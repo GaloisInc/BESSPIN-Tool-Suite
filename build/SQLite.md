@@ -34,3 +34,23 @@
    $ riscv64-unknown-linux-gnu-gcc shell.c sqlite3.c -ldl -lpthread -o sqlite3` 
    ```
    (`clang` works as well)
+
+## Troubleshooting
+
+If `make sqlite3.c` dies, check to see if the error mentions `tcl` or `tclsh`, e.g.:
+```
+tclsh8.6 /home/besspinuser/tool-suite/sqlite/tool/mkopcodec.tcl opcodes.h >opcodes.c
+can't read "label(0)": no such variable
+    while executing
+"format "    /* %3d */ %-18s OpHelp(\"%s\"),"  $i \"$label($i)\" $synopsis($i)"
+    ("for" body line 2)
+    invoked from within
+"for {set i 0} {$i<=$mx} {incr i} {
+  puts [format "    /* %3d */ %-18s OpHelp(\"%s\")," \
+         $i \"$label($i)\" $synopsis($i)]
+}"
+    (file "/home/besspinuser/tool-suite/sqlite/tool/mkopcodec.tcl" line 43)
+make: *** [Makefile:972: opcodes.c] Error 1
+```
+
+If so, you are missing the `tcl` dependency (see above)! Install `tcl`, run `make distclean` and try again from step 3.
