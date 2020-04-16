@@ -1,0 +1,36 @@
+system BESSPIN FETT Target System (BFTS)
+The system responsible for running a BESSPIN demonstrator stack.
+
+indexing
+  owner: Ramy Tadros <rtadros@galois.com>
+  contributors: Galois
+  copyright: (C) 2020 Galois
+  license: TBD
+
+// These subsystems are the principal subsystems
+// by which researchers evaluate the security claims
+// made by processor designers. Each subsystem
+// denotes a single processor family -- the definition
+// of the subsystem includes the applications that are exposed
+// to security researchers.
+
+subsystem FETT_P1
+The principal subsystem by which researchers evaluate security claims
+made by designers of a P1 processor.
+
+subsystem FETT_P2
+The principal subsystem by which researchers evaluate security claims
+made by designers of a P2 processor.
+
+subsystem FETT_Software
+The software for managing a particular FETT subsystem.
+
+// @todo abakst it's obvious I don't _really_ understand
+// what these things are, so this needs to be fixed before
+// this spec is done !
+
+subsystem Linux_Host
+The system connected to the FPGA fabric/cloudGFE.
+
+subsystem cloudGFE
+The target processors themselves.
