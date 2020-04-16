@@ -94,7 +94,7 @@
         {
             "name" : "compiler",
             "type" : "string",
-            "choices" : [ "crossCompileGcc", "crossCompileClang", "qemuCompileGcc" ]
+            "choices" : [ "crossCompileGcc", "crossCompileClang" ]
         },
         {
             "name" : "linker",
