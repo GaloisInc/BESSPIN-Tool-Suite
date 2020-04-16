@@ -1,0 +1,101 @@
+{
+    "_usage" : "This json file has the fett parameters. This is the guide to check that the configuration file is legal.",
+    "_name" : "The option name.",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath",
+    "_choices" : "a list of acceptable choices. Use for int or str",
+    "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
+    "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
+    "_condition" : "only for filePath. If present, only check the path validity if the option in the condition is True.",
+
+    "backend" : [
+        {
+            "name" : "target",
+            "type" : "string",
+            "choices" : [ "qemu", "aws", "fpga" ]
+        },
+        {
+            "name" : "processor",
+            "type" : "string",
+            "choices" : [ "bluespec_p1", "chisel_p1", "bluespec_p2", "chisel_p2" ]
+        },
+        {
+            "name" : "osImage",
+            "type" : "string",
+            "choices" : [ "debian", "FreeRTOS", "FreeBSD" ]
+        },
+        {
+            "name" : "elfLoader",
+            "type" : "string",
+            "choices" : [ "JTAG", "netboot" ]
+        },
+        {
+            "name" : "openConsole",
+            "type" : "bool"
+        },
+        {
+            "name" : "useCustomOsImage",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomOsImage",
+            "type" : "filePath",
+            "condition" : "useCustomOsImage"
+        },
+        {
+            "name" : "qemuNtkPortRangeStart",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535
+        },
+        {
+            "name" : "qemuNtkPortRangeEnd",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535
+        },
+        {
+            "name" : "netbootPortRangeStart",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535
+        },
+        {
+            "name" : "netbootPortRangeEnd",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535
+        }
+    ],
+
+    "applications" : [
+        {
+            "name" : "https",
+            "type" : "boolean"
+        },
+        {
+            "name" : "ota",
+            "type" : "boolean"
+        },
+        {
+            "name" : "webserver",
+            "type" : "boolean"
+        },
+        {
+            "name" : "database",
+            "type" : "boolean"
+        }
+    ],
+
+    "build" : [
+        {
+            "name" : "compiler",
+            "type" : "string",
+            "choices" : [ "crossCompileGcc", "crossCompileClang", "qemuCompileGcc" ]
+        },
+        {
+            "name" : "linker",
+            "type" : "string",
+            "choices" : [ "GCC", "LLD" ]
+        }
+    ]
+}
