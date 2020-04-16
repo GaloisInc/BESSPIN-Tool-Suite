@@ -65,7 +65,10 @@ def getSetting (setting):
     except Exception as exc:
         logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc)
 
-def isSetting (setting,val):
+def isEnabled(setting):
+    return getSetting(setting)
+
+def isEqSetting (setting,val):
     return (getSetting(setting) == val)
 
 def dumpSettings ():
