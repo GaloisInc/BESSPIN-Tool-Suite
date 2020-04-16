@@ -3,10 +3,27 @@
 Main logging functions
 """
 
-import logging
+import logging, enum
 from fett.base.utils import decorate
 
 settings = dict()
+
+class EXIT (enum.Enum):
+    Success = 0
+    Unspecified = enum.auto()
+    Nothing_to_do = enum.auto()
+    Configuration = enum.auto()
+    Create_path = enum.auto()
+    File_read = enum.auto()
+
+    def __str__ (self): #to replace '_' by ' ' when printing
+        return f"{self.name.replace('_',' ')}"
+
+def exitFett (exitCode):
+    if (not isinstance(exitCode,EXIT)):
+        exitCode = EXIT.Unspecified
+    printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
+    exit(exitCode.value)
 
 def formatExc (exc):
     """ format the exception for printing """
@@ -28,11 +45,11 @@ def errorAndLog (message):
     logging.error(message)
 
 @decorate.debugWrap
-def logAndExit (message,exc=None,exitCode=1):
+def logAndExit (message,exc=None,exitCode=EXIT.Unspecified):
     if (exc):
         message += f"\n{formatExc(exc)}."
     errorAndLog(message)
-    exit (exitCode)
+    exitFett (exitCode)
 
 def setSetting (setting, val):
     global settings

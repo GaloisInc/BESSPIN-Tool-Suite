@@ -16,7 +16,7 @@ def loadJsonFile (jsonFile):
         jsonData = json.load(fJson)
         fJson.close()
     except Exception as exc:
-        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc)
+        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.File_read)
     return jsonData
 
 @decorate.debugWrap
@@ -32,7 +32,7 @@ def loadConfiguration(configFile):
         xConfig.read_file(fConfig)
         fConfig.close()
     except Exception as exc:
-        logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc)
+        logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc,exitCode=EXIT.File_read)
 
     #loading the configuration parameters data
     configDataFile = getSetting('jsonDataFile')
@@ -57,26 +57,26 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
         try:
             assert xConfig.has_section(xSection)
         except Exception as exc:
-            logAndExit(f"Section <{xSection}> not found in configuration file.",exc=exc)
+            logAndExit(f"Section <{xSection}> not found in configuration file.",exc=exc,exitCode=EXIT.Configuration)
         optionsInConfig = dict.fromkeys(xConfig.options(xSection),False) #to see if some unwanted parameters in config file
     
     try:
         jsonPars = jsonData[xSection]
     except Exception as exc:
-        logAndExit(f"Section <{xSection}> not found in json configuration info file.",exc=exc)
+        logAndExit(f"Section <{xSection}> not found in json configuration info file.",exc=exc,exitCode=EXIT.Configuration)
 
     for iPar in jsonPars:
         if (('name' not in iPar) or ('type' not in iPar)):
-            logAndExit("While reading json configuration info file. <%s> is missing a <name> or <type> in section [%s]." %(iPar['name'],xSection))
+            logAndExit("While reading json configuration info file. <%s> is missing a <name> or <type> in section [%s]." %(iPar['name'],xSection),exitCode=EXIT.Configuration)
         #checking the value types + fetching the values--------------
         if (setup):
             if ('val' not in iPar):
-                logAndExit(f"While reading json setupEnv file. <{iPar['name']}> is missing <val>.")
+                logAndExit(f"While reading json setupEnv file. <{iPar['name']}> is missing <val>.",exitCode=EXIT.Configuration)
         else:
             try:
                 assert xConfig.has_option(xSection,iPar['name'])
             except Exception as exc:
-                logAndExit(f"{fileName}: <{iPar['name']}> not found in section [{xSection}].",exc=exc)
+                logAndExit(f"{fileName}: <{iPar['name']}> not found in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
             optionsInConfig[iPar['name'].lower()] = True #Be careful! configparser options are always case insensitive and are all lowercase
         
         if (iPar['type'] in 'integer'): #works for int or integer
@@ -86,7 +86,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 else:
                     val = xConfig.getint(xSection,iPar['name'])
             except Exception as exc:
-                logAndExit(f"{fileName}: <{iPar['name']}> has to be integer in section [{xSection}].",exc=exc)
+                logAndExit(f"{fileName}: <{iPar['name']}> has to be integer in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
         elif (iPar['type'] in 'boolean'): #works for bool or boolean
             try:
                 if (setup):
@@ -94,16 +94,16 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 else:
                     val = xConfig.getboolean(xSection,iPar['name'])
             except Exception as exc:
-                logAndExit(f"{fileName}: <{iPar['name']}> has to be boolean in section [{xSection}].",exc=exc)
+                logAndExit(f"{fileName}: <{iPar['name']}> has to be boolean in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
         elif ( iPar['type'] in ['str', 'string', 'filePath', 'dirPath', 'ipAddress']):
             if (setup):
                 val = iPar['val']
             else:
                 val = xConfig.get(xSection,iPar['name'])
             if (len(val)==0):
-                logAndExit(f"{fileName}: Failed to read <{iPar['name']}> in section [{xSection}]. Is it empty?")
+                logAndExit(f"{fileName}: Failed to read <{iPar['name']}> in section [{xSection}]. Is it empty?",exitCode=EXIT.Configuration)
             if ('#' in val):
-                logAndExit(f"{fileName}: Illegal character in <{iPar['name']}> in section [{xSection}]. Is there a comment next to the value?")
+                logAndExit(f"{fileName}: Illegal character in <{iPar['name']}> in section [{xSection}]. Is there a comment next to the value?",exitCode=EXIT.Configuration)
             if (iPar['type'] == 'filePath'):
                 doCheckPath = True
                 if (setup):
@@ -113,24 +113,24 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                         try:
                             doCheckPath = xConfig.getboolean(xSection,iPar['condition'])
                         except Exception as exc:
-                            logAndExit("Configuration file: <%s> has to be boolean in section [%s]." %(iPar['condition'],xSection),exc=exc)
+                            logAndExit("Configuration file: <%s> has to be boolean in section [%s]." %(iPar['condition'],xSection),exc=exc,exitCode=EXIT.Configuration)
                     else:
-                        logAndExit(f"Configuration file: The condition <{iPar['condition']}> is not found in section [{xSection}].")
+                        logAndExit(f"Configuration file: The condition <{iPar['condition']}> is not found in section [{xSection}].",exitCode=EXIT.Configuration)
                 elif (setup and ('condition' in iPar)):
-                    logAndExit (f"The <condition> option is not yet implemented for the setupEnv json.")
+                    logAndExit (f"The <condition> option is not yet implemented for the setupEnv json.",exitCode=EXIT.Configuration)
                 if (doCheckPath and (not os.path.isfile(val))):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].")
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].",exitCode=EXIT.Configuration)
             elif (iPar['type'] == 'dirPath'):
                 if (setup):
                     val = os.path.join(getSetting('repoDir'),val)
                 if (not os.path.isdir(val)):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].")
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].",exitCode=EXIT.Configuration)
             elif (iPar['type'] == 'ipAddress'):
                 ipMatch = re.match(r"(\d{1,3}\.){3}\d{1,3}$",val)
                 if (ipMatch is None):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid IP address in section [{xSection}].")
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid IP address in section [{xSection}].",exitCode=EXIT.Configuration)
         else:
-            logAndExit("Json info file: Unknown type <%s> for <%s> in section [%s]." %(iPar['type'],iPar['name'],xSection))
+            logAndExit("Json info file: Unknown type <%s> for <%s> in section [%s]." %(iPar['type'],iPar['name'],xSection),exitCode=EXIT.Configuration)
 
         #checking the values choices + limits
         isChoices= False
