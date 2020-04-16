@@ -3,7 +3,7 @@
 Main logging functions
 """
 
-import logging, enum
+import logging, enum, traceback
 from fett.base.utils import decorate
 
 settings = dict()
@@ -15,6 +15,8 @@ class EXIT (enum.Enum):
     Configuration = enum.auto()
     Create_path = enum.auto()
     File_read = enum.auto()
+    Environment = enum.auto()
+    Implementation = enum.auto()
 
     def __str__ (self): #to replace '_' by ' ' when printing
         return f"{self.name.replace('_',' ')}"
@@ -49,6 +51,8 @@ def logAndExit (message,exc=None,exitCode=EXIT.Unspecified):
     if (exc):
         message += f"\n{formatExc(exc)}."
     errorAndLog(message)
+    if (exc):
+        logging.error(traceback.format_exc())
     exitFett (exitCode)
 
 def setSetting (setting, val):
@@ -74,3 +78,12 @@ def isEqSetting (setting,val):
 def dumpSettings ():
     global settings
     logging.debug(f"settings = {settings}")
+
+def mkdir(dirPath, addToSettings=None):
+    try:
+        os.mkdir(buildDir)
+    except Exception as exc:
+        logAndExit (f"Failed to create <{dirPath}>.",exitCode=EXIT.Create_path,exc=exc)
+    if (addToSettings):
+        setSetting(addToSettings,dirPath)
+
