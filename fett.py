@@ -14,7 +14,7 @@
 import logging, argparse, os, shutil
 from fett.base.utils.misc import formatExc, printAndLog, setSetting
 from fett.base.config import loadConfiguration
-from fett.target.launch import startFett
+from fett.target.launch import startFett, endFett
 
 def main (xArgs):
     # Create working Directory
@@ -76,6 +76,7 @@ def main (xArgs):
 
     #launch the tool
     startFett()
+    endFett()
     printAndLog(f"End of FETT! [Exit code 0:Success]")
     exit(0)
 
