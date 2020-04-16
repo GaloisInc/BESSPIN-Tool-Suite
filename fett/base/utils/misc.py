@@ -48,7 +48,9 @@ def getSetting (setting):
     except Exception as exc:
         logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc)
 
-def printSettings ():
+def isSetting (setting,val):
+    return (getSetting(setting) == val)
+
+def dumpSettings ():
     global settings
-    for setting in settings:
-        print(f"<{setting}>=<{settings[setting]}>")
+    logging.debug(f"settings = {settings}")

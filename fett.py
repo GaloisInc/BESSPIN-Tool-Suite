@@ -18,11 +18,11 @@ from fett.target.launch import launchFett
 
 def main (xArgs):
     # Create working Directory
-    fettDir = os.path.abspath(os.path.dirname(__file__))
+    repoDir = os.path.abspath(os.path.dirname(__file__))
     if (xArgs.workingDirectory):
         workDir = os.path.abspath(xArgs.workingDirectory)
     else:
-        workDir = os.path.join(fettDir,'workDir')
+        workDir = os.path.join(repoDir,'workDir')
     if (os.path.isdir(workDir)): # already exists, delete
         try:
             shutil.rmtree(workDir)
@@ -39,7 +39,7 @@ def main (xArgs):
     if (xArgs.configFile):
         configFile = os.path.abspath(xArgs.configFile)
     else:
-        configFile = os.path.join(fettDir,'config.ini')
+        configFile = os.path.join(repoDir,'config.ini')
     try:
         fConfig = open(configFile,'r')
         fConfig.close()
@@ -64,12 +64,20 @@ def main (xArgs):
     logging.basicConfig(filename=logFile,filemode='w',format='%(asctime)s: (%(levelname)s)~  %(message)s',datefmt='%I:%M:%S %p',level=logLevel)
     printAndLog(f"Welcome to FETT!")
 
-    # Load all settings
+    # Store critical settings
+    setSetting('repoDir', repoDir)
     setSetting ('workDir', workDir)
+    setSetting('configFile', configFile)
+    setSetting('logFile', logFile)
+    # Load all configuration and setup settings
+    setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
+    setSetting('setupEnvFile', setupEnvFile)
     loadConfiguration(configFile)
 
     #launch the tool
     launchFett()
+    printAndLog(f"End of FETT! [Exit code 0:Success]")
+    exit(0)
 
 if __name__ == '__main__':
     # Reading the bash arguments

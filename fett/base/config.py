@@ -22,11 +22,7 @@ def loadJsonFile (jsonFile):
 @decorate.debugWrap
 def loadConfiguration(configFile):
     #loading dev setup environment
-    baseDir = os.path.abspath(os.path.dirname(__file__))
-    fettDir = os.path.abspath(os.path.join(baseDir, os.pardir))
-    setSetting('fettDir',fettDir)
-    setupEnvFile = os.path.join(baseDir,'utils','setupEnv.json')
-    setupEnvData = loadJsonFile(setupEnvFile)
+    setupEnvData = loadJsonFile(getSetting('setupEnvFile'))
     loadConfigSection(None,setupEnvData,'setupEnv',setup=True)
 
     #loading the configuration file
@@ -47,6 +43,7 @@ def loadConfiguration(configFile):
         loadConfigSection (xConfig,configData,xSection)
 
     printAndLog('Configuration loaded successfully.')
+    dumpSettings()
     return
 
 @decorate.debugWrap
@@ -110,7 +107,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
             if (iPar['type'] == 'filePath'):
                 doCheckPath = True
                 if (setup):
-                    val = os.path.join(getSetting('fettDir'),val)
+                    val = os.path.join(getSetting('repoDir'),val)
                 if (not setup and ('condition' in iPar)): #skip checking the path if the setting is disabled
                     if (xConfig.has_option(xSection,iPar['condition'])):
                         try:
@@ -125,7 +122,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                     logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].")
             elif (iPar['type'] == 'dirPath'):
                 if (setup):
-                    val = os.path.join(getSetting('fettDir'),val)
+                    val = os.path.join(getSetting('repoDir'),val)
                 if (not os.path.isdir(val)):
                     logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].")
             elif (iPar['type'] == 'ipAddress'):
