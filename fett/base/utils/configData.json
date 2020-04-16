@@ -69,6 +69,10 @@
 
     "applications" : [
         {
+            "name" : "buildApps",
+            "type" : "boolean"
+        },
+        {
             "name" : "https",
             "type" : "boolean"
         },
