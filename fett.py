@@ -14,6 +14,7 @@
 import logging, argparse, os, shutil
 from fett.base.utils.log import formatExc, printAndLog
 from fett.base.config import loadConfiguration
+#from fett.target.launch import launchFett
 
 def main (xArgs):
     # Create working Directory
@@ -67,6 +68,8 @@ def main (xArgs):
     settings = dict()
     settings['workDir'] = workDir
     loadConfiguration(configFile,settings)
+
+    #launchFett(settings)
 
 if __name__ == '__main__':
     # Reading the bash arguments

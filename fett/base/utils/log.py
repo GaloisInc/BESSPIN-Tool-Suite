@@ -1,4 +1,7 @@
 #! /usr/bin/env python3
+"""
+Main logging functions
+"""
 
 import logging
 from fett.base.utils import decorate
