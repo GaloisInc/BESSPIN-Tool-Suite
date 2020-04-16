@@ -3,8 +3,6 @@
 import logging
 from fett.base.utils import decorate
 
-from fett.base.config import loadConfiguration
-
 def formatExc (exc):
     """ format the exception for printing """
     try:
@@ -31,14 +29,3 @@ def logAndExit (message,exc=None,exitCode=1):
     errorAndLog(message)
     exit (exitCode)
 
-class objFett ():
-    """
-    --- This is the main FETT class. One object is created per run, and it will
-        be passed around.
-    """
-    def __init__(self,workDir,configFile):
-        self.settings = dict()
-        self.settings['workDir'] = workDir
-        loadConfiguration(configFile,self.settings)
-        
-        logging.debug('Created objFett.')
