@@ -12,7 +12,7 @@
 """
 
 import logging, argparse, os, shutil
-from fett.base.utils.misc import formatExc, printAndLog, setSetting
+from fett.base.utils.misc import formatExc, printAndLog, setSetting, exitFett, EXIT
 from fett.base.config import loadConfiguration
 from fett.target.launch import startFett, endFett
 
@@ -28,12 +28,12 @@ def main (xArgs):
             shutil.rmtree(workDir)
         except Exception as exc:
             print(f"(Error)~  Failed to delete <{workDir}>.\n{formatExc(exc)}.")
-            exit (1)
+            exitFett(EXIT.Configuration)
     try:
         os.mkdir(workDir)
     except Exception as exc:
         print(f"(Error)~  Failed to create the working directory <{workDir}>.\n{formatExc(exc)}.")
-        exit (1)
+        exitFett(EXIT.Create_path)
 
     # Check config file
     if (xArgs.configFile):
@@ -45,7 +45,7 @@ def main (xArgs):
         fConfig.close()
     except Exception as exc:
         print(f"(Error)~  Failed to read the configuration file <{configFile}>.\n{formatExc(exc)}.")
-        exit (1)
+        exitFett(EXIT.Configuration)
 
     # Check log file
     if (xArgs.logFile):
@@ -57,7 +57,7 @@ def main (xArgs):
         fLog.close()
     except Exception as exc:
         print(f"(Error)~  Failed to create the log file <{logFile}>.\n{formatExc(exc)}.")
-        exit (1)
+        exitFett(EXIT.Create_path)
 
     # setup the logging
     logLevel = logging.DEBUG if (xArgs.debug) else logging.INFO 
@@ -77,8 +77,7 @@ def main (xArgs):
     #launch the tool
     startFett()
     endFett()
-    printAndLog(f"End of FETT! [Exit code 0:Success]")
-    exit(0)
+    exitFett(EXIT.Success)
 
 if __name__ == '__main__':
     # Reading the bash arguments
