@@ -6,6 +6,8 @@ Main logging functions
 import logging
 from fett.base.utils import decorate
 
+settings = dict()
+
 def formatExc (exc):
     """ format the exception for printing """
     try:
@@ -32,3 +34,21 @@ def logAndExit (message,exc=None,exitCode=1):
     errorAndLog(message)
     exit (exitCode)
 
+def setSetting (setting, val):
+    global settings
+    try:
+        settings[setting] = val
+    except Exception as exc:
+        logAndExit (f"Failed to set setting <{setting}> to <{val}>.",exc=exc)
+
+def getSetting (setting):
+    global settings
+    try:
+        return settings[setting]
+    except Exception as exc:
+        logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc)
+
+def printSettings ():
+    global settings
+    for setting in settings:
+        print(f"<{setting}>=<{settings[setting]}>")

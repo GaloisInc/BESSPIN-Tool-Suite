@@ -4,14 +4,31 @@ This file parses the input configuration ini file, checks its legality, and stor
 json details are in: ./utils/configData.json
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
-import configparser, json, os
-from fett.base.utils.log import *
+import configparser, json, os, re
+from fett.base.utils.misc import *
 
 CONFIG_SECTIONS = ['backend', 'applications', 'build']
 APPS = {'FreeRTOS' : ['https', 'ota'], 'debian' : ['webserver', 'database'], 'FreeBSD' : ['webserver', 'database']}
 
+def loadJsonFile (jsonFile):
+    try:
+        fJson = open(jsonFile,'r')
+        jsonData = json.load(fJson)
+        fJson.close()
+    except Exception as exc:
+        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc)
+    return jsonData
+
 @decorate.debugWrap
-def loadConfiguration(configFile,settings):
+def loadConfiguration(configFile):
+    #loading dev setup environment
+    baseDir = os.path.abspath(os.path.dirname(__file__))
+    fettDir = os.path.abspath(os.path.join(baseDir, os.pardir))
+    setSetting('fettDir',fettDir)
+    setupEnvFile = os.path.join(baseDir,'utils','setupEnv.json')
+    setupEnvData = loadJsonFile(setupEnvFile)
+    loadConfigSection(None,setupEnvData,'setupEnv',setup=True)
+
     #loading the configuration file
     xConfig = configparser.ConfigParser()
     try:
@@ -22,30 +39,30 @@ def loadConfiguration(configFile,settings):
         logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc)
 
     #loading the configuration parameters data
-    baseDir = os.path.abspath(os.path.dirname(__file__))
-    jsonDataFile = os.path.join(baseDir,'utils','configData.json')
-    try:
-        fJson = open(jsonDataFile,'r')
-        jsonData = json.load(fJson)
-        fJson.close()
-    except Exception as exc:
-        logAndExit(f"Failed to load parameters info file <{jsonDataFile}>.",exc=exc)
+    configDataFile = getSetting('jsonDataFile')
+    configData = loadJsonFile(configDataFile)
 
     # Here we should read the options and such
     for xSection in CONFIG_SECTIONS:
-        loadConfigSection (settings,xConfig,jsonData,xSection)
+        loadConfigSection (xConfig,configData,xSection)
 
     printAndLog('Configuration loaded successfully.')
     return
 
 @decorate.debugWrap
-def loadConfigSection (settings,xConfig, jsonData,xSection):
-    try:
-        assert xConfig.has_section(xSection)
-    except Exception as exc:
-        logAndExit(f"Section <{xSection}> not found in configuration file.",exc=exc)
+def loadConfigSection (xConfig, jsonData,xSection,setup=False):
+    if (setup):
+        fileName = "SetupEnv file"
+    else:
+        fileName = "Configuration file"
 
-    optionsInConfig = dict.fromkeys(xConfig.options(xSection),False) #to see if some unwanted parameters in config file
+    if (not setup):
+        try:
+            assert xConfig.has_section(xSection)
+        except Exception as exc:
+            logAndExit(f"Section <{xSection}> not found in configuration file.",exc=exc)
+        optionsInConfig = dict.fromkeys(xConfig.options(xSection),False) #to see if some unwanted parameters in config file
+    
     try:
         jsonPars = jsonData[xSection]
     except Exception as exc:
@@ -55,31 +72,46 @@ def loadConfigSection (settings,xConfig, jsonData,xSection):
         if (('name' not in iPar) or ('type' not in iPar)):
             logAndExit("While reading json configuration info file. <%s> is missing a <name> or <type> in section [%s]." %(iPar['name'],xSection))
         #checking the value types + fetching the values--------------
-        try:
-            assert xConfig.has_option(xSection,iPar['name'])
-        except Exception as exc:
-            logAndExit("Configuration file: <%s> not found in section [%s]." %(iPar['name'],xSection),exc=exc)
-            
-        optionsInConfig[iPar['name'].lower()] = True #Be careful! configparser options are always case insensitive and are all lowercase
+        if (setup):
+            if ('val' not in iPar):
+                logAndExit(f"While reading json setupEnv file. <{iPar['name']}> is missing <val>.")
+        else:
+            try:
+                assert xConfig.has_option(xSection,iPar['name'])
+            except Exception as exc:
+                logAndExit(f"{fileName}: <{iPar['name']}> not found in section [{xSection}].",exc=exc)
+            optionsInConfig[iPar['name'].lower()] = True #Be careful! configparser options are always case insensitive and are all lowercase
+        
         if (iPar['type'] in 'integer'): #works for int or integer
             try:
-                val = xConfig.getint(xSection,iPar['name'])
+                if (setup):
+                    val = int(iPar['val'])
+                else:
+                    val = xConfig.getint(xSection,iPar['name'])
             except Exception as exc:
-                logAndExit("Configuration file: <%s> has to be integer in section [%s]." %(iPar['name'],xSection),exc=exc)
+                logAndExit(f"{fileName}: <{iPar['name']}> has to be integer in section [{xSection}].",exc=exc)
         elif (iPar['type'] in 'boolean'): #works for bool or boolean
             try:
-                val = xConfig.getboolean(xSection,iPar['name'])
+                if (setup):
+                    val = bool(int(iPar['val']))
+                else:
+                    val = xConfig.getboolean(xSection,iPar['name'])
             except Exception as exc:
-                logAndExit("Configuration file: <%s> has to be boolean in section [%s]." %(iPar['name'],xSection),exc=exc)
-        elif ( iPar['type'] in ['str', 'string', 'filePath']):
-            val = xConfig.get(xSection,iPar['name'])
+                logAndExit(f"{fileName}: <{iPar['name']}> has to be boolean in section [{xSection}].",exc=exc)
+        elif ( iPar['type'] in ['str', 'string', 'filePath', 'dirPath', 'ipAddress']):
+            if (setup):
+                val = iPar['val']
+            else:
+                val = xConfig.get(xSection,iPar['name'])
             if (len(val)==0):
-                logAndExit("Configuration file: Failed to read <%s> in section [%s]. Is it empty?" %(iPar['name'],xSection))
+                logAndExit(f"{fileName}: Failed to read <{iPar['name']}> in section [{xSection}]. Is it empty?")
             if ('#' in val):
-                logAndExit("Configuration file: Illegal character in <%s> in section [%s]. Is there a comment next to the value?" %(iPar['name'],xSection))
+                logAndExit(f"{fileName}: Illegal character in <{iPar['name']}> in section [{xSection}]. Is there a comment next to the value?")
             if (iPar['type'] == 'filePath'):
                 doCheckPath = True
-                if ('condition' in iPar): #skip checking the path if the setting is disabled
+                if (setup):
+                    val = os.path.join(getSetting('fettDir'),val)
+                if (not setup and ('condition' in iPar)): #skip checking the path if the setting is disabled
                     if (xConfig.has_option(xSection,iPar['condition'])):
                         try:
                             doCheckPath = xConfig.getboolean(xSection,iPar['condition'])
@@ -87,10 +119,21 @@ def loadConfigSection (settings,xConfig, jsonData,xSection):
                             logAndExit("Configuration file: <%s> has to be boolean in section [%s]." %(iPar['condition'],xSection),exc=exc)
                     else:
                         logAndExit(f"Configuration file: The condition <{iPar['condition']}> is not found in section [{xSection}].")
+                elif (setup and ('condition' in iPar)):
+                    logAndExit (f"The <condition> option is not yet implemented for the setupEnv json.")
                 if (doCheckPath and (not os.path.isfile(val))):
-                    logAndExit(f"Configuration file: <{iPar['name']}> has to be a valid file path in section [{xSection}].")
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].")
+            elif (iPar['type'] == 'dirPath'):
+                if (setup):
+                    val = os.path.join(getSetting('fettDir'),val)
+                if (not os.path.isdir(val)):
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].")
+            elif (iPar['type'] == 'ipAddress'):
+                ipMatch = re.match(r"(\d{1,3}\.){3}\d{1,3}$",val)
+                if (ipMatch is None):
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid IP address in section [{xSection}].")
         else:
-            logAndExit("Json configuration info file: Unknown type <%s> for <%s> in section [%s]." %(iPar['type'],iPar['name'],xSection))
+            logAndExit("Json info file: Unknown type <%s> for <%s> in section [%s]." %(iPar['type'],iPar['name'],xSection))
 
         #checking the values choices + limits
         isChoices= False
@@ -126,11 +169,12 @@ def loadConfigSection (settings,xConfig, jsonData,xSection):
         if (isMax and (val > iPar['max'])):
             logAndExit(f"Configuration file: The maximum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['max']))
 
-        settings[iPar['name']] = val
+        setSetting(iPar['name'],val)
 
-    for option,isItLegal in optionsInConfig.items():
-        if (not isItLegal):
-            warnAndLog("Configuration file: Unrecognized option <%s> in section [%s]. This value is going to be ignored." %(option,xSection))
+    if (not setup):
+        for option,isItLegal in optionsInConfig.items():
+            if (not isItLegal):
+                warnAndLog("Configuration file: Unrecognized option <%s> in section [%s]. This value is going to be ignored." %(option,xSection))
 
     return
 

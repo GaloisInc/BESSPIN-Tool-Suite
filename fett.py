@@ -12,9 +12,9 @@
 """
 
 import logging, argparse, os, shutil
-from fett.base.utils.log import formatExc, printAndLog
+from fett.base.utils.misc import formatExc, printAndLog, setSetting
 from fett.base.config import loadConfiguration
-#from fett.target.launch import launchFett
+from fett.target.launch import launchFett
 
 def main (xArgs):
     # Create working Directory
@@ -65,11 +65,11 @@ def main (xArgs):
     printAndLog(f"Welcome to FETT!")
 
     # Load all settings
-    settings = dict()
-    settings['workDir'] = workDir
-    loadConfiguration(configFile,settings)
+    setSetting ('workDir', workDir)
+    loadConfiguration(configFile)
 
-    #launchFett(settings)
+    #launch the tool
+    launchFett()
 
 if __name__ == '__main__':
     # Reading the bash arguments

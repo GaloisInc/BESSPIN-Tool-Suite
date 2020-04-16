@@ -1,0 +1,41 @@
+{
+    "_usage" : "This json file has the environment setup that is not to be changed per run.",
+    "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
+    "_warning" : "The values are not sanity checked by the tool.",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath",
+    "_choices" : "a list of acceptable choices. Use for int or str",
+    "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
+    "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
+
+    "setupEnv" : [
+        {
+            "name" : "jsonDataFile",
+            "type" : "filePath",
+            "val" : "base/utils/configData.json"
+        },
+        {
+            "name" : "fpgaIpTarget",
+            "type" : "ipAddress",
+            "val" : "10.88.88.2"
+        },
+        {
+            "name" : "fpgaIpHost",
+            "type" : "ipAddress",
+            "val" : "10.88.88.1"
+        },
+        {
+            "name" : "fpgaPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "fpgaPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        }
+    ] 
+}
