@@ -1,8 +1,8 @@
 {
     "_usage" : "This json file has the environment setup that is not to be changed per run.",
     "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
-    "_warning" : "The values are not sanity checked by the tool.",
-    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath",
+    "_paths" : "Paths here are assumed to be relative to the repo source dir.",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, ipAddress",
     "_choices" : "a list of acceptable choices. Use for int or str",
     "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
     "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
@@ -11,7 +11,7 @@
         {
             "name" : "jsonDataFile",
             "type" : "filePath",
-            "val" : "base/utils/configData.json"
+            "val" : "fett/base/utils/configData.json"
         },
         {
             "name" : "fpgaIpTarget",
