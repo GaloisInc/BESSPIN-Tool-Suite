@@ -15,7 +15,16 @@ def startFett ():
     # ------- Global/Misc sanity checks
     #check we're in nix
     if (sys.executable.split('/')[1] != 'nix'):
-        logAndExit(f"Please run within a nix shell. [Run <nix-shell> in target-fett directory].")
+        logAndExit(f"Please run within a nix shell. [Run <nix-shell> in target-fett directory].",exitCode=EXIT.Environment)
+
+    #Processor and osImage combinations
+    combinationsDict = getSetting('procOsCombinations')
+    if (getSetting('processor') not in getSetting('procOsCombinations')[getSetting('osImage')]):
+        logAndExit(f"{getSetting('osImage')} is not compatible with <{getSetting('processor')}>.",exitCode=EXIT.Configuration)
+
+    #qemu on FreeRTOS?
+    if (isEqSetting('osImage','FreeRTOS') and isEqSetting('target','qemu')):
+        logAndExit (f"Qemu is not implemented for FreeRTOS.",exitCode=EXIT.Implementation)
 
     #Console mode on FreeRTOS?
     if (isEqSetting('osImage','FreeRTOS') and isEnabled('openConsole')):
@@ -55,6 +64,7 @@ def prepareEnv ():
                 warnAndLog (f"All {getSetting('osImage')} apps are switched off, and <openConsole> is disabled.")
                 exitFett (EXIT.Nothing_to_do)
             else:
+                warnAndLog (f"All {getSetting('osImage')} apps are switched off. This is a console only mode.")
 
         if (isEnabled('webserver') and isEnabled('database')):
             warnAndLog (f"<webserver> and <database> are mutually exclusive. <webserver> is going to be ignored.")
@@ -62,7 +72,7 @@ def prepareEnv ():
     
     buildApps ()
 
-    # config sanity checks for fetching osImage
+    prepareOsImage ()
 
 
 """ This is the loading/booting function """
