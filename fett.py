@@ -12,7 +12,8 @@
 """
 
 import logging, argparse, os, shutil
-from fett.base.core import formatExc, objFett, printAndLog
+from fett.base.utils.log import formatExc, printAndLog
+from fett.base.config import loadConfiguration
 
 def main (xArgs):
     # Create working Directory
@@ -62,8 +63,10 @@ def main (xArgs):
     logging.basicConfig(filename=logFile,filemode='w',format='%(asctime)s: (%(levelname)s)~  %(message)s',datefmt='%I:%M:%S %p',level=logLevel)
     printAndLog(f"Welcome to FETT!")
 
-    # Getting the main FETT object
-    xFett = objFett(workDir, configFile)
+    # Load all settings
+    settings = dict()
+    settings['workDir'] = workDir
+    loadConfiguration(configFile,settings)
 
 if __name__ == '__main__':
     # Reading the bash arguments
