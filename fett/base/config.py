@@ -4,8 +4,7 @@ This file parses the input configuration ini file, checks its legality, and stor
 json details are in: ./utils/configData.json
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
-import logging, configparser, json, os
-from fett.base.utils import decorate
+import configparser, json, os
 from fett.base.utils.log import *
 
 CONFIG_SECTIONS = ['backend', 'applications', 'build']
