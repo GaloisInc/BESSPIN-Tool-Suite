@@ -8,7 +8,7 @@ import sys
 
 @decorate.debugWrap
 @decorate.timeWrap
-def launchFett ():
+def startFett ():
     # ------- Global/Misc sanity checks
 
     #check we're in nix
@@ -21,5 +21,5 @@ def launchFett ():
         setSetting('openConsole',False)
 
 
-    
+
 
