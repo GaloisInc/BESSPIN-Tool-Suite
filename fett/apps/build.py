@@ -6,6 +6,9 @@ Building apps
 from fett.base.utils.misc import *
 import os
 
+""" The entry function 
+---------------------------------------
+"""
 @decorate.debugWrap
 def buildApps ():
     # create the build directory
@@ -13,8 +16,9 @@ def buildApps ():
     mkdir(buildDir,addToSettings='buildDir')
 
     if (isEnabled('buildApps')):
-        # copy makefiles and such
-        pass
+        targetUtilsDir = os.path.join(getSetting('repoDir'),'fett','target','utils')
+        cp(os.path.join(targetUtilsDir,'Makefile.xcompileDir'),os.path.join(getSetting('buildDir'),'Makefile'))
+        cp(os.path.join(targetUtilsDir,'defaultEnvLinux.mk'),getSetting('buildDir'))
 
     if (isEnabled('https')):
         buildHttps()
@@ -30,26 +34,65 @@ def buildApps ():
 - Unix: if building is disabled, then nothing to do here. If building is enabled, then we copy and compile here.
 """
 
+# app-specific building steps -----------------------------------------------------------
+
+""" Special building for 'https' """
 @decorate.debugWrap
 @decorate.timeWrap
 def buildHttps():
     pass
 
+""" Special building for 'ota' """
 @decorate.debugWrap
 @decorate.timeWrap
 def buildOta():
     pass
 
+""" Special building for 'webserver' """
 @decorate.debugWrap
 @decorate.timeWrap
 def buildWebserver():
     pass
 
+""" Special building for 'database' """
 @decorate.debugWrap
 @decorate.timeWrap
 def buildDatabase():
-    sourceDir = os.path.join(getSetting('repoDir'),'fett','apps','database')
+    sourceDir = getSourceDir('database')
+    cpFilesToBuildDir (sourceDir)
     if (isEnabled('buildApps')):
+        crossCompileUnix()
+    return
+
+# re-used parts -----------------------------------------------------------
+
+@decorate.debugWrap
+def getSourceDir (app):
+    return os.path.join(getSetting('repoDir'),'fett','apps',app)
+
+@decorate.debugWrap
+def cpFilesToBuildDir (sourceDir): #maybe add an optional argument for copying a custom pattern
+    if (isEnabled('buildApps')):
+        # copy source files
         cp (sourceDir,getSetting('buildDir'),pattern="*.c")
-    pass
+    else:
+        # copy binaries
+        cp (sourceDir,getSetting('buildDir'),pattern="*.riscv")
+
+@decorate.debugWrap
+@decorate.timeWrap
+def crossCompileUnix():
+    printAndLog (f"Cross-compiling ...")
+    envLinux = []
+    osImageCap1 = getSetting('osImage')[0].upper() + getSetting('osImage')[1:]
+    envLinux.append(f"OS_IMAGE={osImageCap1}")
+    envLinux.append(f"TARGET={getSetting('target').upper()}")
+    envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
+    envLinux.append(f"LINKER={getSetting('linker').upper()}")
+    logging.debug(f"going to make using {envLinux}")
+    make (envLinux,getSetting('buildDir'))
+    printAndLog(f"Files cross-compiled successfully.")
+
+
+
 
