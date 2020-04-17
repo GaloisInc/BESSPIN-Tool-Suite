@@ -4,8 +4,8 @@ The P1 Target System Software.
 component P1 Target CVEs
 The CVEs exposed by the FETT_P1 system.
 
-component Base FreeRTOS Kernel
-The base kernel on which (or into which) the target applications are integrated.
+component FreeRTOS Kernel
+The (abstract) kernel that will be booted on the P1 processor.
 
   What is the IP?
 
