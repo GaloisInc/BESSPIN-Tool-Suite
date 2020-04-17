@@ -7,18 +7,17 @@ indexing
   copyright: (C) 2020 Galois
   license: TBD
 
-// These subsystems are the principal subsystems
-// by which researchers evaluate the security claims
-// made by processor designers. Each subsystem
-// denotes a single processor family -- the definition
-// of the subsystem includes the applications that are exposed
-// to security researchers.
+subsystem Target_Subsystem
+Realizations of the Target_Subsystem are the principal subsystems by which
+researchers evaluate the security claims made by processor designers. Each
+subsystem denotes a single processor family -- the definition of the subsystem
+includes the applications that are exposed to security researchers.
 
-subsystem FETT_P1
+subsystem FETT_P1 extends Target_Subsystem
 The principal subsystem by which researchers evaluate security claims
 made by designers of a P1 processor.
 
-subsystem FETT_P2
+subsystem FETT_P2 extends Target_Subsystem
 The principal subsystem by which researchers evaluate security claims
 made by designers of a P2 processor.
 
