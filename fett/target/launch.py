@@ -74,6 +74,10 @@ def prepareEnv ():
 
     prepareOsImage ()
 
+    if (isEqSetting('target','fpga')):
+        pass
+        # program fpga
+        # reset network
 
 """ This is the loading/booting function """
 @decorate.debugWrap
