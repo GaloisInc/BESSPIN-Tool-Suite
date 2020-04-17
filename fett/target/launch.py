@@ -93,6 +93,14 @@ def prepareEnv ():
 def launchFett ():
     printAndLog (f"Launching FETT...")
     xTarget = getClassType()
+    xTarget.start()
+    if (isEnabled('isUnix')):
+        xTarget.createUser()
+    xTarget.executeApp()
+    if(isEnabled('openConsole')):
+        xTarget.interact()
+    xTarget.shutdown()
+
 
 """ This is the teardown function """
 @decorate.debugWrap

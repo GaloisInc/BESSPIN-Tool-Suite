@@ -54,6 +54,8 @@ def loadConfiguration(configFile):
         setSetting('procFlavor', 'bluespec')
     else:
         logAndExit(f"Failed to determine the processor flavor <chisel or bluespec>.",exitCode=EXIT.Dev_Bug)
+    # Create an isUnix setting
+    setSetting('isUnix',getSetting('osImage') in ['debian', 'FreeBSD'])
 
     printAndLog('Configuration loaded successfully.')
     dumpSettings()
