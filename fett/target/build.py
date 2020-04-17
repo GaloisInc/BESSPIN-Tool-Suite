@@ -28,6 +28,7 @@ def prepareFreeRTOS():
 @decorate.timeWrap
 def prepareDebian():
     # copy the crngOnDebian.riscv
+    cp (getSetting('addEntropyDebianPath'),getSetting('buildDir'))
     setupUnixImages('debian')
 
 @decorate.debugWrap
@@ -35,6 +36,7 @@ def prepareDebian():
 def prepareFreeBSD():
     setupUnixImages('FreeBSD')
 
+@decorate.debugWrap
 def setupUnixImages(osImage):
     osImageElf = os.path.join(getSetting('osImagesDir'),f"{osImage}.elf")
     setSetting('osImageElf',osImageElf)

@@ -61,6 +61,11 @@
                 },
                 "gfeTestingScripts" : "BESSPIN_GFE_SCRIPT_DIR"
             }
+        },
+        {
+            "name" : "addEntropyDebianPath",
+            "type" : "filePath",
+            "val" : "fett/target/utils/addEntropyDebian.riscv"
         }
     ] 
 }

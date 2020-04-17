@@ -52,14 +52,16 @@ def buildOta():
 @decorate.debugWrap
 @decorate.timeWrap
 def buildWebserver():
-    pass
+    cpFilesToBuildDir (getSourceDir('webserver'))
+    if (isEnabled('buildApps')):
+        crossCompileUnix()
+    return
 
 """ Special building for 'database' """
 @decorate.debugWrap
 @decorate.timeWrap
 def buildDatabase():
-    sourceDir = getSourceDir('database')
-    cpFilesToBuildDir (sourceDir)
+    cpFilesToBuildDir (getSourceDir('database'))
     if (isEnabled('buildApps')):
         crossCompileUnix()
     return
