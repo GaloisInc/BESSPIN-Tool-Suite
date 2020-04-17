@@ -21,6 +21,7 @@ class EXIT (enum.Enum):
     Copy_and_Move = enum.auto()
     Dev_Bug = enum.auto()
     External = enum.auto()
+    Run = enum.auto()
 
     def __str__ (self): #to replace '_' by ' ' when printing
         return f"{self.name.replace('_',' ')}"
@@ -52,11 +53,14 @@ def errorAndLog (message):
 
 @decorate.debugWrap
 def logAndExit (message,exc=None,exitCode=EXIT.Unspecified):
-    if (exc):
-        message += f"\n{formatExc(exc)}."
-    errorAndLog(message)
-    if (exc):
-        logging.error(traceback.format_exc())
+    if (message or exc):
+        if (not message): #empty message
+            message = f"{formatExc(exc)}."
+        elif (exc):
+            message += f"\n{formatExc(exc)}."
+        errorAndLog(message)
+        if (exc):
+            logging.error(traceback.format_exc())
     exitFett (exitCode)
 
 def setSetting (setting, val):
