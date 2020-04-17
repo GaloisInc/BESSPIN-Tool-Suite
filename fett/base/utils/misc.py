@@ -4,7 +4,7 @@ Main logging functions
 """
 
 import logging, enum, traceback
-import os, shutil, glob
+import os, shutil, glob, subprocess
 from fett.base.utils import decorate
 
 settings = dict()
@@ -20,6 +20,8 @@ class EXIT (enum.Enum):
     Implementation = enum.auto()
     Global_settings_handling = enum.auto()
     Copy_and_Move = enum.auto()
+    Dev_Bug = enum.auto()
+    External = enum.auto()
 
     def __str__ (self): #to replace '_' by ' ' when printing
         return f"{self.name.replace('_',' ')}"
@@ -95,9 +97,9 @@ def mkdir(dirPath, addToSettings=None):
 def cp (src,dest,pattern=None):
     if ((not src) or (not dest)):
         if (not src):
-            logAndExit (f"cp: source cannot be of NoneType.",exitCode=EXIT.Copy_and_Move)
+            logAndExit (f"cp: source cannot be of NoneType.",exitCode=EXIT.Dev_Bug)
         else:
-            logAndExit (f"cp: destination cannot be of NoneType.",exitCode=EXIT.Copy_and_Move)
+            logAndExit (f"cp: destination cannot be of NoneType.",exitCode=EXIT.Dev_Bug)
     
     if (pattern):
         if (not os.path.isdir(src)):
@@ -111,17 +113,37 @@ def cp (src,dest,pattern=None):
         for xFile in listFiles:
             if (os.path.isfile(xFile)):
                 try:
-                    shutil.copy2(xFile,dst)
+                    shutil.copy2(xFile,dest)
                 except Exception as exc:
                     logAndExit (f"Failed to copy <{xFile}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
     else:
         if (not os.path.isfile(src)):
             logAndExit (f"cp: <{src}> is not a valid file.",exitCode=EXIT.Copy_and_Move)
         try:
-            shutil.copy2(src,dst)
+            shutil.copy2(src,dest)
         except Exception as exc:
             logAndExit (f"Failed to copy <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
-    
+
+@decorate.debugWrap
+def make (argsList,dirPath):
+
+    if ((not dirPath) or (argsList is None)):
+        logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
+    # open a file for stdout/stderr
+    try:
+        outMake = open(os.path.join(dirPath,'make.out'),'a')
+    except Exception as exc:
+        logAndExit (f"Failed to open <{os.path.join(dirPath,'make.out')}> to <{dest}>.",exc=exc,exitCode=EXIT.Create_path)
+
+    argsList = ['make','-C',dirPath] + argsList
+    try:
+        subprocess.check_call(argsList, stdout=outMake, stderr=outMake)
+    except Exception as exc:
+        outMake.close()
+        logAndExit (f"Failed to <{' '.join(argsList)}>.",exc=exc,exitCode=EXIT.External)
+
+    outMake.close()
+
 
 
 
