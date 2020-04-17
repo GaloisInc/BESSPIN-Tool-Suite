@@ -19,7 +19,7 @@ def startFett ():
 
     #Processor and osImage combinations
     combinationsDict = getSetting('procOsCombinations')
-    if (getSetting('processor') not in getSetting('procOsCombinations')[getSetting('osImage')]):
+    if (getSetting('processor') not in getSettingDict('procOsCombinations',[getSetting('osImage')])):
         logAndExit(f"{getSetting('osImage')} is not compatible with <{getSetting('processor')}>.",exitCode=EXIT.Configuration)
 
     #qemu on FreeRTOS?

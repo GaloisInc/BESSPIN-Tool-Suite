@@ -18,7 +18,6 @@ class EXIT (enum.Enum):
     File_read = enum.auto()
     Environment = enum.auto()
     Implementation = enum.auto()
-    Global_settings_handling = enum.auto()
     Copy_and_Move = enum.auto()
     Dev_Bug = enum.auto()
     External = enum.auto()
@@ -65,14 +64,26 @@ def setSetting (setting, val):
     try:
         settings[setting] = val
     except Exception as exc:
-        logAndExit (f"Failed to set setting <{setting}> to <{val}>.",exc=exc,exitCode=EXIT.Global_settings_handling)
+        logAndExit (f"Failed to set setting <{setting}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
 def getSetting (setting):
     global settings
     try:
         return settings[setting]
     except Exception as exc:
-        logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc,exitCode=EXIT.Global_settings_handling)
+        logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+
+def getSettingDict (setting,hierarchy):
+    xSetting = getSetting(setting)
+    if (isinstance(hierarchy,str)):
+        hierarchy = [hierarchy]
+    for item in hierarchy:
+        try:
+            xSetting = xSetting[item]
+        except Exception as exc:
+            hierarchyPretty = ''.join([f"[{x}]" for x in hierarchy])
+            logAndExit (f"getSetting: Failed to obtain the value of <{setting}{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+    return xSetting
 
 def isEnabled(setting):
     return getSetting(setting)
@@ -143,6 +154,8 @@ def make (argsList,dirPath):
         logAndExit (f"Failed to <{' '.join(argsList)}>.",exc=exc,exitCode=EXIT.External)
 
     outMake.close()
+
+
 
 
 
