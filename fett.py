@@ -11,10 +11,10 @@
         logging level = INFO 
 """
 
-import logging, argparse, os, shutil
-from fett.base.utils.misc import formatExc, printAndLog, setSetting, exitFett, EXIT
+from fett.base.utils.misc import *
 from fett.base.config import loadConfiguration
 from fett.target.launch import startFett, endFett
+import logging, argparse, os, shutil, atexit
 
 def main (xArgs):
     # Create working Directory
@@ -74,6 +74,10 @@ def main (xArgs):
     setSetting('setupEnvFile', setupEnvFile)
     loadConfiguration(configFile)
 
+    #Prepare the peaceful exit
+    setSetting('trash',trashCanObj())
+    atexit.register(exitPeacefully,getSetting('trash'))
+    
     #launch the tool
     startFett()
     endFett()
