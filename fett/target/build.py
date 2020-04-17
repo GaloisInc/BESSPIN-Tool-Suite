@@ -12,6 +12,9 @@ def prepareOsImage ():
     osImagesDir = os.path.join(getSetting('workDir'),'osImages')
     mkdir(osImagesDir,addToSettings='osImagesDir')
 
+    if(isEqSetting('target','aws')):
+        logAndExit (f"<target.build.prepareOsImage> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
+
     if(isEqSetting('osImage','FreeRTOS')):
         prepareFreeRTOS ()
     elif(isEqSetting('osImage','debian')):
@@ -22,7 +25,9 @@ def prepareOsImage ():
 @decorate.debugWrap
 @decorate.timeWrap
 def prepareFreeRTOS():
-    pass
+    # should build FreeRTOS image here (if needed)
+    # Check if FreeRTOS mirror is checked out
+    logAndExit (f"<target.build.prepareFreeRTOS> is not yet implemented.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
 @decorate.timeWrap

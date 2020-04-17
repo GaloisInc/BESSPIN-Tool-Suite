@@ -5,6 +5,10 @@ The main file to start launching fett
 
 from fett.base.utils.misc import *
 from fett.target.build import prepareOsImage
+from fett.target import common
+from fett.target import fpga
+from fett.target import qemu
+#from fett.target import aws
 from fett.apps.build import buildApps
 import sys
 
@@ -75,14 +79,16 @@ def prepareEnv ():
     prepareOsImage ()
 
     if (isEqSetting('target','fpga')):
-        pass
-        # program fpga
-        # reset network
+        fpga.programBifile()
+        fpga.resetEthAdaptor()
+
+    printAndLog (f"Environment is ready.")
 
 """ This is the loading/booting function """
 @decorate.debugWrap
 @decorate.timeWrap
 def launchFett ():
+    printAndLog (f"Launching FETT...")
     pass
 
 """ This is the teardown function """
