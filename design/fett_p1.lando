@@ -1,0 +1,29 @@
+subsystem FETT P1 Target System
+The P1 Target System.
+
+component Base FreeRTOS Kernel
+The base kernel on which (or into which) the target applications are integrated.
+
+  What is the IP?
+
+component HTTPS Configuration contains Base FreeRTOS Kernel
+The FreeRTOS configuration that includes HTTPS functionality.
+
+  Start the HTTPS service! // Can be boot
+  Stop the HTTPS service!  // Can be HALT
+  On what ports is the HTTPS service listening?
+  Execute HTTPS Method!
+  HTTPS Query?
+
+// @note abakst
+// The following may need to be refined with additional details
+// e.g. MQTT/AWS information once we know precisely how this
+// will be implemented. From the point of view of the Target
+// system, however, abstracting these details is probably OK.
+
+component OTA Configuration contains Base FreeRTOS Kernel
+The FreeRTOS configuration that includes OTA functionality.
+
+  Start the OTA service! // Can be boot
+  Stop the OTA service!  // Can be HALT
+  Accept update data!
