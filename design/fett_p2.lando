@@ -4,12 +4,9 @@ The P2 Target System Software.
 component P2 Target CVEs
 The CVEs exposed by the FETT_P2 system.
 
-component Base Debian Image
-The Base Debian image that hosts the Target applications.
-
-  What is the IP?
-  Which services are running?
-  Start a new service!
+// Target Application Components
+component P2 Target Applications
+The supported applications on the P2 Target System.
 
 component SSH Server
 The SSH service application.
@@ -40,24 +37,30 @@ The Database application.
   Create new database!
   Execute SQL statement!
 
-component Debian Linux Image contains Base Debian Image, SSH Server, Web Server, Database
-The Debian image in which the target applications are executed.
-
-  Start the Web Server!
-  Stop the Web Server!
-  Start the SSH Service!
-  Stop the SSH Service!
-
-component P2 Target Applications
-The supported applications on the P2 Target System.
-
-relation SSH Server client Base Debian Linux Image
-relation Web Server client Base Debian Linux Image
-relation Database   client Base Debian Linux Image
-
 relation P2 Target Applications contains SSH Server
 relation P2 Target Applications contains Web Server
 relation P2 Target Applications contains Database
+
+// Operating System Components
+
+component Base OS Image
+The Base OS image that hosts the Target applications.
+
+  Each P2 Target Application must be supported on the Base OS Image.
+  What is the IP?
+  Which services are running?
+  Start a service from the P2 Target Applications list! // Note that for SQLite, this is a noop
+  Stop a service from the P2 Target Applications list!  // Note that for SQLite, this is a noop
+
+component Base FreeBSD Image extends Base OS Image
+The Base FreeBSD Image is a concrete instantiation of a Base OS Image.
+
+component Base Debian Image extends Base OS Image
+The Base Debian Image is a concrete instantiation of a Base OS Image.
+
+relation SSH Server client Base OS Image
+relation Web Server client Base OS Image
+relation Database   client Base OS Image
 
 requirements Target System
 
