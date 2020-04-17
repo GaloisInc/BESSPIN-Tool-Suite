@@ -1,5 +1,5 @@
-subsystem FETT P1 Target System
-The P1 Target System.
+subsystem FETT_P1
+The P1 Target System Software.
 
 component Base FreeRTOS Kernel
 The base kernel on which (or into which) the target applications are integrated.

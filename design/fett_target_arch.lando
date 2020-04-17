@@ -32,5 +32,5 @@ The software for managing a particular FETT subsystem.
 subsystem Linux_Host
 The system connected to the FPGA fabric/cloudGFE.
 
-subsystem cloudGFE
+subsystem CloudGFE
 The target processors themselves.
