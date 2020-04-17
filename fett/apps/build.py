@@ -82,6 +82,11 @@ def cpFilesToBuildDir (sourceDir): #maybe add an optional argument for copying a
 @decorate.debugWrap
 @decorate.timeWrap
 def crossCompileUnix():
+    #cross-compiling sanity checks
+    if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
+        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
+        setSetting('linker','GCC')
+
     printAndLog (f"Cross-compiling ...")
     envLinux = []
     osImageCap1 = getSetting('osImage')[0].upper() + getSetting('osImage')[1:]
