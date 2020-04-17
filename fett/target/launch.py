@@ -56,6 +56,7 @@ def prepareEnv ():
         setSetting('buildApps',False)
 
     # config sanity checks for building apps
+    setSetting('runApp',True)
     if (isEqSetting('osImage','FreeRTOS')):
         if (not isEnabled('https') and not isEnabled('ota')):
             warnAndLog (f"All FreeRTOS apps are switched off.")
@@ -70,6 +71,7 @@ def prepareEnv ():
                 exitFett (EXIT.Nothing_to_do)
             else:
                 warnAndLog (f"All {getSetting('osImage')} apps are switched off. This is a console only mode.")
+                setSetting('runApp',False)
 
         if (isEnabled('webserver') and isEnabled('database')):
             warnAndLog (f"<webserver> and <database> are mutually exclusive. <webserver> is going to be ignored.")
@@ -96,7 +98,8 @@ def launchFett ():
     xTarget.start()
     if (isEnabled('isUnix')):
         xTarget.createUser()
-    xTarget.executeApp()
+    if (isEnabled('runApp')):
+        xTarget.runApp()
     if(isEnabled('openConsole')):
         xTarget.interact()
     xTarget.shutdown()
