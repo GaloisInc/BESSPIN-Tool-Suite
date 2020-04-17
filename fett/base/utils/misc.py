@@ -137,7 +137,6 @@ def cp (src,dest,pattern=None):
 
 @decorate.debugWrap
 def make (argsList,dirPath):
-
     if ((not dirPath) or (argsList is None)):
         logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
     # open a file for stdout/stderr
@@ -147,6 +146,7 @@ def make (argsList,dirPath):
         logAndExit (f"Failed to open <{os.path.join(dirPath,'make.out')}> to <{dest}>.",exc=exc,exitCode=EXIT.Create_path)
 
     argsList = ['make','-C',dirPath] + argsList
+    logging.info(f"Executing <{' '.join(argsList)}>. Command output is appended to <{outMake.name}>.")
     try:
         subprocess.check_call(argsList, stdout=outMake, stderr=outMake)
     except Exception as exc:

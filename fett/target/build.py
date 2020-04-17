@@ -56,4 +56,5 @@ def setupUnixImages(osImage):
             cp(os.environ[netbootImage],netbootElf)
         else:
             logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
+    logging.info("Unix images imported successfully.")
 
