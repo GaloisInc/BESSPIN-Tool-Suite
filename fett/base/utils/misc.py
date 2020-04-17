@@ -3,7 +3,7 @@
 Main logging functions
 """
 
-import logging, enum, traceback
+import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess
 from fett.base.utils import decorate
 
@@ -142,8 +142,9 @@ def make (argsList,dirPath):
     # open a file for stdout/stderr
     try:
         outMake = open(os.path.join(dirPath,'make.out'),'a')
+        getSetting('trash').throwFile(outMake)
     except Exception as exc:
-        logAndExit (f"Failed to open <{os.path.join(dirPath,'make.out')}> to <{dest}>.",exc=exc,exitCode=EXIT.Create_path)
+        logAndExit (f"Failed to open <{os.path.join(dirPath,'make.out')}> to append.",exc=exc,exitCode=EXIT.Create_path)
 
     argsList = ['make','-C',dirPath] + argsList
     logging.info(f"Executing <{' '.join(argsList)}>. Command output is appended to <{outMake.name}>.")
@@ -154,6 +155,55 @@ def make (argsList,dirPath):
         logAndExit (f"Failed to <{' '.join(argsList)}>.",exc=exc,exitCode=EXIT.External)
 
     outMake.close()
+
+class redirectPrintToFile:
+    def __init__(self,outFilePath):
+        try:
+            self.outFile = open(outFilePath,"a")
+            getSetting('trash').throwFile(self.outFile)
+        except Exception as exc:
+            logAndExit (f"Failed to open <{outFilePath}> to append.",exc=exc,exitCode=EXIT.Create_path)
+
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = self.outFile
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self._original_stdout
+        self.outFile.close()
+
+class trashCanObj (object):
+    def __init__ (self):
+        self.threadsTrash = []
+        self.filesTrash = []
+
+    def throwThread (self,thread,tag):
+        self.threadsTrash.append((tag,thread))
+
+    def throwFile (self,xFile):
+        self.filesTrash.append(xFile)
+
+    def listThreadsInTrash (self):
+        return self.threadsTrash
+
+    def listFilesInTrash (self):
+        return self.filesTrash
+
+def exitPeacefully (trashCan):
+    #close the opened files
+    for xFile in trashCan.listFilesInTrash():
+        try:
+            if (not xFile.closed):
+                logging.warning (f"Atexit: File <{xFile.name}> was left open. Closing it...")
+            xFile.close()
+        except Exception as exc:
+            logging.warning (f"Atexit: attempted to check on cleanly closing <{xFile.name}>, but something went wrong.\n{formatExc(exc)}.")
+
+    #close any hanging threads
+    for (tag,thread) in trashCan.listThreadsInTrash():
+        if ((thread is not None) and (thread.is_alive())): #oops it's alive
+            logging.warning (f"Atexit: Thread <{tag}> was still alive at exit. It is unsafely killed.")
+
 
 
 
