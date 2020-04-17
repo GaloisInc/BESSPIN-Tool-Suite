@@ -15,18 +15,14 @@ component FETT_Runner_Tool
 The tool used to execute commands on CloudGFE and the Target software stack.
 
   Get status of CloudGFE!
-  Start P1 with OTA!
-  Start P1 with HTTPS Server!
-  Start P2 with Web Server!
-  Start P2 with Database!
-  Start P2 with SSH Server!
-  Start P2 with Voting Registration System!
+  Start Application in P1 Target Applications!
+  Start Application in P2 Target Applications!
   Stop target application stack!
 
   What is the state of the Target?
 
-Linux_Host client CloudGFE
-FETT_Runner_Tool client CloudGFE
-FETT_Runner_Tool client FETT P1 Target System
-FETT_Runner_Tool client FETT P2 Target System
+relation Linux_Host client CloudGFE
+relation FETT_Runner_Tool client CloudGFE
+relation FETT_Runner_Tool client FETT P1 Target System
+relation FETT_Runner_Tool client FETT P2 Target System
 
