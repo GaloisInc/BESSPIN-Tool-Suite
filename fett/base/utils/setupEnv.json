@@ -45,6 +45,22 @@
                 "debian" : ["chisel_p2", "bluespec_p2"],
                 "FreeBSD" : ["chisel_p2", "bluespec_p2"]
             }
+        },
+        {
+            "name" : "nixEnv",
+            "type" : "dict",
+            "val" : {
+                "netboot" : "BESSPIN_TESTGEN_NETBOOT_IMAGE",
+                "debian" : {
+                    "fpga" : "BESSPIN_TESTGEN_DEBIAN_IMAGE",
+                    "qemu" : "BESSPIN_TESTGEN_DEBIAN_IMAGE_QEMU"
+                },
+                "FreeBSD" : {
+                    "fpga" : "BESSPIN_TESTGEN_FREEBSD_IMAGE",
+                    "qemu" : "BESSPIN_TESTGEN_FREEBSD_IMAGE_QEMU"
+                },
+                "gfeTestingScripts" : "BESSPIN_GFE_SCRIPT_DIR"
+            }
         }
     ] 
 }
