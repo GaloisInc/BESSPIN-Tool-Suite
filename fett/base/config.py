@@ -41,6 +41,20 @@ def loadConfiguration(configFile):
     for xSection in CONFIG_SECTIONS:
         loadConfigSection (xConfig,configData,xSection)
 
+    # Get the XLEN and processor flavor
+    if (getSetting('processor') in ['chisel_p1', 'bluespec_p1']):
+        setSetting('xlen',32)
+    elif (getSetting('processor') in ['chisel_p2', 'bluespec_p2']):
+        setSetting('xlen',64)
+    else:
+        logAndExit(f"Failed to determine xlen from <{getSetting('processor')}>.",exitCode=EXIT.Dev_Bug)
+    if (getSetting('processor') in ['chisel_p1', 'chisel_p2']):
+        setSetting('procFlavor', 'chisel')
+    elif (getSetting('processor') in ['bluespec_p1', 'bluespec_p2']):
+        setSetting('procFlavor', 'bluespec')
+    else:
+        logAndExit(f"Failed to determine the processor flavor <chisel or bluespec>.",exitCode=EXIT.Dev_Bug)
+
     printAndLog('Configuration loaded successfully.')
     dumpSettings()
     return
