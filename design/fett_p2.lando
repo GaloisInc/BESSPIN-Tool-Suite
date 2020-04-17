@@ -1,0 +1,47 @@
+subsystem FETT P2 Target System
+The P2 Target System Software.
+
+component Base Debian Image
+The Base Debian image that hosts the Target applications.
+
+  What is the IP?
+  Which services are running?
+  Start a new service!
+
+component SSH Server
+The SSH service application.
+
+  Log in remote user!
+
+// @note abakst Some of the constraints below are derived
+// from the FETT-Voting requirements
+
+// @note abakst this serves as a very high level set of requirements
+// and descriptions. A separate file will document the requirements
+// for the concrete instantiation of the web server
+// (e.g. resources, configuration, etc.)
+component Web Server
+The Web Server application.
+
+  Web Server must support SSL/TLS.  
+  Web Server must support execution of external programs (via CGI or similar mechanism).  
+  Web Server and external program execution mechanism must support submission of forms
+    including attached files.
+  Web Server must log all connections and connection attempts.
+  Web Server must support execution of external programs (via CGI or similar mechanism).  
+  Execute HTTPS Method!
+
+component Database
+The Database application.
+
+  Create new database!
+  Execute SQL statement!
+
+component Debian Linux Image contains Base Debian Image, SSH Server, Web Server, Database
+The Debian image in which the target applications are executed.
+
+  Start the Web Server!
+  Stop the Web Server!
+  Start the SSH Service!
+  Stop the SSH Service!
+
