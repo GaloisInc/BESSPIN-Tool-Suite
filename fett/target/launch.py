@@ -10,7 +10,8 @@ from fett.target import fpga
 from fett.target import qemu
 #from fett.target import aws
 from fett.apps.build import buildApps
-import sys
+import sys, os
+from importlib.machinery import SourceFileLoader
 
 """ This is the FETT entry function """
 @decorate.debugWrap
@@ -73,6 +74,8 @@ def prepareEnv ():
         if (isEnabled('webserver') and isEnabled('database')):
             warnAndLog (f"<webserver> and <database> are mutually exclusive. <webserver> is going to be ignored.")
             setSetting('webserver',False) 
+    else:
+        logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
     
     buildApps ()
 
@@ -89,10 +92,37 @@ def prepareEnv ():
 @decorate.timeWrap
 def launchFett ():
     printAndLog (f"Launching FETT...")
-    pass
+    xTarget = getClassType()
 
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett ():
     pass
+
+""" This decides the classes hierarchy """
+@decorate.debugWrap
+def getClassType():
+    if (isEqSetting('target','aws')):
+        logAndExit (f"<launch.getClassType> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
+    elif (isEqSetting('target','qemu')):
+        return qemu.qemuTarget()
+    elif (isEqSetting('target','fpga')):
+        gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
+        if (gfeTestingScripts not in os.environ):
+            logAndExit (f"<${gfeTestingScripts}> not found in the nix path.",exitCode=EXIT.Environment)
+        try:
+            sys.path.append(os.environ[gfeTestingScripts])
+            from test_gfe_unittest import TestLinux, TestFreeRTOS
+        except Exception as exc:
+            logAndExit (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc,exitCode=EXIT.Environment)
+        if (isEqSetting('xlen',32)):
+            return type('classFpgaTarget',(fpga.fpgaTarget,TestFreeRTOS),dict())
+        elif(isEqSetting('xlen',64)):
+            return type('classFpgaTarget',(fpga.fpgaTarget,TestLinux),dict())
+        else:
+            logAndExit (f"Invalid <xlen={getSetting('xlen')}> value.",exitCode=EXIT.Dev_Bug)
+
+    else:
+        logAndExit (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.",exitCode=EXIT.Dev_Bug)
+
 
