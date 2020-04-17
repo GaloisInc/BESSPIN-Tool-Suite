@@ -22,15 +22,8 @@ subsystem FETT_P2
 The principal subsystem by which researchers evaluate security claims
 made by designers of a P2 processor.
 
-subsystem FETT_Software
+subsystem FETT_Runner
 The software for managing a particular FETT subsystem.
-
-// @todo abakst it's obvious I don't _really_ understand
-// what these things are, so this needs to be fixed before
-// this spec is done !
-
-subsystem Linux_Host
-The system connected to the FPGA fabric/cloudGFE.
 
 subsystem CloudGFE
 The target processors themselves.
