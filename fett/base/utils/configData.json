@@ -92,9 +92,9 @@
 
     "build" : [
         {
-            "name" : "compiler",
+            "name" : "cross-compiler",
             "type" : "string",
-            "choices" : [ "crossCompileGcc", "crossCompileClang" ]
+            "choices" : [ "GCC", "Clang" ]
         },
         {
             "name" : "linker",
