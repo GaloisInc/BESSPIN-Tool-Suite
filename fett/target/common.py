@@ -140,7 +140,7 @@ class commonTarget():
                 timeout = 120
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=self.stdout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             self.boot(endsWith="login:",timeout=timeout)    
             self.stopShowingTime.set() 
             time.sleep (0.3) #to make it beautiful
@@ -167,7 +167,7 @@ class commonTarget():
                 timeout = 60
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=self.stdout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             bootEndsWith = "login:"
             self.boot(endsWith=bootEndsWith, timeout=timeout)
             self.stopShowingTime.set()
