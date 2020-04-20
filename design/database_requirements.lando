@@ -25,7 +25,6 @@ authentication keys mechanism and grant permissions to
 corresponding users in order to be able to execute the
 sqlite binary.
 
-
 Sqlite_via_WebSQL_in_Google_Chrome
 Html5 has implementation of databases and the implementation is done
 by embedding SqLite database into browser. Browser's like Google Chrome
