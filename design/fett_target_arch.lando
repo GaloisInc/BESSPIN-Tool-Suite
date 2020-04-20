@@ -25,4 +25,6 @@ subsystem FETT_Runner
 The software for managing a particular FETT subsystem.
 
 subsystem CloudGFE
-The target processors themselves.
+The platform on which FETT will run, consisting of TA-1 SSITH processors
+running inside of AWS F1-hosted SoCs, complete with OS and devices
+relevant to FETT.
