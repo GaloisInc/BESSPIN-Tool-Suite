@@ -38,6 +38,11 @@
             "val" : 1234
         },
         {
+            "name" : "qemuIpTarget",
+            "type" : "ipAddress",
+            "val" : "127.0.0.1"
+        },
+        {
             "name" : "procOsCombinations",
             "type" : "dict",
             "val" : {

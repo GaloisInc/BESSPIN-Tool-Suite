@@ -23,6 +23,7 @@ class EXIT (enum.Enum):
     Dev_Bug = enum.auto()
     External = enum.auto()
     Run = enum.auto()
+    Network = enum.auto()
 
     def __str__ (self): #to replace '_' by ' ' when printing
         return f"{self.name.replace('_',' ')}"
@@ -45,11 +46,13 @@ def printAndLog (message,doPrint=True):
         print("(Info)~  " + message)
     logging.info(message)
 
-def warnAndLog (message,doPrint=True):
+def warnAndLog (message,doPrint=True,exc=None):
     if (doPrint):
         print("(Warning)~  " + message)
     logging.warning(message)
-
+    if (exc):
+        logging.warning(traceback.format_exc())
+    
 def errorAndLog (message,doPrint=True):
     if (doPrint):
         print("(Error)~  " + message)
