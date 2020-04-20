@@ -15,7 +15,7 @@ component FETT_Runner_Tool
 The tool used to execute commands on CloudGFE and the Target software stack.
 
   What is the status of this CloudGFE instance?
-  Get target forensics! // The definition of this depends on the platform
+  What is the current Target's forensic data? // The definition of this depends on the platform
   Start Application in P1 Target Applications!
   Start Application in P2 Target Applications!
   Stop target application stack!
