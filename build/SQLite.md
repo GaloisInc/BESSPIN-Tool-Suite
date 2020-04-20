@@ -4,8 +4,8 @@
 
 ### Dependencies
 
-- `tclsh` (e.g. `apt install tcl`)
-- `libpthread`, `libdl` (should be available in the Tool Suite Nix environment)
+- `tclsh` (e.g. `apt install tcl`) (should be available in the FETT Nix environment)
+- `libpthread`, `libdl` (should be available in the FETT Nix environment)
 
 ### Build Steps
 
