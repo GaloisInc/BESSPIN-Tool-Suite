@@ -39,6 +39,8 @@ class commonTarget():
         # TODO: These passwords need to be different per run
         self.rootPassword = 'ssithdefault' if (isEqSetting('osImage','FreeBSD')) else 'riscv'
         self.rootGroup = 'wheel' if (isEqSetting('osImage','FreeBSD')) else 'root'
+        self.userPassword = 'fett_2020'
+        self.userName = 'researcher'
 
         self.userName = None
         self.userPassword = None
@@ -119,24 +121,21 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def start (self,timeout=15,createUser=False,interactWithFreeRTOS=False,getGdbInsightFreeRTOS=False):
+    def start (self,timeout=15,createUser=False):
         if (isEqSetting('osImage','debian')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             if (isEqSetting('target','fpga')):
-                processor, plevel = self.settings['processor'].split('_')
-                if (processor == 'bluespec'):
-                    if plevel == "p2":
-                        timeout = 1150 if self.settings['elfLoader'] == 'JTAG' else 560
-                    else: # p3
-                        timeout = 2200
-                else: #chisel
-                    if plevel == "p2":
-                        timeout = 800 if self.settings['elfLoader'] == 'JTAG' else 360
-                    else: # p3
-                        timeout = 1400
-            else: #qemu
+                if (isEqSetting('procFlavor','bluespec')):
+                    timeout = 1150 if isEqSetting('elfLoader','JTAG') else 560
+                elif (isEqSetting('procFlavor','chisel')):
+                    timeout = 800 if isEqSetting('elfLoader','JTAG') else 360
+                else:
+                    self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
+            elif (isEqSetting('target','qemu')):
                 timeout = 120
-            self.stopShowingTime = showElapsedTime (self.trash,estimatedTime=timeout,stdout=self.stdout)
+            else:
+                self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=self.stdout)
             self.boot(endsWith="login:",timeout=timeout)    
             self.stopShowingTime.set() 
             time.sleep (0.3) #to make it beautiful
@@ -145,30 +144,24 @@ class commonTarget():
             self.runCommand ("root",endsWith="Password:")
             self.runCommand ("riscv")
         elif (isEqSetting('osImage','FreeRTOS')):
-            if (getGdbInsightFreeRTOS):
-                self.getGdbInsightFreeRTOS = True
-            if (interactWithFreeRTOS):
-                self.interactWithFreeRTOS = True
-                self.boot (endsWith=">>>Beginning of Testgen<<<",timeout=self.settings['FreeRTOStimeout'])
-            else:
-                #Note the typo in 'Progam'. #I chose not to change it in FreeRTOS repo.
-                endsWith = [">>>End of Testgen<<<", "Progam has exited with code:0x\d{8}"]
-                self.boot (endsWith=endsWith,timeout=self.settings['FreeRTOStimeout'])
-                logging.info ("start: {1} executed successfully!\n".format(self.osImage))
+            #self.boot (endsWith=">>>Beginning of Testgen<<<",timeout=timeout)
+            endsWith = [">>>End of Fett<<<"]
+            self.boot (endsWith=endsWith,timeout=timeout)
+            logging.info (f"start: {getSetting('osImage')} executed successfully!\n")
         elif (isEqSetting('osImage','FreeBSD')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-            processor, plevel = self.settings['processor'].split('_')
             if (isEqSetting('target','fpga')):
-                if (processor == 'bluespec'):
-                    timeout = 1400 if self.settings['elfLoader'] == 'JTAG' else 700
-                else: #chisel
-                    if plevel == "p2":
-                        timeout = 1000 if self.settings['elfLoader'] == 'JTAG' else 370
-                    else: # p3
-                        timeout = 1600
-            else: #qemu
+                if (isEqSetting('procFlavor','bluespec')):
+                    timeout = 1400 if isEqSetting('elfLoader','JTAG') else 700
+                elif (isEqSetting('procFlavor','chisel')):
+                    timeout = 1000 if isEqSetting('elfLoader','JTAG') else 370
+                else:
+                    self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
+            elif (isEqSetting('target','qemu')):
                 timeout = 60
-            self.stopShowingTime = showElapsedTime (self.trash,estimatedTime=timeout,stdout=self.stdout)
+            else:
+                self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=self.stdout)
             bootEndsWith = "login:"
             self.boot(endsWith=bootEndsWith, timeout=timeout)
             self.stopShowingTime.set()
@@ -208,10 +201,6 @@ class commonTarget():
     @decorate.timeWrap
     def createUser (self):
         printAndLog (f"Creating a user...")
-        self.userName = getpass.getuser()
-        pwCharacters = string.ascii_letters + string.digits + "%_~+=<>.," #using a subset of strin.punctuation for FreeBSD sake
-        pwLength = 12 #chosen arbitrarily -- maybe configurable? why? what's the value? left as is.
-        self.userPassword = ''.join([random.choice(pwCharacters) for i in range(pwLength)])
         if (isEqSetting('osImage','debian')):
             self.runCommand ("useradd -m {0}".format(self.userName))
             self.runCommand ("passwd {0}".format(self.userName),endsWith="New password:")
@@ -362,10 +351,10 @@ class commonTarget():
             elif (isEqSetting('osImage','FreeBSD')):
                 listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False,uartRetriesOnBSD=False))             
             listenOnTarget.daemon = True
-            self.trash.throwThread(listenOnTarget,"nc listening for <{0}> on Target".format(xFile))
+            getSetting('trash').throwThread(listenOnTarget,"nc listening for <{0}> on Target".format(xFile))
             sendFromHost = threading.Thread(target=subprocess.call, kwargs=dict(args=f"nc -w 1 {self.ipTarget} {self.portHost} <{pathToFile}/{xFile}",shell=True))
             sendFromHost.daemon = True
-            self.trash.throwThread(sendFromHost,"nc sending <{0}/{1}> from host".format(pathToFile,xFile))
+            getSetting('trash').throwThread(sendFromHost,"nc sending <{0}/{1}> from host".format(pathToFile,xFile))
             listenOnTarget.start()
             time.sleep(1)
             sendFromHost.start()
@@ -422,18 +411,18 @@ class commonTarget():
         if (isEqSetting('osImage','FreeRTOS')):
             if (self.interactWithFreeRTOS):
                 fLog = open("{0}/execFreeRTOS.log".format(self.testsDir), "a")
-                self.trash.throwFile(fLog)
+                getSetting('trash').throwFile(fLog)
                 if ((methodToExecute is not None) and hasattr(self,methodToExecute)):
                     outLog = getattr(self,methodToExecute)(self.testsPars['TEST_NAME'] + ".riscv")
                 else:
                     self.shutdownAndExit (f"runApp: Invalid methodToExecute: <{methodToExecute}>. Exitting...")
                 fLog.write (outLog)
                 fLog.close()
-                logging.info ("runApp: {1} executed successfully!\n".format(self.osImage))
+                logging.info ("runApp: {1} executed successfully!\n".format(getSetting('osImage')))
         elif (isEqSetting('osImage','debian') or isEqSetting('osImage','FreeBSD')):
             if (isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')):
                 timeout *= 4
-                if (self.settings['processor'].split('_')[0] == 'bluespec'):
+                if (isEqSetting('procFlavor','bluespec')):
                     timeout *= 2
             #send tests to target
             self.sendTests(timeout=timeout)
@@ -481,7 +470,7 @@ class commonTarget():
                 else:
                     outLog = self.runCommand("./{0}".format(exeTest),erroneousContents="-bash:",shutdownOnError=False,timeout=timeout)[1]
                 fLog = open("{0}/{1}.log".format(self.testsDir,exeTest.split('.')[0]), "w")
-                self.trash.throwFile(fLog)
+                getSetting('trash').throwFile(fLog)
                 fLog.write (outLog)
                 if ((methodToExecute is None) and (self.settings['useCustomScoring'])): #will need the gdb output here
                     gdbOut = self.getGdbOutput()
@@ -499,7 +488,7 @@ class commonTarget():
 
             printAndLog ("runApp: Run successful!")
         else:
-            self.reportAndExit("Error in {0}: <executeDir> is not implemented for <{1}> on <{2}>.".format(self.filename,self.osImage,self.backend))
+            self.reportAndExit("Error in {0}: <executeDir> is not implemented for <{1}> on <{2}>.".format(self.filename,getSetting('osImage'),self.backend))
         return
 
     @decorate.debugWrap
@@ -508,7 +497,7 @@ class commonTarget():
         if (os.path.isfile(self.gdbOutPath)):
             try:
                 fGdb = open(self.gdbOutPath, "r")
-                self.trash.throwFile(fGdb)
+                getSetting('trash').throwFile(fGdb)
                 gdbOut = "\n~~~GDB LOGGING~~~\n" + fGdb.read() + "\n~~~~~~~~~~~~~~~~~\n"
                 fGdb.close()
                 os.remove(self.gdbOutPath) #clear the file for next test
