@@ -4,6 +4,10 @@ The P1 Target System Software.
 component P1 Target CVEs
 The CVEs exposed by the FETT_P1 system.
 
+component P1 Target Forensics
+Target state that can be inspected by the FETT Runner. In this case, this is be
+any in-memory logs, processor state, etc.
+
 component FreeRTOS Kernel
 The (abstract) kernel that will be booted on the P1 processor.
 

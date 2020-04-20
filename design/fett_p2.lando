@@ -4,6 +4,11 @@ The P2 Target System Software.
 component P2 Target CVEs
 The CVEs exposed by the FETT_P2 system.
 
+component P2 Target Forensics
+Target state that can be inspected by the FETT Runner. In this case, this should
+include OS core dumps, application core dumps, system logs, application logs,
+and processor state.
+
 // Target Application Components
 component P2 Target Applications
 The supported applications on the P2 Target System.
