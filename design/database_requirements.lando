@@ -2,8 +2,8 @@ requirements database SQLite
 
 Sqlite_installation_versions
 For the CVE/CWE tests purpose only, provide installation and set-up of
-the following SQLite database versions:
-3.22.0, 3.25.3, 3.27.2, 3.29.0 and 3.30.1.
+the following SQLite database version:
+3.22.0.
 
 Adjust_sqlite_memory_allocation
 Adjust how SQLite does memory allocation, including setting up
