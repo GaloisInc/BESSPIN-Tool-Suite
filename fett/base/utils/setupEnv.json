@@ -66,6 +66,11 @@
             "name" : "addEntropyDebianPath",
             "type" : "filePath",
             "val" : "fett/target/utils/addEntropyDebian.riscv"
+        },
+        {
+            "name" : "tarballName",
+            "type" : "string",
+            "val" : "filesToSend.tar.gz"
         }
     ] 
 }
