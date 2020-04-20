@@ -7,7 +7,8 @@ import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess
 from fett.base.utils import decorate
 
-settings = dict()
+# private; not available using import *
+_settings = dict()
 
 class EXIT (enum.Enum):
     Success = 0
@@ -67,16 +68,14 @@ def logAndExit (message,exc=None,exitCode=EXIT.Unspecified):
     exitFett (exitCode)
 
 def setSetting (setting, val):
-    global settings
     try:
-        settings[setting] = val
+        _settings[setting] = val
     except Exception as exc:
         logAndExit (f"Failed to set setting <{setting}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
 def getSetting (setting):
-    global settings
     try:
-        return settings[setting]
+        return _settings[setting]
     except Exception as exc:
         logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
@@ -103,8 +102,7 @@ def isEqSetting (setting,val):
     return (getSetting(setting) == val)
 
 def dumpSettings ():
-    global settings
-    logging.debug(f"settings = {settings}")
+    logging.debug(f"settings = {_settings}")
 
 def mkdir(dirPath, addToSettings=None):
     try:
