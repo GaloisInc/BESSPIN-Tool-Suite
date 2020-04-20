@@ -1,0 +1,39 @@
+requirements database SQLite
+
+Sqlite_installation_versions
+For the CVE/CWE tests purpose only, provide installation and set-up of
+the following SQLite database versions:
+3.22.0, 3.25.3, 3.27.2, 3.29.0 and 3.30.1.
+
+Adjust_sqlite_memory_allocation
+Adjust how SQLite does memory allocation, including setting up
+alternative memory allocators appropriate for safety-critical
+real-time embedded systems and application-defined memory allocators.
+
+Application_defined_page_cache
+Specify an application-defined page cache.
+
+Sqlite_error_log
+Set up a process-wide error log.
+
+Sqlite_db_connection
+Configure and provide limit for individual database connections
+
+Sqlite_access_and_permission
+Provide ssh access and login without password by using
+authentication keys mechanism and grant permissions to
+corresponding users in order to be able to execute the
+sqlite binary.
+
+
+Sqlite_via_WebSQL_in_Google_Chrome
+Html5 has implementation of databases and the implementation is done
+by embedding SqLite database into browser. Browser's like Google Chrome
+and Safari have their implementation of Html5 databases implemented
+using the SQLite termed as websql.
+
+Sqlite_fts3_virtual_table
+Provide fts3 for sqite3 version < SQLite 3.25.3.
+
+Sqlite_faxfinder
+Install Multi-Tech FaxFinder version < 5.1.6
