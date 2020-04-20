@@ -24,7 +24,7 @@ class commonTarget():
         self.inInteractMode = False
         self.stopShowingTime = None
         self.resendAttempts = 0
-        self.limitResendAttempts = 5 if (isEqSetting('osImage','FreeBSD') and (self.backend=='qemu')) else 3
+        self.limitResendAttempts = 5 if (isEqSetting('osImage','FreeBSD') and isEqSetting('target','qemu')) else 3
 
         # For sshWhenPossible
         self.isSshConn = False
@@ -58,6 +58,8 @@ class commonTarget():
             self.shutdown(overwriteConsole=overwriteConsole,isError=True)
         logAndExit("",exc=exc,exitCode=exitCode)
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def switchUser (self):
         if (self.userName is None) or (self.userPassword is None):
             self.shutdownAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
@@ -86,17 +88,19 @@ class commonTarget():
             self.shutdownAndExit(f"<switchUser> is not implemented on <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
         return
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
             return
         if (isEqSetting('osImage','debian')):
             timeout = 20
         else:
-            timeout = 90 if (self.backend == 'fpga') else 40
+            timeout = 90 if isEqSetting('target','fpga') else 40
         if (self.AttemptShutdownFailed):
             self.shutdownAndExit(f"shutdown: Unable to shutdown the {getSetting('target')} properly.",overwriteShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
-        if (self.debugMode and not overwriteConsole):
+        if (isEnabled('openConsole') and (not overwriteConsole)):
             self.interact()
             if (self.userName is not None):
                 retCommand = self.terminateTarget(timeout=timeout,shutdownOnError=False)
@@ -113,10 +117,12 @@ class commonTarget():
         printAndLog (f"{getSetting('target')} shut down successfully!")
         return
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def start (self,timeout=15,createUser=False,interactWithFreeRTOS=False,getGdbInsightFreeRTOS=False):
         if (isEqSetting('osImage','debian')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-            if (self.backend=='fpga'):
+            if (isEqSetting('target','fpga')):
                 processor, plevel = self.settings['processor'].split('_')
                 if (processor == 'bluespec'):
                     if plevel == "p2":
@@ -148,11 +154,11 @@ class commonTarget():
                 #Note the typo in 'Progam'. #I chose not to change it in FreeRTOS repo.
                 endsWith = [">>>End of Testgen<<<", "Progam has exited with code:0x\d{8}"]
                 self.boot (endsWith=endsWith,timeout=self.settings['FreeRTOStimeout'])
-                self.reportFile.write ("{0}: {1} executed successfully!\n".format(self.filename,self.osImage))
+                logging.info ("start: {1} executed successfully!\n".format(self.osImage))
         elif (isEqSetting('osImage','FreeBSD')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             processor, plevel = self.settings['processor'].split('_')
-            if (self.backend=='fpga'):
+            if (isEqSetting('target','fpga')):
                 if (processor == 'bluespec'):
                     timeout = 1400 if self.settings['elfLoader'] == 'JTAG' else 700
                 else: #chisel
@@ -171,7 +177,7 @@ class commonTarget():
             tempEndsWith = '#' if (isEqSetting('target','fpga')) else "\r\n#"
                 
             # fpga freebsd would be already logged in
-            if (self.backend=='qemu'):
+            if (isEqSetting('target','qemu')):
                 self.runCommand("root",endsWith=tempEndsWith)
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith=tempEndsWith)
 
@@ -198,6 +204,8 @@ class commonTarget():
             printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def createUser (self):
         printAndLog (f"Creating a user...")
         self.userName = getpass.getuser()
@@ -215,8 +223,9 @@ class commonTarget():
         else:
             self.shutdownAndExit(f"<createUser> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",overwriteConsole=True,exitCode=EXIT.Implementation)
 
-    # change global timeout for p3 testing
-    def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=180,showOnScreen=False,suppressErrors=False,onlySearchTheEnd=True,uartRetriesOnBSD=True,expectExact=False):
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=60,suppressErrors=False,onlySearchTheEnd=True,uartRetriesOnBSD=True,expectExact=False):
         #expected contents: any one of them not found, gives error [one string or list]
         #erroneous contensts: any one of them gives error [one string or list]
         if (isEnabled('isUnix')):
@@ -225,28 +234,28 @@ class commonTarget():
             if (isEqSetting('osImage','debian')):
                 if (self.isCurrentUserRoot):
                     endsWith = ":~#"
-                elif (self.backend == "qemu"):
+                elif (isEqSetting('target','qemu')):
                     endsWith = ":~\$"
-                elif (self.backend == "fpga"):
+                elif (isEqSetting('target','fpga')):
                     if (self.targetObj.isSshConn):
                         expectExact = True
                         endsWith = '[00m:[01;34m~[00m$'
                     else:
                         endsWith = ":~$"
                 else:
-                    self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.".format(self.filename,self.backend),exitCode=EXIT.Implementation) 
+                    self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
             elif (isEqSetting('osImage','FreeBSD')):
-                if (self.backend == "fpga"):
+                if (isEqSetting('target','fpga')):
                     if (self.targetObj.isSshConn): #pexpect uses regex
                         endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
                     else:
                         endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ $"
-                elif (self.backend == "qemu"):
+                elif (isEqSetting('target','qemu')):
                     endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
                 else:
-                    self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.".format(self.filename,self.backend),exitCode=EXIT.Implementation) 
+                    self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
             else:
-                self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.".format(self.filename,self.backend),exitCode=EXIT.Implementation) 
+                self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,onlySearchTheEnd=onlySearchTheEnd,uartRetriesOnBSD=uartRetriesOnBSD,expectExact=expectExact)
         isSuccess = not wasTimeout
         if (expectedContents is not None):
@@ -274,8 +283,6 @@ class commonTarget():
                         if (not suppressErrors):
                             errorAndLog (f"runCommand: Encountered <{content}> while executing <{command}>.")
                         break #One error per command is enough
-        if ( showOnScreen  or ((not isSuccess) and shutdownOnError)):
-            print (textBack)
         if (shutdownOnError and not isSuccess):
             try:
                 self.sendToTarget('\x03\r\n')
@@ -284,6 +291,8 @@ class commonTarget():
             self.shutdownAndExit(f"runCommand: fatal error.",exitCode=EXIT.Run)
         return [isSuccess, textBack, wasTimeout, idxEndsWith] #the 3rd argument is "timed-out"
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def sendFile (self,pathToFile,xFile,timeout=30,shutdownOnError=True): #send File to target
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
@@ -363,7 +372,7 @@ class commonTarget():
             listenOnTarget.join(timeout=timeout+5) #arbitrarily set timeout
             #check sending
             if (sendFromHost.is_alive()):
-                self.reportFile.write("Warning in {0}: Netcat sending from host is still hanging while sending <{1}> to target.\n".format(self.filename,xFile))
+                logging.warning("sendFile: Netcat sending from host is still hanging while sending <{1}> to target.\n".format(xFile))
             if (listenOnTarget.is_alive() or (not self.doesFileExist(xFile,timeout=timeout,shutdownOnError=False))):
                 return returnFalse()
 
@@ -390,9 +399,11 @@ class commonTarget():
         self.resendAttempts = 0 #reset
         return True
 
+    @decorate.debugWrap
     def doesFileExist (self,xFile,pathToFile='.',timeout=15,shutdownOnError=True):
         return self.runCommand(f"ls {pathToFile}/{xFile}",expectedContents=xFile,erroneousContents=['ls:', 'cannot access', 'No such file or directory'],timeout=timeout,shutdownOnError=shutdownOnError)[0]
 
+    @decorate.debugWrap
     def sendTar(self,timeout=15): #send filesToSend.tar.gz to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
@@ -405,6 +416,8 @@ class commonTarget():
             self.runCommand("rm filesToSend.tar.gz",timeout=timeout) #to save space
         printAndLog ("sendTar: Sending successful!")
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def runApp (self,methodToExecute=None,timeout=30): #executes the app
         if (isEqSetting('osImage','FreeRTOS')):
             if (self.interactWithFreeRTOS):
@@ -416,9 +429,9 @@ class commonTarget():
                     self.shutdownAndExit (f"runApp: Invalid methodToExecute: <{methodToExecute}>. Exitting...")
                 fLog.write (outLog)
                 fLog.close()
-                self.reportFile.write ("{0}: {1} executed successfully!\n".format(self.filename,self.osImage))
+                logging.info ("runApp: {1} executed successfully!\n".format(self.osImage))
         elif (isEqSetting('osImage','debian') or isEqSetting('osImage','FreeBSD')):
-            if (isEqSetting('osImage','FreeBSD') and (self.backend=='fpga')):
+            if (isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')):
                 timeout *= 4
                 if (self.settings['processor'].split('_')[0] == 'bluespec'):
                     timeout *= 2
@@ -457,30 +470,26 @@ class commonTarget():
                     exeTest = srcTest
                 else:
                     continue
-                if(self.showExecutionOnScreen):
-                    print ("Executing <{0}> \r".format(exeTest))
-                else:
-                    sys.stdout.write("Executing <{0}> \r".format(exeTest))
-                    sys.stdout.flush()
+                
+                sys.stdout.write("Executing <{0}> \r".format(exeTest))
+                sys.stdout.flush()
                 if (methodToExecute is not None):
                     if (hasattr(self,methodToExecute)):
                         outLog = getattr(self,methodToExecute)(exeTest)
                     else:
                         self.reportAndExit (f"Error in {self.filename}: Invalid methodToExecute: <{methodToExecute}>. Exitting...")
                 else:
-                    outLog = self.runCommand("./{0}".format(exeTest),erroneousContents="-bash:",showOnScreen=self.showExecutionOnScreen,shutdownOnError=False,timeout=timeout)[1]
+                    outLog = self.runCommand("./{0}".format(exeTest),erroneousContents="-bash:",shutdownOnError=False,timeout=timeout)[1]
                 fLog = open("{0}/{1}.log".format(self.testsDir,exeTest.split('.')[0]), "w")
                 self.trash.throwFile(fLog)
                 fLog.write (outLog)
                 if ((methodToExecute is None) and (self.settings['useCustomScoring'])): #will need the gdb output here
                     gdbOut = self.getGdbOutput()
                     fLog.write(gdbOut)
-                    if (self.showExecutionOnScreen):
-                        print(gdbOut)
                 fLog.close()
-            if(not self.showExecutionOnScreen):
-                sys.stdout.write(' ' * 80 + '\r')
-                sys.stdout.flush()
+            
+            sys.stdout.write(' ' * 80 + '\r')
+            sys.stdout.flush()
 
             if (not executeOnRoot): #return to root
                 self.switchUser()
@@ -493,6 +502,7 @@ class commonTarget():
             self.reportAndExit("Error in {0}: <executeDir> is not implemented for <{1}> on <{2}>.".format(self.filename,self.osImage,self.backend))
         return
 
+    @decorate.debugWrap
     def getGdbOutput (self):
         gdbOut = ''
         if (os.path.isfile(self.gdbOutPath)):
@@ -506,6 +516,7 @@ class commonTarget():
                 warnAndLog (f"Failed to obtain the GDB output.")
         return gdbOut
 
+    @decorate.debugWrap
     def keyboardInterrupt (self,shutdownOnError=True):
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
@@ -515,6 +526,7 @@ class commonTarget():
             textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,uartRetriesOnBSD=False,timeout=15)[1]
         return textBack
 
+    @decorate.debugWrap
     def ensureCrngIsUp (self):
         if (not isEqSetting('osImage','debian')):
             self.shutdownAndExit(f"<ensureCrngIsUp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
@@ -525,12 +537,12 @@ class commonTarget():
             isCrngUp = retCommand[0]
             retText = retCommand[1]
             if (isCrngUp):
-                self.reportFile.write(f"{self.filename}: CRNG is properly initialized.\n")
+                logging.info(f"ensureCrngIsUp: CRNG is properly initialized.\n")
                 break
             retText += self.runCommand("./addEntropyDebian.riscv",erroneousContents=["bash:","<INVALID>"])[1]
             if ("crng init done" in retText):
                 isCrngUp = True
-                self.reportFile.write(f"{self.filename}: CRNG is properly initialized.\n")
+                logging.info(f"ensureCrngIsUp: CRNG is properly initialized.\n")
                 break
 
         if (not isCrngUp):
@@ -559,11 +571,11 @@ def checkPort (portNum, host=''):
             iSock.bind((host, portNum))
         except OSError as error:
             if (error.errno is not errno.EADDRINUSE):
-                self.reportAndExit(f"Error in {self.filename}: Encountered OS Error #{error} while checking port #{portNum}.")
+                logging.error (f"checkPort: Encountered OS Error #{error} while checking port #{portNum}.")
             else:
                 return False
         except:
-            self.reportAndExit(f"Error in {self.filename}: Encountered a non recognized error while checking port #{portNum}.")
+            logging.error (f"checkPort: Encountered a non recognized error while checking port #{portNum}.")
     return True
 
 def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
