@@ -214,7 +214,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=60,suppressErrors=False,onlySearchTheEnd=True,uartRetriesOnBSD=True,expectExact=False):
+    def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=60,suppressErrors=False,uartRetriesOnBSD=True,expectExact=False):
         #expected contents: any one of them not found, gives error [one string or list]
         #erroneous contensts: any one of them gives error [one string or list]
         if (isEnabled('isUnix')):
@@ -245,32 +245,32 @@ class commonTarget():
                     self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
             else:
                 self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
-        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,onlySearchTheEnd=onlySearchTheEnd,uartRetriesOnBSD=uartRetriesOnBSD,expectExact=expectExact)
+        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,uartRetriesOnBSD=uartRetriesOnBSD,expectExact=expectExact)
+        logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
+        logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
+        logging.debug(f"textBack:\n{textBack}")
         isSuccess = not wasTimeout
         if (expectedContents is not None):
             if (isinstance(expectedContents,str)): #only one string
                 if (expectedContents not in textBack):
                     isSuccess = False
-                    if (not suppressErrors):
-                        errorAndLog (f"runCommand: Missing <{expectedContents}> while executing <{command}>.")
+                    errorAndLog (f"runCommand: Missing <{expectedContents}> while executing <{command}>.",doPrint=not suppressErrors)
             else: #It is a list
                 for content in expectedContents:
                     if (content not in textBack):
                         isSuccess = False
-                        if (not suppressErrors):
-                            errorAndLog (f"runCommand: Missing <{content}> while executing <{command}>.")
+                        errorAndLog (f"runCommand: Missing <{content}> while executing <{command}>.",doPrint=not suppressErrors)
+                        break #One error per command is enough
         if (erroneousContents is not None):
             if (isinstance(erroneousContents,str)): #only one string               
                 if (erroneousContents in textBack):
                     isSuccess = False
-                    if (not suppressErrors):
-                        errorAndLog (f"runCommand: Encountered <{erroneousContents}> while executing <{command}>.")
+                    errorAndLog (f"runCommand: Encountered <{erroneousContents}> while executing <{command}>.",doPrint=not suppressErrors)
             else:
                 for content in erroneousContents:
                     if (content in textBack):
                         isSuccess = False
-                        if (not suppressErrors):
-                            errorAndLog (f"runCommand: Encountered <{content}> while executing <{command}>.")
+                        errorAndLog (f"runCommand: Encountered <{content}> while executing <{command}>.",doPrint=not suppressErrors)
                         break #One error per command is enough
         if (shutdownOnError and not isSuccess):
             try:
@@ -286,43 +286,46 @@ class commonTarget():
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
-        def returnFalse (message='',noRetries=False):
+        def returnFalse (message='',noRetries=False,exc=None,fileToClose=None):
             try:
                 self.keyboardInterrupt (shutdownOnError=False)
             except:
                 pass
+            if (exc):
+                logging.error(traceback.format_exc())
             if ((not noRetries) and (self.resendAttempts < self.limitResendAttempts-1)):
-                errorAndLog (message + "\nsendFile: Failed to send <{1}/{2}> to target. Trying again...".format(pathToFile,xFile))
-                sys.stdout.flush()
+                logging.error(message)
+                errorAndLog ("sendFile: Failed to send <{1}/{2}> to target. Trying again...".format(pathToFile,xFile))
                 self.resendAttempts += 1
                 return self.sendFile (pathToFile,xFile,timeout=timeout,shutdownOnError=shutdownOnError)
             elif (shutdownOnError):
                 self.shutdownAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
             else:
-                errorAndLog (message + "\nsendFile: Failed to send <{1}/{2}> to target.".format(pathToFile,xFile))
+                logging.error(message)
+                errorAndLog ("sendFile: Failed to send <{1}/{2}> to target.".format(pathToFile,xFile))
             return False
 
         if ( (self.ipTarget is None) or (self.portTarget is None) or (self.portHost is None) ):
-            return returnFalse ("Ethernet not properly activated. <sendFile> can not execute",noRetries=True)
+            return returnFalse ("Ethernet not properly activated. <sendFile> can not execute.",noRetries=True)
 
         #find the sha256sum of the file
         try:
             shaSumTX = str(subprocess.check_output (f"sha256sum {pathToFile}/{xFile} | awk '{{ print $1 }}'",stderr=subprocess.STDOUT,shell=True),'utf-8').strip()
-        except:
-            return returnFalse ("Failed to obtain the checksum of <{1}/{2}>.".format(pathToFile,xFile),noRetries=True)
+            logging.debug(f"Output from <sha256sum>:\n{shaSumTX}")
+        except Exception as exc:
+            return returnFalse ("Failed to obtain the checksum of <{1}/{2}>.".format(pathToFile,xFile),noRetries=True,exc=exc)
 
         if (isEqSetting('osImage','FreeBSD') and (self.targetObj.isSshConn)): #send through SSH
             scpCommand = f"scp {pathToFile}/{xFile} root@{self.ipTarget}:/root/"
+            scpOutFile = ftOpenFile(os.path.join(getSetting('workDir','scp.out')),'a')
             try:
-                scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=self.reportFile,timeout=timeout)
-            except:
-                return returnFalse (f"Failed to spawn an scp process for sendFile.")
+                scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
+            except Exception as exc:
+                return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
             try:
                 retExpect = scpProcess.expect([f"Password for root@[\w-]+\:","\)\?"],timeout=timeout)
-            except Exception as e:
-                print (e)
-                sys.stdout.flush()
-                return returnFalse (f"Unexpected outcome from the scp command.")
+            except Exception as exc:
+                return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
                 if (retExpect == 1): #needs a yes
                     scpProcess.sendline("yes")
@@ -331,17 +334,13 @@ class commonTarget():
                     scpProcess.sendline(self.rootPassword)
                 else:
                     return returnFalse (f"Failed to authenticate the scp process.")
-            except Exception as e:
-                print (e)
-                sys.stdout.flush()
-                return returnFalse (f"Non-recognized error while using the scp command [sending password].")
+            except Exception as exc:
+                return returnFalse (f"Unexpected error while using the scp command [sending password].",exc=exc)
             try:
                 scpProcess.expect(pexpect.EOF,timeout=timeout)
-            except Exception as e:
-                if (type(e) == pexpect.TIMEOUT):
-                    return returnFalse (f"Timeout while sending using scp.")
-                else:
-                    return returnFalse (f"Non-recognized error while using scp command [waiting for termination].")
+            except Exception as exc:
+                return returnFalse (f"Unexpected error while using scp command [waiting for termination].",exc=exc)
+            scpOutFile.close()
             time.sleep(5)
             self.keyboardInterrupt (shutdownOnError=True)
 
@@ -380,11 +379,11 @@ class commonTarget():
                         break
                 if (shaSumRX is None):
                     raise
-        except:
-            return returnFalse ("Error in {0}: Failed to obtain the checksum of <{1}> from target.".format(self.filename,xFile))
+        except Exception as exc:
+            return returnFalse ("sendFile: Failed to obtain the checksum of <{1}> from target.".format(xFile),exc=exc)
         
         if (shaSumRX != shaSumTX):
-            return returnFalse("Error in {0}: Checksum from <{1}> on target does not match.".format(self.filename,xFile))
+            return returnFalse("sendFile: Checksum from <{1}> on target does not match.".format(xFile),exc=exc)
         self.resendAttempts = 0 #reset
         return True
 
@@ -402,7 +401,7 @@ class commonTarget():
             self.runCommand("tar xvf filesToSend.tar.gz --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand("tar xvf filesToSend.tar.gz -m",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
-            self.runCommand("rm filesToSend.tar.gz",timeout=timeout) #to save space
+        self.runCommand("rm filesToSend.tar.gz",timeout=timeout) #to save space
         printAndLog ("sendTar: Sending successful!")
 
     @decorate.debugWrap

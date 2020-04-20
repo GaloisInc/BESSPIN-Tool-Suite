@@ -39,16 +39,19 @@ def formatExc (exc):
     except:
         return '<Non-recognized Exception>'
 
-def printAndLog (message):
-    print("(Info)~  " + message)
+def printAndLog (message,doPrint=True):
+    if (doPrint):
+        print("(Info)~  " + message)
     logging.info(message)
 
-def warnAndLog (message):
-    print("(Warning)~  " + message)
+def warnAndLog (message,doPrint=True):
+    if (doPrint):
+        print("(Warning)~  " + message)
     logging.warning(message)
 
-def errorAndLog (message):
-    print("(Error)~  " + message)
+def errorAndLog (message,doPrint=True):
+    if (doPrint):
+        print("(Error)~  " + message)
     logging.error(message)
 
 @decorate.debugWrap
@@ -144,11 +147,7 @@ def make (argsList,dirPath):
     if ((not dirPath) or (argsList is None)):
         logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
     # open a file for stdout/stderr
-    try:
-        outMake = open(os.path.join(dirPath,'make.out'),'a')
-        getSetting('trash').throwFile(outMake)
-    except Exception as exc:
-        logAndExit (f"Failed to open <{os.path.join(dirPath,'make.out')}> to append.",exc=exc,exitCode=EXIT.Create_path)
+    outMake = ftOpenFile(os.path.join(dirPath,'make.out'),'a')
 
     argsList = ['make','-C',dirPath] + argsList
     logging.info(f"Executing <{' '.join(argsList)}>. Command output is appended to <{outMake.name}>.")
@@ -162,11 +161,7 @@ def make (argsList,dirPath):
 
 class redirectPrintToFile:
     def __init__(self,outFilePath):
-        try:
-            self.outFile = open(outFilePath,"a")
-            getSetting('trash').throwFile(self.outFile)
-        except Exception as exc:
-            logAndExit (f"Failed to open <{outFilePath}> to append.",exc=exc,exitCode=EXIT.Create_path)
+        self.outFile = ftOpenFile(outFilePath,'a')
 
     def __enter__(self):
         self._original_stdout = sys.stdout
@@ -207,6 +202,23 @@ def exitPeacefully (trashCan):
     for (tag,thread) in trashCan.listThreadsInTrash():
         if ((thread is not None) and (thread.is_alive())): #oops it's alive
             logging.warning (f"Atexit: Thread <{tag}> was still alive at exit. It is unsafely killed.")
+
+def ftOpenFile (filePath,mode):
+    if ('w' in mode):
+        modeName = 'write'
+    elif ('a' in mode):
+        modeName = 'append'
+    elif ('r' in mode):
+        modeName = 'read'
+    else:
+        logAndExit (f"openFile: Unrecognized requested mode=<{mode}>.",exitCode=EXIT.Dev_Bug)
+
+    try:
+        xFile = open(filePath,mode)
+        getSetting('trash').throwFile(xFile)
+        return xFile
+    except Exception as exc:
+        logAndExit (f"Failed to open <{filePath}> to {modeName}.",exc=exc,exitCode=EXIT.Create_path)    
 
 
 
