@@ -25,14 +25,7 @@ authentication keys mechanism and grant permissions to
 corresponding users in order to be able to execute the
 sqlite binary.
 
-Sqlite_via_WebSQL_in_Google_Chrome
-Html5 has implementation of databases and the implementation is done
-by embedding SqLite database into browser. Browser's like Google Chrome
-and Safari have their implementation of Html5 databases implemented
-using the SQLite termed as websql.
 
 Sqlite_fts3_virtual_table
 Provide fts3 for sqite3 version < SQLite 3.25.3.
 
-Sqlite_faxfinder
-Install Multi-Tech FaxFinder version < 5.1.6
