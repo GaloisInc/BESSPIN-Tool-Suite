@@ -41,9 +41,9 @@ $ make
 
    - Replace the first section (lines 2-5) with the following.
      ```
-CC =  riscv64-unknown-linux-gnu-gcc
-CFLAGS =  -march=rv64imafdc -mabi=lp64d -Wall -O0 -I $(OPENSSL_DIR)/include
-LINK =  $(CC)
+     CC =  riscv64-unknown-linux-gnu-gcc
+     CFLAGS =  -march=rv64imafdc -mabi=lp64d -Wall -O0 -I $(OPENSSL_DIR)/include
+     LINK =  $(CC)
      ```
      
    - Replace the line "`-ldl -lpthread -lcrypt -lssl -lcrypto -ldl \`" (line 357) with the following.
