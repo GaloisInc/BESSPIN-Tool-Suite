@@ -99,7 +99,7 @@ def launchFett ():
     if (isEnabled('isUnix')):
         xTarget.createUser()
     if (isEnabled('runApp')):
-        xTarget.runApp()
+        xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
     if(isEnabled('openConsole')):
         xTarget.interact()
     xTarget.shutdown()

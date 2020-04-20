@@ -5,12 +5,17 @@ Main commonTarget class + misc common functions
 
 from fett.base.utils.misc import *
 
-import os, sys, glob, getpass
+import os, sys, glob
 import pexpect, subprocess, threading
 import time, random
 import string, re
 import socket, errno, pty, termios
 from collections import Iterable
+
+from fett.apps.database.run import runApp as runDatabase
+from fett.apps.webserver.run import runApp as runWebserver
+from fett.apps.https.run import runApp as runHttps
+from fett.apps.ota.run import runApp as runOta
 
 class commonTarget():
     def __init__(self):
@@ -142,7 +147,8 @@ class commonTarget():
             #logging in
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
             self.runCommand ("root",endsWith="Password:")
-            self.runCommand ("riscv")
+            self.runCommand (self.rootPassword)
+            self.ensureCrngIsUp () #check we have enough entropy for ssh
         elif (isEqSetting('osImage','FreeRTOS')):
             #self.boot (endsWith=">>>Beginning of Testgen<<<",timeout=timeout)
             endsWith = [">>>End of Fett<<<"]
@@ -395,7 +401,7 @@ class commonTarget():
     def sendTar(self,timeout=15): #send filesToSend.tar.gz to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
-        self.sendFile (getSetting('buildDir'),"filesToSend.tar.gz",timeout=timeout)
+        self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
         #---untar
         if (isEqSetting('osImage','debian')):
             self.runCommand("tar xvf filesToSend.tar.gz --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
@@ -406,103 +412,26 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def runApp (self,methodToExecute=None,timeout=30): #executes the app
-        if (isEqSetting('osImage','FreeRTOS')):
-            if (self.interactWithFreeRTOS):
-                fLog = open("{0}/execFreeRTOS.log".format(self.testsDir), "a")
-                getSetting('trash').throwFile(fLog)
-                if ((methodToExecute is not None) and hasattr(self,methodToExecute)):
-                    outLog = getattr(self,methodToExecute)(self.testsPars['TEST_NAME'] + ".riscv")
-                else:
-                    self.shutdownAndExit (f"runApp: Invalid methodToExecute: <{methodToExecute}>. Exitting...")
-                fLog.write (outLog)
-                fLog.close()
-                logging.info ("runApp: {1} executed successfully!\n".format(getSetting('osImage')))
-        elif (isEqSetting('osImage','debian') or isEqSetting('osImage','FreeBSD')):
-            if (isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')):
-                timeout *= 4
-                if (isEqSetting('procFlavor','bluespec')):
-                    timeout *= 2
-            #send tests to target
-            self.sendTests(timeout=timeout)
+    def runApp (self,sendFiles=False,timeout=30): #executes the app
+        printAndLog ("Running app...")
+        if (sendFiles):
+            #send any needed files to target
+            self.sendTar(timeout=timeout)
 
-            #---compile tests if needed
-            if (doCompile):
-                self.compileTests(timeout=timeout)
+        if (isEnabled('https')):
+            outLog = runHttps()
+        elif (isEnabled('ota')):
+            outLog = runOta()
+        elif (isEnabled('webserver')):
+            outLog = runWebserver()
+        elif (isEnabled('database')):
+            outLog = runDatabase()
 
-            #----move pam/limits files if there are any + *.riscv and *.sh
-            listOfFiles =  self.runCommand("ls",erroneousContents=["ls:", "-bash:"])[1]
-            if ("pam_" in listOfFiles):
-                self.runCommand(f"chown root:{self.rootGroup} pam*",erroneousContents=['Operation not permitted', 'No such file or directory', 'chown:'])
-                self.runCommand("mv pam* /etc/pam.d/",erroneousContents=['cannot stat', 'No such file or directory', 'mv:'])
-            if ("limits_" in listOfFiles):
-                self.runCommand(f"chown root:{self.rootGroup} limits*",erroneousContents=['Operation not permitted', 'No such file or directory', 'chown:'])
-                self.runCommand("mv limits* /etc/security/",erroneousContents=['cannot stat', 'No such file or directory', 'mv:'])
-            if (".riscv" in listOfFiles):
-                self.runCommand("chmod +x *.riscv",erroneousContents=['cannot access', 'No such file or directory', 'Operation not permitted', 'chmod:'])
-            
-            if (isEqSetting('osImage','debian') and ('crngOnDebian' in self.settings) and self.settings['crngOnDebian']): #check crng is up
-                self.ensureCrngIsUp ()
-                if (self.settings['processor'] == 'bluespec_p3'): #execute debian on bluespec_p3 on SSH
-                    self.runCommand (" ")
-                    time.sleep(30)
-                    self.openSshConn()
-
-            printAndLog ("Running app...")
-            #Only executable tests .riscv and .sh files
-            for srcTest in sorted(os.listdir(self.testsDir)):
-                exeTest = ''
-                if (srcTest.endswith(".c") and (srcTest != 'addEntropyDebian.c')):
-                    exeTest = srcTest.split('.')[0] + ".riscv"
-                elif (srcTest.endswith(".sh") and not (self.settings['useCustomCompiling'] and (os.path.basename(self.settings['pathToCustomExecutable'])==srcTest))):
-                    exeTest = srcTest
-                else:
-                    continue
-                
-                sys.stdout.write("Executing <{0}> \r".format(exeTest))
-                sys.stdout.flush()
-                if (methodToExecute is not None):
-                    if (hasattr(self,methodToExecute)):
-                        outLog = getattr(self,methodToExecute)(exeTest)
-                    else:
-                        self.reportAndExit (f"Error in {self.filename}: Invalid methodToExecute: <{methodToExecute}>. Exitting...")
-                else:
-                    outLog = self.runCommand("./{0}".format(exeTest),erroneousContents="-bash:",shutdownOnError=False,timeout=timeout)[1]
-                fLog = open("{0}/{1}.log".format(self.testsDir,exeTest.split('.')[0]), "w")
-                getSetting('trash').throwFile(fLog)
-                fLog.write (outLog)
-                if ((methodToExecute is None) and (self.settings['useCustomScoring'])): #will need the gdb output here
-                    gdbOut = self.getGdbOutput()
-                    fLog.write(gdbOut)
-                fLog.close()
-            
-            sys.stdout.write(' ' * 80 + '\r')
-            sys.stdout.flush()
-
-            if (not executeOnRoot): #return to root
-                self.switchUser()
-
-            if (isEqSetting('osImage','debian') and ('crngOnDebian' in self.settings) and self.settings['crngOnDebian'] and (self.settings['processor'] == 'bluespec_p3')): #check crng is up
-                self.closeSshConn()
-
-            printAndLog ("runApp: Run successful!")
-        else:
-            self.reportAndExit("Error in {0}: <executeDir> is not implemented for <{1}> on <{2}>.".format(self.filename,getSetting('osImage'),self.backend))
+        fLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
+        fLog.write (outLog)
+        fLog.close()
+        logging.info (f"runApp: app executed successfully!\n")
         return
-
-    @decorate.debugWrap
-    def getGdbOutput (self):
-        gdbOut = ''
-        if (os.path.isfile(self.gdbOutPath)):
-            try:
-                fGdb = open(self.gdbOutPath, "r")
-                getSetting('trash').throwFile(fGdb)
-                gdbOut = "\n~~~GDB LOGGING~~~\n" + fGdb.read() + "\n~~~~~~~~~~~~~~~~~\n"
-                fGdb.close()
-                os.remove(self.gdbOutPath) #clear the file for next test
-            except:
-                warnAndLog (f"Failed to obtain the GDB output.")
-        return gdbOut
 
     @decorate.debugWrap
     def keyboardInterrupt (self,shutdownOnError=True):
@@ -539,20 +468,6 @@ class commonTarget():
 
 # END OF CLASS commonTarget
 
-def parseIpAddr (retIpAddr):
-    #This should only be used on host as per the new static configuration
-    #For now, the code uses the second interface because it is always the main one
-    #Alternative more robust way: parse /etc/network/interfaces for macAddress and match it
-    relevantLine = retIpAddr.splitlines()[1]
-    ipFormatMatch = re.match (r'(?P<interface>\w+)\s+UP\s+(?P<ipAddress>(\d{1,3}\.){3}\d{1,3})\/\d{1,3} .*$', relevantLine)
-    if (ipFormatMatch is not None):
-        ipAddr = ipFormatMatch.group('ipAddress')
-        if ((ipAddr == 0) or (ipAddr == '0.0.0.0')):
-            exit()
-        return ipAddr
-    else:
-        exit ()
-
 def checkPort (portNum, host=''):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as iSock:
         try:
@@ -578,9 +493,10 @@ def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
             stdout.flush ()
             time.sleep(0.25)
         stdout.write(' ' * (len(prefix)+5) + '\r')
-        stdout.write("Estimated ~{:0>2}:{:0>2} ----- Completed in {:0>2}:{:0>2}\n".format(int(minutesEst),int(secondsEst),int(minutes),int(seconds)))
+        completedMsg = "Estimated ~{:0>2}:{:0>2} ----- Completed in {:0>2}:{:0>2}\n".format(int(minutesEst),int(secondsEst),int(minutes),int(seconds))
+        stdout.write(completedMsg)
         stdout.flush()
-
+        logging.info(completedMsg)
 
     stopTimeTrack = threading.Event()
     runTimeTrack = threading.Thread(target=showTime, kwargs=dict(stopThread=stopTimeTrack))

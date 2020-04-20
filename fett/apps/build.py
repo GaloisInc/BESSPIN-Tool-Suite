@@ -15,6 +15,7 @@ def buildApps ():
     buildDir = os.path.join(getSetting('workDir'),'build')
     mkdir(buildDir,addToSettings='buildDir')
 
+    setSetting('sendTarballToTarget',False) #any app has to enable this to send the tarball to target
     if (isEnabled('buildApps')):
         targetUtilsDir = os.path.join(getSetting('repoDir'),'fett','target','utils')
         cp(os.path.join(targetUtilsDir,'Makefile.xcompileDir'),os.path.join(getSetting('buildDir'),'Makefile'))
@@ -55,6 +56,7 @@ def buildWebserver():
     cpFilesToBuildDir (getSourceDir('webserver'))
     if (isEnabled('buildApps')):
         crossCompileUnix()
+    #Create the tarball here to be sent to target
     return
 
 """ Special building for 'database' """
@@ -64,6 +66,7 @@ def buildDatabase():
     cpFilesToBuildDir (getSourceDir('database'))
     if (isEnabled('buildApps')):
         crossCompileUnix()
+    #Create the tarball here to be sent to target
     return
 
 # re-used parts -----------------------------------------------------------
