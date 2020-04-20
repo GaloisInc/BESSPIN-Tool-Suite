@@ -93,7 +93,11 @@ def getSettingDict (setting,hierarchy):
     return xSetting
 
 def isEnabled(setting):
-    return getSetting(setting)
+    val = getSetting(setting)
+    if (isinstance(val,bool)):
+        return val
+    else:
+        logAndExit (f"isEnabled: The value of <{setting}> is not boolean: <{val}>.",exitCode=EXIT.Dev_Bug)
 
 def isEqSetting (setting,val):
     return (getSetting(setting) == val)
