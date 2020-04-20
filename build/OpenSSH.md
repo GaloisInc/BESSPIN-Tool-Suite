@@ -84,7 +84,7 @@ $ ./configure --prefix=${BUILD_DIR}/openssh-riscv --with-privsep-path=${BUILD_DI
 $ sed 's/#define USE_BTMP .*/\/\* #define USE_BTMP 1 \*\//' -i config.h
 $ make
 $ make STRIP_OPT="--strip-program=${CROSS_PREFIX}-strip -s" install-files
-$ cd $(BUILD_DIR)/openssh-riscv
+$ cd ${BUILD_DIR}/openssh-riscv
 ```
 
 7. The cross built files are in `BUILD_DIR/openssh-riscv`
