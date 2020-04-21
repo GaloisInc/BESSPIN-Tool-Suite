@@ -1,15 +1,5 @@
 requirements database SQLite
 
-Sqlite_installation_versions
-For the CVE/CWE tests purpose only, provide installation and set-up of
-the following SQLite database version:
-3.22.0.
-
-Adjust_sqlite_memory_allocation
-Adjust how SQLite does memory allocation, including setting up
-alternative memory allocators appropriate for safety-critical
-real-time embedded systems and application-defined memory allocators.
-
 Application_defined_page_cache
 Specify an application-defined page cache.
 
