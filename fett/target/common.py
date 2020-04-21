@@ -148,6 +148,7 @@ class commonTarget():
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
             self.runCommand ("root",endsWith="Password:")
             self.runCommand (self.rootPassword)
+            self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
             self.ensureCrngIsUp () #check we have enough entropy for ssh
         elif (isEqSetting('osImage','FreeRTOS')):
             #self.boot (endsWith=">>>Beginning of Testgen<<<",timeout=timeout)
@@ -208,11 +209,11 @@ class commonTarget():
     def createUser (self):
         printAndLog (f"Creating a user...")
         if (isEqSetting('osImage','debian')):
-            self.runCommand ("useradd -m {0}".format(self.userName))
-            self.runCommand ("passwd {0}".format(self.userName),endsWith="New password:")
+            self.runCommand (f"useradd -m {self.userName}")
+            self.runCommand (f"passwd {self.userName}",endsWith="New password:")
             self.runCommand (self.userPassword,endsWith="Retype new password:")
             self.runCommand (self.userPassword,expectedContents='password updated successfully')
-            self.runCommand ("usermod --shell /bin/bash {0}".format(self.userName))
+            self.runCommand (f"usermod --shell /bin/bash {self.userName}")
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"echo \"{self.userName}::::::{self.userName}::sh:{self.userPassword}\" | adduser -f -",expectedContents=f"Successfully added ({self.userName}) to the user database.",timeout=90)
         else:
@@ -301,14 +302,14 @@ class commonTarget():
                 logging.error(traceback.format_exc())
             if ((not noRetries) and (self.resendAttempts < self.limitResendAttempts-1)):
                 logging.error(message)
-                errorAndLog ("sendFile: Failed to send <{1}/{2}> to target. Trying again...".format(pathToFile,xFile))
+                errorAndLog (f"sendFile: Failed to send <{pathToFile}/{xFile}> to target. Trying again...")
                 self.resendAttempts += 1
                 return self.sendFile (pathToFile,xFile,timeout=timeout,shutdownOnError=shutdownOnError)
             elif (shutdownOnError):
                 self.shutdownAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
             else:
                 logging.error(message)
-                errorAndLog ("sendFile: Failed to send <{1}/{2}> to target.".format(pathToFile,xFile))
+                errorAndLog (f"sendFile: Failed to send <{pathToFile}/{xFile}> to target.")
             return False
 
         if ( (self.ipTarget is None) or (self.portTarget is None) or (self.portHost is None) ):
@@ -319,7 +320,7 @@ class commonTarget():
             shaSumTX = str(subprocess.check_output (f"sha256sum {pathToFile}/{xFile} | awk '{{ print $1 }}'",stderr=subprocess.STDOUT,shell=True),'utf-8').strip()
             logging.debug(f"Output from <sha256sum>:\n{shaSumTX}")
         except Exception as exc:
-            return returnFalse ("Failed to obtain the checksum of <{1}/{2}>.".format(pathToFile,xFile),noRetries=True,exc=exc)
+            return returnFalse (f"Failed to obtain the checksum of <{pathToFile}/{xFile}>.",noRetries=True,exc=exc)
 
         if (isEqSetting('osImage','FreeBSD') and (self.targetObj.isSshConn)): #send through SSH
             scpCommand = f"scp {pathToFile}/{xFile} root@{self.ipTarget}:/root/"
@@ -356,17 +357,17 @@ class commonTarget():
             elif (isEqSetting('osImage','FreeBSD')):
                 listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False,uartRetriesOnBSD=False))             
             listenOnTarget.daemon = True
-            getSetting('trash').throwThread(listenOnTarget,"nc listening for <{0}> on Target".format(xFile))
+            getSetting('trash').throwThread(listenOnTarget,f"nc listening for <{xFile}> on Target")
             sendFromHost = threading.Thread(target=subprocess.call, kwargs=dict(args=f"nc -w 1 {self.ipTarget} {self.portHost} <{pathToFile}/{xFile}",shell=True))
             sendFromHost.daemon = True
-            getSetting('trash').throwThread(sendFromHost,"nc sending <{0}/{1}> from host".format(pathToFile,xFile))
+            getSetting('trash').throwThread(sendFromHost,f"nc sending <{pathToFile}/{xFile}> from host")
             listenOnTarget.start()
             time.sleep(1)
             sendFromHost.start()
             listenOnTarget.join(timeout=timeout+5) #arbitrarily set timeout
             #check sending
             if (sendFromHost.is_alive()):
-                logging.warning("sendFile: Netcat sending from host is still hanging while sending <{1}> to target.\n".format(xFile))
+                logging.warning(f"sendFile: Netcat sending from host is still hanging while sending <{xFile}> to target.\n")
             if (listenOnTarget.is_alive() or (not self.doesFileExist(xFile,timeout=timeout,shutdownOnError=False))):
                 return returnFalse()
 
@@ -386,10 +387,10 @@ class commonTarget():
                 if (shaSumRX is None):
                     raise
         except Exception as exc:
-            return returnFalse ("sendFile: Failed to obtain the checksum of <{1}> from target.".format(xFile),exc=exc)
+            return returnFalse (f"sendFile: Failed to obtain the checksum of <{xFile}> from target.",exc=exc)
         
         if (shaSumRX != shaSumTX):
-            return returnFalse("sendFile: Checksum from <{1}> on target does not match.".format(xFile),exc=exc)
+            return returnFalse(f"sendFile: Checksum from <{xFile}> on target does not match.",exc=exc)
         self.resendAttempts = 0 #reset
         return True
 
