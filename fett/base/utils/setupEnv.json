@@ -56,19 +56,19 @@
             "name" : "nixEnv",
             "type" : "dict",
             "val" : {
-                "netboot" : "BESSPIN_TESTGEN_NETBOOT_IMAGE",
+                "netboot" : "FETT_NETBOOT",
                 "debian" : {
-                    "fpga" : "BESSPIN_TESTGEN_DEBIAN_IMAGE",
-                    "qemu" : "BESSPIN_TESTGEN_DEBIAN_IMAGE_QEMU"
+                    "fpga" : "FETT_GFE_DEBIAN_FPGA",
+                    "qemu" : "FETT_GFE_DEBIAN_QEMU"
                 },
                 "FreeBSD" : {
-                    "fpga" : "BESSPIN_TESTGEN_FREEBSD_IMAGE",
-                    "qemu" : "BESSPIN_TESTGEN_FREEBSD_IMAGE_QEMU"
+                    "fpga" : "FETT_GFE_FREEBSD_FPGA",
+                    "qemu" : "FETT_GFE_FREEBSD_QEMU"
                 },
                 "busybox" : {
-                    "fpga" : "BESSPIN_TESTGEN_BUSYBOX_IMAGE"
+                    "fpga" : "FETT_GFE_BUSYBOX_FPGA"
                 },
-                "gfeTestingScripts" : "BESSPIN_GFE_SCRIPT_DIR"
+                "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR"
             }
         },
         {
