@@ -149,6 +149,7 @@ class commonTarget():
             self.runCommand ("root",endsWith="Password:")
             self.runCommand (self.rootPassword)
             self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
+            self.runCommand("chmod +x addEntropyDebian.riscv")
             self.ensureCrngIsUp () #check we have enough entropy for ssh
         elif (isEqSetting('osImage','FreeRTOS')):
             #self.boot (endsWith=">>>Beginning of Testgen<<<",timeout=timeout)
