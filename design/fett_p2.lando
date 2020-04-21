@@ -36,15 +36,15 @@ The Web Server application.
   Web Server must support execution of external programs (via CGI or similar mechanism).  
   Execute HTTPS Method!
 
-component Database
-The Database application.
+component DatabaseCLI
+The Database CLI application.
 
   Create new database!
   Execute SQL statement!
 
 relation P2 Target Applications contains SSH Server
 relation P2 Target Applications contains Web Server
-relation P2 Target Applications contains Database
+relation P2 Target Applications contains DatabaseCLI
 
 // Operating System Components
 
@@ -65,7 +65,7 @@ The Base Debian Image is a concrete instantiation of a Base OS Image.
 
 relation SSH Server client Base OS Image
 relation Web Server client Base OS Image
-relation Database   client Base OS Image
+relation DatabaseCLI client Base OS Image
 
 requirements Target System
 
