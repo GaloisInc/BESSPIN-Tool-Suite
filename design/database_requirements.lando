@@ -29,3 +29,11 @@ sqlite binary.
 Sqlite_fts3_virtual_table
 Provide fts3 for sqite3 version < SQLite 3.25.3.
 
+Sqlite_moun_remote_filesystem
+SQLite has no server process.	Access to the database files in 
+the filesystem is usually linked into the binaries which access 
+SQLite databases. So to "connect" to a remote SQLite database file 
+we would have to mount the remote filesystem locally and use a normal 
+SQLite  utility to open it. In that case additional resource 
+is needed : sshfs.  
+
