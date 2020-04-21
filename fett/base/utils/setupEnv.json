@@ -48,7 +48,8 @@
             "val" : {
                 "FreeRTOS" : ["chisel_p1", "bluespec_p1"],
                 "debian" : ["chisel_p2", "bluespec_p2"],
-                "FreeBSD" : ["chisel_p2", "bluespec_p2"]
+                "FreeBSD" : ["chisel_p2", "bluespec_p2"],
+                "busybox" : ["chisel_p2", "bluespec_p2"]
             }
         },
         {
@@ -63,6 +64,9 @@
                 "FreeBSD" : {
                     "fpga" : "BESSPIN_TESTGEN_FREEBSD_IMAGE",
                     "qemu" : "BESSPIN_TESTGEN_FREEBSD_IMAGE_QEMU"
+                },
+                "busybox" : {
+                    "fpga" : "BESSPIN_TESTGEN_BUSYBOX_IMAGE"
                 },
                 "gfeTestingScripts" : "BESSPIN_GFE_SCRIPT_DIR"
             }

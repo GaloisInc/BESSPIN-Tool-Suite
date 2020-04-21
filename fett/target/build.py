@@ -21,6 +21,10 @@ def prepareOsImage ():
         prepareDebian ()
     elif(isEqSetting('osImage','FreeBSD')):
         prepareFreeBSD ()
+    elif(isEqSetting('osImage','busybox')):
+        prepareBusybox ()
+    else:
+        logAndExit (f"<target.prepareOsImage> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -40,6 +44,11 @@ def prepareDebian():
 @decorate.timeWrap
 def prepareFreeBSD():
     setupUnixImages('FreeBSD')
+
+@decorate.debugWrap
+@decorate.timeWrap
+def prepareBusybox():
+    setupUnixImages('busybox')
 
 @decorate.debugWrap
 def setupUnixImages(osImage):

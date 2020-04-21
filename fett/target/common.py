@@ -72,7 +72,7 @@ class commonTarget():
             self.shutdownAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
 
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
-            if (not self.targetObj.isSshConn):
+            if (not self.isSshConn):
                 isPrevUserRoot = self.isCurrentUserRoot
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
                 self.runCommand ("exit",endsWith="login:")
@@ -91,6 +91,13 @@ class commonTarget():
                     sshSuccess =  self.openSshConn(userName='root')
                 if (not sshSuccess):
                     self.shutdownAndExit(f"switchUser: Failed to switch user.")
+        elif (isEqSetting('osImage','buysbox')):
+            if (self.isCurrentUserRoot): #switch to the other user
+                self.runCommand ("su {0}".format(self.userName),endsWith="\$")
+                self.runCommand ("cd ~",endsWith="\$")
+            else: #switch to root
+                self.runCommand ("exit",endsWith="~ #")
+            self.isCurrentUserRoot = not self.isCurrentUserRoot #<This needs to be figured out for busybox in case the login itself fails
         else:
             self.shutdownAndExit(f"<switchUser> is not implemented on <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
         return
@@ -100,7 +107,7 @@ class commonTarget():
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
             return
-        if (isEqSetting('osImage','debian')):
+        if (getSetting('osImage') in ['debian','busybox']):
             timeout = 20
         else:
             timeout = 90 if isEqSetting('target','fpga') else 40
@@ -126,7 +133,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def start (self,timeout=15,createUser=False):
+    def start (self,timeout=15):
         if (isEqSetting('osImage','debian')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             if (isEqSetting('target','fpga')):
@@ -149,6 +156,15 @@ class commonTarget():
             self.runCommand ("root",endsWith="Password:")
             self.runCommand (self.rootPassword)
             self.ensureCrngIsUp () #check we have enough entropy for ssh
+        elif (isEqSetting('osImage','busybox')):
+            printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=70,stdout=sys.stdout)
+            self.boot(endsWith="Please press Enter to activate this console.",timeout=70)
+            self.stopShowingTime.set()
+            time.sleep (0.3) #to make it beautiful
+            self.runCommand (" ",endsWith="/ #") #This is necessary
+            self.runCommand("cd root")
+            printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
         elif (isEqSetting('osImage','FreeRTOS')):
             #self.boot (endsWith=">>>Beginning of Testgen<<<",timeout=timeout)
             endsWith = [">>>End of Fett<<<"]
@@ -188,7 +204,7 @@ class commonTarget():
         else:
             self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
 
-        if (isEqSetting('osImage','debian') or isEqSetting('osImage','FreeBSD')):
+        if (getSetting('osImage') in ['debian','FreeBSD','buysbox']):
             self.activateEthernet() #up the ethernet adaptor and get the ip address
 
             #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
@@ -197,8 +213,6 @@ class commonTarget():
                 self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
             elif (isEqSetting('osImage','FreeBSD')):
                 self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
-            if (createUser): #Create another user
-                self.createUser()
                                 
             printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
@@ -215,6 +229,11 @@ class commonTarget():
             self.runCommand ("usermod --shell /bin/bash {0}".format(self.userName))
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"echo \"{self.userName}::::::{self.userName}::sh:{self.userPassword}\" | adduser -f -",expectedContents=f"Successfully added ({self.userName}) to the user database.",timeout=90)
+        elif (isEqSetting('osImage','busybox')):
+            self.runCommand ("mkdir -p /home/{0}".format(self.userName))
+            self.runCommand ("adduser {0}".format(self.userName),endsWith="New password:",expectedContents='Changing password')
+            self.runCommand (self.userPassword,endsWith="Retype password:")
+            self.runCommand (self.userPassword,expectedContents='changed by root')
         else:
             self.shutdownAndExit(f"<createUser> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",overwriteConsole=True,exitCode=EXIT.Implementation)
 
@@ -232,7 +251,7 @@ class commonTarget():
                 elif (isEqSetting('target','qemu')):
                     endsWith = ":~\$"
                 elif (isEqSetting('target','fpga')):
-                    if (self.targetObj.isSshConn):
+                    if (self.isSshConn):
                         expectExact = True
                         endsWith = '[00m:[01;34m~[00m$'
                     else:
@@ -241,7 +260,7 @@ class commonTarget():
                     self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
             elif (isEqSetting('osImage','FreeBSD')):
                 if (isEqSetting('target','fpga')):
-                    if (self.targetObj.isSshConn): #pexpect uses regex
+                    if (self.isSshConn): #pexpect uses regex
                         endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
                     else:
                         endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ $"
@@ -249,6 +268,8 @@ class commonTarget():
                     endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
                 else:
                     self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
+            elif (isEqSetting('osImage','busybox')):
+                endsWith = "~ #" if self.isCurrentUserRoot else "\$"
             else:
                 self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,uartRetriesOnBSD=uartRetriesOnBSD,expectExact=expectExact)
@@ -321,7 +342,7 @@ class commonTarget():
         except Exception as exc:
             return returnFalse ("Failed to obtain the checksum of <{1}/{2}>.".format(pathToFile,xFile),noRetries=True,exc=exc)
 
-        if (isEqSetting('osImage','FreeBSD') and (self.targetObj.isSshConn)): #send through SSH
+        if (isEqSetting('osImage','FreeBSD') and (self.isSshConn)): #send through SSH
             scpCommand = f"scp {pathToFile}/{xFile} root@{self.ipTarget}:/root/"
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
