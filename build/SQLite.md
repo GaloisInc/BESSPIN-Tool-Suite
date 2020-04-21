@@ -9,7 +9,7 @@
 
 ### Build Steps
 
-0. We'll assume the working directory is $ROOT and that the user is in a FETT Nix environment (e.g. `ix-shell /path/to/fett/shell.nix).
+0. We'll assume the working directory is $ROOT and that the user is in a FETT Nix environment (e.g. `nix-shell $SSITH-FETT-Target/shell.nix`)
 1. Fetch and unpack the source tarball from
    `https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=version-3.22.0`, e.g.
    ```
