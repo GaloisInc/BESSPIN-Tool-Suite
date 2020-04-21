@@ -51,6 +51,13 @@
    $ COMPILER=GCC LINKER=GCC OS_IMAGE=Debian make -f env.mk print-CC print-LD print-LDFLAGS print-CFLAGS
    ```
    
+## FreeBSD
+
+The steps to build on FreeBSD are essentially the same as the steps
+for Debian. The only differences are:
+- In step 3, change `riscv64-unknown-linux` to `riscv64-unknown-freebsd`
+- When using `env.mk` to determine the commands for compiling and
+  linking, pass the argument `OS_IMAGE=FreeBSD`.
 
 ## Troubleshooting
 
