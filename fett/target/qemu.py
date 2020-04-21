@@ -22,10 +22,6 @@ class qemuTarget (commonTarget):
         if (self.process is not None):
             try:
                 fetchedBytes = self.process.before
-                if (readAfter): 
-                    moreBytes = self.process.after
-                    if (isinstance(moreBytes,bytes)):
-                        fetchedBytes += moreBytes
                 try:
                     textBack = str(fetchedBytes,'utf-8')
                 except UnicodeDecodeError:
@@ -123,10 +119,8 @@ class qemuTarget (commonTarget):
             if (shutdownOnError):
                 self.shutdownAndExit(f"expectFromTarget: Qemu timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run)
             elif (not isEqSetting('osImage','FreeRTOS')):
-                self.sendToTarget("\x03",shutdownOnError=False)
-                time.sleep(1)
-                textBack += self.readFromTarget(readAfter=True)
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
+                self.runCommand("\x03",shutdownOnError=True)
             return [textBack, True, -1]
         except Exception as exc:
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run)
