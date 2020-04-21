@@ -30,10 +30,27 @@
    $ make sqlite3.c
    ```
 5. Compile `sqlite3` with CLI:
+   - Compile:
    ```
-   $ riscv64-unknown-linux-gnu-gcc shell.c sqlite3.c -ldl -lpthread -o sqlite3` 
+   $CC -c -o sqlite3.o sqlite3.c $CFLAGS
+   $CC -c -o shell.o shell.c $CFLAGS
    ```
-   (`clang` works as well)
+   - Link:
+   ```
+   $LD -o sqlite3 sqlite3.o shell.o -lpthread -ldl $(LDFLAGS)
+   ```
+   
+   The correct values for `CC`, `LD`, `CFLAGS`, and `LDFLAGS` can be obtained by
+   setting the environment variables `OS_IMAGE=DEBIAN`, `CC` (to either `GCC` or
+   `CLANG`), and `LD` (to either `LLD` or `GCC`), and then running (`env.mk` is provided [here](env.mk))
+   ```
+   make -f env.mk print-CC print-LD print-CFLAGS print-LDFLAGS
+   ```
+   e.g.
+   ```
+   $ COMPILER=GCC LINKER=GCC OS_IMAGE=Debian make -f env.mk print-CC print-LD print-LDFLAGS print-CFLAGS
+   ```
+   
 
 ## Troubleshooting
 
