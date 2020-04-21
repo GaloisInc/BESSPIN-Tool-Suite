@@ -13,6 +13,7 @@ the CloudGFE.
   Where is the CloudGFE?
   The Linux host is not visible to FETT Researchers.
   The Linux host is used exclusively to manage CloudGFE instances.
+
 component FETT_Runner_Tool
 The tool used to execute commands on CloudGFE and the Target software stack.
 
