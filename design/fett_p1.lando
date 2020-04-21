@@ -6,18 +6,18 @@ The CVEs exposed by the FETT_P1 system.
 
 component P1 Target Forensics
 Target state that can be inspected by the FETT Runner. In this case, this is be
-any in-memory logs, processor state, etc.
+any in-memory logs, processor state, etc. The Researcher should not have access to
+any of this state.
 
 component FreeRTOS Kernel
 The (abstract) kernel that will be booted on the P1 processor.
-
-  What is the IP?
 
 component HTTPS Configuration extends Base FreeRTOS Kernel
 The FreeRTOS configuration that includes HTTPS functionality.
 
   Start the HTTPS service! // Can be boot
   Stop the HTTPS service!  // Can be HALT
+  What is the IP Address of the HTTPS service?
   On what ports is the HTTPS service listening?
   Execute HTTPS Method!
   HTTPS Query?
@@ -31,6 +31,7 @@ The FreeRTOS configuration that includes HTTPS functionality.
 component OTA Configuration extends Base FreeRTOS Kernel
 The FreeRTOS configuration that includes OTA functionality.
 
+  What is the IP Address of the OTA service?
   Start the OTA service! // Can be boot
   Stop the OTA service!  // Can be HALT
   Accept update data!
