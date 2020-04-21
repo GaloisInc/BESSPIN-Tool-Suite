@@ -53,10 +53,12 @@ def warnAndLog (message,doPrint=True,exc=None):
     if (exc):
         logging.warning(traceback.format_exc())
     
-def errorAndLog (message,doPrint=True):
+def errorAndLog (message,doPrint=True,exc=None):
     if (doPrint):
         print("(Error)~  " + message)
     logging.error(message)
+    if (exc):
+        logging.error(traceback.format_exc())
 
 @decorate.debugWrap
 def logAndExit (message,exc=None,exitCode=EXIT.Unspecified):
@@ -65,9 +67,7 @@ def logAndExit (message,exc=None,exitCode=EXIT.Unspecified):
             message = f"{formatExc(exc)}."
         elif (exc):
             message += f"\n{formatExc(exc)}."
-        errorAndLog(message)
-        if (exc):
-            logging.error(traceback.format_exc())
+        errorAndLog(message,exc=exc)
     exitFett (exitCode)
 
 def setSetting (setting, val):
