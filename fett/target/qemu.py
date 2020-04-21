@@ -8,10 +8,11 @@ from fett.target.common import *
 
 class qemuTarget (commonTarget):
     def __init__ (self):
+        
+        super().__init__()
+        
         self.process = None
         self.ipTarget = getSetting('qemuIpTarget')
-
-        super().__init__()
         return
 
     @decorate.debugWrap
@@ -21,7 +22,7 @@ class qemuTarget (commonTarget):
         if (self.process is not None):
             try:
                 fetchedBytes = self.process.before
-                if (readAfter): #default
+                if (readAfter): 
                     moreBytes = self.process.after
                     if (isinstance(moreBytes,bytes)):
                         fetchedBytes += moreBytes
@@ -59,28 +60,17 @@ class qemuTarget (commonTarget):
             if ((self.portTarget is None) or (self.portHost is None)):
                 self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
             else:
-                self.printAndReport(f"{self.filename}: Qemu will use the network ports {self.portTarget} and {self.portHost}.")
-                
-            #re-define pty.STDIN_FILENO in case of debugMode
-            if (self.debugMode): #has to obtain the tty because the python script is running in the background
-                try:
-                    self.ttyFd = open ('/dev/tty', 'r')
-                    self.trash.throwFile(self.ttyFd)
-                    pty.STDIN_FILENO = self.ttyFd.fileno()
-                except:
-                    self.ttyFd = -1
-                    self.printAndReport (f"Warning in {self.filename}: Could not obtain \'/dev/tty\' file descriptor. Debug Mode is not going to work.")
-
+                printAndLog(f"Qemu will use the network ports {self.portTarget} and {self.portHost}.")
             
             qemuCommand = f"qemu-system-riscv64 -nographic -machine virt -m 2G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\"" 
             qemuCommand += f" -device virtio-net-device,netdev=usernet -netdev user,id=usernet,hostfwd=tcp:{self.ipTarget}:{self.portHost}-:{self.portTarget}"
 
-            targetOutFile = ftOpenFile(os.path.join(getSetting('workDir','target.out')),'a')
+            targetOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'target.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
             try:
-                self.process = pexpect.spawn(qemuCommand,encoding='utf-8',logfile=targetOutFile,timeout=timeout)
+                self.process = pexpect.spawn(qemuCommand,logfile=targetOutFile,timeout=timeout)
                 self.expectFromTarget(endsWith,"Booting",timeout=timeout)
             except Exception as exc:
-                self.shutdownAndExit(f"boot: Failed to spwan the qemy process.",,overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+                self.shutdownAndExit(f"boot: Failed to spwan the qemy process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
         else:
             self.shutdownAndExit(f"boot: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
         
@@ -154,24 +144,14 @@ class qemuTarget (commonTarget):
         if (self.inInteractMode):
             return #avoid recursive interact mode
         self.inInteractMode = True
-        if (self.ttyFd == -1):
-            self.printAndReport (f"Error in {self.filename}: Failed to find the stdin tty. Cannot open interactive mode.")
-            return
-        self.printAndReport ("{0}: Entering interactive mode. Press \"Ctrl + E\" to exit.".format(self.filename))
+        printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
         if (self.userName is not None):
-            self.printAndReport ("{0}: Note that there is another user. User name: \'{1}\'. Password: \'{2}\'.".format(self.filename,self.userName,self.userPassword))
-            self.printAndReport ("{0}: Now the shell is logged in as: \'{1}\'.".format(self.filename,'root' if self.isCurrentUserRoot else self.userName))
+            printAndLog ("Note that there is another user. User name: \'{0}\'. Password: \'{1}\'.".format(self.userName,self.userPassword))
+            printAndLog ("Now the shell is logged in as: \'{0}\'.".format(self.filename,'root' if self.isCurrentUserRoot else self.userName))
         try:
             self.process.interact(escape_character='\x05')
-        except termios.error as err:
-            if (err.args[0] == errno.ENOTTY):
-                print (f"Error in {self.filename}: Cannot open interactive mode. Failed to obtain the stdin; The /dev/tty workaround failed!")
-            else:
-                print (f"Error in {self.filename}: Cannot open interactive mode because of a non-expected termios error [errno {err.args[0]}]")
-        except:
-            print (f"Error in {self.filename}: Cannot open interactive mode due to a non-recognized error.")
-
-        self.ttyFd.close()
+        except Exception as exc:
+            errorAndLog(f"Failed to open interactive mode.",exc=exc)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -185,6 +165,7 @@ class qemuTarget (commonTarget):
             return self.runCommand(" ",endsWith=pexpect.EOF,timeout=timeout,shutdownOnError=shutdownOnError)
         else:
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
+        targetOutFile.close()
         return
 
 #--- END OF CLASS qemuTarget------------------------------

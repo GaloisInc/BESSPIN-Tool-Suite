@@ -323,7 +323,7 @@ class commonTarget():
 
         if (isEqSetting('osImage','FreeBSD') and (self.targetObj.isSshConn)): #send through SSH
             scpCommand = f"scp {pathToFile}/{xFile} root@{self.ipTarget}:/root/"
-            scpOutFile = ftOpenFile(os.path.join(getSetting('workDir','scp.out')),'a')
+            scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
