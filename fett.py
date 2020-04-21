@@ -33,7 +33,7 @@ def main (xArgs):
         os.mkdir(workDir)
     except Exception as exc:
         print(f"(Error)~  Failed to create the working directory <{workDir}>.\n{formatExc(exc)}.")
-        exitFett(EXIT.Create_path)
+        exitFett(EXIT.Files_and_paths)
 
     # Check config file
     if (xArgs.configFile):
@@ -57,7 +57,7 @@ def main (xArgs):
         fLog.close()
     except Exception as exc:
         print(f"(Error)~  Failed to create the log file <{logFile}>.\n{formatExc(exc)}.")
-        exitFett(EXIT.Create_path)
+        exitFett(EXIT.Files_and_paths)
 
     # setup the logging
     logLevel = logging.DEBUG if (xArgs.debug) else logging.INFO 

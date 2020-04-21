@@ -15,7 +15,7 @@ def loadJsonFile (jsonFile):
         jsonData = json.load(fJson)
         fJson.close()
     except Exception as exc:
-        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.File_read)
+        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
 @decorate.debugWrap
@@ -31,7 +31,7 @@ def loadConfiguration(configFile):
         xConfig.read_file(fConfig)
         fConfig.close()
     except Exception as exc:
-        logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc,exitCode=EXIT.File_read)
+        logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
     #loading the configuration parameters data
     configDataFile = getSetting('jsonDataFile')
