@@ -1,4 +1,4 @@
-subsystem FETT P2 Target System
+subsystem FETT P1
 The P2 Target System Software.
 
 component P2 Target CVEs
@@ -69,7 +69,7 @@ relation DatabaseCLI client Base OS Image
 
 requirements Target System
 
-// This requirement should serve as the high level specification for the
+// This requirement should serve as the high level specification
 // for the concrete instantiation of each component, i.e. if we instantiate
 // the web server with NGINX, then we must define an exposed CVE list
 // and the features required such that each CVE is present.

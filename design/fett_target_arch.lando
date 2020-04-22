@@ -7,21 +7,21 @@ indexing
   copyright: (C) 2020 Galois
   license: TBD
 
-subsystem Target_Subsystem
+subsystem Target Subsystem
 Realizations of the Target_Subsystem are the principal subsystems by which
 researchers evaluate the security claims made by processor designers. Each
 subsystem denotes a single processor family -- the definition of the subsystem
 includes the applications that are exposed to security researchers.
 
-subsystem FETT_P1 extends Target_Subsystem
+subsystem FETT P1 extends Target Subsystem
 The principal subsystem by which researchers evaluate security claims
 made by designers of a P1 processor.
 
-subsystem FETT_P2 extends Target_Subsystem
+subsystem FETT P2 extends Target Subsystem
 The principal subsystem by which researchers evaluate security claims
 made by designers of a P2 processor.
 
-subsystem FETT_Runner
+subsystem FETT Runner
 The software for managing a particular FETT subsystem.
 
 subsystem FPGA
@@ -33,4 +33,4 @@ running inside of AWS F1-hosted SoCs, complete with OS and devices
 relevant to FETT.
 
 relation FPGA contains CloudGFE
-relation Target_Subsystem client CloudGFE
+relation Target Subsystem client CloudGFE

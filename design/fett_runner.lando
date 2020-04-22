@@ -1,11 +1,11 @@
-subsystem FETT_Runner
+subsystem FETT Runner
 The system used to bring up a target software stack (P1 or P2 + App).
 
 // @todo abakst it's obvious I don't _really_ understand
 // what these things are, so this needs to be fixed before
 // this spec is done !
 
-component Linux_Host
+component Linux Host
 The host Linux system connected to the FPGA fabric which contains
 the CloudGFE. 
 
@@ -14,7 +14,7 @@ the CloudGFE.
   The Linux host is not visible to FETT Researchers.
   The Linux host is used exclusively to manage CloudGFE instances.
 
-component FETT_Runner_Tool
+component FETT Runner Tool
 The tool used to execute commands on CloudGFE and the Target software stack.
 
   What is the status of this CloudGFE instance?
@@ -25,7 +25,7 @@ The tool used to execute commands on CloudGFE and the Target software stack.
 
   What is the state of the Target?
 
-relation Linux_Host client CloudGFE
-relation FETT_Runner_Tool client CloudGFE
-relation FETT_Runner_Tool client FETT P1 Target System
-relation FETT_Runner_Tool client FETT P2 Target System
+relation Linux Host client CloudGFE
+relation FETT Runner Tool client CloudGFE
+relation FETT Runner Tool client FETT P1
+relation FETT Runner Tool client FETT P2
