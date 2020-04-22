@@ -16,6 +16,7 @@ def buildApps ():
     mkdir(buildDir,addToSettings='buildDir')
 
     setSetting('sendTarballToTarget',False) #any app has to enable this to send the tarball to target
+    tarName = os.path.join(getSetting('buildDir'),getSetting('tarballName'))
     if (isEnabled('buildApps')):
         targetUtilsDir = os.path.join(getSetting('repoDir'),'fett','target','utils')
         cp(os.path.join(targetUtilsDir,'Makefile.xcompileDir'),os.path.join(getSetting('buildDir'),'Makefile'))
@@ -28,7 +29,7 @@ def buildApps ():
     elif (isEnabled('webserver')):
         buildWebserver()
     elif (isEnabled('database')):
-        buildDatabase()
+        buildDatabase(tarName)
 
 """
 - FreeRTOS, building an app means copying the C files/headers/.mk env files to the workDir to prepare for os build.
@@ -62,12 +63,24 @@ def buildWebserver():
 """ Special building for 'database' """
 @decorate.debugWrap
 @decorate.timeWrap
-def buildDatabase():
-    cpFilesToBuildDir (getSourceDir('database'))
+def buildDatabase(tarName):
     if (isEnabled('buildApps')):
-        crossCompileUnix()
-    #Create the tarball here to be sent to target
+        printAndLog (f"Building from source is not supported for the database application")
+        raise NotImplemented
+    else:
+        # Just grab the pre-built binary
+        cpFilesToBuildDir (getBinDir('database'), pattern="sqlite")
+
+        destBin = "sqlite"
+        srcBin  = os.path.join(getSetting('buildDir'), "sqlite")
+        tar (tarName, filesList=[(destBin, srcBin)])
+
+        #Create the tarball here to be sent to target
+        setSetting('sendTarballToTarget',True)
     return
+"""
+ To control which files to be transferred to target, edit the corresponding function inside `fett/apps/build.py`. You'd have to tar the files into a tar file named `os.path.join(getSetting('buildDir'),getSetting('tarballName'))`, and enable the setting for sending the files: `setSetting('sendTarballToTarget',True)`.
+"""
 
 # re-used parts -----------------------------------------------------------
 
@@ -76,13 +89,21 @@ def getSourceDir (app):
     return os.path.join(getSetting('repoDir'),'fett','apps',app)
 
 @decorate.debugWrap
-def cpFilesToBuildDir (sourceDir): #maybe add an optional argument for copying a custom pattern
+def getBinDir(app):
+    return os.path.join(getSetting('repoDir'),'build', app, getSetting('osImage'))
+
+@decorate.debugWrap
+def cpFilesToBuildDir (sourceDir, pattern=None): #maybe add an optional argument for copying a custom pattern
     if (isEnabled('buildApps')):
         # copy source files
-        cp (sourceDir,getSetting('buildDir'),pattern="*.c")
+        if pattern is None:
+            pattern = "*.c"
+        cp (sourceDir,getSetting('buildDir'),pattern=pattern)
     else:
         # copy binaries
-        cp (sourceDir,getSetting('buildDir'),pattern="*.riscv")
+        if pattern is None:
+            pattern = "*.riscv"
+        cp (sourceDir,getSetting('buildDir'),pattern=pattern)
 
 @decorate.debugWrap
 @decorate.timeWrap
