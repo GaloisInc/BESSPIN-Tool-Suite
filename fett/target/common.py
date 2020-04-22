@@ -74,7 +74,7 @@ class commonTarget():
             self.shutdownAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
 
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
-            if (not self.targetObj.isSshConn):
+            if (not self.isSshConn):
                 isPrevUserRoot = self.isCurrentUserRoot
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
                 self.runCommand ("exit",endsWith="login:")
@@ -231,7 +231,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 return ":~\$"
             elif (isEqSetting('target','fpga')):
-                if (self.targetObj.isSshConn):
+                if (self.isSshConn):
                     expectExact = True
                     return '[00m:[01;34m~[00m$'
                 else:
@@ -240,7 +240,7 @@ class commonTarget():
                 self.shutdownAndExit(f"<getDefaultEndWith> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
         elif (isEqSetting('osImage','FreeBSD')):
             if (isEqSetting('target','fpga')):
-                if (self.targetObj.isSshConn): #pexpect uses regex
+                if (self.isSshConn): #pexpect uses regex
                     return "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
                 else:
                     return "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ $"
@@ -330,7 +330,7 @@ class commonTarget():
         except Exception as exc:
             return returnFalse (f"Failed to obtain the checksum of <{pathToFile}/{xFile}>.",noRetries=True,exc=exc)
 
-        if (isEqSetting('osImage','FreeBSD') and (self.targetObj.isSshConn)): #send through SSH
+        if (isEqSetting('osImage','FreeBSD') and (self.isSshConn)): #send through SSH
             scpCommand = f"scp {pathToFile}/{xFile} root@{self.ipTarget}:/root/"
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
