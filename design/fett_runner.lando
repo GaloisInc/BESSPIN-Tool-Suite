@@ -9,7 +9,7 @@ component Linux Host
 The host Linux system. This system is connected to the FPGA, which itself
 contains the CloudGFE.
 
-  Linux_Host must support CloudGFE and BESSPIN Tool Suite.
+  Linux Host must support CloudGFE and BESSPIN Tool Suite.
   Where is the CloudGFE?
   The Linux host is not accessible via a direct channel.
   The Linux host is used exclusively to manage CloudGFE instances.
