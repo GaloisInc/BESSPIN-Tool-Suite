@@ -455,7 +455,7 @@ class commonTarget():
         if (self.process):
             readAfter = self.readFromTarget(readAfter=True)
             if (self.getDefaultEndWith() in readAfter):
-                self.process.expect(":~#",timeout=timeout)
+                self.process.expect(":~#",timeout=15)
                 textBack += readAfter
         return textBack
 
