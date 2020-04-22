@@ -6,8 +6,8 @@ The system used to bring up a target software stack (P1 or P2 + App).
 // this spec is done !
 
 component Linux Host
-The host Linux system connected to the FPGA fabric which contains
-the CloudGFE. 
+The host Linux system. This system is connected to the FPGA, which itself
+contains the CloudGFE.
 
   Linux_Host must support CloudGFE and BESSPIN Tool Suite.
   Where is the CloudGFE?
