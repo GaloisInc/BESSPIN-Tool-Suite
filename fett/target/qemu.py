@@ -11,7 +11,6 @@ class qemuTarget (commonTarget):
         
         super().__init__()
         
-        self.process = None
         self.ipTarget = getSetting('qemuIpTarget')
         return
 
@@ -26,7 +25,12 @@ class qemuTarget (commonTarget):
                 else: #default
                     fetchedBytes = self.process.before
                 try:
-                    textBack = str(fetchedBytes,'utf-8')
+                    if (fetchedBytes == pexpect.TIMEOUT):
+                        textBack = '\n<TIMEOUT>\n'
+                    elif (fetchedBytes == pexpect.EOF):
+                        textBack = '\n<EOF>\n'
+                    else:
+                        textBack = str(fetchedBytes,'utf-8')
                 except UnicodeDecodeError:
                     textBack = charByCharEncoding(fetchedBytes)
                     warnAndLog ("Unrecognized character while reading from target.",doPrint=False)
