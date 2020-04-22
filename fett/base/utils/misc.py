@@ -5,6 +5,7 @@ Main logging functions
 
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess
+import tarfile
 from fett.base.utils import decorate
 
 # private; not available using import *
@@ -25,6 +26,7 @@ class EXIT (enum.Enum):
     Run = enum.auto()
     Network = enum.auto()
     Interrupted = enum.auto()
+    Tar = enum.auto()
 
     def __str__ (self): #to replace '_' by ' ' when printing
         return f"{self.name.replace('_',' ')}"
@@ -119,6 +121,36 @@ def mkdir(dirPath, addToSettings=None):
         logAndExit (f"Failed to create <{dirPath}>.",exitCode=EXIT.Create_path,exc=exc)
     if (addToSettings):
         setSetting(addToSettings,dirPath)
+
+@decorate.debugWrap
+def tar (tarFileName, filesList=[]):
+    """
+    Create a tar archive of the files in filesList.
+    filesList is a list of either:
+      (1) file names, to be copied to the tar archive as-is
+      (2) (dest name, file name) pairs, i.e. 'file name' will be copied to the
+          archive as 'dest name'. Useful for copying files from deeply nested
+          trees
+    """
+    try:
+        tarFile = tarfile.open(name=tarFileName, mode="x:gz")
+        if tarFile is None:
+            logAndExit (f"tar: error creating {tarFileName}", exitCode=EXIT.Tar)
+    except Exception as e:
+            logAndExit (f"tar: error creating {tarFileName}", exitCode=EXIT.Tar)
+    for f in filesList:
+        arcname = None
+        if type(f) == tuple:
+            arcname = f[0]
+            f       = f[1]
+        try:
+            tarFile.add(f, arcname=arcname)
+        except Exception as e:
+            logAndExit (f"tar: error adding {f} to {tarFileName}", exitCode=EXIT.Tar)
+    try:
+        tarFile.close()
+    except Exception as e:
+            logAndExit (f"tar: error closing {tarFileName}", exitCode=EXIT.Tar)
 
 @decorate.debugWrap
 def cp (src,dest,pattern=None):
