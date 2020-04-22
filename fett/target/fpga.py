@@ -12,11 +12,11 @@ import sys, signal, os, socket
 class fpgaTarget (commonTarget):
     def __init__ (self):
 
+        super().__init__()
+
         # For FreeBSD
         self.uartAttempts = 0
         self.limitUartAttempts = 8 if(isEqSetting('procFlavor','bluespec')) else 4
-
-        super().__init__()
         return
 
 @decorate.debugWrap

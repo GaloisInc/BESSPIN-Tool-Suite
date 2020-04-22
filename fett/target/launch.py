@@ -97,7 +97,6 @@ def prepareEnv ():
     if (isEqSetting('target','fpga')):
         fpga.programBifile()
         fpga.resetEthAdaptor()
-
     printAndLog (f"Environment is ready.")
 
 """ This is the loading/booting function """
@@ -105,7 +104,7 @@ def prepareEnv ():
 @decorate.timeWrap
 def launchFett ():
     printAndLog (f"Launching FETT...")
-    xTarget = getClassType()
+    xTarget = getClassType()()
     xTarget.start()
     if (isEnabled('isUnix')):
         xTarget.createUser()
@@ -127,7 +126,7 @@ def getClassType():
     if (isEqSetting('target','aws')):
         logAndExit (f"<launch.getClassType> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
     elif (isEqSetting('target','qemu')):
-        return qemu.qemuTarget()
+        return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):
         gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
         if (gfeTestingScripts not in os.environ):
