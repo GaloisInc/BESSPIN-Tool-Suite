@@ -278,37 +278,7 @@ class commonTarget():
         if (isEnabled('isUnix')):
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
-<<<<<<< HEAD
-            if (isEqSetting('osImage','debian')):
-                if (self.isCurrentUserRoot):
-                    endsWith = ":~#"
-                elif (isEqSetting('target','qemu')):
-                    endsWith = ":~\$"
-                elif (isEqSetting('target','fpga')):
-                    if (self.isSshConn):
-                        expectExact = True
-                        endsWith = '[00m:[01;34m~[00m$'
-                    else:
-                        endsWith = ":~$"
-                else:
-                    self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
-            elif (isEqSetting('osImage','FreeBSD')):
-                if (isEqSetting('target','fpga')):
-                    if (self.isSshConn): #pexpect uses regex
-                        endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
-                    else:
-                        endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ $"
-                elif (isEqSetting('target','qemu')):
-                    endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
-                else:
-                    self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
-            elif (isEqSetting('osImage','busybox')):
-                endsWith = "~ #" if self.isCurrentUserRoot else "\$"
-            else:
-                self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
-=======
             endsWith = self.getDefaultEndWith()
->>>>>>> develop
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,uartRetriesOnBSD=uartRetriesOnBSD,expectExact=expectExact)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
