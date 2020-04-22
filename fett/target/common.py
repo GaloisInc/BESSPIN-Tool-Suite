@@ -19,6 +19,9 @@ from fett.apps.ota.run import runApp as runOta
 
 class commonTarget():
     def __init__(self):
+
+        self.process = None
+
         # all OSs settings
         self.portTarget = None
         self.portHost = None
@@ -455,7 +458,7 @@ class commonTarget():
         if (self.process):
             readAfter = self.readFromTarget(readAfter=True)
             if (self.getDefaultEndWith() in readAfter):
-                self.process.expect(":~#",timeout=15)
+                self.process.expect(self.getDefaultEndWith(),timeout=15)
                 textBack += readAfter
         return textBack
 
