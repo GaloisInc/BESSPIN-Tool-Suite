@@ -10,7 +10,7 @@ class qemuTarget (commonTarget):
     def __init__ (self):
         
         super().__init__()
-        
+        self.sshHostPort = getSetting('qemuSshHostPort')
         self.ipTarget = getSetting('qemuIpTarget')
         return
 
@@ -62,11 +62,14 @@ class qemuTarget (commonTarget):
                     break
             if ((self.portTarget is None) or (self.portHost is None)):
                 self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
-            else:
-                printAndLog(f"Qemu will use the network ports {self.portTarget} and {self.portHost}.")
+            #checking ssh port
+            if (self.sshHostPort in [self.portTarget, self.portHost]):
+                self.shutdownAndExit(f"boot: The sshHostPort<{self.sshHostPort}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
             
+            printAndLog(f"Qemu will use the network ports <target:{self.portTarget}>, <hostTcp:{self.portHost}>, and <hostSsh:{self.sshHostPort}>.")
+
             qemuCommand = f"qemu-system-riscv64 -nographic -machine virt -m 2G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\"" 
-            qemuCommand += f" -device virtio-net-device,netdev=usernet -netdev user,id=usernet,hostfwd=tcp:{self.ipTarget}:{self.portHost}-:{self.portTarget}"
+            qemuCommand += f" -device virtio-net-device,netdev=usernet -netdev user,id=usernet,hostfwd=tcp:{self.ipTarget}:{self.portHost}-:{self.portTarget},hostfwd=tcp:{self.ipTarget}:{self.sshHostPort}-:22"
 
             targetOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'target.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
             try:

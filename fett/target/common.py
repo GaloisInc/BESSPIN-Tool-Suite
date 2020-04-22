@@ -35,6 +35,7 @@ class commonTarget():
         self.limitResendAttempts = 5 if (isEqSetting('osImage','FreeBSD') and isEqSetting('target','qemu')) else 3
 
         # For sshWhenPossible
+        self.sshHostPort = None
         self.isSshConn = False
         self.sshProcess = None
         self.sshRetries = 0
