@@ -21,7 +21,10 @@ class qemuTarget (commonTarget):
             return ''
         if (self.process is not None):
             try:
-                fetchedBytes = self.process.before
+                if (readAfter):
+                    fetchedBytes = self.process.after
+                else: #default
+                    fetchedBytes = self.process.before
                 try:
                     textBack = str(fetchedBytes,'utf-8')
                 except UnicodeDecodeError:
@@ -120,7 +123,7 @@ class qemuTarget (commonTarget):
                 self.shutdownAndExit(f"expectFromTarget: Qemu timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run)
             elif (not isEqSetting('osImage','FreeRTOS')):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
-                self.runCommand("\x03",shutdownOnError=True)
+                textBack += self.keyboardInterrupt (shutdownOnError=True)
             return [textBack, True, -1]
         except Exception as exc:
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run)
