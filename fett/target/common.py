@@ -50,8 +50,6 @@ class commonTarget():
         self.userPassword = 'fett_2020'
         self.userName = 'researcher'
 
-        self.userName = None
-        self.userPassword = None
         self.AttemptShutdownFailed = False
 
         return
@@ -151,9 +149,6 @@ class commonTarget():
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
             self.runCommand ("root",endsWith="Password:")
             self.runCommand (self.rootPassword)
-            self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
-            self.runCommand("chmod +x addEntropyDebian.riscv")
-            self.ensureCrngIsUp () #check we have enough entropy for ssh
         elif (isEqSetting('osImage','FreeRTOS')):
             #self.boot (endsWith=">>>Beginning of Testgen<<<",timeout=timeout)
             endsWith = [">>>End of Fett<<<"]
@@ -200,6 +195,10 @@ class commonTarget():
             #Adding 5 minutes to avoid being in the past
             if (isEqSetting('osImage','debian')):
                 self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
+                #get the ssh up and running
+                self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
+                self.runCommand("chmod +x addEntropyDebian.riscv")
+                self.ensureCrngIsUp () #check we have enough entropy for ssh
             elif (isEqSetting('osImage','FreeBSD')):
                 self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
             if (createUser): #Create another user
