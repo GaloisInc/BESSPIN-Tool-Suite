@@ -140,8 +140,8 @@ class qemuTarget (commonTarget):
         self.inInteractMode = True
         printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
         if (self.userName is not None):
-            printAndLog ("Note that there is another user. User name: \'{0}\'. Password: \'{1}\'.".format(self.userName,self.userPassword))
-            printAndLog ("Now the shell is logged in as: \'{0}\'.".format(self.filename,'root' if self.isCurrentUserRoot else self.userName))
+            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
         try:
             self.process.interact(escape_character='\x05')
         except Exception as exc:
