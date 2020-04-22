@@ -14,7 +14,7 @@
 from fett.base.utils.misc import *
 from fett.base.config import loadConfiguration
 from fett.target.launch import startFett, endFett
-import logging, argparse, os, shutil, atexit
+import logging, argparse, os, shutil, atexit, signal
 
 def main (xArgs):
     # Create working Directory
@@ -91,5 +91,10 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
     xArgs = xArgParser.parse_args()
+
+    #Trapping the signals
+    signalsToCatch = [signal.SIGINT, signal.SIGTERM]
+    for xSignal in signalsToCatch:
+        signal.signal(xSignal,exitOnInterrupt)
 
     main(xArgs)

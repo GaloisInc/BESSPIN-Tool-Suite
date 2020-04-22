@@ -10,8 +10,7 @@ class qemuTarget (commonTarget):
     def __init__ (self):
         
         super().__init__()
-        
-        self.process = None
+        self.sshHostPort = getSetting('qemuSshHostPort')
         self.ipTarget = getSetting('qemuIpTarget')
         return
 
@@ -21,13 +20,17 @@ class qemuTarget (commonTarget):
             return ''
         if (self.process is not None):
             try:
-                fetchedBytes = self.process.before
-                if (readAfter): 
-                    moreBytes = self.process.after
-                    if (isinstance(moreBytes,bytes)):
-                        fetchedBytes += moreBytes
+                if (readAfter):
+                    fetchedBytes = self.process.after
+                else: #default
+                    fetchedBytes = self.process.before
                 try:
-                    textBack = str(fetchedBytes,'utf-8')
+                    if (fetchedBytes == pexpect.TIMEOUT):
+                        textBack = '\n<TIMEOUT>\n'
+                    elif (fetchedBytes == pexpect.EOF):
+                        textBack = '\n<EOF>\n'
+                    else:
+                        textBack = str(fetchedBytes,'utf-8')
                 except UnicodeDecodeError:
                     textBack = charByCharEncoding(fetchedBytes)
                     warnAndLog ("Unrecognized character while reading from target.",doPrint=False)
@@ -59,11 +62,14 @@ class qemuTarget (commonTarget):
                     break
             if ((self.portTarget is None) or (self.portHost is None)):
                 self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
-            else:
-                printAndLog(f"Qemu will use the network ports {self.portTarget} and {self.portHost}.")
+            #checking ssh port
+            if (self.sshHostPort in [self.portTarget, self.portHost]):
+                self.shutdownAndExit(f"boot: The sshHostPort<{self.sshHostPort}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
             
+            printAndLog(f"Qemu will use the network ports <target:{self.portTarget}>, <hostTcp:{self.portHost}>, and <hostSsh:{self.sshHostPort}>.")
+
             qemuCommand = f"qemu-system-riscv64 -nographic -machine virt -m 2G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\"" 
-            qemuCommand += f" -device virtio-net-device,netdev=usernet -netdev user,id=usernet,hostfwd=tcp:{self.ipTarget}:{self.portHost}-:{self.portTarget}"
+            qemuCommand += f" -device virtio-net-device,netdev=usernet -netdev user,id=usernet,hostfwd=tcp:{self.ipTarget}:{self.portHost}-:{self.portTarget},hostfwd=tcp:{self.ipTarget}:{self.sshHostPort}-:22"
 
             targetOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'target.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
             try:
@@ -123,10 +129,8 @@ class qemuTarget (commonTarget):
             if (shutdownOnError):
                 self.shutdownAndExit(f"expectFromTarget: Qemu timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run)
             elif (not isEqSetting('osImage','FreeRTOS')):
-                self.sendToTarget("\x03",shutdownOnError=False)
-                time.sleep(1)
-                textBack += self.readFromTarget(readAfter=True)
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
+                textBack += self.keyboardInterrupt (shutdownOnError=True)
             return [textBack, True, -1]
         except Exception as exc:
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run)
@@ -146,8 +150,8 @@ class qemuTarget (commonTarget):
         self.inInteractMode = True
         printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
         if (self.userName is not None):
-            printAndLog ("Note that there is another user. User name: \'{0}\'. Password: \'{1}\'.".format(self.userName,self.userPassword))
-            printAndLog ("Now the shell is logged in as: \'{0}\'.".format(self.filename,'root' if self.isCurrentUserRoot else self.userName))
+            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
         try:
             self.process.interact(escape_character='\x05')
         except Exception as exc:

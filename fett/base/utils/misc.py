@@ -23,6 +23,7 @@ class EXIT (enum.Enum):
     External = enum.auto()
     Run = enum.auto()
     Network = enum.auto()
+    Interrupted = enum.auto()
 
     def __str__ (self): #to replace '_' by ' ' when printing
         return f"{self.name.replace('_',' ')}"
@@ -32,6 +33,9 @@ def exitFett (exitCode):
         exitCode = EXIT.Unspecified
     printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
     exit(exitCode.value)
+
+def exitOnInterrupt (xSig,xFrame):
+    exitFett(EXIT.Interrupted)
 
 def formatExc (exc):
     """ format the exception for printing """

@@ -1,0 +1,453 @@
+From 3c0b6a4a2a116816aadf52372ed795137969272e Mon Sep 17 00:00:00 2001
+From: Isaiah Mindich <isaiah@galois.com>
+Date: Tue, 21 Apr 2020 09:13:43 -0700
+Subject: [PATCH] Pass configure checks when cross compiling
+
+---
+ auto/cc/conf      | 18 +++++++++--
+ auto/cc/name      |  6 +++-
+ auto/endianness   | 48 ++++++++++++++---------------
+ auto/feature      | 27 ++++++++++++++++-
+ auto/include      | 10 +++---
+ auto/options      |  7 ++++-
+ auto/os/freebsd   | 17 ++++++++---
+ auto/types/sizeof | 17 +++++++++--
+ auto/unix         | 91 +++++++++++++++++++++++++++++++------------------------
+ 9 files changed, 159 insertions(+), 82 deletions(-)
+
+diff --git a/auto/cc/conf b/auto/cc/conf
+index afbca62..3bd151b 100644
+--- a/auto/cc/conf
++++ b/auto/cc/conf
+@@ -183,7 +183,11 @@ if [ "$NGX_PLATFORM" != win32 ]; then
+     else
+         ngx_feature="gcc builtin atomic operations"
+         ngx_feature_name=NGX_HAVE_GCC_ATOMIC
+-        ngx_feature_run=yes
++        if test -n "$NGX_CROSSCOMPILING"; then
++            ngx_feature_run=no
++        else
++            ngx_feature_run=yes
++        fi
+         ngx_feature_incs=
+         ngx_feature_path=
+         ngx_feature_libs=
+@@ -204,7 +208,11 @@ if [ "$NGX_PLATFORM" != win32 ]; then
+     else
+         ngx_feature="C99 variadic macros"
+         ngx_feature_name="NGX_HAVE_C99_VARIADIC_MACROS"
+-        ngx_feature_run=yes
++        if test -n "$NGX_CROSSCOMPILING"; then
++            ngx_feature_run=no
++        else
++            ngx_feature_run=yes
++        fi
+         ngx_feature_incs="#include <stdio.h>
+ #define var(dummy, ...)  sprintf(__VA_ARGS__)"
+         ngx_feature_path=
+@@ -218,7 +226,11 @@ if [ "$NGX_PLATFORM" != win32 ]; then
+ 
+     ngx_feature="gcc variadic macros"
+     ngx_feature_name="NGX_HAVE_GCC_VARIADIC_MACROS"
+-    ngx_feature_run=yes
++    if test -n "$NGX_CROSSCOMPILING"; then
++        ngx_feature_run=no
++    else
++        ngx_feature_run=yes
++    fi
+     ngx_feature_incs="#include <stdio.h>
+ #define var(dummy, args...)  sprintf(args)"
+     ngx_feature_path=
+diff --git a/auto/cc/name b/auto/cc/name
+index ded93f5..7f864a5 100644
+--- a/auto/cc/name
++++ b/auto/cc/name
+@@ -7,7 +7,11 @@ if [ "$NGX_PLATFORM" != win32 ]; then
+ 
+     ngx_feature="C compiler"
+     ngx_feature_name=
+-    ngx_feature_run=yes
++    if test -n "$NGX_CROSSCOMPILING"; then
++        ngx_feature_run=no
++    else
++        ngx_feature_run=yes
++    fi
+     ngx_feature_incs=
+     ngx_feature_path=
+     ngx_feature_libs=
+diff --git a/auto/endianness b/auto/endianness
+index 1b552b6..fbcd8c3 100644
+--- a/auto/endianness
++++ b/auto/endianness
+@@ -13,38 +13,38 @@ checking for system byte ordering
+ END
+ 
+ 
+-cat << END > $NGX_AUTOTEST.c
++cat << END > "$NGX_AUTOTEST.c"
+ 
+ int main(void) {
+-    int i = 0x11223344;
+-    char *p;
+-
+-    p = (char *) &i;
+-    if (*p == 0x44) return 0;
+-    return 1;
++    #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
++    #error "Order is little endian"
++    #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
++    #error "Order is big endian"
++    #else
++    #error "Unknown Order"
++    #endif
+ }
+ 
+ END
+ 
+-ngx_test="$CC $CC_TEST_FLAGS $CC_AUX_FLAGS \
+-          -o $NGX_AUTOTEST $NGX_AUTOTEST.c $NGX_LD_OPT $ngx_feature_libs"
++ngx_test="$CC -c $CC_TEST_FLAGS $CC_AUX_FLAGS \
++          -o $NGX_AUTOTEST $NGX_AUTOTEST.c"
+ 
+-eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&1"
++output=$($ngx_test 2>&1)
++rm -rf "$NGX_AUTOTEST"
++# echo $output
+ 
+-if [ -x $NGX_AUTOTEST ]; then
+-    if $NGX_AUTOTEST >/dev/null 2>&1; then
++case "$output" in
++    *"Order is little endian"*)
+         echo " little endian"
+         have=NGX_HAVE_LITTLE_ENDIAN . auto/have
+-    else
++        ;;
++    *"Order is big endian"*)
+         echo " big endian"
+-    fi
+-
+-    rm -rf $NGX_AUTOTEST*
+-
+-else
+-    rm -rf $NGX_AUTOTEST*
+-
+-    echo
+-    echo "$0: error: cannot detect system byte ordering"
+-    exit 1
+-fi
++        ;;
++    *)
++        echo
++        echo "$0: error: cannot detect system byte ordering"
++        exit 1
++        ;;
++esac
+diff --git a/auto/feature b/auto/feature
+index 3561f59..0fc218c 100644
+--- a/auto/feature
++++ b/auto/feature
+@@ -25,9 +25,11 @@ if test -n "$ngx_feature_path"; then
+     done
+ fi
+ 
++# Need to include stdlib.h to get NULL defined
+ cat << END > $NGX_AUTOTEST.c
+ 
+ #include <sys/types.h>
++#include <stdlib.h>
+ $NGX_INCLUDE_UNISTD_H
+ $ngx_feature_incs
+ 
+@@ -53,7 +55,22 @@ if [ -x $NGX_AUTOTEST ]; then
+ 
+         yes)
+             # /bin/sh is used to intercept "Killed" or "Abort trap" messages
+-            if /bin/sh -c $NGX_AUTOTEST >> $NGX_AUTOCONF_ERR 2>&1; then
++            if test -n "$NGX_CROSSCOMPILING"; then
++                envname="$ngx_feature_name"
++                eval "env_override=\$$envname"
++                if test -n "$env_override"; then
++                    echo " cross: $env_override"
++                    if test "x$env_override" = "xyes"; then
++                        ngx_found=yes
++                        if test -n "$ngx_feature_name"; then
++                            have=$ngx_have_feature . auto/have
++                        fi
++                    fi
++                else
++                    echo "Error: crosscompiling -> cannot run test program"
++                    echo "   Set $envname to yes or no" && exit 1
++                fi
++            elif /bin/sh -c $NGX_AUTOTEST >> $NGX_AUTOCONF_ERR 2>&1; then
+                 echo " found"
+                 ngx_found=yes
+ 
+@@ -67,6 +84,10 @@ if [ -x $NGX_AUTOTEST ]; then
+         ;;
+ 
+         value)
++            if test -n "$NGX_CROSSCOMPILING"; then
++                echo " Cannot check due to cross compiling!"
++                exit 1
++            fi
+             # /bin/sh is used to intercept "Killed" or "Abort trap" messages
+             if /bin/sh -c $NGX_AUTOTEST >> $NGX_AUTOCONF_ERR 2>&1; then
+                 echo " found"
+@@ -85,6 +106,10 @@ END
+         ;;
+ 
+         bug)
++            if test -n "$NGX_CROSSCOMPILING"; then
++                echo " Cannot check due to cross compiling!"
++                exit 1
++            fi
+             # /bin/sh is used to intercept "Killed" or "Abort trap" messages
+             if /bin/sh -c $NGX_AUTOTEST >> $NGX_AUTOCONF_ERR 2>&1; then
+                 echo " not found"
+diff --git a/auto/include b/auto/include
+index c1bd364..03523c3 100644
+--- a/auto/include
++++ b/auto/include
+@@ -26,12 +26,12 @@ int main(void) {
+ 
+ END
+ 
+-
+-ngx_test="$CC -o $NGX_AUTOTEST $NGX_AUTOTEST.c"
+-
++# Don't build an executable but only and object file as we're only testing the include
++ngx_test="$CC $CC_TEST_FLAGS $CC_AUX_FLAGS $ngx_feature_inc_path -c -o $NGX_AUTOTEST $NGX_AUTOTEST.c"
++rm -f "$NGX_AUTOTEST"
+ eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&1"
+ 
+-if [ -x $NGX_AUTOTEST ]; then
++if [ -f $NGX_AUTOTEST ]; then
+ 
+     ngx_found=yes
+ 
+@@ -55,4 +55,4 @@ else
+     echo "----------"    >> $NGX_AUTOCONF_ERR
+ fi
+ 
+-rm -rf $NGX_AUTOTEST*
++rm -f $NGX_AUTOTEST*
+diff --git a/auto/options b/auto/options
+index 59f0449..cea74ff 100644
+--- a/auto/options
++++ b/auto/options
+@@ -16,6 +16,8 @@ NGX_LOCK_PATH=
+ NGX_USER=
+ NGX_GROUP=
+ NGX_BUILD=
++NGX_SYSROOT=
++NGC_CROSSCOMPILING=
+ 
+ CC=${CC:-cc}
+ CPP=
+@@ -192,7 +194,10 @@ do
+         --user=*)                        NGX_USER="$value"          ;;
+         --group=*)                       NGX_GROUP="$value"         ;;
+ 
+-        --crossbuild=*)                  NGX_PLATFORM="$value"      ;;
++        --crossbuild=*)                  NGX_PLATFORM="$value";
++                                         NGX_CROSSCOMPILING=YES     ;;
++
++        --sysroot=*)                     NGX_SYSROOT="$value"       ;;
+ 
+         --build=*)                       NGX_BUILD="$value"         ;;
+         --builddir=*)                    NGX_OBJS="$value"          ;;
+diff --git a/auto/os/freebsd b/auto/os/freebsd
+index 937ca20..21ac949 100644
+--- a/auto/os/freebsd
++++ b/auto/os/freebsd
+@@ -18,16 +18,25 @@ ngx_spacer='
+ # __FreeBSD_version is used for the testing of the build environment.
+ # sysctl kern.osreldate is used for the testing of the kernel capabilities.
+ 
+-version=`grep "#define __FreeBSD_version" /usr/include/osreldate.h \
++version=`grep "#define __FreeBSD_version" "${NGX_SYSROOT}/usr/include/osreldate.h" \
+          | sed -e 's/^.* \(.*\)$/\1/'`
+ 
+-osreldate=`/sbin/sysctl -n kern.osreldate`
++if test -z "$version"; then
++    echo "FATAL: Cannot determine FreeBSD version from ${NGX_SYSROOT}/usr/include/osreldate.h"
++    exit 1
++fi
++
++if test -n "$NGX_CROSSCOMPILING"; then
++    osreldate=$version
++else
++    osreldate=`/sbin/sysctl -n kern.osreldate`
++fi
+ 
+ 
+ # setproctitle() in libutil
+ 
+-if [ \( $version -ge 500000 -a $version -lt 500012 \) \
+-     -o $version -lt 410002 ]
++if [ \( "$version" -ge 500000 -a "$version" -lt 500012 \) \
++     -o "$version" -lt 410002 ]
+ then
+     echo " + setproctitle() in libutil"
+ 
+diff --git a/auto/types/sizeof b/auto/types/sizeof
+index 480d8cf..a4b6208 100644
+--- a/auto/types/sizeof
++++ b/auto/types/sizeof
+@@ -40,8 +40,19 @@ eval "$ngx_test >> $NGX_AUTOCONF_ERR 2>&1"
+ 
+ 
+ if [ -x $NGX_AUTOTEST ]; then
+-    ngx_size=`$NGX_AUTOTEST`
+-    echo " $ngx_size bytes"
++    size_var="NGX_SIZEOF_$ngx_type"
++    size_var=`echo "NGX_SIZEOF_$ngx_type" | tr -s ' ' | tr ' ' '_' | tr '*' 'p'`
++    eval "size_var_value=\$$size_var"
++    if test -n "$size_var_value"; then
++        ngx_size="$size_var_value"
++        echo " $ngx_size bytes"
++    elif test -n "$NGX_CROSSCOMPILING"; then
++        echo " cannot detect size of $ngx_type when cross compiling, you must set \$$size_var!"
++        exit 1
++    else
++        ngx_size=`$NGX_AUTOTEST`
++        echo " $ngx_size bytes"
++    fi
+ fi
+ 
+ 
+@@ -51,7 +62,7 @@ case $ngx_size in
+         ngx_max_len='(sizeof("-2147483648") - 1)'
+     ;;
+ 
+-    8)
++    8|16|32)
+         ngx_max_value=9223372036854775807LL
+         ngx_max_len='(sizeof("-9223372036854775808") - 1)'
+     ;;
+diff --git a/auto/unix b/auto/unix
+index 43d3b25..20ea4af 100644
+--- a/auto/unix
++++ b/auto/unix
+@@ -150,9 +150,9 @@ fi
+ 
+ 
+ ngx_feature="crypt()"
+-ngx_feature_name=
++ngx_feature_name=NGX_HAVE_CRYPT
+ ngx_feature_run=no
+-ngx_feature_incs=
++ngx_feature_incs="#include <unistd.h>"
+ ngx_feature_path=
+ ngx_feature_libs=
+ ngx_feature_test="crypt(\"test\", \"salt\");"
+@@ -727,57 +727,68 @@ ngx_feature_test="char buf[1]; struct iovec vec[1]; ssize_t n;
+ . auto/feature
+ 
+ 
+-ngx_feature="sys_nerr"
+-ngx_feature_name="NGX_SYS_NERR"
+-ngx_feature_run=value
+-ngx_feature_incs='#include <errno.h>
+-                  #include <stdio.h>'
+-ngx_feature_path=
+-ngx_feature_libs=
+-ngx_feature_test='printf("%d", sys_nerr);'
+-. auto/feature
+-
++# HACK: just use sys_nerr directly when crosscompiling
++# This is wrong but should generally work
++if test -n "$NGX_CROSSCOMPILING"; then
++    cat << END >> $NGX_AUTO_CONFIG_H
+ 
+-if [ $ngx_found = no ]; then
++#ifndef NGX_SYS_NERR
++#define NGX_SYS_NERR  sys_nerr
++#endif
+ 
+-    # Cygiwn defines _sys_nerr
+-    ngx_feature="_sys_nerr"
++END
++else
++    ngx_feature="sys_nerr"
+     ngx_feature_name="NGX_SYS_NERR"
+     ngx_feature_run=value
+     ngx_feature_incs='#include <errno.h>
+                       #include <stdio.h>'
+     ngx_feature_path=
+     ngx_feature_libs=
+-    ngx_feature_test='printf("%d", _sys_nerr);'
++    ngx_feature_test='printf("%d", sys_nerr);'
+     . auto/feature
+-fi
+ 
+ 
+-if [ $ngx_found = no ]; then
++    if [ $ngx_found = no ]; then
++        # Cygiwn defines _sys_nerr
++        ngx_feature="_sys_nerr"
++        ngx_feature_name="NGX_SYS_NERR"
++        ngx_feature_run=value
++        ngx_feature_incs='#include <errno.h>
++                          #include <stdio.h>'
++        ngx_feature_path=
++        ngx_feature_libs=
++        ngx_feature_test='printf("%d", _sys_nerr);'
++        . auto/feature
++    fi
+ 
+-    # Solaris has no sys_nerr
+-    ngx_feature='maximum errno'
+-    ngx_feature_name=NGX_SYS_NERR
+-    ngx_feature_run=value
+-    ngx_feature_incs='#include <errno.h>
+-                      #include <string.h>
+-                      #include <stdio.h>'
+-    ngx_feature_path=
+-    ngx_feature_libs=
+-    ngx_feature_test='int  n;
+-                      char *p;
+-                      for (n = 1; n < 1000; n++) {
+-                          errno = 0;
+-                          p = strerror(n);
+-                          if (errno == EINVAL
+-                              || p == NULL
+-                              || strncmp(p, "Unknown error", 13) == 0)
+-                          {
+-                              break;
++
++    if [ $ngx_found = no ]; then
++
++        # Solaris has no sys_nerr
++        ngx_feature='maximum errno'
++        ngx_feature_name=NGX_SYS_NERR
++        ngx_feature_run=value
++        ngx_feature_incs='#include <errno.h>
++                          #include <string.h>
++                          #include <stdio.h>'
++        ngx_feature_path=
++        ngx_feature_libs=
++        ngx_feature_test='int  n;
++                          char *p;
++                          for (n = 1; n < 1000; n++) {
++                              errno = 0;
++                              p = strerror(n);
++                              if (errno == EINVAL
++                                  || p == NULL
++                                  || strncmp(p, "Unknown error", 13) == 0)
++                              {
++                                  break;
++                              }
+                           }
+-                      }
+-                      printf("%d", n);'
+-    . auto/feature
++                          printf("%d", n);'
++        . auto/feature
++    fi
+ fi
+ 
+ 
+-- 
+2.7.4
+
