@@ -221,6 +221,34 @@ class commonTarget():
             self.shutdownAndExit(f"<createUser> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",overwriteConsole=True,exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
+    def getDefaultEndWith (self):
+        if (isEqSetting('osImage','debian')):
+            if (self.isCurrentUserRoot):
+                return ":~#"
+            elif (isEqSetting('target','qemu')):
+                return ":~\$"
+            elif (isEqSetting('target','fpga')):
+                if (self.targetObj.isSshConn):
+                    expectExact = True
+                    return '[00m:[01;34m~[00m$'
+                else:
+                    return ":~$"
+            else:
+                self.shutdownAndExit(f"<getDefaultEndWith> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
+        elif (isEqSetting('osImage','FreeBSD')):
+            if (isEqSetting('target','fpga')):
+                if (self.targetObj.isSshConn): #pexpect uses regex
+                    return "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
+                else:
+                    return "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ $"
+            elif (isEqSetting('target','qemu')):
+                return "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
+            else:
+                self.shutdownAndExit(f"<getDefaultEndWith> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
+        else:
+            self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation) 
+
+    @decorate.debugWrap
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=60,suppressErrors=False,uartRetriesOnBSD=True,expectExact=False):
         #expected contents: any one of them not found, gives error [one string or list]
@@ -228,31 +256,7 @@ class commonTarget():
         if (isEnabled('isUnix')):
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
-            if (isEqSetting('osImage','debian')):
-                if (self.isCurrentUserRoot):
-                    endsWith = ":~#"
-                elif (isEqSetting('target','qemu')):
-                    endsWith = ":~\$"
-                elif (isEqSetting('target','fpga')):
-                    if (self.targetObj.isSshConn):
-                        expectExact = True
-                        endsWith = '[00m:[01;34m~[00m$'
-                    else:
-                        endsWith = ":~$"
-                else:
-                    self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
-            elif (isEqSetting('osImage','FreeBSD')):
-                if (isEqSetting('target','fpga')):
-                    if (self.targetObj.isSshConn): #pexpect uses regex
-                        endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
-                    else:
-                        endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ $"
-                elif (isEqSetting('target','qemu')):
-                    endsWith = "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
-                else:
-                    self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
-            else:
-                self.shutdownAndExit(f"<runCommand> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
+            endsWith = self.getDefaultEndWith()
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,uartRetriesOnBSD=uartRetriesOnBSD,expectExact=expectExact)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
@@ -374,30 +378,34 @@ class commonTarget():
 
         #obtaining the checksum
         try:
+            shaSumRX = None
             if (isEqSetting('osImage','debian')):
-                shaSumRX = self.runCommand(f"sha256sum {xFile}")[1].split()[2]
+                retShaRX = self.runCommand(f"sha256sum {xFile}")[1]
             elif (isEqSetting('osImage','FreeBSD')):
-                shaSumRX = None
                 retShaRX = self.runCommand(f"sha256 {xFile}",timeout=90)[1]
                 retShaRX += self.runCommand(" ")[1]
-                for line in retShaRX.splitlines():
+            logging.debug(f"retShaRX:\n{retShaRX}")
+            for line in retShaRX.splitlines():
+                if (isEqSetting('osImage','debian')):
+                    shaMatch = re.match(rf"^(?P<shaSum>[0-9a-f]+)\s+ {xFile}\s*$",line)
+                elif (isEqSetting('osImage','FreeBSD')):
                     shaMatch = re.match(rf"^SHA256 \({xFile}\) = (?P<shaSum>[0-9a-f]+)$",line)
-                    if (shaMatch is not None):
-                        shaSumRX = shaMatch.group('shaSum')
-                        break
-                if (shaSumRX is None):
-                    raise
+                if (shaMatch is not None):
+                    shaSumRX = shaMatch.group('shaSum')
+                    break
+            if (shaSumRX is None):
+                raise
         except Exception as exc:
             return returnFalse (f"sendFile: Failed to obtain the checksum of <{xFile}> from target.",exc=exc)
         
         if (shaSumRX != shaSumTX):
-            return returnFalse(f"sendFile: Checksum from <{xFile}> on target does not match.",exc=exc)
+            return returnFalse(f"sendFile: Checksum from <{xFile}> on target does not match.")
         self.resendAttempts = 0 #reset
         return True
 
     @decorate.debugWrap
     def doesFileExist (self,xFile,pathToFile='.',timeout=15,shutdownOnError=True):
-        return self.runCommand(f"ls {pathToFile}/{xFile}",expectedContents=xFile,erroneousContents=['ls:', 'cannot access', 'No such file or directory'],timeout=timeout,shutdownOnError=shutdownOnError)[0]
+        return self.runCommand(f"ls {pathToFile}/{xFile}",suppressErrors=True,expectedContents=xFile,erroneousContents=['ls:', 'cannot access', 'No such file or directory'],timeout=timeout,shutdownOnError=shutdownOnError)[0]
 
     @decorate.debugWrap
     def sendTar(self,timeout=15): #send filesToSend.tar.gz to target
@@ -443,6 +451,12 @@ class commonTarget():
         textBack = retCommand[1]
         if ((not retCommand[0]) or (retCommand[2])):
             textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,uartRetriesOnBSD=False,timeout=15)[1]
+        #See if the order is correct
+        if (self.process):
+            readAfter = self.readFromTarget(readAfter=True)
+            if (self.getDefaultEndWith() in readAfter):
+                self.process.expect(":~#",timeout=timeout)
+                textBack += readAfter
         return textBack
 
     @decorate.debugWrap
