@@ -585,6 +585,53 @@ class commonTarget():
         return [textBack, False, retExpect]
 
     @decorate.debugWrap
+    def interact (self): #no need to use targetObj as we'll never activate ethernet in non-reboot mode
+        #This method gives the control back to the user
+        if (self.inInteractMode):
+            return #avoid recursive interact mode
+        self.inInteractMode = True
+        if (self.isSshConn): #only interact on the JTAG
+            self.closeSshConn()
+        printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
+        if (self.userName is not None):
+            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+        try:
+            self.process.interact(escape_character='\x05')
+        except Exception as exc:
+            errorAndLog(f"Failed to open interactive mode.",exc=exc)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def terminateTarget (self,timeout=15,shutdownOnError=True):
+        if (isEqSetting('osImage','debian')):
+            if (self.isSshConn): #only shutdown on tty
+                self.closeSshConn()
+            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
+        elif (self.osImage == 'busybox'):
+            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,,suppressErrors=True,shutdownOnError=shutdownOnError)
+        elif (isEqSetting('osImage','FreeBSD') and (self.onlySsh)):
+            dumpSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",timeout=60,,suppressErrors=True,shutdownOnError=False)
+            isSuccess = self.closeSshConn() 
+        elif (isEqSetting('osImage','FreeBSD')):
+            if (self.isSshConn): #only shutdown on tty
+                self.closeSshConn()
+            self.runCommand (" ") #to clear any remaining messages
+            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,,suppressErrors=True,shutdownOnError=shutdownOnError)
+            if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
+                isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=pexpect.EOF,timeout=timeout,,suppressErrors=True,shutdownOnError=shutdownOnError)
+                textBack = textBack + textBack_2
+        else:
+            self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
+        try:
+            self.fTtyOut.close()
+        except Exception as exc:
+            warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False)
+        if ((isSuccess and (not isTimeout)) or shutdownOnError):
+            isSuccess &= self.targetTearDown()
+        return [isSuccess, textBack, isTimeout, dumpIdx]
+
+    @decorate.debugWrap
     @decorate.timeWrap
     def openSshConn (self,userName='root',timeout=60):
         def returnFail (message,exc=None):
