@@ -609,17 +609,17 @@ class commonTarget():
                 self.closeSshConn()
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
         elif (self.osImage == 'busybox'):
-            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,,suppressErrors=True,shutdownOnError=shutdownOnError)
+            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','FreeBSD') and (self.onlySsh)):
-            dumpSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",timeout=60,,suppressErrors=True,shutdownOnError=False)
+            dumpSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",timeout=60,suppressErrors=True,shutdownOnError=False)
             isSuccess = self.closeSshConn() 
         elif (isEqSetting('osImage','FreeBSD')):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
             self.runCommand (" ") #to clear any remaining messages
-            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,,suppressErrors=True,shutdownOnError=shutdownOnError)
+            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
             if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
-                isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=pexpect.EOF,timeout=timeout,,suppressErrors=True,shutdownOnError=shutdownOnError)
+                isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=pexpect.EOF,timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
                 textBack = textBack + textBack_2
         else:
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
