@@ -11,8 +11,7 @@ to communicate with a FIDO device over USB, and to verify
 attestation and assertion signatures.
 
 Open_sshd_config
-The binary OpenSSH should install a default sshd_config 
-in the install-sysconf makefile target
+OpenSSH server requires an default configured sshd_config file. 
 
 Open_ssh_primes_moduli
 The binary OpenSSH also set-up primes and moduli
