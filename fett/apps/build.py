@@ -66,7 +66,7 @@ def buildWebserver():
 def buildDatabase(tarName):
     if (isEnabled('buildApps')):
         logAndExit (f"Building from source is not supported for the database application",
-                    exitCode=EXIT.Nothing_to_do)
+                    exitCode=EXIT.Configuration)
     else:
         # Just grab the pre-built binary
         cpFilesToBuildDir (getBinDir('database'), pattern="sqlite")
