@@ -65,8 +65,8 @@ def buildWebserver():
 @decorate.timeWrap
 def buildDatabase(tarName):
     if (isEnabled('buildApps')):
-        printAndLog (f"Building from source is not supported for the database application")
-        raise NotImplemented
+        logAndExit (f"Building from source is not supported for the database application",
+                    exitCode=EXIT.Nothing_to_do)
     else:
         # Just grab the pre-built binary
         cpFilesToBuildDir (getBinDir('database'), pattern="sqlite")
