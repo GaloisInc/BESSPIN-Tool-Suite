@@ -200,8 +200,8 @@ class commonTarget():
                 self.runCommand("root",endsWith=tempEndsWith)
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith=tempEndsWith)
 
-            self.runCommand("echo \"testgenPrompt> \" > promptText.txt",endsWith=tempEndsWith) #this is to avoid having the prompt in the set prompt command
-            self.runCommand(f"echo \'set prompt = \"testgenPrompt> \"\' > .cshrc",endsWith=tempEndsWith)
+            self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempEndsWith) #this is to avoid having the prompt in the set prompt command
+            self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempEndsWith)
             self.runCommand("set prompt = \"`cat promptText.txt`\"")
            
             printAndLog (f"start: Activating ethernet and setting system time...")
@@ -255,15 +255,12 @@ class commonTarget():
             else:
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
-            if (isEqSetting('target','fpga')):
-                if (self.isSshConn): #pexpect uses regex
-                    return "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
-                else:
-                    return "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ $"
-            elif (isEqSetting('target','qemu')):
-                return "testgenPrompt>" if (self.isCurrentUserRoot) else ":~ \$"
+            if (self.isCurrentUserRoot):
+                return "fettPrompt>"
             else:
-                self.shutdownAndExit(f"<getDefaultEndWith> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
+                return ":~ \$"
+        elif (isEqSetting('osImage','busybox')):
+            endsWith = "~ #" if self.isCurrentUserRoot else "\$"
         else:
             self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation) 
 
@@ -608,7 +605,7 @@ class commonTarget():
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
-        elif (self.osImage == 'busybox'):
+        elif (isEqSetting('osImage','busybox')):
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','FreeBSD') and (self.onlySsh)):
             dumpSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",timeout=60,suppressErrors=True,shutdownOnError=False)
