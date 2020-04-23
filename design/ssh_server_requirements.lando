@@ -14,17 +14,17 @@ Open_sshd_config
 OpenSSH server requires an default configured sshd_config file. 
 
 Open_ssh_primes_moduli
-The binary OpenSSH also set-up primes and moduli
+The binary OpenSSH also set-up primes and moduli.
 
 Open_ssh_keygen
 The install also provides authentication keys by 
-standard mechanism ssh-keygen
+standard mechanism ssh-keygen.
 
 Open_sshd_check_config
 The sshd_config file specifies the locations of one or more 
 host key files (mandatory) and the location of authorized_keys 
 files for users. The config should be checked with the following 
-command: sshd -t -f /path/to/sshd_config
+command: sshd -t -f /path/to/sshd_config.
 
 Open_sshd_access_service
 Create a user-password pair per researcher (team) for logging purpose. 
