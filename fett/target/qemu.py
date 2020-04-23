@@ -74,4 +74,22 @@ class qemuTarget (commonTarget):
     def targetTearDown(self):
         return True
 
+
+    @decorate.debugWrap
+    def interact (self):
+        #This method gives the control back to the user
+        if (self.inInteractMode):
+            return #avoid recursive interact mode
+        self.inInteractMode = True
+        if (self.isSshConn): #only interact on the JTAG
+            self.closeSshConn()
+        printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
+        if (self.userCreated):
+            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+        try:
+            self.process.interact(escape_character='\x05')
+        except Exception as exc:
+            errorAndLog(f"Failed to open interactive mode.",exc=exc)
+
 #--- END OF CLASS qemuTarget------------------------------

@@ -594,23 +594,6 @@ class commonTarget():
         return [textBack, False, retExpect]
 
     @decorate.debugWrap
-    def interact (self): #no need to use targetObj as we'll never activate ethernet in non-reboot mode
-        #This method gives the control back to the user
-        if (self.inInteractMode):
-            return #avoid recursive interact mode
-        self.inInteractMode = True
-        if (self.isSshConn): #only interact on the JTAG
-            self.closeSshConn()
-        printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
-        if (self.userCreated):
-            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
-            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
-        try:
-            self.process.interact(escape_character='\x05')
-        except Exception as exc:
-            errorAndLog(f"Failed to open interactive mode.",exc=exc)
-
-    @decorate.debugWrap
     @decorate.timeWrap
     def terminateTarget (self,timeout=15,shutdownOnError=True):
         if (isEqSetting('osImage','debian')):

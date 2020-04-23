@@ -191,6 +191,65 @@ class fpgaTarget (commonTarget):
         except:
             return False
 
+    @decorate.debugWrap
+    def interact (self):
+        #This method gives the control back to the user
+        # could not use "pexpect.spawn.interact" as "fdpexpect.spawn" does not have the method
+        if (self.inInteractMode):
+            return #avoid recursive interact mode
+        self.inInteractMode = True
+        if (self.isSshConn): #only interact on the JTAG
+            self.closeSshConn()
+        printAndLog (f"Entering pseudo-interactive mode. Enter \"--exit + Enter\" to exit.")
+        printAndLog ("Please use \"--ctrlc\" for interrupts. (Ctrl-C would exit the whole FETT tool).")
+        if (self.userCreated):
+            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+        
+        def keepReadingFromFdpexpect (stopEvent=None,timeStep=5):
+            if (stopEvent is None):
+                errorAndLog ("interact: Failed to read from target. StopEvent is None.")
+                return
+            while (not stopEvent.is_set()):
+                try:
+                    textBack = self.process.read_nonblocking(timeout=timeStep)
+                    sys.stdout.write(str(textBack,'utf-8'))
+                    sys.stdout.flush()
+                except pexpect.TIMEOUT:
+                    logging.debug("interactiveMode: timeout in keepReadingFromFdpexpect.")
+                except Exception as exc:
+                    errorAndLog ("interact: Failed to read from target.",exc=exc)
+                    return
+
+        stopReading = threading.Event() #event to stop the reading process in the end
+        readThread = threading.Thread(target=keepReadingFromFdpexpect, kwargs=dict(timeStep=5,stopEvent=stopReading))
+        readThread.daemon = True
+        getSetting('trash').throwThread(readThread,"Interact reading thread")
+        stopReading.clear() #the event that controls the interactive mode keepReadingFromFdpexpect
+        readThread.start() #start the reading thread
+        exitTerminal = False
+        while ((not exitTerminal) and readThread.is_alive()):
+            try:
+                instruction = input ("")
+            except Exception as exc:
+                warnAndLog(f"Invalid Command. Please use interpreter commands such as \'--ctrlc\' and \'--exit\' instead of direct interrupts.",exc=exc)
+                sys.stdout.flush()
+                continue
+            if (instruction == '--exit'): #exit
+                exitTerminal = True
+            elif (instruction == '--ctrlc'):
+                self.sendToTarget(b'\x03\r\n',shutdownOnError=False)
+            elif (('shutdown' in instruction) or ('poweroff' in instruction) or ('halt' in instruction)):
+                warnAndLog ("Please use \'--exit\' instead of direct shutting down command.")
+                self.sendToTarget(" ",shutdownOnError=False)
+            else:
+                self.sendToTarget(instruction,shutdownOnError=False)
+                time.sleep(1)
+
+        stopReading.set()
+        time.sleep(5)
+        return
+
 #--- END OF CLASS fpgaTarget------------------------------
 
 @decorate.debugWrap
