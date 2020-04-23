@@ -90,17 +90,12 @@ def getBinDir(app):
     return os.path.join(getSetting('repoDir'),'build', app, getSetting('osImage'))
 
 @decorate.debugWrap
-def cpFilesToBuildDir (sourceDir, pattern=None): #maybe add an optional argument for copying a custom pattern
-    if (isEnabled('buildApps')):
-        # copy source files
-        if pattern is None:
-            pattern = "*.c"
-        cp (sourceDir,getSetting('buildDir'),pattern=pattern)
-    else:
-        # copy binaries
-        if pattern is None:
-            pattern = "*.riscv"
-        cp (sourceDir,getSetting('buildDir'),pattern=pattern)
+def cpFilesToBuildDir (sourceDir, pattern=None):
+    # If no pattern is specified, look for "*.c" files if we're building,
+    # otherwise *.riscv
+    if pattern is None:
+        pattern = "*.c" if isEnabled('buildApps') else "*.riscv"
+    cp (sourceDir,getSetting('buildDir'),pattern=pattern)
 
 @decorate.debugWrap
 @decorate.timeWrap
