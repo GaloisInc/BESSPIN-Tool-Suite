@@ -78,9 +78,6 @@ def buildDatabase(tarName):
         #Create the tarball here to be sent to target
         setSetting('sendTarballToTarget',True)
     return
-"""
- To control which files to be transferred to target, edit the corresponding function inside `fett/apps/build.py`. You'd have to tar the files into a tar file named `os.path.join(getSetting('buildDir'),getSetting('tarballName'))`, and enable the setting for sending the files: `setSetting('sendTarballToTarget',True)`.
-"""
 
 # re-used parts -----------------------------------------------------------
 
