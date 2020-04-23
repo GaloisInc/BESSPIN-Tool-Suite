@@ -2,7 +2,13 @@ requirements OpenSSH server 7.3 configuration
 
 Open_ssh_dependencies
 OpenSSH has dependencies on zlib and OpenSSL (or another SSL library), 
-and optionally libfido2
+and optionally libfido2.
+
+zlib is a software library used for data compression.
+
+libfido2 provides library functionality and command-line tools 
+to communicate with a FIDO device over USB, and to verify 
+attestation and assertion signatures.
 
 Open_sshd_config
 The binary OpenSSH should install a default sshd_config 
