@@ -14,10 +14,175 @@ class fpgaTarget (commonTarget):
 
         super().__init__()
 
+        self.ipTarget = getSetting('fpgaIpTarget')
+        self.ipHost = getSetting('fpgaIpHost')  
+        self.portTarget = getSetting('fpgaPortTarget')
+        self.portHost = getSetting('fpgaPortHost')
+
+        self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
+        self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')
         # For FreeBSD
         self.uartAttempts = 0
         self.limitUartAttempts = 8 if(isEqSetting('procFlavor','bluespec')) else 4
         return
+
+    def boot(self,endsWith="login:",timeout=90):
+        isException = False
+
+        def setupGdbLogging (): #always execute under redirectPrintToFile
+            print(self.gfe.gdb_session.command(f"set logging file {self.gdbOutPath}"))
+            print(self.gfe.gdb_session.command("set logging on"))
+            return 
+
+        def loadJTAG(binary): 
+            if (getSetting('osImage') not in ['debian', 'FreeBSD', 'busybox', 'FreeRTOS']):
+                self.shutdownAndExit(f"<loadJTAG> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Dev_Bug)
+            with redirectPrintToFile(self.gfeOutPath):
+                try:
+                    if (isEqSetting('osImage','FreeRTOS')):
+                        if (isEqSetting('procFlavor','bluespec')):
+                            print(self.gfe.softReset())
+                        print(self.gfe.gdb_session.interrupt())
+                    elif (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
+                        #The following values are hardcoded as copied from GFE. When GFE updates the testing platform, we'll change this accordingly
+                        print(self.gfe.gdb_session.command("set $a0 = 0"))
+                        print(self.gfe.gdb_session.command("set $a1 = 0x70000020"))
+                    self.setupUart()
+                    self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+                    self.ttyProcess = pexpect.fdexpect.fdspawn(self.gfe.uart_session.fileno(),logfile=self.fTtyOut,timeout=timeout)
+                    self.process = self.ttyProcess
+                    print(self.gfe.gdb_session.command("file {}".format(binary)))
+                    self.gfe.gdb_session.load(False) #has some asserts. False not to verify compare-sections and MIS.
+                    if (isEqSetting('osImage','FreeRTOS')):
+                        print (self.gfe.gdb_session.command("dprintf vApplicationIdleHook,\"idle-breakpoint\\n\""))
+                    setupGdbLogging ()
+                    self.gfe.gdb_session.c(wait=False)
+                except Exception as exc:
+                    if ('minicom' in repr(exc)):
+                        warnAndLog ("If minicom is not open, please ensure the tty is reset properly using 'stty -F <pathToTTY> min 0 time 0'.",doPrint=False)
+                    self.shutdownAndExit("boot: Failed to load the binary on FPGA.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+        nAttempts = 2
+        for iAttempt in range(nAttempts):
+            exc = None
+            with redirectPrintToFile(self.gfeOutPath):
+                try:
+                    self.setUp()
+                except Exception as tempExc:
+                    exc = tempExc
+                    isException = True
+            if (not isException): #The exception is caught in this weird way in order to print on the screen (because under redirectPrint)
+                break #success
+            elif (iAttempt < nAttempts-1): #that was the first try
+                errorAndLog(f"boot: Failed to <setUp> FPGA for booting. Trying again...",exc=exc)
+                programBifile()
+                isException = False #go and try again
+        if (isException): 
+            self.shutdownAndExit (f"boot: Failed to <setUp> FPGA for booting.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+        if (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
+            if (isEqSetting('elfLoader','JTAG')):
+                loadJTAG(getSetting('osImageElf'))
+            elif (isEqSetting('elfLoader','netboot')):
+                loadJTAG(getSetting('netbootElf'))
+            else:
+                self.shutdownAndExit (f"boot: ELF loader <{getSetting('elfLoader')}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
+
+            if (isEqSetting('elfLoader','netboot')):
+                self.expectFromTarget('>',"Starting netboot loader",timeout=60,uartRetriesOnBSD=False)
+                dirname, basename = os.path.split(os.path.abspath(getSetting('osImageElf')))
+                listenPort = None
+                rangeStart = getSetting('netbootNtkPortRangeStart')
+                rangeEnd = getSetting('netbootNtkPortRangeEnd')
+                if (rangeStart > rangeEnd):
+                    self.shutdownAndExit(f"boot: The netboot port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.", overwriteShutdown=True,exitCode=EXIT.Configuration)
+                for i in range(rangeStart, rangeEnd+1):
+                    if (checkPort(i, self.ipHost)):
+                        listenPort = i
+                if listenPort is None:
+                    self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+                try:
+                    server = tftpy.TftpServer(dirname)
+                except Exception as exc:
+                    self.shutdownAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overwriteShutdown=True,exitCode=EXIT.Run)
+
+                serverThread = threading.Thread(target=server.listen, kwargs={'listenip': self.ipHost, 'listenport': listenPort})
+                serverThread.daemon = True
+                getSetting('trash').throwThread(serverThread, "TFTP server listening on host for netboot")
+                serverThread.start()
+                printAndLog (f"Started TFTP server on port {listenPort}.",doPrint=False)
+                time.sleep(1)
+                self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}")
+
+            time.sleep(1)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,uartRetriesOnBSD=False)
+
+            if (isEqSetting('elfLoader','netboot')):
+                server.stop()
+                serverThread.join(timeout=30)
+                if (serverThread.is_alive()):
+                    # It isn't a fatal error if the server doesn't shut down, since we already know booting has succeeded.
+                    warnAndLog(f"boot: TFTP server thread still running after attempted shutdown.",doPrint=False)
+
+            # onlySsh happens here
+            # ......
+
+        elif (isEqSetting('osImage','FreeRTOS')):
+            loadJTAG(getSetting('osImageElf'))
+            printAndLog ("FreeRTOS started execution...",doPrint=False)  
+            time.sleep(1)
+            textBack,wasTimeout,dump = self.expectFromTarget(endsWith,"Booting",timeout=timeout,shutdownOnError=False)
+        else:
+            self.shutdownAndExit(f"<boot> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.")
+
+    def activateEthernet (self):
+        if self.onlySsh:
+            return ''
+        if (isEqSetting('osImage','debian')):
+            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+            self.runCommand ("echo \"address {0}/24\" >> /etc/network/interfaces".format(self.ipTarget))
+            outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
+        elif (isEqSetting('osImage','busybox')):
+            time.sleep(1)
+            self.runCommand ("ifconfig eth0 up",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
+            outCmd = self.runCommand ("ip addr add {0}/24 dev eth0".format(self.ipTarget),timeout=20)
+        elif (isEqSetting('osImage','FreeRTOS')):
+            outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=30)
+        elif (isEqSetting('osImage','FreeBSD')):
+            outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
+        else:
+            self.shutdownAndExit("<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
+
+        #pinging the FPGA to check everything is ok
+        gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
+        pingAttempts = 3
+        wasPingSuccessful = False
+        for iPing in range(pingAttempts):
+            try:
+                subprocess.check_call(['ping', '-c', 1, self.ipTarget],stdout=gfeOut,stderr=gfeOut)
+                wasPingSuccessful = True
+                break
+            except Exception as exc:
+                if (iPing < pingAttempts - 1):
+                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
+                    time.sleep(15)
+                else:
+                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+        gfeOut.close()
+        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+
+        if (isEqSetting('osImage','FreeBSD')): #use ssh instead of JTAG
+            self.openSshConn()
+        return outCmd
+
+    def targetTearDown(self):
+        try:
+            self.tearDown()
+            return True
+        except:
+            return False
+
+#--- END OF CLASS fpgaTarget------------------------------
 
 @decorate.debugWrap
 @decorate.timeWrap
