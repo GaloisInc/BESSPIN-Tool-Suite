@@ -71,11 +71,11 @@ def buildDatabase(tarName):
         # Just grab the pre-built binary
         cpFilesToBuildDir (getBinDir('database'), pattern="sqlite")
 
+        # Create the tarball here to be sent to target
         destBin = "sqlite"
         srcBin  = os.path.join(getSetting('buildDir'), "sqlite")
         tar (tarName, filesList=[(destBin, srcBin)])
 
-        #Create the tarball here to be sent to target
         setSetting('sendTarballToTarget',True)
     return
 
