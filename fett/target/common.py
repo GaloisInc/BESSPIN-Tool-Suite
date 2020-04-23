@@ -21,6 +21,10 @@ class commonTarget():
     def __init__(self):
 
         self.process = None
+        self.ttyProcess = None
+        self.fTtyOut = None
+        self.sshProcess = None
+        self.fSshOut = None
 
         # all OSs settings
         self.portTarget = None
@@ -34,15 +38,14 @@ class commonTarget():
         self.resendAttempts = 0
         self.limitResendAttempts = 5 if (isEqSetting('osImage','FreeBSD') and isEqSetting('target','qemu')) else 3
 
-        # For sshWhenPossible
+        # For ssh
         self.sshHostPort = None
         self.isSshConn = False
-        self.sshProcess = None
         self.sshRetries = 0
         self.sshLimitRetries = 3
         self.sshECDSAkeyWasUpdated = False
-        # TODO: fix this. Configurations that can only use SSH and no UART
-        self.onlySsh = isEqSetting('osImage','FreeBSD') and (not isEqSetting('target','fpga'))
+        # TODO: test this. Configurations that can only use SSH and no UART
+        self.onlySsh = False #isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
 
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
         # TODO: These passwords need to be different per run
@@ -247,16 +250,10 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             if (self.isCurrentUserRoot):
                 return ":~#"
-            elif (isEqSetting('target','qemu')):
-                return ":~\$"
-            elif (isEqSetting('target','fpga')):
-                if (self.isSshConn):
-                    expectExact = True
-                    return '[00m:[01;34m~[00m$'
-                else:
-                    return ":~$"
+            elif (self.isSshConn):
+                return '[00m:[01;34m~[00m$'
             else:
-                self.shutdownAndExit(f"<getDefaultEndWith> is not implemented on <{getSetting('target')}>.",exitCode=EXIT.Implementation) 
+                return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
             if (isEqSetting('target','fpga')):
                 if (self.isSshConn): #pexpect uses regex
@@ -279,6 +276,8 @@ class commonTarget():
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
+        if (isEqSetting('osImage','debian') and self.isSshConn and (not self.isCurrentUserRoot)):
+            expectExact = True
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,uartRetriesOnBSD=uartRetriesOnBSD,expectExact=expectExact)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
@@ -475,10 +474,11 @@ class commonTarget():
             textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,uartRetriesOnBSD=False,timeout=15)[1]
         #See if the order is correct
         if (self.process):
-            readAfter = self.readFromTarget(readAfter=True)
-            if (self.getDefaultEndWith() in readAfter):
-                self.process.expect(self.getDefaultEndWith(),timeout=15)
-                textBack += readAfter
+            for i in range(2):
+                readAfter = self.readFromTarget(readAfter=True)
+                if (self.getDefaultEndWith() in readAfter):
+                    self.process.expect(self.getDefaultEndWith(),timeout=15)
+                    textBack += readAfter
         return textBack
 
     @decorate.debugWrap
@@ -502,6 +502,162 @@ class commonTarget():
 
         if (not isCrngUp):
             self.shutdownAndExit(f"ensureCrngIsUp: CRNG was not initialized.",exitCode=EXIT.Run)
+
+    @decorate.debugWrap
+    def checkFallToTty (self,fnName):
+        if ((not self.process) and self.isSshConn):
+            warnAndLog(f"{fnName}: called with sshConnection, but connection is unreachable. Falling back to main tty.",doPrint=False)
+            self.killSshConn()
+        if (not self.process): #Note that this condition cannot be merged with the above one, because killSshConn updates self.process
+            self.shutdownAndExit(f"{fnName}: Failed to communicate with target.",overwriteShutdown=True,exitCode=EXIT.Run)
+        logging.debug(f"{fnName}: isSshConn = {self.isSshConn}")
+        return
+
+    @decorate.debugWrap
+    def readFromTarget (self,endsWith=None,readAfter=False):
+        self.checkFallToTty ("readFromTarget")
+        try:
+            if (readAfter):
+                fetchedBytes = self.process.after
+            else: #default
+                fetchedBytes = self.process.before
+            try:
+                if (fetchedBytes == pexpect.TIMEOUT):
+                    textBack = '\n<TIMEOUT>\n'
+                elif (fetchedBytes == pexpect.EOF):
+                    textBack = '\n<EOF>\n'
+                else:
+                    textBack = str(fetchedBytes,'utf-8')
+            except UnicodeDecodeError:
+                textBack = charByCharEncoding(fetchedBytes)
+                warnAndLog ("Unrecognized character while reading from target.",doPrint=False)
+        except Exception as exc:
+            warnAndLog ("Failed to read from target.",doPrint=False,exc=exc)
+            return ''
+        logging.debug(f"readFromTarget: <endsWith={endsWith}>")
+        logging.debug(f"textBack:\n{textBack}{endsWith}")
+        return textBack
+
+    @decorate.debugWrap
+    def sendToTarget (self,command,shutdownOnError=True):
+        self.checkFallToTty ("sendToTarget")
+        try:
+            self.process.sendline(command)
+        except Exception as exc:
+            if (shutdownOnError):
+                self.shutdownAndExit(f"sendToTarget: Failed to send <{command}> to {getSetting('target')}.",exc=exc,exitCode=EXIT.Run)
+            else:
+                warnAndLog (f"sendToTarget: Failed to send <{command}> to {getSetting('target')}.",exc=exc,doPrint=False)
+        return
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,uartRetriesOnBSD=True,expectExact=False):
+        self.checkFallToTty ("expectFromTarget")
+        textBack = ''
+        try:
+            if (expectExact):
+                retExpect = self.process.expect_exact(endsWith,timeout=timeout)
+            elif (isEqSetting('target','fpga')):
+                #if (isEqSetting('osImage','FreeBSD') and (not self.isSshConn) and uartRetriesOnBSD and (self.uartAttempts < self.limitUartAttempts-1)):
+                retExpect = self.process.expect(endsWith,timeout=timeout)
+            else:
+                retExpect = self.process.expect(endsWith,timeout=timeout)
+            if ( (endsWith == pexpect.EOF) or isinstance(endsWith,str)): #only one string or EOF
+                textBack += self.readFromTarget(endsWith=endsWith)
+            else: #It is a list
+                textBack += self.readFromTarget(endsWith=endsWith[retExpect])
+        except pexpect.TIMEOUT:
+            if (shutdownOnError):
+                self.shutdownAndExit(f"expectFromTarget: {getSetting('target').capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run)
+            elif (not isEqSetting('osImage','FreeRTOS')):
+                warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
+                textBack += self.keyboardInterrupt (shutdownOnError=True)
+            return [textBack, True, -1]
+        except Exception as exc:
+            self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run)
+        if (endsWith == pexpect.EOF):
+            endsWith = ''
+        elif (isinstance(endsWith,str)): #only one string
+            textBack += endsWith
+        else:
+            textBack += endsWith[retExpect]
+        return [textBack, False, retExpect]
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def openSshConn (self,userName='root',timeout=60):
+        def returnFail (message,exc=None):
+            self.killSshConn()
+            warnAndLog (message,doPrint=False,exc=exc)
+            extraMsg = ' Trying again...' if (self.sshRetries < self.sshLimitRetries-1) else ''
+            warnAndLog(f"openSshConn: Failed to open an SSH connection for <{userName}>.{extraMsg}")
+            self.sshRetries += 1
+            return self.openSshConn (userName=userName, timeout=timeout)
+
+        if (getSetting('osImage') not in ['FreeBSD','debian']):
+            self.shutdownAndExit(f"<openSshConn> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
+        
+        if (self.sshRetries >= self.sshLimitRetries): #to protect it from excessive attempts
+            return False
+
+        portPart = '' if (not self.sshHostPort) else f" -p {self.sshHostPort}"
+        sshCommand = f"ssh{portPart} {userName}@{self.ipTarget}"
+        sshPassword = self.rootPassword  if (userName=='root') else self.userPassword
+        #Need to clear the ECDSA key first in case it is not the first time
+        if (not self.sshECDSAkeyWasUpdated):
+            ipUpdateECDSA = self.ipTarget if (not self.sshHostPort) else f"[{self.ipTarget}]:{self.sshHostPort}"
+            self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
+            try:
+                subprocess.check_call (['ssh-keygen', '-R', ipUpdateECDSA],stdout=self.fSshOut,stderr=self.fSshOut)
+            except Exception as exc:
+                warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",doPrint=False)
+            self.sshECDSAkeyWasUpdated = True
+            self.fSshOut.close()
+        
+        self.killSshConn()
+        self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
+        try:
+            self.sshProcess = pexpect.spawn(sshCommand,logfile=self.fSshOut,timeout=timeout)
+        except Exception as exc:
+            return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
+        self.isSshConn = True
+        self.process = self.sshProcess
+        passwordPrompt = f"Password for {userName}@[\w\-\.]+\:" if isEqSetting('osImage', 'FreeBSD') else f"{userName}@[\w\-\.]+\'s password\:"
+        blockedIpResponse = "Connection closed by remote host" if isEqSetting('osImage', 'FreeBSD') else "Connection reset by peer"
+        retExpect = self.expectFromTarget([passwordPrompt,"\)\?",blockedIpResponse],"openSshConn",timeout=timeout,shutdownOnError=False)
+        if (retExpect[1]): #Failed
+            return returnFail(f"openSshConn: Unexpected response when spawning the ssh process.")
+        if (retExpect[2]==1): # asking for yes/no for new host
+            self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
+        elif (retExpect[2]==2): #the ip was blocked
+            return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
+        self.runCommand(sshPassword,timeout=timeout,shutdownOnError=False)
+        self.sshRetries = 0 #reset the retries
+        return True
+        
+    @decorate.debugWrap
+    def killSshConn (self): #Only for FreeBSD and Debian
+        if (self.sshProcess is not None):
+            try:
+                self.sshProcess.terminate(force=True)
+                self.sshProcess = None
+            except:
+                warnAndLog(f"killSshConn: Failed to terminate the sshProcess.\n",doPrint=False)
+        self.isSshConn = False
+        self.process = self.ttyProcess
+
+    @decorate.debugWrap
+    def closeSshConn (self, timeout=60):
+        if (getSetting('osImage') not in ['FreeBSD','debian']):
+            self.shutdownAndExit(f"<closeSshConn> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
+        if (self.isSshConn and (self.sshProcess is not None)):
+            self.runCommand("exit",endsWith=pexpect.EOF,expectedContents='closed',suppressErrors=True,timeout=timeout,shutdownOnError=False)
+        try:
+            self.fSshOut.close()
+        except Exception as exc:
+            warnAndLog("closeSshConn: Failed to close the ssh.out file.",doPrint=False)
+        self.killSshConn()
 
 
 # END OF CLASS commonTarget
