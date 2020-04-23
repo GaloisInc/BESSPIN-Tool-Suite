@@ -6,8 +6,9 @@ Main fpga class + misc fpga functions
 from fett.base.utils.misc import *
 from fett.target.common import *
 
-import subprocess, getpass, psutil
+import subprocess, getpass, psutil, tftpy
 import sys, signal, os, socket
+from pexpect import fdpexpect
 
 class fpgaTarget (commonTarget):
     def __init__ (self):
@@ -26,17 +27,16 @@ class fpgaTarget (commonTarget):
         self.limitUartAttempts = 8 if(isEqSetting('procFlavor','bluespec')) else 4
         return
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
-        isException = False
-
-        def setupGdbLogging (): #always execute under redirectPrintToFile
-            print(self.gfe.gdb_session.command(f"set logging file {self.gdbOutPath}"))
-            print(self.gfe.gdb_session.command("set logging on"))
-            return 
-
+        
+        @decorate.debugWrap
         def loadJTAG(binary): 
             if (getSetting('osImage') not in ['debian', 'FreeBSD', 'busybox', 'FreeRTOS']):
                 self.shutdownAndExit(f"<loadJTAG> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Dev_Bug)
+            isException = False
+            exc = None
             with redirectPrintToFile(self.gfeOutPath):
                 try:
                     if (isEqSetting('osImage','FreeRTOS')):
@@ -49,19 +49,25 @@ class fpgaTarget (commonTarget):
                         print(self.gfe.gdb_session.command("set $a1 = 0x70000020"))
                     self.setupUart()
                     self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
-                    self.ttyProcess = pexpect.fdexpect.fdspawn(self.gfe.uart_session.fileno(),logfile=self.fTtyOut,timeout=timeout)
+                    self.ttyProcess = fdpexpect.fdspawn(self.gfe.uart_session.fileno(),logfile=self.fTtyOut,timeout=timeout)
                     self.process = self.ttyProcess
                     print(self.gfe.gdb_session.command(f"file {binary}"))
                     self.gfe.gdb_session.load(False) #has some asserts. False not to verify compare-sections and MIS.
                     if (isEqSetting('osImage','FreeRTOS')):
                         print (self.gfe.gdb_session.command("dprintf vApplicationIdleHook,\"idle-breakpoint\\n\""))
-                    setupGdbLogging ()
+                    #setupGdbLogging
+                    print(self.gfe.gdb_session.command(f"set logging file {self.gdbOutPath}"))
+                    print(self.gfe.gdb_session.command("set logging on"))
                     self.gfe.gdb_session.c(wait=False)
-                except Exception as exc:
+                except Exception as tempExc:
+                    isException = True
+                    exc = tempExc
                     if ('minicom' in repr(exc)):
                         warnAndLog ("If minicom is not open, please ensure the tty is reset properly using 'stty -F <pathToTTY> min 0 time 0'.",doPrint=False)
-                    self.shutdownAndExit("boot: Failed to load the binary on FPGA.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            if (isException):
+                self.shutdownAndExit("boot: Failed to load the binary on FPGA.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
+        isException = False
         nAttempts = 2
         for iAttempt in range(nAttempts):
             exc = None
@@ -91,8 +97,8 @@ class fpgaTarget (commonTarget):
                 self.expectFromTarget('>',"Starting netboot loader",timeout=60,uartRetriesOnBSD=False)
                 dirname, basename = os.path.split(os.path.abspath(getSetting('osImageElf')))
                 listenPort = None
-                rangeStart = getSetting('netbootNtkPortRangeStart')
-                rangeEnd = getSetting('netbootNtkPortRangeEnd')
+                rangeStart = getSetting('netbootPortRangeStart')
+                rangeEnd = getSetting('netbootPortRangeEnd')
                 if (rangeStart > rangeEnd):
                     self.shutdownAndExit(f"boot: The netboot port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.", overwriteShutdown=True,exitCode=EXIT.Configuration)
                 for i in range(rangeStart, rangeEnd+1):
@@ -134,6 +140,8 @@ class fpgaTarget (commonTarget):
         else:
             self.shutdownAndExit(f"<boot> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.")
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def activateEthernet (self):
         if self.onlySsh:
             return ''
@@ -159,7 +167,7 @@ class fpgaTarget (commonTarget):
         wasPingSuccessful = False
         for iPing in range(pingAttempts):
             try:
-                subprocess.check_call(['ping', '-c', 1, self.ipTarget],stdout=gfeOut,stderr=gfeOut)
+                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=gfeOut,stderr=gfeOut)
                 wasPingSuccessful = True
                 break
             except Exception as exc:
@@ -175,6 +183,7 @@ class fpgaTarget (commonTarget):
             self.openSshConn()
         return outCmd
 
+    @decorate.debugWrap
     def targetTearDown(self):
         try:
             self.tearDown()

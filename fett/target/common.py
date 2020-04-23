@@ -53,8 +53,10 @@ class commonTarget():
         self.rootGroup = 'wheel' if (isEqSetting('osImage','FreeBSD')) else 'root'
         self.userPassword = 'fett_2020'
         self.userName = 'researcher'
+        self.userCreated = False
 
         self.AttemptShutdownFailed = False
+        self.keyboardInterruptTriggered = False
 
         return
 
@@ -73,7 +75,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def switchUser (self):
-        if (self.userName is None) or (self.userPassword is None):
+        if (not self.userCreated):
             self.shutdownAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
 
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
@@ -121,7 +123,7 @@ class commonTarget():
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
         if (isEnabled('openConsole') and (not overwriteConsole)):
             self.interact()
-            if (self.userName is not None):
+            if (self.userCreated):
                 retCommand = self.terminateTarget(timeout=timeout,shutdownOnError=False)
                 if ((not retCommand[0]) or retCommand[2]): #bad -- probably logged in as non-root user
                     self.isCurrentUserRoot = False
@@ -162,12 +164,12 @@ class commonTarget():
             self.runCommand (self.rootPassword)
         elif (isEqSetting('osImage','busybox')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=70,stdout=sys.stdout)
-            self.boot(endsWith="Please press Enter to activate this console.",timeout=70)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=80,stdout=sys.stdout)
+            self.boot(endsWith="Please press Enter to activate this console.",timeout=80)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
-            self.runCommand (" ",endsWith="/ #") #This is necessary
-            self.runCommand("cd root")
+            self.runCommand (" ",endsWith="/ #",timeout=10) #This is necessary
+            self.runCommand("cd root",timeout=10)
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
         elif (isEqSetting('osImage','FreeRTOS')):
             #self.boot (endsWith=">>>Beginning of Testgen<<<",timeout=timeout)
@@ -208,7 +210,7 @@ class commonTarget():
         else:
             self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
 
-        if (getSetting('osImage') in ['debian','FreeBSD','buysbox']):
+        if (getSetting('osImage') in ['debian','FreeBSD','busybox']):
             self.activateEthernet() #up the ethernet adaptor and get the ip address
 
             #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
@@ -244,6 +246,7 @@ class commonTarget():
             self.runCommand (self.userPassword,expectedContents='changed by root')
         else:
             self.shutdownAndExit(f"<createUser> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",overwriteConsole=True,exitCode=EXIT.Implementation)
+        self.userCreated = True
 
     @decorate.debugWrap
     def getDefaultEndWith (self):
@@ -260,7 +263,10 @@ class commonTarget():
             else:
                 return ":~ \$"
         elif (isEqSetting('osImage','busybox')):
-            endsWith = "~ #" if self.isCurrentUserRoot else "\$"
+            if (self.isCurrentUserRoot):
+                return "~ #"
+            else:
+                return "\$"
         else:
             self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation) 
 
@@ -463,6 +469,10 @@ class commonTarget():
 
     @decorate.debugWrap
     def keyboardInterrupt (self,shutdownOnError=True):
+        if (self.keyboardInterruptTriggered): #to break any infinite loop
+            self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overwriteShutdown=True,overwriteConsole=True,exitCode=EXIT.Run)
+        else:
+            self.keyboardInterruptTriggered = True
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
         retCommand = self.runCommand("\x03",shutdownOnError=False,uartRetriesOnBSD=False,timeout=15)
@@ -476,6 +486,7 @@ class commonTarget():
                 if (self.getDefaultEndWith() in readAfter):
                     self.process.expect(self.getDefaultEndWith(),timeout=15)
                     textBack += readAfter
+        self.keyboardInterruptTriggered = False #Safe to be called again
         return textBack
 
     @decorate.debugWrap
@@ -551,6 +562,7 @@ class commonTarget():
     @decorate.timeWrap
     def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,uartRetriesOnBSD=True,expectExact=False):
         self.checkFallToTty ("expectFromTarget")
+        logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
         try:
             if (expectExact):
@@ -590,7 +602,7 @@ class commonTarget():
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
         printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
-        if (self.userName is not None):
+        if (self.userCreated):
             printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
             printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
         try:
