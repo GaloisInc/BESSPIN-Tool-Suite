@@ -71,39 +71,7 @@ class qemuTarget (commonTarget):
             self.shutdownAndExit(f"activateEthernet: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
         return
 
-    @decorate.debugWrap
-    def interact (self): #no need to use targetObj as we'll never activate ethernet in non-reboot mode
-        #This method gives the control back to the user
-        if (self.inInteractMode):
-            return #avoid recursive interact mode
-        self.inInteractMode = True
-        if (self.isSshConn): #only interact on the JTAG
-            self.closeSshConn()
-        printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
-        if (self.userName is not None):
-            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
-            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
-        try:
-            self.process.interact(escape_character='\x05')
-        except Exception as exc:
-            errorAndLog(f"Failed to open interactive mode.",exc=exc)
-
-    @decorate.debugWrap
-    @decorate.timeWrap
-    def terminateTarget (self,timeout=15,shutdownOnError=True):
-        if (isEqSetting('osImage','debian')):
-            return self.runCommand("shutdown -h now",endsWith=pexpect.EOF,timeout=timeout,shutdownOnError=shutdownOnError)
-        elif (isEqSetting('osImage','FreeBSD')):
-            retCommand = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,shutdownOnError=shutdownOnError)
-            if ((not retCommand[0]) or retCommand[2]): 
-                return retCommand
-            return self.runCommand(" ",endsWith=pexpect.EOF,timeout=timeout,shutdownOnError=shutdownOnError)
-        else:
-            self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
-        try:
-            self.fTtyOut.close()
-        except Exception as exc:
-            warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False)
-        return
+    def targetTearDown(self):
+        return True
 
 #--- END OF CLASS qemuTarget------------------------------
