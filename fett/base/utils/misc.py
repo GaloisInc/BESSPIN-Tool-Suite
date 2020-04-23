@@ -4,7 +4,7 @@ Main logging functions
 """
 
 import logging, enum, traceback, atexit, re
-import os, shutil, glob, subprocess
+import os, shutil, glob, subprocess, sys
 from fett.base.utils import decorate
 
 # private; not available using import *
