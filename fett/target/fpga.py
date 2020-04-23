@@ -51,7 +51,7 @@ class fpgaTarget (commonTarget):
                     self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
                     self.ttyProcess = pexpect.fdexpect.fdspawn(self.gfe.uart_session.fileno(),logfile=self.fTtyOut,timeout=timeout)
                     self.process = self.ttyProcess
-                    print(self.gfe.gdb_session.command("file {}".format(binary)))
+                    print(self.gfe.gdb_session.command(f"file {binary}"))
                     self.gfe.gdb_session.load(False) #has some asserts. False not to verify compare-sections and MIS.
                     if (isEqSetting('osImage','FreeRTOS')):
                         print (self.gfe.gdb_session.command("dprintf vApplicationIdleHook,\"idle-breakpoint\\n\""))
@@ -140,12 +140,12 @@ class fpgaTarget (commonTarget):
         if (isEqSetting('osImage','debian')):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
-            self.runCommand ("echo \"address {0}/24\" >> /etc/network/interfaces".format(self.ipTarget))
+            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
         elif (isEqSetting('osImage','busybox')):
             time.sleep(1)
             self.runCommand ("ifconfig eth0 up",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
-            outCmd = self.runCommand ("ip addr add {0}/24 dev eth0".format(self.ipTarget),timeout=20)
+            outCmd = self.runCommand (f"ip addr add {self.ipTarget}/24 dev eth0",timeout=20)
         elif (isEqSetting('osImage','FreeRTOS')):
             outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=30)
         elif (isEqSetting('osImage','FreeBSD')):
