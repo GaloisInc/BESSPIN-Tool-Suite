@@ -13,9 +13,6 @@ attestation and assertion signatures.
 Open_sshd_config
 OpenSSH server requires an default configured sshd_config file. 
 
-Open_ssh_primes_moduli
-The binary OpenSSH also set-up primes and moduli.
-
 Open_ssh_keygen
 The install also provides authentication keys by 
 standard mechanism ssh-keygen.
