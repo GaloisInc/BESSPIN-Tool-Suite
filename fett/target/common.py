@@ -207,10 +207,6 @@ class commonTarget():
             self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith="\r\n#") #this is to avoid having the prompt in the set prompt command
             self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith="\r\n#")
             self.runCommand("set prompt = \"`cat promptText.txt`\"")
-
-            for i in range(15):
-                self.runCommand(f"echo \'testing the UART-{i}\'")
-                time.sleep(3)
            
             printAndLog (f"start: Activating ethernet and setting system time...")
         else:
