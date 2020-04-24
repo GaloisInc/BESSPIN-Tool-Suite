@@ -371,7 +371,7 @@ def resetEthAdaptor ():
             time.sleep(1)
         time.sleep(2)
         try:
-            isReset = psutil.net_if_stats()['eth1'].isup
+            isReset = psutil.net_if_stats()[getSetting('ethAdaptor')].isup
         except Exception as exc:
             logAndExit (f"fpga.resetEthAdaptor: Failed to check that <{getSetting('ethAdaptor')}> is up.",exc=exc,exitCode=EXIT.Network)
         if (isReset):
