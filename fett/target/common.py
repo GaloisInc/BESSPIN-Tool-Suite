@@ -57,6 +57,7 @@ class commonTarget():
 
         self.AttemptShutdownFailed = False
         self.keyboardInterruptTriggered = False
+        self.terminateTargetStarted = False
 
         return
 
@@ -115,9 +116,9 @@ class commonTarget():
         if (isEqSetting('osImage','FreeRTOS')):
             return
         if (getSetting('osImage') in ['debian','busybox']):
-            timeout = 20
+            timeout = 45
         else:
-            timeout = 90 if isEqSetting('target','fpga') else 40
+            timeout = 90 if isEqSetting('target','fpga') else 45
         if (self.AttemptShutdownFailed):
             self.shutdownAndExit(f"shutdown: Unable to shutdown the {getSetting('target')} properly.",overwriteShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
@@ -147,7 +148,7 @@ class commonTarget():
                 if (isEqSetting('procFlavor','bluespec')):
                     timeout = 1150 if isEqSetting('elfLoader','JTAG') else 560
                 elif (isEqSetting('procFlavor','chisel')):
-                    timeout = 800 if isEqSetting('elfLoader','JTAG') else 360
+                    timeout = 1050 if isEqSetting('elfLoader','JTAG') else 500
                 else:
                     self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
             elif (isEqSetting('target','qemu')):
@@ -469,6 +470,8 @@ class commonTarget():
 
     @decorate.debugWrap
     def keyboardInterrupt (self,shutdownOnError=True):
+        if (self.terminateTargetStarted):
+            return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
             self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overwriteShutdown=True,overwriteConsole=True,exitCode=EXIT.Run)
         else:
@@ -596,10 +599,11 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def terminateTarget (self,timeout=15,shutdownOnError=True):
+        self.terminateTargetStarted = True
         if (isEqSetting('osImage','debian')):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
-            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
+            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=["Power off",pexpect.EOF],suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','busybox')):
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','FreeBSD') and (self.onlySsh)):
@@ -611,7 +615,7 @@ class commonTarget():
             self.runCommand (" ") #to clear any remaining messages
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
             if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
-                isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=pexpect.EOF,timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
+                isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
                 textBack = textBack + textBack_2
         else:
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
@@ -655,6 +659,8 @@ class commonTarget():
             self.fSshOut.close()
         
         self.killSshConn()
+        self.runCommand(" ") #Get some entropy going on
+        time.sleep(3)
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
         try:
             self.sshProcess = pexpect.spawn(sshCommand,logfile=self.fSshOut,timeout=timeout)
@@ -664,10 +670,12 @@ class commonTarget():
         self.process = self.sshProcess
         passwordPrompt = f"Password for {userName}@[\w\-\.]+\:" if isEqSetting('osImage', 'FreeBSD') else f"{userName}@[\w\-\.]+\'s password\:"
         blockedIpResponse = "Connection closed by remote host" if isEqSetting('osImage', 'FreeBSD') else "Connection reset by peer"
-        retExpect = self.expectFromTarget([passwordPrompt,"\)\?",blockedIpResponse],"openSshConn",timeout=timeout,shutdownOnError=False)
-        if (retExpect[1]): #Failed
-            return returnFail(f"openSshConn: Unexpected response when spawning the ssh process.")
-        if (retExpect[2]==1): # asking for yes/no for new host
+        retExpect = self.expectFromTarget([passwordPrompt,'\)\?',blockedIpResponse,pexpect.EOF],"openSshConn",timeout=timeout,shutdownOnError=False)
+        if (retExpect[2]==3): #Failed
+            return returnFail(f"openSshConn: Failed to spawn the ssh process.")
+        elif (retExpect[1]): #Failed
+            return returnFail(f"openSshConn: Spawning the ssh process timed out.")
+        elif (retExpect[2]==1): # asking for yes/no for new host
             self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
         elif (retExpect[2]==2): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
@@ -691,7 +699,7 @@ class commonTarget():
         if (getSetting('osImage') not in ['FreeBSD','debian']):
             self.shutdownAndExit(f"<closeSshConn> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
         if (self.isSshConn and (self.sshProcess is not None)):
-            self.runCommand("exit",endsWith=pexpect.EOF,expectedContents='closed',suppressErrors=True,timeout=timeout,shutdownOnError=False)
+            self.runCommand("exit",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,shutdownOnError=False)
         try:
             self.fSshOut.close()
         except Exception as exc:

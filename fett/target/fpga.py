@@ -49,7 +49,7 @@ class fpgaTarget (commonTarget):
                         print(self.gfe.gdb_session.command("set $a1 = 0x70000020"))
                     self.setupUart()
                     self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
-                    self.ttyProcess = fdpexpect.fdspawn(self.gfe.uart_session.fileno(),logfile=self.fTtyOut,timeout=timeout)
+                    self.ttyProcess = fdpexpect.fdspawn(self.gfe.uart_session.fileno(),logfile=self.fTtyOut,timeout=30)
                     self.process = self.ttyProcess
                     print(self.gfe.gdb_session.command(f"file {binary}"))
                     self.gfe.gdb_session.load(False) #has some asserts. False not to verify compare-sections and MIS.
