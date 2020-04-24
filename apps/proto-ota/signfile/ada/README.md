@@ -28,3 +28,5 @@ Ed25519 public key, which is derived from a known pass-phrase.
 * badmsg.sig - A copy of good.txt.sig, but with one byte of the message block modified
 
 * badboth.sig - A copy of good.txt.sig, but with one byte of both the signature and the message modified
+
+* badsk.sig - A copy of good.txt, but signed with pass-phrase "wibble"
