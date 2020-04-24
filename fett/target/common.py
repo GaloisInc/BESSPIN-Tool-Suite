@@ -432,13 +432,13 @@ class commonTarget():
             self.sendTar(timeout=timeout)
 
         if (isEnabled('https')):
-            outLog = runHttps()
+            outLog = runHttps(self)
         elif (isEnabled('ota')):
-            outLog = runOta()
+            outLog = runOta(self)
         elif (isEnabled('webserver')):
-            outLog = runWebserver()
+            outLog = runWebserver(self)
         elif (isEnabled('database')):
-            outLog = runDatabase()
+            outLog = runDatabase(self)
 
         fLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
         fLog.write (outLog)
