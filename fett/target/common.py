@@ -198,8 +198,8 @@ class commonTarget():
 
             tempEndsWith = '#' if (isEqSetting('target','fpga')) else "\r\n#"
                 
-            # fpga freebsd would be already logged in
-            if (isEqSetting('target','qemu')):
+            # fpga freebsd would be already logged in if onlySsh
+            if (not self.onlySsh):
                 self.runCommand("root",endsWith=tempEndsWith)
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith=tempEndsWith)
 
