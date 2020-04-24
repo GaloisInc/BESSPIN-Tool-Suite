@@ -107,6 +107,7 @@ class fpgaTarget (commonTarget):
                 if listenPort is None:
                     self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
                 try:
+                    logging.getLogger('tftpy.TftpServer').setLevel(logging.ERROR)
                     server = tftpy.TftpServer(dirname)
                 except Exception as exc:
                     self.shutdownAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overwriteShutdown=True,exitCode=EXIT.Run)
@@ -117,7 +118,7 @@ class fpgaTarget (commonTarget):
                 serverThread.start()
                 printAndLog (f"Started TFTP server on port {listenPort}.",doPrint=False)
                 time.sleep(1)
-                self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}")
+                self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
 
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,uartRetriesOnBSD=False)
