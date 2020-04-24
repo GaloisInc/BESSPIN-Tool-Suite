@@ -1,0 +1,13 @@
+with "/Users/rchapman/Desktop/prog/SPARKNaCl/sparknacl_common.gpr";
+with "/Users/rchapman/Desktop/prog/SPARKNaCl/src/sparknacl.gpr";
+project SignFile
+is
+   for Main use ("signfile.adb");
+
+   package Compiler renames SPARKNaCl_Common.Compiler;
+   package Prove renames SPARKNaCl_Common.Prove;
+   package Builder renames SPARKNaCl_Common.Builder;
+   package Binder renames SPARKNaCl_Common.Binder;
+   package Linker renames SPARKNaCl_Common.Linker;
+
+end SignFile;
