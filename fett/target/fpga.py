@@ -22,9 +22,6 @@ class fpgaTarget (commonTarget):
 
         self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
         self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')
-        # For FreeBSD
-        self.uartAttempts = 0
-        self.limitUartAttempts = 8 if(isEqSetting('procFlavor','bluespec')) else 4
         return
 
     @decorate.debugWrap
@@ -94,7 +91,7 @@ class fpgaTarget (commonTarget):
                 self.shutdownAndExit (f"boot: ELF loader <{getSetting('elfLoader')}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
 
             if (isEqSetting('elfLoader','netboot')):
-                self.expectFromTarget('>',"Starting netboot loader",timeout=60,uartRetriesOnBSD=False)
+                self.expectFromTarget('>',"Starting netboot loader",timeout=60)
                 dirname, basename = os.path.split(os.path.abspath(getSetting('osImageElf')))
                 listenPort = None
                 rangeStart = getSetting('netbootPortRangeStart')
@@ -123,7 +120,7 @@ class fpgaTarget (commonTarget):
                 self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
 
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout,uartRetriesOnBSD=False)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout)
 
             if (isEqSetting('elfLoader','netboot')):
                 server.stop()
@@ -133,7 +130,10 @@ class fpgaTarget (commonTarget):
                     warnAndLog(f"boot: TFTP server thread still running after attempted shutdown.",doPrint=False)
 
             # onlySsh happens here
-            # ......
+            # starting prompt is still '#'
+            if (self.onlySsh):
+                if (not self.openSshConn(endsWith="\r\n#")):
+                    self.shutdownAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
         elif (isEqSetting('osImage','FreeRTOS')):
             loadJTAG(getSetting('osImageElf'))

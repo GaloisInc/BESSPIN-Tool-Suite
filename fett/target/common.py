@@ -44,8 +44,8 @@ class commonTarget():
         self.sshRetries = 0
         self.sshLimitRetries = 3
         self.sshECDSAkeyWasUpdated = False
-        # TODO: test this. Configurations that can only use SSH and no UART
-        self.onlySsh = False #isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
+        
+        self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
 
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
         # TODO: These passwords need to be different per run
@@ -207,6 +207,10 @@ class commonTarget():
             self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith="\r\n#") #this is to avoid having the prompt in the set prompt command
             self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith="\r\n#")
             self.runCommand("set prompt = \"`cat promptText.txt`\"")
+
+            for i in range(15):
+                self.runCommand(f"echo \'testing the UART-{i}\'")
+                time.sleep(3)
            
             printAndLog (f"start: Activating ethernet and setting system time...")
         else:
@@ -285,7 +289,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=60,suppressErrors=False,uartRetriesOnBSD=True,expectExact=False):
+    def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=60,suppressErrors=False,expectExact=False):
         #expected contents: any one of them not found, gives error [one string or list]
         #erroneous contensts: any one of them gives error [one string or list]
         if (isEnabled('isUnix')):
@@ -294,7 +298,7 @@ class commonTarget():
             endsWith = self.getDefaultEndWith()
         if (isEqSetting('osImage','debian') and self.isSshConn and (not self.isCurrentUserRoot)):
             expectExact = True
-        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,uartRetriesOnBSD=uartRetriesOnBSD,expectExact=expectExact)
+        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,expectExact=expectExact)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
         logging.debug(f"textBack:\n{textBack}")
@@ -397,7 +401,7 @@ class commonTarget():
             if (isEqSetting('osImage','debian')): 
                 listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
             elif (isEqSetting('osImage','FreeBSD')):
-                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False,uartRetriesOnBSD=False))             
+                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))             
             listenOnTarget.daemon = True
             getSetting('trash').throwThread(listenOnTarget,f"nc listening for <{xFile}> on Target")
             sendFromHost = threading.Thread(target=subprocess.call, kwargs=dict(args=f"nc -w 1 {self.ipTarget} {self.portHost} <{pathToFile}/{xFile}",shell=True))
@@ -490,10 +494,10 @@ class commonTarget():
             self.keyboardInterruptTriggered = True
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
-        retCommand = self.runCommand("\x03",shutdownOnError=False,uartRetriesOnBSD=False,timeout=15)
+        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=15)
         textBack = retCommand[1]
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,uartRetriesOnBSD=False,timeout=15)[1]
+            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=15)[1]
         #See if the order is correct
         if (self.process):
             for i in range(2):
@@ -575,16 +579,13 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,uartRetriesOnBSD=True,expectExact=False):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,expectExact=False):
         self.checkFallToTty ("expectFromTarget")
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
         try:
             if (expectExact):
                 retExpect = self.process.expect_exact(endsWith,timeout=timeout)
-            elif (isEqSetting('target','fpga')):
-                #if (isEqSetting('osImage','FreeBSD') and (not self.isSshConn) and uartRetriesOnBSD and (self.uartAttempts < self.limitUartAttempts-1)):
-                retExpect = self.process.expect(endsWith,timeout=timeout)
             else:
                 retExpect = self.process.expect(endsWith,timeout=timeout)
             if ( (endsWith == pexpect.EOF) or isinstance(endsWith,str)): #only one string or EOF
@@ -619,7 +620,7 @@ class commonTarget():
         elif (isEqSetting('osImage','busybox')):
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','FreeBSD') and (self.onlySsh)):
-            dumpSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",timeout=60,suppressErrors=True,shutdownOnError=False)
+            dumpSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=[self.getDefaultEndWith(),pexpect.EOF],timeout=60,suppressErrors=True,shutdownOnError=False)
             isSuccess = self.closeSshConn() 
         elif (isEqSetting('osImage','FreeBSD')):
             if (self.isSshConn): #only shutdown on tty
@@ -641,7 +642,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def openSshConn (self,userName='root',timeout=60):
+    def openSshConn (self,userName='root',endsWith=None,timeout=60):
         def returnFail (message,exc=None):
             self.killSshConn()
             warnAndLog (message,doPrint=False,exc=exc)
@@ -691,7 +692,7 @@ class commonTarget():
             self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
         elif (retExpect[2]==2): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
-        self.runCommand(sshPassword,timeout=timeout,shutdownOnError=False)
+        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
         return True
         
