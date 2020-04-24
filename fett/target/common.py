@@ -272,6 +272,17 @@ class commonTarget():
             self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation) 
 
     @decorate.debugWrap
+    def getAllEndsWith (self):
+        if (isEqSetting('osImage','debian')):
+            return [":~#", ":~\$", '[00m:[01;34m~[00m$']
+        elif (isEqSetting('osImage','FreeBSD')):
+            return ["fettPrompt>", ":~ \$"]
+        elif (isEqSetting('osImage','busybox')):
+            return ["~ #", "\$"]
+        else:
+            self.shutdownAndExit(f"<getAllEndsWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation) 
+
+    @decorate.debugWrap
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=60,suppressErrors=False,uartRetriesOnBSD=True,expectExact=False):
         #expected contents: any one of them not found, gives error [one string or list]
@@ -659,7 +670,7 @@ class commonTarget():
             self.fSshOut.close()
         
         self.killSshConn()
-        self.runCommand(" ") #Get some entropy going on
+        self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True) #Get some entropy going on
         time.sleep(3)
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
         try:
