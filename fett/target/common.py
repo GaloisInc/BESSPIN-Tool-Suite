@@ -183,7 +183,7 @@ class commonTarget():
                 if (isEqSetting('procFlavor','bluespec')):
                     timeout = 1400 if isEqSetting('elfLoader','JTAG') else 700
                 elif (isEqSetting('procFlavor','chisel')):
-                    timeout = 1000 if isEqSetting('elfLoader','JTAG') else 370
+                    timeout = 1000 if isEqSetting('elfLoader','JTAG') else 450
                 else:
                     self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
             elif (isEqSetting('target','qemu')):
@@ -195,16 +195,17 @@ class commonTarget():
             self.boot(endsWith=bootEndsWith, timeout=timeout)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
-
-            tempEndsWith = '#' if (isEqSetting('target','fpga')) else "\r\n#"
                 
             # fpga freebsd would be already logged in if onlySsh
-            if (not self.onlySsh):
-                self.runCommand("root",endsWith=tempEndsWith)
-                self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith=tempEndsWith)
+            if (isEqSetting('target','qemu')):
+                self.runCommand("root",endsWith="\r\n#")
+                self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
+            elif (not self.onlySsh):
+                self.runCommand ("root",endsWith='Password:')
+                self.runCommand (self.rootPassword,endsWith="\r\n#")
 
-            self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempEndsWith) #this is to avoid having the prompt in the set prompt command
-            self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempEndsWith)
+            self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith="\r\n#") #this is to avoid having the prompt in the set prompt command
+            self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith="\r\n#")
             self.runCommand("set prompt = \"`cat promptText.txt`\"")
            
             printAndLog (f"start: Activating ethernet and setting system time...")
