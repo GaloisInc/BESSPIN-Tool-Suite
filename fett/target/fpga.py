@@ -191,7 +191,8 @@ class fpgaTarget (commonTarget):
         try:
             self.tearDown()
             return True
-        except:
+        except Exception as exc:
+            warnAndLog ("targetTearDown: Failed to tearDown peacefully.",doPrint=False,exc=exc)
             return False
 
     @decorate.debugWrap

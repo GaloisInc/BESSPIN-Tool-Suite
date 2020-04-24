@@ -672,8 +672,9 @@ class commonTarget():
             self.fSshOut.close()
         
         self.killSshConn()
-        self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True) #Get some entropy going on
-        time.sleep(3)
+        if (not self.onlySsh):
+            self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True) #Get some entropy going on
+            time.sleep(3)
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
         try:
             self.sshProcess = pexpect.spawn(sshCommand,logfile=self.fSshOut,timeout=timeout)
@@ -718,7 +719,7 @@ class commonTarget():
         except Exception as exc:
             warnAndLog("closeSshConn: Failed to close the ssh.out file.",doPrint=False)
         self.killSshConn()
-
+        return True
 
 # END OF CLASS commonTarget
 
