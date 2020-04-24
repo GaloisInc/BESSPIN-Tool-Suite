@@ -1,5 +1,5 @@
-with "/Users/rchapman/Desktop/prog/SPARKNaCl/sparknacl_common.gpr";
-with "/Users/rchapman/Desktop/prog/SPARKNaCl/src/sparknacl.gpr";
+with "../../../../../../../../../../prog/SPARKNaCl/sparknacl_common.gpr";
+with "../../../../../../../../../../prog/SPARKNaCl/src/sparknacl.gpr";
 project SignFile
 is
    for Main use ("signfile.adb");
