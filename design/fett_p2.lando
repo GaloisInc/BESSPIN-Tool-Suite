@@ -1,4 +1,4 @@
-subsystem FETT P1
+subsystem FETT P2
 The P2 Target System Software.
 
 component P2 Target CVEs
