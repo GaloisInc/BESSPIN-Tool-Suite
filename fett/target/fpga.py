@@ -107,7 +107,9 @@ class fpgaTarget (commonTarget):
                 if listenPort is None:
                     self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
                 try:
-                    logging.getLogger('tftpy.TftpServer').setLevel(logging.ERROR)
+                    #Need to divert the tftpy logging. Otherwise, in case of debug (`-d`), our logging will get smothered.
+                    logging.getLogger('tftpy').propagate = False
+                    logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.log'),'w'))
                     server = tftpy.TftpServer(dirname)
                 except Exception as exc:
                     self.shutdownAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overwriteShutdown=True,exitCode=EXIT.Run)
