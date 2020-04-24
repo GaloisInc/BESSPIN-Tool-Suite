@@ -82,16 +82,16 @@ def buildWebserver(tarName):
 def buildDatabase(tarName):
     if (isEnabled('buildApps')):
         logAndExit (f"Building from source is not supported for the database application",
-                    exitCode=EXIT.Nothing_to_do)
+                    exitCode=EXIT.Configuration)
     else:
         # Just grab the pre-built binary
         cpFilesToBuildDir (getBinDir('database'), pattern="sqlite")
 
+        # Create the tarball here to be sent to target
         destBin = "sqlite"
         srcBin  = os.path.join(getSetting('buildDir'), "sqlite")
         tar (tarName, filesList=[(destBin, srcBin)])
 
-        #Create the tarball here to be sent to target
         setSetting('sendTarballToTarget',True)
     return
 

@@ -134,10 +134,8 @@ def tar (tarFileName, filesList=[]):
     """
     try:
         tarFile = tarfile.open(name=tarFileName, mode="x:gz")
-        if tarFile is None:
-            logAndExit (f"tar: error creating {tarFileName}", exitCode=EXIT.Tar)
     except Exception as e:
-            logAndExit (f"tar: error creating {tarFileName}", exitCode=EXIT.Tar)
+        logAndExit (f"tar: error creating {tarFileName}", exc=e, exitCode=EXIT.Tar)
     for f in filesList:
         arcname = None
         if type(f) == tuple:
@@ -146,11 +144,11 @@ def tar (tarFileName, filesList=[]):
         try:
             tarFile.add(f, arcname=arcname)
         except Exception as e:
-            logAndExit (f"tar: error adding {f} to {tarFileName}", exitCode=EXIT.Tar)
+            logAndExit (f"tar: error adding {f} to {tarFileName}", exc=e, exitCode=EXIT.Tar)
     try:
         tarFile.close()
     except Exception as e:
-            logAndExit (f"tar: error closing {tarFileName}", exitCode=EXIT.Tar)
+            logAndExit (f"tar: error closing {tarFileName}", exc=e, exitCode=EXIT.Tar)
 
 @decorate.debugWrap
 def cp (src,dest,pattern=None):

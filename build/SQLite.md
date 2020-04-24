@@ -32,7 +32,7 @@
 5. Compile `sqlite3` with CLI:
    - Compile:
    ```
-   $CC -c -o sqlite3.o sqlite3.c $CFLAGS
+   $CC -c -o sqlite3.o sqlite3.c $CFLAGS -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_FTS3_PARENTHESIS
    $CC -c -o shell.o shell.c $CFLAGS
    ```
    - Link:
