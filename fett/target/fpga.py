@@ -42,6 +42,7 @@ class fpgaTarget (commonTarget):
                         print(self.gfe.gdb_session.interrupt())
                     elif (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
                         #The following values are hardcoded as copied from GFE. When GFE updates the testing platform, we'll change this accordingly
+                        #This soft resets the processor
                         print(self.gfe.gdb_session.command("set $a0 = 0"))
                         print(self.gfe.gdb_session.command("set $a1 = 0x70000020"))
                     self.setupUart()
