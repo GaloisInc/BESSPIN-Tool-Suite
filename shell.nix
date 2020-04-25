@@ -1,1 +1,1 @@
-tool-suite/shell.nix
+tool-suite/nix/dev/fett.nix

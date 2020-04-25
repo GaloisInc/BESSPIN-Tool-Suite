@@ -1,11 +1,12 @@
 #! /usr/bin/env python3
 """
-Main logging functions
+Misc required functions for fett.py
 """
 
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess
-import tarfile
+import tarfile, sys, re
+
 from fett.base.utils import decorate
 
 # private; not available using import *
@@ -16,8 +17,7 @@ class EXIT (enum.Enum):
     Unspecified = enum.auto()
     Nothing_to_do = enum.auto()
     Configuration = enum.auto()
-    Create_path = enum.auto()
-    File_read = enum.auto()
+    Files_and_paths = enum.auto()
     Environment = enum.auto()
     Implementation = enum.auto()
     Copy_and_Move = enum.auto()
@@ -110,6 +110,9 @@ def isEnabled(setting):
 def isEqSetting (setting,val):
     return (getSetting(setting) == val)
 
+def doesSettingExist (setting):
+    return (setting in _settings)
+
 def dumpSettings ():
     logging.debug(f"settings = {_settings}")
 
@@ -118,7 +121,7 @@ def mkdir(dirPath, addToSettings=None):
         os.mkdir(dirPath)
         logging.debug(f"Created directory <{dirPath}>.")
     except Exception as exc:
-        logAndExit (f"Failed to create <{dirPath}>.",exitCode=EXIT.Create_path,exc=exc)
+        logAndExit (f"Failed to create <{dirPath}>.",exitCode=EXIT.Files_and_paths,exc=exc)
     if (addToSettings):
         setSetting(addToSettings,dirPath)
 
@@ -257,10 +260,25 @@ def ftOpenFile (filePath,mode):
         getSetting('trash').throwFile(xFile)
         return xFile
     except Exception as exc:
-        logAndExit (f"Failed to open <{filePath}> to {modeName}.",exc=exc,exitCode=EXIT.Create_path)    
+        logAndExit (f"Failed to open <{filePath}> to {modeName}.",exc=exc,exitCode=EXIT.Files_and_paths)    
 
-
-
+def ftReadLines (filePath):
+    xFile = ftOpenFile (filePath,'r')
+    try:
+        lines = xFile.read().splitlines()
+        xFile.close()
+        return lines
+    except Exception as exc:
+        logAndExit (f"Failed to read lines from <{filePath}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    
+def matchExprInLines (expr,lines):
+    if (not lines):
+        return None
+    for line in lines:
+        xMatch = re.match(expr,line)
+        if (xMatch is not None):
+            return xMatch
+    return None
 
 
 
