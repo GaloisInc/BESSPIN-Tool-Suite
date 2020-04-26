@@ -15,7 +15,7 @@ def loadJsonFile (jsonFile):
         jsonData = json.load(fJson)
         fJson.close()
     except Exception as exc:
-        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.File_read)
+        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
 @decorate.debugWrap
@@ -31,7 +31,7 @@ def loadConfiguration(configFile):
         xConfig.read_file(fConfig)
         fConfig.close()
     except Exception as exc:
-        logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc,exitCode=EXIT.File_read)
+        logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
     #loading the configuration parameters data
     configDataFile = getSetting('jsonDataFile')
@@ -55,7 +55,7 @@ def loadConfiguration(configFile):
     else:
         logAndExit(f"Failed to determine the processor flavor <chisel or bluespec>.",exitCode=EXIT.Dev_Bug)
     # Create an isUnix setting
-    setSetting('isUnix',getSetting('osImage') in ['debian', 'FreeBSD'])
+    setSetting('isUnix',getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])
 
     printAndLog('Configuration loaded successfully.')
     dumpSettings()

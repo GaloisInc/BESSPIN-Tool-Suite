@@ -21,7 +21,7 @@
         {
             "name" : "osImage",
             "type" : "string",
-            "choices" : [ "debian", "FreeRTOS", "FreeBSD" ]
+            "choices" : [ "debian", "FreeRTOS", "FreeBSD", "busybox" ]
         },
         {
             "name" : "elfLoader",

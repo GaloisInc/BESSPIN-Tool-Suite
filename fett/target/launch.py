@@ -28,8 +28,8 @@ def startFett ():
         logAndExit(f"{getSetting('osImage')} is not compatible with <{getSetting('processor')}>.",exitCode=EXIT.Configuration)
 
     #qemu on FreeRTOS?
-    if (isEqSetting('osImage','FreeRTOS') and isEqSetting('target','qemu')):
-        logAndExit (f"Qemu is not implemented for FreeRTOS.",exitCode=EXIT.Implementation)
+    if ((getSetting('osImage') in ['FreeRTOS','busybox']) and isEqSetting('target','qemu')):
+        logAndExit (f"Qemu is not implemented for {getSetting('osImage')}.",exitCode=EXIT.Implementation)
 
     #Console mode on FreeRTOS?
     if (isEqSetting('osImage','FreeRTOS') and isEnabled('openConsole')):
@@ -58,6 +58,8 @@ def prepareEnv ():
     # config sanity checks for building apps
     setSetting('runApp',True)
     if (isEqSetting('osImage','FreeRTOS')):
+        setSetting('webserver',False) 
+        setSetting('database',False) 
         if (not isEnabled('https') and not isEnabled('ota')):
             warnAndLog (f"All FreeRTOS apps are switched off.")
             exitFett (EXIT.Nothing_to_do)
@@ -65,6 +67,8 @@ def prepareEnv ():
             warnAndLog (f"<https> and <ota> are mutually exclusive. <ota> is going to be ignored.")
             setSetting('ota',False)
     elif (isEqSetting('osImage','FreeBSD') or isEqSetting('osImage','debian')):
+        setSetting('https',False) 
+        setSetting('ota',False) 
         if (not isEnabled('webserver') and not isEnabled('database')):
             if (not isEnabled('openConsole')):
                 warnAndLog (f"All {getSetting('osImage')} apps are switched off, and <openConsole> is disabled.")
@@ -76,6 +80,13 @@ def prepareEnv ():
         if (isEnabled('webserver') and isEnabled('database')):
             warnAndLog (f"<webserver> and <database> are mutually exclusive. <webserver> is going to be ignored.")
             setSetting('webserver',False) 
+    elif (isEqSetting('osImage','busybox')):
+        printAndLog(f"<busybox> is only used for smoke testing the target/network. No applications are supported.")
+        setSetting('runApp',False)
+        setSetting('webserver',False) 
+        setSetting('database',False) 
+        setSetting('https',False) 
+        setSetting('ota',False) 
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
     
@@ -86,7 +97,6 @@ def prepareEnv ():
     if (isEqSetting('target','fpga')):
         fpga.programBifile()
         fpga.resetEthAdaptor()
-
     printAndLog (f"Environment is ready.")
 
 """ This is the loading/booting function """
@@ -94,7 +104,7 @@ def prepareEnv ():
 @decorate.timeWrap
 def launchFett ():
     printAndLog (f"Launching FETT...")
-    xTarget = getClassType()
+    xTarget = getClassType()()
     xTarget.start()
     if (isEnabled('isUnix')):
         xTarget.createUser()
@@ -116,7 +126,7 @@ def getClassType():
     if (isEqSetting('target','aws')):
         logAndExit (f"<launch.getClassType> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
     elif (isEqSetting('target','qemu')):
-        return qemu.qemuTarget()
+        return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):
         gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
         if (gfeTestingScripts not in os.environ):
