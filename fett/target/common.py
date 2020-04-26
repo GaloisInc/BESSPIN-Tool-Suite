@@ -769,4 +769,9 @@ def charByCharEncoding (inBytes):
         textBack += xChar
     return textBack
 
+def randomPassword(length):
+    chars = string.ascii_letters + string.digits + '!@#$%^&*()'
+    rnd = random.SystemRandom()
+    return ''.join(rnd.choice(chars) for i in range(length))
+
 
