@@ -161,6 +161,8 @@ class commonTarget():
             time.sleep (0.3) #to make it beautiful
             #logging in
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
+            # updated root password by random generated password
+            self.rootPassword = randomPassword(14)
             self.runCommand ("root",endsWith="Password:")
             self.runCommand (self.rootPassword)
         elif (isEqSetting('osImage','busybox')):
@@ -195,7 +197,8 @@ class commonTarget():
             self.boot(endsWith=bootEndsWith, timeout=timeout)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
-                
+            # updated root password by random generated password
+            self.rootPassword = randomPassword(14)
             # fpga freebsd would be already logged in if onlySsh
             if (isEqSetting('target','qemu')):
                 self.runCommand("root",endsWith="\r\n#")
