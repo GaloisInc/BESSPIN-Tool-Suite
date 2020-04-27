@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 
 import os, sys, glob
 import pexpect, subprocess, threading
-import time, random
+import time, random, secrets
 import string, re
 import socket, errno, pty, termios
 from collections import Iterable
@@ -773,8 +773,7 @@ def charByCharEncoding (inBytes):
     return textBack
 
 def randomPassword(length):
-    chars = string.ascii_letters + string.digits + '!@#$%^&*()'
-    rnd = random.SystemRandom()
-    return ''.join(rnd.choice(chars) for i in range(length))
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*(-_=+)"
+    return ''.join(secrets.choice(alphabet) for i in range(length))
 
 
