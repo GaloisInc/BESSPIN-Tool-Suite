@@ -1,10 +1,6 @@
 subsystem FETT Runner
 The system used to bring up a target software stack (P1 or P2 + App).
 
-// @todo abakst it's obvious I don't _really_ understand
-// what these things are, so this needs to be fixed before
-// this spec is done !
-
 component Linux Host
 The host Linux system. This system is connected to the FPGA, which itself
 contains the CloudGFE.
