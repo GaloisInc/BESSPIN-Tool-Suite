@@ -161,8 +161,6 @@ class commonTarget():
             time.sleep (0.3) #to make it beautiful
             #logging in
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
-            # updated root password by random generated password
-            self.rootPassword = randomPassword(14)
             self.runCommand ("root",endsWith="Password:")
             self.runCommand (self.rootPassword)
         elif (isEqSetting('osImage','busybox')):
@@ -197,8 +195,6 @@ class commonTarget():
             self.boot(endsWith=bootEndsWith, timeout=timeout)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
-            # updated root password by random generated password
-            self.rootPassword = randomPassword(14)
             # fpga freebsd would be already logged in if onlySsh
             if (isEqSetting('target','qemu')):
                 self.runCommand("root",endsWith="\r\n#")
@@ -226,11 +222,30 @@ class commonTarget():
                 self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
                 self.runCommand("chmod +x addEntropyDebian.riscv")
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
+                # updated root password by random generated password
+                self.rootPassword = randomPassword(14)
             elif (isEqSetting('osImage','FreeBSD')):
                 self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
+                # updated root password by random generated password
+                self.rootPassword = randomPassword(14)
                                 
             printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def changeRootPassword(self):
+        printAndLog(f"Changing the root password...")
+        if isEqSetting('osImage', 'debian'):
+            self.runCommand(f"passwd root", endsWith="New password:")
+            self.runCommand(self.rootPassword, endsWith="Retype new password:")
+            self.runCommand(self.rootPassword, expectedContents='password updated successfully')
+        elif isEqSetting('osImage', 'FreeBSD'):
+            printAndLog(f"Not yet implemented...")
+        else:
+            self.shutdownAndExit(
+                f"<update root password> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",
+                overwriteConsole=True, exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
     @decorate.timeWrap
