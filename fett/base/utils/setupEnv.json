@@ -68,6 +68,9 @@
                 "busybox" : {
                     "fpga" : "FETT_GFE_BUSYBOX_FPGA"
                 },
+                "FreeRTOS" : {
+                    "fpga" : "FETT_GFE_FREERTOS_FPGA"
+                },
                 "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR"
             }
         },
