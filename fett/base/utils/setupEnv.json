@@ -83,6 +83,11 @@
             "name" : "tarballName",
             "type" : "string",
             "val" : "filesToSend.tar.gz"
+        },
+        {
+            "name" : "FreeRTOSfork",
+            "type" : "dirPath",
+            "val" : "FreeRTOSmirror"
         }
     ] 
 }

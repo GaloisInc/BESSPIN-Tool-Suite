@@ -42,7 +42,10 @@ def prepareFreeRTOS():
         importImage()
     else: #build it
         # Check if FreeRTOS mirror is checked out
-        logAndExit (f"Building FreeRTOS kernel is not yet implemented.",exitCode=EXIT.Implementation)
+        if (len(os.listdir(getSetting('FreeRTOSfork'))) == 0):
+            logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSfork')}> seems not checked-out properly. Please use <git submodule update>.",exitCode=EXIT.Environment)
+
+        logAndExit (f"Building FreeRTOS kernel is not yet fully implemented.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
 @decorate.timeWrap
