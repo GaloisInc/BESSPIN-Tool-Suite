@@ -87,7 +87,7 @@
         {
             "name" : "FreeRTOSfork",
             "type" : "dirPath",
-            "val" : "FreeRTOSmirror"
+            "val" : "FreeRTOS-mirror"
         }
     ] 
 }
