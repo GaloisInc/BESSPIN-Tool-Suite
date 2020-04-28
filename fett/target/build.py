@@ -63,7 +63,7 @@ def prepareFreeRTOS():
         if (isEqSetting('cross-compiler','Clang')):
             logAndExit(f"<Clang> is not yet supported for FreeRTOS.",exitCode=EXIT.Implementation)
 
-
+        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'))
 
         logAndExit (f"Building FreeRTOS kernel is not yet fully implemented.",exitCode=EXIT.Implementation)
 
