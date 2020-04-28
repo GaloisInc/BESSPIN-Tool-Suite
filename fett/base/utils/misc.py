@@ -185,6 +185,19 @@ def cp (src,dest,pattern=None):
             logAndExit (f"Failed to copy <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
 
 @decorate.debugWrap
+def renameFile (src,dest):
+    if ((not src) or (not dest)):
+        logAndExit(f"renameFile: source or destination cannot be of NoneType", exitCode=EXIT.Dev_Bug)
+
+    if (not os.path.isfile(src)):
+        logAndExit (f"renameFile: <{src}> is not a valid file.",exitCode=EXIT.Copy_and_Move)
+
+    try:
+        os.rename(src,dest)
+    except Exception as exc:
+        logAndExit (f"Failed to rename <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+
+@decorate.debugWrap
 def copyDir(src,dest,renameDest=False,copyContents=False):
     if ((not src) or (not dest)):
         logAndExit(f"copyDir: source or destination cannot be of NoneType", exitCode=EXIT.Dev_Bug)
