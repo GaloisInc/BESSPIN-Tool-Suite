@@ -174,7 +174,7 @@ class commonTarget():
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
         elif (isEqSetting('osImage','FreeRTOS')):
             self.boot (endsWith=">>>Beginning of Fett<<<",timeout=30)
-            printAndLog (f"{getSetting('osImage')} has successfully started.\n")
+            printAndLog (f"{getSetting('osImage')} has successfully started.")
         elif (isEqSetting('osImage','FreeBSD')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             if (isEqSetting('target','fpga')):
