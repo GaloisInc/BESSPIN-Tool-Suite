@@ -56,7 +56,7 @@ def buildOta():
 def buildWebserver(tarName):
     if (isEnabled('buildApps')):
         logAndExit (f"Building from source is not supported for the webserver application",
-                    exitCode=EXIT.Nothing_to_do)
+                    exitCode=EXIT.Configuration)
     else:
         cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
         cpDirToBuildDir(os.path.join(getBinDir('webserver'), "conf"))

@@ -27,5 +27,5 @@ def runApp (target):
         outLog += target.runCommand("service nginx start")[1]
     else:
         logAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
-                     exitCode=EXIT.Configurations)
+                     exitCode=EXIT.Configuration)
     return outLog
