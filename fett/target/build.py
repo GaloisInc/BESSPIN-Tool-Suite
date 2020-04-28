@@ -63,7 +63,9 @@ def prepareFreeRTOS():
         if (isEqSetting('cross-compiler','Clang')):
             logAndExit(f"<Clang> is not yet supported for FreeRTOS.",exitCode=EXIT.Implementation)
 
-        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'))
+        #copy the C files, .mk files, and any directory
+        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
+        renameFile(os.path.join(getSetting('buildDir'),'traceHooks.h'),os.path.join(getSetting('buildDir'),'testgenTraceHooks.h'))
 
         logAndExit (f"Building FreeRTOS kernel is not yet fully implemented.",exitCode=EXIT.Implementation)
 
