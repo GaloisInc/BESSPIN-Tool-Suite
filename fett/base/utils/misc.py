@@ -208,12 +208,6 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
     if(renameDest and copyContents): #that doesn't make sense
         logAndExit(f"copyDir: Cannot call with both renameDest and copyContents.", exitCode=EXIT.Dev_Bug)
 
-    def copyTree (srcTree,destTree):
-        try:
-            shutil.copytree(srcTree, os.path.join(destTree,os.path.basename(os.path.normpath(srcTree))))
-        except Exception as exc:
-            logAndExit (f"Failed to copy directory <{srcTree}> to <{destTree}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
-
     if (copyContents):
         #first, copy files
         cp(src,dest,pattern='*')
@@ -223,7 +217,10 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
         for xDir in listDirs:
             copyDir(os.path.join(src,xDir),dest)
     else:
-        copyTree(src,dest)
+        try:
+            shutil.copytree(src, os.path.join(dest,os.path.basename(os.path.normpath(src))))
+        except Exception as exc:
+            logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
 
 @decorate.debugWrap
 def make (argsList,dirPath):
