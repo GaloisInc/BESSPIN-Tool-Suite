@@ -91,7 +91,7 @@ def prepareFreeRTOS():
         envVars.append(f"INC_TESTGEN={getSetting('buildDir')}") #to be changed in the new fork
         logging.debug(f"going to make using {envVars}")
         make (envVars,getSetting('FreeRTOSprojDir'))
-        
+
         #check if the elf file was created
         builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_testgen.elf') #to be changed in the new fork
         if (not os.path.isfile(builtElf)):
@@ -102,8 +102,7 @@ def prepareFreeRTOS():
         #Cleaning all ".o" files post run
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
-
-        logAndExit (f"Building FreeRTOS kernel is not yet fully implemented.",exitCode=EXIT.Implementation)
+    return
 
 @decorate.debugWrap
 @decorate.timeWrap

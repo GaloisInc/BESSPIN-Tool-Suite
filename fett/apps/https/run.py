@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ 
-This is executed after loading the app on the target to execute this app
+This is executed after loading the app on the target to execute this app (HTTPS)
 """
 
 from fett.base.utils.misc import *
@@ -10,5 +10,5 @@ from fett.base.utils.misc import *
 def runApp (target):
     # target is a fett target object
     outLog = ''
-    outLog += target.runCommand("echo \"Executing app...\"")
+    outLog += target.runCommand("runHttps",endsWith=">>>End of Fett<<<",timeout=15)
     return outLog
