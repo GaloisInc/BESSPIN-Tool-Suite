@@ -230,7 +230,7 @@ def make (argsList,dirPath):
     if ((not dirPath) or (argsList is None)):
         logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
     # open a file for stdout/stderr
-    outMake = ftOpenFile(os.path.join(getSetting('workDir'),'make.out'),'a')
+    outMake = ftOpenFile(os.path.join(getSetting('buildDir'),'make.out'),'a')
 
     argsList = ['make','-C',dirPath] + argsList
     logging.info(f"Executing <{' '.join(argsList)}>. Command output is appended to <{outMake.name}>.")
