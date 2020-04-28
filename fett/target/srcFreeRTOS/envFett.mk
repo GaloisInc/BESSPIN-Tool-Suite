@@ -9,4 +9,4 @@ INCLUDES += -I$(INC_TESTGEN)/lib
 INCLUDES += -I$(INC_TESTGEN)
 CFLAGS := $(filter-out -Werror,$(CFLAGS))
 
-include $(INC_TESTGEN)/appEnv.mk
+include $(INC_TESTGEN)/envApp.mk
