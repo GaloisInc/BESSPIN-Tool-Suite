@@ -70,6 +70,9 @@ def buildWebserver(tarName):
         elif getSetting('osImage') == 'FreeBSD':
             cpFilesToBuildDir (getBinDir('webserver'), pattern="rcfile")
             tarFiles += ["rcfile"]
+        else:
+            logAndExit (f"Installing nginx is not supported on <{getSetting('osImage')}>",
+                        exitCode=EXIT.Dev_Bug)
 
         #Create the tarball here to be sent to target
         tar (tarName, filesList=map(buildDirPathTuple, tarFiles))
