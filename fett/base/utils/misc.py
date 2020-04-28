@@ -185,6 +185,19 @@ def cp (src,dest,pattern=None):
             logAndExit (f"Failed to copy <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
 
 @decorate.debugWrap
+def copyDir(src,dest):
+    if ((not src) or (not dest)):
+        logAndExit(f"copyDir: source or destination cannot be of NoneType", exitCode=EXIT.Dev_Bug)
+    if (not os.path.isdir(src)):
+        logAndExit(f"copyDir: invalid source dir <{src}>.",exitCode=EXIT.Copy_and_Move)
+    if (not os.path.isdir(dest)):
+        logAndExit(f"copyDir: invalid destination dir <{dest}>.",exitCode=EXIT.Copy_and_Move)
+    try:
+        shutil.copytree(src, os.path.join(dest, os.path.basename(os.path.normpath(src))))
+    except Exception as exc:
+        logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+
+@decorate.debugWrap
 def make (argsList,dirPath):
     if ((not dirPath) or (argsList is None)):
         logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
