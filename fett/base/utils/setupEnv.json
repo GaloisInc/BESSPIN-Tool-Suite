@@ -85,9 +85,14 @@
             "val" : "filesToSend.tar.gz"
         },
         {
-            "name" : "FreeRTOSfork",
-            "type" : "dirPath",
+            "name" : "FreeRTOSforkName",
+            "type" : "string",
             "val" : "FreeRTOS-mirror"
+        },
+        {
+            "name" : "FreeRTOSprojName",
+            "type" : "string",
+            "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
         }
     ] 
 }

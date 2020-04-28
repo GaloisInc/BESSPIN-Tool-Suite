@@ -51,9 +51,18 @@ def prepareFreeRTOS():
     if (not isEnabled('buildApps')): #just fetch the image
         importImage()
     else: #build it
-        # Check if FreeRTOS mirror is checked out
-        if (len(os.listdir(getSetting('FreeRTOSfork'))) == 0):
-            logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSfork')}> seems not checked-out properly. Please use <git submodule update>.",exitCode=EXIT.Environment)
+        # Check if FreeRTOS mirror is checked out properly
+        forkDir = os.path.join(getSetting('repoDir'),getSetting('FreeRTOSforkName'))
+        setSetting('FreeRTOSforkDir',forkDir)
+        if (not os.path.isdir(getSetting('FreeRTOSforkDir'))):
+            logAndExit (f"Failed to find the FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}>. Please use <git submodule update --init>.",exitCode=EXIT.Environment)
+        if (len(os.listdir(getSetting('FreeRTOSforkDir'))) == 0):
+            logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}> is empty. Please use <git submodule update>.",exitCode=EXIT.Environment)
+
+        projDir = os.path.join(getSetting('FreeRTOSforkDir'),getSetting('FreeRTOSprojName'))
+        setSetting('FreeRTOSprojDir',projDir)
+        if (not os.path.isdir(getSetting('FreeRTOSprojDir'))):
+            logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
 
         #cross-compiling sanity checks
         if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
@@ -70,14 +79,14 @@ def prepareFreeRTOS():
         renameFile(os.path.join(getSetting('buildDir'),'envFett.mk'),os.path.join(getSetting('buildDir'),'testgenEnvironment.mk'))        
 
         #Cleaning all ".o" and ".elf" files in site
-        cleanDirectory (getSetting('FreeRTOSfork'),endsWith='.o')
-        cleanDirectory (getSetting('FreeRTOSfork'),endsWith='.elf')
+        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
+        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
 
         #Compile
 
         #Cleaning all ".o" files post run
-        cleanDirectory (getSetting('FreeRTOSfork'),endsWith='.o')
-        cleanDirectory (getSetting('FreeRTOSfork'),endsWith='.elf')
+        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
+        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
 
         logAndExit (f"Building FreeRTOS kernel is not yet fully implemented.",exitCode=EXIT.Implementation)
 
