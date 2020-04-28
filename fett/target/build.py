@@ -65,7 +65,19 @@ def prepareFreeRTOS():
 
         #copy the C files, .mk files, and any directory
         copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
+        #these should be temporary until we figure out the new fork
         renameFile(os.path.join(getSetting('buildDir'),'traceHooks.h'),os.path.join(getSetting('buildDir'),'testgenTraceHooks.h'))
+        renameFile(os.path.join(getSetting('buildDir'),'envFett.mk'),os.path.join(getSetting('buildDir'),'testgenEnvironment.mk'))        
+
+        #Cleaning all ".o" and ".elf" files in site
+        cleanDirectory (getSetting('FreeRTOSfork'),endsWith='.o')
+        cleanDirectory (getSetting('FreeRTOSfork'),endsWith='.elf')
+
+        #Compile
+
+        #Cleaning all ".o" files post run
+        cleanDirectory (getSetting('FreeRTOSfork'),endsWith='.o')
+        cleanDirectory (getSetting('FreeRTOSfork'),endsWith='.elf')
 
         logAndExit (f"Building FreeRTOS kernel is not yet fully implemented.",exitCode=EXIT.Implementation)
 
@@ -105,4 +117,21 @@ def importImage():
         else:
             logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
     logging.info(f"{getSetting('osImage')} image imported successfully.")
+
+@decorate.debugWrap
+def cleanDirectory (xDir,endsWith='.o'):
+    if ((not xDir) or (not os.path.isdir(xDir))):
+        logAndExit(f"cleanDirectory: <{xDir}> is not a valid directory.", exitCode=EXIT.Dev_Bug)
+
+    if (not isinstance(endsWith,str)):
+        logAndExit(f"cleanDirectory: <{endsWith}> has to be a string.", exitCode=EXIT.Dev_Bug)
+
+    for xDirName, xDirList, xFilesList in os.walk(xDir):
+        for xFile in xFilesList:
+            if (xFile.endswith(endsWith)):
+                try:
+                    os.remove(os.path.join(xDirName,xFile))
+                except Exception as exc:
+                    logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.", exitCode=EXIT.Files_and_paths)
+
 
