@@ -109,12 +109,6 @@ def launchFett ():
     if (isEnabled('isUnix')):
         xTarget.changeRootPassword()
         xTarget.createUser()
-        # test users
-        xTarget.switchUser()
-        xTarget.runCommand("echo $USER")
-        xTarget.switchUser()
-        xTarget.runCommand("echo $USER")
-
     if (isEnabled('runApp')):
         xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
     if(isEnabled('openConsole')):

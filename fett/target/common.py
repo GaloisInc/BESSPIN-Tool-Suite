@@ -44,7 +44,7 @@ class commonTarget():
         self.sshRetries = 0
         self.sshLimitRetries = 3
         self.sshECDSAkeyWasUpdated = False
-        
+
         self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
 
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
@@ -156,8 +156,8 @@ class commonTarget():
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
-            self.boot(endsWith="login:",timeout=timeout)    
-            self.stopShowingTime.set() 
+            self.boot(endsWith="login:",timeout=timeout)
+            self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             #logging in
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
@@ -206,7 +206,7 @@ class commonTarget():
             self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith="\r\n#") #this is to avoid having the prompt in the set prompt command
             self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith="\r\n#")
             self.runCommand("set prompt = \"`cat promptText.txt`\"")
-           
+
             printAndLog (f"start: Activating ethernet and setting system time...")
         else:
             self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
@@ -222,19 +222,15 @@ class commonTarget():
                 self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
                 self.runCommand("chmod +x addEntropyDebian.riscv")
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
-                # updated root password by random generated password
-                self.rootPassword = randomPassword(14)
             elif (isEqSetting('osImage','FreeBSD')):
                 self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
-                # updated root password by random generated password
-                self.rootPassword = randomPassword(14)
-                                
             printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def changeRootPassword(self):
+    def changeRootPassword(self,random_passwd=True):
+        self.rootPassword = randomPassword(14) if random_passwd else "!@#$%^&*(-_=+)"
         printAndLog(f"Changing the root password...")
         if isEqSetting('osImage', 'debian'):
             self.runCommand(f"passwd root", endsWith="New password:")
@@ -290,7 +286,7 @@ class commonTarget():
             else:
                 return "\$"
         else:
-            self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation) 
+            self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
     def getAllEndsWith (self):
@@ -301,7 +297,7 @@ class commonTarget():
         elif (isEqSetting('osImage','busybox')):
             return ["~ #", "\$"]
         else:
-            self.shutdownAndExit(f"<getAllEndsWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation) 
+            self.shutdownAndExit(f"<getAllEndsWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -331,7 +327,7 @@ class commonTarget():
                         errorAndLog (f"runCommand: Missing <{content}> while executing <{command}>.",doPrint=not suppressErrors)
                         break #One error per command is enough
         if (erroneousContents is not None):
-            if (isinstance(erroneousContents,str)): #only one string               
+            if (isinstance(erroneousContents,str)): #only one string
                 if (erroneousContents in textBack):
                     isSuccess = False
                     errorAndLog (f"runCommand: Encountered <{erroneousContents}> while executing <{command}>.",doPrint=not suppressErrors)
@@ -414,10 +410,10 @@ class commonTarget():
             self.keyboardInterrupt (shutdownOnError=True)
 
         else: #send the file through netcat
-            if (isEqSetting('osImage','debian')): 
+            if (isEqSetting('osImage','debian')):
                 listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
             elif (isEqSetting('osImage','FreeBSD')):
-                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))             
+                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
             listenOnTarget.daemon = True
             getSetting('trash').throwThread(listenOnTarget,f"nc listening for <{xFile}> on Target")
             sendFromHost = threading.Thread(target=subprocess.call, kwargs=dict(args=f"nc -w 1 {self.ipTarget} {self.portHost} <{pathToFile}/{xFile}",shell=True))
@@ -454,7 +450,7 @@ class commonTarget():
                 raise
         except Exception as exc:
             return returnFalse (f"sendFile: Failed to obtain the checksum of <{xFile}> from target.",exc=exc)
-        
+
         if (shaSumRX != shaSumTX):
             return returnFalse(f"sendFile: Checksum from <{xFile}> on target does not match.")
         self.resendAttempts = 0 #reset
@@ -637,7 +633,7 @@ class commonTarget():
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','FreeBSD') and (self.onlySsh)):
             dumpSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=[self.getDefaultEndWith(),pexpect.EOF],timeout=60,suppressErrors=True,shutdownOnError=False)
-            isSuccess = self.closeSshConn() 
+            isSuccess = self.closeSshConn()
         elif (isEqSetting('osImage','FreeBSD')):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
@@ -669,7 +665,7 @@ class commonTarget():
 
         if (getSetting('osImage') not in ['FreeBSD','debian']):
             self.shutdownAndExit(f"<openSshConn> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
-        
+
         if (self.sshRetries >= self.sshLimitRetries): #to protect it from excessive attempts
             return False
 
@@ -686,7 +682,7 @@ class commonTarget():
                 warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",doPrint=False)
             self.sshECDSAkeyWasUpdated = True
             self.fSshOut.close()
-        
+
         self.killSshConn()
         if (not self.onlySsh):
             self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True) #Get some entropy going on
@@ -712,7 +708,7 @@ class commonTarget():
         self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
         return True
-        
+
     @decorate.debugWrap
     def killSshConn (self): #Only for FreeBSD and Debian
         if (self.sshProcess is not None):
