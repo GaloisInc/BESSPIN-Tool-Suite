@@ -241,7 +241,9 @@ class commonTarget():
             self.runCommand(self.rootPassword, endsWith="Retype new password:")
             self.runCommand(self.rootPassword, expectedContents='password updated successfully')
         elif isEqSetting('osImage', 'FreeBSD'):
-            printAndLog(f"Not yet implemented...")
+            self.runCommand(f"passwd root",expectedContents='Changing local password for root', endsWith="New Password:")
+            self.runCommand(self.rootPassword, endsWith="Retype New Password:")
+            self.runCommand(self.rootPassword)
         else:
             self.shutdownAndExit(
                 f"<update root password> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",
