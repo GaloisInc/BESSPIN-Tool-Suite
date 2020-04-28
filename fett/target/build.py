@@ -83,6 +83,21 @@ def prepareFreeRTOS():
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
 
         #Compile
+        printAndLog (f"Cross-compiling...")
+        envVars = []
+        envVars.append(f"XLEN={getSetting('xlen')}")
+        envVars.append(f"USE_CLANG={int(isEqSetting('cross-compiler','Clang'))}")
+        envVars.append(f"PROG=main_testgen") #to be changed in the new fork
+        envVars.append(f"INC_TESTGEN={getSetting('buildDir')}") #to be changed in the new fork
+        logging.debug(f"going to make using {envVars}")
+        make (envVars,getSetting('FreeRTOSprojDir'))
+        
+        #check if the elf file was created
+        builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_testgen.elf') #to be changed in the new fork
+        if (not os.path.isfile(builtElf)):
+            logAndExit(f"<make> executed without errors, but cannot fine <{builtElf}>.",exitCode=EXIT.Run)
+        cp(builtElf,getSetting('osImageElf'))
+        printAndLog(f"Files cross-compiled successfully.")
 
         #Cleaning all ".o" files post run
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
