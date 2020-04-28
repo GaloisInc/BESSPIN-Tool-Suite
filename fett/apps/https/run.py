@@ -10,5 +10,5 @@ from fett.base.utils.misc import *
 def runApp (target):
     # target is a fett target object
     outLog = ''
-    outLog += target.runCommand("runHttps",endsWith=">>>End of Fett<<<",timeout=15)
+    outLog += target.runCommand("runHttps",endsWith=">>>End of Fett<<<",timeout=15)[1]
     return outLog
