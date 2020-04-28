@@ -27,7 +27,7 @@ def buildApps ():
     elif (isEnabled('ota')):
         buildOta()
     elif (isEnabled('webserver')):
-        buildWebserver()
+        buildWebserver(tarName)
     elif (isEnabled('database')):
         buildDatabase(tarName)
 
@@ -62,11 +62,30 @@ def buildOta():
 """ Special building for 'webserver' """
 @decorate.debugWrap
 @decorate.timeWrap
-def buildWebserver():
-    cpFilesToBuildDir (getSourceDir('webserver'))
+def buildWebserver(tarName):
     if (isEnabled('buildApps')):
-        crossCompileUnix()
-    #Create the tarball here to be sent to target
+        logAndExit (f"Building from source is not supported for the webserver application",
+                    exitCode=EXIT.Configuration)
+    else:
+        cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
+        cpDirToBuildDir(os.path.join(getBinDir('webserver'), "conf"))
+        cpDirToBuildDir(os.path.join(getBinDir('webserver'), "html"))
+
+        tarFiles = ["nginx", "conf", "html"]
+
+        if getSetting('osImage') == 'debian':
+            cpFilesToBuildDir (getBinDir('webserver'), pattern="nginx.service")
+            tarFiles += ["nginx.service"]
+        elif getSetting('osImage') == 'FreeBSD':
+            cpFilesToBuildDir (getBinDir('webserver'), pattern="rcfile")
+            tarFiles += ["rcfile"]
+        else:
+            logAndExit (f"Installing nginx is not supported on <{getSetting('osImage')}>",
+                        exitCode=EXIT.Dev_Bug)
+
+        #Create the tarball here to be sent to target
+        tar (tarName, filesList=map(buildDirPathTuple, tarFiles))
+        setSetting('sendTarballToTarget',True)
     return
 
 """ Special building for 'database' """
@@ -105,6 +124,14 @@ def cpFilesToBuildDir (sourceDir, pattern=None):
     if pattern is None:
         pattern = "*.c" if isEnabled('buildApps') else "*.riscv"
     cp (sourceDir,getSetting('buildDir'),pattern=pattern)
+
+@decorate.debugWrap
+def cpDirToBuildDir(sourceDir):
+    copyDir(sourceDir, getSetting('buildDir'))
+
+@decorate.debugWrap
+def buildDirPathTuple(path):
+    return (path, os.path.join(getSetting('buildDir'), path))
 
 @decorate.debugWrap
 @decorate.timeWrap

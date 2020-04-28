@@ -89,6 +89,8 @@ class qemuTarget (commonTarget):
             printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
         try:
             self.process.interact(escape_character='\x05')
+            #escaping interact closes the logFile, which will make any read/write fail inside pexpect logging
+            self.fTtyOut = ftOpenFile(self.fTtyOut.name,self.fTtyOut.mode)
         except Exception as exc:
             errorAndLog(f"Failed to open interactive mode.",exc=exc)
 

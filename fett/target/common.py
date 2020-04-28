@@ -68,10 +68,10 @@ class commonTarget():
                 self.stopShowingTime.set()
             except:
                 pass
-        errorAndLog(message)
+        errorAndLog(message,exc=exc)
         if ((not overwriteShutdown) and (not isEqSetting('osImage','FreeRTOS'))):
             self.shutdown(overwriteConsole=overwriteConsole,isError=True)
-        logAndExit("",exc=exc,exitCode=exitCode)
+        logAndExit("",exitCode=exitCode)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -619,7 +619,6 @@ class commonTarget():
         elif (isEqSetting('osImage','FreeBSD')):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
-            self.runCommand (" ") #to clear any remaining messages
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
             if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
                 isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)

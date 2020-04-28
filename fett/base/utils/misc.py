@@ -203,6 +203,7 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
         logAndExit(f"copyDir: source or destination cannot be of NoneType", exitCode=EXIT.Dev_Bug)
     if (not os.path.isdir(src)):
         logAndExit(f"copyDir: invalid source dir <{src}>.",exitCode=EXIT.Copy_and_Move)
+
     if ((not renameDest) and (not os.path.isdir(dest))):
         logAndExit(f"copyDir: invalid destination dir <{dest}>.",exitCode=EXIT.Copy_and_Move)
     if(renameDest and copyContents): #that doesn't make sense
