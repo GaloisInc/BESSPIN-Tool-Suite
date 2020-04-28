@@ -38,12 +38,32 @@ def prepareFreeRTOS():
     2. If 'buildApps' is disabled && useCustomImage is disabled --> Nix
     3. If 'buildApps' is disabled && useCustomImage is enabled --> customImage
     """
+
+    #Console mode on FreeRTOS?
+    if (isEqSetting('osImage','FreeRTOS') and isEnabled('openConsole')):
+        warnAndLog (f"Unable to <openConsole> on FreeRTOS. This will be switched off.", doPrint=False)
+        setSetting('openConsole',False)
+    #Netboot on FreeRTOS?
+    if (isEqSetting('osImage','FreeRTOS') and isEqSetting('elfLoader','netboot')):
+        warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
+        setSetting('elfLoader','JTAG')
+
     if (not isEnabled('buildApps')): #just fetch the image
         importImage()
     else: #build it
         # Check if FreeRTOS mirror is checked out
         if (len(os.listdir(getSetting('FreeRTOSfork'))) == 0):
             logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSfork')}> seems not checked-out properly. Please use <git submodule update>.",exitCode=EXIT.Environment)
+
+        #cross-compiling sanity checks
+        if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
+            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
+            setSetting('linker','GCC')
+
+        if (isEqSetting('cross-compiler','Clang')):
+            logAndExit(f"<Clang> is not yet supported for FreeRTOS.",exitCode=EXIT.Implementation)
+
+
 
         logAndExit (f"Building FreeRTOS kernel is not yet fully implemented.",exitCode=EXIT.Implementation)
 
