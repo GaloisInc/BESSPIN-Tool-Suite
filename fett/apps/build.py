@@ -17,7 +17,7 @@ def buildApps ():
 
     setSetting('sendTarballToTarget',False) #any app has to enable this to send the tarball to target
     tarName = os.path.join(getSetting('buildDir'),getSetting('tarballName'))
-    if (isEnabled('buildApps')):
+    if (isEnabled('buildApps') and isEnabled('isUnix')):
         targetUtilsDir = os.path.join(getSetting('repoDir'),'fett','target','utils')
         cp(os.path.join(targetUtilsDir,'Makefile.xcompileDir'),os.path.join(getSetting('buildDir'),'Makefile'))
         cp(os.path.join(targetUtilsDir,'defaultEnvLinux.mk'),getSetting('buildDir'))
@@ -55,7 +55,7 @@ def buildOta():
     if (not isEnabled('buildApps')):
         pass #For readability
     else:
-        cpFilesToBuildDir (getSourceDir('https'))
+        cpFilesToBuildDir (getSourceDir('ota'))
 
 """ Special building for 'webserver' """
 @decorate.debugWrap
