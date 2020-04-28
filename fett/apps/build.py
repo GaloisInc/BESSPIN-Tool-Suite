@@ -42,13 +42,20 @@ def buildApps ():
 @decorate.debugWrap
 @decorate.timeWrap
 def buildHttps():
-    pass
+    if (not isEnabled('buildApps')):
+        pass #For readability
+    else:
+        cpFilesToBuildDir (getSourceDir('https'))
+
 
 """ Special building for 'ota' """
 @decorate.debugWrap
 @decorate.timeWrap
 def buildOta():
-    pass
+    if (not isEnabled('buildApps')):
+        pass #For readability
+    else:
+        cpFilesToBuildDir (getSourceDir('https'))
 
 """ Special building for 'webserver' """
 @decorate.debugWrap
