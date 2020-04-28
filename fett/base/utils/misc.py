@@ -185,17 +185,32 @@ def cp (src,dest,pattern=None):
             logAndExit (f"Failed to copy <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
 
 @decorate.debugWrap
-def copyDir(src,dest,renameDest=False):
+def copyDir(src,dest,renameDest=False,copyContents=False):
     if ((not src) or (not dest)):
         logAndExit(f"copyDir: source or destination cannot be of NoneType", exitCode=EXIT.Dev_Bug)
     if (not os.path.isdir(src)):
         logAndExit(f"copyDir: invalid source dir <{src}>.",exitCode=EXIT.Copy_and_Move)
     if ((not renameDest) and (not os.path.isdir(dest))):
         logAndExit(f"copyDir: invalid destination dir <{dest}>.",exitCode=EXIT.Copy_and_Move)
-    try:
-        shutil.copytree(src, os.path.join(dest, os.path.basename(os.path.normpath(src))))
-    except Exception as exc:
-        logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+    if(renameDest and copyContents): #that doesn't make sense
+        logAndExit(f"copyDir: Cannot call with both renameDest and copyContents.", exitCode=EXIT.Dev_Bug)
+
+    def copyTree (srcTree,destTree):
+        try:
+            shutil.copytree(srcTree, os.path.join(destTree,os.path.basename(os.path.normpath(srcTree))))
+        except Exception as exc:
+            logAndExit (f"Failed to copy directory <{srcTree}> to <{destTree}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+
+    if (copyContents):
+        #first, copy files
+        cp(src,dest,pattern='*')
+        #second, copy dirs -- no need to check walk as we check it's dir, and if it's empty, listDirs will = []
+        recursiveContents = [listDirs for dirName,listDirs,listFiles in os.walk(src)]
+        listDirs = recursiveContents[0]
+        for xDir in listDirs:
+            copyDir(os.path.join(src,xDir),dest)
+    else:
+        copyTree(src,dest)
 
 @decorate.debugWrap
 def make (argsList,dirPath):
