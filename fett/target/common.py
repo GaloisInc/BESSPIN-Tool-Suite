@@ -224,7 +224,6 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
             elif (isEqSetting('osImage','FreeBSD')):
                 self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
-            self.rootPassword = randomPassword(14)
             printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
 
@@ -232,6 +231,7 @@ class commonTarget():
     @decorate.timeWrap
     def changeRootPassword(self):
         printAndLog(f"Changing the root password...")
+        self.rootPassword = randomPassword(14)
         if isEqSetting('osImage', 'debian'):
             self.runCommand(f"passwd root", endsWith="New password:")
             self.runCommand(self.rootPassword, endsWith="Retype new password:")
@@ -244,11 +244,6 @@ class commonTarget():
             self.shutdownAndExit(
                 f"<update root password> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",
                 overwriteConsole=True, exitCode=EXIT.Implementation)
-
-    def changeRootPasswordTest(self, random_passwd=True):
-        self.rootPassword = randomPassword(14) if random_passwd else "!@#$%^&*(-_=+)"
-        return self.changeRootPassword()
-
 
     @decorate.debugWrap
     @decorate.timeWrap
