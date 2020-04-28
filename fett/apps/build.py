@@ -46,6 +46,7 @@ def buildHttps():
         pass #For readability
     else:
         cpFilesToBuildDir (getSourceDir('https'))
+        cpFilesToBuildDir (getSourceDir('https'),pattern='*.mk')
 
 
 """ Special building for 'ota' """
@@ -56,6 +57,7 @@ def buildOta():
         pass #For readability
     else:
         cpFilesToBuildDir (getSourceDir('ota'))
+        cpFilesToBuildDir (getSourceDir('ota'),pattern='*.mk')
 
 """ Special building for 'webserver' """
 @decorate.debugWrap
