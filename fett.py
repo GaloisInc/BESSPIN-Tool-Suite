@@ -11,10 +11,21 @@
         logging level = INFO 
 """
 
-from fett.base.utils.misc import *
-from fett.base.config import loadConfiguration
-from fett.target.launch import startFett, endFett
-import logging, argparse, os, shutil, atexit, signal
+try:
+    from fett.base.utils.misc import *
+    from fett.base.config import loadConfiguration
+    from fett.target.launch import startFett, endFett
+    import logging, argparse, os, shutil, atexit, signal
+except Exception as exc:
+    try:
+        #check we're in nix
+        import sys
+        if (sys.executable.split('/')[1] != 'nix'):
+            print (f"(Error)~  Please run within a nix shell. [Run <nix-shell> in target-fett directory].")
+    except Exception as exc2:
+        print(f"<{exc.__class__.__name__}>: {exc}")
+    print(f"End of FETT! [Exit code -1:Fatal]")
+    exit(-1)
 
 def main (xArgs):
     # Create working Directory
