@@ -21,7 +21,6 @@ class EXIT (enum.Enum):
     Environment = enum.auto()
     Implementation = enum.auto()
     Dev_Bug = enum.auto()
-    External = enum.auto()
     Run = enum.auto()
     Network = enum.auto()
     Interrupted = enum.auto()
@@ -234,7 +233,7 @@ def make (argsList,dirPath):
         subprocess.check_call(argsList, stdout=outMake, stderr=outMake)
     except Exception as exc:
         outMake.close()
-        logAndExit (f"Failed to <{' '.join(argsList)}>.",exc=exc,exitCode=EXIT.External)
+        logAndExit (f"Failed to <{' '.join(argsList)}>.",exc=exc,exitCode=EXIT.Run)
 
     outMake.close()
 
