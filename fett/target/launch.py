@@ -18,9 +18,6 @@ from importlib.machinery import SourceFileLoader
 @decorate.timeWrap
 def startFett ():
     # ------- Global/Misc sanity checks
-    #check we're in nix
-    if (sys.executable.split('/')[1] != 'nix'):
-        logAndExit(f"Please run within a nix shell. [Run <nix-shell> in target-fett directory].",exitCode=EXIT.Environment)
 
     #Processor and osImage combinations
     combinationsDict = getSetting('procOsCombinations')
