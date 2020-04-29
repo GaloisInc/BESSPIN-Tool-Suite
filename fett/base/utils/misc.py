@@ -20,7 +20,6 @@ class EXIT (enum.Enum):
     Files_and_paths = enum.auto()
     Environment = enum.auto()
     Implementation = enum.auto()
-    Copy_and_Move = enum.auto()
     Dev_Bug = enum.auto()
     External = enum.auto()
     Run = enum.auto()
@@ -163,26 +162,26 @@ def cp (src,dest,pattern=None):
     
     if (pattern):
         if (not os.path.isdir(src)):
-            logAndExit (f"cp: pattern has to have a valid source dir <{src}>.",exitCode=EXIT.Copy_and_Move)
+            logAndExit (f"cp: pattern has to have a valid source dir <{src}>.",exitCode=EXIT.Files_and_paths)
         if (not os.path.isdir(dest)):
-            logAndExit (f"cp: pattern has to have a valid destination dir <{dest}>.",exitCode=EXIT.Copy_and_Move)
+            logAndExit (f"cp: pattern has to have a valid destination dir <{dest}>.",exitCode=EXIT.Files_and_paths)
         try:
             listFiles = glob.glob(os.path.join(src, pattern))
         except Exception as exc:
-            logAndExit (f"Failed to list <{src}/{pattern}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+            logAndExit (f"Failed to list <{src}/{pattern}>.",exc=exc,exitCode=EXIT.Files_and_paths)
         for xFile in listFiles:
             if (os.path.isfile(xFile)):
                 try:
                     shutil.copy2(xFile,dest)
                 except Exception as exc:
-                    logAndExit (f"Failed to copy <{xFile}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+                    logAndExit (f"Failed to copy <{xFile}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     else:
         if (not os.path.isfile(src)):
-            logAndExit (f"cp: <{src}> is not a valid file.",exitCode=EXIT.Copy_and_Move)
+            logAndExit (f"cp: <{src}> is not a valid file.",exitCode=EXIT.Files_and_paths)
         try:
             shutil.copy2(src,dest)
         except Exception as exc:
-            logAndExit (f"Failed to copy <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+            logAndExit (f"Failed to copy <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap
 def renameFile (src,dest):
@@ -190,22 +189,22 @@ def renameFile (src,dest):
         logAndExit(f"renameFile: source or destination cannot be of NoneType", exitCode=EXIT.Dev_Bug)
 
     if (not os.path.isfile(src)):
-        logAndExit (f"renameFile: <{src}> is not a valid file.",exitCode=EXIT.Copy_and_Move)
+        logAndExit (f"renameFile: <{src}> is not a valid file.",exitCode=EXIT.Files_and_paths)
 
     try:
         os.rename(src,dest)
     except Exception as exc:
-        logAndExit (f"Failed to rename <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+        logAndExit (f"Failed to rename <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap
 def copyDir(src,dest,renameDest=False,copyContents=False):
     if ((not src) or (not dest)):
         logAndExit(f"copyDir: source or destination cannot be of NoneType", exitCode=EXIT.Dev_Bug)
     if (not os.path.isdir(src)):
-        logAndExit(f"copyDir: invalid source dir <{src}>.",exitCode=EXIT.Copy_and_Move)
+        logAndExit(f"copyDir: invalid source dir <{src}>.",exitCode=EXIT.Files_and_paths)
 
     if ((not renameDest) and (not os.path.isdir(dest))):
-        logAndExit(f"copyDir: invalid destination dir <{dest}>.",exitCode=EXIT.Copy_and_Move)
+        logAndExit(f"copyDir: invalid destination dir <{dest}>.",exitCode=EXIT.Files_and_paths)
     if(renameDest and copyContents): #that doesn't make sense
         logAndExit(f"copyDir: Cannot call with both renameDest and copyContents.", exitCode=EXIT.Dev_Bug)
 
@@ -221,7 +220,7 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
         try:
             shutil.copytree(src, os.path.join(dest,os.path.basename(os.path.normpath(src))))
         except Exception as exc:
-            logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+            logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap
 def make (argsList,dirPath):
