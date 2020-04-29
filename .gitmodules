@@ -1,3 +1,6 @@
 [submodule "FreeRTOS-mirror"]
 	path = FreeRTOS-mirror
 	url = https://github.com/GaloisInc/FreeRTOS-mirror.git
+[submodule "SSITH-FETT-Environment"]
+	path = SSITH-FETT-Environment
+	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Environment.git
