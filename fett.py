@@ -17,7 +17,6 @@ try:
     from fett.target.launch import startFett, endFett
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
-    doPrintExc = False
     try:
         #check we're in nix
         import sys
