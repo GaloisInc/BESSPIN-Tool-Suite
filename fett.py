@@ -17,13 +17,16 @@ try:
     from fett.target.launch import startFett, endFett
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
+    doPrintExc = False
     try:
         #check we're in nix
         import sys
         if (sys.executable.split('/')[1] != 'nix'):
             print (f"(Error)~  Please run within a nix shell. [Run <nix-shell> in target-fett directory].")
-    except Exception as exc2:
-        print(f"<{exc.__class__.__name__}>: {exc}")
+        else:
+            raise
+    except:
+        print(f"(Error)~  <{exc.__class__.__name__}>: {exc}")
     print(f"End of FETT! [Exit code -1:Fatal]")
     exit(-1)
 
