@@ -25,21 +25,21 @@ nix-shell
   or by removing the password requirement from resetting that
   particular adaptor.  This can be done by adding the following lines
   in the sudoers file (accessed by `sudo visudo`):
-```bash
-Cmnd_Alias IFDOWN_FPGA_ADAPTOR = <path-to-ifdown>/ifdown <ethernet-adaptor-name>
-Cmnd_Alias IFUP_FPGA_ADAPTOR = <path-to-ifup>/ifup <ethernet-adaptor-name>
-Cmnd_Alias IFUP_ALL = <path-to-ifup>/ifup -a
-Cmnd_Alias IP_FLUSH = <path-to-ip>/ip addr flush dev <ethernet-adaptor-name>
-ALL ALL=NOPASSWD: IFDOWN_FPGA_ADAPTOR, IFUP_FPGA_ADAPTOR, IFUP_ALL, IP_FLUSH
-```
+    ```bash
+        Cmnd_Alias IFDOWN_FPGA_ADAPTOR = <path-to-ifdown>/ifdown <ethernet-adaptor-name>
+        Cmnd_Alias IFUP_FPGA_ADAPTOR = <path-to-ifup>/ifup <ethernet-adaptor-name>
+        Cmnd_Alias IFUP_ALL = <path-to-ifup>/ifup -a
+        Cmnd_Alias IP_FLUSH = <path-to-ip>/ip addr flush dev <ethernet-adaptor-name>
+        ALL ALL=NOPASSWD: IFDOWN_FPGA_ADAPTOR, IFUP_FPGA_ADAPTOR, IFUP_ALL, IP_FLUSH
+    ```
 
-  - Note that the `<ethernet-adaptor-name>` changes from a system to
+    - Note that the `<ethernet-adaptor-name>` changes from a system to
     another. Please review the [FPGA host network configuration setup
     instructions](https://gitlab-ext.galois.com/ssith/gfe/blob/master/install/network.md)
     for more details about the adaptors and IP settings.  In case you
     intend to use a different setup, please change
     [setupEnvGlobal.sh](scripts/setupEnvGlobal.sh) accordingly.
-  - Note that the keyword `ALL` in the beginning of the third line can
+    - Note that the keyword `ALL` in the beginning of the third line can
     be replaced by a particular user name or by a group name (starting
     with `%`).
 
