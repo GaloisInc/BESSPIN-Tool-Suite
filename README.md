@@ -2,6 +2,48 @@
 The target platform for the SSITH FETT bug bounty exercise.
 
 
+## Software Requirements and Setup
+
+To clone the repo and start `the nix-shell`, please use:
+
+```bash
+git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
+cd SSITH-FETT-Target
+git submodule update --init
+nix-shell
+```
+
+* For `nix-shell` issues, please check the instructions in [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment).   
+
+* Regarding the local `fpga` target:   
+    1. A GFE SoC on a Xilinx VCU118 FPGA should be accessible, in
+  addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
+    2. The ethernet adaptor connected to the FPGA needs to be reset before each run. This requires `sudo` privileges. In case of error, the tool
+  falls back to `ifup -a` to get all of the adaptors up. Thus, the user has two
+  options: either entering the sudo password when requested by the
+  tool (the request explicitly mentions that it is for adaptor reset),
+  or by removing the password requirement from resetting that
+  particular adaptor.  This can be done by adding the following lines
+  in the sudoers file (accessed by `sudo visudo`):
+```bash
+Cmnd_Alias IFDOWN_FPGA_ADAPTOR = <path-to-ifdown>/ifdown <ethernet-adaptor-name>
+Cmnd_Alias IFUP_FPGA_ADAPTOR = <path-to-ifup>/ifup <ethernet-adaptor-name>
+Cmnd_Alias IFUP_ALL = <path-to-ifup>/ifup -a
+Cmnd_Alias IP_FLUSH = <path-to-ip>/ip addr flush dev <ethernet-adaptor-name>
+ALL ALL=NOPASSWD: IFDOWN_FPGA_ADAPTOR, IFUP_FPGA_ADAPTOR, IFUP_ALL, IP_FLUSH
+```
+
+  - Note that the `<ethernet-adaptor-name>` changes from a system to
+    another. Please review the [FPGA host network configuration setup
+    instructions](https://gitlab-ext.galois.com/ssith/gfe/blob/master/install/network.md)
+    for more details about the adaptors and IP settings.  In case you
+    intend to use a different setup, please change
+    [setupEnvGlobal.sh](scripts/setupEnvGlobal.sh) accordingly.
+  - Note that the keyword `ALL` in the beginning of the third line can
+    be replaced by a particular user name or by a group name (starting
+    with `%`).
+
+
 ## User Manual ##
 
 To run the tool, use the following:
@@ -12,8 +54,18 @@ fett.py [-h] [-c CONFIGFILE] [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
 The default configuration file is `config.ini`, working directory is `$REPO/workDir`, and log file is `$REPO/$WRKDIR/fett.log`. If you run with the debug (`-d`) flag, the log file will have a lot of useful info.
 
 Some useful configuration options:
+- `target`: Choose either `aws` for the main FETT target, `fpga` for Xilinx VCU118 hardware
+    emulation, or `qemu` for [QEMU](https://www.qemu.org/) emulation.
+- `processor`: One of the GFE processors or the TA-1 teams processors.
+- `osImage`: The operating system on which the tests will run.  The
+    SSITH OSs are either [FreeRTOS](https://www.freertos.org/),
+    [FreeBSD](https://www.freebsd.org/), or [Linux Debian](https://www.debian.org/),
+    or [Busybox](https://busybox.net/about.html).
+- `useCustomOsImage`: If disabled, Nix images will be used.
 - `openConsole`: returns an open console for Unix targets.
 - `buildApps`: Cross-compile as instructed in `fett/apps/build.py`.
+- `https`/`ota`/`webserver`/`database`: To enable a particular application.
+
 
 ## Developer Manual ##
 
