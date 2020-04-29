@@ -173,10 +173,8 @@ class commonTarget():
             self.runCommand("cd root",timeout=10)
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
         elif (isEqSetting('osImage','FreeRTOS')):
-            #self.boot (endsWith=">>>Beginning of Testgen<<<",timeout=timeout)
-            endsWith = [">>>End of Fett<<<"]
-            self.boot (endsWith=endsWith,timeout=timeout)
-            logging.info (f"start: {getSetting('osImage')} executed successfully!\n")
+            self.boot (endsWith=">>>Beginning of Fett<<<",timeout=30)
+            printAndLog (f"{getSetting('osImage')} has successfully started.")
         elif (isEqSetting('osImage','FreeBSD')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             if (isEqSetting('target','fpga')):

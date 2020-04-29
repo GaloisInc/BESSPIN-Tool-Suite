@@ -27,14 +27,9 @@ def startFett ():
     if (getSetting('processor') not in getSettingDict('procOsCombinations',[getSetting('osImage')])):
         logAndExit(f"{getSetting('osImage')} is not compatible with <{getSetting('processor')}>.",exitCode=EXIT.Configuration)
 
-    #qemu on FreeRTOS?
+    #qemu on FreeRTOS and Busybox
     if ((getSetting('osImage') in ['FreeRTOS','busybox']) and isEqSetting('target','qemu')):
         logAndExit (f"Qemu is not implemented for {getSetting('osImage')}.",exitCode=EXIT.Implementation)
-
-    #Console mode on FreeRTOS?
-    if (isEqSetting('osImage','FreeRTOS') and isEnabled('openConsole')):
-        warnAndLog (f"Unable to <openConsole> on FreeRTOS. This will be switched off.")
-        setSetting('openConsole',False)
 
     # prepare the environment
     prepareEnv()

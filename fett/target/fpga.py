@@ -137,10 +137,9 @@ class fpgaTarget (commonTarget):
                     self.shutdownAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
         elif (isEqSetting('osImage','FreeRTOS')):
-            loadJTAG(getSetting('osImageElf'))
-            printAndLog ("FreeRTOS started execution...",doPrint=False)  
+            loadJTAG(getSetting('osImageElf')) 
             time.sleep(1)
-            textBack,wasTimeout,dump = self.expectFromTarget(endsWith,"Booting",timeout=timeout,shutdownOnError=False)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout)
         else:
             self.shutdownAndExit(f"<boot> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.")
 

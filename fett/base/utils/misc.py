@@ -185,24 +185,50 @@ def cp (src,dest,pattern=None):
             logAndExit (f"Failed to copy <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
 
 @decorate.debugWrap
-def copyDir(src,dest):
+def renameFile (src,dest):
+    if ((not src) or (not dest)):
+        logAndExit(f"renameFile: source or destination cannot be of NoneType", exitCode=EXIT.Dev_Bug)
+
+    if (not os.path.isfile(src)):
+        logAndExit (f"renameFile: <{src}> is not a valid file.",exitCode=EXIT.Copy_and_Move)
+
+    try:
+        os.rename(src,dest)
+    except Exception as exc:
+        logAndExit (f"Failed to rename <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+
+@decorate.debugWrap
+def copyDir(src,dest,renameDest=False,copyContents=False):
     if ((not src) or (not dest)):
         logAndExit(f"copyDir: source or destination cannot be of NoneType", exitCode=EXIT.Dev_Bug)
     if (not os.path.isdir(src)):
         logAndExit(f"copyDir: invalid source dir <{src}>.",exitCode=EXIT.Copy_and_Move)
-    if (not os.path.isdir(dest)):
+
+    if ((not renameDest) and (not os.path.isdir(dest))):
         logAndExit(f"copyDir: invalid destination dir <{dest}>.",exitCode=EXIT.Copy_and_Move)
-    try:
-        shutil.copytree(src, os.path.join(dest, os.path.basename(os.path.normpath(src))))
-    except Exception as exc:
-        logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
+    if(renameDest and copyContents): #that doesn't make sense
+        logAndExit(f"copyDir: Cannot call with both renameDest and copyContents.", exitCode=EXIT.Dev_Bug)
+
+    if (copyContents):
+        #first, copy files
+        cp(src,dest,pattern='*')
+        #second, copy dirs -- no need to check walk as we check it's dir, and if it's empty, listDirs will = []
+        recursiveContents = [listDirs for dirName,listDirs,listFiles in os.walk(src)]
+        listDirs = recursiveContents[0]
+        for xDir in listDirs:
+            copyDir(os.path.join(src,xDir),dest)
+    else:
+        try:
+            shutil.copytree(src, os.path.join(dest,os.path.basename(os.path.normpath(src))))
+        except Exception as exc:
+            logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Copy_and_Move)
 
 @decorate.debugWrap
 def make (argsList,dirPath):
     if ((not dirPath) or (argsList is None)):
         logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
     # open a file for stdout/stderr
-    outMake = ftOpenFile(os.path.join(dirPath,'make.out'),'a')
+    outMake = ftOpenFile(os.path.join(getSetting('buildDir'),'make.out'),'a')
 
     argsList = ['make','-C',dirPath] + argsList
     logging.info(f"Executing <{' '.join(argsList)}>. Command output is appended to <{outMake.name}>.")

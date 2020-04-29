@@ -68,6 +68,9 @@
                 "busybox" : {
                     "fpga" : "FETT_GFE_BUSYBOX_FPGA"
                 },
+                "FreeRTOS" : {
+                    "fpga" : "FETT_GFE_FREERTOS_FPGA"
+                },
                 "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR"
             }
         },
@@ -80,6 +83,16 @@
             "name" : "tarballName",
             "type" : "string",
             "val" : "filesToSend.tar.gz"
+        },
+        {
+            "name" : "FreeRTOSforkName",
+            "type" : "string",
+            "val" : "FreeRTOS-mirror"
+        },
+        {
+            "name" : "FreeRTOSprojName",
+            "type" : "string",
+            "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
         }
     ] 
 }
