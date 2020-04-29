@@ -109,7 +109,7 @@ def prepareFreeRTOS():
 def prepareDebian():
     # copy the crngOnDebian.riscv
     cp (getSetting('addEntropyDebianPath'),getSetting('buildDir'))
-    importImage('debian')
+    importImage()
 
 @decorate.debugWrap
 @decorate.timeWrap
