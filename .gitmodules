@@ -1,6 +1,3 @@
-[submodule "testgen-appDevFETT"]
-	path = testgen-appDevFETT
-	url = https://gitlab-ext.galois.com/ssith/testgen-appDevFETT
 [submodule "FreeRTOS-mirror"]
 	path = FreeRTOS-mirror
 	url = https://github.com/GaloisInc/FreeRTOS-mirror.git
