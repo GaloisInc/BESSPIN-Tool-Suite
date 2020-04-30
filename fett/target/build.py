@@ -73,10 +73,7 @@ def prepareFreeRTOS():
             logAndExit(f"<Clang> is not yet supported for FreeRTOS.",exitCode=EXIT.Implementation)
 
         #copy the C files, .mk files, and any directory
-        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
-        #these should be temporary until we figure out the new fork
-        renameFile(os.path.join(getSetting('buildDir'),'traceHooks.h'),os.path.join(getSetting('buildDir'),'testgenTraceHooks.h'))
-        renameFile(os.path.join(getSetting('buildDir'),'envFett.mk'),os.path.join(getSetting('buildDir'),'testgenEnvironment.mk'))        
+        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)      
 
         #Cleaning all ".o" and ".elf" files in site
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
@@ -87,13 +84,13 @@ def prepareFreeRTOS():
         envVars = []
         envVars.append(f"XLEN={getSetting('xlen')}")
         envVars.append(f"USE_CLANG={int(isEqSetting('cross-compiler','Clang'))}")
-        envVars.append(f"PROG=main_testgen") #to be changed in the new fork
-        envVars.append(f"INC_TESTGEN={getSetting('buildDir')}") #to be changed in the new fork
+        envVars.append(f"PROG=main_fett")
+        envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
         logging.debug(f"going to make using {envVars}")
         make (envVars,getSetting('FreeRTOSprojDir'))
 
         #check if the elf file was created
-        builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_testgen.elf') #to be changed in the new fork
+        builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
         if (not os.path.isfile(builtElf)):
             logAndExit(f"<make> executed without errors, but cannot fine <{builtElf}>.",exitCode=EXIT.Run)
         cp(builtElf,getSetting('osImageElf'))
