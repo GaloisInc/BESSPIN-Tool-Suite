@@ -4,3 +4,6 @@
 [submodule "tool-suite"]
 	path = tool-suite
 	url = https://gitlab-ext.galois.com/ssith/tool-suite.git
+[submodule "FreeRTOS-10.0.1"]
+	path = FreeRTOS-10.0.1
+	url = git@github.com:DARPA-SSITH-Demonstrators/FreeRTOS-10.0.1.git
