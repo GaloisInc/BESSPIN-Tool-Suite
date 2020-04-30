@@ -1,9 +1,9 @@
 [submodule "testgen-appDevFETT"]
 	path = testgen-appDevFETT
-	url = https://gitlab-ext.galois.com/ssith/testgen-appDevFETT
+	url = git@gitlab-ext.galois.com:ssith/testgen-appDevFETT.git
 [submodule "tool-suite"]
 	path = tool-suite
-	url = https://gitlab-ext.galois.com/ssith/tool-suite.git
+	url = git@gitlab-ext.galois.com:ssith/docker-tools.git
 [submodule "FreeRTOS-mirror"]
 	path = FreeRTOS-mirror
 	url = https://github.com/GaloisInc/FreeRTOS-mirror.git
