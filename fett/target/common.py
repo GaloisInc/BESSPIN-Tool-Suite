@@ -244,7 +244,7 @@ class commonTarget():
         else:
             self.shutdownAndExit(
                 f"<update root password> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",
-                overwriteConsole=True, exitCode=EXIT.Implementation)
+                exitCode=EXIT.Implementation)
         printAndLog(f"root password has been changed successfully!")
 
     @decorate.debugWrap
