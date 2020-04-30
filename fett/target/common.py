@@ -497,7 +497,10 @@ class commonTarget():
             for i in range(2):
                 readAfter = self.readFromTarget(readAfter=True)
                 if (self.getDefaultEndWith() in readAfter):
-                    self.process.expect(self.getDefaultEndWith(),timeout=15)
+                    try:
+                        self.process.expect(self.getDefaultEndWith(),timeout=10)
+                    except Exception as exc:
+                        warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
                     textBack += readAfter
         self.keyboardInterruptTriggered = False #Safe to be called again
         return textBack

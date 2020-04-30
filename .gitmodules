@@ -1,9 +1,6 @@
-[submodule "testgen-appDevFETT"]
-	path = testgen-appDevFETT
-	url = https://gitlab-ext.galois.com/ssith/testgen-appDevFETT
-[submodule "tool-suite"]
-	path = tool-suite
-	url = https://gitlab-ext.galois.com/ssith/tool-suite.git
-[submodule "FreeRTOS-mirror"]
-	path = FreeRTOS-mirror
-	url = https://github.com/GaloisInc/FreeRTOS-mirror.git
+[submodule "FreeRTOS-10.0.1"]
+	path = FreeRTOS-10.0.1
+	url = git@github.com:DARPA-SSITH-Demonstrators/FreeRTOS-10.0.1.git
+[submodule "SSITH-FETT-Environment"]
+	path = SSITH-FETT-Environment
+	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Environment.git
