@@ -231,7 +231,8 @@ class commonTarget():
     @decorate.timeWrap
     def changeRootPassword(self):
         printAndLog(f"Changing the root password...")
-        self.rootPassword = randomPassword(14)
+        alphabet = string.ascii_letters + string.digits + "!@#$%^&*(-_=+)"
+        self.rootPassword = ''.join(secrets.choice(alphabet) for i in range(14))
         if isEqSetting('osImage', 'debian'):
             self.runCommand(f"passwd root", endsWith="New password:")
             self.runCommand(self.rootPassword, endsWith="Retype new password:")
@@ -789,8 +790,5 @@ def charByCharEncoding (inBytes):
         textBack += xChar
     return textBack
 
-def randomPassword(length):
-    alphabet = string.ascii_letters + string.digits + "!@#$%^&*(-_=+)"
-    return ''.join(secrets.choice(alphabet) for i in range(length))
 
 
