@@ -1,12 +1,11 @@
 # This file has the necessary includes to run Fett on FreeRTOS
 
-CFLAGS += -DmainDEMO_TYPE=12 
-CFLAGS += -DtestgenOnFreeRTOS -DtestgenFPGA
+CFLAGS += -DFETT_APPS
 DEMO_SRC = main.c \
-	$(wildcard $(INC_TESTGEN)/*.c) \
-	$(wildcard $(INC_TESTGEN)/lib/*.c)
-INCLUDES += -I$(INC_TESTGEN)/lib
-INCLUDES += -I$(INC_TESTGEN)
+	$(wildcard $(INC_FETT_APPS)/*.c) \
+	$(wildcard $(INC_FETT_APPS)/lib/*.c)
+INCLUDES += -I$(INC_FETT_APPS)/lib
+INCLUDES += -I$(INC_FETT_APPS)
 CFLAGS := $(filter-out -Werror,$(CFLAGS))
 
-include $(INC_TESTGEN)/envApp.mk
+include $(INC_FETT_APPS)/envApp.mk

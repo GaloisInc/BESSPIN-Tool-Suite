@@ -87,7 +87,7 @@
         {
             "name" : "FreeRTOSforkName",
             "type" : "string",
-            "val" : "FreeRTOS-mirror"
+            "val" : "FreeRTOS-10.0.1"
         },
         {
             "name" : "FreeRTOSprojName",

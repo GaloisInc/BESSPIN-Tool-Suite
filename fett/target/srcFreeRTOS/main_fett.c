@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-void main_testgen (void);
+void main_fett (void);
 
 //Define main apps + other tests
 #if defined(FETT_HTTPS)
@@ -11,7 +11,7 @@ void main_testgen (void);
     extern void main_ota (void);
 #endif
 
-void main_testgen () {
+void main_fett () {
 
     printf ("\n>>>Beginning of Fett<<<\n");
 
