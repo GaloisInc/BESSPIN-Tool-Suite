@@ -1,1 +1,1 @@
-tool-suite/nix/dev/fett.nix
+SSITH-FETT-Environment/shell.nix
