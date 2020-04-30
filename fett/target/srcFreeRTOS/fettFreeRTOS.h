@@ -1,0 +1,106 @@
+/*
+fett header for includes, externs, and global variables
+*/
+
+/* General includes */
+#include <stdio.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+/* FreeRTOS  includes. */
+#include <FreeRTOS.h>
+#include <task.h>
+#include <message_buffer.h>
+#include <semphr.h>
+/* IP stack includes. */
+#include "FreeRTOS_IP.h"
+#include "FreeRTOS_Sockets.h"
+/* WolfSSL includes */ //for TLS if needed
+/*#include <wolfssl/ssl.h>
+#include <wolfssl/error-ssl.h>
+#include <wolfssl/wolfcrypt/dh.h>
+#include <wolfssl/wolfcrypt/asn.h>*/
+/* Misc includes */
+#include <malloc.h>
+
+/* Macros */
+#define MSGBUF_SIZE 32
+/* Task notifications values */
+#define NOTIFY_SUCCESS 0x0000000F
+#define NOTIFY_FAIL 0x00000000
+#define NOTIFY_CONNECTED 0x000000F0
+#define NOTIFY_TERMINATED 0x00000F00
+#define NOTIFY_INVALIDAUTH 0x0000F000
+/* True and False values */
+#define uTRUE 1
+#define uFALSE 0
+
+/* EXIT macro sends the exit flag + delete the task if task (vEXIT) and return if void func (prEXIT) */
+#define vEXIT(exitCode) ({exitFett (exitCode); vTaskDelete (NULL);})
+#define prEXIT(exitCode) ({exitFett (exitCode); return;})
+
+/* Useful functions to enhance readability */
+#define ERROR_IF_TRUE(ret, msg, caller, xBool) {\
+    if (xBool) {\
+        fettPrintf ("(Error)~  %s [ret=%d].\r\n",msg,ret);\
+        if (caller == 'v')\
+            vEXIT(1);\
+        else\
+            prEXIT(1);\
+    } else \
+        fettPrintf ("(Info)~  %s.\r\n",msg);\
+    }
+
+#define COMP_EQ(ret, err) (ret == err)
+#define COMP_NEQ(ret, gold) (ret != gold)
+#define vERROR_IF_NEQ(ret, gold, msg)  (ERROR_IF_TRUE (ret, msg, 'v',COMP_NEQ(ret, gold)))
+#define prERROR_IF_NEQ(ret, gold, msg)  (ERROR_IF_TRUE (ret, msg, 'p',COMP_NEQ(ret, gold)))
+#define vERROR_IF_EQ(ret, err, msg)  (ERROR_IF_TRUE (ret, msg, 'v',COMP_EQ(ret, err)))
+#define prERROR_IF_EQ(ret, err, msg)  (ERROR_IF_TRUE (ret, msg, 'p',COMP_EQ(ret, err)))
+
+/* Extra types */
+struct fett_parentSocket {
+    Socket_t xConnectedSocket;
+    TaskHandle_t xTaskParent;
+    #ifdef USE_TLS_OVER_TCP
+        WOLFSSL* xWolfSSL_Object;
+    #endif
+    uint8_t isServer; 
+};
+
+// --------- fettNtk.c ---------------------------------------------------------------------------------
+extern void vStartNetwork (void *pvParameters);
+
+// ---------- fettTCP.c --------------------------------------------------------------------------------
+extern void vServerSocketTCP (void *pvParameters);
+extern void vClientSocketTCP (void *pvParameters);
+
+// --------- fettMisc.c ---------------------------------------------------------------------------------
+extern void fettPrintf (const char * textToPrint, ...);
+extern void exitFett (uint8_t exitCode);
+//extern void _open (const char * dump1, int dump2, ...); //for TLS if needed
+//extern void _gettimeofday (struct timeval *__p, void *__tz); //for TLS if needed
+//extern time_t XTIME(time_t *t); //for TLS if needed
+//extern void *XREALLOC(void *p, size_t n, void* heap, int type); //for TLS if needed
+extern uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress, uint16_t usSourcePort, 
+                                            uint32_t ulDestinationAddress, uint16_t usDestinationPort);
+//extern int fett_wc_GenerateSeed(uint8_t* seed, uint8_t sz); //for TLS if needed
+extern MessageBufferHandle_t globalMsgBuffer;
+extern uint8_t sendToMsgBuffer (void * xData, size_t xDataSize);
+extern size_t recvFromMsgBuffer (void * xBuf, size_t xBufSize);
+
+// --------- main_APP.c ---------------------------------------------------------------------------------
+extern TaskHandle_t xMainTask;
+extern UBaseType_t xMainPriority;
+
+// --------- fettWolfSSL.c
+/*extern void vEndWolfSSL (void *pvParameters);
+extern int startWolfSSL( void );
+extern void vInitServerWolfSSL (void *pvParameters);
+extern void vInitClientWolfSSL (void *pvParameters);
+extern WOLFSSL_CTX* xWolfSSL_ServerContext;
+extern WOLFSSL_CTX* xWolfSSL_ClientContext;*/
+
+
