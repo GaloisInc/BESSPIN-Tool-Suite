@@ -158,7 +158,7 @@ class fpgaTarget (commonTarget):
             self.runCommand ("ifconfig eth0 up",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
             outCmd = self.runCommand (f"ip addr add {self.ipTarget}/24 dev eth0",timeout=20)
         elif (isEqSetting('osImage','FreeRTOS')):
-            outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=30)
+            outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
         elif (isEqSetting('osImage','FreeBSD')):
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
