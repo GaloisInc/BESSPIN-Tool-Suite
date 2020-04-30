@@ -231,8 +231,7 @@ class commonTarget():
     @decorate.timeWrap
     def changeRootPassword(self):
         printAndLog(f"Changing the root password...")
-        # randomPassword(14)
-        self.rootPassword = "!@#$%^&*(-_=+)"
+        self.rootPassword = randomPassword(14)
         if isEqSetting('osImage', 'debian'):
             self.runCommand(f"passwd root", endsWith="New password:")
             self.runCommand(self.rootPassword, endsWith="Retype new password:")
