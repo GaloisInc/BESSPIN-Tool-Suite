@@ -2,3 +2,4 @@ __pycache__/
 workDir/
 *.pyc
 myConfig.ini
+core

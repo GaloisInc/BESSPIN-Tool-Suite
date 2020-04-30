@@ -22,10 +22,8 @@ def buildApps ():
         cp(os.path.join(targetUtilsDir,'Makefile.xcompileDir'),os.path.join(getSetting('buildDir'),'Makefile'))
         cp(os.path.join(targetUtilsDir,'defaultEnvLinux.mk'),getSetting('buildDir'))
 
-    if (isEnabled('https')):
-        buildHttps()
-    elif (isEnabled('ota')):
-        buildOta()
+    if (isEnabled('https') or isEnabled('ota')):
+        buildFreeRTOSapps()
     elif (isEnabled('webserver')):
         buildWebserver(tarName)
     elif (isEnabled('database')):
@@ -38,26 +36,19 @@ def buildApps ():
 
 # app-specific building steps -----------------------------------------------------------
 
-""" Special building for 'https' """
+""" Special building for 'https' and 'ota' """
 @decorate.debugWrap
 @decorate.timeWrap
-def buildHttps():
+def buildFreeRTOSapps():
     if (not isEnabled('buildApps')):
         pass #For readability
     else:
-        cpFilesToBuildDir (getSourceDir('https'))
-        cpFilesToBuildDir (getSourceDir('https'),pattern='*.mk')
-
-
-""" Special building for 'ota' """
-@decorate.debugWrap
-@decorate.timeWrap
-def buildOta():
-    if (not isEnabled('buildApps')):
-        pass #For readability
-    else:
-        cpFilesToBuildDir (getSourceDir('ota'))
-        cpFilesToBuildDir (getSourceDir('ota'),pattern='*.mk')
+        cpFilesToBuildDir (getSourceDir('https'),pattern='*.c')
+        cpFilesToBuildDir (getSourceDir('ota'),pattern='*.c')
+        if (isEnabled('https')):
+            cpFilesToBuildDir (getSourceDir('https'),pattern='*.mk')
+        elif (isEnabled('ota')):
+            cpFilesToBuildDir (getSourceDir('ota'),pattern='*.mk')
 
 """ Special building for 'webserver' """
 @decorate.debugWrap
