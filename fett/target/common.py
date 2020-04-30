@@ -230,7 +230,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def changeRootPassword(self):
-        printAndLog(f"Changing the root password...")
+        printAndLog(f"Changing the root password...", doPrint=False)
         alphabet = string.ascii_letters + string.digits + "!@#$%^&*(-_=+)"
         self.rootPassword = ''.join(secrets.choice(alphabet) for i in range(14))
         if isEqSetting('osImage', 'debian'):
@@ -245,7 +245,7 @@ class commonTarget():
             self.shutdownAndExit(
                 f"<update root password> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",
                 exitCode=EXIT.Implementation)
-        printAndLog(f"root password has been changed successfully!")
+        printAndLog(f"root password has been changed successfully!",doPrint=False)
 
     @decorate.debugWrap
     @decorate.timeWrap
