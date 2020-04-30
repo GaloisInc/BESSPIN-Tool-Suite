@@ -281,7 +281,8 @@ def exitPeacefully (trashCan):
         if ((thread is not None) and (thread.is_alive())): #oops it's alive
             logging.warning (f"Atexit: Thread <{tag}> was still alive at exit. It is unsafely killed.")
 
-def ftOpenFile (filePath,mode):
+@decorate.debugWrap
+def ftOpenFile (filePath,mode,exitOnFileError=True):
     if ('w' in mode):
         modeName = 'write'
     elif ('a' in mode):
@@ -296,17 +297,26 @@ def ftOpenFile (filePath,mode):
         getSetting('trash').throwFile(xFile)
         return xFile
     except Exception as exc:
-        logAndExit (f"Failed to open <{filePath}> to {modeName}.",exc=exc,exitCode=EXIT.Files_and_paths)    
+        errMsg = f"Failed to open <{filePath}> to {modeName}."
+        if (exitOnFileError):
+            logAndExit (errMsg,exc=exc,exitCode=EXIT.Files_and_paths)
+        else:
+            errorAndLog(f"{errMsg} Will continue anyway.",doPrint=False,exc=exc)
+            return None    
 
-def ftReadLines (filePath):
-    xFile = ftOpenFile (filePath,'r')
+@decorate.debugWrap
+def ftReadLines (filePath,exitOnFileError=True):
+    xFile = ftOpenFile (filePath,'r',exitOnFileError=exitOnFileError)
+    if ((not xFile) and (not exitOnFileError)):
+        return []
     try:
         lines = xFile.read().splitlines()
         xFile.close()
         return lines
     except Exception as exc:
         logAndExit (f"Failed to read lines from <{filePath}>.",exc=exc,exitCode=EXIT.Files_and_paths)
-    
+
+@decorate.debugWrap    
 def matchExprInLines (expr,lines):
     if (not lines):
         return None
