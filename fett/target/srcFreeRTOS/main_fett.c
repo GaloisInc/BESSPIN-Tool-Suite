@@ -18,10 +18,9 @@ void main_testgen () {
     #if defined(FETT_HTTPS)
         main_https ();
     #elif defined(FETT_OTA)
-        main_ota (void);
+        main_ota ();
     #endif
 
     printf ("\n>>>End of Fett<<<\n");
     return;
 }
-
