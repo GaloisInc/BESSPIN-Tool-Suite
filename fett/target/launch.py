@@ -99,6 +99,7 @@ def launchFett ():
     xTarget = getClassType()()
     xTarget.start()
     if (isEnabled('isUnix')):
+        xTarget.changeRootPassword()
         xTarget.createUser()
     if (isEnabled('runApp')):
         xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
