@@ -50,7 +50,7 @@ void vMain (void *pvParameters) {
     //Wait for the tasks to finish. This will be clearer as we move forward. Probably we'll just leave it hanging and remove this part.
     uint8_t iNotif = 0, nTasksNotif = 2; //HTTP and OTA
     uint8_t exitCode = 0;
-    for (iNotif=0,iNotif<nTasksNotif && exitCode==0,iNotif++) {
+    for (iNotif=0;iNotif<nTasksNotif && exitCode==0;iNotif++) {
         recvNotification = NOTIFY_FAIL;
         funcReturn = xTaskNotifyWait(0xffffffff, 0, &recvNotification, pdMS_TO_TICKS(120000)); //2 minutes arbitrary value
         vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Receive state notification.");
