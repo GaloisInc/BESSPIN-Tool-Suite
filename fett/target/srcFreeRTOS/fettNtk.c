@@ -30,21 +30,21 @@ void vStartNetwork (void *pvParameters) {
     xTaskStartNtk = xTaskGetCurrentTaskHandle();
 
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
-    vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Initialize Network IP.")
+    vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Initialize Network IP.");
 
     //wait for NtkHook
     uint32_t recvNotification = NOTIFY_FAIL;
     funcReturn = xTaskNotifyWait(0xffffffff, 0, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
-    vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Receive notification from hook.")
-    vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS, "startNetwork: Expected notification value from hook.")
+    vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Receive notification from hook.");
+    vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS, "startNetwork: Expected notification value from hook.");
 
     fettPrintf ("\r\n<NTK-READY>\r\n");
     vTaskDelay(pdMS_TO_TICKS(3000)); //give time to the host to ping
 
     //notify main
-    vERROR_IF_EQ(xMainTask, NULL, "startNetwork: Get handle of <main:task>.")
+    vERROR_IF_EQ(xMainTask, NULL, "startNetwork: Get handle of <main:task>.");
     funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS ,eSetValueWithOverwrite);
-    vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Notify <main:task>.")
+    vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Notify <main:task>.");
 
     vTaskDelete (NULL);
 } //vStartNetwork
@@ -76,14 +76,14 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent) {
         fettPrintf("\t\tDNS Server Address: %s\r\n\r\n", cBuffer);
 
         //Notify start netowork
-        vERROR_IF_EQ(xTaskStartNtk, NULL, "NtkHook: Get handle of <task:startNetwork>.")
+        vERROR_IF_EQ(xTaskStartNtk, NULL, "NtkHook: Get handle of <task:startNetwork>.");
         BaseType_t funcReturn = xTaskNotify( xTaskStartNtk, NOTIFY_SUCCESS ,eSetValueWithOverwrite);
-        vERROR_IF_NEQ(funcReturn, pdPASS, "NtkHook: Notify <task:startNetwork>.")
+        vERROR_IF_NEQ(funcReturn, pdPASS, "NtkHook: Notify <task:startNetwork>.");
 
         isNetworkUp = uTRUE;
     } //network has just come up
 
     // HERE DETECTS IF THE NETWORK WENT DOWN 
-    vERROR_IF_EQ(eNetworkEvent, eNetworkDown, "NtkHook: Check if network is down.")
+    vERROR_IF_EQ(eNetworkEvent, eNetworkDown, "NtkHook: Check if network is down.");
 
 } //vApplicationIPNetworkEventHook
