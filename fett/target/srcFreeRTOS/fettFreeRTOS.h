@@ -63,7 +63,7 @@ fett header for includes, externs, and global variables
 #define vERROR_IF_EQ(ret, err, msg)  (ERROR_IF_TRUE (ret, msg, 'v',COMP_EQ(ret, err)))
 #define prERROR_IF_EQ(ret, err, msg)  (ERROR_IF_TRUE (ret, msg, 'p',COMP_EQ(ret, err)))
 
-#ifndef pdTICKS_TO_MS
+#ifndef pdTICKS_TO_S
     #define pdTICKS_TO_S( xTicks ) ( ( TickType_t ) ( ( ( TickType_t ) ( xTicks ) ) / ( TickType_t ) configTICK_RATE_HZ ) )
 #endif
 
