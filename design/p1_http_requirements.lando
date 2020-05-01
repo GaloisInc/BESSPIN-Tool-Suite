@@ -15,9 +15,11 @@ HTTP requires TCP/IP network protocol plus all underlying protocols and drivers
 
 // Resources
 
-// Configuration
+// Configuration - config items that might need to be configured or changed per instance,
+// and are shared with the bastion host - i.e. HTTP port number needs to be known by both
+// the target and the host. Additional items are TBD
 http_config
-Including port number for HTTP
+HTTP port number
 
 filesystem_config
-Including name of root filesystem
+Name of root filesystem

@@ -18,9 +18,11 @@ OTA requires UDP network protocol plus all underlying protocols and drivers
 crypto_keys
 A predefined Ed25519 public key must be installed or built in to OTA
 
-// Configuration
+// Configuration - config items that might need to be configured or changed per instance,
+// and are shared with the bastion host - i.e. TFTP port number needs to be known by both
+// the target and the host. Additional items are TBD
 tftp_config
-Including port number for TFTP
+TFTP port number
 
 filesystem_config
-Including name of root filesystem
+Name of root filesystem
