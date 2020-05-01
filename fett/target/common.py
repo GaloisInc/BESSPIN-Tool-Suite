@@ -174,7 +174,6 @@ class commonTarget():
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
         elif (isEqSetting('osImage','FreeRTOS')):
             self.boot (endsWith=">>>Beginning of Fett<<<",timeout=30)
-            printAndLog (f"{getSetting('osImage')} has successfully started.")
         elif (isEqSetting('osImage','FreeBSD')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             if (isEqSetting('target','fpga')):
@@ -209,20 +208,21 @@ class commonTarget():
         else:
             self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
 
-        if (getSetting('osImage') in ['debian','FreeBSD','busybox']):
-            self.activateEthernet() #up the ethernet adaptor and get the ip address
-
-            #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
-            #Adding 5 minutes to avoid being in the past
-            if (isEqSetting('osImage','debian')):
-                self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
-                #get the ssh up and running
-                self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
-                self.runCommand("chmod +x addEntropyDebian.riscv")
-                self.ensureCrngIsUp () #check we have enough entropy for ssh
-            elif (isEqSetting('osImage','FreeBSD')):
-                self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
-            printAndLog (f"start: {getSetting('osImage')} booted successfully!")
+        #up the ethernet adaptor and get the ip address
+        self.activateEthernet() 
+                                  
+        #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
+        #Adding 5 minutes to avoid being in the past
+        if (isEqSetting('osImage','debian')):
+            self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
+            #get the ssh up and running
+            self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
+            self.runCommand("chmod +x addEntropyDebian.riscv")
+            self.ensureCrngIsUp () #check we have enough entropy for ssh
+        elif (isEqSetting('osImage','FreeBSD')):
+            self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
+                                
+        printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
 
     @decorate.debugWrap
