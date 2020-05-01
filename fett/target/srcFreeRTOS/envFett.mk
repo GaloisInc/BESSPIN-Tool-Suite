@@ -31,8 +31,8 @@ WOLFSSL_SRC = $(WOLFSSL_SOURCE_DIR)/src/ssl.c \
 
 DEMO_SRC = main.c \
 	$(wildcard $(INC_FETT_APPS)/*.c) \
-	$(wildcard $(INC_FETT_APPS)/lib/*.c)
-INCLUDES += -I$(INC_FETT_APPS)/lib
+	$(wildcard $(INC_FETT_APPS)/appLib/*.c)
+INCLUDES += -I$(INC_FETT_APPS)/appLib
 INCLUDES += -I$(INC_FETT_APPS)
 CFLAGS := $(filter-out -Werror,$(CFLAGS))
 
@@ -43,4 +43,3 @@ DEMO_SRC += $(FREERTOS_IP_DEMO_SRC)
 #DEMO_SRC += $(WOLFSSL_SRC)
 #INCLUDES += -I$(WOLFSSL_SOURCE_DIR)
 
-include $(INC_FETT_APPS)/envApp.mk
