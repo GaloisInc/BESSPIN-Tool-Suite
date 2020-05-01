@@ -64,7 +64,7 @@ Some useful configuration options:
 - `useCustomOsImage`: If disabled, Nix images will be used.
 - `openConsole`: returns an open console for Unix targets.
 - `buildApps`: Cross-compile as instructed in `fett/apps/build.py`.
-- `https`/`ota`/`webserver`/`database`: To enable a particular application.
+- `webserver`/`database`: To choose which Unix application to run. For FreeRTOS, all apps run by default.
 
 
 ## Developer Manual ##
