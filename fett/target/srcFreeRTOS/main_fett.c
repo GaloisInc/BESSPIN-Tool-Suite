@@ -44,7 +44,7 @@ void vMain (void *pvParameters) {
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vHttp task.");
 
     //Start the OTA task
-    funcReturn = xTaskCreate(vHttp, "vMain:vOta", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
+    funcReturn = xTaskCreate(vOta, "vMain:vOta", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vOta task.");
 
     //Wait for the tasks to finish. This will be clearer as we move forward. Probably we'll just leave it hanging and remove this part.
