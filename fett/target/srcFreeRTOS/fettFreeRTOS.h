@@ -30,10 +30,11 @@ fett header for includes, externs, and global variables
 #define STACKSIZEMUL 10 //For tasks. Needs to be larger on 64-bit (not for FETT)
 /* Task notifications values */
 #define NOTIFY_SUCCESS 0x0000000F
-#define NOTIFY_FAIL 0x00000000
-#define NOTIFY_CONNECTED 0x000000F0
-#define NOTIFY_TERMINATED 0x00000F00
-#define NOTIFY_INVALIDAUTH 0x0000F000
+#define NOTIFY_SUCCESS_HTTP 0x00000001
+#define NOTIFY_SUCCESS_OTA 0x00000002
+#define NOTIFY_FAIL 0x000000F0
+#define NOTIFY_FAIL_HTTP 0x00000010
+#define NOTIFY_FAIL_OTA 0x00000020
 /* True and False values */
 #define uTRUE 1
 #define uFALSE 0
