@@ -79,14 +79,6 @@
             "type" : "boolean"
         },
         {
-            "name" : "https",
-            "type" : "boolean"
-        },
-        {
-            "name" : "ota",
-            "type" : "boolean"
-        },
-        {
             "name" : "webserver",
             "type" : "boolean"
         },
