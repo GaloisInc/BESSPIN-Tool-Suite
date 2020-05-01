@@ -55,14 +55,14 @@ uint8_t sendToMsgBuffer (void * xData, size_t xDataSize) {
 
         globalMsgBuffer = xMessageBufferCreate (msgBufSize);
         if (globalMsgBuffer == NULL) {
-            fettPrintf ("[sendToMsgBuffer]: Failed to create the global message buffer.\r\n");
+            fettPrintf ("(Error)~  sendToMsgBuffer: Create the global message buffer.\r\n");
             return uFALSE;
         }
     } //if it was not created
 
     size_t xBytesSent = xMessageBufferSend( globalMsgBuffer, xData, xDataSize, 0);
     if (xBytesSent != xDataSize) {
-        fettPrintf ("[sendToMsgBuffer]: Failed to send to the message buffer. [ret=%d]\r\n",xBytesSent);
+        fettPrintf ("(Error)~  sendToMsgBuffer: Send to the message buffer. [ret=%d]\r\n",xBytesSent);
         return uFALSE;
     }
     
@@ -72,7 +72,7 @@ uint8_t sendToMsgBuffer (void * xData, size_t xDataSize) {
 /* This function receives some data from the message buffer */
 size_t recvFromMsgBuffer (void * xBuf, size_t xBufSize) {
     if (globalMsgBuffer == NULL) { //it was not created or received
-        fettPrintf ("[recvFromMsgBuffer]: There is no message buffer to receive from.\r\n");
+        fettPrintf ("(Error)~  recvFromMsgBuffer: Message buffer to receive from.\r\n");
         return 0;
     }
 
