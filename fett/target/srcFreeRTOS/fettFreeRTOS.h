@@ -27,6 +27,7 @@ fett header for includes, externs, and global variables
 
 /* Macros */
 #define MSGBUF_SIZE 32
+#define STACKSIZEMUL 10 //For tasks. Needs to be larger on 64-bit (not for FETT)
 /* Task notifications values */
 #define NOTIFY_SUCCESS 0x0000000F
 #define NOTIFY_FAIL 0x00000000
