@@ -16,7 +16,7 @@ void vHttp (void *pvParameters) {
 
     //notify main
     vERROR_IF_EQ(xMainTask, NULL, "vHttp: Get handle of <main:task>.");
-    funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_HTTP ,eSetValueWithOverwrite);
+    funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_HTTP ,eSetBits);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vHttp: Notify <main:task>.");
 
     vTaskDelete (NULL);

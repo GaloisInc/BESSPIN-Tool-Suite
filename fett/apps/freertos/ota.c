@@ -16,7 +16,7 @@ void vOta (void *pvParameters) {
 
     //notify main
     vERROR_IF_EQ(xMainTask, NULL, "vOta: Get handle of <main:task>.");
-    funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_OTA ,eSetValueWithOverwrite);
+    funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_OTA ,eSetBits);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vOta: Notify <main:task>.");
 
     vTaskDelete (NULL);
