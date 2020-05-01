@@ -51,7 +51,7 @@ fett header for includes, externs, and global variables
         else\
             prEXIT(1);\
     } else \
-        fettPrintf ("(Info)~  %s.\r\n",msg);\
+        fettPrintf ("(Info)~  %s\r\n",msg);\
     }
 
 #define COMP_EQ(ret, err) (ret == err)
