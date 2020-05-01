@@ -3,7 +3,7 @@
 #include "fettFreeRTOS.h"
 
 void main_fett (void);
-void vMain (void *pvParameters)
+void vMain (void *pvParameters);
 
 TaskHandle_t xMainTask = NULL;
 UBaseType_t xMainPriority = tskIDLE_PRIORITY+100; //100 is chosen arbitrarily.
