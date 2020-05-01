@@ -19,5 +19,5 @@ void vHttp (void *pvParameters) {
     funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_HTTP ,eSetValueWithOverwrite);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vHttp: Notify <main:task>.");
 
-    vEXIT(0);
+    vTaskDelete (NULL);
 }
