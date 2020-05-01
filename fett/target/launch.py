@@ -52,15 +52,7 @@ def prepareEnv ():
     if (isEqSetting('osImage','FreeRTOS')):
         setSetting('webserver',False) 
         setSetting('database',False) 
-        if (not isEnabled('https') and not isEnabled('ota')):
-            warnAndLog (f"All FreeRTOS apps are switched off.")
-            exitFett (EXIT.Nothing_to_do)
-        if (isEnabled('https') and isEnabled('ota')):
-            warnAndLog (f"<https> and <ota> are mutually exclusive. <ota> is going to be ignored.")
-            setSetting('ota',False)
     elif (isEqSetting('osImage','FreeBSD') or isEqSetting('osImage','debian')):
-        setSetting('https',False) 
-        setSetting('ota',False) 
         if (not isEnabled('webserver') and not isEnabled('database')):
             if (not isEnabled('openConsole')):
                 warnAndLog (f"All {getSetting('osImage')} apps are switched off, and <openConsole> is disabled.")
@@ -77,8 +69,6 @@ def prepareEnv ():
         setSetting('runApp',False)
         setSetting('webserver',False) 
         setSetting('database',False) 
-        setSetting('https',False) 
-        setSetting('ota',False) 
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
     
