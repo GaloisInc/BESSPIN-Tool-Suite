@@ -56,7 +56,7 @@ void vMain (void *pvParameters) {
         funcReturn = xTaskNotifyWait(0xffffffff, 0, &recvNotification, pdMS_TO_TICKS(10000)); //10 seconds arbitrary value
         if (funcReturn != pdPASS) {
             //the following should be printed in debug mode only (Not yet implemented)
-            fettPrintf("(Debug)~  vMain: <%d seconds> elapsed with <%d notification(s)> received.\r\n",pdTICKS_TO_MS(xTaskGetTickCount() - xStartTime),iNotif);
+            fettPrintf("(Debug)~  vMain: <%d seconds> elapsed with <%d notification(s)> received.\r\n",pdTICKS_TO_S(xTaskGetTickCount() - xStartTime),iNotif);
         } else {
             iNotif++;
             if (recvNotification & NOTIFY_FAIL) { //There is a fail somewhere
