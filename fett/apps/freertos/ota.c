@@ -19,5 +19,5 @@ void vOta (void *pvParameters) {
     funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_OTA ,eSetValueWithOverwrite);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vOta: Notify <main:task>.");
 
-    vEXIT(0);
+    vTaskDelete (NULL);
 }
