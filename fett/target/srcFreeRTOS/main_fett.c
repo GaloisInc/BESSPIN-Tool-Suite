@@ -47,38 +47,44 @@ void vMain (void *pvParameters) {
     funcReturn = xTaskCreate(vOta, "vMain:vOta", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vOta task.");
 
-    //Wait for the tasks to finish. This will be clearer as we move forward. Probably we'll just leave it hanging and remove this part.
+    //In dev/test mode, we time-out.
     uint8_t iNotif = 0, nTasksNotif = 2; //HTTP and OTA
     uint8_t exitCode = 0;
-    for (iNotif=0;iNotif<nTasksNotif && exitCode==0;iNotif++) {
+    TickType_t xStartTime = xTaskGetTickCount();
+    do {
         recvNotification = NOTIFY_FAIL;
-        funcReturn = xTaskNotifyWait(0xffffffff, 0, &recvNotification, pdMS_TO_TICKS(120000)); //2 minutes arbitrary value
-        vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Receive state notification.");
-        if (recvNotification & NOTIFY_FAIL) { //There is a fail somewhere
-            switch (recvNotification) {
-                case NOTIFY_FAIL_HTTP : fettPrintf("(Error)~  vMain: Received HTTP fail notification.\r\n");
-                                        break;
-                case NOTIFY_FAIL_OTA  : fettPrintf("(Error)~  vMain: Received OTA fail notification.\r\n");
-                                        break;             
-                default               : fettPrintf("(Error)~  vMain: Received unknown fail notification. [notif=%lx]\r\n",recvNotification);
-                                        break;       
-            }
-            exitCode = 1;
-        } else if (recvNotification & NOTIFY_SUCCESS) { //Success
-            switch (recvNotification) {
-                case NOTIFY_SUCCESS_HTTP : fettPrintf("(Success)~  vMain: Received HTTP success notification.\r\n");
-                                        break;
-                case NOTIFY_SUCCESS_OTA  : fettPrintf("(Success)~  vMain: Received OTA success notification.\r\n");
-                                        break;             
-                default               : fettPrintf("(Error)~  vMain: Received unknown success notification. [notif=%lx]\r\n",recvNotification);  
-                                        exitCode = 1;
-                                        break;     
-            }
+        funcReturn = xTaskNotifyWait(0xffffffff, 0, &recvNotification, pdMS_TO_TICKS(10000)); //10 seconds arbitrary value
+        if (funcReturn != pdPASS) {
+            //the following should be printed in debug mode only (Not yet implemented)
+            fettPrintf("(Debug)~  vMain: <%d seconds> elapsed with <%d notification(s)> received.\r\n",pdTICKS_TO_MS(xTaskGetTickCount() - xStartTime),iNotif);
         } else {
-            fettPrintf("(Error)~  vMain: Received unexpected notification. [notif=%lx]\r\n",recvNotification);
-            exitCode = 1;
-        }
-    } //for iNotif
+            iNotif++;
+            if (recvNotification & NOTIFY_FAIL) { //There is a fail somewhere
+                switch (recvNotification) {
+                    case NOTIFY_FAIL_HTTP : fettPrintf("(Error)~  vMain: Received HTTP fail notification.\r\n");
+                                            break;
+                    case NOTIFY_FAIL_OTA  : fettPrintf("(Error)~  vMain: Received OTA fail notification.\r\n");
+                                            break;             
+                    default               : fettPrintf("(Error)~  vMain: Received unknown fail notification. [notif=%lx]\r\n",recvNotification);
+                                            break;       
+                }
+                exitCode = 1;
+            } else if (recvNotification & NOTIFY_SUCCESS) { //Success
+                switch (recvNotification) {
+                    case NOTIFY_SUCCESS_HTTP : fettPrintf("(Success)~  vMain: Received HTTP success notification.\r\n");
+                                            break;
+                    case NOTIFY_SUCCESS_OTA  : fettPrintf("(Success)~  vMain: Received OTA success notification.\r\n");
+                                            break;             
+                    default               : fettPrintf("(Error)~  vMain: Received unknown success notification. [notif=%lx]\r\n",recvNotification);  
+                                            exitCode = 1;
+                                            break;     
+                }
+            } else {
+                fettPrintf("(Error)~  vMain: Received unexpected notification. [notif=%lx]\r\n",recvNotification);
+                exitCode = 1;
+            }
+        } //else: notification received
+    } while ((iNotif<nTasksNotif) && (exitCode==0) && ((xTaskGetTickCount() - xStartTime) < pdMS_TO_TICKS(1000*APP_TIMEOUT)));
 
     vEXIT(exitCode);
 }
