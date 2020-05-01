@@ -8,7 +8,7 @@ void vHttps (void *pvParameters) {
     (void) pvParameters;
     xMainTask = xTaskGetCurrentTaskHandle();
 
-    fettPrintf("\nStarting HTTPS...\n");
+    fettPrintf("vHTTPS: Starting HTTPS...\r\n");
     
     vEXIT(0);
 }

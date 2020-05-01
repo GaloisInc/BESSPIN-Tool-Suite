@@ -8,7 +8,7 @@ void vOta (void *pvParameters) {
     (void) pvParameters;
     xMainTask = xTaskGetCurrentTaskHandle();
 
-    fettPrintf ("\nStarting OTA...\n");
+    fettPrintf ("vOTA: Starting OTA...\r\n");
 
     vEXIT(0);
 }
