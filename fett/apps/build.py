@@ -22,7 +22,7 @@ def buildApps ():
         cp(os.path.join(targetUtilsDir,'Makefile.xcompileDir'),os.path.join(getSetting('buildDir'),'Makefile'))
         cp(os.path.join(targetUtilsDir,'defaultEnvLinux.mk'),getSetting('buildDir'))
 
-    if (isEnabled('https') or isEnabled('ota')):
+    if (isEqSetting('osImage','FreeRTOS')):
         buildFreeRTOSapps()
     elif (isEnabled('webserver')):
         buildWebserver(tarName)
@@ -36,19 +36,16 @@ def buildApps ():
 
 # app-specific building steps -----------------------------------------------------------
 
-""" Special building for 'https' and 'ota' """
+""" Special building for 'freertos' """
 @decorate.debugWrap
 @decorate.timeWrap
 def buildFreeRTOSapps():
     if (not isEnabled('buildApps')):
         pass #For readability
     else:
-        cpFilesToBuildDir (getSourceDir('https'),pattern='*.c')
-        cpFilesToBuildDir (getSourceDir('ota'),pattern='*.c')
-        if (isEnabled('https')):
-            cpFilesToBuildDir (getSourceDir('https'),pattern='*.mk')
-        elif (isEnabled('ota')):
-            cpFilesToBuildDir (getSourceDir('ota'),pattern='*.mk')
+        appLibPath = os.path.join(getSetting('buildDir'),'appLib')
+        mkdir (appLibPath)
+        cp (getSourceDir('freertos'),appLibPath,pattern='*.c')
 
 """ Special building for 'webserver' """
 @decorate.debugWrap
