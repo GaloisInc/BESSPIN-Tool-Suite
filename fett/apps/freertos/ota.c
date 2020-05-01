@@ -8,11 +8,11 @@ void vOta (void *pvParameters) {
     (void) pvParameters;
     BaseType_t funcReturn;
 
-    fettPrintf("vOta: Starting OTA...\r\n");
+    fettPrintf("(Info)~  vOta: Starting OTA...\r\n");
 
     /* Code goes here */
 
-    fettPrintf("vOta: Exitting OTA...\r\n");
+    fettPrintf("(Info)~  vOta: Exitting OTA...\r\n");
 
     //notify main
     vERROR_IF_EQ(xMainTask, NULL, "vOta: Get handle of <main:task>.");
