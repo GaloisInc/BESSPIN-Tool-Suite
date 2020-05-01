@@ -8,11 +8,11 @@ void vHttp (void *pvParameters) {
     (void) pvParameters;
     BaseType_t funcReturn;
 
-    fettPrintf("vHttp: Starting HTTP...\r\n");
+    fettPrintf("(Info)~  vHttp: Starting HTTP...\r\n");
 
     /* Code goes here */
 
-    fettPrintf("vHttp: Exitting HTTP...\r\n");
+    fettPrintf("(Info)~  vHttp: Exitting HTTP...\r\n");
 
     //notify main
     vERROR_IF_EQ(xMainTask, NULL, "vHttp: Get handle of <main:task>.");
