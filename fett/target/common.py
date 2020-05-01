@@ -14,8 +14,7 @@ from collections import Iterable
 
 from fett.apps.database.run import runApp as runDatabase
 from fett.apps.webserver.run import runApp as runWebserver
-from fett.apps.https.run import runApp as runHttps
-from fett.apps.ota.run import runApp as runOta
+from fett.apps.freertos.run import runFreeRTOSapps
 
 class commonTarget():
     def __init__(self):
@@ -481,10 +480,8 @@ class commonTarget():
             #send any needed files to target
             self.sendTar(timeout=timeout)
 
-        if (isEnabled('https')):
-            outLog = runHttps(self)
-        elif (isEnabled('ota')):
-            outLog = runOta(self)
+        if (isEqSetting('osImage','FreeRTOS')):
+            outLog = runFreeRTOSapps(self)
         elif (isEnabled('webserver')):
             outLog = runWebserver(self)
         elif (isEnabled('database')):
