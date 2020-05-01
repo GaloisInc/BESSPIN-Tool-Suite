@@ -73,7 +73,15 @@ def prepareFreeRTOS():
             logAndExit(f"<Clang> is not yet supported for FreeRTOS.",exitCode=EXIT.Implementation)
 
         #copy the C files, .mk files, and any directory
-        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)      
+        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
+
+        #Include the relevant user configuration parameters
+        #This is a list of tuples: (settingName,macroName)
+        listConfigParams = [('appTimeout','END_TIMEOUT')]
+        configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
+        for xSetting,xMacro in listConfigParams:
+            configHfile.write(f"#define {xMacro} {getSetting(xSetting)}\n")
+        configHfile.close()
 
         #Cleaning all ".o" and ".elf" files in site
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
