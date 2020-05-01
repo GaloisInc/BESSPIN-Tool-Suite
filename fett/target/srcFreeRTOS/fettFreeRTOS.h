@@ -75,10 +75,6 @@ struct fett_parentSocket {
 // --------- fettNtk.c ---------------------------------------------------------------------------------
 extern void vStartNetwork (void *pvParameters);
 
-// ---------- fettTCP.c --------------------------------------------------------------------------------
-extern void vServerSocketTCP (void *pvParameters);
-extern void vClientSocketTCP (void *pvParameters);
-
 // --------- fettMisc.c ---------------------------------------------------------------------------------
 extern void fettPrintf (const char * textToPrint, ...);
 extern void exitFett (uint8_t exitCode);
@@ -93,7 +89,7 @@ extern MessageBufferHandle_t globalMsgBuffer;
 extern uint8_t sendToMsgBuffer (void * xData, size_t xDataSize);
 extern size_t recvFromMsgBuffer (void * xBuf, size_t xBufSize);
 
-// --------- main_APP.c ---------------------------------------------------------------------------------
+// --------- main_fett.c ---------------------------------------------------------------------------------
 extern TaskHandle_t xMainTask;
 extern UBaseType_t xMainPriority;
 
@@ -105,4 +101,8 @@ extern void vInitClientWolfSSL (void *pvParameters);
 extern WOLFSSL_CTX* xWolfSSL_ServerContext;
 extern WOLFSSL_CTX* xWolfSSL_ClientContext;*/
 
+// ----------- http.c -------------------------------------------------------------------------------------
+extern void vHttp (void *pvParameters);
 
+// ----------- ota.c --------------------------------------------------------------------------------------
+extern void vOta (void *pvParameters);
