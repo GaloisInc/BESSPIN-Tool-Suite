@@ -1,10 +1,14 @@
-// This is the main function executed by ota
+// This is the main task executed by ota
 
-#include <stdio.h>
+#include "fettFreeRTOS.h"
 
-void main_ota (void);
+void vOta (void *pvParameters);
 
-void main_ota () {
-    printf("\nStarting OTA...\n");
-    return;
+void vOta (void *pvParameters) {
+    (void) pvParameters;
+    xMainTask = xTaskGetCurrentTaskHandle();
+
+    fettPrintf ("\nStarting OTA...\n");
+
+    vEXIT(0);
 }

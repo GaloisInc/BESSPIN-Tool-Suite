@@ -1,10 +1,14 @@
-// This is the main function executed by https
+// This is the main task executed by https
 
-#include <stdio.h>
+#include "fettFreeRTOS.h"
 
-void main_https (void);
+void vHttps (void *pvParameters);
 
-void main_https () {
-    printf("\nStarting HTTPS...\n");
-    return;
+void vHttps (void *pvParameters) {
+    (void) pvParameters;
+    xMainTask = xTaskGetCurrentTaskHandle();
+
+    fettPrintf("\nStarting HTTPS...\n");
+    
+    vEXIT(0);
 }
