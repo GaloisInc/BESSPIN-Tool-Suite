@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
-""" 
+"""
 Building apps
 """
 
 from fett.base.utils.misc import *
 import os
 
-""" The entry function 
+""" The entry function
 ---------------------------------------
 """
 @decorate.debugWrap
@@ -46,6 +46,7 @@ def buildFreeRTOSapps():
         appLibPath = os.path.join(getSetting('buildDir'),'appLib')
         mkdir (appLibPath)
         cp (getSourceDir('freertos'),appLibPath,pattern='*.c')
+        cp (getSourceDir('freertos'),appLibPath,pattern='*.h')
 
 """ Special building for 'webserver' """
 @decorate.debugWrap
@@ -139,7 +140,3 @@ def crossCompileUnix():
     logging.debug(f"going to make using {envLinux}")
     make (envLinux,getSetting('buildDir'))
     printAndLog(f"Files cross-compiled successfully.")
-
-
-
-
