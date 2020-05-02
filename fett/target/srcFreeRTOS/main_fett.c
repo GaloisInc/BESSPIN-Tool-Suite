@@ -32,10 +32,9 @@ void vMain (void *pvParameters) {
     funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vStartNetwork task.");
 
-    recvNotification = NOTIFY_FAIL;
-    funcReturn = xTaskNotifyWait(0xffffffff, 0, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
+    funcReturn = xTaskNotifyWait(0xffffffff, 0xffffffff, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Receive notification from vStartNetwork.");
-    vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS, "vMain: Expected notification value from vStartNetwork.");
+    vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS_NTK, "vMain: Expected notification value from vStartNetwork.");
 
     //Start the FAT filesystem
 
@@ -52,7 +51,6 @@ void vMain (void *pvParameters) {
     uint8_t exitCode = 0;
     TickType_t xStartTime = xTaskGetTickCount();
     do {
-        recvNotification = NOTIFY_FAIL;
         funcReturn = xTaskNotifyWait(0x00000000, 0xffffffff, &recvNotification, pdMS_TO_TICKS(10000)); //10 seconds arbitrary value
         if (funcReturn != pdPASS) {
             //the following should be printed in debug mode only (Not yet implemented)
