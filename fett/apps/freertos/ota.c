@@ -1,6 +1,7 @@
 // This is the main task executed by ota
 
 #include "fettFreeRTOS.h"
+#include "ota_tests.h"
 
 void vOta (void *pvParameters);
 
@@ -11,6 +12,7 @@ void vOta (void *pvParameters) {
     fettPrintf("(Info)~  vOta: Starting OTA...\r\n");
 
     /* Code goes here */
+    test_ed25519_verify();
 
     fettPrintf("(Info)~  vOta: Exitting OTA...\r\n");
 
