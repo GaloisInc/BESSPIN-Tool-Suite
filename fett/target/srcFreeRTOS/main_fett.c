@@ -64,7 +64,7 @@ void vMain (void *pvParameters) {
                     fettPrintf("(Error)~  vMain: Received OTA fail notification.\r\n");
                 }
                 if (!(recvNotification & NOTIFY_FAIL_HTTP) && !(recvNotification & NOTIFY_FAIL_OTA)) {
-                    fettPrintf("(Error)~  vMain: Received unknown fail notification. [notif=%lx]\r\n",recvNotification);
+                    fettPrintf("(Error)~  vMain: Received unknown fail notification. [notif=0x%lx]\r\n",recvNotification);
                 }
                 exitCode = 1;
             } else if (recvNotification & NOTIFY_SUCCESS) { //Success
@@ -77,11 +77,11 @@ void vMain (void *pvParameters) {
                     iNotif++;
                 }
                 if (!(recvNotification & NOTIFY_SUCCESS_HTTP) && !(recvNotification & NOTIFY_SUCCESS_OTA)) {
-                    fettPrintf("(Error)~  vMain: Received unknown success notification. [notif=%lx]\r\n",recvNotification);  
+                    fettPrintf("(Error)~  vMain: Received unknown success notification. [notif=0x%lx]\r\n",recvNotification);  
                     exitCode = 1;
                 }
             } else {
-                fettPrintf("(Error)~  vMain: Received unexpected notification. [notif=%lx]\r\n",recvNotification);
+                fettPrintf("(Error)~  vMain: Received unexpected notification. [notif=0x%lx]\r\n",recvNotification);
                 exitCode = 1;
             }
         } //else: notification received
