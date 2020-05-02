@@ -10,5 +10,5 @@ from fett.base.utils.misc import *
 def runFreeRTOSapps (target):
     # target is a fett target object
     outLog = ''
-    outLog += target.runCommand("runFreeRTOSapps",endsWith=">>>End of Fett<<<",timeout=getSetting('appTimeout'))[1]
+    outLog += target.runCommand("runFreeRTOSapps",endsWith=">>>End of Fett<<<",erroneousContents=['(Error)','EXIT: exiting FETT with code <1>'],timeout=getSetting('appTimeout'))[1]
     return outLog
