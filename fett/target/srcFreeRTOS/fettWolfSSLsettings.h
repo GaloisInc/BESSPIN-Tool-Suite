@@ -23,6 +23,7 @@ fett settings for WolfSSL -- This file is included in <WOLFSSL>/wolfssl/wolfcryp
 /* Allow the use of SHA512 - needed for Ed25519 */
 #define HAVE_SHA512
 #define WOLFSSL_SHA512
+#define USE_SLOW_SHA2
 /* Allow the use of Ed25519 signature algorithm */
 #define HAVE_CURVE25519
 #define HAVE_ED25519
