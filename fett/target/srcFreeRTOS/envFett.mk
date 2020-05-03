@@ -23,7 +23,6 @@ WOLFSSL_SRC = $(WOLFSSL_SOURCE_DIR)/src/ssl.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/random.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/arc4.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/des3.c \
-			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/rabbit.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/error.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/integer.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/aes.c \

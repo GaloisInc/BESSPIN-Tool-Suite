@@ -27,6 +27,8 @@ fett settings for WolfSSL -- This file is included in <WOLFSSL>/wolfssl/wolfcryp
 /* Allow the use of Ed25519 signature algorithm */
 #define HAVE_CURVE25519
 #define HAVE_ED25519
+/* Eliminate the RABBIT Cipher */
+#define NO_RABBIT
 
 /* enable FETT-specific modifications in WolfSSL sources */
 #define fettOnFreeRTOS
