@@ -1,0 +1,40 @@
+image: artifactory.galois.com:5008/fett-target:ci
+#-----------------------------------------------------------------------------#
+#
+# General startup commands
+#
+#-----------------------------------------------------------------------------#
+before_script:
+  - git submodule init
+  - git submodule update
+  - git submodule sync
+
+#-----------------------------------------------------------------------------#
+#
+# Define tags
+#
+#-----------------------------------------------------------------------------#
+.fpga:
+  tags: ["docker-fpga"]
+
+.docker:
+  tags: ["docker"]
+
+.log_always:
+  artifacts:
+    expire_in: 1 day
+    when: always
+    paths:
+      - workDir/fett.log
+      - workDir/*.out
+
+#-----------------------------------------------------------------------------#
+#
+# Test definitions
+#
+#-----------------------------------------------------------------------------#
+Busybox_on_FPGA:
+  timeout: 1h
+  script:
+    - ./fett.py -c tests/fpga-busybox.ini -d 
+  extends: [.log_always, .fpga]
