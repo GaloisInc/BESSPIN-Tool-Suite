@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 from fett.target.common import *
 
 import subprocess, getpass, psutil, tftpy
-import sys, signal, os, socket
+import sys, signal, os, socket, time
 from pexpect import fdpexpect
 
 class fpgaTarget (commonTarget):
@@ -291,6 +291,7 @@ def programBifile ():
 @decorate.debugWrap
 def setEthAdaptorName ():
     def tryToGetEthAdaptorName(family, address):
+        time.sleep(5)
         for nic, addrs in psutil.net_if_addrs().items():
             for addr in addrs:
                 if (addr.family == family):
@@ -313,10 +314,6 @@ def setEthAdaptorName ():
             printAndLog("getEthAdaptorName: Failed to find the adaptor with the found mac address!",doPrint=False)
     #Failed, have to try using the ip
     printAndLog("getEthAdaptorName: Trying to use the IP address instead...",doPrint=False)
-    if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
-        return
-    #Failed. Try again
-    printAndLog(f"getEthAdaptorName: Failed to find the adaptor using the FPGA IP <{getSetting('fpgaIpHost')}>. Trying to <ifup -a> first...",doPrint=False)
     if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
         return
     logAndExit("getEthAdaptorName: Failed to find the ethernet adaptor name!",exitCode=EXIT.Network)
@@ -347,8 +344,7 @@ def resetEthAdaptor ():
     commands = [
                 ['ip', 'addr', 'flush', 'dev', getSetting('ethAdaptor')],
                 ['ip','link','set', getSetting('ethAdaptor'),'down'],
-                ['ip','link','set', getSetting('ethAdaptor'),'up'],
-                ['sleep','5']
+                ['ip','link','set', getSetting('ethAdaptor'),'up']
             ]
     nAttempts = 3
     isReset = False
