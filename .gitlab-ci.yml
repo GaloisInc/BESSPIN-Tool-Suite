@@ -37,5 +37,5 @@ before_script:
 Busybox_on_FPGA:
   timeout: 1h
   script:
-    - nix-shell --run "./fett.py -c tests/fpga-busybox.ini -d"
+    - . $HOME/.nix-profile/etc/profile.d/nix.sh && nix-shell --command "./fett.py -c tests/fpga-busybox.ini -d"
   extends: [.log_always, .fpga]
