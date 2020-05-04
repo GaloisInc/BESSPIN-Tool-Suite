@@ -91,6 +91,10 @@
         {
             "name" : "database",
             "type" : "boolean"
+        },
+        {
+            "name" : "voting",
+            "type" : "boolean"
         }
     ],
 
