@@ -31,6 +31,3 @@ fett settings for WolfSSL -- This file is included in <WOLFSSL>/wolfssl/wolfcryp
 #define NO_RABBIT
 #define NO_RC4
 #define NO_DES3
-
-/* enable FETT-specific modifications in WolfSSL sources */
-#define fettOnFreeRTOS
