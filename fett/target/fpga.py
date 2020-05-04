@@ -318,7 +318,12 @@ def setEthAdaptorName ():
         return
     #Failed. Try again
     printAndLog(f"getEthAdaptorName: Failed to find the adaptor using the FPGA IP <{getSetting('fpgaIpHost')}>. Trying to <ifup -a> first...",doPrint=False)
-    sudoShellCommand (['ifup', '-a'],f" You need sudo privileges to ifup all network adaptors: ")
+    # TODO: we need this hacky script to get all interfaces through `ip -a`, parse their names and then bring them up with `ip link set $name up`
+    # because we don't have `ifup -a` in docker.
+    # Not sure how to do this better:-/
+    import os
+    cmd = "for name in `ip a | grep ': <' | cut -d ' ' -f 2 | cut -d ':' -f 1`; do sudo ip link set $name up; done"
+    os.system(cmd)
     if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
         return
     logAndExit("getEthAdaptorName: Failed to find the ethernet adaptor name!",exitCode=EXIT.Network)
@@ -348,8 +353,8 @@ def resetEthAdaptor ():
     sudoPromptPrefix = f"You need sudo privileges to reset the ethernet adaptor: "
     commands = [
                 ['ip', 'addr', 'flush', 'dev', getSetting('ethAdaptor')],
-                ['ifdown', getSetting('ethAdaptor')],
-                ['ifup', getSetting('ethAdaptor')]
+                ['ip','link','set', getSetting('ethAdaptor'), 'down'],
+                ['ip','link','set', getSetting('ethAdaptor'), 'up']
             ]
     nAttempts = 3
     isReset = False
