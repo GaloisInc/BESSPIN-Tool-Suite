@@ -5,9 +5,7 @@ image: artifactory.galois.com:5008/fett-target:ci
 #
 #-----------------------------------------------------------------------------#
 before_script:
-  - echo $USER
-  - alias nix-shell=". $HOME/.nix-profile/etc/profile.d/nix.sh && nix-shell"
-  - alias
+  - . $HOME/.nix-profile/etc/profile.d/nix.sh
   - export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
   - source /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
   - git submodule init
@@ -41,5 +39,5 @@ before_script:
 Busybox_on_FPGA:
   timeout: 1h
   script:
-    - . $HOME/.nix-profile/etc/profile.d/nix.sh && nix-shell --command "./fett.py -c tests/fpga-busybox.ini -d"
+    - nix-shell --command "./fett.py -c tests/fpga-busybox.ini -d"
   extends: [.log_always, .fpga]

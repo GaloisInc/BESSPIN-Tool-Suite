@@ -316,6 +316,11 @@ def setEthAdaptorName ():
     printAndLog("getEthAdaptorName: Trying to use the IP address instead...",doPrint=False)
     if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
         return
+    #Failed. Try again
+    printAndLog(f"getEthAdaptorName: Failed to find the adaptor using the FPGA IP <{getSetting('fpgaIpHost')}>. Trying to <ifup -a> first...",doPrint=False)
+    sudoShellCommand (['ifup', '-a'],f" You need sudo privileges to ifup all network adaptors: ")
+    if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
+        return
     logAndExit("getEthAdaptorName: Failed to find the ethernet adaptor name!",exitCode=EXIT.Network)
 
 @decorate.debugWrap
@@ -343,8 +348,8 @@ def resetEthAdaptor ():
     sudoPromptPrefix = f"You need sudo privileges to reset the ethernet adaptor: "
     commands = [
                 ['ip', 'addr', 'flush', 'dev', getSetting('ethAdaptor')],
-                ['ip','link','set', getSetting('ethAdaptor'),'down'],
-                ['ip','link','set', getSetting('ethAdaptor'),'up']
+                ['ifdown', getSetting('ethAdaptor')],
+                ['ifup', getSetting('ethAdaptor')]
             ]
     nAttempts = 3
     isReset = False
