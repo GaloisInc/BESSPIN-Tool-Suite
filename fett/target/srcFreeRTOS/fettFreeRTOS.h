@@ -72,16 +72,6 @@ fett header for includes, externs, and global variables
     #define pdTICKS_TO_S( xTicks ) ( ( TickType_t ) ( ( ( TickType_t ) ( xTicks ) ) / ( TickType_t ) configTICK_RATE_HZ ) )
 #endif
 
-/* Extra types */
-struct fett_parentSocket {
-    Socket_t xConnectedSocket;
-    TaskHandle_t xTaskParent;
-    #ifdef USE_TLS_OVER_TCP
-        WOLFSSL* xWolfSSL_Object;
-    #endif
-    uint8_t isServer;
-};
-
 // --------- fettNtk.c ---------------------------------------------------------------------------------
 extern void vStartNetwork (void *pvParameters);
 
