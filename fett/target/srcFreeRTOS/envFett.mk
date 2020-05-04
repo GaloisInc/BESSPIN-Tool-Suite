@@ -28,8 +28,7 @@ WOLFSSL_SRC = $(WOLFSSL_SOURCE_DIR)/src/ssl.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/fe_operations.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/ge_operations.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/curve25519.c \
-			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/ed25519.c \
-			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/dh.c
+			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/ed25519.c
 
 DEMO_SRC = main.c \
 	$(wildcard $(INC_FETT_APPS)/*.c) \
