@@ -12,8 +12,8 @@ import string, re
 import socket, errno, pty, termios
 from collections import Iterable
 
-from fett.apps.database.run import runApp as runDatabase
-from fett.apps.webserver.run import runApp as runWebserver
+import fett.apps.unix.database as database
+import fett.apps.unix.webserver as webserver
 from fett.apps.freertos.run import runFreeRTOSapps
 
 class commonTarget():
@@ -483,9 +483,11 @@ class commonTarget():
         if (isEqSetting('osImage','FreeRTOS')):
             outLog = runFreeRTOSapps(self)
         elif (isEnabled('webserver')):
-            outLog = runWebserver(self)
+            outLog = webserver.install(self)
+            outLog += webserver.deploy(self)
         elif (isEnabled('database')):
-            outLog = runDatabase(self)
+            outLog = database.install(self)
+            outLog += database.deploy(self)
 
         fLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
         fLog.write (outLog)
