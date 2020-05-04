@@ -12,8 +12,8 @@ import string, re
 import socket, errno, pty, termios
 from collections import Iterable
 
-import fett.apps.unix.database as database
-import fett.apps.unix.webserver as webserver
+from fett.apps.unix import database
+from fett.apps.unix import webserver
 from fett.apps.freertos.run import runFreeRTOSapps
 
 class commonTarget():
