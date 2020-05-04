@@ -14,6 +14,7 @@ from collections import Iterable
 
 from fett.apps.unix import database
 from fett.apps.unix import webserver
+from fett.apps.unix import voting
 from fett.apps.freertos.run import runFreeRTOSapps
 
 class commonTarget():
@@ -488,6 +489,9 @@ class commonTarget():
         elif (isEnabled('database')):
             outLog = database.install(self)
             outLog += database.deploy(self)
+        elif (isEnabled('voting')):
+            outLog = voting.install(self)
+            outLog += voting.deploy(self)
 
         fLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
         fLog.write (outLog)
