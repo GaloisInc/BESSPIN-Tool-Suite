@@ -314,7 +314,7 @@ def setEthAdaptorName ():
 
     printAndLog("getEthAdaptorName: Obtaining the ethernet adaptor name using the mac address...",doPrint=False)
     interfacesFile = '/etc/network/interfaces'
-    macAddressMatch = matchExprInLines(r"^\s*map\s+(?P<macAddress>([0-9a-fA-F][0-9a-fA-F]:){5}([0-9a-fA-F][0-9a-fA-F]))\s+FPGA\s*$",ftReadLines(interfacesFile))
+    macAddressMatch = matchExprInLines(r"^\s*map\s+(?P<macAddress>([0-9a-fA-F][0-9a-fA-F]:){5}([0-9a-fA-F][0-9a-fA-F]))\s+FPGA\s*$",ftReadLines(interfacesFile,exitOnFileError=False))
     if (not macAddressMatch):
         warnAndLog(f"getEthAdaptorName: Failed to get the mac address from {interfacesFile}.",doPrint=False)
     else:
