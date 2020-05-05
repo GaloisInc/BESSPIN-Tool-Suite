@@ -4,6 +4,7 @@ fett header for includes, externs, and global variables
 
 /* General includes */
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>

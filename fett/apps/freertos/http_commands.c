@@ -23,13 +23,7 @@
  * http://www.FreeRTOS.org
  */
 
-/* Standard includes. */
-#include <stdio.h>
-#include <stdlib.h>
-
-/* FreeRTOS includes. */
-#include "FreeRTOS.h"
-
+#include "fettFreeRTOS.h"
 #include "http_commands.h"
 
 const struct xWEB_COMMAND xWebCommands[WEB_CMD_COUNT] = {
