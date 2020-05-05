@@ -23,18 +23,7 @@
  * http://www.FreeRTOS.org
  */
 
-/* Standard includes. */
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-/* FreeRTOS includes. */
-#include "FreeRTOS.h"
-#include "task.h"
-
-/* FreeRTOS+TCP includes. */
-#include "FreeRTOS_IP.h"
-#include "FreeRTOS_Sockets.h"
+#include "fettFreeRTOS.h"
 
 #include "tcp_server.h"
 #include "tcp_server_private.h"
