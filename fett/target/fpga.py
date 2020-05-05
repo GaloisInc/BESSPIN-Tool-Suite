@@ -317,13 +317,13 @@ def setEthAdaptorName ():
     if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
         return
     #Failed. Try again
-    printAndLog(f"getEthAdaptorName: Failed to find the adaptor using the FPGA IP <{getSetting('fpgaIpHost')}>. Trying to <ifup -a> first...",doPrint=False)
-    # TODO: we need this hacky script to get all interfaces through `ip -a`, parse their names and then bring them up with `ip link set $name up`
-    # because we don't have `ifup -a` in docker.
-    # Not sure how to do this better:-/
-    import os
-    cmd = "for name in `ip a | grep ': <' | cut -d ' ' -f 2 | cut -d ':' -f 1`; do sudo ip link set $name up; done"
-    os.system(cmd)
+    printAndLog(f"getEthAdaptorName: Failed to find the adaptor using the FPGA IP <{getSetting('fpgaIpHost')}>. Trying to bring all of them up first...",doPrint=False)
+    #Note: We're doing it this way instead of "ifup -a" because Docker did not like the idea of `ifup -a`
+    sudoPromptPrefix = f" You need sudo privileges to bring all network adaptors up: "
+    for nic, addrs in psutil.net_if_addrs().items():
+        for addr in addrs:
+            if (addr.family == socket.AF_INET):
+                sudoShellCommand(['ip','link','set',nic,'up'],sudoPromptPrefix)
     if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
         return
     logAndExit("getEthAdaptorName: Failed to find the ethernet adaptor name!",exitCode=EXIT.Network)
