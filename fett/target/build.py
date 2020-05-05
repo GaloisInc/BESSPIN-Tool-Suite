@@ -77,7 +77,7 @@ def prepareFreeRTOS():
 
         #Include the relevant user configuration parameters
         #This is a list of tuples: (settingName,macroName)
-        listConfigParams = [('appTimeout','APP_TIMEOUT')]
+        listConfigParams = [('appTimeout','APP_TIMEOUT'),('debugMode','FETT_DEBUG')]
         configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
         for xSetting,xMacro in listConfigParams:
             try:
