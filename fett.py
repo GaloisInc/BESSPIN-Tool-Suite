@@ -82,6 +82,7 @@ def main (xArgs):
     setSetting ('workDir', workDir)
     setSetting('configFile', configFile)
     setSetting('logFile', logFile)
+    setSetting('debugMode', xArgs.debug)
     # Load all configuration and setup settings
     setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
