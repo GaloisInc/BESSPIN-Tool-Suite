@@ -270,7 +270,7 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
 
     fettPrintf(
         "Open file '%s': %s\n", pxClient->pcCurrentFilename,
-         pxClient->pxFileHandle != NULL ? "Ok" : strerror(stdioGET_ERRNO()));
+         pxClient->pxFileHandle != NULL ? "Ok" : "ERROR");
 
     if (pxClient->pxFileHandle == NULL)
     {
