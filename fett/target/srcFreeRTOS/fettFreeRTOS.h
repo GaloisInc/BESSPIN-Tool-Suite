@@ -21,7 +21,7 @@ fett header for includes, externs, and global variables
 
 /* WolfSSL includes */ //for TLS if needed
 
-#include "fettWolfSSLSettings.h"
+#include "fettWolfSSLsettings.h"
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
 #include <wolfssl/wolfcrypt/ed25519.h>
