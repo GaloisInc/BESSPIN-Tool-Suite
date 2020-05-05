@@ -81,8 +81,7 @@ TCPServer_t *FreeRTOS_CreateTCPServer(const struct xSERVER_CONFIG *pxConfigs,
                     xSocket =
                         FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_STREAM,
                                         FREERTOS_IPPROTO_TCP);
-                    FreeRTOS_printf(
-                        ("TCP socket on port %d\n", (int)xPortNumber));
+                    fettPrintf("TCP socket on port %d\n", (int)xPortNumber);
 
                     if (xSocket != FREERTOS_INVALID_SOCKET)
                     {
@@ -217,12 +216,10 @@ static void prvReceiveNewClient(TCPServer_t *pxServer, BaseType_t xIndex,
     {
         struct freertos_sockaddr xRemoteAddress;
         FreeRTOS_GetRemoteAddress(pxClient->xSocket, &xRemoteAddress);
-        FreeRTOS_printf(("TPC-server: new %s client %xip\n", pcType,
-                         (unsigned)FreeRTOS_ntohl(xRemoteAddress.sin_addr)));
+        fettPrintf("TPC-server: new %s client %xip\n", pcType,
+                         (unsigned)FreeRTOS_ntohl(xRemoteAddress.sin_addr));
     }
 
-    /* Remove compiler warnings in case FreeRTOS_printf() is not used. */
-    (void)pcType;
 }
 /*-----------------------------------------------------------*/
 

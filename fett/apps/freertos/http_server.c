@@ -104,7 +104,7 @@ static void prvFileClose(HTTPClient_t *pxClient)
 {
     if (pxClient->pxFileHandle != NULL)
     {
-        FreeRTOS_printf(("Closing file: %s\n", pxClient->pcCurrentFilename));
+        fettPrintf("Closing file: %s\n", pxClient->pcCurrentFilename);
         ff_fclose(pxClient->pxFileHandle);
         pxClient->pxFileHandle = NULL;
     }
@@ -268,9 +268,9 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
 
     pxClient->pxFileHandle = ff_fopen(pxClient->pcCurrentFilename, "rb");
 
-    FreeRTOS_printf(
-        ("Open file '%s': %s\n", pxClient->pcCurrentFilename,
-         pxClient->pxFileHandle != NULL ? "Ok" : strerror(stdioGET_ERRNO())));
+    fettPrintf(
+        "Open file '%s': %s\n", pxClient->pcCurrentFilename,
+         pxClient->pxFileHandle != NULL ? "Ok" : strerror(stdioGET_ERRNO()));
 
     if (pxClient->pxFileHandle == NULL)
     {
@@ -308,8 +308,8 @@ static BaseType_t prvProcessCmd(HTTPClient_t *pxClient, BaseType_t xIndex)
     case ECMD_PATCH:
     case ECMD_UNK:
     {
-        FreeRTOS_printf(("prvProcessCmd: Not implemented: %s\n",
-                         xWebCommands[xIndex].pcCommandName));
+        fettPrintf("prvProcessCmd: Not implemented: %s\n",
+                         xWebCommands[xIndex].pcCommandName);
     }
     break;
     }
@@ -391,7 +391,7 @@ BaseType_t xHTTPClientWork(TCPClient_t *pxTCPClient)
     else if (xRc < 0)
     {
         /* The connection will be closed and the client will be deleted. */
-        FreeRTOS_printf(("xHTTPClientWork: rc = %ld\n", xRc));
+        fettPrintf("xHTTPClientWork: rc = %ld\n", xRc);
     }
     return xRc;
 }
