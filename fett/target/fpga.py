@@ -322,7 +322,7 @@ def setEthAdaptorName ():
     sudoPromptPrefix = f" You need sudo privileges to bring all network adaptors up: "
     for nic, addrs in psutil.net_if_addrs().items():
         for addr in addrs:
-            if (addr.family == socket.AF_INET):
+            if (addr.family == psutil.AF_LINK):
                 sudoShellCommand(['ip','link','set',nic,'up'],sudoPromptPrefix)
     if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
         return
