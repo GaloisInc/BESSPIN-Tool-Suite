@@ -32,9 +32,6 @@
 
 #define FREERTOS_NO_SOCKET NULL
 
-/* FreeRTOS+FAT */
-#include "ff_stdio.h"
-
 /* Each HTTP server has 1, at most 2 sockets */
 #define HTTP_SOCKET_COUNT 2
 

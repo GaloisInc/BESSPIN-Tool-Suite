@@ -33,9 +33,6 @@
 /* Remove the whole file if HTTP is not supported. */
 #if (ipconfigUSE_HTTP == 1)
 
-/* FreeRTOS+FAT includes. */
-#include "ff_stdio.h"
-
 #ifndef HTTP_SERVER_BACKLOG
 #define HTTP_SERVER_BACKLOG (12)
 #endif

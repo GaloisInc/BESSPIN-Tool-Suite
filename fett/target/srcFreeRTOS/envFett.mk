@@ -30,8 +30,6 @@ WOLFSSL_SRC = $(WOLFSSL_SOURCE_DIR)/src/ssl.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/curve25519.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/ed25519.c
 
-FF_INCLUDE_DIR = $(FREERTOS_PLUS_SOURCE_DIR)/FreeRTOS-Plus-FAT/include
-
 DEMO_SRC = main.c \
 	$(wildcard $(INC_FETT_APPS)/*.c) \
 	$(wildcard $(INC_FETT_APPS)/appLib/*.c)
@@ -44,6 +42,3 @@ CFLAGS += -I$(WOLFSSL_SOURCE_DIR)
 FREERTOS_SRC += $(FREERTOS_IP_SRC)
 DEMO_SRC += $(WOLFSSL_SRC)
 INCLUDES += -I$(WOLFSSL_SOURCE_DIR)
-
-INCLUDES += -I$(FF_INCLUDE_DIR)
-CFLAGS += -I$(FF_INCLUDE_DIR)

@@ -1,5 +1,4 @@
 #include "fettFreeRTOS.h"
-#include "ff_stdio.h"
 
 /* STUB IMPLEMENTATIONS                                   */
 /* To be removed then the FF library is fully implemented */
