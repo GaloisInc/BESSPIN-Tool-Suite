@@ -4,8 +4,7 @@ This is executed after loading the app on the target to execute this app
 """
 
 from fett.base.utils.misc import *
-import sqlite3
-import subprocess
+
 
 @decorate.debugWrap
 @decorate.timeWrap
