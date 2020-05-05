@@ -488,6 +488,9 @@ class commonTarget():
         elif (isEnabled('database')):
             outLog = database.install(self)
             outLog += database.deploy(self)
+            if getSetting('osImage') in ['debian', 'FreeBSD']:
+                database.deploymentTest(self)
+
 
         fLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
         fLog.write (outLog)
