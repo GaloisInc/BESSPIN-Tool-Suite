@@ -4,6 +4,7 @@ fett header for includes, externs, and global variables
 
 /* General includes */
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
@@ -20,13 +21,14 @@ fett header for includes, externs, and global variables
 
 /* WolfSSL includes */ //for TLS if needed
 
-#include "fettWolfSSLSettings.h"
+#include "fettWolfSSLsettings.h"
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
 #include <wolfssl/wolfcrypt/ed25519.h>
 
 /* Misc includes */
 #include <malloc.h>
+#include "ff_stdio.h"
 
 /* Macros */
 #define MSGBUF_SIZE 32
