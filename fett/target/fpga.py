@@ -363,7 +363,7 @@ def resetEthAdaptor ():
                 break
             else:
                 printAndLog (f"fpga.resetEthAdaptor: <{getSetting('ethAdaptor')}> is up, but it does not have the right IP. Will try to assign it.",doPrint=False)
-                sudoShellCommand(['ip','addr','add',getSetting('fpgaIpHost'),'dev',getSetting('ethAdaptor')],sudoPromptPrefix)
+                sudoShellCommand(['ip','addr','add',f"{getSetting('fpgaIpHost')}/24",'dev',getSetting('ethAdaptor')],sudoPromptPrefix)
                 time.sleep(3)
                 isReset = checkEthAdaptorIsUp ()
                 if (isReset):
