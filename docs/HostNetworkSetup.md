@@ -12,18 +12,18 @@ Because each host machine might have different default names for the ethernet ad
 
 1. In this case we have interface `enp3s0f1` connected to the FPGA. Change the   script accordingly for your machine:
 
-    ```
-    #!/bin/bash
-    OLDNAME=enp3s0f1
-    NEWNAME=eth0fpga
-    ip link set $OLDNAME down
-    ip link set $OLDNAME name $NEWNAME
-    ip link set $NEWNAME up
-    macchanger -m 88:53:48:41:56:45 $NEWNAME
-    ip addr add 10.88.88.1/24 dev $NEWNAME
-    ```
+```
+#!/bin/bash
+OLDNAME=enp3s0f1
+NEWNAME=eth0fpga
+ip link set $OLDNAME down
+ip link set $OLDNAME name $NEWNAME
+ip link set $NEWNAME up
+macchanger -m 88:53:48:41:56:45 $NEWNAME
+ip addr add 10.88.88.1/24 dev $NEWNAME
+```
 
-    and save it as `/opt/net_setup.sh`
+and save it as `/opt/net_setup.sh`
 
 2. Make executable:
     ```
