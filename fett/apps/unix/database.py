@@ -29,7 +29,7 @@ def deploy(target):
 def deploymentTest(target):
     sqlite_bin = "/usr/bin/sqlite"
     xDb = 'test.db'
-
+    target.switchUser()
     def create_database_and_table(pathToFile='/usr/bin', xFile='sqlite', xTable='food'):
         printAndLog(f"Test-create_database_and_table: Create sqlite {xDb} database and {xTable} table", doPrint=False)
         if target.doesFileExist(xFile=xFile, pathToFile=pathToFile, shutdownOnError=False):
@@ -111,7 +111,7 @@ def deploymentTest(target):
                 target.runCommand(".exit")
                 printAndLog(f"Test-drop_table: The {xTable} table has been dropped successfully!", doPrint=False)
 
-    def drop_database(pathToFile='/root'):
+    def drop_database(pathToFile='~'):
 
         printAndLog(f"Test-drop_database: Drop sqlite {xDb} database", doPrint=False)
         if target.doesFileExist(xFile=xDb, pathToFile=pathToFile, shutdownOnError=False):
