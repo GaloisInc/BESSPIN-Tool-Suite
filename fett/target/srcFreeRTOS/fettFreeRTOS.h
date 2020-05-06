@@ -19,8 +19,7 @@ fett header for includes, externs, and global variables
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
 
-/* WolfSSL includes */ //for TLS if needed
-
+/* WolfSSL includes */ //for TLS if needed  + for signatures
 #include "fettWolfSSLsettings.h"
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
