@@ -298,7 +298,7 @@ def checkEthAdaptorIsUp ():
 def getAddrOfAdaptor (ethAdaptor,addrType):
     if (addrType == 'MAC'):
         family = psutil.AF_LINK
-    elif (addrType == 'MAC'):
+    elif (addrType == 'IP'):
         family = socket.AF_INET
     else:
         logAndExit (f"fpga.getAddrOfAdaptor: Unrecognized address type <{addrType}> is up.",exitCode=EXIT.Dev_Bug)
