@@ -107,7 +107,7 @@ time_t XTIME(time_t *t) {
 }
 
 /* Added as there is no such function in FreeRTOS. */
-// type is not type anymore; it is the old size.
+// The argument `type` is used as `old size`.
 void *XREALLOC(void *p, size_t n, void* heap, int type)
 {
     // This part is clean
@@ -128,22 +128,20 @@ void *XREALLOC(void *p, size_t n, void* heap, int type)
         unsigned int isItCustomCall = (heap != NULL) && ((int) heap == USE_FETT_REALLOC);
     #endif
 
-    if (isItCustomCall == 0) { //super dangerous method
-        fettPrintf ("Warning: XREALLOC <dangerously defined> is used.\r\n");
+    if (isItCustomCall == 0) { //Not a customized caller
+        fettPrintf ("(FATAL ERROR)~  XREALLOC is called from a non-adjusted location.\r\n");
+        exitFett (1);
+        return NULL;
     }
 
     void *pvReturn = pvPortMalloc (n);
     if (pvReturn == NULL) {
-        fettPrintf ("<INVALID> [XREALLOC]: Failed to malloc.");
-        exitFett (2); //cannot use prEXIT because this function is non-void
+        fettPrintf ("(Error)~  XREALLOC: Failed to malloc.\r\n");
+        exitFett (1); 
         return NULL;
     }
 
-    if (isItCustomCall == 0) { //super dangerous method
-        memcpy (pvReturn, p, n); //This is dangerous because n might be > size(p) and may be in a bad memory region.
-    } else { //the custom safe call
-        memcpy (pvReturn, p, (size_t) type);
-    }
+    memcpy (pvReturn, p, (size_t) type);
 
     vPortFree (p);
     return pvReturn;
