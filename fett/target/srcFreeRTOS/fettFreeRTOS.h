@@ -94,14 +94,6 @@ extern size_t recvFromMsgBuffer (void * xBuf, size_t xBufSize);
 extern TaskHandle_t xMainTask;
 extern UBaseType_t xMainPriority;
 
-// --------- fettWolfSSL.c
-/*extern void vEndWolfSSL (void *pvParameters);
-extern int startWolfSSL( void );
-extern void vInitServerWolfSSL (void *pvParameters);
-extern void vInitClientWolfSSL (void *pvParameters);
-extern WOLFSSL_CTX* xWolfSSL_ServerContext;
-extern WOLFSSL_CTX* xWolfSSL_ClientContext;*/
-
 // ----------- http.c -------------------------------------------------------------------------------------
 extern void vHttp (void *pvParameters);
 
