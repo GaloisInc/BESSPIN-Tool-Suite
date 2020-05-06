@@ -287,46 +287,23 @@ def programBifile ():
     gfeOut.close()
     printAndLog("FPGA was programmed successfully!")
 
-    
 @decorate.debugWrap
-def setEthAdaptorName ():
-    def tryToGetEthAdaptorName(family, address):
-        time.sleep(5)
-        for nic, addrs in psutil.net_if_addrs().items():
-            for addr in addrs:
-                if (addr.family == family):
-                    if (addr.address == address):
-                        setSetting('ethAdaptor',nic)
-                        return True
-        return False
-
-    printAndLog("getEthAdaptorName: Obtaining the ethernet adaptor name using the mac address...",doPrint=False)
-    interfacesFile = '/etc/network/interfaces'
-    macAddressMatch = matchExprInLines(r"^\s*map\s+(?P<macAddress>([0-9a-fA-F][0-9a-fA-F]:){5}([0-9a-fA-F][0-9a-fA-F]))\s+FPGA\s*$",ftReadLines(interfacesFile,exitOnFileError=False))
-    if (not macAddressMatch):
-        warnAndLog(f"getEthAdaptorName: Failed to get the mac address from {interfacesFile}.",doPrint=False)
-    else:
-        macAddress = macAddressMatch.group('macAddress')
-        printAndLog(f"getEthAdaptorName: Mac address is <{macAddress}>",doPrint=False)
-        if (tryToGetEthAdaptorName(psutil.AF_LINK, macAddress)):
-            return
-        else:
-            printAndLog("getEthAdaptorName: Failed to find the adaptor with the found mac address!",doPrint=False)
-    #Failed, have to try using the ip
-    printAndLog("getEthAdaptorName: Trying to use the IP address instead...",doPrint=False)
-    if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
-        return
-    #Failed. Try again
-    printAndLog(f"getEthAdaptorName: Failed to find the adaptor using the FPGA IP <{getSetting('fpgaIpHost')}>. Trying to bring all of them up first...",doPrint=False)
-    #Note: We're doing it this way instead of "ifup -a" because Docker did not like the idea of `ifup -a`
-    sudoPromptPrefix = f" You need sudo privileges to bring all network adaptors up: "
-    for nic, addrs in psutil.net_if_addrs().items():
-        for addr in addrs:
-            if (addr.family == psutil.AF_LINK):
-                sudoShellCommand(['ip','link','set',nic,'up'],sudoPromptPrefix)
-    if (tryToGetEthAdaptorName(socket.AF_INET, getSetting('fpgaIpHost'))):
-        return
-    logAndExit("getEthAdaptorName: Failed to find the ethernet adaptor name!",exitCode=EXIT.Network)
+def checkEthAdaptorConfiguration ():
+    """
+    This function checks that an adaptor exists with the agreed-upon name,
+    and that it has the right Mac address
+    """
+    #1. Check the adaptor exists
+    ethAdaptor= getSetting('fpgaEthAdaptorName')
+    if (ethAdaptor not in psutil.net_if_addrs()):
+        logAndExit(f"checkEthAdaptorConfiguration: Failed to find the adaptor <{ethAdaptor}>. Please check the network configuration.",exitCode=EXIT.Network)
+    #2. Check it has the right Mac address
+    for addr in psutil.net_if_addrs()[ethAdaptor]:
+        if (addr.family == psutil.AF_LINK):
+            if (addr.address != getSetting('fpgaEthAdaptorMacAddress')):
+                logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('fpgaEthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
+    #3. Done. Set the adaptor's name
+    setSetting('ethAdaptor',nic)
 
 @decorate.debugWrap
 def sudoShellCommand (argsList, sudoPromptPrefix):
@@ -347,8 +324,8 @@ def sudoShellCommand (argsList, sudoPromptPrefix):
 def resetEthAdaptor ():
     #get the name if this is the first time called
     if (not doesSettingExist('ethAdaptor')):
-        setEthAdaptorName ()
-        printAndLog (f"Found ethernet adaptor name: <{getSetting('ethAdaptor')}>.",doPrint=False)
+        checkEthAdaptorConfiguration ()
+        printAndLog (f"<{getSetting('ethAdaptor')}> exists and its MAC address is properly configured.",doPrint=False)
 
     sudoPromptPrefix = f"You need sudo privileges to reset the ethernet adaptor: "
     commands = [
