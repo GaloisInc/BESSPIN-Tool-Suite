@@ -82,7 +82,7 @@ extern void exitFett (uint8_t exitCode);
 extern void _open (const char * dump1, int dump2, ...); //Needed for WolfSSL to compile -- should never be called
 extern void _gettimeofday (struct timeval *__p, void *__tz); //Needed for WolfSSL to compile -- should never be called
 extern time_t XTIME(time_t *t); //Needed for WolfSSL to compile -- should never be called
-extern void *XREALLOC(void *p, size_t n, void* heap, int type); //for TLS if needed
+extern void *XREALLOC(void *p, size_t n, void* heap, int type); //Not defined in FreeRTOS -- a safe not-feature-complete version is defined here
 extern uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress, uint16_t usSourcePort,
                                             uint32_t ulDestinationAddress, uint16_t usDestinationPort);
 extern int fett_wc_GenerateSeed(uint8_t* seed, uint8_t sz); //for TLS if needed
