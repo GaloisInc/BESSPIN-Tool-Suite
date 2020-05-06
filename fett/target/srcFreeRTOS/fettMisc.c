@@ -85,7 +85,7 @@ In such a case, such culprit function should have a wrapper and the functionalit
 void _open (const char * dump1, int dump2, ...) {
     (void) (dump1);
     (void) (dump2);
-    fettPrintf ("FATAL ERROR: <_open> should never be called.\r\n");
+    fettPrintf ("(FATAL ERROR)~  <_open> should never be called.\r\n");
     prEXIT(1);
 }
 
