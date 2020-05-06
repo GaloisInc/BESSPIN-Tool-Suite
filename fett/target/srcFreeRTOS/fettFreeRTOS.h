@@ -85,7 +85,7 @@ extern time_t XTIME(time_t *t); //Needed for WolfSSL to compile -- should never 
 extern void *XREALLOC(void *p, size_t n, void* heap, int type); //Not defined in FreeRTOS -- a safe not-feature-complete version is defined here
 extern uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress, uint16_t usSourcePort,
                                             uint32_t ulDestinationAddress, uint16_t usDestinationPort);
-extern int fett_wc_GenerateSeed(uint8_t* seed, uint8_t sz); //for TLS if needed
+extern int fett_wc_GenerateSeed(uint8_t* seed, uint8_t sz); //Needed for WolfSSL to compile -- a temporary workaround is implemented
 extern MessageBufferHandle_t globalMsgBuffer;
 extern uint8_t sendToMsgBuffer (void * xData, size_t xDataSize);
 extern size_t recvFromMsgBuffer (void * xBuf, size_t xBufSize);
