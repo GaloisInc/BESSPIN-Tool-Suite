@@ -79,7 +79,7 @@ extern void vStartNetwork (void *pvParameters);
 // --------- fettMisc.c ---------------------------------------------------------------------------------
 extern void fettPrintf (const char * textToPrint, ...);
 extern void exitFett (uint8_t exitCode);
-extern void _open (const char * dump1, int dump2, ...); //for TLS if needed
+extern void _open (const char * dump1, int dump2, ...); //Needed for WolfSSL to compile -- should never be called
 extern void _gettimeofday (struct timeval *__p, void *__tz); //for TLS if needed
 extern time_t XTIME(time_t *t); //for TLS if needed
 extern void *XREALLOC(void *p, size_t n, void* heap, int type); //for TLS if needed
