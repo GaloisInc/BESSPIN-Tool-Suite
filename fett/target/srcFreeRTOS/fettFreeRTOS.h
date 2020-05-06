@@ -74,6 +74,10 @@ fett header for includes, externs, and global variables
     #define pdTICKS_TO_S( xTicks ) ( ( TickType_t ) ( ( ( TickType_t ) ( xTicks ) ) / ( TickType_t ) configTICK_RATE_HZ ) )
 #endif
 
+#if (FETT_DEBUG == 1)
+    #define debugFettPrintf(X) {fettPrintf("(Debug)~  "); fettPrintf (X);}
+#endif
+
 // --------- fettNtk.c ---------------------------------------------------------------------------------
 extern void vStartNetwork (void *pvParameters);
 
