@@ -76,7 +76,7 @@ fett header for includes, externs, and global variables
 
 /* Debug and logging */
 #if (FETT_DEBUG == 1)
-    #define debugFettPrintf(X) {fettPrintf("(Debug)~  "); fettPrintf (X);}
+    #define debugFettPrintf(...) {fettPrintf("(Debug)~  "); fettPrintf (__VA_ARGS__);}
     #ifdef FreeRTOS_debug_printf
         #undef FreeRTOS_debug_printf
     #endif
