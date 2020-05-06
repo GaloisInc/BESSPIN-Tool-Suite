@@ -295,7 +295,7 @@ def checkEthAdaptorIsUp ():
         logAndExit (f"fpga.checkEthAdaptorIsUp: Failed to check that <{getSetting('ethAdaptor')}> is up.",exc=exc,exitCode=EXIT.Network)
 
 @decorate.debugWrap
-def getAddrOfAdaptor (ethAdaptor,addrType):
+def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
     if (addrType == 'MAC'):
         family = psutil.AF_LINK
     elif (addrType == 'IP'):
@@ -310,8 +310,11 @@ def getAddrOfAdaptor (ethAdaptor,addrType):
         if (addr.family == family):
             printAndLog(f"fpga.getAddrOfAdaptor: <{addrType} address> of <{ethAdaptor}> = <{addr.address}>",doPrint=False)
             return addr.address
-    
-    logAndExit(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>. Please check the network configuration.",exitCode=EXIT.Network)
+    if (exitIfNoAddr):
+        logAndExit(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>. Please check the network configuration.",exitCode=EXIT.Network)
+    else:
+        printAndLog(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>.",doPrint=False)
+        return 'NotAnAddress'
 
 @decorate.debugWrap
 def sudoShellCommand (argsList, sudoPromptPrefix):
@@ -356,7 +359,7 @@ def resetEthAdaptor ():
         isReset = checkEthAdaptorIsUp ()
         if (isReset):
             #check that the IP address is properly set
-            if (getAddrOfAdaptor(getSetting('ethAdaptor'),'IP') == getSetting('fpgaIpHost')):
+            if (getAddrOfAdaptor(getSetting('ethAdaptor'),'IP',exitIfNoAddr=False) == getSetting('fpgaIpHost')):
                 break
             else:
                 printAndLog (f"fpga.resetEthAdaptor: <{getSetting('ethAdaptor')}> is up, but it does not have the right IP. Will try to assign it.",doPrint=False)
