@@ -44,7 +44,7 @@ DROP TABLE IF EXISTS food1;
 DROP TABLE IF EXISTS food;
 ~~~~
 * and finally drop the database instance `test.db`
-~~~bash 
+~~~bash
 rm -f ~/test.db
 ~~~
 
