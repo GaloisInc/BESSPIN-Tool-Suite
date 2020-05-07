@@ -1,13 +1,8 @@
 //  Tests for Ed25519 Signature Verification using WolfSSL in FreeRTOS
 
 #include "fettFreeRTOS.h"
+#include "ota_common.h"
 #include "ota_tests.h"
-
-static const byte raw_pk[ED25519_KEY_SIZE] =
-  {0xBA, 0xFB, 0xD4, 0xBB, 0x9F, 0x8E, 0xCE, 0xC1,
-   0xEC, 0xE7, 0x42, 0xD7, 0xEA, 0x3B, 0x2E, 0xE2,
-   0xE0, 0x16, 0xE3, 0x0F, 0x27, 0x0B, 0xAE, 0x74,
-   0xB3, 0x0B, 0xED, 0xAC, 0x33, 0x47, 0x01, 0xFA};
 
 #define PAYLOAD_SIZE 70
 // Signature and message match
@@ -91,6 +86,7 @@ void test_ed25519_verify(void)
       fettPrintf ("Signature is NOT OK - FAIL\n");
     }
 
+  
   fettPrintf ("Test case 2 - corrupt signature\n");
 
   r = wc_ed25519_verify_msg((byte *) bad_sig,  // ptr to first byte of signature
