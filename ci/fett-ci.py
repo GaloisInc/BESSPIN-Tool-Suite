@@ -102,7 +102,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('artifactSuffix', help='The suffix of the path to copy the artifacts to.')
     xArgParser.add_argument ('-i', '--nodeIndex', help='The node index within the job.')
     xArgParser.add_argument ('-N', '--nNodes', help='The total number of nodes.')
-    xArgParser.add_argument ('-t', '--jobTimeout', help='The timeout (in hours) for executing fett.py. Before deducting 15 minutes.')
+    xArgParser.add_argument ('-t', '--jobTimeout', help='The timeout for executing fett.py. Before deducting 15 minutes.')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals
