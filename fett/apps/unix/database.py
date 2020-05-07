@@ -93,15 +93,14 @@ def deploymentTest(target):
 
     def drop_table(xTable='food'):
         printAndLog(f"Test[drop_table]: Drop {xTable} table", doPrint=False)
-        retText = ''
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                           endsWith="sqlite>")
-        retText += \
+        retCommand = \
             target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>", shutdownOnError=False,
-                              suppressErrors=True)[1]
-        if not (f"{xTable}" in retText):
+                              suppressErrors=True)
+        if (not retCommand[0]):
             target.runCommand(".exit")
-            logging.info(f"Test: drop_table: Invalid input parameter table {xTable}. Provide valid table name.")
+            printAndLog(f"Test[drop_table]: Invalid input parameter table {xTable}. Provide valid table name.", doPrint=False)
         else:
             target.runCommand(f"DROP TABLE IF EXISTS {xTable};", endsWith="sqlite>")
             target.runCommand(".tables", expectedContents=[], endsWith="sqlite>")
