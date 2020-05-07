@@ -41,11 +41,14 @@ def main (xArgs):
     nodeIndex = 0 if (not xArgs.nodeIndex) else xArgs.nodeIndex
 
     # Check runType
-    if (xArgs.runType not in ['runPush', 'runDevPR', 'runPeriodic', 'runRelease']):
-        exitFettCi(message="Invalid runType argument. Has to be in [runPush, runDevPR, runPeriodic, runRelease].")
+    if (xArgs.runType not in ['runOnPush', 'runDevPR', 'runPeriodic', 'runRelease']):
+        exitFettCi(message="Invalid runType argument. Has to be in [runOnPush, runDevPR, runPeriodic, runRelease].")
+
+    if (xArgs.testOnly):
+        print("FETT-CI: TestMode: Dumping some useful info...")
 
     # Check number of configs + get the right config file
-    if (xArgs.runType == 'runPush'): #Execute the files in ci/runOnPush
+    if (xArgs.runType == 'runOnPush'): #Execute the files in ci/runOnPush
         dirConfigs = os.path.join(ciDir,'runOnPush')
         if (not os.path.isdir(dirConfigs)):
             exitFettCi(message=f"Directory <{dirConfigs}> cannot be accessed.")
@@ -53,9 +56,16 @@ def main (xArgs):
             listConfigs = glob.glob(os.path.join(dirConfigs, '*.ini'))
         except Exception as exc:
             exitFettCi (message=f"Failed to list <{dirConfigs}/*.ini>.",exc=exc)
+
+        if (xArgs.testOnly):
+            print(listConfigs)
+
     else: #generate the config file
         # ------ Code here
         listConfigs = []
+    
+    if (xArgs.testOnly):
+        exitFettCi(message="This is not a real CI run.",exitCode=1)
 
     # run the fett tool
     nErrs = 0 
@@ -83,6 +93,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-i', '--nodeIndex', help='The node index within the job.')
     xArgParser.add_argument ('-N', '--nNodes', help='The total number of nodes.')
     xArgParser.add_argument ('-t', '--jobTimeout', help='The timeout for executing fett.py. Before deducting 15 minutes.')
+    xArgParser.add_argument ('-X', '--testOnly', help='This dumps all possible config permutations and their number. Does not run anything.', action='store_true')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals
