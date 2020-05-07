@@ -18,19 +18,23 @@ nix-shell
 * Regarding the local `fpga` target:   
     1. A GFE SoC on a Xilinx VCU118 FPGA should be accessible, in
   addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
-    2. The ethernet adaptor connected to the FPGA needs to be reset before each run. This requires `sudo` privileges. In case of error, the tool
-  falls back to `ifup -a` to get all of the adaptors up. Thus, the user has two
-  options: either entering the sudo password when requested by the
+    2. The ethernet adaptor connected to the FPGA needs to be reset before each run. This requires `sudo` privileges. Thus, the user has two   options: either entering the sudo password when requested by the
   tool (the request explicitly mentions that it is for adaptor reset),
   or by removing the password requirement from resetting that
   particular adaptor.  This can be done by adding the following lines
   in the sudoers file (accessed by `sudo visudo`):
     ```bash
-        Cmnd_Alias IFDOWN_FPGA_ADAPTOR = <path-to-ifdown>/ifdown <ethernet-adaptor-name>
-        Cmnd_Alias IFUP_FPGA_ADAPTOR = <path-to-ifup>/ifup <ethernet-adaptor-name>
-        Cmnd_Alias IFUP_ALL = <path-to-ifup>/ifup -a
         Cmnd_Alias IP_FLUSH = <path-to-ip>/ip addr flush dev <ethernet-adaptor-name>
-        ALL ALL=NOPASSWD: IFDOWN_FPGA_ADAPTOR, IFUP_FPGA_ADAPTOR, IFUP_ALL, IP_FLUSH
+        Cmnd_Alias IP_UP = <path-to-ip>/ip link set <ethernet-adaptor-name> up
+        Cmnd_Alias IP_DOWN = <path-to-ip>/ip link set <ethernet-adaptor-name> down
+        Cmnd_Alias IP_ADD_ADDR = <path-to-ip>/ip addr add <IP_ADDR/24> dev <ethernet-adaptor-name>
+        ALL ALL=NOPASSWD: IP_FLUSH, IP_UP, IP_DOWN, IP_ADD_ADDR
+    ```
+
+    - In order to simplify this for sudoers, you may just allow any sudo member to execute the `ip` command
+    without password by adding the following:
+    ```bash
+        %sudo ALL=NOPASSWD: <path-to-ip>/ip
     ```
 
     - Note that the `<ethernet-adaptor-name>` changes from a system to
@@ -39,9 +43,6 @@ nix-shell
     for more details about the adaptors and IP settings.  In case you
     intend to use a different setup, please change
     [setupEnvGlobal.sh](scripts/setupEnvGlobal.sh) accordingly.
-    - Note that the keyword `ALL` in the beginning of the third line can
-    be replaced by a particular user name or by a group name (starting
-    with `%`).
 
 
 ## User Manual ##
