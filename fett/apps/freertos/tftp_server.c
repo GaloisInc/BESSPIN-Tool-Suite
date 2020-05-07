@@ -619,3 +619,13 @@ static void prvSendTFTPError(Socket_t xSocket,
         }
     }
 }
+
+uint32_t TFTPReceiveOneFile (uint8_t *buffer,         // out
+                             uint32_t buffer_len,     // in
+                             char    *file_name,      // out
+                             uint32_t file_name_len)  // in
+{
+  // TBD
+
+}
+
