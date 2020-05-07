@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 
 @decorate.debugWrap
 @decorate.timeWrap
-def runApp (target):
+def install (target):
     # target is a fett target object
     outLog = ''
     outLog += target.runCommand("echo \"Installing nginx...\"")[1]
@@ -16,6 +16,13 @@ def runApp (target):
     outLog += target.runCommand("mkdir -p /usr/local/nginx/logs /usr/local/nginx/conf /usr/local/nginx/html")[1]
     outLog += target.runCommand("find conf -type f -exec install \"{}\" /usr/local/nginx/conf \\;", erroneousContents=["find:", "install:"])[1]
     outLog += target.runCommand("find html -type f -exec install \"{}\" /usr/local/nginx/html \\;", erroneousContents=["find:", "install:"])[1]
+    return outLog
+
+@decorate.debugWrap
+@decorate.timeWrap
+def deploy (target):
+    # target is a fett target object
+    outLog = ''
     outLog += target.runCommand("echo \"Starting nginx service...\"")[1]
     if getSetting('osImage') == 'debian':
         outLog += target.runCommand("install nginx.service /lib/systemd/system/nginx.service", erroneousContents="install:")[1]
