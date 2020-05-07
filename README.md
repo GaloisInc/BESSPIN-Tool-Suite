@@ -39,7 +39,7 @@ nix-shell
 
     - Note that the `<ethernet-adaptor-name>` changes from a system to
     another. Please review the [FPGA host network configuration setup
-    instructions](https://gitlab-ext.galois.com/ssith/gfe/blob/master/install/network.md)
+    instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md)
     for more details about the adaptors and IP settings.  In case you
     intend to use a different setup, please change
     [setupEnvGlobal.sh](scripts/setupEnvGlobal.sh) accordingly.
