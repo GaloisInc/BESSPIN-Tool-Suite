@@ -124,3 +124,4 @@ def deploymentTest(target):
     drop_table(xTable='food1')
     drop_table()
     drop_database()
+    return ''
