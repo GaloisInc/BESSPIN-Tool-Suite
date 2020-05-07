@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 
 @decorate.debugWrap
 @decorate.timeWrap
-def runApp (target):
+def install (target):
     # target is a fett target object
     outLog = ''
     # All we need to do is install sqlite into a suitable location,
@@ -15,3 +15,8 @@ def runApp (target):
     outLog += target.runCommand("echo \"Installing sqlite into /usr/bin...\"")[1]
     outLog += target.runCommand("install sqlite /usr/bin")[1]
     return outLog
+
+@decorate.debugWrap
+@decorate.timeWrap
+def deploy (target):
+    return ''
