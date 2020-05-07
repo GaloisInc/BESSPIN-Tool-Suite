@@ -10,8 +10,11 @@ void Http_Worker (void);
 
 static const struct xSERVER_CONFIG xServerConfiguration[] =
   {
-   /* Server type, port number, backlog, root dir. */
-   { eSERVER_HTTP, 80,          1,       configHTTP_ROOT },
+    { eSERVER_HTTP,   // Server type
+      HTTP_PORT,      // port number - configured in fett/base/utils/setupEnv.json
+      1,              // backlog - just 1 for simplicity initially
+      configHTTP_ROOT // root dir.
+    },
   };
 
 void Http_Worker (void)
