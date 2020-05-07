@@ -33,11 +33,13 @@ def extensiveTest(target):
 def deploymentTest(target):
     sqlite_bin = "/usr/bin/sqlite"
     xDb = 'test.db'
+    tableName = 'food'
+    foodstuff = 'Pancakes'
     target.switchUser()
 
-    def create_database_and_table(xTable='food'):
+    def create_database_and_table(xTable=tableName):
         printAndLog(f"Test[create_database_and_table]: Create sqlite {xDb} database and {xTable} table", doPrint=False)
-        target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"], erroneousContents=["Error:", "near","error"],
+        target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"], erroneousContents=["Error:","near","error"],
                           endsWith="sqlite>")
         target.runCommand(f"CREATE VIRTUAL TABLE IF NOT EXISTS {xTable} USING fts3(title);",
                           endsWith="sqlite>")
@@ -46,7 +48,7 @@ def deploymentTest(target):
         printAndLog(f"Test[create_database_and_table]: The {xDb} database and {xTable} table created successfully!",
                     doPrint=False)
 
-    def insert_record(xTable='food', title_val='Pancakes'):
+    def insert_record(xTable=tableName, title_val=foodstuff):
         printAndLog(f"Test[insert_record]: Insert into  {xTable} table value {title_val}.", doPrint=False)
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                           endsWith="sqlite>")
@@ -60,7 +62,7 @@ def deploymentTest(target):
             f"Test[insert_record]: The value {title_val} has been successfully inserted into {xTable} table!",
             doPrint=False)
 
-    def update_record(xTable='food', title_val='Pizza'):
+    def update_record(xTable=tableName, title_val=foodstuff):
         printAndLog(f"Test[update_record]: Update the first record in the table {xTable}  - value {title_val}.",
                     doPrint=False)
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
@@ -76,7 +78,7 @@ def deploymentTest(target):
         printAndLog(f"Test[update_record]: The first record has been successfully updated - value {title_val}.",
                     doPrint=False)
 
-    def delete_record(xTable='food', title_val='Pizza'):
+    def delete_record(xTable=tableName, title_val='Pizza'):
         printAndLog(f"Test[delete_record]: Delete {title_val} from the {xTable} table.", doPrint=False)
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                           endsWith="sqlite>")
@@ -91,7 +93,7 @@ def deploymentTest(target):
             f"Test[delete_record]: The value {title_val} has been successfully deleted from the {xTable} table!",
             doPrint=False)
 
-    def drop_table(xTable='food'):
+    def drop_table(xTable=tableName):
         printAndLog(f"Test[drop_table]: Drop {xTable} table", doPrint=False)
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                           endsWith="sqlite>")
@@ -117,7 +119,7 @@ def deploymentTest(target):
 
     create_database_and_table()
     insert_record()
-    update_record()
+    update_record(title_val='Pizza')
     delete_record()
     drop_table(xTable='food1')
     drop_table()
