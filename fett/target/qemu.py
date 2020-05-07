@@ -12,6 +12,8 @@ class qemuTarget (commonTarget):
         super().__init__()
         self.sshHostPort = getSetting('qemuSshHostPort')
         self.ipTarget = getSetting('qemuIpTarget')
+        self.httpHostPort = getSetting('qemuHttpHostPort')
+        self.httpsHostPort = getSetting('qemuHttpsHostPort')
         return
 
     @decorate.debugWrap
