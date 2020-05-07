@@ -350,12 +350,12 @@ static BaseType_t prvReceiveFile(FF_FILE *pxFile,
             if (lBytes == 0)
             {
                 /* Timed out. */
-                FreeRTOS_printf(("Error: Timeout.\n"));
+                fettPrintf(("Error: Timeout.\n"));
                 xRetries++;
 
                 if (xRetries > ipconfigTFTP_MAX_RETRIES)
                 {
-                    FreeRTOS_printf(("Error: Retry limit exceeded.\n"));
+                    fettPrintf(("Error: Retry limit exceeded.\n"));
                     xReturn = pdFAIL;
                 }
             }
@@ -380,7 +380,7 @@ static BaseType_t prvReceiveFile(FF_FILE *pxFile,
 					data. */
                     xBytesOfFileDataReceived =
                         (size_t)lBytes - sizeof(TFTPBlockNumberHeader_t);
-                    FreeRTOS_printf(("Received %d bytes of file data.\n",
+                    fettPrintf(("Received %d bytes of file data.\n",
                                      (int)xBytesOfFileDataReceived));
 
                     /* Ack the data then write the data to the file. */
@@ -422,7 +422,7 @@ static BaseType_t prvReceiveFile(FF_FILE *pxFile,
         } while ((xReturn != pdFAIL) &&
                  (xBytesOfFileDataReceived == tftpMAX_DATA_LENGTH));
 
-        FreeRTOS_printf(("Closing connection.\n"));
+        fettPrintf(("Closing connection.\n"));
         FreeRTOS_closesocket(xTFTPRxSocket);
     }
     else
@@ -430,7 +430,7 @@ static BaseType_t prvReceiveFile(FF_FILE *pxFile,
         /* An error could be returned here, but it is probably cleaner to just
 		time out as the error would have to be sent via the listening socket
 		outside of this function. */
-        FreeRTOS_printf(("Could not create socket to receive file.\n"));
+        fettPrintf(("Could not create socket to receive file.\n"));
     }
 
     ff_fclose(pxFile);
@@ -460,7 +460,7 @@ static FF_FILE *prvValidateFileToWrite(Socket_t xSocket,
 {
     FF_FILE *pxFile;
 
-    FreeRTOS_printf(("Write request for %s received\n", pcFileName));
+    fettPrintf(("Write request for %s received\n", pcFileName));
 
     /* The file cannot be received if it already exists.  Attempt to open the
 	file in read mode to see if it exists. */
@@ -579,7 +579,7 @@ static void prvSendTFTPError(Socket_t xSocket,
 
     if (pucUDPPayloadBuffer != NULL)
     {
-        FreeRTOS_printf(("Error: %s\n", pcErrorString));
+        fettPrintf(("Error: %s\n", pcErrorString));
 
         /* Create error packet: Opcode. */
         pucUDPPayloadBuffer[0] = 0;
