@@ -37,9 +37,23 @@ class qemuTarget (commonTarget):
                 break
         if ((self.portTarget is None) or (self.portHost is None)):
             self.shutdownAndExit(f"allocPortRange: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
-        #checking ssh port
-        if (self.sshHostPort in [self.portTarget, self.portHost]):
-            self.shutdownAndExit(f"allocPortRange: The sshHostPort<{self.sshHostPort}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
+
+        def checkPortRange(name, val):
+            if val in [self.portTarget, self.portHost]:
+                self.shutdownAndExit(f"allocPortRange: The {name}<{val}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
+
+        portsToCheck = ["sshHostPort", "httpHostPort", "httpsHostPort"]
+        # Check the allocated ports are distinct from the user-specified ports
+        for name in portsToCheck:
+            checkPortRange(name, getattr(self, name))
+
+        # Now check the user specified ports are distinct
+        userPorts = { getattr(self,name):name for name in portsToCheck }
+        for name in portsToCheck:
+            portVal = getattr(self, name)
+            if userPorts[portVal] != name:
+                self.shutdownAndExit(f"allocPortRange: The port <{portVal}> is used for both {name} and {userPorts[portVal]}")
+
         return (rangeStart, rangeEnd)
 
     @decorate.debugWrap
