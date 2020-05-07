@@ -82,7 +82,7 @@ fett header for includes, externs, and global variables
     #endif
     #define FreeRTOS_debug_printf(X)    debugFettPrintf X
 #else
-    #define debugFettPrintf(X) {do{} while(0);}
+    #define debugFettPrintf(...) {do{} while(0);}
 #endif
 
 #ifdef FreeRTOS_printf
