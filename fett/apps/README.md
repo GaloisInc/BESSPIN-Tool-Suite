@@ -15,26 +15,32 @@ The following workflow has been implemented:
 sqlite ~/test.db
 ~~~
 * create virtual table `food` containing the column `title` and using the `FTS3` search extension
+
 ~~~~sql
 CREATE VIRTUAL TABLE IF NOT EXISTS food USING fts3(title);
 ~~~~
 * insert record into table `food` 
+
 ~~~~sql
 INSERT INTO food(title) VALUES('Pancakes');
 ~~~~
 * verify and update an existing record.
+
 ~~~~sql
 UPDATE food SET title = 'Pizza' WHERE title = 'Pancakes';
 ~~~~
 * verify and delete an existing record.
+
 ~~~~sql
 DELETE FROM food WHERE title = 'Pizza';
 ~~~~
 * drop non existing table.
+
 ~~~~sql
 DROP TABLE IF EXISTS food1;
 ~~~~
 * drop an existing table.
+
 ~~~~sql
 DROP TABLE IF EXISTS food;
 ~~~~
