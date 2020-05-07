@@ -36,7 +36,7 @@ def deploymentTest(target):
     target.switchUser()
 
     def create_database_and_table(pathToFile='/usr/bin', xFile='sqlite', xTable='food'):
-        printAndLog(f"Test-create_database_and_table: Create sqlite {xDb} database and {xTable} table", doPrint=False)
+        printAndLog(f"Test[create_database_and_table]: Create sqlite {xDb} database and {xTable} table", doPrint=False)
         if target.doesFileExist(xFile=xFile, pathToFile=pathToFile, shutdownOnError=False):
             if getSetting('osImage') in ['debian', 'FreeBSD']:
                 target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
@@ -45,13 +45,13 @@ def deploymentTest(target):
                                   endsWith="sqlite>")
                 target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>")
                 target.runCommand(".exit")
-                printAndLog(f"Test-create_database_and_table: The {xDb} database and {xTable} table created successfully!",
+                printAndLog(f"Test[create_database_and_table]: The {xDb} database and {xTable} table created successfully!",
                             doPrint=False)
         else:
             target.shutdownAndExit(f"\ncheckFile: Failed to find <{pathToFile}/{xFile}> on target.", exitCode=EXIT.Run)
 
     def insert_record(xTable='food', title_val='Pancakes'):
-        printAndLog(f"Test-insert_record: Insert into  {xTable} table value {title_val}.", doPrint=False)
+        printAndLog(f"Test[insert_record]: Insert into  {xTable} table value {title_val}.", doPrint=False)
         if getSetting('osImage') in ['debian', 'FreeBSD']:
             target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                               endsWith="sqlite>")
@@ -62,11 +62,11 @@ def deploymentTest(target):
                               endsWith="sqlite>")
             target.runCommand(".exit")
             printAndLog(
-                f"Test-insert_record: The value {title_val} has been successfully inserted into {xTable} table!",
+                f"Test[insert_record]: The value {title_val} has been successfully inserted into {xTable} table!",
                 doPrint=False)
 
     def update_record(xTable='food', title_val='Pizza'):
-        printAndLog(f"Test-update_record: Update the first record in the table {xTable}  - value {title_val}.",
+        printAndLog(f"Test[update_record]: Update the first record in the table {xTable}  - value {title_val}.",
                     doPrint=False)
         if getSetting('osImage') in ['debian', 'FreeBSD']:
             target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
@@ -79,11 +79,11 @@ def deploymentTest(target):
             target.runCommand(f"SELECT * from {xTable};", expectExact=True, expectedContents=[f"{title_val}"],
                               endsWith="sqlite>")
             target.runCommand(".exit")
-            printAndLog(f"Test-update_record: The first record has been successfully updated - value {title_val}.",
+            printAndLog(f"Test[update_record]: The first record has been successfully updated - value {title_val}.",
                         doPrint=False)
 
     def delete_record(xTable='food', title_val='Pizza'):
-        printAndLog(f"Test-delete_record: Delete {title_val} from the {xTable} table.", doPrint=False)
+        printAndLog(f"Test[delete_record]: Delete {title_val} from the {xTable} table.", doPrint=False)
         if getSetting('osImage') in ['debian', 'FreeBSD']:
             target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                               endsWith="sqlite>")
@@ -95,11 +95,11 @@ def deploymentTest(target):
             target.runCommand(f"SELECT * from {xTable};", expectedContents=[], endsWith="sqlite>")
             target.runCommand(".exit")
             printAndLog(
-                f"Test-delete_record: The value {title_val} has been successfully deleted from the {xTable} table!",
+                f"Test[delete_record]: The value {title_val} has been successfully deleted from the {xTable} table!",
                 doPrint=False)
 
     def drop_table(xTable='food'):
-        printAndLog(f"Test-drop_table: Drop {xTable} table", doPrint=False)
+        printAndLog(f"Test[drop_table]: Drop {xTable} table", doPrint=False)
         retText = ''
         if getSetting('osImage') in ['debian', 'FreeBSD']:
             target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
@@ -109,22 +109,22 @@ def deploymentTest(target):
                                   suppressErrors=True)[1]
             if not (f"{xTable}" in retText):
                 target.runCommand(".exit")
-                logging.info(f"Test-drop_table: Invalid input parameter table {xTable}. Provide valid table name.")
+                logging.info(f"Test: drop_table: Invalid input parameter table {xTable}. Provide valid table name.")
             else:
                 target.runCommand(f"DROP TABLE IF EXISTS {xTable};", endsWith="sqlite>")
                 target.runCommand(".tables", expectedContents=[], endsWith="sqlite>")
                 target.runCommand(".exit")
-                printAndLog(f"Test-drop_table: The {xTable} table has been dropped successfully!", doPrint=False)
+                printAndLog(f"Test[drop_table]: The {xTable} table has been dropped successfully!", doPrint=False)
 
     def drop_database(pathToFile='~'):
 
-        printAndLog(f"Test-drop_database: Drop sqlite {xDb} database", doPrint=False)
+        printAndLog(f"Test[drop_database]: Drop sqlite {xDb} database", doPrint=False)
         if target.doesFileExist(xFile=xDb, pathToFile=pathToFile, shutdownOnError=False):
             if getSetting('osImage') in ['debian', 'FreeBSD']:
                 target.runCommand(f"rm -f {pathToFile}/{xDb}")
-                printAndLog(f"Test-drop_database: Database {xDb} dropped successfully!", doPrint=False)
+                printAndLog(f"Test[drop_database]: Database {xDb} dropped successfully!", doPrint=False)
         else:
-            target.shutdownAndExit(f"\ncheckFile: Failed to find <{pathToFile}/{xDb}> on target.", exitCode=EXIT.Run)
+            target.shutdownAndExit(f"\nTest[drop_database]: Failed to find <{pathToFile}/{xDb}> on target.", exitCode=EXIT.Run)
 
     create_database_and_table()
     insert_record()
