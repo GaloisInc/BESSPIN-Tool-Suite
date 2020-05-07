@@ -16,27 +16,35 @@ class qemuTarget (commonTarget):
 
     @decorate.debugWrap
     @decorate.timeWrap
+    def allocPortRange(self):
+        """
+        Must ONLY be called on debian or freebsd
+        """
+        #Find open ports to use. Searching from qemuNtkPortRangeStart-qemuNtkPortRangeEnd.
+        #To avoid assigning a port to the target while it is still booting, will use even number for target and odd for host
+        rangeStart = getSetting('qemuNtkPortRangeStart')
+        rangeEnd = getSetting('qemuNtkPortRangeEnd')
+        if (rangeStart >= rangeEnd-1):
+            self.shutdownAndExit(f"allocPortRange: The port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.",exitCode=EXIT.Configuration)
+        if (rangeStart%2):
+            rangeStart += 1
+        for iPort in range(rangeStart,rangeEnd,2):
+            if (checkPort (iPort) and checkPort(iPort+1)):
+                self.portTarget = iPort
+                self.portHost = iPort+1
+                break
+        if ((self.portTarget is None) or (self.portHost is None)):
+            self.shutdownAndExit(f"allocPortRange: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+        #checking ssh port
+        if (self.sshHostPort in [self.portTarget, self.portHost]):
+            self.shutdownAndExit(f"allocPortRange: The sshHostPort<{self.sshHostPort}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
+        return (rangeStart, rangeEnd)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
     def boot (self,endsWith="login:",timeout=90): #no need to use targetObj as we'll never boot in non-reboot mode
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
-            #Find open ports to use. Searching from qemuNtkPortRangeStart-qemuNtkPortRangeEnd.
-            #To avoid assigning a port to the target while it is still booting, will use even number for target and odd for host
-            rangeStart = getSetting('qemuNtkPortRangeStart')
-            rangeEnd = getSetting('qemuNtkPortRangeEnd')
-            if (rangeStart >= rangeEnd-1):
-                self.shutdownAndExit(f"boot: The port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.",exitCode=EXIT.Configuration)
-            if (rangeStart%2):
-                rangeStart += 1
-            for iPort in range(rangeStart,rangeEnd,2):
-                if (checkPort (iPort) and checkPort(iPort+1)):
-                    self.portTarget = iPort
-                    self.portHost = iPort+1
-                    break
-            if ((self.portTarget is None) or (self.portHost is None)):
-                self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
-            #checking ssh port
-            if (self.sshHostPort in [self.portTarget, self.portHost]):
-                self.shutdownAndExit(f"boot: The sshHostPort<{self.sshHostPort}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
-            
+            rangeStart, rangeEnd = self.allocPortRange()
             printAndLog(f"Qemu will use the network ports <target:{self.portTarget}>, <hostTcp:{self.portHost}>, and <hostSsh:{self.sshHostPort}>.")
 
             qemuCommand = f"qemu-system-riscv64 -nographic -machine virt -m 2G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\"" 
