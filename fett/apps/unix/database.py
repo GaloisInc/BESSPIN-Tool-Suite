@@ -78,7 +78,7 @@ def deploymentTest(target):
         printAndLog(f"Test[update_record]: The first record has been successfully updated - value {title_val}.",
                     doPrint=False)
 
-    def delete_record(xTable=tableName, title_val='Pizza'):
+    def delete_record(xTable=tableName, title_val=foodstuff):
         printAndLog(f"Test[delete_record]: Delete {title_val} from the {xTable} table.", doPrint=False)
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                           endsWith="sqlite>")
@@ -120,7 +120,7 @@ def deploymentTest(target):
     create_database_and_table()
     insert_record()
     update_record(title_val='Pizza')
-    delete_record()
+    delete_record(title_val='Pizza')
     drop_table(xTable='food1')
     drop_table()
     drop_database()
