@@ -7,12 +7,13 @@ void vHttp (void *pvParameters);
 void Http_Worker (void);
 
 #define configHTTP_ROOT "/"
+#define configHTTP_TIMEOUT 9000 // milliseconds
 
 static const struct xSERVER_CONFIG xServerConfiguration[] =
   {
     { eSERVER_HTTP,   // Server type
       HTTP_PORT,      // port number - configured in fett/base/utils/setupEnv.json
-      1,              // backlog - just 1 for simplicity initially
+      1,              // backlog - initially 1 for simplicity
       configHTTP_ROOT // root dir.
     },
   };
@@ -28,10 +29,10 @@ void Http_Worker (void)
 
     vERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Failed to create TCP Server.");
 
-    for( ;; )
-      {
-        FreeRTOS_TCPServerWork( pxTCPServer, xInitialBlockTime );
-      }
+    TickType_t xStartTime = xTaskGetTickCount();
+    do {
+      FreeRTOS_TCPServerWork (pxTCPServer, xInitialBlockTime);
+    } while ((xTaskGetTickCount() - xStartTime) < pdMS_TO_TICKS(configHTTP_TIMEOUT));
 }
 
 
