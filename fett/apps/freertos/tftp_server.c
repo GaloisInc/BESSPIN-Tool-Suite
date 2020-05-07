@@ -77,19 +77,9 @@
 
 /* Standard includes. */
 #include <stdint.h>
-#include <stdio.h>
-#include <string.h>
 
-/* FreeRTOS includes. */
-#include "FreeRTOS.h"
-#include "task.h"
-
-/* FreeRTOS+TCP includes. */
-#include "FreeRTOS_IP.h"
-#include "FreeRTOS_Sockets.h"
-
-/* FreeRTOS+FAT includes. */
-#include "ff_stdio.h"
+/* Fett and FreeRTOS includes. */
+#include "fettFreeRTOS.h"
 
 #if (ipconfigALLOW_SOCKET_SEND_WITHOUT_BIND != 1)
 #error ipconfigALLOW_SOCKET_SEND_WITHOUT_BIND must be set to one to use this TFTP server.
@@ -106,9 +96,6 @@
 #ifndef ipconfigTFTP_MAX_RETRIES
 #define ipconfigTFTP_MAX_RETRIES (6)
 #endif
-
-/* Standard/expected TFTP port number. */
-#define tftpPORT_NUMBER ((uint16_t)69)
 
 /* Offset to the file name within the frame. */
 #define tftpFILE_NAME_OFFSET (2)
@@ -240,7 +227,7 @@ static void prvSimpleTFTPServerTask(void *pvParameters)
     /* Bind to the standard TFTP port. */
     FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     xBindAddress.sin_addr = ulIPAddress;
-    xBindAddress.sin_port = FreeRTOS_htons(tftpPORT_NUMBER);
+    xBindAddress.sin_port = FreeRTOS_htons(TFTP_PORT);
     FreeRTOS_bind(xTFTPListeningSocket, &xBindAddress, sizeof(xBindAddress));
 
     for (;;)
@@ -350,12 +337,12 @@ static BaseType_t prvReceiveFile(FF_FILE *pxFile,
             if (lBytes == 0)
             {
                 /* Timed out. */
-                fettPrintf(("Error: Timeout.\n"));
+                fettPrintf("Error: Timeout.\n");
                 xRetries++;
 
                 if (xRetries > ipconfigTFTP_MAX_RETRIES)
                 {
-                    fettPrintf(("Error: Retry limit exceeded.\n"));
+                    fettPrintf("Error: Retry limit exceeded.\n");
                     xReturn = pdFAIL;
                 }
             }
@@ -380,8 +367,8 @@ static BaseType_t prvReceiveFile(FF_FILE *pxFile,
 					data. */
                     xBytesOfFileDataReceived =
                         (size_t)lBytes - sizeof(TFTPBlockNumberHeader_t);
-                    fettPrintf(("Received %d bytes of file data.\n",
-                                     (int)xBytesOfFileDataReceived));
+                    fettPrintf("Received %d bytes of file data.\n",
+                                     (int)xBytesOfFileDataReceived);
 
                     /* Ack the data then write the data to the file. */
                     prvSendAcknowledgement(xTFTPRxSocket, pxClient,
@@ -422,7 +409,7 @@ static BaseType_t prvReceiveFile(FF_FILE *pxFile,
         } while ((xReturn != pdFAIL) &&
                  (xBytesOfFileDataReceived == tftpMAX_DATA_LENGTH));
 
-        fettPrintf(("Closing connection.\n"));
+        fettPrintf("Closing connection.\n");
         FreeRTOS_closesocket(xTFTPRxSocket);
     }
     else
@@ -430,7 +417,7 @@ static BaseType_t prvReceiveFile(FF_FILE *pxFile,
         /* An error could be returned here, but it is probably cleaner to just
 		time out as the error would have to be sent via the listening socket
 		outside of this function. */
-        fettPrintf(("Could not create socket to receive file.\n"));
+        fettPrintf("Could not create socket to receive file.\n");
     }
 
     ff_fclose(pxFile);
@@ -460,7 +447,7 @@ static FF_FILE *prvValidateFileToWrite(Socket_t xSocket,
 {
     FF_FILE *pxFile;
 
-    fettPrintf(("Write request for %s received\n", pcFileName));
+    fettPrintf("Write request for %s received\n", pcFileName);
 
     /* The file cannot be received if it already exists.  Attempt to open the
 	file in read mode to see if it exists. */
@@ -579,7 +566,7 @@ static void prvSendTFTPError(Socket_t xSocket,
 
     if (pucUDPPayloadBuffer != NULL)
     {
-        fettPrintf(("Error: %s\n", pcErrorString));
+        fettPrintf("Error: %s\n", pcErrorString);
 
         /* Create error packet: Opcode. */
         pucUDPPayloadBuffer[0] = 0;
