@@ -1,0 +1,43 @@
+image: artifactory.galois.com:5008/fett-target:ci
+#-----------------------------------------------------------------------------#
+#
+# General startup commands
+#
+#-----------------------------------------------------------------------------#
+before_script:
+  - . $HOME/.nix-profile/etc/profile.d/nix.sh
+  - export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
+  - source /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
+  - git submodule init
+  - git submodule update
+  - git submodule sync
+
+#-----------------------------------------------------------------------------#
+#
+# Define tags
+#
+#-----------------------------------------------------------------------------#
+.fpga:
+  tags: ["docker-fpga"]
+
+.docker:
+  tags: ["docker"]
+
+.log_always:
+  artifacts:
+    expire_in: 1 day
+    when: always
+    paths:
+      - workDir/fett.log
+      - workDir/*.out
+
+#-----------------------------------------------------------------------------#
+#
+# Test definitions
+#
+#-----------------------------------------------------------------------------#
+Busybox_on_FPGA:
+  timeout: 1h
+  script:
+    - nix-shell --command "./fett.py -c tests/fpga-busybox.ini -d"
+  extends: [.log_always, .fpga]
