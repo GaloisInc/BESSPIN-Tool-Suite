@@ -73,6 +73,8 @@
  * and other applications that require over the air reception of files.
  */
 
+#include "tftp_server.h"
+
 /* Standard includes. */
 #include <stdint.h>
 #include <stdio.h>
@@ -93,9 +95,9 @@
 #error ipconfigALLOW_SOCKET_SEND_WITHOUT_BIND must be set to one to use this TFTP server.
 #endif
 
-#if (configTICK_RATE_HZ > 1000)
-#error The TFTP server uses the pdMS_TO_TICKS() macro, so configTICK_RATE_HZ must be less than or equal to 1000
-#endif
+//#if (configTICK_RATE_HZ > 1000)
+//#error The TFTP server uses the pdMS_TO_TICKS() macro, so configTICK_RATE_HZ must be less than or equal to 1000
+//#endif
 
 #ifndef ipconfigTFTP_TIME_OUT_MS
 #define ipconfigTFTP_TIME_OUT_MS (10000)
@@ -207,13 +209,13 @@ static const char *cErrorStrings[] = {NULL, /* Not valid. */
 
 /*-----------------------------------------------------------*/
 
-void vStartTFTPServerTask(uint16_t usStackSize, UBaseType_t uxPriority)
-{
-    /* A single server task is created.  Currently this is only capable of
-	managing one TFTP transfer at a time. */
-    xTaskCreate(prvSimpleTFTPServerTask, "TFTPd", usStackSize, NULL, uxPriority,
-                NULL);
-}
+//void vStartTFTPServerTask(uint16_t usStackSize, UBaseType_t uxPriority)
+//{
+//    /* A single server task is created.  Currently this is only capable of
+//	managing one TFTP transfer at a time. */
+//    xTaskCreate(prvSimpleTFTPServerTask, "TFTPd", usStackSize, NULL, uxPriority,
+//                NULL);
+//}
 /*-----------------------------------------------------------*/
 
 static void prvSimpleTFTPServerTask(void *pvParameters)
@@ -528,9 +530,8 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
 		string following the file name. +1 to move past the null terminator to
 		the start of the next string. */
         x++;
-        if (strcmpi(pcOctedMode,
-                    (const char *)&(
-                        pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET + x])) != 0)
+        if (strcmp(pcOctedMode,
+                   (const char *)&(pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET + x])) != 0)
         {
             /* Not the expected mode. */
             prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
@@ -620,12 +621,32 @@ static void prvSendTFTPError(Socket_t xSocket,
     }
 }
 
-uint32_t TFTPReceiveOneFile (uint8_t *buffer,         // out
-                             uint32_t buffer_len,     // in
-                             char    *file_name,      // out
-                             uint32_t file_name_len)  // in
+#define TEST_PAYLOAD_SIZE 70
+static const uint8_t good_one[TEST_PAYLOAD_SIZE] = {
+  0xac, 0xa3, 0x99, 0x24, 0x9d, 0xe4, 0x94, 0x20, 0x0f, 0x11, 0xc4, 0xf2,
+  0x52, 0x3e, 0xef, 0x90, 0xc3, 0x9e, 0x1f, 0xdb, 0xe3, 0xe5, 0x32, 0x33,
+  0x67, 0x23, 0x00, 0xa2, 0xd3, 0x1d, 0xbf, 0x41, 0x4c, 0xcb, 0x2e, 0xb3,
+  0x2b, 0xf6, 0x28, 0xef, 0x01, 0x48, 0xe4, 0x81, 0xca, 0x3b, 0xb0, 0xde,
+  0x74, 0x07, 0x12, 0xc2, 0xf6, 0x64, 0x5b, 0x34, 0x5b, 0xe9, 0x85, 0x8b,
+  0x32, 0xcb, 0x0f, 0x01, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x0a
+};
+
+uint32_t TFTP_Receive_One_File (uint8_t *buffer,         // out
+                                uint32_t buffer_len,     // in
+                                char    *file_name,      // out
+                                uint32_t file_name_len)  // in
 {
-  // TBD
+  (void) buffer_len;
+  (void) file_name_len;
+
+  // Dummy implementation for testing
+  for (int i = 0; i < TEST_PAYLOAD_SIZE; i++)
+    {
+      buffer[i] = good_one[i];
+    }
+  file_name[0] = 'f';
+  file_name[1] = '\0';
+  return TEST_PAYLOAD_SIZE;  
 
 }
 
