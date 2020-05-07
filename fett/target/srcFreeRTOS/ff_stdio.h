@@ -6,8 +6,7 @@ Fake ff_stdio header for FAT filesystem related codes
 
 typedef struct _FF_FILE
 {
-    char NotImplemented;
-
+    char filename[ffconfigMAX_FILENAME+1];
     uint32_t ulFileSize;            /* File's Size. */
 } FF_FILE;
 
