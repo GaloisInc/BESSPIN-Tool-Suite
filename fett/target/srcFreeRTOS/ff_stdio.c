@@ -2,6 +2,10 @@
 #include <stdbool.h>
 #include <SDLib.h>
 
+void ff_init() {
+    sdlib_initialize();
+}
+
 FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 {
     (void) pcMode;
@@ -38,6 +42,16 @@ size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream
 
     bytes = xSize * xItems;
     sdlib_read_from_file(pxStream->filename,pvBuffer,bytes);
+
+    return 0;
+}
+
+size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream )
+{
+    size_t bytes;
+
+    bytes = xSize * xItems;
+    sdlib_write_to_file(pxStream->filename,pvBuffer,bytes);
 
     return 0;
 }
