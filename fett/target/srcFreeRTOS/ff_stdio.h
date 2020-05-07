@@ -2,6 +2,9 @@
 Fake ff_stdio header for FAT filesystem related codes
 */
 
+#ifndef FF_STDIO_H
+#define FF_STDIO_H
+
 #define ffconfigMAX_FILENAME    129
 
 typedef struct _FF_FILE
@@ -20,3 +23,6 @@ typedef struct
 extern FF_FILE *ff_fopen( const char *pcFile, const char *pcMode );
 extern int ff_fclose( FF_FILE *pxStream );
 extern size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream );
+extern size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream );
+
+#endif /* FF_STDIO_H */
