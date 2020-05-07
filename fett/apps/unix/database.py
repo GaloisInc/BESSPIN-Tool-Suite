@@ -70,7 +70,7 @@ def deploymentTest(target):
         target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>")
         target.runCommand(f"SELECT * from {xTable};", expectExact='Pancakes', endsWith="sqlite>")
 
-        target.runCommand(f"Update {xTable} SET title='{title_val}' WHERE title ='Pancakes';",
+        target.runCommand(f"UPDATE {xTable} SET title='{title_val}' WHERE title ='Pancakes';",
                           endsWith="sqlite>")
         target.runCommand(f"SELECT * from {xTable};", expectExact=True, expectedContents=[f"{title_val}"],
                           endsWith="sqlite>")
