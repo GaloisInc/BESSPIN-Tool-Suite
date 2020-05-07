@@ -16,5 +16,5 @@ We have four types of jobs:
     - Logic: All features and flows.
 4. **runRelease:** Same as periodic, but should be manually triggered.
     - Trigger: Manual only.
-    - Source: All configs in `./ci/runRelease`.
+    - Source: All configs in `./ci/runPeriodic`.
     - Logic: All features and flows.
