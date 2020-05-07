@@ -37,7 +37,7 @@ def deploymentTest(target):
 
     def create_database_and_table(xTable='food'):
         printAndLog(f"Test[create_database_and_table]: Create sqlite {xDb} database and {xTable} table", doPrint=False)
-        target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
+        target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"], erroneousContents=["Error:", "near","error"],
                           endsWith="sqlite>")
         target.runCommand(f"CREATE VIRTUAL TABLE IF NOT EXISTS {xTable} USING fts3(title);",
                           endsWith="sqlite>")
