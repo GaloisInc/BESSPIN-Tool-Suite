@@ -37,18 +37,15 @@ def deploymentTest(target):
 
     def create_database_and_table(pathToFile='/usr/bin', xFile='sqlite', xTable='food'):
         printAndLog(f"Test[create_database_and_table]: Create sqlite {xDb} database and {xTable} table", doPrint=False)
-        if target.doesFileExist(xFile=xFile, pathToFile=pathToFile, shutdownOnError=False):
-            if getSetting('osImage') in ['debian', 'FreeBSD']:
-                target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
-                                  endsWith="sqlite>")
-                target.runCommand(f"CREATE VIRTUAL TABLE IF NOT EXISTS {xTable} USING fts3(title);",
-                                  endsWith="sqlite>")
-                target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>")
-                target.runCommand(".exit")
-                printAndLog(f"Test[create_database_and_table]: The {xDb} database and {xTable} table created successfully!",
-                            doPrint=False)
-        else:
-            target.shutdownAndExit(f"\ncheckFile: Failed to find <{pathToFile}/{xFile}> on target.", exitCode=EXIT.Run)
+        if getSetting('osImage') in ['debian', 'FreeBSD']:
+            target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
+                              endsWith="sqlite>")
+            target.runCommand(f"CREATE VIRTUAL TABLE IF NOT EXISTS {xTable} USING fts3(title);",
+                              endsWith="sqlite>")
+            target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>")
+            target.runCommand(".exit")
+            printAndLog(f"Test[create_database_and_table]: The {xDb} database and {xTable} table created successfully!",
+                        doPrint=False)
 
     def insert_record(xTable='food', title_val='Pancakes'):
         printAndLog(f"Test[insert_record]: Insert into  {xTable} table value {title_val}.", doPrint=False)
