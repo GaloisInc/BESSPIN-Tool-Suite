@@ -67,7 +67,6 @@ def deploymentTest(target):
     guidance as to what tests we should run here.
 
     """
-    return ""
     httpPort = target.httpHostPort
     httpsPort = target.httpsHostPort
 
