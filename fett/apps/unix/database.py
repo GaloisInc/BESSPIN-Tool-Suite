@@ -31,7 +31,7 @@ def extensiveTest(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def deploymentTest(target):
-    sqlite_bin = "/usr/bin/sqlite"
+    sqlite_bin = '/usr/bin/sqlite'
     xDb = 'test.db'
     tableName = 'food'
     foodstuff = 'Pancakes'
