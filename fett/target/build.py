@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-""" 
+"""
 Building OS images any other needed files
 """
 
@@ -77,7 +77,7 @@ def prepareFreeRTOS():
 
         #Include the relevant user configuration parameters
         #This is a list of tuples: (settingName,macroName)
-        listConfigParams = [('appTimeout','APP_TIMEOUT')]
+        listConfigParams = [('appTimeout','APP_TIMEOUT'),('HTTPPortTarget','HTTP_PORT'),('TFTPPortTarget','TFTP_PORT')]
         configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
         for xSetting,xMacro in listConfigParams:
             configHfile.write(f"#define {xMacro} {getSetting(xSetting)}\n")
@@ -161,5 +161,3 @@ def cleanDirectory (xDir,endsWith='.o'):
                     os.remove(os.path.join(xDirName,xFile))
                 except Exception as exc:
                     logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.", exitCode=EXIT.Files_and_paths)
-
-

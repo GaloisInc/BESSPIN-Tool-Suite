@@ -52,23 +52,32 @@ def prepareEnv ():
     if (isEqSetting('osImage','FreeRTOS')):
         setSetting('webserver',False) 
         setSetting('database',False) 
+        setSetting('voting',False)
     elif (isEqSetting('osImage','FreeBSD') or isEqSetting('osImage','debian')):
-        if (not isEnabled('webserver') and not isEnabled('database')):
+        listAppsEnabled = [(xApp,isEnabled(xApp)) for xApp in ['database','webserver','voting']]
+        countEnabled = list(zip(*listAppsEnabled))[1].count(True)
+        if (countEnabled == 0):
             if (not isEnabled('openConsole')):
                 warnAndLog (f"All {getSetting('osImage')} apps are switched off, and <openConsole> is disabled.")
                 exitFett (EXIT.Nothing_to_do)
             else:
                 warnAndLog (f"All {getSetting('osImage')} apps are switched off. This is a console only mode.")
                 setSetting('runApp',False)
-
-        if (isEnabled('webserver') and isEnabled('database')):
-            warnAndLog (f"<webserver> and <database> are mutually exclusive. <webserver> is going to be ignored.")
+        elif (countEnabled == 3):
+            warnAndLog (f"<webserver>, <database>, and <voting> are mutually exclusive. Both <webserver> and <voting> are going to be ignored.")
             setSetting('webserver',False) 
+            setSetting('voting',False)
+        elif (countEnabled == 2):
+            enabledOnes = [x[0] for x in listAppsEnabled if (x[1])]
+            warnAndLog (f"<{enabledOnes[0]}> and <{enabledOnes[1]}> are mutually exclusive. <{enabledOnes[1]}> is going to be ignored.")
+            setSetting(enabledOnes[1],False) 
+
     elif (isEqSetting('osImage','busybox')):
         printAndLog(f"<busybox> is only used for smoke testing the target/network. No applications are supported.")
         setSetting('runApp',False)
         setSetting('webserver',False) 
         setSetting('database',False) 
+        setSetting('voting',False)
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
     
@@ -89,7 +98,8 @@ def launchFett ():
     xTarget = getClassType()()
     xTarget.start()
     if (isEnabled('isUnix')):
-        xTarget.changeRootPassword()
+        if (getSetting('osImage') in ['debian','FreeBSD']):
+            xTarget.changeRootPassword()
         xTarget.createUser()
     if (isEnabled('runApp')):
         xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))

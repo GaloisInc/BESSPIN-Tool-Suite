@@ -85,48 +85,29 @@ In such a case, such culprit function should have a wrapper and the functionalit
 void _open (const char * dump1, int dump2, ...) {
     (void) (dump1);
     (void) (dump2);
-    fettPrintf ("FATAL ERROR: <_open> should never be called.\r\n");
+    fettPrintf ("(FATAL ERROR)~  <_open> should never be called.\r\n");
     prEXIT(1);
 }
 
 /* Fake functions because time is needed for certificated expiry and beginning dates.
 _gettimeofday appears to be called from time.h; also the XTIME function overrides the calls to time().
-   This can be improved by being called to set at time of boot and then adding
-   the tickCount (with an interrupt at tickCount overflow).
-   Or even better, we can get the time from the network.
-   It does not seem worth it to spend the time and do that for fett purposes */
+If needed, will be implemented */
 void _gettimeofday (struct timeval *__p, void *__tz) {
-    if (__tz != NULL) {
-        fettPrintf("Warning: timezone pointer is not NULL in custom <gettimeofday>.\r\n");
-    }
-    //this is only temporary ---- will be changed!!
-    if (__p == NULL) {
-        fettPrintf ("<INVALID> No timeval allocated in <gettimeofday>.\r\n");
-        prEXIT(1);
-    }
-    #ifdef FAKETIMEOFDAY
-        __p->tv_sec = FAKETIMEOFDAY;
-    #else
-        fettPrintf ("<INVALID> [gettimeofday]: FAKETIMEOFDAY is not defined!\r\n");
-        prEXIT(1);
-    #endif
-    __p->tv_usec = 0UL;
-    return;
+    (void) (__p);
+    (void) (__tz);
+    fettPrintf ("(FATAL ERROR)~  <_gettimeofday> should never be called.\r\n");
+    prEXIT(1);
 }
 
 time_t XTIME(time_t *t) {
     (void) t;
-    #ifdef FAKETIMEOFDAY
-        return FAKETIMEOFDAY;
-    #else
-        fettPrintf ("<INVALID> [XTIME]: FAKETIMEOFDAY is not defined!\r\n");
-        exitFett(2);
-        return 0;
-    #endif
+    fettPrintf ("(FATAL ERROR)~  <_gettimeofday> should never be called.\r\n");
+    exitFett (1);
+    return 0;
 }
 
 /* Added as there is no such function in FreeRTOS. */
-// type is not type anymore; it is the old size.
+// The argument `type` is used as `old size`.
 void *XREALLOC(void *p, size_t n, void* heap, int type)
 {
     // This part is clean
@@ -147,22 +128,20 @@ void *XREALLOC(void *p, size_t n, void* heap, int type)
         unsigned int isItCustomCall = (heap != NULL) && ((int) heap == USE_FETT_REALLOC);
     #endif
 
-    if (isItCustomCall == 0) { //super dangerous method
-        fettPrintf ("Warning: XREALLOC <dangerously defined> is used.\r\n");
+    if (isItCustomCall == 0) { //Not a customized caller
+        fettPrintf ("(FATAL ERROR)~  XREALLOC is called from a non-adjusted location.\r\n");
+        exitFett (1);
+        return NULL;
     }
 
     void *pvReturn = pvPortMalloc (n);
     if (pvReturn == NULL) {
-        fettPrintf ("<INVALID> [XREALLOC]: Failed to malloc.");
-        exitFett (2); //cannot use prEXIT because this function is non-void
+        fettPrintf ("(Error)~  XREALLOC: Failed to malloc.\r\n");
+        exitFett (1); 
         return NULL;
     }
 
-    if (isItCustomCall == 0) { //super dangerous method
-        memcpy (pvReturn, p, n); //This is dangerous because n might be > size(p) and may be in a bad memory region.
-    } else { //the custom safe call
-        memcpy (pvReturn, p, (size_t) type);
-    }
+    memcpy (pvReturn, p, (size_t) type);
 
     vPortFree (p);
     return pvReturn;

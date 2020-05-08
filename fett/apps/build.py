@@ -28,6 +28,8 @@ def buildApps ():
         buildWebserver(tarName)
     elif (isEnabled('database')):
         buildDatabase(tarName)
+    elif (isEnabled('voting')):
+        buildVoting(tarName)
 
 """
 - FreeRTOS, building an app means copying the C files/headers/.mk env files to the workDir to prepare for os build.
@@ -94,6 +96,18 @@ def buildDatabase(tarName):
         tar (tarName, filesList=[(destBin, srcBin)])
 
         setSetting('sendTarballToTarget',True)
+    return
+
+""" Special building for 'voting' """
+@decorate.debugWrap
+@decorate.timeWrap
+def buildVoting(tarName):
+    if (isEnabled('buildApps')):
+        logAndExit (f"Building from source is not supported for the voting application",
+                    exitCode=EXIT.Configuration)
+    else:
+        logAndExit (f"buildVoting: The build function for <voting> is not yet implemented.",
+                    exitCode=EXIT.Implementation)
     return
 
 # re-used parts -----------------------------------------------------------

@@ -38,6 +38,30 @@
             "val" : 1234
         },
         {
+            "name" : "fpgaEthAdaptorName",
+            "type" : "string",
+            "val" : "eth0fpga"
+        },
+        {
+            "name" : "fpgaEthAdaptorMacAddress",
+            "type" : "string",
+            "val" : "88:53:48:41:56:45"
+        },
+        {
+            "name" : "HTTPPortTarget",
+            "type" : "int",
+            "min" : 80,
+            "max" : 443,
+            "val" : 80
+        },
+        {
+            "name" : "TFTPPortTarget",
+            "type" : "int",
+            "min" : 69,
+            "max" : 69,
+            "val" : 69
+        },
+        {
             "name" : "qemuIpTarget",
             "type" : "ipAddress",
             "val" : "127.0.0.1"

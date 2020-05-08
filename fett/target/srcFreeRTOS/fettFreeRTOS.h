@@ -4,6 +4,7 @@ fett header for includes, externs, and global variables
 
 /* General includes */
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
@@ -18,15 +19,15 @@ fett header for includes, externs, and global variables
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
 
-/* WolfSSL includes */ //for TLS if needed
-
-#include "fettWolfSSLSettings.h"
+/* WolfSSL includes */ //for TLS if needed  + for signatures
+#include "fettWolfSSLsettings.h"
 #include <wolfssl/wolfcrypt/settings.h>
 #include <wolfssl/ssl.h>
 #include <wolfssl/wolfcrypt/ed25519.h>
 
 /* Misc includes */
 #include <malloc.h>
+#include "ff_stdio.h"
 
 /* Macros */
 #define MSGBUF_SIZE 32
@@ -78,13 +79,13 @@ extern void vStartNetwork (void *pvParameters);
 // --------- fettMisc.c ---------------------------------------------------------------------------------
 extern void fettPrintf (const char * textToPrint, ...);
 extern void exitFett (uint8_t exitCode);
-extern void _open (const char * dump1, int dump2, ...); //for TLS if needed
-extern void _gettimeofday (struct timeval *__p, void *__tz); //for TLS if needed
-extern time_t XTIME(time_t *t); //for TLS if needed
-extern void *XREALLOC(void *p, size_t n, void* heap, int type); //for TLS if needed
+extern void _open (const char * dump1, int dump2, ...); //Needed for WolfSSL to compile -- should never be called
+extern void _gettimeofday (struct timeval *__p, void *__tz); //Needed for WolfSSL to compile -- should never be called
+extern time_t XTIME(time_t *t); //Needed for WolfSSL to compile -- should never be called
+extern void *XREALLOC(void *p, size_t n, void* heap, int type); //Not defined in FreeRTOS -- a safe not-feature-complete version is defined here
 extern uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress, uint16_t usSourcePort,
                                             uint32_t ulDestinationAddress, uint16_t usDestinationPort);
-extern int fett_wc_GenerateSeed(uint8_t* seed, uint8_t sz); //for TLS if needed
+extern int fett_wc_GenerateSeed(uint8_t* seed, uint8_t sz); //Needed for WolfSSL to compile -- a temporary workaround is implemented
 extern MessageBufferHandle_t globalMsgBuffer;
 extern uint8_t sendToMsgBuffer (void * xData, size_t xDataSize);
 extern size_t recvFromMsgBuffer (void * xBuf, size_t xBufSize);
@@ -92,14 +93,6 @@ extern size_t recvFromMsgBuffer (void * xBuf, size_t xBufSize);
 // --------- main_fett.c ---------------------------------------------------------------------------------
 extern TaskHandle_t xMainTask;
 extern UBaseType_t xMainPriority;
-
-// --------- fettWolfSSL.c
-/*extern void vEndWolfSSL (void *pvParameters);
-extern int startWolfSSL( void );
-extern void vInitServerWolfSSL (void *pvParameters);
-extern void vInitClientWolfSSL (void *pvParameters);
-extern WOLFSSL_CTX* xWolfSSL_ServerContext;
-extern WOLFSSL_CTX* xWolfSSL_ClientContext;*/
 
 // ----------- http.c -------------------------------------------------------------------------------------
 extern void vHttp (void *pvParameters);
