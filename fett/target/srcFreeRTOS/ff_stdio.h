@@ -19,6 +19,7 @@ typedef struct
 
 } FF_FindData_t;
 
+extern void ff_init(void);
 extern FF_FILE *ff_fopen( const char *pcFile, const char *pcMode );
 extern int ff_fclose( FF_FILE *pxStream );
 extern size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream );

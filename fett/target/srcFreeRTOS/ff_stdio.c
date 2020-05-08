@@ -55,13 +55,3 @@ size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStrea
 
     return 0;
 }
-
-size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream )
-{
-    (void) pvBuffer;
-    (void) xSize;
-    (void) xItems;
-    (void) pxStream;
-    fettPrintf ("ff_fwrite() is currently not implemented.\n");
-    return 0;
-}
