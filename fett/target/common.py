@@ -486,6 +486,7 @@ class commonTarget():
         elif (isEnabled('webserver')):
             outLog = webserver.install(self)
             outLog += webserver.deploy(self)
+            outLog += webserver.deploymentTest(self)
         elif (isEnabled('database')):
             outLog = database.install(self)
             outLog += database.deploy(self)

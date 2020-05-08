@@ -59,10 +59,12 @@ def buildWebserver(tarName):
                     exitCode=EXIT.Configuration)
     else:
         cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
-        cpDirToBuildDir(os.path.join(getBinDir('webserver'), "conf"))
-        cpDirToBuildDir(os.path.join(getBinDir('webserver'), "html"))
+        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "conf"))
+        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "html"))
+        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
+        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
 
-        tarFiles = ["nginx", "conf", "html"]
+        tarFiles = ["nginx", "conf", "html", "certs", "keys"]
 
         if getSetting('osImage') == 'debian':
             cpFilesToBuildDir (getBinDir('webserver'), pattern="nginx.service")
@@ -117,8 +119,12 @@ def getSourceDir (app):
     return os.path.join(getSetting('repoDir'),'fett','apps',app)
 
 @decorate.debugWrap
+def getAppDir(app):
+    return os.path.join(getSetting('repoDir'),'build', app)
+
+@decorate.debugWrap
 def getBinDir(app):
-    return os.path.join(getSetting('repoDir'),'build', app, getSetting('osImage'))
+    return os.path.join(getAppDir(app),getSetting('osImage'))
 
 @decorate.debugWrap
 def cpFilesToBuildDir (sourceDir, pattern=None):

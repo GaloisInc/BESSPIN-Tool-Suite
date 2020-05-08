@@ -2,6 +2,7 @@
 """ 
 This is executed after loading the app on the target to execute this app
 """
+import subprocess
 
 from fett.base.utils.misc import *
 
@@ -44,3 +45,68 @@ def deploy (target):
         logAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
                      exitCode=EXIT.Configuration)
     return outLog
+
+def curlTest(url, http2=False):
+    out = curlRequest(url, http2=http2)
+    try:
+        version,code,*rest = out.splitlines()[0].split(' ')
+    except Exception as exc:
+        logAndExit(f"Failed to parse curl output: <{out}>")
+    return (version, code)
+
+
+@decorate.debugWrap
+@decorate.timeWrap
+def deploymentTest(target):
+    """
+    Let's make sure that the deployed web app is working correctly by issuing
+    some basic requests.
+
+    The web app is supposed to expose the features that were listed as
+    requirements for the web server, so design/nginix_requirements.lando is the
+    guidance as to what tests we should run here.
+
+    """
+    return ""
+    httpPort = target.httpHostPort
+    httpsPort = target.httpsHostPort
+
+    # 0. Fetch index page
+    printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False)
+    try:
+        _,code = curlTest(f"http://localhost:{httpPort}/index.html")
+        if code != '200':
+            logAndExit("Failed to fetch index via HTTP, got code {code}")
+    except Exception as exc:
+        logAndExit("Failed to fetch index via HTTP", exc=exc)
+
+    # 1. Nginx must be compiled with ssl support
+    printAndLog("[Test[HTTPS]: Fetching index via HTTPS", doPrint=False)
+    try:
+        _,code = curlTest(f"https://localhost:{httpsPort}/index.html")
+        if code != '200':
+            logAndExit("Failed to fetch index via HTTPS, got code {code}")
+    except Exception as exc:
+        logAndExit("Failed to fetch index via HTTPS", exc=exc)
+
+    # 2. HTTP2 support
+    printAndLog("[Test[HTTP2]: Fetching index via HTTP2", doPrint=False)
+    try:
+        version,code = curlTest(f"https://localhost:{httpsPort}/index.html", http2=True)
+        if code != '200':
+            logAndExit("Failed to fetch index via HTTP/2, got code {code}")
+        if version != 'HTTP/2':
+            logAndExit("Failed to fetch index via HTTP/2, got wrong version <{version}>")
+    except Exception as exc:
+        logAndExit("Failed to fetch index via HTTPS", exc=exc)
+
+    # 3. Error redirect is working
+    printAndLog("[Test[Error Redirect]: Fetching private resource", doPrint=False)
+    try:
+        version,code = curlTest(f"https://localhost:{httpsPort}/private/index.html")
+        if code != '302':
+            logAndExit("No redirect after attempt to fetch private resource, got code {code}")
+    except Exception as exc:
+        logAndExit("Failed to test error redirection", exc=exc)
+
+    return ""
