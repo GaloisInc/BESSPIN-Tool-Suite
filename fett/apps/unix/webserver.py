@@ -67,31 +67,32 @@ def deploymentTest(target):
     guidance as to what tests we should run here.
 
     """
+    targetIP = target.ipTarget
     httpPort = target.httpHostPort
     httpsPort = target.httpsHostPort
 
     # 0. Fetch index page
     printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False)
     try:
-        _,code = curlTest(f"http://localhost:{httpPort}/index.html")
+        _,code = curlTest(f"http://{targetIP}:{httpPort}/index.html")
         if code != '200':
             logAndExit("Failed to fetch index via HTTP, got code {code}")
     except Exception as exc:
         logAndExit("Failed to fetch index via HTTP", exc=exc)
 
     # 1. Nginx must be compiled with ssl support
-    printAndLog("[Test[HTTPS]: Fetching index via HTTPS", doPrint=False)
+    printAndLog("Test[HTTPS]: Fetching index via HTTPS", doPrint=False)
     try:
-        _,code = curlTest(f"https://localhost:{httpsPort}/index.html")
+        _,code = curlTest(f"https://{targetIP}:{httpsPort}/index.html")
         if code != '200':
             logAndExit("Failed to fetch index via HTTPS, got code {code}")
     except Exception as exc:
         logAndExit("Failed to fetch index via HTTPS", exc=exc)
 
     # 2. HTTP2 support
-    printAndLog("[Test[HTTP2]: Fetching index via HTTP2", doPrint=False)
+    printAndLog("Test[HTTP2]: Fetching index via HTTP2", doPrint=False)
     try:
-        version,code = curlTest(f"https://localhost:{httpsPort}/index.html", http2=True)
+        version,code = curlTest(f"https://{targetIP}:{httpsPort}/index.html", http2=True)
         if code != '200':
             logAndExit("Failed to fetch index via HTTP/2, got code {code}")
         if version != 'HTTP/2':
@@ -100,9 +101,9 @@ def deploymentTest(target):
         logAndExit("Failed to fetch index via HTTPS", exc=exc)
 
     # 3. Error redirect is working
-    printAndLog("[Test[Error Redirect]: Fetching private resource", doPrint=False)
+    printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False)
     try:
-        version,code = curlTest(f"https://localhost:{httpsPort}/private/index.html")
+        version,code = curlTest(f"https://{targetIP}:{httpsPort}/private/index.html")
         if code != '302':
             logAndExit("No redirect after attempt to fetch private resource, got code {code}")
     except Exception as exc:
