@@ -517,8 +517,8 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
 		string following the file name. +1 to move past the null terminator to
 		the start of the next string. */
         x++;
-        if (strcmp(pcOctedMode,
-                   (const char *)&(pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET + x])) != 0)
+        if (strcasecmp(pcOctedMode,
+                       (const char *)&(pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET + x])) != 0)
         {
             /* Not the expected mode. */
             prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
