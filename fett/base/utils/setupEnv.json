@@ -95,7 +95,8 @@
                 "FreeRTOS" : {
                     "fpga" : "FETT_GFE_FREERTOS_FPGA"
                 },
-                "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR"
+                "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR",
+                "gfeBitfileDir" : "FETT_GFE_BITFILE_DIR"
             }
         },
         {
