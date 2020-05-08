@@ -28,7 +28,7 @@ def exitOnInterrupt (xSig,xFrame):
         sigName = f"signal#{xSig}"
     exitFettCi(message=f"Received <{sigName}>!")
 
-def generateAllConfigs():
+def generateAllConfigs(runType):
     #create a list of unique dictionaries. Each dictionary can become a .ini instance
     def createConfig (inputSet, inputDict):
         if (not inputSet): #we're done
@@ -52,10 +52,9 @@ def generateAllConfigs():
             inputDict['name'] += [str(values[0])]
         inputDict[settingName] = values[0]
         createConfig (inputSet, inputDict)
-        
+         
     allConfigs = []
-
-    for xApp,xSet in appSets.items():
+    for xApp,xSet in appSets[runType].items():
         inputSet = copy.deepcopy(xSet)
         inputDict = {'name': [xApp]}
         allConfigs.append(inputDict)
