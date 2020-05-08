@@ -14,8 +14,16 @@ def install (target):
     outLog += target.runCommand("mkdir -p /usr/local/sbin")[1]
     outLog += target.runCommand("install nginx /usr/local/sbin/nginx", erroneousContents="install:")[1]
     outLog += target.runCommand("mkdir -p /usr/local/nginx/logs /usr/local/nginx/conf /usr/local/nginx/html")[1]
-    outLog += target.runCommand("find conf -type f -exec install \"{}\" /usr/local/nginx/conf \\;", erroneousContents=["find:", "install:"])[1]
-    outLog += target.runCommand("find html -type f -exec install \"{}\" /usr/local/nginx/html \\;", erroneousContents=["find:", "install:"])[1]
+    outLog += target.runCommand("mkdir -p /usr/local/nginx/post")[1]
+    outLog += target.runCommand("mkdir -p /etc/ssl/certs")[1]
+    outLog += target.runCommand("mkdir -p /etc/ssl/private")[1]
+
+    outLog += target.runCommand("cp -r conf/* /usr/local/nginx/conf/")[1]
+    outLog += target.runCommand("cp -r html/* /usr/local/nginx/html/")[1]
+    outLog += target.runCommand("cp -r certs/* /etc/ssl/certs")[1]
+    outLog += target.runCommand("cp -r keys/* /etc/ssl/private")[1]
+
+    # TODO add errors above
     return outLog
 
 @decorate.debugWrap
@@ -26,7 +34,7 @@ def deploy (target):
     outLog += target.runCommand("echo \"Starting nginx service...\"")[1]
     if getSetting('osImage') == 'debian':
         outLog += target.runCommand("install nginx.service /lib/systemd/system/nginx.service", erroneousContents="install:")[1]
-        outLog += target.runCommand("systemctl start nginx.service", erroneousContents="Failed to start")[1]
+        outLog += target.runCommand("systemctl start nginx.service", erroneousContents=["Failed to start", "error code"])[1]
     elif getSetting('osImage') == 'FreeBSD':
         outLog += target.runCommand("install -d /usr/local/etc/rc.d")[1]
         outLog += target.runCommand("install rcfile /usr/local/etc/rc.d/nginx", erroneousContents="install:")[1]
