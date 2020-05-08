@@ -9,6 +9,7 @@ We have four types of jobs:
 2. **runDevPR:**   
     - Trigger: Every push on an open PR to develop.
     - Logic: Key features and flows.
+    - Source: All configs outlined in `appSets['runDevPR']` in `./ci/configs.py`.
     
 3. **runPeriodic:** 
     - Trigger: Scheduled to run nightly.
