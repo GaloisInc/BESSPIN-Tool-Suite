@@ -48,8 +48,6 @@ DROP TABLE IF EXISTS food;
 rm -f ~/test.db
 ```
 
-## Smoke tests for  nginx server
-
   
 
  
