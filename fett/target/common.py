@@ -489,9 +489,6 @@ class commonTarget():
             outLog = database.install(self)
             outLog += database.deploy(self)
             outLog += database.deploymentTest(self)
-
-
-
         fLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
         fLog.write (outLog)
         fLog.close()
