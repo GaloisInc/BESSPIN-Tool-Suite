@@ -63,8 +63,17 @@ class qemuTarget (commonTarget):
             rangeStart, rangeEnd = self.allocPortRange()
             printAndLog(f"Qemu will use the network ports <target:{self.portTarget}>, <hostTcp:{self.portHost}>, and <hostSsh:{self.sshHostPort}>.")
 
-            qemuCommand = f"qemu-system-riscv64 -nographic -machine virt -m 2G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\"" 
-            qemuCommand += f" -device virtio-net-device,netdev=usernet -netdev user,id=usernet,hostfwd=tcp:{self.ipTarget}:{self.portHost}-:{self.portTarget},hostfwd=tcp:{self.ipTarget}:{self.sshHostPort}-:22"
+            hostFwdPairs = [
+                (self.portHost, self.portTarget),
+                (self.sshHostPort, 22),
+                (self.httpHostPort, 80),
+                (self.httpsHostPort, 443)
+            ]
+            hostFwdString = ",".join([f"hostfwd=tcp:{self.ipTarget}:{portHost}-:{portTarget}" for portHost,portTarget in hostFwdPairs])
+
+            qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\""
+            qemuCommand += f" -device virtio-net-device,netdev=usernet"
+            qemuCommand += f" -netdev user,id=usernet,{hostFwdString}"
 
             self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
             try:
