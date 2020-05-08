@@ -2,6 +2,16 @@
 
 CFLAGS += -DFETT_APPS
 
+SD_SOURCE_DIR = ./SD/src
+SD_SRC = $(SD_SOURCE_DIR)/SD.cpp \
+		$(SD_SOURCE_DIR)/File.cpp \
+		$(SD_SOURCE_DIR)/utility/Sd2Card.cpp \
+		$(SD_SOURCE_DIR)/utility/SdFile.cpp \
+		$(SD_SOURCE_DIR)/utility/SdVolume.cpp \
+		$(SD_SOURCE_DIR)/SDLib.cpp
+
+
+
 WOLFSSL_SOURCE_DIR = $(FREERTOS_PLUS_SOURCE_DIR)/WolfSSL
 WOLFSSL_SRC = $(WOLFSSL_SOURCE_DIR)/src/ssl.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/logging.c \
@@ -39,6 +49,9 @@ CFLAGS := $(filter-out -Werror,$(CFLAGS))
 
 CFLAGS += -I$(FREERTOS_IP_INCLUDE)
 CFLAGS += -I$(WOLFSSL_SOURCE_DIR)
+CFLAGS += -I$(SD_SOURCE_DIR)
 FREERTOS_SRC += $(FREERTOS_IP_SRC)
 DEMO_SRC += $(WOLFSSL_SRC)
+CPP_SRC += $(SD_SRC)
 INCLUDES += -I$(WOLFSSL_SOURCE_DIR)
+INCLUDES += -I$(SD_SOURCE_DIR)
