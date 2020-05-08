@@ -57,7 +57,7 @@ def main (xArgs):
         except Exception as exc:
             exitFettCi (message=f"Failed to list <{dirConfigs}/*.ini>.",exc=exc)
     else: #generate the config file
-        allConfigs = generateAllConfigs()
+        allConfigs = generateAllConfigs(xArgs.runType)
         actualNumConfigs = len(allConfigs)
         if (xArgs.testOnly):
             print(f"(Debug)~  FETT-CI: <{xArgs.runType}> has <{actualNumConfigs}> configurations in total.")

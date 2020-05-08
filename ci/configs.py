@@ -19,28 +19,40 @@ commonDefaults = {
 }
 
 unixDefaults = commonDefaults.union({
-    ('processor',('chisel_p2', 'bluespec_p2',)),
-    ('target',('qemu', 'fpga',)),
-    ('osImage',('FreeBSD', 'debian',)),
     ('elfLoader',('netboot',)),
     ('buildApps',('no',))
 })
 
-webserver = unixDefaults.union({
+unixAllTargets = unixDefaults.union({
+    ('processor',('chisel_p2', 'bluespec_p2',)),
+    ('target',('qemu', 'fpga',)),
+    ('osImage',('FreeBSD', 'debian',))
+})
+
+unixDevPR = unixDefaults.union({
+    ('processor',('chisel_p2',)),
+    ('target',('fpga',)),
+    ('osImage',('FreeBSD', 'debian',))
+})
+
+webserverDefaults = {
     ('webserver',('yes',)),
     ('database',('no',)),
     ('voting',('no',))
-})
+}
 
-database = unixDefaults.union({
+databaseDefaults = {
     ('database',('yes',)),
     ('webserver',('no',)),
     ('voting',('no',))
-})
+}
 
-freertos = commonDefaults.union({
-    ('processor',('chisel_p1', 'bluespec_p1',)),
-    ('target',('fpga',)),
+webserverAllTargets = webserverDefaults.union(unixAllTargets)
+webserverDevPR = webserverDefaults.union(unixDevPR)
+databaseAllTargets = databaseDefaults.union(unixAllTargets)
+databaseDevPR = databaseDefaults.union(unixDevPR)
+
+freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',)),
     ('database',('no',)),
@@ -51,5 +63,19 @@ freertos = commonDefaults.union({
     ('linker',('GCC',))
 })
 
-appSets = {'freertos':freertos, 'webserver':webserver, 'database':database}
+freertosAllTargets = freertosDefaults.union({
+    ('processor',('chisel_p1', 'bluespec_p1',)),
+    ('target',('fpga',))
+})
+
+freertosDevPR = freertosDefaults.union({
+    ('processor',('chisel_p1',)),
+    ('target',('fpga',))
+})
+
+appSets = {
+    'runPeriodic' : {'freertos':freertosAllTargets, 'webserver':webserverAllTargets, 'database':databaseAllTargets},
+    'runDevPR' : {'freertos':freertosDevPR, 'webserver':webserverDevPR, 'database':databaseDevPR},
+}
+appSets['runRelease'] = appSets['runPeriodic']
 
