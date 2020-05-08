@@ -11,9 +11,9 @@ and they are part of `FETT` platform testing service.
 
 The following workflow has been implemented:
 * create a database instance called `test.db`
-~~~~sql 
+~~~bash 
 sqlite ~/test.db
-~~~~
+~~~
 * create virtual table `food` containing the column `title` and using the `FTS3` search extension
 ~~~~sql
 CREATE VIRTUAL TABLE IF NOT EXISTS food USING fts3(title);
@@ -44,9 +44,9 @@ DROP TABLE IF EXISTS food1;
 DROP TABLE IF EXISTS food;
 ~~~~
 * drop the database instance `test.db`
-~~~~sql 
+~~~bash
 rm -f ~/test.db
-~~~~
+~~~
 
 ## Smoke tests for  nginx server
 
