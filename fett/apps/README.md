@@ -44,9 +44,9 @@ DROP TABLE IF EXISTS food1;
 DROP TABLE IF EXISTS food;
 ~~~~
 * drop the database instance `test.db`
-~~~bash
+~~~~sql 
 rm -f ~/test.db
-~~~
+~~~~
 
 ## Smoke tests for  nginx server
 
