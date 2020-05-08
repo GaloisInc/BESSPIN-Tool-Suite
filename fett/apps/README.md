@@ -16,32 +16,32 @@ sqlite ~/test.db
 ~~~
 * create virtual table `food` containing the column `title` and using the `FTS3` search extension
 ~~~bash
-CREATE VIRTUAL TABLE IF NOT EXISTS food USING fts3(title);
+CREATE VIRTUAL TABLE IF NOT EXISTS food USING fts3(title)
 ~~~
 * insert record into table `food` 
 
 ~~~bash
-INSERT INTO food(title) VALUES('Pancakes');
+INSERT INTO food(title) VALUES('Pancakes')
 ~~~
 * verify and update an existing record.
 
 ~~~bash
-UPDATE food SET title = 'Pizza' WHERE title = 'Pancakes';
+UPDATE food SET title = 'Pizza' WHERE title = 'Pancakes'
 ~~~
 * verify and delete an existing record.
 
 ~~~bash
-DELETE FROM food WHERE title = 'Pizza';
+DELETE FROM food WHERE title = 'Pizza'
 ~~~
 * drop non existing table.
 
 ~~~bash
-DROP TABLE IF EXISTS food1;
+DROP TABLE IF EXISTS food1
 ~~~
 * drop an existing table.
 
 ~~~bash
-DROP TABLE IF EXISTS food;
+DROP TABLE IF EXISTS food
 ~~~
 * drop the database instance `test.db`
 ~~~bash
@@ -49,11 +49,6 @@ rm -f ~/test.db
 ~~~
 
 ## Smoke tests for  nginx server
-
-
-
-
-
 
   
 
