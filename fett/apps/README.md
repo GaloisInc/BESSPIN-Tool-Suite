@@ -15,9 +15,9 @@ The following workflow has been implemented:
 sqlite ~/test.db
 ```
 * create virtual table `food` containing the column `title` and using the `FTS3` search extension
-```sqlite
+~~~~sqlite
 CREATE VIRTUAL TABLE IF NOT EXISTS food USING fts3(title);
-```
+~~~~
 * insert record into table `food` 
 
 ```sqlite
