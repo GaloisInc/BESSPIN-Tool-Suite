@@ -339,5 +339,5 @@ def curlRequest(url, http2=False):
         p = subprocess.run (['curl'] + options + [url], capture_output=True, check=True)
         out = p.stdout.decode('utf-8')
     except Exception as exc:
-        logAndExit (f"Failed to run <curl {options}>", exc=exc, exitCode=EXIT.Run)
+        logAndExit (f"Failed to run <curl {options}>\nstdout:\n{exc.stdout}\nstderr:\n{exc.stderr}", exc=exc, exitCode=EXIT.Run)
     return out
