@@ -17,7 +17,6 @@ def install(target):
     outLog += target.runCommand("install sqlite /usr/bin")[1]
     return outLog
 
-
 @decorate.debugWrap
 @decorate.timeWrap
 def deploy(target):
