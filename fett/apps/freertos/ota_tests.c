@@ -45,25 +45,10 @@ static const byte bad_both[PAYLOAD_SIZE] = {
   0x32, 0xcb, 0x0f, 0x01, 0xFF, 0x65, 0x6c, 0x6c, 0x6f, 0x0a
 };
 
-void test_ed25519_verify(void)
+void test_ed25519_verify(ed25519_key *pk)
 {
-  ed25519_key pk;
-  int r;
   int signature_ok;
-
-  r = wc_ed25519_init (&pk);
-  if (r != 0)
-    {
-      fettPrintf ("wc_ed25519_init() failed\n");
-      return;
-    }
-
-  r = wc_ed25519_import_public (raw_pk, ED25519_KEY_SIZE, &pk);
-  if (r != 0)
-    {
-      fettPrintf ("wc_ed25519_import_public() failed\n");
-      return;
-    }
+  int r;
 
   // TEST CASE 1 - GOOD SIGNATURE
   fettPrintf ("Test case 1 - expected good signature\n");
@@ -76,7 +61,8 @@ void test_ed25519_verify(void)
                             PAYLOAD_SIZE - ED25519_SIG_SIZE, // size of message
 
                             &signature_ok,            // Returned status
-                            &pk);                     // public key
+                            pk);                      // public key
+  (void) r;
   if (signature_ok == 1)
     {
       fettPrintf ("Signature is OK - PASS\n");
@@ -96,7 +82,7 @@ void test_ed25519_verify(void)
                             PAYLOAD_SIZE - ED25519_SIG_SIZE, // size of message
 
                             &signature_ok,            // Returned status
-                            &pk);                     // public key
+                            pk);                      // public key
   if (signature_ok == 1)
     {
       fettPrintf ("Signature is OK - FAIL\n");
@@ -115,7 +101,7 @@ void test_ed25519_verify(void)
                             PAYLOAD_SIZE - ED25519_SIG_SIZE, // size of message
 
                             &signature_ok,            // Returned status
-                            &pk);                     // public key
+                            pk);                      // public key
   if (signature_ok == 1)
     {
       fettPrintf ("Signature is OK - FAIL\n");
@@ -134,7 +120,7 @@ void test_ed25519_verify(void)
                             PAYLOAD_SIZE - ED25519_SIG_SIZE, // size of message
 
                             &signature_ok,            // Returned status
-                            &pk);                     // public key
+                            pk);                      // public key
   if (signature_ok == 1)
     {
       fettPrintf ("Signature is OK - FAIL\n");
@@ -143,6 +129,4 @@ void test_ed25519_verify(void)
     {
       fettPrintf ("Signature is NOT OK - PASS\n");
     }
-
-  wc_ed25519_free (&pk);
 }

@@ -11,7 +11,7 @@ uint8_t file_buffer[OTA_MAX_SIGNED_PAYLOAD_SIZE]; // SIZE set in setupEnv.json
 char    filename_buffer[ffconfigMAX_FILENAME];
 
 void vOta (void *pvParameters);
-void Ota_Worker (void);
+void Ota_Worker (ed25519_key *pk);
 void Write_Payload (size_t fsize);
 void Initialize_Receipt_Buffers (void);
 
@@ -53,33 +53,16 @@ void Write_Payload (size_t fsize)
     }
 }
 
-void Ota_Worker (void)
+void Ota_Worker (ed25519_key *pk)
 {
-  ed25519_key pk;
-  int r;
-
-  r = wc_ed25519_init (&pk);
-  if (r != 0)
-    {
-      fettPrintf ("(Info)~  vOta: wc_ed25519_init() failed\n");
-      return;
-    }
-
-  r = wc_ed25519_import_public (raw_pk, ED25519_KEY_SIZE, &pk);
-  if (r != 0)
-    {
-      fettPrintf ("(Info)~  vOta: wc_ed25519_import_public() failed\n");
-      return;
-    }
-
-
   // Normally, this would loop forever, but for initial testing,
   // we'll just receive and process one file before returning
   // for (;;)
   {
     int      signature_ok;
     uint32_t received_file_size;
-  
+    int      r;
+    
     Initialize_Receipt_Buffers();
     
     received_file_size = TFTP_Receive_One_File (file_buffer,
@@ -95,8 +78,8 @@ void Ota_Worker (void)
                                   received_file_size - ED25519_SIG_SIZE, // size of message
                                   
                                   &signature_ok,            // Returned status
-                                  &pk);                     // public key
-
+                                  pk);                      // public key
+        (void) r;
         if (signature_ok == 1)
           {
             fettPrintf ("(Info)~  vOta: Signature is OK\n");
@@ -123,13 +106,33 @@ void Ota_Worker (void)
 void vOta (void *pvParameters) {
     (void) pvParameters;
     BaseType_t funcReturn;
+    ed25519_key pk;
+    int r;
 
     fettPrintf("(Info)~  vOta: Starting OTA...\r\n");
 
-    test_ed25519_verify();
+    r = wc_ed25519_init (&pk);
+    if (r != 0)
+      {
+        fettPrintf ("(Info)~  vOta: wc_ed25519_init() failed\n");
+        return;
+      }
 
-    Ota_Worker();
+    r = wc_ed25519_import_public (raw_pk, ED25519_KEY_SIZE, &pk);
+    if (r != 0)
+      {
+        fettPrintf ("(Info)~  vOta: wc_ed25519_import_public() failed\n");
+        return;
+      }
+
+    // Self test crypto
+    test_ed25519_verify(&pk);
+
+    // Enter main loop
+    Ota_Worker(&pk);
     
+    wc_ed25519_free (&pk);
+
     fettPrintf("(Info)~  vOta: Exitting OTA...\r\n");
 
     //notify main
