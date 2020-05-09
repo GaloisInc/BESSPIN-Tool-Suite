@@ -51,7 +51,7 @@ def curlTest(target, url, extra=[], http2=False):
     try:
         version,code,*rest = out.splitlines()[0].split(' ')
     except Exception as exc:
-        logAndExit(f"Failed to parse curl output: <{out}>")
+        logAndExit(f"Failed to parse curl output: <{out}>", exc=exc, exitCode=EXIT.Run)
     printAndLog(f"curl {url} extra={extra} http2={http2} returned:\n{out}", doPrint=False)
     return (version, code)
 
