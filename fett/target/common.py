@@ -489,6 +489,7 @@ class commonTarget():
         elif (isEnabled('database')):
             outLog = database.install(self)
             outLog += database.deploy(self)
+            outLog += database.deploymentTest(self)
         elif (isEnabled('voting')):
             outLog = voting.install(self)
             outLog += voting.deploy(self)
