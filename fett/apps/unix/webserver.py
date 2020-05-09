@@ -73,8 +73,8 @@ def deploymentTest(target):
 
     """
     targetIP = target.ipTarget
-    httpPort = target.httpHostPort
-    httpsPort = target.httpsHostPort
+    httpPort = target.httpPortTarget
+    httpsPort = target.httpsPortTarget
     output = ""
 
     # 0. Fetch index page

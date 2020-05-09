@@ -12,8 +12,9 @@ class qemuTarget (commonTarget):
         super().__init__()
         self.sshHostPort = getSetting('qemuSshHostPort')
         self.ipTarget = getSetting('qemuIpTarget')
-        self.httpHostPort = getSetting('qemuHttpHostPort')
-        self.httpsHostPort = getSetting('qemuHttpsHostPort')
+        # These are QEMU specific
+        self.httpPortTarget = getSetting('qemuHttpHostPort')
+        self.httpsPortTarget = getSetting('qemuHttpsHostPort')
         return
 
     @decorate.debugWrap
@@ -42,7 +43,10 @@ class qemuTarget (commonTarget):
             if val in [self.portTarget, self.portHost]:
                 self.shutdownAndExit(f"allocPortRange: The {name}<{val}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
 
-        portsToCheck = ["sshHostPort", "httpHostPort", "httpsHostPort"]
+        # The names here look confusing, but for clients of the class,
+        # if these are the ports to access http or https being served on the target.
+        # They actually exist on the host, of course, since we're doing port forwarding.
+        portsToCheck = ["sshHostPort", "httpPortTarget", "httpsPortTarget"]
         # Check the allocated ports are distinct from the user-specified ports
         for name in portsToCheck:
             checkPortRange(name, getattr(self, name))
@@ -66,9 +70,10 @@ class qemuTarget (commonTarget):
             hostFwdPairs = [
                 (self.portHost, self.portTarget),
                 (self.sshHostPort, 22),
-                (self.httpHostPort, 80),
-                (self.httpsHostPort, 443)
+                (self.httpPortTarget, getSetting('HTTPPortTarget')),
+                (self.httpsPortTarget, getSetting('HTTPSPortTarget')),
             ]
+
             hostFwdString = ",".join([f"hostfwd=tcp:{self.ipTarget}:{portHost}-:{portTarget}" for portHost,portTarget in hostFwdPairs])
 
             qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\""
