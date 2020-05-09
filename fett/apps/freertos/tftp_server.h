@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#define DUMMY_TFTP 0
+
 // Waits for an incoming connection on TFTP_PORT and receives
 // a file, writing the contents to buffer[0 .. buffer_len-1] and
 // the indicated file name into file_name[0 .. file_name_len-1].
