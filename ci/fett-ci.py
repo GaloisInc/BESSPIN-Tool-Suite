@@ -5,7 +5,7 @@
 """
 
 try:
-    import sys, os, glob, shutil
+    import sys, os, glob, shutil, time
     import subprocess, argparse, signal, configparser, copy
     from utils import exitFettCi, exitOnInterrupt, generateAllConfigs, generateConfigFile, prepareArtifact
 except Exception as exc:
@@ -101,7 +101,7 @@ def main (xArgs):
         nErrs += int(exitCode != 0)
 
         # prepare artifacts
-        prepareArtifact (xConfig, xArgs.artifactSuffix)
+        prepareArtifact (repoDir,xConfig, xArgs.artifactSuffix)
 
     exitFettCi(exitCode=nErrs)
 

@@ -5,7 +5,7 @@
 """
 
 from configs import *
-import configparser, os, copy
+import configparser, os, copy, time, glob, shutil
 
 def exitFettCi (exitCode=-1,exc=None,message=None):
     if (message):
@@ -112,9 +112,29 @@ def generateConfigFile (repoDir,dictConfig,testMode):
 
     return xConfigFilePath
 
-def prepareArtifact(configFile,artifactSuffix):
-    #path to the artifact folder
-    pass
+def prepareArtifact(repoDir, configFile,artifactSuffix):
+    #decide on the folder's name
+    artifactsPath = f"{os.path.splitext(os.path.basename(configFile))[0]}-{artifactSuffix}"
+    if (os.path.isdir(artifactsPath)): # already exists, add the date
+        artifactsPath += f"-{int(time.time())}"
+    
+    #create the directory
+    try:
+        os.mkdir(artifactsPath)
+    except Exception as exc:
+        exitFettCi (message=f"Failed to create <{artifactsPath}>.",exc=exc)
+    
+    #Move the important files there
+    #This is assuming fett-ci uses the default workDir and logFile
+    workDir = os.path.join(repoDir,'workDir')
+    logFile = os.path.join(workDir,'fett.log')
+    outFiles = glob.glob(os.path.join(workDir,'*.out'))
+    listArtifacts = [configFile, logFile] +  outFiles
+    for xArtifact in listArtifacts:
+        try:
+            shutil.copy2(xArtifact,artifactsPath)
+        except Exception as exc:
+            exitFettCi (message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",exc=exc)
 
 
 
