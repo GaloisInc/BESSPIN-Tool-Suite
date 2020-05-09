@@ -64,7 +64,7 @@ freertosDefaults = commonDefaults.union({
 })
 
 freertosAllTargets = freertosDefaults.union({
-    ('processor',('chisel_p1', 'bluespec_p1',)),
+    ('processor',('chisel_p1',)),
     ('target',('fpga',))
 })
 
