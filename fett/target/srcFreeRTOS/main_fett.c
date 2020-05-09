@@ -9,9 +9,20 @@ TaskHandle_t xMainTask = NULL;
 UBaseType_t xMainPriority = tskIDLE_PRIORITY+100; //100 is chosen arbitrarily.
 
 //This is the entry point function
-void main_fett () {
-
+void main_fett ()
+{
+    int r;
+  
     printf ("\n>>>Beginning of Fett<<<\n");
+
+    // Start the FAT filesystem before any other tasks get created.
+    // TBD - See Issue #204
+
+
+    // Initialize WolfSLL - this needs to be done before any other call to
+    // any other WolfSSL or Wolfcrypt API
+    r = wolfSSL_Init();
+    prERROR_IF_NEQ(r, SSL_SUCCESS, "main_fett: Initializing WolfSSL.");
 
     BaseType_t funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     prERROR_IF_NEQ(funcReturn, pdPASS, "main_fett: Creating vMain task.");
@@ -29,6 +40,7 @@ void vMain (void *pvParameters) {
 
     fettPrintf("vMain: Main task started...\r\n");
 
+    // Start the Networking task
     funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vStartNetwork task.");
 
@@ -36,11 +48,11 @@ void vMain (void *pvParameters) {
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Receive notification from vStartNetwork.");
     vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS_NTK, "vMain: Expected notification value from vStartNetwork.");
 
-    //Start the FAT filesystem
 
     //Start the HTTP task
     funcReturn = xTaskCreate(vHttp, "vMain:vHttp", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vHttp task.");
+
 
     //Start the OTA task
     funcReturn = xTaskCreate(vOta, "vMain:vOta", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
