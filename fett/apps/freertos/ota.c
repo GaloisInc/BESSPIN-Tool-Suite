@@ -5,12 +5,9 @@
 #include "ota_tests.h"
 #include "tftp_server.h"
 
-// The maximum size of a file that can be received to the in-memory buffer
-#define TFTP_FILE_BUFFER_LEN 65536
-
 #define OTA_FILE_MIN_SIZE (ED25519_SIG_SIZE + 1)
 
-uint8_t file_buffer[TFTP_FILE_BUFFER_LEN];
+uint8_t file_buffer[OTA_MAX_SIGNED_PAYLOAD_SIZE]; // SIZE set in setupEnv.json
 char    filename_buffer[ffconfigMAX_FILENAME];
 
 void vOta (void *pvParameters);
@@ -20,7 +17,7 @@ void Initialize_Receipt_Buffers (void);
 
 void Initialize_Receipt_Buffers (void)
 {
-  for (int i = 0; i < TFTP_FILE_BUFFER_LEN; i++)
+  for (int i = 0; i < OTA_MAX_SIGNED_PAYLOAD_SIZE; i++)
     {
       file_buffer[i] = (uint8_t) 0;
     }
@@ -86,7 +83,7 @@ void Ota_Worker (void)
     Initialize_Receipt_Buffers();
     
     received_file_size = TFTP_Receive_One_File (file_buffer,
-                                                TFTP_FILE_BUFFER_LEN,
+                                                OTA_MAX_SIGNED_PAYLOAD_SIZE,
                                                 filename_buffer,
                                                 ffconfigMAX_FILENAME);
     if (received_file_size >= OTA_FILE_MIN_SIZE)
