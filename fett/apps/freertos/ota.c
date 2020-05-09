@@ -80,6 +80,14 @@ void Ota_Worker (ed25519_key *pk)
                                                 ffconfigMAX_FILENAME);
     if (received_file_size >= OTA_FILE_MIN_SIZE)
       {
+        fettPrintf ("(Info)~ OTA received a file of %d bytes\n", (int) received_file_size);
+        fettPrintf ("(Info)~ OTA requested file name is %s\n", filename_buffer);
+        fettPrintf ("(Info)~ First four bytes of signature are %2x %2x %2x %2x\n",
+                    file_buffer[0],
+                    file_buffer[1],
+                    file_buffer[2], 
+                    file_buffer[3]);
+        
         r = wc_ed25519_verify_msg((byte *) file_buffer,  // ptr to first byte of signature
                                   ED25519_SIG_SIZE,   // size of signature
                                   
