@@ -15,7 +15,7 @@ from collections import Iterable
 from fett.apps.unix import database
 from fett.apps.unix import webserver
 from fett.apps.unix import voting
-from fett.apps.freertos.run import runFreeRTOSapps
+from fett.apps.freertos import freertos
 
 class commonTarget():
     def __init__(self):
@@ -483,7 +483,7 @@ class commonTarget():
             self.sendTar(timeout=timeout)
 
         if (isEqSetting('osImage','FreeRTOS')):
-            outLog = runFreeRTOSapps(self)
+            outLog = freertos.extensiveTest(self)
         elif (isEnabled('webserver')):
             outLog = webserver.install(self)
             outLog += webserver.deploy(self)
