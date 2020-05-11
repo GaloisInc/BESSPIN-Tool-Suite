@@ -40,3 +40,5 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 
     if ((retCommand[3] == 0) and (not endOfApp)): #FETT exited prematurely
         target.shutdownAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
+
+    return retCommand
