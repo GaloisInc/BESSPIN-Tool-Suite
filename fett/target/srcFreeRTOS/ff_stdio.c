@@ -2,8 +2,9 @@
 #include <stdbool.h>
 #include <SDLib.h>
 
-void ff_init() {
-    sdlib_initialize();
+int ff_init( void ) 
+{
+    return sdlib_initialize();
 }
 
 FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
@@ -12,7 +13,7 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 
     FF_FILE * file;
 
-    file = malloc(sizeof(FF_FILE));
+    file = pvPortMalloc(sizeof(FF_FILE));
 
     // Store the file size
     file->ulFileSize = sdlib_size(pcFile);
@@ -31,7 +32,7 @@ int ff_fclose( FF_FILE *pxStream )
 {
     // Close the stream and free up the underlying memory
     sdlib_close(pxStream->filename);
-    free(pxStream);
+    vPortFree(pxStream);
 
     return 0;
 }
@@ -39,19 +40,27 @@ int ff_fclose( FF_FILE *pxStream )
 size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream )
 {
     size_t bytes;
+    size_t bytes_read;
+    size_t items_read;
 
     bytes = xSize * xItems;
-    sdlib_read_from_file(pxStream->filename,pvBuffer,bytes);
+    bytes_read = sdlib_read_from_file(pxStream->filename,pvBuffer,bytes);
 
-    return 0;
+    items_read = bytes_read/xSize;
+
+    return items_read;
 }
 
 size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream )
 {
     size_t bytes;
+    size_t bytes_written;
+    size_t items_written;
 
     bytes = xSize * xItems;
-    sdlib_write_to_file(pxStream->filename,pvBuffer,bytes);
+    bytes_written = sdlib_write_to_file(pxStream->filename,pvBuffer,bytes);
 
-    return 0;
+    items_written = bytes_written/xSize;
+
+    return items_written;
 }

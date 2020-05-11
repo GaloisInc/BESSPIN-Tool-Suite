@@ -25,6 +25,7 @@ void vMain (void *pvParameters) {
     (void) pvParameters;
     BaseType_t funcReturn;
     uint32_t recvNotification;
+    int r;
     xMainTask = xTaskGetCurrentTaskHandle();
 
     fettPrintf("vMain: Main task started...\r\n");
@@ -37,6 +38,8 @@ void vMain (void *pvParameters) {
     vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS_NTK, "vMain: Expected notification value from vStartNetwork.");
 
     //Start the FAT filesystem
+    r = ff_init();
+    prERROR_IF_NEQ(r, 0, "main_fett: Initializing WolfSSL."); 
 
     //Start the HTTP task
     funcReturn = xTaskCreate(vHttp, "vMain:vHttp", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
