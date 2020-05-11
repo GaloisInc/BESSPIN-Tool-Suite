@@ -145,6 +145,9 @@ void vOta (void *pvParameters) {
     // Self test crypto
     test_ed25519_verify(&pk);
 
+    // Inform the test harness that OTA/TFTP is ready
+    fettPrintf ("<TFTP-SERVER-READY>\n");
+
     // Enter main loop
     Ota_Worker(&pk);
     
