@@ -24,6 +24,10 @@ void main_fett ()
     r = wolfSSL_Init();
     prERROR_IF_NEQ(r, SSL_SUCCESS, "main_fett: Initializing WolfSSL.");
 
+    //Start the FAT filesystem
+    funcReturn = ff_init();
+    prERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
+
     BaseType_t funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     prERROR_IF_NEQ(funcReturn, pdPASS, "main_fett: Creating vMain task.");
 
@@ -47,10 +51,6 @@ void vMain (void *pvParameters) {
     funcReturn = xTaskNotifyWait(0xffffffff, 0xffffffff, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Receive notification from vStartNetwork.");
     vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS_NTK, "vMain: Expected notification value from vStartNetwork.");
-
-    //Start the FAT filesystem
-    funcReturn = ff_init();
-    prERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
 
     //Start the HTTP task
     funcReturn = xTaskCreate(vHttp, "vMain:vHttp", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
