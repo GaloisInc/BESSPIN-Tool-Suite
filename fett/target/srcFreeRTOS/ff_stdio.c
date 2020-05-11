@@ -15,6 +15,13 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 
     file = pvPortMalloc(sizeof(FF_FILE));
 
+    // Crash fast if there's no memory left on the device
+    if (file == NULL) {
+        fettPrintf("(Error)~  ff_open: Failed to malloc.\r\n");
+        exitFett (1);
+        return NULL;
+    }
+
     // Store the file size
     file->ulFileSize = sdlib_size(pcFile);
 
