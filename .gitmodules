@@ -4,3 +4,6 @@
 [submodule "SSITH-FETT-Environment"]
 	path = SSITH-FETT-Environment
 	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Environment.git
+[submodule "SSITH-FETT-Voting"]
+	path = SSITH-FETT-Voting
+	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Voting.git

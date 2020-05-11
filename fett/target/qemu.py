@@ -12,35 +12,73 @@ class qemuTarget (commonTarget):
         super().__init__()
         self.sshHostPort = getSetting('qemuSshHostPort')
         self.ipTarget = getSetting('qemuIpTarget')
+        # These are QEMU specific
+        self.httpPortTarget = getSetting('qemuHttpHostPort')
+        self.httpsPortTarget = getSetting('qemuHttpsHostPort')
         return
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def allocPortRange(self):
+        """
+        Must ONLY be called on debian or freebsd
+        """
+        #Find open ports to use. Searching from qemuNtkPortRangeStart-qemuNtkPortRangeEnd.
+        #To avoid assigning a port to the target while it is still booting, will use even number for target and odd for host
+        rangeStart = getSetting('qemuNtkPortRangeStart')
+        rangeEnd = getSetting('qemuNtkPortRangeEnd')
+        if (rangeStart >= rangeEnd-1):
+            self.shutdownAndExit(f"allocPortRange: The port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.",exitCode=EXIT.Configuration)
+        if (rangeStart%2):
+            rangeStart += 1
+        for iPort in range(rangeStart,rangeEnd,2):
+            if (checkPort (iPort) and checkPort(iPort+1)):
+                self.portTarget = iPort
+                self.portHost = iPort+1
+                break
+        if ((self.portTarget is None) or (self.portHost is None)):
+            self.shutdownAndExit(f"allocPortRange: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+
+        def checkPortRange(name, val):
+            if val in [self.portTarget, self.portHost]:
+                self.shutdownAndExit(f"allocPortRange: The {name}<{val}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
+
+        # The names here look confusing, but for clients of the class,
+        # if these are the ports to access http or https being served on the target.
+        # They actually exist on the host, of course, since we're doing port forwarding.
+        portsToCheck = ["sshHostPort", "httpPortTarget", "httpsPortTarget"]
+        # Check the allocated ports are distinct from the user-specified ports
+        for name in portsToCheck:
+            checkPortRange(name, getattr(self, name))
+
+        # Now check the user specified ports are distinct
+        userPorts = { getattr(self,name):name for name in portsToCheck }
+        for name in portsToCheck:
+            portVal = getattr(self, name)
+            if userPorts[portVal] != name:
+                self.shutdownAndExit(f"allocPortRange: The port <{portVal}> is used for both {name} and {userPorts[portVal]}")
+
+        return (rangeStart, rangeEnd)
 
     @decorate.debugWrap
     @decorate.timeWrap
     def boot (self,endsWith="login:",timeout=90): #no need to use targetObj as we'll never boot in non-reboot mode
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
-            #Find open ports to use. Searching from qemuNtkPortRangeStart-qemuNtkPortRangeEnd.
-            #To avoid assigning a port to the target while it is still booting, will use even number for target and odd for host
-            rangeStart = getSetting('qemuNtkPortRangeStart')
-            rangeEnd = getSetting('qemuNtkPortRangeEnd')
-            if (rangeStart >= rangeEnd-1):
-                self.shutdownAndExit(f"boot: The port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.",exitCode=EXIT.Configuration)
-            if (rangeStart%2):
-                rangeStart += 1
-            for iPort in range(rangeStart,rangeEnd,2):
-                if (checkPort (iPort) and checkPort(iPort+1)):
-                    self.portTarget = iPort
-                    self.portHost = iPort+1
-                    break
-            if ((self.portTarget is None) or (self.portHost is None)):
-                self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
-            #checking ssh port
-            if (self.sshHostPort in [self.portTarget, self.portHost]):
-                self.shutdownAndExit(f"boot: The sshHostPort<{self.sshHostPort}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
-            
+            rangeStart, rangeEnd = self.allocPortRange()
             printAndLog(f"Qemu will use the network ports <target:{self.portTarget}>, <hostTcp:{self.portHost}>, and <hostSsh:{self.sshHostPort}>.")
 
-            qemuCommand = f"qemu-system-riscv64 -nographic -machine virt -m 2G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\"" 
-            qemuCommand += f" -device virtio-net-device,netdev=usernet -netdev user,id=usernet,hostfwd=tcp:{self.ipTarget}:{self.portHost}-:{self.portTarget},hostfwd=tcp:{self.ipTarget}:{self.sshHostPort}-:22"
+            hostFwdPairs = [
+                (self.portHost, self.portTarget),
+                (self.sshHostPort, 22),
+                (self.httpPortTarget, getSetting('HTTPPortTarget')),
+                (self.httpsPortTarget, getSetting('HTTPSPortTarget')),
+            ]
+
+            hostFwdString = ",".join([f"hostfwd=tcp:{self.ipTarget}:{portHost}-:{portTarget}" for portHost,portTarget in hostFwdPairs])
+
+            qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\""
+            qemuCommand += f" -device virtio-net-device,netdev=usernet"
+            qemuCommand += f" -netdev user,id=usernet,{hostFwdString}"
 
             self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
             try:

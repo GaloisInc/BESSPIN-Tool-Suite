@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 from fett.target.common import *
 
 import subprocess, getpass, psutil, tftpy
-import sys, signal, os, socket
+import sys, signal, os, socket, time
 from pexpect import fdpexpect
 
 class fpgaTarget (commonTarget):
@@ -19,6 +19,10 @@ class fpgaTarget (commonTarget):
         self.ipHost = getSetting('fpgaIpHost')  
         self.portTarget = getSetting('fpgaPortTarget')
         self.portHost = getSetting('fpgaPortHost')
+
+        # Important for the Web Server
+        self.httpPortTarget  = getSetting('HTTPPortTarget')
+        self.httpsPortTarget = getSetting('HTTPSPortTarget')
 
         self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
         self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')
@@ -287,53 +291,34 @@ def programBifile ():
     gfeOut.close()
     printAndLog("FPGA was programmed successfully!")
 
-    
 @decorate.debugWrap
-def setEthAdaptorName ():
-    def tryToGetEthAdaptorName(ipOrMac,ipAddress=None,macAddress=None):
-        if (ipOrMac not in ['MAC','IP']):
-            logAndExit (f"<fpga.tryToGetEthAdaptorName> called with unrecognized argument <{ipOrMac}>.",exitCode=EXIT.Dev_Bug)
-        if ((ipOrMac == 'MAC') and not macAddress):
-            logAndExit (f"<fpga.tryToGetEthAdaptorName> called with 'MAC' and <macAddress=None>.",exitCode=EXIT.Dev_Bug)
-        if ((ipOrMac == 'IP') and not ipAddress):
-            logAndExit (f"<fpga.tryToGetEthAdaptorName> called with 'IP' and <ipAddress=None>.",exitCode=EXIT.Dev_Bug)
+def checkEthAdaptorIsUp ():
+    try:
+        return psutil.net_if_stats()[getSetting('ethAdaptor')].isup
+    except Exception as exc:
+        logAndExit (f"fpga.checkEthAdaptorIsUp: Failed to check that <{getSetting('ethAdaptor')}> is up.",exc=exc,exitCode=EXIT.Network)
 
-        for nic, addrs in psutil.net_if_addrs().items():
-            for addr in addrs:
-                if (ipOrMac == 'MAC'):
-                    if(addr.family == psutil.AF_LINK):
-                        if (addr.address == macAddress):
-                            setSetting('ethAdaptor',nic)
-                            return True
-                elif (ipOrMac == 'IP'):
-                    if(addr.family == socket.AF_INET):
-                        if (addr.address == ipAddress):
-                            setSetting('ethAdaptor',nic)
-                            return True
-        return False
-
-    printAndLog("getEthAdaptorName: Obtaining the ethernet adaptor name using the mac address...",doPrint=False)
-    interfacesFile = '/etc/network/interfaces'
-    macAddressMatch = matchExprInLines(r"^\s*map\s+(?P<macAddress>([0-9a-fA-F][0-9a-fA-F]:){5}([0-9a-fA-F][0-9a-fA-F]))\s+FPGA\s*$",ftReadLines(interfacesFile,exitOnFileError=False))
-    if (not macAddressMatch):
-        warnAndLog(f"getEthAdaptorName: Failed to get the mac address from {interfacesFile}.",doPrint=False)
+@decorate.debugWrap
+def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
+    if (addrType == 'MAC'):
+        family = psutil.AF_LINK
+    elif (addrType == 'IP'):
+        family = socket.AF_INET
     else:
-        macAddress = macAddressMatch.group('macAddress')
-        printAndLog(f"getEthAdaptorName: Mac address is <{macAddress}>",doPrint=False)
-        if (tryToGetEthAdaptorName('MAC', macAddress=macAddress)):
-            return
-        else:
-            printAndLog("getEthAdaptorName: Failed to find the adaptor with the found mac address!",doPrint=False)
-    #Failed, have to try using the ip
-    printAndLog("getEthAdaptorName: Trying to use the IP address instead...",doPrint=False)
-    if (tryToGetEthAdaptorName('IP', ipAddress=getSetting('fpgaIpHost'))):
-        return
-    #Failed. Try again
-    printAndLog(f"getEthAdaptorName: Failed to find the adaptor using the FPGA IP <{getSetting('fpgaIpHost')}>. Trying to <ifup -a> first...",doPrint=False)
-    sudoShellCommand (['ifup', '-a'],f" You need sudo privileges to ifup all network adaptors: ")
-    if (tryToGetEthAdaptorName('IP', ipAddress=getSetting('fpgaIpHost'))):
-        return
-    logAndExit("getEthAdaptorName: Failed to find the ethernet adaptor name!",exitCode=EXIT.Network)
+        logAndExit (f"fpga.getAddrOfAdaptor: Unrecognized address type <{addrType}> is up.",exitCode=EXIT.Dev_Bug)
+    
+    if (ethAdaptor not in psutil.net_if_addrs()):
+        logAndExit(f"fpga.getAddrOfAdaptor: Failed to find the adaptor <{ethAdaptor}>. Please check the network configuration.",exitCode=EXIT.Network)
+    
+    for addr in psutil.net_if_addrs()[ethAdaptor]:
+        if (addr.family == family):
+            printAndLog(f"fpga.getAddrOfAdaptor: <{addrType} address> of <{ethAdaptor}> = <{addr.address}>",doPrint=False)
+            return addr.address
+    if (exitIfNoAddr):
+        logAndExit(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>. Please check the network configuration.",exitCode=EXIT.Network)
+    else:
+        printAndLog(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>.",doPrint=False)
+        return 'NotAnAddress'
 
 @decorate.debugWrap
 def sudoShellCommand (argsList, sudoPromptPrefix):
@@ -352,18 +337,22 @@ def sudoShellCommand (argsList, sudoPromptPrefix):
 
 @decorate.debugWrap
 def resetEthAdaptor ():
-    #get the name if this is the first time called
+    #get the name and check configuration if this is the first time called
     if (not doesSettingExist('ethAdaptor')):
-        setEthAdaptorName ()
-        printAndLog (f"Found ethernet adaptor name: <{getSetting('ethAdaptor')}>.",doPrint=False)
+        ethAdaptor= getSetting('fpgaEthAdaptorName')
+        if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('fpgaEthAdaptorMacAddress')):
+            logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('fpgaEthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
+        #Set the adaptor's name
+        setSetting('ethAdaptor',ethAdaptor)
+        printAndLog (f"<{getSetting('ethAdaptor')}> exists and its MAC address is properly configured.",doPrint=False)
 
+    #make the link go down, then up
     sudoPromptPrefix = f"You need sudo privileges to reset the ethernet adaptor: "
     commands = [
                 ['ip', 'addr', 'flush', 'dev', getSetting('ethAdaptor')],
-                ['ifdown', getSetting('ethAdaptor')],
-                ['ifup', getSetting('ethAdaptor')]
+                ['ip','link','set', getSetting('ethAdaptor'), 'down'],
+                ['ip','link','set', getSetting('ethAdaptor'), 'up']
             ]
-    
     nAttempts = 3
     isReset = False
     for iAttempt in range(nAttempts):
@@ -371,21 +360,28 @@ def resetEthAdaptor ():
             sudoShellCommand(command,sudoPromptPrefix)
             time.sleep(1)
         time.sleep(2)
-        try:
-            isReset = psutil.net_if_stats()[getSetting('ethAdaptor')].isup
-        except Exception as exc:
-            logAndExit (f"fpga.resetEthAdaptor: Failed to check that <{getSetting('ethAdaptor')}> is up.",exc=exc,exitCode=EXIT.Network)
+        isReset = checkEthAdaptorIsUp ()
         if (isReset):
-            break
-        elif (iAttempt < nAttempts - 1):
-            printAndLog (f"fpga.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>. Trying again...",doPrint=False)
-            time.sleep(5)
+            #check that the IP address is properly set
+            if (getAddrOfAdaptor(getSetting('ethAdaptor'),'IP',exitIfNoAddr=False) == getSetting('fpgaIpHost')):
+                break
+            else:
+                printAndLog (f"fpga.resetEthAdaptor: <{getSetting('ethAdaptor')}> is up, but it does not have the right IP. Will try to assign it.",doPrint=False)
+                sudoShellCommand(['ip','addr','add',f"{getSetting('fpgaIpHost')}/24",'dev',getSetting('ethAdaptor')],sudoPromptPrefix)
+                time.sleep(3)
+                isReset = checkEthAdaptorIsUp ()
+                if (isReset):
+                    break
 
-    if (isReset):
-        printAndLog (f"fpga.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)
-    else:
+        if ((not isReset) and (iAttempt < nAttempts - 1)):
+            printAndLog (f"fpga.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>. Trying again...",doPrint=False)
+            time.sleep(3)
+
+    if (not isReset):
         logAndExit (f"fpga.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>.",exitCode=EXIT.Network)
-    
+
+    printAndLog (f"fpga.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)
+
 @decorate.debugWrap
 def clearProcesses ():
     processesList = ['openocd', 'vivado_lab', 'hw_server', 'loader', 'pyprogram_fpga']

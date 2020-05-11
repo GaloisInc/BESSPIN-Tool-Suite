@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<link rel="stylesheet" href="https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-default.min.css">
+		<style>
+		h1 {text-align: center;}
+		img {text-align: center;}
+		.center {
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+			width: 50%;
+		}
+		</style>
+		<title> SSITH Nginx Features PoC </title>
+	</head>
+
+	<body>
+		<h1> SSITH Nginx Features Page </h1>
+		<hr />
+		
+		<h2> Open an Internet Page </h2>
+		<a href = "https://www.wikipedia.org/" title = "Wikipedia Link"/>Wikipedia Link</a> 
+		<hr />
+	
+		<h2> Upload HTML File via HTTP POST</h2>
+		<form method="POST" action='/upload' enctype="multipart/form-data">
+			<input type="file" name="file_upload"><br>
+			<input type="submit" value="Upload">
+		</form>
+		<hr />
+
+		<h2> Open a Text File </h2>
+		<p>&nbsp;</p>
+		<a href = "test.txt" title = "Text File"/>test.txt</a>
+		<p>&nbsp;</p>
+		<object data="test.txt" width="300" height="200">
+			Not supported
+		</object>
+		<hr />
+
+		<h2> Serve a Static Page </h2>
+		<a href = "static.html" title = "Static HTML File"/>Static Page</a> 
+		<hr />
+
+		<h2> Open an Image </h2>
+		<img src = "stanford.png" class="center" alt = "Stanford Rabbit Test Image"/>
+	</body>
+
+</html>

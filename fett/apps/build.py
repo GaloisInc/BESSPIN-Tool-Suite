@@ -28,6 +28,8 @@ def buildApps ():
         buildWebserver(tarName)
     elif (isEnabled('database')):
         buildDatabase(tarName)
+    elif (isEnabled('voting')):
+        buildVoting(tarName)
 
 """
 - FreeRTOS, building an app means copying the C files/headers/.mk env files to the workDir to prepare for os build.
@@ -57,10 +59,12 @@ def buildWebserver(tarName):
                     exitCode=EXIT.Configuration)
     else:
         cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
-        cpDirToBuildDir(os.path.join(getBinDir('webserver'), "conf"))
-        cpDirToBuildDir(os.path.join(getBinDir('webserver'), "html"))
+        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "conf"))
+        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "html"))
+        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
+        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
 
-        tarFiles = ["nginx", "conf", "html"]
+        tarFiles = ["nginx", "conf", "html", "certs", "keys"]
 
         if getSetting('osImage') == 'debian':
             cpFilesToBuildDir (getBinDir('webserver'), pattern="nginx.service")
@@ -96,6 +100,18 @@ def buildDatabase(tarName):
         setSetting('sendTarballToTarget',True)
     return
 
+""" Special building for 'voting' """
+@decorate.debugWrap
+@decorate.timeWrap
+def buildVoting(tarName):
+    if (isEnabled('buildApps')):
+        logAndExit (f"Building from source is not supported for the voting application",
+                    exitCode=EXIT.Configuration)
+    else:
+        logAndExit (f"buildVoting: The build function for <voting> is not yet implemented.",
+                    exitCode=EXIT.Implementation)
+    return
+
 # re-used parts -----------------------------------------------------------
 
 @decorate.debugWrap
@@ -103,8 +119,12 @@ def getSourceDir (app):
     return os.path.join(getSetting('repoDir'),'fett','apps',app)
 
 @decorate.debugWrap
+def getAppDir(app):
+    return os.path.join(getSetting('repoDir'),'build', app)
+
+@decorate.debugWrap
 def getBinDir(app):
-    return os.path.join(getSetting('repoDir'),'build', app, getSetting('osImage'))
+    return os.path.join(getAppDir(app),getSetting('osImage'))
 
 @decorate.debugWrap
 def cpFilesToBuildDir (sourceDir, pattern=None):
