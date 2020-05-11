@@ -48,6 +48,9 @@ void vMain (void *pvParameters) {
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Receive notification from vStartNetwork.");
     vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS_NTK, "vMain: Expected notification value from vStartNetwork.");
 
+    //Start the FAT filesystem
+    funcReturn = ff_init();
+    prERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
 
     //Start the HTTP task
     funcReturn = xTaskCreate(vHttp, "vMain:vHttp", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
