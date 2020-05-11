@@ -1,0 +1,28 @@
+name: Auto-assign issues to organization-level and repo projects
+
+on:
+  issues:
+    types: [opened]
+env:
+  MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+
+jobs:
+  assign_to_org_project:
+    runs-on: ubuntu-latest
+    name: Assign to organization project
+    steps:
+    - name: Assign NEW issues and NEW pull requests to organization project
+      uses: srggrs/assign-one-project-github-action@1.2.0
+      if: github.event.action == 'opened'
+      with:
+        project: 'https://github.com/orgs/DARPA-SSITH-Demonstrators/projects/1'
+  assign_to_repo_project:
+    runs-on: ubuntu-latest
+    name: Assign to repo project
+    steps:
+    - name: Assign NEW issues and NEW pull requests to organization project
+      uses: srggrs/assign-one-project-github-action@1.2.0
+      if: github.event.action == 'opened'
+      with:      
+        project: 'https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/projects/1'
