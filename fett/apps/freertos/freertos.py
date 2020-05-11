@@ -20,5 +20,23 @@ def extensiveTest(target):
 def deploymentTest(target):
     # target is a fett target object
     outLog = ''
-    outLog += target.runCommand("runFreeRTOSapps",endsWith=">>>End of Fett<<<",erroneousContents=['(Error)','EXIT: exiting FETT with code <1>'],timeout=getSetting('appTimeout'))[1]
+    outLog += rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))[1]
     return outLog
+
+def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,expectExact=False,endOfApp=False):
+    if isinstance(endsWith,str):
+        endsWith = [endsWith]
+    elif (not isinstance(endsWith,list)):
+        target.shutdownAndExit(f"rtosRunCommand: <endsWith> has to be list or str.",exitCode=EXIT.Dev_Bug)
+
+    if (isinstance(erroneousContents,str)):
+        erroneousContents = [erroneousContents]
+    elif (not isinstance(erroneousContents,list)):
+        target.shutdownAndExit(f"rtosRunCommand: <erroneousContents> has to be list or str.",exitCode=EXIT.Dev_Bug)
+
+    retCommand = target.runCommand(command,endsWith=[">>>End of Fett<<<"] + endsWith,
+        expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],shutdownOnError=shutdownOnError,
+        timeout=timeout,suppressErrors=suppressErrors,expectExact=expectExact)
+
+    if ((retCommand[3] == 0) and (not endOfApp)): #FETT exited prematurely
+        target.shutdownAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
