@@ -15,10 +15,6 @@ void main_fett ()
   
     fettPrintf ("\n>>>Beginning of Fett<<<\n");
 
-    // Start the FAT filesystem before any other tasks get created.
-    // TBD - See Issue #204
-
-
     // Initialize WolfSLL - this needs to be done before any other call to
     // any other WolfSSL or Wolfcrypt API
     r = wolfSSL_Init();
