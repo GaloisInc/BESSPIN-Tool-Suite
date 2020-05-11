@@ -13,7 +13,7 @@ void main_fett ()
 {
     int r;
   
-    printf ("\n>>>Beginning of Fett<<<\n");
+    fettPrintf ("\n>>>Beginning of Fett<<<\n");
 
     // Start the FAT filesystem before any other tasks get created.
     // TBD - See Issue #204
