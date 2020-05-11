@@ -326,10 +326,19 @@ def matchExprInLines (expr,lines):
             return xMatch
     return None
 
-
-
-
-
-
-
-
+@decorate.debugWrap    
+def curlRequest(url, extra=[], http2=False):
+    # Need --insecure because of self signed certs
+    options = [
+        "--insecure",
+        "--http2" if http2 else "--http1.1",
+        "-L",
+        "-I",
+        "-s"
+    ] + extra
+    try:
+        p = subprocess.run (['curl'] + options + [url], capture_output=True, check=True)
+        out = p.stdout.decode('utf-8')
+    except Exception as exc:
+        logAndExit (f"Failed to run <curl {options} {url}>\nstdout:\n{exc.stdout}\nstderr:\n{exc.stderr}", exc=exc, exitCode=EXIT.Run)
+    return out

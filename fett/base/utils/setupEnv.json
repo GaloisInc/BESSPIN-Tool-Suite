@@ -55,6 +55,13 @@
             "val" : 80
         },
         {
+            "name" : "HTTPSPortTarget",
+            "type" : "int",
+            "min" : 0,
+            "max" : 1023,
+            "val" : 443
+        },
+        {
             "name" : "TFTPPortTarget",
             "type" : "int",
             "min" : 69,
