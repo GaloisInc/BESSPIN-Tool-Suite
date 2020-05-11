@@ -10,14 +10,14 @@ UBaseType_t xMainPriority = tskIDLE_PRIORITY+100; //100 is chosen arbitrarily.
 
 //This is the entry point function
 void main_fett () {
-
+    BaseType_t funcReturn;
     printf ("\n>>>Beginning of Fett<<<\n");
 
     //Start the FAT filesystem
     funcReturn = ff_init();
     prERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
 
-    BaseType_t funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
+    funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     prERROR_IF_NEQ(funcReturn, pdPASS, "main_fett: Creating vMain task.");
 
     vTaskStartScheduler(); //Hang the function
