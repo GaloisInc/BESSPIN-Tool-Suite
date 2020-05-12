@@ -10,6 +10,7 @@ UBaseType_t xMainPriority = tskIDLE_PRIORITY+100; //100 is chosen arbitrarily.
 
 //This is the entry point function
 void main_fett () {
+    int r;
     BaseType_t funcReturn;
     
     fettPrintf ("\n>>>Beginning of Fett<<<\n");
