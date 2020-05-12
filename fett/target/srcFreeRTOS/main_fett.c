@@ -9,9 +9,7 @@ TaskHandle_t xMainTask = NULL;
 UBaseType_t xMainPriority = tskIDLE_PRIORITY+100; //100 is chosen arbitrarily.
 
 //This is the entry point function
-void main_fett ()
-{
-    int r;
+void main_fett () {
     BaseType_t funcReturn;
     
     fettPrintf ("\n>>>Beginning of Fett<<<\n");
@@ -22,8 +20,8 @@ void main_fett ()
     prERROR_IF_NEQ(r, SSL_SUCCESS, "main_fett: Initializing WolfSSL.");
 
     // Start the FAT filesystem
-    r = ff_init();
-    prERROR_IF_NEQ(r, 0, "main_fett: Initializing FAT filesystem."); 
+    funcReturn = ff_init();
+    prERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
 
     funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     prERROR_IF_NEQ(funcReturn, pdPASS, "main_fett: Creating vMain task.");
