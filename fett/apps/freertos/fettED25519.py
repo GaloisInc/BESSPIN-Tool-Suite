@@ -42,7 +42,7 @@ def exitOnInterrupt (xSig,xFrame):
 
 try:
     import sys, os, signal, argparse, getpass
-    import nacl.signing, hashlib
+    import nacl.signing, nacl.encoding, hashlib
 except Exception as exc:
     try:
         import sys
@@ -86,6 +86,28 @@ def main(xArgs):
         except Exception as exc:
             exitFett(message="Failed to generate the ED25519 key pair.",exc=exc)
         print(f"(Info)~  EC25519 successfully generated from the provided passcode.")
+
+        # Get the verify key (public key)
+        publicKey = signingKey.verify_key
+
+    # Dump public key
+    if (dumpPublicKey):
+        print(f"(Info)~  Dumping the public key...")
+        keyLength = 64
+        try:
+            fKey = open(xArgs.getPublicKey,'w')
+            hexString = str(publicKey.encode(encoder=nacl.encoding.HexEncoder),'utf-8')
+            if (len(hexString) != keyLength):
+                print(f"Public key length <{len(hexString)}> is not equal to <{keyLength}>.")
+                raise
+            listNibbles = ','.join([f"0x{hexString[i].upper()}{hexString[i+1].upper()}" for i in range(len(hexString)//2)])
+            listNibblesPretty = '\n'.join([listNibbles[40*i:(40*i)+40] for i in range(int(1+(keyLength-1)/16))]) #40 chars per line, i.e. 8 bytes.
+            fKey.write(f"{{{listNibblesPretty}}}\n")
+            fKey.close()
+        except Exception as exc:
+            exitFett(message="Failed to dump the public key.",exc=exc)
+
+        print(f"(Info)~  Public key saved in <{xArgs.getPublicKey}>")
 
     exitFett(exitCode=0)
 
