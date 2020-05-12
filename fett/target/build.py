@@ -77,10 +77,15 @@ def prepareFreeRTOS():
 
         #Include the relevant user configuration parameters
         #This is a list of tuples: (settingName,macroName)
-        listConfigParams = [('appTimeout','APP_TIMEOUT'),('HTTPPortTarget','HTTP_PORT'),('TFTPPortTarget','TFTP_PORT')]
+        listConfigParams = [('appTimeout','APP_TIMEOUT'),('HTTPPortTarget','HTTP_PORT'),
+                            ('TFTPPortTarget','TFTP_PORT'),('debugMode','FETT_DEBUG')]
         configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
         for xSetting,xMacro in listConfigParams:
-            configHfile.write(f"#define {xMacro} {getSetting(xSetting)}\n")
+            try:
+                intVal = int(getSetting(xSetting))
+            except Exception as exc:
+                logAndExit(f"Invalid type in populating <fettUserConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+            configHfile.write(f"#define {xMacro} {intVal}\n")
         configHfile.close()
 
         #Cleaning all ".o" and ".elf" files in site
