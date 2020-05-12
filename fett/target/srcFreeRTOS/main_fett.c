@@ -10,8 +10,8 @@ UBaseType_t xMainPriority = tskIDLE_PRIORITY+100; //100 is chosen arbitrarily.
 
 //This is the entry point function
 void main_fett () {
+
     int r;
-    BaseType_t funcReturn;
     
     fettPrintf ("\n>>>Beginning of Fett<<<\n");
 
@@ -20,11 +20,8 @@ void main_fett () {
     r = wolfSSL_Init();
     prERROR_IF_NEQ(r, SSL_SUCCESS, "main_fett: Initializing WolfSSL.");
 
-    // Start the FAT filesystem
-    funcReturn = ff_init();
-    prERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
+    BaseType_t funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
 
-    funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     prERROR_IF_NEQ(funcReturn, pdPASS, "main_fett: Creating vMain task.");
 
     vTaskStartScheduler(); //Hang the function
@@ -40,7 +37,10 @@ void vMain (void *pvParameters) {
 
     fettPrintf("vMain: Main task started...\r\n");
 
-    // Start the Networking task
+    //Start the FAT filesystem
+    funcReturn = ff_init();
+    vERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
+
     funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vStartNetwork task.");
 
