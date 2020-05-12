@@ -10,7 +10,6 @@ UBaseType_t xMainPriority = tskIDLE_PRIORITY+100; //100 is chosen arbitrarily.
 
 //This is the entry point function
 void main_fett () {
-    BaseType_t funcReturn;
     printf ("\n>>>Beginning of Fett<<<\n");
 
     BaseType_t funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
