@@ -41,8 +41,8 @@ def exitOnInterrupt (xSig,xFrame):
     exitFett(message=f"Received <{sigName}>!")
 
 try:
-    import sys, os, signal, argparse
-    import nacl.signing 
+    import sys, os, signal, argparse, getpass
+    import nacl.signing, hashlib
 except Exception as exc:
     try:
         import sys
@@ -54,12 +54,45 @@ except Exception as exc:
         exitFett (exc=exc)
     
 def main(xArgs):
-    pass
+    # options sanity checks
+    dumpPublicKey = (xArgs.getPublicKey is not None)
+    doSignFile = (xArgs.signFile is not None)
+    doVerifySignature = (xArgs.verifySignature is not None)
+    usePublicKey = False
+    if ((not dumpPublicKey) and (not doSignFile) and (not xArgs.verifySignature)):
+        print("(info)~  Nothing to do.")
+    
+    if (xArgs.usePublicKey):
+        if (dumpPublicKey):
+            print("(Warning)~  Cannot use <-k,--usePublicKey> with <-p,--getPublicKey>. Ignoring <usePublicKey>.")
+        elif (doSignFile):
+            print("(Warning)~  Cannot use <-k,--usePublicKey> with <-s,--signFile>. Ignoring <usePublicKey>.")
+        else:
+            usePublicKey = True
+
+    # Generate the key-pair
+    if (dumpPublicKey or doSignFile): #needs the private key --> generate
+        print(f"(Info)~  Generating the key pair...")
+        try:
+            passcode = getpass.getpass(prompt='Passcode: ')
+        except Exception as exc:
+            exitFett(message="Failed to get the passcode.",exc=exc)
+        try:
+            passcodeEncoded = hashlib.sha256(passcode.encode('utf-8'))
+        except Exception as exc:
+            exitFett(message="Failed to obtain the sha256 of the passcode.",exc=exc)
+        try: 
+            signingKey = nacl.signing.SigningKey(passcodeEncoded.digest())
+        except Exception as exc:
+            exitFett(message="Failed to generate the ED25519 key pair.",exc=exc)
+        print(f"(Info)~  EC25519 successfully generated from the provided passcode.")
+
+    exitFett(exitCode=0)
 
 if __name__ == '__main__':
     # Reading the bash arguments
     xArgParser = argparse.ArgumentParser (description='FETT-ED25519 (ED25519 utlity for FETT)')
-    xArgParser.add_argument ('-p', '--getPublicKey', help='Dump out the public key to a file.')
+    xArgParser.add_argument ('-p', '--getPublicKey', help='Dumps out the public key to a file.')
     xArgParser.add_argument ('-s', '--signFile', help='Signs the input file.')
     xArgParser.add_argument ('-vf', '--verifySignature', help='verify the signature of a file.')
     xArgParser.add_argument ('-k', '--usePublicKey', help='Use input public key for verification instead of passcode.')
