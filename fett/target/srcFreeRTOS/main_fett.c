@@ -30,7 +30,7 @@ void vMain (void *pvParameters) {
 
     //Start the FAT filesystem
     funcReturn = ff_init();
-    prERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
+    vERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
 
     funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vStartNetwork task.");
