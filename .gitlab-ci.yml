@@ -6,6 +6,10 @@ image: artifactory.galois.com:5008/fett-target:ci
 #-----------------------------------------------------------------------------#
 default:
   tags: ["docker-fpga"]
+  artifacts:
+    expire_in: 7 days
+    when: always
+    name: "$CI_COMMIT_REF_SLUG-CI_COMMIT_SHA"
   before_script:
     - . $HOME/.nix-profile/etc/profile.d/nix.sh
     - export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
@@ -13,20 +17,6 @@ default:
     - eval $(ssh-agent -s)
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
     - git submodule update --init
-
-#-----------------------------------------------------------------------------#
-#
-# Define tags
-#
-#-----------------------------------------------------------------------------#
-.parallel:
-  parallel: 4 # https://xkcd.com/221/
-
-.artifacts:
-  artifacts:
-    expire_in: 7 days
-    when: always
-    name: "$CI_COMMIT_REF_SLUG-CI_COMMIT_SHA"
 
 #-----------------------------------------------------------------------------#
 #
@@ -38,7 +28,6 @@ Push:
     - if: "$CI_COMMIT_TAG == null"
   script:
     - nix-shell --command "./ci/fett-ci.py runOnPush push-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
-  extends: [.artifacts, .fpga]
   artifacts:
     paths: [./*-push-$CI_COMMIT_SHA]
 
@@ -48,7 +37,6 @@ DevPR:
   parallel: 5
   script:
     - nix-shell --command "./ci/fett-ci.py runDevPR devPR-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
-  extends: [.artifacts, .fpga]
   artifacts:
     paths: [./*-devPR-$CI_COMMIT_SHA]
 
@@ -58,7 +46,6 @@ Periodic:
   parallel: 17
   script:
     - nix-shell --command "./ci/fett-ci.py runPeriodic periodic-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
-  extends: [.artifacts, .fpga]
   artifacts:
     paths: [./*-periodic-$CI_COMMIT_SHA]
 
@@ -69,6 +56,5 @@ Release:
   parallel: 17
   script:
     - nix-shell --command "./ci/fett-ci.py runRelease release-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
-  extends: [.artifacts, .fpga]
   artifacts:
     paths: [./*-release-$CI_COMMIT_SHA]
