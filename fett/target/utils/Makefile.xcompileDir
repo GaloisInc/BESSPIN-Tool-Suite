@@ -1,0 +1,20 @@
+# this makefile is for cross compiling C files in a directory for emulation
+
+include defaultEnvLinux.mk
+
+TARGETS := $(patsubst ./%.c, ./%.riscv, $(wildcard ./*.c))
+
+all: $(TARGETS)
+
+# Compiling 
+%o: %.c
+	$(CC) -c -o $@ $(CFLAGS) $<
+
+# Linking
+%.riscv: %.o
+	$(LD) -o $@ $(LDFLAGS) $<
+
+clean:
+	rm -f *.o *.riscv
+
+.PHONY: clean all

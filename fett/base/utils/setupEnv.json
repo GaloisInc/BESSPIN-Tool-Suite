@@ -1,0 +1,129 @@
+{
+    "_usage" : "This json file has the environment setup that is not to be changed per run.",
+    "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
+    "_paths" : "Paths here are assumed to be relative to the repo source dir.",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, ipAddress, dict",
+    "_choices" : "a list of acceptable choices. Use for int or str",
+    "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
+    "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
+
+    "setupEnv" : [
+        {
+            "name" : "jsonDataFile",
+            "type" : "filePath",
+            "val" : "fett/base/utils/configData.json"
+        },
+        {
+            "name" : "fpgaIpTarget",
+            "type" : "ipAddress",
+            "val" : "10.88.88.2"
+        },
+        {
+            "name" : "fpgaIpHost",
+            "type" : "ipAddress",
+            "val" : "10.88.88.1"
+        },
+        {
+            "name" : "fpgaPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "fpgaPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "fpgaEthAdaptorName",
+            "type" : "string",
+            "val" : "eth0fpga"
+        },
+        {
+            "name" : "fpgaEthAdaptorMacAddress",
+            "type" : "string",
+            "val" : "88:53:48:41:56:45"
+        },
+        {
+            "name" : "HTTPPortTarget",
+            "type" : "int",
+            "min" : 80,
+            "max" : 443,
+            "val" : 80
+        },
+        {
+            "name" : "HTTPSPortTarget",
+            "type" : "int",
+            "min" : 0,
+            "max" : 1023,
+            "val" : 443
+        },
+        {
+            "name" : "TFTPPortTarget",
+            "type" : "int",
+            "min" : 69,
+            "max" : 69,
+            "val" : 69
+        },
+        {
+            "name" : "qemuIpTarget",
+            "type" : "ipAddress",
+            "val" : "127.0.0.1"
+        },
+        {
+            "name" : "procOsCombinations",
+            "type" : "dict",
+            "val" : {
+                "FreeRTOS" : ["chisel_p1", "bluespec_p1"],
+                "debian" : ["chisel_p2", "bluespec_p2"],
+                "FreeBSD" : ["chisel_p2", "bluespec_p2"],
+                "busybox" : ["chisel_p2", "bluespec_p2"]
+            }
+        },
+        {
+            "name" : "nixEnv",
+            "type" : "dict",
+            "val" : {
+                "netboot" : "FETT_NETBOOT",
+                "debian" : {
+                    "fpga" : "FETT_GFE_DEBIAN_FPGA",
+                    "qemu" : "FETT_GFE_DEBIAN_QEMU"
+                },
+                "FreeBSD" : {
+                    "fpga" : "FETT_GFE_FREEBSD_FPGA",
+                    "qemu" : "FETT_GFE_FREEBSD_QEMU"
+                },
+                "busybox" : {
+                    "fpga" : "FETT_GFE_BUSYBOX_FPGA"
+                },
+                "FreeRTOS" : {
+                    "fpga" : "FETT_GFE_FREERTOS_FPGA"
+                },
+                "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR"
+            }
+        },
+        {
+            "name" : "addEntropyDebianPath",
+            "type" : "filePath",
+            "val" : "fett/target/utils/addEntropyDebian.riscv"
+        },
+        {
+            "name" : "tarballName",
+            "type" : "string",
+            "val" : "filesToSend.tar.gz"
+        },
+        {
+            "name" : "FreeRTOSforkName",
+            "type" : "string",
+            "val" : "FreeRTOS-10.0.1"
+        },
+        {
+            "name" : "FreeRTOSprojName",
+            "type" : "string",
+            "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
+        }
+    ] 
+}
