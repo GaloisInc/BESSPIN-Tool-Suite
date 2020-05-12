@@ -100,7 +100,7 @@ def main(xArgs):
             if (len(hexString) != keyLength):
                 print(f"Public key length <{len(hexString)}> is not equal to <{keyLength}>.")
                 raise
-            listNibbles = ','.join([f"0x{hexString[i].upper()}{hexString[i+1].upper()}" for i in range(len(hexString)//2)])
+            listNibbles = ','.join([f"0x{hexString[2*i].upper()}{hexString[2*i+1].upper()}" for i in range(len(hexString)//2)])
             listNibblesPretty = '\n'.join([listNibbles[40*i:(40*i)+40] for i in range(int(1+(keyLength-1)/16))]) #40 chars per line, i.e. 8 bytes.
             fKey.write(f"{{{listNibblesPretty}}}\n")
             fKey.close()
@@ -108,6 +108,27 @@ def main(xArgs):
             exitFett(message="Failed to dump the public key.",exc=exc)
 
         print(f"(Info)~  Public key saved in <{xArgs.getPublicKey}>")
+
+    # Sign a file
+    if (doSignFile):
+        try:
+            fFileToSign = open(xArgs.signFile,'rb')
+            bytesToSign = fFileToSign.read()
+            fFileToSign.close()
+        except Exception as exc:
+            exitFett(message="Failed to load the file to sign.",exc=exc)
+
+        try:
+            signedBytes = signingKey.sign(bytesToSign)
+        except Exception as exc:
+            exitFett(message="Failed to sign the file.",exc=exc)
+
+        try:
+            fSignedFile = open(f"{xArgs.signFile}.sig",'wb')
+            fSignedFile.write(signedBytes)
+            fSignedFile.close()
+        except Exception as exc:
+            exitFett(message="Failed to write the signed file.",exc=exc)
 
     exitFett(exitCode=0)
 
