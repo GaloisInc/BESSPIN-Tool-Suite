@@ -22,14 +22,14 @@ default:
 # Test definitions
 #
 #-----------------------------------------------------------------------------#
-Push:
+runOnPush:
   tags: ["docker-fpga-io"]
   rules:
     - if: "$CI_COMMIT_TAG == null"
   script:
-    - nix-shell --command "./ci/fett-ci.py runOnPush push-$CI_COMMIT_SHA"
+    - nix-shell --command "./ci/fett-ci.py runOnPush runOnPush-$CI_COMMIT_SHA"
   artifacts:
-    paths: [./*-push-$CI_COMMIT_SHA]
+    paths: [./*-runOnPush-$CI_COMMIT_SHA]
 
 DevPR:
   rules:
