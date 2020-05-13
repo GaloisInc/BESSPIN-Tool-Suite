@@ -44,7 +44,7 @@ void Write_Payload (size_t fsize)
   int     r;
 
   fd = ff_fopen (filename_buffer, "w");
-  vERROR_IF_EQ (fd, NULL, "vOta: file open/create failed");
+  vERROR_IF_EQ (fd, NULL, "vOta: file open/create");
 
   written = ff_fwrite (file_buffer, 1, fsize, fd);
   if (written != fsize)
@@ -125,10 +125,10 @@ void vOta (void *pvParameters) {
     fettPrintf("(Info)~  vOta: Starting OTA...\r\n");
 
     r = wc_ed25519_init (&pk);
-    vERROR_IF_NEQ (r, 0, "vOta : wc_ed25519_init() failed");
+    vERROR_IF_NEQ (r, 0, "vOta : wc_ed25519_init()");
 
     r = wc_ed25519_import_public (raw_pk, ED25519_KEY_SIZE, &pk);
-    vERROR_IF_NEQ (r, 0, "vOta : wc_ed25519_import_public() failed");
+    vERROR_IF_NEQ (r, 0, "vOta : wc_ed25519_import_public()");
 
     // Self test crypto
     test_ed25519_verify(&pk);
