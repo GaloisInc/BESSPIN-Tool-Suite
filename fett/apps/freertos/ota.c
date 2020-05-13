@@ -96,8 +96,7 @@ void Ota_Worker (ed25519_key *pk)
                                   
                                   &signature_ok,            // Returned status
                                   pk);                      // public key
-        (void) r;
-        if (signature_ok == 1)
+        if ((r == 0) && (signature_ok == 1))
           {
             fettPrintf ("(Info)~  vOta: Signature is OK\n");
             // now write the payload (not including the signature) to disk.
