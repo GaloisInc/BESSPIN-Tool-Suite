@@ -13,11 +13,14 @@ void main_fett () {
 
     fettPrintf ("\n>>>Beginning of Fett<<<\n");
 
-    BaseType_t funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
-
+    BaseType_t funcReturn = xTaskCreate(vMain,
+                                        "main:vMain",
+                                        configMINIMAL_STACK_SIZE * STACKSIZEMUL,
+                                        NULL, xMainPriority,
+                                        NULL);
     prERROR_IF_NEQ(funcReturn, pdPASS, "main_fett: Creating vMain task.");
 
-    vTaskStartScheduler(); //Hang the function
+    vTaskStartScheduler(); // Hang the function
     return;
 }
 
