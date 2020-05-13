@@ -154,7 +154,7 @@ def main(xArgs):
                 exitFett(message=f"Failed to use <{jsonSetupPath}> to find the OTA max file size. You can use `-max` to customize.",exc=exc)
 
         if (len(bytesToSign) > (OTAMaxSignedPayloadSize-keyLength)):
-            print(f"(WARNING)~  The signed <{xArgs.signFile}> (={len(bytesToSign)} bytes) will exceed the maximum size allowed by OTA (={OTAMaxSignedPayloadSize} bytes).")
+            print(f"(WARNING)~  The unsigned payload <{xArgs.signFile}> (={len(bytesToSign)} bytes) and its signature will exceed the maximum size allowed by OTA (={OTAMaxSignedPayloadSize} bytes).")
         
         try:
             signedBytes = signingKey.sign(bytesToSign)
