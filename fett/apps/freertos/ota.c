@@ -46,19 +46,19 @@ void Write_Payload (size_t fsize)
   fd = ff_fopen (filename_buffer, "w");
   if (fd == NULL)
     {
-      fettPrintf ("(Info)~  vOta: file open/create failed\n");
+      fettPrintf ("(Error)~  vOta: file open/create failed\n");
       return;
     }
   written = ff_fwrite (file_buffer, 1, fsize, fd);
   if (written != fsize)
     {
-      fettPrintf ("(Info)~  vOta: file write failed\n");
+      fettPrintf ("(Error)~  vOta: file write failed\n");
       // Go on to close the file anyway...
     }
   r = ff_fclose (fd);
   if (r != 0)
     {
-      fettPrintf ("(Info)~  vOta: file close failed\n");
+      fettPrintf ("(Error)~  vOta: file close failed\n");
     }
 }
 
@@ -111,7 +111,7 @@ void Ota_Worker (ed25519_key *pk)
       }
     else
       {
-        fettPrintf ("(Info)~  vOta: OTA: received file too small to be signed.\n");
+        fettPrintf ("(Error)~  vOta: OTA: received file too small to be signed.\n");
       }
 
   }
@@ -131,14 +131,14 @@ void vOta (void *pvParameters) {
     r = wc_ed25519_init (&pk);
     if (r != 0)
       {
-        fettPrintf ("(Info)~  vOta: wc_ed25519_init() failed\n");
+        fettPrintf ("(Error)~  vOta: wc_ed25519_init() failed\n");
         return;
       }
 
     r = wc_ed25519_import_public (raw_pk, ED25519_KEY_SIZE, &pk);
     if (r != 0)
       {
-        fettPrintf ("(Info)~  vOta: wc_ed25519_import_public() failed\n");
+        fettPrintf ("(Error)~  vOta: wc_ed25519_import_public() failed\n");
         return;
       }
 
