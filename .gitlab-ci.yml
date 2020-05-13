@@ -45,9 +45,8 @@ DevPR-freertos:
   tags: ["docker-fpga-io"]
   rules:
     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
-  parallel: 1
   script:
-    - nix-shell --command "./ci/fett-ci.py runDevPR-freertos devPR-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+    - nix-shell --command "./ci/fett-ci.py runDevPR-freertos devPR-$CI_COMMIT_SHA"
   artifacts:
     paths: [./*-devPR-$CI_COMMIT_SHA]
 
@@ -65,9 +64,8 @@ Periodic-freertos:
   tags: ["docker-fpga-io"]
   rules:
     - if: "$CI_PIPELINE_SOURCE == 'schedule'"
-  parallel: 1
   script:
-    - nix-shell --command "./ci/fett-ci.py runPeriodic-freertos periodic-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+    - nix-shell --command "./ci/fett-ci.py runPeriodic-freertos periodic-$CI_COMMIT_SHA"
   artifacts:
     paths: [./*-periodic-$CI_COMMIT_SHA]
 
@@ -87,8 +85,7 @@ Release-freertos:
   rules:
     - if: "$CI_PIPELINE_SOURCE == 'schedule'"
       when: manual
-  parallel: 1
   script:
-    - nix-shell --command "./ci/fett-ci.py runRelease-freertos release-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+    - nix-shell --command "./ci/fett-ci.py runRelease-freertos release-$CI_COMMIT_SHA"
   artifacts:
     paths: [./*-release-$CI_COMMIT_SHA]
