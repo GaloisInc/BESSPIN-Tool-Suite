@@ -70,6 +70,14 @@ def main(xArgs):
         else:
             usePublicKey = True
 
+    # check the input files before proceeding
+    if (doSignFile and (not os.path.isfile(xArgs.signFile))):
+        exitFett(message=f"signFile: Could not find <{xArgs.signFile}>.")
+    if (doVerifySignature and (not os.path.isfile(xArgs.verifySignature))):
+        exitFett(message=f"verifyFile: Could not find <{xArgs.verifySignature}>.")
+    if (usePublicKey and (not os.path.isfile(xArgs.usePublicKey))):
+        exitFett(message=f"publicKey: Could not find <{xArgs.usePublicKey}>.")
+
     # Generate the key-pair
     if (dumpPublicKey or doSignFile or (doVerifySignature and (not usePublicKey))): #needs the private key --> generate
         print(f"(Info)~  Generating the key pair...")
