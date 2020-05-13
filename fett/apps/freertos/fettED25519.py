@@ -54,6 +54,9 @@ except Exception as exc:
         exitFett (exc=exc)
     
 def main(xArgs):
+    keyLength = 64
+    OTAMaxSignedPayloadSize = 65536
+    
     # options sanity checks
     dumpPublicKey = (xArgs.getPublicKey is not None)
     doSignFile = (xArgs.signFile is not None)
@@ -101,7 +104,6 @@ def main(xArgs):
     # Dump public key
     if (dumpPublicKey):
         print(f"(Info)~  Dumping the public key...")
-        keyLength = 64
         try:
             fKey = open(xArgs.getPublicKey,'w')
             hexString = str(publicKey.encode(encoder=nacl.encoding.HexEncoder),'utf-8')
