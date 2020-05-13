@@ -10,12 +10,17 @@ UBaseType_t xMainPriority = tskIDLE_PRIORITY+100; //100 is chosen arbitrarily.
 
 //This is the entry point function
 void main_fett () {
-    printf ("\n>>>Beginning of Fett<<<\n");
 
-    BaseType_t funcReturn = xTaskCreate(vMain, "main:vMain", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
+    fettPrintf ("\n>>>Beginning of Fett<<<\n");
+
+    BaseType_t funcReturn = xTaskCreate(vMain,
+                                        "main:vMain",
+                                        configMINIMAL_STACK_SIZE * STACKSIZEMUL,
+                                        NULL, xMainPriority,
+                                        NULL);
     prERROR_IF_NEQ(funcReturn, pdPASS, "main_fett: Creating vMain task.");
 
-    vTaskStartScheduler(); //Hang the function
+    vTaskStartScheduler(); // Hang the function
     return;
 }
 
@@ -24,9 +29,16 @@ void vMain (void *pvParameters) {
     (void) pvParameters;
     BaseType_t funcReturn;
     uint32_t recvNotification;
+    int r;
+    
     xMainTask = xTaskGetCurrentTaskHandle();
 
     fettPrintf("vMain: Main task started...\r\n");
+
+    // Initialize WolfSLL - this needs to be done before any other call to
+    // any other WolfSSL or Wolfcrypt API
+    r = wolfSSL_Init();
+    vERROR_IF_NEQ(r, SSL_SUCCESS, "main_fett: Initializing WolfSSL.");
 
     //Start the FAT filesystem
     funcReturn = ff_init();

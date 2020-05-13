@@ -1,10 +1,13 @@
 all: verifyfile
 
+CFLAGS=-I/usr/local/include -Wall
+LFLAGS=-L/usr/local/lib
+
 verifyfile: verifyfile.o
-	gcc -o verifyfile verifyfile.o -lwolfssl
+	gcc -o verifyfile $(LFLAGS) verifyfile.o -lwolfssl
 
 .o:.c
-	gcc -c -Wall $<
+	gcc -c $(CFLAGS) $<
 
 clean:
 	rm -f verifyfile *.o
