@@ -5,7 +5,6 @@ image: artifactory.galois.com:5008/fett-target:ci
 #
 #-----------------------------------------------------------------------------#
 default:
-  tags: ["docker-fpga"]
   artifacts:
     expire_in: 7 days
     when: always
@@ -24,6 +23,7 @@ default:
 #
 #-----------------------------------------------------------------------------#
 Push:
+  tags: ["docker-fpga"]
   rules:
     - if: "$CI_COMMIT_TAG == null"
   script:
@@ -31,30 +31,64 @@ Push:
   artifacts:
     paths: [./*-push-$CI_COMMIT_SHA]
 
-DevPR:
+DevPR-unix:
+  tags: ["docker-fpga"]
   rules:
     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
-  parallel: 5
+  parallel: 4
   script:
-    - nix-shell --command "./ci/fett-ci.py runDevPR devPR-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+    - nix-shell --command "./ci/fett-ci.py runDevPR-unix devPR-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
   artifacts:
     paths: [./*-devPR-$CI_COMMIT_SHA]
 
-Periodic:
+DevPR-freertos:
+  tags: ["docker-fpga-io"]
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+  parallel: 1
+  script:
+    - nix-shell --command "./ci/fett-ci.py runDevPR-freertos devPR-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+  artifacts:
+    paths: [./*-devPR-$CI_COMMIT_SHA]
+
+Periodic-unix:
+  tags: ["docker-fpga"]
   rules:
     - if: "$CI_PIPELINE_SOURCE == 'schedule'"
-  parallel: 17
+  parallel: 16
   script:
-    - nix-shell --command "./ci/fett-ci.py runPeriodic periodic-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+    - nix-shell --command "./ci/fett-ci.py runPeriodic-unix periodic-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
   artifacts:
     paths: [./*-periodic-$CI_COMMIT_SHA]
 
-Release:
+Periodic-freertos:
+  tags: ["docker-fpga-io"]
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'schedule'"
+  parallel: 1
+  script:
+    - nix-shell --command "./ci/fett-ci.py runPeriodic-freertos periodic-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+  artifacts:
+    paths: [./*-periodic-$CI_COMMIT_SHA]
+
+Release-unix:
+  tags: ["docker-fpga"]
   rules:
     - if: "$CI_PIPELINE_SOURCE == 'schedule'"
       when: manual
-  parallel: 17
+  parallel: 16
   script:
-    - nix-shell --command "./ci/fett-ci.py runRelease release-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+    - nix-shell --command "./ci/fett-ci.py runRelease-unix release-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+  artifacts:
+    paths: [./*-release-$CI_COMMIT_SHA]
+
+Release-freertos:
+  tags: ["docker-fpga-io"]
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'schedule'"
+      when: manual
+  parallel: 1
+  script:
+    - nix-shell --command "./ci/fett-ci.py runRelease-freertos release-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
   artifacts:
     paths: [./*-release-$CI_COMMIT_SHA]

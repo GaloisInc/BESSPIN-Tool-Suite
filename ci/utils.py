@@ -54,7 +54,8 @@ def generateAllConfigs(runType):
         createConfig (inputSet, inputDict)
          
     allConfigs = []
-    for xApp,xSet in appSets[runType].items():
+    baseRunType, flavor = runType.split('-')
+    for xApp,xSet in appSets[baseRunType][flavor].items():
         inputSet = copy.deepcopy(xSet)
         inputDict = {'name': [xApp]}
         allConfigs.append(inputDict)

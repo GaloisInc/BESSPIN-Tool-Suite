@@ -5,7 +5,7 @@
 """
 
 try:
-    import sys, os, glob, shutil, time
+    import sys, os, glob, shutil, time, itertools
     import subprocess, argparse, signal, configparser, copy
     from utils import exitFettCi, exitOnInterrupt, generateAllConfigs, generateConfigFile, prepareArtifact
 except Exception as exc:
@@ -41,8 +41,11 @@ def main (xArgs):
     nodeIndex = 0 if (not xArgs.nodeIndex) else (xArgs.nodeIndex-1) #$CI_NODE_INDEX starts from 1
 
     # Check runType
-    if (xArgs.runType not in ['runOnPush', 'runDevPR', 'runPeriodic', 'runRelease']):
-        exitFettCi(message="Invalid runType argument. Has to be in [runOnPush, runDevPR, runPeriodic, runRelease].")
+    baseRunTypes = ['runDevPR', 'runPeriodic', 'runRelease']
+    flavors = ['unix', 'freertos'] #to add an `aws` flavor at some point
+    listRunTypes = ['runOnPush'] + ['-'.join(pair) for pair in itertools.product(baseRunTypes, flavors)]
+    if (xArgs.runType not in listRunTypes):
+        exitFettCi(message=f"Invalid runType argument. Has to be in {listRunTypes}.")
 
     if (xArgs.testOnly):
         print("(Debug)~  FETT-CI: TestMode: Dumping some useful info...")
