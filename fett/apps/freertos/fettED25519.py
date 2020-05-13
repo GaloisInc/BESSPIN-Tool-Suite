@@ -101,8 +101,8 @@ def main(xArgs):
                 print(f"Public key length <{len(hexString)}> is not equal to <{keyLength}>.")
                 raise
             listNibbles = ','.join([f"0x{hexString[2*i].upper()}{hexString[2*i+1].upper()}" for i in range(len(hexString)//2)])
-            listNibblesPretty = '\n'.join([listNibbles[40*i:(40*i)+40] for i in range(int(1+(keyLength-1)/16))]) #40 chars per line, i.e. 8 bytes.
-            fKey.write(f"{{{listNibblesPretty}}}\n")
+            #listNibblesPretty = '\n'.join([listNibbles[40*i:(40*i)+40] for i in range(int(1+(keyLength-1)/16))]) #40 chars per line, i.e. 8 bytes.
+            fKey.write(f"{listNibbles}\n")
             fKey.close()
         except Exception as exc:
             exitFett(message="Failed to dump the public key.",exc=exc)
