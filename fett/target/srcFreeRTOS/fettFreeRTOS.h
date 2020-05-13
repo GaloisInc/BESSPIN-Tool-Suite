@@ -73,6 +73,22 @@ fett header for includes, externs, and global variables
     #define pdTICKS_TO_S( xTicks ) ( ( TickType_t ) ( ( ( TickType_t ) ( xTicks ) ) / ( TickType_t ) configTICK_RATE_HZ ) )
 #endif
 
+/* Debug and logging */
+#if (FETT_DEBUG == 1)
+    #define debugFettPrintf(...) {fettPrintf("(Debug)~  "); fettPrintf (__VA_ARGS__);}
+    #ifdef FreeRTOS_debug_printf
+        #undef FreeRTOS_debug_printf
+    #endif
+    #define FreeRTOS_debug_printf(X)    debugFettPrintf X
+#else
+    #define debugFettPrintf(...) {do{} while(0);}
+#endif
+
+#ifdef FreeRTOS_printf
+    #undef FreeRTOS_printf
+#endif
+#define FreeRTOS_printf(X)  fettPrintf X
+
 // --------- fettNtk.c ---------------------------------------------------------------------------------
 extern void vStartNetwork (void *pvParameters);
 

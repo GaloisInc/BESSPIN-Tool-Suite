@@ -20,6 +20,10 @@ class fpgaTarget (commonTarget):
         self.portTarget = getSetting('fpgaPortTarget')
         self.portHost = getSetting('fpgaPortHost')
 
+        # Important for the Web Server
+        self.httpPortTarget  = getSetting('HTTPPortTarget')
+        self.httpsPortTarget = getSetting('HTTPSPortTarget')
+
         self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
         self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')
         return

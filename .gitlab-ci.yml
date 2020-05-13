@@ -4,40 +4,57 @@ image: artifactory.galois.com:5008/fett-target:ci
 # General startup commands
 #
 #-----------------------------------------------------------------------------#
-before_script:
-  - . $HOME/.nix-profile/etc/profile.d/nix.sh
-  - export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
-  - source /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
-  - git submodule init
-  - git submodule update
-  - git submodule sync
-
-#-----------------------------------------------------------------------------#
-#
-# Define tags
-#
-#-----------------------------------------------------------------------------#
-.fpga:
+default:
   tags: ["docker-fpga"]
-
-.docker:
-  tags: ["docker"]
-
-.log_always:
   artifacts:
-    expire_in: 1 day
+    expire_in: 7 days
     when: always
-    paths:
-      - workDir/fett.log
-      - workDir/*.out
+    name: "$CI_COMMIT_REF_SLUG-CI_COMMIT_SHA"
+  before_script:
+    - . $HOME/.nix-profile/etc/profile.d/nix.sh
+    - export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
+    - . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - git submodule update --init
 
 #-----------------------------------------------------------------------------#
 #
 # Test definitions
 #
 #-----------------------------------------------------------------------------#
-Busybox_on_FPGA:
-  timeout: 1h
+Push:
+  rules:
+    - if: "$CI_COMMIT_TAG == null"
   script:
-    - nix-shell --command "./fett.py -c tests/fpga-busybox.ini -d"
-  extends: [.log_always, .fpga]
+    - nix-shell --command "./ci/fett-ci.py runOnPush push-$CI_COMMIT_SHA"
+  artifacts:
+    paths: [./*-push-$CI_COMMIT_SHA]
+
+DevPR:
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+  parallel: 5
+  script:
+    - nix-shell --command "./ci/fett-ci.py runDevPR devPR-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+  artifacts:
+    paths: [./*-devPR-$CI_COMMIT_SHA]
+
+Periodic:
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'schedule'"
+  parallel: 17
+  script:
+    - nix-shell --command "./ci/fett-ci.py runPeriodic periodic-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+  artifacts:
+    paths: [./*-periodic-$CI_COMMIT_SHA]
+
+Release:
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'schedule'"
+      when: manual
+  parallel: 17
+  script:
+    - nix-shell --command "./ci/fett-ci.py runRelease release-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+  artifacts:
+    paths: [./*-release-$CI_COMMIT_SHA]
