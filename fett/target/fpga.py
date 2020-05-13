@@ -79,7 +79,7 @@ class fpgaTarget (commonTarget):
                 break #success
             elif (iAttempt < nAttempts-1): #that was the first try
                 errorAndLog(f"boot: Failed to <setUp> FPGA for booting. Trying again...",exc=exc)
-                programBifile()
+                programBitfile()
                 isException = False #go and try again
         if (isException): 
             self.shutdownAndExit (f"boot: Failed to <setUp> FPGA for booting.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
@@ -258,7 +258,7 @@ class fpgaTarget (commonTarget):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programBifile ():
+def programBitfile ():
     printAndLog("Preparing the FPGA environment...")
     clearProcesses()
     gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
@@ -275,7 +275,7 @@ def programBifile ():
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor')],stderr=gfeOut,timeout=90)
+            outProgram = subprocess.check_output(['gfe-program-fpga', '-b', selectBitfile()],stderr=gfeOut,timeout=90)
             printAndLog(str(outProgram,'utf-8').strip())
             break
         except Exception as exc:
@@ -286,6 +286,20 @@ def programBifile ():
 
     gfeOut.close()
     printAndLog("FPGA was programmed successfully!")
+
+@decorate.debugWrap
+def selectBitfile ():
+    if getSetting('useCustomBitfile'):
+        bitfilePath = getSetting('pathToCustomBitfile')
+        if not os.path.isfile(bitfilePath):
+            logAndExit(f"Custom bitfile {bitfilePath} does not exist.", exitCode=EXIT.Configuration)
+    else:
+        # Check the nix environment
+        bitfileName = "soc_" + getSetting('processor') + ".bit"
+        bitfilePath = os.path.join(getSettingDict('nixEnv', ['gfeBitfileDir']), bitfileName)
+        if not os.path.isfile(bitfilePath):
+            logAndExit(f"Could not find bitfile for {getSetting('processor')} in Nix environment", exitCode=EXIT.Environment)
+    return bitfilePath
 
 @decorate.debugWrap
 def checkEthAdaptorIsUp ():
