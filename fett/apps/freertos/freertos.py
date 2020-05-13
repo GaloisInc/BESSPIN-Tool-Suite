@@ -26,7 +26,7 @@ def deploymentTest(target):
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(target.ipTarget, getSetting('TFTPPortTarget')) 
     # uploading the index.html file
-    fileName = 'index.html'
+    fileName = 'index.html.sig'
     fileSigned = os.path.join(getSetting('repoDir'),'fett','apps','freertos','resources',fileName)
     try:
         clientTftp.upload(fileName, fileSigned, timeout=10)
@@ -41,7 +41,7 @@ def deploymentTest(target):
     except Exception as exc:
         target.shutdownAndExit(f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
     """
-    
+
     # Run to completion
     outLog += rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))[1]
     return outLog
