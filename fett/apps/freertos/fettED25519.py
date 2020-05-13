@@ -42,7 +42,7 @@ def exitOnInterrupt (xSig,xFrame):
 
 try:
     import sys, os, signal, argparse, getpass
-    import nacl.signing, nacl.encoding, hashlib
+    import nacl.signing, nacl.encoding, nacl.exceptions, hashlib
 except Exception as exc:
     try:
         import sys
@@ -71,7 +71,7 @@ def main(xArgs):
             usePublicKey = True
 
     # Generate the key-pair
-    if (dumpPublicKey or doSignFile): #needs the private key --> generate
+    if (dumpPublicKey or doSignFile or (doVerifySignature and (not usePublicKey))): #needs the private key --> generate
         print(f"(Info)~  Generating the key pair...")
         try:
             passcode = getpass.getpass(prompt='Passcode: ')
@@ -111,6 +111,7 @@ def main(xArgs):
 
     # Sign a file
     if (doSignFile):
+        print(f"(Info)~  Signing the input file...")
         try:
             fFileToSign = open(xArgs.signFile,'rb')
             bytesToSign = fFileToSign.read()
@@ -129,6 +130,27 @@ def main(xArgs):
             fSignedFile.close()
         except Exception as exc:
             exitFett(message="Failed to write the signed file.",exc=exc)
+
+        print(f"(Info)~  File signed successfully.")
+
+    # Verify signature
+    if (doVerifySignature):
+        print(f"(Info)~  Verifying the signature...")
+        try:
+            fFileToVerify = open(xArgs.verifySignature,'rb')
+            bytesToVerify = fFileToVerify.read()
+            fFileToVerify.close()
+        except Exception as exc:
+            exitFett(message="Failed to load the file to verify.",exc=exc)
+
+        try:
+            publicKey.verify(bytesToVerify)
+        except nacl.exceptions.BadSignatureError:
+            exitFett(message="verify: Bad Signature.")
+        except Exception as exc:
+            exitFett(message="Failed to verify the file to sign.",exc=exc)
+
+        print(f"(Info)~  verify: Good signature!")
 
     exitFett(exitCode=0)
 
