@@ -56,7 +56,7 @@ except Exception as exc:
 def main(xArgs):
     keyLength = 64
     OTAMaxSignedPayloadSize = 65536
-    
+
     # options sanity checks
     dumpPublicKey = (xArgs.getPublicKey is not None)
     doSignFile = (xArgs.signFile is not None)
@@ -129,6 +129,10 @@ def main(xArgs):
         except Exception as exc:
             exitFett(message="Failed to load the file to sign.",exc=exc)
 
+        #Check if the file is of an acceptable size
+        if (len(bytesToSign) > (OTAMaxSignedPayloadSize-keyLength)):
+            print(f"(WARNING)~  The signed <{xArgs.signFile}> (={len(bytesToSign)} bytes) will exceed the maximum size allowed by OTA (={OTAMaxSignedPayloadSize} bytes).")
+        
         try:
             signedBytes = signingKey.sign(bytesToSign)
         except Exception as exc:
