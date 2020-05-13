@@ -107,7 +107,7 @@ def main(xArgs):
         except Exception as exc:
             exitFett(message="Failed to dump the public key.",exc=exc)
 
-        print(f"(Info)~  Public key saved in <{xArgs.getPublicKey}>")
+        print(f"(Info)~  Public key saved in <{xArgs.getPublicKey}>.")
 
     # Sign a file
     if (doSignFile):
@@ -135,6 +135,22 @@ def main(xArgs):
 
     # Verify signature
     if (doVerifySignature):
+        if (usePublicKey):
+            print(f"(Info)~  Loading public key from file...")
+            try:
+                fKey = open(xArgs.usePublicKey,'r')
+                keyHex = fKey.read().strip()
+                fKey.close()
+            except Exception as exc:
+                exitFett(message="Failed to open the provided public key file.",exc=exc)
+
+            try:
+                hexString = ''.join([xByte[2:].lower() for xByte in keyHex.split(',')])
+                publicKey = nacl.signing.VerifyKey(hexString,encoder=nacl.encoding.HexEncoder)
+            except Exception as exc:
+                exitFett(message="Failed to obtain the public key from the provided file. Check the format.",exc=exc)
+            print(f"(Info)~  Public file loaded successfully.")
+
         print(f"(Info)~  Verifying the signature...")
         try:
             fFileToVerify = open(xArgs.verifySignature,'rb')
@@ -146,7 +162,7 @@ def main(xArgs):
         try:
             publicKey.verify(bytesToVerify)
         except nacl.exceptions.BadSignatureError:
-            exitFett(message="verify: Bad Signature.")
+            exitFett(message="verify: Bad Signature!")
         except Exception as exc:
             exitFett(message="Failed to verify the file to sign.",exc=exc)
 
