@@ -69,6 +69,13 @@
             "val" : 69
         },
         {
+            "name" : "OTAMaxSignedPayloadSize",
+            "type" : "int",
+            "min" : 65536,
+            "max" : 65536,
+            "val" : 65536
+        },
+        {
             "name" : "qemuIpTarget",
             "type" : "ipAddress",
             "val" : "127.0.0.1"
