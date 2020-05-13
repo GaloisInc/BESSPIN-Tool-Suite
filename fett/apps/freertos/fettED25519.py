@@ -5,13 +5,14 @@
 --- This is not integrated in the tool.
 --- Usage: fettED25519.py [-h] [-p GETPUBLICKEY] [-s SIGNFILE]
                       [-vf VERIFYSIGNATURE] [-k USEPUBLICKEY]
+                      [-max MAXOTAFILESIZE]
 
 FETT-ED25519 (ED25519 utlity for FETT)
 
 optional arguments:
   -h, --help            show this help message and exit
   -p GETPUBLICKEY, --getPublicKey GETPUBLICKEY
-                        Dump out the public key to a file.
+                        Dumps out the public key to a file.
   -s SIGNFILE, --signFile SIGNFILE
                         Signs the input file.
   -vf VERIFYSIGNATURE, --verifySignature VERIFYSIGNATURE
@@ -19,6 +20,8 @@ optional arguments:
   -k USEPUBLICKEY, --usePublicKey USEPUBLICKEY
                         Use input public key for verification instead of
                         passcode.
+  -max MAXOTAFILESIZE, --maxOTAfileSize MAXOTAFILESIZE
+                        A custom max OTA file size
 """
 
 def exitFett (exitCode=-1,exc=None,message=None):
@@ -41,7 +44,7 @@ def exitOnInterrupt (xSig,xFrame):
     exitFett(message=f"Received <{sigName}>!")
 
 try:
-    import sys, os, signal, argparse, getpass
+    import sys, os, signal, argparse, getpass, json
     import nacl.signing, nacl.encoding, nacl.exceptions, hashlib
 except Exception as exc:
     try:
@@ -55,7 +58,6 @@ except Exception as exc:
     
 def main(xArgs):
     keyLength = 64
-    OTAMaxSignedPayloadSize = 65536
 
     # options sanity checks
     dumpPublicKey = (xArgs.getPublicKey is not None)
@@ -130,6 +132,27 @@ def main(xArgs):
             exitFett(message="Failed to load the file to sign.",exc=exc)
 
         #Check if the file is of an acceptable size
+        if (xArgs.maxOTAfileSize): #user provided
+            OTAMaxSignedPayloadSize = xArgs.maxOTAfileSize
+        else: #fetch from setupEnv.json
+            OTAMaxSignedPayloadSize = None
+            appsFreeRTOSdir = os.path.abspath(os.path.dirname(__file__))
+            fettDir = os.path.abspath(os.path.join(os.path.join(appsFreeRTOSdir,os.pardir),os.pardir))
+            jsonSetupPath = os.path.join(fettDir,'base','utils','setupEnv.json')
+            try:
+                fJson = open(jsonSetupPath,'r')
+                jsonData = json.load(fJson)
+                fJson.close()
+                for xPar in jsonData['setupEnv']:
+                    if (xPar['name'] == 'OTAMaxSignedPayloadSize'):
+                        OTAMaxSignedPayloadSize = int(xPar['val'])
+                        break
+                if (OTAMaxSignedPayloadSize == None):
+                    print(f"(Error)~  Failed to find a parameter named 'OTAMaxSignedPayloadSize' in {jsonSetupPath}." )
+                    raise
+            except Exception as exc:
+                exitFett(message=f"Failed to use <{jsonSetupPath}> to find the OTA max file size. You can use `-max` to customize.",exc=exc)
+
         if (len(bytesToSign) > (OTAMaxSignedPayloadSize-keyLength)):
             print(f"(WARNING)~  The signed <{xArgs.signFile}> (={len(bytesToSign)} bytes) will exceed the maximum size allowed by OTA (={OTAMaxSignedPayloadSize} bytes).")
         
@@ -191,6 +214,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-s', '--signFile', help='Signs the input file.')
     xArgParser.add_argument ('-vf', '--verifySignature', help='verify the signature of a file.')
     xArgParser.add_argument ('-k', '--usePublicKey', help='Use input public key for verification instead of passcode.')
+    xArgParser.add_argument ('-max', '--maxOTAfileSize', help='A custom max OTA file size', type=int)
 
     xArgs = xArgParser.parse_args()
 
