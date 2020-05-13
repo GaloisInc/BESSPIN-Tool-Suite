@@ -128,18 +128,10 @@ void vOta (void *pvParameters) {
     fettPrintf("(Info)~  vOta: Starting OTA...\r\n");
 
     r = wc_ed25519_init (&pk);
-    if (r != 0)
-      {
-        fettPrintf ("(Error)~  vOta: wc_ed25519_init() failed\n");
-        return;
-      }
+    vERROR_IF_NEQ (r, 0, "vOta : wc_ed25519_init() failed");
 
     r = wc_ed25519_import_public (raw_pk, ED25519_KEY_SIZE, &pk);
-    if (r != 0)
-      {
-        fettPrintf ("(Error)~  vOta: wc_ed25519_import_public() failed\n");
-        return;
-      }
+    vERROR_IF_NEQ (r, 0, "vOta : wc_ed25519_import_public() failed");
 
     // Self test crypto
     test_ed25519_verify(&pk);
