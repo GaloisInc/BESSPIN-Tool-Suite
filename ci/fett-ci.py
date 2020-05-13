@@ -92,6 +92,8 @@ def main (xArgs):
     nErrs = 0 
     for xConfig in listConfigs:
         exitCode = 0 #success
+        print(f"(Info)~  FETT-CI: Running <{os.path.basename(xConfig)}>.")
+        sys.stdout.flush()
         try:
             subprocess.run([fettPyPath,'-c',xConfig,'-d'], stdout=sys.stdout, stderr=sys.stderr, timeout=jobTimeout, check=True)
         except subprocess.CalledProcessError as exc:
