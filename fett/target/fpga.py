@@ -279,7 +279,7 @@ def programBitfile ():
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            outProgram = subprocess.check_output(['gfe-program-fpga', '-b', selectBitfile()],stderr=gfeOut,timeout=90)
+            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor'), '-b', selectBitfile()],stderr=gfeOut,timeout=90)
             printAndLog(str(outProgram,'utf-8').strip())
             break
         except Exception as exc:
