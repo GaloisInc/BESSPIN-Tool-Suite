@@ -25,7 +25,7 @@ def deploy(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def extensiveTest(target):
-    deploymentTest(target)
+    return deploymentTest(target)
 
 @decorate.debugWrap
 @decorate.timeWrap
