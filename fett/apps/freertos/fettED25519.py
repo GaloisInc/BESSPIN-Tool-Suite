@@ -161,14 +161,24 @@ def main(xArgs):
         except Exception as exc:
             exitFett(message="Failed to sign the file.",exc=exc)
 
+        #respect the 8.3 standard
+        outBasename = xArgs.signFile.split('.')[0]
+        if (len(outBasename) > 8):
+            outBasename = outBasename[:8]
+        if (outBasename.isalnum()):
+            outFileName = f"{outBasename}.sig"
+        else:
+            print(f"(WARNING)~  Input file name has non-8.3 compatible character(s). Will use default name instead.")
+            outFileName = 'index.sig'
+
         try:
-            fSignedFile = open(f"{xArgs.signFile}.sig",'wb')
+            fSignedFile = open(outFileName,'wb')
             fSignedFile.write(signedBytes)
             fSignedFile.close()
         except Exception as exc:
             exitFett(message="Failed to write the signed file.",exc=exc)
 
-        print(f"(Info)~  File signed successfully.")
+        print(f"(Info)~  Signed file was successfully written to <{outFileName}>.")
 
     # Verify signature
     if (doVerifySignature):
