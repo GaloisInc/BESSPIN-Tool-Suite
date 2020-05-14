@@ -9,7 +9,7 @@ A minimal nginx server is desired to run on target platforms. Namely, it will se
 - the page opens a text file
 - the page opens an image
 - the page receives a request and saves on the local filesystem
-- the page page links to another static page
+- the page links to another static page
 
 ## HTTPS Client Setup
 
