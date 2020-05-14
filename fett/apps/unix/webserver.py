@@ -10,6 +10,7 @@ from fett.base.utils.misc import *
 @decorate.timeWrap
 def install (target):
     # target is a fett target object
+    printAndLog("Installing nginx...")
     outLog = ''
     outLog += target.runCommand("echo \"Installing nginx...\"")[1]
     outLog += target.runCommand("mkdir -p /usr/local/sbin")[1]
@@ -25,6 +26,8 @@ def install (target):
     outLog += target.runCommand("cp -r keys/* /etc/ssl/private")[1]
 
     # TODO add errors above
+
+    printAndLog("Nginx installed successfully.")
     return outLog
 
 @decorate.debugWrap
@@ -72,6 +75,7 @@ def deploymentTest(target):
     guidance as to what tests we should run here.
 
     """
+    printAndLog("Testing nginx...")
     targetIP = target.ipTarget
     httpPort = target.httpPortTarget
     httpsPort = target.httpsPortTarget
@@ -124,5 +128,7 @@ def deploymentTest(target):
             logAndExit(f"Could not fetch resource from hidden server, got code {code}")
     except Exception as exc:
         logAndExit("Failed to test error redirection", exc=exc)
+
+    printAndLog("Nginx tests OK!")
 
     return ""
