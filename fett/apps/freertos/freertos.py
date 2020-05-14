@@ -26,12 +26,12 @@ def deploymentTest(target):
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(target.ipTarget, getSetting('TFTPPortTarget')) 
     # uploading the signed index.html file
-    fileName_8_3 = 'index.htm' #a filename that is 8.3 compatible
-    actualSignedFilePath = os.path.join(getSetting('repoDir'),'fett','apps','freertos','resources','index.html.sig')
+    fileName = 'index.html.sig'
+    filePath = os.path.join(getSetting('repoDir'),'fett','apps','freertos','resources',fileName)
     try:
-        clientTftp.upload(fileName_8_3, actualSignedFilePath, timeout=10)
+        clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
-        target.shutdownAndExit(f"clientTftp: Failed to upload <{actualSignedFilePath}> to the server.",exc=exc,exitCode=EXIT.Run)
+        target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     """
     # downloading a file
     fileName = "fileToReceive.html"
