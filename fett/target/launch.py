@@ -94,7 +94,7 @@ def prepareEnv ():
 @decorate.debugWrap
 @decorate.timeWrap
 def launchFett ():
-    printAndLog (f"Launching FETT...")
+    printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
     xTarget = getClassType()()
     xTarget.start()
     if (isEnabled('isUnix')):
