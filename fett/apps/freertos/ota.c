@@ -49,7 +49,7 @@ void Write_Payload (size_t fsize)
   written = ff_fwrite (file_buffer, 1, fsize, fd);
   if (written != fsize)
     {
-      fettPrintf ("(Error)~  vOta: file write failed\n");
+      fettPrintf ("(Error)~  vOta: file write failed. [written=%ld, fsize=%ld].\r\n",written,fsize);
       // Go on to close the file anyway...
     }
   r = ff_fclose (fd);
