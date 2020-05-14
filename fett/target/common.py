@@ -483,18 +483,24 @@ class commonTarget():
             self.sendTar(timeout=timeout)
 
         if (isEqSetting('osImage','FreeRTOS')):
-            outLog = freertos.extensiveTest(self)
+            appModule = freertos
         elif (isEnabled('webserver')):
-            outLog = webserver.install(self)
-            outLog += webserver.deploy(self)
-            outLog += webserver.deploymentTest(self)
+            appModule = webserver
         elif (isEnabled('database')):
-            outLog = database.install(self)
-            outLog += database.deploy(self)
-            outLog += database.deploymentTest(self)
+            appModule = database
         elif (isEnabled('voting')):
-            outLog = voting.install(self)
-            outLog += voting.deploy(self)
+            appModule = voting
+        else:
+            self.shutdownAndExit(f"<runApp> is executed with an undefined app.",exitCode=EXIT.Dev_Bug)
+
+        outLog = appModule.install(self)
+        if (isEqSetting('mode','deploy')):
+            outLog += appModule.deploymentTest(self)
+            outLog += appModule.deploy(self)
+        elif (isEqSetting('mode','test')):
+            outLog += appModule.extensiveTest(self)
+        else:
+            self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('mode')}> mode.",exitCode=EXIT.Implementation)
 
         fLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
         fLog.write (outLog)
