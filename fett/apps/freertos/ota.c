@@ -6,14 +6,15 @@
 #include "tftp_server.h"
 
 #define OTA_FILE_MIN_SIZE (ED25519_SIG_SIZE + 1)
+#define tftpconfigMAX_FILENAME  129
+#define OTA_FILENAME  "ota.htm"
 
 uint8_t file_buffer[OTA_MAX_SIGNED_PAYLOAD_SIZE]; // SIZE set in setupEnv.json
-char    filename_buffer[ffconfigMAX_FILENAME];
 
 void vOta (void *pvParameters);
 void Ota_Worker (ed25519_key *pk);
 void Write_Payload (size_t fsize);
-void Initialize_Receipt_Buffers (void);
+void Initialize_Receipt_Buffer (void);
 
 
 // This is the Public Key used for Ed25519 signature verification
@@ -24,15 +25,11 @@ static const byte raw_pk[ED25519_KEY_SIZE] =
    0xB3, 0x0B, 0xED, 0xAC, 0x33, 0x47, 0x01, 0xFA};
 
 
-void Initialize_Receipt_Buffers (void)
+void Initialize_Receipt_Buffer (void)
 {
   for (int i = 0; i < OTA_MAX_SIGNED_PAYLOAD_SIZE; i++)
     {
       file_buffer[i] = (uint8_t) 0;
-    }
-  for (int j = 0; j < ffconfigMAX_FILENAME; j++)
-    {
-      filename_buffer[j] = '\0';
     }
 }
 
@@ -43,7 +40,7 @@ void Write_Payload (size_t fsize)
   size_t  written;
   int     r;
 
-  fd = ff_fopen (filename_buffer, "w");
+  fd = ff_fopen (OTA_FILENAME, "w");
   vERROR_IF_EQ (fd, NULL, "vOta: file open/create");
 
   written = ff_fwrite (file_buffer+ED25519_SIG_SIZE, 1, fsize, fd);
@@ -68,17 +65,19 @@ void Ota_Worker (ed25519_key *pk)
     int      signature_ok;
     uint32_t received_file_size;
     int      r;
+    char tftp_filename[tftpconfigMAX_FILENAME];
+    memset(tftp_filename,0,tftpconfigMAX_FILENAME);
     
-    Initialize_Receipt_Buffers();
+    Initialize_Receipt_Buffer();
     
     received_file_size = TFTP_Receive_One_File (file_buffer,
                                                 OTA_MAX_SIGNED_PAYLOAD_SIZE,
-                                                filename_buffer,
+                                                tftp_filename,
                                                 ffconfigMAX_FILENAME);
     if (received_file_size >= OTA_FILE_MIN_SIZE)
       {
         fettPrintf ("(Info)~ OTA received a file of %d bytes\n", (int) received_file_size);
-        fettPrintf ("(Info)~ OTA requested file name is %s\n", filename_buffer);
+        fettPrintf ("(Info)~ OTA requested file name is %s\n", tftp_filename);
         fettPrintf ("(Info)~ First four bytes of signature are %2x %2x %2x %2x\n",
                     file_buffer[0],
                     file_buffer[1],
