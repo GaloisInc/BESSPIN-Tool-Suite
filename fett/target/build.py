@@ -134,15 +134,24 @@ def prepareBusybox():
     importImage()
 
 @decorate.debugWrap
+def selectImagePath():
+    if isEnabled('useCustomOsImage'):
+        logging.info(f"Importing {getSetting('osImage')} image from custom path.")
+        return getSetting('pathToCustomOsImage')
+    else:
+        if getSetting('binarySource') == 'GFE':
+            nixImage = getSettingDict('nixEnv',[getSetting('osImage'),getSetting('target')])
+            if (nixImage in os.environ):
+                logging.info(f"Importing {getSetting('osImage')} image from nix.")
+                return os.environ[nixImage]
+        imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', getSetting('target'), f"{getSetting('osImage')}.elf")
+        logging.info(f"Importing {getSetting('osImage')} image from binary repo.")
+        return imagePath
+
+@decorate.debugWrap
 def importImage():
-    if (isEnabled('useCustomOsImage')):
-        cp (getSetting('pathToCustomOsImage'),getSetting('osImageElf'))
-    else: #use nix images
-        nixImage = getSettingDict('nixEnv',[getSetting('osImage'),getSetting('target')])
-        if (nixImage in os.environ):
-            cp(os.environ[nixImage],getSetting('osImageElf'))
-        else:
-            logAndExit (f"<${nixImage}> not found in the nix path.",exitCode=EXIT.Environment)
+    imagePath = selectImagePath()
+    cp (imagePath, getSetting('osImageElf'))
     if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
         netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
         setSetting('netbootElf',netbootElf)
