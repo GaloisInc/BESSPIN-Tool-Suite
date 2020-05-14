@@ -53,10 +53,13 @@ def deploy (target):
 @decorate.timeWrap
 def curlTest(target, url, extra=[], http2=False):
     out = curlRequest(url, http2=http2, extra=extra)
+    if (not out):
+        return (None,None)
     try:
         version,code,*rest = out.splitlines()[0].split(' ')
     except Exception as exc:
-        logAndExit(f"Failed to parse curl output: <{out}>", exc=exc, exitCode=EXIT.Run)
+        errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
+        return (None,None)
     printAndLog(f"curl {url} extra={extra} http2={http2} returned:\n{out}", doPrint=False)
     return (version, code)
 
@@ -85,51 +88,46 @@ def deploymentTest(target):
 
     # 0. Fetch index page
     printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False)
-    try:
-        _,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.html")
-        if code != '200':
-            logAndExit(f"Failed to fetch index via HTTP, got code {code}")
-    except Exception as exc:
-        logAndExit("Failed to fetch index via HTTP", exc=exc)
+    _,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.html")
+    if (not code):
+        target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 1. Nginx must be compiled with ssl support
     printAndLog("Test[HTTPS]: Fetching index via HTTPS", doPrint=False)
-    try:
-        _,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html")
-        if code != '200':
-            logAndExit(f"Failed to fetch index via HTTPS, got code {code}")
-    except Exception as exc:
-        logAndExit("Failed to fetch index via HTTPS", exc=exc)
+    _,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html")
+    if (not code):
+        target.shutdownAndExit (f"Test[HTTPS]: Failed! [Fatal]",exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit (f"Test[HTTPS]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 2. HTTP2 support
     printAndLog("Test[HTTP2]: Fetching index via HTTP2", doPrint=False)
-    try:
-        version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html", http2=True)
-        if code != '200':
-            logAndExit(f"Failed to fetch index via HTTP/2, got code {code}")
-        if version != 'HTTP/2':
-            logAndExit(f"Failed to fetch index via HTTP/2, got wrong version <{version}>")
-    except Exception as exc:
-        logAndExit("Failed to fetch index via HTTPS", exc=exc)
+    version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html", http2=True)
+    if (not code):
+        target.shutdownAndExit (f"Test[HTTP2]: Failed! [Fatal]",exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit (f"Test[HTTP2]: Failed! [Got code {code}].",exitCode=EXIT.Run)
+    elif version != 'HTTP/2':
+        target.shutdownAndExit (f"Test[HTTP2]: Failed! [Got wrong version <{version}>].",exitCode=EXIT.Run)
 
     # 3. Error redirect is working
     printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False)
-    try:
-        version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html")
-        if code != '302':
-            logAndExit(f"No redirect after attempt to fetch private resource, got code {code}")
-    except Exception as exc:
-        logAndExit("Failed to test error redirection", exc=exc)
+    version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html")
+    if (not code):
+        target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Fatal]",exitCode=EXIT.Run)
+    elif code != '302':
+        target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 4. "Hidden" resource
-    printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False)
-    try:
-        version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html",
+    printAndLog("Test[Private Resource]: Fetching private resource from hidden server", doPrint=False)
+    version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html",
                                 extra=["-H", "Host: secret_server"])
-        if code != '200':
-            logAndExit(f"Could not fetch resource from hidden server, got code {code}")
-    except Exception as exc:
-        logAndExit("Failed to test error redirection", exc=exc)
+    if (not code):
+        target.shutdownAndExit (f"Test[Private Resource]: Failed! [Fatal]",exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit (f"Test[Private Resource]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     printAndLog("Nginx tests OK!")
 
