@@ -22,6 +22,13 @@ def install(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def deploy(target):
+    printAndLog ("Deployment successful. Target is ready.")
+    
+    #Here we should send a message to the portal
+
+    #Here we should wait for a termination signal from the portal
+    
+    printAndLog("Termination signal received. Preparing to exit...")
     return ''
 
 @decorate.debugWrap
