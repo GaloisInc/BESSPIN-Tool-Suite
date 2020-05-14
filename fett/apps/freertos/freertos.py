@@ -14,6 +14,13 @@ def install (target):
 @decorate.debugWrap
 @decorate.timeWrap
 def deploy(target):
+    printAndLog ("Deployment successful. Target is ready.")
+    
+    #Here we should send a message to the portal
+
+    #Here we should wait for a termination signal from the portal
+    
+    printAndLog("Termination signal received. Preparing to exit...")
     return ''
 
 @decorate.debugWrap
@@ -46,7 +53,7 @@ def deploymentTest(target):
     except Exception as exc:
         target.shutdownAndExit(f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
     """
-
+    outLog += f"(Host)~  {filePath} uploaded to the TFTP server."
     # Run to completion
     outLog += rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))[1]
     return outLog
