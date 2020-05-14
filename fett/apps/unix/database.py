@@ -10,11 +10,13 @@ from fett.base.utils.misc import *
 @decorate.timeWrap
 def install(target):
     # target is a fett target object
+    printAndLog("Installing sqlite...")
     outLog = ''
     # All we need to do is install sqlite into a suitable location,
     # like /usr/bin
     outLog += target.runCommand("echo \"Installing sqlite into /usr/bin...\"")[1]
     outLog += target.runCommand("install sqlite /usr/bin")[1]
+    printAndLog("Sqlite installed successfully.")
     return outLog
 
 @decorate.debugWrap
@@ -30,6 +32,7 @@ def extensiveTest(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def deploymentTest(target):
+    printAndLog("Testing sqlite...")
     outLog = ''
     sqlite_bin = '/usr/bin/sqlite'
     xDb = 'test.db'
@@ -137,4 +140,5 @@ def deploymentTest(target):
     outLog += drop_table(xTable='food1')
     outLog += drop_table()
     outLog += drop_database()
+    printAndLog("Sqlite tests OK!")
     return outLog
