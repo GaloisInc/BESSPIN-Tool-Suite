@@ -46,7 +46,7 @@ void Write_Payload (size_t fsize)
   fd = ff_fopen (filename_buffer, "w");
   vERROR_IF_EQ (fd, NULL, "vOta: file open/create");
 
-  written = ff_fwrite (file_buffer, 1, fsize, fd);
+  written = ff_fwrite (file_buffer+ED25519_SIG_SIZE, 1, fsize, fd);
   if (written != fsize)
     {
       fettPrintf ("(Error)~  vOta: file write failed. [written=%ld, fsize=%ld].\r\n",written,fsize);
