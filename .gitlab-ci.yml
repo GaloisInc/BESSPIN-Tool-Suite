@@ -22,12 +22,21 @@ default:
 # Test definitions
 #
 #-----------------------------------------------------------------------------#
-Push:
+Push-unix:
   tags: ["docker-fpga"]
   rules:
     - if: "$CI_COMMIT_TAG == null"
   script:
-    - nix-shell --command "./ci/fett-ci.py runOnPush push-$CI_COMMIT_SHA"
+    - nix-shell --command "./ci/fett-ci.py runOnPush-unix push-$CI_COMMIT_SHA"
+  artifacts:
+    paths: [./*-push-$CI_COMMIT_SHA]
+
+Push-freertos:
+  tags: ["docker-fpga-io"]
+  rules:
+    - if: "$CI_COMMIT_TAG == null"
+  script:
+    - nix-shell --command "./ci/fett-ci.py runOnPush-freertos push-$CI_COMMIT_SHA"
   artifacts:
     paths: [./*-push-$CI_COMMIT_SHA]
 
