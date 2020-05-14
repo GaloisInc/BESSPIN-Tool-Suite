@@ -6,9 +6,7 @@
 --- Usage: fettED25519.py [-h] [-p GETPUBLICKEY] [-s SIGNFILE]
                       [-vf VERIFYSIGNATURE] [-k USEPUBLICKEY]
                       [-max MAXOTAFILESIZE]
-
 FETT-ED25519 (ED25519 utlity for FETT)
-
 optional arguments:
   -h, --help            show this help message and exit
   -p GETPUBLICKEY, --getPublicKey GETPUBLICKEY
@@ -161,24 +159,14 @@ def main(xArgs):
         except Exception as exc:
             exitFett(message="Failed to sign the file.",exc=exc)
 
-        #respect the 8.3 standard
-        outBasename = xArgs.signFile.split('.')[0]
-        if (len(outBasename) > 8):
-            outBasename = outBasename[:8]
-        if (outBasename.isalnum()):
-            outFileName = f"{outBasename}.sig"
-        else:
-            print(f"(WARNING)~  Input file name has non-8.3 compatible character(s). Will use default name instead.")
-            outFileName = 'index.sig'
-
         try:
-            fSignedFile = open(outFileName,'wb')
+            fSignedFile = open(f"{xArgs.signFile}.sig",'wb')
             fSignedFile.write(signedBytes)
             fSignedFile.close()
         except Exception as exc:
             exitFett(message="Failed to write the signed file.",exc=exc)
 
-        print(f"(Info)~  Signed file was successfully written to <{outFileName}>.")
+        print(f"(Info)~  File signed successfully.")
 
     # Verify signature
     if (doVerifySignature):
