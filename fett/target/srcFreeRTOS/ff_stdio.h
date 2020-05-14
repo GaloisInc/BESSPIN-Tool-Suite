@@ -5,7 +5,7 @@
 #ifndef FF_STDIO_H
 #define FF_STDIO_H
 
-#define ffconfigMAX_FILENAME    129
+#define ffconfigMAX_FILENAME    12 //8.3 format
 
 typedef struct _FF_FILE
 {
