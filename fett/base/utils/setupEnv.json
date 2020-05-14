@@ -132,6 +132,11 @@
             "name" : "FreeRTOSprojName",
             "type" : "string",
             "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
+        },
+        {
+            "name" : "binaryRepoDir",
+            "type" : "dirPath",
+            "val" : "SSITH-FETT-Binaries"
         }
     ] 
 }
