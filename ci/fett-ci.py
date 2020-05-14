@@ -41,9 +41,9 @@ def main (xArgs):
     nodeIndex = 0 if (not xArgs.nodeIndex) else (xArgs.nodeIndex-1) #$CI_NODE_INDEX starts from 1
 
     # Check runType
-    baseRunTypes = ['runDevPR', 'runPeriodic', 'runRelease']
+    baseRunTypes = ['runOnPush', 'runDevPR', 'runPeriodic', 'runRelease']
     flavors = ['unix', 'freertos'] #to add an `aws` flavor at some point
-    listRunTypes = ['runOnPush'] + ['-'.join(pair) for pair in itertools.product(baseRunTypes, flavors)]
+    listRunTypes = ['-'.join(pair) for pair in itertools.product(baseRunTypes, flavors)]
     if (xArgs.runType not in listRunTypes):
         exitFettCi(message=f"Invalid runType argument. Has to be in {listRunTypes}.")
 
@@ -51,8 +51,9 @@ def main (xArgs):
         print("(Debug)~  FETT-CI: TestMode: Dumping some useful info...")
 
     # Check number of configs + get the right config file
-    if (xArgs.runType == 'runOnPush'): #Execute the files in ci/runOnPush
-        dirConfigs = os.path.join(ciDir,'runOnPush')
+    baseRunType, flavor = xArgs.runType.split('-')
+    if (baseRunType == 'runOnPush'): #Execute the files in ci/runOnPush-flavor
+        dirConfigs = os.path.join(ciDir,xArgs.runType)
         if (not os.path.isdir(dirConfigs)):
             exitFettCi(message=f"Directory <{dirConfigs}> cannot be accessed.")
         try:
