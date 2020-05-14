@@ -6,7 +6,9 @@
 --- Usage: fettED25519.py [-h] [-p GETPUBLICKEY] [-s SIGNFILE]
                       [-vf VERIFYSIGNATURE] [-k USEPUBLICKEY]
                       [-max MAXOTAFILESIZE]
+
 FETT-ED25519 (ED25519 utlity for FETT)
+
 optional arguments:
   -h, --help            show this help message and exit
   -p GETPUBLICKEY, --getPublicKey GETPUBLICKEY
