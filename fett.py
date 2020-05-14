@@ -26,7 +26,7 @@ except Exception as exc:
             raise
     except:
         print(f"(Error)~  <{exc.__class__.__name__}>: {exc}")
-    print(f"End of FETT! [Exit code -1:Fatal]")
+    print(f"(Info)~  End of FETT! [Exit code -1:Fatal]")
     exit(-1)
 
 def main (xArgs):
@@ -82,6 +82,7 @@ def main (xArgs):
     setSetting ('workDir', workDir)
     setSetting('configFile', configFile)
     setSetting('logFile', logFile)
+    setSetting('debugMode', xArgs.debug)
     # Load all configuration and setup settings
     setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)

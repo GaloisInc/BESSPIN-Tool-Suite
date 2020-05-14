@@ -15,7 +15,7 @@ from collections import Iterable
 from fett.apps.unix import database
 from fett.apps.unix import webserver
 from fett.apps.unix import voting
-from fett.apps.freertos.run import runFreeRTOSapps
+from fett.apps.freertos import freertos
 
 class commonTarget():
     def __init__(self):
@@ -114,7 +114,8 @@ class commonTarget():
     @decorate.timeWrap
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
-            return
+            self.terminateTarget(shutdownOnError=True)
+            return 
         if (getSetting('osImage') in ['debian','busybox']):
             timeout = 45
         else:
@@ -482,13 +483,15 @@ class commonTarget():
             self.sendTar(timeout=timeout)
 
         if (isEqSetting('osImage','FreeRTOS')):
-            outLog = runFreeRTOSapps(self)
+            outLog = freertos.extensiveTest(self)
         elif (isEnabled('webserver')):
             outLog = webserver.install(self)
             outLog += webserver.deploy(self)
+            outLog += webserver.deploymentTest(self)
         elif (isEnabled('database')):
             outLog = database.install(self)
             outLog += database.deploy(self)
+            outLog += database.deploymentTest(self)
         elif (isEnabled('voting')):
             outLog = voting.install(self)
             outLog += voting.deploy(self)
@@ -647,7 +650,9 @@ class commonTarget():
             if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
                 isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
                 textBack = textBack + textBack_2
-        else:
+        elif (isEqSetting('osImage','FreeRTOS')):
+            isSuccess, textBack, isTimeout, dumpIdx = [True, '', False, 0] #nothing to terminate
+        elif (not isEqSetting('osImage','FreeRTOS')):
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
         try:
             self.fTtyOut.close()

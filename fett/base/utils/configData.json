@@ -69,6 +69,18 @@
             "max" : 65535
         },
         {
+            "name" : "qemuHttpHostPort",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535
+        },
+        {
+            "name" : "qemuHttpsHostPort",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535
+        },
+        {
             "name" : "netbootPortRangeStart",
             "type" : "int",
             "min" : 1024,

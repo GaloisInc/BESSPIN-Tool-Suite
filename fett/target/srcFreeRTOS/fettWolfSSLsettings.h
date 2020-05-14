@@ -8,8 +8,10 @@ fett settings for WolfSSL -- This file is included in <WOLFSSL>/wolfssl/wolfcryp
 #define NO_FILESYSTEM
 /* For smaller implementations -- saves memory */
 #define WOLFSSL_SMALL_STACK
-/* Enable the following only during debugging development -- dumps lots of debug text */
-//#define DEBUG_WOLFSSL
+/* Dumps lots of debug text from wolfssl */
+#if (FETT_DEBUG == 1)
+    #define DEBUG_WOLFSSL
+#endif
 /* For smaller implementations -- saves memory */
 #define BENCH_EMBEDDED
 /* The value used instead of (void * heap) to mark a realloc call as edited by fett */
