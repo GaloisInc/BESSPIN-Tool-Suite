@@ -25,8 +25,8 @@ def deploymentTest(target):
     outLog += rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)[1]
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(target.ipTarget, getSetting('TFTPPortTarget')) 
-    # uploading the signed index.html file
-    fileName = 'index.html.sig'
+    # uploading the signed ota.html file
+    fileName = 'ota.html.sig'
     filePath = os.path.join(getSetting('repoDir'),'fett','apps','freertos','resources',fileName)
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
