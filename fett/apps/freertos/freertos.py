@@ -8,6 +8,11 @@ import tftpy
 
 @decorate.debugWrap
 @decorate.timeWrap
+def install (target):
+    return ''
+
+@decorate.debugWrap
+@decorate.timeWrap
 def deploy(target):
     return ''
 
