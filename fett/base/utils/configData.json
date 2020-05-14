@@ -9,6 +9,11 @@
 
     "backend" : [
         {
+            "name" : "mode",
+            "type" : "string",
+            "choices" : [ "test", "deploy" ]
+        },
+        {
             "name" : "target",
             "type" : "string",
             "choices" : [ "qemu", "aws", "fpga" ]
