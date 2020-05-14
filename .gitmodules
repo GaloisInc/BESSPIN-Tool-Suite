@@ -7,3 +7,6 @@
 [submodule "SSITH-FETT-Voting"]
 	path = SSITH-FETT-Voting
 	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Voting.git
+[submodule "SSITH-FETT-Binaries"]
+	path = SSITH-FETT-Binaries
+	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Binaries.git
