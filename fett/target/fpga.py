@@ -273,13 +273,17 @@ def programBitfile ():
     except Exception as exc:
         errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
 
+    bitfile = selectBitfile()
+    if not os.path.isfile(bitfile):
+        logAndExit(f"Bitfile <{bitfile}> does not exist.", exitCode=EXIT.Files_and_paths)
+
     printAndLog("Programming the bitfile...")
     nAttempts = 2
     for iAttempt in range(nAttempts):
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor'), '-b', selectBitfile()],stderr=gfeOut,timeout=90)
+            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor'), '-b', bitfile],stderr=gfeOut,timeout=90)
             printAndLog(str(outProgram,'utf-8').strip())
             break
         except Exception as exc:
@@ -294,16 +298,15 @@ def programBitfile ():
 @decorate.debugWrap
 def selectBitfile ():
     if getSetting('useCustomBitfile'):
-        bitfilePath = getSetting('pathToCustomBitfile')
-        if not os.path.isfile(bitfilePath):
-            logAndExit(f"Custom bitfile {bitfilePath} does not exist.", exitCode=EXIT.Configuration)
+        return getSetting('pathToCustomBitfile')
     else:
-        # Check the nix environment
         bitfileName = "soc_" + getSetting('processor') + ".bit"
-        bitfilePath = os.path.join(getSettingDict('nixEnv', ['gfeBitfileDir']), bitfileName)
-        if not os.path.isfile(bitfilePath):
-            logAndExit(f"Could not find bitfile for {getSetting('processor')} in Nix environment", exitCode=EXIT.Environment)
-    return bitfilePath
+        # If source is GFE, we check the nix environment for latest bitfiles
+        if getSetting('binarySource') == 'GFE':
+            bitfilePath = os.path.join(getSettingDict('nixEnv', ['gfeBitfileDir']), bitfileName)
+            if bitfilePath in os.environ:
+                return os.environ[bitfilePath]
+        return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'fpga', bitfileName)
 
 @decorate.debugWrap
 def checkEthAdaptorIsUp ():
