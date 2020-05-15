@@ -112,6 +112,7 @@ extern UBaseType_t xMainPriority;
 
 // ----------- http.c -------------------------------------------------------------------------------------
 extern void vHttp (void *pvParameters);
+extern void Initialize_HTTP_Assets (void);
 
 // ----------- ota.c --------------------------------------------------------------------------------------
 extern void vOta (void *pvParameters);

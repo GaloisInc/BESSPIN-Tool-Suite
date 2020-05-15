@@ -44,6 +44,12 @@ void vMain (void *pvParameters) {
     funcReturn = ff_init();
     vERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
 
+    // Initialize HTTP Assets onto the FAT Filesystem.
+    // Note - this is done here, BEFORE starting the HTTP and OTA tasks to avoid
+    // a potential race condition between HTTP and OTA both trying to update the
+    // same file(s) at the same time.
+    Initialize_HTTP_Assets();
+    
     funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vStartNetwork task.");
 
