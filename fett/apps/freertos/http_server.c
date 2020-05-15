@@ -266,7 +266,7 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
     snprintf(pxClient->pcCurrentFilename, sizeof(pxClient->pcCurrentFilename),
              "%s%s%s", pxClient->pcRootDir, pcSlash, pxClient->pcUrlData);
 
-    pxClient->pxFileHandle = ff_fopen(pxClient->pcCurrentFilename, "rb"); 
+    pxClient->pxFileHandle = ff_fopen(pxClient->pcCurrentFilename, "rb");
 
     fettPrintf(
         "Open file '%s': %s\n", pxClient->pcCurrentFilename,
