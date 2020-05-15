@@ -977,15 +977,15 @@ static const uint8_t glogo_png_data[glogo_png_size] = {
 };
 
 
-// manifest
-#define manifest_files 3
+// asset
+#define asset_files 3
 
-static size_t manifest_sizes[manifest_files] = {
+static size_t asset_sizes[asset_files] = {
   index_htm_size, ota_htm_size, glogo_png_size
 };
-static const char * const manifest_names[manifest_files] = {
+static const char * const asset_names[asset_files] = {
   index_htm_name, ota_htm_name, glogo_png_name
 };
-static const uint8_t * const manifest_data[manifest_files] = {
+static const uint8_t * const asset_data[asset_files] = {
   index_htm_data, ota_htm_data, glogo_png_data
 };

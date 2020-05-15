@@ -26,14 +26,14 @@ static const struct xSERVER_CONFIG xServerConfiguration[] =
 // out to the filesystem with the given name, size and content.
 void Initialize_HTTP_Assets (void)
 {
-    for (int i = 0; i < manifest_files; i++)
+    for (int i = 0; i < asset_files; i++)
     {
         FF_FILE *fd;
         size_t  written;
         int     r;
 
-        const char   *this_name = manifest_names[i];
-        const size_t  this_size = manifest_sizes[i];
+        const char   *this_name = asset_names[i];
+        const size_t  this_size = asset_sizes[i];
         
         fettPrintf ("(Info)~  Initialize_HTTP_Assets: Creating %s to write %ld bytes\n",
                     this_name,
@@ -42,7 +42,7 @@ void Initialize_HTTP_Assets (void)
         fd = ff_fopen (this_name, "w");
         vERROR_IF_EQ (fd, NULL, "Initialize_HTTP_Assets: open/create");
 
-        written = ff_fwrite ((void *) manifest_data[i], 1, this_size, fd);
+        written = ff_fwrite ((void *) asset_data[i], 1, this_size, fd);
         if (written != this_size)
         {
             fettPrintf ("(Error)~  Initialize_HTTP_Assets: file write failed. [written=%ld, fsize=%ld].\r\n",
