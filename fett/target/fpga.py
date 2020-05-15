@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 from fett.target.common import *
 
 import subprocess, getpass, psutil, tftpy
-import sys, signal, os, socket, time
+import sys, signal, os, socket, time, hashlib
 from pexpect import fdpexpect
 
 class fpgaTarget (commonTarget):
@@ -273,9 +273,21 @@ def programBitfile ():
     except Exception as exc:
         errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
 
-    bitfile = selectBitfile()
-    if not os.path.isfile(bitfile):
-        logAndExit(f"Bitfile <{bitfile}> does not exist.", exitCode=EXIT.Files_and_paths)
+    bitfilePath = selectBitfile()
+    if not os.path.isfile(bitfilePath):
+        logAndExit(f"Bitfile <{bitfilePath}> does not exist.", exitCode=EXIT.Files_and_paths)
+
+    try:
+        bitfile = ftOpenFile(bitfilePath, "rb")
+        md5 = hashlib.md5()
+        while True:
+            chunk = bitfile.read(65536)
+            if not chunk:
+                break
+            md5.update(chunk)
+        bitfile.close()
+    except Exception as exc:
+        logAndExit(f"Could not compute md5 for file <{bitfilePath}>.", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Programming the bitfile...")
     nAttempts = 2
@@ -283,8 +295,8 @@ def programBitfile ():
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfile],stderr=gfeOut,timeout=90)
-            printAndLog(str(outProgram,'utf-8').strip())
+            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfilePath],stderr=gfeOut,timeout=90)
+            printAndLog(f"Programmed bitfile {bitfilePath} (md5: {md5.hexdigest()})")
             break
         except Exception as exc:
             if (iAttempt < nAttempts-1):
@@ -304,7 +316,6 @@ def selectBitfile ():
         # If source is GFE, we check the nix environment for latest bitfiles
         if getSetting('binarySource') == 'GFE':
             bitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
-            print(bitfileDir)
             if bitfileDir in os.environ:
                 return os.path.join(os.environ[bitfileDir], bitfileName)
         return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'fpga', bitfileName)
