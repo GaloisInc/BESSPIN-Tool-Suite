@@ -136,16 +136,13 @@ def prepareBusybox():
 @decorate.debugWrap
 def selectImagePath():
     if isEnabled('useCustomOsImage'):
-        logging.info(f"Importing {getSetting('osImage')} image from custom path.")
         return getSetting('pathToCustomOsImage')
     else:
         if getSetting('binarySource') == 'GFE':
             nixImage = getSettingDict('nixEnv',[getSetting('osImage'),getSetting('target')])
             if (nixImage in os.environ):
-                logging.info(f"Importing {getSetting('osImage')} image from nix.")
                 return os.environ[nixImage]
         imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', getSetting('target'), f"{getSetting('osImage')}.elf")
-        logging.info(f"Importing {getSetting('osImage')} image from binary repo.")
         return imagePath
 
 @decorate.debugWrap
