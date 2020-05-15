@@ -9,6 +9,9 @@ void Http_Worker (void);
 #define configHTTP_ROOT "/"
 #define configHTTP_TIMEOUT 9000 // milliseconds
 
+// Include auto-generated data for initial state of the web-site
+#include "httpdata.h"
+
 static const struct xSERVER_CONFIG xServerConfiguration[] =
   {
     { eSERVER_HTTP,   // Server type
