@@ -49,6 +49,7 @@ def buildFreeRTOSapps():
         mkdir (appLibPath)
         cp (getSourceDir('freertos'),appLibPath,pattern='*.c')
         cp (getSourceDir('freertos'),appLibPath,pattern='*.h')
+        cp (getSourceDir('freertos/resources'),appLibPath,pattern='*.h')
 
 """ Special building for 'webserver' """
 @decorate.debugWrap
