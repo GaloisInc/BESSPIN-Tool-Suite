@@ -283,7 +283,7 @@ def programBitfile ():
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor'), '-b', bitfile],stderr=gfeOut,timeout=90)
+            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfile],stderr=gfeOut,timeout=90)
             printAndLog(str(outProgram,'utf-8').strip())
             break
         except Exception as exc:
@@ -303,9 +303,10 @@ def selectBitfile ():
         bitfileName = "soc_" + getSetting('processor') + ".bit"
         # If source is GFE, we check the nix environment for latest bitfiles
         if getSetting('binarySource') == 'GFE':
-            bitfilePath = os.path.join(getSettingDict('nixEnv', ['gfeBitfileDir']), bitfileName)
-            if bitfilePath in os.environ:
-                return os.environ[bitfilePath]
+            bitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
+            print(bitfileDir)
+            if bitfileDir in os.environ:
+                return os.path.join(os.environ[bitfileDir], bitfileName)
         return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'fpga', bitfileName)
 
 @decorate.debugWrap
