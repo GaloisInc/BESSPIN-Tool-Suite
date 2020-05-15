@@ -21,6 +21,44 @@ static const struct xSERVER_CONFIG xServerConfiguration[] =
     },
   };
 
+
+// Iterates over the data tables from httpdata.h, and writes each
+// out to the filesystem with the given name, size and content.
+void Initialize_HTTP_Assets (void)
+{
+    for (int i = 0; i < manifest_files; i++)
+    {
+        FF_FILE *fd;
+        size_t  written;
+        int     r;
+
+        const char   *this_name = manifest_names[i];
+        const size_t  this_size = manifest_sizes[i];
+        
+        fettPrintf ("(Info)~  Initialize_HTTP_Assets: Creating %s to write %ld bytes\n",
+                    this_name,
+                    this_size);
+
+        fd = ff_fopen (this_name, "w");
+        vERROR_IF_EQ (fd, NULL, "Initialize_HTTP_Assets: open/create");
+
+        written = ff_fwrite ((void *) manifest_data[i], 1, this_size, fd);
+        if (written != this_size)
+        {
+            fettPrintf ("(Error)~  Initialize_HTTP_Assets: file write failed. [written=%ld, fsize=%ld].\r\n",
+                        written,
+                        this_size);
+            // Go on to close the file anyway...
+        }
+        r = ff_fclose (fd);
+        if (r != 0)
+        {
+            fettPrintf ("(Error)~  Initialize_HTTP_Assets: file close failed\n");
+        }
+    }
+    return;
+}
+
 void Http_Worker (void)
 {
     TCPServer_t *pxTCPServer = NULL;
