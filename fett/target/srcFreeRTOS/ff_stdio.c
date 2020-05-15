@@ -9,7 +9,11 @@ int ff_init( void )
 
 FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 {
-    (void) pcMode;
+
+    if (!sdlib_open(pcFile,pcMode)) {
+        fettPrintf ("ff_fopen: Failed to open <%s>.\r\n",pcFile);
+        return NULL;
+    }
 
     FF_FILE * file;
 
