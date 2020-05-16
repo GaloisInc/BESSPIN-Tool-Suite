@@ -86,7 +86,7 @@ def prepareEnv ():
     prepareOsImage ()
 
     if (isEqSetting('target','fpga')):
-        fpga.programBifile()
+        fpga.programBitfile()
         fpga.resetEthAdaptor()
     printAndLog (f"Environment is ready.")
 
