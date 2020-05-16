@@ -318,6 +318,8 @@ def selectBitfile ():
             bitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
             if bitfileDir in os.environ:
                 return os.path.join(os.environ[bitfileDir], bitfileName)
+            else:
+                printAndLog(f"Could not find bitfile for <{getSetting('processor')}> in nix environment. Falling back to binary repo.", doPrint=False)
         return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'fpga', bitfileName)
 
 @decorate.debugWrap

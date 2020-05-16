@@ -142,6 +142,8 @@ def selectImagePath():
             nixImage = getSettingDict('nixEnv',[getSetting('osImage'),getSetting('target')])
             if (nixImage in os.environ):
                 return os.environ[nixImage]
+            else:
+                printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
         imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', getSetting('target'), f"{getSetting('osImage')}.elf")
         return imagePath
 
