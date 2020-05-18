@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: true
+          submodules: recursive
           ssh-key: ${ secrets.SSH_PRIVATE_KEY }
       - run: echo "hello world"
       - uses: ./.github/docker
