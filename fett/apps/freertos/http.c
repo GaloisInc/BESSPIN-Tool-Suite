@@ -10,7 +10,7 @@ void Http_Worker (void);
 #define configHTTP_TIMEOUT 9000 // milliseconds
 
 // Include auto-generated data for initial state of the web-site
-#include "httpdata.h"
+#include "httpAssets.h"
 
 static const struct xSERVER_CONFIG xServerConfiguration[] =
   {
