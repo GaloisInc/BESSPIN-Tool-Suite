@@ -94,7 +94,7 @@ def prepareAssets ():
 
     for xAsset in listAssets:
         #Check 8.3 compatibility -- strict check
-        if (not re.match(r"\w{1,8}\.\w{3}",sys.argv[1])):
+        if (not re.match(r"\w{1,8}\.\w{3}",xAsset)):
             logAndExit (f"prepareAssets: The SD filesystem only accepts filenames in 8.3 format. The asset <{assetsPath}/{xAsset}> does not comply.")
 
         assetsHfile.write(fett_xxd_i(os.path.join(assetsPath,xAsset)))
