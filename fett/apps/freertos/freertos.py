@@ -106,10 +106,10 @@ def prepareAssets ():
     assetsHfile.write(f"static size_t asset_sizes[asset_files] = {{\n")
     assetsHfile.write(f"\t{','.join([xAsset.replace('.','_')+'_size' for xAsset in listAssets])}\n}};\n")
     # write the asset_names
-    assetsHfile.write(f"static const char * const asset_names[asset_files] {{\n")
+    assetsHfile.write(f"static const char * const asset_names[asset_files] = {{\n")
     assetsHfile.write(f"\t{','.join([xAsset.replace('.','_')+'_name' for xAsset in listAssets])}\n}};\n")
     # write the asset_data
-    assetsHfile.write(f"static const uint8_t * const asset_data[asset_files] {{\n")
+    assetsHfile.write(f"static const uint8_t * const asset_data[asset_files] = {{\n")
     assetsHfile.write(f"\t{','.join([xAsset.replace('.','_')+'_data' for xAsset in listAssets])}\n}};\n")
 
     assetsHfile.close()
@@ -136,7 +136,8 @@ def fett_xxd_i (binPath,check83=True):
     outXxd += f"static const char * const {filePrefix}_name = \"index.htm\";\n"
     outXxd += f"static const uint8_t {filePrefix}_data[{filePrefix}_size] = {{\n"
     for xChunk in [hexFormatData[i:i+12] for i in range(0,len(hexFormatData),12)]:
-        outXxd += '\t' + ','.join(xChunk) + '\n'
-    outXxd += '};\n\n'
+        outXxd += '\t' + ','.join(xChunk) + ',\n'
+    outXxd = outXxd[:-2] #remove the last comma
+    outXxd += '\n};\n\n'
 
     return outXxd
