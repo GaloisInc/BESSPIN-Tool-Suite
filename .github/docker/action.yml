@@ -11,4 +11,4 @@ runs:
   args:
     - sh
     - -c
-    - "'${{ inputs.run }}'"
+    - ${{ inputs.run }}
