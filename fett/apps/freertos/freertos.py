@@ -133,7 +133,7 @@ def fett_xxd_i (binPath,check83=True):
     filePrefix = fileName.replace('.','_')
     outXxd = f"//{fileName}\n"
     outXxd += f"#define {filePrefix}_size {len(binData)}\n"
-    outXxd += f"static const char * const {filePrefix}_name = \"index.htm\";\n"
+    outXxd += f"static const char * const {filePrefix}_name = \"{fileName}\";\n"
     outXxd += f"static const uint8_t {filePrefix}_data[{filePrefix}_size] = {{\n"
     for xChunk in [hexFormatData[i:i+12] for i in range(0,len(hexFormatData),12)]:
         outXxd += '\t' + ','.join(xChunk) + ',\n'
