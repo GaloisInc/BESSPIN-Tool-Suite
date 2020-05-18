@@ -7,7 +7,6 @@
 
 #define OTA_FILE_MIN_SIZE (ED25519_SIG_SIZE + 1)
 #define tftpconfigMAX_FILENAME  129
-#define OTA_FILENAME  "ota.htm"
 
 uint8_t file_buffer[OTA_MAX_SIGNED_PAYLOAD_SIZE]; // SIZE set in setupEnv.json
 
