@@ -137,6 +137,16 @@
             "name" : "binaryRepoDir",
             "type" : "dirPath",
             "val" : "SSITH-FETT-Binaries"
+        },
+        {
+            "name" : "freertosAssets",
+            "type" : "dict",
+            "val" : {
+                "path" : "fett/apps/freertos/resources",
+                "homepageHtml" : "index.htm",
+                "otaHtml" : "ota.htm",
+                "homepageImage" : "glogo.png"
+            }
         }
     ] 
 }
