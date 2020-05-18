@@ -1,5 +1,9 @@
 name: fett-target:ci
 description: ""
+inputs:
+  run:
+    required: true
+    description: ""
 runs:
   using: docker
   # This works because the VM with the self hosted runner has already pulled the image.
