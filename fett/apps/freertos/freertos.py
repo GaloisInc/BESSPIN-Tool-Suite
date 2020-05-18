@@ -53,7 +53,7 @@ def deploymentTest(target):
     except Exception as exc:
         target.shutdownAndExit(f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
     """
-    outLog += f"(Host)~  {filePath} uploaded to the TFTP server."
+    outLog += f"\n(Host)~  {filePath} uploaded to the TFTP server."
     # Run to completion
     outLog += rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))[1]
     return outLog
