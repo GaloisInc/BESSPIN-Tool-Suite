@@ -38,8 +38,8 @@ def deploymentTest(target):
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(target.ipTarget, getSetting('TFTPPortTarget')) 
     # uploading the signed ota.html file
-    fileName = 'ota.html.sig'
-    filePath = os.path.join(getSetting('repoDir'),'fett','apps','freertos','resources',fileName)
+    fileName = f"{getSettingDict('freertosAssets',['otaHtml'])}.sig"
+    filePath = os.path.join(getSetting('assetsDir'),fileName)
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
