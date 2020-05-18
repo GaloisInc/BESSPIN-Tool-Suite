@@ -16,4 +16,4 @@ jobs:
           run: |
             echo "Hello world"
             echo "This is running inside the docker container"
-            cat ~/.nix-profile/manifest.nix
+            cat \~/.nix-profile/manifest.nix
