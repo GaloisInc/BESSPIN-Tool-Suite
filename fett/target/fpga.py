@@ -295,7 +295,7 @@ def programBitfile ():
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfilePath],stderr=gfeOut,timeout=90)
+            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfilePath],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
             printAndLog(f"Programmed bitfile {bitfilePath} (md5: {md5.hexdigest()})")
             break
         except Exception as exc:
