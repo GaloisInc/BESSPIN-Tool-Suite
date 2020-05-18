@@ -4,7 +4,7 @@ This is executed after loading the app on the target to execute FreeRTOS app
 """
 
 from fett.base.utils.misc import *  
-import tftpy, os
+import tftpy, os, re
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -78,9 +78,45 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 
     return retCommand
 
+
+@decorate.debugWrap
+def prepareAssets ():
+    assetsPath = os.path.join(getSetting('repoDir'),getSettingDict(freertosAssets,['path']))
+    setSetting('assetsDir',assetsPath)
+    #copy the empty header to buildDir
+    httpAssetsFilename = 'httpAssets.h'
+    cp (os.path.join(assetsPath,httpAssetsFilename),getSetting('appLibDir'))
+
+    assetsHfile = ftOpenFile (os.path.join(getSetting('appLibDir'),httpAssetsFilename),'a')
+
+    #go through the assets, and: check 8.3 compatibility + dump their data into the header
+    listAssets = getSettingDict('freertosAssets',['assets'])
+
+    for xAsset in listAssets:
+        #Check 8.3 compatibility -- strict check
+        if (not re.match(r"\w{1,8}\.\w{3}",sys.argv[1])):
+            logAndExit (f"prepareAssets: The SD filesystem only accepts filenames in 8.3 format. The asset <{assetsPath}/{xAsset}> does not comply.")
+
+        assetsHfile.write(fett_xxd_i(os.path.join(assetsPath,xAsset)))
+
+    # write the asset_files macro
+    assetsHfile.write(f"// assets\n")
+    assetsHfile.write(f"#define asset_files {len(listAssets)}\n\n")
+    # write the asset_sizes
+    assetsHfile.write(f"static size_t asset_sizes[asset_files] = {{\n")
+    assetsHfile.write(f"\t{','.join([xAsset.replace('.','_')+'_size' for xAsset in listAssets])}\n}};\n")
+    # write the asset_names
+    assetsHfile.write(f"static const char * const asset_names[asset_files] {{\n")
+    assetsHfile.write(f"\t{','.join([xAsset.replace('.','_')+'_name' for xAsset in listAssets])}\n}};\n")
+    # write the asset_data
+    assetsHfile.write(f"static const uint8_t * const asset_data[asset_files] {{\n")
+    assetsHfile.write(f"\t{','.join([xAsset.replace('.','_')+'_data' for xAsset in listAssets])}\n}};\n")
+
+    assetsHfile.close()
+
 @decorate.debugWrap
 @decorate.timeWrap
-def fett_xxd_i (binPath):
+def fett_xxd_i (binPath,check83=True):
     """
     # The input is a path to a file.
     # The output is similar to the output of `xxd -i binPath`. 
