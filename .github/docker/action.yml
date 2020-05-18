@@ -9,4 +9,6 @@ runs:
   # This works because the VM with the self hosted runner has already pulled the image.
   image: docker://artifactory.galois.com:5008/fett-target:ci
   args:
+    - sh
+    - -c
     - ${{ inputs.run }}
