@@ -10,18 +10,13 @@ int ff_init( void )
 FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 {
 
-    if (!sdlib_open(pcFile,pcMode)) {
-        fettPrintf ("ff_fopen: Failed to open <%s>.\r\n",pcFile);
-        return NULL;
-    }
-
-    FF_FILE * file;
-
     if (strlen(pcFile) > ffconfigMAX_FILENAME) {
         fettPrintf("(Error)~  ff_open: Length of filename should be <= %d.\r\n",ffconfigMAX_FILENAME);
         exitFett (1);
         return NULL;
     }
+
+    FF_FILE * file;
 
     file = pvPortMalloc(sizeof(FF_FILE));
 
@@ -29,6 +24,11 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
     if (file == NULL) {
         fettPrintf("(Error)~  ff_open: Failed to malloc.\r\n");
         exitFett (1);
+        return NULL;
+    }
+
+    if (!sdlib_open(pcFile,pcMode)) {
+        fettPrintf ("ff_fopen: Failed to open <%s>.\r\n",pcFile);
         return NULL;
     }
 
