@@ -89,7 +89,7 @@ def prepareFreeRTOS():
                 logAndExit(f"Invalid type in populating <fettUserConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
             configHfile.write(f"#define {xMacro} {intVal}\n")
         #Write the ota filename too (not list as it is unique)
-        configHfile.write(f"#define OTA_FILENAME {getSettingDict('freertosAssets',['otaHtml'])}\n")
+        configHfile.write(f"#define OTA_FILENAME \"{getSettingDict('freertosAssets',['otaHtml'])}\"\n")
         configHfile.close()
 
         #Cleaning all ".o" and ".elf" files in site
