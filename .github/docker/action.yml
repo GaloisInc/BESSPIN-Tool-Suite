@@ -1,0 +1,5 @@
+name: fett-target:ci
+description: ""
+runs:
+  using: docker
+  image: artifactory.galois.com:5008/fett-target:ci

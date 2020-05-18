@@ -1,0 +1,9 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  job1:
+    runs-on: self-hosted
+    steps:
+      - run: echo "hello world"
+      - uses: .github/docker
