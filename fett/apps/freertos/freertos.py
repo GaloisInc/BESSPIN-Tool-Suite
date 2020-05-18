@@ -78,6 +78,8 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 
     return retCommand
 
+@decorate.debugWrap
+@decorate.timeWrap
 def fett_xxd_i (binPath):
     """
     # The input is a path to a file.
