@@ -81,7 +81,7 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 
 @decorate.debugWrap
 def prepareAssets ():
-    assetsPath = os.path.join(getSetting('repoDir'),getSettingDict(freertosAssets,['path']))
+    assetsPath = os.path.join(getSetting('repoDir'),getSettingDict('freertosAssets',['path']))
     setSetting('assetsDir',assetsPath)
     #copy the empty header to buildDir
     httpAssetsFilename = 'httpAssets.h'
