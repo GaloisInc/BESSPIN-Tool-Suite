@@ -5,5 +5,8 @@ jobs:
   job1:
     runs-on: self-hosted
     steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
       - run: echo "hello world"
       - uses: ./.github/docker
