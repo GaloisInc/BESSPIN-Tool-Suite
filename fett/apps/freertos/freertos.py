@@ -4,7 +4,7 @@ This is executed after loading the app on the target to execute FreeRTOS app
 """
 
 from fett.base.utils.misc import *  
-import tftpy
+import tftpy, os
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -77,3 +77,28 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
         target.shutdownAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
 
     return retCommand
+
+def fett_xxd_i (binPath):
+    """
+    # The input is a path to a file.
+    # The output is similar to the output of `xxd -i binPath`. 
+    """
+    try:
+        fbin = open(binPath,"rb")
+        binData = fbin.read()
+        hexFormatData = [f"0x{xByte:02x}" for xByte in binData]
+        fbin.close()
+    except Exception as exc:
+        logAndExit (f"fett_xxd_i: Failed to generate a header from <{binPath}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    
+    fileName = os.path.basename(binPath)
+    filePrefix = fileName.replace('.','_')
+    outXxd = f"//{fileName}\n"
+    outXxd += f"#define {filePrefix}_size len(binData)\n"
+    outXxd += f"static const char * const {filePrefix}_name = \"index.htm\";\n"
+    outXxd += f"static const uint8_t {filePrefix}_data[{filePrefix}_size] = {{\n"
+    for xChunk in [hexFormatData[i:i+12] for i in range(0,len(hexFormatData),12)]:
+        outXxd += '\t' + ','.join(xChunk) + '\n'
+    outXxd += '};\n\n'
+
+    return outXxd
