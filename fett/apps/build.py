@@ -4,6 +4,7 @@ Building apps
 """
 
 from fett.base.utils.misc import *
+from fett.apps.freertos import freertos
 import os
 
 """ The entry function
@@ -46,10 +47,10 @@ def buildFreeRTOSapps():
         pass #For readability
     else:
         appLibPath = os.path.join(getSetting('buildDir'),'appLib')
-        mkdir (appLibPath)
+        mkdir (appLibPath,addToSettings='appLibDir')
         cp (getSourceDir('freertos'),appLibPath,pattern='*.c')
         cp (getSourceDir('freertos'),appLibPath,pattern='*.h')
-        cp (getSetting('assetsDir'),appLibPath,pattern='*.h')
+        freertos.prepareAssets()        
 
 """ Special building for 'webserver' """
 @decorate.debugWrap
