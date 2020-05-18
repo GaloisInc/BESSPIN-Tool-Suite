@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 from fett.target.common import *
 
 import subprocess, getpass, psutil, tftpy
-import sys, signal, os, socket, time
+import sys, signal, os, socket, time, hashlib
 from pexpect import fdpexpect
 
 class fpgaTarget (commonTarget):
@@ -83,7 +83,7 @@ class fpgaTarget (commonTarget):
                 break #success
             elif (iAttempt < nAttempts-1): #that was the first try
                 errorAndLog(f"boot: Failed to <setUp> FPGA for booting. Trying again...",exc=exc)
-                programBifile()
+                programBitfile()
                 isException = False #go and try again
         if (isException): 
             self.shutdownAndExit (f"boot: Failed to <setUp> FPGA for booting.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
@@ -262,7 +262,7 @@ class fpgaTarget (commonTarget):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programBifile ():
+def programBitfile ():
     printAndLog("Preparing the FPGA environment...")
     clearProcesses()
     gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
@@ -273,14 +273,30 @@ def programBifile ():
     except Exception as exc:
         errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
 
+    bitfilePath = selectBitfile()
+    if not os.path.isfile(bitfilePath):
+        logAndExit(f"Bitfile <{bitfilePath}> does not exist.", exitCode=EXIT.Files_and_paths)
+
+    try:
+        bitfile = ftOpenFile(bitfilePath, "rb")
+        md5 = hashlib.md5()
+        while True:
+            chunk = bitfile.read(65536)
+            if not chunk:
+                break
+            md5.update(chunk)
+        bitfile.close()
+    except Exception as exc:
+        logAndExit(f"Could not compute md5 for file <{bitfilePath}>.", exc=exc, exitCode=EXIT.Run)
+
     printAndLog("Programming the bitfile...")
     nAttempts = 2
     for iAttempt in range(nAttempts):
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor')],stderr=gfeOut,timeout=90)
-            printAndLog(str(outProgram,'utf-8').strip())
+            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfilePath],stderr=gfeOut,timeout=90)
+            printAndLog(f"Programmed bitfile {bitfilePath} (md5: {md5.hexdigest()})")
             break
         except Exception as exc:
             if (iAttempt < nAttempts-1):
@@ -290,6 +306,21 @@ def programBifile ():
 
     gfeOut.close()
     printAndLog("FPGA was programmed successfully!")
+
+@decorate.debugWrap
+def selectBitfile ():
+    if getSetting('useCustomBitfile'):
+        return getSetting('pathToCustomBitfile')
+    else:
+        bitfileName = "soc_" + getSetting('processor') + ".bit"
+        # If source is GFE, we check the nix environment for latest bitfiles
+        if getSetting('binarySource') == 'GFE':
+            bitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
+            if bitfileDir in os.environ:
+                return os.path.join(os.environ[bitfileDir], bitfileName)
+            else:
+                printAndLog(f"Could not find bitfile for <{getSetting('processor')}> in nix environment. Falling back to binary repo.", doPrint=False)
+        return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'fpga', bitfileName)
 
 @decorate.debugWrap
 def checkEthAdaptorIsUp ():

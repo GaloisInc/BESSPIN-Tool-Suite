@@ -67,11 +67,12 @@ def buildWebserver(tarName):
 
         tarFiles = ["nginx", "conf", "html", "certs", "keys"]
 
+        runtimeFilesDir = os.path.join(getAppDir('webserver'), getSetting('osImage'))
         if getSetting('osImage') == 'debian':
-            cpFilesToBuildDir (getBinDir('webserver'), pattern="nginx.service")
+            cpFilesToBuildDir (runtimeFilesDir, pattern="nginx.service")
             tarFiles += ["nginx.service"]
         elif getSetting('osImage') == 'FreeBSD':
-            cpFilesToBuildDir (getBinDir('webserver'), pattern="rcfile")
+            cpFilesToBuildDir (runtimeFilesDir, pattern="rcfile")
             tarFiles += ["rcfile"]
         else:
             logAndExit (f"Installing nginx is not supported on <{getSetting('osImage')}>",
@@ -125,7 +126,7 @@ def getAppDir(app):
 
 @decorate.debugWrap
 def getBinDir(app):
-    return os.path.join(getAppDir(app),getSetting('osImage'))
+    return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'appsBinaries', app, getSetting('osImage'))
 
 @decorate.debugWrap
 def cpFilesToBuildDir (sourceDir, pattern=None):
