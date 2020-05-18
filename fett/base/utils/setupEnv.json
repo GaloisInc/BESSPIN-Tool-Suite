@@ -142,10 +142,9 @@
             "name" : "freertosAssets",
             "type" : "dict",
             "val" : {
-                "path" : "fett/apps/freertos/resources",
-                "homepageHtml" : "index.htm",
+                "path" : "fett/apps/freertos/assets",
                 "otaHtml" : "ota.htm",
-                "homepageImage" : "glogo.png"
+                "assets" : ["index.htm", "ota.htm", "glogo.png"]
             }
         }
     ] 
