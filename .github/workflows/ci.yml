@@ -6,4 +6,4 @@ jobs:
     runs-on: self-hosted
     steps:
       - run: echo "hello world"
-      - uses: .github/docker
+      - uses: ./.github/docker
