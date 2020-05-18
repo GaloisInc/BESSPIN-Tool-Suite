@@ -12,3 +12,8 @@ jobs:
           ssh-strict: false
       - run: echo "hello world"
       - uses: ./.github/docker
+        with:
+          run: |
+            echo "Hello world"
+            echo "This is running inside the docker container"
+            cat ~/.nix-profile/manifest.nix
