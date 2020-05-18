@@ -15,3 +15,13 @@ def install (target):
 @decorate.timeWrap
 def deploy (target):
     return ''
+
+@decorate.debugWrap
+@decorate.timeWrap
+def deploymentTest (target):
+    return ''
+
+@decorate.debugWrap
+@decorate.timeWrap
+def extensiveTest (target):
+    return ''

@@ -9,7 +9,12 @@ int ff_init( void )
 
 FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 {
-    (void) pcMode;
+
+    if (strlen(pcFile) > ffconfigMAX_FILENAME) {
+        fettPrintf("(Error)~  ff_open: Length of filename should be <= %d.\r\n",ffconfigMAX_FILENAME);
+        exitFett (1);
+        return NULL;
+    }
 
     FF_FILE * file;
 
@@ -22,15 +27,17 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
         return NULL;
     }
 
+    if (!sdlib_open(pcFile,pcMode)) {
+        fettPrintf ("ff_fopen: Failed to open <%s>.\r\n",pcFile);
+        return NULL;
+    }
+
     // Store the file size
     file->ulFileSize = sdlib_size(pcFile);
 
     // Store the filename in the FILE struct for later access
     // as SDLib uses file names instead of file handles
-    strncpy(file->filename,pcFile,ffconfigMAX_FILENAME);
-
-    // Null terminate the file name
-    file->filename[ffconfigMAX_FILENAME] = 0;
+    strcpy(file->filename,pcFile);
 
     return file;
 }
