@@ -17,6 +17,6 @@ jobs:
             . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
             export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
             . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
-            eval \$(ssh-agent -s)
+            eval $(ssh-agent -s)
             ssh-add <(echo "${{ secrets.SSH_PRIVATE_KEY }}")
             nix-shell --command "./ci/fett-ci.py runOnPush push-${{ github.sha }}"
