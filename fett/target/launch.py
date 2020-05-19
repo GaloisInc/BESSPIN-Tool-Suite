@@ -50,14 +50,13 @@ def prepareEnv ():
     # config sanity checks for building apps
     if (getSetting('osImage') in ['FreeRTOS', 'debian', 'FreeBSD']):
         setSetting('runApp',True)
+        buildApps ()
     elif (isEqSetting('osImage','busybox')):
         printAndLog(f"<busybox> is only used for smoke testing the target/network. No applications are supported.")
         setSetting('runApp',False)
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
     
-    buildApps ()
-
     prepareOsImage ()
 
     if (isEqSetting('target','fpga')):
