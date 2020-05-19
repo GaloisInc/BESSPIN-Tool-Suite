@@ -38,6 +38,16 @@
             "val" : 1234
         },
         {
+            "name" : "fpgaNetMaskTarget",
+            "type" : "ipAddress",
+            "val" : "255.255.255.0"
+        },
+        {
+            "name" : "fpgaMacAddrTarget",
+            "type" : "macAddress", 
+            "val" : "00.0a.35.04.db.77"
+        },
+        {
             "name" : "fpgaEthAdaptorName",
             "type" : "string",
             "val" : "eth0fpga"
