@@ -121,7 +121,7 @@
         {
             "name" : "tarballName",
             "type" : "string",
-            "val" : "filesToSend.tar.gz"
+            "val" : "filesToSend.tar"
         },
         {
             "name" : "FreeRTOSforkName",

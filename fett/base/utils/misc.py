@@ -133,7 +133,7 @@ def tar (tarFileName, filesList=[]):
           trees
     """
     try:
-        tarFile = tarfile.open(name=tarFileName, mode="x:gz")
+        tarFile = tarfile.open(name=tarFileName, mode="a:")
     except Exception as e:
         logAndExit (f"tar: error creating {tarFileName}", exc=e, exitCode=EXIT.Files_and_paths)
     for f in filesList:
