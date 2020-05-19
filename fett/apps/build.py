@@ -25,12 +25,12 @@ def buildApps ():
 
     if (isEqSetting('osImage','FreeRTOS')):
         buildFreeRTOSapps()
-    elif (isEnabled('webserver')):
+    elif (getSetting('osImage') in ['debian', 'FreeBSD']):
         buildWebserver(tarName)
-    elif (isEnabled('database')):
         buildDatabase(tarName)
-    elif (isEnabled('voting')):
-        buildVoting(tarName)
+        #buildVoting(tarName) #--to be implemented
+    else:
+        logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
 """
 - FreeRTOS, building an app means copying the C files/headers/.mk env files to the workDir to prepare for os build.
