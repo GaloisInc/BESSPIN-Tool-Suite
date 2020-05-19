@@ -14,8 +14,7 @@ jobs:
       - uses: ./.github/docker
         with:
           run: |
-            echo user is $USER
-            echo home is $HOME
+            export HOME=/home/besspinuser
             export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
             . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
             eval $(ssh-agent -s)

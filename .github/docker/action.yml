@@ -11,5 +11,4 @@ runs:
   args:
     - bash
     - -c
-    - export HOME=/home/besspinuser
     - ${{ inputs.run }}
