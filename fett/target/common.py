@@ -389,14 +389,14 @@ class commonTarget():
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
             try:
-                retExpect = scpProcess.expect([f"Password for root@[\w-]+\:","\)\?"],timeout=timeout)
+                retExpect = scpProcess.expect(["Password for root@[\w-]+\:","root@[\w\-\.]+\'s password\:","\)\?"],timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
-                if (retExpect == 1): #needs a yes
+                if (retExpect == 2): #needs a yes
                     scpProcess.sendline("yes")
                     retExpect = scpProcess.expect(f"Password for root@[\w-]+\:",timeout=timeout)
-                if (retExpect == 0):
+                if (retExpect in [0,1]): #password prompt
                     scpProcess.sendline(self.rootPassword)
                 else:
                     return returnFalse (f"Failed to authenticate the scp process.")
