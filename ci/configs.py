@@ -74,8 +74,14 @@ freertosDevPR = freertosDefaults.union({
 })
 
 appSets = {
-    'runPeriodic' : {'freertos':freertosAllTargets, 'webserver':webserverAllTargets, 'database':databaseAllTargets},
-    'runDevPR' : {'freertos':freertosDevPR, 'webserver':webserverDevPR, 'database':databaseDevPR},
+    'runPeriodic' : {
+        'freertos' : {'freertos':freertosAllTargets},
+        'unix' : {'webserver':webserverAllTargets, 'database':databaseAllTargets}
+    },
+    'runDevPR' : {
+        'freertos' : {'freertos':freertosDevPR},
+        'unix' : {'webserver':webserverDevPR, 'database':databaseDevPR}
+    }
 }
 appSets['runRelease'] = appSets['runPeriodic']
 

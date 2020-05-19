@@ -5,7 +5,7 @@
 """
 
 try:
-    import sys, os, glob, shutil, time
+    import sys, os, glob, shutil, time, itertools
     import subprocess, argparse, signal, configparser, copy
     from utils import exitFettCi, exitOnInterrupt, generateAllConfigs, generateConfigFile, prepareArtifact
 except Exception as exc:
@@ -41,15 +41,19 @@ def main (xArgs):
     nodeIndex = 0 if (not xArgs.nodeIndex) else (xArgs.nodeIndex-1) #$CI_NODE_INDEX starts from 1
 
     # Check runType
-    if (xArgs.runType not in ['runOnPush', 'runDevPR', 'runPeriodic', 'runRelease']):
-        exitFettCi(message="Invalid runType argument. Has to be in [runOnPush, runDevPR, runPeriodic, runRelease].")
+    baseRunTypes = ['runOnPush', 'runDevPR', 'runPeriodic', 'runRelease']
+    flavors = ['unix', 'freertos'] #to add an `aws` flavor at some point
+    listRunTypes = ['-'.join(pair) for pair in itertools.product(baseRunTypes, flavors)]
+    if (xArgs.runType not in listRunTypes):
+        exitFettCi(message=f"Invalid runType argument. Has to be in {listRunTypes}.")
 
     if (xArgs.testOnly):
         print("(Debug)~  FETT-CI: TestMode: Dumping some useful info...")
 
     # Check number of configs + get the right config file
-    if (xArgs.runType == 'runOnPush'): #Execute the files in ci/runOnPush
-        dirConfigs = os.path.join(ciDir,'runOnPush')
+    baseRunType, flavor = xArgs.runType.split('-')
+    if (baseRunType == 'runOnPush'): #Execute the files in ci/runOnPush-flavor
+        dirConfigs = os.path.join(ciDir,xArgs.runType)
         if (not os.path.isdir(dirConfigs)):
             exitFettCi(message=f"Directory <{dirConfigs}> cannot be accessed.")
         try:
@@ -92,6 +96,8 @@ def main (xArgs):
     nErrs = 0 
     for xConfig in listConfigs:
         exitCode = 0 #success
+        print(f"(Info)~  FETT-CI: Running <{os.path.basename(xConfig)}>.")
+        sys.stdout.flush()
         try:
             subprocess.run([fettPyPath,'-c',xConfig,'-d'], stdout=sys.stdout, stderr=sys.stderr, timeout=jobTimeout, check=True)
         except subprocess.CalledProcessError as exc:
