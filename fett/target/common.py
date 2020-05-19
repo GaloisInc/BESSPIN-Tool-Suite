@@ -482,23 +482,29 @@ class commonTarget():
             #send any needed files to target
             self.sendTar(timeout=timeout)
 
+        # assign modules
         if (isEqSetting('osImage','FreeRTOS')):
-            appModule = freertos
-        elif (isEnabled('webserver')):
-            appModule = webserver
-        elif (isEnabled('database')):
-            appModule = database
-        elif (isEnabled('voting')):
-            appModule = voting
+            appModules = [freertos]
+        elif (getSetting('osImage') in ['debian', 'FreeBSD']):
+            appModules = [webserver, database, voting]
         else:
-            self.shutdownAndExit(f"<runApp> is executed with an undefined app.",exitCode=EXIT.Dev_Bug)
+            self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
-        outLog = appModule.install(self)
+        outLog = '' #This will be copied to `app.out`
+        # Install
+        for appModule in appModules:
+            outLog += appModule.install(self)
+
+        # Test and Deploy    
         if (isEqSetting('mode','deploy')):
-            outLog += appModule.deploymentTest(self)
-            outLog += appModule.deploy(self)
+            for appModule in appModules:
+                outLog += appModule.deploymentTest(self)
+            for appModule in appModules: 
+                #TODO: This should be threads and only collect the message once. Will be done in #247.
+                outLog += appModule.deploy(self)
         elif (isEqSetting('mode','test')):
-            outLog += appModule.extensiveTest(self)
+            for appModule in appModules:
+                outLog += appModule.extensiveTest(self)
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('mode')}> mode.",exitCode=EXIT.Implementation)
 
