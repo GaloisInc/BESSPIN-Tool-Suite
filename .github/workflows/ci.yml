@@ -4,6 +4,7 @@ on: [push, pull_request]
 jobs:
   Push:
     runs-on: self-hosted
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v2
         with:
