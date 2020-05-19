@@ -89,7 +89,6 @@ class qemuTarget (commonTarget):
                 self.shutdownAndExit(f"boot: Failed to spwan the qemy process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
         else:
             self.shutdownAndExit(f"boot: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
-        
         return
 
     @decorate.debugWrap
@@ -121,7 +120,7 @@ class qemuTarget (commonTarget):
         self.inInteractMode = True
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
-        printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
+        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         if (self.userCreated):
             printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
             printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))

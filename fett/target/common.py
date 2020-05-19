@@ -389,14 +389,14 @@ class commonTarget():
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
             try:
-                retExpect = scpProcess.expect([f"Password for root@[\w-]+\:","\)\?"],timeout=timeout)
+                retExpect = scpProcess.expect(["Password for root@[\w-]+\:","root@[\w\-\.]+\'s password\:","\)\?"],timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
-                if (retExpect == 1): #needs a yes
+                if (retExpect == 2): #needs a yes
                     scpProcess.sendline("yes")
                     retExpect = scpProcess.expect(f"Password for root@[\w-]+\:",timeout=timeout)
-                if (retExpect == 0):
+                if (retExpect in [0,1]): #password prompt
                     scpProcess.sendline(self.rootPassword)
                 else:
                     return returnFalse (f"Failed to authenticate the scp process.")
@@ -710,16 +710,16 @@ class commonTarget():
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
         self.isSshConn = True
         self.process = self.sshProcess
-        passwordPrompt = f"Password for {userName}@[\w\-\.]+\:" if isEqSetting('osImage', 'FreeBSD') else f"{userName}@[\w\-\.]+\'s password\:"
-        blockedIpResponse = "Connection closed by remote host" if isEqSetting('osImage', 'FreeBSD') else "Connection reset by peer"
-        retExpect = self.expectFromTarget([passwordPrompt,'\)\?',blockedIpResponse,pexpect.EOF],"openSshConn",timeout=timeout,shutdownOnError=False)
-        if (retExpect[2]==3): #Failed
+        passwordPrompt = [f"Password for {userName}@[\w\-\.]+\:", f"{userName}@[\w\-\.]+\'s password\:"]
+        blockedIpResponse = ["Connection closed by remote host", "Connection reset by peer"]
+        retExpect = self.expectFromTarget(passwordPrompt + blockedIpResponse + ['\)\?',pexpect.EOF],"openSshConn",timeout=timeout,shutdownOnError=False)
+        if (retExpect[2]==5): #Failed
             return returnFail(f"openSshConn: Failed to spawn the ssh process.")
         elif (retExpect[1]): #Failed
             return returnFail(f"openSshConn: Spawning the ssh process timed out.")
-        elif (retExpect[2]==1): # asking for yes/no for new host
+        elif (retExpect[2]==4): # asking for yes/no for new host
             self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
-        elif (retExpect[2]==2): #the ip was blocked
+        elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
         self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries

@@ -208,7 +208,7 @@ class fpgaTarget (commonTarget):
         self.inInteractMode = True
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
-        printAndLog (f"Entering pseudo-interactive mode. Enter \"--exit + Enter\" to exit.")
+        printAndLog (f"Entering pseudo-interactive mode. Root password: \'{self.rootPassword}\'. Enter \"--exit + Enter\" to exit.")
         printAndLog ("Please use \"--ctrlc\" for interrupts. (Ctrl-C would exit the whole FETT tool).")
         if (self.userCreated):
             printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
