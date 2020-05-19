@@ -462,16 +462,16 @@ class commonTarget():
         return self.runCommand(f"ls {pathToFile}/{xFile}",suppressErrors=True,expectedContents=xFile,erroneousContents=['ls:', 'cannot access', 'No such file or directory'],timeout=timeout,shutdownOnError=shutdownOnError)[0]
 
     @decorate.debugWrap
-    def sendTar(self,timeout=15): #send filesToSend.tar.gz to target
+    def sendTar(self,timeout=15): #send tarball to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
         self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
         #---untar
         if (isEqSetting('osImage','debian')):
-            self.runCommand("tar xvf filesToSend.tar.gz --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
+            self.runCommand(f"tar xvf {getSetting('tarballName')} --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
         elif (isEqSetting('osImage','FreeBSD')):
-            self.runCommand("tar xvf filesToSend.tar.gz -m",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
-        self.runCommand("rm filesToSend.tar.gz",timeout=timeout) #to save space
+            self.runCommand(f"tar xvf {getSetting('tarballName')} -m",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
+        self.runCommand(f"rm {getSetting('tarballName')}",timeout=timeout) #to save space
         printAndLog ("sendTar: Sending successful!")
 
     @decorate.debugWrap
