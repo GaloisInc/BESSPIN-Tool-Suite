@@ -110,7 +110,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                     val = xConfig.getboolean(xSection,iPar['name'])
             except Exception as exc:
                 logAndExit(f"{fileName}: <{iPar['name']}> has to be boolean in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
-        elif ( iPar['type'] in ['str', 'string', 'filePath', 'dirPath', 'ipAddress', 'dict']): 
+        elif ( iPar['type'] in ['str', 'string', 'filePath', 'dirPath', 'ipAddress', 'dict', 'macAddress']): 
             if (setup):
                 val = iPar['val']
             else:
@@ -144,6 +144,10 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 ipMatch = re.match(r"(\d{1,3}\.){3}\d{1,3}$",val)
                 if (ipMatch is None):
                     logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid IP address in section [{xSection}].",exitCode=EXIT.Configuration)
+            elif (iPar['type'] == 'macAddress'):
+                macAddressMatch = re.match(r"([0-9a-fA-F]{2}\:){5}[0-9a-fA-F]{2}$",val)
+                if (macAddressMatch is None):
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid MAC address in section [{xSection}].",exitCode=EXIT.Configuration)
 
         else:
             logAndExit("Json info file: Unknown type <%s> for <%s> in section [%s]." %(iPar['type'],iPar['name'],xSection),exitCode=EXIT.Configuration)
