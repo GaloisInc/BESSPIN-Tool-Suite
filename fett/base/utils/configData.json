@@ -114,18 +114,6 @@
         {
             "name" : "buildApps",
             "type" : "boolean"
-        },
-        {
-            "name" : "webserver",
-            "type" : "boolean"
-        },
-        {
-            "name" : "database",
-            "type" : "boolean"
-        },
-        {
-            "name" : "voting",
-            "type" : "boolean"
         }
     ],
 
