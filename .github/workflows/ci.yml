@@ -12,4 +12,5 @@ jobs:
       - run: echo "hello world"
       - uses: ./.github/docker
         with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           run: nix-shell --command "./ci/fett-ci.py runOnPush push-${{ github.sha }}"

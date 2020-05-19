@@ -1,6 +1,9 @@
 name: fett-target:ci
 description: ""
 inputs:
+  ssh-key:
+    required: true
+    description: ""
   run:
     required: true
     description: ""
@@ -17,6 +20,6 @@ runs:
       export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
       . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
       eval $(ssh-agent -s)
-      ssh-add <(echo "${{ secrets.SSH_PRIVATE_KEY }}")
+      ssh-add <(echo "${{ inputs.ssh-key }}")
       . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
       ${{ inputs.run }}
