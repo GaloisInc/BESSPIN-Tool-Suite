@@ -338,26 +338,20 @@ class commonTarget():
         isSuccess = not wasTimeout
         if (expectedContents is not None):
             if (isinstance(expectedContents,str)): #only one string
-                if (expectedContents not in textBack):
+                expectedContents = [expectedContents]
+            for content in expectedContents:
+                if (content not in textBack):
                     isSuccess = False
-                    errorAndLog (f"runCommand: Missing <{expectedContents}> while executing <{command}>.",doPrint=not suppressErrors)
-            else: #It is a list
-                for content in expectedContents:
-                    if (content not in textBack):
-                        isSuccess = False
-                        errorAndLog (f"runCommand: Missing <{content}> while executing <{command}>.",doPrint=not suppressErrors)
-                        break #One error per command is enough
+                    errorAndLog (f"runCommand: Missing <{content}> while executing <{command}>.",doPrint=not suppressErrors)
+                    break #One error per command is enough
         if (erroneousContents is not None):
             if (isinstance(erroneousContents,str)): #only one string
-                if (erroneousContents in textBack):
+                erroneousContents = [erroneousContents]
+            for content in erroneousContents:
+                if (content in textBack):
                     isSuccess = False
-                    errorAndLog (f"runCommand: Encountered <{erroneousContents}> while executing <{command}>.",doPrint=not suppressErrors)
-            else:
-                for content in erroneousContents:
-                    if (content in textBack):
-                        isSuccess = False
-                        errorAndLog (f"runCommand: Encountered <{content}> while executing <{command}>.",doPrint=not suppressErrors)
-                        break #One error per command is enough
+                    errorAndLog (f"runCommand: Encountered <{content}> while executing <{command}>.",doPrint=not suppressErrors)
+                    break #One error per command is enough
         if (tee):
             try:
                 tee.write(textBack)
