@@ -4,12 +4,12 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-  Periodic:
+  Periodic-unix:
     runs-on: self-hosted
     strategy:
       matrix:
-        index: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
-
+        os: [unix]
+        index: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -18,20 +18,19 @@ jobs:
       - uses: ./.github/docker
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runPeriodic periodic-${{ github.sha }} -i ${{ matrix.index }} -N 17"
+          run: nix-shell --command "./ci/fett-ci.py runPeriodic-${{ matrix.os }} periodic-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 16"
       - if: always()
         uses: actions/upload-artifact@v2
         with:
           name: periodic-${{ github.sha }}
-          path: "*-periodic-${{ github.sha }}"
+          path: "*-periodic-${{ matrix.os}}-${{ github.sha }}"
 
-  Release:
-    if: true == false
+  Periodic-freertos:
     runs-on: self-hosted
     strategy:
       matrix:
-        index: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
-
+        os: [freertos]
+        index: [1]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -40,9 +39,51 @@ jobs:
       - uses: ./.github/docker
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runRelease release-${{ github.sha }} -i ${{ matrix.index }} -N 17"
+          run: nix-shell --command "./ci/fett-ci.py runPeriodic-${{ matrix.os }} periodic-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 1"
+      - if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: periodic-${{ github.sha }}
+          path: "*-periodic-${{ matrix.os }}-${{ github.sha }}"
+
+  Release-unix:
+    if: true == false
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        index: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - uses: ./.github/docker
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          run: nix-shell --command "./ci/fett-ci.py runRelease-${{ matrix.os }} release-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 16"
       - if: always()
         uses: actions/upload-artifact@v2
         with:
           name: release-${{ github.sha }}
-          path: "*-release-${{ github.sha }}"
+          path: "*-release-${{ matrix.os }}-${{ github.sha }}"
+
+  Release-freertos:
+    if: true == false
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        index: [1]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - uses: ./.github/docker
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          run: nix-shell --command "./ci/fett-ci.py runRelease-${{ matrix.os }} release-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 1"
+      - if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: release-${{ github.sha }}
+          path: "*-release-${{ matrix.os }}-${{ github.sha }}"
