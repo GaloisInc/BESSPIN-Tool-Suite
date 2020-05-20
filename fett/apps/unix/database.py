@@ -39,13 +39,14 @@ def extensiveTest(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def deploymentTest(target):
-    printAndLog("Testing sqlite...",tee=getSetting('appLog'))
+    appLog = getSetting('appLog')
+    printAndLog("Testing sqlite...",tee=appLog)
     sqlite_bin = '/usr/bin/sqlite'
     xDb = 'test.db'
     tableName = 'food'
     foodstuff = 'Pancakes'
     target.switchUser()
-    appLog = getSetting('appLog')
+    
 
     def create_database_and_table(xTable=tableName):
         printAndLog(f"Test[create_database_and_table]: Create sqlite {xDb} database and {xTable} table", doPrint=False,tee=getSetting('appLog'))
@@ -140,5 +141,5 @@ def deploymentTest(target):
     drop_table(xTable='food1')
     drop_table()
     drop_database()
-    printAndLog("Sqlite tests OK!",tee=getSetting('appLog'))
+    printAndLog("Sqlite tests OK!",tee=appLog)
     return
