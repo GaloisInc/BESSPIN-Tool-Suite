@@ -25,10 +25,14 @@ try {
   const docker = child_process.spawn(
     "docker",
     [
-      `run --rm --name ${image.replace(/[^a-z0-9]+/gi, "")}`,
-      `--privileged=true --network=host`,
-      `--workdir /github/workspace`,
-      `${env} --entrypoint ".github/docker/entrypoint.sh"`,
+      "run",
+      "--rm",
+      `--name ${image.replace(/[^a-z0-9]+/gi, "")}`,
+      "--privileged=true",
+      "--network=host",
+      "--workdir /github/workspace",
+      env,
+      '--entrypoint ".github/docker/entrypoint.sh"',
       '-v "/var/run/docker.sock":"/var/run/docker.sock" ',
       `-v "${work}/_temp/_github_home":"/github/home"        `,
       `-v "${work}/_temp/_github_workflow":"/github/workflow" `,
