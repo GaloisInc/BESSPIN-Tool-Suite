@@ -302,9 +302,29 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=60,suppressErrors=False,expectExact=False):
-        #expected contents: any one of them not found, gives error [one string or list]
-        #erroneous contensts: any one of them gives error [one string or list]
+    def runCommand (self,command,endsWith=None,expectedContents=None,
+                    erroneousContents=None,shutdownOnError=True,timeout=60,
+                    suppressErrors=False,expectExact=False,tee=None):
+        """
+        " runCommand: Sends `command` to the target, and wait for a reply.
+        "   ARGUMENTS:
+        "   ----------
+        "   command: The string to send to target using `sendToTarget`. If FreeRTOS, we do nothing with it.
+        "   endsWith: String/regex or list of strings/regex. The function returns when either is received from target.
+        "   expectedContents: string or list of strings. If either is not found in the target's response --> error
+        "   erroneousContents: string or list of strings. If either is found in the target's response --> error
+        "   shutdownOnError: Boolean. Whether to return or shutdown in case of error (timeout or contents related error)
+        "   timeout: how long to wait for endsWith before timing out.
+        "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
+        "   expectExact: Matching the endsWith should be by regex or exact match. As defined in pexpect.
+        "   tee: A file object to write the text output to. Has to be a valid file object to write. 
+        "   RETURNS:
+        "   --------
+        "   A list: [isSuccess  : "Boolean. True on no-errors.",
+        "            textBack   : "A string containing all text returned back from the target after sending the command.",
+        "            wasTimeout : "Boolean. True if timed-out waiting for endsWith.",
+        "            idxEndsWith: The index of the endsWith received. If endsWith was a string, this would be 0. -1 on time-out.
+        """
         if (isEnabled('isUnix')):
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
