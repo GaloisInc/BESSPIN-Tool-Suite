@@ -47,7 +47,7 @@ jobs:
           path: "*-periodic-${{ matrix.os }}-${{ github.sha }}"
 
   Release-unix:
-    if: true == false
+    if: "!always()"
     runs-on: self-hosted
     strategy:
       matrix:
@@ -68,7 +68,7 @@ jobs:
           path: "*-release-${{ matrix.os }}-${{ github.sha }}"
 
   Release-freertos:
-    if: true == false
+    if: "!always()"
     runs-on: self-hosted
     strategy:
       matrix:
