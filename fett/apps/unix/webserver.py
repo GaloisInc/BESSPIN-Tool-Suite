@@ -11,7 +11,7 @@ from fett.base.utils.misc import *
 def install (target):
     # target is a fett target object
     appLog = getSetting('appLog')
-    printAndLog("Installing nginx...")
+    printAndLog("Installing nginx...",tee=appLog)
     target.runCommand("echo \"Installing nginx...\"",tee=appLog)
     target.runCommand("mkdir -p /usr/local/sbin",tee=appLog)
     target.runCommand("install nginx /usr/local/sbin/nginx", erroneousContents="install:",tee=appLog)
@@ -38,19 +38,19 @@ def install (target):
         target.shutdownAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
                      exitCode=EXIT.Dev_Bug)
 
-    printAndLog("Nginx installed successfully.")
+    printAndLog("Nginx installed successfully.",tee=appLog)
     return
 
 @decorate.debugWrap
 @decorate.timeWrap
 def deploy (target):
-    printAndLog ("Deployment successful. Target is ready.")
+    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
     
     #Here we should send a message to the portal
 
     #Here we should wait for a termination signal from the portal
     
-    printAndLog("Termination signal received. Preparing to exit...")
+    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
     return
 
 @decorate.debugWrap
@@ -64,8 +64,7 @@ def curlTest(target, url, extra=[], http2=False):
     except Exception as exc:
         errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
         return (None,None)
-    printAndLog(f"curl {url} extra={extra} http2={http2} returned:\n{out}", doPrint=False)
-    getSetting('appLog').write(f"curl {url} extra={extra} http2={http2} returned:\n{out}\n")
+    printAndLog(f"curl {url} extra={extra} http2={http2} returned:\n{out}", doPrint=False,tee=getSetting('appLog'))
     return (version, code)
 
 @decorate.debugWrap
@@ -85,13 +84,13 @@ def deploymentTest(target):
     guidance as to what tests we should run here.
 
     """
-    printAndLog("Testing nginx...")
+    printAndLog("Testing nginx...",tee=getSetting('appLog'))
     targetIP = target.ipTarget
     httpPort = target.httpPortTarget
     httpsPort = target.httpsPortTarget
 
     # 0. Fetch index page
-    printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False)
+    printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.html")
     if (not code):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
@@ -99,7 +98,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 1. Nginx must be compiled with ssl support
-    printAndLog("Test[HTTPS]: Fetching index via HTTPS", doPrint=False)
+    printAndLog("Test[HTTPS]: Fetching index via HTTPS", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html")
     if (not code):
         target.shutdownAndExit (f"Test[HTTPS]: Failed! [Fatal]",exitCode=EXIT.Run)
@@ -107,7 +106,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTPS]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 2. HTTP2 support
-    printAndLog("Test[HTTP2]: Fetching index via HTTP2", doPrint=False)
+    printAndLog("Test[HTTP2]: Fetching index via HTTP2", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html", http2=True)
     if (not code):
         target.shutdownAndExit (f"Test[HTTP2]: Failed! [Fatal]",exitCode=EXIT.Run)
@@ -117,7 +116,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTP2]: Failed! [Got wrong version <{version}>].",exitCode=EXIT.Run)
 
     # 3. Error redirect is working
-    printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False)
+    printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html")
     if (not code):
         target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Fatal]",exitCode=EXIT.Run)
@@ -125,7 +124,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 4. "Hidden" resource
-    printAndLog("Test[Private Resource]: Fetching private resource from hidden server", doPrint=False)
+    printAndLog("Test[Private Resource]: Fetching private resource from hidden server", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html",
                                 extra=["-H", "Host: secret_server"])
     if (not code):
@@ -133,6 +132,6 @@ def deploymentTest(target):
     elif code != '200':
         target.shutdownAndExit (f"Test[Private Resource]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
-    printAndLog("Nginx tests OK!")
+    printAndLog("Nginx tests OK!",tee=getSetting('appLog'))
 
     return
