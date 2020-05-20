@@ -97,11 +97,17 @@ def prepareFreeRTOS():
         listConfigIpParams = [('fpgaMacAddrTarget','configMAC_ADDR', hex), ('fpgaIpTarget','configIP_ADDR', int),
                               ('fpgaIpHost','configGATEWAY_ADDR', int), ('fpgaNetMaskTarget','configNET_MASK', int)]
 
+        def mapVal(val,xType):
+            if (xType==int):
+                return int(val)
+            elif (xType==hex):
+                return "0x{:02X}".format(int(val,16))
+        
         configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettFreeRTOSIPConfig.h'),'a')
         for xSetting,xMacro,xType in listConfigIpParams:
             for iPart,xPart in enumerate(re.split(r'[\.\:]',getSetting(xSetting))):
                 try:
-                    configIpHfile.write(f"#define {xMacro}{iPart} {xType(xPart)}\n")
+                    configIpHfile.write(f"#define {xMacro}{iPart} {mapVal(xPart,xType)}\n")
                 except Exception as exc:
                     logAndExit(f"Failed to populate <fettFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
         configIpHfile.close()
