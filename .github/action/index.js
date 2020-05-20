@@ -25,7 +25,7 @@ try {
   const docker = child_process.spawn(
     "docker",
     [
-      `run --rm --name ${image.replace(/[^a-z0-9]+/gi, " ")}`,
+      `run --rm --name ${image.replace(/[^a-z0-9]+/gi, "")}`,
       `--privileged=true --network=host`,
       `--workdir /github/workspace`,
       `${env} --entrypoint ".github/docker/entrypoint.sh"`,
