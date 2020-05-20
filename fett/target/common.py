@@ -512,22 +512,26 @@ class commonTarget():
 
         # The appLog will be the file object flying around for logging into app.out
         appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
-        appLog.write('-'*20, "<FETT-APPS-OUT>", '-'*20, '\n\n')
+        appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
         setSetting("appLog",appLog)
         # Install
         for appModule in appModules:
             appModule.install(self)
+            appLog.flush()
 
         # Test and Deploy    
         if (isEqSetting('mode','deploy')):
             for appModule in appModules:
                 appModule.deploymentTest(self)
+                appLog.flush()
             for appModule in appModules: 
                 #TODO: This should be threads and only collect the message once. Will be done in #247.
                 appModule.deploy(self)
+                appLog.flush()
         elif (isEqSetting('mode','test')):
             for appModule in appModules:
                 appModule.extensiveTest(self)
+                appLog.flush()
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('mode')}> mode.",exitCode=EXIT.Implementation)
 
