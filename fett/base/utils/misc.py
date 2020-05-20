@@ -44,9 +44,18 @@ def formatExc (exc):
     except:
         return '<Non-recognized Exception>'
 
-def printAndLog (message,doPrint=True):
+def printAndLog (message,doPrint=True,tee=None):
     if (doPrint):
         print("(Info)~  " + message)
+    if (tee):
+        try:
+            tee.write(message + '\n')
+        except Exception as exc:
+            try:
+                fName = tee.name
+            except:
+                fName = 'UNKNOWN_FILE'
+            errorAndLog(f"printAndLog: Failed to tee the output to <{fName}>.",doPrint=False,exc=exc)
     logging.info(message)
 
 def warnAndLog (message,doPrint=True,exc=None):
