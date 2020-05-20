@@ -359,10 +359,6 @@ class commonTarget():
                         errorAndLog (f"runCommand: Encountered <{content}> while executing <{command}>.",doPrint=not suppressErrors)
                         break #One error per command is enough
         if (shutdownOnError and not isSuccess):
-            try:
-                self.sendToTarget('\x03\r\n')
-            except:
-                pass
             self.shutdownAndExit(f"runCommand: fatal error.",exitCode=EXIT.Run)
         return [isSuccess, textBack, wasTimeout, idxEndsWith] #the 3rd argument is "timed-out"
 
