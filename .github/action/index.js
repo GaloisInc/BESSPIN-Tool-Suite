@@ -48,6 +48,7 @@ try {
   );
   docker.stdout.on("data", (data) => process.stdout.write(`stdout: ${data}`));
   docker.stderr.on("data", (data) => process.stderr.write(`${data}`));
+  process.exitCode = docker.exitCode;
 } catch (error) {
   process.stderr.write(error.message);
   process.exitCode = 1;
