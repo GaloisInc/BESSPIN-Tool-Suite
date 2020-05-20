@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [unix]
-        index: [1]
+        index: [1, 2]
 
     if: "github.event_name == 'pull_request' && github.base_ref == 'develop'"
     steps:
@@ -39,7 +39,7 @@ jobs:
       - uses: ./.github/docker
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.os }} devPR-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 4"
+          run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.os }} devPR-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 2"
       - if: always()
         uses: actions/upload-artifact@v2
         with:
