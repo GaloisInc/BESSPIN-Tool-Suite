@@ -31,7 +31,7 @@ try {
       "--privileged=true",
       "--network=host",
       "--workdir /github/workspace",
-      env,
+      ...env,
       '--entrypoint ".github/docker/entrypoint.sh"',
       '-v "/var/run/docker.sock":"/var/run/docker.sock" ',
       `-v "${work}/_temp/_github_home":"/github/home"        `,
@@ -48,7 +48,7 @@ try {
        . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
        ${run}`,
     ],
-    { shell: "/bin/bash" }
+    { shell: "/bin/bash", stdio: "inherit" }
   );
   docker.stdout.on("data", (data) => process.stdout.write(`stdout: ${data}`));
   docker.stderr.on("data", (data) => process.stderr.write(`${data}`));
