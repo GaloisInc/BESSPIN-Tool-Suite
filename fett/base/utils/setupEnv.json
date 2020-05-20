@@ -45,7 +45,7 @@
         {
             "name" : "fpgaMacAddrTarget",
             "type" : "macAddress", 
-            "val" : "00.0a.35.04.db.77"
+            "val" : "00:0a:35:04:db:77"
         },
         {
             "name" : "fpgaEthAdaptorName",
