@@ -10,38 +10,36 @@ from fett.base.utils.misc import *
 @decorate.timeWrap
 def install (target):
     # target is a fett target object
+    appLog = getSetting('appLog')
     printAndLog("Installing nginx...")
-    outLog = ''
-    outLog += target.runCommand("echo \"Installing nginx...\"")[1]
-    outLog += target.runCommand("mkdir -p /usr/local/sbin")[1]
-    outLog += target.runCommand("install nginx /usr/local/sbin/nginx", erroneousContents="install:")[1]
-    outLog += target.runCommand("mkdir -p /usr/local/nginx/logs /usr/local/nginx/conf /usr/local/nginx/html")[1]
-    outLog += target.runCommand("mkdir -p /usr/local/nginx/post")[1]
-    outLog += target.runCommand("mkdir -p /etc/ssl/certs")[1]
-    outLog += target.runCommand("mkdir -p /etc/ssl/private")[1]
+    target.runCommand("echo \"Installing nginx...\"",tee=appLog)
+    target.runCommand("mkdir -p /usr/local/sbin",tee=appLog)
+    target.runCommand("install nginx /usr/local/sbin/nginx", erroneousContents="install:",tee=appLog)
+    target.runCommand("mkdir -p /usr/local/nginx/logs /usr/local/nginx/conf /usr/local/nginx/html",tee=appLog)
+    target.runCommand("mkdir -p /usr/local/nginx/post",tee=appLog)
+    target.runCommand("mkdir -p /etc/ssl/certs",tee=appLog)
+    target.runCommand("mkdir -p /etc/ssl/private",tee=appLog)
 
-    outLog += target.runCommand("cp -r conf/* /usr/local/nginx/conf/")[1]
-    outLog += target.runCommand("cp -r html/* /usr/local/nginx/html/")[1]
-    outLog += target.runCommand("cp -r certs/* /etc/ssl/certs")[1]
-    outLog += target.runCommand("cp -r keys/* /etc/ssl/private")[1]
+    target.runCommand("cp -r conf/* /usr/local/nginx/conf/",tee=appLog)
+    target.runCommand("cp -r html/* /usr/local/nginx/html/",tee=appLog)
+    target.runCommand("cp -r certs/* /etc/ssl/certs",tee=appLog)
+    target.runCommand("cp -r keys/* /etc/ssl/private",tee=appLog)
 
-    outLog += target.runCommand("echo \"Starting nginx service...\"")[1]
+    target.runCommand("echo \"Starting nginx service...\"",tee=appLog)
     if isEqSetting('osImage','debian'):
-        outLog += target.runCommand("install nginx.service /lib/systemd/system/nginx.service", erroneousContents="install:")[1]
-        outLog += target.runCommand("systemctl start nginx.service", erroneousContents=["Failed to start", "error code"])[1]
+        target.runCommand("install nginx.service /lib/systemd/system/nginx.service", erroneousContents="install:",tee=appLog)
+        target.runCommand("systemctl start nginx.service", erroneousContents=["Failed to start", "error code"],tee=appLog)
     elif isEqSetting('osImage','FreeBSD'):
-        outLog += target.runCommand("install -d /usr/local/etc/rc.d")[1]
-        outLog += target.runCommand("install rcfile /usr/local/etc/rc.d/nginx", erroneousContents="install:")[1]
-        outLog += target.runCommand("service nginx enable", erroneousContents="nginx does not exist")[1]
-        outLog += target.runCommand("service nginx start")[1]
+        target.runCommand("install -d /usr/local/etc/rc.d",tee=appLog)
+        target.runCommand("install rcfile /usr/local/etc/rc.d/nginx", erroneousContents="install:",tee=appLog)
+        target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog)
+        target.runCommand("service nginx start",tee=appLog)
     else:
         target.shutdownAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
                      exitCode=EXIT.Dev_Bug)
 
-    # TODO add errors above
-
     printAndLog("Nginx installed successfully.")
-    return outLog
+    return
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -53,7 +51,7 @@ def deploy (target):
     #Here we should wait for a termination signal from the portal
     
     printAndLog("Termination signal received. Preparing to exit...")
-    return ''
+    return
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -67,12 +65,13 @@ def curlTest(target, url, extra=[], http2=False):
         errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
         return (None,None)
     printAndLog(f"curl {url} extra={extra} http2={http2} returned:\n{out}", doPrint=False)
+    getSetting('appLog').write(f"curl {url} extra={extra} http2={http2} returned:\n{out}\n")
     return (version, code)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def extensiveTest(target):
-    return deploymentTest(target)
+    deploymentTest(target)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -90,7 +89,6 @@ def deploymentTest(target):
     targetIP = target.ipTarget
     httpPort = target.httpPortTarget
     httpsPort = target.httpsPortTarget
-    output = ""
 
     # 0. Fetch index page
     printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False)
@@ -137,4 +135,4 @@ def deploymentTest(target):
 
     printAndLog("Nginx tests OK!")
 
-    return ""
+    return
