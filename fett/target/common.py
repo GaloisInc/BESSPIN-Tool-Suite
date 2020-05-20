@@ -510,27 +510,28 @@ class commonTarget():
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
-        outLog = '' #This will be copied to `app.out`
+        # The appLog will be the file object flying around for logging into app.out
+        appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
+        appLog.write('-'*20, "<FETT-APPS-OUT>", '-'*20, '\n\n')
+        setSetting("appLog",appLog)
         # Install
         for appModule in appModules:
-            outLog += appModule.install(self)
+            appModule.install(self)
 
         # Test and Deploy    
         if (isEqSetting('mode','deploy')):
             for appModule in appModules:
-                outLog += appModule.deploymentTest(self)
+                appModule.deploymentTest(self)
             for appModule in appModules: 
                 #TODO: This should be threads and only collect the message once. Will be done in #247.
-                outLog += appModule.deploy(self)
+                appModule.deploy(self)
         elif (isEqSetting('mode','test')):
             for appModule in appModules:
-                outLog += appModule.extensiveTest(self)
+                appModule.extensiveTest(self)
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('mode')}> mode.",exitCode=EXIT.Implementation)
 
-        fLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
-        fLog.write (outLog)
-        fLog.close()
+        appLog.close()
         logging.info (f"runApp: app executed successfully!\n")
         return
 
