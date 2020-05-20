@@ -3,7 +3,7 @@
 Building OS images any other needed files
 """
 
-import os
+import os, re
 from fett.base.utils.misc import *
 
 @decorate.debugWrap
@@ -91,6 +91,20 @@ def prepareFreeRTOS():
         #Write the ota filename too (not list as it is unique)
         configHfile.write(f"#define OTA_FILENAME \"{getSettingDict('freertosAssets',['otaHtml'])}\"\n")
         configHfile.close()
+
+        #Include the network configuration parameters
+        #This is a list of tuples: (settingName, macroNameBase, int/hex)
+        listConfigIpParams = [('fpgaMacAddrTarget','configMAC_ADDR', hex), ('fpgaIpTarget','configIP_ADDR', int),
+                              ('fpgaIpHost','configGATEWAY_ADDR', int), ('fpgaNetMaskTarget','configNET_MASK', int)]
+
+        configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettFreeRTOSIPConfig.h'),'a')
+        for xSetting,xMacro,xType in listConfigIpParams:
+            for iPart,xPart in enumerate(re.split(r'[\.\:]',getSetting(xSetting))):
+                try:
+                    configIpHfile.write(f"#define {xMacro}{iPart} {xType(xPart)}\n")
+                except Exception as exc:
+                    logAndExit(f"Failed to populate <fettFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+        configIpHfile.close()
 
         #Cleaning all ".o" and ".elf" files in site
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
