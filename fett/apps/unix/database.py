@@ -10,25 +10,25 @@ from fett.base.utils.misc import *
 @decorate.timeWrap
 def install(target):
     # target is a fett target object
-    printAndLog("Installing sqlite...")
+    printAndLog("Installing sqlite...",tee=getSetting('appLog'))
 
     # All we need to do is install sqlite into a suitable location,
     # like /usr/bin
     target.runCommand("echo \"Installing sqlite into /usr/bin...\"",tee=getSetting('appLog'))
     target.runCommand("install sqlite /usr/bin",erroneousContents=["install:"],tee=getSetting('appLog'))
-    printAndLog("Sqlite installed successfully.")
+    printAndLog("Sqlite installed successfully.",tee=getSetting('appLog'))
     return
 
 @decorate.debugWrap
 @decorate.timeWrap
 def deploy(target):
-    printAndLog ("Deployment successful. Target is ready.")
+    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
     
     #Here we should send a message to the portal
 
     #Here we should wait for a termination signal from the portal
     
-    printAndLog("Termination signal received. Preparing to exit...")
+    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
     return
 
 @decorate.debugWrap
@@ -39,7 +39,7 @@ def extensiveTest(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def deploymentTest(target):
-    printAndLog("Testing sqlite...")
+    printAndLog("Testing sqlite...",tee=getSetting('appLog'))
     sqlite_bin = '/usr/bin/sqlite'
     xDb = 'test.db'
     tableName = 'food'
@@ -48,7 +48,7 @@ def deploymentTest(target):
     appLog = getSetting('appLog')
 
     def create_database_and_table(xTable=tableName):
-        printAndLog(f"Test[create_database_and_table]: Create sqlite {xDb} database and {xTable} table", doPrint=False)
+        printAndLog(f"Test[create_database_and_table]: Create sqlite {xDb} database and {xTable} table", doPrint=False,tee=getSetting('appLog'))
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                                       erroneousContents=["Error:","near","error"], endsWith="sqlite>",tee=appLog)
         target.runCommand(f"CREATE VIRTUAL TABLE IF NOT EXISTS {xTable} USING fts3(title);",
@@ -56,11 +56,11 @@ def deploymentTest(target):
         target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>",tee=appLog)
         target.runCommand(".exit",tee=appLog)
         printAndLog(f"Test[create_database_and_table]: The {xDb} database and {xTable} table created successfully!",
-                    doPrint=False)
+                    doPrint=False,tee=getSetting('appLog'))
         return
 
     def insert_record(xTable=tableName, title_val=foodstuff):
-        printAndLog(f"Test[insert_record]: Insert into  {xTable} table value {title_val}.", doPrint=False)
+        printAndLog(f"Test[insert_record]: Insert into  {xTable} table value {title_val}.", doPrint=False,tee=getSetting('appLog'))
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                                       endsWith="sqlite>",tee=appLog)
         target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>",tee=appLog)
@@ -71,12 +71,12 @@ def deploymentTest(target):
         target.runCommand(".exit",tee=appLog)
         printAndLog(
             f"Test[insert_record]: The value {title_val} has been successfully inserted into {xTable} table!",
-            doPrint=False)
+            doPrint=False,tee=getSetting('appLog'))
         return
 
     def update_record(xTable=tableName, title_val=foodstuff):
         printAndLog(f"Test[update_record]: Update the first record in the table {xTable}  - value {title_val}.",
-                    doPrint=False)
+                    doPrint=False,tee=getSetting('appLog'))
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                                       endsWith="sqlite>",tee=appLog)
         target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>",tee=appLog)
@@ -88,11 +88,11 @@ def deploymentTest(target):
                                       endsWith="sqlite>",tee=appLog)
         target.runCommand(".exit",tee=appLog)
         printAndLog(f"Test[update_record]: The first record has been successfully updated - value {title_val}.",
-                    doPrint=False)
+                    doPrint=False,tee=getSetting('appLog'))
         return
 
     def delete_record(xTable=tableName, title_val=foodstuff):
-        printAndLog(f"Test[delete_record]: Delete {title_val} from the {xTable} table.", doPrint=False)
+        printAndLog(f"Test[delete_record]: Delete {title_val} from the {xTable} table.", doPrint=False,tee=getSetting('appLog'))
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                                       endsWith="sqlite>",tee=appLog)
         target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>",tee=appLog)
@@ -104,11 +104,11 @@ def deploymentTest(target):
         target.runCommand(".exit",tee=appLog)
         printAndLog(
             f"Test[delete_record]: The value {title_val} has been successfully deleted from the {xTable} table!",
-            doPrint=False)
+            doPrint=False,tee=getSetting('appLog'))
         return
 
     def drop_table(xTable=tableName):
-        printAndLog(f"Test[drop_table]: Drop {xTable} table", doPrint=False)
+        printAndLog(f"Test[drop_table]: Drop {xTable} table", doPrint=False,tee=getSetting('appLog'))
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                                       endsWith="sqlite>",tee=appLog)
         retCommand = \
@@ -121,14 +121,14 @@ def deploymentTest(target):
             target.runCommand(f"DROP TABLE IF EXISTS {xTable};", endsWith="sqlite>",tee=appLog)
             target.runCommand(".tables", expectedContents=[], endsWith="sqlite>",tee=appLog)
             target.runCommand(".exit",tee=appLog)
-            printAndLog(f"Test[drop_table]: The {xTable} table has been dropped successfully!", doPrint=False)
+            printAndLog(f"Test[drop_table]: The {xTable} table has been dropped successfully!", doPrint=False,tee=getSetting('appLog'))
         return
 
     def drop_database(pathToFile='~'):
-        printAndLog(f"Test[drop_database]: Drop sqlite {xDb} database", doPrint=False)
+        printAndLog(f"Test[drop_database]: Drop sqlite {xDb} database", doPrint=False,tee=getSetting('appLog'))
         if target.doesFileExist(xFile=xDb, pathToFile=pathToFile, shutdownOnError=False):
             target.runCommand(f"rm -f {pathToFile}/{xDb}",tee=appLog)
-            printAndLog(f"Test[drop_database]: Database {xDb} dropped successfully!", doPrint=False)
+            printAndLog(f"Test[drop_database]: Database {xDb} dropped successfully!", doPrint=False,tee=getSetting('appLog'))
         else:
             target.shutdownAndExit(f"\nTest[drop_database]: Failed to find <{pathToFile}/{xDb}> on target.", exitCode=EXIT.Run)
         return
@@ -140,5 +140,5 @@ def deploymentTest(target):
     drop_table(xTable='food1')
     drop_table()
     drop_database()
-    printAndLog("Sqlite tests OK!")
+    printAndLog("Sqlite tests OK!",tee=getSetting('appLog'))
     return
