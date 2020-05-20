@@ -358,6 +358,16 @@ class commonTarget():
                         isSuccess = False
                         errorAndLog (f"runCommand: Encountered <{content}> while executing <{command}>.",doPrint=not suppressErrors)
                         break #One error per command is enough
+        if (tee):
+            try:
+                tee.write(textBack)
+            except Exception as exc:
+                isSuccess = False
+                try:
+                    fName = tee.name
+                except:
+                    fName = 'UNKNOWN_FILE'
+                errorAndLog (f"runCommand: Failed to tee the output to <{fName}> while executing <{command}>.",doPrint=not suppressErrors,exc=exc)
         if (shutdownOnError and not isSuccess):
             self.shutdownAndExit(f"runCommand: fatal error.",exitCode=EXIT.Run)
         return [isSuccess, textBack, wasTimeout, idxEndsWith] #the 3rd argument is "timed-out"
