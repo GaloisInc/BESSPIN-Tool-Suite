@@ -9,7 +9,7 @@ import tftpy, os, re
 @decorate.debugWrap
 @decorate.timeWrap
 def install (target):
-    return ''
+    return
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -21,20 +21,20 @@ def deploy(target):
     #Here we should wait for a termination signal from the portal
     
     printAndLog("Termination signal received. Preparing to exit...")
-    return ''
+    return
 
 @decorate.debugWrap
 @decorate.timeWrap
 def extensiveTest(target):
-    return deploymentTest(target)
+    deploymentTest(target)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def deploymentTest(target):
     # target is a fett target object
-    outLog = ''
+
     # Wait till TFTP server is up
-    outLog += rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)[1]
+    rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(target.ipTarget, getSetting('TFTPPortTarget')) 
     # uploading the signed ota.html file
@@ -53,10 +53,10 @@ def deploymentTest(target):
     except Exception as exc:
         target.shutdownAndExit(f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
     """
-    outLog += f"\n(Host)~  {filePath} uploaded to the TFTP server."
+    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
     # Run to completion
-    outLog += rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))[1]
-    return outLog
+    rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))
+    return
 
 def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,expectExact=False,endOfApp=False):
     if isinstance(endsWith,str):
@@ -71,12 +71,12 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 
     retCommand = target.runCommand(command,endsWith=[">>>End of Fett<<<"] + endsWith,
         expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],shutdownOnError=shutdownOnError,
-        timeout=timeout,suppressErrors=suppressErrors,expectExact=expectExact)
+        timeout=timeout,suppressErrors=suppressErrors,expectExact=expectExact,tee=getSetting('appLog'))
 
     if ((retCommand[3] == 0) and (not endOfApp)): #FETT exited prematurely
         target.shutdownAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
 
-    return retCommand
+    return
 
 
 @decorate.debugWrap
