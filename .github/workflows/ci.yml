@@ -13,7 +13,7 @@ jobs:
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - uses: ./.github/docker
+      - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           run: nix-shell --command "./ci/fett-ci.py runOnPush-${{ matrix.os }} push-${{ matrix.os }}-${{ github.sha }}"
@@ -36,7 +36,7 @@ jobs:
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - uses: ./.github/docker
+      - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.os }} devPR-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 2"
@@ -59,7 +59,7 @@ jobs:
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - uses: ./.github/docker
+      - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.os }} devPR-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 1"
