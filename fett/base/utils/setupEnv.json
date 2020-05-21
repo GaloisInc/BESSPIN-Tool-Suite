@@ -2,7 +2,7 @@
     "_usage" : "This json file has the environment setup that is not to be changed per run.",
     "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
     "_paths" : "Paths here are assumed to be relative to the repo source dir.",
-    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, ipAddress, dict",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, ipAddress, dict, macAddress",
     "_choices" : "a list of acceptable choices. Use for int or str",
     "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
     "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
@@ -38,13 +38,23 @@
             "val" : 1234
         },
         {
+            "name" : "fpgaNetMaskTarget",
+            "type" : "ipAddress",
+            "val" : "255.255.255.0"
+        },
+        {
+            "name" : "fpgaMacAddrTarget",
+            "type" : "macAddress", 
+            "val" : "00:0a:35:04:db:77"
+        },
+        {
             "name" : "fpgaEthAdaptorName",
             "type" : "string",
             "val" : "eth0fpga"
         },
         {
             "name" : "fpgaEthAdaptorMacAddress",
-            "type" : "string",
+            "type" : "macAddress",
             "val" : "88:53:48:41:56:45"
         },
         {
