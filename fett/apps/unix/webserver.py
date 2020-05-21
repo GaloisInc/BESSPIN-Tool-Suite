@@ -37,7 +37,7 @@ def install (target):
         target.runCommand("install -d /usr/local/etc/rc.d",tee=appLog)
         target.runCommand("install rcfile /usr/local/etc/rc.d/nginx", erroneousContents="install:",tee=appLog)
         target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog)
-        target.runCommand("service nginx start",tee=appLog)
+        target.runCommand("service nginx start", erroneousContents=["failed"], tee=appLog)
     else:
         target.shutdownAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
                      exitCode=EXIT.Dev_Bug)
