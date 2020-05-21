@@ -23,6 +23,8 @@ class fpgaTarget (commonTarget):
         # Important for the Web Server
         self.httpPortTarget  = getSetting('HTTPPortTarget')
         self.httpsPortTarget = getSetting('HTTPSPortTarget')
+        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
+        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
         self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
         self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')

@@ -40,7 +40,7 @@ class qemuTarget (commonTarget):
         
         #find more ports for ssh and http
         additionalPorts = []
-        nPorts = 3
+        nPorts = 5
         for xPort in range(self.portHost+1,rangeEnd):
             if (checkPort(xPort)):
                 additionalPorts.append(xPort)
@@ -49,8 +49,12 @@ class qemuTarget (commonTarget):
         if (len(additionalPorts) != nPorts):
             self.shutdownAndExit(f"assignNtkPorts: Could not find enough open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
         printAndLog(f"assignNtkPorts: The app ports are: {','.join(str(xPort) for xPort in additionalPorts)}.",doPrint=False)
-        self.sshHostPort, self.httpPortTarget, self.httpsPortTarget = additionalPorts
-        
+        self.sshHostPort           = additionalPorts[0]
+        self.httpPortTarget        = additionalPorts[1]
+        self.httpsPortTarget       = additionalPorts[2]
+        self.votingHttpPortTarget  = additionalPorts[3]
+        self.votingHttpsPortTarget = additionalPorts[4]
+
         return
 
     @decorate.debugWrap
@@ -58,13 +62,23 @@ class qemuTarget (commonTarget):
     def boot (self,endsWith="login:",timeout=90): #no need to use targetObj as we'll never boot in non-reboot mode
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
             self.assignNtkPorts()
-            printAndLog(f"Qemu will use the network ports <target:{self.portTarget}>, <hostTcp:{self.portHost}>, <hostSsh:{self.sshHostPort}>, <hostHTTP:{self.httpPortTarget}>, and <hostHTTPS:{self.httpsPortTarget}>.")
+            ports = [("target", self.portTarget),
+                     ("hostTcp", self.portHost),
+                     ("hostSsh", self.sshHostPort),
+                     ("hostHTTP", self.httpPortTarget),
+                     ("hostHTTPS", self.httpsPortTarget),
+                     ("votingHTTP", self.votingHttpPortTarget),
+                     ("votingHTTPS", self.votingHttpsPortTarget)]
+            portUsage = ", ".join([f"<{name}:{port}>" for name,port in ports])
+            printAndLog(f"Qemu will use the network ports {portUsage}.")
 
             hostFwdPairs = [
                 (self.portHost, self.portTarget),
                 (self.sshHostPort, 22),
                 (self.httpPortTarget, getSetting('HTTPPortTarget')),
                 (self.httpsPortTarget, getSetting('HTTPSPortTarget')),
+                (self.votingHttpPortTarget, getSetting('VotingHTTPPortTarget')),
+                (self.votingHttpsPortTarget, getSetting('VotingHTTPSPortTarget')),
             ]
 
             hostFwdString = ",".join([f"hostfwd=tcp:{self.ipTarget}:{portHost}-:{portTarget}" for portHost,portTarget in hostFwdPairs])
