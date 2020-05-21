@@ -23,7 +23,7 @@ const env = ["-e HOME=/home/besspinuser", "-e CI=true"].concat(
     "EVENT_PATH",
     "ACTIONS=true",
   ].map((e) => `-e GITHUB_${e}`),
-  ["input", "run"].map((e) => `-e ${toInpt(e)}`),
+  ["ssh-key", "run"].map((e) => `-e ${toInpt(e)}`),
   ["RUNTIME_URL", "RUNTIME_TOKEN", "CACHE_URL"].map((e) => `-e ACTIONS_${e}`),
   ["OS", "TOOL_CACHE", "TEMP", "WORKSPACE"].map((e) => `-e RUNNER_${e}`)
 );
@@ -55,7 +55,7 @@ try {
       "-c",
       `"export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
       . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
-      eval $(ssh-agent -s)
+      eval \\"$(ssh-agent -s)\\"
       ssh-add <(echo \\"${sshKey}\\")
       . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
       ${run.replace(/"/g, '\\"')}"`,
