@@ -42,7 +42,7 @@ void vStartNetwork (void *pvParameters) {
     vTaskDelay(pdMS_TO_TICKS(3000)); //give time to the host to ping
 
     //notify main
-    vERROR_IF_EQ(xMainTask, NULL, "startNetwork: Get handle of <main:task>.");
+    pvERROR_IF_EQ(xMainTask, NULL, "startNetwork: Get handle of <main:task>.");
     funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_NTK ,eSetBits);
     vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Notify <main:task>.");
 
@@ -76,7 +76,7 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent) {
         fettPrintf("\t\tDNS Server Address: %s\r\n\r\n", cBuffer);
 
         //Notify start netowork
-        vERROR_IF_EQ(xTaskStartNtk, NULL, "NtkHook: Get handle of <task:startNetwork>.");
+        pvERROR_IF_EQ(xTaskStartNtk, NULL, "NtkHook: Get handle of <task:startNetwork>.");
         BaseType_t funcReturn = xTaskNotify( xTaskStartNtk, NOTIFY_SUCCESS_NTK ,eSetBits);
         vERROR_IF_NEQ(funcReturn, pdPASS, "NtkHook: Notify <task:startNetwork>.");
 
