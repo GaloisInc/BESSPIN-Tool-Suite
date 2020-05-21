@@ -40,7 +40,7 @@ void Write_Payload (size_t fsize)
   int     r;
 
   fd = ff_fopen (OTA_FILENAME, "w");
-  vERROR_IF_EQ (fd, NULL, "vOta: file open/create");
+  pvERROR_IF_EQ (fd, NULL, "vOta: file open/create");
 
   written = ff_fwrite (file_buffer+ED25519_SIG_SIZE, 1, fsize, fd);
   if (written != fsize)
@@ -142,7 +142,7 @@ void vOta (void *pvParameters) {
     fettPrintf("(Info)~  vOta: Exitting OTA...\r\n");
 
     //notify main
-    vERROR_IF_EQ(xMainTask, NULL, "vOta: Get handle of <main:task>.");
+    pvERROR_IF_EQ(xMainTask, NULL, "vOta: Get handle of <main:task>.");
     funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_OTA ,eSetBits);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vOta: Notify <main:task>.");
 

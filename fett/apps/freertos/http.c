@@ -40,7 +40,7 @@ void Initialize_HTTP_Assets (void)
                     this_size);
 
         fd = ff_fopen (this_name, "w");
-        vERROR_IF_EQ (fd, NULL, "Initialize_HTTP_Assets: open/create");
+        pvERROR_IF_EQ (fd, NULL, "Initialize_HTTP_Assets: open/create");
 
         written = ff_fwrite ((void *) asset_data[i], 1, this_size, fd);
         if (written != this_size)
@@ -68,7 +68,7 @@ void Http_Worker (void)
     pxTCPServer = FreeRTOS_CreateTCPServer
       (xServerConfiguration, sizeof( xServerConfiguration ) / sizeof( xServerConfiguration[ 0 ] ) );
 
-    vERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Failed to create TCP Server.");
+    pvERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Create TCP Server.");
 
     TickType_t xStartTime = xTaskGetTickCount();
     do {
@@ -89,7 +89,7 @@ void vHttp (void *pvParameters) {
     fettPrintf("(Info)~  vHttp: Exitting HTTP...\r\n");
 
     //notify main
-    vERROR_IF_EQ(xMainTask, NULL, "vHttp: Get handle of <main:task>.");
+    pvERROR_IF_EQ(xMainTask, NULL, "vHttp: Get handle of <main:task>.");
     funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_HTTP ,eSetBits);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vHttp: Notify <main:task>.");
 
