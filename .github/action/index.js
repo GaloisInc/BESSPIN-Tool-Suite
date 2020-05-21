@@ -47,6 +47,7 @@ try {
       "--privileged",
       "--network=host",
       "--workdir /github/workspace",
+      "--entrypoint .github/action/entrypoint.sh",
       ...env,
       "-v /var/run/docker.sock:/var/run/docker.sock",
       `-v ${work}/_temp/_github_home:/github/home`,
