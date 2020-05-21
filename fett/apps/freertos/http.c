@@ -68,7 +68,7 @@ void Http_Worker (void)
     pxTCPServer = FreeRTOS_CreateTCPServer
       (xServerConfiguration, sizeof( xServerConfiguration ) / sizeof( xServerConfiguration[ 0 ] ) );
 
-    pvERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Failed to create TCP Server.");
+    pvERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Create TCP Server.");
 
     TickType_t xStartTime = xTaskGetTickCount();
     do {
