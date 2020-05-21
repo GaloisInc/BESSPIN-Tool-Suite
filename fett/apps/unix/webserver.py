@@ -20,12 +20,16 @@ def install (target):
     target.runCommand("mkdir -p /etc/ssl/certs",tee=appLog)
     target.runCommand("mkdir -p /etc/ssl/private",tee=appLog)
 
+    if isEqSetting('osImage','FreeBSD'):
+        # The user's name is www on FreeBSD, not www-data:
+        target.runCommand("sed -i.bak -e 's/www-data/www/' conf/nginx.conf",tee=appLog)
     target.runCommand("cp -r conf/* /usr/local/nginx/conf/",tee=appLog)
     target.runCommand("cp -r html/* /usr/local/nginx/html/",tee=appLog)
     target.runCommand("cp -r certs/* /etc/ssl/certs",tee=appLog)
     target.runCommand("cp -r keys/* /etc/ssl/private",tee=appLog)
 
     target.runCommand("echo \"Starting nginx service...\"",tee=appLog)
+
     if isEqSetting('osImage','debian'):
         target.runCommand("install nginx.service /lib/systemd/system/nginx.service", erroneousContents="install:",tee=appLog)
         target.runCommand("systemctl start nginx.service", erroneousContents=["Failed to start", "error code"],tee=appLog)
