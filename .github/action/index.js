@@ -34,6 +34,7 @@ try {
   // This works because the VM with the self hosted runner has already pulled the image.
   const image =
     getInput("image") || "artifactory.galois.com:5008/fett-target:ci";
+  const hash = require("crypto").randomBytes(4).toString("hex");
 
   const work = "/home/gitlab-runner/actions-runner/_work";
   const docker = child_process.spawn(
@@ -41,7 +42,8 @@ try {
     [
       "run",
       "--rm",
-      `--name ${image.replace(/[^a-z0-9]+/gi, "")}`,
+      `--name ${image.replace(/[^a-z0-9]+/gi, "")}-${hash}`,
+      `--label=${hash}`,
       "--privileged",
       "--network=host",
       "--workdir /github/workspace",
@@ -53,11 +55,11 @@ try {
       image,
       "bash",
       "-c",
-      `"export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
+      `'export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
       . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
-      eval \\"$(ssh-agent -s)\\"
-      ssh-add <(echo \\"${sshKey}\\")
-      . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
+      eval "$(ssh-agent -s)"
+      ssh-add <(echo "${sshKey}")
+      . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh'"
       ${run.replace(/"/g, '\\"')}"`,
     ],
     { shell: true, stdio: "inherit" }
