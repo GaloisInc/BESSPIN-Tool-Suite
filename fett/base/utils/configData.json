@@ -21,7 +21,7 @@
         {
             "name" : "processor",
             "type" : "string",
-            "choices" : [ "bluespec_p1", "chisel_p1", "bluespec_p2", "chisel_p2" ]
+            "choices" : [ "chisel_p1", "bluespec_p2", "chisel_p2" ]
         },
         {
             "name" : "osImage",
