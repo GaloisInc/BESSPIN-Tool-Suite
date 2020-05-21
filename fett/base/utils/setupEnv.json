@@ -94,7 +94,7 @@
             "name" : "procOsCombinations",
             "type" : "dict",
             "val" : {
-                "FreeRTOS" : ["chisel_p1", "bluespec_p1"],
+                "FreeRTOS" : ["chisel_p1"],
                 "debian" : ["chisel_p2", "bluespec_p2"],
                 "FreeBSD" : ["chisel_p2", "bluespec_p2"],
                 "busybox" : ["chisel_p2", "bluespec_p2"]
