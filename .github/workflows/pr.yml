@@ -1,30 +1,10 @@
-name: CI
-on: [push, pull_request]
+name: CI DevPR
+on:
+  pull_request:
+    branches:
+      - develop
 
 jobs:
-  Push:
-    runs-on: ${{ matrix.cfg.host }}
-    if: github.event_name == 'push'
-    strategy:
-      matrix:
-        cfg:
-          - { os: unix, host: docker-fpga }
-          - { os: freertos, host: docker-fpga-io }
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - uses: ./.github/action
-        with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runOnPush-${{ matrix.cfg.os }} push-${{ matrix.cfg.os }}-${{ github.sha }}"
-      - if: always()
-        uses: actions/upload-artifact@v2
-        with:
-          name: push-${{ github.sha }}
-          path: "*-push-${{ matrix.cfg.os }}-${{ github.sha }}"
-
   DevPR:
     runs-on: ${{ matrix.cfg.host }}
     strategy:
@@ -34,7 +14,6 @@ jobs:
           - { os: unix, index: 2, total: 2, host: docker-fpga }
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
 
-    if: "github.event_name == 'pull_request' && github.base_ref == 'develop'"
     steps:
       - uses: actions/checkout@v2
         with:
