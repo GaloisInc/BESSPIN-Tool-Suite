@@ -6,13 +6,13 @@
 
 try:
     import sys, os, glob, shutil, time, itertools
-    import subprocess, argparse, signal, configparser, copy
+    import subprocess, argparse, signal, configparser, copy, socket
     from utils import exitFettCi, exitOnInterrupt, generateAllConfigs, generateConfigFile, prepareArtifact
 except Exception as exc:
     exitFettCi (exitCode=-1,exc=exc)
 
 def main (xArgs):
-    print(f"(Info)~  FETT-CI: Starting...")
+    print(f"(Info)~  FETT-CI: Starting on <{socket.gethostname()}>...")
     #important paths
     ciDir = os.path.abspath(os.path.dirname(__file__))
     repoDir = os.path.abspath(os.path.join(ciDir,os.pardir))
