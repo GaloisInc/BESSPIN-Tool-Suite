@@ -10,16 +10,14 @@ class qemuTarget (commonTarget):
     def __init__ (self):
         
         super().__init__()
-        self.sshHostPort = getSetting('qemuSshHostPort')
+        
         self.ipTarget = getSetting('qemuIpTarget')
-        # These are QEMU specific
-        self.httpPortTarget = getSetting('qemuHttpHostPort')
-        self.httpsPortTarget = getSetting('qemuHttpsHostPort')
+
         return
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def allocPortRange(self):
+    def assignNtkPorts(self):
         """
         Must ONLY be called on debian or freebsd
         """
@@ -28,7 +26,7 @@ class qemuTarget (commonTarget):
         rangeStart = getSetting('qemuNtkPortRangeStart')
         rangeEnd = getSetting('qemuNtkPortRangeEnd')
         if (rangeStart >= rangeEnd-1):
-            self.shutdownAndExit(f"allocPortRange: The port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.",exitCode=EXIT.Configuration)
+            self.shutdownAndExit(f"assignNtkPorts: The port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.",exitCode=EXIT.Configuration)
         if (rangeStart%2):
             rangeStart += 1
         for iPort in range(rangeStart,rangeEnd,2):
@@ -37,35 +35,30 @@ class qemuTarget (commonTarget):
                 self.portHost = iPort+1
                 break
         if ((self.portTarget is None) or (self.portHost is None)):
-            self.shutdownAndExit(f"allocPortRange: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
-
-        def checkPortRange(name, val):
-            if val in [self.portTarget, self.portHost]:
-                self.shutdownAndExit(f"allocPortRange: The {name}<{val}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
-
-        # The names here look confusing, but for clients of the class,
-        # if these are the ports to access http or https being served on the target.
-        # They actually exist on the host, of course, since we're doing port forwarding.
-        portsToCheck = ["sshHostPort", "httpPortTarget", "httpsPortTarget"]
-        # Check the allocated ports are distinct from the user-specified ports
-        for name in portsToCheck:
-            checkPortRange(name, getattr(self, name))
-
-        # Now check the user specified ports are distinct
-        userPorts = { getattr(self,name):name for name in portsToCheck }
-        for name in portsToCheck:
-            portVal = getattr(self, name)
-            if userPorts[portVal] != name:
-                self.shutdownAndExit(f"allocPortRange: The port <{portVal}> is used for both {name} and {userPorts[portVal]}")
-
-        return (rangeStart, rangeEnd)
+            self.shutdownAndExit(f"assignNtkPorts: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+        printAndLog(f"assignNtkPorts: portTarget={self.portTarget}, portHost={self.portHost}",doPrint=False)
+        
+        #find more ports for ssh and http
+        additionalPorts = []
+        nPorts = 3
+        for xPort in range(self.portHost+1,rangeEnd):
+            if (checkPort(xPort)):
+                additionalPorts.append(xPort)
+                if (len(additionalPorts) == nPorts):
+                    break
+        if (len(additionalPorts) != nPorts):
+            self.shutdownAndExit(f"assignNtkPorts: Could not find enough open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+        printAndLog(f"assignNtkPorts: The app ports are: {','.join(str(xPort) for xPort in additionalPorts)}.",doPrint=False)
+        self.sshHostPort, self.httpPortTarget, self.httpsPortTarget = additionalPorts
+        
+        return
 
     @decorate.debugWrap
     @decorate.timeWrap
     def boot (self,endsWith="login:",timeout=90): #no need to use targetObj as we'll never boot in non-reboot mode
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
-            rangeStart, rangeEnd = self.allocPortRange()
-            printAndLog(f"Qemu will use the network ports <target:{self.portTarget}>, <hostTcp:{self.portHost}>, and <hostSsh:{self.sshHostPort}>.")
+            self.assignNtkPorts()
+            printAndLog(f"Qemu will use the network ports <target:{self.portTarget}>, <hostTcp:{self.portHost}>, <hostSsh:{self.sshHostPort}>, <hostHTTP:{self.httpPortTarget}>, and <hostHTTPS:{self.httpsPortTarget}>.")
 
             hostFwdPairs = [
                 (self.portHost, self.portTarget),
