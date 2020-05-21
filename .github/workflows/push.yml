@@ -5,6 +5,7 @@ jobs:
   Push:
     runs-on: ${{ matrix.cfg.host }}
     strategy:
+      fail-fast: false
       matrix:
         cfg:
           - { os: unix, host: docker-fpga }

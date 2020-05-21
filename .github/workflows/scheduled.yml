@@ -7,6 +7,7 @@ jobs:
   Periodic:
     runs-on: ${{ matrix.cfg.host }}
     strategy:
+      fail-fast: false
       matrix:
         cfg:
           - { os: unix, index: 1, total: 16, host: docker-fpga }
@@ -45,6 +46,7 @@ jobs:
     if: "!always()"
     runs-on: ${{ matrix.cfg.host }}
     strategy:
+      fail-fast: false
       matrix:
         cfg:
           - { os: unix, index: 1, total: 16, host: docker-fpga }
