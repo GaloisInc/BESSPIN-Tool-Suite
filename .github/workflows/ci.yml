@@ -3,11 +3,13 @@ on: [push, pull_request]
 
 jobs:
   Push:
-    runs-on: self-hosted
+    runs-on: ${{ matrix.cfg.host }}
     if: github.event_name == 'push'
     strategy:
       matrix:
-        os: [unix, freertos]
+        cfg:
+          - { os: unix, host: docker-fpga }
+          - { os: freertos, host: docker-fpga-io }
     steps:
       - uses: actions/checkout@v2
         with:
@@ -16,19 +18,21 @@ jobs:
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runOnPush-${{ matrix.os }} push-${{ matrix.os }}-${{ github.sha }}"
+          run: nix-shell --command "./ci/fett-ci.py runOnPush-${{ matrix.cfg.os }} push-${{ matrix.cfg.os }}-${{ github.sha }}"
       - if: always()
         uses: actions/upload-artifact@v2
         with:
           name: push-${{ github.sha }}
-          path: "*-push-${{ matrix.os }}-${{ github.sha }}"
+          path: "*-push-${{ matrix.cfg.os }}-${{ github.sha }}"
 
-  DevPR-unix:
-    runs-on: self-hosted
+  DevPR:
+    runs-on: ${{ matrix.cfg.host }}
     strategy:
       matrix:
-        os: [unix]
-        index: [1, 2]
+        cfg:
+          - { os: unix, index: 1, total: 2, host: docker-fpga }
+          - { os: unix, index: 2, total: 2, host: docker-fpga }
+          - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
 
     if: "github.event_name == 'pull_request' && github.base_ref == 'develop'"
     steps:
@@ -39,32 +43,9 @@ jobs:
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.os }} devPR-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 2"
+          run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.cfg.os }} devPR-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
       - if: always()
         uses: actions/upload-artifact@v2
         with:
           name: devPR-${{ github.sha }}
-          path: "*-devPR-${{ matrix.os }}-${{ github.sha }}"
-
-  DevPR-freertos:
-    runs-on: self-hosted
-    strategy:
-      matrix:
-        os: [freertos]
-        index: [1]
-
-    if: "github.event_name == 'pull_request' && github.base_ref == 'develop'"
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - uses: ./.github/action
-        with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.os }} devPR-${{ matrix.os }}-${{ github.sha }} -i ${{ matrix.index }} -N 1"
-      - if: always()
-        uses: actions/upload-artifact@v2
-        with:
-          name: devPR-${{ github.sha }}
-          path: "*-devPR-${{ matrix.os }}-${{ github.sha }}"
+          path: "*-devPR-${{ matrix.cfg.os }}-${{ github.sha }}"
