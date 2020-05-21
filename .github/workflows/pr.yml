@@ -8,6 +8,7 @@ jobs:
   DevPR:
     runs-on: ${{ matrix.cfg.host }}
     strategy:
+      fail-fast: false
       matrix:
         cfg:
           - { os: unix, index: 1, total: 2, host: docker-fpga }
