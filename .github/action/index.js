@@ -5,15 +5,34 @@ const getInput = (name) =>
   (process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "").trim();
 
 const env = [
-  ["INPUT_SSH-KEY", "INPUT_RUN", "HOME", "CI = true"],
-  [
-    ["JOB", "REF", "SHA", "REPOSITORY", "REPOSITORY_OWNER"],
-    ["RUN_ID", "RUN_NUMBER", "ACTOR", "WORKFLOW", "HEAD_REF", "BASE_REF"],
-    ["EVENT_NAME", "WORKSPACE", "ACTION", "EVENT_PATH", "ACTIONS=true"],
-  ].flatMap((e) => `GITHUB_${e}`),
-  ["RUNTIME_URL", "RUNTIME_TOKEN", "CACHE_URL"].map((e) => `ACTIONS_${e}`),
-  ["OS", "TOOL_CACHE", "TEMP", "WORKSPACE"].map((e) => `RUNNER_${e}`),
-].flatMap((e) => ` -e ${e}`);
+  "-e INPUT_SSH-KEY",
+  "-e INPUT_RUN",
+  "-e HOME",
+  "-e CI=true",
+  "-e GITHUB_JOB",
+  "-e GITHUB_REF",
+  "-e GITHUB_SHA",
+  "-e GITHUB_REPOSITORY",
+  "-e GITHUB_REPOSITORY_OWNER",
+  "-e GITHUB_RUN_ID",
+  "-e GITHUB_RUN_NUMBER",
+  "-e GITHUB_ACTOR",
+  "-e GITHUB_WORKFLOW",
+  "-e GITHUB_HEAD_REF",
+  "-e GITHUB_BASE_REF",
+  "-e GITHUB_EVENT_NAME",
+  "-e GITHUB_WORKSPACE",
+  "-e GITHUB_ACTION",
+  "-e GITHUB_EVENT_PATH",
+  "-e GITHUB_ACTIONS=true",
+  "-e ACTIONS_RUNTIME_URL",
+  "-e ACTIONS_RUNTIME_TOKEN",
+  "-e ACTIONS_CACHE_URL",
+  "-e RUNNER_OS",
+  "-e RUNNER_TOOL_CACHE",
+  "-e RUNNER_TEMP",
+  "-e RUNNER_WORKSPACE",
+];
 
 try {
   const sshKey = getInput("ssh-key");
@@ -28,27 +47,26 @@ try {
       "run",
       "--rm",
       `--name ${image.replace(/[^a-z0-9]+/gi, "")}`,
-      "--privileged=true",
+      "--privileged",
       "--network=host",
       "--workdir /github/workspace",
       ...env,
-      '--entrypoint ".github/docker/entrypoint.sh"',
       '-v "/var/run/docker.sock":"/var/run/docker.sock" ',
       `-v "${work}/_temp/_github_home":"/github/home"        `,
       `-v "${work}/_temp/_github_workflow":"/github/workflow" `,
-      `-v "${work}/SSITH-FETT-Target/SSITH-FETT-Target": "/github/workspace"`,
+      `-v "${work}/SSITH-FETT-Target/SSITH-FETT-Target":"/github/workspace"`,
       image,
       "bash",
       "-c",
-      `export HOME=/home/besspinuser
-       export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
-       . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
-       eval $(ssh-agent -s)
-       ssh-add <(echo "${sshKey}")
-       . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
-       ${run}`,
+      `"export HOME=/home/besspinuser
+      export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
+      . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
+      eval $(ssh-agent -s)
+      ssh-add <(echo \\"${sshKey}\\")
+      . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
+      ${run.replace(/"/g, '\\"')}"`,
     ],
-    { shell: "/bin/bash", stdio: "inherit" }
+    { shell: true, stdio: "inherit" }
   );
   process.exitCode = docker.exitCode;
 } catch (error) {
