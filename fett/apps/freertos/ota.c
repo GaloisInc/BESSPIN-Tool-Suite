@@ -160,7 +160,7 @@ void vOta (void *pvParameters) {
     
     wc_ed25519_free (&pk);
 
-    fettPrintf("(Info)~  vOta: Exitting OTA...\r\n");
+    fettPrintf("(Info)~  vOta: Exiting OTA...\r\n");
 
     //notify main
     pvERROR_IF_EQ(xMainTask, NULL, "vOta: Get handle of <main:task>.");
