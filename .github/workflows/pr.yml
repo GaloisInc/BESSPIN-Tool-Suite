@@ -11,9 +11,9 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: unix, index: 1, total: 2, host: docker-fpga }
-          - { os: unix, index: 2, total: 2, host: docker-fpga }
-          - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
+          - { os: unix, index: 1, total: 2, host: 6 }
+          - { os: unix, index: 2, total: 2, host: 6 }
+          - { os: freertos, index: 1, total: 1, host: 6 }
 
     steps:
       - uses: actions/checkout@v2
