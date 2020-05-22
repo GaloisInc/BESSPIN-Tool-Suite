@@ -1,0 +1,32 @@
+name: CI DevPR
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  DevPR:
+    runs-on: ${{ matrix.cfg.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+          - { os: unix, index: 1, total: 2, host: docker-fpga }
+          - { os: unix, index: 2, total: 2, host: docker-fpga }
+          - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          lfs: true
+      - uses: ./.github/action
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.cfg.os }} devPR-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
+      - if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: devPR-${{ github.sha }}
+          path: "*-devPR-${{ matrix.cfg.os }}-${{ github.sha }}"
