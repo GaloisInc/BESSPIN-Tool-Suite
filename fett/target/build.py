@@ -16,7 +16,10 @@ def prepareOsImage ():
     setSetting('osImageElf',osImageElf)
 
     if(isEqSetting('target','aws')):
-        logAndExit (f"<target.build.prepareOsImage> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
+        #logAndExit (f"<target.build.prepareOsImage> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
+        warnAndLog(f"AWS is not featured! Running the temporary preparations to test the target!")
+        prepareAWSTemporary()
+        return
 
     if(isEqSetting('osImage','FreeRTOS')):
         prepareFreeRTOS ()
@@ -28,6 +31,20 @@ def prepareOsImage ():
         prepareBusybox ()
     else:
         logAndExit (f"<target.prepareOsImage> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
+
+def prepareAWSTemporary():
+    # setup firesim specific settings -- screen interfaces and kernel modules
+    # TODO: ELEW hard coded - ew
+    minimalGfePath = '/home/centos/minimal_cloudgfe'
+    setSetting('awsFiresimSimPath', os.path.join(minimalGfePath, 'sim'))
+    setSetting('awsFiresimModPath', os.path.join(minimalGfePath, 'kmods'))
+
+    # copy over the elf file like other FETT Target setups
+    imagePath = os.path.join(minimalGfePath, 'sim', 'linux-uniform0-br-base-bin')
+    cp (imagePath, getSetting('osImageElf'))
+    if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
+        warnAndLog(f"<build.prepareAWSTemporary>: netboot option is being ignored")
+    logging.info(f"{getSetting('osImage')} image imported successfully.")
 
 @decorate.debugWrap
 @decorate.timeWrap
