@@ -11,8 +11,15 @@
 uint8_t file_buffer[OTA_MAX_SIGNED_PAYLOAD_SIZE]; // SIZE set in setupEnv.json
 
 void vOta (void *pvParameters);
+
 void Ota_Worker (ed25519_key *pk);
-void Write_Payload (size_t fsize);
+
+/* Writes file_buffer[ED25519_SIG_SIZE .. ED25519_SIG_SIZE+fsize-1] to the filesystem */
+void Write_Payload_To_FS  (size_t fsize);
+
+/* Writes file_buffer[ED25519_SIG_SIZE .. ED25519_SIG_SIZE+fsize-1] to the log */
+void Write_Payload_To_Log (size_t fsize);
+
 void Initialize_Receipt_Buffer (void);
 
 
@@ -23,7 +30,6 @@ static const byte raw_pk[ED25519_KEY_SIZE] =
    0xE0, 0x16, 0xE3, 0x0F, 0x27, 0x0B, 0xAE, 0x74,
    0xB3, 0x0B, 0xED, 0xAC, 0x33, 0x47, 0x01, 0xFA};
 
-
 void Initialize_Receipt_Buffer (void)
 {
   for (int i = 0; i < OTA_MAX_SIGNED_PAYLOAD_SIZE; i++)
@@ -32,8 +38,7 @@ void Initialize_Receipt_Buffer (void)
     }
 }
 
-
-void Write_Payload (size_t fsize)
+void Write_Payload_To_FS (size_t fsize)
 {
   FF_FILE *fd;
   size_t  written;
@@ -52,6 +57,18 @@ void Write_Payload (size_t fsize)
   if (r != 0)
     {
       fettPrintf ("(Error)~  vOta: file close failed\n");
+    }
+}
+
+void Write_Payload_To_Log (size_t fsize)
+{
+  for (size_t i = 0; i < fsize; i++)
+    {
+      fettPrintf ("%02x ", file_buffer[ED25519_SIG_SIZE + i]);
+      if ((i % 16) == 15)
+        {
+          fettPrintf ("\n");
+        }
     }
 }
 
@@ -95,7 +112,10 @@ void Ota_Worker (ed25519_key *pk)
           {
             fettPrintf ("(Info)~  vOta: Signature is OK\n");
             // now write the payload (not including the signature) to disk.
-            Write_Payload ((size_t) received_file_size - ED25519_SIG_SIZE);
+            Write_Payload_To_FS ((size_t) received_file_size - ED25519_SIG_SIZE);
+            // and to the log
+            fettPrintf ("(Info)~  vOta: Received payload is\n");
+            Write_Payload_To_Log ((size_t) received_file_size - ED25519_SIG_SIZE);
           } 
         else
           {
