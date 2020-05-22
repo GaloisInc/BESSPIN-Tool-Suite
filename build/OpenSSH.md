@@ -50,7 +50,7 @@ $ STRIP=${CROSS_PREFIX}-strip
 If using Clang:
 ```bash
 $ SYSROOT=$(${CROSS_PREFIX}-gcc -print-sysroot)
-$ CFLAGS="-target ${CROSS_PREFIX} ${ARCH_ABI} -Wall -lrt -fPIC --sysroot=${SYSROOT}"
+$ CFLAGS="-target ${CROSS_PREFIX} ${ARCH_ABI} -Wall -lrt -fPIC --sysroot=${SYSROOT} -fuse-ld=lld -mno-relax"
 $ CC=clang
 $ AR=llvm-ar
 $ RANLIB=llvm-ranlib
@@ -67,7 +67,7 @@ $ git clone https://github.com/madler/zlib.git && cd zlib
 $ git checkout cacf7f1
 $ ./configure --prefix=${BUILD_DIR}/zlib-riscv 
 # host option doesn't exist in configure, so modify make variables
-$ make CC="${CC} ${CFLAGS}" LD="${CROSS_PREFIX}-gcc ${CFLAGS}" AR="${AR}" RANLIB="${RANLIB}" 
+$ make CC="${CC} ${CFLAGS}" LD="${CC}" LDFLAGS="${CFLAGS}" AR="${AR}" RANLIB="${RANLIB}" 
 $ make install
 $ cd ${BUILD_DIR}
 ```
@@ -107,7 +107,7 @@ $ autoreconf
 $ ./configure --prefix=${BUILD_DIR}/openssh-riscv --with-privsep-path=${BUILD_DIR}/openssh-riscv/var/empty --host=${CROSS_PREFIX} --with-libs --with-zlib=${BUILD_DIR}/zlib-riscv --with-ssl-dir=${BUILD_DIR}/openssl-riscv --disable-etc-default-login CC="${CC} ${CFLAGS}" LD="${CC} ${CFLAGS}" AR="${AR}" RANLIB="${RANLIB}"
 ```
 
-If you are building to debian, you may have to run the following command.
+If you are building for debian, you may have to run the following command.
 ```bash
 # FETT environment sysroot doesn't have <utmp.h>, so BTMP has to be disabled in config.h
 $ sed 's/#define USE_BTMP .*/\/\* #define USE_BTMP 1 \*\//' -i config.h

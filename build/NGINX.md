@@ -104,9 +104,10 @@ $ patch -p1 <path/to/0001-Pass-configure-checks-when-cross-compiling.patch
 ```
 $ SYSROOT=$(riscv64-unknown-freebsd12.1-gcc -print-sysroot)
 ```
-  Set `CFLAGS`:
+  Set `CFLAGS` and `LDFLAGS`:
 ```
-$ CFLAGS="-target riscv64-unknown-freebsd12.1 -march=rv64imafdc -mabi=lp64d -Wno-error=sign-compare --sysroot=${SYSROOT}"
+$ CFLAGS="-target riscv64-unknown-freebsd12.1 -march=rv64imafdc -mabi=lp64d -Wno-error=sign-compare --sysroot=${SYSROOT} -mno-relax"
+$ LDFLAGS="-target riscv64-unknown-freebsd12.1 -march=rv64imafdc -mabi=lp64d --sysroot=${SYSROOT} -fuse-ld=lld"
 ```
 
 5. Configure for the target platform, explicitly defining the settings
@@ -133,7 +134,7 @@ $ env NGX_HAVE_TIMER_EVENT=yes \
           --crossbuild=FreeBSD \
           --with-cc=clang \
           --with-cc-opt="${CFLAGS}" \
-          --with-ld-opt="${CFLAGS}" \
+          --with-ld-opt="${LDFLAGS}" \
           --sysroot=${SYSROOT} \
           --prefix=$BUILD_DIR/nginx-riscv
 ```
