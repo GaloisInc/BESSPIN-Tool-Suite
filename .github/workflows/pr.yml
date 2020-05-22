@@ -4,8 +4,6 @@ on:
     branches:
       - develop
   push:
-    branches:
-      - temp/test-fpga-6
 
 jobs:
   DevPR:
