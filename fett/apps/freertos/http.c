@@ -26,6 +26,10 @@ static const struct xSERVER_CONFIG xServerConfiguration[] =
 // out to the filesystem with the given name, size and content.
 void Initialize_HTTP_Assets (void)
 {
+    // Gain mutually exclusive access to the filesystem
+    // Code below must always reach a call to ff_release()
+    ff_lock();
+
     for (int i = 0; i < asset_files; i++)
     {
         FF_FILE *fd;
@@ -40,22 +44,32 @@ void Initialize_HTTP_Assets (void)
                     this_size);
 
         fd = ff_fopen (this_name, "w");
-        pvERROR_IF_EQ (fd, NULL, "Initialize_HTTP_Assets: open/create");
-
-        written = ff_fwrite ((void *) asset_data[i], 1, this_size, fd);
-        if (written != this_size)
-        {
-            fettPrintf ("(Error)~  Initialize_HTTP_Assets: file write failed. [written=%ld, fsize=%ld].\r\n",
-                        written,
-                        this_size);
-            // Go on to close the file anyway...
-        }
-        r = ff_fclose (fd);
-        if (r != 0)
-        {
-            fettPrintf ("(Error)~  Initialize_HTTP_Assets: file close failed\n");
-        }
+        if (fd != NULL)
+          {
+            written = ff_fwrite ((void *) asset_data[i], 1, this_size, fd);
+            if (written != this_size)
+              {
+                fettPrintf ("(Error)~  Initialize_HTTP_Assets: file write failed. [written=%ld, fsize=%ld].\r\n",
+                            written,
+                            this_size);
+                // Go on to close the file anyway...
+              }
+            r = ff_fclose (fd);
+            if (r != 0)
+              {
+                fettPrintf ("(Error)~  Initialize_HTTP_Assets: file close failed\n");
+              }
+          }
+        else
+          {
+            // Log an error here, but CARRY ON to ensure that control-flow
+            // reaches the ff_release() call below.
+            fettPrintf ("(Error)~  Initialize_HTTP_Assets, failed to open %s\r\n", this_name);
+          }
     }
+
+    ff_release();
+
     return;
 }
 
