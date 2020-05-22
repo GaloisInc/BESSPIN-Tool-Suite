@@ -70,6 +70,7 @@ void Write_Payload_To_Log (size_t fsize)
           fettPrintf ("\n");
         }
     }
+  fettPrintf ("\n");
 }
 
 void Ota_Worker (ed25519_key *pk)
