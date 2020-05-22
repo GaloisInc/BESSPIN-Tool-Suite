@@ -22,7 +22,7 @@ static const struct xSERVER_CONFIG xServerConfiguration[] =
   };
 
 
-// Iterates over the data tables from httpdata.h, and writes each
+// Iterates over the data tables from httpAssets.h, and writes each
 // out to the filesystem with the given name, size and content.
 void Initialize_HTTP_Assets (void)
 {

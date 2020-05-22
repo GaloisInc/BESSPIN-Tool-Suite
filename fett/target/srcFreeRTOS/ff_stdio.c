@@ -4,8 +4,8 @@
 
 // Static (persistent) state of this module.
 
-// Mutex providing gross mutual exclusion to the facilities of this
-// modules. Note this is declared with static/file scope, so it cannot
+// Mutex providing gross mutual exclusion for the facilities of this
+// module. Note this is declared with static/file scope, so it cannot
 // be directly accessed outside of this file.
 static SemaphoreHandle_t ff_mutex;
 
