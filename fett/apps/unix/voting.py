@@ -71,7 +71,7 @@ def install (target):
     target.runCommand("echo \"Starting BVRS CGI Handler...\"",tee=appLog)
 
     target.runCommand(f"/usr/local/sbin/kfcgi -s /var/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- /var/www/cgi-bin/bvrs /var/www/data/bvrs.db",tee=appLog)
-    return ''
+    return
 
 @decorate.debugWrap
 @decorate.timeWrap

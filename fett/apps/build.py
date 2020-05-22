@@ -28,7 +28,7 @@ def buildApps ():
     elif (getSetting('osImage') in ['debian', 'FreeBSD']):
         buildWebserver(tarName)
         buildDatabase(tarName)
-        buildVoting(tarName) #--to be implemented
+        buildVoting(tarName)
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
