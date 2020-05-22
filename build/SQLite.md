@@ -59,7 +59,7 @@ for Debian. The only differences are:
 - When using `env.mk` to determine the commands for compiling and
   linking, pass the argument `OS_IMAGE=FreeBSD`. You will probably be
   using Clang rather than GCC, which would mean also passing
-  `COMPILER=CLANG`, and `LINKER=LLD` if you are using LDD as your
+  `COMPILER=CLANG`, and `LINKER=LLD` if you are using LLD as your
   linker.
 
 ## Troubleshooting
