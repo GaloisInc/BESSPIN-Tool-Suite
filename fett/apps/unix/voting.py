@@ -89,8 +89,9 @@ def deploy (target):
 @decorate.timeWrap
 def deploymentTest (target):
     printAndLog("Testing voting server...",tee=getSetting('appLog'))
+    ip = target.ipTarget
 
-    req  = f"http://localhost:{target.votingHttpPortTarget}/bvrs/voter_register.json?"
+    req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_register.json?"
     req += "voter-birthdate=1986-02-04&"
     req += "voter-lastname=l&"
     req += "voter-givennames=g&"
@@ -102,7 +103,7 @@ def deploymentTest (target):
     if not out:
         target.shutdownAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
 
-    req  = f"http://localhost:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
+    req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
     req += "voter-birthdate=1986-02-04&"
     req += "voter-lastname=l&"
     req += "voter-givennames=g"
@@ -120,6 +121,8 @@ def deploymentTest (target):
 
     printAndLog("Clearing voting database")
     clear_voter_table(target, "/var/www/data/bvrs.db")
+
+    printAndLog("Voting tests OK!",tee=getSetting('appLog'))
 
     return
 
