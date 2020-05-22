@@ -60,7 +60,7 @@ def deploy (target):
 @decorate.debugWrap
 @decorate.timeWrap
 def curlTest(target, url, extra=[], http2=False):
-    out = curlRequest(url, http2=http2, extra=extra)
+    out = curlRequest(url, http2=http2, extra=extra, rawOutput=False)
     if (not out):
         return (None,None)
     try:

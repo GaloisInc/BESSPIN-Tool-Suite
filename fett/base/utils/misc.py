@@ -336,15 +336,17 @@ def matchExprInLines (expr,lines):
     return None
 
 @decorate.debugWrap    
-def curlRequest(url, extra=[], http2=False):
+def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False):
     # Need --insecure because of self signed certs
     options = [
         "--insecure",
         "--http2" if http2 else "--http1.1",
         "-L",
-        "-I",
-        "-s"
+        "-s",
+        "-X", method
     ] + extra
+    if not rawOutput:
+        options.append("-I")
     try:
         p = subprocess.run (['curl'] + options + [url], capture_output=True, check=True)
         out = p.stdout.decode('utf-8')
