@@ -20,12 +20,16 @@ def install (target):
     target.runCommand("mkdir -p /etc/ssl/certs",tee=appLog)
     target.runCommand("mkdir -p /etc/ssl/private",tee=appLog)
 
+    if isEqSetting('osImage','FreeBSD'):
+        # The user's name is www on FreeBSD, not www-data:
+        target.runCommand("sed -i.bak -e 's/www-data/www/' conf/nginx.conf",tee=appLog)
     target.runCommand("cp -r conf/* /usr/local/nginx/conf/",tee=appLog)
     target.runCommand("cp -r html/* /usr/local/nginx/html/",tee=appLog)
     target.runCommand("cp -r certs/* /etc/ssl/certs",tee=appLog)
     target.runCommand("cp -r keys/* /etc/ssl/private",tee=appLog)
 
     target.runCommand("echo \"Starting nginx service...\"",tee=appLog)
+
     if isEqSetting('osImage','debian'):
         target.runCommand("install nginx.service /lib/systemd/system/nginx.service", erroneousContents="install:",tee=appLog)
         target.runCommand("systemctl start nginx.service", erroneousContents=["Failed to start", "error code"],tee=appLog)
@@ -33,7 +37,7 @@ def install (target):
         target.runCommand("install -d /usr/local/etc/rc.d",tee=appLog)
         target.runCommand("install rcfile /usr/local/etc/rc.d/nginx", erroneousContents="install:",tee=appLog)
         target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog)
-        target.runCommand("service nginx start",tee=appLog)
+        target.runCommand("service nginx start", erroneousContents=["failed"], tee=appLog)
     else:
         target.shutdownAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
                      exitCode=EXIT.Dev_Bug)
@@ -56,7 +60,7 @@ def deploy (target):
 @decorate.debugWrap
 @decorate.timeWrap
 def curlTest(target, url, extra=[], http2=False):
-    out = curlRequest(url, http2=http2, extra=extra)
+    out = curlRequest(url, http2=http2, extra=extra, rawOutput=False)
     if (not out):
         return (None,None)
     try:

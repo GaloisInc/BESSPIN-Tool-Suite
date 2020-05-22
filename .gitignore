@@ -3,3 +3,5 @@ workDir/
 *.pyc
 myConfig.ini
 core
+*.mypy_cache/
+.DS_STORE

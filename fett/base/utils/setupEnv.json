@@ -62,10 +62,24 @@
             "type" : "int",
             "min" : 80,
             "max" : 443,
-            "val" : 80
+            "val" : 81
         },
         {
             "name" : "HTTPSPortTarget",
+            "type" : "int",
+            "min" : 0,
+            "max" : 1023,
+            "val" : 444
+        },
+        {
+            "name" : "VotingHTTPPortTarget",
+            "type" : "int",
+            "min" : 80,
+            "max" : 443,
+            "val" : 80
+        },
+        {
+            "name" : "VotingHTTPSPortTarget",
             "type" : "int",
             "min" : 0,
             "max" : 1023,
