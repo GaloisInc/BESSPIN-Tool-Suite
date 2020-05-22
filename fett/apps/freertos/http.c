@@ -86,7 +86,7 @@ void vHttp (void *pvParameters) {
 
     Http_Worker();
 
-    fettPrintf("(Info)~  vHttp: Exitting HTTP...\r\n");
+    fettPrintf("(Info)~  vHttp: Exiting HTTP...\r\n");
 
     //notify main
     pvERROR_IF_EQ(xMainTask, NULL, "vHttp: Get handle of <main:task>.");
