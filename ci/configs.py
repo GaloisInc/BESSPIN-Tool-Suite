@@ -22,10 +22,7 @@ unixDefaults = commonDefaults.union({
     ('netbootPortRangeStart',(5000,)),
     ('netbootPortRangeEnd',(6000,)),
     ('qemuNtkPortRangeStart',(5000,)),
-    ('qemuNtkPortRangeEnd',(6000,)),
-    ('qemuSshHostPort',(2222,)),
-    ('qemuHttpHostPort',(8080,)),
-    ('qemuHttpsHostPort',(8081,)),
+    ('qemuNtkPortRangeEnd',(6000,))
 })
 
 unixAllTargets = unixDefaults.union({
