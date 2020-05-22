@@ -36,9 +36,22 @@ $ CROSS_PREFIX=riscv64-unknown-freebsd12.1 	# FreeBSD
 
 ```bash
 $ ARCH_ABI="-march=rv64imafdc -mabi=lp64d"	
-$ CFLAGS="${ARCH_ABI} -Wall -lrt -fPIC"
 $ BUILD_DIR=`pwd`
+```
+
+If using GCC:
+```
+$ CFLAGS="${ARCH_ABI} -Wall -lrt -fPIC"
 $ CC=${CROSS_PREFIX}-gcc
+$ AR=${CROSS_PREFIX}-ar
+$ RANLIB=${CROSS_PREFIX}-ranlib
+```
+If using Clang:
+```
+$ CFLAGS="-target ${CROSS_PREFIX} ${ARCH_ABI} -Wall -lrt -fPIC"
+$ CC=clang
+$ AR=llvm-ar
+$ RANLIB=llvm-ranlib
 ```
 
 #### Build Zlib v1.2.11
@@ -51,21 +64,30 @@ $ git clone https://github.com/madler/zlib.git && cd zlib
 $ git checkout cacf7f1
 $ ./configure --prefix=${BUILD_DIR}/zlib-riscv 
 # host option doesn't exist in configure, so modify make variables
-$ make CC="${CROSS_PREFIX}-gcc ${CFLAGS}" LD="${CROSS_PREFIX}-gcc ${CFLAGS}" AR="${CROSS_PREFIX}-ar" RANLIB="${CROSS_PREFIX}-ranlib" 
+$ make CC="${CROSS_PREFIX}-gcc ${CFLAGS}" LD="${CROSS_PREFIX}-gcc ${CFLAGS}" AR="${AR}" RANLIB="${RANLIB}" 
 $ make install
 $ cd ${BUILD_DIR}
 ```
 
 #### Build OpenSSL v1.0.2
 
-5. Clone, configure, build and install OpenSSL
+5. Depending on which platform you are compiling for, set the variable
+   `OPENSSL_CONFIG`.
+
+```bash
+$ OPENSSL_CONFIG=linux-generic64 # debian
+$ OPENSSL_CONFIG=BSD-generic64   # FreeBSD
+```
+
+Clone, configure, build and install OpenSSL. If using Clang, omit the
+`--cross-compile-prefix` flag when running `Configure`.
 
 ```bash
 $ mkdir openssl-riscv
 $ git clone https://github.com/openssl/openssl.git && cd openssl
 $ git checkout origin/OpenSSL_1_0_2-stable
 $ ./Configure linux-generic64 --cross-compile-prefix=${CROSS_PREFIX}- --openssldir=${BUILD_DIR}/openssl-riscv 
-$ make CC="${CROSS_PREFIX}-gcc ${CFLAGS}" LD="${CROSS_PREFIX}-gcc ${CFLAGS}" AR="${CROSS_PREFIX}-ar r"
+$ make CC="${CC} ${CFLAGS}" LD="${CC} ${CFLAGS}" AR="${AR} r"
 $ make install
 $ cd ${BUILD_DIR}
 ```
@@ -79,7 +101,7 @@ $ mkdir openssh-riscv
 $ git clone https://github.com/openssh/openssh-portable.git && cd openssh-portable
 $ git checkout origin/V_7_3
 $ autoreconf
-$ ./configure --prefix=${BUILD_DIR}/openssh-riscv --with-privsep-path=${BUILD_DIR}/openssh-riscv/var/empty --host=${CROSS_PREFIX} --with-libs --with-zlib=${BUILD_DIR}/zlib-riscv --with-ssl-dir=${BUILD_DIR}/openssl-riscv --disable-etc-default-login CC="${CROSS_PREFIX}-gcc ${CFLAGS}" LD="${CROSS_PREFIX}-gcc ${CFLAGS}" AR="${CROSS_PREFIX}-ar" RANLIB="${CROSS_PREFIX}-ranlib"
+$ ./configure --prefix=${BUILD_DIR}/openssh-riscv --with-privsep-path=${BUILD_DIR}/openssh-riscv/var/empty --host=${CROSS_PREFIX} --with-libs --with-zlib=${BUILD_DIR}/zlib-riscv --with-ssl-dir=${BUILD_DIR}/openssl-riscv --disable-etc-default-login CC="${CC} ${CFLAGS}" LD="${CROSS_PREFIX}-gcc ${CFLAGS}" AR="${AR}" RANLIB="${RANLIB}"
 # FETT environment sysroot doesn't have <utmp.h>, so BTMP has to be disabled in config.h
 $ sed 's/#define USE_BTMP .*/\/\* #define USE_BTMP 1 \*\//' -i config.h
 $ make
