@@ -44,20 +44,33 @@ void Write_Payload_To_FS (size_t fsize)
   size_t  written;
   int     r;
 
-  fd = ff_fopen (OTA_FILENAME, "w");
-  pvERROR_IF_EQ (fd, NULL, "vOta: file open/create");
+  // Gain mutually exclusive access to the filesystem
+  // Code below must always reach a call to ff_release()
+  ff_lock();
 
-  written = ff_fwrite (file_buffer+ED25519_SIG_SIZE, 1, fsize, fd);
-  if (written != fsize)
+  fd = ff_fopen (OTA_FILENAME, "w");
+  if (fd != NULL)
     {
-      fettPrintf ("(Error)~  vOta: file write failed. [written=%ld, fsize=%ld].\r\n",written,fsize);
-      // Go on to close the file anyway...
+      written = ff_fwrite (file_buffer+ED25519_SIG_SIZE, 1, fsize, fd);
+      if (written != fsize)
+        {
+          fettPrintf ("(Error)~  vOta: file write failed. [written=%ld, fsize=%ld].\r\n",written,fsize);
+          // Go on to close the file anyway...
+        }
+      r = ff_fclose (fd);
+      if (r != 0)
+        {
+          fettPrintf ("(Error)~  vOta: file close failed\n");
+        }
     }
-  r = ff_fclose (fd);
-  if (r != 0)
+  else
     {
-      fettPrintf ("(Error)~  vOta: file close failed\n");
+      // Log an error here, but CARRY ON to ensure that control-flow
+      // reaches the ff_release() call below.
+      fettPrintf ("(Error)~  vOta: failed to open %s\r\n", OTA_FILENAME);
     }
+
+  ff_release();
 }
 
 void Write_Payload_To_Log (size_t fsize)
