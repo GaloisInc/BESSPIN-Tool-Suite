@@ -3,12 +3,28 @@
 
 --- fett.py is the main FETT-Target program. All documentation and features are based on 
     solely executing this file. Please do not execute any other file.
---- Usage: `./fett.py (--help | -h)`
+--- Usage: fett.py [-h] [-c CONFIGFILE] [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
+               [-ep ENTRYPOINT]
+
+FETT (Finding Exploits to Thwart Tampering)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIGFILE, --configFile CONFIGFILE
+                        Overwrites the default config file: ./config.ini
+  -w WORKINGDIRECTORY, --workingDirectory WORKINGDIRECTORY
+                        Overwrites the default working directory: ./workDir/
+  -l LOGFILE, --logFile LOGFILE
+                        Overwrites the default logFile: ./${workDir}/fett.log
+  -d, --debug           Enable debugging mode.
+  -ep ENTRYPOINT, --entrypoint ENTRYPOINT
+                        Entrypoint: devHost | ciOnPrem
 --- Defaults: 
         workingDirectory = ./workDir
         configFile = ./config.ini
         logFile = ./${workDir}/fett.log
         logging level = INFO 
+        entrypoint = devHost
 """
 
 try:
@@ -72,6 +88,14 @@ def main (xArgs):
         print(f"(Error)~  Failed to create the log file <{logFile}>.\n{formatExc(exc)}.")
         exitFett(EXIT.Files_and_paths)
 
+    # Entrypoint
+    listEntrypoints = ['devHost','ciOnPrem']
+    if ((xArgs.entrypoint) and (xArgs.entrypoint not in listEntrypoints)):
+        print(f"(Error)~  ENTRYPOINT has to be in [{','.join(listEntrypoints)}].")
+        exitFett(EXIT.Configuration)
+    elif(xArgs.entrypoint is None):
+        xArgs.entrypoint = 'devHost'
+
     # setup the logging
     logLevel = logging.DEBUG if (xArgs.debug) else logging.INFO 
     logging.basicConfig(filename=logFile,filemode='w',format='%(asctime)s: (%(levelname)s)~  %(message)s',datefmt='%I:%M:%S %p',level=logLevel)
@@ -83,6 +107,7 @@ def main (xArgs):
     setSetting('configFile', configFile)
     setSetting('logFile', logFile)
     setSetting('debugMode', xArgs.debug)
+    setSetting('fettEntrypoint',xArgs.entrypoint)
     # Load all configuration and setup settings
     setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
@@ -104,6 +129,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-w', '--workingDirectory', help='Overwrites the default working directory: ./workDir/')
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
+    xArgParser.add_argument ('-ep', '--entrypoint', help='Entrypoint: devHost | ciOnPrem')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals
