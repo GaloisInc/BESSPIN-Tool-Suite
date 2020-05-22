@@ -800,13 +800,21 @@ def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
     def showTime(stopThread):
         startTime = time.time()
         minutesEst, secondsEst = divmod(estimatedTime, 60)
-        prefix = "Estimated ~{:0>2}:{:0>2} ----- Elapsed: ".format(int(minutesEst),int(secondsEst))
+        estimatedPrefix = "Estimated ~{:0>2}:{:0>2} ".format(int(minutesEst),int(secondsEst))
+        if (isEqSetting('fettEntrypoint','devHost')):
+            showTimePrefix = f"{estimatedPrefix}----- Elapsed: "
+        elif (isEqSetting('fettEntrypoint','ciOnPrem')):
+            stdout.write(f"{estimatedPrefix}\n")
+        else:
+            logAndExit(f"showElapsedTime: Not implemented for Entrypoint: <{getSetting('fettEntrypoint')}>.",exitCode=EXIT.Implementation)
         while (not stopThread.is_set()):
             minutes, seconds = divmod(time.time() - startTime, 60)
-            stdout.write(prefix + "{:0>2}:{:0>2}\r".format(int(minutes),int(seconds)))
-            stdout.flush ()
+            if (isEqSetting('fettEntrypoint','devHost')):
+                stdout.write(showTimePrefix + "{:0>2}:{:0>2}\r".format(int(minutes),int(seconds)))
+                stdout.flush ()
             time.sleep(0.25)
-        stdout.write(' ' * (len(prefix)+5) + '\r')
+        if (isEqSetting('fettEntrypoint','devHost')):
+            stdout.write(' ' * (len(showTimePrefix)+5) + '\r')
         completedMsg = "Estimated ~{:0>2}:{:0>2} ----- Completed in {:0>2}:{:0>2}\n".format(int(minutesEst),int(secondsEst),int(minutes),int(seconds))
         stdout.write(completedMsg)
         stdout.flush()
