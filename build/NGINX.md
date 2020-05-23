@@ -98,11 +98,11 @@ to this directory.
 $ patch -p1 <path/to/0001-Pass-configure-checks-when-cross-compiling.patch
 ```
 
-4. Set the variable `SYSROOT` to  the location of the sysroot for your
-   FreeBSD RISC-V toolchain. If you have an installation of GCC, then
-   this can be done as follows:
-```
-$ SYSROOT=$(riscv64-unknown-freebsd12.1-gcc -print-sysroot)
+4. Set the variable `SYSROOT` to the location of the sysroot for your
+   FreeBSD RISC-V toolchain. If you are using the toolchain in the
+   FETT environment, then the following will work:
+ ```
+$ SYSROOT=$FETT_GFE_FREEBSD_SYSROOT
 ```
   Set `CFLAGS` and `LDFLAGS`:
 ```

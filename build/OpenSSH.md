@@ -49,13 +49,17 @@ $ STRIP=${CROSS_PREFIX}-strip
 ```
 If using Clang:
 ```bash
-$ SYSROOT=$(${CROSS_PREFIX}-gcc -print-sysroot)
 $ CFLAGS="-target ${CROSS_PREFIX} ${ARCH_ABI} -Wall -lrt -fPIC --sysroot=${SYSROOT} -fuse-ld=lld -mno-relax"
 $ CC=clang
 $ AR=llvm-ar
 $ RANLIB=llvm-ranlib
 $ STRIP=llvm-strip
 ```
+You will also need to define the variable `SYSROOT`, which is the path
+of the sysroot that your toolchain uses. If you were building for
+FreeBSD with the LLVM toolchain in the FETT Nix environment, you would
+set this to `$FETT_GFE_FREEBSD_SYSROOT`. If you using a GNU toolchain
+for linking, then you can use `$(${CROSS_PREFIX}-gcc -print-sysroot)`.
 
 #### Build Zlib v1.2.11
 
