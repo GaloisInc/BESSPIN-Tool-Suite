@@ -36,13 +36,29 @@ nix-shell
     ```bash
         %sudo ALL=NOPASSWD: <path-to-ip>/ip
     ```
+  
+  - Note that the `<ethernet-adaptor-name>` changes from a system to
+      another. Please review the [FPGA host network configuration setup
+      instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md)
+      for more details about the adaptors and IP settings.  In case you
+      intend to use a different setup, please change
+      [setupEnvGlobal.sh](scripts/setupEnvGlobal.sh) accordingly.
 
-    - Note that the `<ethernet-adaptor-name>` changes from a system to
-    another. Please review the [FPGA host network configuration setup
-    instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md)
-    for more details about the adaptors and IP settings.  In case you
-    intend to use a different setup, please change
-    [setupEnvGlobal.sh](scripts/setupEnvGlobal.sh) accordingly.
+### AWS Setup
+
+To utilize its FireSim integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of both the FireSim and FETT projects. The AMI is referenced with:
+
+**AMI ID: `ami-024190edb87da82c8`**
+
+#### Contents
+
+The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e251a40fd1fc-ami-0b1edf08d56c2da5c.4 (ami-02b792770bf83b668)` AMI. It runs CentOS 7 and is the AMI used for Firesim. It adds
+
+* An updated version of Git, required by the FETT Environment nix shell installation.
+* [The Nix Package Manager](https://nixos.org/nix/)
+* [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) checked out at `2430b00b1becf8957d7fe4a304fb820e74e66972`, with the environment pre-populated at `nix/store`
+* [DARPA-SSITH-Demonstrators fork](https://github.com/DARPA-SSITH-Demonstrators/firesim) of [FireSim](https://fires.im), checked out at `1c2ce5cb6594e0d39fb547d910ac8dac9e7f6cbb`
+* A minimal version of CloudGFE, with the prebuilt firesim interface binaries and kernel modules
 
 
 ## User Manual ##
