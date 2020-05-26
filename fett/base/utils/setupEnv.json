@@ -105,13 +105,47 @@
             "val" : "127.0.0.1"
         },
         {
-            "name" : "procOsCombinations",
+            "name" : "fettMatrix",
             "type" : "dict",
             "val" : {
-                "FreeRTOS" : ["chisel_p1"],
-                "debian" : ["chisel_p2", "bluespec_p2"],
-                "FreeBSD" : ["chisel_p2", "bluespec_p2"],
-                "busybox" : ["chisel_p2", "bluespec_p2"]
+                "GFE" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    },
+                    "chisel_p2" : {
+                        "debian" : "firesim",
+                        "FreeBSD" : "notOnAWS",
+                        "busybox" : "notOnAWS"
+                    },
+                    "bluespec_p2" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "awsteria",
+                        "busybox" : "notOnAWS"
+                    }
+                },
+                "LMCO" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    },
+                    "chisel_p2" : {
+                        "debian" : "firesim"
+                    }
+                },
+                "Michigan" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    }
+                },
+                "MIT" : {
+                    "bluespec_p2" : {
+                        "FreeBSD" : "connectal"
+                    }
+                },
+                "SRI-Cambridge" : {
+                    "bluespec_p2" : {
+                        "FreeBSD" : "awsteria"
+                    }
+                }
             }
         },
         {
