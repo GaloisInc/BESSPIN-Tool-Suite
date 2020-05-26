@@ -32,7 +32,7 @@ nix-shell
     ```
 
     - In order to simplify this for sudoers, you may just allow any sudo member to execute the `ip` command
-    without password by adding the following:
+      without password by adding the following:
     ```bash
         %sudo ALL=NOPASSWD: <path-to-ip>/ip
     ```
@@ -45,6 +45,10 @@ nix-shell
       [setupEnvGlobal.sh](scripts/setupEnvGlobal.sh) accordingly.
 
 ### AWS Setup
+
+AWS setup has the following platform variants (PV):
+
+#### FireSim
 
 To utilize its FireSim integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of both the FireSim and FETT projects. The AMI is referenced with:
 
