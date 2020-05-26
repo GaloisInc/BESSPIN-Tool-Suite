@@ -83,7 +83,10 @@ def prepareEnv ():
 @decorate.timeWrap
 def launchFett ():
     printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
-    xTarget = getClassType()()
+    try:
+        xTarget = getClassType()()
+    except Exception as exc:
+        logAndExit (f"launchFett: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
     xTarget.start()
     if (isEnabled('isUnix')):
         if (getSetting('osImage') in ['debian','FreeBSD']):
