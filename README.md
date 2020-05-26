@@ -48,7 +48,7 @@ nix-shell
 
 To utilize its FireSim integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of both the FireSim and FETT projects. The AMI is referenced with:
 
-**AMI ID: `ami-024190edb87da82c8`**
+**AMI ID: `ami-01fe7251936e23f61`**
 
 #### Contents
 
