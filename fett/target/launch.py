@@ -8,6 +8,7 @@ from fett.target.build import prepareOsImage
 from fett.target import common
 from fett.target import fpga
 from fett.target import qemu
+from fett.target import aws
 #from fett.target import aws
 from fett.apps.build import buildApps
 import sys, os
@@ -89,7 +90,9 @@ def endFett ():
 @decorate.debugWrap
 def getClassType():
     if (isEqSetting('target','aws')):
-        logAndExit (f"<launch.getClassType> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
+        #logAndExit (f"<launch.getClassType> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
+        warnAndLog(f"<launch.getClassType> is not yet implemented for <aws>. Running the temporary code to test the harness!")
+        return aws.firesimTarget
     elif (isEqSetting('target','qemu')):
         return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):
