@@ -62,7 +62,9 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 * [The Nix Package Manager](https://nixos.org/nix/)
 * [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) checked out at `2430b00b1becf8957d7fe4a304fb820e74e66972`, with the environment pre-populated at `nix/store`
 * [DARPA-SSITH-Demonstrators fork](https://github.com/DARPA-SSITH-Demonstrators/firesim) of [FireSim](https://fires.im), checked out at `1c2ce5cb6594e0d39fb547d910ac8dac9e7f6cbb`
-* A minimal version of CloudGFE, with the prebuilt firesim interface binaries and kernel modules
+* A minimal version of CloudGFE, with the prebuilt FireSim interface binaries and kernel modules
+
+See the instructions in `build/FireSimAMI.md` to recreate the image manually.
 
 
 ## User Manual ##
@@ -92,7 +94,7 @@ Some useful configuration options:
 
 - To control which files to be transferred to target, edit the corresponding function inside `fett/apps/build.py`. You'd have to tar the files into a tar file named `os.path.join(getSetting('buildDir'),getSetting('tarballName'))`, and enable the setting for sending the files: `setSetting('sendTarballToTarget',True)`.
 - To execute, modify the function `runApp` inside `fett/apps/<appName>/run.py` to do whatever you want. 
-- The most important functiosn provided inside the `target` object which will be given by default to `runApp()`, is `runCommand`, `switchUser`, and `openSshConn` (all of which are defined inside `fett/target/common.py`.
+- The most important functions provided inside the `target` object which will be given by default to `runApp()`, is `runCommand`, `switchUser`, and `openSshConn` (all of which are defined inside `fett/target/common.py`.
 - There are other functions that can help you while coding whether the build or the execute functions for your experiments. These functions are defined inside `fett/base/utils/misc.py`:
     - `printAndLog(message, doPrint=True)`
     - `warnAndLog(message, doPrint=True, exc=None)`
