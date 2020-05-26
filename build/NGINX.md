@@ -98,7 +98,19 @@ to this directory.
 $ patch -p1 <path/to/0001-Pass-configure-checks-when-cross-compiling.patch
 ```
 
-4. Configure for the target platform, explicitly defining the settings
+4. Set the variable `SYSROOT` to the location of the sysroot for your
+   FreeBSD RISC-V toolchain. If you are using the toolchain in the
+   FETT environment, then the following will work:
+ ```
+$ SYSROOT=$FETT_GFE_FREEBSD_SYSROOT
+```
+  Set `CFLAGS` and `LDFLAGS`:
+```
+$ CFLAGS="-target riscv64-unknown-freebsd12.1 -march=rv64imafdc -mabi=lp64d -Wno-error=sign-compare --sysroot=${SYSROOT} -mno-relax"
+$ LDFLAGS="-target riscv64-unknown-freebsd12.1 -march=rv64imafdc -mabi=lp64d --sysroot=${SYSROOT} -fuse-ld=lld"
+```
+
+5. Configure for the target platform, explicitly defining the settings
    which the build scripts are unable to detect when cross compiling.
 ```
 $ env NGX_HAVE_TIMER_EVENT=yes \
@@ -120,13 +132,14 @@ $ env NGX_HAVE_TIMER_EVENT=yes \
           --with-http_v2_module \
           --with-http_ssl_module \
           --crossbuild=FreeBSD \
-          --with-cc=riscv64-unknown-freebsd12.1-gcc \
-          --with-cc-opt="-Wno-error=sign-compare -Wno-error=cast-function-type" \
-          --sysroot=$(riscv64-unknown-freebsd12.1-gcc -print-sysroot) \
+          --with-cc=clang \
+          --with-cc-opt="${CFLAGS}" \
+          --with-ld-opt="${LDFLAGS}" \
+          --sysroot=${SYSROOT} \
           --prefix=$BUILD_DIR/nginx-riscv
 ```
 
-5. Build a cross-compiled NGINX and install into
+6. Build a cross-compiled NGINX and install into
    `$BUILD_DIR/nginx-riscv`. The executable can be found at
    `$BUILD_DIR/nginx-riscv/sbin/nginx`.
 ```
