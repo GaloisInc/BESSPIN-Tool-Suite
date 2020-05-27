@@ -85,9 +85,22 @@ void Http_Worker (void)
     pvERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Create TCP Server.");
 
     TickType_t xStartTime = xTaskGetTickCount();
-    do {
+    for (;;)
+    {
       FreeRTOS_TCPServerWork (pxTCPServer, xInitialBlockTime);
-    } while ((xTaskGetTickCount() - xStartTime) < pdMS_TO_TICKS(configHTTP_TIMEOUT));
+
+      if (StopRequested())
+        {
+          fettPrintf ("(Info)~ Http_Worker: Terminating on STOP request\n");
+          break;
+        }
+      
+      if ((xTaskGetTickCount() - xStartTime) >= pdMS_TO_TICKS(configHTTP_TIMEOUT))
+        {
+          fettPrintf ("(Info)~ Http_Worker: Terminating on connection timeout\n");
+          break;
+        }
+    }
 }
 
 

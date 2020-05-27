@@ -37,23 +37,35 @@ def deploymentTest(target):
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(target.ipTarget, getSetting('TFTPPortTarget')) 
-    # uploading the signed ota.html file
+
+    # uploading the signed ota.htm file
     fileName = f"{getSettingDict('freertosAssets',['otaHtml'])}.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
-    """
-    # downloading a file
-    fileName = "fileToReceive.html"
-    fileToReceive = os.path.join(getSetting('workDir'),fileName)
-    try:
-        clientTftp.download(filename, output, packethook=None, timeout=10)
-    except Exception as exc:
-        target.shutdownAndExit(f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
-    """
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
+
+    # uploading the signed stop.htm file
+    fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
+    filePath = os.path.join(getSetting('assetsDir'),fileName)
+    try:
+        clientTftp.upload(fileName, filePath, timeout=10)
+    except Exception as exc:
+        target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
+    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
+
+
+    # downloading a file - NOT IMPLEMENTED ON TARGET YET
+    # fileName = "fileToReceive.html"
+    # fileToReceive = os.path.join(getSetting('workDir'),fileName)
+    # try:
+    #    clientTftp.download(filename, output, packethook=None, timeout=10)
+    # except Exception as exc:
+    #    target.shutdownAndExit(f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
+
+
     # Run to completion
     rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))
     return
