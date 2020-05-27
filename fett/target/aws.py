@@ -11,8 +11,7 @@ class firesimTarget(commonTarget):
         self.switch0Proc = None
 
         self.fswitchOut = None
-        self.switch0timing = ['6405', '10', '200']
-        self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
+        self.switch0timing = ['6405', '10', '200'] # dictated by cloudGFE
 
         self.rootPassword = 'firesim'
 
@@ -23,15 +22,6 @@ class firesimTarget(commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
-        """ process
-        1. ensure/install kernel modules [RT: not in this function]
-        2. check the network config -- tap interface and NAT [RT: not in this function]
-        3. clear the FPGA slot and load AFI [RT: not in this function]
-        4. detach screens
-        5. start switch
-        6. start bootcheck
-        7. start fsim0
-        """
 
         # 1. Switch0
         self.fswitchOut = ftOpenFile(os.path.join(getSetting('workDir'),'switch0.out'),'a')
@@ -110,6 +100,7 @@ class firesimTarget(commonTarget):
         except Exception as exc:
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
+        # The tap needs to be turned up AFTER booting
         getTapAdaptorUp ()
 
     def runCommand (self,command,endsWith=None,expectedContents=None, **kwargs):
