@@ -11,6 +11,7 @@ class firesimTarget(commonTarget):
                         'bootcheck': None}
         self.rootPassword = 'firesim'
 
+    @decorate.debugWrap
     def interact(self):
         pass
 
@@ -19,6 +20,8 @@ class firesimTarget(commonTarget):
         for s in screens:
             quitScreenSession(s)
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
         """ process
         1. ensure/install kernel modules
@@ -62,6 +65,8 @@ class firesimTarget(commonTarget):
                     endsWith = "#"
         return super().runCommand(command, endsWith=endsWith, **kwargs)
 
+    @decorate.debugWrap
+    @decorate.timeWrap
     def activateEthernet(self):
         return
 
