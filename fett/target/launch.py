@@ -63,6 +63,9 @@ def prepareEnv ():
     if (isEqSetting('target','fpga')):
         fpga.programBitfile()
         fpga.resetEthAdaptor()
+    elif (isEqSetting('target','aws')):
+        aws.configTapAdaptor()
+        aws.programAFI()
     printAndLog (f"Environment is ready.")
 
 """ This is the loading/booting function """
