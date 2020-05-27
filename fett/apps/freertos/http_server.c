@@ -355,6 +355,8 @@ BaseType_t xHTTPClientWork(TCPClient_t *pxTCPClient)
         }
         pcEndOfCmd = pcBuffer + xRc;
 
+        fettPrintf ("(Info)~  HTTP received request: %s\n", pcBuffer);
+        
         curCmd = xWebCommands;
 
         /* Pointing to "/index.html HTTP/1.1". */

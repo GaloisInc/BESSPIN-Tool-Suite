@@ -25,6 +25,21 @@ def deploy(target):
 
 @decorate.debugWrap
 @decorate.timeWrap
+def curlTest(target, url, extra=[], http2=False):
+    printAndLog(f"curl {url} extra={extra} http2={http2}", doPrint=False,tee=getSetting('appLog'))
+    out = curlRequest(url, http2=http2, extra=extra, rawOutput=False)
+    if (not out):
+        return (None,None)
+    try:
+        version,code,*rest = out.splitlines()[0].split(' ')
+    except Exception as exc:
+        errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
+        return (None,None)
+    printAndLog(f"curl {url} extra={extra} http2={http2} returned code {code}, version {version}\n{out}", doPrint=False,tee=getSetting('appLog'))
+    return (version, code)
+
+@decorate.debugWrap
+@decorate.timeWrap
 def extensiveTest(target):
     deploymentTest(target)
 
@@ -46,6 +61,16 @@ def deploymentTest(target):
     except Exception as exc:
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
+
+
+    # Issue an HTTP GET Request for index.htm
+    targetIP = target.ipTarget
+    httpPort = target.httpPortTarget
+    _,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.htm")
+    if (not code):
+        target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # uploading the signed stop.htm file
     fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
