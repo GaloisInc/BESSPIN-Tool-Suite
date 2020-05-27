@@ -662,11 +662,9 @@ class commonTarget():
             return [textBack, True, -1]
         except Exception as exc:
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run)
-        if (endsWith == pexpect.EOF):
-            endsWith = ''
-        elif (isinstance(endsWith,str)): #only one string
+        if (isinstance(endsWith,str)): #only one string
             textBack += endsWith
-        else:
+        elif ((endsWith not in [pexpect.EOF, pexpect.TIMEOUT]) and isinstance(endsWith[retExpect],str)): #list
             textBack += endsWith[retExpect]
         return [textBack, False, retExpect]
 
