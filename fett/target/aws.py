@@ -129,7 +129,7 @@ class firesimTarget(commonTarget):
     @decorate.debugWrap
     def targetTearDown(self):
         try:
-            subprocess.check_call(['sudo', 'kill', os.getpgid(self.switch0Proc.pid)],
+            subprocess.check_call(['sudo', 'kill', f"{os.getpgid(self.switch0Proc.pid)}"],
                                 stdout=self.fswitchOut, stderr=self.fswitchOut)
         except Exception as exc:
             warnAndLog("targetTearDown: Failed to kill <switch0> process.",doPrint=False,exc=exc)
