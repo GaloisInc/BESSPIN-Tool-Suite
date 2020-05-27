@@ -31,11 +31,12 @@ def curlTest(target, url, extra=[], http2=False):
     if (not out):
         return (None,None)
     try:
+        printAndLog(f"curl {url} returned:\n{out}\n", doPrint=False,tee=getSetting('appLog'))
         version,code,*rest = out.splitlines()[0].split(' ')
     except Exception as exc:
         errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
         return (None,None)
-    printAndLog(f"curl {url} extra={extra} http2={http2} returned code {code}, version {version}\n{out}", doPrint=False,tee=getSetting('appLog'))
+    printAndLog(f"curl {url} extra={extra} http2={http2} returned code {code}, version {version}\n", doPrint=False,tee=getSetting('appLog'))
     return (version, code)
 
 @decorate.debugWrap
