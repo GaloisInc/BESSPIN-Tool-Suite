@@ -125,6 +125,17 @@ def configTapAdaptor():
         fpga.sudoShellCommand(command,sudoPromptPrefix)
         time.sleep(1)
 
+    printAndLog (f"aws.configTapAdaptor: <{getSetting('awsTapAdaptorName')}> is properly configured.",doPrint=False)
+
 @decorate.debugWrap
 def programAFI():
-    pass
+    warnAndLog("programAFI: This is to be properly implemented.")
+    sudoPromptPrefix = f"You need sudo privileges to manipulate the AFI: "
+    commands = [
+        ['fpga-clear-local-image', '-S', '0'],
+        ['fpga-load-local-image', '-S', '0', '-I', 'agfi-009b6afeef4f64454']
+    ]
+
+    for command in commands:
+        fpga.sudoShellCommand(command,sudoPromptPrefix)
+        time.sleep(1)
