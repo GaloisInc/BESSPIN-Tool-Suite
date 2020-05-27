@@ -32,12 +32,20 @@ def curlTest(target, url, extra=[], http2=False):
         return (None,None)
     try:
         printAndLog(f"curl {url} returned:\n{out}\n", doPrint=False,tee=getSetting('appLog'))
+
+        # Line 0 of "out" should be something like "HTTP/1.1 200 OK".
+        # We're mainly interested in the middle one - the return status code
         version,code,*rest = out.splitlines()[0].split(' ')
+
+        # Line 3 of "out" should be of the form "Content-Length: XXX"
+        # where XXX is a positive integer.  We want to grab that and report it back to the caller
+        clheader,contentLength = out.splitlines()[3].split(' ')
+
     except Exception as exc:
         errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
         return (None,None)
-    printAndLog(f"curl {url} extra={extra} http2={http2} returned code {code}, version {version}\n", doPrint=False,tee=getSetting('appLog'))
-    return (version, code)
+    printAndLog(f"curl {url} extra={extra} http2={http2} returned code {code}, Content-Length {contentLength}\n", doPrint=False,tee=getSetting('appLog'))
+    return (contentLength, code)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -48,11 +56,13 @@ def extensiveTest(target):
 @decorate.timeWrap
 def deploymentTest(target):
     # target is a fett target object
+    targetIP = target.ipTarget
+    httpPort = target.httpPortTarget
 
     # Wait till TFTP server is up
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
-    clientTftp = tftpy.TftpClient(target.ipTarget, getSetting('TFTPPortTarget')) 
+    clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget')) 
 
     # uploading the signed ota.htm file
     fileName = f"{getSettingDict('freertosAssets',['otaHtml'])}.sig"
@@ -61,16 +71,16 @@ def deploymentTest(target):
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
-    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
+    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
 
     # Issue an HTTP GET Request for index.htm
-    targetIP = target.ipTarget
-    httpPort = target.httpPortTarget
-    _,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.htm")
+    contentLength,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.htm")
     if (not code):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
-    elif code != '200':
+    elif code == '200':
+        getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.")
+    else:
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # uploading the signed stop.htm file
