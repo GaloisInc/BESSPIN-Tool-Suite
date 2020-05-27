@@ -84,21 +84,24 @@ which allow the configure checks to pass when cross compiling.
 $ BUILD_DIR=`pwd`
 ```
 
-2. Fetch and unpack the source tarball.
+2. Build and install zlib and OpenSSL as described in steps 4 and 5 of
+   the [instructions](./OpenSSH.md) for building OpenSSH.
+
+3. Fetch and unpack the source tarball.
 ```
 $ wget https://nginx.org/download/nginx-1.13.2.tar.gz
 $ tar zxf nginx-1.13.2.tar.gz
 $ cd nginx-1.13.2
 ```
 
-3. Apply the patch located at
+4. Apply the patch located at
 `build/0001-Pass-configure-checks-when-cross-compiling.patch` relative
 to this directory.
 ```
 $ patch -p1 <path/to/0001-Pass-configure-checks-when-cross-compiling.patch
 ```
 
-4. Set the variable `SYSROOT` to the location of the sysroot for your
+5. Set the variable `SYSROOT` to the location of the sysroot for your
    FreeBSD RISC-V toolchain. If you are using the toolchain in the
    FETT environment, then the following will work:
  ```
@@ -110,7 +113,7 @@ $ CFLAGS="-target riscv64-unknown-freebsd12.1 -march=rv64imafdc -mabi=lp64d -Wno
 $ LDFLAGS="-target riscv64-unknown-freebsd12.1 -march=rv64imafdc -mabi=lp64d --sysroot=${SYSROOT} -fuse-ld=lld"
 ```
 
-5. Configure for the target platform, explicitly defining the settings
+6. Configure for the target platform, explicitly defining the settings
    which the build scripts are unable to detect when cross compiling.
 ```
 $ env NGX_HAVE_TIMER_EVENT=yes \
@@ -133,13 +136,23 @@ $ env NGX_HAVE_TIMER_EVENT=yes \
           --with-http_ssl_module \
           --crossbuild=FreeBSD \
           --with-cc=clang \
-          --with-cc-opt="${CFLAGS}" \
-          --with-ld-opt="${LDFLAGS}" \
+          --with-cc-opt="${CFLAGS} \
+              -I $BUILD_DIR/zlib-riscv/include \
+              -I $BUILD_DIR/openssl-riscv/include" \
+          --with-ld-opt="${LDFLAGS} \
+              $BUILD_DIR/zlib-riscv/lib/libz.a \
+              $BUILD_DIR/openssl-riscv/lib/libssl.a \
+              $BUILD_DIR/openssl-riscv/lib/libcrypto.a" \
           --sysroot=${SYSROOT} \
           --prefix=$BUILD_DIR/nginx-riscv
 ```
 
-6. Build a cross-compiled NGINX and install into
+7. Modify `objs/Makefile` to avoid linking to the system zlib and OpenSSL libraries.
+```
+$ sed -i -E 's/-lssl|-lcrypto|-lz|//g' objs/Makefile
+```
+
+7. Build a cross-compiled NGINX and install into
    `$BUILD_DIR/nginx-riscv`. The executable can be found at
    `$BUILD_DIR/nginx-riscv/sbin/nginx`.
 ```
