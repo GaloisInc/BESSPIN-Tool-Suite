@@ -1,5 +1,6 @@
 import pexpect
 from fett.target.common import *
+from fett.target import fpga
 from subprocess import getoutput
 
 class firesimTarget(commonTarget):
@@ -94,3 +95,36 @@ def quitScreenSession(name):
         quitCommand = f"screen -X -S {sname} quit"
         output = getoutput(quitCommand)
         # TODO: ELEW sanity check this?
+
+@decorate.debugWrap
+def configTapAdaptor():
+    sudoPromptPrefix = f"You need sudo privileges to configure the tap adaptor: "
+    commands = {
+        'config' : [
+            ['ip', 'addr', 'flush', 'dev', getSetting('awsTapAdaptorName')],
+            ['ip','addr','add',f"{getSetting('awsIpHost')}/24",'dev',getSetting('awsTapAdaptorName')],
+            ['ifconfig', getSetting('awsTapAdaptorName'), 'hw', 'ether', getSetting('awsTapAdaptorMacAddress')],
+        ],
+        'down' : [
+            ['ip','link','set', getSetting('awsTapAdaptorName'), 'down'],
+        ]
+    }
+    # First, configure
+    for command in commands['config']:
+        fpga.sudoShellCommand(command,sudoPromptPrefix)
+        time.sleep(1)
+
+    # second, check configuration
+    if (fpga.getAddrOfAdaptor(getSetting('awsTapAdaptorName'),'IP') != getSetting('awsIpHost')):
+        logAndExit(f"configTapAdaptor: The <{getSetting('awsTapAdaptorName')}> IP does not match <{getSetting('awsIpHost')}>",exitCode=EXIT.Network)
+    if (fpga.getAddrOfAdaptor(getSetting('awsTapAdaptorName'),'MAC') != getSetting('awsTapAdaptorMacAddress')):
+        logAndExit(f"configTapAdaptor: The <{getSetting('awsTapAdaptorName')}> MAC address does not match <{getSetting('awsTapAdaptorMacAddress')}>",exitCode=EXIT.Network)
+
+    # Third, take the adaptor DOWN for firesim
+    for command in commands['down']:
+        fpga.sudoShellCommand(command,sudoPromptPrefix)
+        time.sleep(1)
+
+@decorate.debugWrap
+def programAFI():
+    pass
