@@ -27,7 +27,7 @@ def deploy(target):
 @decorate.timeWrap
 def curlTest(target, url, extra=[], http2=False):
     printAndLog(f"curl {url} extra={extra} http2={http2}", doPrint=False,tee=getSetting('appLog'))
-    out = curlRequest(url, http2=http2, extra=extra, rawOutput=False)
+    out = curlRequest(url, http2=http2, extra=extra, rawOutput=True)
     if (not out):
         return (None,None)
     try:
