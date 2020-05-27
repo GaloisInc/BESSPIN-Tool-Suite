@@ -88,14 +88,13 @@ void Write_Payload_To_Log (size_t fsize)
 
 void Ota_Worker (ed25519_key *pk)
 {
-  // Normally, this would loop forever, but for initial testing,
-  // we'll just receive and process one file before returning
-  // for (;;)
+  do
   {
     int      signature_ok;
     uint32_t received_file_size;
     int      r;
-    char tftp_filename[tftpconfigMAX_FILENAME];
+    char     tftp_filename[tftpconfigMAX_FILENAME];
+
     memset(tftp_filename,0,tftpconfigMAX_FILENAME);
     
     Initialize_Receipt_Buffer();
@@ -124,12 +123,27 @@ void Ota_Worker (ed25519_key *pk)
                                   pk);                      // public key
         if ((r == 0) && (signature_ok == 1))
           {
-            fettPrintf ("(Info)~  vOta: Signature is OK\n");
-            // now write the payload (not including the signature) to disk.
-            Write_Payload_To_FS ((size_t) received_file_size - ED25519_SIG_SIZE);
-            // and to the log
-            fettPrintf ("(Info)~  vOta: Received payload is\n");
-            Write_Payload_To_Log ((size_t) received_file_size - ED25519_SIG_SIZE);
+            uint8_t *message_data = file_buffer + ED25519_SIG_SIZE;
+            
+            // Check for the special STOP signed message
+            if (received_file_size == (ED25519_SIG_SIZE + 4) &&
+                message_data[0] == 'S' &&
+                message_data[1] == 'T' &&
+                message_data[2] == 'O' &&
+                message_data[3] == 'P')
+              {
+                fettPrintf ("(Info)~  vOta: Signed STOP message received\n");
+                setStopRequested();
+              }
+            else
+              {
+                fettPrintf ("(Info)~  vOta: Signature is OK\n");
+                // now write the payload (not including the signature) to disk.
+                Write_Payload_To_FS ((size_t) received_file_size - ED25519_SIG_SIZE);
+                // and to the log
+                fettPrintf ("(Info)~  vOta: Received payload is\n");
+                Write_Payload_To_Log ((size_t) received_file_size - ED25519_SIG_SIZE);
+              }
           } 
         else
           {
@@ -142,8 +156,10 @@ void Ota_Worker (ed25519_key *pk)
         fettPrintf ("(Error)~  vOta: OTA: received file too small to be signed.\n");
       }
 
-  }
+  } while (!StopRequested());
 
+  fettPrintf ("(Info)~  vOta: Ota_Worker returns after STOP message\n");
+            
 }
 
 
