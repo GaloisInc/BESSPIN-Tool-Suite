@@ -65,6 +65,10 @@ class firesimTarget(commonTarget):
     def activateEthernet(self):
         return
 
+    @decorate.debugWrap
+    def targetTearDown(self):
+        return True
+
 def getScreenSessions():
     """get all screen sessions currently available"""
     listCommand = "screen -ls"
