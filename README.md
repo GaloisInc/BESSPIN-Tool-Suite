@@ -56,6 +56,7 @@ The default configuration file is `config.ini`, working directory is `$REPO/work
 
 Some useful configuration options:
 - `mode`: Choose either `test` for the testing flow, or `deploy` for leaving the apps switched on for researchers interactions.
+- `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
 - `target`: Choose either `aws` for the main FETT target, `fpga` for Xilinx VCU118 hardware
     emulation, or `qemu` for [QEMU](https://www.qemu.org/) emulation.
 - `processor`: One of the GFE processors or the TA-1 teams processors.
@@ -65,9 +66,10 @@ Some useful configuration options:
     or [Busybox](https://busybox.net/about.html).
 - `useCustomOsImage`: If disabled, Nix (if image is available) or FETT-Binaries images will be used.
 - `useCustomBitfile`: If disabled, Nix (if bitfile is available) or FETT-Binaries bitfiles will be used.
-- `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
 - `openConsole`: returns an open console for Unix targets.
 - `buildApps`: Cross-compile as instructed in `fett/apps/build.py`.
+
+Note that the AWS platform variant is determined based on the `binarySource`-`processor`-`osImage` choice. More information about these decisions can be found in [the cloudGFE TA-1 and GFE tracker spreadsheet](https://docs.google.com/spreadsheets/d/1J8MSDQS1X0V-wPHiNdCTgu7Pwf8GcgTy91kcn8u9mt0/edit#gid=0).
 
 
 ## Developer Manual ##
