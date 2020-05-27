@@ -5,57 +5,112 @@ from subprocess import getoutput
 
 class firesimTarget(commonTarget):
     def __init__(self):
+
         super().__init__()
+
+        self.switch0Proc = None
+
+        self.fswitchOut = None
+        self.switch0timing = ['6405', '10', '200']
         self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
-        self.screens = {'fsim0': None,
-                        'switch0': None,
-                        'bootcheck': None}
+
         self.rootPassword = 'firesim'
 
     @decorate.debugWrap
     def interact(self):
         pass
 
-    def quitAllScreens(self):
-        screens = getScreenSessions()
-        for s in screens:
-            quitScreenSession(s)
-
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
         """ process
-        1. ensure/install kernel modules
-        2. check the network config -- tap interface and NAT
-        3. clear the FPGA slot and load AFI
+        1. ensure/install kernel modules [RT: not in this function]
+        2. check the network config -- tap interface and NAT [RT: not in this function]
+        3. clear the FPGA slot and load AFI [RT: not in this function]
         4. detach screens
         5. start switch
         6. start bootcheck
         7. start fsim0
         """
-        self.quitAllScreens()
-        simPath = getSetting("awsFiresimSimPath")
 
-        # TODO: ELEW using a shell setup - ew
-        # run_sim.sh was modded by adding -d to screen Firesim-f1, so we can
-        # attach a process separately
-        runSimCommand = os.path.join(simPath, "run_sim.sh")
-        imageFile = os.path.join(simPath, "linux-uniform0-br-base.img")
-        dwarfFile = os.path.join(simPath, "linux-uniform0-br-base-bin-dwarf")
-        elfFile = getSetting("osImageElf")
-        owd = os.getcwd()
-        os.chdir(simPath)
-        output = getoutput(f"{runSimCommand} {imageFile} {dwarfFile} {elfFile}")
-        os.chdir(owd)
+        # 1. Switch0
+        self.fswitchOut = ftOpenFile(os.path.join(getSetting('workDir'),'switch0.out'),'a')
+        self.switch0Proc = subprocess.Popen(['sudo', './switch0']+self.switch0timing,
+                                            stdout=self.fswitchOut, stderr=self.fswitchOut,
+                                            cwd=getSetting("awsFiresimSimPath"), preexec_fn=os.setpgrp)
 
-        print(output)
-        fsimSession = getScreenSessionName("fsim0")
-        printAndLog(f"<target.boot> found {fsimSession} session to use as process")
-        self.screens['fsim0'] = pexpect.spawn(f"screen -r {fsimSession}")
-        self.process = self.screens['fsim0']
+        # 2. fsim
+        imageFile = os.path.join(getSetting("awsFiresimSimPath"), "linux-uniform0-br-base.img")
+        dwarfFile = os.path.join(getSetting("awsFiresimSimPath"), "linux-uniform0-br-base-bin-dwarf")
+        firesimCommand = ' '.join([
+            'sudo',
+            "LD_LIBRARY_PATH={}:$LD_LIBRARY_PATH".format(getSetting("awsFiresimSimPath")),
+            './FireSim-f1',
+            '+permissive',
+            '+mm_relaxFunctionalModel=0',
+            '+mm_openPagePolicy=1',
+            '+mm_backendLatency=2',
+            '+mm_schedulerWindowSize=8',
+            '+mm_transactionQueueDepth=8',
+            '+mm_dramTimings_tAL=0',
+            '+mm_dramTimings_tCAS=14',
+            '+mm_dramTimings_tCMD=1',
+            '+mm_dramTimings_tCWD=10',
+            '+mm_dramTimings_tCCD=4',
+            '+mm_dramTimings_tFAW=25',
+            '+mm_dramTimings_tRAS=33',
+            '+mm_dramTimings_tREFI=7800',
+            '+mm_dramTimings_tRC=47',
+            '+mm_dramTimings_tRCD=14',
+            '+mm_dramTimings_tRFC=160',
+            '+mm_dramTimings_tRRD=8',
+            '+mm_dramTimings_tRP=14',
+            '+mm_dramTimings_tRTP=8',
+            '+mm_dramTimings_tRTRS=2',
+            '+mm_dramTimings_tWR=15',
+            '+mm_dramTimings_tWTR=8',
+            '+mm_rowAddr_offset=18',
+            '+mm_rowAddr_mask=65535',
+            '+mm_rankAddr_offset=16',
+            '+mm_rankAddr_mask=3',
+            '+mm_bankAddr_offset=13',
+            '+mm_bankAddr_mask=7',
+            '+mm_llc_wayBits=3',
+            '+mm_llc_setBits=12',
+            '+mm_llc_blockBits=7',
+            '+mm_llc_activeMSHRs=8',
+            '+slotid=0',
+            '+profile-interval=-1',
+            f"+macaddr0={getSetting('awsTargetMacAddress')}",
+            f"+blkdev0={imageFile}",
+            f"+niclog0={os.path.join(getSetting('workDir'),'niclog0.out')}",
+            f"+blkdev-log0={os.path.join(getSetting('workDir'),'blkdev-log0.out')}",
+            '+trace-select0=1',
+            '+trace-start0=0',
+            '+trace-end0=-1',
+            '+trace-output-format0=0',
+            f"+dwarf-file-name0={dwarfFile}",
+            '+autocounter-readrate0=0',
+            f"+autocounter-filename0={os.path.join(getSetting('workDir'),'AUTOCOUNTERFILE0.out')}",
+            f"+linklatency0={self.switch0timing[0]}",
+            f"+netbw0={self.switch0timing[2]}",
+            '+shmemportname0=0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+            '+permissive-off',
+            getSetting("osImageElf")
+        ])
+        logging.debug(f"boot: firesimCommand = {firesimCommand}")
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
-        time.sleep(1)
-        self.expectFromTarget(endsWith, "Booting", timeout=timeout)
+        try:
+            self.ttyProcess = pexpect.spawn(firesimCommand,logfile=self.fTtyOut,timeout=30,
+                                        cwd=getSetting("awsFiresimSimPath"))
+            self.process = self.ttyProcess
+            time.sleep(1)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout)
+        except Exception as exc:
+            self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+        getTapAdaptorUp ()
 
     def runCommand (self,command,endsWith=None,expectedContents=None, **kwargs):
         """ this is for the firesim debian build, but not the ones FETT will use """
@@ -73,28 +128,16 @@ class firesimTarget(commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
+        try:
+            subprocess.check_call(['sudo', 'kill', os.getpgid(self.switch0Proc.pid)],
+                                stdout=self.fswitchOut, stderr=self.fswitchOut)
+        except Exception as exc:
+            warnAndLog("targetTearDown: Failed to kill <switch0> process.",doPrint=False,exc=exc)
+        try:
+            self.fswitchOut.close()
+        except Exception as exc:
+            warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
         return True
-
-def getScreenSessions():
-    """get all screen sessions currently available"""
-    listCommand = "screen -ls"
-    return [l.split()[0] for l in getoutput(listCommand).split('\n') if "\t" in l or ".".join(l.split(".")[1:]).split("\t")[0]]
-
-def getScreenSessionName(name):
-    """ given session name, find the session currently available (permissive function)"""
-    for s in getScreenSessions():
-        if name in s:
-            return s
-    return None
-
-def quitScreenSession(name):
-    """ quit session, if it's available (permissive function)"""
-    sname = getScreenSessionName(name)
-    if sname is not None:
-        printAndLog(f"quitScreenSession: found {sname} to quit")
-        quitCommand = f"screen -X -S {sname} quit"
-        output = getoutput(quitCommand)
-        # TODO: ELEW sanity check this?
 
 @decorate.debugWrap
 def configTapAdaptor():
@@ -139,3 +182,9 @@ def programAFI():
     for command in commands:
         fpga.sudoShellCommand(command,sudoPromptPrefix)
         time.sleep(1)
+
+@decorate.debugWrap
+def getTapAdaptorUp ():
+    sudoPromptPrefix = f"You need sudo privileges to set the tap adaptor up: "
+    fpga.sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'],sudoPromptPrefix)
+
