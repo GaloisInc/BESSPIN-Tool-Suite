@@ -3,9 +3,23 @@ Functions used for Misc implementation on FreeRTOS
 */
 
 #include "fettFreeRTOS.h"
+#include <stdatomic.h>
 
 static uint8_t doEndFett = 0;
 MessageBufferHandle_t globalMsgBuffer = NULL;
+
+// Termination control.
+static atomic_bool stopRequestedFlag = false;
+
+void setStopRequested(void)
+{
+    stopRequestedFlag = true;
+}
+
+bool StopRequested(void)
+{
+    return stopRequestedFlag;
+}
 
 // Only printf while "ON"
 void fettPrintf (const char * textToPrint, ...) {
