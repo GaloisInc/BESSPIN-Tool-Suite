@@ -695,7 +695,7 @@ class commonTarget():
         try:
             self.fTtyOut.close()
         except Exception as exc:
-            warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False)
+            warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False,exc=exc)
         if ((isSuccess and (not isTimeout)) or shutdownOnError):
             isSuccess &= self.targetTearDown()
         return [isSuccess, textBack, isTimeout, dumpIdx]
