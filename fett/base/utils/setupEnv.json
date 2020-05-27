@@ -58,6 +58,21 @@
             "val" : "88:53:48:41:56:45"
         },
         {
+            "name" : "awsIpHost",
+            "type" : "ipAddress",
+            "val" : "172.16.0.1"
+        },
+        {
+            "name" : "awsTapAdaptorName",
+            "type" : "string",
+            "val" : "tap0"
+        },
+        {
+            "name" : "awsTapAdaptorMacAddress",
+            "type" : "macAddress",
+            "val" : "8e:6b:35:04:00:00"
+        },
+        {
             "name" : "HTTPPortTarget",
             "type" : "int",
             "min" : 80,
