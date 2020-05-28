@@ -242,7 +242,7 @@ def flashFpgas(agfi):
     """
     printAndLog(f"""<aws.flashFpgas>: Flashing FPGAs with agfi: {agfi}.""")
     numFpgas = int(getoutput("sudo fpga-describe-local-image-slots | wc -l"))
-    printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGAs to clear")
+    printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGAs to flash")
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
