@@ -179,3 +179,10 @@ def getTapAdaptorUp ():
     sudoPromptPrefix = f"You need sudo privileges to set the tap adaptor up: "
     fpga.sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'],sudoPromptPrefix)
 
+@decorate.debugWrap
+def setupKernelModules():
+    if (isEqSetting('pvAWS','firesim')):
+        pass
+    else:
+        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)    
+
