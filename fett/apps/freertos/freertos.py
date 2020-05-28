@@ -75,11 +75,19 @@ def deploymentTest(target):
 
 
     # Issue an HTTP GET Request for index.htm
+    filePath = os.path.join(getSetting('assetsDir'),'index.htm')
+    expectedFileLength = os.stat(filePath).st_size
+    getSetting('appLog').write(f"(Host)~  HTTP Request expected length is {expectedFileLength}.\n")
+
     contentLength,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.htm")
     if (not code):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code == '200':
-        getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.")
+        getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.\n")
+        if contentLength == expectedFileLength then:
+            getSetting('appLog').write(f"(Host)~  HTTP TEST PASSED\n")
+        else:
+            getSetting('appLog').write(f"(Host)~  HTTP TEST FAILED - Wrong length\n")
     else:
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
