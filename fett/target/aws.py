@@ -1,7 +1,7 @@
 import pexpect
 from fett.target.common import *
 from fett.target import fpga
-from subprocess import getoutput
+from subprocess import getoutput, run
 
 class firesimTarget(commonTarget):
     def __init__(self):
@@ -163,10 +163,9 @@ def configTapAdaptor():
 @decorate.debugWrap
 def programAFI():
     """ perform AFI Management Commands for f1.2xlarge """
-    slotno = 0
     agfiId = 'agfi-009b6afeef4f64454'
-    clearFpga(slotno)
-    flashFpga(agfiId, slotno)
+    clearFpgas()
+    flashFpgas(agfiId)
 
 @decorate.debugWrap
 def getTapAdaptorUp ():
@@ -186,51 +185,77 @@ def setupKernelModules():
     else:
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
-def _runCommandAndLog(command):
-    """ convenience for fpga.sudoShellCommand """
-    if type(command) is str:
-        command = command.split()
-    printAndLog(f"_runCommandAndLog: running <{' '.join(command)}>")
-    return fpga.sudoShellCommand(command)
+def _runCommandAndLog(command, **kwargs):
+    """ run and log a simple command, treating all exceptions as terminal errors """
+    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
+    try:
+        subprocess.run(command,stdout=sudoOut,stderr=sudoOut,check=False,shell=True)
+    except Exception as exc:
+        logAndExit (f"sudo: Failed to send a message to </dev/kmsg>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
+    sudoOut.close()
 
 def _sendKmsg(message):
     """send message to /dev/kmsg"""
     # TODO: replace all whitespace with underscores?
-    command = f"echo {message} | sudo tee /dev/kmsg"
+    command = f"echo \"{message}\" | sudo tee /dev/kmsg"
     _runCommandAndLog(command)
+
+def _poll_command(command, trigger):
+    hasTriggered = False
+    while not hasTriggered:
+        out = getoutput(command)
+        if trigger not in out:
+            time.sleep(1)
+        else:
+            hasTriggered = True
 
 def clearFpga(slotno):
     """clear FPGA in a given slot id and wait until finished """
-    printAndLog(f"Clearing FPGA Slot {slotno}")
     _sendKmsg(f"about to clear fpga {slotno}")
     _runCommandAndLog(f"sudo fpga-clear-local-image -S {slotno} -A")
     _sendKmsg(f"done clearing fpga {slotno}")
 
     # wait until the FPGA has been cleared
     _sendKmsg(f"checking for fpga slot {slotno}")
-    _runCommandAndLog(f"""until sudo fpga-describe-local-image -S {slotno} -R -H | grep -q "cleared"; do  sleep 1;  done""")
+    _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "cleared")
     _sendKmsg(f"done checking fpga slot {slotno}")
+
+def clearFpgas():
+    """ clear ALL FPGAs """
+    numFpgas = int(getoutput("sudo fpga-describe-local-image-slots | wc -l"))
+    printAndLog(f"<aws.clearFpgas>: Found {numFpgas} FPGAs to clear")
+    for sn in range(numFpgas):
+        clearFpga(sn)
 
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    # NOTE: FireSim documentation came with a note. If an instance is chosen that has more than one FPGA, leaving one
-    # in a cleared state can cause XDMA to hang. Accordingly, it is advised to flash all the FPGAs in a slot with
-    # something. This method might need to be extended to flash all available slots with our AGFI
-    printAndLog("""Flashing FPGA Slot: {} with agfi: {}.""".format(slotno, agfi))
     _runCommandAndLog(f"""sudo fpga-load-local-image -S {slotno} -I {agfi} -A""")
 
     # wait until the FPGA has been flashed
-    printAndLog(f"""Checking for Flashed FPGA Slot: {slotno} with agfi: {agfi}.""")
-    _runCommandAndLog(f"""until sudo fpga-describe-local-image -S {slotno} -R -H | grep -q "loaded"; do  sleep 1;  done""")
+    _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "loaded")
+
+def flashFpgas(agfi):
+    """
+    NOTE: FireSim documentation came with a note. If an instance is chosen that has more than one FPGA, leaving one
+    in a cleared state can cause XDMA to hang. Accordingly, it is advised to flash all the FPGAs in a slot with
+    something. This method might need to be extended to flash all available slots with our AGFI
+    """
+    printAndLog(f"""<aws.flashFpgas>: Flashing FPGAs with agfi: {agfi}.""")
+    numFpgas = int(getoutput("sudo fpga-describe-local-image-slots | wc -l"))
+    printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGAs to clear")
+    for sn in range(numFpgas):
+        flashFpga(agfi, sn)
 
 @decorate.debugWrap
-def installAwsSdk(installPath, firesimVersion="6c707ab4a26c2766b916dad9d40727266fa0e4ef"):
+def installAwsSdk(firesimVersion="6c707ab4a26c2766b916dad9d40727266fa0e4ef"):
     """ Installs the aws-sdk--required for firesim AWS work"""
+    printAndLog("""<aws.installAwsSdk>: Setting up Firesim's AWS SDK""")
+    installPath = getSetting("awsFiresimPath")
     awsPath = os.path.join(installPath, "aws-fpga")
     if not os.path.exists(awsPath):
-      printAndLog(f"installAwsSdk: {awsPath} does not exist. cloning...")
+      printAndLog(f"""<aws.installAwsSdk>: {awsPath} does not exist. cloning...""")
       _runCommandAndLog('git clone https://github.com/aws/aws-fpga')
       _runCommandAndLog(f'cd aws-fpga && git checkout {firesimVersion}')
     else:
-      print(f"installAwsSdk: {awsPath} exists, using...")
+      printAndLog(f"""<aws.installAwsSdk>: {awsPath} exists, using...""")
     _runCommandAndLog("source sdk_setup.sh", cwd=installPath, shell=True)
