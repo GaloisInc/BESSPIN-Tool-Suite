@@ -179,7 +179,14 @@ def getTapAdaptorUp ():
 @decorate.debugWrap
 def setupKernelModules():
     if (isEqSetting('pvAWS','firesim')):
-        pass
+        #remove all modules to be safe
+        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
+        for kmod in kmodsToClean:
+            sudoShellCommand(['rmmod', kmod],checkCall=False)
+
+        #load our modules
+        sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/nbd.ko", 'nbds_max=128'])
+        sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/xdma.ko", 'poll_mode=1'])
     else:
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)    
 
