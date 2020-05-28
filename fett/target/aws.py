@@ -16,10 +16,6 @@ class firesimTarget(commonTarget):
         self.rootPassword = 'firesim'
 
     @decorate.debugWrap
-    def interact(self):
-        pass
-
-    @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
 
@@ -102,6 +98,10 @@ class firesimTarget(commonTarget):
 
         # The tap needs to be turned up AFTER booting
         getTapAdaptorUp ()
+
+    def interact(self):
+        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + C\" to exit.")
+        super().interact()
 
     def runCommand (self,command,endsWith=None,expectedContents=None, **kwargs):
         """ this is for the firesim debian build, but not the ones FETT will use """

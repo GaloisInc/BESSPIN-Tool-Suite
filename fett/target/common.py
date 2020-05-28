@@ -212,7 +212,7 @@ class commonTarget():
             self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
 
         #up the ethernet adaptor and get the ip address
-        self.activateEthernet() 
+        self.activateEthernet()
                                   
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         #Adding 5 minutes to avoid being in the past
@@ -227,6 +227,24 @@ class commonTarget():
                                 
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
+
+    @decorate.debugWrap
+    def interact(self):
+        #This method gives the control back to the user
+        if (self.inInteractMode):
+            return #avoid recursive interact mode
+        self.inInteractMode = True
+        if (self.isSshConn): #only interact on the JTAG
+            self.closeSshConn()
+        if (self.userCreated):
+            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+        try:
+            self.process.interact(escape_character='\x05')
+            #escaping interact closes the logFile, which will make any read/write fail inside pexpect logging
+            self.fTtyOut = ftOpenFile(self.fTtyOut.name,self.fTtyOut.mode)
+        except Exception as exc:
+            errorAndLog(f"Failed to open interactive mode.",exc=exc)
 
     @decorate.debugWrap
     @decorate.timeWrap
