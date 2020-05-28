@@ -54,6 +54,30 @@ def extensiveTest(target):
 
 @decorate.debugWrap
 @decorate.timeWrap
+def HTTPSmokeTest(assetFileName):
+    # Issue an HTTP GET Request for index.htm
+    filePath = os.path.join(getSetting('assetsDir'),assetFileName)
+    expectedFileLength = os.stat(filePath).st_size
+    getSetting('appLog').write(f"(Host)~  HTTP Request expected length is {expectedFileLength}.\n")
+
+    contentLength,code = curlTest(target, f"http://{targetIP}:{httpPort}/{assetFileName}")
+    if (not code):
+        target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
+    elif code == '200':
+        getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.\n")
+
+        # contentLength is a string, but expectedFileLength is an int, so to compare...
+        if (int(contentLength) == expectedFileLength):
+            getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} PASSED\n")
+        else:
+            getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} FAILED - Wrong length\n")
+    else:
+        target.shutdownAndExit (f"(Host)~  HTTP GET for {assetFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
+    return
+
+
+@decorate.debugWrap
+@decorate.timeWrap
 def deploymentTest(target):
     # target is a fett target object
     targetIP = target.ipTarget
@@ -73,26 +97,9 @@ def deploymentTest(target):
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
-
-    # Issue an HTTP GET Request for index.htm
-    filePath = os.path.join(getSetting('assetsDir'),'index.htm')
-    expectedFileLength = os.stat(filePath).st_size
-    getSetting('appLog').write(f"(Host)~  HTTP Request expected length is {expectedFileLength}.\n")
-
-    contentLength,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.htm")
-    if (not code):
-        target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
-    elif code == '200':
-        getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.\n")
-
-        # contentLength is a string, but expectedFileLength is an int, so to compare...
-        if (int(contentLength) == expectedFileLength):
-            getSetting('appLog').write(f"(Host)~  HTTP TEST PASSED\n")
-        else:
-            getSetting('appLog').write(f"(Host)~  HTTP TEST FAILED - Wrong length\n")
-    else:
-        target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
-
+    HTTPSmokeTest('index.htm')
+    HTTPSmokeTest(f"{getSettingDict('freertosAssets',['otaHtml'])}")
+    
     # uploading the signed stop.htm file
     fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
