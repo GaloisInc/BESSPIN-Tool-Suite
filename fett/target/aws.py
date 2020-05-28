@@ -132,7 +132,6 @@ class firesimTarget(commonTarget):
 
 @decorate.debugWrap
 def configTapAdaptor():
-    sudoPromptPrefix = f"You need sudo privileges to configure the tap adaptor: "
     commands = {
         'config' : [
             ['ip', 'addr', 'flush', 'dev', getSetting('awsTapAdaptorName')],
@@ -145,7 +144,7 @@ def configTapAdaptor():
     }
     # First, configure
     for command in commands['config']:
-        fpga.sudoShellCommand(command,sudoPromptPrefix)
+        sudoShellCommand(command)
         time.sleep(1)
 
     # second, check configuration
@@ -156,7 +155,7 @@ def configTapAdaptor():
 
     # Third, take the adaptor DOWN for firesim
     for command in commands['down']:
-        fpga.sudoShellCommand(command,sudoPromptPrefix)
+        sudoShellCommand(command)
         time.sleep(1)
 
     printAndLog (f"aws.configTapAdaptor: <{getSetting('awsTapAdaptorName')}> is properly configured.",doPrint=False)
@@ -164,20 +163,18 @@ def configTapAdaptor():
 @decorate.debugWrap
 def programAFI():
     warnAndLog("programAFI: This is to be properly implemented.")
-    sudoPromptPrefix = f"You need sudo privileges to manipulate the AFI: "
     commands = [
         ['fpga-clear-local-image', '-S', '0'],
         ['fpga-load-local-image', '-S', '0', '-I', 'agfi-009b6afeef4f64454']
     ]
 
     for command in commands:
-        fpga.sudoShellCommand(command,sudoPromptPrefix)
+        sudoShellCommand(command)
         time.sleep(1)
 
 @decorate.debugWrap
 def getTapAdaptorUp ():
-    sudoPromptPrefix = f"You need sudo privileges to set the tap adaptor up: "
-    fpga.sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'],sudoPromptPrefix)
+    sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'])
 
 @decorate.debugWrap
 def setupKernelModules():

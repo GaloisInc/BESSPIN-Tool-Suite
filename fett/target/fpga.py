@@ -6,7 +6,7 @@ Main fpga class + misc fpga functions
 from fett.base.utils.misc import *
 from fett.target.common import *
 
-import subprocess, getpass, psutil, tftpy
+import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
 from pexpect import fdpexpect
 
@@ -352,21 +352,6 @@ def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
     else:
         printAndLog(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>.",doPrint=False)
         return 'NotAnAddress'
-
-@decorate.debugWrap
-def sudoShellCommand (argsList, sudoPromptPrefix):
-    try:
-        sudoPrompt = sudoPromptPrefix + f" [sudo] password for {getpass.getuser()}: "
-        command = ['sudo', '-p', sudoPrompt] + argsList
-    except Exception as exc:
-        logAndExit (f"sudo: Functions called with unsuitable arguments <{argsList}> and <{sudoPromptPrefix}>.",exc=exc,exitCode=EXIT.Dev_Bug)
-    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
-    sudoOut.write(f"\n\n{' '.join(command)}\n")
-    try:
-        subprocess.check_call(command,stdout=sudoOut,stderr=sudoOut,timeout=90)
-    except Exception as exc:
-        logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Network)
-    sudoOut.close()
 
 @decorate.debugWrap
 def resetEthAdaptor ():
