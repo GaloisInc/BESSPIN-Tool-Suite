@@ -1,7 +1,7 @@
 import pexpect
 from fett.target.common import *
 from fett.target import fpga
-from subprocess import getoutput, run
+from subprocess import getoutput
 
 class firesimTarget(commonTarget):
     def __init__(self):
