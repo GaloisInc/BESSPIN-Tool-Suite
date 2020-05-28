@@ -356,7 +356,7 @@ def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False):
     return out
 
 @decorate.debugWrap
-def sudoShellCommand (argsList, sudoPromptPrefix=None):
+def sudoShellCommand (argsList, sudoPromptPrefix=None, checkCall=True, timeout=90):
     if (sudoPromptPrefix):
         try:
             sudoPrompt = sudoPromptPrefix + f" [sudo] password for {getpass.getuser()}: "
@@ -373,7 +373,7 @@ def sudoShellCommand (argsList, sudoPromptPrefix=None):
     sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
     sudoOut.write(f"\n\n{' '.join(command)}\n")
     try:
-        subprocess.check_call(command,stdout=sudoOut,stderr=sudoOut,timeout=90)
+        subprocess.run(command,stdout=sudoOut,stderr=sudoOut,timeout=timeout,check=checkCall)
     except Exception as exc:
         logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Network)
     sudoOut.close()
