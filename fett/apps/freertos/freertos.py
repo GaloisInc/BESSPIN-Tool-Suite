@@ -84,7 +84,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code == '200':
         getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.\n")
-        if contentLength == expectedFileLength then:
+        if (contentLength == expectedFileLength):
             getSetting('appLog').write(f"(Host)~  HTTP TEST PASSED\n")
         else:
             getSetting('appLog').write(f"(Host)~  HTTP TEST FAILED - Wrong length\n")
