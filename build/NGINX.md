@@ -137,9 +137,9 @@ $ env NGX_HAVE_TIMER_EVENT=yes \
               -I $BUILD_DIR/zlib-riscv/include \
               -I $BUILD_DIR/openssl-riscv/include" \
           --with-ld-opt="${LDFLAGS} \
-              $BUILD_DIR/zlib-riscv/lib/libz.a \
-              $BUILD_DIR/openssl-riscv/lib/libssl.a \
-              $BUILD_DIR/openssl-riscv/lib/libcrypto.a" \
+              $ZLIB_DIR/lib/libz.a \
+              $OPENSSL_DIR/lib/libssl.a \
+              $OPENSSL_DIR/lib/libcrypto.a" \
           --sysroot=${SYSROOT} \
           --prefix=$BUILD_DIR/nginx-riscv
 ```
