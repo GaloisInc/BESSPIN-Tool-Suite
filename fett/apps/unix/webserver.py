@@ -59,8 +59,8 @@ def deploy (target):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def curlTest(target, url, extra=[], http2=False):
-    out = curlRequest(url, http2=http2, extra=extra, rawOutput=False)
+def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
+    out = curlRequest(url, http2=http2, extra=extra, method=method, rawOutput=rawOutput)
     if (not out):
         return (None,None)
     try:
@@ -135,6 +135,65 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[Private Resource]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code != '200':
         target.shutdownAndExit (f"Test[Private Resource]: Failed! [Got code {code}].",exitCode=EXIT.Run)
+
+    # 5. Fetching text.txt via HTTP
+    printAndLog("Test[Text File]: Fetching text.txt via HTTP", doPrint=False, tee=getSetting('appLog'))
+    _, code = curlTest(target, f"http://{targetIP}:{httpPort}/test.txt")
+    if (not code):
+        target.shutdownAndExit(f"Test[Text File]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Text File]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+
+    # 6. Fetching static.html  via HTTP
+    printAndLog("Test[Static HTTP]: Fetching static.html via HTTP", doPrint=False, tee=getSetting('appLog'))
+    _, code = curlTest(target, f"http://{targetIP}:{httpPort}/static.html")
+    if (not code):
+        target.shutdownAndExit(f"Test[Static HTTP]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Static HTTP]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+
+    # 7. Fetching stanford.png - an image via HTTP
+    printAndLog("Test[Image Resource]: Fetching stanford.png via HTTP", doPrint=False, tee=getSetting('appLog'))
+    _, code = curlTest(target, f"http://{targetIP}:{httpPort}/stanford.png")
+    if (not code):
+        target.shutdownAndExit(f"Test[Image Resource]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Image Resource]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+
+    # 8. Fetching static https web page
+    printAndLog("Test[Static HTTP2]: Fetching static https web page", doPrint=False, tee=getSetting('appLog'))
+    version, code = curlTest(target, f"https://{targetIP}:{httpsPort}/static.html", http2=True)
+    if (not code):
+        target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+    elif version != 'HTTP/2':
+        target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Got wrong version <{version}>].", exitCode=EXIT.Run)
+
+    # 9. page opens another internet web page through a link
+    printAndLog("Test[Web page through a link]: Web page opens another internet web page through a link", doPrint=False,
+                tee=getSetting('appLog'))
+    _, code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html",
+                       extra=[ "Host: https://www.wikipedia.org/"],http2=True)
+    if (not code):
+        target.shutdownAndExit(f"Test[Web page through a link]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Web page through a link]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+
+    # 10. page receives a request and saves on the local filesystem
+    printAndLog("Test[Upload text file]: Web page receives a request and saves on the local filesystem",
+                doPrint=False, tee=getSetting('appLog'))
+    size_upload, code = curlTest(target, f"http://{targetIP}:{httpPort}/upload",
+                       extra=["-F", "file_upload=@config.ini", "-F", "press=Upload", "--write-out",
+                              '%{size_upload} %{http_code}', "--silent","--output","/dev/null"],
+                                 method="POST", rawOutput=True)
+    if (not code):
+        target.shutdownAndExit(f"Test[Upload text file]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Upload text file]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+
+    printAndLog(f"Test[Upload text file]:The total amount of bytes that were uploaded is: {size_upload}.",
+                doPrint=False, tee=getSetting('appLog'))
 
     printAndLog("Nginx tests OK!",tee=getSetting('appLog'))
 
