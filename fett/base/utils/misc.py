@@ -375,5 +375,5 @@ def sudoShellCommand (argsList, sudoPromptPrefix=None, checkCall=True, timeout=9
     try:
         subprocess.run(command,stdout=sudoOut,stderr=sudoOut,timeout=timeout,check=checkCall)
     except Exception as exc:
-        logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Network)
+        logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
     sudoOut.close()
