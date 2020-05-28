@@ -205,7 +205,7 @@ def _runCommandAndLog(command, stdout=None, stderr=None, **kwargs):
     else:
         logAndExit(f"<aws._runCommandAndLog>: type of command <{command}> is not understood")
     try:
-        subprocess.run(command, **kwargs)
+        subprocess.run(command, stdout=stdout, stderr=stderr, **kwargs)
     except Exception as exc:
             logAndExit (f"<aws._runCommandAndLog>: Failed on <{command}>." + logDetailsString())
 
