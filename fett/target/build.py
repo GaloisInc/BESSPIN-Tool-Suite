@@ -36,6 +36,7 @@ def prepareAWSTemporary():
     # setup firesim specific settings -- screen interfaces and kernel modules
     # TODO: ELEW hard coded - ew
     minimalGfePath = '/home/centos/minimal_cloudgfe'
+    setSetting('awsFiresimPath', os.path.realpath(minimalGfePath))
     setSetting('awsFiresimSimPath', os.path.join(minimalGfePath, 'sim'))
     setSetting('awsFiresimModPath', os.path.join(minimalGfePath, 'kmods'))
 

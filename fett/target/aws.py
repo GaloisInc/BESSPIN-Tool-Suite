@@ -1,7 +1,7 @@
 import pexpect
 from fett.target.common import *
 from fett.target import fpga
-from subprocess import getoutput
+import collections
 
 class firesimTarget(commonTarget):
     def __init__(self):
@@ -162,15 +162,10 @@ def configTapAdaptor():
 
 @decorate.debugWrap
 def programAFI():
-    warnAndLog("programAFI: This is to be properly implemented.")
-    commands = [
-        ['fpga-clear-local-image', '-S', '0'],
-        ['fpga-load-local-image', '-S', '0', '-I', 'agfi-009b6afeef4f64454']
-    ]
-
-    for command in commands:
-        sudoShellCommand(command)
-        time.sleep(1)
+    """ perform AFI Management Commands for f1.2xlarge """
+    agfiId = 'agfi-009b6afeef4f64454'
+    clearFpgas()
+    flashFpgas(agfiId)
 
 @decorate.debugWrap
 def getTapAdaptorUp ():
@@ -193,15 +188,94 @@ def setupKernelModules():
     else:
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
-@decorate.debugWrap
+def _runCommandAndLog(command, stdout=None, stderr=None, **kwargs):
+    """ run and log a simple command, treating all exceptions as terminal errors """
+    def logDetailsString():
+        if stdout is None and stderr is None:
+            return ""
+        else:
+            stdoutStr = f"{stdout.name} for stdout " if stdout is not None else ""
+            stderrStr = f"{stderr.name} for stderr " if stderr is not None else ""
+            joinStr = "and " if stdout is not None and stderr is not None else ""
+            return "Check " + stdoutStr + joinStr + stderrStr + " for more details"
+    if type(command) is str:
+        command = command.split()
+    elif isinstance(command, collections.Sequence):
+        pass
+    else:
+        logAndExit(f"<aws._runCommandAndLog>: type of command <{command}> is not understood")
+    try:
+        subprocess.run(command, stdout=stdout, stderr=stderr, **kwargs)
+    except Exception as exc:
+            logAndExit (f"<aws._runCommandAndLog>: Failed on <{command}>." + logDetailsString())
+
 def _sendKmsg(message):
     """send message to /dev/kmsg"""
-    command = f"echo \"{message}\" | sudo tee /dev/kmsg"
+    # TODO: replace all whitespace with underscores?
     sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
+    command = f"echo \"{message}\" | sudo tee /dev/kmsg"
+    _runCommandAndLog(command, stdout=sudoOut, stderr=sudoOut,check=False,shell=True)
+    sudoOut.close()
+
+def _poll_command(command, trigger, maxTimeout=10):
+    for i in range(maxTimeout):
+        out = subprocess.getoutput(command)
+        if trigger not in out:
+            time.sleep(1)
+        else:
+            return
+    logAndExit(f"<aws._poll_command>: command <{command}> timed out <{maxTimeout} attempts> on trigger <{trigger}>")
+
+def clearFpga(slotno):
+    """clear FPGA in a given slot id and wait until finished """
+    _sendKmsg(f"about to clear fpga {slotno}")
+    _runCommandAndLog(f"sudo fpga-clear-local-image -S {slotno} -A")
+    _sendKmsg(f"done clearing fpga {slotno}")
+
+    # wait until the FPGA has been cleared
+    _sendKmsg(f"checking for fpga slot {slotno}")
+    _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "cleared")
+    _sendKmsg(f"done checking fpga slot {slotno}")
+
+def getNumFpgas():
+    """return number of FPGAS"""
     try:
-        subprocess.run(command,stdout=sudoOut,stderr=sudoOut,check=False,shell=True)
+        out = subprocess.check_output("sudo fpga-describe-local-image-slots".split())
+        out = out.decode('utf-8')
     except Exception as exc:
-        logAndExit (f"sudo: Failed to send a message to </dev/kmsg>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
-    sudoOut.close()   
+        logAndExit(f'<aws.getNumFpgas>: error getting fpga local slot description', exc=exc)
+    lines = out.split('\n')[:-1]
 
+    #check that the output is an AFIDEVICE
+    regexPattern = r'(AFIDEVICE\s+\w\s+\w+\s+\w+\s+.*)'
+    for l in lines:
+        if not bool(re.match(regexPattern, l)):
+            logAndExit(f'<aws.getNumFpgas>: unknown output for fpga-describe-local-image-slots <{l}>')
+    numLines = len(lines)
+    return numLines
 
+def clearFpgas():
+    """ clear ALL FPGAs """
+    numFpgas = getNumFpgas()
+    printAndLog(f"<aws.clearFpgas>: Found {numFpgas} FPGA(s) to clear")
+    for sn in range(numFpgas):
+        clearFpga(sn)
+
+def flashFpga(agfi, slotno):
+    """flash FPGA in a given slot with a given AGFI ID and wait until finished """
+    _runCommandAndLog(f"sudo fpga-load-local-image -S {slotno} -I {agfi} -A")
+
+    # wait until the FPGA has been flashed
+    _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "loaded")
+
+def flashFpgas(agfi):
+    """
+    NOTE: FireSim documentation came with a note. If an instance is chosen that has more than one FPGA, leaving one
+    in a cleared state can cause XDMA to hang. Accordingly, it is advised to flash all the FPGAs in a slot with
+    something. This method might need to be extended to flash all available slots with our AGFI
+    """
+    printAndLog(f"<aws.flashFpgas>: Flashing FPGAs with agfi: {agfi}.")
+    numFpgas = getNumFpgas()
+    printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGA(s) to flash")
+    for sn in range(numFpgas):
+        flashFpga(agfi, sn)
