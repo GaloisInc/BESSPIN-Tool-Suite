@@ -183,10 +183,24 @@ def setupKernelModules():
         kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
         for kmod in kmodsToClean:
             sudoShellCommand(['rmmod', kmod],checkCall=False)
+            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
 
         #load our modules
         sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/nbd.ko", 'nbds_max=128'])
+        _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
         sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/xdma.ko", 'poll_mode=1'])
+        _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
     else:
-        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)    
+        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+
+@decorate.debugWrap
+def _sendKmsg(message):
+    """send message to /dev/kmsg"""
+    command = f"echo \"{message}\" | sudo tee /dev/kmsg"
+    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
+    try:
+        subprocess.run(command,stdout=sudoOut,stderr=sudoOut,check=False,shell=True)
+    except Exception as exc:
+        logAndExit (f"sudo: Failed to send a message to </dev/kmsg>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
+    sudoOut.close()   
 
