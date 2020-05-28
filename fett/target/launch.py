@@ -77,7 +77,6 @@ def prepareEnv ():
         fpga.programBitfile()
         fpga.resetEthAdaptor()
     elif (isEqSetting('target','aws')):
-        aws.installAwsSdk()
         aws.setupKernelModules()
         aws.configTapAdaptor()
         aws.programAFI()
