@@ -54,8 +54,11 @@ def extensiveTest(target):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def HTTPSmokeTest(assetFileName):
-    # Issue an HTTP GET Request for index.htm
+def HTTPSmokeTest(target, assetFileName):
+    # Issue an HTTP GET Request for assetFilename
+    targetIP = target.ipTarget
+    httpPort = target.httpPortTarget
+
     filePath = os.path.join(getSetting('assetsDir'),assetFileName)
     expectedFileLength = os.stat(filePath).st_size
     getSetting('appLog').write(f"(Host)~  HTTP Request expected length is {expectedFileLength}.\n")
@@ -81,7 +84,6 @@ def HTTPSmokeTest(assetFileName):
 def deploymentTest(target):
     # target is a fett target object
     targetIP = target.ipTarget
-    httpPort = target.httpPortTarget
 
     # Wait till TFTP server is up
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
@@ -97,8 +99,8 @@ def deploymentTest(target):
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
-    HTTPSmokeTest('index.htm')
-    HTTPSmokeTest(f"{getSettingDict('freertosAssets',['otaHtml'])}")
+    HTTPSmokeTest(target, 'index.htm')
+    HTTPSmokeTest(target, f"{getSettingDict('freertosAssets',['otaHtml'])}")
     
     # uploading the signed stop.htm file
     fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
