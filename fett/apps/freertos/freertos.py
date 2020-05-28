@@ -37,10 +37,13 @@ def curlTest(target, url, extra=[], http2=False):
         # We're mainly interested in the middle one - the return status code
         version,code,*rest = out.splitlines()[0].split(' ')
 
-        # Line 3 of "out" should be of the form "Content-Length: XXX"
-        # where XXX is a positive integer.  We want to grab that and report it back to the caller
-        clheader,contentLength = out.splitlines()[3].split(' ')
-
+        # A successful request should also have a Content-Length field
+        if (code == '200'):
+            # Line 3 of "out" should be of the form "Content-Length: XXX"
+            # where XXX is a positive integer.  We want to grab that and report it back to the caller
+            clheader,contentLength = out.splitlines()[3].split(' ')
+        else:
+            contentLength = '0'
     except Exception as exc:
         errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
         return (None,None)
@@ -54,7 +57,7 @@ def extensiveTest(target):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def HTTPSmokeTest(target, assetFileName):
+def HTTPSmokeTest(target, assetFileName, expectedCode):
     # Issue an HTTP GET Request for assetFilename
     targetIP = target.ipTarget
     httpPort = target.httpPortTarget
@@ -66,14 +69,19 @@ def HTTPSmokeTest(target, assetFileName):
     contentLength,code = curlTest(target, f"http://{targetIP}:{httpPort}/{assetFileName}")
     if (not code):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
-    elif code == '200':
+    elif code == expectedCode:
         getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.\n")
 
-        # contentLength is a string, but expectedFileLength is an int, so to compare...
-        if (int(contentLength) == expectedFileLength):
+        if (expectedCode == '200'):
+            # contentLength is a string, but expectedFileLength is an int, so to compare...
+            if (int(contentLength) == expectedFileLength):
+                getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} PASSED\n")
+            else:
+                getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} FAILED - Wrong length\n")
+        elif (expectedCode == '404'):
             getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} PASSED\n")
         else:
-            getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} FAILED - Wrong length\n")
+            target.shutdownAndExit (f"(Host)~  HTTP GET for {assetFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
     else:
         target.shutdownAndExit (f"(Host)~  HTTP GET for {assetFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
     return
@@ -99,8 +107,10 @@ def deploymentTest(target):
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
-    HTTPSmokeTest(target, 'index.htm')
-    HTTPSmokeTest(target, f"{getSettingDict('freertosAssets',['otaHtml'])}")
+    HTTPSmokeTest(target, 'index.htm', '200')
+    HTTPSmokeTest(target, f"{getSettingDict('freertosAssets',['otaHtml'])}", '200')
+    # Now try a file that we know won't be there on the target. We should get error code 404
+    HTTPSmokeTest(target, 'notthere.htm', '404')
     
     # uploading the signed stop.htm file
     fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
