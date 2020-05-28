@@ -132,7 +132,6 @@ class firesimTarget(commonTarget):
 
 @decorate.debugWrap
 def configTapAdaptor():
-    sudoPromptPrefix = f"You need sudo privileges to configure the tap adaptor: "
     commands = {
         'config' : [
             ['ip', 'addr', 'flush', 'dev', getSetting('awsTapAdaptorName')],
@@ -145,7 +144,7 @@ def configTapAdaptor():
     }
     # First, configure
     for command in commands['config']:
-        fpga.sudoShellCommand(command,sudoPromptPrefix)
+        sudoShellCommand(command)
         time.sleep(1)
 
     # second, check configuration
@@ -156,7 +155,7 @@ def configTapAdaptor():
 
     # Third, take the adaptor DOWN for firesim
     for command in commands['down']:
-        fpga.sudoShellCommand(command,sudoPromptPrefix)
+        sudoShellCommand(command)
         time.sleep(1)
 
     printAndLog (f"aws.configTapAdaptor: <{getSetting('awsTapAdaptorName')}> is properly configured.",doPrint=False)
@@ -164,18 +163,45 @@ def configTapAdaptor():
 @decorate.debugWrap
 def programAFI():
     warnAndLog("programAFI: This is to be properly implemented.")
-    sudoPromptPrefix = f"You need sudo privileges to manipulate the AFI: "
     commands = [
         ['fpga-clear-local-image', '-S', '0'],
         ['fpga-load-local-image', '-S', '0', '-I', 'agfi-009b6afeef4f64454']
     ]
 
     for command in commands:
-        fpga.sudoShellCommand(command,sudoPromptPrefix)
+        sudoShellCommand(command)
         time.sleep(1)
 
 @decorate.debugWrap
 def getTapAdaptorUp ():
-    sudoPromptPrefix = f"You need sudo privileges to set the tap adaptor up: "
-    fpga.sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'],sudoPromptPrefix)
+    sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'])
+
+@decorate.debugWrap
+def setupKernelModules():
+    if (isEqSetting('pvAWS','firesim')):
+        #remove all modules to be safe
+        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
+        for kmod in kmodsToClean:
+            sudoShellCommand(['rmmod', kmod],checkCall=False)
+            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
+
+        #load our modules
+        sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/nbd.ko", 'nbds_max=128'])
+        _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
+        sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/xdma.ko", 'poll_mode=1'])
+        _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
+    else:
+        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+
+@decorate.debugWrap
+def _sendKmsg(message):
+    """send message to /dev/kmsg"""
+    command = f"echo \"{message}\" | sudo tee /dev/kmsg"
+    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
+    try:
+        subprocess.run(command,stdout=sudoOut,stderr=sudoOut,check=False,shell=True)
+    except Exception as exc:
+        logAndExit (f"sudo: Failed to send a message to </dev/kmsg>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
+    sudoOut.close()   
+
 

@@ -5,7 +5,7 @@ Misc required functions for fett.py
 
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess
-import tarfile, sys, re
+import tarfile, sys, re, getpass
 
 from fett.base.utils import decorate
 
@@ -354,3 +354,26 @@ def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False):
         errorAndLog (f"Failed to run <curl {' '.join(options)} {url}>\n", exc=exc, doPrint=False)
         out = None
     return out
+
+@decorate.debugWrap
+def sudoShellCommand (argsList, sudoPromptPrefix=None, checkCall=True, timeout=90):
+    if (sudoPromptPrefix):
+        try:
+            sudoPrompt = sudoPromptPrefix + f" [sudo] password for {getpass.getuser()}: "
+        except Exception as exc:
+            logAndExit (f"sudo: Failed to format the sudo prompt with <{sudoPromptPrefix}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+        promptArgs = ['-p', sudoPrompt]
+    else: #no prompt
+        promptArgs = []
+
+    try:
+        command = ['sudo'] + promptArgs + argsList
+    except Exception as exc:
+        logAndExit (f"sudo: Failed to format the sudo command with <{argsList}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
+    sudoOut.write(f"\n\n{' '.join(command)}\n")
+    try:
+        subprocess.run(command,stdout=sudoOut,stderr=sudoOut,timeout=timeout,check=checkCall)
+    except Exception as exc:
+        logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
+    sudoOut.close()
