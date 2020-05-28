@@ -1,4 +1,4 @@
-import pexpect
+import pexpect, psutil, getpass
 from fett.target.common import *
 from fett.target import fpga
 import collections
@@ -132,33 +132,63 @@ class firesimTarget(commonTarget):
 
 @decorate.debugWrap
 def configTapAdaptor():
+    tapAdaptor = getSetting('awsTapAdaptorName')
+
+    def getMainAdaptor():
+        for xAdaptor in psutil.net_if_addrs():
+            if (xAdaptor not in ['lo', tapAdaptor]):
+                return xAdaptor
+        logAndExit(f"configTapAdaptor: Failed to find the main Eth adaptor.",exitCode=EXIT.Network)
+
     commands = {
+        'create' : [
+            ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()]
+        ],
+        'natSetup' : [
+            ['sysctl', '-w', 'net.ipv6.conf.tap0.disable_ipv6=1'],
+            ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
+            ['iptables', '-A', 'FORWARD', '-i', getMainAdaptor(), '-o', tapAdaptor, '-m', 'state',
+                '--state', 'RELATED,ESTABLISHED', '-j', 'ACCEPT'],
+            ['iptables', '-A', 'FORWARD', '-i', tapAdaptor, '-o', getMainAdaptor(), '-j', 'ACCEPT'],  
+            ['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-o', getMainAdaptor(), '-j', 'MASQUERADE']  
+        ],
+        'refresh' : [
+            ['ip', 'addr', 'flush', 'dev', tapAdaptor]
+        ],
         'config' : [
-            ['ip', 'addr', 'flush', 'dev', getSetting('awsTapAdaptorName')],
-            ['ip','addr','add',f"{getSetting('awsIpHost')}/24",'dev',getSetting('awsTapAdaptorName')],
-            ['ifconfig', getSetting('awsTapAdaptorName'), 'hw', 'ether', getSetting('awsTapAdaptorMacAddress')],
+            ['ip','addr','add',f"{getSetting('awsIpHost')}/24",'dev',tapAdaptor],
+            ['ifconfig', tapAdaptor, 'hw', 'ether', getSetting('awsTapAdaptorMacAddress')],
         ],
         'down' : [
-            ['ip','link','set', getSetting('awsTapAdaptorName'), 'down'],
+            ['ip','link','set', tapAdaptor, 'down'],
         ]
     }
-    # First, configure
-    for command in commands['config']:
-        sudoShellCommand(command)
-        time.sleep(1)
 
-    # second, check configuration
-    if (fpga.getAddrOfAdaptor(getSetting('awsTapAdaptorName'),'IP') != getSetting('awsIpHost')):
-        logAndExit(f"configTapAdaptor: The <{getSetting('awsTapAdaptorName')}> IP does not match <{getSetting('awsIpHost')}>",exitCode=EXIT.Network)
-    if (fpga.getAddrOfAdaptor(getSetting('awsTapAdaptorName'),'MAC') != getSetting('awsTapAdaptorMacAddress')):
-        logAndExit(f"configTapAdaptor: The <{getSetting('awsTapAdaptorName')}> MAC address does not match <{getSetting('awsTapAdaptorMacAddress')}>",exitCode=EXIT.Network)
+    def execSudoCommands (commandNames):
+        for xName in commandNames:
+            for command in commands[xName]:
+                sudoShellCommand(command)
+                time.sleep(1)
 
-    # Third, take the adaptor DOWN for firesim
-    for command in commands['down']:
-        sudoShellCommand(command)
-        time.sleep(1)
+    # Check if the adaptor exists
+    if (fpga.getAddrOfAdaptor(tapAdaptor,'MAC',exitIfNoAddr=False) == 'NotAnAddress'):
+        printAndLog (f"configTapAdaptor: <{tapAdaptor}> was never configured. Configuring...",doPrint=False)
+        execSudoCommands(['create','config','natSetup'])
+    else:
+        # was created --> re-configure
+        execSudoCommands(['refresh','config'])
 
-    printAndLog (f"aws.configTapAdaptor: <{getSetting('awsTapAdaptorName')}> is properly configured.",doPrint=False)
+    # Check configuration
+    if (fpga.getAddrOfAdaptor(tapAdaptor,'IP') != getSetting('awsIpHost')):
+        logAndExit(f"configTapAdaptor: The <{tapAdaptor}> IP does not match <{getSetting('awsIpHost')}>",exitCode=EXIT.Network)
+    if (fpga.getAddrOfAdaptor(tapAdaptor,'MAC') != getSetting('awsTapAdaptorMacAddress')):
+        logAndExit(f"configTapAdaptor: The <{tapAdaptor}> MAC address does not match <{getSetting('awsTapAdaptorMacAddress')}>",exitCode=EXIT.Network)
+
+    if (isEqSetting('pvAWS','firesim')):
+        # The adaptor needs to be DOWN for firesim
+        execSudoCommands(['down'])
+
+    printAndLog (f"aws.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=False)
 
 @decorate.debugWrap
 def programAFI():
