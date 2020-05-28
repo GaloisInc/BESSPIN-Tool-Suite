@@ -204,3 +204,4 @@ def _sendKmsg(message):
         logAndExit (f"sudo: Failed to send a message to </dev/kmsg>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
     sudoOut.close()   
 
+
