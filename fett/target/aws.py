@@ -178,10 +178,13 @@ def setupKernelModules():
         kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
         for kmod in kmodsToClean:
             sudoShellCommand(['rmmod', kmod],checkCall=False)
+            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
 
         #load our modules
         sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/nbd.ko", 'nbds_max=128'])
+        _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
         sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/xdma.ko", 'poll_mode=1'])
+        _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
     else:
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
