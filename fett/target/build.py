@@ -45,6 +45,10 @@ def prepareAWSTemporary():
     setSetting('cloudgfeBinPath',cloudgfeBinPath)
     imagePath = os.path.join(cloudgfeBinPath, 'debian.elf')
     cp (imagePath, getSetting('osImageElf'))
+    imageFile = os.path.join(cloudgfeBinPath, "debian.img")
+    cp (imageFile, getSetting('osImagesDir'))
+    dwarfFile = os.path.join(cloudgfeBinPath, "debian.dwarf")
+    cp (dwarfFile, getSetting('osImagesDir'))
     if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
         warnAndLog(f"<build.prepareAWSTemporary>: netboot option is being ignored")
     logging.info(f"{getSetting('osImage')} image imported successfully.")
