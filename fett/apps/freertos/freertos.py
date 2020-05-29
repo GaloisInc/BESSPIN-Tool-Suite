@@ -5,6 +5,7 @@ This is executed after loading the app on the target to execute FreeRTOS app
 
 from fett.base.utils.misc import *  
 import tftpy, os, re
+import logging
 
 # HTTP Status code constants. These must match those in http_commands.h
 WEB_REPLY_OK = 200
@@ -165,7 +166,7 @@ def deploymentTest(target):
     # uploading the signed badsig.htm file - Signature is corrupt
     fileName = "badsig.htm.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
-    TftpShared.setLogLevel (10)
+    logging.getLogger('tftpy').setLevel(10)
     getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 3 - SEND {fileName}\n")
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
