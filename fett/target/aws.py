@@ -193,7 +193,7 @@ def configTapAdaptor():
 @decorate.debugWrap
 def programAFI():
     """ perform AFI Management Commands for f1.2xlarge """
-    agfiId = 'agfi-009b6afeef4f64454'
+    agfiId = 'agfi-0640a58e5553a75bd'
     clearFpgas()
     flashFpgas(agfiId)
 
