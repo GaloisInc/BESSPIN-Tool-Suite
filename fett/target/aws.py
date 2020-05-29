@@ -92,7 +92,7 @@ class firesimTarget(commonTarget):
                                         cwd=getSetting("awsFiresimSimPath"))
             self.process = self.ttyProcess
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
         except Exception as exc:
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
