@@ -165,6 +165,7 @@ def deploymentTest(target):
     # uploading the signed badsig.htm file - Signature is corrupt
     fileName = "badsig.htm.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
+    TftpShared.setLogLevel (10)
     getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 3 - SEND {fileName}\n")
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
