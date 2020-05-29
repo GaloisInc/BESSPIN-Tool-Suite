@@ -217,7 +217,6 @@ static BaseType_t prvSendFile(HTTPClient_t *pxClient)
 static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
 {
     BaseType_t xRc;
-    // char pcSlash[2];
 
     pxClient->bits.ulFlags = 0;
 
@@ -251,21 +250,6 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
         }
     }
 #endif /* ipconfigHTTP_HAS_HANDLE_REQUEST_HOOK */
-
-    //    if (pxClient->pcUrlData[0] != '/')
-    //{
-    //    /* Insert a slash before the file name. */
-    //    pcSlash[0] = '/';
-    //    pcSlash[1] = '\0';
-    // }
-    //else
-    //{
-    //    /* The browser provided a starting '/' already. */
-    //    pcSlash[0] = '\0';
-    //}
-
-    // snprintf(pxClient->pcCurrentFilename, sizeof(pxClient->pcCurrentFilename),
-    //          "%s%s%s", pxClient->pcRootDir, pcSlash, pxClient->pcUrlData);
 
     // FETT HTTP doesn't care about directories, so simplify this here to
     snprintf(pxClient->pcCurrentFilename, sizeof(pxClient->pcCurrentFilename),
