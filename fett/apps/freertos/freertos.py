@@ -80,10 +80,16 @@ def HTTPSmokeTest(target, assetFileName, expectedCode):
     targetIP = target.ipTarget
     httpPort = target.httpPortTarget
 
-    if expectedCode = 
-    filePath = os.path.join(getSetting('assetsDir'),assetFileName)
-    expectedFileLength = os.stat(filePath).st_size
-    getSetting('appLog').write(f"(Host)~  HTTP Request expected length is {expectedFileLength}.\n")
+    if (expectedCode == WEB_NOT_FOUND):
+        expectedFileLength = 0
+    else:
+        try:
+            filePath = os.path.join(getSetting('assetsDir'),assetFileName)
+            expectedFileLength = os.stat(filePath).st_size
+            getSetting('appLog').write(f"(Host)~  HTTP Request expected length is {expectedFileLength}.\n")
+        except Exception as exc:
+            errorAndLog (f"Failed to find length of file: <{filePath}>", exc=exc, doPrint=False)
+            expectedFileLength = 0
 
     contentLength,code = curlTest(target, f"http://{targetIP}:{httpPort}/{assetFileName}")
     if (code == 0):
