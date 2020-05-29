@@ -58,9 +58,28 @@
             "val" : "88:53:48:41:56:45"
         },
         {
+            "name" : "awsIpTarget",
+            "type" : "ipAddress",
+            "val" : "172.16.0.2"
+        },
+        {
             "name" : "awsIpHost",
             "type" : "ipAddress",
             "val" : "172.16.0.1"
+        },
+        {
+            "name" : "awsPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "awsPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
         },
         {
             "name" : "awsTapAdaptorName",
