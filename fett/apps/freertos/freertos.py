@@ -6,6 +6,10 @@ This is executed after loading the app on the target to execute FreeRTOS app
 from fett.base.utils.misc import *  
 import tftpy, os, re
 
+# HTTP Status code constants. These must match those in http_commands.h
+WEB_REPLY_OK = 200
+WEB_NOT_FOUND = 404
+
 @decorate.debugWrap
 @decorate.timeWrap
 def install (target):
@@ -26,8 +30,8 @@ def deploy(target):
 @decorate.debugWrap
 @decorate.timeWrap
 # returns a pair of integers (X,Y).
-# X is the Content-Length field, only valid when Y = 200
-# Y is the HTTP reponse status code, such as 200 ("OK"), or 404 ("Page not found")
+# X is the Content-Length field, only valid when Y = WEB_REPLY_OK
+# Y is the HTTP reponse status code, such as WEB_REPLY_OK or WEB_NOT_FOUND
 # Returns (0,0) on error
 def curlTest(target, url, extra=[], http2=False):
     printAndLog(f"curl {url} extra={extra} http2={http2}", doPrint=False,tee=getSetting('appLog'))
@@ -47,7 +51,7 @@ def curlTest(target, url, extra=[], http2=False):
             codeval = 0
             
         # A successful request should also have a Content-Length field
-        if (codeval == 200):
+        if (codeval == WEB_REPLY_OK):
             # Line 3 of "out" should be of the form "Content-Length: XXX"
             # where XXX is a positive integer.  We want to grab that and report it back to the caller
             try:
@@ -76,6 +80,7 @@ def HTTPSmokeTest(target, assetFileName, expectedCode):
     targetIP = target.ipTarget
     httpPort = target.httpPortTarget
 
+    if expectedCode = 
     filePath = os.path.join(getSetting('assetsDir'),assetFileName)
     expectedFileLength = os.stat(filePath).st_size
     getSetting('appLog').write(f"(Host)~  HTTP Request expected length is {expectedFileLength}.\n")
@@ -86,12 +91,12 @@ def HTTPSmokeTest(target, assetFileName, expectedCode):
     elif code == expectedCode:
         getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.\n")
 
-        if (expectedCode == 200):
+        if (expectedCode == WEB_REPLY_OK):
             if (contentLength == expectedFileLength):
                 getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} PASSED\n")
             else:
                 getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} FAILED - Wrong length\n")
-        elif (expectedCode == 404):
+        elif (expectedCode == WEB_NOT_FOUND):
             getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} PASSED\n")
         else:
             target.shutdownAndExit (f"(Host)~  HTTP GET for {assetFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
@@ -120,10 +125,10 @@ def deploymentTest(target):
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
-    HTTPSmokeTest(target, 'index.htm', 200)
-    HTTPSmokeTest(target, f"{getSettingDict('freertosAssets',['otaHtml'])}", 200)
-    # Now try a file that we know won't be there on the target. We should get error code 404
-    HTTPSmokeTest(target, 'notthere.htm', 404)
+    HTTPSmokeTest(target, 'index.htm', WEB_REPLY_OK)
+    HTTPSmokeTest(target, f"{getSettingDict('freertosAssets',['otaHtml'])}", WEB_REPLY_OK)
+    # Now try a file that we know won't be there on the target. We should get error code WEB_NOT_FOUND
+    HTTPSmokeTest(target, 'notthere.htm', WEB_NOT_FOUND)
     
     # uploading the signed stop.htm file
     fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
