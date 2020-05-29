@@ -383,6 +383,8 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
 	into the packet. */
     pcFileName = (char *)&(pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET]);
 
+    fettPrintf ("(Info)~  validateWriteReqeust pcFileName is %s\n", pcFileName);
+
     /* Sanity check the file name. */
     for (x = 0; x < ffconfigMAX_FILENAME; x++)
     {
@@ -411,6 +413,11 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
 		string following the file name. +1 to move past the null terminator to
 		the start of the next string. */
         x++;
+
+        fettPrintf ("(Info)~  validateWriteReqeust x is %d\n", (int) x);
+        fettPrintf ("(Info)~  validateWriteReqeust mode string is %s\n",
+                    (const char *)&(pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET + x]));
+
         if (strcasecmp(pcOctetMode,
                        (const char *)&(
                            pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET + x])) != 0)
