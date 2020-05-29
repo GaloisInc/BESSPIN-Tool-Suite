@@ -133,6 +133,10 @@ def deploymentTest(target):
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 3 - GET notthere.htm\n")
     HTTPSmokeTest(target, 'notthere.htm', WEB_NOT_FOUND)
     
+    # Now try to GET glogo.png - a larger binary format file
+    getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 4 - GET glogo.png\n")
+    HTTPSmokeTest(target, 'glogo.png', WEB_REPLY_OK)
+
 
     ###################################
     # SmokeTests for the OTA Server
