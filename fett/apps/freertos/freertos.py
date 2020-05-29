@@ -98,10 +98,12 @@ def HTTPSmokeTest(target, assetFileName, expectedCode):
         getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.\n")
 
         if (expectedCode == WEB_REPLY_OK):
+
             if (contentLength == expectedFileLength):
                 getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} PASSED\n")
             else:
-                getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} FAILED - Wrong length\n")
+                logAndExit(f"(Host)~  HTTP GET for {assetFileName} FAILED - Wrong length\n")
+
         elif (expectedCode == WEB_NOT_FOUND):
             getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} PASSED\n")
         else:
