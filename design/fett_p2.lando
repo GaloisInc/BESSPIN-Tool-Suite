@@ -34,6 +34,7 @@ The Web Server application.
     including attached files.
   Web Server must log all connections and connection attempts.
   Web Server must support execution of external programs (via CGI or similar mechanism).  
+  Execute HTTP Method!
   Execute HTTPS Method!
 
 component DatabaseCLI
