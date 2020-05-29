@@ -23,6 +23,8 @@ class fpgaTarget (commonTarget):
         # Important for the Web Server
         self.httpPortTarget  = getSetting('HTTPPortTarget')
         self.httpsPortTarget = getSetting('HTTPSPortTarget')
+        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
+        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
         self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
         self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')
@@ -208,7 +210,7 @@ class fpgaTarget (commonTarget):
         self.inInteractMode = True
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
-        printAndLog (f"Entering pseudo-interactive mode. Enter \"--exit + Enter\" to exit.")
+        printAndLog (f"Entering pseudo-interactive mode. Root password: \'{self.rootPassword}\'. Enter \"--exit + Enter\" to exit.")
         printAndLog ("Please use \"--ctrlc\" for interrupts. (Ctrl-C would exit the whole FETT tool).")
         if (self.userCreated):
             printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
@@ -295,7 +297,7 @@ def programBitfile ():
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfilePath],stderr=gfeOut,timeout=90)
+            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfilePath],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
             printAndLog(f"Programmed bitfile {bitfilePath} (md5: {md5.hexdigest()})")
             break
         except Exception as exc:

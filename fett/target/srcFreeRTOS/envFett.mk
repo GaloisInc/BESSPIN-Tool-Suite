@@ -45,7 +45,6 @@ DEMO_SRC = main.c \
 	$(wildcard $(INC_FETT_APPS)/appLib/*.c)
 INCLUDES += -I$(INC_FETT_APPS)/appLib
 INCLUDES += -I$(INC_FETT_APPS)
-CFLAGS := $(filter-out -Werror,$(CFLAGS))
 
 CFLAGS += -I$(FREERTOS_IP_INCLUDE)
 CFLAGS += -I$(WOLFSSL_SOURCE_DIR)

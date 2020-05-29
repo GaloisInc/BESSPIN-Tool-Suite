@@ -8,19 +8,21 @@
 """
 
 commonDefaults = {
+    ('mode',('test',)),
     ('openConsole',('No',)),
     ('useCustomOsImage',('No',)),
-    ('netbootPortRangeStart',(5000,)),
-    ('netbootPortRangeEnd',(6000,)),
-    ('qemuNtkPortRangeStart',(5000,)),
-    ('qemuNtkPortRangeEnd',(6000,)),
-    ('qemuSshHostPort',(2222,)),
+    ('useCustomBitfile',('No',)),
+    ('binarySource',('GFE',)),
     ('appTimeout',(30,))
 }
 
 unixDefaults = commonDefaults.union({
     ('elfLoader',('netboot',)),
-    ('buildApps',('no',))
+    ('buildApps',('no',)),
+    ('netbootPortRangeStart',(5000,)),
+    ('netbootPortRangeEnd',(6000,)),
+    ('qemuNtkPortRangeStart',(5000,)),
+    ('qemuNtkPortRangeEnd',(6000,))
 })
 
 unixAllTargets = unixDefaults.union({
@@ -35,29 +37,9 @@ unixDevPR = unixDefaults.union({
     ('osImage',('FreeBSD', 'debian',))
 })
 
-webserverDefaults = {
-    ('webserver',('yes',)),
-    ('database',('no',)),
-    ('voting',('no',))
-}
-
-databaseDefaults = {
-    ('database',('yes',)),
-    ('webserver',('no',)),
-    ('voting',('no',))
-}
-
-webserverAllTargets = webserverDefaults.union(unixAllTargets)
-webserverDevPR = webserverDefaults.union(unixDevPR)
-databaseAllTargets = databaseDefaults.union(unixAllTargets)
-databaseDevPR = databaseDefaults.union(unixDevPR)
-
 freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',)),
-    ('database',('no',)),
-    ('webserver',('no',)),
-    ('voting',('no',)),
     ('buildApps',('yes',)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',))
@@ -74,8 +56,14 @@ freertosDevPR = freertosDefaults.union({
 })
 
 appSets = {
-    'runPeriodic' : {'freertos':freertosAllTargets, 'webserver':webserverAllTargets, 'database':databaseAllTargets},
-    'runDevPR' : {'freertos':freertosDevPR, 'webserver':webserverDevPR, 'database':databaseDevPR},
+    'runPeriodic' : {
+        'freertos' : {'freertos':freertosAllTargets},
+        'unix' : {'unix':unixAllTargets}
+    },
+    'runDevPR' : {
+        'freertos' : {'freertos':freertosDevPR},
+        'unix' : {'unix':unixDevPR}
+    }
 }
 appSets['runRelease'] = appSets['runPeriodic']
 

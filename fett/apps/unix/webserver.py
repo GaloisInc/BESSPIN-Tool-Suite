@@ -10,55 +10,57 @@ from fett.base.utils.misc import *
 @decorate.timeWrap
 def install (target):
     # target is a fett target object
-    printAndLog("Installing nginx...")
-    outLog = ''
-    outLog += target.runCommand("echo \"Installing nginx...\"")[1]
-    outLog += target.runCommand("mkdir -p /usr/local/sbin")[1]
-    outLog += target.runCommand("install nginx /usr/local/sbin/nginx", erroneousContents="install:")[1]
-    outLog += target.runCommand("mkdir -p /usr/local/nginx/logs /usr/local/nginx/conf /usr/local/nginx/html")[1]
-    outLog += target.runCommand("mkdir -p /usr/local/nginx/post")[1]
-    outLog += target.runCommand("mkdir -p /etc/ssl/certs")[1]
-    outLog += target.runCommand("mkdir -p /etc/ssl/private")[1]
+    appLog = getSetting('appLog')
+    printAndLog("Installing nginx...",tee=appLog)
+    target.runCommand("echo \"Installing nginx...\"",tee=appLog)
+    target.runCommand("mkdir -p /usr/local/sbin",tee=appLog)
+    target.runCommand("install nginx /usr/local/sbin/nginx", erroneousContents="install:",tee=appLog)
+    target.runCommand("mkdir -p /usr/local/nginx/logs /usr/local/nginx/conf /usr/local/nginx/html",tee=appLog)
+    target.runCommand("mkdir -p /usr/local/nginx/post",tee=appLog)
+    target.runCommand("mkdir -p /etc/ssl/certs",tee=appLog)
+    target.runCommand("mkdir -p /etc/ssl/private",tee=appLog)
 
-    outLog += target.runCommand("cp -r conf/* /usr/local/nginx/conf/")[1]
-    outLog += target.runCommand("cp -r html/* /usr/local/nginx/html/")[1]
-    outLog += target.runCommand("cp -r certs/* /etc/ssl/certs")[1]
-    outLog += target.runCommand("cp -r keys/* /etc/ssl/private")[1]
+    if isEqSetting('osImage','FreeBSD'):
+        # The user's name is www on FreeBSD, not www-data:
+        target.runCommand("sed -i.bak -e 's/www-data/www/' conf/nginx.conf",tee=appLog)
+    target.runCommand("cp -r conf/* /usr/local/nginx/conf/",tee=appLog)
+    target.runCommand("cp -r html/* /usr/local/nginx/html/",tee=appLog)
+    target.runCommand("cp -r certs/* /etc/ssl/certs",tee=appLog)
+    target.runCommand("cp -r keys/* /etc/ssl/private",tee=appLog)
 
-    outLog += target.runCommand("echo \"Starting nginx service...\"")[1]
+    target.runCommand("echo \"Starting nginx service...\"",tee=appLog)
+
     if isEqSetting('osImage','debian'):
-        outLog += target.runCommand("install nginx.service /lib/systemd/system/nginx.service", erroneousContents="install:")[1]
-        outLog += target.runCommand("systemctl start nginx.service", erroneousContents=["Failed to start", "error code"])[1]
+        target.runCommand("install nginx.service /lib/systemd/system/nginx.service", erroneousContents="install:",tee=appLog)
+        target.runCommand("systemctl start nginx.service", erroneousContents=["Failed to start", "error code"],tee=appLog)
     elif isEqSetting('osImage','FreeBSD'):
-        outLog += target.runCommand("install -d /usr/local/etc/rc.d")[1]
-        outLog += target.runCommand("install rcfile /usr/local/etc/rc.d/nginx", erroneousContents="install:")[1]
-        outLog += target.runCommand("service nginx enable", erroneousContents="nginx does not exist")[1]
-        outLog += target.runCommand("service nginx start")[1]
+        target.runCommand("install -d /usr/local/etc/rc.d",tee=appLog)
+        target.runCommand("install rcfile /usr/local/etc/rc.d/nginx", erroneousContents="install:",tee=appLog)
+        target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog)
+        target.runCommand("service nginx start", erroneousContents=["failed"], tee=appLog)
     else:
         target.shutdownAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
                      exitCode=EXIT.Dev_Bug)
 
-    # TODO add errors above
-
-    printAndLog("Nginx installed successfully.")
-    return outLog
+    printAndLog("Nginx installed successfully.",tee=appLog)
+    return
 
 @decorate.debugWrap
 @decorate.timeWrap
 def deploy (target):
-    printAndLog ("Deployment successful. Target is ready.")
+    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
     
     #Here we should send a message to the portal
 
     #Here we should wait for a termination signal from the portal
     
-    printAndLog("Termination signal received. Preparing to exit...")
-    return ''
+    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
+    return
 
 @decorate.debugWrap
 @decorate.timeWrap
-def curlTest(target, url, extra=[], http2=False):
-    out = curlRequest(url, http2=http2, extra=extra)
+def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
+    out = curlRequest(url, http2=http2, extra=extra, method=method, rawOutput=rawOutput)
     if (not out):
         return (None,None)
     try:
@@ -66,13 +68,13 @@ def curlTest(target, url, extra=[], http2=False):
     except Exception as exc:
         errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
         return (None,None)
-    printAndLog(f"curl {url} extra={extra} http2={http2} returned:\n{out}", doPrint=False)
+    printAndLog(f"curl {url} extra={extra} http2={http2} returned:\n{out}", doPrint=False,tee=getSetting('appLog'))
     return (version, code)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def extensiveTest(target):
-    return deploymentTest(target)
+    deploymentTest(target)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -86,14 +88,13 @@ def deploymentTest(target):
     guidance as to what tests we should run here.
 
     """
-    printAndLog("Testing nginx...")
+    printAndLog("Testing nginx...",tee=getSetting('appLog'))
     targetIP = target.ipTarget
     httpPort = target.httpPortTarget
     httpsPort = target.httpsPortTarget
-    output = ""
 
     # 0. Fetch index page
-    printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False)
+    printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.html")
     if (not code):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
@@ -101,7 +102,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 1. Nginx must be compiled with ssl support
-    printAndLog("Test[HTTPS]: Fetching index via HTTPS", doPrint=False)
+    printAndLog("Test[HTTPS]: Fetching index via HTTPS", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html")
     if (not code):
         target.shutdownAndExit (f"Test[HTTPS]: Failed! [Fatal]",exitCode=EXIT.Run)
@@ -109,7 +110,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTPS]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 2. HTTP2 support
-    printAndLog("Test[HTTP2]: Fetching index via HTTP2", doPrint=False)
+    printAndLog("Test[HTTP2]: Fetching index via HTTP2", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html", http2=True)
     if (not code):
         target.shutdownAndExit (f"Test[HTTP2]: Failed! [Fatal]",exitCode=EXIT.Run)
@@ -119,7 +120,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTP2]: Failed! [Got wrong version <{version}>].",exitCode=EXIT.Run)
 
     # 3. Error redirect is working
-    printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False)
+    printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html")
     if (not code):
         target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Fatal]",exitCode=EXIT.Run)
@@ -127,7 +128,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 4. "Hidden" resource
-    printAndLog("Test[Private Resource]: Fetching private resource from hidden server", doPrint=False)
+    printAndLog("Test[Private Resource]: Fetching private resource from hidden server", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html",
                                 extra=["-H", "Host: secret_server"])
     if (not code):
@@ -135,6 +136,65 @@ def deploymentTest(target):
     elif code != '200':
         target.shutdownAndExit (f"Test[Private Resource]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
-    printAndLog("Nginx tests OK!")
+    # 5. Fetching text.txt via HTTP
+    printAndLog("Test[Text File]: Fetching text.txt via HTTP", doPrint=False, tee=getSetting('appLog'))
+    _, code = curlTest(target, f"http://{targetIP}:{httpPort}/test.txt")
+    if (not code):
+        target.shutdownAndExit(f"Test[Text File]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Text File]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
-    return ""
+    # 6. Fetching static.html  via HTTP
+    printAndLog("Test[Static HTTP]: Fetching static.html via HTTP", doPrint=False, tee=getSetting('appLog'))
+    _, code = curlTest(target, f"http://{targetIP}:{httpPort}/static.html")
+    if (not code):
+        target.shutdownAndExit(f"Test[Static HTTP]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Static HTTP]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+
+    # 7. Fetching stanford.png - an image via HTTP
+    printAndLog("Test[Image Resource]: Fetching stanford.png via HTTP", doPrint=False, tee=getSetting('appLog'))
+    _, code = curlTest(target, f"http://{targetIP}:{httpPort}/stanford.png")
+    if (not code):
+        target.shutdownAndExit(f"Test[Image Resource]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Image Resource]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+
+    # 8. Fetching static https web page
+    printAndLog("Test[Static HTTP2]: Fetching static https web page", doPrint=False, tee=getSetting('appLog'))
+    version, code = curlTest(target, f"https://{targetIP}:{httpsPort}/static.html", http2=True)
+    if (not code):
+        target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+    elif version != 'HTTP/2':
+        target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Got wrong version <{version}>].", exitCode=EXIT.Run)
+
+    # 9. page opens another internet web page through a link
+    printAndLog("Test[Web page through a link]: Web page opens another internet web page through a link", doPrint=False,
+                tee=getSetting('appLog'))
+    _, code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html",
+                       extra=[ "Host: https://www.wikipedia.org/"],http2=True)
+    if (not code):
+        target.shutdownAndExit(f"Test[Web page through a link]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Web page through a link]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+
+    # 10. page receives a request and saves on the local filesystem
+    printAndLog("Test[Upload text file]: Web page receives a request and saves on the local filesystem",
+                doPrint=False, tee=getSetting('appLog'))
+    size_upload, code = curlTest(target, f"http://{targetIP}:{httpPort}/upload",
+                       extra=["-F", "file_upload=@config.ini", "-F", "press=Upload", "--write-out",
+                              '%{size_upload} %{http_code}', "--silent","--output","/dev/null"],
+                                 method="POST", rawOutput=True)
+    if (not code):
+        target.shutdownAndExit(f"Test[Upload text file]: Failed! [Fatal]", exitCode=EXIT.Run)
+    elif code != '200':
+        target.shutdownAndExit(f"Test[Upload text file]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+
+    printAndLog(f"Test[Upload text file]:The total amount of bytes that were uploaded is: {size_upload}.",
+                doPrint=False, tee=getSetting('appLog'))
+
+    printAndLog("Nginx tests OK!",tee=getSetting('appLog'))
+
+    return

@@ -10,16 +10,14 @@ class qemuTarget (commonTarget):
     def __init__ (self):
         
         super().__init__()
-        self.sshHostPort = getSetting('qemuSshHostPort')
+        
         self.ipTarget = getSetting('qemuIpTarget')
-        # These are QEMU specific
-        self.httpPortTarget = getSetting('qemuHttpHostPort')
-        self.httpsPortTarget = getSetting('qemuHttpsHostPort')
+
         return
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def allocPortRange(self):
+    def assignNtkPorts(self):
         """
         Must ONLY be called on debian or freebsd
         """
@@ -28,7 +26,7 @@ class qemuTarget (commonTarget):
         rangeStart = getSetting('qemuNtkPortRangeStart')
         rangeEnd = getSetting('qemuNtkPortRangeEnd')
         if (rangeStart >= rangeEnd-1):
-            self.shutdownAndExit(f"allocPortRange: The port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.",exitCode=EXIT.Configuration)
+            self.shutdownAndExit(f"assignNtkPorts: The port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.",exitCode=EXIT.Configuration)
         if (rangeStart%2):
             rangeStart += 1
         for iPort in range(rangeStart,rangeEnd,2):
@@ -37,41 +35,50 @@ class qemuTarget (commonTarget):
                 self.portHost = iPort+1
                 break
         if ((self.portTarget is None) or (self.portHost is None)):
-            self.shutdownAndExit(f"allocPortRange: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+            self.shutdownAndExit(f"assignNtkPorts: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+        printAndLog(f"assignNtkPorts: portTarget={self.portTarget}, portHost={self.portHost}",doPrint=False)
+        
+        #find more ports for ssh and http
+        additionalPorts = []
+        nPorts = 5
+        for xPort in range(self.portHost+1,rangeEnd):
+            if (checkPort(xPort)):
+                additionalPorts.append(xPort)
+                if (len(additionalPorts) == nPorts):
+                    break
+        if (len(additionalPorts) != nPorts):
+            self.shutdownAndExit(f"assignNtkPorts: Could not find enough open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+        printAndLog(f"assignNtkPorts: The app ports are: {','.join(str(xPort) for xPort in additionalPorts)}.",doPrint=False)
+        self.sshHostPort           = additionalPorts[0]
+        self.httpPortTarget        = additionalPorts[1]
+        self.httpsPortTarget       = additionalPorts[2]
+        self.votingHttpPortTarget  = additionalPorts[3]
+        self.votingHttpsPortTarget = additionalPorts[4]
 
-        def checkPortRange(name, val):
-            if val in [self.portTarget, self.portHost]:
-                self.shutdownAndExit(f"allocPortRange: The {name}<{val}> is the same as the chosen default tcp ports:<{self.portTarget} and {self.portHost}>.",exitCode=EXIT.Configuration)
-
-        # The names here look confusing, but for clients of the class,
-        # if these are the ports to access http or https being served on the target.
-        # They actually exist on the host, of course, since we're doing port forwarding.
-        portsToCheck = ["sshHostPort", "httpPortTarget", "httpsPortTarget"]
-        # Check the allocated ports are distinct from the user-specified ports
-        for name in portsToCheck:
-            checkPortRange(name, getattr(self, name))
-
-        # Now check the user specified ports are distinct
-        userPorts = { getattr(self,name):name for name in portsToCheck }
-        for name in portsToCheck:
-            portVal = getattr(self, name)
-            if userPorts[portVal] != name:
-                self.shutdownAndExit(f"allocPortRange: The port <{portVal}> is used for both {name} and {userPorts[portVal]}")
-
-        return (rangeStart, rangeEnd)
+        return
 
     @decorate.debugWrap
     @decorate.timeWrap
     def boot (self,endsWith="login:",timeout=90): #no need to use targetObj as we'll never boot in non-reboot mode
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
-            rangeStart, rangeEnd = self.allocPortRange()
-            printAndLog(f"Qemu will use the network ports <target:{self.portTarget}>, <hostTcp:{self.portHost}>, and <hostSsh:{self.sshHostPort}>.")
+            self.assignNtkPorts()
+            ports = [("target", self.portTarget),
+                     ("hostTcp", self.portHost),
+                     ("hostSsh", self.sshHostPort),
+                     ("hostHTTP", self.httpPortTarget),
+                     ("hostHTTPS", self.httpsPortTarget),
+                     ("votingHTTP", self.votingHttpPortTarget),
+                     ("votingHTTPS", self.votingHttpsPortTarget)]
+            portUsage = ", ".join([f"<{name}:{port}>" for name,port in ports])
+            printAndLog(f"Qemu will use the network ports {portUsage}.")
 
             hostFwdPairs = [
                 (self.portHost, self.portTarget),
                 (self.sshHostPort, 22),
                 (self.httpPortTarget, getSetting('HTTPPortTarget')),
                 (self.httpsPortTarget, getSetting('HTTPSPortTarget')),
+                (self.votingHttpPortTarget, getSetting('VotingHTTPPortTarget')),
+                (self.votingHttpsPortTarget, getSetting('VotingHTTPSPortTarget')),
             ]
 
             hostFwdString = ",".join([f"hostfwd=tcp:{self.ipTarget}:{portHost}-:{portTarget}" for portHost,portTarget in hostFwdPairs])
@@ -89,7 +96,6 @@ class qemuTarget (commonTarget):
                 self.shutdownAndExit(f"boot: Failed to spwan the qemy process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
         else:
             self.shutdownAndExit(f"boot: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
-        
         return
 
     @decorate.debugWrap
@@ -121,7 +127,7 @@ class qemuTarget (commonTarget):
         self.inInteractMode = True
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
-        printAndLog (f"Entering interactive mode. Press \"Ctrl + E\" to exit.")
+        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         if (self.userCreated):
             printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
             printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))

@@ -581,6 +581,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
      the IP stack is no longer responsible for releasing the buffer, and the
      task *must* return the buffer to the stack when it is no longer
      needed. */
+    fettPrintf("TFTP waiting for initial Request Message\n");
     lBytes = FreeRTOS_recvfrom(
         xTFTPListeningSocket,
         (void *)&pucUDPPayloadBuffer, // out - pointer to data block
@@ -629,6 +630,9 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     {
         fettPrintf("TFTP recvfrom() failed with return code %d\n", (int)lBytes);
     }
+
+    fettPrintf("TFTP Closing main listening socket.\n");
+    FreeRTOS_closesocket(xTFTPListeningSocket);
 
     if (Receive_Result == pdFAIL)
     {

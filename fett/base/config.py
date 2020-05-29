@@ -42,7 +42,7 @@ def loadConfiguration(configFile):
         loadConfigSection (xConfig,configData,xSection)
 
     # Get the XLEN and processor flavor
-    if (getSetting('processor') in ['chisel_p1', 'bluespec_p1']):
+    if (getSetting('processor') in ['chisel_p1']):
         setSetting('xlen',32)
     elif (getSetting('processor') in ['chisel_p2', 'bluespec_p2']):
         setSetting('xlen',64)
@@ -50,7 +50,7 @@ def loadConfiguration(configFile):
         logAndExit(f"Failed to determine xlen from <{getSetting('processor')}>.",exitCode=EXIT.Dev_Bug)
     if (getSetting('processor') in ['chisel_p1', 'chisel_p2']):
         setSetting('procFlavor', 'chisel')
-    elif (getSetting('processor') in ['bluespec_p1', 'bluespec_p2']):
+    elif (getSetting('processor') in ['bluespec_p2']):
         setSetting('procFlavor', 'bluespec')
     else:
         logAndExit(f"Failed to determine the processor flavor <chisel or bluespec>.",exitCode=EXIT.Dev_Bug)
@@ -110,7 +110,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                     val = xConfig.getboolean(xSection,iPar['name'])
             except Exception as exc:
                 logAndExit(f"{fileName}: <{iPar['name']}> has to be boolean in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
-        elif ( iPar['type'] in ['str', 'string', 'filePath', 'dirPath', 'ipAddress', 'dict']): 
+        elif ( iPar['type'] in ['str', 'string', 'filePath', 'dirPath', 'ipAddress', 'dict', 'macAddress']): 
             if (setup):
                 val = iPar['val']
             else:
@@ -144,6 +144,10 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 ipMatch = re.match(r"(\d{1,3}\.){3}\d{1,3}$",val)
                 if (ipMatch is None):
                     logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid IP address in section [{xSection}].",exitCode=EXIT.Configuration)
+            elif (iPar['type'] == 'macAddress'):
+                macAddressMatch = re.match(r"([0-9a-fA-F]{2}\:){5}[0-9a-fA-F]{2}$",val)
+                if (macAddressMatch is None):
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid MAC address in section [{xSection}].",exitCode=EXIT.Configuration)
 
         else:
             logAndExit("Json info file: Unknown type <%s> for <%s> in section [%s]." %(iPar['type'],iPar['name'],xSection),exitCode=EXIT.Configuration)

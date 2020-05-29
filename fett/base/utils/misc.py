@@ -44,9 +44,18 @@ def formatExc (exc):
     except:
         return '<Non-recognized Exception>'
 
-def printAndLog (message,doPrint=True):
+def printAndLog (message,doPrint=True,tee=None):
     if (doPrint):
         print("(Info)~  " + message)
+    if (tee):
+        try:
+            tee.write(message + '\n')
+        except Exception as exc:
+            try:
+                fName = tee.name
+            except:
+                fName = 'UNKNOWN_FILE'
+            errorAndLog(f"printAndLog: Failed to tee the output to <{fName}>.",doPrint=False,exc=exc)
     logging.info(message)
 
 def warnAndLog (message,doPrint=True,exc=None):
@@ -133,7 +142,7 @@ def tar (tarFileName, filesList=[]):
           trees
     """
     try:
-        tarFile = tarfile.open(name=tarFileName, mode="x:gz")
+        tarFile = tarfile.open(name=tarFileName, mode="a:")
     except Exception as e:
         logAndExit (f"tar: error creating {tarFileName}", exc=e, exitCode=EXIT.Files_and_paths)
     for f in filesList:
@@ -327,15 +336,17 @@ def matchExprInLines (expr,lines):
     return None
 
 @decorate.debugWrap    
-def curlRequest(url, extra=[], http2=False):
+def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False):
     # Need --insecure because of self signed certs
     options = [
         "--insecure",
         "--http2" if http2 else "--http1.1",
         "-L",
-        "-I",
-        "-s"
+        "-s",
+        "-X", method
     ] + extra
+    if not rawOutput:
+        options.append("-I")
     try:
         p = subprocess.run (['curl'] + options + [url], capture_output=True, check=True)
         out = p.stdout.decode('utf-8')

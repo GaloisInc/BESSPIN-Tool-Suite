@@ -7,13 +7,19 @@
 
 #define OTA_FILE_MIN_SIZE (ED25519_SIG_SIZE + 1)
 #define tftpconfigMAX_FILENAME  129
-#define OTA_FILENAME  "ota.htm"
 
 uint8_t file_buffer[OTA_MAX_SIGNED_PAYLOAD_SIZE]; // SIZE set in setupEnv.json
 
 void vOta (void *pvParameters);
+
 void Ota_Worker (ed25519_key *pk);
-void Write_Payload (size_t fsize);
+
+/* Writes file_buffer[ED25519_SIG_SIZE .. ED25519_SIG_SIZE+fsize-1] to the filesystem */
+void Write_Payload_To_FS  (size_t fsize);
+
+/* Writes file_buffer[ED25519_SIG_SIZE .. ED25519_SIG_SIZE+fsize-1] to the log */
+void Write_Payload_To_Log (size_t fsize);
+
 void Initialize_Receipt_Buffer (void);
 
 
@@ -24,7 +30,6 @@ static const byte raw_pk[ED25519_KEY_SIZE] =
    0xE0, 0x16, 0xE3, 0x0F, 0x27, 0x0B, 0xAE, 0x74,
    0xB3, 0x0B, 0xED, 0xAC, 0x33, 0x47, 0x01, 0xFA};
 
-
 void Initialize_Receipt_Buffer (void)
 {
   for (int i = 0; i < OTA_MAX_SIGNED_PAYLOAD_SIZE; i++)
@@ -33,39 +38,63 @@ void Initialize_Receipt_Buffer (void)
     }
 }
 
-
-void Write_Payload (size_t fsize)
+void Write_Payload_To_FS (size_t fsize)
 {
   FF_FILE *fd;
   size_t  written;
   int     r;
 
-  fd = ff_fopen (OTA_FILENAME, "w");
-  vERROR_IF_EQ (fd, NULL, "vOta: file open/create");
+  // Gain mutually exclusive access to the filesystem
+  // Code below must always reach a call to ff_release()
+  ff_lock();
 
-  written = ff_fwrite (file_buffer+ED25519_SIG_SIZE, 1, fsize, fd);
-  if (written != fsize)
+  fd = ff_fopen (OTA_FILENAME, "w");
+  if (fd != NULL)
     {
-      fettPrintf ("(Error)~  vOta: file write failed. [written=%ld, fsize=%ld].\r\n",written,fsize);
-      // Go on to close the file anyway...
+      written = ff_fwrite (file_buffer+ED25519_SIG_SIZE, 1, fsize, fd);
+      if (written != fsize)
+        {
+          fettPrintf ("(Error)~  vOta: file write failed. [written=%ld, fsize=%ld].\r\n",written,fsize);
+          // Go on to close the file anyway...
+        }
+      r = ff_fclose (fd);
+      if (r != 0)
+        {
+          fettPrintf ("(Error)~  vOta: file close failed\n");
+        }
     }
-  r = ff_fclose (fd);
-  if (r != 0)
+  else
     {
-      fettPrintf ("(Error)~  vOta: file close failed\n");
+      // Log an error here, but CARRY ON to ensure that control-flow
+      // reaches the ff_release() call below.
+      fettPrintf ("(Error)~  vOta: failed to open %s\r\n", OTA_FILENAME);
     }
+
+  ff_release();
+}
+
+void Write_Payload_To_Log (size_t fsize)
+{
+  for (size_t i = 0; i < fsize; i++)
+    {
+      fettPrintf ("%02x ", file_buffer[ED25519_SIG_SIZE + i]);
+      if ((i % 16) == 15)
+        {
+          fettPrintf ("\n");
+        }
+    }
+  fettPrintf ("\n");
 }
 
 void Ota_Worker (ed25519_key *pk)
 {
-  // Normally, this would loop forever, but for initial testing,
-  // we'll just receive and process one file before returning
-  // for (;;)
+  do
   {
     int      signature_ok;
     uint32_t received_file_size;
     int      r;
-    char tftp_filename[tftpconfigMAX_FILENAME];
+    char     tftp_filename[tftpconfigMAX_FILENAME];
+
     memset(tftp_filename,0,tftpconfigMAX_FILENAME);
     
     Initialize_Receipt_Buffer();
@@ -94,9 +123,27 @@ void Ota_Worker (ed25519_key *pk)
                                   pk);                      // public key
         if ((r == 0) && (signature_ok == 1))
           {
-            fettPrintf ("(Info)~  vOta: Signature is OK\n");
-            // now write the payload (not including the signature) to disk.
-            Write_Payload ((size_t) received_file_size - ED25519_SIG_SIZE);
+            uint8_t *message_data = file_buffer + ED25519_SIG_SIZE;
+            
+            // Check for the special STOP signed message
+            if (received_file_size == (ED25519_SIG_SIZE + 4) &&
+                message_data[0] == 'S' &&
+                message_data[1] == 'T' &&
+                message_data[2] == 'O' &&
+                message_data[3] == 'P')
+              {
+                fettPrintf ("(Info)~  vOta: Signed STOP message received\n");
+                setStopRequested();
+              }
+            else
+              {
+                fettPrintf ("(Info)~  vOta: Signature is OK\n");
+                // now write the payload (not including the signature) to disk.
+                Write_Payload_To_FS ((size_t) received_file_size - ED25519_SIG_SIZE);
+                // and to the log
+                fettPrintf ("(Info)~  vOta: Received payload is\n");
+                Write_Payload_To_Log ((size_t) received_file_size - ED25519_SIG_SIZE);
+              }
           } 
         else
           {
@@ -109,8 +156,10 @@ void Ota_Worker (ed25519_key *pk)
         fettPrintf ("(Error)~  vOta: OTA: received file too small to be signed.\n");
       }
 
-  }
+  } while (!StopRequested());
 
+  fettPrintf ("(Info)~  vOta: Ota_Worker returns after STOP message\n");
+            
 }
 
 
@@ -140,10 +189,10 @@ void vOta (void *pvParameters) {
     
     wc_ed25519_free (&pk);
 
-    fettPrintf("(Info)~  vOta: Exitting OTA...\r\n");
+    fettPrintf("(Info)~  vOta: Exiting OTA...\r\n");
 
     //notify main
-    vERROR_IF_EQ(xMainTask, NULL, "vOta: Get handle of <main:task>.");
+    pvERROR_IF_EQ(xMainTask, NULL, "vOta: Get handle of <main:task>.");
     funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_OTA ,eSetBits);
     vERROR_IF_NEQ(funcReturn, pdPASS, "vOta: Notify <main:task>.");
 

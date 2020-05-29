@@ -265,7 +265,10 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
     }
     snprintf(pxClient->pcCurrentFilename, sizeof(pxClient->pcCurrentFilename),
              "%s%s%s", pxClient->pcRootDir, pcSlash, pxClient->pcUrlData);
-
+    
+    // Filesystem Critical Section starts here
+    ff_lock();
+    
     pxClient->pxFileHandle = ff_fopen(pxClient->pcCurrentFilename, "rb");
 
     fettPrintf(
@@ -283,6 +286,10 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
         xRc = prvSendFile(pxClient);
     }
 
+    // Critical section ends here. Note that prvSendFile calls ff_fclose()
+    // before it returns.
+    ff_release();
+    
     return xRc;
 }
 /*-----------------------------------------------------------*/
