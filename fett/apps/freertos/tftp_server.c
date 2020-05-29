@@ -231,6 +231,7 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
         /* Acknowledge the write request so the client starts to send the file.
 		The first acknowledgment does not have a corresponding block number so
 		the special case block number 0 is used. */
+        fettPrintf ("(Info)~  TFTP usExpectedBlockNumber set to 0\n");
         usExpectedBlockNumber = 0;
 
         do
@@ -269,8 +270,17 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                 pxHeader->usBlockNumber =
                     FreeRTOS_ntohs(pxHeader->usBlockNumber);
 
-                /* Is the data as expected and from the expected IP address and
-				port? */
+                /* Is the data as expected and from the expected IP address and port? */
+                fettPrintf ("(Info)~  TFTP got a packet\n");
+                fettPrintf ("(Info)~    lBytes = %d\n", (int) lBytes);
+                fettPrintf ("(Info)~    Opcode = %d\n", (int) pxHeader->usOpcode);
+                fettPrintf ("(Info)~    expected block number = %d\n", (int) usExpectedBlockNumber);
+                fettPrintf ("(Info)~    actual   block number = %d\n", (int) pxHeader->usBlockNumber);
+                fettPrintf ("(Info)~    expected IP = %d\n", (int) xClient.sin_addr);
+                fettPrintf ("(Info)~    actual   IP = %d\n", (int) pxClient->sin_addr);
+                fettPrintf ("(Info)~    expected port = %d\n", (int) xClient.sin_port);
+                fettPrintf ("(Info)~    actual   port = %d\n", (int) pxClient->sin_port);
+
                 if ((pxHeader->usOpcode == (uint16_t)eData) &&
                     (pxHeader->usBlockNumber == usExpectedBlockNumber) &&
                     (pxClient->sin_addr == xClient.sin_addr) &&
