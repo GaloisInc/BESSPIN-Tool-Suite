@@ -101,15 +101,6 @@ class firesimTarget(commonTarget):
         printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + C\" to exit.")
         super().interact()
 
-    def runCommand (self,command,endsWith=None,expectedContents=None, **kwargs):
-        """ this is for the firesim debian build, but not the ones FETT will use """
-        # TODO: ELEW use actual images and remove
-        if endsWith is None:
-            if isEqSetting('osImage','debian'):
-                if (self.isCurrentUserRoot):
-                    endsWith = "#"
-        return super().runCommand(command, endsWith=endsWith, **kwargs)
-
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet(self):
