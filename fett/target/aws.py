@@ -93,6 +93,7 @@ class firesimTarget(commonTarget):
             self.ttyProcess = pexpect.spawn(firesimCommand,logfile=self.fTtyOut,timeout=30,
                                         cwd=getSetting("awsFiresimSimPath"))
             self.process = self.ttyProcess
+            self.process.sendline('stty intr ^c') #enable sending `\x03` to target
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
         except Exception as exc:
@@ -112,7 +113,7 @@ class firesimTarget(commonTarget):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
+            outCmd = self.runCommand ("ifup eth0",expectedContents='IceNet: opened device')
         
         #pinging the FPGA to check everything is ok
         gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
