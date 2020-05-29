@@ -31,6 +31,7 @@ class firesimTarget(commonTarget):
         imageFile = os.path.join(getSetting("osImagesDir"), "debian.img")
         dwarfFile = os.path.join(getSetting("osImagesDir"), "debian.dwarf")
         firesimCommand = ' '.join([
+            "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target 
             'sudo',
             "LD_LIBRARY_PATH={}:$LD_LIBRARY_PATH".format(getSetting("awsFiresimSimPath")),
             './FireSim-f1',
@@ -84,7 +85,8 @@ class firesimTarget(commonTarget):
             f"+netbw0={self.switch0timing[2]}",
             '+shmemportname0=0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
             '+permissive-off',
-            getSetting("osImageElf")
+            getSetting("osImageElf"),
+            "\'"
         ])
         logging.debug(f"boot: firesimCommand = {firesimCommand}")
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
@@ -93,7 +95,6 @@ class firesimTarget(commonTarget):
             self.ttyProcess = pexpect.spawn(firesimCommand,logfile=self.fTtyOut,timeout=30,
                                         cwd=getSetting("awsFiresimSimPath"))
             self.process = self.ttyProcess
-            self.process.sendline('stty intr ^c') #enable sending `\x03` to target
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
         except Exception as exc:
