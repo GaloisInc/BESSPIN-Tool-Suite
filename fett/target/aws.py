@@ -13,8 +13,6 @@ class firesimTarget(commonTarget):
         self.fswitchOut = None
         self.switch0timing = ['6405', '10', '200'] # dictated by cloudGFE
 
-        self.rootPassword = 'firesim'
-
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
