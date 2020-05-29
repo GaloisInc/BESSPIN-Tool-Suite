@@ -230,7 +230,8 @@ def _runCommandAndLog(command, stdout=None, stderr=None, **kwargs):
             joinStr = "and " if stdout is not None and stderr is not None else ""
             return "Check " + stdoutStr + joinStr + stderrStr + " for more details"
     if type(command) is str:
-        command = command.split()
+        if not (('shell' in kwargs) and kwargs['shell']): #if shell=True, do not split
+            command = command.split()
     elif isinstance(command, collections.Sequence):
         pass
     else:
