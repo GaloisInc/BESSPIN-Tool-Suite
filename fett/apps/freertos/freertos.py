@@ -152,17 +152,23 @@ def deploymentTest(target):
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
+    # uploading the signed ota.htm file AGAIN
+    fileName = f"{getSettingDict('freertosAssets',['otaHtml'])}.sig"
+    filePath = os.path.join(getSetting('assetsDir'),fileName)
+    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 2 - SEND {fileName}\n")
+    try:
+        clientTftp.upload(fileName, filePath, timeout=10)
+    except Exception as exc:
+        target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
+    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
+
     # uploading the signed badsig.htm file - Signature is corrupt
     fileName = "badsig.htm.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
-
-    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 2 - SEND {fileName}\n")
+    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 3 - SEND {fileName}\n")
     try:
-        printAndLog(f"fileName is {fileName}\n");
-        printAndLog(f"filePath is {filePath}\n");
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
-        errorAndLog (f"TFTP Error: ", exc=exc, doPrint=True)
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
