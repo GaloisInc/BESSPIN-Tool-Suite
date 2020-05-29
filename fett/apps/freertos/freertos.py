@@ -83,7 +83,6 @@ def HTTPSmokeTest(target, assetFileName, expectedCode):
         try:
             filePath = os.path.join(getSetting('assetsDir'),assetFileName)
             expectedFileLength = os.stat(filePath).st_size
-            getSetting('appLog').write(f"(Host)~  HTTP Request expected length is {expectedFileLength}.\n")
         except Exception as exc:
             errorAndLog (f"Failed to find length of file: <{filePath}>", exc=exc, doPrint=False)
             expectedFileLength = 0
@@ -121,21 +120,38 @@ def deploymentTest(target):
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget')) 
 
+    ###################################
+    # SmokeTests for the HTTP Server
+    ###################################
+    getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 1 - GET index.htm\n")
+    HTTPSmokeTest(target, 'index.htm', WEB_REPLY_OK)
+
+    getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 2 - GET ota.htm\n")
+    HTTPSmokeTest(target, f"{getSettingDict('freertosAssets',['otaHtml'])}", WEB_REPLY_OK)
+
+    # Now try a file that we know won't be there on the target. We should get error code WEB_NOT_FOUND
+    getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 3 - GET notthere.htm\n")
+    HTTPSmokeTest(target, 'notthere.htm', WEB_NOT_FOUND)
+    
+
+    ###################################
+    # SmokeTests for the OTA Server
+    ###################################
+
     # uploading the signed ota.htm file
     fileName = f"{getSettingDict('freertosAssets',['otaHtml'])}.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
+    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 1 - SEND {fileName}\n")
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
-    HTTPSmokeTest(target, 'index.htm', WEB_REPLY_OK)
-    HTTPSmokeTest(target, f"{getSettingDict('freertosAssets',['otaHtml'])}", WEB_REPLY_OK)
-    # Now try a file that we know won't be there on the target. We should get error code WEB_NOT_FOUND
-    HTTPSmokeTest(target, 'notthere.htm', WEB_NOT_FOUND)
-    
+    ###################################
+    # STOP the FreeRTOS application
     # uploading the signed stop.htm file
+    ###################################
     fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
     try:
