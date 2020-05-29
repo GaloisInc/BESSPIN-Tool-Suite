@@ -218,6 +218,7 @@ def setupKernelModules():
     else:
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
+@decorate.debugWrap
 def _runCommandAndLog(command, stdout=None, stderr=None, **kwargs):
     """ run and log a simple command, treating all exceptions as terminal errors """
     def logDetailsString():
@@ -239,6 +240,7 @@ def _runCommandAndLog(command, stdout=None, stderr=None, **kwargs):
     except Exception as exc:
             logAndExit (f"<aws._runCommandAndLog>: Failed on <{command}>." + logDetailsString())
 
+@decorate.debugWrap
 def _sendKmsg(message):
     """send message to /dev/kmsg"""
     # TODO: replace all whitespace with underscores?
@@ -247,6 +249,8 @@ def _sendKmsg(message):
     _runCommandAndLog(command, stdout=sudoOut, stderr=sudoOut,check=False,shell=True)
     sudoOut.close()
 
+@decorate.debugWrap
+@decorate.timeWrap
 def _poll_command(command, trigger, maxTimeout=10):
     for i in range(maxTimeout):
         out = subprocess.getoutput(command)
@@ -256,6 +260,7 @@ def _poll_command(command, trigger, maxTimeout=10):
             return
     logAndExit(f"<aws._poll_command>: command <{command}> timed out <{maxTimeout} attempts> on trigger <{trigger}>")
 
+@decorate.debugWrap
 def clearFpga(slotno):
     """clear FPGA in a given slot id and wait until finished """
     _sendKmsg(f"about to clear fpga {slotno}")
@@ -267,6 +272,7 @@ def clearFpga(slotno):
     _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "cleared")
     _sendKmsg(f"done checking fpga slot {slotno}")
 
+@decorate.debugWrap
 def getNumFpgas():
     """return number of FPGAS"""
     try:
@@ -284,6 +290,7 @@ def getNumFpgas():
     numLines = len(lines)
     return numLines
 
+@decorate.debugWrap
 def clearFpgas():
     """ clear ALL FPGAs """
     numFpgas = getNumFpgas()
@@ -291,6 +298,7 @@ def clearFpgas():
     for sn in range(numFpgas):
         clearFpga(sn)
 
+@decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
     _runCommandAndLog(f"sudo fpga-load-local-image -S {slotno} -I {agfi} -A")
@@ -298,6 +306,7 @@ def flashFpga(agfi, slotno):
     # wait until the FPGA has been flashed
     _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "loaded")
 
+@decorate.debugWrap
 def flashFpgas(agfi):
     """
     NOTE: FireSim documentation came with a note. If an instance is chosen that has more than one FPGA, leaving one
