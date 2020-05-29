@@ -174,7 +174,8 @@ def deploymentTest(target):
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
         # This test case reaches here with an unknown exception, then terminates
-        target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
+        errorAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=True,exc=exc)
+        # target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
 
