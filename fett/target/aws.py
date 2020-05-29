@@ -1,7 +1,6 @@
 import pexpect, psutil, getpass
 from fett.target.common import *
 from fett.target import fpga
-import collections
 
 class firesimTarget(commonTarget):
     def __init__(self):
@@ -219,25 +218,30 @@ def setupKernelModules():
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
-def _runCommandAndLog(command, stdout=None, stderr=None, **kwargs):
+def _runCommandAndLog(command, **kwargs):
     """ run and log a simple command, treating all exceptions as terminal errors """
+    # Defaulting the parameters that we use
+    if ('shell' not in kwargs):
+        kwargs['shell'] = False
+    elif ('stdout' not in kwargs):
+        kwargs['stdout'] = None
+    elif ('stderr' not in kwargs):
+        kwargs['stderr'] = None
+
     def logDetailsString():
-        if stdout is None and stderr is None:
+        if kwargs['stdout'] is None and kwargs['stderr'] is None:
             return ""
         else:
-            stdoutStr = f"{stdout.name} for stdout " if stdout is not None else ""
-            stderrStr = f"{stderr.name} for stderr " if stderr is not None else ""
-            joinStr = "and " if stdout is not None and stderr is not None else ""
+            stdoutStr = f"{kwargs['stdout'].name} for stdout " if kwargs['stdout'] is not None else ""
+            stderrStr = f"{kwargs['stderr'].name} for stderr " if kwargs['stderr'] is not None else ""
+            joinStr = "and " if kwargs['stdout'] is not None and kwargs['stderr'] is not None else ""
             return "Check " + stdoutStr + joinStr + stderrStr + " for more details"
-    if type(command) is str:
-        if not (('shell' in kwargs) and kwargs['shell']): #if shell=True, do not split
-            command = command.split()
-    elif isinstance(command, collections.Sequence):
-        pass
+    if ((type(command) is str) and (not kwargs['shell'])): #if shell=True, do not split
+        command = command.split()
     else:
         logAndExit(f"<aws._runCommandAndLog>: type of command <{command}> is not understood")
     try:
-        subprocess.run(command, stdout=stdout, stderr=stderr, **kwargs)
+        subprocess.run(command, **kwargs)
     except Exception as exc:
             logAndExit (f"<aws._runCommandAndLog>: Failed on <{command}>." + logDetailsString())
 
