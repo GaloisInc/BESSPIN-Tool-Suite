@@ -35,13 +35,15 @@ def prepareOsImage ():
 def prepareAWSTemporary():
     # setup firesim specific settings -- screen interfaces and kernel modules
     # TODO: ELEW hard coded - ew
-    minimalGfePath = '/home/centos/minimal_cloudgfe'
+    minimalGfePath = '/home/centos/sw'
     setSetting('awsFiresimPath', os.path.realpath(minimalGfePath))
     setSetting('awsFiresimSimPath', os.path.join(minimalGfePath, 'sim'))
     setSetting('awsFiresimModPath', os.path.join(minimalGfePath, 'kmods'))
 
     # copy over the elf file like other FETT Target setups
-    imagePath = os.path.join(minimalGfePath, 'sim', 'linux-uniform0-br-base-bin')
+    cloudgfeBinPath = '/home/centos/cloudgfe_binaries/debianlinux_64bit'
+    setSetting('cloudgfeBinPath',cloudgfeBinPath)
+    imagePath = os.path.join(cloudgfeBinPath, 'debian.elf')
     cp (imagePath, getSetting('osImageElf'))
     if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
         warnAndLog(f"<build.prepareAWSTemporary>: netboot option is being ignored")

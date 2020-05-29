@@ -26,8 +26,8 @@ class firesimTarget(commonTarget):
                                             cwd=getSetting("awsFiresimSimPath"), preexec_fn=os.setpgrp)
 
         # 2. fsim
-        imageFile = os.path.join(getSetting("awsFiresimSimPath"), "linux-uniform0-br-base.img")
-        dwarfFile = os.path.join(getSetting("awsFiresimSimPath"), "linux-uniform0-br-base-bin-dwarf")
+        imageFile = os.path.join(getSetting("cloudgfeBinPath"), "debian.img")
+        dwarfFile = os.path.join(getSetting("cloudgfeBinPath"), "debian.dwarf")
         firesimCommand = ' '.join([
             'sudo',
             "LD_LIBRARY_PATH={}:$LD_LIBRARY_PATH".format(getSetting("awsFiresimSimPath")),
