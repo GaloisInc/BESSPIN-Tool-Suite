@@ -170,23 +170,7 @@ class fpgaTarget (commonTarget):
         else:
             self.shutdownAndExit("<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
 
-        #pinging the FPGA to check everything is ok
-        gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
-        pingAttempts = 3
-        wasPingSuccessful = False
-        for iPing in range(pingAttempts):
-            try:
-                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=gfeOut,stderr=gfeOut)
-                wasPingSuccessful = True
-                break
-            except Exception as exc:
-                if (iPing < pingAttempts - 1):
-                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
-                    time.sleep(15)
-                else:
-                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
-        gfeOut.close()
-        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+        self.pingTarget()
 
         if (isEqSetting('osImage','FreeBSD')): #use ssh instead of JTAG
             self.openSshConn()

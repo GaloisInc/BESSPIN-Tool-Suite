@@ -798,6 +798,27 @@ class commonTarget():
         self.killSshConn()
         return True
 
+    @decorate.debugWrap
+    def pingTarget (self):
+        #pinging the target to check everything is ok
+        pingOut = ftOpenFile(os.path.join(getSetting('workDir'),'ping.out'),'a')
+        pingAttempts = 3
+        wasPingSuccessful = False
+        for iPing in range(pingAttempts):
+            try:
+                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=pingOut,stderr=pingOut)
+                wasPingSuccessful = True
+                break
+            except Exception as exc:
+                if (iPing < pingAttempts - 1):
+                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
+                    time.sleep(15)
+                else:
+                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+        pingOut.close()
+        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+        return
+
 # END OF CLASS commonTarget
 
 def checkPort (portNum, host=''):
