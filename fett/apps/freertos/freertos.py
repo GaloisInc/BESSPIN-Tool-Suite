@@ -155,10 +155,13 @@ def deploymentTest(target):
     # uploading the signed badsig.htm file - Signature is corrupt
     fileName = "badsig.htm.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
+
+    tftpy.TftpShared.setLogLevel (10)
     getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 2 - SEND {fileName}\n")
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
+        errorAndLog (f"TFTP Error: ", exc=exc, doPrint=False)
         target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
 
