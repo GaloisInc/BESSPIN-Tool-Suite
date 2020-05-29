@@ -386,7 +386,7 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
     fettPrintf ("(Info)~  validateWriteReqeust pcFileName is %s\n", pcFileName);
 
     /* Sanity check the file name. */
-    for (x = 0; x < ffconfigMAX_FILENAME; x++)
+    for (x = 0; x < tftpconfigMAX_FILENAME; x++)
     {
         if (pcFileName[x] == 0x00)
         {
