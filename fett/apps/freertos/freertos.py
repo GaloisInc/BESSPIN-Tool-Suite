@@ -34,13 +34,11 @@ def deploy(target):
 # Y is the HTTP reponse status code, such as WEB_REPLY_OK or WEB_NOT_FOUND
 # Returns (0,0) on error
 def curlTest(target, url, extra=[], http2=False):
-    printAndLog(f"curl {url} extra={extra} http2={http2}", doPrint=False,tee=getSetting('appLog'))
+    printAndLog(f"(Host)~  curl {url} extra={extra} http2={http2}", doPrint=False,tee=getSetting('appLog'))
     out = curlRequest(url, http2=http2, extra=extra, rawOutput=False)
     if (not out):
         return (0,0)
     try:
-        printAndLog(f"curl {url} returned:\n{out}\n", doPrint=False,tee=getSetting('appLog'))
-
         # Line 0 of "out" should be something like "HTTP/1.1 200 OK".
         # We're mainly interested in the middle one - the return status code
         try:
@@ -65,7 +63,6 @@ def curlTest(target, url, extra=[], http2=False):
     except Exception as exc:
         errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
         return (0,0)
-    printAndLog(f"curl {url} extra={extra} http2={http2} returned code {codeval}, Content-Length {clval}\n", doPrint=False,tee=getSetting('appLog'))
     return (clval, codeval)
 
 @decorate.debugWrap
