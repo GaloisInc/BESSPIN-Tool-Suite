@@ -238,8 +238,7 @@ def _runCommandAndLog(command, **kwargs):
             return "Check " + stdoutStr + joinStr + stderrStr + " for more details"
     if ((type(command) is str) and (not kwargs['shell'])): #if shell=True, do not split
         command = command.split()
-    else:
-        logAndExit(f"<aws._runCommandAndLog>: type of command <{command}> is not understood")
+    
     try:
         subprocess.run(command, **kwargs)
     except Exception as exc:
