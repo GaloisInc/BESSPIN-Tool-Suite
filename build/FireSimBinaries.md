@@ -1,7 +1,17 @@
 # Building Firesim Binaries on an F1 Instance #
 
-This document details the process of building important Firesim binaries on an
-f1 instance.
+This document details the process of building important Firesim binaries used
+by `fett.py` to run on AWS PV-FireSim.
+The binaries are stored in the SSITH-FETT-Binaries repository.
+A short description of each binary follows.
+
+* `nbd.ko` - Network block device kernel driver.  Used for mounting qcow2
+  images
+* `xdma.ko` - Xilinx PCIE DMA driver
+* `libdwarf.so.1.0.0` - Library to consume and produce DWARF debug information
+* `libelf-0.175.so` - Library to read and write ELF files
+* `FireSim-f1` - Controls simulation and communicates with the FPGA
+* `switch0` - Facilitates internet communication with simulated node
 
 ## Install Build Dependencies ##
 
