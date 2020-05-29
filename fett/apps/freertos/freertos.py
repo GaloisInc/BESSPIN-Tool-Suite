@@ -143,6 +143,9 @@ def deploymentTest(target):
     # SmokeTests for the OTA Server
     ###################################
 
+    logging.getLogger('tftpy').propagate = False
+    logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.log'),'w'))
+
     # uploading the signed ota.htm file
     fileName = f"{getSettingDict('freertosAssets',['otaHtml'])}.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
