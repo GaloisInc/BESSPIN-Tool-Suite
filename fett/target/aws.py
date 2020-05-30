@@ -7,12 +7,14 @@ class firesimTarget(commonTarget):
 
         super().__init__()
 
-        self.switch0Proc = None
+        self.ipTarget = getSetting('awsIpTarget')
+        self.ipHost = getSetting('awsIpHost')  
+        self.portTarget = getSetting('awsPortTarget')
+        self.portHost = getSetting('awsPortHost')
 
+        self.switch0Proc = None
         self.fswitchOut = None
         self.switch0timing = ['6405', '10', '200'] # dictated by cloudGFE
-
-        self.rootPassword = 'firesim'
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -25,9 +27,10 @@ class firesimTarget(commonTarget):
                                             cwd=getSetting("awsFiresimSimPath"), preexec_fn=os.setpgrp)
 
         # 2. fsim
-        imageFile = os.path.join(getSetting("awsFiresimSimPath"), "linux-uniform0-br-base.img")
-        dwarfFile = os.path.join(getSetting("awsFiresimSimPath"), "linux-uniform0-br-base-bin-dwarf")
+        imageFile = os.path.join(getSetting("osImagesDir"), "debian.img")
+        dwarfFile = os.path.join(getSetting("osImagesDir"), "debian.dwarf")
         firesimCommand = ' '.join([
+            "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target 
             'sudo',
             "LD_LIBRARY_PATH={}:$LD_LIBRARY_PATH".format(getSetting("awsFiresimSimPath")),
             './FireSim-f1',
@@ -81,7 +84,8 @@ class firesimTarget(commonTarget):
             f"+netbw0={self.switch0timing[2]}",
             '+shmemportname0=0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
             '+permissive-off',
-            getSetting("osImageElf")
+            getSetting("osImageElf"),
+            "\'"
         ])
         logging.debug(f"boot: firesimCommand = {firesimCommand}")
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
@@ -102,19 +106,18 @@ class firesimTarget(commonTarget):
         printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + C\" to exit.")
         super().interact()
 
-    def runCommand (self,command,endsWith=None,expectedContents=None, **kwargs):
-        """ this is for the firesim debian build, but not the ones FETT will use """
-        # TODO: ELEW use actual images and remove
-        if endsWith is None:
-            if isEqSetting('osImage','debian'):
-                if (self.isCurrentUserRoot):
-                    endsWith = "#"
-        return super().runCommand(command, endsWith=endsWith, **kwargs)
-
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet(self):
-        return
+        if (isEqSetting('osImage','debian')):
+            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+            outCmd = self.runCommand ("ifup eth0",expectedContents='IceNet: opened device')
+        
+        self.pingTarget()
+
+        return outCmd
 
     @decorate.debugWrap
     def targetTearDown(self):
@@ -192,7 +195,7 @@ def configTapAdaptor():
 @decorate.debugWrap
 def programAFI():
     """ perform AFI Management Commands for f1.2xlarge """
-    agfiId = 'agfi-009b6afeef4f64454'
+    agfiId = 'agfi-0640a58e5553a75bd'
     clearFpgas()
     flashFpgas(agfiId)
 
@@ -229,6 +232,7 @@ def _runCommandAndLog(command, stdout=None, stderr=None, shell=False, **kwargs):
             stderrStr = f"{stderr.name} for stderr " if stderr is not None else ""
             joinStr = "and " if stdout is not None and stderr is not None else ""
             return "Check " + stdoutStr + joinStr + stderrStr + " for more details"
+
     if ((type(command) is str) and (not shell)): #if shell=True, do not split
         command = command.split()
     

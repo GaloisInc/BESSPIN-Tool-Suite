@@ -155,7 +155,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 120
             elif (isEqSetting('target', 'aws')):
-                timeout = 60
+                timeout = 420
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -797,6 +797,27 @@ class commonTarget():
             warnAndLog("closeSshConn: Failed to close the ssh.out file.",doPrint=False)
         self.killSshConn()
         return True
+
+    @decorate.debugWrap
+    def pingTarget (self):
+        #pinging the target to check everything is ok
+        pingOut = ftOpenFile(os.path.join(getSetting('workDir'),'ping.out'),'a')
+        pingAttempts = 3
+        wasPingSuccessful = False
+        for iPing in range(pingAttempts):
+            try:
+                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=pingOut,stderr=pingOut)
+                wasPingSuccessful = True
+                break
+            except Exception as exc:
+                if (iPing < pingAttempts - 1):
+                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
+                    time.sleep(15)
+                else:
+                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+        pingOut.close()
+        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+        return
 
 # END OF CLASS commonTarget
 
