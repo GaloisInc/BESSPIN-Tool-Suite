@@ -1,7 +1,6 @@
 import pexpect, psutil, getpass
 from fett.target.common import *
 from fett.target import fpga
-import collections
 
 class firesimTarget(commonTarget):
     def __init__(self):
@@ -222,8 +221,9 @@ def setupKernelModules():
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
-def _runCommandAndLog(command, stdout=None, stderr=None, **kwargs):
+def _runCommandAndLog(command, stdout=None, stderr=None, shell=False, **kwargs):
     """ run and log a simple command, treating all exceptions as terminal errors """
+
     def logDetailsString():
         if stdout is None and stderr is None:
             return ""
@@ -232,15 +232,12 @@ def _runCommandAndLog(command, stdout=None, stderr=None, **kwargs):
             stderrStr = f"{stderr.name} for stderr " if stderr is not None else ""
             joinStr = "and " if stdout is not None and stderr is not None else ""
             return "Check " + stdoutStr + joinStr + stderrStr + " for more details"
-    if type(command) is str:
-        if not (('shell' in kwargs) and kwargs['shell']): #if shell=True, do not split
-            command = command.split()
-    elif isinstance(command, collections.Sequence):
-        pass
-    else:
-        logAndExit(f"<aws._runCommandAndLog>: type of command <{command}> is not understood")
+
+    if ((type(command) is str) and (not shell)): #if shell=True, do not split
+        command = command.split()
+    
     try:
-        subprocess.run(command, stdout=stdout, stderr=stderr, **kwargs)
+        subprocess.run(command, stdout=stdout, stderr=stderr, shell=shell, **kwargs)
     except Exception as exc:
             logAndExit (f"<aws._runCommandAndLog>: Failed on <{command}>." + logDetailsString())
 
