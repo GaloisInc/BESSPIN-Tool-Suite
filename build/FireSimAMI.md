@@ -50,44 +50,56 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target a
     password <your password>
    ```
 
-5. Clone the [FETT Target Repository](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target). Initialize and update the submodules, and then run
+   For the permanent AMI, an account was created so the FETT Environment can be modified by the user and still interact with the artifactory resources. The user `besspin_fett` was added and a token key was registered. Also, for good practice,
 
    ```
+   $ chmod 600 /home/centos/.config/nix/netrc
+   ```
+
+5. Clone the [FETT Target Repository](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target). If `nix` has already been installed and you're modifying an existing AMI, it is a good idea to delete packages no longer used by the project, with
+
+   ```
+   $ nix-collect-garbage
+   ```
+
+   Initialize and update the submodules, running
+
+   ```
+   $ cd ~
    $ git clone https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git && cd SSITH-FETT-Target
    $ git submodule init
    $ git submodule update
    $ nix-shell
    $ exit
-   ```
-
-   Nix will now perform the first time builds and installation of the FETT Environment. This will take ~20 minutes. After the first time installation, subsequent re-runs will only take a few seconds.
-
-6. Clone the SSITH fork of FireSim. 
-
-   ```
    $ cd ~
-   $ git clone https://github.com/DARPA-SSITH-Demonstrators/firesim.git 
+   $ rm -rf SSITH-FETT-Target
    ```
 
-   Not much is configured for this project out of the box. It is cloned for convenience when developing FETT Target.
+   Nix will now perform the first time builds and installation of the FETT Environment. This will take ~20 minutes. After the first time installation, subsequent re-runs will only take a few seconds. 
 
-7. Copy over the minimal CloudGFE
-
+6. As was suggested in #323, the permissions can be changed for the amazon FPGA management toosl to not require `sudo`. This can be done with
+   
    ```
-   $ cd ~
-   $ aws s3 cp s3://firesim-845509001885/minimal_cloudgfe.tgz .
-   $ tar xzvf minimal_cloudgfe.tgz
-   $ rm minimal_cloudgfe.tgz
-   $ cd minimal_cloudgfe
-   $ ./setup.sh
+   # sudo chmod u+s /usr/bin/fpga-*
    ```
 
-   Importantly, do not run `setup.sh` in a nix shell. The toolchain that it uses to build inside the `aws-fpga ` task will fail, as it relies on a toolchain shipped with the AMI.
+7. Clear personal items and prepare image for AMI creation. 
 
-8. Clear personal items and prepare image for AMI creation. 
-   * remove git usernames if they are configured
-   * **delete the contents of `/home/centos/.config/nix` as they contain your login credentials**
+   * remove git usernames if they are configured, clearing
+
+     ```
+     /home/centos/.gitconfig
+     ```
+
+   * **IF NOT USING `besspin_fett`, delete the contents of `/home/centos/.config/nix` as they contain your login credentials**
+
    * **delete/deactivate the SSH keys associated with your GitHub/GitLab accounts**
+
    * clear your command history
 
-9. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
+     ```
+     $ rm ~/.bash_history
+     $ history -c
+     ```
+
+8. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
