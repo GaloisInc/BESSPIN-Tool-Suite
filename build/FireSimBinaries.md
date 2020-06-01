@@ -73,8 +73,8 @@ Relative to the root of the firesim repo, the outputs will be located:
 ## Important Environmental Variables ##
 
 Before you can build `FireSim-f1`, you must understand the following
-environmental variables that will change specialize the binary to a specific
-target and platform:
+environmental variables that will specialize the binary to a specific target
+and platform:
 
 * `TARGET_CONFIG`: Specifies a `Config` instance that is consumed by the target
   design's generator.  Example target configurations and details on how to
@@ -150,7 +150,7 @@ this document does the same for completeness.
 ## A Note on Exact Binary Reproducibility ##
 
 This build process may produce binaries that are not identical even when using
-the same compiler and configuration variables.
+the same compiler and configuration environmental variables.
 For example, the build injects the build path into the binary.
 Therefore, building from different locations will produce binaries that are not
 bitwise identical.
