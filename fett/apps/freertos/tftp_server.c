@@ -145,6 +145,13 @@ struct DataPacketHeader
 #include "pack_struct_end.h"
 typedef struct DataPacketHeader TFTPBlockNumberHeader_t;
 
+// A TFTP Write Request has to have a certain minimum lenghh to be valid.
+// This server only support "octet" mode, so the minimum length arises with
+// a one-character filename "f", thus:
+//   "\0 \2 f \0 o c t e t \0"
+// which is TEN bytes.
+static const int32_t TFTP_Write_Request_Min_Length = 10;
+
 /*
  * Manage the reception of a file.  If the file is received correctly then
  * return pdPASS, otherwise return pdFAIL.
@@ -165,10 +172,12 @@ static void prvSendTFTPError(Socket_t xSocket,
  * Check a received write request contains a potentially valid file name string,
  * and is a binary mode transfer.  If so return a pointer to the file name with
  * the write request packet received from the network, otherwise return NULL.
+ * lBytes is the number of bytes on the pucUDPPayloadBuffer received.
  */
 static const char *prvValidateWriteRequest(Socket_t xSocket,
                                            struct freertos_sockaddr *pxClient,
-                                           uint8_t *pucUDPPayloadBuffer);
+                                           uint8_t *pucUDPPayloadBuffer,
+                                           int32_t lBytes);
 
 /*
  * Send an acknowledgement packet to pxClient with block number usBlockNumber.
@@ -251,12 +260,12 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
             if (lBytes == 0)
             {
                 /* Timed out. */
-                fettPrintf("TFTP Error: Timeout.\n");
+                fettPrintf("(Error)~  TFTP Timeout.\n");
                 xRetries++;
 
                 if (xRetries > ipconfigTFTP_MAX_RETRIES)
                 {
-                    fettPrintf("TFTP Error: Retry limit exceeded.\n");
+                    fettPrintf("(Error)~  TFTP Retry limit exceeded.\n");
                     xReturn = pdFAIL;
                 }
             }
@@ -290,7 +299,7 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
 					data. */
                     xBytesOfFileDataReceived =
                         (size_t)lBytes - sizeof(TFTPBlockNumberHeader_t);
-                    fettPrintf("TFTP Received %d bytes of file data.\n",
+                    fettPrintf("(Info)~  TFTP Received %d bytes of file data.\n",
                                (int)xBytesOfFileDataReceived);
 
                     /* Ack the data then write the data to the file. */
@@ -309,7 +318,7 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                     }
                     else
                     {
-                        fettPrintf("TFTP Error: file too large for receiving "
+                        fettPrintf("(Error)~  TFTP file too large for receiving "
                                    "buffer\n");
                         // Report "Disk Full" to TFTP Client, although it's really "Buffer Full"
                         prvSendTFTPError(xTFTPRxSocket, pxClient, eDiskFull);
@@ -338,7 +347,7 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
         } while ((xReturn != pdFAIL) &&
                  (xBytesOfFileDataReceived == tftpMAX_DATA_LENGTH));
 
-        fettPrintf("TFTP Closing connection.\n");
+        fettPrintf("(Info)~  TFTP Closing connection.\n");
         FreeRTOS_closesocket(xTFTPRxSocket);
     }
     else
@@ -346,7 +355,7 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
         /* An error could be returned here, but it is probably cleaner to just
 		time out as the error would have to be sent via the listening socket
 		outside of this function. */
-        fettPrintf("TFTP Could not create socket to receive file.\n");
+        fettPrintf("(Error)~  TFTP Could not create socket to receive file.\n");
     }
 
     *file_size = Total_Bytes_Written;
@@ -371,70 +380,101 @@ interface, just send the buffer directly. */
 
 static const char *prvValidateWriteRequest(Socket_t xSocket,
                                            struct freertos_sockaddr *pxClient,
-                                           uint8_t *pucUDPPayloadBuffer)
+                                           uint8_t *pucUDPPayloadBuffer,
+                                           int32_t lBytes)
 {
     char *pcFileName;
-    BaseType_t x;
-    const char *pcOctetMode = "octet";
+    // Offsets for the parts of the Write Request Header.
+    // Since we know lBytes and the only supported mode is "octet", we can
+    // compute where "octet" is supposed to begin, and therefore the offset
+    // of the \0 character that preceeds it.
 
-    /* pcFileName is set to point to the file name which is inside the write
-	request frame, so its important not to free the frame until the operation is
-	over.  The start of the file name string is after the opcode, so two bytes
-	into the packet. */
-    pcFileName = (char *)&(pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET]);
+    // Request type are at offset 0 and 1, so...
+    const int32_t File_Name_Offset = 2;
 
-    fettPrintf ("(Info)~  validateWriteReqeust pcFileName is %s\n", pcFileName);
+    // The final byte should be the \0 on the end of "octet" so
+    const int32_t Mode_Terminator_Offset = lBytes - 1;
+    const int32_t Mode_Offset = lBytes - 6;
 
-    /* Sanity check the file name. */
-    for (x = 0; x < tftpconfigMAX_FILENAME; x++)
+    // The byte before the "o" of "octet" should be a \0
+    const int32_t File_Name_Terminator_Offset = lBytes - 7;
+
+    bool Terminators_OK;
+
+    // Re-check the pre-condition
+    if (lBytes < TFTP_Write_Request_Min_Length)
     {
-        if (pcFileName[x] == 0x00)
+        fettPrintf("(Error)~  TFTP write request header too short\n");
+        prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
+        return NULL;
+    }
+
+    pcFileName = (char *)&(pucUDPPayloadBuffer[File_Name_Offset]);
+
+    Terminators_OK =
+        (pucUDPPayloadBuffer[File_Name_Terminator_Offset] == 0x00) &&
+        (pucUDPPayloadBuffer[Mode_Terminator_Offset] == 0x00);
+
+    if (Terminators_OK)
+    {
+        bool Mode_OK;
+
+        // RFC 1350 require case-insensitive comparison here
+        Mode_OK = (strcasecmp("octet",
+                              (const char *)&(
+                                  pucUDPPayloadBuffer[Mode_Offset])) == 0);
+        if (Mode_OK)
         {
-            /* The end of the string was located. */
-            break;
-        }
-        else if ((pcFileName[x] < ' ') || (pcFileName[x] > '~'))
-        {
-            /* Not a valid file name character. */
-            fettPrintf(
-                "TFTP Error: invalid character in requested file name\n");
-            pcFileName = NULL;
-            break;
+            bool File_Name_OK = true;
+            char *p = pcFileName;
+            while (*p != 0x00)
+            {
+                File_Name_OK = File_Name_OK && (*p >= ' ') && (*p <= '~');
+                p++;
+            }
+
+            if (File_Name_OK)
+            {
+                size_t fnlen = strlen (pcFileName);
+
+                fettPrintf ("(Info)~  validateWriteRequest pcFileName is %s\n", pcFileName);
+
+                if (fnlen > tftpconfigMAX_FILENAME)
+                {
+                    fettPrintf("(Error)~  TFTP filename too long\n");
+                    prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
+                    pcFileName = NULL;
+                }
+                // else everything is fine, so leave pcFileName
+                // alone and return it below
+            }
+            else
+            {
+                fettPrintf("(Error)~  TFTP illegal character in filename\n");
+                prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
+                pcFileName = NULL;
+            }
         }
         else
         {
-            /* Just a character in the file name. */
-        }
-    }
-
-    if (pcFileName != NULL)
-    {
-        /* Only binary transfers are supported, indicated by an 'octet' mode
-		string following the file name. +1 to move past the null terminator to
-		the start of the next string. */
-        x++;
-
-        fettPrintf ("(Info)~  validateWriteReqeust x is %d\n", (int) x);
-        fettPrintf ("(Info)~  validateWriteReqeust mode string is %s\n",
-                    (const char *)&(pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET + x]));
-
-        if (strcasecmp(pcOctetMode,
-                       (const char *)&(
-                           pucUDPPayloadBuffer[tftpFILE_NAME_OFFSET + x])) != 0)
-        {
-            /* Not the expected mode. */
-            fettPrintf("TFTP Error: requested transfer mode is not octet\n");
+            fettPrintf("(Error)~  TFTP transfer mode is not octet\n");
             prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
             pcFileName = NULL;
         }
     }
     else
     {
-        prvSendTFTPError(xSocket, pxClient, eFileNotFound);
+        fettPrintf("(Error)~  TFTP mal-formed write request header\n");
+        prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
+        pcFileName = NULL;
     }
-
     return pcFileName;
 }
+
+
+
+
+
 /*-----------------------------------------------------------*/
 
 static void prvSendTFTPError(Socket_t xSocket,
@@ -469,7 +509,7 @@ static void prvSendTFTPError(Socket_t xSocket,
 
     if (pucUDPPayloadBuffer != NULL)
     {
-        fettPrintf("TFTP Error: %s\n", pcErrorString);
+        fettPrintf("(Error)~  TFTP %s\n", pcErrorString);
 
         /* Create error packet: Opcode. */
         pucUDPPayloadBuffer[0] = 0;
@@ -541,13 +581,6 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     return TEST_PAYLOAD_SIZE;
 #else
 
-    // A TFTP Write Request has to have a certain minimum lenghh to be valid.
-    // This server only support "octet" mode, so the minimum length arises with
-    // a one-character filename, thus:
-    //   "\0 \2 f \0 o c t e t \0"
-    // which is TEN bytes.
-    const int32_t TFTP_Write_Request_Min_Length = 10;
-
     int32_t lBytes;
     uint8_t *pucUDPPayloadBuffer;
 
@@ -571,12 +604,12 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
 
     if (xTFTPListeningSocket == FREERTOS_INVALID_SOCKET)
     {
-        fettPrintf("TFTP Error: failed to create Listening Socket\n");
+        fettPrintf("(Error)~  TFTP failed to create Listening Socket\n");
         return 0;
     }
     else
     {
-        fettPrintf("TFTP created Listening Socket OK\n");
+        fettPrintf("(Info)~  TFTP created Listening Socket OK\n");
     }
 
     /* Bind to the standard TFTP port. */
@@ -584,7 +617,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     {
         uint8_t IP_Address_String[16]; // "255.255.255.255\0" is 16 chars
         FreeRTOS_inet_ntoa(ulIPAddress, IP_Address_String);
-        fettPrintf("TFTP Target IP address is %s\n", IP_Address_String);
+        fettPrintf("(Info)~  TFTP Target IP address is %s\n", IP_Address_String);
     }
 
     xBindAddress.sin_addr = ulIPAddress;
@@ -593,7 +626,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
                                 sizeof(xBindAddress));
     if (Bind_Result != 0)
     {
-        fettPrintf("TFTP Error: socket bind failed with return code %d\n",
+        fettPrintf("(Error)~  TFTP socket bind failed with return code %d\n",
                    (int)Bind_Result);
         return 0;
     }
@@ -605,7 +638,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
      the IP stack is no longer responsible for releasing the buffer, and the
      task *must* return the buffer to the stack when it is no longer
      needed. */
-    fettPrintf("TFTP waiting for initial Request Message\n");
+    fettPrintf("(Info)~  TFTP waiting for initial Request Message\n");
     lBytes = FreeRTOS_recvfrom(
         xTFTPListeningSocket,
         (void *)&pucUDPPayloadBuffer, // out - pointer to data block
@@ -620,7 +653,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
         {
             /* Could this be a new write request?  The opcode is contained in
                the first two bytes of the received data. */
-            fettPrintf("TFTP received a request. First header bytes are %2x %2x\n",
+            fettPrintf("(Info)~  TFTP received a request. First header bytes are %2x %2x\n",
                        pucUDPPayloadBuffer[0], pucUDPPayloadBuffer[1]);
 
             if ((pucUDPPayloadBuffer[0] == (uint8_t)0) &&
@@ -630,7 +663,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
                    point to the file name within pucWriteRequestBuffer - otherwise
                    an appropriate error will be sent on xTFTPListeningSocket. */
                 pcFileName = prvValidateWriteRequest(xTFTPListeningSocket, &xClient,
-                                                     pucUDPPayloadBuffer);
+                                                     pucUDPPayloadBuffer, lBytes);
 
                 if (pcFileName != NULL)
                 {
@@ -644,7 +677,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
             else
             {
                 /* Not a transfer ID handled by this server. */
-                fettPrintf("TFTP Error: not a Write Request\n");
+                fettPrintf("(Error)~  TFTP not a Write Request\n");
                 prvSendTFTPError(xTFTPListeningSocket, &xClient,
                                  eUnknownTransferID);
             }
@@ -652,7 +685,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
         else
         {
             /* message too short. */
-            fettPrintf("TFTP Error: initial request message too short\n");
+            fettPrintf("(Error)~  TFTP initial request message too short\n");
             prvSendTFTPError(xTFTPListeningSocket, &xClient,
                              eUnknownTransferID);
         }
@@ -662,15 +695,15 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     }
     else
     {
-        fettPrintf("TFTP recvfrom() failed with return code %d\n", (int)lBytes);
+        fettPrintf("(Error)~  TFTP recvfrom() failed with return code %d\n", (int)lBytes);
     }
 
-    fettPrintf("TFTP Closing main listening socket.\n");
+    fettPrintf("(Info)~  TFTP Closing main listening socket.\n");
     FreeRTOS_closesocket(xTFTPListeningSocket);
 
     if (Receive_Result == pdFAIL)
     {
-        fettPrintf("TFTP File Receive failed. Sanitizing buffers\n");
+        fettPrintf("(Error)~  TFTP File Receive failed. Sanitizing buffers\n");
         memset((void *)buffer, 0, (size_t)buffer_len);
         memset((void *)file_name, 0, (size_t)file_name_len);
         file_size = 0;
