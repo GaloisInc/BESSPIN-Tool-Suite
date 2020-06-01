@@ -104,7 +104,7 @@ static void prvFileClose(HTTPClient_t *pxClient)
 {
     if (pxClient->pxFileHandle != NULL)
     {
-        fettPrintf("Closing file: %s\n", pxClient->pcCurrentFilename);
+        fettPrintf("(Info)~  HTTP Closing file: %s\n", pxClient->pcCurrentFilename);
         ff_fclose(pxClient->pxFileHandle);
         pxClient->pxFileHandle = NULL;
     }
@@ -257,11 +257,11 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
 
     // Filesystem Critical Section starts here
     ff_lock();
-    
+
     pxClient->pxFileHandle = ff_fopen(pxClient->pcCurrentFilename, "rb");
 
     fettPrintf(
-        "Open file '%s': %s\n", pxClient->pcCurrentFilename,
+        "(Info)~  HTTP Open file '%s': %s\n", pxClient->pcCurrentFilename,
          pxClient->pxFileHandle != NULL ? "Ok" : "ERROR");
 
     if (pxClient->pxFileHandle == NULL)
@@ -272,13 +272,15 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
     else
     {
         pxClient->uxBytesLeft = (size_t)pxClient->pxFileHandle->ulFileSize;
+        fettPrintf(
+            "(Info)~  HTTP sending %d bytes\n", (int) pxClient->uxBytesLeft,
         xRc = prvSendFile(pxClient);
     }
 
     // Critical section ends here. Note that prvSendFile calls ff_fclose()
     // before it returns.
     ff_release();
-    
+
     return xRc;
 }
 /*-----------------------------------------------------------*/
@@ -304,7 +306,7 @@ static BaseType_t prvProcessCmd(HTTPClient_t *pxClient, BaseType_t xIndex)
     case ECMD_PATCH:
     case ECMD_UNK:
     {
-        fettPrintf("prvProcessCmd: Not implemented: %s\n",
+        fettPrintf("(Info)~ HTTP prvProcessCmd: Not implemented: %s\n",
                          xWebCommands[xIndex].pcCommandName);
     }
     break;
@@ -345,7 +347,7 @@ BaseType_t xHTTPClientWork(TCPClient_t *pxTCPClient)
         pcEndOfCmd = pcBuffer + xRc;
 
         fettPrintf ("(Info)~  HTTP received request: %s\n", pcBuffer);
-        
+
         curCmd = xWebCommands;
 
         /* Pointing to "/index.html HTTP/1.1". */
@@ -400,7 +402,7 @@ BaseType_t xHTTPClientWork(TCPClient_t *pxTCPClient)
     else if (xRc < 0)
     {
         /* The connection will be closed and the client will be deleted. */
-        fettPrintf("xHTTPClientWork: rc = %ld\n", xRc);
+        fettPrintf("(Info)~  xHTTPClientWork: rc = %ld\n", xRc);
     }
     return xRc;
 }
