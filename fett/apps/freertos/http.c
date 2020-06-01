@@ -84,7 +84,6 @@ void Http_Worker (void)
 
     pvERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Create TCP Server.");
 
-    TickType_t xStartTime = xTaskGetTickCount();
     for (;;)
     {
       FreeRTOS_TCPServerWork (pxTCPServer, xInitialBlockTime);
