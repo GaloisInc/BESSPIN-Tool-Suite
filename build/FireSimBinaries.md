@@ -70,6 +70,23 @@ Relative to the root of the firesim repo, the outputs will be located:
 * `target-design/chipyard/riscv-tools-install/lib/libdwarf.so.1.0.0`
 * `target-design/chipyard/riscv-tools-install/lib/libelf-0.175.so`
 
+## Important Environmental Variables ##
+
+Before you can build `FireSim-f1`, you must understand the following
+environmental variables that will change specialize the binary to a specific
+target and platform:
+
+* `TARGET_CONFIG`: Specifies a `Config` instance that is consumed by the target
+  design's generator.  Example target configurations and details on how to
+  create your own target configurations are available in
+  `docs/Advanced-Usage/Generating-Different-Targets.rst`.
+  Additionally, grepping for "extends Config" will help you find more
+  predefined target configurations.
+* `PLATFORM_CONFIG`: Specifies a `Config` instance that is consumed by Golden
+  Gate and specified compiler-level and host-land parameters, such as whether
+  to enable assertion synthesis, or multi-ported RAM optimizations.  You can
+  find common platform configurations in
+  `sim/firesim-lib/src/main/scala/configs/CompilerConfigs.scala`.
 
 ## Building FireSim-f1 ##
 
@@ -87,7 +104,7 @@ Now you can build `FireSim-f1`:
 
 ```bash
 cd sim
-make `pwd`/generated-src/f1/FireSim-FireSimRocketConfig-BaseF1Config/FireSim-f1
+make TARGET_CONFIG=<desired target> PLATFORM_CONFIG=<desired platform> xsim
 ```
 
 Relative to the root of the firesim repo, the output binary will be at
@@ -129,3 +146,16 @@ mv switch switch0
 
 The FireSim build scripts always build `switch` then move it to `switch<N>`, so
 this document does the same for completeness.
+
+## A Note on Exact Binary Reproducibility ##
+
+This build process may produce binaries that are not identical even when using
+the same compiler and configuration variables.
+For example, the build injects the build path into the binary.
+Therefore, building from different locations will produce binaries that are not
+bitwise identical.
+There may be other factors that produce binaries that are not bitwise
+identical.
+However, the binaries produced by controlling for the variables in this
+document should be functionally equivalent.
+
