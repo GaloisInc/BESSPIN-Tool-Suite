@@ -340,7 +340,7 @@ def prepareFiresim():
         return contents[keyName]
 
     # copy over the firesim kernel modules, simulation interfaces
-    firesimPath = os.path.join(getSetting('binaryRepoDir'), "Firesim")
+    firesimPath = os.path.join(getSetting('binaryRepoDir'), os.path.join('GFE', 'bitfiles', 'aws', 'firesim'))
     firesimModPath = os.path.join(firesimPath, 'kmods')
     firesimSimPath = os.path.join(firesimPath, 'sim')
 
