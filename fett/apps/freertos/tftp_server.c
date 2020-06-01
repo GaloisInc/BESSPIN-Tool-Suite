@@ -692,7 +692,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
 
     if (Receive_Result == pdFAIL)
     {
-        fettPrintf("(Error)~  TFTP File Receive failed. Sanitizing buffers\n");
+        fettPrintf("(Info)~  TFTP File Receive failed. Sanitizing buffers\n");
         memset((void *)buffer, 0, (size_t)buffer_len);
         memset((void *)file_name, 0, (size_t)file_name_len);
         file_size = 0;

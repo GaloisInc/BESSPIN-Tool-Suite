@@ -162,7 +162,7 @@ void Ota_Worker (ed25519_key *pk)
       }
     else
       {
-        fettPrintf ("(Error)~  vOta: OTA: received file too small to be signed.\n");
+        fettPrintf ("(Info)~  vOta: OTA: received file too small to be signed.\n");
       }
 
   } while (!StopRequested());
