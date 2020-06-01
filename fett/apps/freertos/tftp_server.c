@@ -433,6 +433,7 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
                 size_t fnlen = strlen (pcFileName);
 
                 fettPrintf ("(Info)~  validateWriteRequest pcFileName is %s\n", pcFileName);
+                fettPrintf ("(Info)~  validateWriteRequest fnlen is %d\n", (int) fnlen);
 
                 if (fnlen > tftpconfigMAX_FILENAME)
                 {
