@@ -186,18 +186,24 @@ def deploymentTest(target):
     # on the HTTP server. We should get back 448 bytes (512 minus the 64 byte signature)
     HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK, 5)
 
-    # uploading ota65535.htm.sig - the upper limit for our server.
+    # uploading ota65535.htm.sig - just under the upper limit for our server.
     OTATest(clientTftp, "ota65535.htm.sig", 5)
     HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK, 6)
 
-    # Restore the original ota.htm file
-    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 6)
-
-    # uploading ota65536.htm.sig - just over the upper limit for our server.
+    # uploading ota65536.htm.sig - the upper limit for our server.
     # Should be rejected
     OTATest(clientTftp, "ota65536.htm.sig", 6)
     # OtaFile should NOT have been changed, so check it's still as was
-    HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 7)
+    HTTPSmokeTest(target, OtaFile, "ota65536.htm", WEB_REPLY_OK, 7)
+
+    # Restore the original ota.htm file
+    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 7)
+
+    # uploading ota65537.htm.sig - the upper limit for our server.
+    # Should be rejected
+    OTATest(clientTftp, "ota65537.htm.sig", 8)
+    # OtaFile should NOT have been changed, so check it's still as was
+    HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 8)
 
 
     ###################################
