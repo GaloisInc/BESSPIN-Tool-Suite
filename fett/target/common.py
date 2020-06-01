@@ -222,6 +222,12 @@ class commonTarget():
             self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
             self.runCommand("chmod +x addEntropyDebian.riscv")
             self.ensureCrngIsUp () #check we have enough entropy for ssh
+
+            if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
+                # start the ssh service
+                self.runCommand("systemctl unmask ssh.service")
+                self.runCommand("systemctl start ssh.service",erroneousContents=["Failed", "not found"])
+                
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
                                 
