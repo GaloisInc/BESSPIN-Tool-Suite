@@ -435,7 +435,8 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
                 fettPrintf ("(Info)~  validateWriteRequest pcFileName is %s\n", pcFileName);
                 fettPrintf ("(Info)~  validateWriteRequest fnlen is %d\n", (int) fnlen);
 
-                if (fnlen > tftpconfigMAX_FILENAME)
+                // fnlen needs to be less than MAX to allow for a final \0
+                if (fnlen >= tftpconfigMAX_FILENAME)
                 {
                     fettPrintf("(Error)~  TFTP filename too long\n");
                     prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
