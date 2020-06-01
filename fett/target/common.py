@@ -404,7 +404,7 @@ class commonTarget():
             return returnFalse (f"Failed to obtain the checksum of <{pathToFile}/{xFile}>.",noRetries=True,exc=exc)
 
         if (getSetting('osImage') in ['debian', 'FreeBSD'] and (self.isSshConn)): #send through SSH
-            currentUser = 'root' if self.isCurrentUserIsRoot else self.userName
+            currentUser = 'root' if self.isCurrentUserRoot else self.userName
             scpCommand = f"scp {pathToFile}/{xFile} {currentUser}@{self.ipTarget}:/root/"
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
