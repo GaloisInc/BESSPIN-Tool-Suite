@@ -4,7 +4,7 @@ Misc required functions for fett.py
 """
 
 import logging, enum, traceback, atexit
-import os, shutil, glob, subprocess
+import os, shutil, glob, subprocess, pathlib
 import tarfile, sys, json, re, getpass
 
 from fett.base.utils import decorate
@@ -228,6 +228,12 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
             shutil.copytree(src, os.path.join(dest,os.path.basename(os.path.normpath(src))))
         except Exception as exc:
             logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+
+def touch(filepath, mode=0o666, permissive=True):
+    try:
+        pathlib.Path(filepath).touch(mode=mode, exist_ok=permissive)
+    except FileExistsError as exc:
+        logAndExit(f"Failed touching file {filepath}! File already exists", exc=exc, exitCode=EXIT.Files_and_paths)
 
 def safeLoadJsonFile (jsonFile):
     try:
