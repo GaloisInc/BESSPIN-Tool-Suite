@@ -167,8 +167,11 @@ def deploymentTest(target):
     # uploading the signed badsig.htm file - Signature is corrupt
     OTATest(clientTftp, "badsig.htm.sig", 3)
 
+    # uploading ota512.htm.sig - exactly 1 TFTP block
+    OTATest(clientTftp, "ota512.htm.sig", 4)
+
     # upload file with 129 character file name
-    OTATest(clientTftp, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab.htm.sig", 4)
+    OTATest(clientTftp, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab.htm.sig", 5)
 
     ###################################
     # STOP the FreeRTOS application
