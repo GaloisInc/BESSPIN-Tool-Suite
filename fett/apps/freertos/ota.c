@@ -76,15 +76,24 @@ void Write_Payload_To_FS (size_t fsize)
 
 void Write_Payload_To_Log (size_t fsize)
 {
-  for (size_t i = 0; i < fsize; i++)
+    size_t n = fsize;
+    fettPrintf ("(Info)~  vOta: Received payload (up to first 256 bytes) is\n");
+
+    // Clip output at 256 bytes to avoid timeout
+    if (fsize > 256)
     {
-      fettPrintf ("%02x ", file_buffer[ED25519_SIG_SIZE + i]);
-      if ((i % 16) == 15)
+        n = 256;
+    }
+
+    for (size_t i = 0; i < n; i++)
+    {
+        fettPrintf ("%02x ", file_buffer[ED25519_SIG_SIZE + i]);
+        if ((i % 16) == 15)
         {
-          fettPrintf ("\n");
+            fettPrintf ("\n");
         }
     }
-  fettPrintf ("\n");
+    fettPrintf ("\n");
 }
 
 void Ota_Worker (ed25519_key *pk)
@@ -142,7 +151,6 @@ void Ota_Worker (ed25519_key *pk)
                 // now write the payload (not including the signature) to disk.
                 Write_Payload_To_FS ((size_t) received_file_size - ED25519_SIG_SIZE);
                 // and to the log
-                fettPrintf ("(Info)~  vOta: Received payload is\n");
                 Write_Payload_To_Log ((size_t) received_file_size - ED25519_SIG_SIZE);
               }
           }
