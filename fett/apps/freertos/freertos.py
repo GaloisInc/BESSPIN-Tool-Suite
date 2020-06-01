@@ -195,9 +195,9 @@ def deploymentTest(target):
 
     # uploading ota65536.htm.sig - just over the upper limit for our server.
     # Should be rejected
-    # OTATest(clientTftp, "ota65536.htm.sig", 7)
+    OTATest(clientTftp, "ota65536.htm.sig", 6)
     # OtaFile should NOT have been changed, so check it's still as was
-    # HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 7)
+    HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 7)
 
 
     ###################################
