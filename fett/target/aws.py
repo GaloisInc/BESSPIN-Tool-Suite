@@ -328,11 +328,10 @@ def prepareFiresim():
     """prepare the firesim binaries for the FETT work directory"""
     def getAgfiJson(jsonFile):
         keyName = 'agfi-id'
-        with open(jsonFile) as jfp:
-            contents = json.load(jfp)
-            if keyName not in contents:
-                logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi-id> in {jsonFile}")
-            return contents[keyName]
+        contents = safeLoadJsonFile(jsonFile)
+        if keyName not in contents:
+            logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi-id> in {jsonFile}")
+        return contents[keyName]
 
     # copy over the firesim kernel modules, simulation interfaces
     firesimPath = os.path.join(getSetting('binaryRepoDir'), "Firesim")
