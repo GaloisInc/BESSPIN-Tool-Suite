@@ -179,8 +179,10 @@ def deploymentTest(target):
     # on the HTTP server. We should get back 448 bytes (512 minus the 64 byte signature)
     HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK)
 
-    # upload file with 129 character file name
-    OTATest(clientTftp, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab.htm.sig", 5)
+    # uploading ota65535.htm.sig - just under the upper limit for our server.
+    OTATest(clientTftp, "ota65535.htm.sig", 5)
+    HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK)
+
 
     ###################################
     # STOP the FreeRTOS application
