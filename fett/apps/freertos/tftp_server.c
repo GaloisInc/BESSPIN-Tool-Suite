@@ -305,7 +305,7 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                     }
                     else
                     {
-                        fettPrintf("(Error)~  TFTP file too large for receiving "
+                        fettPrintf("(Info)~  TFTP file too large for receiving "
                                    "buffer\n");
                         // Report "Disk Full" to TFTP Client, although it's really "Buffer Full"
                         prvSendTFTPError(xTFTPRxSocket, pxClient, eDiskFull);
@@ -498,7 +498,7 @@ static void prvSendTFTPError(Socket_t xSocket,
 
     if (pucUDPPayloadBuffer != NULL)
     {
-        fettPrintf("(Error)~  TFTP %s\n", pcErrorString);
+        fettPrintf("(Info)~  TFTP %s\n", pcErrorString);
 
         /* Create error packet: Opcode. */
         pucUDPPayloadBuffer[0] = 0;
