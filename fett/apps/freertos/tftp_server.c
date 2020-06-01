@@ -240,7 +240,6 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
         /* Acknowledge the write request so the client starts to send the file.
 		The first acknowledgment does not have a corresponding block number so
 		the special case block number 0 is used. */
-        fettPrintf ("(Info)~  TFTP usExpectedBlockNumber set to 0\n");
         usExpectedBlockNumber = 0;
 
         do
@@ -280,11 +279,6 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                     FreeRTOS_ntohs(pxHeader->usBlockNumber);
 
                 /* Is the data as expected and from the expected IP address and port? */
-                fettPrintf ("(Info)~  TFTP got a packet\n");
-                fettPrintf ("(Info)~    lBytes = %d\n", (int) lBytes);
-                fettPrintf ("(Info)~    Opcode = %d\n", (int) pxHeader->usOpcode);
-                fettPrintf ("(Info)~    expected block number = %d\n", (int) usExpectedBlockNumber);
-                fettPrintf ("(Info)~    actual   block number = %d\n", (int) pxHeader->usBlockNumber);
                 if ((pxHeader->usOpcode == (uint16_t)eData) &&
                     (pxHeader->usBlockNumber == usExpectedBlockNumber) &&
                     (pxClient->sin_addr == xClient.sin_addr) &&
@@ -294,8 +288,6 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
 					data. */
                     xBytesOfFileDataReceived =
                         (size_t)lBytes - sizeof(TFTPBlockNumberHeader_t);
-                    fettPrintf("(Info)~  TFTP Received %d bytes of file data.\n",
-                               (int)xBytesOfFileDataReceived);
 
                     /* Ack the data then write the data to the file. */
                     prvSendAcknowledgement(xTFTPRxSocket, pxClient,
