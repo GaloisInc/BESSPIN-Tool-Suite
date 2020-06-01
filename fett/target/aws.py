@@ -20,20 +20,21 @@ class firesimTarget(commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
+        awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
 
         # 1. Switch0
         self.fswitchOut = ftOpenFile(os.path.join(getSetting('workDir'),'switch0.out'),'a')
         self.switch0Proc = subprocess.Popen(['sudo', './switch0']+self.switch0timing,
                                             stdout=self.fswitchOut, stderr=self.fswitchOut,
-                                            cwd=getSetting("awsFiresimSimPath"), preexec_fn=os.setpgrp)
+                                            cwd=awsFiresimSimPath, preexec_fn=os.setpgrp)
 
         # 2. fsim
-        imageFile = os.path.join(getSetting("osImagesDir"), "debian.img")
-        dwarfFile = os.path.join(getSetting("osImagesDir"), "debian.dwarf")
+        imageFile = os.path.join(awsFiresimSimPath, "linux-uniform0-br-base.img")
+        dwarfFile = os.path.join(awsFiresimSimPath, "linux-uniform0-br-base-bin-dwarf")
         firesimCommand = ' '.join([
             "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target 
             'sudo',
-            "LD_LIBRARY_PATH={}:$LD_LIBRARY_PATH".format(getSetting("awsFiresimSimPath")),
+            "LD_LIBRARY_PATH={}:$LD_LIBRARY_PATH".format(awsFiresimSimPath),
             './FireSim-f1',
             '+permissive',
             '+mm_relaxFunctionalModel=0',
@@ -93,7 +94,7 @@ class firesimTarget(commonTarget):
 
         try:
             self.ttyProcess = pexpect.spawn(firesimCommand,logfile=self.fTtyOut,timeout=30,
-                                        cwd=getSetting("awsFiresimSimPath"))
+                                        cwd=awsFiresimSimPath)
             self.process = self.ttyProcess
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
@@ -213,10 +214,12 @@ def setupKernelModules():
             sudoShellCommand(['rmmod', kmod],checkCall=False)
             _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
 
+        awsFiresimModPath = os.path.join(getSetting('firesimPath'), 'kmods')
+
         #load our modules
-        sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/nbd.ko", 'nbds_max=128'])
+        sudoShellCommand(['insmod', f"{awsFiresimModPath}/nbd.ko", 'nbds_max=128'])
         _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
-        sudoShellCommand(['insmod', f"{getSetting('awsFiresimModPath')}/xdma.ko", 'poll_mode=1'])
+        sudoShellCommand(['insmod', f"{awsFiresimModPath}/xdma.ko", 'poll_mode=1'])
         _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
     else:
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
@@ -335,8 +338,13 @@ def prepareFiresim():
     firesimPath = os.path.join(getSetting('binaryRepoDir'), "Firesim")
     firesimModPath = os.path.join(firesimPath, 'kmods')
     firesimSimPath = os.path.join(firesimPath, 'sim')
-    cp(firesimSimPath, getSetting('buildDir'))
-    cp(firesimModPath, getSetting('buildDir'))
+
+    firesimWorkPath = os.path.join(getSetting("workDir"), "firesim")
+    mkdir(firesimWorkPath)
+    setSetting("firesimPath", firesimWorkPath)
+
+    copyDir(firesimSimPath, firesimWorkPath)
+    copyDir(firesimModPath, firesimWorkPath)
 
     # extract the agfi and put it in setting
     processorName = getSetting('processor')
