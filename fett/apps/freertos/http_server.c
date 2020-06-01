@@ -272,8 +272,7 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
     else
     {
         pxClient->uxBytesLeft = (size_t)pxClient->pxFileHandle->ulFileSize;
-        fettPrintf(
-            "(Info)~  HTTP sending %d bytes\n", (int) pxClient->uxBytesLeft,
+        fettPrintf("(Info)~  HTTP sending %d bytes\n", (int) pxClient->uxBytesLeft);
         xRc = prvSendFile(pxClient);
     }
 
