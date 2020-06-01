@@ -1,7 +1,6 @@
-import pexpect, psutil, getpass
+import psutil
 from fett.target.common import *
 from fett.target import fpga
-import json
 
 class firesimTarget(commonTarget):
     def __init__(self):
@@ -36,6 +35,7 @@ class firesimTarget(commonTarget):
 
         # 2. fsim
         imageFile = os.path.join(awsFiresimSimPath, "linux-uniform0-br-base.img")
+
         dwarfFile = os.path.join(awsFiresimSimPath, "linux-uniform0-br-base-bin-dwarf")
         firesimCommand = ' '.join([
             "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target 
@@ -348,8 +348,13 @@ def prepareFiresim():
     mkdir(firesimWorkPath)
     setSetting("firesimPath", firesimWorkPath)
 
+    # copy over sim and kmods
     copyDir(firesimSimPath, firesimWorkPath)
     copyDir(firesimModPath, firesimWorkPath)
+
+    # touch an empty image
+    imageFile = os.path.join(firesimWorkPath, 'sim', 'linux-uniform0-br-base.img')
+    touch(imageFile)
 
     # extract the agfi and put it in setting
     processorName = getSetting('processor')
