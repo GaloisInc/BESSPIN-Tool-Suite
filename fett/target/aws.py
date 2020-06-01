@@ -1,6 +1,7 @@
 import pexpect, psutil, getpass
 from fett.target.common import *
 from fett.target import fpga
+import json
 
 class firesimTarget(commonTarget):
     def __init__(self):
@@ -195,7 +196,7 @@ def configTapAdaptor():
 @decorate.debugWrap
 def programAFI():
     """ perform AFI Management Commands for f1.2xlarge """
-    agfiId = 'agfi-0640a58e5553a75bd'
+    agfiId = getSetting("agfiId")
     clearFpgas()
     flashFpgas(agfiId)
 
@@ -319,3 +320,28 @@ def flashFpgas(agfi):
     printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGA(s) to flash")
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
+
+def prepareFiresim():
+    """prepare the firesim binaries for the FETT work directory"""
+    def getAgfiJson(jsonFile):
+        keyName = 'agfi-id'
+        with open(jsonFile) as jfp:
+            contents = json.load(jfp)
+            if keyName not in contents:
+                logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi-id> in {jsonFile}")
+            return contents[keyName]
+
+    # copy over the firesim kernel modules, simulation interfaces
+    firesimPath = os.path.join(getSetting('binaryRepoDir'), "Firesim")
+    firesimModPath = os.path.join(firesimPath, 'kmods')
+    firesimSimPath = os.path.join(firesimPath, 'sim')
+    cp(firesimSimPath, getSetting('buildDir'))
+    cp(firesimModPath, getSetting('buildDir'))
+
+    # extract the agfi and put it in setting
+    processorName = getSetting('processor')
+    agfiJsonPath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'aws', 'firesim',
+                                processorName, 'agfi_id.json')
+    agfiId = getAgfiJson(agfiJsonPath)
+    setSetting("agfiId", agfiId)
+
