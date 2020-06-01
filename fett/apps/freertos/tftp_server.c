@@ -285,11 +285,6 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                 fettPrintf ("(Info)~    Opcode = %d\n", (int) pxHeader->usOpcode);
                 fettPrintf ("(Info)~    expected block number = %d\n", (int) usExpectedBlockNumber);
                 fettPrintf ("(Info)~    actual   block number = %d\n", (int) pxHeader->usBlockNumber);
-                fettPrintf ("(Info)~    expected IP = %d\n", (int) xClient.sin_addr);
-                fettPrintf ("(Info)~    actual   IP = %d\n", (int) pxClient->sin_addr);
-                fettPrintf ("(Info)~    expected port = %d\n", (int) xClient.sin_port);
-                fettPrintf ("(Info)~    actual   port = %d\n", (int) pxClient->sin_port);
-
                 if ((pxHeader->usOpcode == (uint16_t)eData) &&
                     (pxHeader->usBlockNumber == usExpectedBlockNumber) &&
                     (pxClient->sin_addr == xClient.sin_addr) &&
