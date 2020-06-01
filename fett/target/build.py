@@ -15,12 +15,6 @@ def prepareOsImage ():
     osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
     setSetting('osImageElf',osImageElf)
 
-    if(isEqSetting('target','aws')):
-        #logAndExit (f"<target.build.prepareOsImage> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
-        warnAndLog(f"AWS is not featured! Running the temporary preparations to test the target!")
-        prepareAWSTemporary()
-        return
-
     if(isEqSetting('osImage','FreeRTOS')):
         prepareFreeRTOS ()
     elif(isEqSetting('osImage','debian')):
@@ -31,28 +25,6 @@ def prepareOsImage ():
         prepareBusybox ()
     else:
         logAndExit (f"<target.prepareOsImage> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
-
-def prepareAWSTemporary():
-    # setup firesim specific settings -- screen interfaces and kernel modules
-    # TODO: ELEW hard coded - ew
-    minimalGfePath = '/home/centos/sw'
-    setSetting('awsFiresimPath', os.path.realpath(minimalGfePath))
-    setSetting('awsFiresimSimPath', os.path.join(minimalGfePath, 'sim'))
-    setSetting('awsFiresimModPath', os.path.join(minimalGfePath, 'kmods'))
-
-    # copy over the elf file like other FETT Target setups
-    cloudgfeBinPath = '/home/centos/cloudgfe_binaries/debianlinux_64bit'
-    setSetting('cloudgfeBinPath',cloudgfeBinPath)
-    imagePath = os.path.join(cloudgfeBinPath, 'debian.elf')
-    cp (imagePath, getSetting('osImageElf'))
-    imageFile = os.path.join(cloudgfeBinPath, "debian.img")
-    cp (imageFile, getSetting('osImagesDir'))
-    dwarfFile = os.path.join(cloudgfeBinPath, "debian.dwarf")
-    cp (dwarfFile, getSetting('osImagesDir'))
-    cp (getSetting('addEntropyDebianPath'),getSetting('buildDir'))
-    if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
-        warnAndLog(f"<build.prepareAWSTemporary>: netboot option is being ignored")
-    logging.info(f"{getSetting('osImage')} image imported successfully.")
 
 @decorate.debugWrap
 @decorate.timeWrap
