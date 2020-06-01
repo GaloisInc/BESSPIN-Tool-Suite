@@ -39,31 +39,27 @@ def curlTest(target, url, extra=[], http2=False):
     out = curlRequest(url, http2=http2, extra=extra, rawOutput=False)
     if (not out):
         return (0,0)
+    # Line 0 of "out" should be something like "HTTP/1.1 200 OK".
+    # We're mainly interested in the middle one - the return status code
     try:
-        # Line 0 of "out" should be something like "HTTP/1.1 200 OK".
-        # We're mainly interested in the middle one - the return status code
-        try:
-            version,code,*rest = out.splitlines()[0].split(' ')
-            codeval = int(code)
-        except Exception as exc:
-            errorAndLog (f"Failed to find status code field in: <{out}>", exc=exc, doPrint=False)
-            codeval = 0
-
-        # A successful request should also have a Content-Length field
-        if (codeval == WEB_REPLY_OK):
-            # Line 3 of "out" should be of the form "Content-Length: XXX"
-            # where XXX is a positive integer.  We want to grab that and report it back to the caller
-            try:
-                clheader,contentLength = out.splitlines()[3].split(' ')
-                clval = int(contentLength)
-            except Exception as exc:
-                errorAndLog (f"Failed to find Content-Length field in: <{out}>", exc=exc, doPrint=False)
-                clval = 0
-        else:
-            clval = 0
+        version,code,*rest = out.splitlines()[0].split(' ')
+        codeval = int(code)
     except Exception as exc:
-        errorAndLog (f"Failed to parse curl output: <{out}>", exc=exc, doPrint=False)
-        return (0,0)
+        errorAndLog (f"Failed to find status code field in: <{out}>", exc=exc, doPrint=False)
+        codeval = 0
+
+    # A successful request should also have a Content-Length field
+    if (codeval == WEB_REPLY_OK):
+        # Line 3 of "out" should be of the form "Content-Length: XXX"
+        # where XXX is a positive integer.  We want to grab that and report it back to the caller
+        try:
+            clheader,contentLength = out.splitlines()[3].split(' ')
+            clval = int(contentLength)
+        except Exception as exc:
+            errorAndLog (f"Failed to find Content-Length field in: <{out}>", exc=exc, doPrint=False)
+            clval = 0
+    else:
+        clval = 0
     return (clval, codeval)
 
 @decorate.debugWrap
@@ -103,7 +99,7 @@ def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode, testCase):
             if (contentLength == expectedFileLength):
                 printAndLog(f"HTTP SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
             else:
-                logAndExit(f"(Host)~  HTTP GET for {GETFileName} FAILED - Wrong length\n")
+                target.shutdownAndExit(f"(Host)~  HTTP GET for {GETFileName} FAILED - Wrong length\n",exitCode=EXIT.Run)
 
         elif (expectedCode == WEB_NOT_FOUND):
             printAndLog(f"HTTP SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
@@ -121,12 +117,12 @@ def OTATest(clientTftp, fileName, testCase):
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
         # No exception? Then...
+        getSetting('appLog').write(f"(Host)~  {filePath} uploaded to the TFTP server.\n")
         printAndLog(f"OTA SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
     except Exception as exc:
         # some test cases as supposed to fail and reach here, so we do not mark this as
         # an error
         printAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=False,tee=getSetting('appLog'))
-    getSetting('appLog').write(f"(Host)~  {filePath} uploaded to the TFTP server.\n")
 
 
 @decorate.debugWrap
