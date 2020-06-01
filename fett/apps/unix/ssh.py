@@ -4,12 +4,6 @@ This is executed after loading the app on the target to execute this app
 """
 
 from fett.base.utils.misc import *
-import os, sys, glob
-import pexpect, subprocess, threading
-import time, random, secrets
-import string, re
-import socket, errno, pty, termios
-from collections import Iterable
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -40,7 +34,7 @@ def extensiveTest (target):
     sshSuccess = target.openSshConn(userName=target.userName, timeout=120)
     if (not sshSuccess):
         target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.")
-    scpSuccess = target.sendFile(getSetting('buildDir'), 'nginx.service', timeout=360)
+    scpSuccess = target.sendFile(getSetting('buildDir'), 'nginx.service', timeout=120)
     if (not scpSuccess):
         target.shutdownAndExit(f"Test[user test scp]:Failed to open ssh conn.")
     return
