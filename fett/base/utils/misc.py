@@ -5,7 +5,7 @@ Misc required functions for fett.py
 
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess
-import tarfile, sys, re, getpass
+import tarfile, sys, json, re, getpass
 
 from fett.base.utils import decorate
 
@@ -228,6 +228,15 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
             shutil.copytree(src, os.path.join(dest,os.path.basename(os.path.normpath(src))))
         except Exception as exc:
             logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+
+def safeLoadJsonFile (jsonFile):
+    try:
+        fJson = ftOpenFile(jsonFile, 'r')
+        jsonData = json.load(fJson)
+        fJson.close()
+    except Exception as exc:
+        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    return jsonData
 
 @decorate.debugWrap
 def make (argsList,dirPath):

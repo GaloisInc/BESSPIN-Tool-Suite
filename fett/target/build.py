@@ -180,7 +180,7 @@ def importImage():
             else:
                 logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
     else:
-        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is aws")
+        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is aws", doPrint=False)
     logging.info(f"{getSetting('osImage')} image imported successfully.")
 
 @decorate.debugWrap
