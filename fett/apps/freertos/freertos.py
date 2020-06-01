@@ -123,7 +123,7 @@ def OTATest(clientTftp, fileName, testCase):
     except Exception as exc:
         # some test cases as supposed to fail and reach here, so we do not mark this as
         # an error
-        printAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=True,exc=exc)
+        printAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=True,tee=getSetting('appLog'))
     getSetting('appLog').write(f"(Host)~  {filePath} uploaded to the TFTP server.\n")
 
 
