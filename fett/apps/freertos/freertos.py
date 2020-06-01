@@ -111,7 +111,7 @@ def HTTPSmokeTest(target, assetFileName, expectedCode):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def OTATest(fileName, testCase):
+def OTATest(clientTftp, fileName, testCase):
     filePath = os.path.join(getSetting('assetsDir'),fileName)
     getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case {testCase} - SEND {fileName}\n")
     try:
@@ -159,13 +159,13 @@ def deploymentTest(target):
     logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.out'),'w'))
 
     # uploading the signed ota.htm file
-    OTATest("ota.htm.sig", 1)
+    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 1)
 
     # uploading the signed ota.htm file AGAIN
-    OTATest("ota.htm.sig", 2)
+    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 2)
 
     # uploading the signed badsig.htm file - Signature is corrupt
-    OTATest("badsig.htm.sig", 3)
+    OTATest(clientTftp, "badsig.htm.sig", 3)
 
     ###################################
     # STOP the FreeRTOS application
