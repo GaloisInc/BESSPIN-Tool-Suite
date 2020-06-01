@@ -39,5 +39,8 @@ def extensiveTest (target):
     printAndLog("Testing ssh ", tee=getSetting('appLog'))
     sshSuccess = target.openSshConn(userName=target.userName, timeout=120)
     if (not sshSuccess):
-        target.shutdownAndExit(f"Test[user test scp]:: Failed to open ssh conn.")
+        target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.")
+    scpSuccess = target.sendFile(getSetting('buildDir'), 'nginx.service', timeout=360)
+    if (not scpSuccess):
+        target.shutdownAndExit(f"Test[user test scp]:Failed to open ssh conn.")
     return
