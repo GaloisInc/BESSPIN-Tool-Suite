@@ -195,7 +195,7 @@
                 "debian" : {
                     "fpga" : "FETT_GFE_DEBIAN_FPGA",
                     "qemu" : "FETT_GFE_DEBIAN_QEMU",
-                    "aws" :  "FETT_GFE_DEBIAN_AWS"
+                    "firesim" :  "FETT_GFE_DEBIAN_FIRESIM"
                 },
                 "FreeBSD" : {
                     "fpga" : "FETT_GFE_FREEBSD_FPGA",

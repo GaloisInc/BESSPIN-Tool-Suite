@@ -157,13 +157,14 @@ def selectImagePath():
     if isEnabled('useCustomOsImage'):
         return getSetting('pathToCustomOsImage')
     else:
+        imageType = getSetting('target') if getSetting('target') != 'aws' else getSetting('pvAWS')
         if getSetting('binarySource') == 'GFE':
-            nixImage = getSettingDict('nixEnv',[getSetting('osImage'),getSetting('target')])
+            nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
             if (nixImage in os.environ):
                 return os.environ[nixImage]
             else:
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
-        imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', getSetting('target'), f"{getSetting('osImage')}.elf")
+        imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType, f"{getSetting('osImage')}.elf")
         return imagePath
 
 @decorate.debugWrap
