@@ -541,6 +541,13 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     return TEST_PAYLOAD_SIZE;
 #else
 
+    // A TFTP Write Request has to have a certain minimum lenghh to be valid.
+    // This server only support "octet" mode, so the minimum length arises with
+    // a one-character filename, thus:
+    //   "\0 \2 f \0 o c t e t \0"
+    // which is TEN bytes.
+    const int32_t TFTP_Write_Request_Min_Length = 10;
+
     int32_t lBytes;
     uint8_t *pucUDPPayloadBuffer;
 
@@ -609,33 +616,43 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
 
     if (lBytes >= 0)
     {
-        /* Could this be a new write request?  The opcode is contained in
-         the first two bytes of the received data. */
-        fettPrintf("TFTP received a request. First header bytes are %2x %2x\n",
-                   pucUDPPayloadBuffer[0], pucUDPPayloadBuffer[1]);
-
-        if ((pucUDPPayloadBuffer[0] == (uint8_t)0) &&
-            (pucUDPPayloadBuffer[1] == (uint8_t)eWriteRequest))
+        if (lBytes >= TFTP_Write_Request_Min_Length)
         {
-            /* If the write request is valid pcFileName will get set to
-             point to the file name within pucWriteRequestBuffer - otherwise
-             an appropriate error will be sent on xTFTPListeningSocket. */
-            pcFileName = prvValidateWriteRequest(xTFTPListeningSocket, &xClient,
-                                                 pucUDPPayloadBuffer);
+            /* Could this be a new write request?  The opcode is contained in
+               the first two bytes of the received data. */
+            fettPrintf("TFTP received a request. First header bytes are %2x %2x\n",
+                       pucUDPPayloadBuffer[0], pucUDPPayloadBuffer[1]);
 
-            if (pcFileName != NULL)
+            if ((pucUDPPayloadBuffer[0] == (uint8_t)0) &&
+                (pucUDPPayloadBuffer[1] == (uint8_t)eWriteRequest))
             {
-                // Copy the filename from the received request header
-                // to our persistent filename_buffer
-                strncpy(file_name, pcFileName, file_name_len);
-                Receive_Result =
-                    prvReceiveFile(buffer, buffer_len, &file_size, &xClient);
+                /* If the write request is valid pcFileName will get set to
+                   point to the file name within pucWriteRequestBuffer - otherwise
+                   an appropriate error will be sent on xTFTPListeningSocket. */
+                pcFileName = prvValidateWriteRequest(xTFTPListeningSocket, &xClient,
+                                                     pucUDPPayloadBuffer);
+
+                if (pcFileName != NULL)
+                {
+                    // Copy the filename from the received request header
+                    // to our persistent filename_buffer
+                    strncpy(file_name, pcFileName, file_name_len);
+                    Receive_Result =
+                        prvReceiveFile(buffer, buffer_len, &file_size, &xClient);
+                }
+            }
+            else
+            {
+                /* Not a transfer ID handled by this server. */
+                fettPrintf("TFTP Error: not a Write Request\n");
+                prvSendTFTPError(xTFTPListeningSocket, &xClient,
+                                 eUnknownTransferID);
             }
         }
         else
         {
-            /* Not a transfer ID handled by this server. */
-            fettPrintf("TFTP Error: not a Write Request\n");
+            /* message too short. */
+            fettPrintf("TFTP Error: initial request message too short\n");
             prvSendTFTPError(xTFTPListeningSocket, &xClient,
                              eUnknownTransferID);
         }
