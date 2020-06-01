@@ -123,7 +123,7 @@ def OTATest(clientTftp, fileName, testCase):
     except Exception as exc:
         # some test cases as supposed to fail and reach here, so we do not mark this as
         # an error
-        printAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=True,tee=getSetting('appLog'))
+        printAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=False,tee=getSetting('appLog'))
     getSetting('appLog').write(f"(Host)~  {filePath} uploaded to the TFTP server.\n")
 
 
@@ -137,6 +137,9 @@ def deploymentTest(target):
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget'))
+
+
+    printAndLog ("Starting HTTP Smoketests.",doPrint=True,tee=getSetting('appLog'))
 
     ###################################
     # SmokeTests for the HTTP Server
@@ -164,6 +167,8 @@ def deploymentTest(target):
     logging.getLogger('tftpy').propagate = False
     logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.out'),'w'))
 
+    printAndLog ("Starting OTA Smoketests.",doPrint=True,tee=getSetting('appLog'))
+
     # uploading the signed ota.htm file
     OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 1)
 
@@ -179,9 +184,18 @@ def deploymentTest(target):
     # on the HTTP server. We should get back 448 bytes (512 minus the 64 byte signature)
     HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK)
 
-    # uploading ota65535.htm.sig - just under the upper limit for our server.
+    # uploading ota65535.htm.sig - the upper limit for our server.
     OTATest(clientTftp, "ota65535.htm.sig", 5)
     HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK)
+
+    # Restore the original ota.htm file
+    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 6)
+
+    # uploading ota65536.htm.sig - just over the upper limit for our server.
+    # Should be rejected
+    # OTATest(clientTftp, "ota65536.htm.sig", 7)
+    # OtaFile should NOT have been changed, so check it's still as was
+    # HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK)
 
 
     ###################################
@@ -190,6 +204,7 @@ def deploymentTest(target):
     ###################################
     fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
+    printAndLog ("Sending STOP message via OTA.",doPrint=True,tee=getSetting('appLog'))
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
