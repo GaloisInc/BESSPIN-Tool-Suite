@@ -73,11 +73,14 @@ def extensiveTest(target):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def HTTPSmokeTest(target, assetFileName, expectedCode):
-    # Issue an HTTP GET Request for assetFilename
+def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode):
+    # GETFileName is the name to request from the HTTP Server
+    # assetFileName is the name of file against which the returned data is compared.
+
     targetIP = target.ipTarget
     httpPort = target.httpPortTarget
 
+    # Find the length of the refererence asset file
     if (expectedCode == WEB_NOT_FOUND):
         expectedFileLength = 0
     else:
@@ -88,7 +91,8 @@ def HTTPSmokeTest(target, assetFileName, expectedCode):
             errorAndLog (f"Failed to find length of file: <{filePath}>", exc=exc, doPrint=False)
             expectedFileLength = 0
 
-    contentLength,code = curlTest(target, f"http://{targetIP}:{httpPort}/{assetFileName}")
+    # Issue an HTTP GET Request for GETFilename
+    contentLength,code = curlTest(target, f"http://{targetIP}:{httpPort}/{GETFileName}")
     if (code == 0):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code == expectedCode:
@@ -97,16 +101,16 @@ def HTTPSmokeTest(target, assetFileName, expectedCode):
         if (expectedCode == WEB_REPLY_OK):
 
             if (contentLength == expectedFileLength):
-                getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} PASSED\n")
+                getSetting('appLog').write(f"(Host)~  HTTP GET for {GETFileName} PASSED\n")
             else:
-                logAndExit(f"(Host)~  HTTP GET for {assetFileName} FAILED - Wrong length\n")
+                logAndExit(f"(Host)~  HTTP GET for {GETFileName} FAILED - Wrong length\n")
 
         elif (expectedCode == WEB_NOT_FOUND):
-            getSetting('appLog').write(f"(Host)~  HTTP GET for {assetFileName} PASSED\n")
+            getSetting('appLog').write(f"(Host)~  HTTP GET for {GETFileName} PASSED\n")
         else:
-            target.shutdownAndExit (f"(Host)~  HTTP GET for {assetFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
+            target.shutdownAndExit (f"(Host)~  HTTP GET for {GETFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
     else:
-        target.shutdownAndExit (f"(Host)~  HTTP GET for {assetFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
+        target.shutdownAndExit (f"(Host)~  HTTP GET for {GETFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
     return
 
 @decorate.debugWrap
@@ -138,18 +142,19 @@ def deploymentTest(target):
     # SmokeTests for the HTTP Server
     ###################################
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 1 - GET index.htm\n")
-    HTTPSmokeTest(target, 'index.htm', WEB_REPLY_OK)
+    HTTPSmokeTest(target, 'index.htm', 'index.htm', WEB_REPLY_OK)
 
+    OtaFile = f"{getSettingDict('freertosAssets',['otaHtml'])}"
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 2 - GET ota.htm\n")
-    HTTPSmokeTest(target, f"{getSettingDict('freertosAssets',['otaHtml'])}", WEB_REPLY_OK)
+    HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK)
 
     # Now try a file that we know won't be there on the target. We should get error code WEB_NOT_FOUND
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 3 - GET notthere.htm\n")
-    HTTPSmokeTest(target, 'notthere.htm', WEB_NOT_FOUND)
+    HTTPSmokeTest(target, 'notthere.htm', 'notthere.htm', WEB_NOT_FOUND)
 
     # Now try to GET glogo.png - a larger binary format file
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 4 - GET glogo.png\n")
-    HTTPSmokeTest(target, 'glogo.png', WEB_REPLY_OK)
+    HTTPSmokeTest(target, 'glogo.png', 'glogo.png', WEB_REPLY_OK)
 
 
     ###################################
@@ -171,8 +176,8 @@ def deploymentTest(target):
     # uploading ota512.htm.sig - exactly 1 TFTP block...
     OTATest(clientTftp, "ota512.htm.sig", 4)
     # ...and fetch it back from the HTTP server - note the filename changes to ota.htm
-    # on receipt. We should get back 512 bytes
-    HTTPSmokeTest(target, f"{getSettingDict('freertosAssets',['otaHtml'])}", WEB_REPLY_OK)
+    # on the HTTP server. We should get back 448 bytes (512 minus the 64 byte signature)
+    HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK)
 
     # upload file with 129 character file name
     OTATest(clientTftp, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab.htm.sig", 5)
