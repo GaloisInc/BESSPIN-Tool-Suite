@@ -170,14 +170,17 @@ def selectImagePath():
 def importImage():
     imagePath = selectImagePath()
     cp (imagePath, getSetting('osImageElf'))
-    if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
-        netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
-        setSetting('netbootElf',netbootElf)
-        netbootImage = getSettingDict('nixEnv','netboot')
-        if (netbootImage in os.environ):
-            cp(os.environ[netbootImage],netbootElf)
-        else:
-            logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
+    if not isEqSetting('target', 'aws'):
+        if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
+            netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
+            setSetting('netbootElf',netbootElf)
+            netbootImage = getSettingDict('nixEnv','netboot')
+            if (netbootImage in os.environ):
+                cp(os.environ[netbootImage],netbootElf)
+            else:
+                logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
+    else:
+        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is aws")
     logging.info(f"{getSetting('osImage')} image imported successfully.")
 
 @decorate.debugWrap
