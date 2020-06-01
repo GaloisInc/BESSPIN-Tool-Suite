@@ -38,7 +38,7 @@ void Initialize_HTTP_Assets (void)
 
         const char   *this_name = asset_names[i];
         const size_t  this_size = asset_sizes[i];
-        
+
         fettPrintf ("(Info)~  Initialize_HTTP_Assets: Creating %s to write %ld bytes\n",
                     this_name,
                     this_size);
@@ -92,12 +92,6 @@ void Http_Worker (void)
       if (StopRequested())
         {
           fettPrintf ("(Info)~ Http_Worker: Terminating on STOP request\n");
-          break;
-        }
-      
-      if ((xTaskGetTickCount() - xStartTime) >= pdMS_TO_TICKS(configHTTP_TIMEOUT))
-        {
-          fettPrintf ("(Info)~ Http_Worker: Terminating on connection timeout\n");
           break;
         }
     }
