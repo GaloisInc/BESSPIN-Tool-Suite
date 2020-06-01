@@ -101,12 +101,12 @@ def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode, testCase):
         if (expectedCode == WEB_REPLY_OK):
 
             if (contentLength == expectedFileLength):
-                printAndLog(f"HTTP SmokeTest Case {testCase} - PASSED\n",doPrint=True,tee=getSetting('appLog'))
+                printAndLog(f"HTTP SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
             else:
                 logAndExit(f"(Host)~  HTTP GET for {GETFileName} FAILED - Wrong length\n")
 
         elif (expectedCode == WEB_NOT_FOUND):
-            getSetting('appLog').write(f"(Host)~  HTTP GET for {GETFileName} PASSED\n")
+            printAndLog(f"HTTP SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
         else:
             target.shutdownAndExit (f"(Host)~  HTTP GET for {GETFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
     else:
@@ -121,7 +121,7 @@ def OTATest(clientTftp, fileName, testCase):
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
         # No exception? Then...
-        printAndLog(f"OTA SmokeTest Case {testCase} - PASSED\n",doPrint=True,tee=getSetting('appLog'))
+        printAndLog(f"OTA SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
     except Exception as exc:
         # some test cases as supposed to fail and reach here, so we do not mark this as
         # an error
@@ -184,11 +184,11 @@ def deploymentTest(target):
     OTATest(clientTftp, "ota512.htm.sig", 4)
     # ...and fetch it back from the HTTP server - note the filename changes to ota.htm
     # on the HTTP server. We should get back 448 bytes (512 minus the 64 byte signature)
-    HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK, 4)
+    HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK, 5)
 
     # uploading ota65535.htm.sig - the upper limit for our server.
     OTATest(clientTftp, "ota65535.htm.sig", 5)
-    HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK, 5)
+    HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK, 6)
 
     # Restore the original ota.htm file
     OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 6)
