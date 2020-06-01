@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
-""" 
+"""
 This is executed after loading the app on the target to execute FreeRTOS app
 """
 
-from fett.base.utils.misc import *  
+from fett.base.utils.misc import *
 import tftpy, os, re
 import logging
 
@@ -20,11 +20,11 @@ def install (target):
 @decorate.timeWrap
 def deploy(target):
     printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
-    
+
     #Here we should send a message to the portal
 
     #Here we should wait for a termination signal from the portal
-    
+
     printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
     return
 
@@ -48,7 +48,7 @@ def curlTest(target, url, extra=[], http2=False):
         except Exception as exc:
             errorAndLog (f"Failed to find status code field in: <{out}>", exc=exc, doPrint=False)
             codeval = 0
-            
+
         # A successful request should also have a Content-Length field
         if (codeval == WEB_REPLY_OK):
             # Line 3 of "out" should be of the form "Content-Length: XXX"
@@ -109,6 +109,18 @@ def HTTPSmokeTest(target, assetFileName, expectedCode):
         target.shutdownAndExit (f"(Host)~  HTTP GET for {assetFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
     return
 
+@decorate.debugWrap
+@decorate.timeWrap
+def OTATest(fileName, testCase):
+    filePath = os.path.join(getSetting('assetsDir'),fileName)
+    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case {testCase} - SEND {fileName}\n")
+    try:
+        clientTftp.upload(fileName, filePath, timeout=10)
+    except Exception as exc:
+        # This test case reaches here with an unknown exception
+        errorAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=True,exc=exc)
+    getSetting('appLog').write(f"(Host)~  {filePath} uploaded to the TFTP server.\n")
+
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -119,7 +131,7 @@ def deploymentTest(target):
     # Wait till TFTP server is up
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
-    clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget')) 
+    clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget'))
 
     ###################################
     # SmokeTests for the HTTP Server
@@ -133,7 +145,7 @@ def deploymentTest(target):
     # Now try a file that we know won't be there on the target. We should get error code WEB_NOT_FOUND
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 3 - GET notthere.htm\n")
     HTTPSmokeTest(target, 'notthere.htm', WEB_NOT_FOUND)
-    
+
     # Now try to GET glogo.png - a larger binary format file
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 4 - GET glogo.png\n")
     HTTPSmokeTest(target, 'glogo.png', WEB_REPLY_OK)
@@ -147,37 +159,13 @@ def deploymentTest(target):
     logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.out'),'w'))
 
     # uploading the signed ota.htm file
-    fileName = f"{getSettingDict('freertosAssets',['otaHtml'])}.sig"
-    filePath = os.path.join(getSetting('assetsDir'),fileName)
-    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 1 - SEND {fileName}\n")
-    try:
-        clientTftp.upload(fileName, filePath, timeout=10)
-    except Exception as exc:
-        target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
-    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
+    OTATest("ota.htm.sig", 1)
 
     # uploading the signed ota.htm file AGAIN
-    fileName = f"{getSettingDict('freertosAssets',['otaHtml'])}.sig"
-    filePath = os.path.join(getSetting('assetsDir'),fileName)
-    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 2 - SEND {fileName}\n")
-    try:
-        clientTftp.upload(fileName, filePath, timeout=10)
-    except Exception as exc:
-        target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
-    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
+    OTATest("ota.htm.sig", 2)
 
     # uploading the signed badsig.htm file - Signature is corrupt
-    fileName = "badsig.htm.sig"
-    filePath = os.path.join(getSetting('assetsDir'),fileName)
-    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case 3 - SEND {fileName}\n")
-    try:
-        clientTftp.upload(fileName, filePath, timeout=10)
-    except Exception as exc:
-        # This test case reaches here with an unknown exception, then terminates
-        errorAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=True,exc=exc)
-        # target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
-    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.\n")
-
+    OTATest("badsig.htm.sig", 3)
 
     ###################################
     # STOP the FreeRTOS application
@@ -266,7 +254,7 @@ def prepareAssets ():
 def fett_xxd_i (binPath,check83=True):
     """
     # The input is a path to a file.
-    # The output is similar to the output of `xxd -i binPath`. 
+    # The output is similar to the output of `xxd -i binPath`.
     """
     try:
         fbin = open(binPath,"rb")
@@ -275,7 +263,7 @@ def fett_xxd_i (binPath,check83=True):
         fbin.close()
     except Exception as exc:
         logAndExit (f"fett_xxd_i: Failed to generate a header from <{binPath}>.",exc=exc,exitCode=EXIT.Files_and_paths)
-    
+
     fileName = os.path.basename(binPath)
     filePrefix = fileName.replace('.','_')
     outXxd = f"//{fileName}\n"
