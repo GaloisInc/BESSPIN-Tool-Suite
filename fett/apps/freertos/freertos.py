@@ -117,8 +117,9 @@ def OTATest(clientTftp, fileName, testCase):
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
-        # This test case reaches here with an unknown exception
-        errorAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=True,exc=exc)
+        # some test cases as supposed to fail and reach here, so we do not mark this as
+        # an error
+        printAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=True,exc=exc)
     getSetting('appLog').write(f"(Host)~  {filePath} uploaded to the TFTP server.\n")
 
 
