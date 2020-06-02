@@ -77,10 +77,13 @@ def prepareEnv ():
         fpga.programBitfile()
         fpga.resetEthAdaptor()
     elif (isEqSetting('target','aws')):
-        aws.prepareFiresim()
-        aws.setupKernelModules()
-        aws.configTapAdaptor()
-        aws.programAFI()
+        if (isEqSetting('pvAWS','firesim')):
+            aws.prepareFiresim()
+            aws.setupKernelModules()
+            aws.configTapAdaptor()
+            aws.programAFI()
+        else:
+            logAndExit (f"<launch.prepareEnv> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
     printAndLog (f"Environment is ready.")
 
 """ This is the loading/booting function """
