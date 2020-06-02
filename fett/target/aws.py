@@ -237,34 +237,11 @@ def setupKernelModules():
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
-def _runCommandAndLog(command, stdout=None, stderr=None, shell=False, **kwargs):
-    """ run and log a simple command, treating all exceptions as terminal errors """
-
-    def logDetailsString():
-        if stdout is None and stderr is None:
-            return ""
-        else:
-            stdoutStr = f"{stdout.name} for stdout " if stdout is not None else ""
-            stderrStr = f"{stderr.name} for stderr " if stderr is not None else ""
-            joinStr = "and " if stdout is not None and stderr is not None else ""
-            return "Check " + stdoutStr + joinStr + stderrStr + " for more details"
-
-    if ((type(command) is str) and (not shell)): #if shell=True, do not split
-        command = command.split()
-    
-    try:
-        subprocess.run(command, stdout=stdout, stderr=stderr, shell=shell, **kwargs)
-    except Exception as exc:
-        logAndExit (f"<aws._runCommandAndLog>: Failed on <{command}>." + logDetailsString())
-
-@decorate.debugWrap
 def _sendKmsg(message):
     """send message to /dev/kmsg"""
     # TODO: replace all whitespace with underscores?
-    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
     command = f"echo \"{message}\" | sudo tee /dev/kmsg"
-    _runCommandAndLog(command, stdout=sudoOut, stderr=sudoOut,check=False,shell=True)
-    sudoOut.close()
+    shellCommand(command, check=False, shell=True)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -281,19 +258,19 @@ def _poll_command(command, trigger, maxTimeout=10):
 def clearFpga(slotno):
     """clear FPGA in a given slot id and wait until finished """
     _sendKmsg(f"about to clear fpga {slotno}")
-    _runCommandAndLog(f"sudo fpga-clear-local-image -S {slotno} -A")
+    shellCommand(['fpga-clear-local-image','-S',f"{slotno}",'-A'])
     _sendKmsg(f"done clearing fpga {slotno}")
 
     # wait until the FPGA has been cleared
     _sendKmsg(f"checking for fpga slot {slotno}")
-    _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "cleared")
+    _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "cleared")
     _sendKmsg(f"done checking fpga slot {slotno}")
 
 @decorate.debugWrap
 def getNumFpgas():
     """return number of FPGAS"""
     try:
-        out = subprocess.check_output("sudo fpga-describe-local-image-slots".split())
+        out = subprocess.check_output("fpga-describe-local-image-slots".split())
         out = out.decode('utf-8')
     except Exception as exc:
         logAndExit(f'<aws.getNumFpgas>: error getting fpga local slot description', exc=exc)
@@ -318,10 +295,10 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    _runCommandAndLog(f"sudo fpga-load-local-image -S {slotno} -I {agfi} -A")
+    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'])
 
     # wait until the FPGA has been flashed
-    _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "loaded")
+    _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")
 
 @decorate.debugWrap
 def flashFpgas(agfi):
