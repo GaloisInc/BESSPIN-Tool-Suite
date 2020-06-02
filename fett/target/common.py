@@ -52,8 +52,8 @@ class commonTarget():
         # TODO: These passwords need to be different per run
         self.rootPassword = 'ssithdefault' if (isEqSetting('osImage','FreeBSD')) else 'riscv'
         self.rootGroup = 'wheel' if (isEqSetting('osImage','FreeBSD')) else 'root'
-        self.userPassword = 'fett_2020'
-        self.userName = 'researcher'
+        self.userPassword = getSetting('userPassword')
+        self.userName = getSetting('userName')
         self.userCreated = False
 
         self.AttemptShutdownFailed = False
