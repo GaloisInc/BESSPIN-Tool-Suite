@@ -354,10 +354,14 @@ def prepareFiresim():
     firesimWorkPath = os.path.join(getSetting("workDir"), "firesim")
     mkdir(firesimWorkPath,addToSettings='firesimPath')
 
-    # firesim needs two empty files img and dwarf [for now]
+    # firesim needs two files: img and dwarf:
     imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
     setSetting("osImageImg",imageFile)
-    touch(imageFile)
+    if (isEqSetting('osImage','FreeRTOS')): # create a filesystem -- 1 GB [TODO: make it configurable maybe]
+        shellCommand(['dd','if=/dev/zero',f"of={imageFile}",'bs=100M','count=10'])
+        shellCommand(['mkfs.vfat','-S','512','-n',"\"DATA42\"",'-F','32', imageFile])
+    else: #an empty file will do 
+        touch(imageFile)
     dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
     setSetting("osImageDwarf",dwarfFile)
     touch(dwarfFile)
