@@ -2,6 +2,7 @@
 
 CFLAGS += -DFETT_APPS
 
+# On-prem FPGA SD card
 SD_SOURCE_DIR = ./SD/src
 SD_SRC = $(SD_SOURCE_DIR)/SD.cpp \
 		$(SD_SOURCE_DIR)/File.cpp \
@@ -10,7 +11,12 @@ SD_SRC = $(SD_SOURCE_DIR)/SD.cpp \
 		$(SD_SOURCE_DIR)/utility/SdVolume.cpp \
 		$(SD_SOURCE_DIR)/SDLib.cpp
 
-
+# AWS ICEBLK Device
+ICEBLK_SOURCE_DIR = ./FatFs/source
+ICEBLK_SRC = $(ICEBLK_SOURCE_DIR)/diskio.c \
+		 	$(ICEBLK_SOURCE_DIR)/ff.c \
+			$(ICEBLK_SOURCE_DIR)/ffsystem.c \
+			$(ICEBLK_SOURCE_DIR)/ffunicode.c
 
 WOLFSSL_SOURCE_DIR = $(FREERTOS_PLUS_SOURCE_DIR)/WolfSSL
 WOLFSSL_SRC = $(WOLFSSL_SOURCE_DIR)/src/ssl.c \
@@ -40,17 +46,29 @@ WOLFSSL_SRC = $(WOLFSSL_SOURCE_DIR)/src/ssl.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/curve25519.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/ed25519.c
 
+# FETT Apps sources
 DEMO_SRC = main.c \
 	$(wildcard $(INC_FETT_APPS)/*.c) \
 	$(wildcard $(INC_FETT_APPS)/appLib/*.c)
 INCLUDES += -I$(INC_FETT_APPS)/appLib
 INCLUDES += -I$(INC_FETT_APPS)
 
+# Network
 CFLAGS += -I$(FREERTOS_IP_INCLUDE)
-CFLAGS += -I$(WOLFSSL_SOURCE_DIR)
-CFLAGS += -I$(SD_SOURCE_DIR)
 FREERTOS_SRC += $(FREERTOS_IP_SRC)
+
+# WolfSSL
+CFLAGS += -I$(WOLFSSL_SOURCE_DIR)
 DEMO_SRC += $(WOLFSSL_SRC)
-CPP_SRC += $(SD_SRC)
 INCLUDES += -I$(WOLFSSL_SOURCE_DIR)
-INCLUDES += -I$(SD_SOURCE_DIR)
+
+# Filesystem
+ifeq ($(BSP),aws)
+	CFLAGS += -I$(ICEBLK_SOURCE_DIR)
+	INCLUDES += -I$(ICEBLK_SOURCE_DIR)
+	DEMO_SRC += $(ICEBLK_SRC)
+else #fpga
+	CFLAGS += -I$(SD_SOURCE_DIR)
+	CPP_SRC += $(SD_SRC)
+	INCLUDES += -I$(SD_SOURCE_DIR)
+endif
