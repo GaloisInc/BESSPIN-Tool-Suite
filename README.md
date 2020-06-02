@@ -10,10 +10,23 @@ To clone the repo and start `the nix-shell`, please use:
 git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
 cd SSITH-FETT-Target
 git submodule update --init
+cd SSITH-FETT-Binaries
+git-lfs pull
+cd ..
 nix-shell
 ```
 
 * For `nix-shell` issues, please check the instructions in [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment).   
+
+* You should check that `git-lfs pull` succeeded and that `SSITH-FETT-Binaries`
+  contains the expected binaries.
+  From the root of the repository, run:
+  ```bash
+  file SSITH-FETT-Binaries/GFE/appsBinaries/webserver/debian/sbin/nginx
+  ```
+  If `file` reports `ASCII Text` then you have not successfully pulled down the
+  binaries.
+  Try re-cloning `SSITH-FETT-Binaries` and re-running `git-lfs pull`.
 
 * Regarding the local `fpga` target:   
     1. A GFE SoC on a Xilinx VCU118 FPGA should be accessible, in
