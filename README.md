@@ -18,16 +18,6 @@ nix-shell
 
 * For `nix-shell` issues, please check the instructions in [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment).   
 
-* You should check that `git-lfs pull` succeeded and that `SSITH-FETT-Binaries`
-  contains the expected binaries.
-  From the root of the repository, run:
-  ```bash
-  file SSITH-FETT-Binaries/GFE/appsBinaries/webserver/debian/sbin/nginx
-  ```
-  If `file` reports `ASCII Text` then you have not successfully pulled down the
-  binaries.
-  Try re-cloning `SSITH-FETT-Binaries` and re-running `git-lfs pull`.
-
 * Regarding the local `fpga` target:   
     1. A GFE SoC on a Xilinx VCU118 FPGA should be accessible, in
   addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
@@ -75,13 +65,6 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 * Git LFS, needed by FETT Binaries
 * [The Nix Package Manager](https://nixos.org/nix/)
 * [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) checked out at `2430b00b1becf8957d7fe4a304fb820e74e66972`, with the environment pre-populated at `nix/store`
-
-After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access. To properly update the SSITH-FETT-Binaries, git lfs can be invoked with
-
-```
-$ cd /home/centos/SSITH-FETT-Target/SSITH-FETT-Binaries
-$ git-lfs pull
-```
 
 See the instructions in `build/FireSimAMI.md` to recreate the image manually.
 
