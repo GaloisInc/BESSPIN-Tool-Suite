@@ -233,7 +233,11 @@ def touch(filepath, mode=0o666, permissive=True):
     try:
         pathlib.Path(filepath).touch(mode=mode, exist_ok=permissive)
     except FileExistsError as exc:
-        logAndExit(f"Failed touching file {filepath}! File already exists", exc=exc, exitCode=EXIT.Files_and_paths)
+        logAndExit(f"touch: Failed touching file {filepath}! File already exists", exc=exc, exitCode=EXIT.Files_and_paths)
+    except FileNotFoundError as exc:
+        logAndExit(f"touch: filepath {filepath} is not a valid path", exc=exc, exitCode=EXIT.Files_and_paths)
+    except Exception as exc:
+        logAndExit(f"touch: Error touching file {filepath}", exc=exc)
 
 def safeLoadJsonFile (jsonFile):
     try:
