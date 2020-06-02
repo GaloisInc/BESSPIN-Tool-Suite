@@ -407,9 +407,9 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
         bool Mode_OK;
 
         // RFC 1350 require case-insensitive comparison here
-        Mode_OK = (strcasecmp("octet",
-                              (const char *)&(
-                                  pucUDPPayloadBuffer[Mode_Offset])) == 0);
+        Mode_OK =
+            (strcasecmp("octet", (const char *)&(
+                                     pucUDPPayloadBuffer[Mode_Offset])) == 0);
         if (Mode_OK)
         {
             bool File_Name_OK = true;
@@ -422,10 +422,12 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
 
             if (File_Name_OK)
             {
-                size_t fnlen = strlen (pcFileName);
+                size_t fnlen = strlen(pcFileName);
 
-                fettPrintf ("(Info)~  validateWriteRequest pcFileName is %s\n", pcFileName);
-                fettPrintf ("(Info)~  validateWriteRequest fnlen is %d\n", (int) fnlen);
+                fettPrintf("(Info)~  validateWriteRequest pcFileName is %s\n",
+                           pcFileName);
+                fettPrintf("(Info)~  validateWriteRequest fnlen is %d\n",
+                           (int)fnlen);
 
                 // fnlen needs to be less than MAX to allow for a final \0
                 if (fnlen >= tftpconfigMAX_FILENAME)
@@ -459,10 +461,6 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
     }
     return pcFileName;
 }
-
-
-
-
 
 /*-----------------------------------------------------------*/
 
@@ -606,7 +604,8 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     {
         uint8_t IP_Address_String[16]; // "255.255.255.255\0" is 16 chars
         FreeRTOS_inet_ntoa(ulIPAddress, IP_Address_String);
-        fettPrintf("(Info)~  TFTP Target IP address is %s\n", IP_Address_String);
+        fettPrintf("(Info)~  TFTP Target IP address is %s\n",
+                   IP_Address_String);
     }
 
     xBindAddress.sin_addr = ulIPAddress;
@@ -642,7 +641,8 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
         {
             /* Could this be a new write request?  The opcode is contained in
                the first two bytes of the received data. */
-            fettPrintf("(Info)~  TFTP received a request. First header bytes are %2x %2x\n",
+            fettPrintf("(Info)~  TFTP received a request. First header bytes "
+                       "are %2x %2x\n",
                        pucUDPPayloadBuffer[0], pucUDPPayloadBuffer[1]);
 
             if ((pucUDPPayloadBuffer[0] == (uint8_t)0) &&
@@ -651,16 +651,17 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
                 /* If the write request is valid pcFileName will get set to
                    point to the file name within pucWriteRequestBuffer - otherwise
                    an appropriate error will be sent on xTFTPListeningSocket. */
-                pcFileName = prvValidateWriteRequest(xTFTPListeningSocket, &xClient,
-                                                     pucUDPPayloadBuffer, lBytes);
+                pcFileName =
+                    prvValidateWriteRequest(xTFTPListeningSocket, &xClient,
+                                            pucUDPPayloadBuffer, lBytes);
 
                 if (pcFileName != NULL)
                 {
                     // Copy the filename from the received request header
                     // to our persistent filename_buffer
                     strncpy(file_name, pcFileName, file_name_len);
-                    Receive_Result =
-                        prvReceiveFile(buffer, buffer_len, &file_size, &xClient);
+                    Receive_Result = prvReceiveFile(buffer, buffer_len,
+                                                    &file_size, &xClient);
                 }
             }
             else
@@ -684,7 +685,8 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     }
     else
     {
-        fettPrintf("(Error)~  TFTP recvfrom() failed with return code %d\n", (int)lBytes);
+        fettPrintf("(Error)~  TFTP recvfrom() failed with return code %d\n",
+                   (int)lBytes);
     }
 
     fettPrintf("(Info)~  TFTP Closing main listening socket.\n");
