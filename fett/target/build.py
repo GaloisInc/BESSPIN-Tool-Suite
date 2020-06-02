@@ -91,8 +91,9 @@ def prepareFreeRTOS():
 
         #Include the network configuration parameters
         #This is a list of tuples: (settingName, macroNameBase, int/hex)
-        listConfigIpParams = [('fpgaMacAddrTarget','configMAC_ADDR', hex), ('fpgaIpTarget','configIP_ADDR', int),
-                              ('fpgaIpHost','configGATEWAY_ADDR', int), ('fpgaNetMaskTarget','configNET_MASK', int)]
+        thisTarget = getSetting('target')
+        listConfigIpParams = [(f"{thisTarget}MacAddrTarget",'configMAC_ADDR', hex), (f"{thisTarget}IpTarget",'configIP_ADDR', int),
+                              (f"{thisTarget}IpHost",'configGATEWAY_ADDR', int), (f"{thisTarget}NetMaskTarget",'configNET_MASK', int)]
 
         def mapVal(val,xType):
             if (xType==int):

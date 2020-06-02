@@ -92,6 +92,11 @@
             "val" : "8e:6b:35:04:00:00"
         },
         {
+            "name" : "awsNetMaskTarget",
+            "type" : "ipAddress",
+            "val" : "255.255.255.0"
+        },
+        {
             "name" : "awsMacAddrTarget",
             "type" : "macAddress",
             "val" : "00:12:6D:00:00:02"
