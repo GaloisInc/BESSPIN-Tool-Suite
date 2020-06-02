@@ -340,8 +340,9 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
     else
     {
         /* An error could be returned here, but it is probably cleaner to just
-		time out as the error would have to be sent via the listening socket
-		outside of this function. */
+           time out as the error would have to be sent via the listening socket
+           outside of this function. */
+        // caller responsible
         fettPrintf("(Error)~  TFTP Could not create socket to receive file.\n");
     }
 
@@ -393,6 +394,7 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
     {
         fettPrintf("(Error)~  TFTP write request header too short\n");
         prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
+        // caller responsible
         return NULL;
     }
 
@@ -434,6 +436,7 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
                 {
                     fettPrintf("(Error)~  TFTP filename too long\n");
                     prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
+                    // caller responsible
                     pcFileName = NULL;
                 }
                 // else everything is fine, so leave pcFileName
@@ -443,6 +446,7 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
             {
                 fettPrintf("(Error)~  TFTP illegal character in filename\n");
                 prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
+                // caller responsible
                 pcFileName = NULL;
             }
         }
@@ -450,6 +454,7 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
         {
             fettPrintf("(Error)~  TFTP transfer mode is not octet\n");
             prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
+            // caller responsible
             pcFileName = NULL;
         }
     }
@@ -457,6 +462,7 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
     {
         fettPrintf("(Error)~  TFTP mal-formed write request header\n");
         prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
+        // caller responsible
         pcFileName = NULL;
     }
     return pcFileName;
@@ -510,8 +516,8 @@ static void prvSendTFTPError(Socket_t xSocket,
         strcpy(((char *)&(pucUDPPayloadBuffer[4])), pcErrorString);
 
         /* Pass the buffer into the send function.  ulFlags has the
-		FREERTOS_ZERO_COPY bit set so the IP stack will take control of the
-		buffer rather than copy data out of the buffer. */
+           FREERTOS_ZERO_COPY bit set so the IP stack will take control of the
+           buffer rather than copy data out of the buffer. */
         lReturned = FreeRTOS_sendto(
             xSocket, /* The socket to which the error frame is sent. */
             (void *)
@@ -524,16 +530,16 @@ static void prvSendTFTPError(Socket_t xSocket,
         if (lReturned == 0)
         {
             /* The send operation failed, so this task is still responsible
-			for the buffer obtained from the IP stack.  To ensure the buffer
-			is not lost it must either be used again, or, as in this case,
-			returned to the IP stack using FreeRTOS_ReleaseUDPPayloadBuffer(). */
+               for the buffer obtained from the IP stack.  To ensure the buffer
+               is not lost it must either be used again, or, as in this case,
+               returned to the IP stack using FreeRTOS_ReleaseUDPPayloadBuffer(). */
             FreeRTOS_ReleaseUDPPayloadBuffer((void *)pucUDPPayloadBuffer);
         }
         else
         {
             /* The send was successful so the IP stack is now managing the
-			buffer pointed to by pucUDPPayloadBuffer, and the IP stack will
-			return the buffer once it has been sent. */
+               buffer pointed to by pucUDPPayloadBuffer, and the IP stack will
+               return the buffer once it has been sent. */
         }
     }
 }
@@ -592,6 +598,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     if (xTFTPListeningSocket == FREERTOS_INVALID_SOCKET)
     {
         fettPrintf("(Error)~  TFTP failed to create Listening Socket\n");
+        // caller responsible
         return 0;
     }
     else
@@ -616,16 +623,17 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     {
         fettPrintf("(Error)~  TFTP socket bind failed with return code %d\n",
                    (int)Bind_Result);
+        // caller responsible
         return 0;
     }
 
     /* Look for the start of a new transfer on the TFTP port.  ulFlags has
-     the zero copy bit set (FREERTOS_ZERO_COPY) indicating to the stack that
-     a reference to the received data should be passed out to this task using
-     the second parameter to the FreeRTOS_recvfrom() call.  When this is done
-     the IP stack is no longer responsible for releasing the buffer, and the
-     task *must* return the buffer to the stack when it is no longer
-     needed. */
+       the zero copy bit set (FREERTOS_ZERO_COPY) indicating to the stack that
+       a reference to the received data should be passed out to this task using
+       the second parameter to the FreeRTOS_recvfrom() call.  When this is done
+       the IP stack is no longer responsible for releasing the buffer, and the
+       task *must* return the buffer to the stack when it is no longer
+       needed. */
     fettPrintf("(Info)~  TFTP waiting for initial Request Message\n");
     lBytes = FreeRTOS_recvfrom(
         xTFTPListeningSocket,
@@ -685,6 +693,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     }
     else
     {
+        // T3D3 - something weird happened, but carry on
         fettPrintf("(Error)~  TFTP recvfrom() failed with return code %d\n",
                    (int)lBytes);
     }
@@ -697,6 +706,7 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
         fettPrintf("(Info)~  TFTP File Receive failed. Sanitizing buffers\n");
         memset((void *)buffer, 0, (size_t)buffer_len);
         memset((void *)file_name, 0, (size_t)file_name_len);
+        // caller responsible
         file_size = 0;
     }
 
