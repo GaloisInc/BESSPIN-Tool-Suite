@@ -137,6 +137,8 @@ class firesimTarget(commonTarget):
             warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
         return True
 
+    # ------------------ END OF CLASS firesimTarget ----------------------------------------
+
 @decorate.debugWrap
 def configTapAdaptor():
     tapAdaptor = getSetting('awsTapAdaptorName')
