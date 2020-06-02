@@ -223,7 +223,7 @@ def setupKernelModules():
         #remove all modules to be safe
         kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
         for kmod in kmodsToClean:
-            sudoShellCommand(['rmmod', kmod],checkCall=False)
+            sudoShellCommand(['rmmod', kmod],check=False)
             _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
 
         awsFiresimModPath = os.path.join(getSetting('firesimPath'), 'kmods')

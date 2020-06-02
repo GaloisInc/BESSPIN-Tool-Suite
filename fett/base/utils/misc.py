@@ -395,5 +395,5 @@ def shellCommand (argsList, check=True, timeout=30, **kwargs):
     try:
         subprocess.run(argsList, stdout=shellOut, stderr=shellOut, timeout=timeout, check=check, **kwargs)
     except Exception as exc:
-        logAndExit (f"shell: Failed to <{' '.join(command)}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
+        logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
     shellOut.close()
