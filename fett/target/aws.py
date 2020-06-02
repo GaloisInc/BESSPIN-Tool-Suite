@@ -122,6 +122,8 @@ class firesimTarget(commonTarget):
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             outCmd = self.runCommand ("ifup eth0",expectedContents='IceNet: opened device')
+        elif (isEqSetting('osImage','FreeRTOS')):
+            outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
