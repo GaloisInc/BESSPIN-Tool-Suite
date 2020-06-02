@@ -30,20 +30,25 @@ void vStartNetwork (void *pvParameters) {
     xTaskStartNtk = xTaskGetCurrentTaskHandle();
 
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
+    // T2D2 - Fatal for this task
     vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Initialize Network IP.");
 
     //wait for NtkHook
     uint32_t recvNotification;
     funcReturn = xTaskNotifyWait(0xffffffff, 0xffffffff, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
+    // T2D2 - Fatal for this task
     vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Receive notification from hook.");
+    // T2D2 - Fatal for this task
     vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS_NTK, "startNetwork: Expected notification value from hook.");
 
     fettPrintf ("\r\n<NTK-READY>\r\n");
     vTaskDelay(pdMS_TO_TICKS(3000)); //give time to the host to ping
 
     //notify main
+    // T2D2 - Fatal for this task
     pvERROR_IF_EQ(xMainTask, NULL, "startNetwork: Get handle of <main:task>.");
     funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_NTK ,eSetBits);
+    // T2D2 - Fatal for this task
     vERROR_IF_NEQ(funcReturn, pdPASS, "startNetwork: Notify <main:task>.");
 
     vTaskDelete (NULL);
@@ -53,7 +58,7 @@ void vStartNetwork (void *pvParameters) {
 events are only received if implemented in the MAC driver. */
 void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent) {
     fettPrintf ("(Info)~  NtkHook: A network event has been detected! (eventNum=%d).\r\n",eNetworkEvent);
-    
+
     /* If the network has just come up...*/
     if ((eNetworkEvent == eNetworkUp) && (isNetworkUp == uFALSE)) //Network never was up
     {
@@ -76,14 +81,16 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent) {
         fettPrintf("\t\tDNS Server Address: %s\r\n\r\n", cBuffer);
 
         //Notify start netowork
+        // T1D1 - Fatal
         pvERROR_IF_EQ(xTaskStartNtk, NULL, "NtkHook: Get handle of <task:startNetwork>.");
         BaseType_t funcReturn = xTaskNotify( xTaskStartNtk, NOTIFY_SUCCESS_NTK ,eSetBits);
+        // T1D1 - Fatal
         vERROR_IF_NEQ(funcReturn, pdPASS, "NtkHook: Notify <task:startNetwork>.");
 
         isNetworkUp = uTRUE;
     } //network has just come up
 
-    // HERE DETECTS IF THE NETWORK WENT DOWN 
+    // HERE DETECTS IF THE NETWORK WENT DOWN
     vERROR_IF_EQ(eNetworkEvent, eNetworkDown, "NtkHook: Check if network is down.");
 
 } //vApplicationIPNetworkEventHook
