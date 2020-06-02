@@ -333,7 +333,7 @@ def prepareFiresim():
         keyName = 'agfi_id'
         contents = safeLoadJsonFile(jsonFile)
         if keyName not in contents:
-            logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi-id> in {jsonFile}")
+            logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi_id> in {jsonFile}")
         return contents[keyName]
 
     # copy over the firesim kernel modules, simulation interfaces
