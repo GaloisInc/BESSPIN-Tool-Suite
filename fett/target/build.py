@@ -120,6 +120,7 @@ def prepareFreeRTOS():
         envVars.append(f"USE_CLANG={int(isEqSetting('cross-compiler','Clang'))}")
         envVars.append(f"PROG=main_fett")
         envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
+        envVars.append(f"BSP={getSetting('target')}")
         logging.debug(f"going to make using {envVars}")
         make (envVars,getSetting('FreeRTOSprojDir'))
 
