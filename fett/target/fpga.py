@@ -168,7 +168,7 @@ class fpgaTarget (commonTarget):
         elif (isEqSetting('osImage','FreeBSD')):
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
-            self.shutdownAndExit("<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
+            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
 
         self.pingTarget()
 
