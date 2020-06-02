@@ -58,6 +58,45 @@
             "val" : "88:53:48:41:56:45"
         },
         {
+            "name" : "awsIpTarget",
+            "type" : "ipAddress",
+            "val" : "172.16.0.2"
+        },
+        {
+            "name" : "awsIpHost",
+            "type" : "ipAddress",
+            "val" : "172.16.0.1"
+        },
+        {
+            "name" : "awsPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "awsPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "awsTapAdaptorName",
+            "type" : "string",
+            "val" : "tap0"
+        },
+        {
+            "name" : "awsTapAdaptorMacAddress",
+            "type" : "macAddress",
+            "val" : "8e:6b:35:04:00:00"
+        },
+        {
+            "name" : "awsTargetMacAddress",
+            "type" : "macAddress",
+            "val" : "00:12:6D:00:00:02"
+        },
+        {
             "name" : "HTTPPortTarget",
             "type" : "int",
             "min" : 80,
@@ -105,13 +144,47 @@
             "val" : "127.0.0.1"
         },
         {
-            "name" : "procOsCombinations",
+            "name" : "fettMatrix",
             "type" : "dict",
             "val" : {
-                "FreeRTOS" : ["chisel_p1"],
-                "debian" : ["chisel_p2", "bluespec_p2"],
-                "FreeBSD" : ["chisel_p2", "bluespec_p2"],
-                "busybox" : ["chisel_p2", "bluespec_p2"]
+                "GFE" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    },
+                    "chisel_p2" : {
+                        "debian" : "firesim",
+                        "FreeBSD" : "notOnAWS",
+                        "busybox" : "notOnAWS"
+                    },
+                    "bluespec_p2" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "awsteria",
+                        "busybox" : "notOnAWS"
+                    }
+                },
+                "LMCO" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    },
+                    "chisel_p2" : {
+                        "debian" : "firesim"
+                    }
+                },
+                "Michigan" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    }
+                },
+                "MIT" : {
+                    "bluespec_p2" : {
+                        "FreeBSD" : "connectal"
+                    }
+                },
+                "SRI-Cambridge" : {
+                    "bluespec_p2" : {
+                        "FreeBSD" : "awsteria"
+                    }
+                }
             }
         },
         {
@@ -121,7 +194,8 @@
                 "netboot" : "FETT_NETBOOT",
                 "debian" : {
                     "fpga" : "FETT_GFE_DEBIAN_FPGA",
-                    "qemu" : "FETT_GFE_DEBIAN_QEMU"
+                    "qemu" : "FETT_GFE_DEBIAN_QEMU",
+                    "firesim" :  "FETT_GFE_DEBIAN_FIRESIM"
                 },
                 "FreeBSD" : {
                     "fpga" : "FETT_GFE_FREEBSD_FPGA",

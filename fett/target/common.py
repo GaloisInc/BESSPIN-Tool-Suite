@@ -154,6 +154,8 @@ class commonTarget():
                     self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
             elif (isEqSetting('target','qemu')):
                 timeout = 120
+            elif (isEqSetting('target', 'aws')):
+                timeout = 420
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -210,7 +212,7 @@ class commonTarget():
             self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
 
         #up the ethernet adaptor and get the ip address
-        self.activateEthernet() 
+        self.activateEthernet()
                                   
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         #Adding 5 minutes to avoid being in the past
@@ -220,11 +222,35 @@ class commonTarget():
             self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
             self.runCommand("chmod +x addEntropyDebian.riscv")
             self.ensureCrngIsUp () #check we have enough entropy for ssh
+
+            if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
+                # start the ssh service
+                self.runCommand("systemctl unmask ssh.service")
+                self.runCommand("systemctl start ssh.service",erroneousContents=["Failed", "not found"])
+                
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
                                 
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
+
+    @decorate.debugWrap
+    def interact(self):
+        #This method gives the control back to the user
+        if (self.inInteractMode):
+            return #avoid recursive interact mode
+        self.inInteractMode = True
+        if (self.isSshConn): #only interact on the JTAG
+            self.closeSshConn()
+        if (self.userCreated):
+            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+        try:
+            self.process.interact(escape_character='\x05')
+            #escaping interact closes the logFile, which will make any read/write fail inside pexpect logging
+            self.fTtyOut = ftOpenFile(self.fTtyOut.name,self.fTtyOut.mode)
+        except Exception as exc:
+            errorAndLog(f"Failed to open interactive mode.",exc=exc)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -637,7 +663,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,expectExact=False):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,expectExact=False,overwriteShutdown=False):
         self.checkFallToTty ("expectFromTarget")
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
@@ -652,18 +678,16 @@ class commonTarget():
                 textBack += self.readFromTarget(endsWith=endsWith[retExpect])
         except pexpect.TIMEOUT:
             if (shutdownOnError):
-                self.shutdownAndExit(f"expectFromTarget: {getSetting('target').capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run)
+                self.shutdownAndExit(f"expectFromTarget: {getSetting('target').capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
             elif (not isEqSetting('osImage','FreeRTOS')):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
                 textBack += self.keyboardInterrupt (shutdownOnError=True)
             return [textBack, True, -1]
         except Exception as exc:
-            self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run)
-        if (endsWith == pexpect.EOF):
-            endsWith = ''
-        elif (isinstance(endsWith,str)): #only one string
+            self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
+        if (isinstance(endsWith,str)): #only one string
             textBack += endsWith
-        else:
+        elif ((endsWith not in [pexpect.EOF, pexpect.TIMEOUT]) and isinstance(endsWith[retExpect],str)): #list
             textBack += endsWith[retExpect]
         return [textBack, False, retExpect]
 
@@ -694,7 +718,7 @@ class commonTarget():
         try:
             self.fTtyOut.close()
         except Exception as exc:
-            warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False)
+            warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False,exc=exc)
         if ((isSuccess and (not isTimeout)) or shutdownOnError):
             isSuccess &= self.targetTearDown()
         return [isSuccess, textBack, isTimeout, dumpIdx]
@@ -779,6 +803,27 @@ class commonTarget():
             warnAndLog("closeSshConn: Failed to close the ssh.out file.",doPrint=False)
         self.killSshConn()
         return True
+
+    @decorate.debugWrap
+    def pingTarget (self):
+        #pinging the target to check everything is ok
+        pingOut = ftOpenFile(os.path.join(getSetting('workDir'),'ping.out'),'a')
+        pingAttempts = 3
+        wasPingSuccessful = False
+        for iPing in range(pingAttempts):
+            try:
+                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=pingOut,stderr=pingOut)
+                wasPingSuccessful = True
+                break
+            except Exception as exc:
+                if (iPing < pingAttempts - 1):
+                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
+                    time.sleep(15)
+                else:
+                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+        pingOut.close()
+        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+        return
 
 # END OF CLASS commonTarget
 

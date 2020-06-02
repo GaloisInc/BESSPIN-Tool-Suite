@@ -52,17 +52,23 @@ AWS setup has the following platform variants (PV):
 
 To utilize its FireSim integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of both the FireSim and FETT projects. The AMI is referenced with:
 
-**AMI ID: `ami-03690995f9bfa512e`**
+**AMI ID: `ami-04c55ee64b3c6f758`**
 
 #### Contents
 
 The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e251a40fd1fc-ami-0b1edf08d56c2da5c.4 (ami-02b792770bf83b668)` AMI. It runs CentOS 7 and is the AMI used for Firesim. It adds
 
-* An updated version of Git, required by the FETT Environment nix shell installation.
+* An updated version of Git, required by the FETT Environment nix shell installation
+* Git LFS, needed by FETT Binaries
 * [The Nix Package Manager](https://nixos.org/nix/)
 * [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) checked out at `2430b00b1becf8957d7fe4a304fb820e74e66972`, with the environment pre-populated at `nix/store`
 
-After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access.
+After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access. To properly update the SSITH-FETT-Binaries, git lfs can be invoked with
+
+```
+$ cd /home/centos/SSITH-FETT-Target/SSITH-FETT-Binaries
+$ git-lfs pull
+```
 
 See the instructions in `build/FireSimAMI.md` to recreate the image manually.
 
@@ -78,6 +84,7 @@ The default configuration file is `config.ini`, working directory is `$REPO/work
 
 Some useful configuration options:
 - `mode`: Choose either `test` for the testing flow, or `deploy` for leaving the apps switched on for researchers interactions.
+- `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
 - `target`: Choose either `aws` for the main FETT target, `fpga` for Xilinx VCU118 hardware
     emulation, or `qemu` for [QEMU](https://www.qemu.org/) emulation.
 - `processor`: One of the GFE processors or the TA-1 teams processors.
@@ -87,9 +94,10 @@ Some useful configuration options:
     or [Busybox](https://busybox.net/about.html).
 - `useCustomOsImage`: If disabled, Nix (if image is available) or FETT-Binaries images will be used.
 - `useCustomBitfile`: If disabled, Nix (if bitfile is available) or FETT-Binaries bitfiles will be used.
-- `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
 - `openConsole`: returns an open console for Unix targets.
 - `buildApps`: Cross-compile as instructed in `fett/apps/build.py`.
+
+Note that the AWS platform variant is determined based on the `binarySource`-`processor`-`osImage` choice. More information about these decisions can be found in [the cloudGFE TA-1 and GFE tracker spreadsheet](https://docs.google.com/spreadsheets/d/1J8MSDQS1X0V-wPHiNdCTgu7Pwf8GcgTy91kcn8u9mt0/edit#gid=0).
 
 
 ## Developer Manual ##
