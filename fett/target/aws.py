@@ -119,7 +119,9 @@ class firesimTarget(commonTarget):
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             outCmd = self.runCommand ("ifup eth0",expectedContents='IceNet: opened device')
-        
+        else:
+            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+
         self.pingTarget()
 
         return outCmd
@@ -344,20 +346,11 @@ def prepareFiresim():
     firesimSimPath = os.path.join(firesimPath, 'sim')
 
     firesimWorkPath = os.path.join(getSetting("workDir"), "firesim")
-    mkdir(firesimWorkPath)
-    setSetting("firesimPath", firesimWorkPath)
+    mkdir(firesimWorkPath,addToSettings='firesimPath')
 
     # copy over sim and kmods
     copyDir(firesimSimPath, firesimWorkPath)
     copyDir(firesimModPath, firesimWorkPath)
-
-    # touch an empty image + dwarf
-    imageFile = os.path.join(firesimWorkPath, 'sim', 'debian.img')
-    setSetting("osImageImg",imageFile)
-    touch(imageFile)
-    dwarfFile = os.path.join(firesimWorkPath, 'sim', 'debian.dwarf')
-    setSetting("osImageDwarf",dwarfFile)
-    touch(dwarfFile)
 
     # extract the agfi and put it in setting
     processorName = getSetting('processor')
