@@ -762,7 +762,8 @@ class commonTarget():
             self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
-        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
+        time.sleep(10)
+        self.runCommand(sshPassword,endsWith=self.getAllEndsWith(),timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
         return True
 
