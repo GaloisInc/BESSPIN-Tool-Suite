@@ -77,7 +77,7 @@ class firesimTarget(commonTarget):
             '+mm_llc_activeMSHRs=8',
             '+slotid=0',
             '+profile-interval=-1',
-            f"+macaddr0={getSetting('awsTargetMacAddress')}",
+            f"+macaddr0={getSetting('awsMacAddrTarget')}",
             f"+blkdev0={getSetting('osImageImg')}",
             f"+niclog0={os.path.join(getSetting('workDir'),'niclog0.out')}",
             f"+blkdev-log0={os.path.join(getSetting('workDir'),'blkdev-log0.out')}",
