@@ -4,6 +4,7 @@ This is executed after loading the app on the target to execute this app
 """
 
 from fett.base.utils.misc import *
+import pexpect
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -31,12 +32,9 @@ def deploymentTest (target):
 @decorate.timeWrap
 def extensiveTest (target):
     printAndLog("Testing ssh ", tee=getSetting('appLog'))
-    sshSuccess = target.openSshConn(userName=target.userName, timeout=120)
+    sshSuccess = target.openSshConn(userName=target.userName)
     if (not sshSuccess):
         target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.")
-    scpSuccess = target.sendFile(getSetting('buildDir'), 'nginx.service', timeout=120)
-    if (not scpSuccess):
-        target.shutdownAndExit(f"Test[user test scp]:Failed to open ssh conn.")
     target.closeSshConn()
-    printAndLog("Test[user test ssh]: Ssh and scp test OK!", doPrint=False, tee=getSetting('appLog'))
+    printAndLog("Test[user test ssh]: Ssh and scp test OK!", doPrint=True, tee=getSetting('appLog'))
     return

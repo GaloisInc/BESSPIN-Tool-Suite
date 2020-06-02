@@ -516,7 +516,8 @@ class commonTarget():
         if (isEqSetting('osImage','FreeRTOS')):
             appModules = [freertos]
         elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-            appModules = [webserver, database, voting, ssh]
+            # appModules = [webserver, database, voting, ssh]
+            appModules = [ssh]
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
@@ -741,7 +742,7 @@ class commonTarget():
             self.fSshOut.close()
 
         self.killSshConn()
-        if (not self.onlySsh):
+        if (not self.onlySsh): # entropy still not working on debian
             self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True, shutdownOnError=False) #Get some entropy going on
             time.sleep(3)
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
@@ -762,8 +763,7 @@ class commonTarget():
             self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
-        time.sleep(10)
-        self.runCommand(sshPassword,endsWith=self.getAllEndsWith(),timeout=timeout,shutdownOnError=False)
+        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
         return True
 
