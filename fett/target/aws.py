@@ -255,7 +255,7 @@ def _runCommandAndLog(command, stdout=None, stderr=None, shell=False, **kwargs):
     try:
         subprocess.run(command, stdout=stdout, stderr=stderr, shell=shell, **kwargs)
     except Exception as exc:
-            logAndExit (f"<aws._runCommandAndLog>: Failed on <{command}>." + logDetailsString())
+        logAndExit (f"<aws._runCommandAndLog>: Failed on <{command}>." + logDetailsString())
 
 @decorate.debugWrap
 def _sendKmsg(message):
