@@ -25,6 +25,9 @@ class firesimTarget(commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
+        if (getSetting('osImage') != 'debian'):
+            logAndExit (f"<firesimTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
+
         awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
 
         # 1. Switch0
