@@ -83,6 +83,14 @@
             "type" : "int",
             "min" : 1024,
             "max" : 65535
+        },
+        {
+            "name" : "userName",
+            "type" : "string"
+        },
+        {
+            "name" : "userPassword",
+            "type" : "string"
         }
     ],
 
