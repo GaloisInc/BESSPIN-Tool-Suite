@@ -375,7 +375,7 @@ def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False):
     return out
 
 @decorate.debugWrap
-def sudoShellCommand (argsList, sudoPromptPrefix=None, checkCall=True, timeout=90):
+def sudoShellCommand (argsList, sudoPromptPrefix=None, check=True, timeout=30, **kwargs):
     if (sudoPromptPrefix):
         try:
             sudoPrompt = sudoPromptPrefix + f" [sudo] password for {getpass.getuser()}: "
@@ -385,14 +385,15 @@ def sudoShellCommand (argsList, sudoPromptPrefix=None, checkCall=True, timeout=9
     else: #no prompt
         promptArgs = []
 
+    command = ['sudo'] + promptArgs + argsList
+    shellCommand (command, check=check, timeout=timeout, **kwargs)
+
+@decorate.debugWrap
+def shellCommand (argsList, check=True, timeout=30, **kwargs):
+    shellOut = ftOpenFile(os.path.join(getSetting('workDir'),'shell.out'),'a')
+    shellOut.write(f"\n\n{' '.join(argsList)}\n")
     try:
-        command = ['sudo'] + promptArgs + argsList
+        subprocess.run(argsList, stdout=shellOut, stderr=shellOut, timeout=timeout, check=check, **kwargs)
     except Exception as exc:
-        logAndExit (f"sudo: Failed to format the sudo command with <{argsList}>.",exc=exc,exitCode=EXIT.Dev_Bug)
-    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
-    sudoOut.write(f"\n\n{' '.join(command)}\n")
-    try:
-        subprocess.run(command,stdout=sudoOut,stderr=sudoOut,timeout=timeout,check=checkCall)
-    except Exception as exc:
-        logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
-    sudoOut.close()
+        logAndExit (f"shell: Failed to <{' '.join(command)}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
+    shellOut.close()
