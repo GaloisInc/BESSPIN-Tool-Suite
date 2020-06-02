@@ -48,6 +48,7 @@ void Initialize_HTTP_Assets(void)
             written = ff_fwrite((void *)asset_data[i], 1, this_size, fd);
             if (written != this_size)
             {
+                // T1D1 - fatal if we can't initialize HTTP assets
                 fettPrintf("(Error)~  Initialize_HTTP_Assets: file write "
                            "failed. [written=%ld, fsize=%ld].\r\n",
                            written, this_size);
@@ -56,6 +57,7 @@ void Initialize_HTTP_Assets(void)
             r = ff_fclose(fd);
             if (r != 0)
             {
+                // T3D3 - carry on...
                 fettPrintf(
                     "(Error)~  Initialize_HTTP_Assets: file close failed\n");
             }
@@ -64,6 +66,7 @@ void Initialize_HTTP_Assets(void)
         {
             // Log an error here, but CARRY ON to ensure that control-flow
             // reaches the ff_release() call below.
+            // T1D1 - fatal if we can't initialize HTTP assets
             fettPrintf(
                 "(Error)~  Initialize_HTTP_Assets, failed to open %s\r\n",
                 this_name);
@@ -85,6 +88,7 @@ void Http_Worker(void)
                                            sizeof(xServerConfiguration) /
                                                sizeof(xServerConfiguration[0]));
 
+    // T1D1 - fatal if TCP server cannot be created
     pvERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Create TCP Server.");
 
     for (;;)
@@ -111,8 +115,10 @@ void vHttp(void *pvParameters)
     fettPrintf("(Info)~  vHttp: Exiting HTTP...\r\n");
 
     //notify main
+    // T1D1
     pvERROR_IF_EQ(xMainTask, NULL, "vHttp: Get handle of <main:task>.");
     funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_HTTP, eSetBits);
+    // T1D1
     vERROR_IF_NEQ(funcReturn, pdPASS, "vHttp: Notify <main:task>.");
 
     vTaskDelete(NULL);
