@@ -341,9 +341,10 @@ def prepareFiresim():
         return contents[keyName]
 
     # copy over the firesim kernel modules, simulation interfaces
-    firesimPath = os.path.join(getSetting('binaryRepoDir'), os.path.join('GFE', 'bitfiles', 'aws', 'firesim'))
-    firesimModPath = os.path.join(firesimPath, 'kmods')
-    firesimSimPath = os.path.join(firesimPath, 'sim')
+    firesimSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 
+                                    'bitfiles', 'firesim', getSetting('processor'))
+    firesimModPath = os.path.join(firesimSourcePath, 'kmods')
+    firesimSimPath = os.path.join(firesimSourcePath, 'sim')
 
     firesimWorkPath = os.path.join(getSetting("workDir"), "firesim")
     mkdir(firesimWorkPath,addToSettings='firesimPath')
@@ -354,8 +355,7 @@ def prepareFiresim():
 
     # extract the agfi and put it in setting
     processorName = getSetting('processor')
-    agfiJsonPath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'aws', 'firesim',
-                                processorName, 'agfi_id.json')
+    agfiJsonPath = os.path.join(firesimSourcePath, 'agfi_id.json')
     agfiId = getAgfiJson(agfiJsonPath)
     setSetting("agfiId", agfiId)
 
