@@ -216,7 +216,7 @@ static void prvReceiveNewClient(TCPServer_t *pxServer, BaseType_t xIndex,
     {
         struct freertos_sockaddr xRemoteAddress;
         FreeRTOS_GetRemoteAddress(pxClient->xSocket, &xRemoteAddress);
-        fettPrintf("TPC-server: new %s client %xip\n", pcType,
+        fettPrintf("TCP-server: new %s client on IP %08x\n", pcType,
                          (unsigned)FreeRTOS_ntohl(xRemoteAddress.sin_addr));
     }
 

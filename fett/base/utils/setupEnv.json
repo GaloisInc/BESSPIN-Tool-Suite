@@ -242,6 +242,7 @@
             "val" : {
                 "path" : "fett/apps/freertos/assets",
                 "otaHtml" : "ota.htm",
+                "StopHtml" : "stop.htm",
                 "assets" : ["index.htm", "ota.htm", "glogo.png"]
             }
         }

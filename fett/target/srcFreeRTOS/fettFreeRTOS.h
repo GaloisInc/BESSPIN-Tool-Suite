@@ -5,6 +5,7 @@ fett header for includes, externs, and global variables
 /* General includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
@@ -121,8 +122,20 @@ fett header for includes, externs, and global variables
 extern void vStartNetwork (void *pvParameters);
 
 // --------- fettMisc.c ---------------------------------------------------------------------------------
+
+// Termination control.
+//
+// A global atomic Boolean flag is declared and initialized to False.
+// A task can set this to True by calling setStopRequested()
+// Other tasks can test it with StopRequested()
+extern void setStopRequested(void);
+extern bool StopRequested(void);
+
+// Debug printing and exit
 extern void fettPrintf (const char * textToPrint, ...);
 extern void exitFett (uint8_t exitCode);
+
+
 extern void _open (const char * dump1, int dump2, ...); //Needed for WolfSSL to compile -- should never be called
 extern void _gettimeofday (struct timeval *__p, void *__tz); //Needed for WolfSSL to compile -- should never be called
 extern time_t XTIME(time_t *t); //Needed for WolfSSL to compile -- should never be called

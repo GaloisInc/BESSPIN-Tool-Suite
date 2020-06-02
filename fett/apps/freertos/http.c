@@ -38,7 +38,7 @@ void Initialize_HTTP_Assets (void)
 
         const char   *this_name = asset_names[i];
         const size_t  this_size = asset_sizes[i];
-        
+
         fettPrintf ("(Info)~  Initialize_HTTP_Assets: Creating %s to write %ld bytes\n",
                     this_name,
                     this_size);
@@ -84,10 +84,16 @@ void Http_Worker (void)
 
     pvERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Create TCP Server.");
 
-    TickType_t xStartTime = xTaskGetTickCount();
-    do {
+    for (;;)
+    {
       FreeRTOS_TCPServerWork (pxTCPServer, xInitialBlockTime);
-    } while ((xTaskGetTickCount() - xStartTime) < pdMS_TO_TICKS(configHTTP_TIMEOUT));
+
+      if (StopRequested())
+        {
+          fettPrintf ("(Info)~ Http_Worker: Terminating on STOP request\n");
+          break;
+        }
+    }
 }
 
 
