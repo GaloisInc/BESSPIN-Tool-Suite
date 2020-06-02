@@ -7,11 +7,26 @@
 
 #define ffconfigMAX_FILENAME    13 // 8.3 format plus a final \0 terminator
 
+#if BSP_USE_ICEBLK
+/* FatFS library and IceBlk driver for AWS */
+#include "ff.h" /* Declarations of FatFs API */
+typedef struct _FF_FILE
+{
+    char filename[ffconfigMAX_FILENAME];
+    uint32_t ulFileSize;            /* File's Size. */
+    FIL fatfsFile; /* FatFS file struct */
+} FF_FILE;
+
+#else
+/* SD Lib for FPGA target */
+#include <SDLib.h>
 typedef struct _FF_FILE
 {
     char filename[ffconfigMAX_FILENAME];
     uint32_t ulFileSize;            /* File's Size. */
 } FF_FILE;
+
+#endif
 
 typedef struct
 {
@@ -24,6 +39,7 @@ typedef struct
 //
 // This function MUST be called exactly ONCE before any of
 // the other functions declared below.
+// Returns 0 if OK, 1 if an error occured
 extern int ff_init( void );
 
 // Mutual exclusion
@@ -42,9 +58,22 @@ extern void ff_lock (void);
 extern void ff_release (void);
 
 // File manipulation
+// Open a file specified by char* pcFile
+// Returns NULL if an error occured, otherwise a pointer to FF_FILE struct
 extern FF_FILE *ff_fopen( const char *pcFile, const char *pcMode );
+
+// Close a file specified by FF_FILE
+// Returns 0 if OK, 1 if an error occured
 extern int ff_fclose( FF_FILE *pxStream );
+
+// Read from file to pvBuffer
+// NOTE: this function reads xItems of xSize, rather than bytes
+// and returns number of xItems read, not bytes!
 extern size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream );
+
+// Write to file from pvBuffer
+// NOTE: this function writes xItems of xSize, rather than bytes
+// and returns number of xItems written, not bytes!
 extern size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream );
 
 #endif /* FF_STDIO_H */
