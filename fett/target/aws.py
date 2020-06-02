@@ -352,6 +352,14 @@ def prepareFiresim():
     firesimWorkPath = os.path.join(getSetting("workDir"), "firesim")
     mkdir(firesimWorkPath,addToSettings='firesimPath')
 
+    # firesim needs two empty files img and dwarf [for now]
+    imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
+    setSetting("osImageImg",imageFile)
+    touch(imageFile)
+    dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
+    setSetting("osImageDwarf",dwarfFile)
+    touch(dwarfFile)
+
     # copy over sim and kmods
     copyDir(firesimSimPath, firesimWorkPath)
     copyDir(firesimModPath, firesimWorkPath)

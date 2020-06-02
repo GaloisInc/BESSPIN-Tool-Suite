@@ -143,15 +143,6 @@ def prepareDebian():
     # copy the crngOnDebian.riscv
     cp (getSetting('addEntropyDebianPath'),getSetting('buildDir'))
     importImage()
-    if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
-        # need two empty files too
-        imageFile = os.path.join(getSetting('osImagesDir'), 'debian.img')
-        setSetting("osImageImg",imageFile)
-        touch(imageFile)
-        dwarfFile = os.path.join(getSetting('osImagesDir'), 'debian.dwarf')
-        setSetting("osImageDwarf",dwarfFile)
-        touch(dwarfFile)
-
 
 @decorate.debugWrap
 @decorate.timeWrap
