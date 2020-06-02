@@ -28,9 +28,6 @@ class firesimTarget(commonTarget):
                                             cwd=awsFiresimSimPath, preexec_fn=os.setpgrp)
 
         # 2. fsim
-        imageFile = os.path.join(awsFiresimSimPath, "debian.img")
-
-        dwarfFile = os.path.join(awsFiresimSimPath, "debian.dwarf")
         firesimCommand = ' '.join([
             "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target 
             'sudo',
@@ -72,14 +69,14 @@ class firesimTarget(commonTarget):
             '+slotid=0',
             '+profile-interval=-1',
             f"+macaddr0={getSetting('awsTargetMacAddress')}",
-            f"+blkdev0={imageFile}",
+            f"+blkdev0={getSetting('osImageImg')}",
             f"+niclog0={os.path.join(getSetting('workDir'),'niclog0.out')}",
             f"+blkdev-log0={os.path.join(getSetting('workDir'),'blkdev-log0.out')}",
             '+trace-select0=1',
             '+trace-start0=0',
             '+trace-end0=-1',
             '+trace-output-format0=0',
-            f"+dwarf-file-name0={dwarfFile}",
+            f"+dwarf-file-name0={getSetting('osImageDwarf')}",
             '+autocounter-readrate0=0',
             f"+autocounter-filename0={os.path.join(getSetting('workDir'),'AUTOCOUNTERFILE0.out')}",
             f"+linklatency0={self.switch0timing[0]}",
@@ -346,9 +343,13 @@ def prepareFiresim():
     copyDir(firesimSimPath, firesimWorkPath)
     copyDir(firesimModPath, firesimWorkPath)
 
-    # touch an empty image
+    # touch an empty image + dwarf
     imageFile = os.path.join(firesimWorkPath, 'sim', 'debian.img')
+    setSetting("osImageImg",imageFile)
     touch(imageFile)
+    dwarfFile = os.path.join(firesimWorkPath, 'sim', 'debian.dwarf')
+    setSetting("osImageDwarf",dwarfFile)
+    touch(dwarfFile)
 
     # extract the agfi and put it in setting
     processorName = getSetting('processor')
