@@ -66,6 +66,8 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 * [The Nix Package Manager](https://nixos.org/nix/)
 * [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) checked out at `2430b00b1becf8957d7fe4a304fb820e74e66972`, with the environment pre-populated at `nix/store`
 
+After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access.
+
 See the instructions in `build/FireSimAMI.md` to recreate the image manually.
 
 
