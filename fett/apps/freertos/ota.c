@@ -53,6 +53,7 @@ void Write_Payload_To_FS(size_t fsize)
         written = ff_fwrite(file_buffer + ED25519_SIG_SIZE, 1, fsize, fd);
         if (written != fsize)
         {
+            // T1D3
             fettPrintf("(Error)~  vOta: file write failed. [written=%ld, "
                        "fsize=%ld].\r\n",
                        written, fsize);
@@ -61,6 +62,7 @@ void Write_Payload_To_FS(size_t fsize)
         r = ff_fclose(fd);
         if (r != 0)
         {
+            // T1D3
             fettPrintf("(Error)~  vOta: file close failed\n");
         }
     }
@@ -68,6 +70,7 @@ void Write_Payload_To_FS(size_t fsize)
     {
         // Log an error here, but CARRY ON to ensure that control-flow
         // reaches the ff_release() call below.
+        // T1D3
         fettPrintf("(Error)~  vOta: failed to open %s\r\n", OTA_FILENAME);
     }
 
@@ -156,11 +159,13 @@ void Ota_Worker(ed25519_key *pk)
             }
             else
             {
+                // T3D3 - forged signature detected, so carry on...
                 fettPrintf("(Info)~  vOta: Signature is NOT OK\n");
             }
         }
         else
         {
+            // T3D3 - odd, but harmless, so carry on...
             fettPrintf(
                 "(Info)~  vOta: OTA: received file too small to be signed.\n");
         }
@@ -180,9 +185,11 @@ void vOta(void *pvParameters)
     fettPrintf("(Info)~  vOta: Starting OTA...\r\n");
 
     r = wc_ed25519_init(&pk);
+    // T1D1 - fatal is crypto lib is failed
     vERROR_IF_NEQ(r, 0, "vOta : wc_ed25519_init()");
 
     r = wc_ed25519_import_public(raw_pk, ED25519_KEY_SIZE, &pk);
+    // T1D1 - fatal is key cannot be imported
     vERROR_IF_NEQ(r, 0, "vOta : wc_ed25519_import_public()");
 
     // Self test crypto
@@ -199,8 +206,10 @@ void vOta(void *pvParameters)
     fettPrintf("(Info)~  vOta: Exiting OTA...\r\n");
 
     //notify main
+    // T1D1
     pvERROR_IF_EQ(xMainTask, NULL, "vOta: Get handle of <main:task>.");
     funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_OTA, eSetBits);
+    // T1D1
     vERROR_IF_NEQ(funcReturn, pdPASS, "vOta: Notify <main:task>.");
 
     vTaskDelete(NULL);
