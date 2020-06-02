@@ -28,9 +28,9 @@ class firesimTarget(commonTarget):
                                             cwd=awsFiresimSimPath, preexec_fn=os.setpgrp)
 
         # 2. fsim
-        imageFile = os.path.join(awsFiresimSimPath, "linux-uniform0-br-base.img")
+        imageFile = os.path.join(awsFiresimSimPath, "debian.img")
 
-        dwarfFile = os.path.join(awsFiresimSimPath, "linux-uniform0-br-base-bin-dwarf")
+        dwarfFile = os.path.join(awsFiresimSimPath, "debian.dwarf")
         firesimCommand = ' '.join([
             "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target 
             'sudo',
@@ -327,7 +327,7 @@ def flashFpgas(agfi):
 def prepareFiresim():
     """prepare the firesim binaries for the FETT work directory"""
     def getAgfiJson(jsonFile):
-        keyName = 'agfi-id'
+        keyName = 'agfi_id'
         contents = safeLoadJsonFile(jsonFile)
         if keyName not in contents:
             logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi-id> in {jsonFile}")
@@ -347,7 +347,7 @@ def prepareFiresim():
     copyDir(firesimModPath, firesimWorkPath)
 
     # touch an empty image
-    imageFile = os.path.join(firesimWorkPath, 'sim', 'linux-uniform0-br-base.img')
+    imageFile = os.path.join(firesimWorkPath, 'sim', 'debian.img')
     touch(imageFile)
 
     # extract the agfi and put it in setting
