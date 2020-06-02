@@ -12,7 +12,7 @@ static SemaphoreHandle_t ff_mutex;
 
 // Exported function bodies
 
-int ff_init( void ) 
+int ff_init( void )
 {
     // Note that we use a dynamically allocated Mutex, since our FreeRTOSConfig.h
     // does not support static allocation.
@@ -34,6 +34,7 @@ void ff_lock (void)
 {
     BaseType_t r;
     r = xSemaphoreTake (ff_mutex, portMAX_DELAY);
+    // T3D3 - should never return pdFalse with portMAX_DELAY
     prERROR_IF_EQ (r, pdFALSE, "Taking ff_mutex");
     return;
 }
@@ -42,6 +43,7 @@ void ff_release (void)
 {
     BaseType_t r;
     r = xSemaphoreGive (ff_mutex);
+    // T3D3 - should never return pdFalse for a simple mutex
     prERROR_IF_EQ (r, pdFALSE, "Releasing ff_mutex");
     return;
 }
@@ -52,6 +54,7 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
     if (strlen(pcFile) > ffconfigMAX_FILENAME) {
         fettPrintf("(Error)~  ff_open: Length of filename should be <= %d.\r\n",ffconfigMAX_FILENAME);
         exitFett (1);
+        // caller responsible
         return NULL;
     }
 
@@ -63,11 +66,13 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
     if (file == NULL) {
         fettPrintf("(Error)~  ff_open: Failed to malloc.\r\n");
         exitFett (1);
+        // caller responsible
         return NULL;
     }
 
     if (!sdlib_open(pcFile,pcMode)) {
         fettPrintf ("ff_fopen: Failed to open <%s>.\r\n",pcFile);
+        // caller responsible
         return NULL;
     }
 
@@ -101,6 +106,7 @@ size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream
 
     items_read = bytes_read/xSize;
 
+    // caller responsible to check items_read
     return items_read;
 }
 
@@ -115,5 +121,6 @@ size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStrea
 
     items_written = bytes_written/xSize;
 
+    // caller responsible to check items_written
     return items_written;
 }
