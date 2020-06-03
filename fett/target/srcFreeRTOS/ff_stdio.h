@@ -7,26 +7,22 @@
 
 #define ffconfigMAX_FILENAME    13 // 8.3 format plus a final \0 terminator
 
-#if BSP_USE_ICEBLK
-/* FatFS library and IceBlk driver for AWS */
-#include "ff.h" /* Declarations of FatFs API */
-typedef struct _FF_FILE
-{
-    char filename[ffconfigMAX_FILENAME];
-    uint32_t ulFileSize;            /* File's Size. */
-    FIL fatfsFile; /* FatFS file struct */
-} FF_FILE;
-
+#ifdef FETT_AWS
+    /* FatFS library and IceBlk driver for AWS */
+    #include "ff.h" /* Declarations of FatFs API */
+    #include "iceblk.h"
 #else
-/* SD Lib for FPGA target */
-#include <SDLib.h>
+    #include <SDLib.h>
+#endif
+
 typedef struct _FF_FILE
 {
     char filename[ffconfigMAX_FILENAME];
     uint32_t ulFileSize;            /* File's Size. */
+    #ifdef FETT_AWS
+        FIL fatfsFile; /* FatFS file struct */
+    #endif
 } FF_FILE;
-
-#endif
 
 typedef struct
 {

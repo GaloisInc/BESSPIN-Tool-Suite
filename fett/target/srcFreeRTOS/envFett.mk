@@ -49,6 +49,7 @@ INCLUDES += -I$(WOLFSSL_SOURCE_DIR)
 # Filesystem
 ifeq ($(BSP),aws)
 	# AWS & IceBlk driver
+	CFLAGS += -DFETT_AWS
 	SD_SOURCE_DIR = ./FatFs/source
 	DEMO_SRC += $(SD_SOURCE_DIR)/diskio.c \
 			 	$(SD_SOURCE_DIR)/ff.c \
