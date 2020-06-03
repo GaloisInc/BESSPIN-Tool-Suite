@@ -391,7 +391,7 @@ def sudoShellCommand (argsList, sudoPromptPrefix=None, check=True, timeout=30, *
 @decorate.debugWrap
 def shellCommand (argsList, check=True, timeout=30, **kwargs):
     shellOut = ftOpenFile(os.path.join(getSetting('workDir'),'shell.out'),'a')
-    shellOut.write(f"\n\n{' '.join(argsList)}\n")
+    shellOut.write(f"\n\n{argsList}\n")
     try:
         subprocess.run(argsList, stdout=shellOut, stderr=shellOut, timeout=timeout, check=check, **kwargs)
     except Exception as exc:
