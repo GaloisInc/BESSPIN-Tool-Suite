@@ -21,7 +21,7 @@ int ff_init( void )
       {
         fettPrintf ("(Error)~ failed to allocate memory for ff_mutex\r\n");
         exitFett (1);
-        return 1; // error
+        return 1; // caller responsible for handling error
       }
 
     // Make sure ff_mutex is in the "given" state at startup
@@ -34,8 +34,7 @@ void ff_lock (void)
 {
     BaseType_t r;
     r = xSemaphoreTake (ff_mutex, portMAX_DELAY);
-    // T3D3 - should never return pdFalse with portMAX_DELAY
-    prERROR_IF_EQ (r, pdFALSE, "Taking ff_mutex");
+    ASSERT_OR_WARN ((r == pdTRUE), "Taking ff_mutex");
     return;
 }
 
@@ -43,8 +42,7 @@ void ff_release (void)
 {
     BaseType_t r;
     r = xSemaphoreGive (ff_mutex);
-    // T3D3 - should never return pdFalse for a simple mutex
-    prERROR_IF_EQ (r, pdFALSE, "Releasing ff_mutex");
+    ASSERT_OR_WARN ((r == pdTRUE), "Releasing ff_mutex");
     return;
 }
 
@@ -54,7 +52,7 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
     if (strlen(pcFile) > ffconfigMAX_FILENAME) {
         fettPrintf("(Error)~  ff_open: Length of filename should be <= %d.\r\n",ffconfigMAX_FILENAME);
         exitFett (1);
-        // caller responsible
+        // caller responsible for handling error
         return NULL;
     }
 

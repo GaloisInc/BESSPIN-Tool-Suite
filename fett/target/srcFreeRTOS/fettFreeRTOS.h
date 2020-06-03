@@ -98,6 +98,26 @@ fett header for includes, externs, and global variables
 #define  pvERROR_IF_EQ(ret, err, msg)  (pERROR_IF_TRUE (ret, msg, 'v', COMP_EQ(ret, err)))
 #define pprERROR_IF_EQ(ret, err, msg)  (pERROR_IF_TRUE (ret, msg, 'p', COMP_EQ(ret, err)))
 
+
+/* New error-handling macros introduced by Issue #248 */
+#define ASSERT_OR_WARN(b, msg) {\
+    if (b)\
+        fettPrintf ("(Info)~  Assertion OK: %s\r\n",msg);\
+    else\
+        fettPrintf ("(Warning)~  Assertion failed: %s\r\n",msg);\
+    }
+
+#define ASSERT_OR_DELETE_TASK(b, msg) {\
+    if (b)\
+        fettPrintf ("(Info)~  Assertion OK: %s\r\n",msg);\
+    else {\
+        fettPrintf ("(Error)~  Assertion failed so deleting task: %s\r\n",msg);\
+        exitFett (1);\
+        vTaskDelete (NULL); }\
+    }
+
+
+
 #ifndef pdTICKS_TO_S
     #define pdTICKS_TO_S( xTicks ) ( ( TickType_t ) ( ( ( TickType_t ) ( xTicks ) ) / ( TickType_t ) configTICK_RATE_HZ ) )
 #endif
