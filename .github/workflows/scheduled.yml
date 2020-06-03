@@ -1,3 +1,7 @@
+# All scheduled jobs only run on the master branch. Consequently, any changes
+# to this file will not be refelcted in the CI until it is merged to master.
+#
+# To run the workflow on the develop branch, develop is checked out manually.
 name: Scheduled Runs
 on:
   schedule:
