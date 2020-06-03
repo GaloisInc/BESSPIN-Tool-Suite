@@ -7,7 +7,9 @@
 // be directly accessed outside of this file.
 static SemaphoreHandle_t ff_mutex;
 
-// Exported function bodies
+#ifdef FETT_AWS
+    FATFS FatFs; /* FatFs work area needed for each volume */
+#endif
 
 void ff_lock (void)
 {
@@ -45,7 +47,8 @@ int ff_init( void )
         // IceBlk is already initialized upon boot,
         // check if the disk is present instead
         if (IceblkDevInstance.disk_present) {
-            return 0;
+            fettPrintf ("(Info)~ ff_init: Disk present. Mounting filesystem...");
+            return f_mount(&FatFs, "", 0);
         } else {
             fettPrintf ("(Error)~ iceclk disk is not present\r\n");
             return 1;
