@@ -70,7 +70,7 @@ def loadConfiguration(configFile):
         logAndExit(f"userPassword \"{userPassword}\" does not satisfy the "
                    "password requirements.  Must be 8-14 characters long and "
                    "may consist only of alphanumeric ASCII characters and the "
-                   "following special characters: @%^&*(-_=+)")
+                   "following special characters: !@%^&*(-_=+)")
 
     printAndLog('Configuration loaded successfully.')
     dumpSettings()
