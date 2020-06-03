@@ -93,8 +93,9 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
             fettPrintf ("(Error)~  ff_fopen: pcMode:<%s> is not implemented.\r\n",pcMode);
             return NULL;
         }
-        if (f_open(file->fatfsFile, pcFile, mode) != FR_OK) {
-            fettPrintf ("(Error)~  ff_fopen: Failed to open <%s>.\r\n",pcFile);
+        int res = f_open(file->fatfsFile, pcFile, mode);
+        if (res != FR_OK) {
+            fettPrintf ("(Error)~  ff_fopen: Failed to open <%s>. [ret=%d]\r\n",pcFile,res);
             return NULL;
         }
 
@@ -143,7 +144,7 @@ size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream
     #ifdef FETT_AWS
         int res = f_read(pxStream->fatfsFile, (uint8_t *)pvBuffer, bytes, &bytes_read);
         if (res != FR_OK) {
-            fettPrintf ("(Error)~ ff_fread: failed to read from file\r\n");
+            fettPrintf ("(Error)~ ff_fread: failed to read from file. [ret =%d]\r\n",res);
             return 0; // 0 items read [TODO: do we check here on any error values?]
         }
     #else
@@ -164,7 +165,7 @@ size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStrea
     #ifdef FETT_AWS
         int res = f_write(pxStream->fatfsFile, (uint8_t *)pvBuffer, bytes, &bytes_written); /* Write data to the file */
         if (res != FR_OK) {
-            fettPrintf ("(Error)~ ff_fwrite: failed to write to file\r\n");
+            fettPrintf ("(Error)~ ff_fwrite: failed to write to file. [ret=%d]\r\n",res);
             return 0; // 0 items written
         }
     #else
