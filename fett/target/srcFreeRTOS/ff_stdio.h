@@ -20,7 +20,7 @@ typedef struct _FF_FILE
     char filename[ffconfigMAX_FILENAME];
     uint32_t ulFileSize;            /* File's Size. */
     #ifdef FETT_AWS
-        FIL * fatfsFile; /* FatFS file struct */
+        FIL fatfsFile; /* FatFS file struct */
     #endif
 } FF_FILE;
 

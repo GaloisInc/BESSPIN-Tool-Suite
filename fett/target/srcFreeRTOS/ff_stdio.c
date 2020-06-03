@@ -79,14 +79,6 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
     }
 
     #ifdef FETT_AWS
-        // allocate the FIL structure too
-        file->fatfsFile = pvPortMalloc(sizeof(FIL));
-        if (file->fatfsFile == NULL) {
-            fettPrintf("(Error)~  ff_open: Failed to malloc <FIL>.\r\n");
-            exitFett (1);
-            return NULL;
-        }
-
         uint8_t mode;
         if ((strcmp(pcMode,"r") == 0) || (strcmp(pcMode,"rb") == 0)) {
             mode = FA_READ;
@@ -96,14 +88,14 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
             fettPrintf ("(Error)~  ff_fopen: pcMode:<%s> is not implemented.\r\n",pcMode);
             return NULL;
         }
-        int res = f_open(file->fatfsFile, pcFile, mode);
+        int res = f_open(&(file->fatfsFile), pcFile, mode);
         if (res != FR_OK) {
-            fettPrintf ("(Error)~  ff_fopen: Failed to open <%s>. [ret=%d]\r\n",pcFile,res);
+            fettPrintf ("ff_fopen: Failed to open <%s>. [ret=%d]\r\n",pcFile,res);
             return NULL;
         }
 
         // Store the file size
-        file->ulFileSize = f_size(file->fatfsFile);
+        file->ulFileSize = f_size(&(file->fatfsFile));
     #else
         if (!sdlib_open(pcFile,pcMode)) {
             fettPrintf ("ff_fopen: Failed to open <%s>.\r\n",pcFile);
@@ -126,8 +118,7 @@ int ff_fclose( FF_FILE *pxStream )
 {
     int ret;
     #ifdef FETT_AWS
-        ret = f_close(pxStream->fatfsFile); /* Close the file */
-        vPortFree(pxStream->fatfsFile);
+        ret = f_close(&(pxStream->fatfsFile)); /* Close the file */
     #else
         ret = 0;
         sdlib_close(pxStream->filename);
@@ -145,7 +136,7 @@ size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream
     bytes = xSize * xItems;
 
     #ifdef FETT_AWS
-        int res = f_read(pxStream->fatfsFile, (uint8_t *)pvBuffer, bytes, &bytes_read);
+        int res = f_read(&(pxStream->fatfsFile), (uint8_t *)pvBuffer, bytes, &bytes_read);
         if (res != FR_OK) {
             fettPrintf ("(Error)~ ff_fread: failed to read from file. [ret =%d]\r\n",res);
             return 0; // 0 items read [TODO: do we check here on any error values?]
@@ -166,7 +157,7 @@ size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStrea
 
     bytes = xSize * xItems;
     #ifdef FETT_AWS
-        int res = f_write(pxStream->fatfsFile, (uint8_t *)pvBuffer, bytes, &bytes_written); /* Write data to the file */
+        int res = f_write(&(pxStream->fatfsFile), (uint8_t *)pvBuffer, bytes, &bytes_written); /* Write data to the file */
         if (res != FR_OK) {
             fettPrintf ("(Error)~ ff_fwrite: failed to write to file. [ret=%d]\r\n",res);
             return 0; // 0 items written
