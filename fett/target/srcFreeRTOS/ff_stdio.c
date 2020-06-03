@@ -70,12 +70,20 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 
     // Crash fast if there's no memory left on the device
     if (file == NULL) {
-        fettPrintf("(Error)~  ff_open: Failed to malloc.\r\n");
+        fettPrintf("(Error)~  ff_open: Failed to malloc <FF_FILE>.\r\n");
         exitFett (1);
         return NULL;
     }
 
     #ifdef FETT_AWS
+        // allocate the FIL structure too
+        file->fatfsFile = pvPortMalloc(sizeof(FIL));
+        if (file->fatfsFile == NULL) {
+            fettPrintf("(Error)~  ff_open: Failed to malloc <FIL>.\r\n");
+            exitFett (1);
+            return NULL;
+        }
+
         uint8_t mode;
         if ((strcmp(pcMode,"r") == 0) || (strcmp(pcMode,"rb") == 0)) {
             mode = FA_READ;
@@ -115,6 +123,7 @@ int ff_fclose( FF_FILE *pxStream )
     int ret;
     #ifdef FETT_AWS
         ret = f_close(pxStream->fatfsFile); /* Close the file */
+        vPortFree(pxStream->fatfsFile);
     #else
         ret = 0;
         sdlib_close(pxStream->filename);
