@@ -355,14 +355,15 @@ def matchExprInLines (expr,lines):
     return None
 
 @decorate.debugWrap    
-def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False):
+def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False, timeout=60):
     # Need --insecure because of self signed certs
     options = [
         "--insecure",
         "--http2" if http2 else "--http1.1",
         "-L",
         "-s",
-        "-X", method
+        "-X", method,
+        '-m', str(timeout)
     ] + extra
     if not rawOutput:
         options.append("-I")
