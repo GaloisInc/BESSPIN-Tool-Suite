@@ -87,6 +87,8 @@ def prepareFreeRTOS():
             configHfile.write(f"#define {xMacro} {intVal}\n")
         #Write the ota filename too (not list as it is unique)
         configHfile.write(f"#define OTA_FILENAME \"{getSettingDict('freertosAssets',['otaHtml'])}\"\n")
+        #Translate the mode to one char: T or D
+        configHfile.write(f"#define FETT_MODE \'{getSetting('mode')[0].upper()}\'\n")
         configHfile.close()
 
         #Include the network configuration parameters

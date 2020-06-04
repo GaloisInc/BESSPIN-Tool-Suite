@@ -8,7 +8,7 @@ void vMain (void *pvParameters);
 TaskHandle_t xMainTask = NULL;
 UBaseType_t xMainPriority = tskIDLE_PRIORITY+100; //100 is chosen arbitrarily.
 
-//This is the entry point function
+// This is the entry point function
 void main_fett () {
 
     fettPrintf ("\n>>>Beginning of Fett<<<\n");
@@ -18,9 +18,16 @@ void main_fett () {
                                         configMINIMAL_STACK_SIZE * STACKSIZEMUL,
                                         NULL, xMainPriority,
                                         NULL);
-    prERROR_IF_NEQ(funcReturn, pdPASS, "main_fett: Creating vMain task.");
 
-    vTaskStartScheduler(); // Hang the function
+    if (funcReturn == pdPASS)
+    {
+        fettPrintf ("(Info)~  main_fett: Creating vMain task OK.");
+        vTaskStartScheduler(); // Hang the function
+    }
+    else
+    {
+        fettPrintf ("(Error)~  main_fett: Creating vMain task.");
+    }
     return;
 }
 
@@ -30,7 +37,7 @@ void vMain (void *pvParameters) {
     BaseType_t funcReturn;
     uint32_t recvNotification;
     int r;
-    
+
     xMainTask = xTaskGetCurrentTaskHandle();
 
     fettPrintf("vMain: Main task started...\r\n");
@@ -38,32 +45,39 @@ void vMain (void *pvParameters) {
     // Initialize WolfSLL - this needs to be done before any other call to
     // any other WolfSSL or Wolfcrypt API
     r = wolfSSL_Init();
-    vERROR_IF_NEQ(r, SSL_SUCCESS, "main_fett: Initializing WolfSSL.");
+    ASSERT_OR_DELETE_TASK((r == SSL_SUCCESS),
+                          "main_fett: Initializing WolfSSL.");
 
-    //Start the FAT filesystem
+    // Start the FAT filesystem
     funcReturn = ff_init();
-    vERROR_IF_NEQ(funcReturn, 0, "main_fett: Initializing FAT filesystem."); 
+    ASSERT_OR_DELETE_TASK((funcReturn == 0),
+                          "main_fett: Initializing FAT filesystem.");
 
     // Initialize HTTP Assets onto the FAT Filesystem.
     // Note - this is done here, BEFORE starting the HTTP and OTA tasks to avoid
     // a potential race condition between HTTP and OTA both trying to update the
     // same file(s) at the same time.
     Initialize_HTTP_Assets();
-    
+
     funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
-    vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vStartNetwork task.");
+    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
+                          "vMain: Creating vStartNetwork task.");
 
     funcReturn = xTaskNotifyWait(0xffffffff, 0xffffffff, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
-    vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Receive notification from vStartNetwork.");
-    vERROR_IF_NEQ(recvNotification, NOTIFY_SUCCESS_NTK, "vMain: Expected notification value from vStartNetwork.");
+    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
+                          "vMain: Receive notification from vStartNetwork.");
+    ASSERT_OR_DELETE_TASK((recvNotification == NOTIFY_SUCCESS_NTK),
+                          "vMain: Expected notification value from vStartNetwork.");
 
     //Start the HTTP task
     funcReturn = xTaskCreate(vHttp, "vMain:vHttp", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
-    vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vHttp task.");
+    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
+                          "vMain: Creating vHttp task.");
 
     //Start the OTA task
     funcReturn = xTaskCreate(vOta, "vMain:vOta", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
-    vERROR_IF_NEQ(funcReturn, pdPASS, "vMain: Creating vOta task.");
+    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
+                          "vMain: Creating vOta task.");
 
     //In dev/test mode, we time-out.
     uint8_t iNotif = 0, nTasksNotif = 2; //HTTP and OTA
@@ -96,7 +110,7 @@ void vMain (void *pvParameters) {
                     iNotif++;
                 }
                 if (!(recvNotification & NOTIFY_SUCCESS_HTTP) && !(recvNotification & NOTIFY_SUCCESS_OTA)) {
-                    fettPrintf("(Error)~  vMain: Received unknown success notification. [notif=0x%lx]\r\n",recvNotification);  
+                    fettPrintf("(Error)~  vMain: Received unknown success notification. [notif=0x%lx]\r\n",recvNotification);
                     exitCode = 1;
                 }
             } else {
@@ -106,5 +120,6 @@ void vMain (void *pvParameters) {
         } //else: notification received
     } while ((iNotif<nTasksNotif) && (exitCode==0) && ((xTaskGetTickCount() - xStartTime) < pdMS_TO_TICKS(1000*APP_TIMEOUT)));
 
-    vEXIT(exitCode);
+    exitFett(exitCode);
+    vTaskDelete(NULL);
 }

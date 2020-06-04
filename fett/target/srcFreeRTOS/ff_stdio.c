@@ -15,7 +15,7 @@ void ff_lock (void)
 {
     BaseType_t r;
     r = xSemaphoreTake (ff_mutex, portMAX_DELAY);
-    prERROR_IF_EQ (r, pdFALSE, "Taking ff_mutex");
+    ASSERT_OR_WARN ((r == pdTRUE), "Taking ff_mutex");
     return;
 }
 
@@ -23,12 +23,11 @@ void ff_release (void)
 {
     BaseType_t r;
     r = xSemaphoreGive (ff_mutex);
-    prERROR_IF_EQ (r, pdFALSE, "Releasing ff_mutex");
+    ASSERT_OR_WARN ((r == pdTRUE), "Releasing ff_mutex");
     return;
 }
 
-/* Return 0 if OK, 1 if Error */
-int ff_init( void ) 
+int ff_init( void )
 {
     // Note that we use a dynamically allocated Mutex, since our FreeRTOSConfig.h
     // does not support static allocation.
@@ -37,7 +36,7 @@ int ff_init( void )
       {
         fettPrintf ("(Error)~ failed to allocate memory for ff_mutex\r\n");
         exitFett (1);
-        return 1; // error
+        return 1; // caller responsible for handling error
       }
 
     // Make sure ff_mutex is in the "given" state at startup
@@ -64,6 +63,7 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
     if (strlen(pcFile) > ffconfigMAX_FILENAME) {
         fettPrintf("(Error)~  ff_open: Length of filename should be <= %d.\r\n",ffconfigMAX_FILENAME);
         exitFett (1);
+        // caller responsible for handling error
         return NULL;
     }
 
@@ -75,6 +75,7 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
     if (file == NULL) {
         fettPrintf("(Error)~  ff_open: Failed to malloc <FF_FILE>.\r\n");
         exitFett (1);
+        // caller responsible
         return NULL;
     }
 
@@ -145,7 +146,9 @@ size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream
         bytes_read = sdlib_read_from_file(pxStream->filename,pvBuffer,bytes);
     #endif
 
+
     items_read = bytes_read/xSize;
+    // caller responsible to check items_read
     return items_read;
 }
 
@@ -167,5 +170,6 @@ size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStrea
     #endif
 
     items_written = bytes_written/xSize;
+    // caller responsible to check items_written
     return items_written;
 }
