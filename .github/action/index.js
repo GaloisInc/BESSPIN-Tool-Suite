@@ -45,6 +45,7 @@ try {
       `--name ${image.replace(/[^a-z0-9]+/gi, "")}-${hash}`,
       `--label=${hash}`,
       "--privileged",
+      "--user=root",
       "--network=host",
       "--workdir /github/workspace",
       "--entrypoint .github/action/entrypoint.sh",
