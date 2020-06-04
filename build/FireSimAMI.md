@@ -26,10 +26,11 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target a
 
    was used. 
 
-3. Install git 2.x.x. You can install git using whatever technique you want, but since nix was just installed, it can be done conveniently,
+3. Install git 2.x.x and git lfs. You can install git using whatever technique you want, but since nix was just installed, it can be done conveniently,
 
    ```
    $ nix-env -i git
+   $ nix-env -i git-lfs
    ```
 
 4. As FETT Environment is based on tool-suite, all of the relevant accesses need to be setup in order for the shell to function correctly. Provided that you have access to the correct repositories, it will help to setup SSH keys with [http://gitlab-ext.galois.com](https://docs.gitlab.com/ee/ssh/) and [www.github.com](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent). Also, tool-suite utilizes a binary cache that will need to be accessed. This is done by [following the tool-suite setup instructions](https://gitlab-ext.galois.com/ssith/tool-suite). The general steps are to create two files, a `nix.conf` configuration file and a `netrc` file with the relevant artifactory login credentials.

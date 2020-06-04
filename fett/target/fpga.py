@@ -6,7 +6,7 @@ Main fpga class + misc fpga functions
 from fett.base.utils.misc import *
 from fett.target.common import *
 
-import subprocess, getpass, psutil, tftpy
+import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
 from pexpect import fdpexpect
 
@@ -168,25 +168,9 @@ class fpgaTarget (commonTarget):
         elif (isEqSetting('osImage','FreeBSD')):
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
-            self.shutdownAndExit("<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
+            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
 
-        #pinging the FPGA to check everything is ok
-        gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
-        pingAttempts = 3
-        wasPingSuccessful = False
-        for iPing in range(pingAttempts):
-            try:
-                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=gfeOut,stderr=gfeOut)
-                wasPingSuccessful = True
-                break
-            except Exception as exc:
-                if (iPing < pingAttempts - 1):
-                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
-                    time.sleep(15)
-                else:
-                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
-        gfeOut.close()
-        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+        self.pingTarget()
 
         if (isEqSetting('osImage','FreeBSD')): #use ssh instead of JTAG
             self.openSshConn()
@@ -333,6 +317,14 @@ def checkEthAdaptorIsUp ():
 
 @decorate.debugWrap
 def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
+    
+    def noAddrFound(errMessage):
+        if (exitIfNoAddr):
+            logAndExit(f"fpga.getAddrOfAdaptor: Failed to {errMessage}. Please check the network configuration.",exitCode=EXIT.Network)
+        else:
+            printAndLog(f"fpga.getAddrOfAdaptor: Failed to {errMessage}.",doPrint=False)
+            return 'NotAnAddress'
+
     if (addrType == 'MAC'):
         family = psutil.AF_LINK
     elif (addrType == 'IP'):
@@ -341,32 +333,14 @@ def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
         logAndExit (f"fpga.getAddrOfAdaptor: Unrecognized address type <{addrType}> is up.",exitCode=EXIT.Dev_Bug)
     
     if (ethAdaptor not in psutil.net_if_addrs()):
-        logAndExit(f"fpga.getAddrOfAdaptor: Failed to find the adaptor <{ethAdaptor}>. Please check the network configuration.",exitCode=EXIT.Network)
+        return noAddrFound(f"find the adaptor <{ethAdaptor}>")
     
     for addr in psutil.net_if_addrs()[ethAdaptor]:
         if (addr.family == family):
             printAndLog(f"fpga.getAddrOfAdaptor: <{addrType} address> of <{ethAdaptor}> = <{addr.address}>",doPrint=False)
             return addr.address
-    if (exitIfNoAddr):
-        logAndExit(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>. Please check the network configuration.",exitCode=EXIT.Network)
-    else:
-        printAndLog(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>.",doPrint=False)
-        return 'NotAnAddress'
 
-@decorate.debugWrap
-def sudoShellCommand (argsList, sudoPromptPrefix):
-    try:
-        sudoPrompt = sudoPromptPrefix + f" [sudo] password for {getpass.getuser()}: "
-        command = ['sudo', '-p', sudoPrompt] + argsList
-    except Exception as exc:
-        logAndExit (f"sudo: Functions called with unsuitable arguments <{argsList}> and <{sudoPromptPrefix}>.",exc=exc,exitCode=EXIT.Dev_Bug)
-    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
-    sudoOut.write(f"\n\n{' '.join(command)}\n")
-    try:
-        subprocess.check_call(command,stdout=sudoOut,stderr=sudoOut,timeout=90)
-    except Exception as exc:
-        logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Network)
-    sudoOut.close()
+    return noAddrFound(f"get the <{addrType} address> of <{ethAdaptor}>")
 
 @decorate.debugWrap
 def resetEthAdaptor ():

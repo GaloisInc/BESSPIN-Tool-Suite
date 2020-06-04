@@ -36,7 +36,7 @@ try {
     getInput("image") || "artifactory.galois.com:5008/fett-target:ci";
   const hash = require("crypto").randomBytes(4).toString("hex");
 
-  const work = "/home/gitlab-runner/actions-runner/_work";
+  const work = "/root/actions-runner/_work";
   const docker = child_process.spawn(
     "docker",
     [
@@ -45,9 +45,9 @@ try {
       `--name ${image.replace(/[^a-z0-9]+/gi, "")}-${hash}`,
       `--label=${hash}`,
       "--privileged",
+      "--user=root",
       "--network=host",
       "--workdir /github/workspace",
-      "--entrypoint .github/action/entrypoint.sh",
       ...env,
       "-v /var/run/docker.sock:/var/run/docker.sock",
       `-v ${work}/_temp/_github_home:/github/home`,
