@@ -102,7 +102,7 @@ void _open (const char * dump1, int dump2, ...) {
     (void) (dump1);
     (void) (dump2);
     fettPrintf ("(FATAL ERROR)~  <_open> should never be called.\r\n");
-    prEXIT(1);
+    exitFett(1);
 }
 
 /* Fake functions because time is needed for certificated expiry and beginning dates.
@@ -112,7 +112,7 @@ void _gettimeofday (struct timeval *__p, void *__tz) {
     (void) (__p);
     (void) (__tz);
     fettPrintf ("(FATAL ERROR)~  <_gettimeofday> should never be called.\r\n");
-    prEXIT(1);
+    exitFett(1);
 }
 
 time_t XTIME(time_t *t) {
