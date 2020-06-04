@@ -121,6 +121,10 @@ void vMain (void *pvParameters) {
         } //else: notification received
     } while ((iNotif<nTasksNotif) && (exitCode==0) && ((xTaskGetTickCount() - xStartTime) < pdMS_TO_TICKS(1000*APP_TIMEOUT)));
 
+    if ((exitCode==0) && (iNotif<nTasksNotif)) {
+        fettPrintf("(Error)~  vMain: Missing notifications. [received %d/%d]\r\n",iNotif,nTasksNotif);
+        exitCode = 1;
+    }
     exitFett(exitCode);
     vTaskDelete(NULL);
 }
