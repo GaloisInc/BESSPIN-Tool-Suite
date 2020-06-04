@@ -47,58 +47,6 @@ fett header for includes, externs, and global variables
 #define uTRUE 1
 #define uFALSE 0
 
-/* EXIT macro sends the exit flag + delete the task if task (vEXIT) and return if void func (prEXIT) */
-#define vEXIT(exitCode) ({exitFett (exitCode); vTaskDelete (NULL);})
-#define prEXIT(exitCode) ({exitFett (exitCode); return;})
-
-/* Useful functions to enhance readability */
-
-/* ret is expected to be an integer or enumeration value that      */
-/* can be converted to 'int' and passed to printf()'s %d specifier */
-#define ERROR_IF_TRUE(ret, msg, caller, xBool) {\
-    if (xBool) {\
-        fettPrintf ("(Error)~  %s [ret=%d].\r\n",msg,(int) ret);\
-        if (caller == 'v')\
-            vEXIT(1);\
-        else\
-            prEXIT(1);\
-    } else \
-        fettPrintf ("(Info)~  %s\r\n",msg);\
-    }
-
-/* ret is expected to be a pointer-typed value compatible with */
-/* printf()'s %p specifier                                     */
-#define pERROR_IF_TRUE(ret, msg, caller, xBool) {\
-    if (xBool) {\
-        fettPrintf ("(Error)~  %s [ret=%p].\r\n",msg,(void *) ret);\
-        if (caller == 'v')\
-            vEXIT(1);\
-        else\
-            prEXIT(1);\
-    } else \
-        fettPrintf ("(Info)~  %s\r\n",msg);\
-    }
-
-#define  COMP_EQ(ret, err)  (ret == err)
-#define COMP_NEQ(ret, gold) (ret != gold)
-
-/* ret and gold must be integer or enumeration values */
-/* that can be compared for inequality                */
-#define  vERROR_IF_NEQ(ret, gold, msg)  (ERROR_IF_TRUE (ret, msg, 'v', COMP_NEQ(ret, gold)))
-#define prERROR_IF_NEQ(ret, gold, msg)  (ERROR_IF_TRUE (ret, msg, 'p', COMP_NEQ(ret, gold)))
-
-/* ret and err must be integer or enumeration values */
-/* that can be compared for equality                 */
-#define  vERROR_IF_EQ(ret, err, msg)  (ERROR_IF_TRUE (ret, msg, 'v', COMP_EQ(ret, err)))
-#define prERROR_IF_EQ(ret, err, msg)  (ERROR_IF_TRUE (ret, msg, 'p', COMP_EQ(ret, err)))
-
-/* Variants of the above with a 'p' prefix    */
-/* ret and err must be a pointer-typed values */
-/* that can be compared for equality          */
-#define  pvERROR_IF_EQ(ret, err, msg)  (pERROR_IF_TRUE (ret, msg, 'v', COMP_EQ(ret, err)))
-#define pprERROR_IF_EQ(ret, err, msg)  (pERROR_IF_TRUE (ret, msg, 'p', COMP_EQ(ret, err)))
-
-
 /* New error-handling macros introduced by Issue #248 */
 #define ASSERT_OR_WARN(b, msg) {\
     if (b)\
