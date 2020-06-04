@@ -185,12 +185,12 @@ void vOta(void *pvParameters)
     fettPrintf("(Info)~  vOta: Starting OTA...\r\n");
 
     r = wc_ed25519_init(&pk);
-    // T1D1 - fatal is crypto lib is failed
-    vERROR_IF_NEQ(r, 0, "vOta : wc_ed25519_init()");
+    ASSERT_OR_DELETE_TASK((r == 0),
+                          "vOta : wc_ed25519_init()");
 
     r = wc_ed25519_import_public(raw_pk, ED25519_KEY_SIZE, &pk);
-    // T1D1 - fatal is key cannot be imported
-    vERROR_IF_NEQ(r, 0, "vOta : wc_ed25519_import_public()");
+    ASSERT_OR_DELETE_TASK((r == 0),
+                          "vOta : wc_ed25519_import_public()");
 
     // Self test crypto
     test_ed25519_verify(&pk);
@@ -205,12 +205,12 @@ void vOta(void *pvParameters)
 
     fettPrintf("(Info)~  vOta: Exiting OTA...\r\n");
 
-    //notify main
-    // T1D1
-    pvERROR_IF_EQ(xMainTask, NULL, "vOta: Get handle of <main:task>.");
+    // notify main
+    ASSERT_OR_DELETE_TASK((xMainTask != NULL),
+                          "vOta: Get handle of <main:task>.");
     funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_OTA, eSetBits);
-    // T1D1
-    vERROR_IF_NEQ(funcReturn, pdPASS, "vOta: Notify <main:task>.");
+    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
+                          "vOta: Notify <main:task>.");
 
     vTaskDelete(NULL);
 }
