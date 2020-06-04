@@ -32,10 +32,12 @@ void fettPrintf (const char * textToPrint, ...) {
     return;
 }
 
-//turn off printing. and print >>>End of Fett<<<
+// turn off printing. and print >>>End of Fett<<<
+// and signal other tasks to stop.
 void exitFett (uint8_t exitCode) {
     if (!doEndFett) {
         doEndFett = 1;
+        stopRequestedFlag = true;
         printf ("EXIT: exiting FETT with code <%x>\r\n",exitCode);
         printf ("\r\n>>>End of Fett<<<\r\n");
     }
@@ -151,7 +153,7 @@ void *XREALLOC(void *p, size_t n, void* heap, int type)
     void *pvReturn = pvPortMalloc (n);
     if (pvReturn == NULL) {
         fettPrintf ("(Error)~  XREALLOC: Failed to malloc.\r\n");
-        exitFett (1); 
+        exitFett (1);
         return NULL;
     }
 
