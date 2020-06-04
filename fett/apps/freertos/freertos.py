@@ -253,7 +253,7 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 @decorate.debugWrap
 def rtosShutdownAndExit (target, message, exc=None, exitCode=None):
     # Run to completion
-    rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))
+    rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,shutdownOnError=False,timeout=30)
     target.shutdownAndExit(message, exc=exc, exitCode=exitCode)
 
 @decorate.debugWrap
