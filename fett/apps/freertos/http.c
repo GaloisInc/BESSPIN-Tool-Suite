@@ -88,8 +88,7 @@ void Http_Worker(void)
                                            sizeof(xServerConfiguration) /
                                                sizeof(xServerConfiguration[0]));
 
-    // T1D1 - fatal if TCP server cannot be created
-    pvERROR_IF_EQ(pxTCPServer, NULL, "vHttp: Create TCP Server.");
+    ASSERT_OR_DELETE_TASK((pxTCPServer != NULL), "vHttp: Create TCP Server.");
 
     for (;;)
     {
@@ -114,12 +113,12 @@ void vHttp(void *pvParameters)
 
     fettPrintf("(Info)~  vHttp: Exiting HTTP...\r\n");
 
-    //notify main
-    // T1D1
-    pvERROR_IF_EQ(xMainTask, NULL, "vHttp: Get handle of <main:task>.");
+    // notify main
+    ASSERT_OR_DELETE_TASK((xMainTask != NULL),
+                          "vHttp: Get handle of <main:task>.");
     funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_HTTP, eSetBits);
-    // T1D1
-    vERROR_IF_NEQ(funcReturn, pdPASS, "vHttp: Notify <main:task>.");
+    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
+                          "vHttp: Notify <main:task>.");
 
     vTaskDelete(NULL);
 }
