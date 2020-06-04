@@ -90,7 +90,7 @@ def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode, testCase):
     # Issue an HTTP GET Request for GETFilename
     contentLength,code = curlTest(target, f"http://{targetIP}:{httpPort}/{GETFileName}")
     if (code == 0):
-        target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
+        rtosShutdownAndExit(target, f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code == expectedCode:
         getSetting('appLog').write(f"(Host)~  HTTP request returned code {code} and Content-Length {contentLength}.\n")
 
@@ -99,14 +99,14 @@ def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode, testCase):
             if (contentLength == expectedFileLength):
                 printAndLog(f"HTTP SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
             else:
-                target.shutdownAndExit(f"(Host)~  HTTP GET for {GETFileName} FAILED - Wrong length\n",exitCode=EXIT.Run)
+                rtosShutdownAndExit(target, f"(Host)~  HTTP GET for {GETFileName} FAILED - Wrong length\n",exitCode=EXIT.Run)
 
         elif (expectedCode == WEB_NOT_FOUND):
             printAndLog(f"HTTP SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
         else:
-            target.shutdownAndExit (f"(Host)~  HTTP GET for {GETFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
+            rtosShutdownAndExit(target, f"(Host)~  HTTP GET for {GETFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
     else:
-        target.shutdownAndExit (f"(Host)~  HTTP GET for {GETFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
+        rtosShutdownAndExit(target, f"(Host)~  HTTP GET for {GETFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
     return
 
 @decorate.debugWrap
@@ -212,7 +212,7 @@ def deploymentTest(target):
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
-        target.shutdownAndExit(f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
+        rtosShutdownAndExit(target, f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
     getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
 
 
@@ -222,23 +222,24 @@ def deploymentTest(target):
     # try:
     #    clientTftp.download(filename, output, packethook=None, timeout=10)
     # except Exception as exc:
-    #    target.shutdownAndExit(f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
+    #    rtosShutdownAndExit(target, f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
 
 
     # Run to completion
     rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))
     return
 
+@decorate.debugWrap
 def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,expectExact=False,endOfApp=False):
     if isinstance(endsWith,str):
         endsWith = [endsWith]
     elif (not isinstance(endsWith,list)):
-        target.shutdownAndExit(f"rtosRunCommand: <endsWith> has to be list or str.",exitCode=EXIT.Dev_Bug)
+        rtosShutdownAndExit(target, f"rtosRunCommand: <endsWith> has to be list or str.",exitCode=EXIT.Dev_Bug)
 
     if (isinstance(erroneousContents,str)):
         erroneousContents = [erroneousContents]
     elif (not isinstance(erroneousContents,list)):
-        target.shutdownAndExit(f"rtosRunCommand: <erroneousContents> has to be list or str.",exitCode=EXIT.Dev_Bug)
+        rtosShutdownAndExit(target, f"rtosRunCommand: <erroneousContents> has to be list or str.",exitCode=EXIT.Dev_Bug)
 
     retCommand = target.runCommand(command,endsWith=[">>>End of Fett<<<"] + endsWith,
         expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],shutdownOnError=shutdownOnError,
@@ -249,6 +250,11 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 
     return
 
+@decorate.debugWrap
+def rtosShutdownAndExit (target, message, exc=None, exitCode=None):
+    # Run to completion
+    rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))
+    target.shutdownAndExit(message, exc=exc, exitCode=exitCode)
 
 @decorate.debugWrap
 def prepareAssets ():
