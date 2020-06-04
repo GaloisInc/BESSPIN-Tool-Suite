@@ -142,6 +142,7 @@ class firesimTarget(commonTarget):
             self.fswitchOut.close()
         except Exception as exc:
             warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
+        sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
         return True
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
