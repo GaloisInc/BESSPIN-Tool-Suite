@@ -32,9 +32,15 @@ def deploymentTest (target):
 @decorate.timeWrap
 def extensiveTest (target):
     printAndLog("Testing ssh ", tee=getSetting('appLog'))
+    # target.switchUser()
+    if (target.isCurrentUserRoot and target.userName != 'root'):
+        target.shutdownAndExit(f"Test[openSshConn]: User {target.userName} is not current root user. "
+                               f"<{getSetting('osImage')}>.", exitCode=EXIT.Dev_Bug)
     sshSuccess = target.openSshConn(userName=target.userName)
     if (not sshSuccess):
-        target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.")
+        target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.", exitCode=EXIT.Implementation)
+    # target.sendFile (pathToFile=getSetting('repoDir'),xFile='README.md',timeout=120)
     target.closeSshConn()
-    printAndLog("Test[user test ssh]: Ssh and scp test OK!", doPrint=True, tee=getSetting('appLog'))
+
+    printAndLog("Test[user test ssh]: Ssh test OK!", doPrint=True, tee=getSetting('appLog'))
     return

@@ -517,7 +517,7 @@ class commonTarget():
             appModules = [freertos]
         elif (getSetting('osImage') in ['debian', 'FreeBSD']):
             # appModules = [webserver, database, voting, ssh]
-            appModules = [ssh]
+            appModules = [database, ssh]
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
@@ -730,7 +730,7 @@ class commonTarget():
         portPart = '' if (not self.sshHostPort) else f" -p {self.sshHostPort}"
         sshCommand = f"ssh{portPart} {userName}@{self.ipTarget}"
         sshPassword = self.rootPassword  if (userName=='root') else self.userPassword
-        #Need to clear the ECDSA key first in case it is not the first time
+        #Need to clear the ECDSA key first in cas   e it is not the first time
         if (not self.sshECDSAkeyWasUpdated):
             ipUpdateECDSA = self.ipTarget if (not self.sshHostPort) else f"[{self.ipTarget}]:{self.sshHostPort}"
             self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
