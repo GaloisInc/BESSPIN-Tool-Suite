@@ -42,6 +42,17 @@ void vMain (void *pvParameters) {
 
     fettPrintf("vMain: Main task started...\r\n");
 
+    // Start the network task to configure the network before the hook -- has to be the first thing
+    funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
+    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
+                          "vMain: Creating vStartNetwork task.");
+
+    funcReturn = xTaskNotifyWait(0xffffffff, 0xffffffff, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
+    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
+                          "vMain: Receive notification from vStartNetwork.");
+    ASSERT_OR_DELETE_TASK((recvNotification == NOTIFY_SUCCESS_NTK),
+                          "vMain: Expected notification value from vStartNetwork.");
+
     // Initialize WolfSLL - this needs to be done before any other call to
     // any other WolfSSL or Wolfcrypt API
     r = wolfSSL_Init();
@@ -58,16 +69,6 @@ void vMain (void *pvParameters) {
     // a potential race condition between HTTP and OTA both trying to update the
     // same file(s) at the same time.
     Initialize_HTTP_Assets();
-
-    funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
-    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
-                          "vMain: Creating vStartNetwork task.");
-
-    funcReturn = xTaskNotifyWait(0xffffffff, 0xffffffff, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
-    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
-                          "vMain: Receive notification from vStartNetwork.");
-    ASSERT_OR_DELETE_TASK((recvNotification == NOTIFY_SUCCESS_NTK),
-                          "vMain: Expected notification value from vStartNetwork.");
 
     //Start the HTTP task
     funcReturn = xTaskCreate(vHttp, "vMain:vHttp", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
