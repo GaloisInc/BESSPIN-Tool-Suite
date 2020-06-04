@@ -226,7 +226,7 @@ def deploymentTest(target):
 
 
     # Run to completion
-    rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=getSetting('appTimeout'))
+    rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=20)
     return
 
 @decorate.debugWrap
