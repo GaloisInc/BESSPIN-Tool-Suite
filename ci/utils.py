@@ -67,7 +67,7 @@ def generateAllConfigs(baseRunType,flavor):
     
     return allConfigs
 
-def generateConfigFile (repoDir,dictConfig,testMode):
+def generateConfigFile (repoDir,outDir,dictConfig,testMode):
     #loading the template configuration file (the repo's default)
     templateConfigPath = os.path.join(repoDir,'config.ini')
     xConfig = configparser.ConfigParser()
@@ -97,11 +97,11 @@ def generateConfigFile (repoDir,dictConfig,testMode):
 
     #Creating the config file
     if (testMode):
-        dumpDir = os.path.join(repoDir,'dumpIni')
+        dumpDir = os.path.join(outDir,'dumpIni')
         xConfigFilePath = os.path.join(dumpDir,fileName)
         print(f"\t{fileName}")
     else:
-        xConfigFilePath = os.path.join(repoDir,fileName)
+        xConfigFilePath = os.path.join(outDir,fileName)
 
     try:
         fConfig = open(xConfigFilePath,'w')

@@ -53,12 +53,14 @@ def main (xArgs):
             exitFettCi(message=f"Invalid runType argument. For AWS, runType has to be in {baseRunTypes[1:2]}.")
         baseRunType = xArgs.runType
         flavor = 'aws'
+        outDir = '/tmp'
     elif (xArgs.entrypoint == 'OnPrem'):
         flavors = ['unix', 'freertos']
         listRunTypes = ['-'.join(pair) for pair in itertools.product(baseRunTypes, flavors)]
         if (xArgs.runType not in listRunTypes):
             exitFettCi(message=f"Invalid runType argument. For OnPrem, runType has to be in {listRunTypes}.")
         baseRunType, flavor = xArgs.runType.split('-')
+        outDir = repoDir
 
     if (xArgs.testOnly):
         print("(Debug)~  FETT-CI: TestMode: Dumping some useful info...")
@@ -91,7 +93,7 @@ def main (xArgs):
         actualNumConfigs = len(allConfigs)
         if (xArgs.testOnly):
             print(f"(Debug)~  FETT-CI: <{xArgs.runType}> has <{actualNumConfigs}> configurations in total.")
-            dumpDir = os.path.join(repoDir,'dumpIni')
+            dumpDir = os.path.join(outDir,'dumpIni')
             print(f"(Debug)~  FETT-CI: The configurations will be listed here and dumped in <{dumpDir}>:")
             if (os.path.isdir(dumpDir)): # already exists, delete
                 try:
@@ -103,11 +105,11 @@ def main (xArgs):
             except Exception as exc:
                 exitFettCi (message=f"Failed to create <{dumpDir}>.",exc=exc)
             for dictConfig in allConfigs:
-                generateConfigFile(repoDir,dictConfig,xArgs.testOnly)
+                generateConfigFile(repoDir,outDir,dictConfig,xArgs.testOnly)
 
             if (xArgs.entrypoint == 'AWS'): #generate the info file
                 infoDict = {'nNodes' : actualNumConfigs, 'fettTargetAMI' : fettTargetAMI}
-                infoFilePath = os.path.join(repoDir,'awsCiInfo.json')
+                infoFilePath = os.path.join(outDir,'awsCiInfo.json')
                 try:
                     infoFile = open(infoFilePath,'w')
                     json.dump(infoDict, infoFile)
@@ -122,7 +124,7 @@ def main (xArgs):
         if ((nodeIndex < 0) or (nodeIndex > actualNumConfigs-1)):
             exitFettCi(message=f"Invalid node index <{nodeIndex}> while the actual number of configs is <{actualNumConfigs}>.")
 
-        configFilePath = generateConfigFile(repoDir,allConfigs[nodeIndex],False)
+        configFilePath = generateConfigFile(repoDir,outDir,allConfigs[nodeIndex],False)
         listConfigs = [configFilePath]
     
     if (xArgs.testOnly):
