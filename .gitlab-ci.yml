@@ -27,7 +27,7 @@ Push-unix:
   rules:
     - if: "$CI_COMMIT_TAG == null"
   script:
-    - nix-shell --command "./ci/fett-ci.py runOnPush-unix push-$CI_COMMIT_SHA"
+    - nix-shell --command "./ci/fett-ci.py runOnPush-unix -ep OnPrem -art push-$CI_COMMIT_SHA"
   artifacts:
     paths: [./*-push-$CI_COMMIT_SHA]
 
@@ -36,7 +36,7 @@ Push-freertos:
   rules:
     - if: "$CI_COMMIT_TAG == null"
   script:
-    - nix-shell --command "./ci/fett-ci.py runOnPush-freertos push-$CI_COMMIT_SHA"
+    - nix-shell --command "./ci/fett-ci.py runOnPush-freertos -ep OnPrem -art push-$CI_COMMIT_SHA"
   artifacts:
     paths: [./*-push-$CI_COMMIT_SHA]
 
@@ -46,7 +46,7 @@ DevPR-unix:
     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
   parallel: 4
   script:
-    - nix-shell --command "./ci/fett-ci.py runDevPR-unix devPR-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+    - nix-shell --command "./ci/fett-ci.py runDevPR-unix -ep OnPrem -art devPR-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
   artifacts:
     paths: [./*-devPR-$CI_COMMIT_SHA]
 
@@ -55,7 +55,7 @@ DevPR-freertos:
   rules:
     - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
   script:
-    - nix-shell --command "./ci/fett-ci.py runDevPR-freertos devPR-$CI_COMMIT_SHA"
+    - nix-shell --command "./ci/fett-ci.py runDevPR-freertos -ep OnPrem -art devPR-$CI_COMMIT_SHA"
   artifacts:
     paths: [./*-devPR-$CI_COMMIT_SHA]
 
@@ -65,7 +65,7 @@ Periodic-unix:
     - if: "$CI_PIPELINE_SOURCE == 'schedule'"
   parallel: 16
   script:
-    - nix-shell --command "./ci/fett-ci.py runPeriodic-unix periodic-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+    - nix-shell --command "./ci/fett-ci.py runPeriodic-unix -ep OnPrem -art periodic-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
   artifacts:
     paths: [./*-periodic-$CI_COMMIT_SHA]
 
@@ -74,7 +74,7 @@ Periodic-freertos:
   rules:
     - if: "$CI_PIPELINE_SOURCE == 'schedule'"
   script:
-    - nix-shell --command "./ci/fett-ci.py runPeriodic-freertos periodic-$CI_COMMIT_SHA"
+    - nix-shell --command "./ci/fett-ci.py runPeriodic-freertos -ep OnPrem -art periodic-$CI_COMMIT_SHA"
   artifacts:
     paths: [./*-periodic-$CI_COMMIT_SHA]
 
@@ -85,7 +85,7 @@ Release-unix:
       when: manual
   parallel: 16
   script:
-    - nix-shell --command "./ci/fett-ci.py runRelease-unix release-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
+    - nix-shell --command "./ci/fett-ci.py runRelease-unix -ep OnPrem -art release-$CI_COMMIT_SHA -i $CI_NODE_INDEX -N $CI_NODE_TOTAL"
   artifacts:
     paths: [./*-release-$CI_COMMIT_SHA]
 
@@ -95,6 +95,6 @@ Release-freertos:
     - if: "$CI_PIPELINE_SOURCE == 'schedule'"
       when: manual
   script:
-    - nix-shell --command "./ci/fett-ci.py runRelease-freertos release-$CI_COMMIT_SHA"
+    - nix-shell --command "./ci/fett-ci.py runRelease-freertos -ep OnPrem -art release-$CI_COMMIT_SHA"
   artifacts:
     paths: [./*-release-$CI_COMMIT_SHA]
