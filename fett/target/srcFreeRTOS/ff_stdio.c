@@ -46,7 +46,7 @@ int ff_init( void )
         // IceBlk is already initialized upon boot,
         // check if the disk is present instead
         if (IceblkDevInstance.disk_present) {
-            fettPrintf ("(Info)~ ff_init: Disk present. Mounting filesystem...");
+            fettPrintf ("(Info)~ ff_init: Disk present. Mounting filesystem...\r\n");
             return f_mount(&FatFs, "", 0);
         } else {
             fettPrintf ("(Error)~ iceclk disk is not present\r\n");
