@@ -14,22 +14,14 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: unix, index: 1, total: 16, host: docker-fpga }
-          - { os: unix, index: 2, total: 16, host: docker-fpga }
-          - { os: unix, index: 3, total: 16, host: docker-fpga }
-          - { os: unix, index: 4, total: 16, host: docker-fpga }
-          - { os: unix, index: 5, total: 16, host: docker-fpga }
-          - { os: unix, index: 6, total: 16, host: docker-fpga }
-          - { os: unix, index: 7, total: 16, host: docker-fpga }
-          - { os: unix, index: 8, total: 16, host: docker-fpga }
-          - { os: unix, index: 9, total: 16, host: docker-fpga }
-          - { os: unix, index: 10, total: 16, host: docker-fpga }
-          - { os: unix, index: 11, total: 16, host: docker-fpga }
-          - { os: unix, index: 12, total: 16, host: docker-fpga }
-          - { os: unix, index: 13, total: 16, host: docker-fpga }
-          - { os: unix, index: 14, total: 16, host: docker-fpga }
-          - { os: unix, index: 15, total: 16, host: docker-fpga }
-          - { os: unix, index: 16, total: 16, host: docker-fpga }
+          - { os: unix, index: 1, total: 8, host: docker-fpga }
+          - { os: unix, index: 2, total: 8, host: docker-fpga }
+          - { os: unix, index: 3, total: 8, host: docker-fpga }
+          - { os: unix, index: 4, total: 8, host: docker-fpga }
+          - { os: unix, index: 5, total: 8, host: docker-fpga }
+          - { os: unix, index: 6, total: 8, host: docker-fpga }
+          - { os: unix, index: 7, total: 8, host: docker-fpga }
+          - { os: unix, index: 8, total: 8, host: docker-fpga }
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
     steps:
       - uses: actions/checkout@v2
@@ -41,7 +33,7 @@ jobs:
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runPeriodic-${{ matrix.cfg.os }} periodic-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
+          run: nix-shell --command "./ci/fett-ci.py runPeriodic-${{ matrix.cfg.os }} -ep OnPrem -art periodic-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
       - if: always()
         uses: actions/upload-artifact@v2
         with:
@@ -55,22 +47,14 @@ jobs:
       fail-fast: false
       matrix:
         cfg:
-          - { os: unix, index: 1, total: 16, host: docker-fpga }
-          - { os: unix, index: 2, total: 16, host: docker-fpga }
-          - { os: unix, index: 3, total: 16, host: docker-fpga }
-          - { os: unix, index: 4, total: 16, host: docker-fpga }
-          - { os: unix, index: 5, total: 16, host: docker-fpga }
-          - { os: unix, index: 6, total: 16, host: docker-fpga }
-          - { os: unix, index: 7, total: 16, host: docker-fpga }
-          - { os: unix, index: 8, total: 16, host: docker-fpga }
-          - { os: unix, index: 9, total: 16, host: docker-fpga }
-          - { os: unix, index: 10, total: 16, host: docker-fpga }
-          - { os: unix, index: 11, total: 16, host: docker-fpga }
-          - { os: unix, index: 12, total: 16, host: docker-fpga }
-          - { os: unix, index: 13, total: 16, host: docker-fpga }
-          - { os: unix, index: 14, total: 16, host: docker-fpga }
-          - { os: unix, index: 15, total: 16, host: docker-fpga }
-          - { os: unix, index: 16, total: 16, host: docker-fpga }
+          - { os: unix, index: 1, total: 8, host: docker-fpga }
+          - { os: unix, index: 2, total: 8, host: docker-fpga }
+          - { os: unix, index: 3, total: 8, host: docker-fpga }
+          - { os: unix, index: 4, total: 8, host: docker-fpga }
+          - { os: unix, index: 5, total: 8, host: docker-fpga }
+          - { os: unix, index: 6, total: 8, host: docker-fpga }
+          - { os: unix, index: 7, total: 8, host: docker-fpga }
+          - { os: unix, index: 8, total: 8, host: docker-fpga }
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
     steps:
       - uses: actions/checkout@v2
@@ -82,7 +66,7 @@ jobs:
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runRelease-${{ matrix.cfg.os }} release-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
+          run: nix-shell --command "./ci/fett-ci.py runRelease-${{ matrix.cfg.os }} -ep OnPrem -art release-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
       - if: always()
         uses: actions/upload-artifact@v2
         with:

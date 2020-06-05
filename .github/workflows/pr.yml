@@ -24,7 +24,7 @@ jobs:
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.cfg.os }} devPR-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
+          run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.cfg.os }} -ep OnPrem -art devPR-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
       - if: always()
         uses: actions/upload-artifact@v2
         with:
