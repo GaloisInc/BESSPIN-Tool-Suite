@@ -225,7 +225,7 @@ class commonTarget():
 
             if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
                 # start the ssh service
-                self.runCommand("systemctl unmask ssh.service")
+                self.runCommand("systemctl unmask ssh.service", timeout=90)
                 self.runCommand("systemctl start ssh.service",erroneousContents=["Failed", "not found"])
                 
         elif (isEqSetting('osImage','FreeBSD')):
