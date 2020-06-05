@@ -27,7 +27,6 @@ fett header for includes, externs, and global variables
 #include <wolfssl/wolfcrypt/ed25519.h>
 
 /* Misc includes */
-#include <malloc.h>
 #include "ff_stdio.h"
 
 /* Macros */
