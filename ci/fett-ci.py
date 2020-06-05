@@ -30,9 +30,10 @@ optional arguments:
 """
 
 try:
-    import sys, os, glob, shutil, time, itertools
+    import sys, os, glob, shutil, time, itertools, json
     import subprocess, argparse, signal, configparser, copy, socket
     from utils import exitFettCi, exitOnInterrupt, generateAllConfigs, generateConfigFile, prepareArtifact
+    from configs import fettTargetAMI
 except Exception as exc:
     exitFettCi (exitCode=-1,exc=exc)
 
@@ -104,6 +105,17 @@ def main (xArgs):
             for dictConfig in allConfigs:
                 generateConfigFile(repoDir,dictConfig,xArgs.testOnly)
 
+            if (xArgs.entrypoint == 'AWS'): #generate the info file
+                infoDict = {'nNodes' : actualNumConfigs, 'fettTargetAMI' : fettTargetAMI}
+                infoFilePath = os.path.join(repoDir,'awsCiInfo.json')
+                try:
+                    infoFile = open(infoFilePath,'w')
+                    json.dump(infoDict, infoFile)
+                    infoFile.close()
+                except Exception as exc:
+                    exitFettCi (message=f"Failed to generate <{infoFilePath}>.",exc=exc)
+                print(f"(Info)~  FETT-CI: Required info for AWS CI was generated into <{infoFilePath}>.")
+
         if ((xArgs.nNodes) and (xArgs.nNodes != actualNumConfigs)):
             exitFettCi(message=f"The actual number of configs <{actualNumConfigs}> does not match the total (={xArgs.nNodes}) declared in CI setup.")
 
@@ -115,7 +127,8 @@ def main (xArgs):
     
     if (xArgs.testOnly):
         print('List of .ini files to execute:\n',listConfigs)
-        exitFettCi(message="This is not a real CI run.",exitCode=1)
+        print("(Warning)~  FETT-CI: This is not a real CI run.")
+        exitFettCi(exitCode=0)
 
     # Adjust optional arguments
     if (xArgs.jobTimeout):
