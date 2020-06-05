@@ -7,6 +7,8 @@
     Each "values" should be a tuple. Please note that a 1-element tuple should be: ('element',)
 """
 
+fettTargetAMI = 'ami-04c55ee64b3c6f758' #fett-target-060120
+
 commonDefaults = {
     ('mode',('test',)),
     ('binarySource',('GFE',)),
