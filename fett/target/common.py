@@ -405,28 +405,25 @@ class commonTarget():
 
         if (getSetting('osImage') in ['debian', 'FreeBSD'] and (self.isSshConn)): #send through SSH
             currentUser = 'root' if self.isCurrentUserRoot else self.userName
-            scpCommand = f"scp {pathToFile}/{xFile} {currentUser}@{self.ipTarget}:/root/"
+            user_path = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
+            portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
+            scpCommand = f"scp{portPart} {pathToFile}/{xFile} {currentUser}@{self.ipTarget}:/{user_path}/"
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
-            if (isEqSetting('osImage', 'FreeBSD')):
-                try:
-                    retExpect = scpProcess.expect([f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"],timeout=timeout)
-                except Exception as exc:
-                    return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
-            else: #debian
-                try:
-                    retExpect = scpProcess.expect(['[pP]assword:', pexpect.EOF], timeout=timeout)
-                except Exception as exc:
-                    return returnFalse(f"Unexpected outcome from the scp command.", exc=exc)
             try:
+                retExpect = scpProcess.expect([f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"],timeout=timeout)
+            except Exception as exc:
+                return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
+            try:
+                pwd = self.rootPassword if self.isCurrentUserRoot else self.userPassword
                 if (retExpect == 2): #needs a yes
                     scpProcess.sendline("yes")
                     retExpect = scpProcess.expect(f"Password for {currentUser}@[\w-]+\:",timeout=timeout)
+                    scpProcess.sendline(pwd)
                 if (retExpect in [0,1]): #password prompt
-                    pwd = self.rootPassword if self.isCurrentUserRoot else self.userPassword
                     scpProcess.sendline(pwd)
                 else:
                     return returnFalse (f"Failed to authenticate the scp process.")
@@ -516,8 +513,7 @@ class commonTarget():
         if (isEqSetting('osImage','FreeRTOS')):
             appModules = [freertos]
         elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-            # appModules = [webserver, database, voting, ssh]
-            appModules = [database, ssh]
+            appModules = [webserver, database, voting, ssh]
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
