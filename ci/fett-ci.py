@@ -143,7 +143,7 @@ def main (xArgs):
         print(f"(Info)~  FETT-CI: Running <{os.path.basename(xConfig)}>.")
         sys.stdout.flush()
         try:
-            subprocess.run([fettPyPath,'-c',xConfig,'-ep','ciOnPrem','-d'], stdout=sys.stdout, stderr=sys.stderr, timeout=jobTimeout, check=True)
+            subprocess.run([fettPyPath,'-c',xConfig,'-ep',f"ci{xArgs.entrypoint}",'-d'], stdout=sys.stdout, stderr=sys.stderr, timeout=jobTimeout, check=True)
         except subprocess.CalledProcessError as exc:
             exitCode = exc.returncode
         except Exception as exc: #fatal
