@@ -46,9 +46,7 @@ def main (xArgs):
 
     # Check runType
     baseRunTypes = ['runOnPush', 'runDevPR', 'runPeriodic', 'runRelease']
-    if (not xArgs.entrypoint):
-        exitFettCi(message=f"Missing argument. You have to specify the entrypoint `-ep [OnPrem | AWS]`.")
-    elif (xArgs.entrypoint == 'AWS'):
+    if (xArgs.entrypoint == 'AWS'):
         if (xArgs.runType not in baseRunTypes[1:2]): #Only allow runDevPR on AWS for now
             exitFettCi(message=f"Invalid runType argument. For AWS, runType has to be in {baseRunTypes[1:2]}.")
         baseRunType = xArgs.runType
@@ -182,7 +180,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-N', '--nNodes', help='The total number of nodes.',type=int)
     xArgParser.add_argument ('-t', '--jobTimeout', help='The timeout for executing fett.py. Before deducting 15 minutes.')
     xArgParser.add_argument ('-X', '--testOnly', help='This dumps all possible config permutations and some meta data. Does not run anything.', action='store_true')
-    xArgParser.add_argument ('-ep', '--entrypoint', help='Entrypoint: OnPrem | AWS')
+    xArgParser.add_argument ('-ep', '--entrypoint', required=True, choices=['OnPrem', 'AWS'] ,help='Entrypoint: OnPrem | AWS')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals
