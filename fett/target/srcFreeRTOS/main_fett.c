@@ -22,7 +22,6 @@ void main_fett () {
     if (funcReturn == pdPASS)
     {
         fettPrintf ("(Info)~  main_fett: Creating vMain task OK.");
-        vTaskStartScheduler(); // Hang the function
     }
     else
     {
