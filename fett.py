@@ -129,7 +129,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-w', '--workingDirectory', help='Overwrites the default working directory: ./workDir/')
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
-    xArgParser.add_argument ('-ep', '--entrypoint', help='Entrypoint: devHost | ciOnPrem')
+    xArgParser.add_argument ('-ep', '--entrypoint', help='Entrypoint: devHost | ciOnPrem | ciAWS')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals
