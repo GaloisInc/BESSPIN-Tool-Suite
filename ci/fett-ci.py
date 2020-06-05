@@ -50,8 +50,8 @@ def main (xArgs):
     elif (xArgs.entrypoint == 'AWS'):
         if (xArgs.runType not in baseRunTypes[1:2]): #Only allow runDevPR on AWS for now
             exitFettCi(message=f"Invalid runType argument. For AWS, runType has to be in {baseRunTypes[1:2]}.")
-        baseRunType = xArgs.entrypoint
-        flavor = 'AWS'
+        baseRunType = xArgs.runType
+        flavor = 'aws'
     elif (xArgs.entrypoint == 'OnPrem'):
         flavors = ['unix', 'freertos']
         listRunTypes = ['-'.join(pair) for pair in itertools.product(baseRunTypes, flavors)]
