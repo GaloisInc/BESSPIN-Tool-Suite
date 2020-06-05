@@ -2,13 +2,14 @@
 """
 --- fett-ci.py is the CI entry to the FETT-Target program. 
 --- usage: fett-ci.py [-h] (-art ARTIFACTSUFFIX | -job JOBID) [-i NODEINDEX]
-                  [-N NNODES] [-t JOBTIMEOUT] [-X] [-ep ENTRYPOINT]
+                  [-N NNODES] [-t JOBTIMEOUT] [-X] -ep {OnPrem,AWS}
                   runType
 
 FETT-CI (CI Entry to FETT-Target)
 
 positional arguments:
-  runType               The CI run type.
+  runType               The CI run type. [OnPrem: {runDevPR,runRelease,runOnPu
+                        sh,runPeriodic}-{unix,freertos}, AWS: runDevPR]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -25,7 +26,7 @@ optional arguments:
                         minutes.
   -X, --testOnly        This dumps all possible config permutations and some
                         meta data. Does not run anything.
-  -ep ENTRYPOINT, --entrypoint ENTRYPOINT
+  -ep {OnPrem,AWS}, --entrypoint {OnPrem,AWS}
                         Entrypoint: OnPrem | AWS
 """
 
@@ -172,7 +173,7 @@ def main (xArgs):
 if __name__ == '__main__':
     # Reading the bash arguments
     xArgParser = argparse.ArgumentParser (description='FETT-CI (CI Entry to FETT-Target)')
-    xArgParser.add_argument ('runType', help='The CI run type.')
+    xArgParser.add_argument ('runType', help='The CI run type. [OnPrem: {runDevPR,runRelease,runOnPush,runPeriodic}-{unix,freertos}, AWS: runDevPR]')
     xGroupArtifacts = xArgParser.add_mutually_exclusive_group(required=True)
     xGroupArtifacts.add_argument ('-art', '--artifactSuffix', help='The suffix of the path to copy the artifacts to.')
     xGroupArtifacts.add_argument ('-job', '--jobID', help='The CI job ID.')
