@@ -5,10 +5,10 @@ Functions used for Misc implementation on FreeRTOS
 #include "fettFreeRTOS.h"
 #include <stdatomic.h>
 
-static uint8_t doEndFett = 0;
 MessageBufferHandle_t globalMsgBuffer = NULL;
 
 // Termination control.
+static atomic_bool doEndFett = false;
 static atomic_bool stopRequestedFlag = false;
 
 void setStopRequested(void)
@@ -32,10 +32,12 @@ void fettPrintf (const char * textToPrint, ...) {
     return;
 }
 
-//turn off printing. and print >>>End of Fett<<<
+// turn off printing. and print >>>End of Fett<<<
+// and signal other tasks to stop.
 void exitFett (uint8_t exitCode) {
     if (!doEndFett) {
-        doEndFett = 1;
+        doEndFett = true;
+        stopRequestedFlag = true;
         printf ("EXIT: exiting FETT with code <%x>\r\n",exitCode);
         printf ("\r\n>>>End of Fett<<<\r\n");
     }
@@ -100,7 +102,7 @@ void _open (const char * dump1, int dump2, ...) {
     (void) (dump1);
     (void) (dump2);
     fettPrintf ("(FATAL ERROR)~  <_open> should never be called.\r\n");
-    prEXIT(1);
+    exitFett(1);
 }
 
 /* Fake functions because time is needed for certificated expiry and beginning dates.
@@ -110,7 +112,7 @@ void _gettimeofday (struct timeval *__p, void *__tz) {
     (void) (__p);
     (void) (__tz);
     fettPrintf ("(FATAL ERROR)~  <_gettimeofday> should never be called.\r\n");
-    prEXIT(1);
+    exitFett(1);
 }
 
 time_t XTIME(time_t *t) {
@@ -151,7 +153,7 @@ void *XREALLOC(void *p, size_t n, void* heap, int type)
     void *pvReturn = pvPortMalloc (n);
     if (pvReturn == NULL) {
         fettPrintf ("(Error)~  XREALLOC: Failed to malloc.\r\n");
-        exitFett (1); 
+        exitFett (1);
         return NULL;
     }
 

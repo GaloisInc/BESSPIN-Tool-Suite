@@ -15,9 +15,6 @@ def prepareOsImage ():
     osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
     setSetting('osImageElf',osImageElf)
 
-    if(isEqSetting('target','aws')):
-        logAndExit (f"<target.build.prepareOsImage> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
-
     if(isEqSetting('osImage','FreeRTOS')):
         prepareFreeRTOS ()
     elif(isEqSetting('osImage','debian')):
@@ -90,6 +87,8 @@ def prepareFreeRTOS():
             configHfile.write(f"#define {xMacro} {intVal}\n")
         #Write the ota filename too (not list as it is unique)
         configHfile.write(f"#define OTA_FILENAME \"{getSettingDict('freertosAssets',['otaHtml'])}\"\n")
+        #Translate the mode to one char: T or D
+        configHfile.write(f"#define FETT_MODE \'{getSetting('mode')[0].upper()}\'\n")
         configHfile.close()
 
         #Include the network configuration parameters
@@ -144,6 +143,15 @@ def prepareDebian():
     # copy the crngOnDebian.riscv
     cp (getSetting('addEntropyDebianPath'),getSetting('buildDir'))
     importImage()
+    if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
+        # need two empty files too
+        imageFile = os.path.join(getSetting('osImagesDir'), 'debian.img')
+        setSetting("osImageImg",imageFile)
+        touch(imageFile)
+        dwarfFile = os.path.join(getSetting('osImagesDir'), 'debian.dwarf')
+        setSetting("osImageDwarf",dwarfFile)
+        touch(dwarfFile)
+
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -160,27 +168,31 @@ def selectImagePath():
     if isEnabled('useCustomOsImage'):
         return getSetting('pathToCustomOsImage')
     else:
+        imageType = getSetting('target') if getSetting('target') != 'aws' else getSetting('pvAWS')
         if getSetting('binarySource') == 'GFE':
-            nixImage = getSettingDict('nixEnv',[getSetting('osImage'),getSetting('target')])
+            nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
             if (nixImage in os.environ):
                 return os.environ[nixImage]
             else:
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
-        imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', getSetting('target'), f"{getSetting('osImage')}.elf")
+        imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType, f"{getSetting('osImage')}.elf")
         return imagePath
 
 @decorate.debugWrap
 def importImage():
     imagePath = selectImagePath()
     cp (imagePath, getSetting('osImageElf'))
-    if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
-        netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
-        setSetting('netbootElf',netbootElf)
-        netbootImage = getSettingDict('nixEnv','netboot')
-        if (netbootImage in os.environ):
-            cp(os.environ[netbootImage],netbootElf)
-        else:
-            logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
+    if not isEqSetting('target', 'aws'):
+        if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
+            netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
+            setSetting('netbootElf',netbootElf)
+            netbootImage = getSettingDict('nixEnv','netboot')
+            if (netbootImage in os.environ):
+                cp(os.environ[netbootImage],netbootElf)
+            else:
+                logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
+    else:
+        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is aws", doPrint=False)
     logging.info(f"{getSetting('osImage')} image imported successfully.")
 
 @decorate.debugWrap

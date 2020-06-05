@@ -8,6 +8,7 @@ from fett.target.build import prepareOsImage
 from fett.target import common
 from fett.target import fpga
 from fett.target import qemu
+from fett.target import aws
 #from fett.target import aws
 from fett.apps.build import buildApps
 import sys, os
@@ -19,10 +20,23 @@ from importlib.machinery import SourceFileLoader
 def startFett ():
     # ------- Global/Misc sanity checks
 
-    #Processor and osImage combinations
-    combinationsDict = getSetting('procOsCombinations')
-    if (getSetting('processor') not in getSettingDict('procOsCombinations',[getSetting('osImage')])):
-        logAndExit(f"{getSetting('osImage')} is not compatible with <{getSetting('processor')}>.",exitCode=EXIT.Configuration)
+    # --------   binarySource-Processor-osImage-PV Matrix --------
+    # Check that the processor is provided by this team
+    if (getSetting('processor') not in getSettingDict('fettMatrix',[getSetting('binarySource')])):
+        logAndExit(f"{getSetting('processor')} is not compatible with <{getSetting('binarySource')}>.",exitCode=EXIT.Configuration)
+    # Check that osImage is provided for this team-processor combination
+    if (getSetting('osImage') not in getSettingDict('fettMatrix',[getSetting('binarySource'),getSetting('processor')])):
+        logAndExit(f"{getSetting('osImage')} is not compatible with <{getSetting('binarySource')}-{getSetting('processor')}>.",exitCode=EXIT.Configuration)
+    # check the AWS variant
+    if (isEqSetting('target','aws')):
+        pvAWS = getSettingDict('fettMatrix',[getSetting('binarySource'),getSetting('processor'),getSetting('osImage')]) 
+        if (pvAWS == 'notOnAWS'):
+            logAndExit(f"<aws> target is not compatible with <{getSetting('binarySource')}-{getSetting('processor')}-{getSetting('osImage')}>.",exitCode=EXIT.Configuration)
+        elif (pvAWS not in ['firesim', 'connectal', 'awsteria']):
+            logAndExit(f"<{pvAWS}> is not a valid AWS PV.",exitCode=EXIT.Dev_Bug)
+        elif (pvAWS in ['connectal', 'awsteria']):
+            logAndExit(f"<{pvAWS}> PV is not yet implemented.",exitCode=EXIT.Implementation)
+        setSetting('pvAWS',pvAWS)
 
     #qemu on FreeRTOS and Busybox
     if ((getSetting('osImage') in ['FreeRTOS','busybox']) and isEqSetting('target','qemu')):
@@ -62,6 +76,14 @@ def prepareEnv ():
     if (isEqSetting('target','fpga')):
         fpga.programBitfile()
         fpga.resetEthAdaptor()
+    elif (isEqSetting('target','aws')):
+        if (isEqSetting('pvAWS','firesim')):
+            aws.prepareFiresim()
+            aws.setupKernelModules()
+            aws.configTapAdaptor()
+            aws.programAFI()
+        else:
+            logAndExit (f"<launch.prepareEnv> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
     printAndLog (f"Environment is ready.")
 
 """ This is the loading/booting function """
@@ -69,7 +91,10 @@ def prepareEnv ():
 @decorate.timeWrap
 def launchFett ():
     printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
-    xTarget = getClassType()()
+    try:
+        xTarget = getClassType()()
+    except Exception as exc:
+        logAndExit (f"launchFett: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
     xTarget.start()
     if (isEnabled('isUnix')):
         if (getSetting('osImage') in ['debian','FreeBSD']):
@@ -89,7 +114,7 @@ def endFett ():
 @decorate.debugWrap
 def getClassType():
     if (isEqSetting('target','aws')):
-        logAndExit (f"<launch.getClassType> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
+        return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
         return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):

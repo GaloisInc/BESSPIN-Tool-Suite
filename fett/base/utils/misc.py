@@ -4,8 +4,8 @@ Misc required functions for fett.py
 """
 
 import logging, enum, traceback, atexit
-import os, shutil, glob, subprocess
-import tarfile, sys, re
+import os, shutil, glob, subprocess, pathlib
+import tarfile, sys, json, re, getpass
 
 from fett.base.utils import decorate
 
@@ -229,6 +229,25 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
         except Exception as exc:
             logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
+def touch(filepath, mode=0o666, permissive=True):
+    try:
+        pathlib.Path(filepath).touch(mode=mode, exist_ok=permissive)
+    except FileExistsError as exc:
+        logAndExit(f"touch: Failed touching file {filepath}! File already exists", exc=exc, exitCode=EXIT.Files_and_paths)
+    except FileNotFoundError as exc:
+        logAndExit(f"touch: filepath {filepath} is not a valid path", exc=exc, exitCode=EXIT.Files_and_paths)
+    except Exception as exc:
+        logAndExit(f"touch: Error touching file {filepath}", exc=exc)
+
+def safeLoadJsonFile (jsonFile):
+    try:
+        fJson = ftOpenFile(jsonFile, 'r')
+        jsonData = json.load(fJson)
+        fJson.close()
+    except Exception as exc:
+        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    return jsonData
+
 @decorate.debugWrap
 def make (argsList,dirPath):
     if ((not dirPath) or (argsList is None)):
@@ -354,3 +373,26 @@ def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False):
         errorAndLog (f"Failed to run <curl {' '.join(options)} {url}>\n", exc=exc, doPrint=False)
         out = None
     return out
+
+@decorate.debugWrap
+def sudoShellCommand (argsList, sudoPromptPrefix=None, checkCall=True, timeout=90):
+    if (sudoPromptPrefix):
+        try:
+            sudoPrompt = sudoPromptPrefix + f" [sudo] password for {getpass.getuser()}: "
+        except Exception as exc:
+            logAndExit (f"sudo: Failed to format the sudo prompt with <{sudoPromptPrefix}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+        promptArgs = ['-p', sudoPrompt]
+    else: #no prompt
+        promptArgs = []
+
+    try:
+        command = ['sudo'] + promptArgs + argsList
+    except Exception as exc:
+        logAndExit (f"sudo: Failed to format the sudo command with <{argsList}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
+    sudoOut.write(f"\n\n{' '.join(command)}\n")
+    try:
+        subprocess.run(command,stdout=sudoOut,stderr=sudoOut,timeout=timeout,check=checkCall)
+    except Exception as exc:
+        logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
+    sudoOut.close()

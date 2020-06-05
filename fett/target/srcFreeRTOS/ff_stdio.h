@@ -5,11 +5,11 @@
 #ifndef FF_STDIO_H
 #define FF_STDIO_H
 
-#define ffconfigMAX_FILENAME    12 //8.3 format
+#define ffconfigMAX_FILENAME    13 // 8.3 format plus a final \0 terminator
 
 typedef struct _FF_FILE
 {
-    char filename[ffconfigMAX_FILENAME+1];
+    char filename[ffconfigMAX_FILENAME];
     uint32_t ulFileSize;            /* File's Size. */
 } FF_FILE;
 

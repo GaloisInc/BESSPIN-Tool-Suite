@@ -2,6 +2,8 @@
 
 #define DUMMY_TFTP 0
 
+#define tftpconfigMAX_FILENAME  129
+
 // IF DUMMY_TFTP == 1
 //
 //  Places a known, constant signed payload into buffer[0 .. 69]
