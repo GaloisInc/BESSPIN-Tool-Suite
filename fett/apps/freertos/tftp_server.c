@@ -693,8 +693,8 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     }
     else
     {
-        // T3D3 - something weird happened, but carry on
-        fettPrintf("(Error)~  TFTP recvfrom() failed with return code %d\n",
+        // Timeout or something weird happened, but carry on
+        fettPrintf("(Warning)~  TFTP recvfrom() failed with return code %d\n",
                    (int)lBytes);
     }
 
