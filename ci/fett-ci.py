@@ -164,7 +164,7 @@ def main (xArgs):
         nErrs += int(exitCode != 0)
 
         # prepare artifacts
-        prepareArtifact (repoDir,xConfig, artifactSuffix)
+        prepareArtifact (repoDir,xConfig, artifactSuffix, xArgs.entrypoint)
 
     exitFettCi(exitCode=nErrs)
 

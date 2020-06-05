@@ -112,7 +112,7 @@ def generateConfigFile (repoDir,dictConfig,testMode):
 
     return xConfigFilePath
 
-def prepareArtifact(repoDir, configFile,artifactSuffix):
+def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint):
     #decide on the folder's name
     artifactsPath = f"{os.path.splitext(os.path.basename(configFile))[0]}-{artifactSuffix}"
     if (os.path.isdir(artifactsPath)): # already exists, add the date
@@ -136,6 +136,11 @@ def prepareArtifact(repoDir, configFile,artifactSuffix):
         except Exception as exc:
             exitFettCi (message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",exc=exc)
 
+    if (entrypoint == 'AWS'):
+        print("(Warning)~  FETT-CI: AWS upload to S3 is not yet implemented.")
+        # Tar the artifact folder
+        # Upload the folder to S3
+        # Send an SQS message that we're done
 
 
 
