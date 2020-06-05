@@ -83,7 +83,7 @@ class firesimTarget(commonTarget):
             f"+blkdev-log0={os.path.join(getSetting('workDir'),'blkdev-log0.out')}",
             '+trace-select0=1',
             '+trace-start0=0',
-            '+trace-end0=-1',
+            '+trace-end0=1',
             '+trace-output-format0=0',
             f"+dwarf-file-name0={getSetting('osImageDwarf')}",
             '+autocounter-readrate0=0',
