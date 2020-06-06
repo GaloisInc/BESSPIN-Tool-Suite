@@ -93,8 +93,9 @@ def prepareFreeRTOS():
 
         #Include the network configuration parameters
         #This is a list of tuples: (settingName, macroNameBase, int/hex)
-        listConfigIpParams = [('fpgaMacAddrTarget','configMAC_ADDR', hex), ('fpgaIpTarget','configIP_ADDR', int),
-                              ('fpgaIpHost','configGATEWAY_ADDR', int), ('fpgaNetMaskTarget','configNET_MASK', int)]
+        thisTarget = getSetting('target')
+        listConfigIpParams = [(f"{thisTarget}MacAddrTarget",'configMAC_ADDR', hex), (f"{thisTarget}IpTarget",'configIP_ADDR', int),
+                              (f"{thisTarget}IpHost",'configGATEWAY_ADDR', int), (f"{thisTarget}NetMaskTarget",'configNET_MASK', int)]
 
         def mapVal(val,xType):
             if (xType==int):
@@ -122,6 +123,7 @@ def prepareFreeRTOS():
         envVars.append(f"USE_CLANG={int(isEqSetting('cross-compiler','Clang'))}")
         envVars.append(f"PROG=main_fett")
         envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
+        envVars.append(f"BSP={getSetting('target')}")
         logging.debug(f"going to make using {envVars}")
         make (envVars,getSetting('FreeRTOSprojDir'))
 
@@ -143,15 +145,6 @@ def prepareDebian():
     # copy the crngOnDebian.riscv
     cp (getSetting('addEntropyDebianPath'),getSetting('buildDir'))
     importImage()
-    if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
-        # need two empty files too
-        imageFile = os.path.join(getSetting('osImagesDir'), 'debian.img')
-        setSetting("osImageImg",imageFile)
-        touch(imageFile)
-        dwarfFile = os.path.join(getSetting('osImagesDir'), 'debian.dwarf')
-        setSetting("osImageDwarf",dwarfFile)
-        touch(dwarfFile)
-
 
 @decorate.debugWrap
 @decorate.timeWrap

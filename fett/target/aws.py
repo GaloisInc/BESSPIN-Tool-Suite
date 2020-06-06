@@ -25,7 +25,7 @@ class firesimTarget(commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
-        if (getSetting('osImage') != 'debian'):
+        if (getSetting('osImage') not in ['debian','FreeRTOS']):
             logAndExit (f"<firesimTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
         awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
@@ -77,13 +77,13 @@ class firesimTarget(commonTarget):
             '+mm_llc_activeMSHRs=8',
             '+slotid=0',
             '+profile-interval=-1',
-            f"+macaddr0={getSetting('awsTargetMacAddress')}",
+            f"+macaddr0={getSetting('awsMacAddrTarget')}",
             f"+blkdev0={getSetting('osImageImg')}",
             f"+niclog0={os.path.join(getSetting('workDir'),'niclog0.out')}",
             f"+blkdev-log0={os.path.join(getSetting('workDir'),'blkdev-log0.out')}",
             '+trace-select0=1',
             '+trace-start0=0',
-            '+trace-end0=-1',
+            '+trace-end0=1',
             '+trace-output-format0=0',
             f"+dwarf-file-name0={getSetting('osImageDwarf')}",
             '+autocounter-readrate0=0',
@@ -122,6 +122,8 @@ class firesimTarget(commonTarget):
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             outCmd = self.runCommand ("ifup eth0",expectedContents='IceNet: opened device')
+        elif (isEqSetting('osImage','FreeRTOS')):
+            outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
@@ -140,6 +142,7 @@ class firesimTarget(commonTarget):
             self.fswitchOut.close()
         except Exception as exc:
             warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
+        sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
         return True
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
@@ -221,7 +224,7 @@ def setupKernelModules():
         #remove all modules to be safe
         kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
         for kmod in kmodsToClean:
-            sudoShellCommand(['rmmod', kmod],checkCall=False)
+            sudoShellCommand(['rmmod', kmod],check=False)
             _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
 
         awsFiresimModPath = os.path.join(getSetting('firesimPath'), 'kmods')
@@ -235,34 +238,11 @@ def setupKernelModules():
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
-def _runCommandAndLog(command, stdout=None, stderr=None, shell=False, **kwargs):
-    """ run and log a simple command, treating all exceptions as terminal errors """
-
-    def logDetailsString():
-        if stdout is None and stderr is None:
-            return ""
-        else:
-            stdoutStr = f"{stdout.name} for stdout " if stdout is not None else ""
-            stderrStr = f"{stderr.name} for stderr " if stderr is not None else ""
-            joinStr = "and " if stdout is not None and stderr is not None else ""
-            return "Check " + stdoutStr + joinStr + stderrStr + " for more details"
-
-    if ((type(command) is str) and (not shell)): #if shell=True, do not split
-        command = command.split()
-    
-    try:
-        subprocess.run(command, stdout=stdout, stderr=stderr, shell=shell, **kwargs)
-    except Exception as exc:
-            logAndExit (f"<aws._runCommandAndLog>: Failed on <{command}>." + logDetailsString())
-
-@decorate.debugWrap
 def _sendKmsg(message):
     """send message to /dev/kmsg"""
     # TODO: replace all whitespace with underscores?
-    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
     command = f"echo \"{message}\" | sudo tee /dev/kmsg"
-    _runCommandAndLog(command, stdout=sudoOut, stderr=sudoOut,check=False,shell=True)
-    sudoOut.close()
+    shellCommand(command, check=False, shell=True)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -279,19 +259,19 @@ def _poll_command(command, trigger, maxTimeout=10):
 def clearFpga(slotno):
     """clear FPGA in a given slot id and wait until finished """
     _sendKmsg(f"about to clear fpga {slotno}")
-    _runCommandAndLog(f"sudo fpga-clear-local-image -S {slotno} -A")
+    shellCommand(['fpga-clear-local-image','-S',f"{slotno}",'-A'])
     _sendKmsg(f"done clearing fpga {slotno}")
 
     # wait until the FPGA has been cleared
     _sendKmsg(f"checking for fpga slot {slotno}")
-    _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "cleared")
+    _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "cleared")
     _sendKmsg(f"done checking fpga slot {slotno}")
 
 @decorate.debugWrap
 def getNumFpgas():
     """return number of FPGAS"""
     try:
-        out = subprocess.check_output("sudo fpga-describe-local-image-slots".split())
+        out = subprocess.check_output("fpga-describe-local-image-slots".split())
         out = out.decode('utf-8')
     except Exception as exc:
         logAndExit(f'<aws.getNumFpgas>: error getting fpga local slot description', exc=exc)
@@ -316,10 +296,10 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    _runCommandAndLog(f"sudo fpga-load-local-image -S {slotno} -I {agfi} -A")
+    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'])
 
     # wait until the FPGA has been flashed
-    _poll_command(f"sudo fpga-describe-local-image -S {slotno} -R -H", "loaded")
+    _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")
 
 @decorate.debugWrap
 def flashFpgas(agfi):
@@ -351,6 +331,18 @@ def prepareFiresim():
 
     firesimWorkPath = os.path.join(getSetting("workDir"), "firesim")
     mkdir(firesimWorkPath,addToSettings='firesimPath')
+
+    # firesim needs two files: img and dwarf:
+    imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
+    setSetting("osImageImg",imageFile)
+    if (isEqSetting('osImage','FreeRTOS')): # create a filesystem -- 256MB [Note that size >=256MB (for mkfs.fat 4.1, but for v.3.0 has to be >256Mb)]
+        shellCommand(['dd','if=/dev/zero',f"of={imageFile}",'bs=256M','count=1'])
+        shellCommand(['mkfs.vfat','-S','512','-n',"\"DATA42\"",'-F','32', imageFile])
+    else: #an empty file will do 
+        touch(imageFile)
+    dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
+    setSetting("osImageDwarf",dwarfFile)
+    touch(dwarfFile)
 
     # copy over sim and kmods
     copyDir(firesimSimPath, firesimWorkPath)

@@ -92,7 +92,12 @@
             "val" : "8e:6b:35:04:00:00"
         },
         {
-            "name" : "awsTargetMacAddress",
+            "name" : "awsNetMaskTarget",
+            "type" : "ipAddress",
+            "val" : "255.255.255.0"
+        },
+        {
+            "name" : "awsMacAddrTarget",
             "type" : "macAddress",
             "val" : "00:12:6D:00:00:02"
         },
@@ -199,13 +204,16 @@
                 },
                 "FreeBSD" : {
                     "fpga" : "FETT_GFE_FREEBSD_FPGA",
-                    "qemu" : "FETT_GFE_FREEBSD_QEMU"
+                    "qemu" : "FETT_GFE_FREEBSD_QEMU",
+                    "firesim" :  "FETT_GFE_FREEBSD_FIRESIM"
                 },
                 "busybox" : {
-                    "fpga" : "FETT_GFE_BUSYBOX_FPGA"
+                    "fpga" : "FETT_GFE_BUSYBOX_FPGA",
+                    "firesim" :  "FETT_GFE_BUSYBOX_FIRESIM"
                 },
                 "FreeRTOS" : {
-                    "fpga" : "FETT_GFE_FREERTOS_FPGA"
+                    "fpga" : "FETT_GFE_FREERTOS_FPGA",
+                    "firesim" :  "FETT_GFE_FREERTOS_FIRESIM"
                 },
                 "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR",
                 "gfeBitfileDir" : "FETT_GFE_BITFILE_DIR"
