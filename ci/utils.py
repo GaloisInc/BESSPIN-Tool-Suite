@@ -28,7 +28,7 @@ def exitOnInterrupt (xSig,xFrame):
         sigName = f"signal#{xSig}"
     exitFettCi(message=f"Received <{sigName}>!")
 
-def generateAllConfigs(runType):
+def generateAllConfigs(baseRunType,flavor):
     #create a list of unique dictionaries. Each dictionary can become a .ini instance
     def createConfig (inputSet, inputDict):
         if (not inputSet): #we're done
@@ -54,7 +54,6 @@ def generateAllConfigs(runType):
         createConfig (inputSet, inputDict)
          
     allConfigs = []
-    baseRunType, flavor = runType.split('-')
     for xApp,xSet in appSets[baseRunType][flavor].items():
         inputSet = copy.deepcopy(xSet)
         inputDict = {'name': [xApp]}
@@ -68,7 +67,7 @@ def generateAllConfigs(runType):
     
     return allConfigs
 
-def generateConfigFile (repoDir,dictConfig,testMode):
+def generateConfigFile (repoDir,outDir,dictConfig,testMode):
     #loading the template configuration file (the repo's default)
     templateConfigPath = os.path.join(repoDir,'config.ini')
     xConfig = configparser.ConfigParser()
@@ -98,11 +97,11 @@ def generateConfigFile (repoDir,dictConfig,testMode):
 
     #Creating the config file
     if (testMode):
-        dumpDir = os.path.join(repoDir,'dumpIni')
+        dumpDir = os.path.join(outDir,'dumpIni')
         xConfigFilePath = os.path.join(dumpDir,fileName)
         print(f"\t{fileName}")
     else:
-        xConfigFilePath = os.path.join(repoDir,fileName)
+        xConfigFilePath = os.path.join(outDir,fileName)
 
     try:
         fConfig = open(xConfigFilePath,'w')
@@ -113,7 +112,7 @@ def generateConfigFile (repoDir,dictConfig,testMode):
 
     return xConfigFilePath
 
-def prepareArtifact(repoDir, configFile,artifactSuffix):
+def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint):
     #decide on the folder's name
     artifactsPath = f"{os.path.splitext(os.path.basename(configFile))[0]}-{artifactSuffix}"
     if (os.path.isdir(artifactsPath)): # already exists, add the date
@@ -137,6 +136,11 @@ def prepareArtifact(repoDir, configFile,artifactSuffix):
         except Exception as exc:
             exitFettCi (message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",exc=exc)
 
+    if (entrypoint == 'AWS'):
+        print("(Warning)~  FETT-CI: AWS upload to S3 is not yet implemented.")
+        # Tar the artifact folder
+        # Upload the folder to S3
+        # Send an SQS message that we're done
 
 
 
