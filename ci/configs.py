@@ -56,21 +56,22 @@ freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',)),
     ('buildApps',('yes',)),
-    ('appTimeout',(90,)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',))
 })
 
 freertosAllTargets_onprem = freertosDefaults.union({
     ('processor',('chisel_p1',)),
-    ('target',('fpga',))
+    ('target',('fpga',)),
+    ('appTimeout',(90,))
 })
 
 freertosDevPR_onprem = freertosAllTargets_onprem
 
 freertosDevPR_aws = freertosDefaults.union({
     ('processor',('chisel_p1',)),
-    ('target',('aws',))
+    ('target',('aws',)),
+    ('appTimeout',(120,))
 })
 
 appSets = {
