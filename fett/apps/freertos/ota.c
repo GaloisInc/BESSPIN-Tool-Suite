@@ -153,8 +153,8 @@ void Ota_Worker(ed25519_key *pk)
                     Write_Payload_To_FS((size_t)received_file_size -
                                         ED25519_SIG_SIZE);
                     // and to the log
-                    Write_Payload_To_Log((size_t)received_file_size -
-                                         ED25519_SIG_SIZE);
+                    // Write_Payload_To_Log((size_t)received_file_size -
+                    //                      ED25519_SIG_SIZE);
                 }
             }
             else
