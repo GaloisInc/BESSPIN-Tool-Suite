@@ -69,7 +69,7 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 
     FF_FILE * file;
 
-    file = pvPortMalloc(sizeof(FF_FILE));
+    file = (FF_FILE *) pvPortMalloc(sizeof(FF_FILE));
 
     // Crash fast if there's no memory left on the device
     if (file == NULL) {
