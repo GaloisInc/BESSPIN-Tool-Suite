@@ -147,6 +147,24 @@ class firesimTarget(commonTarget):
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
+class connectalTarget(commonTarget):
+    def __init__(self):
+        pass
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def boot(self):
+        pass
+
+    def interact(self):
+        pass
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def activateEthernet(self):
+        pass
+    # ------------------ END OF CLASS firesimTarget ----------------------------------------
+
 @decorate.debugWrap
 def configTapAdaptor():
     tapAdaptor = getSetting('awsTapAdaptorName')
@@ -217,25 +235,6 @@ def programAFI():
 @decorate.debugWrap
 def getTapAdaptorUp ():
     sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'])
-
-@decorate.debugWrap
-def setupKernelModules():
-    if (isEqSetting('pvAWS','firesim')):
-        #remove all modules to be safe
-        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
-        for kmod in kmodsToClean:
-            sudoShellCommand(['rmmod', kmod],check=False)
-            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
-
-        awsFiresimModPath = os.path.join(getSetting('firesimPath'), 'kmods')
-
-        #load our modules
-        sudoShellCommand(['insmod', f"{awsFiresimModPath}/nbd.ko", 'nbds_max=128'])
-        _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
-        sudoShellCommand(['insmod', f"{awsFiresimModPath}/xdma.ko", 'poll_mode=1'])
-        _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
-    else:
-        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
 def _sendKmsg(message):
@@ -314,6 +313,26 @@ def flashFpgas(agfi):
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
+# ------------------ FireSim Functions ----------------------------------------
+@decorate.debugWrap
+def setupFiresimKernelModules():
+    if (isEqSetting('pvAWS','firesim')):
+        #remove all modules to be safe
+        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
+        for kmod in kmodsToClean:
+            sudoShellCommand(['rmmod', kmod],check=False)
+            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
+
+        awsFiresimModPath = os.path.join(getSetting('firesimPath'), 'kmods')
+
+        #load our modules
+        sudoShellCommand(['insmod', f"{awsFiresimModPath}/nbd.ko", 'nbds_max=128'])
+        _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
+        sudoShellCommand(['insmod', f"{awsFiresimModPath}/xdma.ko", 'poll_mode=1'])
+        _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
+    else:
+        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+
 def prepareFiresim():
     """prepare the firesim binaries for the FETT work directory"""
     def getAgfiJson(jsonFile):
@@ -353,4 +372,11 @@ def prepareFiresim():
     agfiJsonPath = os.path.join(firesimSourcePath, 'agfi_id.json')
     agfiId = getAgfiJson(agfiJsonPath)
     setSetting("agfiId", agfiId)
+
+# ------------------ Connectal Functions ----------------------------------------
+def setupConnectalKernelModules():
+    pass
+
+def prepareConnectal():
+    pass
 
