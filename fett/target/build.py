@@ -13,7 +13,9 @@ def prepareOsImage ():
     mkdir(osImagesDir,addToSettings='osImagesDir')
 
     osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
+    osImageAsm = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.asm")
     setSetting('osImageElf',osImageElf)
+    setSetting('osImageAsm',osImageAsm)
 
     if(isEqSetting('osImage','FreeRTOS')):
         prepareFreeRTOS ()
@@ -102,7 +104,7 @@ def prepareFreeRTOS():
                 return int(val)
             elif (xType==hex):
                 return "0x{:02X}".format(int(val,16))
-        
+
         configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettFreeRTOSIPConfig.h'),'a')
         for xSetting,xMacro,xType in listConfigIpParams:
             for iPart,xPart in enumerate(re.split(r'[\.\:]',getSetting(xSetting))):
@@ -129,9 +131,13 @@ def prepareFreeRTOS():
 
         #check if the elf file was created
         builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
+        builtAsm = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.asm')
         if (not os.path.isfile(builtElf)):
-            logAndExit(f"<make> executed without errors, but cannot fine <{builtElf}>.",exitCode=EXIT.Run)
+            logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
         cp(builtElf,getSetting('osImageElf'))
+        if (not os.path.isfile(builtAsm)):
+            logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
+        cp(builtAsm,getSetting('osImageAsm'))
         printAndLog(f"Files cross-compiled successfully.")
 
         #Cleaning all ".o" files post run
