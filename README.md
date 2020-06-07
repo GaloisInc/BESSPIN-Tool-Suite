@@ -70,6 +70,14 @@ After launching, it is necessary to setup the git `name` and `email`, as well as
 
 See the instructions in `build/FireSimAMI.md` to recreate the image manually.
 
+#### Connectal
+
+A temporary AMI was made for connectal development. It is based on `ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20200408 (ami-003634241a8fcdec0)` . The changes are identical to the FireSim AMI.
+
+**AMI ID: `ami-0a8b6af85347cf024`**
+
+See the instructions in `build/TemporaryConnectalAMI.md` for build procedure.
+
 
 ## User Manual ##
 
