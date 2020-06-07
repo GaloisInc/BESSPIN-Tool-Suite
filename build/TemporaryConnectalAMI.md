@@ -6,7 +6,11 @@ These instructions build out a FETT Target environment to run the connectal work
 
 ## Procedure
 
-1. Base the image on `ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20200408 (ami-003634241a8fcdec0)`
+1. Base the image on `ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20200408 (ami-003634241a8fcdec0)`. The kernel needs to be upgraded to 5.3, which can be done with
+   
+   ```
+   apt update && apt upgrade && reboot
+   ```
    
 2. Install AWS/AWS FPGA utilities
 
