@@ -8,7 +8,7 @@ These instructions build out a FETT Target environment to run the connectal work
 
 1. Base the image on `ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20200408 (ami-003634241a8fcdec0)`
    
-2. Install AWS/ AWS FPGA utilities
+2. Install AWS/AWS FPGA utilities
 
     ```
     sudo apt install awscli
