@@ -21,8 +21,8 @@ These instructions build out a FETT Target environment to run the connectal work
 3. Install connectal drivers
     ```
     sudo add-apt-repository -y ppa:jamey-hicks/connectal
-    sudo apt-get update
-    sudo apt-get install connectal
+    sudo apt update
+    sudo apt install connectal
     modprobe portalmem
     modprobe pcieportal
     ```
