@@ -64,11 +64,11 @@ def prepareFreeRTOS():
             logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
 
         #cross-compiling sanity checks
-        if (isEqSetting('cross-compiler','GCC') and (not isEqSetting('linker','LLD'))):
-            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <GCC> is not supported. Linking using <GCC> instead.>.")
+        if (isEqSetting('cross-compiler','GCC') and (not isEqSetting('linker','GCC'))):
+            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <GCC> is not supported. Linking using <GCC> instead.")
             setSetting('linker','GCC')
         if (isEqSetting('cross-compiler','Clang') and (not isEqSetting('linker','LLD'))):
-            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <Clang> is not supported. Linking using <LLD> instead.>.")
+            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <Clang> is not supported. Linking using <LLD> instead.")
             setSetting('linker','LLD')
 
         #copy the C files, .mk files, and any directory
