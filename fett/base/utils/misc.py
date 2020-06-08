@@ -355,14 +355,15 @@ def matchExprInLines (expr,lines):
     return None
 
 @decorate.debugWrap    
-def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False):
+def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False, timeout=60):
     # Need --insecure because of self signed certs
     options = [
         "--insecure",
         "--http2" if http2 else "--http1.1",
         "-L",
         "-s",
-        "-X", method
+        "-X", method,
+        '-m', str(timeout)
     ] + extra
     if not rawOutput:
         options.append("-I")
@@ -375,7 +376,7 @@ def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False):
     return out
 
 @decorate.debugWrap
-def sudoShellCommand (argsList, sudoPromptPrefix=None, checkCall=True, timeout=90):
+def sudoShellCommand (argsList, sudoPromptPrefix=None, check=True, timeout=30, **kwargs):
     if (sudoPromptPrefix):
         try:
             sudoPrompt = sudoPromptPrefix + f" [sudo] password for {getpass.getuser()}: "
@@ -385,14 +386,16 @@ def sudoShellCommand (argsList, sudoPromptPrefix=None, checkCall=True, timeout=9
     else: #no prompt
         promptArgs = []
 
+    command = ['sudo'] + promptArgs + argsList
+    shellCommand (command, check=check, timeout=timeout, **kwargs)
+
+@decorate.debugWrap
+def shellCommand (argsList, check=True, timeout=30, **kwargs):
+    shellOut = ftOpenFile(os.path.join(getSetting('workDir'),'shell.out'),'a')
+    shellOut.write(f"\n\n{argsList}\n")
+    shellOut.flush()
     try:
-        command = ['sudo'] + promptArgs + argsList
+        subprocess.run(argsList, stdout=shellOut, stderr=shellOut, timeout=timeout, check=check, **kwargs)
     except Exception as exc:
-        logAndExit (f"sudo: Failed to format the sudo command with <{argsList}>.",exc=exc,exitCode=EXIT.Dev_Bug)
-    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
-    sudoOut.write(f"\n\n{' '.join(command)}\n")
-    try:
-        subprocess.run(command,stdout=sudoOut,stderr=sudoOut,timeout=timeout,check=checkCall)
-    except Exception as exc:
-        logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Run)
-    sudoOut.close()
+        logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
+    shellOut.close()
