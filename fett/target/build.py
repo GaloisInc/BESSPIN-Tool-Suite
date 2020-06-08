@@ -13,11 +13,11 @@ def prepareOsImage ():
     mkdir(osImagesDir,addToSettings='osImagesDir')
 
     osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
-    osImageAsm = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.asm")
     setSetting('osImageElf',osImageElf)
-    setSetting('osImageAsm',osImageAsm)
 
     if(isEqSetting('osImage','FreeRTOS')):
+        osImageAsm = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.asm")
+        setSetting('osImageAsm',osImageAsm)
         prepareFreeRTOS ()
     elif(isEqSetting('osImage','debian')):
         prepareDebian ()
