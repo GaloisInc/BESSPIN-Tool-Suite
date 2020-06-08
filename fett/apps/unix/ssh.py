@@ -38,6 +38,7 @@ def extensiveTest (target):
     printAndLog("Test ssh passed successfully!", doPrint=False, tee=getSetting('appLog'))
     # target.sendFile (pathToFile=getSetting('repoDir'),xFile='README.md',timeout=120)
     # printAndLog("Test scp passed successfully!", doPrint=False, tee=getSetting('appLog'))
-    target.closeSshConn()
     printAndLog("Ssh and scp test OK!", tee=getSetting('appLog'))
+    target.closeSshConn()
+
     return
