@@ -4,12 +4,12 @@
 
 A minimal nginx server is desired to run on target platforms. Namely, it will serve the following features:
 
-- static https webpage
+- the https webpage should be static
 - the page opens another internet webpage through a link
 - the page opens a text file
 - the page opens an image
 - the page receives a request and saves on the local filesystem
-- the page another static page
+- the page links to another static page
 
 ## HTTPS Client Setup
 

@@ -6,8 +6,8 @@ Main fpga class + misc fpga functions
 from fett.base.utils.misc import *
 from fett.target.common import *
 
-import subprocess, getpass, psutil, tftpy
-import sys, signal, os, socket, time
+import subprocess, psutil, tftpy
+import sys, signal, os, socket, time, hashlib
 from pexpect import fdpexpect
 
 class fpgaTarget (commonTarget):
@@ -23,6 +23,8 @@ class fpgaTarget (commonTarget):
         # Important for the Web Server
         self.httpPortTarget  = getSetting('HTTPPortTarget')
         self.httpsPortTarget = getSetting('HTTPSPortTarget')
+        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
+        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
         self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
         self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')
@@ -83,7 +85,7 @@ class fpgaTarget (commonTarget):
                 break #success
             elif (iAttempt < nAttempts-1): #that was the first try
                 errorAndLog(f"boot: Failed to <setUp> FPGA for booting. Trying again...",exc=exc)
-                programBifile()
+                programBitfile()
                 isException = False #go and try again
         if (isException): 
             self.shutdownAndExit (f"boot: Failed to <setUp> FPGA for booting.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
@@ -166,25 +168,9 @@ class fpgaTarget (commonTarget):
         elif (isEqSetting('osImage','FreeBSD')):
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
-            self.shutdownAndExit("<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
+            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
 
-        #pinging the FPGA to check everything is ok
-        gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
-        pingAttempts = 3
-        wasPingSuccessful = False
-        for iPing in range(pingAttempts):
-            try:
-                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=gfeOut,stderr=gfeOut)
-                wasPingSuccessful = True
-                break
-            except Exception as exc:
-                if (iPing < pingAttempts - 1):
-                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
-                    time.sleep(15)
-                else:
-                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
-        gfeOut.close()
-        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+        self.pingTarget()
 
         if (isEqSetting('osImage','FreeBSD')): #use ssh instead of JTAG
             self.openSshConn()
@@ -208,7 +194,7 @@ class fpgaTarget (commonTarget):
         self.inInteractMode = True
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
-        printAndLog (f"Entering pseudo-interactive mode. Enter \"--exit + Enter\" to exit.")
+        printAndLog (f"Entering pseudo-interactive mode. Root password: \'{self.rootPassword}\'. Enter \"--exit + Enter\" to exit.")
         printAndLog ("Please use \"--ctrlc\" for interrupts. (Ctrl-C would exit the whole FETT tool).")
         if (self.userCreated):
             printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
@@ -262,7 +248,7 @@ class fpgaTarget (commonTarget):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programBifile ():
+def programBitfile ():
     printAndLog("Preparing the FPGA environment...")
     clearProcesses()
     gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
@@ -273,14 +259,30 @@ def programBifile ():
     except Exception as exc:
         errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
 
+    bitfilePath = selectBitfile()
+    if not os.path.isfile(bitfilePath):
+        logAndExit(f"Bitfile <{bitfilePath}> does not exist.", exitCode=EXIT.Files_and_paths)
+
+    try:
+        bitfile = ftOpenFile(bitfilePath, "rb")
+        md5 = hashlib.md5()
+        while True:
+            chunk = bitfile.read(65536)
+            if not chunk:
+                break
+            md5.update(chunk)
+        bitfile.close()
+    except Exception as exc:
+        logAndExit(f"Could not compute md5 for file <{bitfilePath}>.", exc=exc, exitCode=EXIT.Run)
+
     printAndLog("Programming the bitfile...")
     nAttempts = 2
     for iAttempt in range(nAttempts):
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            outProgram = subprocess.check_output(['gfe-program-fpga', getSetting('processor')],stderr=gfeOut,timeout=90)
-            printAndLog(str(outProgram,'utf-8').strip())
+            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfilePath],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
+            printAndLog(f"Programmed bitfile {bitfilePath} (md5: {md5.hexdigest()})")
             break
         except Exception as exc:
             if (iAttempt < nAttempts-1):
@@ -292,6 +294,21 @@ def programBifile ():
     printAndLog("FPGA was programmed successfully!")
 
 @decorate.debugWrap
+def selectBitfile ():
+    if getSetting('useCustomBitfile'):
+        return getSetting('pathToCustomBitfile')
+    else:
+        bitfileName = "soc_" + getSetting('processor') + ".bit"
+        # If source is GFE, we check the nix environment for latest bitfiles
+        if getSetting('binarySource') == 'GFE':
+            bitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
+            if bitfileDir in os.environ:
+                return os.path.join(os.environ[bitfileDir], bitfileName)
+            else:
+                printAndLog(f"Could not find bitfile for <{getSetting('processor')}> in nix environment. Falling back to binary repo.", doPrint=False)
+        return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'fpga', bitfileName)
+
+@decorate.debugWrap
 def checkEthAdaptorIsUp ():
     try:
         return psutil.net_if_stats()[getSetting('ethAdaptor')].isup
@@ -300,6 +317,14 @@ def checkEthAdaptorIsUp ():
 
 @decorate.debugWrap
 def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
+    
+    def noAddrFound(errMessage):
+        if (exitIfNoAddr):
+            logAndExit(f"fpga.getAddrOfAdaptor: Failed to {errMessage}. Please check the network configuration.",exitCode=EXIT.Network)
+        else:
+            printAndLog(f"fpga.getAddrOfAdaptor: Failed to {errMessage}.",doPrint=False)
+            return 'NotAnAddress'
+
     if (addrType == 'MAC'):
         family = psutil.AF_LINK
     elif (addrType == 'IP'):
@@ -308,32 +333,14 @@ def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
         logAndExit (f"fpga.getAddrOfAdaptor: Unrecognized address type <{addrType}> is up.",exitCode=EXIT.Dev_Bug)
     
     if (ethAdaptor not in psutil.net_if_addrs()):
-        logAndExit(f"fpga.getAddrOfAdaptor: Failed to find the adaptor <{ethAdaptor}>. Please check the network configuration.",exitCode=EXIT.Network)
+        return noAddrFound(f"find the adaptor <{ethAdaptor}>")
     
     for addr in psutil.net_if_addrs()[ethAdaptor]:
         if (addr.family == family):
             printAndLog(f"fpga.getAddrOfAdaptor: <{addrType} address> of <{ethAdaptor}> = <{addr.address}>",doPrint=False)
             return addr.address
-    if (exitIfNoAddr):
-        logAndExit(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>. Please check the network configuration.",exitCode=EXIT.Network)
-    else:
-        printAndLog(f"fpga.getAddrOfAdaptor: Failed to get the <{addrType} address> of <{ethAdaptor}>.",doPrint=False)
-        return 'NotAnAddress'
 
-@decorate.debugWrap
-def sudoShellCommand (argsList, sudoPromptPrefix):
-    try:
-        sudoPrompt = sudoPromptPrefix + f" [sudo] password for {getpass.getuser()}: "
-        command = ['sudo', '-p', sudoPrompt] + argsList
-    except Exception as exc:
-        logAndExit (f"sudo: Functions called with unsuitable arguments <{argsList}> and <{sudoPromptPrefix}>.",exc=exc,exitCode=EXIT.Dev_Bug)
-    sudoOut = ftOpenFile(os.path.join(getSetting('workDir'),'sudo.out'),'a')
-    sudoOut.write(f"\n\n{' '.join(command)}\n")
-    try:
-        subprocess.check_call(command,stdout=sudoOut,stderr=sudoOut,timeout=90)
-    except Exception as exc:
-        logAndExit (f"sudo: Failed to <{' '.join(command)}>. Check <sudo.out> for more details.",exc=exc,exitCode=EXIT.Network)
-    sudoOut.close()
+    return noAddrFound(f"get the <{addrType} address> of <{ethAdaptor}>")
 
 @decorate.debugWrap
 def resetEthAdaptor ():

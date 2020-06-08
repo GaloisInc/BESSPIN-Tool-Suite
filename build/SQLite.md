@@ -57,7 +57,10 @@ The steps to build on FreeBSD are essentially the same as the steps
 for Debian. The only differences are:
 - In step 3, change `riscv64-unknown-linux` to `riscv64-unknown-freebsd`
 - When using `env.mk` to determine the commands for compiling and
-  linking, pass the argument `OS_IMAGE=FreeBSD`.
+  linking, pass the argument `OS_IMAGE=FreeBSD`. You will probably be
+  using Clang rather than GCC, which would mean also passing
+  `COMPILER=CLANG`, and `LINKER=LLD` if you are using LLD as your
+  linker.
 
 ## Troubleshooting
 

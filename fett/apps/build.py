@@ -4,6 +4,7 @@ Building apps
 """
 
 from fett.base.utils.misc import *
+from fett.apps.freertos import freertos
 import os
 
 """ The entry function
@@ -24,12 +25,12 @@ def buildApps ():
 
     if (isEqSetting('osImage','FreeRTOS')):
         buildFreeRTOSapps()
-    elif (isEnabled('webserver')):
+    elif (getSetting('osImage') in ['debian', 'FreeBSD']):
         buildWebserver(tarName)
-    elif (isEnabled('database')):
         buildDatabase(tarName)
-    elif (isEnabled('voting')):
         buildVoting(tarName)
+    else:
+        logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
 """
 - FreeRTOS, building an app means copying the C files/headers/.mk env files to the workDir to prepare for os build.
@@ -46,11 +47,81 @@ def buildFreeRTOSapps():
         pass #For readability
     else:
         appLibPath = os.path.join(getSetting('buildDir'),'appLib')
-        mkdir (appLibPath)
+        mkdir (appLibPath,addToSettings='appLibDir')
         cp (getSourceDir('freertos'),appLibPath,pattern='*.c')
         cp (getSourceDir('freertos'),appLibPath,pattern='*.h')
+        freertos.prepareAssets()        
 
 """ Special building for 'webserver' """
+@decorate.debugWrap
+@decorate.timeWrap
+def copyWebserverFiles(tarName):
+    """
+    Build a tar containing:
+      - nginx
+      - conf/<nginx configuration>
+      - html/<html files>
+      - certs/<certname>
+      - keys/<keyname>
+    """
+    cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
+    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "conf"))
+    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "html"))
+    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
+    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
+
+    tarFiles = ["nginx", "conf", "html", "certs", "keys"]
+
+    runtimeFilesDir = os.path.join(getAppDir('webserver'), getSetting('osImage'))
+    if getSetting('osImage') == 'debian':
+        cpFilesToBuildDir (runtimeFilesDir, pattern="nginx.service")
+        tarFiles += ["nginx.service"]
+    elif getSetting('osImage') == 'FreeBSD':
+        cpFilesToBuildDir (runtimeFilesDir, pattern="rcfile")
+        tarFiles += ["rcfile"]
+    else:
+        logAndExit (f"Installing nginx is not supported on <{getSetting('osImage')}>",
+                    exitCode=EXIT.Dev_Bug)
+    filesList=map(buildDirPathTuple, tarFiles)
+    return filesList
+
+@decorate.debugWrap
+@decorate.timeWrap
+def copyDatabaseFiles(tarName):
+    """
+    Build a tar just containing `sqlite`
+    """
+    # Just grab the pre-built binary
+    cpFilesToBuildDir (getBinDir('database'), pattern="sqlite")
+    # Create the tarball here to be sent to target
+    destBin = "sqlite"
+    srcBin  = os.path.join(getSetting('buildDir'), "sqlite")
+    filesList = [(destBin, srcBin)]
+    return filesList
+
+@decorate.debugWrap
+@decorate.timeWrap
+def copyVotingFiles(tarName):
+    # sqlite binary
+    # sqlFiles    = copyDatabaseFiles(tarName)
+    # Nginx + config + service files
+    # serverFiles = copyWebserverFiles(tarName)
+
+    cpFilesToBuildDir(getBinDir('voting'), 'bvrs')
+    cpFilesToBuildDir(getBinDir('voting'), 'kfcgi')
+    cpDirToBuildDir(os.path.join(getAppDir('voting'), 'common', 'conf', 'sites'))
+    cp(os.path.join(getAppDir('voting'), "common", "conf"),
+       os.path.join(getSetting('buildDir'), "conf"),
+       pattern="*.conf")
+    cp(os.path.join(getAppDir('voting'), "common"),
+       os.path.join(getSetting('buildDir')),
+       pattern="bvrs.db")
+    filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf', 'bvrs.db']))
+    filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
+    # Need kfcgi, webserver's nginx.conf, bvrs app
+    # We should probably just generate the initial database script here
+    return filesList
+
 @decorate.debugWrap
 @decorate.timeWrap
 def buildWebserver(tarName):
@@ -58,26 +129,9 @@ def buildWebserver(tarName):
         logAndExit (f"Building from source is not supported for the webserver application",
                     exitCode=EXIT.Configuration)
     else:
-        cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
-        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "conf"))
-        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "html"))
-        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
-        cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
-
-        tarFiles = ["nginx", "conf", "html", "certs", "keys"]
-
-        if getSetting('osImage') == 'debian':
-            cpFilesToBuildDir (getBinDir('webserver'), pattern="nginx.service")
-            tarFiles += ["nginx.service"]
-        elif getSetting('osImage') == 'FreeBSD':
-            cpFilesToBuildDir (getBinDir('webserver'), pattern="rcfile")
-            tarFiles += ["rcfile"]
-        else:
-            logAndExit (f"Installing nginx is not supported on <{getSetting('osImage')}>",
-                        exitCode=EXIT.Dev_Bug)
-
+        tarFiles = copyWebserverFiles(tarName)
         #Create the tarball here to be sent to target
-        tar (tarName, filesList=map(buildDirPathTuple, tarFiles))
+        tar (tarName, tarFiles)
         setSetting('sendTarballToTarget',True)
     return
 
@@ -89,13 +143,8 @@ def buildDatabase(tarName):
         logAndExit (f"Building from source is not supported for the database application",
                     exitCode=EXIT.Configuration)
     else:
-        # Just grab the pre-built binary
-        cpFilesToBuildDir (getBinDir('database'), pattern="sqlite")
-
-        # Create the tarball here to be sent to target
-        destBin = "sqlite"
-        srcBin  = os.path.join(getSetting('buildDir'), "sqlite")
-        tar (tarName, filesList=[(destBin, srcBin)])
+        tarFiles = copyDatabaseFiles(tarName)
+        tar (tarName, filesList=tarFiles)
 
         setSetting('sendTarballToTarget',True)
     return
@@ -108,8 +157,10 @@ def buildVoting(tarName):
         logAndExit (f"Building from source is not supported for the voting application",
                     exitCode=EXIT.Configuration)
     else:
-        logAndExit (f"buildVoting: The build function for <voting> is not yet implemented.",
-                    exitCode=EXIT.Implementation)
+        tarFiles = copyVotingFiles(tarName)
+        tar (tarName, filesList=tarFiles)
+
+        setSetting('sendTarballToTarget',True)
     return
 
 # re-used parts -----------------------------------------------------------
@@ -124,7 +175,7 @@ def getAppDir(app):
 
 @decorate.debugWrap
 def getBinDir(app):
-    return os.path.join(getAppDir(app),getSetting('osImage'))
+    return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'appsBinaries', app, getSetting('osImage'))
 
 @decorate.debugWrap
 def cpFilesToBuildDir (sourceDir, pattern=None):

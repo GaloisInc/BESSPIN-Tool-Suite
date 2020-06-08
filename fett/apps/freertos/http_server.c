@@ -104,7 +104,7 @@ static void prvFileClose(HTTPClient_t *pxClient)
 {
     if (pxClient->pxFileHandle != NULL)
     {
-        fettPrintf("Closing file: %s\n", pxClient->pcCurrentFilename);
+        fettPrintf("(Info)~  HTTP Closing file: %s\n", pxClient->pcCurrentFilename);
         ff_fclose(pxClient->pxFileHandle);
         pxClient->pxFileHandle = NULL;
     }
@@ -217,7 +217,6 @@ static BaseType_t prvSendFile(HTTPClient_t *pxClient)
 static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
 {
     BaseType_t xRc;
-    char pcSlash[2];
 
     pxClient->bits.ulFlags = 0;
 
@@ -252,24 +251,17 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
     }
 #endif /* ipconfigHTTP_HAS_HANDLE_REQUEST_HOOK */
 
-    if (pxClient->pcUrlData[0] != '/')
-    {
-        /* Insert a slash before the file name. */
-        pcSlash[0] = '/';
-        pcSlash[1] = '\0';
-    }
-    else
-    {
-        /* The browser provided a starting '/' already. */
-        pcSlash[0] = '\0';
-    }
+    // FETT HTTP doesn't care about directories, so simplify this here to
     snprintf(pxClient->pcCurrentFilename, sizeof(pxClient->pcCurrentFilename),
-             "%s%s%s", pxClient->pcRootDir, pcSlash, pxClient->pcUrlData);
+             "%s", pxClient->pcUrlData);
+
+    // Filesystem Critical Section starts here
+    ff_lock();
 
     pxClient->pxFileHandle = ff_fopen(pxClient->pcCurrentFilename, "rb");
 
     fettPrintf(
-        "Open file '%s': %s\n", pxClient->pcCurrentFilename,
+        "(Info)~  HTTP Open file '%s': %s\n", pxClient->pcCurrentFilename,
          pxClient->pxFileHandle != NULL ? "Ok" : "ERROR");
 
     if (pxClient->pxFileHandle == NULL)
@@ -280,8 +272,13 @@ static BaseType_t prvOpenURL(HTTPClient_t *pxClient)
     else
     {
         pxClient->uxBytesLeft = (size_t)pxClient->pxFileHandle->ulFileSize;
+        fettPrintf("(Info)~  HTTP sending %d bytes\n", (int) pxClient->uxBytesLeft);
         xRc = prvSendFile(pxClient);
     }
+
+    // Critical section ends here. Note that prvSendFile calls ff_fclose()
+    // before it returns.
+    ff_release();
 
     return xRc;
 }
@@ -308,7 +305,7 @@ static BaseType_t prvProcessCmd(HTTPClient_t *pxClient, BaseType_t xIndex)
     case ECMD_PATCH:
     case ECMD_UNK:
     {
-        fettPrintf("prvProcessCmd: Not implemented: %s\n",
+        fettPrintf("(Info)~ HTTP prvProcessCmd: Not implemented: %s\n",
                          xWebCommands[xIndex].pcCommandName);
     }
     break;
@@ -348,6 +345,8 @@ BaseType_t xHTTPClientWork(TCPClient_t *pxTCPClient)
         }
         pcEndOfCmd = pcBuffer + xRc;
 
+        fettPrintf ("(Info)~  HTTP received request: %s\n", pcBuffer);
+
         curCmd = xWebCommands;
 
         /* Pointing to "/index.html HTTP/1.1". */
@@ -367,7 +366,18 @@ BaseType_t xHTTPClientWork(TCPClient_t *pxTCPClient)
             {
                 char *pcLastPtr;
 
+                // If pcUrlData is pointing at something like "GET /index.htm"
+                // then xLength will be 3, and the "/" of "/index.htm will
+                // be at PcUrlData + xLength + 1.
                 pxClient->pcUrlData += xLength + 1;
+
+                // If there is still a leading '/', then we drop it
+                // here for FETT since we don't care about directory names at all.
+                if (((char *) pxClient->pcUrlData)[0] == '/')
+                {
+                    pxClient->pcUrlData++;
+                }
+
                 for (pcLastPtr = (char *)pxClient->pcUrlData;
                      pcLastPtr < pcEndOfCmd; pcLastPtr++)
                 {
@@ -391,7 +401,7 @@ BaseType_t xHTTPClientWork(TCPClient_t *pxTCPClient)
     else if (xRc < 0)
     {
         /* The connection will be closed and the client will be deleted. */
-        fettPrintf("xHTTPClientWork: rc = %ld\n", xRc);
+        fettPrintf("(Info)~  xHTTPClientWork: rc = %ld\n", xRc);
     }
     return xRc;
 }

@@ -5,6 +5,7 @@ fett header for includes, externs, and global variables
 /* General includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
@@ -26,7 +27,6 @@ fett header for includes, externs, and global variables
 #include <wolfssl/wolfcrypt/ed25519.h>
 
 /* Misc includes */
-#include <malloc.h>
 #include "ff_stdio.h"
 
 /* Macros */
@@ -46,28 +46,24 @@ fett header for includes, externs, and global variables
 #define uTRUE 1
 #define uFALSE 0
 
-/* EXIT macro sends the exit flag + delete the task if task (vEXIT) and return if void func (prEXIT) */
-#define vEXIT(exitCode) ({exitFett (exitCode); vTaskDelete (NULL);})
-#define prEXIT(exitCode) ({exitFett (exitCode); return;})
-
-/* Useful functions to enhance readability */
-#define ERROR_IF_TRUE(ret, msg, caller, xBool) {\
-    if (xBool) {\
-        fettPrintf ("(Error)~  %s [ret=%d].\r\n",msg,ret);\
-        if (caller == 'v')\
-            vEXIT(1);\
-        else\
-            prEXIT(1);\
-    } else \
-        fettPrintf ("(Info)~  %s\r\n",msg);\
+/* New error-handling macros introduced by Issue #248 */
+#define ASSERT_OR_WARN(b, msg) {\
+    if (b)\
+        fettPrintf ("(Info)~  Assertion OK: %s\r\n",msg);\
+    else\
+        fettPrintf ("(Warning)~  Assertion failed: %s\r\n",msg);\
     }
 
-#define COMP_EQ(ret, err) (ret == err)
-#define COMP_NEQ(ret, gold) (ret != gold)
-#define vERROR_IF_NEQ(ret, gold, msg)  (ERROR_IF_TRUE (ret, msg, 'v',COMP_NEQ(ret, gold)))
-#define prERROR_IF_NEQ(ret, gold, msg)  (ERROR_IF_TRUE (ret, msg, 'p',COMP_NEQ(ret, gold)))
-#define vERROR_IF_EQ(ret, err, msg)  (ERROR_IF_TRUE (ret, msg, 'v',COMP_EQ(ret, err)))
-#define prERROR_IF_EQ(ret, err, msg)  (ERROR_IF_TRUE (ret, msg, 'p',COMP_EQ(ret, err)))
+#define ASSERT_OR_DELETE_TASK(b, msg) {\
+    if (b)\
+        fettPrintf ("(Info)~  Assertion OK: %s\r\n",msg);\
+    else {\
+        fettPrintf ("(Error)~  Assertion failed so deleting task: %s\r\n",msg);\
+        exitFett (1);\
+        vTaskDelete (NULL); }\
+    }
+
+
 
 #ifndef pdTICKS_TO_S
     #define pdTICKS_TO_S( xTicks ) ( ( TickType_t ) ( ( ( TickType_t ) ( xTicks ) ) / ( TickType_t ) configTICK_RATE_HZ ) )
@@ -93,8 +89,20 @@ fett header for includes, externs, and global variables
 extern void vStartNetwork (void *pvParameters);
 
 // --------- fettMisc.c ---------------------------------------------------------------------------------
+
+// Termination control.
+//
+// A global atomic Boolean flag is declared and initialized to False.
+// A task can set this to True by calling setStopRequested()
+// Other tasks can test it with StopRequested()
+extern void setStopRequested(void);
+extern bool StopRequested(void);
+
+// Debug printing and exit
 extern void fettPrintf (const char * textToPrint, ...);
 extern void exitFett (uint8_t exitCode);
+
+
 extern void _open (const char * dump1, int dump2, ...); //Needed for WolfSSL to compile -- should never be called
 extern void _gettimeofday (struct timeval *__p, void *__tz); //Needed for WolfSSL to compile -- should never be called
 extern time_t XTIME(time_t *t); //Needed for WolfSSL to compile -- should never be called
@@ -112,6 +120,7 @@ extern UBaseType_t xMainPriority;
 
 // ----------- http.c -------------------------------------------------------------------------------------
 extern void vHttp (void *pvParameters);
+extern void Initialize_HTTP_Assets (void);
 
 // ----------- ota.c --------------------------------------------------------------------------------------
 extern void vOta (void *pvParameters);

@@ -1,0 +1,12 @@
+name: fett-target:ci
+description: ""
+inputs:
+  ssh-key:
+    required: true
+    description: ""
+  run:
+    required: true
+    description: ""
+runs:
+  using: node12
+  main: index.js

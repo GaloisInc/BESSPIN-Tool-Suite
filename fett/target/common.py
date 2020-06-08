@@ -15,7 +15,7 @@ from collections import Iterable
 from fett.apps.unix import database
 from fett.apps.unix import webserver
 from fett.apps.unix import voting
-from fett.apps.freertos.run import runFreeRTOSapps
+from fett.apps.freertos import freertos
 
 class commonTarget():
     def __init__(self):
@@ -114,7 +114,8 @@ class commonTarget():
     @decorate.timeWrap
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
-            return
+            self.terminateTarget(shutdownOnError=True)
+            return 
         if (getSetting('osImage') in ['debian','busybox']):
             timeout = 45
         else:
@@ -153,6 +154,8 @@ class commonTarget():
                     self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
             elif (isEqSetting('target','qemu')):
                 timeout = 120
+            elif (isEqSetting('target', 'aws')):
+                timeout = 420
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -209,7 +212,7 @@ class commonTarget():
             self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
 
         #up the ethernet adaptor and get the ip address
-        self.activateEthernet() 
+        self.activateEthernet()
                                   
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         #Adding 5 minutes to avoid being in the past
@@ -219,11 +222,35 @@ class commonTarget():
             self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
             self.runCommand("chmod +x addEntropyDebian.riscv")
             self.ensureCrngIsUp () #check we have enough entropy for ssh
+
+            if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
+                # start the ssh service
+                self.runCommand("systemctl unmask ssh.service", timeout=90)
+                self.runCommand("systemctl start ssh.service",erroneousContents=["Failed", "not found"])
+                
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
                                 
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
+
+    @decorate.debugWrap
+    def interact(self):
+        #This method gives the control back to the user
+        if (self.inInteractMode):
+            return #avoid recursive interact mode
+        self.inInteractMode = True
+        if (self.isSshConn): #only interact on the JTAG
+            self.closeSshConn()
+        if (self.userCreated):
+            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+        try:
+            self.process.interact(escape_character='\x05')
+            #escaping interact closes the logFile, which will make any read/write fail inside pexpect logging
+            self.fTtyOut = ftOpenFile(self.fTtyOut.name,self.fTtyOut.mode)
+        except Exception as exc:
+            errorAndLog(f"Failed to open interactive mode.",exc=exc)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -301,9 +328,29 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def runCommand (self,command,endsWith=None,expectedContents=None,erroneousContents=None,shutdownOnError=True,timeout=60,suppressErrors=False,expectExact=False):
-        #expected contents: any one of them not found, gives error [one string or list]
-        #erroneous contensts: any one of them gives error [one string or list]
+    def runCommand (self,command,endsWith=None,expectedContents=None,
+                    erroneousContents=None,shutdownOnError=True,timeout=60,
+                    suppressErrors=False,expectExact=False,tee=None):
+        """
+        " runCommand: Sends `command` to the target, and wait for a reply.
+        "   ARGUMENTS:
+        "   ----------
+        "   command: The string to send to target using `sendToTarget`. If FreeRTOS, we do nothing with it.
+        "   endsWith: String/regex or list of strings/regex. The function returns when either is received from target.
+        "   expectedContents: string or list of strings. If either is not found in the target's response --> error
+        "   erroneousContents: string or list of strings. If either is found in the target's response --> error
+        "   shutdownOnError: Boolean. Whether to return or shutdown in case of error (timeout or contents related error)
+        "   timeout: how long to wait for endsWith before timing out.
+        "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
+        "   expectExact: Matching the endsWith should be by regex or exact match. As defined in pexpect.
+        "   tee: A file object to write the text output to. Has to be a valid file object to write. 
+        "   RETURNS:
+        "   --------
+        "   A list: [isSuccess  : "Boolean. True on no-errors.",
+        "            textBack   : "A string containing all text returned back from the target after sending the command.",
+        "            wasTimeout : "Boolean. True if timed-out waiting for endsWith.",
+        "            idxEndsWith: The index of the endsWith received. If endsWith was a string, this would be 0. -1 on time-out.
+        """
         if (isEnabled('isUnix')):
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
@@ -317,31 +364,31 @@ class commonTarget():
         isSuccess = not wasTimeout
         if (expectedContents is not None):
             if (isinstance(expectedContents,str)): #only one string
-                if (expectedContents not in textBack):
+                expectedContents = [expectedContents]
+            for content in expectedContents:
+                if (content not in textBack):
                     isSuccess = False
-                    errorAndLog (f"runCommand: Missing <{expectedContents}> while executing <{command}>.",doPrint=not suppressErrors)
-            else: #It is a list
-                for content in expectedContents:
-                    if (content not in textBack):
-                        isSuccess = False
-                        errorAndLog (f"runCommand: Missing <{content}> while executing <{command}>.",doPrint=not suppressErrors)
-                        break #One error per command is enough
+                    errorAndLog (f"runCommand: Missing <{content}> while executing <{command}>.",doPrint=not suppressErrors)
+                    break #One error per command is enough
         if (erroneousContents is not None):
             if (isinstance(erroneousContents,str)): #only one string
-                if (erroneousContents in textBack):
+                erroneousContents = [erroneousContents]
+            for content in erroneousContents:
+                if (content in textBack):
                     isSuccess = False
-                    errorAndLog (f"runCommand: Encountered <{erroneousContents}> while executing <{command}>.",doPrint=not suppressErrors)
-            else:
-                for content in erroneousContents:
-                    if (content in textBack):
-                        isSuccess = False
-                        errorAndLog (f"runCommand: Encountered <{content}> while executing <{command}>.",doPrint=not suppressErrors)
-                        break #One error per command is enough
-        if (shutdownOnError and not isSuccess):
+                    errorAndLog (f"runCommand: Encountered <{content}> while executing <{command}>.",doPrint=not suppressErrors)
+                    break #One error per command is enough
+        if (tee):
             try:
-                self.sendToTarget('\x03\r\n')
-            except:
-                pass
+                tee.write(textBack)
+            except Exception as exc:
+                isSuccess = False
+                try:
+                    fName = tee.name
+                except:
+                    fName = 'UNKNOWN_FILE'
+                errorAndLog (f"runCommand: Failed to tee the output to <{fName}> while executing <{command}>.",doPrint=not suppressErrors,exc=exc)
+        if (shutdownOnError and not isSuccess):
             self.shutdownAndExit(f"runCommand: fatal error.",exitCode=EXIT.Run)
         return [isSuccess, textBack, wasTimeout, idxEndsWith] #the 3rd argument is "timed-out"
 
@@ -388,14 +435,14 @@ class commonTarget():
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
             try:
-                retExpect = scpProcess.expect([f"Password for root@[\w-]+\:","\)\?"],timeout=timeout)
+                retExpect = scpProcess.expect(["Password for root@[\w-]+\:","root@[\w\-\.]+\'s password\:","\)\?"],timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
-                if (retExpect == 1): #needs a yes
+                if (retExpect == 2): #needs a yes
                     scpProcess.sendline("yes")
                     retExpect = scpProcess.expect(f"Password for root@[\w-]+\:",timeout=timeout)
-                if (retExpect == 0):
+                if (retExpect in [0,1]): #password prompt
                     scpProcess.sendline(self.rootPassword)
                 else:
                     return returnFalse (f"Failed to authenticate the scp process.")
@@ -461,16 +508,16 @@ class commonTarget():
         return self.runCommand(f"ls {pathToFile}/{xFile}",suppressErrors=True,expectedContents=xFile,erroneousContents=['ls:', 'cannot access', 'No such file or directory'],timeout=timeout,shutdownOnError=shutdownOnError)[0]
 
     @decorate.debugWrap
-    def sendTar(self,timeout=15): #send filesToSend.tar.gz to target
+    def sendTar(self,timeout=15): #send tarball to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
         self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
         #---untar
         if (isEqSetting('osImage','debian')):
-            self.runCommand("tar xvf filesToSend.tar.gz --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
+            self.runCommand(f"tar xvf {getSetting('tarballName')} --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
         elif (isEqSetting('osImage','FreeBSD')):
-            self.runCommand("tar xvf filesToSend.tar.gz -m",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
-        self.runCommand("rm filesToSend.tar.gz",timeout=timeout) #to save space
+            self.runCommand(f"tar xvf {getSetting('tarballName')} -m",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
+        self.runCommand(f"rm {getSetting('tarballName')}",timeout=timeout) #to save space
         printAndLog ("sendTar: Sending successful!")
 
     @decorate.debugWrap
@@ -481,23 +528,40 @@ class commonTarget():
             #send any needed files to target
             self.sendTar(timeout=timeout)
 
+        # assign modules
         if (isEqSetting('osImage','FreeRTOS')):
-            outLog = runFreeRTOSapps(self)
-        elif (isEnabled('webserver')):
-            outLog = webserver.install(self)
-            outLog += webserver.deploy(self)
-            outLog += webserver.deploymentTest(self)
-        elif (isEnabled('database')):
-            outLog = database.install(self)
-            outLog += database.deploy(self)
-            outLog += database.deploymentTest(self)
-        elif (isEnabled('voting')):
-            outLog = voting.install(self)
-            outLog += voting.deploy(self)
+            appModules = [freertos]
+        elif (getSetting('osImage') in ['debian', 'FreeBSD']):
+            appModules = [webserver, database, voting]
+        else:
+            self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
-        fLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
-        fLog.write (outLog)
-        fLog.close()
+        # The appLog will be the file object flying around for logging into app.out
+        appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
+        appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
+        setSetting("appLog",appLog)
+        # Install
+        for appModule in appModules:
+            appModule.install(self)
+            appLog.flush()
+
+        # Test and Deploy    
+        if (isEqSetting('mode','deploy')):
+            for appModule in appModules:
+                appModule.deploymentTest(self)
+                appLog.flush()
+            for appModule in appModules: 
+                #TODO: This should be threads and only collect the message once. Will be done in #247.
+                appModule.deploy(self)
+                appLog.flush()
+        elif (isEqSetting('mode','test')):
+            for appModule in appModules:
+                appModule.extensiveTest(self)
+                appLog.flush()
+        else:
+            self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('mode')}> mode.",exitCode=EXIT.Implementation)
+
+        appLog.close()
         logging.info (f"runApp: app executed successfully!\n")
         return
 
@@ -599,7 +663,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,expectExact=False):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,expectExact=False,overwriteShutdown=False):
         self.checkFallToTty ("expectFromTarget")
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
@@ -614,18 +678,16 @@ class commonTarget():
                 textBack += self.readFromTarget(endsWith=endsWith[retExpect])
         except pexpect.TIMEOUT:
             if (shutdownOnError):
-                self.shutdownAndExit(f"expectFromTarget: {getSetting('target').capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run)
+                self.shutdownAndExit(f"expectFromTarget: {getSetting('target').capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
             elif (not isEqSetting('osImage','FreeRTOS')):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
                 textBack += self.keyboardInterrupt (shutdownOnError=True)
             return [textBack, True, -1]
         except Exception as exc:
-            self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run)
-        if (endsWith == pexpect.EOF):
-            endsWith = ''
-        elif (isinstance(endsWith,str)): #only one string
+            self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
+        if (isinstance(endsWith,str)): #only one string
             textBack += endsWith
-        else:
+        elif ((endsWith not in [pexpect.EOF, pexpect.TIMEOUT]) and isinstance(endsWith[retExpect],str)): #list
             textBack += endsWith[retExpect]
         return [textBack, False, retExpect]
 
@@ -649,12 +711,14 @@ class commonTarget():
             if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
                 isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
                 textBack = textBack + textBack_2
-        else:
+        elif (isEqSetting('osImage','FreeRTOS')):
+            isSuccess, textBack, isTimeout, dumpIdx = [True, '', False, 0] #nothing to terminate
+        elif (not isEqSetting('osImage','FreeRTOS')):
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
         try:
             self.fTtyOut.close()
         except Exception as exc:
-            warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False)
+            warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False,exc=exc)
         if ((isSuccess and (not isTimeout)) or shutdownOnError):
             isSuccess &= self.targetTearDown()
         return [isSuccess, textBack, isTimeout, dumpIdx]
@@ -701,16 +765,16 @@ class commonTarget():
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
         self.isSshConn = True
         self.process = self.sshProcess
-        passwordPrompt = f"Password for {userName}@[\w\-\.]+\:" if isEqSetting('osImage', 'FreeBSD') else f"{userName}@[\w\-\.]+\'s password\:"
-        blockedIpResponse = "Connection closed by remote host" if isEqSetting('osImage', 'FreeBSD') else "Connection reset by peer"
-        retExpect = self.expectFromTarget([passwordPrompt,'\)\?',blockedIpResponse,pexpect.EOF],"openSshConn",timeout=timeout,shutdownOnError=False)
-        if (retExpect[2]==3): #Failed
+        passwordPrompt = [f"Password for {userName}@[\w\-\.]+\:", f"{userName}@[\w\-\.]+\'s password\:"]
+        blockedIpResponse = ["Connection closed by remote host", "Connection reset by peer"]
+        retExpect = self.expectFromTarget(passwordPrompt + blockedIpResponse + ['\)\?',pexpect.EOF],"openSshConn",timeout=timeout,shutdownOnError=False)
+        if (retExpect[2]==5): #Failed
             return returnFail(f"openSshConn: Failed to spawn the ssh process.")
         elif (retExpect[1]): #Failed
             return returnFail(f"openSshConn: Spawning the ssh process timed out.")
-        elif (retExpect[2]==1): # asking for yes/no for new host
+        elif (retExpect[2]==4): # asking for yes/no for new host
             self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
-        elif (retExpect[2]==2): #the ip was blocked
+        elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
         self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
@@ -740,6 +804,27 @@ class commonTarget():
         self.killSshConn()
         return True
 
+    @decorate.debugWrap
+    def pingTarget (self):
+        #pinging the target to check everything is ok
+        pingOut = ftOpenFile(os.path.join(getSetting('workDir'),'ping.out'),'a')
+        pingAttempts = 3
+        wasPingSuccessful = False
+        for iPing in range(pingAttempts):
+            try:
+                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=pingOut,stderr=pingOut)
+                wasPingSuccessful = True
+                break
+            except Exception as exc:
+                if (iPing < pingAttempts - 1):
+                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
+                    time.sleep(15)
+                else:
+                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+        pingOut.close()
+        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+        return
+
 # END OF CLASS commonTarget
 
 def checkPort (portNum, host=''):
@@ -760,13 +845,21 @@ def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
     def showTime(stopThread):
         startTime = time.time()
         minutesEst, secondsEst = divmod(estimatedTime, 60)
-        prefix = "Estimated ~{:0>2}:{:0>2} ----- Elapsed: ".format(int(minutesEst),int(secondsEst))
+        estimatedPrefix = "Estimated ~{:0>2}:{:0>2} ".format(int(minutesEst),int(secondsEst))
+        if (isEqSetting('fettEntrypoint','devHost')):
+            showTimePrefix = f"{estimatedPrefix}----- Elapsed: "
+        elif (getSetting('fettEntrypoint') in ['ciOnPrem','ciAWS']):
+            stdout.write(f"{estimatedPrefix}\n")
+        else:
+            logAndExit(f"showElapsedTime: Not implemented for Entrypoint: <{getSetting('fettEntrypoint')}>.",exitCode=EXIT.Implementation)
         while (not stopThread.is_set()):
             minutes, seconds = divmod(time.time() - startTime, 60)
-            stdout.write(prefix + "{:0>2}:{:0>2}\r".format(int(minutes),int(seconds)))
-            stdout.flush ()
+            if (isEqSetting('fettEntrypoint','devHost')):
+                stdout.write(showTimePrefix + "{:0>2}:{:0>2}\r".format(int(minutes),int(seconds)))
+                stdout.flush ()
             time.sleep(0.25)
-        stdout.write(' ' * (len(prefix)+5) + '\r')
+        if (isEqSetting('fettEntrypoint','devHost')):
+            stdout.write(' ' * (len(showTimePrefix)+5) + '\r')
         completedMsg = "Estimated ~{:0>2}:{:0>2} ----- Completed in {:0>2}:{:0>2}\n".format(int(minutesEst),int(secondsEst),int(minutes),int(seconds))
         stdout.write(completedMsg)
         stdout.flush()

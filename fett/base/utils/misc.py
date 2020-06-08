@@ -4,8 +4,8 @@ Misc required functions for fett.py
 """
 
 import logging, enum, traceback, atexit
-import os, shutil, glob, subprocess
-import tarfile, sys, re
+import os, shutil, glob, subprocess, pathlib
+import tarfile, sys, json, re, getpass
 
 from fett.base.utils import decorate
 
@@ -44,9 +44,18 @@ def formatExc (exc):
     except:
         return '<Non-recognized Exception>'
 
-def printAndLog (message,doPrint=True):
+def printAndLog (message,doPrint=True,tee=None):
     if (doPrint):
         print("(Info)~  " + message)
+    if (tee):
+        try:
+            tee.write(message + '\n')
+        except Exception as exc:
+            try:
+                fName = tee.name
+            except:
+                fName = 'UNKNOWN_FILE'
+            errorAndLog(f"printAndLog: Failed to tee the output to <{fName}>.",doPrint=False,exc=exc)
     logging.info(message)
 
 def warnAndLog (message,doPrint=True,exc=None):
@@ -133,7 +142,7 @@ def tar (tarFileName, filesList=[]):
           trees
     """
     try:
-        tarFile = tarfile.open(name=tarFileName, mode="x:gz")
+        tarFile = tarfile.open(name=tarFileName, mode="a:")
     except Exception as e:
         logAndExit (f"tar: error creating {tarFileName}", exc=e, exitCode=EXIT.Files_and_paths)
     for f in filesList:
@@ -219,6 +228,25 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
             shutil.copytree(src, os.path.join(dest,os.path.basename(os.path.normpath(src))))
         except Exception as exc:
             logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+
+def touch(filepath, mode=0o666, permissive=True):
+    try:
+        pathlib.Path(filepath).touch(mode=mode, exist_ok=permissive)
+    except FileExistsError as exc:
+        logAndExit(f"touch: Failed touching file {filepath}! File already exists", exc=exc, exitCode=EXIT.Files_and_paths)
+    except FileNotFoundError as exc:
+        logAndExit(f"touch: filepath {filepath} is not a valid path", exc=exc, exitCode=EXIT.Files_and_paths)
+    except Exception as exc:
+        logAndExit(f"touch: Error touching file {filepath}", exc=exc)
+
+def safeLoadJsonFile (jsonFile):
+    try:
+        fJson = ftOpenFile(jsonFile, 'r')
+        jsonData = json.load(fJson)
+        fJson.close()
+    except Exception as exc:
+        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    return jsonData
 
 @decorate.debugWrap
 def make (argsList,dirPath):
@@ -327,18 +355,47 @@ def matchExprInLines (expr,lines):
     return None
 
 @decorate.debugWrap    
-def curlRequest(url, extra=[], http2=False):
+def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False, timeout=60):
     # Need --insecure because of self signed certs
     options = [
         "--insecure",
         "--http2" if http2 else "--http1.1",
         "-L",
-        "-I",
-        "-s"
+        "-s",
+        "-X", method,
+        '-m', str(timeout)
     ] + extra
+    if not rawOutput:
+        options.append("-I")
     try:
         p = subprocess.run (['curl'] + options + [url], capture_output=True, check=True)
         out = p.stdout.decode('utf-8')
     except Exception as exc:
-        logAndExit (f"Failed to run <curl {options} {url}>\nstdout:\n{exc.stdout}\nstderr:\n{exc.stderr}", exc=exc, exitCode=EXIT.Run)
+        errorAndLog (f"Failed to run <curl {' '.join(options)} {url}>\n", exc=exc, doPrint=False)
+        out = None
     return out
+
+@decorate.debugWrap
+def sudoShellCommand (argsList, sudoPromptPrefix=None, check=True, timeout=30, **kwargs):
+    if (sudoPromptPrefix):
+        try:
+            sudoPrompt = sudoPromptPrefix + f" [sudo] password for {getpass.getuser()}: "
+        except Exception as exc:
+            logAndExit (f"sudo: Failed to format the sudo prompt with <{sudoPromptPrefix}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+        promptArgs = ['-p', sudoPrompt]
+    else: #no prompt
+        promptArgs = []
+
+    command = ['sudo'] + promptArgs + argsList
+    shellCommand (command, check=check, timeout=timeout, **kwargs)
+
+@decorate.debugWrap
+def shellCommand (argsList, check=True, timeout=30, **kwargs):
+    shellOut = ftOpenFile(os.path.join(getSetting('workDir'),'shell.out'),'a')
+    shellOut.write(f"\n\n{argsList}\n")
+    shellOut.flush()
+    try:
+        subprocess.run(argsList, stdout=shellOut, stderr=shellOut, timeout=timeout, check=check, **kwargs)
+    except Exception as exc:
+        logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
+    shellOut.close()

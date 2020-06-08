@@ -2,7 +2,7 @@
     "_usage" : "This json file has the environment setup that is not to be changed per run.",
     "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
     "_paths" : "Paths here are assumed to be relative to the repo source dir.",
-    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, ipAddress, dict",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, ipAddress, dict, macAddress",
     "_choices" : "a list of acceptable choices. Use for int or str",
     "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
     "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
@@ -38,24 +38,92 @@
             "val" : 1234
         },
         {
+            "name" : "fpgaNetMaskTarget",
+            "type" : "ipAddress",
+            "val" : "255.255.255.0"
+        },
+        {
+            "name" : "fpgaMacAddrTarget",
+            "type" : "macAddress", 
+            "val" : "00:0a:35:04:db:77"
+        },
+        {
             "name" : "fpgaEthAdaptorName",
             "type" : "string",
             "val" : "eth0fpga"
         },
         {
             "name" : "fpgaEthAdaptorMacAddress",
-            "type" : "string",
+            "type" : "macAddress",
             "val" : "88:53:48:41:56:45"
+        },
+        {
+            "name" : "awsIpTarget",
+            "type" : "ipAddress",
+            "val" : "172.16.0.2"
+        },
+        {
+            "name" : "awsIpHost",
+            "type" : "ipAddress",
+            "val" : "172.16.0.1"
+        },
+        {
+            "name" : "awsPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "awsPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "awsTapAdaptorName",
+            "type" : "string",
+            "val" : "tap0"
+        },
+        {
+            "name" : "awsTapAdaptorMacAddress",
+            "type" : "macAddress",
+            "val" : "8e:6b:35:04:00:00"
+        },
+        {
+            "name" : "awsNetMaskTarget",
+            "type" : "ipAddress",
+            "val" : "255.255.255.0"
+        },
+        {
+            "name" : "awsMacAddrTarget",
+            "type" : "macAddress",
+            "val" : "00:12:6D:00:00:02"
         },
         {
             "name" : "HTTPPortTarget",
             "type" : "int",
             "min" : 80,
             "max" : 443,
-            "val" : 80
+            "val" : 81
         },
         {
             "name" : "HTTPSPortTarget",
+            "type" : "int",
+            "min" : 0,
+            "max" : 1023,
+            "val" : 444
+        },
+        {
+            "name" : "VotingHTTPPortTarget",
+            "type" : "int",
+            "min" : 80,
+            "max" : 443,
+            "val" : 80
+        },
+        {
+            "name" : "VotingHTTPSPortTarget",
             "type" : "int",
             "min" : 0,
             "max" : 1023,
@@ -69,18 +137,59 @@
             "val" : 69
         },
         {
+            "name" : "OTAMaxSignedPayloadSize",
+            "type" : "int",
+            "min" : 65536,
+            "max" : 65536,
+            "val" : 65536
+        },
+        {
             "name" : "qemuIpTarget",
             "type" : "ipAddress",
             "val" : "127.0.0.1"
         },
         {
-            "name" : "procOsCombinations",
+            "name" : "fettMatrix",
             "type" : "dict",
             "val" : {
-                "FreeRTOS" : ["chisel_p1", "bluespec_p1"],
-                "debian" : ["chisel_p2", "bluespec_p2"],
-                "FreeBSD" : ["chisel_p2", "bluespec_p2"],
-                "busybox" : ["chisel_p2", "bluespec_p2"]
+                "GFE" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    },
+                    "chisel_p2" : {
+                        "debian" : "firesim",
+                        "FreeBSD" : "notOnAWS",
+                        "busybox" : "notOnAWS"
+                    },
+                    "bluespec_p2" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "awsteria",
+                        "busybox" : "notOnAWS"
+                    }
+                },
+                "LMCO" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    },
+                    "chisel_p2" : {
+                        "debian" : "firesim"
+                    }
+                },
+                "Michigan" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    }
+                },
+                "MIT" : {
+                    "bluespec_p2" : {
+                        "FreeBSD" : "connectal"
+                    }
+                },
+                "SRI-Cambridge" : {
+                    "bluespec_p2" : {
+                        "FreeBSD" : "awsteria"
+                    }
+                }
             }
         },
         {
@@ -90,19 +199,24 @@
                 "netboot" : "FETT_NETBOOT",
                 "debian" : {
                     "fpga" : "FETT_GFE_DEBIAN_FPGA",
-                    "qemu" : "FETT_GFE_DEBIAN_QEMU"
+                    "qemu" : "FETT_GFE_DEBIAN_QEMU",
+                    "firesim" :  "FETT_GFE_DEBIAN_FIRESIM"
                 },
                 "FreeBSD" : {
                     "fpga" : "FETT_GFE_FREEBSD_FPGA",
-                    "qemu" : "FETT_GFE_FREEBSD_QEMU"
+                    "qemu" : "FETT_GFE_FREEBSD_QEMU",
+                    "firesim" :  "FETT_GFE_FREEBSD_FIRESIM"
                 },
                 "busybox" : {
-                    "fpga" : "FETT_GFE_BUSYBOX_FPGA"
+                    "fpga" : "FETT_GFE_BUSYBOX_FPGA",
+                    "firesim" :  "FETT_GFE_BUSYBOX_FIRESIM"
                 },
                 "FreeRTOS" : {
-                    "fpga" : "FETT_GFE_FREERTOS_FPGA"
+                    "fpga" : "FETT_GFE_FREERTOS_FPGA",
+                    "firesim" :  "FETT_GFE_FREERTOS_FIRESIM"
                 },
-                "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR"
+                "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR",
+                "gfeBitfileDir" : "FETT_GFE_BITFILE_DIR"
             }
         },
         {
@@ -113,7 +227,7 @@
         {
             "name" : "tarballName",
             "type" : "string",
-            "val" : "filesToSend.tar.gz"
+            "val" : "filesToSend.tar"
         },
         {
             "name" : "FreeRTOSforkName",
@@ -124,6 +238,21 @@
             "name" : "FreeRTOSprojName",
             "type" : "string",
             "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
+        },
+        {
+            "name" : "binaryRepoDir",
+            "type" : "dirPath",
+            "val" : "SSITH-FETT-Binaries"
+        },
+        {
+            "name" : "freertosAssets",
+            "type" : "dict",
+            "val" : {
+                "path" : "fett/apps/freertos/assets",
+                "otaHtml" : "ota.htm",
+                "StopHtml" : "stop.htm",
+                "assets" : ["index.htm", "ota.htm", "glogo.png"]
+            }
         }
     ] 
 }

@@ -9,6 +9,11 @@
 
     "backend" : [
         {
+            "name" : "mode",
+            "type" : "string",
+            "choices" : [ "test", "deploy" ]
+        },
+        {
             "name" : "target",
             "type" : "string",
             "choices" : [ "qemu", "aws", "fpga" ]
@@ -16,7 +21,7 @@
         {
             "name" : "processor",
             "type" : "string",
-            "choices" : [ "bluespec_p1", "chisel_p1", "bluespec_p2", "chisel_p2" ]
+            "choices" : [ "chisel_p1", "bluespec_p2", "chisel_p2" ]
         },
         {
             "name" : "osImage",
@@ -42,6 +47,20 @@
             "condition" : "useCustomOsImage"
         },
         {
+            "name" : "useCustomBitfile",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomBitfile",
+            "type" : "filePath",
+            "condition" : "useCustomBitfile"
+        },
+        {
+            "name" : "binarySource",
+            "type" : "string",
+            "choices" : [ "GFE", "LMCO", "Michigan", "MIT", "SRI-Cambridge" ]
+        },
+        {
             "name" : "qemuNtkPortRangeStart",
             "type" : "int",
             "min" : 1024,
@@ -49,24 +68,6 @@
         },
         {
             "name" : "qemuNtkPortRangeEnd",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
-            "name" : "qemuSshHostPort",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
-            "name" : "qemuHttpHostPort",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
-            "name" : "qemuHttpsHostPort",
             "type" : "int",
             "min" : 1024,
             "max" : 65535
@@ -94,18 +95,6 @@
         },
         {
             "name" : "buildApps",
-            "type" : "boolean"
-        },
-        {
-            "name" : "webserver",
-            "type" : "boolean"
-        },
-        {
-            "name" : "database",
-            "type" : "boolean"
-        },
-        {
-            "name" : "voting",
             "type" : "boolean"
         }
     ],

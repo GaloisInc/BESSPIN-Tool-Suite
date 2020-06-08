@@ -1,0 +1,74 @@
+# All scheduled jobs only run on the master branch. Consequently, any changes
+# to this file will not be refelcted in the CI until it is merged to master.
+#
+# To run the workflow on the develop branch, develop is checked out manually.
+name: Scheduled Runs
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  Periodic:
+    runs-on: ${{ matrix.cfg.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+          - { os: unix, index: 1, total: 8, host: docker-fpga }
+          - { os: unix, index: 2, total: 8, host: docker-fpga }
+          - { os: unix, index: 3, total: 8, host: docker-fpga }
+          - { os: unix, index: 4, total: 8, host: docker-fpga }
+          - { os: unix, index: 5, total: 8, host: docker-fpga }
+          - { os: unix, index: 6, total: 8, host: docker-fpga }
+          - { os: unix, index: 7, total: 8, host: docker-fpga }
+          - { os: unix, index: 8, total: 8, host: docker-fpga }
+          - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          lfs: true
+          ref: "develop"
+      - uses: ./.github/action
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          run: nix-shell --command "./ci/fett-ci.py runPeriodic-${{ matrix.cfg.os }} -ep OnPrem -art periodic-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
+      - if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: periodic-${{ github.sha }}
+          path: "*-periodic-${{ matrix.cfg.os}}-${{ github.sha }}"
+
+  Release:
+    if: "!always()"
+    runs-on: ${{ matrix.cfg.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+          - { os: unix, index: 1, total: 8, host: docker-fpga }
+          - { os: unix, index: 2, total: 8, host: docker-fpga }
+          - { os: unix, index: 3, total: 8, host: docker-fpga }
+          - { os: unix, index: 4, total: 8, host: docker-fpga }
+          - { os: unix, index: 5, total: 8, host: docker-fpga }
+          - { os: unix, index: 6, total: 8, host: docker-fpga }
+          - { os: unix, index: 7, total: 8, host: docker-fpga }
+          - { os: unix, index: 8, total: 8, host: docker-fpga }
+          - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          lfs: true
+          ref: "develop"
+      - uses: ./.github/action
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          run: nix-shell --command "./ci/fett-ci.py runRelease-${{ matrix.cfg.os }} -ep OnPrem -art release-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
+      - if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: release-${{ github.sha }}
+          path: "*-release-${{ matrix.cfg.os }}-${{ github.sha }}"

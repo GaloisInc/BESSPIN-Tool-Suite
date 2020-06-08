@@ -1,0 +1,27 @@
+name: CI Push
+on: [push]
+
+jobs:
+  Push:
+    runs-on: ${{ matrix.cfg.host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+          - { os: unix, host: docker-fpga }
+          - { os: freertos, host: docker-fpga-io }
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          lfs: true
+      - uses: ./.github/action
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          run: nix-shell --command "./ci/fett-ci.py runOnPush-${{ matrix.cfg.os }} -ep OnPrem -art push-${{ matrix.cfg.os }}-${{ github.sha }}"
+      - if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: push-${{ github.sha }}
+          path: "*-push-${{ matrix.cfg.os }}-${{ github.sha }}"

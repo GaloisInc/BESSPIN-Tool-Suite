@@ -3,7 +3,7 @@
 Building OS images any other needed files
 """
 
-import os
+import os, re
 from fett.base.utils.misc import *
 
 @decorate.debugWrap
@@ -14,9 +14,6 @@ def prepareOsImage ():
 
     osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
     setSetting('osImageElf',osImageElf)
-
-    if(isEqSetting('target','aws')):
-        logAndExit (f"<target.build.prepareOsImage> is not yet implemented for <aws>.",exitCode=EXIT.Implementation)
 
     if(isEqSetting('osImage','FreeRTOS')):
         prepareFreeRTOS ()
@@ -78,7 +75,9 @@ def prepareFreeRTOS():
         #Include the relevant user configuration parameters
         #This is a list of tuples: (settingName,macroName)
         listConfigParams = [('appTimeout','APP_TIMEOUT'),('HTTPPortTarget','HTTP_PORT'),
-                            ('TFTPPortTarget','TFTP_PORT'),('debugMode','FETT_DEBUG')]
+                            ('TFTPPortTarget','TFTP_PORT'),('debugMode','FETT_DEBUG'),
+                            ('OTAMaxSignedPayloadSize','OTA_MAX_SIGNED_PAYLOAD_SIZE')]
+
         configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
         for xSetting,xMacro in listConfigParams:
             try:
@@ -86,7 +85,32 @@ def prepareFreeRTOS():
             except Exception as exc:
                 logAndExit(f"Invalid type in populating <fettUserConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
             configHfile.write(f"#define {xMacro} {intVal}\n")
+        #Write the ota filename too (not list as it is unique)
+        configHfile.write(f"#define OTA_FILENAME \"{getSettingDict('freertosAssets',['otaHtml'])}\"\n")
+        #Translate the mode to one char: T or D
+        configHfile.write(f"#define FETT_MODE \'{getSetting('mode')[0].upper()}\'\n")
         configHfile.close()
+
+        #Include the network configuration parameters
+        #This is a list of tuples: (settingName, macroNameBase, int/hex)
+        thisTarget = getSetting('target')
+        listConfigIpParams = [(f"{thisTarget}MacAddrTarget",'configMAC_ADDR', hex), (f"{thisTarget}IpTarget",'configIP_ADDR', int),
+                              (f"{thisTarget}IpHost",'configGATEWAY_ADDR', int), (f"{thisTarget}NetMaskTarget",'configNET_MASK', int)]
+
+        def mapVal(val,xType):
+            if (xType==int):
+                return int(val)
+            elif (xType==hex):
+                return "0x{:02X}".format(int(val,16))
+        
+        configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettFreeRTOSIPConfig.h'),'a')
+        for xSetting,xMacro,xType in listConfigIpParams:
+            for iPart,xPart in enumerate(re.split(r'[\.\:]',getSetting(xSetting))):
+                try:
+                    configIpHfile.write(f"#define {xMacro}{iPart} {mapVal(xPart,xType)}\n")
+                except Exception as exc:
+                    logAndExit(f"Failed to populate <fettFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+        configIpHfile.close()
 
         #Cleaning all ".o" and ".elf" files in site
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
@@ -99,6 +123,7 @@ def prepareFreeRTOS():
         envVars.append(f"USE_CLANG={int(isEqSetting('cross-compiler','Clang'))}")
         envVars.append(f"PROG=main_fett")
         envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
+        envVars.append(f"BSP={getSetting('target')}")
         logging.debug(f"going to make using {envVars}")
         make (envVars,getSetting('FreeRTOSprojDir'))
 
@@ -132,23 +157,35 @@ def prepareBusybox():
     importImage()
 
 @decorate.debugWrap
+def selectImagePath():
+    if isEnabled('useCustomOsImage'):
+        return getSetting('pathToCustomOsImage')
+    else:
+        imageType = getSetting('target') if getSetting('target') != 'aws' else getSetting('pvAWS')
+        if getSetting('binarySource') == 'GFE':
+            nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
+            if (nixImage in os.environ):
+                return os.environ[nixImage]
+            else:
+                printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
+        imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType, f"{getSetting('osImage')}.elf")
+        return imagePath
+
+@decorate.debugWrap
 def importImage():
-    if (isEnabled('useCustomOsImage')):
-        cp (getSetting('pathToCustomOsImage'),getSetting('osImageElf'))
-    else: #use nix images
-        nixImage = getSettingDict('nixEnv',[getSetting('osImage'),getSetting('target')])
-        if (nixImage in os.environ):
-            cp(os.environ[nixImage],getSetting('osImageElf'))
-        else:
-            logAndExit (f"<${nixImage}> not found in the nix path.",exitCode=EXIT.Environment)
-    if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
-        netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
-        setSetting('netbootElf',netbootElf)
-        netbootImage = getSettingDict('nixEnv','netboot')
-        if (netbootImage in os.environ):
-            cp(os.environ[netbootImage],netbootElf)
-        else:
-            logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
+    imagePath = selectImagePath()
+    cp (imagePath, getSetting('osImageElf'))
+    if not isEqSetting('target', 'aws'):
+        if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
+            netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
+            setSetting('netbootElf',netbootElf)
+            netbootImage = getSettingDict('nixEnv','netboot')
+            if (netbootImage in os.environ):
+                cp(os.environ[netbootImage],netbootElf)
+            else:
+                logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
+    else:
+        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is aws", doPrint=False)
     logging.info(f"{getSetting('osImage')} image imported successfully.")
 
 @decorate.debugWrap
