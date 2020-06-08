@@ -149,15 +149,39 @@ class firesimTarget(commonTarget):
 
 class connectalTarget(commonTarget):
     def __init__(self):
-        pass
+        super().__init__()
+        self.ipTarget = getSetting('awsIpTarget')
+        self.ipHost = getSetting('awsIpHost')
+        self.portTarget = getSetting('awsPortTarget')
+        self.portHost = getSetting('awsPortHost')
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def boot(self):
-        pass
+    def boot(self,endsWith="login:",timeout=90):
+        if (getSetting('osImage') not in ['FreeBSD']):
+            logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
-    def interact(self):
-        pass
+
+        connectalSimPath = os.path.join(getSetting('connectalPath'), 'sim')
+
+        # TODO ELEW: command has hard coded path
+        connectalCommand = ' '.join(["bash -c 'stty intr ^] &&",
+                                     "sudo",
+                                     "/home/ubuntu/ssith-aws-fpga/build/ssith_aws_fpga",
+                                     f'--dtb={getSetting("osImageDtb")}',
+                                     f'--elf {getSetting("osImageElf")}',
+                                     "\'"])
+        logging.debug(f"boot: connectalCommand = {connectalCommand}")
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+
+        try:
+            self.ttyProcess = pexpect.spawn(connectalCommand,logfile=self.fTtyOut,timeout=30,
+                                            cwd=connectalSimPath)
+            self.process = self.ttyProcess
+            time.sleep(1)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+        except Exception as exc:
+            self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -384,25 +408,39 @@ def prepareFiresim():
 
 # ------------------ Connectal Functions ----------------------------------------
 
+@decorate.debugWrap
 def setupConnectalKernelModules():
     """unload/load necessary kernel modules for connectal"""
+
+    # required for safe kernel unloading
+    clearFpgas()
+
     if (isEqSetting('pvAWS', 'connectal')):
-        #remove all modules to be safe
-        kmodsToClean = ['pcieportal', 'portalmem']
-        for kmod in kmodsToClean:
-            sudoShellCommand(['rmmod', kmod],check=False)
-            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
+        # TODO: this is unsafe
+        # #remove all modules to be safe
+        # kmodsToClean = ['portalmem', 'pcieportal']
+        # for kmod in kmodsToClean:
+        #     sudoShellCommand(['rmmod', kmod],check=False)
+        #     _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
 
         awsConnectalPath = os.path.join(getSetting('connectalPath'), 'kmods')
 
-        #load our modules
-        sudoShellCommand(['insmod', f"{awsConnectalPath}/portalmem.ko"])
-        _sendKmsg (f"FETT-firesim: Installing portalmem.ko.")
-        sudoShellCommand(['insmod', f"{awsConnectalPath}/pcieportal.ko"])
-        _sendKmsg (f"FETT-firesim: Installing pcieportal.ko.")
+        # #load our modules
+        # sudoShellCommand(['insmod', f"{awsConnectalPath}/pcieportal.ko"])
+        # _sendKmsg (f"FETT-firesim: Installing pcieportal.ko.")
+        # sudoShellCommand(['insmod', f"{awsConnectalPath}/portalmem.ko"])
+        # _sendKmsg (f"FETT-firesim: Installing portalmem.ko.")
     else:
         logAndExit(f"<setupConnectalKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 def prepareConnectal():
     """connectal environment preparation"""
     copyAWSSources()
+
+    # device tree file
+    dtbPath = os.path.join(getSetting('connectalPath'), 'sim')
+    dtbFile = os.path.join(dtbPath, "FreeBSD.dtb")
+    if os.path.exists(dtbFile):
+        setSetting('osImageDtb', dtbFile)
+    else:
+        errorAndLog(f"<aws.prepareConnectal>: dtb file <{dtbFile}> does not exist")
