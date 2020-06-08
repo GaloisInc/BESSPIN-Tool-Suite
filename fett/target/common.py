@@ -432,7 +432,7 @@ class commonTarget():
         if (getSetting('osImage') in ['debian', 'FreeBSD'] and (self.isSshConn)): #send through SSH
             currentUser = 'root' if self.isCurrentUserRoot else self.userName
             user_path = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
-            portPart = f" -P {self.sshHostPort}" if (self.sshHostPort is not None) else ''
+            portPart = '' if (not self.sshHostPort) else f" -p {self.sshHostPort}"
             scpCommand = f"scp{portPart} {pathToFile}/{xFile} {currentUser}@{self.ipTarget}:/{user_path}/"
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
