@@ -313,7 +313,40 @@ def flashFpgas(agfi):
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
+def getAgfiJson(jsonFile):
+    keyName = 'agfi_id'
+    contents = safeLoadJsonFile(jsonFile)
+    if keyName not in contents:
+        logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi_id> in {jsonFile}")
+    return contents[keyName]
+
+def copyAWSSources():
+    pvAWS = getSetting('pvAWS')
+
+    if pvAWS not in ['firesim', 'connectal']:
+        logAndExit(f"<aws.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
+
+    awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                     'bitfiles', pvAWS, getSetting('processor'))
+    awsModPath = os.path.join(awsSourcePath, 'kmods')
+    awsSimPath = os.path.join(awsSourcePath, 'sim')
+
+    awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
+    mkdir(awsWorkPath,addToSettings=f'{pvAWS}Path')
+
+    # copy over available paths
+    if os.path.exists(awsSimPath):
+        copyDir(awsSimPath, awsWorkPath)
+    if os.path.exists(awsModPath):
+        copyDir(awsModPath, awsWorkPath)
+
+    # extract the agfi and put it in setting
+    agfiJsonPath = os.path.join(awsSourcePath, 'agfi_id.json')
+    agfiId = getAgfiJson(agfiJsonPath)
+    setSetting("agfiId", agfiId)
+
 # ------------------ FireSim Functions ----------------------------------------
+
 @decorate.debugWrap
 def setupFiresimKernelModules():
     if (isEqSetting('pvAWS','firesim')):
@@ -331,25 +364,11 @@ def setupFiresimKernelModules():
         sudoShellCommand(['insmod', f"{awsFiresimModPath}/xdma.ko", 'poll_mode=1'])
         _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
     else:
-        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+        logAndExit(f"<setupFiresimKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 def prepareFiresim():
     """prepare the firesim binaries for the FETT work directory"""
-    def getAgfiJson(jsonFile):
-        keyName = 'agfi_id'
-        contents = safeLoadJsonFile(jsonFile)
-        if keyName not in contents:
-            logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi_id> in {jsonFile}")
-        return contents[keyName]
-
-    # copy over the firesim kernel modules, simulation interfaces
-    firesimSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 
-                                    'bitfiles', 'firesim', getSetting('processor'))
-    firesimModPath = os.path.join(firesimSourcePath, 'kmods')
-    firesimSimPath = os.path.join(firesimSourcePath, 'sim')
-
-    firesimWorkPath = os.path.join(getSetting("workDir"), "firesim")
-    mkdir(firesimWorkPath,addToSettings='firesimPath')
+    copyAWSSources()
 
     # firesim needs two files: img and dwarf:
     imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
@@ -363,20 +382,27 @@ def prepareFiresim():
     setSetting("osImageDwarf",dwarfFile)
     touch(dwarfFile)
 
-    # copy over sim and kmods
-    copyDir(firesimSimPath, firesimWorkPath)
-    copyDir(firesimModPath, firesimWorkPath)
-
-    # extract the agfi and put it in setting
-    processorName = getSetting('processor')
-    agfiJsonPath = os.path.join(firesimSourcePath, 'agfi_id.json')
-    agfiId = getAgfiJson(agfiJsonPath)
-    setSetting("agfiId", agfiId)
-
 # ------------------ Connectal Functions ----------------------------------------
+
 def setupConnectalKernelModules():
-    pass
+    """unload/load necessary kernel modules for connectal"""
+    if (isEqSetting('pvAWS', 'connectal')):
+        #remove all modules to be safe
+        kmodsToClean = ['pcieportal', 'portalmem']
+        for kmod in kmodsToClean:
+            sudoShellCommand(['rmmod', kmod],check=False)
+            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
+
+        awsConnectalPath = os.path.join(getSetting('connectalPath'), 'kmods')
+
+        #load our modules
+        sudoShellCommand(['insmod', f"{awsConnectalPath}/portalmem.ko"])
+        _sendKmsg (f"FETT-firesim: Installing portalmem.ko.")
+        sudoShellCommand(['insmod', f"{awsConnectalPath}/pcieportal.ko"])
+        _sendKmsg (f"FETT-firesim: Installing pcieportal.ko.")
+    else:
+        logAndExit(f"<setupConnectalKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 def prepareConnectal():
-    pass
-
+    """connectal environment preparation"""
+    copyAWSSources()

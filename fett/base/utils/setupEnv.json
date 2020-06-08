@@ -187,7 +187,7 @@
                 },
                 "SRI-Cambridge" : {
                     "bluespec_p2" : {
-                        "FreeBSD" : "awsteria"
+                        "FreeBSD" : "connectal"
                     }
                 }
             }

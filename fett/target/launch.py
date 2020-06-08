@@ -34,7 +34,7 @@ def startFett ():
             logAndExit(f"<aws> target is not compatible with <{getSetting('binarySource')}-{getSetting('processor')}-{getSetting('osImage')}>.",exitCode=EXIT.Configuration)
         elif (pvAWS not in ['firesim', 'connectal', 'awsteria']):
             logAndExit(f"<{pvAWS}> is not a valid AWS PV.",exitCode=EXIT.Dev_Bug)
-        elif (pvAWS in ['connectal', 'awsteria']):
+        elif (pvAWS in ['awsteria']):
             logAndExit(f"<{pvAWS}> PV is not yet implemented.",exitCode=EXIT.Implementation)
         setSetting('pvAWS',pvAWS)
 
@@ -49,7 +49,7 @@ def startFett ():
     launchFett()
 
     # tear down
-    endFett () 
+    endFett ()
 
 
 """ This is the prepare function before launch (binaries, network,) """ 
@@ -70,7 +70,7 @@ def prepareEnv ():
         setSetting('runApp',False)
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
-    
+
     prepareOsImage ()
 
     if (isEqSetting('target','fpga')):
@@ -80,6 +80,11 @@ def prepareEnv ():
         if (isEqSetting('pvAWS','firesim')):
             aws.prepareFiresim()
             aws.setupFiresimKernelModules()
+            aws.configTapAdaptor()
+            aws.programAFI()
+        if (isEqSetting('pvAWS', 'connectal')):
+            aws.prepareConnectal()
+            aws.setupConnectalKernelModules()
             aws.configTapAdaptor()
             aws.programAFI()
         else:

@@ -175,7 +175,7 @@ def selectImagePath():
 def importImage():
     imagePath = selectImagePath()
     cp (imagePath, getSetting('osImageElf'))
-    if not isEqSetting('target', 'aws'):
+    if not (isEqSetting('target', 'aws') or isEqSetting('target', 'connectal')):
         if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
             netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
             setSetting('netbootElf',netbootElf)
