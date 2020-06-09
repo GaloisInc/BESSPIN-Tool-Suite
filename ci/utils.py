@@ -131,23 +131,23 @@ def sendCiSQStermination (exitCode, jobID, nodeIndex):
                 MessageAttributes={
                     'sender': {
                         'StringValue': 'fett-target-ci',
-                        'DataType': 'string'
+                        'DataType': 'String'
                     },
                     'objective' : {
                         'StringValue': 'termination',
-                        'DataType': 'string'
+                        'DataType': 'String'
                     },
                     'exitCode' : {
                         'StringValue': str(exitCode),
-                        'DataType': 'number'
+                        'DataType': 'Number'
                     },
                     'jobID' : {
                         'StringValue': str(jobID),
-                        'DataType': 'number'
+                        'DataType': 'Number'
                     },
                     'nodeIndex' : {
                         'StringValue': str(nodeIndex),
-                        'DataType': 'number'
+                        'DataType': 'Number'
                     }
                 },
                 MessageDeduplicationId='fett-target-ci',
@@ -157,7 +157,6 @@ def sendCiSQStermination (exitCode, jobID, nodeIndex):
         exitFettCi(message=f"Failed to send the termination message to <{ciAWSqueue}>.",exc=exc)
 
     print(f"(Info)~  FETT-CI: Termination message sent to {ciAWSqueue}.")
-
 
 
 def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, jobID, nodeIndex):
