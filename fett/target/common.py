@@ -296,19 +296,19 @@ class commonTarget():
         self.userCreated = True
 
     @decorate.debugWrap
-    def getDefaultEndWith (self):
+    def getDefaultEndWith (self, isNotUser=True):
         if (isEqSetting('osImage','debian')):
-            if (self.isCurrentUserRoot):
+            if (self.isCurrentUserRoot and isNotUser):
                 return ":~#"
             else:
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
-            if (self.isCurrentUserRoot):
+            if (self.isCurrentUserRoot and isNotUser):
                 return "fettPrompt>"
             else:
                 return ":~ \$"
         elif (isEqSetting('osImage','busybox')):
-            if (self.isCurrentUserRoot):
+            if (self.isCurrentUserRoot and isNotUser):
                 return "~ #"
             else:
                 return "\$"
@@ -779,8 +779,9 @@ class commonTarget():
             self.runCommand("yes", endsWith=passwordPrompt, timeout=timeout, shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
-        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
+        self.runCommand(sshPassword,endsWith=self.getDefaultEndWith(isNotUser=False),timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
+        self.isCurrentUserRoot = not self.isCurrentUserRoot
         return True
 
     @decorate.debugWrap
