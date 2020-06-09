@@ -193,7 +193,7 @@ class connectalTarget(commonTarget):
         getTapAdaptorUp ()
 
     def interact(self):
-        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + C\" to exit.")
+        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl-A X\" to exit.")
         super().interact()
 
     @decorate.debugWrap
@@ -470,4 +470,3 @@ def prepareConnectal():
     dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
     cp (dtbsrc, dtbFile)
     logging.info(f"copy {dtbsrc} to {dtbFile}")
-
