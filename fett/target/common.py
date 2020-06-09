@@ -300,9 +300,6 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             if (self.isCurrentUserRoot):
                 return ":~#"
-            # elif (self.isSshConn):
-            #     return '[00m:[01;34m~[00m$'
-
             elif (self.isSshConn):
                 # return '[00m:[01;34m~[00m$'
                 return ":~\$"
