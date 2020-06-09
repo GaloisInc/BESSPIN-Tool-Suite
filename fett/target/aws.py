@@ -162,19 +162,15 @@ class connectalTarget(commonTarget):
             logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
         awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'host')
+        print(awsConnectalHostPath)
         printAndLog(f"awsConnectalHostPath={awsConnectalHostPath}")
 
         connectalCommand = ' '.join([
-             "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target
-             './ssith_aws_fpga',
-             f"--uart-console=1",
-             f"--dma=1",
-             f"--xdma=0",
-             f"--entry=0x80003000",
-             f"--dtb={getSetting('osImageDtb')}",
-             f"--block={getSetting('osImageImg')}",
-             f"--elf={getSetting('osImageElf')}",
-             "\'"
+            "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target
+            './ssith_aws_fpga',
+            f"--dtb={getSetting('osImageDtb')}",
+            f"--elf={getSetting('osImageElf')}",
+            "\'"
         ])
         logging.debug(f"boot: connectalCommand = {connectalCommand}")
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
@@ -392,11 +388,11 @@ def copyAWSSources():
     awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
 
     # populate workDir with available subdirectories
-    subdirectories = next(os.walk(awsSourcePath))[1]
-    if len(subdirectories) == 0:
+    subdirectories = [os.path.join(awsSourcePath, o) for o in os.listdir(awsSourcePath) if os.path.isdir(os.path.join(awsSourcePath,o))]
+    if len(subdirectories) > 0:
         mkdir(awsWorkPath,addToSettings=f'{pvAWS}Path')
-    for awsDirPath in subdirectories:
-        copyDir(os.path.join(awsSourcePath, awsDirPath), awsWorkPath)
+        for awsDirPath in subdirectories:
+            copyDir(os.path.join(awsSourcePath, awsDirPath), awsWorkPath)
 
     # aws resources need an image file:
     imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
