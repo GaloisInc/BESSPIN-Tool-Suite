@@ -158,36 +158,72 @@ class connectalTarget(commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
-        if (getSetting('osImage') not in ['FreeBSD']):
+        if (getSetting('osImage') != 'debian'):
             logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
+        awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'host')
+        printAndLog(f"awsConnectalHostPath={awsConnectalHostPath}")
 
-        connectalSimPath = os.path.join(getSetting('connectalPath'), 'sim')
-
-        # TODO ELEW: command has hard coded path
-        connectalCommand = ' '.join(["bash -c 'stty intr ^] &&",
-                                     "sudo",
-                                     "/home/ubuntu/ssith-aws-fpga/build/ssith_aws_fpga",
-                                     f'--dtb={getSetting("osImageDtb")}',
-                                     f'--elf {getSetting("osImageElf")}',
-                                     "\'"])
+        connectalCommand = ' '.join([
+             "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target
+             './ssith_aws_fpga',
+             f"--uart-console=1",
+             f"--dma=1",
+             f"--xdma=0",
+             f"--entry=0x80003000",
+             f"--dtb={getSetting('osImageDtb')}",
+             f"--block={getSetting('osImageImg')}",
+             f"--elf={getSetting('osImageElf')}",
+             "\'"
+        ])
         logging.debug(f"boot: connectalCommand = {connectalCommand}")
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
         try:
-            self.ttyProcess = pexpect.spawn(connectalCommand,logfile=self.fTtyOut,timeout=30,
-                                            cwd=connectalSimPath)
+            self.ttyProcess = pexpect.spawn(connectalCommand,logfile=self.fTtyOut,timeout=90,
+                                         cwd=awsConnectalHostPath)
             self.process = self.ttyProcess
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+            self.expectFromTarget('Console:',"Booting",timeout=timeout,overwriteShutdown=True)
         except Exception as exc:
             self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+         # The tap needs to be turned up AFTER booting
+        getTapAdaptorUp ()
+
+    def interact(self):
+        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + C\" to exit.")
+        super().interact()
 
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet(self):
-        pass
-    # ------------------ END OF CLASS firesimTarget ----------------------------------------
+        if (isEqSetting('osImage','debian')):
+            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+            outCmd = self.runCommand ("ifup eth0",expectedContents='IceNet: opened device')
+        else:
+            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+
+        self.pingTarget()
+
+        return outCmd
+
+    @decorate.debugWrap
+    def targetTearDown(self):
+        try:
+            subprocess.check_call(['sudo', 'kill', f"{os.getpgid(self.switch0Proc.pid)}"],
+                                stdout=self.fswitchOut, stderr=self.fswitchOut)
+        except Exception as exc:
+            warnAndLog("targetTearDown: Failed to kill <switch0> process.",doPrint=False,exc=exc)
+        try:
+            self.fswitchOut.close()
+        except Exception as exc:
+            warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
+        return True
+    # ------------------ END OF CLASS connectalTarget ----------------------------------------
+
 
 @decorate.debugWrap
 def configTapAdaptor():
@@ -352,22 +388,41 @@ def copyAWSSources():
 
     awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
                                      'bitfiles', pvAWS, getSetting('processor'))
-    awsModPath = os.path.join(awsSourcePath, 'kmods')
-    awsSimPath = os.path.join(awsSourcePath, 'sim')
 
     awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
     mkdir(awsWorkPath,addToSettings=f'{pvAWS}Path')
 
     # copy over available paths
-    if os.path.exists(awsSimPath):
-        copyDir(awsSimPath, awsWorkPath)
-    if os.path.exists(awsModPath):
-        copyDir(awsModPath, awsWorkPath)
+    directories = os.walk(awsSourcePath)
+    for awsDirPath in directories:
+        copyDir(awsDirPath, awsWorkPath)
+
+    # aws resources need an image file:
+    imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
+    setSetting("osImageImg",imageFile)
+    if (isEqSetting('osImage','FreeRTOS')): # create a filesystem -- 256MB [Note that size >=256MB (for mkfs.fat 4.1, but for v.3.0 has to be >256Mb)]
+        shellCommand(['dd','if=/dev/zero',f"of={imageFile}",'bs=256M','count=1'])
+        shellCommand(['mkfs.vfat','-S','512','-n',"\"DATA42\"",'-F','32', imageFile])
+    else: #an empty file will do
+        touch(imageFile)
 
     # extract the agfi and put it in setting
     agfiJsonPath = os.path.join(awsSourcePath, 'agfi_id.json')
     agfiId = getAgfiJson(agfiJsonPath)
     setSetting("agfiId", agfiId)
+
+
+def removeKernelModules():
+    if isEqSetting('pvAWS', 'firesim'):
+        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
+    elif isEqSetting('pvAWS', 'connectal'):
+        kmodsToClean = ['xocl', 'xdma', 'pcieportal', 'portalmem']
+    else:
+        printAndLog(f"<aws.removeKernelModules>: no kernel modules to remove for AWS PV {getSetting('pvAWS')}")
+        kmodsToClean = []
+    for kmod in kmodsToClean:
+        sudoShellCommand(['rmmod', kmod],check=False)
+        _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
 
 # ------------------ FireSim Functions ----------------------------------------
 
@@ -375,10 +430,7 @@ def copyAWSSources():
 def setupFiresimKernelModules():
     if (isEqSetting('pvAWS','firesim')):
         #remove all modules to be safe
-        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
-        for kmod in kmodsToClean:
-            sudoShellCommand(['rmmod', kmod],check=False)
-            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
+        removeKernelModules()
 
         awsFiresimModPath = os.path.join(getSetting('firesimPath'), 'kmods')
 
@@ -394,14 +446,6 @@ def prepareFiresim():
     """prepare the firesim binaries for the FETT work directory"""
     copyAWSSources()
 
-    # firesim needs two files: img and dwarf:
-    imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
-    setSetting("osImageImg",imageFile)
-    if (isEqSetting('osImage','FreeRTOS')): # create a filesystem -- 256MB [Note that size >=256MB (for mkfs.fat 4.1, but for v.3.0 has to be >256Mb)]
-        shellCommand(['dd','if=/dev/zero',f"of={imageFile}",'bs=256M','count=1'])
-        shellCommand(['mkfs.vfat','-S','512','-n',"\"DATA42\"",'-F','32', imageFile])
-    else: #an empty file will do 
-        touch(imageFile)
     dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
     setSetting("osImageDwarf",dwarfFile)
     touch(dwarfFile)
@@ -411,25 +455,19 @@ def prepareFiresim():
 @decorate.debugWrap
 def setupConnectalKernelModules():
     """unload/load necessary kernel modules for connectal"""
-
     # required for safe kernel unloading
     clearFpgas()
 
     if (isEqSetting('pvAWS', 'connectal')):
-        # TODO: this is unsafe
-        # #remove all modules to be safe
-        # kmodsToClean = ['portalmem', 'pcieportal']
-        # for kmod in kmodsToClean:
-        #     sudoShellCommand(['rmmod', kmod],check=False)
-        #     _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
+        removeKernelModules()
 
-        awsConnectalPath = os.path.join(getSetting('connectalPath'), 'kmods')
+        awsConnectalModPath = os.path.join(getSetting('connectalPath'), 'kmods')
 
-        # #load our modules
-        # sudoShellCommand(['insmod', f"{awsConnectalPath}/pcieportal.ko"])
-        # _sendKmsg (f"FETT-firesim: Installing pcieportal.ko.")
-        # sudoShellCommand(['insmod', f"{awsConnectalPath}/portalmem.ko"])
-        # _sendKmsg (f"FETT-firesim: Installing portalmem.ko.")
+        #load our modules
+        sudoShellCommand(['insmod', f"{awsConnectalModPath}/pcieportal.ko"])
+        _sendKmsg (f"FETT-firesim: Installing pcieportal.ko.")
+        sudoShellCommand(['insmod', f"{awsConnectalModPath}/portalmem.ko"])
+        _sendKmsg (f"FETT-firesim: Installing portalmem.ko.")
     else:
         logAndExit(f"<setupConnectalKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
@@ -437,10 +475,10 @@ def prepareConnectal():
     """connectal environment preparation"""
     copyAWSSources()
 
-    # device tree file
-    dtbPath = os.path.join(getSetting('connectalPath'), 'sim')
-    dtbFile = os.path.join(dtbPath, "FreeBSD.dtb")
-    if os.path.exists(dtbFile):
-        setSetting('osImageDtb', dtbFile)
-    else:
-        errorAndLog(f"<aws.prepareConnectal>: dtb file <{dtbFile}> does not exist")
+    # connectal requires a device tree blob
+    dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
+    setSetting("osImageDtb",dtbFile)
+    dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
+    cp (dtbsrc, dtbFile)
+    logging.info(f"copy {dtbsrc} to {dtbFile}")
+
