@@ -178,8 +178,22 @@ def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, j
     if (entrypoint == 'AWS'):
         print("(Warning)~  FETT-CI: AWS upload to S3 is not yet implemented.")
         # Tar the artifact folder
+
+        # import the shared module: aws.py
+        try:
+            import importlib.util
+        except Exception as exc:
+            exitFettCi (message=f"Failed to <import importlib.util>.",exc=exc)
+        moduleSpec = importlib.util.spec_from_file_location("aws", os.path.join(repoDir,'fett','base','utils','aws.py'))
+        awsModule = importlib.util.module_from_spec(moduleSpec)
+        moduleSpec.loader.exec_module(awsModule)
+
         # Upload the folder to S3
-        sendCiSQStermination(exitCode, jobID, nodeIndex)
+
+        # Send termination message to SQS
+        jobStatus = "success" if (exitCode == 0) else "failure"
+        awsModule.sendSQS(ciAWSqueue, exitFettCi, jobStatus, jobID, nodeIndex,reason='fett-target-ci-termination')
+        print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
 
 
 
