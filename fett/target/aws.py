@@ -386,16 +386,17 @@ def copyAWSSources():
     if pvAWS not in ['firesim', 'connectal']:
         logAndExit(f"<aws.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
 
-    awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                     'bitfiles', pvAWS, getSetting('processor'))
-
-    awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
-    mkdir(awsWorkPath,addToSettings=f'{pvAWS}Path')
-
     # copy over available paths
-    directories = os.walk(awsSourcePath)
-    for awsDirPath in directories:
-        copyDir(awsDirPath, awsWorkPath)
+    awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                 'bitfiles', pvAWS, getSetting('processor'))
+    awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
+
+    # populate workDir with available subdirectories
+    subdirectories = next(os.walk(awsSourcePath))[1]
+    if len(subdirectories) == 0:
+        mkdir(awsWorkPath,addToSettings=f'{pvAWS}Path')
+    for awsDirPath in subdirectories:
+        copyDir(os.path.join(awsSourcePath, awsDirPath), awsWorkPath)
 
     # aws resources need an image file:
     imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
@@ -410,7 +411,6 @@ def copyAWSSources():
     agfiJsonPath = os.path.join(awsSourcePath, 'agfi_id.json')
     agfiId = getAgfiJson(agfiJsonPath)
     setSetting("agfiId", agfiId)
-
 
 def removeKernelModules():
     if isEqSetting('pvAWS', 'firesim'):
@@ -456,7 +456,6 @@ def prepareFiresim():
 def setupConnectalKernelModules():
     """unload/load necessary kernel modules for connectal"""
     # required for safe kernel unloading
-    clearFpgas()
 
     if (isEqSetting('pvAWS', 'connectal')):
         removeKernelModules()

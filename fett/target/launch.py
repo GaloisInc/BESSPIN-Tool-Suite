@@ -84,9 +84,10 @@ def prepareEnv ():
             aws.programAFI()
         if (isEqSetting('pvAWS', 'connectal')):
             aws.prepareConnectal()
-            aws.setupConnectalKernelModules()
+            aws.removeKernelModules()
             aws.configTapAdaptor()
             aws.programAFI()
+            aws.setupConnectalKernelModules()
         else:
             logAndExit (f"<launch.prepareEnv> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
     printAndLog (f"Environment is ready.")
