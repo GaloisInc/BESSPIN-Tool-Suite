@@ -444,10 +444,6 @@ class commonTarget():
                 pwd = self.rootPassword if self.isCurrentUserRoot else self.userPassword
                 if (retExpect == 2): #needs a yes
                     scpProcess.sendline("yes")
-                    if (isEqSetting('osImage', 'debian')):
-                        passwordPrompt = [passwordPrompt[1]]
-                    else:
-                        passwordPrompt = [passwordPrompt[0]]
                     retExpect = scpProcess.expect(passwordPrompt,timeout=timeout)
                     scpProcess.sendline(pwd)
                 if (retExpect in [0,1]): #password prompt
@@ -463,7 +459,7 @@ class commonTarget():
                 return returnFalse (f"Unexpected error while using scp command [waiting for termination].",exc=exc)
             scpOutFile.close()
             time.sleep(5)
-            self.keyboardInterrupt ()
+            self.keyboardInterrupt (shutdownOnError=True)
 
         else: #send the file through netcat
             if (isEqSetting('osImage','debian')):
@@ -594,8 +590,7 @@ class commonTarget():
                 readAfter = self.readFromTarget(readAfter=True)
                 if (self.getDefaultEndWith() in readAfter):
                     try:
-                        self.process.expect([self.getDefaultEndWith(), pexpect.EOF, pexpect.TIMEOUT],timeout=10) if (isEqSetting('osImage', 'debian')) else \
-                            self.process.expect(self.getDefaultEndWith(),timeout=10)
+                        self.process.expect(self.getDefaultEndWith(),timeout=10)
                     except Exception as exc:
                         warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
                     textBack += readAfter
@@ -763,7 +758,7 @@ class commonTarget():
 
         self.killSshConn()
         if (not self.onlySsh):
-            self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True, shutdownOnError=False) #Get some entropy going on
+            self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True) #Get some entropy going on
             time.sleep(3)
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
         try:
