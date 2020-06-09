@@ -774,11 +774,11 @@ class commonTarget():
         elif (retExpect[1]): #Failed
             return returnFail(f"openSshConn: Spawning the ssh process timed out.")
         elif (retExpect[2]==4): # asking for yes/no for new host
-            if (isEqSetting('osImage','debian')):
-                passwordPrompt = [passwordPrompt[1]]
             self.runCommand("yes", endsWith=passwordPrompt, timeout=timeout, shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
+        if (not self.userName == 'root'):
+            self.isCurrentUserRoot = not self.isCurrentUserRoot
         self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
         return True
