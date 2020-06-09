@@ -828,8 +828,14 @@ class commonTarget():
     @decorate.debugWrap
     def genStdinEntropy (self):
         lenText = 100
-        randText = ''.join(random.choice(string.punctuation) for i in range(lenText))
-        self.runCommand(f"echo \"{randText}\"")
+        if (isEqSetting('osImage','debian')):
+            alphabet = string.ascii_letters + string.digits + ' '
+        elif (isEqSetting('osImage','FreeBSD')):
+            alphabet = string.printable
+        else:
+            self.shutdownAndExit(f"<genStdinEntropy> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
+        randText = ''.join(random.choice(alphabet) for i in range(lenText))
+        self.runCommand(f"echo \"{randText}\"",timeout=5,shutdownOnError=False)
 
 # END OF CLASS commonTarget
 
