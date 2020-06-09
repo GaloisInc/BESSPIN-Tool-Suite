@@ -69,7 +69,7 @@ def extensiveTest(target):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode, testCase):
+def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode, TCNum, TCDesc):
     # GETFileName is the name to request from the HTTP Server
     # assetFileName is the name of file against which the returned data is compared.
 
@@ -97,12 +97,12 @@ def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode, testCase):
         if (expectedCode == WEB_REPLY_OK):
 
             if (contentLength == expectedFileLength):
-                printAndLog(f"HTTP SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
+                printAndLog(f"HTTP SmokeTest Case {TCNum} - {TCDesc} - PASSED",doPrint=True,tee=getSetting('appLog'))
             else:
                 rtosShutdownAndExit(target, f"(Host)~  HTTP GET for {GETFileName} FAILED - Wrong length\n",exitCode=EXIT.Run)
 
         elif (expectedCode == WEB_NOT_FOUND):
-            printAndLog(f"HTTP SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
+            printAndLog(f"HTTP SmokeTest Case {TCNum} - {TCDesc} - PASSED",doPrint=True,tee=getSetting('appLog'))
         else:
             rtosShutdownAndExit(target, f"(Host)~  HTTP GET for {GETFileName} Failed! [Got code {code}].",exitCode=EXIT.Run)
     else:
@@ -111,14 +111,14 @@ def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode, testCase):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def OTATest(clientTftp, fileName, testCase):
+def OTATest(clientTftp, fileName, TCNum, TCDesc):
     filePath = os.path.join(getSetting('assetsDir'),fileName)
-    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case {testCase} - SEND {fileName}\n")
+    getSetting('appLog').write(f"(Host)~  OTA SmokeTest Case {TCNum} - SEND {fileName}, {TCDesc}\n")
     try:
         clientTftp.upload(fileName, filePath, timeout=10)
         # No exception? Then...
         getSetting('appLog').write(f"(Host)~  {filePath} uploaded to the TFTP server.\n")
-        printAndLog(f"OTA SmokeTest Case {testCase} - PASSED",doPrint=True,tee=getSetting('appLog'))
+        printAndLog(f"OTA SmokeTest Case {TCNum} - {TCDesc} - PASSED",doPrint=True,tee=getSetting('appLog'))
     except Exception as exc:
         # some test cases as supposed to fail and reach here, so we do not mark this as
         # an error
@@ -143,19 +143,19 @@ def deploymentTest(target):
     # SmokeTests for the HTTP Server
     ###################################
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 1 - GET index.htm\n")
-    HTTPSmokeTest(target, 'index.htm', 'index.htm', WEB_REPLY_OK, 1)
+    HTTPSmokeTest(target, 'index.htm', 'index.htm', WEB_REPLY_OK, 1, 'TTY, UART, HTTP')
 
     OtaFile = f"{getSettingDict('freertosAssets',['otaHtml'])}"
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 2 - GET ota.htm\n")
-    HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 2)
+    HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 2, 'HTTP GET')
 
     # Now try a file that we know won't be there on the target. We should get error code WEB_NOT_FOUND
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 3 - GET notthere.htm\n")
-    HTTPSmokeTest(target, 'notthere.htm', 'notthere.htm', WEB_NOT_FOUND, 3)
+    HTTPSmokeTest(target, 'notthere.htm', 'notthere.htm', WEB_NOT_FOUND, 3, 'HTTP GET missing file')
 
     # Now try to GET glogo.png - a larger binary format file
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 4 - GET glogo.png\n")
-    HTTPSmokeTest(target, 'glogo.png', 'glogo.png', WEB_REPLY_OK, 4)
+    HTTPSmokeTest(target, 'glogo.png', 'glogo.png', WEB_REPLY_OK, 4, 'HTTP GET PNG file')
 
 
     ###################################
@@ -168,38 +168,38 @@ def deploymentTest(target):
     printAndLog ("Starting OTA Smoketests.",doPrint=True,tee=getSetting('appLog'))
 
     # uploading the signed ota.htm file
-    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 1)
+    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 1, 'OTA, Crypto, Filesystem')
 
     # uploading the signed ota.htm file AGAIN
-    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 2)
+    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 2, 'OTA, Crypto, Filesystem')
 
     # uploading the signed badsig.htm file - Signature is corrupt
-    OTATest(clientTftp, "badsig.htm.sig", 3)
+    OTATest(clientTftp, "badsig.htm.sig", 3, 'OTA corrupt signature')
 
     # uploading ota512.htm.sig - exactly 1 TFTP block...
-    OTATest(clientTftp, "ota512.htm.sig", 4)
+    OTATest(clientTftp, "ota512.htm.sig", 4, 'OTA, TFTP 1 block')
     # ...and fetch it back from the HTTP server - note the filename changes to ota.htm
     # on the HTTP server. We should get back 448 bytes (512 minus the 64 byte signature)
-    HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK, 5)
+    HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK, 5, 'Roundtrip OTA TC 4')
 
     # uploading ota65535.htm.sig - just under the upper limit for our server.
-    OTATest(clientTftp, "ota65535.htm.sig", 5)
-    HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK, 6)
+    OTATest(clientTftp, "ota65535.htm.sig", 5, 'OTA just below max file size')
+    HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK, 6, 'Roundtrip OTA TC 5')
 
     # uploading ota65536.htm.sig - the upper limit for our server.
     # Should be rejected
-    OTATest(clientTftp, "ota65536.htm.sig", 6)
+    OTATest(clientTftp, "ota65536.htm.sig", 6, 'OTA exactly max file size')
     # OtaFile should NOT have been changed, so check it's still as was
-    HTTPSmokeTest(target, OtaFile, "ota65536.htm", WEB_REPLY_OK, 7)
+    HTTPSmokeTest(target, OtaFile, "ota65536.htm", WEB_REPLY_OK, 7 'Roundtrip OTA TC 6')
 
     # Restore the original ota.htm file
-    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 7)
+    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 7, 'Restore original OTA state')
 
     # uploading ota65537.htm.sig - the upper limit for our server.
     # Should be rejected
-    OTATest(clientTftp, "ota65537.htm.sig", 8)
+    OTATest(clientTftp, "ota65537.htm.sig", 8, 'OTA too large file')
     # OtaFile should NOT have been changed, so check it's still as was
-    HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 8)
+    HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 8, 'Verify FS not changed by OTA TC 8')
 
 
     ###################################
