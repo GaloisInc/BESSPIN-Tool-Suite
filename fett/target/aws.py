@@ -441,9 +441,9 @@ def installKernelModules():
 
     elif (isEqSetting('pvAWS', 'connectal')):
         sudoShellCommand(['insmod', f"{awsModPath}/pcieportal.ko"])
-        _sendKmsg (f"FETT-firesim: Installing pcieportal.ko.")
+        _sendKmsg (f"FETT-connectal: Installing pcieportal.ko.")
         sudoShellCommand(['insmod', f"{awsModPath}/portalmem.ko"])
-        _sendKmsg (f"FETT-firesim: Installing portalmem.ko.")
+        _sendKmsg (f"FETT-connectal: Installing portalmem.ko.")
 
     else:
         logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
