@@ -128,35 +128,22 @@ def sendCiSQStermination (exitCode, jobID, nodeIndex):
     except Exception as exc:
         exitFettCi(message=f"Failed to obtain the URL of the AWS CI queue.",exc=exc)
 
+    msg = json.dumps({
+            "job": {
+              "id": str(jobID),
+              "status": "success" if (exitCode == 0) else "failure", 
+              "reason": "fett-target-ci-termination",
+              "node": str(nodeIndex)
+            }
+        })
+
     try:
         qResponse = sqs.send_message(
                 QueueUrl=urlQueueResponse['QueueUrl'],
-                MessageBody='fett-target AWS CI termination',
+                MessageBody=msg,
                 DelaySeconds=0,
-                MessageAttributes={
-                    'sender': {
-                        'StringValue': 'fett-target-ci',
-                        'DataType': 'String'
-                    },
-                    'objective' : {
-                        'StringValue': 'termination',
-                        'DataType': 'String'
-                    },
-                    'exitCode' : {
-                        'StringValue': str(exitCode),
-                        'DataType': 'Number'
-                    },
-                    'jobID' : {
-                        'StringValue': str(jobID),
-                        'DataType': 'Number'
-                    },
-                    'nodeIndex' : {
-                        'StringValue': str(nodeIndex),
-                        'DataType': 'Number'
-                    }
-                },
-                MessageDeduplicationId='fett-target-ci',
-                MessageGroupId='fett-target-ci'
+                MessageDeduplicationId=str(nodeIndex),
+                MessageGroupId=str(jobID)
             )
     except Exception as exc:
         exitFettCi(message=f"Failed to send the termination message to <{ciAWSqueue}>.",exc=exc)
