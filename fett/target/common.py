@@ -300,8 +300,8 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             if (self.isCurrentUserRoot):
                 return ":~#"
-            elif (self.isSshConn):
-                return '[00m:[01;34m~[00m$'
+            # elif (self.isSshConn):
+            #     return '[00m:[01;34m~[00m$'
             else:
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
@@ -320,7 +320,7 @@ class commonTarget():
     @decorate.debugWrap
     def getAllEndsWith (self):
         if (isEqSetting('osImage','debian')):
-            return [":~#", ":~\$", '[00m:[01;34m~[00m$']
+            return [":~#", ":~\$"] #, '[00m:[01;34m~[00m$']
         elif (isEqSetting('osImage','FreeBSD')):
             return ["fettPrompt>", ":~ \$"]
         elif (isEqSetting('osImage','busybox')):
@@ -468,8 +468,7 @@ class commonTarget():
                 return returnFalse (f"Unexpected error while using scp command [waiting for termination].",exc=exc)
             scpOutFile.close()
             time.sleep(5)
-            self.keyboardInterrupt (expectExact=True) if (isEqSetting('osImage', 'debian')) \
-                else self.keyboardInterrupt ()
+            self.keyboardInterrupt ()
 
         else: #send the file through netcat
             if (isEqSetting('osImage','debian')):
@@ -495,8 +494,7 @@ class commonTarget():
         try:
             shaSumRX = None
             if (isEqSetting('osImage','debian')):
-                retShaRX = self.runCommand(f"sha256sum {xFile}", expectExact=True)[1] if (isEqSetting('osImage', 'debian')) \
-                    else self.runCommand(f"sha256sum {xFile}")[1]
+                retShaRX = self.runCommand(f"sha256sum {xFile}")[1]
             elif (isEqSetting('osImage','FreeBSD')):
                 retShaRX = self.runCommand(f"sha256 {xFile}",timeout=90)[1]
                 retShaRX += self.runCommand(" ")[1]
@@ -582,7 +580,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True, expectExact=False):
+    def keyboardInterrupt (self,shutdownOnError=True):
         if (self.terminateTargetStarted):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
@@ -591,17 +589,17 @@ class commonTarget():
             self.keyboardInterruptTriggered = True
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
-        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=15, expectExact=expectExact)
+        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=15)
         textBack = retCommand[1]
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=15,expectExact=expectExact)[1]
+            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=15)[1]
         #See if the order is correct
         if (self.process):
             for i in range(2):
                 readAfter = self.readFromTarget(readAfter=True)
                 if (self.getDefaultEndWith() in readAfter):
                     try:
-                        self.process.expect_exact([self.getDefaultEndWith(), pexpect.EOF, pexpect.TIMEOUT],timeout=10) if (isEqSetting('osImage', 'debian')) else \
+                        self.process.expect([self.getDefaultEndWith(), pexpect.EOF, pexpect.TIMEOUT],timeout=10) if (isEqSetting('osImage', 'debian')) else \
                             self.process.expect(self.getDefaultEndWith(),timeout=10)
                     except Exception as exc:
                         warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
@@ -795,8 +793,7 @@ class commonTarget():
             self.runCommand("yes", endsWith=passwordPrompt, timeout=timeout, shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
-        expectExpect= True if (isEqSetting('osImage', 'debian')) else False
-        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False, expectExact=expectExpect)
+        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
         return True
 
