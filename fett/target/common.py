@@ -302,6 +302,10 @@ class commonTarget():
                 return ":~#"
             # elif (self.isSshConn):
             #     return '[00m:[01;34m~[00m$'
+
+            elif (self.isSshConn):
+                # return '[00m:[01;34m~[00m$'
+                return ":~\$"
             else:
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
