@@ -300,9 +300,6 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             if (self.isCurrentUserRoot):
                 return ":~#"
-            elif (self.isSshConn):
-                # return '[00m:[01;34m~[00m$'
-                return ":~\$"
             else:
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
@@ -321,7 +318,7 @@ class commonTarget():
     @decorate.debugWrap
     def getAllEndsWith (self):
         if (isEqSetting('osImage','debian')):
-            return [":~#", ":~\$"] #, '[00m:[01;34m~[00m$']
+            return [":~#", ":~\$"]
         elif (isEqSetting('osImage','FreeBSD')):
             return ["fettPrompt>", ":~ \$"]
         elif (isEqSetting('osImage','busybox')):
@@ -358,8 +355,6 @@ class commonTarget():
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
-        # if (isEqSetting('osImage','debian') and self.isSshConn and (not self.isCurrentUserRoot)):
-        #     expectExact = False
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,expectExact=expectExact)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
@@ -683,10 +678,7 @@ class commonTarget():
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
         try:
-            if (expectExact):
-                retExpect = self.process.expect_exact(endsWith,timeout=timeout)
-            else:
-                retExpect = self.process.expect(endsWith,timeout=timeout)
+            retExpect = self.process.expect(endsWith,timeout=timeout)
             if ( (endsWith == pexpect.EOF) or isinstance(endsWith,str)): #only one string or EOF
                 textBack += self.readFromTarget(endsWith=endsWith)
             else: #It is a list
