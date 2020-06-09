@@ -165,16 +165,10 @@ class connectalTarget(commonTarget):
         printAndLog(f"awsConnectalHostPath={awsConnectalHostPath}")
 
         connectalCommand = ' '.join([
-            "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target
             './ssith_aws_fpga',
-            f"--uart-console=1",
-            f"--dma=1",
-            f"--xdma=0",
-            f"--entry=0x80003000",
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
             f"--elf={getSetting('osImageElf')}",
-            "\'"
         ])
 
         logging.debug(f"boot: connectalCommand = {connectalCommand}")
@@ -199,30 +193,17 @@ class connectalTarget(commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet(self):
-        if (isEqSetting('osImage','debian')):
-            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
-            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            outCmd = self.runCommand ("ifup eth0",expectedContents='IceNet: opened device')
-        else:
-            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+        self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+        self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+        self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+        outCmd = self.runCommand ("ifup eth0")
 
         self.pingTarget()
-
         return outCmd
 
     @decorate.debugWrap
     def targetTearDown(self):
-        try:
-            subprocess.check_call(['sudo', 'kill', f"{os.getpgid(self.switch0Proc.pid)}"],
-                                stdout=self.fswitchOut, stderr=self.fswitchOut)
-        except Exception as exc:
-            warnAndLog("targetTearDown: Failed to kill <switch0> process.",doPrint=False,exc=exc)
-        try:
-            self.fswitchOut.close()
-        except Exception as exc:
-            warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
-        return True
+        pass
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
 
@@ -424,7 +405,7 @@ def removeKernelModules():
         kmodsToClean = []
     for kmod in kmodsToClean:
         sudoShellCommand(['rmmod', kmod],check=False)
-        _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
+        _sendKmsg (f"<aws.removeKernelModules>: Removing {kmod} if it exists.")
 
 @decorate.debugWrap
 def installKernelModules():
@@ -446,7 +427,7 @@ def installKernelModules():
         _sendKmsg (f"FETT-connectal: Installing portalmem.ko.")
 
     else:
-        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+        logAndExit(f"<aws.installKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 # ------------------ FireSim Functions ----------------------------------------
 
