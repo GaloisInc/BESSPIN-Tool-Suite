@@ -8,6 +8,8 @@
 """
 
 fettTargetAMI = 'ami-04c55ee64b3c6f758' #fett-target-060120
+ciAWSqueue = 'fett-target-AWS-CI-test-1.fifo'
+ciAWSbucket = 'bucket'
 
 commonDefaults = {
     ('mode',('test',)),

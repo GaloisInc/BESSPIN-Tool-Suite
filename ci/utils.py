@@ -5,7 +5,7 @@
 """
 
 from configs import *
-import configparser, os, copy, time, glob, shutil
+import configparser, os, copy, time, glob, shutil, boto3
 
 def exitFettCi (exitCode=-1,exc=None,message=None):
     if (message):
@@ -112,7 +112,53 @@ def generateConfigFile (repoDir,outDir,dictConfig,testMode):
 
     return xConfigFilePath
 
-def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint):
+def sendCiSQStermination (exitCode, jobID, nodeIndex):
+    try:
+        sqs = boto3.client('sqs')
+    except Exception as exc:
+        exitFettCi(message=f"Failed to create the SQS object.",exc=exc)
+
+    try:
+        urlQueue = sqs.get_queue_url(QueueName=ciAWSqueue)
+    except Exception as exc:
+        exitFettCi(message=f"Failed to obtain the URL of the AWS CI queue.",exc=exc)
+
+    try:
+        qResponse = client.send_message(
+                QueueUrl=urlQueue,
+                MessageBody='fett-target AWS CI termination',
+                DelaySeconds=0,
+                MessageAttributes={
+                    'sender': {
+                        'StringValue': 'fett-target-ci',
+                        'DataType': 'string'
+                    },
+                    'objective' : {
+                        'StringValue': 'termination',
+                        'DataType': 'string'
+                    },
+                    'exitCode' : {
+                        'StringValue': exitCode,
+                        'DataType': 'number'
+                    },
+                    'jobID' : {
+                        'StringValue': exitCode,
+                        'DataType': 'number'
+                    },
+                    'nodeIndex' : {
+                        'StringValue': exitCode,
+                        'DataType': 'number'
+                    }
+                },
+            )
+    except Exception as exc:
+        exitFettCi(message=f"Failed to send the termination message to <{ciAWSqueue}>.",exc=exc)
+
+    print(f"(Info)~  FETT-CI: Termination message sent to {ciAWSqueue}.")
+
+
+
+def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, jobID, nodeIndex):
     #decide on the folder's name
     artifactsPath = f"{os.path.splitext(os.path.basename(configFile))[0]}-{artifactSuffix}"
     if (os.path.isdir(artifactsPath)): # already exists, add the date
@@ -140,7 +186,7 @@ def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint):
         print("(Warning)~  FETT-CI: AWS upload to S3 is not yet implemented.")
         # Tar the artifact folder
         # Upload the folder to S3
-        # Send an SQS message that we're done
+        sendCiSQStermination(exitCode, jobID, nodeIndex)
 
 
 
