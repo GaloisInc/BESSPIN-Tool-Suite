@@ -118,7 +118,7 @@ def OTATest(clientTftp, fileName, TCNum, TCDesc):
         clientTftp.upload(fileName, filePath, timeout=10)
         # No exception? Then...
         getSetting('appLog').write(f"(Host)~  {filePath} uploaded to the TFTP server.\n")
-        printAndLog(f"OTA SmokeTest Case {TCNum} - {TCDesc} - PASSED",doPrint=True,tee=getSetting('appLog'))
+        printAndLog(f" OTA SmokeTest Case {TCNum} - {TCDesc} - PASSED",doPrint=True,tee=getSetting('appLog'))
     except Exception as exc:
         # some test cases as supposed to fail and reach here, so we do not mark this as
         # an error
