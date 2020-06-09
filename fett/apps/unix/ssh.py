@@ -34,7 +34,7 @@ def extensiveTest (target):
     printAndLog("Testing ssh and scp...", tee=getSetting('appLog'))
     sshSuccess = target.openSshConn(userName=target.userName)
     if (not sshSuccess):
-        target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.", exitCode=EXIT.Implementation)
+        target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.", exitCode=EXIT.Run)
     printAndLog("Test ssh passed successfully!", doPrint=False, tee=getSetting('appLog'))
     target.sendFile (pathToFile=getSetting('repoDir'),xFile='README.md',timeout=120)
     printAndLog("Test scp passed successfully!", doPrint=False, tee=getSetting('appLog'))
