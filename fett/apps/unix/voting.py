@@ -91,6 +91,7 @@ def deploymentTest (target):
     printAndLog("Testing voting server...",tee=getSetting('appLog'))
     ip = target.ipTarget
 
+    target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_register.json?"
     req += "voter-birthdate=1986-02-04&"
     req += "voter-lastname=l&"
@@ -103,6 +104,7 @@ def deploymentTest (target):
     if not out:
         target.shutdownAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
 
+    target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
     req += "voter-birthdate=1986-02-04&"
     req += "voter-lastname=l&"
