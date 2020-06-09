@@ -5,7 +5,7 @@
 """
 
 from configs import *
-import configparser, os, copy, time, glob, shutil, boto3
+import configparser, os, copy, time, glob, shutil
 
 def exitFettCi (exitCode=-1,exc=None,message=None):
     if (message):
@@ -113,6 +113,11 @@ def generateConfigFile (repoDir,outDir,dictConfig,testMode):
     return xConfigFilePath
 
 def sendCiSQStermination (exitCode, jobID, nodeIndex):
+    try:
+        import boto3
+    except Exception as exc:
+        exitFettCi(message=f"Module <boto3> is not available.",exc=exc)
+
     try:
         sqs = boto3.client('sqs')
     except Exception as exc:
