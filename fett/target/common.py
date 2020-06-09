@@ -441,8 +441,7 @@ class commonTarget():
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
             try:
                 passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
-                retExpect = scpProcess.expect([passwordPrompt[1]],timeout=timeout) if (isEqSetting('osImage', 'debian')) else \
-                    scpProcess.expect(passwordPrompt,timeout=timeout)
+                retExpect = scpProcess.expect(passwordPrompt,timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
