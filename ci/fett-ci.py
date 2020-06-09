@@ -76,7 +76,7 @@ def main (xArgs):
     if (xArgs.artifactSuffix):
         artifactSuffix = xArgs.artifactSuffix
     elif (xArgs.jobID):
-        artifactSuffix = f"{nodeIndex}-{xArgs.jobID}"
+        artifactSuffix = f"{xArgs.jobID}-{nodeIndex}"
 
     # Check number of configs + get the right config file
     if (baseRunType == 'runOnPush'): #Execute the files in ci/runOnPush-flavor
