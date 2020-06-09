@@ -190,7 +190,7 @@ def deploymentTest(target):
     # Should be rejected
     OTATest(clientTftp, "ota65536.htm.sig", 6, 'OTA exactly max file size')
     # OtaFile should NOT have been changed, so check it's still as was
-    HTTPSmokeTest(target, OtaFile, "ota65536.htm", WEB_REPLY_OK, 7 'Roundtrip OTA TC 6')
+    HTTPSmokeTest(target, OtaFile, "ota65536.htm", WEB_REPLY_OK, 7, 'Roundtrip OTA TC 6')
 
     # Restore the original ota.htm file
     OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 7, 'Restore original OTA state')
