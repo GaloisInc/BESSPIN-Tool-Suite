@@ -825,6 +825,13 @@ class commonTarget():
         printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
         return
 
+    @decorate.debugWrap
+    def genStdinEntropy (self):
+        lenText = 100
+        alphabet = string.letters + string.digits + [" "]
+        randText = ''.join(random.choice(alphabet) for i in range(lenText))
+        self.runCommand(f"echo \"{randText}\"")
+
 # END OF CLASS commonTarget
 
 def checkPort (portNum, host=''):
