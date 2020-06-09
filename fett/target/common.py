@@ -301,7 +301,8 @@ class commonTarget():
             if (self.isCurrentUserRoot):
                 return ":~#"
             elif (self.isSshConn):
-                return '[00m:[01;34m~[00m$'
+                # return '[00m:[01;34m~[00m$'
+                return ":~\$"
             else:
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
@@ -468,7 +469,7 @@ class commonTarget():
                 return returnFalse (f"Unexpected error while using scp command [waiting for termination].",exc=exc)
             scpOutFile.close()
             time.sleep(5)
-            self.keyboardInterrupt (expectExact=True) if (isEqSetting('osImage', 'debian')) \
+            self.keyboardInterrupt (expectExact=False) if (isEqSetting('osImage', 'debian')) \
                 else self.keyboardInterrupt ()
 
         else: #send the file through netcat
@@ -495,7 +496,7 @@ class commonTarget():
         try:
             shaSumRX = None
             if (isEqSetting('osImage','debian')):
-                retShaRX = self.runCommand(f"sha256sum {xFile}", expectExact=True)[1] if (isEqSetting('osImage', 'debian')) \
+                retShaRX = self.runCommand(f"sha256sum {xFile}", expectExact=False)[1] if (isEqSetting('osImage', 'debian')) \
                     else self.runCommand(f"sha256sum {xFile}")[1]
             elif (isEqSetting('osImage','FreeBSD')):
                 retShaRX = self.runCommand(f"sha256 {xFile}",timeout=90)[1]
@@ -601,7 +602,7 @@ class commonTarget():
                 readAfter = self.readFromTarget(readAfter=True)
                 if (self.getDefaultEndWith() in readAfter):
                     try:
-                        self.process.expect_exact([self.getDefaultEndWith(), pexpect.EOF, pexpect.TIMEOUT],timeout=10) if (isEqSetting('osImage', 'debian')) else \
+                        self.process.expect([self.getDefaultEndWith(), pexpect.EOF, pexpect.TIMEOUT],timeout=10) if (isEqSetting('osImage', 'debian')) else \
                             self.process.expect(self.getDefaultEndWith(),timeout=10)
                     except Exception as exc:
                         warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
@@ -795,8 +796,8 @@ class commonTarget():
             self.runCommand("yes", endsWith=passwordPrompt, timeout=timeout, shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
-        expectExpect= True if (isEqSetting('osImage', 'debian')) else False
-        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False, expectExact=expectExpect)
+        # expectExpect= True if (isEqSetting('osImage', 'debian')) else False
+        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False, expectExact=False)
         self.sshRetries = 0 #reset the retries
         return True
 
