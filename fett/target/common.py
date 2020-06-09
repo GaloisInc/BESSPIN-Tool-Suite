@@ -758,7 +758,7 @@ class commonTarget():
 
         self.killSshConn()
         if (not self.onlySsh):
-            self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True) #Get some entropy going on
+            self.runCommand(" ",endsWith=self.getAllEndsWith()) #Get some entropy going on
             time.sleep(3)
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
         try:
