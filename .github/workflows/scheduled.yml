@@ -6,6 +6,9 @@ name: Scheduled Runs
 on:
   schedule:
     - cron: "0 0 * * *"
+  push:
+    branches:
+      - "actions/*"
 
 jobs:
   Periodic:
