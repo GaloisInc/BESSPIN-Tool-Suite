@@ -28,11 +28,18 @@ jobs:
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
     steps:
       - uses: actions/checkout@v2
+        if: github.event_name == 'schedule'
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
           ref: "develop"
+      - uses: actions/checkout@v2
+        if: github.event_name == 'push'
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          lfs: true
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -61,11 +68,18 @@ jobs:
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
     steps:
       - uses: actions/checkout@v2
+        if: github.event_name == 'schedule'
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
           ref: "develop"
+      - uses: actions/checkout@v2
+        if: github.event_name == 'push'
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          lfs: true
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
