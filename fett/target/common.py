@@ -432,7 +432,7 @@ class commonTarget():
         if (getSetting('osImage') in ['debian', 'FreeBSD'] and (self.isSshConn)): #send through SSH
             currentUser = 'root' if self.isCurrentUserRoot else self.userName
             user_path = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
-            portPart = '' if (not self.sshHostPort) else f" -p {self.sshHostPort}"
+            portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
             scpCommand = f"scp{portPart} {pathToFile}/{xFile} {currentUser}@{self.ipTarget}:/{user_path}/"
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
@@ -441,7 +441,8 @@ class commonTarget():
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
             try:
                 passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
-                retExpect = scpProcess.expect(passwordPrompt,timeout=timeout)
+                retExpect = scpProcess.expect([passwordPrompt[1]],timeout=timeout) if (isEqSetting('osImage', 'debian')) else \
+                    scpProcess.expect(passwordPrompt,timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
