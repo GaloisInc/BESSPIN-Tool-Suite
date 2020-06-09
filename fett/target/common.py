@@ -828,8 +828,7 @@ class commonTarget():
     @decorate.debugWrap
     def genStdinEntropy (self):
         lenText = 100
-        alphabet = string.printable #will cause troubles. Which gets the entropy going on.
-        randText = ''.join(random.choice(alphabet) for i in range(lenText))
+        randText = ''.join(random.choice(string.punctuation) for i in range(lenText))
         self.runCommand(f"echo \"{randText}\"")
 
 # END OF CLASS commonTarget
