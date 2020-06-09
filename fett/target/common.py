@@ -796,7 +796,7 @@ class commonTarget():
         elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
         expectExpect= True if (isEqSetting('osImage', 'debian')) else False
-        self.runCommand(sshPassword,endsWith=[endsWith, pexpect.TIMEOUT],timeout=timeout,shutdownOnError=False, expectExact=expectExpect)
+        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False, expectExact=expectExpect)
         self.sshRetries = 0 #reset the retries
         return True
 
