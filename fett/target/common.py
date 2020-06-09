@@ -827,13 +827,8 @@ class commonTarget():
 
     @decorate.debugWrap
     def genStdinEntropy (self):
-        lenText = 100
-        if (isEqSetting('osImage','debian')):
-            alphabet = string.ascii_letters + string.digits + ' '
-        elif (isEqSetting('osImage','FreeBSD')):
-            alphabet = string.printable
-        else:
-            self.shutdownAndExit(f"<genStdinEntropy> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
+        lenText = 1000
+        alphabet = string.ascii_letters + string.digits + ' '
         randText = ''.join(random.choice(alphabet) for i in range(lenText))
         self.runCommand(f"echo \"{randText}\"",timeout=5,shutdownOnError=False)
 
