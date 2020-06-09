@@ -162,16 +162,21 @@ class connectalTarget(commonTarget):
             logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
         awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'host')
-        print(awsConnectalHostPath)
         printAndLog(f"awsConnectalHostPath={awsConnectalHostPath}")
 
         connectalCommand = ' '.join([
             "bash -c 'stty intr ^] &&", # Making `ctrl+]` the SIGINT for the session so that we can send '\x03' to target
             './ssith_aws_fpga',
+            f"--uart-console=1",
+            f"--dma=1",
+            f"--xdma=0",
+            f"--entry=0x80003000",
             f"--dtb={getSetting('osImageDtb')}",
+            f"--block={getSetting('osImageImg')}",
             f"--elf={getSetting('osImageElf')}",
             "\'"
         ])
+
         logging.debug(f"boot: connectalCommand = {connectalCommand}")
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
@@ -408,6 +413,7 @@ def copyAWSSources():
     agfiId = getAgfiJson(agfiJsonPath)
     setSetting("agfiId", agfiId)
 
+@decorate.debugWrap
 def removeKernelModules():
     if isEqSetting('pvAWS', 'firesim'):
         kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
@@ -420,23 +426,29 @@ def removeKernelModules():
         sudoShellCommand(['rmmod', kmod],check=False)
         _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
 
-# ------------------ FireSim Functions ----------------------------------------
-
 @decorate.debugWrap
-def setupFiresimKernelModules():
+def installKernelModules():
+    """install necessary kernel modules for an AWS PV"""
+    removeKernelModules()
+    awsModPath = os.path.join(getSetting('connectalPath'), 'kmods')
+
+    #load our modules
     if (isEqSetting('pvAWS','firesim')):
-        #remove all modules to be safe
-        removeKernelModules()
-
-        awsFiresimModPath = os.path.join(getSetting('firesimPath'), 'kmods')
-
-        #load our modules
-        sudoShellCommand(['insmod', f"{awsFiresimModPath}/nbd.ko", 'nbds_max=128'])
+        sudoShellCommand(['insmod', f"{awsModPath}/nbd.ko", 'nbds_max=128'])
         _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
-        sudoShellCommand(['insmod', f"{awsFiresimModPath}/xdma.ko", 'poll_mode=1'])
+        sudoShellCommand(['insmod', f"{awsModPath}/xdma.ko", 'poll_mode=1'])
         _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
+
+    elif (isEqSetting('pvAWS', 'connectal')):
+        sudoShellCommand(['insmod', f"{awsModPath}/pcieportal.ko"])
+        _sendKmsg (f"FETT-firesim: Installing pcieportal.ko.")
+        sudoShellCommand(['insmod', f"{awsModPath}/portalmem.ko"])
+        _sendKmsg (f"FETT-firesim: Installing portalmem.ko.")
+
     else:
-        logAndExit(f"<setupFiresimKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+
+# ------------------ FireSim Functions ----------------------------------------
 
 def prepareFiresim():
     """prepare the firesim binaries for the FETT work directory"""
@@ -447,24 +459,6 @@ def prepareFiresim():
     touch(dwarfFile)
 
 # ------------------ Connectal Functions ----------------------------------------
-
-@decorate.debugWrap
-def setupConnectalKernelModules():
-    """unload/load necessary kernel modules for connectal"""
-    # required for safe kernel unloading
-
-    if (isEqSetting('pvAWS', 'connectal')):
-        removeKernelModules()
-
-        awsConnectalModPath = os.path.join(getSetting('connectalPath'), 'kmods')
-
-        #load our modules
-        sudoShellCommand(['insmod', f"{awsConnectalModPath}/pcieportal.ko"])
-        _sendKmsg (f"FETT-firesim: Installing pcieportal.ko.")
-        sudoShellCommand(['insmod', f"{awsConnectalModPath}/portalmem.ko"])
-        _sendKmsg (f"FETT-firesim: Installing portalmem.ko.")
-    else:
-        logAndExit(f"<setupConnectalKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 def prepareConnectal():
     """connectal environment preparation"""

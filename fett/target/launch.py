@@ -79,7 +79,7 @@ def prepareEnv ():
     elif (isEqSetting('target','aws')):
         if (isEqSetting('pvAWS','firesim')):
             aws.prepareFiresim()
-            aws.setupFiresimKernelModules()
+            aws.installKernelModules()
             aws.configTapAdaptor()
             aws.programAFI()
         if (isEqSetting('pvAWS', 'connectal')):
@@ -87,7 +87,7 @@ def prepareEnv ():
             aws.removeKernelModules()
             aws.configTapAdaptor()
             aws.programAFI()
-            aws.setupConnectalKernelModules()
+            aws.installKernelModules()
         else:
             logAndExit (f"<launch.prepareEnv> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
     printAndLog (f"Environment is ready.")
