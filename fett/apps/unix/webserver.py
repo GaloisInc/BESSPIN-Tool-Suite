@@ -94,6 +94,7 @@ def deploymentTest(target):
     httpsPort = target.httpsPortTarget
 
     # 0. Fetch index page
+    target.genStdinEntropy()
     printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.html")
     if (not code):
@@ -102,6 +103,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 1. Nginx must be compiled with ssl support
+    target.genStdinEntropy()
     printAndLog("Test[HTTPS]: Fetching index via HTTPS", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html")
     if (not code):
@@ -110,6 +112,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTPS]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 2. HTTP2 support
+    target.genStdinEntropy()
     printAndLog("Test[HTTP2]: Fetching index via HTTP2", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html", http2=True)
     if (not code):
@@ -120,6 +123,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTP2]: Failed! [Got wrong version <{version}>].",exitCode=EXIT.Run)
 
     # 3. Error redirect is working
+    target.genStdinEntropy()
     printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html")
     if (not code):
@@ -128,6 +132,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 4. "Hidden" resource
+    target.genStdinEntropy()
     printAndLog("Test[Private Resource]: Fetching private resource from hidden server", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html",
                                 extra=["-H", "Host: secret_server"])
@@ -137,6 +142,7 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[Private Resource]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 5. Fetching text.txt via HTTP
+    target.genStdinEntropy()
     printAndLog("Test[Text File]: Fetching text.txt via HTTP", doPrint=False, tee=getSetting('appLog'))
     _, code = curlTest(target, f"http://{targetIP}:{httpPort}/test.txt")
     if (not code):
@@ -145,6 +151,7 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Text File]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 6. Fetching static.html  via HTTP
+    target.genStdinEntropy()
     printAndLog("Test[Static HTTP]: Fetching static.html via HTTP", doPrint=False, tee=getSetting('appLog'))
     _, code = curlTest(target, f"http://{targetIP}:{httpPort}/static.html")
     if (not code):
@@ -153,6 +160,7 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Static HTTP]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 7. Fetching stanford.png - an image via HTTP
+    target.genStdinEntropy()
     printAndLog("Test[Image Resource]: Fetching stanford.png via HTTP", doPrint=False, tee=getSetting('appLog'))
     _, code = curlTest(target, f"http://{targetIP}:{httpPort}/stanford.png")
     if (not code):
@@ -161,6 +169,7 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Image Resource]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 8. Fetching static https web page
+    target.genStdinEntropy()
     printAndLog("Test[Static HTTP2]: Fetching static https web page", doPrint=False, tee=getSetting('appLog'))
     version, code = curlTest(target, f"https://{targetIP}:{httpsPort}/static.html", http2=True)
     if (not code):
@@ -171,6 +180,7 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Got wrong version <{version}>].", exitCode=EXIT.Run)
 
     # 9. page opens another internet web page through a link
+    target.genStdinEntropy()
     printAndLog("Test[Web page through a link]: Web page opens another internet web page through a link", doPrint=False,
                 tee=getSetting('appLog'))
     _, code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html",
@@ -181,6 +191,7 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Web page through a link]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 10. page receives a request and saves on the local filesystem
+    target.genStdinEntropy()
     printAndLog("Test[Upload text file]: Web page receives a request and saves on the local filesystem",
                 doPrint=False, tee=getSetting('appLog'))
     size_upload, code = curlTest(target, f"http://{targetIP}:{httpPort}/upload",
