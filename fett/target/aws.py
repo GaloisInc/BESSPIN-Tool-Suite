@@ -378,7 +378,7 @@ def getAgfiJson(jsonFile):
     keyName = 'agfi_id'
     contents = safeLoadJsonFile(jsonFile)
     if keyName not in contents:
-        logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi_id> in {jsonFile}")
+        logAndExit(f"<aws.getAgfiJson>: unable to find key <agfi_id> in {jsonFile}")
     return contents[keyName]
 
 def copyAWSSources():
