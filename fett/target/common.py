@@ -796,7 +796,7 @@ class commonTarget():
             self.runCommand("yes", endsWith=passwordPrompt, timeout=timeout, shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
-        if(endsWith == None):
+        if(endsWith == None and self.userName == 'root'):
             endsWith=self.getDefaultEndWith()
         else:
             endsWith = "\r\n#" if (endsWith=="\r\n#") else self.switchDefaultEndWith() #see boot
