@@ -396,10 +396,7 @@ class commonTarget():
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
         def returnFalse (message='',noRetries=False,exc=None,fileToClose=None):
-            try:
-                self.keyboardInterrupt ()
-            except:
-                pass
+            self.keyboardInterrupt ()
             if (exc):
                 logging.error(traceback.format_exc())
             if ((not noRetries) and (self.resendAttempts < self.limitResendAttempts-1)):
