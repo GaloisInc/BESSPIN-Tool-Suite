@@ -176,14 +176,22 @@ def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, j
             exitFettCi (message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",exc=exc)
 
     if (entrypoint == 'AWS'):
-        print("(Warning)~  FETT-CI: AWS upload to S3 is not yet implemented.")
+        # import the required modules
+        try:
+            import importlib.util, tarfile
+        except Exception as exc:
+            exitFettCi (message=f"Failed to <import importlib.util, tarfile>.",exc=exc)
+
         # Tar the artifact folder
+        tarFileName = f"{artifactSuffix}.tar.gz"
+        try:
+            xFile = tarfile.open(name=tarFileName, mode="w:gz")
+            xFile.add(artifactsPath, arcname=None)
+            xFile.close()
+        except Exception as exc:
+            exitFettCi (message=f"tar: error creating {tarFileName}", exc=exc)
 
         # import the shared module: aws.py
-        try:
-            import importlib.util
-        except Exception as exc:
-            exitFettCi (message=f"Failed to <import importlib.util>.",exc=exc)
         moduleSpec = importlib.util.spec_from_file_location("aws", os.path.join(repoDir,'fett','base','utils','aws.py'))
         awsModule = importlib.util.module_from_spec(moduleSpec)
         moduleSpec.loader.exec_module(awsModule)
