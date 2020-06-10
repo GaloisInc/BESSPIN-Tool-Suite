@@ -4,7 +4,6 @@ This is executed after loading the app on the target to execute this app
 """
 
 from fett.base.utils.misc import *
-import pexpect
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -32,14 +31,26 @@ def deploymentTest (target):
 @decorate.debugWrap
 @decorate.timeWrap
 def extensiveTest (target):
-    printAndLog("Testing ssh and scp...", tee=getSetting('appLog'))
-    sshSuccess = target.openSshConn(userName=target.userName)
-    if (not sshSuccess):
-        target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.", exitCode=EXIT.Run)
-    printAndLog("Test ssh passed successfully!", doPrint=False, tee=getSetting('appLog'))
+    printAndLog("Testing SSH and SCP...", tee=getSetting('appLog'))
+
+    target.switchUser()
+    wasAlreadyInSsh = target.isSshConn
+    
+    # SSH Test
+    if (not wasAlreadyInSsh): #If in an SSH connection already, then there is no need to test
+        if (not target.openSshConn(userName=target.userName)):
+            target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.", exitCode=EXIT.Run)
+    printAndLog("Test SSH passed successfully!", doPrint=False, tee=getSetting('appLog'))
+
+    # SCP Test
     target.sendFile (pathToFile=getSetting('repoDir'),xFile='README.md',timeout=120)
-    printAndLog("Test scp passed successfully!", doPrint=False, tee=getSetting('appLog'))
-    printAndLog("Ssh and scp test OK!", tee=getSetting('appLog'))
-    if(not target.onlySsh): # only for debian
+    printAndLog("Test SCP passed successfully!", doPrint=False, tee=getSetting('appLog'))
+
+    printAndLog("SSH and SCP test OK!", tee=getSetting('appLog'))
+
+    # Return to the previous state
+    if (not wasAlreadyInSsh):
         target.closeSshConn()
+    target.switchUser()    
+    
     return
