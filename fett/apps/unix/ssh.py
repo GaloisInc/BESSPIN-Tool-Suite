@@ -38,7 +38,7 @@ def extensiveTest (target):
     
     # SSH Test
     if (not wasAlreadyInSsh): #If in an SSH connection already, then there is no need to test
-        if (not target.openSshConn(userName=target.userName)):
+        if (not target.openSshConn(userName=target.userName,timeout=30)):
             target.shutdownAndExit(f"Test[user test ssh]:Failed to open ssh conn.", exitCode=EXIT.Run)
     printAndLog("Test SSH passed successfully!", doPrint=False, tee=getSetting('appLog'))
 
