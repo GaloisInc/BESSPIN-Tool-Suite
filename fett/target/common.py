@@ -16,6 +16,7 @@ from fett.apps.unix import database
 from fett.apps.unix import webserver
 from fett.apps.unix import voting
 from fett.apps.freertos import freertos
+from fett.apps.unix import ssh
 
 class commonTarget():
     def __init__(self):
@@ -532,7 +533,7 @@ class commonTarget():
         if (isEqSetting('osImage','FreeRTOS')):
             appModules = [freertos]
         elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-            appModules = [webserver, database, voting]
+            appModules = [webserver, database, voting, ssh]
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
