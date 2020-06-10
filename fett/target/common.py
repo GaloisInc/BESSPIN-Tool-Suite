@@ -432,6 +432,7 @@ class commonTarget():
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
+            self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
             try:
                 retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=timeout)
             except Exception as exc:
