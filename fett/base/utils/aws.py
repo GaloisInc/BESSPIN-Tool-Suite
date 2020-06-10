@@ -49,7 +49,7 @@ def sendSQS (urlQueue, exitFunc, status, jobId, nodeId, reason='fett', hostIp='N
 
     return
 
-def uploadToS3 (s3Bucket, exitFunc, tarball):
+def uploadToS3 (s3Bucket, exitFunc, tarball, pathInBucket):
     try:
         import boto3, os
     except Exception as exc:
@@ -61,7 +61,7 @@ def uploadToS3 (s3Bucket, exitFunc, tarball):
         exitFunc(message=f"Failed to create the S3 client.",exc=exc)
 
     try:
-        s3.upload_file(tarball, s3Bucket, os.path.basename(tarball))
+        s3.upload_file(tarball, s3Bucket, os.path.join(pathInBucket,os.path.basename(tarball)))
     except Exception as exc:
         exitFunc(message=f"Failed to upload the tarball to the bucket.",exc=exc)
 
