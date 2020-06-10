@@ -23,6 +23,7 @@ jobs:
           - { os: unix, index: 7, total: 8, host: docker-fpga }
           - { os: unix, index: 8, total: 8, host: docker-fpga }
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
+          - { os: freertos, index: 2, total: 2, host: docker-fpga-io }
     steps:
       - uses: actions/checkout@v2
         with:
@@ -56,6 +57,7 @@ jobs:
           - { os: unix, index: 7, total: 8, host: docker-fpga }
           - { os: unix, index: 8, total: 8, host: docker-fpga }
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
+          - { os: freertos, index: 2, total: 2, host: docker-fpga-io }
     steps:
       - uses: actions/checkout@v2
         with:
