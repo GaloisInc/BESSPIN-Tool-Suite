@@ -754,14 +754,15 @@ class commonTarget():
             self.fSshOut.close()
 
         self.killSshConn()
-        if (not self.onlySsh):
-            self.runCommand(" ",endsWith=self.getAllEndsWith()) #Get some entropy going on
-            time.sleep(3)
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
         try:
             self.sshProcess = pexpect.spawn(sshCommand,logfile=self.fSshOut,timeout=timeout)
         except Exception as exc:
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
+
+        if (not self.onlySsh):
+            self.genStdinEntropy(endsWith=self.getAllEndsWith())
+
         self.isSshConn = True
         self.process = self.sshProcess
         passwordPrompt = [f"Password for {userName}@[\w\-\.]+\:", f"{userName}@[\w\-\.]+\'s password\:"]
@@ -825,11 +826,11 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def genStdinEntropy (self):
+    def genStdinEntropy (self,endsWith=None):
         lenText = 1000
         alphabet = string.ascii_letters + string.digits + ' '
         randText = ''.join(random.choice(alphabet) for i in range(lenText))
-        self.runCommand(f"echo \"{randText}\"",timeout=5,shutdownOnError=False)
+        self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
 
 # END OF CLASS commonTarget
 
