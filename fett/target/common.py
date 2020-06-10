@@ -283,6 +283,7 @@ class commonTarget():
             self.runCommand (self.userPassword,endsWith="Retype new password:")
             self.runCommand (self.userPassword,expectedContents='password updated successfully')
             self.runCommand (f"usermod --shell /bin/bash {self.userName}")
+            self.runCommand(f"echo \"PS1=\'\${{debian_chroot:+(\$debian_chroot)}}\\u@\\h:\\w\$ \'\" >> /home/{self.userName}/.bashrc")
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"echo \"{self.userName}::::::{self.userName}::sh:{self.userPassword}\" | adduser -f -",expectedContents=f"Successfully added ({self.userName}) to the user database.",timeout=90)
         elif (isEqSetting('osImage','busybox')):
