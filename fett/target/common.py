@@ -396,7 +396,7 @@ class commonTarget():
 
         def returnFalse (message='',noRetries=False,exc=None,fileToClose=None):
             try:
-                self.keyboardInterrupt (shutdownOnError=False)
+                self.keyboardInterrupt ()
             except:
                 pass
             if (exc):
@@ -423,23 +423,28 @@ class commonTarget():
         except Exception as exc:
             return returnFalse (f"Failed to obtain the checksum of <{pathToFile}/{xFile}>.",noRetries=True,exc=exc)
 
-        if (isEqSetting('osImage','FreeBSD') and (self.isSshConn)): #send through SSH
-            scpCommand = f"scp {pathToFile}/{xFile} root@{self.ipTarget}:/root/"
+        if (getSetting('osImage') in ['debian', 'FreeBSD'] and (self.isSshConn)): #send through SSH
+            currentUser = 'root' if self.isCurrentUserRoot else self.userName
+            user_path = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
+            portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
+            scpCommand = f"scp{portPart} {pathToFile}/{xFile} {currentUser}@{self.ipTarget}:/{user_path}/"
+            passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
             try:
-                retExpect = scpProcess.expect(["Password for root@[\w-]+\:","root@[\w\-\.]+\'s password\:","\)\?"],timeout=timeout)
+                retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
                 if (retExpect == 2): #needs a yes
                     scpProcess.sendline("yes")
-                    retExpect = scpProcess.expect(f"Password for root@[\w-]+\:",timeout=timeout)
+                    retExpect = scpProcess.expect(passwordPrompt,timeout=timeout)
                 if (retExpect in [0,1]): #password prompt
-                    scpProcess.sendline(self.rootPassword)
+                    pwd = self.rootPassword if self.isCurrentUserRoot else self.userPassword
+                    scpProcess.sendline(pwd)
                 else:
                     return returnFalse (f"Failed to authenticate the scp process.")
             except Exception as exc:
