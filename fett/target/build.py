@@ -122,7 +122,7 @@ def prepareFreeRTOS():
         printAndLog (f"Cross-compiling...")
         envVars = []
         envVars.append(f"XLEN={getSetting('xlen')}")
-        envVars.append(f"USE_CLANG={int(isEqSetting('cross-compiler','Clang'))}")
+        envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
         if (isEqSetting('cross-compiler','Clang')):
             # check that the sysroot env variable exists:
             sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
