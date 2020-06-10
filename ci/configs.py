@@ -8,6 +8,8 @@
 """
 
 fettTargetAMI = 'ami-04c55ee64b3c6f758' #fett-target-060120
+ciAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
+ciAWSbucket = 'ssith-fett-target-ci-develop'
 
 commonDefaults = {
     ('mode',('test',)),

@@ -112,7 +112,7 @@ def generateConfigFile (repoDir,outDir,dictConfig,testMode):
 
     return xConfigFilePath
 
-def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint):
+def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, jobID, nodeIndex):
     #decide on the folder's name
     artifactsPath = f"{os.path.splitext(os.path.basename(configFile))[0]}-{artifactSuffix}"
     if (os.path.isdir(artifactsPath)): # already exists, add the date
@@ -137,10 +137,35 @@ def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint):
             exitFettCi (message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",exc=exc)
 
     if (entrypoint == 'AWS'):
-        print("(Warning)~  FETT-CI: AWS upload to S3 is not yet implemented.")
+        # import the required modules
+        try:
+            import importlib.util, tarfile
+        except Exception as exc:
+            exitFettCi (message=f"Failed to <import importlib.util, tarfile>.",exc=exc)
+
         # Tar the artifact folder
+        tarFileName = f"{artifactSuffix}.tar.gz"
+        try:
+            xFile = tarfile.open(name=tarFileName, mode="w:gz")
+            xFile.add(artifactsPath, arcname=None)
+            xFile.close()
+        except Exception as exc:
+            exitFettCi (message=f"tar: error creating {tarFileName}", exc=exc)
+        print(f"(Info)~  FETT-CI: Created <{tarFileName}> including all artifacts.")
+
+        # import the shared module: aws.py
+        moduleSpec = importlib.util.spec_from_file_location("aws", os.path.join(repoDir,'fett','base','utils','aws.py'))
+        awsModule = importlib.util.module_from_spec(moduleSpec)
+        moduleSpec.loader.exec_module(awsModule)
+
         # Upload the folder to S3
-        # Send an SQS message that we're done
+        awsModule.uploadToS3(ciAWSbucket, exitFettCi, tarFileName, 'fett-target/ci/artifacts/')
+        print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
+
+        # Send termination message to SQS
+        jobStatus = "success" if (exitCode == 0) else "failure"
+        awsModule.sendSQS(ciAWSqueue, exitFettCi, jobStatus, jobID, nodeIndex,reason='fett-target-ci-termination')
+        print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
 
 
 
