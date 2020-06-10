@@ -13,13 +13,11 @@ import json
 def clear_voter_table(target, dbfile):
     appLog = getSetting('appLog')
     sqlite   = "/usr/bin/sqlite"
-    target.switchUser()
     target.runCommand(f"{sqlite} {dbfile}", expectedContents=["SQLite version", ".help"],
                       erroneousContents=["Error:","near","error"], endsWith="sqlite>",tee=appLog)
     target.runCommand("DELETE FROM voter;",
                       endsWith="sqlite>", erroneousContents=["Error:", "near", "error"],tee=appLog)
     target.runCommand(".exit",tee=appLog)
-    target.switchUser()
 
 @decorate.debugWrap
 @decorate.timeWrap
