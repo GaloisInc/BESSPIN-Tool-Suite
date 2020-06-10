@@ -14,7 +14,7 @@ def sendSQS (urlQueue, exitFunc, status, jobId, nodeId, reason='fett'):
     try:
         sqs = boto3.client('sqs')
     except Exception as exc:
-        exitFunc(message=f"Failed to create the SQS object.",exc=exc)
+        exitFunc(message=f"Failed to create the SQS client.",exc=exc)
 
     msg = json.dumps({
             "job": {
@@ -37,3 +37,22 @@ def sendSQS (urlQueue, exitFunc, status, jobId, nodeId, reason='fett'):
         exitFunc(message=f"Failed to send the termination message to SQS.",exc=exc)
 
     return
+
+def uploadToS3 (s3Bucket, exitFunc, tarball):
+    try:
+        import boto3, os
+    except Exception as exc:
+        exitFunc(message=f"Failed to <import boto3, os>.",exc=exc)
+
+    try:
+        s3 = boto3.client('s3')
+    except Exception as exc:
+        exitFunc(message=f"Failed to create the S3 client.",exc=exc)
+
+    try:
+        s3.upload_file(tarball, s3Bucket, os.path.basename(tarball))
+    except Exception as exc:
+        exitFunc(message=f"Failed to upload the tarball to the bucket.",exc=exc)
+
+
+    

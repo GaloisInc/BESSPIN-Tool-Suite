@@ -190,6 +190,7 @@ def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, j
             xFile.close()
         except Exception as exc:
             exitFettCi (message=f"tar: error creating {tarFileName}", exc=exc)
+        print(f"(Info)~  FETT-CI: Created <{tarFileName}> including all artifacts.")
 
         # import the shared module: aws.py
         moduleSpec = importlib.util.spec_from_file_location("aws", os.path.join(repoDir,'fett','base','utils','aws.py'))
@@ -197,6 +198,8 @@ def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, j
         moduleSpec.loader.exec_module(awsModule)
 
         # Upload the folder to S3
+        awsModule.uploadToS3(ciAWSbucket, exitFettCi, tarFileName)
+        print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
         # Send termination message to SQS
         jobStatus = "success" if (exitCode == 0) else "failure"
