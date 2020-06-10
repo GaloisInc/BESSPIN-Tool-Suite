@@ -67,7 +67,7 @@ def deploymentTest(target):
         target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>",tee=appLog)
         target.runCommand(f"INSERT INTO {xTable}(title) VALUES('{title_val}');",
                                       endsWith="sqlite>",tee=appLog)
-        target.runCommand(f"SELECT * from {xTable};", expectedContents=[f"{title_val}"], expectExact=True,
+        target.runCommand(f"SELECT * from {xTable};", expectedContents=[f"{title_val}"],
                                       endsWith="sqlite>",tee=appLog)
         target.runCommand(".exit",tee=appLog)
         printAndLog(
@@ -81,11 +81,11 @@ def deploymentTest(target):
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                                       endsWith="sqlite>",tee=appLog)
         target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>",tee=appLog)
-        target.runCommand(f"SELECT * from {xTable};", expectExact='Pancakes', endsWith="sqlite>",tee=appLog)
+        target.runCommand(f"SELECT * from {xTable};", expectedContents='Pancakes', endsWith="sqlite>",tee=appLog)
 
         target.runCommand(f"UPDATE {xTable} SET title='{title_val}' WHERE title ='Pancakes';",
                                       endsWith="sqlite>",tee=appLog)
-        target.runCommand(f"SELECT * from {xTable};", expectExact=True, expectedContents=[f"{title_val}"],
+        target.runCommand(f"SELECT * from {xTable};", expectedContents=[f"{title_val}"],
                                       endsWith="sqlite>",tee=appLog)
         target.runCommand(".exit",tee=appLog)
         printAndLog(f"Test[update_record]: The first record has been successfully updated - value {title_val}.",
@@ -97,7 +97,7 @@ def deploymentTest(target):
         target.runCommand(f"{sqlite_bin} {xDb}", expectedContents=["SQLite version", ".help"],
                                       endsWith="sqlite>",tee=appLog)
         target.runCommand(".tables", expectedContents=[f"{xTable}"], endsWith="sqlite>",tee=appLog)
-        target.runCommand(f"SELECT * from {xTable};", expectExact=True, expectedContents=[f"{title_val}"],
+        target.runCommand(f"SELECT * from {xTable};", expectedContents=[f"{title_val}"],
                                       endsWith="sqlite>",tee=appLog)
         target.runCommand(f"DELETE FROM {xTable} WHERE title='{title_val}';",
                                       endsWith="sqlite>",tee=appLog)

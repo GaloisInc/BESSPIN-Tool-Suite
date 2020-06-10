@@ -299,8 +299,6 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             if (self.isCurrentUserRoot):
                 return ":~#"
-            elif (self.isSshConn):
-                return '[00m:[01;34m~[00m$'
             else:
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
@@ -319,7 +317,7 @@ class commonTarget():
     @decorate.debugWrap
     def getAllEndsWith (self):
         if (isEqSetting('osImage','debian')):
-            return [":~#", ":~\$", '[00m:[01;34m~[00m$']
+            return [":~#", ":~\$"]
         elif (isEqSetting('osImage','FreeBSD')):
             return ["fettPrompt>", ":~ \$"]
         elif (isEqSetting('osImage','busybox')):
@@ -331,7 +329,7 @@ class commonTarget():
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
                     erroneousContents=None,shutdownOnError=True,timeout=60,
-                    suppressErrors=False,expectExact=False,tee=None):
+                    suppressErrors=False,tee=None):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
         "   ARGUMENTS:
@@ -343,7 +341,6 @@ class commonTarget():
         "   shutdownOnError: Boolean. Whether to return or shutdown in case of error (timeout or contents related error)
         "   timeout: how long to wait for endsWith before timing out.
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
-        "   expectExact: Matching the endsWith should be by regex or exact match. As defined in pexpect.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
         "   RETURNS:
         "   --------
@@ -356,9 +353,7 @@ class commonTarget():
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
-        if (isEqSetting('osImage','debian') and self.isSshConn and (not self.isCurrentUserRoot)):
-            expectExact = True
-        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,expectExact=expectExact)
+        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
         logging.debug(f"textBack:\n{textBack}")
@@ -664,15 +659,12 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,expectExact=False,overwriteShutdown=False):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False):
         self.checkFallToTty ("expectFromTarget")
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
         try:
-            if (expectExact):
-                retExpect = self.process.expect_exact(endsWith,timeout=timeout)
-            else:
-                retExpect = self.process.expect(endsWith,timeout=timeout)
+            retExpect = self.process.expect(endsWith,timeout=timeout)
             if ( (endsWith == pexpect.EOF) or isinstance(endsWith,str)): #only one string or EOF
                 textBack += self.readFromTarget(endsWith=endsWith)
             else: #It is a list
@@ -757,7 +749,7 @@ class commonTarget():
 
         self.killSshConn()
         if (not self.onlySsh):
-            self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True) #Get some entropy going on
+            self.runCommand(" ",endsWith=self.getAllEndsWith()) #Get some entropy going on
             time.sleep(3)
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
         try:
