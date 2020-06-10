@@ -230,7 +230,7 @@ def deploymentTest(target):
     return
 
 @decorate.debugWrap
-def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,expectExact=False,endOfApp=False):
+def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,endOfApp=False):
     if isinstance(endsWith,str):
         endsWith = [endsWith]
     elif (not isinstance(endsWith,list)):
@@ -243,7 +243,7 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 
     retCommand = target.runCommand(command,endsWith=[">>>End of Fett<<<"] + endsWith,
         expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],shutdownOnError=shutdownOnError,
-        timeout=timeout,suppressErrors=suppressErrors,expectExact=expectExact,tee=getSetting('appLog'))
+        timeout=timeout,suppressErrors=suppressErrors,tee=getSetting('appLog'))
 
     if ((retCommand[3] == 0) and (not endOfApp)): #FETT exited prematurely
         target.shutdownAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
