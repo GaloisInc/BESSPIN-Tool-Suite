@@ -566,7 +566,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15):
         if (self.terminateTargetStarted):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
@@ -575,17 +575,17 @@ class commonTarget():
             self.keyboardInterruptTriggered = True
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
-        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=15)
+        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout)
         textBack = retCommand[1]
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=15)[1]
+            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout)[1]
         #See if the order is correct
         if (self.process):
             for i in range(2):
                 readAfter = self.readFromTarget(readAfter=True)
                 if (self.getDefaultEndWith() in readAfter):
                     try:
-                        self.process.expect(self.getDefaultEndWith(),timeout=10)
+                        self.process.expect(self.getDefaultEndWith(),timeout=timeout)
                     except Exception as exc:
                         warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
                     textBack += readAfter
