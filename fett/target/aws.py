@@ -154,6 +154,7 @@ class connectalTarget(commonTarget):
         self.ipHost = getSetting('awsIpHost')
         self.portTarget = getSetting('awsPortTarget')
         self.portHost = getSetting('awsPortHost')
+        self.rootPassword = 'rootme'
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -161,17 +162,21 @@ class connectalTarget(commonTarget):
         if (getSetting('osImage') != 'debian'):
             logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
-        awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'host')
-        printAndLog(f"awsConnectalHostPath={awsConnectalHostPath}")
+        awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'sim')
 
+        # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
+        warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
         connectalCommand = ' '.join([
-            './ssith_aws_fpga',
+            os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
             f"--elf={getSetting('osImageElf')}",
+            "--entry=0x80003000",
+            "--xdma=0",
+            "--dma=1",
+            "--tun=tap0",
         ])
 
-        logging.debug(f"boot: connectalCommand = {connectalCommand}")
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
         try:
@@ -179,7 +184,7 @@ class connectalTarget(commonTarget):
                                          cwd=awsConnectalHostPath)
             self.process = self.ttyProcess
             time.sleep(1)
-            self.expectFromTarget('Console:',"Booting",timeout=timeout,overwriteShutdown=True)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
         except Exception as exc:
             self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
@@ -193,17 +198,15 @@ class connectalTarget(commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet(self):
-        self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
-        self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
-        self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-        outCmd = self.runCommand ("ifup eth0")
-
-        self.pingTarget()
-        return outCmd
+        # TODO: does nothing - pass this to get an interactive session
+        warnAndLog(f"<connectalTarget>: activateEthernet is not implemented. Doing nothing...")
+        pass
 
     @decorate.debugWrap
-    def targetTearDown(self):
-        pass
+    def getDefaultEndWith(self):
+        """TODO: required for now"""
+        return 'CONSOLE: #'
+
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
 
@@ -374,11 +377,14 @@ def copyAWSSources():
     awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
 
     # populate workDir with available subdirectories
-    subdirectories = [os.path.join(awsSourcePath, o) for o in os.listdir(awsSourcePath) if os.path.isdir(os.path.join(awsSourcePath,o))]
-    if len(subdirectories) > 0:
-        mkdir(awsWorkPath,addToSettings=f'{pvAWS}Path')
-        for awsDirPath in subdirectories:
-            copyDir(os.path.join(awsSourcePath, awsDirPath), awsWorkPath)
+    try:
+        subdirectories = [os.path.join(awsSourcePath, o) for o in os.listdir(awsSourcePath) if os.path.isdir(os.path.join(awsSourcePath,o))]
+        if len(subdirectories) > 0:
+            mkdir(awsWorkPath,addToSettings=f'{pvAWS}Path')
+            for awsDirPath in subdirectories:
+                copyDir(os.path.join(awsSourcePath, awsDirPath), awsWorkPath)
+    except Exception as exc:
+        logAndExit(f"<aws.copyAWSSources>: error populating subdirectories of AWS PV {pvAWS}", exc=exc, exitCode=EXIT.Files_and_paths)
 
     # aws resources need an image file:
     imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
@@ -451,3 +457,11 @@ def prepareConnectal():
     dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
     cp (dtbsrc, dtbFile)
     logging.info(f"copy {dtbsrc} to {dtbFile}")
+
+    # TODO: use different .img?
+    warnAndLog(f"<aws.prepareConnectal>: adding .img from Binaries. This may be changed in the future.")
+    pvAWS = "connectal"
+    imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
+    imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                 'osImages', pvAWS, "debian.img")
+    cp(imageSourcePath, imageFile)
