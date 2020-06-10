@@ -71,6 +71,10 @@ def prepareFreeRTOS():
             warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <Clang> is not supported. Linking using <LLD> instead.")
             setSetting('linker','LLD')
 
+        # C++ SD Arduino library causing issues with Clang
+        if (isEqSetting('cross-compiler','Clang') and (isEqSetting('target','fpga'))):
+            logAndExit(f"Building FreeRTOS using Clang/LLD is not yet implemented for target <fpga>.",exitCode=EXIT.Implementation)
+
         #copy the C files, .mk files, and any directory
         copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
 

@@ -62,22 +62,17 @@ freertosDefaults = commonDefaults.union({
 freertosAllTargets_onprem = freertosDefaults.union({
     ('processor',('chisel_p1',)),
     ('target',('fpga',)),
-    ('cross-compiler',('GCC','Clang',)),
-    ('linker',('GCC',)) # If cross-compiler is Clang, linker will be over-written to LLD
+    ('cross-compiler',('GCC',)),
+    ('linker',('GCC',)) 
 })
 
-freertosDevPR_onprem = freertosDefaults.union({
-    ('processor',('chisel_p1',)),
-    ('target',('fpga',)),
-    ('cross-compiler',('GCC',)),
-    ('linker',('GCC',))
-})
+freertosDevPR_onprem = freertosAllTargets_onprem
 
 freertosDevPR_aws = freertosDefaults.union({
     ('processor',('chisel_p1',)),
     ('target',('aws',)),
-    ('cross-compiler',('GCC',)),
-    ('linker',('GCC',))
+    ('cross-compiler',('GCC','Clang',)),
+    ('linker',('GCC',)) # If cross-compiler is Clang, linker will be over-written to LLD
 })
 
 appSets = {
