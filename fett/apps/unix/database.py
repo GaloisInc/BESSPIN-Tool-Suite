@@ -142,4 +142,5 @@ def deploymentTest(target):
     drop_table()
     drop_database()
     printAndLog("Sqlite tests OK!",tee=appLog)
+    target.switchUser() #back to root
     return
