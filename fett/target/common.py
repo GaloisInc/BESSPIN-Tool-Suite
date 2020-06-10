@@ -296,24 +296,43 @@ class commonTarget():
         self.userCreated = True
 
     @decorate.debugWrap
-    def getDefaultEndWith (self):
+    def getDefaultEndWith (self, notSwitched=True):
         if (isEqSetting('osImage','debian')):
-            if (self.isCurrentUserRoot):
+            if (self.isCurrentUserRoot and notSwitched):
                 return ":~#"
             else:
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
-            if (self.isCurrentUserRoot):
+            if (self.isCurrentUserRoot and notSwitched):
                 return "fettPrompt>"
             else:
                 return ":~ \$"
         elif (isEqSetting('osImage','busybox')):
-            if (self.isCurrentUserRoot):
+            if (self.isCurrentUserRoot and notSwitched):
                 return "~ #"
             else:
                 return "\$"
         else:
             self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
+
+    @decorate.debugWrap
+    def switchDefaultEndWith(self):
+        if (self.isCurrentUserRoot):
+            if(self.userName != 'root'):
+                self.getDefaultEndWith(notSwitched=False)
+                self.isCurrentUserRoot = not self.isCurrentUserRoot
+            else:
+                self.getDefaultEndWith()
+        else:
+            if (self.userName == 'root'):
+                self.isCurrentUserRoot = not self.isCurrentUserRoot
+                self.getDefaultEndWith()
+            else:
+                self.getDefaultEndWith()
+        return;
+
+
+
 
     @decorate.debugWrap
     def getAllEndsWith (self):
@@ -777,9 +796,7 @@ class commonTarget():
             self.runCommand("yes", endsWith=passwordPrompt, timeout=timeout, shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
             return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
-        if (not self.userName == 'root'):
-            self.isCurrentUserRoot = not self.isCurrentUserRoot
-        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
+        self.runCommand(sshPassword,endsWith=self.switchDefaultEndWith(),timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
         return True
 
