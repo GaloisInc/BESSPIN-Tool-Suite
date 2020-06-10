@@ -64,12 +64,16 @@ def prepareFreeRTOS():
             logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
 
         #cross-compiling sanity checks
-        if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
-            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
+        if (isEqSetting('cross-compiler','GCC') and (not isEqSetting('linker','GCC'))):
+            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <GCC> is not supported. Linking using <GCC> instead.")
             setSetting('linker','GCC')
+        if (isEqSetting('cross-compiler','Clang') and (not isEqSetting('linker','LLD'))):
+            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <Clang> is not supported. Linking using <LLD> instead.")
+            setSetting('linker','LLD')
 
-        if (isEqSetting('cross-compiler','Clang')):
-            logAndExit(f"<Clang> is not yet supported for FreeRTOS.",exitCode=EXIT.Implementation)
+        # C++ SD Arduino library causing issues with Clang
+        if (isEqSetting('cross-compiler','Clang') and (isEqSetting('target','fpga'))):
+            logAndExit(f"Building FreeRTOS using Clang/LLD is not yet implemented for target <fpga>.",exitCode=EXIT.Implementation)
 
         #copy the C files, .mk files, and any directory
         copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
@@ -122,7 +126,13 @@ def prepareFreeRTOS():
         printAndLog (f"Cross-compiling...")
         envVars = []
         envVars.append(f"XLEN={getSetting('xlen')}")
-        envVars.append(f"USE_CLANG={int(isEqSetting('cross-compiler','Clang'))}")
+        envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
+        if (isEqSetting('cross-compiler','Clang')):
+            # check that the sysroot env variable exists:
+            sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
+            if (sysRootEnv not in os.environ):
+                logAndExit (f"<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
+            envVars.append(f"SYSROOT_DIR={os.environ[sysRootEnv]}")
         envVars.append(f"PROG=main_fett")
         envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
         envVars.append(f"BSP={getSetting('target')}")
