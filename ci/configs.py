@@ -58,14 +58,14 @@ freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',)),
     ('buildApps',('yes',)),
-    ('cross-compiler',('GCC',)),
-    ('linker',('GCC',))
+    ('appTimeout',(120,))
 })
 
 freertosAllTargets_onprem = freertosDefaults.union({
     ('processor',('chisel_p1',)),
     ('target',('fpga',)),
-    ('appTimeout',(90,))
+    ('cross-compiler',('GCC',)),
+    ('linker',('GCC',)) 
 })
 
 freertosDevPR_onprem = freertosAllTargets_onprem
@@ -73,7 +73,8 @@ freertosDevPR_onprem = freertosAllTargets_onprem
 freertosDevPR_aws = freertosDefaults.union({
     ('processor',('chisel_p1',)),
     ('target',('aws',)),
-    ('appTimeout',(120,))
+    ('cross-compiler',('GCC','Clang',)),
+    ('linker',('GCC',)) # If cross-compiler is Clang, linker will be over-written to LLD
 })
 
 appSets = {

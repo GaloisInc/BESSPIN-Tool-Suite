@@ -3,17 +3,19 @@ Functions used for Misc implementation on FreeRTOS
 */
 
 #include "fettFreeRTOS.h"
-#include <stdatomic.h>
+#include <stdbool.h>
 
 MessageBufferHandle_t globalMsgBuffer = NULL;
 
 // Termination control.
-static atomic_bool doEndFett = false;
-static atomic_bool stopRequestedFlag = false;
+bool doEndFett = false;
+bool stopRequestedFlag = false;
 
 void setStopRequested(void)
 {
+    taskENTER_CRITICAL();
     stopRequestedFlag = true;
+    taskEXIT_CRITICAL();
 }
 
 bool StopRequested(void)
@@ -35,12 +37,14 @@ void fettPrintf (const char * textToPrint, ...) {
 // turn off printing. and print >>>End of Fett<<<
 // and signal other tasks to stop.
 void exitFett (uint8_t exitCode) {
+    taskENTER_CRITICAL();
     if (!doEndFett) {
         doEndFett = true;
         stopRequestedFlag = true;
         printf ("EXIT: exiting FETT with code <%x>\r\n",exitCode);
         printf ("\r\n>>>End of Fett<<<\r\n");
     }
+    taskEXIT_CRITICAL();
     return;
 }
 
