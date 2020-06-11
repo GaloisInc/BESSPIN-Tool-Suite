@@ -92,7 +92,7 @@ def getSetting (setting, default=None):
     try:
         return _settings[setting]
     except Exception as exc:
-        if default:
+        if default is not None:
             return default
         logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
