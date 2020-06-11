@@ -88,12 +88,6 @@
 
     "applications" : [
         {
-            "name" : "appTimeout",
-            "type" : "int",
-            "min" : 10,
-            "max" : 1800
-        },
-        {
             "name" : "buildApps",
             "type" : "boolean"
         }

@@ -80,8 +80,9 @@ def prepareFreeRTOS():
 
         #Include the relevant user configuration parameters
         #This is a list of tuples: (settingName,macroName)
-        listConfigParams = [('appTimeout','APP_TIMEOUT'),('HTTPPortTarget','HTTP_PORT'),
-                            ('TFTPPortTarget','TFTP_PORT'),('debugMode','FETT_DEBUG'),
+        listConfigParams = [('HTTPPortTarget','HTTP_PORT'),
+                            ('TFTPPortTarget','TFTP_PORT'),
+                            ('debugMode','FETT_DEBUG'),
                             ('OTAMaxSignedPayloadSize','OTA_MAX_SIGNED_PAYLOAD_SIZE')]
 
         configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
@@ -93,8 +94,6 @@ def prepareFreeRTOS():
             configHfile.write(f"#define {xMacro} {intVal}\n")
         #Write the ota filename too (not list as it is unique)
         configHfile.write(f"#define OTA_FILENAME \"{getSettingDict('freertosAssets',['otaHtml'])}\"\n")
-        #Translate the mode to one char: T or D
-        configHfile.write(f"#define FETT_MODE \'{getSetting('mode')[0].upper()}\'\n")
         configHfile.close()
 
         #Include the network configuration parameters
