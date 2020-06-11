@@ -46,10 +46,9 @@ def startFett ():
     prepareEnv()
 
     # launch fett
-    launchFett()
+    xTarget = launchFett()
 
-    # tear down
-    endFett () 
+    return xTarget
 
 
 """ This is the prepare function before launch (binaries, network,) """ 
@@ -102,13 +101,13 @@ def launchFett ():
         xTarget.createUser()
     if (isEnabled('runApp')):
         xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
-    xTarget.shutdown()
-
+    return xTarget
+    
 
 """ This is the teardown function """
 @decorate.debugWrap
-def endFett ():
-    pass
+def endFett (xTarget):
+    xTarget.shutdown()
 
 """ This decides the classes hierarchy """
 @decorate.debugWrap

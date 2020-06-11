@@ -118,8 +118,8 @@ def main (xArgs):
     atexit.register(exitPeacefully,getSetting('trash'))
     
     #launch the tool
-    startFett()
-    endFett()
+    xTarget = startFett()
+    endFett(xTarget)
     exitFett(EXIT.Success)
 
 if __name__ == '__main__':
