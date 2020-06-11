@@ -14,7 +14,7 @@ commonDefaults = {
     ('binarySource',('GFE',)),
     ('openConsole',('No',)),
     ('useCustomOsImage',('No',)),
-    ('useCustomBitfile',('No',))
+    ('useCustomProcessor',('No',))
 }
 
 unixDefaults = commonDefaults.union({
