@@ -53,7 +53,7 @@
         {
             "name" : "pathToCustomProcessorSource",
             "type" : "dirPath",
-            "condition" : "useCustomBitfile"
+            "condition" : "useCustomProcessor"
         },
         {
             "name" : "binarySource",
