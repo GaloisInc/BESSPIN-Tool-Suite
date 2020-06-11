@@ -817,7 +817,7 @@ class commonTarget():
 
     @decorate.debugWrap
     def genStdinEntropy (self,endsWith=None):
-        lenText = 240 if (isEqSetting('target','aws')) else 1000 # A UART buffer issue, should be resolved soon --> avoid long strings
+        lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
         alphabet = string.ascii_letters + string.digits + ' '
         randText = ''.join(random.choice(alphabet) for i in range(lenText))
         self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
