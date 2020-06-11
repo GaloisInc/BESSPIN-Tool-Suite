@@ -166,15 +166,18 @@ class connectalTarget(commonTarget):
 
         # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
         warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
+        binarySourceSettings = getSettingDict('fettMatrix',[getSetting('binarySource'),getSetting('processor')])
+        useXDMA = binarySourceSettings.get('useXDMA', 1)
+        tapName = getSetting('awsTapAdaptorName')
         connectalCommand = ' '.join([
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
             f"--elf={getSetting('osImageElf')}",
             "--entry=0x80003000",
-            "--xdma=0",
+            f"--xdma={useXDMA}",
             "--dma=1",
-            "--tun=tap0",
+            f"--tun={tapName}",
         ])
 
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
@@ -340,7 +343,7 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    binarySourceSettings = getSettingDict('fettMatrix',[getSetting('binarySource')])
+    binarySourceSettings = getSettingDict('fettMatrix',[getSetting('binarySource'),getSetting('processor')])
     fpgaLoadExtraSettings = binarySourceSettings.get('fpgaLoadExtraSettings', [])
     shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 

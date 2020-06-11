@@ -181,10 +181,11 @@
                     }
                 },
                 "MIT" : {
-		    "fpgaLoadExtraSettings" : ["-a", "125"],
                     "bluespec_p2" : {
                         "busybox" : "connectal",
-                        "debian" : "connectal"
+                        "debian" : "connectal",
+			"fpgaLoadExtraSettings" : ["-a", "125"],
+			"useXDMA" : 0
                     }
                 },
                 "SRI-Cambridge" : {
