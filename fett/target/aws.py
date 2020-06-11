@@ -324,8 +324,12 @@ def prepareFiresim():
         return contents[keyName]
 
     # copy over the firesim kernel modules, simulation interfaces
-    firesimSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 
+    if getSetting('useCustomProcessor'):
+        firesimSourcePath = getSetting('pathToCustomProcessorSource')
+    else:
+        firesimSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 
                                     'bitfiles', 'firesim', getSetting('processor'))
+
     firesimModPath = os.path.join(firesimSourcePath, 'kmods')
     firesimSimPath = os.path.join(firesimSourcePath, 'sim')
 
