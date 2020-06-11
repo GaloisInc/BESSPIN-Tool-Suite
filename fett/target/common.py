@@ -326,18 +326,13 @@ class commonTarget():
 
         printAndLog(f"Changing user {self.userName}'s password")
         if isEqSetting('osImage', 'debian'):
-            # Use full path to usermod because `/usr/sbin` is not in PATH
-            # TODO: Is that true ^^
             command = f"usermod -p \'{self.userPasswordHash}\' {self.userName}"
             res = self.runCommand(command)
         elif isEqSetting('osImage', 'FreeBSD'):
-            # TODO: FreeBSD support
             command = (f"echo \'{self.userPasswordHash}\' | "
                        f"pw usermod {self.userName} -H 0")
-            printAndLog(command)
             self.runCommand(command, erroneousContents="pw:")
         else:
-            # TODO: busybox support?
             self.shutdownAndExit("<createUser> is not implemented for "
                                  f"<{getSetting('osImage')}> on "
                                  f"<{getSetting('target')}>.",
