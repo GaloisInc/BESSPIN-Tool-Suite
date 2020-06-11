@@ -166,7 +166,7 @@ class connectalTarget(commonTarget):
 
         # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
         warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
-        extraArgs = getSetting('ssithAwsFpgaExtraArgs', [])
+        extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
         tapName = getSetting('awsTapAdaptorName')
         connectalCommand = ' '.join([
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
@@ -340,7 +340,7 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    fpgaLoadExtraSettings = getSetting('fpgaLoadExtraSettings', [])
+    fpgaLoadExtraSettings = getSetting('fpgaLoadExtraSettings', default=[])
     shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 
     # wait until the FPGA has been flashed
