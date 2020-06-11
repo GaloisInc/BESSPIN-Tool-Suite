@@ -49,11 +49,14 @@ class commonTarget():
         self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
 
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
-        # TODO: These passwords need to be different per run
         self.rootPassword = 'ssithdefault' if (isEqSetting('osImage','FreeBSD')) else 'riscv'
         self.rootGroup = 'wheel' if (isEqSetting('osImage','FreeBSD')) else 'root'
-        self.userPassword = getSetting('userPassword')
-        self.userName = getSetting('userName')
+        self.userPassword = "fett_2020"
+        self.useCustomCredentials = isEnabled('useCustomCredentials')
+        self.userName = (getSetting('userName') if
+                         self.useCustomCredentials else
+                         "researcher")
+        self.userPasswordHash = getSetting("userPasswordHash")
         self.userCreated = False
 
         self.AttemptShutdownFailed = False
@@ -247,8 +250,22 @@ class commonTarget():
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
         if (self.userCreated):
-            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
-            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+            if self.useCustomCredentials:
+                # Become root and change user password
+                if not self.isCurrentUserRoot:
+                    self.switchUser()
+                self.changeUserPassword()
+
+                # Log out to prompt user to log in using their credentials
+                # We can't log in for them because we only have the hash of
+                # their password
+                self.runCommand("exit", endsWith="login:")
+                printAndLog("Note that there is another user.  User name: "
+                            f"\'{self.userName}\'")
+                printAndLog("Please log in using the credentials you supplied")
+            else:
+                printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+                printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
         try:
             self.process.interact(escape_character='\x05')
             #escaping interact closes the logFile, which will make any read/write fail inside pexpect logging
@@ -297,6 +314,38 @@ class commonTarget():
         else:
             self.shutdownAndExit(f"<createUser> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",overwriteConsole=True,exitCode=EXIT.Implementation)
         self.userCreated = True
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def changeUserPassword(self):
+        """
+        Change the user's password hash to userPasswordHash from the
+        configuration file.
+
+        Precondition:  useCustomCredentials must be True in the configuration
+        file
+        Precondition:  Must be root
+        """
+        assert self.useCustomCredentials
+        assert self.isCurrentUserRoot
+
+        printAndLog(f"Changing user {self.userName}'s password")
+        if isEqSetting('osImage', 'debian'):
+            # Use full path to usermod because `/usr/sbin` is not in PATH
+            # TODO: Is that true ^^
+            command = f"usermod -p \'{self.userPasswordHash}\' {self.userName}"
+            res = self.runCommand(command)
+        elif isEqSetting('osImage', 'FreeBSD'):
+            # TODO: FreeBSD support
+            pass
+        else:
+            # TODO: busybox support?
+            self.shutdownAndExit("<createUser> is not implemented for "
+                                 f"<{getSetting('osImage')}> on "
+                                 f"<{getSetting('target')}>.",
+                                 overwriteConsole=True,
+                                 exitCode=EXIT.Implementation)
+
 
     @decorate.debugWrap
     def getDefaultEndWith (self):

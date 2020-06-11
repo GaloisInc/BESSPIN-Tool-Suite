@@ -64,13 +64,7 @@ def loadConfiguration(configFile):
                    "requrements.  Must be 1-14 characters long and may "
                    "consist only of alphanumeric ASCII characters.")
 
-    # Check password is legal
-    userPassword = getSetting("userPassword")
-    if re.fullmatch("[a-zA-Z0-9!@%^&*(-_=+)]{8,14}", userPassword) is None:
-        logAndExit(f"userPassword \"{userPassword}\" does not satisfy the "
-                   "password requirements.  Must be 8-14 characters long and "
-                   "may consist only of alphanumeric ASCII characters and the "
-                   "following special characters: !@%^&*(-_=+)")
+    # TODO: Check password hash is legal
 
     printAndLog('Configuration loaded successfully.')
     dumpSettings()
