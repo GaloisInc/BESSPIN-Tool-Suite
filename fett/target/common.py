@@ -156,7 +156,7 @@ class commonTarget():
                 timeout = 120
             elif (isEqSetting('target', 'aws')):
                 if isEqSetting('pvAWS', 'firesim'):
-                    timeout = 420
+                    timeout = 240
                 elif isEqSetting('pvAWS', 'connectal'):
                     timeout = 90
                 else:
