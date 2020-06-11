@@ -701,7 +701,7 @@ class commonTarget():
                 isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
                 textBack = textBack + textBack_2
         elif (isEqSetting('osImage','FreeRTOS')):
-            isSuccess, textBack, isTimeout, dumpIdx = [True, '', False, 0] #nothing to terminate
+            isSuccess, textBack, isTimeout, dumpIdx = [freertos.terminateAppStack(self), '', False, 0] #send STOP to OTA
         elif (not isEqSetting('osImage','FreeRTOS')):
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
         try:

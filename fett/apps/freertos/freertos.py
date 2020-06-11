@@ -120,7 +120,7 @@ def deploymentTest(target):
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget'))
-
+    setSetting('clientTftp',clientTftp)
 
     printAndLog ("Starting HTTP Smoketests.",doPrint=True,tee=getSetting('appLog'))
 
@@ -186,21 +186,6 @@ def deploymentTest(target):
     # OtaFile should NOT have been changed, so check it's still as was
     HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 8, 'Verify FS not changed by OTA TC 8')
 
-
-    ###################################
-    # STOP the FreeRTOS application
-    # uploading the signed stop.htm file
-    ###################################
-    fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
-    filePath = os.path.join(getSetting('assetsDir'),fileName)
-    printAndLog ("Sending STOP message via OTA.",doPrint=True,tee=getSetting('appLog'))
-    try:
-        clientTftp.upload(fileName, filePath, timeout=10)
-    except Exception as exc:
-        rtosShutdownAndExit(target, f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
-    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
-
-
     # downloading a file - NOT IMPLEMENTED ON TARGET YET
     # fileName = "fileToReceive.html"
     # fileToReceive = os.path.join(getSetting('workDir'),fileName)
@@ -209,10 +194,28 @@ def deploymentTest(target):
     # except Exception as exc:
     #    rtosShutdownAndExit(target, f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
 
+    return
+
+@decorate.debugWrap
+@decorate.timeWrap
+def terminateAppStack (target):
+    ###################################
+    # STOP the FreeRTOS application
+    # uploading the signed stop.htm file
+    ###################################
+    fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
+    filePath = os.path.join(getSetting('assetsDir'),fileName)
+    printAndLog ("Sending STOP message via OTA.",doPrint=True,tee=getSetting('appLog'))
+    try:
+        getSetting('clientTftp').upload(fileName, filePath, timeout=10)
+    except Exception as exc:
+        rtosShutdownAndExit(target, f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
+    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
 
     # Run to completion
     rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=20)
-    return
+
+    return True
 
 @decorate.debugWrap
 def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,endOfApp=False):
