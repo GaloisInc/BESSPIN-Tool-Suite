@@ -57,8 +57,8 @@ def startFett ():
 def prepareEnv ():
     printAndLog (f"Preparing the environment...")
     # cannot buildApps on aws
-    if (isEnabled('buildApps') and isEqSetting('target','aws') and isEqSetting('mode','deploy')):
-        warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <deploy> mode. This will be switched off.")
+    if (isEnabled('buildApps') and isEqSetting('target','aws') and isEqSetting('mode','production')):
+        warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <production> mode. This will be switched off.")
         setSetting('buildApps',False)
 
     # config sanity checks for building apps

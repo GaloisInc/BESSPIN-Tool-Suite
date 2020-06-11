@@ -549,7 +549,7 @@ class commonTarget():
             appLog.flush()
 
         # Test and Deploy    
-        if (isEqSetting('mode','deploy')):
+        if (isEqSetting('mode','production')):
             for appModule in appModules:
                 appModule.deploymentTest(self)
                 appLog.flush()

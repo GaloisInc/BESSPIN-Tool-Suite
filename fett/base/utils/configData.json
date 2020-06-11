@@ -11,7 +11,7 @@
         {
             "name" : "mode",
             "type" : "string",
-            "choices" : [ "test", "deploy" ]
+            "choices" : [ "test", "production" ]
         },
         {
             "name" : "target",
