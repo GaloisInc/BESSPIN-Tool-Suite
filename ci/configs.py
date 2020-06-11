@@ -80,6 +80,14 @@ gfe_freertosDevPR_aws = freertosDefaults.union({
     ('linker',('GCC',)) # If cross-compiler is Clang, linker will be over-written to LLD
 })
 
+lmco_freertosDevPR_aws = freertosDefaults.union({
+    ('binarySource',('LMCO',)),
+    ('processor',('chisel_p1',)),
+    ('target',('aws',)),
+    ('cross-compiler',('GCC',)),
+    ('linker',('GCC',)) # If cross-compiler is Clang, linker will be over-written to LLD
+})
+
 appSets = {
     'runPeriodic' : {
         'freertos' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem },
@@ -88,7 +96,9 @@ appSets = {
     'runDevPR' : {
         'freertos' : { 'gfe_freertos' : gfe_freertosDevPR_onprem },
         'unix' : { 'gfe_unix' : gfe_unixDevPR_onprem },
-        'aws' : { 'gfe_unix' : gfe_unixDevPR_aws, 'gfe_freertos' : gfe_freertosDevPR_aws }
+        'aws' : { 'gfe_unix' : gfe_unixDevPR_aws, 
+                'gfe_freertos' : gfe_freertosDevPR_aws,
+                'lmco_freertos' : lmco_freertosDevPR_aws}
     }
 }
 appSets['runRelease'] = appSets['runPeriodic']
