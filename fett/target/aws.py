@@ -166,8 +166,7 @@ class connectalTarget(commonTarget):
 
         # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
         warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
-        binarySourceSettings = getSettingDict('fettMatrix',[getSetting('binarySource'),getSetting('processor')])
-        useXDMA = binarySourceSettings.get('useXDMA', 1)
+        useXDMA = getSetting('useXDMA', 1)
         tapName = getSetting('awsTapAdaptorName')
         connectalCommand = ' '.join([
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
@@ -343,8 +342,8 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    binarySourceSettings = getSettingDict('fettMatrix',[getSetting('binarySource'),getSetting('processor')])
-    fpgaLoadExtraSettings = binarySourceSettings.get('fpgaLoadExtraSettings', [])
+    agfiId = getSetting("agfiId")
+    fpgaLoadExtraSettings = getSetting('fpgaLoadExtraSettings', [])
     shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 
     # wait until the FPGA has been flashed
@@ -363,12 +362,16 @@ def flashFpgas(agfi):
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
-def getAgfiJson(jsonFile):
+def getAgfiId(jsonFile):
     keyName = 'agfi_id'
     contents = safeLoadJsonFile(jsonFile)
     if keyName not in contents:
         logAndExit(f"<aws.getAgfiJson>: unable to find key <agfi_id> in {jsonFile}")
     return contents[keyName]
+
+def getAgfiSettings(jsonFile):
+    contents = safeLoadJsonFile(jsonFile)
+    return contents
 
 def copyAWSSources():
     pvAWS = getSetting('pvAWS')
@@ -402,8 +405,12 @@ def copyAWSSources():
 
     # extract the agfi and put it in setting
     agfiJsonPath = os.path.join(awsSourcePath, 'agfi_id.json')
-    agfiId = getAgfiJson(agfiJsonPath)
-    setSetting("agfiId", agfiId)
+    agfiSettings = getAgfiSettings(agfiJsonPath)
+    setSetting('agfiId', agfiSettings['agfi_id'])
+    for k in agfiSettings:
+        if k == "_afgi-id.json":
+            continue
+        setSetting(k, agfiSettings[k])
 
 @decorate.debugWrap
 def removeKernelModules():
