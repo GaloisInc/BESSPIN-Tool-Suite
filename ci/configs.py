@@ -13,7 +13,6 @@ ciAWSbucket = 'ssith-fett-target-ci-develop'
 
 commonDefaults = {
     ('mode',('test',)),
-    ('binarySource',('GFE',)),
     ('openConsole',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',))
@@ -24,7 +23,8 @@ unixDefaults = commonDefaults.union({
     ('appTimeout',(30,))
 })
 
-unixOnPremDefaults = unixDefaults.union({
+gfe_unixOnPremDefaults = unixDefaults.union({
+    ('binarySource',('GFE',)),
     ('elfLoader',('netboot',)),
     ('netbootPortRangeStart',(5000,)),
     ('netbootPortRangeEnd',(6000,)),
@@ -32,23 +32,24 @@ unixOnPremDefaults = unixDefaults.union({
     ('qemuNtkPortRangeEnd',(6000,))
 })
 
-unixAwsDefaults = unixDefaults.union({
+gfe_unixAwsDefaults = unixDefaults.union({
+    ('binarySource',('GFE',)),
     ('elfLoader',('JTAG',))
 })
 
-unixAllTargets_onprem = unixOnPremDefaults.union({
+gfe_unixAllTargets_onprem = gfe_unixOnPremDefaults.union({
     ('processor',('chisel_p2', 'bluespec_p2',)),
     ('target',('qemu', 'fpga',)),
     ('osImage',('FreeBSD', 'debian',))
 })
 
-unixDevPR_onprem = unixOnPremDefaults.union({
+gfe_unixDevPR_onprem = gfe_unixOnPremDefaults.union({
     ('processor',('chisel_p2',)),
     ('target',('fpga',)),
     ('osImage',('FreeBSD', 'debian',))
 })
 
-unixDevPR_aws = unixAwsDefaults.union({
+gfe_unixDevPR_aws = gfe_unixAwsDefaults.union({
     ('processor',('chisel_p2',)),
     ('target',('aws',)),
     ('osImage',('debian',))
@@ -61,16 +62,18 @@ freertosDefaults = commonDefaults.union({
     ('appTimeout',(120,))
 })
 
-freertosAllTargets_onprem = freertosDefaults.union({
+gfe_freertosAllTargets_onprem = freertosDefaults.union({
+    ('binarySource',('GFE',)),
     ('processor',('chisel_p1',)),
     ('target',('fpga',)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',)) 
 })
 
-freertosDevPR_onprem = freertosAllTargets_onprem
+gfe_freertosDevPR_onprem = gfe_freertosAllTargets_onprem
 
-freertosDevPR_aws = freertosDefaults.union({
+gfe_freertosDevPR_aws = freertosDefaults.union({
+    ('binarySource',('GFE',)),
     ('processor',('chisel_p1',)),
     ('target',('aws',)),
     ('cross-compiler',('GCC','Clang',)),
@@ -79,13 +82,13 @@ freertosDevPR_aws = freertosDefaults.union({
 
 appSets = {
     'runPeriodic' : {
-        'freertos' : { 'freertos' : freertosAllTargets_onprem },
-        'unix' : { 'unix' : unixAllTargets_onprem }
+        'freertos' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem },
+        'unix' : { 'gfe_unix' : gfe_unixAllTargets_onprem }
     },
     'runDevPR' : {
-        'freertos' : { 'freertos' : freertosDevPR_onprem },
-        'unix' : { 'unix' : unixDevPR_onprem },
-        'aws' : { 'unix' : unixDevPR_aws, 'freertos' : freertosDevPR_aws }
+        'freertos' : { 'gfe_freertos' : gfe_freertosDevPR_onprem },
+        'unix' : { 'gfe_unix' : gfe_unixDevPR_onprem },
+        'aws' : { 'gfe_unix' : gfe_unixDevPR_aws, 'gfe_freertos' : gfe_freertosDevPR_aws }
     }
 }
 appSets['runRelease'] = appSets['runPeriodic']
