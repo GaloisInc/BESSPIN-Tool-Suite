@@ -526,7 +526,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def runApp (self,sendFiles=False,timeout=30): #executes the app
-        printAndLog ("Running app...")
+        printAndLog ("runApp: Starting the application stack...")
         if (sendFiles):
             #send any needed files to target
             self.sendTar(timeout=timeout)
@@ -548,24 +548,13 @@ class commonTarget():
             appModule.install(self)
             appLog.flush()
 
-        # Test and Deploy    
-        if (isEqSetting('mode','production')):
-            for appModule in appModules:
-                appModule.deploymentTest(self)
-                appLog.flush()
-            for appModule in appModules: 
-                #TODO: This should be threads and only collect the message once. Will be done in #247.
-                appModule.deploy(self)
-                appLog.flush()
-        elif (isEqSetting('mode','test')):
-            for appModule in appModules:
-                appModule.extensiveTest(self)
-                appLog.flush()
-        else:
-            self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('mode')}> mode.",exitCode=EXIT.Implementation)
+        # Test    
+        for appModule in appModules:
+            appModule.deploymentTest(self)
+            appLog.flush()
 
         appLog.close()
-        logging.info (f"runApp: app executed successfully!\n")
+        logging.info (f"runApp: The application stack is deployed successfully!\n")
         return
 
     @decorate.debugWrap

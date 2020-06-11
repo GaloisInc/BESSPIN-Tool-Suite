@@ -16,17 +16,6 @@ WEB_NOT_FOUND = 404
 def install (target):
     return
 
-@decorate.debugWrap
-@decorate.timeWrap
-def deploy(target):
-    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
-
-    #Here we should send a message to the portal
-
-    #Here we should wait for a termination signal from the portal
-
-    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
-    return
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -62,10 +51,6 @@ def curlTest(target, url, extra=[], http2=False):
         clval = 0
     return (clval, codeval)
 
-@decorate.debugWrap
-@decorate.timeWrap
-def extensiveTest(target):
-    deploymentTest(target)
 
 @decorate.debugWrap
 @decorate.timeWrap

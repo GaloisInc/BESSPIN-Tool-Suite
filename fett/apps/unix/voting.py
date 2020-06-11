@@ -71,17 +71,6 @@ def install (target):
     target.runCommand(f"/usr/local/sbin/kfcgi -s /var/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- /var/www/cgi-bin/bvrs /var/www/data/bvrs.db",tee=appLog)
     return
 
-@decorate.debugWrap
-@decorate.timeWrap
-def deploy (target):
-    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
-
-    #Here we should send a message to the portal
-
-    #Here we should wait for a termination signal from the portal
-
-    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
-    return
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -126,9 +115,3 @@ def deploymentTest (target):
 
     return
 
-@decorate.debugWrap
-@decorate.timeWrap
-def extensiveTest (target):
-    # Fill this in once the server is fully implemented
-    deploymentTest (target)
-    return
