@@ -119,7 +119,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 logAndExit(f"{fileName}: Failed to read <{iPar['name']}> in section [{xSection}]. Is it empty?",exitCode=EXIT.Configuration)
             if ('#' in val):
                 logAndExit(f"{fileName}: Illegal character in <{iPar['name']}> in section [{xSection}]. Is there a comment next to the value?",exitCode=EXIT.Configuration)
-            if (iPar['type'] == 'filePath'):
+            if (iPar['type'] in ['filePath','dirPath']):
                 doCheckPath = True
                 if (setup):
                     val = os.path.join(getSetting('repoDir'),val)
@@ -133,13 +133,11 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                         logAndExit(f"Configuration file: The condition <{iPar['condition']}> is not found in section [{xSection}].",exitCode=EXIT.Configuration)
                 elif (setup and ('condition' in iPar)):
                     logAndExit (f"The <condition> option is not yet implemented for the setupEnv json.",exitCode=EXIT.Configuration)
-                if (doCheckPath and (not os.path.isfile(val))):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].",exitCode=EXIT.Configuration)
-            elif (iPar['type'] == 'dirPath'):
-                if (setup):
-                    val = os.path.join(getSetting('repoDir'),val)
-                if (not os.path.isdir(val)):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].",exitCode=EXIT.Configuration)
+                if (doCheckPath):
+                    if ((iPar['type'] == 'filePath') and (not os.path.isfile(val))):
+                        logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].",exitCode=EXIT.Configuration)
+                    if ((iPar['type'] == 'dirPath') and (not os.path.isdir(val))):
+                        logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].",exitCode=EXIT.Configuration)
             elif (iPar['type'] == 'ipAddress'):
                 ipMatch = re.match(r"(\d{1,3}\.){3}\d{1,3}$",val)
                 if (ipMatch is None):
