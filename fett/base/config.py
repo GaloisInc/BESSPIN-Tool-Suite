@@ -65,7 +65,7 @@ def loadConfiguration(configFile):
                    "consist only of alphanumeric ASCII characters.")
 
     # Check password hash is legal
-    # Should look like: $6$<salt>$<SHA-512 hash>$
+    # Should look like: $6$<salt>$<SHA-512 hash>
     # The "6" at the beginning identifies the hash as SHA-512, which is what
     # our debian and FreeBSD installs expect
     # <salt> may be up to 16 characters [a-zA-Z0-9./]
