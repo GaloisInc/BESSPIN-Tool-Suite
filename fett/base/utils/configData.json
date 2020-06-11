@@ -47,12 +47,12 @@
             "condition" : "useCustomOsImage"
         },
         {
-            "name" : "useCustomBitfile",
+            "name" : "useCustomProcessor",
             "type" : "boolean"
         },
         {
-            "name" : "pathToCustomBitfile",
-            "type" : "filePath",
+            "name" : "pathToCustomProcessorSource",
+            "type" : "dirPath",
             "condition" : "useCustomBitfile"
         },
         {
