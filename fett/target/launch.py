@@ -48,6 +48,10 @@ def startFett ():
     # launch fett
     xTarget = launchFett()
 
+    if (isEqSetting('mode','production')):
+        # Call-todo -- start any on-line logging
+        pass
+
     return xTarget
 
 
@@ -107,7 +111,16 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
+    if (isEqSetting('mode','production')):
+        # Call-todo -- collect any remaining logs & dumps from target
+        pass
+
     xTarget.shutdown()
+    
+    if (isEqSetting('mode','production')):
+        # Call-todo -- tar all artifacts, dumps, and logs
+        # Call-todo -- upload them to S3
+        pass
 
 """ This decides the classes hierarchy """
 @decorate.debugWrap

@@ -119,6 +119,10 @@ def main (xArgs):
     
     #launch the tool
     xTarget = startFett()
+    if (isEqSetting('mode','production')):
+        # Call-todo -- notify portal that we deployed successfully
+        # Call-todo -- waits for portal termination signal
+        pass
     endFett(xTarget)
     exitFett(EXIT.Success)
 

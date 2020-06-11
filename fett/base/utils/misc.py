@@ -32,6 +32,12 @@ def exitFett (exitCode):
     if (not isinstance(exitCode,EXIT)):
         exitCode = EXIT.Unspecified
     printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
+
+    # notify portal if in production mode -- cannot rely on getSetting because it calls logAndExit
+    if (('mode' in _settings) and (_settings['mode'] == 'production')):
+        # Call-todo notify portal by the exit status
+        pass
+
     exit(exitCode.value)
 
 def exitOnInterrupt (xSig,xFrame):
