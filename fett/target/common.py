@@ -332,7 +332,10 @@ class commonTarget():
             res = self.runCommand(command)
         elif isEqSetting('osImage', 'FreeBSD'):
             # TODO: FreeBSD support
-            pass
+            command = (f"echo \'{self.userPasswordHash}\' | "
+                       f"pw usermod {self.userName} -H 0")
+            printAndLog(command)
+            self.runCommand(command, erroneousContents="pw:")
         else:
             # TODO: busybox support?
             self.shutdownAndExit("<createUser> is not implemented for "
