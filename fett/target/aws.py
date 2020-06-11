@@ -198,15 +198,28 @@ class connectalTarget(commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet(self):
-        # TODO: does nothing - pass this to get an interactive session
-        warnAndLog(f"<connectalTarget>: activateEthernet is not implemented. Doing nothing...")
-        pass
+        if (isEqSetting('osImage','debian')):
+            outCmd = self.runCommand ("ifconfig eth0 up")
+            self.runCommand (f"ifconfig eth0 {self.ipTarget}")
+            self.runCommand (f"ifconfig eth0 netmask {getSetting('awsNetMaskTarget')}")
+            self.runCommand (f"ifconfig eth0 hw ether {getSetting('awsMacAddrTarget')}")
+        else:
+            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+
+        self.pingTarget()
+        return outCmd
 
     @decorate.debugWrap
     def getDefaultEndWith(self):
-        """TODO: required for now"""
-        return 'CONSOLE: #'
+        """TODO: required for now -- dangerous"""
+        if (isEqSetting('osImage','debian')):
+            return "#"
+        else:
+            self.shutdownAndExit(f"<connectalTarget.getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
+    @decorate.debugWrap
+    def targetTearDown(self):
+        return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
 
@@ -468,9 +481,10 @@ def prepareConnectal():
     logging.info(f"copy {dtbsrc} to {dtbFile}")
 
     # TODO: use different .img?
-    warnAndLog(f"<aws.prepareConnectal>: adding .img from Binaries. This may be changed in the future.")
     pvAWS = "connectal"
-    imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
+    imageDir = getSetting('osImagesDir')
     imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                 'osImages', pvAWS, "debian.img")
+                                   'osImages', pvAWS, "debian.img")
+    warnAndLog(f"<aws.prepareConnectal>: adding {getSetting('osImage')}.img from {imageSourcePath}. This may be changed in the future.")
+    imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
     cp(imageSourcePath, imageFile)
