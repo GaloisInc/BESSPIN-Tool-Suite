@@ -340,7 +340,9 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'])
+    binarySourceSettings = getSettingDict('fettMatrix',[getSetting('binarySource')])
+    fpgaLoadExtraSettings = binarySourceSettings.get('fpgaLoadExtraSettings', [])
+    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 
     # wait until the FPGA has been flashed
     _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")

@@ -181,6 +181,7 @@
                     }
                 },
                 "MIT" : {
+		    "fpgaLoadExtraSettings" : ["-a", "125"],
                     "bluespec_p2" : {
                         "busybox" : "connectal",
                         "debian" : "connectal"
