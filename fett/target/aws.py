@@ -166,16 +166,16 @@ class connectalTarget(commonTarget):
 
         # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
         warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
+        extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
+        tapName = getSetting('awsTapAdaptorName')
         connectalCommand = ' '.join([
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
             f"--elf={getSetting('osImageElf')}",
-            "--entry=0x80003000",
-            "--xdma=0",
-            "--dma=1",
-            "--tun=tap0",
-        ])
+            f"--tun={tapName}"
+        ]
+                                    + extraArgs)
 
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
@@ -340,7 +340,8 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'])
+    fpgaLoadExtraSettings = getSetting('fpgaLoadExtraSettings', default=[])
+    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 
     # wait until the FPGA has been flashed
     _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")
@@ -358,12 +359,16 @@ def flashFpgas(agfi):
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
-def getAgfiJson(jsonFile):
+def getAgfiId(jsonFile):
     keyName = 'agfi_id'
     contents = safeLoadJsonFile(jsonFile)
     if keyName not in contents:
         logAndExit(f"<aws.getAgfiJson>: unable to find key <agfi_id> in {jsonFile}")
     return contents[keyName]
+
+def getAgfiSettings(jsonFile):
+    contents = safeLoadJsonFile(jsonFile)
+    return contents
 
 def copyAWSSources():
     pvAWS = getSetting('pvAWS')
@@ -397,8 +402,12 @@ def copyAWSSources():
 
     # extract the agfi and put it in setting
     agfiJsonPath = os.path.join(awsSourcePath, 'agfi_id.json')
-    agfiId = getAgfiJson(agfiJsonPath)
-    setSetting("agfiId", agfiId)
+    agfiSettings = getAgfiSettings(agfiJsonPath)
+    setSetting('agfiId', agfiSettings['agfi_id'])
+    for k in agfiSettings:
+        if k == "_afgi-id.json":
+            continue
+        setSetting(k, agfiSettings[k])
 
 @decorate.debugWrap
 def removeKernelModules():
