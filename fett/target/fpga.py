@@ -259,12 +259,13 @@ def programBitfile ():
     except Exception as exc:
         errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
 
-    bitfilePath = selectBitfile()
-    if not os.path.isfile(bitfilePath):
-        logAndExit(f"Bitfile <{bitfilePath}> does not exist.", exitCode=EXIT.Files_and_paths)
+    bitAndProbefiles = selectBitAndProbeFiles()
+    for xFile in bitAndProbefiles:
+        if not os.path.isfile(xFile):
+            logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
 
     try:
-        bitfile = ftOpenFile(bitfilePath, "rb")
+        bitfile = ftOpenFile(bitAndProbefiles[0], "rb")
         md5 = hashlib.md5()
         while True:
             chunk = bitfile.read(65536)
@@ -273,7 +274,7 @@ def programBitfile ():
             md5.update(chunk)
         bitfile.close()
     except Exception as exc:
-        logAndExit(f"Could not compute md5 for file <{bitfilePath}>.", exc=exc, exitCode=EXIT.Run)
+        logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Programming the bitfile...")
     nAttempts = 2
@@ -281,8 +282,8 @@ def programBitfile ():
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
-            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitfilePath],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
-            printAndLog(f"Programmed bitfile {bitfilePath} (md5: {md5.hexdigest()})")
+            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitAndProbefiles[0], '--probe-file', bitAndProbefiles[1]],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
+            printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})")
             break
         except Exception as exc:
             if (iAttempt < nAttempts-1):
@@ -294,19 +295,26 @@ def programBitfile ():
     printAndLog("FPGA was programmed successfully!")
 
 @decorate.debugWrap
-def selectBitfile ():
-    if getSetting('useCustomBitfile'):
-        return getSetting('pathToCustomBitfile')
+def selectBitAndProbeFiles ():
+    bitfileName = "soc_" + getSetting('processor') + ".bit"
+    probfileName = "soc_" + getSetting('processor') + ".ltx"
+
+    if getSetting('useCustomProcessor'):
+        bitfileDir = getSetting('pathToCustomProcessorSource')
     else:
-        bitfileName = "soc_" + getSetting('processor') + ".bit"
+        useNix = False
         # If source is GFE, we check the nix environment for latest bitfiles
         if getSetting('binarySource') == 'GFE':
-            bitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
-            if bitfileDir in os.environ:
-                return os.path.join(os.environ[bitfileDir], bitfileName)
+            envBitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
+            if envBitfileDir in os.environ:
+                bitfileDir = os.environ[envBitfileDir]
+                useNix = True
             else:
-                printAndLog(f"Could not find bitfile for <{getSetting('processor')}> in nix environment. Falling back to binary repo.", doPrint=False)
-        return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'fpga', bitfileName)
+                printAndLog(f"Could not find bitfileDir for <{getSetting('processor')}> in nix environment. Falling back to binary repo.", doPrint=False)
+        if (not useNix): #use binaries repo
+            bitfileDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'fpga')
+    
+    return (os.path.join(bitfileDir, bitfileName),os.path.join(bitfileDir, probfileName))
 
 @decorate.debugWrap
 def checkEthAdaptorIsUp ():
