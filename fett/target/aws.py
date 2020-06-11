@@ -166,18 +166,16 @@ class connectalTarget(commonTarget):
 
         # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
         warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
-        useXDMA = getSetting('useXDMA', 1)
+        extraArgs = getSetting('ssithAwsFpgaExtraArgs', [])
         tapName = getSetting('awsTapAdaptorName')
         connectalCommand = ' '.join([
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
             f"--elf={getSetting('osImageElf')}",
-            "--entry=0x80003000",
-            f"--xdma={useXDMA}",
-            "--dma=1",
-            f"--tun={tapName}",
-        ])
+            f"--tun={tapName}"
+        ]
+                                    + extraArgs)
 
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
