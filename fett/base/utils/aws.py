@@ -77,9 +77,9 @@ def uploadToS3 (s3Bucket, exitFunc, tarball, pathInBucket):
 
 def pollPortalQueueIndefinitely (urlQueue, exitFunc):
     try:
-        import boto3
+        import boto3, time
     except Exception as exc:
-        exitFunc(message=f"Failed to <import boto3>.",exc=exc)
+        exitFunc(message=f"Failed to <import boto3, time>.",exc=exc)
 
     try:
         sqs = boto3.client('sqs', region_name='us-west-2')
