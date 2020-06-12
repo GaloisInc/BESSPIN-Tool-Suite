@@ -197,8 +197,22 @@ class fpgaTarget (commonTarget):
         printAndLog (f"Entering pseudo-interactive mode. Root password: \'{self.rootPassword}\'. Enter \"--exit + Enter\" to exit.")
         printAndLog ("Please use \"--ctrlc\" for interrupts. (Ctrl-C would exit the whole FETT tool).")
         if (self.userCreated):
-            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
-            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+            if isEnabled("useCustomCredentials"):
+                # Log out to prompt user to log in using their credentials.
+                # We can't log in for them because we only have the hash of
+                # their password
+                output = self.runCommand("exit", endsWith="login:")[1]
+                printAndLog("Note that there is another user.  User name: "
+                            f"\'{self.userName}\'")
+                printAndLog("Please log in using the credentials you supplied")
+
+                # Print login prompt from OS.  Drop the first 2 lines because
+                # those contain the exit / logout messages from running the
+                # `exit` command
+                print("\n".join(output.split("\n")[2:]), end="")
+            else:
+                printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+                printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
         
         def keepReadingFromFdpexpect (stopEvent=None,timeStep=5):
             if (stopEvent is None):

@@ -51,11 +51,9 @@ class commonTarget():
         self.rootPassword = 'ssithdefault' if (isEqSetting('osImage','FreeBSD')) else 'riscv'
         self.rootGroup = 'wheel' if (isEqSetting('osImage','FreeBSD')) else 'root'
         self.userPassword = "fett_2020"
-        self.useCustomCredentials = isEnabled('useCustomCredentials')
         self.userName = (getSetting('userName') if
-                         self.useCustomCredentials else
+                         isEnabled("useCustomCredentials") else
                          "researcher")
-        self.userPasswordHash = getSetting("userPasswordHash")
         self.userCreated = False
 
         self.AttemptShutdownFailed = False
@@ -246,19 +244,19 @@ class commonTarget():
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
         if (self.userCreated):
-            if self.useCustomCredentials:
-                # Become root and change user password
-                if not self.isCurrentUserRoot:
-                    self.switchUser()
-                self.changeUserPassword()
-
-                # Log out to prompt user to log in using their credentials
+            if isEnabled("useCustomCredentials"):
+                # Log out to prompt user to log in using their credentials.
                 # We can't log in for them because we only have the hash of
                 # their password
-                self.runCommand("exit", endsWith="login:")
+                output = self.runCommand("exit", endsWith="login:")[1]
                 printAndLog("Note that there is another user.  User name: "
                             f"\'{self.userName}\'")
                 printAndLog("Please log in using the credentials you supplied")
+
+                # Print login prompt from OS.  Drop the first 2 lines because
+                # those contain the exit / logout messages from running the
+                # `exit` command
+                print("\n".join(output.split("\n")[2:]), end="")
             else:
                 printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
                 printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
@@ -320,16 +318,28 @@ class commonTarget():
         Precondition:  useCustomCredentials must be True in the configuration
         file
         Precondition:  Must be root
+        Precondition:  User must have already been created
         """
-        assert self.useCustomCredentials
-        assert self.isCurrentUserRoot
+        if not isEnabled("useCustomCredentials"):
+            self.shutdownAndExit("<changeUserPassword> cannot be called if "
+                                 "<useCustomCredentials> is False.",
+                                 exitCode=EXIT.Dev_Bug)
+        if not self.isCurrentUserRoot:
+            self.shutdownAndExit("<changeUserPassword> cannot be called if "
+                                 "current user is not root.",
+                                 exitCode=EXIT.Dev_Bug)
+        if not self.userCreated:
+            self.shutdownAndExit("<changeUserPassword> cannot be called if "
+                                 "user has not been created.",
+                                 exitCode=EXIT.Dev_Bug)
 
         printAndLog(f"Changing user {self.userName}'s password")
+        userPasswordHash = getSetting("userPasswordHash")
         if isEqSetting('osImage', 'debian'):
-            command = f"usermod -p \'{self.userPasswordHash}\' {self.userName}"
+            command = f"usermod -p \'{userPasswordHash}\' {self.userName}"
             res = self.runCommand(command)
         elif isEqSetting('osImage', 'FreeBSD'):
-            command = (f"echo \'{self.userPasswordHash}\' | "
+            command = (f"echo \'{userPasswordHash}\' | "
                        f"pw usermod {self.userName} -H 0")
             self.runCommand(command, erroneousContents="pw:")
         else:

@@ -57,24 +57,25 @@ def loadConfiguration(configFile):
     # Create an isUnix setting
     setSetting('isUnix',getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])
 
-    # Check username is legal
-    userName = getSetting("userName")
-    if re.fullmatch("[a-zA-Z0-9]{1,14}", userName) is None:
-        logAndExit(f"userName \"{userName}\" does not satisfy the username "
-                   "requrements.  Must be 1-14 characters long and may "
-                   "consist only of alphanumeric ASCII characters.")
+    if isEnabled('useCustomCredentials'):
+        # Check username is legal
+        userName = getSetting("userName")
+        if re.fullmatch("[a-zA-Z0-9]{1,14}", userName) is None:
+            logAndExit(f"userName \"{userName}\" does not satisfy the username "
+                       "requirements.  Must be 1-14 characters long and may "
+                       "consist only of alphanumeric ASCII characters.")
 
-    # Check password hash is legal
-    # Should look like: $6$<salt>$<SHA-512 hash>
-    # The "6" at the beginning identifies the hash as SHA-512, which is what
-    # our debian and FreeBSD installs expect
-    # <salt> may be up to 16 characters [a-zA-Z0-9./]
-    # <SHA-512 hash> must be exactly 86 characters in [a-zA-Z0-9./]
-    userPasswordHash = getSetting("userPasswordHash")
-    if re.fullmatch("\\$6\\$[a-zA-Z0-9./]{0,16}\\$[a-zA-Z0-9./]{86}", userPasswordHash) is None:
-        logAndExit(f"userPasswordHash \"{userPasswordHash}\" is not a legal "
-                   "password hash.  Must be a SHA-512 encrypted hash prodcued "
-                   "by crypt(3).")
+        # Check password hash is legal
+        # Should look like: $6$<salt>$<SHA-512 hash>
+        # The "6" at the beginning identifies the hash as SHA-512, which is what
+        # our debian and FreeBSD installs expect
+        # <salt> may be up to 16 characters [a-zA-Z0-9./]
+        # <SHA-512 hash> must be exactly 86 characters in [a-zA-Z0-9./]
+        userPasswordHash = getSetting("userPasswordHash")
+        if re.fullmatch("\\$6\\$[a-zA-Z0-9./]{0,16}\\$[a-zA-Z0-9./]{86}", userPasswordHash) is None:
+            logAndExit(f"userPasswordHash \"{userPasswordHash}\" is not a legal "
+                       "password hash.  Must be a SHA-512 encrypted hash produced "
+                       "by crypt(3).")
 
     printAndLog('Configuration loaded successfully.')
     dumpSettings()
