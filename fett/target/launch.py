@@ -79,6 +79,7 @@ def prepareEnv ():
     elif (isEqSetting('target','aws')):
         if (isEqSetting('pvAWS','firesim')):
             aws.prepareFiresim()
+            aws.removeKernelModules()
             aws.installKernelModules()
             aws.configTapAdaptor()
             aws.programAFI()

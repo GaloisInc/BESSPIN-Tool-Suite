@@ -438,7 +438,6 @@ def removeKernelModules():
 @decorate.debugWrap
 def installKernelModules():
     """install necessary kernel modules for an AWS PV"""
-    removeKernelModules()
     awsModPath = os.path.join(getSetting('connectalPath'), 'kmods')
 
     #load our modules
