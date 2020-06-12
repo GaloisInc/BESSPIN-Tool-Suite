@@ -5,7 +5,7 @@ Misc required functions for fett.py
 
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess, pathlib
-import tarfile, sys, json, re, getpass
+import tarfile, sys, json, re, getpass, time
 
 from fett.base.utils import decorate
 from fett.base.utils import aws
@@ -40,7 +40,7 @@ def exitFett (exitCode):
         if (exc): #empty message
             message += f"\n{formatExc(exc)}."
      
-        printAndLog (f"utils.aws: {message}")
+        printAndLog (f"inExit: {message}")
         exitCode = EXIT.AWS
         printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
         exit(exitCode.value)
@@ -443,6 +443,9 @@ def shellCommand (argsList, check=True, timeout=30, **kwargs):
 @decorate.debugWrap
 def tarArtifacts (logAndExitFunc,getSettingFunc):
     artifactsPath = f"production-{getSettingFunc('prodJobId')}"
+
+    if (os.path.isdir(artifactsPath)): # already exists, add the date
+        artifactsPath += f"-{int(time.time())}"
 
     try:
         os.mkdir(artifactsPath)
