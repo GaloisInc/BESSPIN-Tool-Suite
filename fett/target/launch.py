@@ -118,9 +118,10 @@ def endFett (xTarget):
     xTarget.shutdown()
     
     if (isEqSetting('mode','production')):
-        tarballName = tarArtifacts (logAndExit,getSetting)
-        # Call-todo -- upload them to S3
-        pass
+        tarballPath = tarArtifacts (logAndExit,getSetting)
+        aws.uploadToS3(getSetting('prodS3Bucket'), logAndExit, 
+                        tarballPath, 'fett-target/production/artifacts/')
+        printAndLog(f"Artifacts tarball uploaded to S3.")
 
 """ This decides the classes hierarchy """
 @decorate.debugWrap

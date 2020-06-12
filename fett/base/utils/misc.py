@@ -56,9 +56,11 @@ def exitFett (exitCode):
     # notify portal if in production mode -- cannot rely on getSetting because it calls logAndExit
     if (inExit_GetSetting('mode') == 'production'):
         if (exitCode != EXIT.Success): # ERRONEOUS STATE!! -- emergency upload
-            tarballName = tarArtifacts (inExit_logAndExit,inExit_GetSetting)
-            # Call-todo -- upload them to S3
-            pass
+            tarballPath = tarArtifacts (inExit_logAndExit,inExit_GetSetting)
+            aws.uploadToS3(inExit_GetSetting('prodS3Bucket'), inExit_logAndExit, 
+                            tarballPath, 'fett-target/production/artifacts/')
+            printAndLog(f"Artifacts tarball uploaded to S3.")
+
         jobStatus = 'success' if (exitCode != EXIT.Success) else 'failure'
         aws.sendSQS(inExit_GetSetting('prodSqsQueue'), inExit_logAndExit, jobStatus, 
                     inExit_GetSetting('prodJobId'), 'Undefined',
