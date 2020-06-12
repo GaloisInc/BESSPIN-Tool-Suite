@@ -122,7 +122,7 @@ def main (xArgs):
     xTarget = startFett()
     if (isEqSetting('mode','production')):
         # Notify portal that we have deployed successfully
-        aws.sendSQS(getAWSinfo('sqs'), logAndExit, 'success', 
+        aws.sendSQS(getSetting('prodSqsQueue'), logAndExit, 'success', 
                     getSetting('prodJobId'), 'Undefined',
                     reason='fett-target-production-deployment',
                     hostIp=getSetting('awsIpHost'),
