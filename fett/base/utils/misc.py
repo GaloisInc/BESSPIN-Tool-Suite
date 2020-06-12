@@ -435,3 +435,39 @@ def shellCommand (argsList, check=True, timeout=30, **kwargs):
     except Exception as exc:
         logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
     shellOut.close()
+
+""" the tarArtifacts function can be executed from within exitFett -- should not use other functions to avoid recursion """
+@decorate.debugWrap
+def tarArtifacts (logAndExitFunc,getSettingFunc):
+    artifactsPath = f"production-{getSettingFunc('prodJobId')}"
+
+    try:
+        os.mkdir(artifactsPath)
+    except Exception as exc:
+        logAndExitFunc (message=f"Failed to create <{artifactsPath}>.",exc=exc)
+
+    workDir = getSettingFunc('workDir')
+    logFile = getSettingFunc('fett.log')
+    outFiles = glob.glob(os.path.join(workDir,'*.out'))
+    configFile = getSettingFunc('configFile')
+
+    listArtifacts = [configFile, logFile] +  outFiles
+
+    for xArtifact in listArtifacts:
+        try:
+            shutil.copy2(xArtifact,artifactsPath)
+        except Exception as exc:
+            logAndExitFunc (message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",exc=exc)
+
+    tarFileName = f"{artifactsPath}.tar.gz"
+    try:
+        xFile = tarfile.open(name=tarFileName, mode="w:gz")
+        xFile.add(artifactsPath, arcname=None)
+        xFile.close()
+    except Exception as exc:
+        logAndExitFunc (message=f"tar: error creating {tarFileName}", exc=exc)
+
+    printAndLog(f"tarArtifacts: Created <{tarFileName}> including all artifacts.")
+    return tarFileName
+
+
