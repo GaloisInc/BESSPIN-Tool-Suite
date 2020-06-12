@@ -118,7 +118,7 @@ def endFett (xTarget):
     xTarget.shutdown()
     
     if (isEqSetting('mode','production')):
-        # Call-todo -- tar all artifacts, dumps, and logs
+        tarballName = tarArtifacts (logAndExit,getSetting)
         # Call-todo -- upload them to S3
         pass
 

@@ -56,7 +56,7 @@ def exitFett (exitCode):
     # notify portal if in production mode -- cannot rely on getSetting because it calls logAndExit
     if (inExit_GetSetting('mode') == 'production'):
         if (exitCode != EXIT.Success): # ERRONEOUS STATE!! -- emergency upload
-            # Call-todo -- tar all artifacts, dumps, and logs -- emergency mode
+            tarballName = tarArtifacts (inExit_logAndExit,inExit_GetSetting)
             # Call-todo -- upload them to S3
             pass
         jobStatus = 'success' if (exitCode != EXIT.Success) else 'failure'
