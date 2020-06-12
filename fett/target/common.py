@@ -317,21 +317,19 @@ class commonTarget():
 
         Precondition:  useCustomCredentials must be True in the configuration
         file
-        Precondition:  Must be root
         Precondition:  User must have already been created
         """
         if not isEnabled("useCustomCredentials"):
             self.shutdownAndExit("<changeUserPassword> cannot be called if "
                                  "<useCustomCredentials> is False.",
                                  exitCode=EXIT.Dev_Bug)
-        if not self.isCurrentUserRoot:
-            self.shutdownAndExit("<changeUserPassword> cannot be called if "
-                                 "current user is not root.",
-                                 exitCode=EXIT.Dev_Bug)
         if not self.userCreated:
             self.shutdownAndExit("<changeUserPassword> cannot be called if "
                                  "user has not been created.",
                                  exitCode=EXIT.Dev_Bug)
+
+        if not self.isCurrentUserRoot:
+            self.switchUser()
 
         printAndLog(f"Changing user {self.userName}'s password")
         userPasswordHash = getSetting("userPasswordHash")
