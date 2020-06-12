@@ -154,7 +154,6 @@ class connectalTarget(commonTarget):
         self.ipHost = getSetting('awsIpHost')
         self.portTarget = getSetting('awsPortTarget')
         self.portHost = getSetting('awsPortHost')
-        self.rootPassword = 'rootme'
 
     @decorate.debugWrap
     @decorate.timeWrap
