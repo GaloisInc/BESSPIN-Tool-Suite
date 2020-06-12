@@ -19,7 +19,7 @@ commonDefaults = {
 }
 
 unixDefaults = commonDefaults.union({
-    ('useCustomCredentials',('no',)),
+    ('useCustomCredentials',('yes',)),
     ('buildApps',('no',)),
     ('appTimeout',(30,))
 })
