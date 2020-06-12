@@ -14,7 +14,8 @@ from fett.base.utils import aws
 _settings = dict()
 
 # hardcoded URLs -- needed for emergency reporting
-_settings['prodSqsQueue'] = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
+_settings['prodSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
+_settings['prodSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/RafEC2Queue' 
 _settings['prodS3Bucket'] = 'ssith-fett-target-ci-develop'
 
 class EXIT (enum.Enum):
@@ -62,7 +63,7 @@ def exitFett (exitCode):
             printAndLog(f"Artifacts tarball uploaded to S3.")
 
         jobStatus = 'success' if (exitCode != EXIT.Success) else 'failure'
-        aws.sendSQS(inExit_GetSetting('prodSqsQueue'), inExit_logAndExit, jobStatus, 
+        aws.sendSQS(inExit_GetSetting('prodSqsQueueTX'), inExit_logAndExit, jobStatus, 
                     inExit_GetSetting('prodJobId'), 'Undefined',
                     reason='fett-target-production-termination',
                     hostIp=inExit_GetSetting('awsIpHost'),
