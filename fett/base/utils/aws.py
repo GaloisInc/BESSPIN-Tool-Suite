@@ -75,4 +75,53 @@ def uploadToS3 (s3Bucket, exitFunc, tarball, pathInBucket):
         exitFunc(message=f"Failed to upload the tarball to the bucket.",exc=exc)
 
 
+def pollPortalQueueIndefinitely (urlQueue, exitFunc):
+    try:
+        import boto3
+    except Exception as exc:
+        exitFunc(message=f"Failed to <import boto3>.",exc=exc)
+
+    try:
+        sqs = boto3.client('sqs', region_name='us-west-2')
+    except Exception as exc:
+        exitFunc(message=f"Failed to create the SQS client.",exc=exc)
+
+    def delete_message(message):
+        try:
+            sqs.delete_message(
+                QueueUrl=urlQueue,
+                ReceiptHandle=message['ReceiptHandle']
+            )
+        except Exception as exc:
+            exitFunc(message=f"Failed to delete the message from the SQS queue.",exc=exc)
+
+    instanceId = getInstanceId(exitFunc)
+
+    wasReceived = False
+    while (not wasReceived):
+        try:
+            response = sqs.receive_message(
+                QueueUrl=urlQueue,
+                MessageAttributeNames=[
+                    'instance_id',
+                ],
+                VisibilityTimeout=60, # this is large enough
+                WaitTimeSeconds=20 # Long-polling for messages, reduce number of empty receives
+            )
+        except Exception as exc:
+            exitFunc(message=f"Failed to receive a response from the SQS queue.",exc=exc)
+
+        if ('Messages' in response):
+            for message in response['Messages']:
+                try:
+                    msgInstanceId = message['MessageAttributes']['instance_id']['StringValue']
+                except:
+                    continue
+                if (msgInstanceId == instance_id):
+                    delete_message(message)
+                    wasReceived = True
+                    break 
+
+        time.sleep(60)            
+
     

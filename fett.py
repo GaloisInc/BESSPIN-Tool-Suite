@@ -31,6 +31,7 @@ try:
     from fett.base.utils.misc import *
     from fett.base.config import loadConfiguration
     from fett.target.launch import startFett, endFett
+    from fett.base.utils import aws
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
     try:
@@ -128,8 +129,9 @@ def main (xArgs):
                     hostIp=getSetting('awsIpHost'),
                     fpgaIp=getSetting('awsIpTarget')
                     )
-        # Call-todo -- waits for portal termination signal
-        pass
+
+        aws.pollPortalQueueIndefinitely (getSetting('prodSqsQueueRX'), logAndExit)
+        
     endFett(xTarget)
     exitFett(EXIT.Success)
 
