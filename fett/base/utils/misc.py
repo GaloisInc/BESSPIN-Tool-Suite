@@ -450,7 +450,7 @@ def tarArtifacts (logAndExitFunc,getSettingFunc):
         logAndExitFunc (message=f"Failed to create <{artifactsPath}>.",exc=exc)
 
     workDir = getSettingFunc('workDir')
-    logFile = getSettingFunc('fett.log')
+    logFile = getSettingFunc('logFile')
     outFiles = glob.glob(os.path.join(workDir,'*.out'))
     configFile = getSettingFunc('configFile')
 

@@ -129,8 +129,10 @@ def main (xArgs):
                     hostIp=getSetting('awsIpHost'),
                     fpgaIp=getSetting('awsIpTarget')
                     )
+        printAndLog("Sent deployment message to the SQS queue.")
 
         aws.pollPortalQueueIndefinitely (getSetting('prodSqsQueueRX'), logAndExit)
+        printAndLog("Received termination message from the SQS queue.")
         
     endFett(xTarget)
     exitFett(EXIT.Success)
@@ -143,7 +145,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
     xArgParser.add_argument ('-ep', '--entrypoint', help='Entrypoint: devHost | ciOnPrem | ciAWS')
-    xGroupArtifacts.add_argument ('-job', '--jobId', help='The job ID in production mode.')
+    xArgParser.add_argument ('-job', '--jobId', help='The job ID in production mode.')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals

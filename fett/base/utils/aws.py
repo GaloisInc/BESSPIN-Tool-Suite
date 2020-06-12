@@ -54,7 +54,7 @@ def sendSQS (urlQueue, exitFunc, status, jobId, nodeId, reason='fett', hostIp='N
                 MessageGroupId=str(jobId)
             )
     except Exception as exc:
-        exitFunc(message=f"Failed to send the termination message to SQS.",exc=exc)
+        exitFunc(message=f"Failed to send message to SQS.",exc=exc)
 
     return
 
