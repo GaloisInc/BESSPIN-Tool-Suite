@@ -108,6 +108,7 @@ def main (xArgs):
     setSetting('logFile', logFile)
     setSetting('debugMode', xArgs.debug)
     setSetting('fettEntrypoint',xArgs.entrypoint)
+    setSetting('prodJobId', xArgs.jobId)
     # Load all configuration and setup settings
     setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
@@ -134,6 +135,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
     xArgParser.add_argument ('-ep', '--entrypoint', help='Entrypoint: devHost | ciOnPrem | ciAWS')
+    xGroupArtifacts.add_argument ('-job', '--jobId', help='The job ID in production mode.')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals
