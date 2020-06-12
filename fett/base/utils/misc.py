@@ -8,9 +8,14 @@ import os, shutil, glob, subprocess, pathlib
 import tarfile, sys, json, re, getpass
 
 from fett.base.utils import decorate
+from fett.base.utils import aws
 
 # private; not available using import *
 _settings = dict()
+
+# hardcoded URLs -- needed for emergency reporting
+_productionAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
+_productionAWSbucket = 'ssith-fett-target-ci-develop'
 
 class EXIT (enum.Enum):
     Success = 0
@@ -46,6 +51,14 @@ def exitFett (exitCode):
 
 def exitOnInterrupt (xSig,xFrame):
     exitFett(EXIT.Interrupted)
+
+def getAWSinfo (typeOfInfo):
+    if (typeOfInfo == 's3'):
+        return _productionAWSbucket
+    elif (typeOfInfo == 'sqs'):
+        return _productionAWSqueue
+    else:
+        logAndExit (f"getAWSinfo: Called with unknown <typeOfInfo={typeOfInfo}>.",exitCode=EXIT.Dev_Bug)
 
 def formatExc (exc):
     """ format the exception for printing """
