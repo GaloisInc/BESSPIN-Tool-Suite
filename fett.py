@@ -121,7 +121,13 @@ def main (xArgs):
     #launch the tool
     xTarget = startFett()
     if (isEqSetting('mode','production')):
-        # Call-todo -- notify portal that we deployed successfully
+        # Notify portal that we have deployed successfully
+        aws.sendSQS(getAWSinfo('sqs'), logAndExit, 'success', 
+                    getSetting('prodJobId'), 'Undefined',
+                    reason='fett-target-production-deployment',
+                    hostIp=getSetting('awsIpHost'),
+                    fpgaIp=getSetting('awsIpTarget')
+                    )
         # Call-todo -- waits for portal termination signal
         pass
     endFett(xTarget)
