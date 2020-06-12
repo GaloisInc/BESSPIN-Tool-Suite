@@ -29,6 +29,7 @@ class EXIT (enum.Enum):
     Run = enum.auto()
     Network = enum.auto()
     Interrupted = enum.auto()
+    AWS = enum.auto()
 
     def __str__ (self): #to replace '_' by ' ' when printing
         return f"{self.name.replace('_',' ')}"
@@ -38,16 +39,36 @@ def exitFett (exitCode):
         exitCode = EXIT.Unspecified
     
     # notify portal if in production mode -- cannot rely on getSetting because it calls logAndExit
-    if (('mode' in _settings) and (_settings['mode'] == 'production')):
+    if (awsGetSetting('mode') == 'production'):
         if (exitCode != EXIT.Success): # ERRONEOUS STATE!! -- emergency upload
             # Call-todo -- tar all artifacts, dumps, and logs -- emergency mode
             # Call-todo -- upload them to S3
-            pass
-        # Call-todo notify portal by the exit status
-        pass
+        jobStatus = 'success' if (exitCode != EXIT.Success) else 'failure'
+        aws.sendSQS(_productionAWSqueue, awsExit, jobStatus, 
+                    awsGetSetting('prodJobId'), 'Undefined',
+                    reason='fett-target-production-termination',
+                    hostIp=awsGetSetting('awsIpHost'),
+                    fpgaIp=awsGetSetting('awsIpTarget')
+                    )       
 
     printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
     exit(exitCode.value)
+
+""" The functions starting with `aws` are to execute withing `exitFett()` """
+def awsExit (message,exc=None):
+    if (exc): #empty message
+        message += f"\n{formatExc(exc)}."
+ 
+    printAndLog (f"utils.aws: {message}")
+    exitCode = EXIT.AWS
+    printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
+    exit(exitCode.value)
+
+def awsGetSetting (setting):
+    try:
+        return _settings[setting]
+    except:
+        return 'UNKNOWN'
 
 def exitOnInterrupt (xSig,xFrame):
     exitFett(EXIT.Interrupted)
