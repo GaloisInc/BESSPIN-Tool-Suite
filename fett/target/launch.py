@@ -9,7 +9,7 @@ from fett.target import common
 from fett.target import fpga
 from fett.target import qemu
 from fett.target import aws
-from fett.target.utils.aws import uploadToS3
+from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
 import sys, os
 from importlib.machinery import SourceFileLoader
