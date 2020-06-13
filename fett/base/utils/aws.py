@@ -117,7 +117,7 @@ def pollPortalQueueIndefinitely (urlQueue, exitFunc):
                     msgInstanceId = message['MessageAttributes']['instance_id']['StringValue']
                 except:
                     continue
-                if (msgInstanceId == instance_id):
+                if (msgInstanceId == instanceId):
                     delete_message(message)
                     wasReceived = True
                     break 
