@@ -62,13 +62,14 @@ def exitFett (exitCode):
                             tarballPath, 'fett-target/production/artifacts/')
             printAndLog(f"Artifacts tarball uploaded to S3.")
 
-        jobStatus = 'success' if (exitCode != EXIT.Success) else 'failure'
+        jobStatus = 'success' if (exitCode == EXIT.Success) else 'failure'
         aws.sendSQS(inExit_GetSetting('prodSqsQueueTX'), inExit_logAndExit, jobStatus, 
                     inExit_GetSetting('prodJobId'), 'Undefined',
                     reason='fett-target-production-termination',
                     hostIp=inExit_GetSetting('awsIpHost'),
                     fpgaIp=inExit_GetSetting('awsIpTarget')
-                    )       
+                    )
+        printAndLog("Sent termination message to the SQS queue.")       
 
     printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
     exit(exitCode.value)
