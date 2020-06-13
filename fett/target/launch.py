@@ -9,7 +9,7 @@ from fett.target import common
 from fett.target import fpga
 from fett.target import qemu
 from fett.target import aws
-#from fett.target import aws
+from fett.target.utils.aws import uploadToS3
 from fett.apps.build import buildApps
 import sys, os
 from importlib.machinery import SourceFileLoader
@@ -119,7 +119,7 @@ def endFett (xTarget):
     
     if (isEqSetting('mode','production')):
         tarballPath = tarArtifacts (logAndExit,getSetting)
-        aws.uploadToS3(getSetting('prodS3Bucket'), logAndExit, 
+        uploadToS3(getSetting('prodS3Bucket'), logAndExit, 
                         tarballPath, 'fett-target/production/artifacts/')
         printAndLog(f"Artifacts tarball uploaded to S3.")
 
