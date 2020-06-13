@@ -97,8 +97,7 @@ def pollPortalQueueIndefinitely (urlQueue, exitFunc):
 
     instanceId = getInstanceId(exitFunc)
 
-    wasReceived = False
-    while (not wasReceived):
+    while (True):
         try:
             response = sqs.receive_message(
                 QueueUrl=urlQueue,
@@ -119,8 +118,7 @@ def pollPortalQueueIndefinitely (urlQueue, exitFunc):
                     continue
                 if (msgInstanceId == instanceId):
                     delete_message(message)
-                    wasReceived = True
-                    break 
+                    return
 
         time.sleep(60)            
 
