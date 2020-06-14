@@ -5,6 +5,7 @@ This is executed after loading the app on the target to execute this app
 
 from fett.base.utils.misc import *
 from fett.apps.unix.webserver import curlTest
+from fett.apps.unix.database import sqliteCmd
 import string, secrets, crypt
 import json
 
@@ -13,11 +14,7 @@ import json
 def clear_voter_table(target, dbfile):
     appLog = getSetting('appLog')
     sqlite   = "/usr/bin/sqlite"
-    target.runCommand(f"{sqlite} {dbfile}", expectedContents=["SQLite version", ".help"],
-                      erroneousContents=["Error:","near","error"], endsWith="sqlite>",tee=appLog)
-    target.runCommand("DELETE FROM voter;",
-                      endsWith="sqlite>", erroneousContents=["Error:", "near", "error"],tee=appLog)
-    target.runCommand(".exit",tee=appLog)
+    sqliteCmd(target, sqlite, dbfile, "DELETE FROM voter;", tee=appLog)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -36,7 +33,7 @@ def add_official(target, dbfile):
     # Insert the record. The database will always be empty at this point,
     # so we give the official ID 0
     insert = f"INSERT INTO electionofficial (id, username, hash) VALUES (0, '{officialName}', '{passHash}');"
-    target.runCommand(f"{sqlite} {dbfile} \"{insert}\"", erroneousContents=["Error:","near","error"] ,tee=appLog)
+    sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
 
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
 
