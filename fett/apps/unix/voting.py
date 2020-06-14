@@ -30,7 +30,7 @@ def add_official(target, dbfile):
     # Generate the password and its hash
     alphabet = string.ascii_letters + string.digits + "!@#$%^&*(-_=+)"
     password = ''.join(secrets.choice(alphabet) for i in range(14))
-    salt     = "XY"
+    salt     = crypt.mksalt()
     passHash = crypt.crypt(password, salt)
 
     # Insert the record. The database will always be empty at this point,
