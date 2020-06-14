@@ -35,11 +35,8 @@ def add_official(target, dbfile):
 
     # Insert the record. The database will always be empty at this point,
     # so we give the official ID 0
-    target.runCommand(f"{sqlite} {dbfile}", expectedContents=["SQLite version", ".help"],
-                      erroneousContents=["Error:","near","error"], endsWith="sqlite>",tee=appLog)
-    target.runCommand(f"INSERT INTO electionofficial (id, username, hash) VALUES (0, \"{officialName}\", \"{passHash}\");",
-                      endsWith="sqlite>", tee=appLog)
-    target.runCommand(".exit",tee=appLog)
+    insert = f"INSERT INTO electionofficial (id, username, hash) VALUES (0, '{officialName}', '{passHash}');"
+    target.runCommand(f"{sqlite} {dbfile} \"{insert}\"", erroneousContents=["Error:","near","error"] ,tee=appLog)
 
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
 
