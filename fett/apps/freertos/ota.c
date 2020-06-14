@@ -7,6 +7,8 @@
 
 #define OTA_FILE_MIN_SIZE (ED25519_SIG_SIZE + 1)
 
+static intptr_t wptl = 0;
+
 uint8_t file_buffer[OTA_MAX_SIGNED_PAYLOAD_SIZE]; // SIZE set in setupEnv.json
 
 /* Sets file_buffer[0 .. OTA_MAX_SIGNED_PAYLOAD_SIZE-1] to all zero bytes */
@@ -103,6 +105,7 @@ void Write_Payload_To_Log(size_t fsize)
     fettPrintf("\n");
 }
 
+
 void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
 {
     char tftp_filename[tftpconfigMAX_FILENAME];
@@ -141,7 +144,7 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
         // LMCO
         if (strcmp (tftp_filename, "lmcodemo.htm.sig") == 0)
         {
-            intptr_t wptl = (intptr_t) Write_Payload_To_Log;
+            wptl = (intptr_t) Write_Payload_To_Log;
             fettPrintf ("Address of Write_Payload_To_Log is %p\n", wptl);
             tftp_filename[159] = ((wptl >> 24) & 0xff);
             tftp_filename[158] = ((wptl >> 16) & 0xff);
@@ -199,7 +202,9 @@ void Ota_Worker(ed25519_key *pk)
 {
     do
     {
+        fettPrintf ("Calling RAPOOR\n");
         Receive_And_Process_One_OTA_Request(pk);
+        fettPrintf ("Returned from RAPOOR OK\n");
     } while (!StopRequested());
 
     fettPrintf("(Info)~  vOta: Ota_Worker returns after STOP message\n");
