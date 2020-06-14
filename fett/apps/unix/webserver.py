@@ -61,6 +61,24 @@ def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
 
 @decorate.debugWrap
 @decorate.timeWrap
+def dumpLogs(target):
+    webserverDir = os.path.join(getSetting('workDir'),'webserver')
+    printAndLog(f"Dumping webserver logs to {webserverDir}...",tee=getSetting('appLog'))
+    mkdir(webserverDir)
+    weblogs = getSetting("webserverLogs")
+    root    = weblogs["root"]
+
+    # These are the standard nginx logs
+    for l in weblogs["logs"]:
+        log = ftOpenFile(os.path.join(webserverDir, l), 'w')
+        # This is simpler than dealing with a potentially finicky network
+        # transfer. As long as the ability to run commands/tee the output is
+        # working then we will be able to grab the logs.
+        target.runCommand(f"cat {root}/{l}", shutdownOnError=False, tee=log)
+        log.close()
+
+@decorate.debugWrap
+@decorate.timeWrap
 def deploymentTest(target):
     """
     Let's make sure that the deployed web app is working correctly by issuing
