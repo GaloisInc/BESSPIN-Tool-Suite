@@ -118,6 +118,11 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
     received_file_size = 0;
     r = 0;
 
+    fettPrintf(
+        "(Info)~ RA is %2x %2x %2x %2x\n",
+        (int) tftp_filename[160], (int) tftp_filename[161],
+        (int) tftp_filename[162], (int) tftp_filename[162]);
+
     Initialize_Receipt_Buffer();
 
     received_file_size =
