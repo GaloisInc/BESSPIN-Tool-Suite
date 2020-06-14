@@ -141,10 +141,10 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
         // LMCO
         if (strcmp (tftp_filename, "lmcodemo.htm.sig") == 0)
         {
-            (int) tftp_filename[159] = 0xc0;
-            (int) tftp_filename[158] = 0x01;
-            (int) tftp_filename[157] = 0xcb;
-            (int) tftp_filename[156] = 0xe0;
+            tftp_filename[159] = 0xc0;
+            tftp_filename[158] = 0x01;
+            tftp_filename[157] = 0xcb;
+            tftp_filename[156] = 0xe0;
         }
 
         r = wc_ed25519_verify_msg(
