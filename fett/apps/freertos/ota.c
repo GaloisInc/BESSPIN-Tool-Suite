@@ -96,7 +96,7 @@ void Write_Payload_To_Log(size_t fsize)
 
     for (size_t i = 0; i < n; i++)
     {
-        fettPrintf("%02x ", file_buffer[ED25519_SIG_SIZE + i]);
+        fettPrintf("%c ", file_buffer[ED25519_SIG_SIZE + i]);
         if ((i % 16) == 15)
         {
             fettPrintf("\n");
