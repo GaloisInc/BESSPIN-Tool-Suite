@@ -9,17 +9,21 @@
 
 uint8_t file_buffer[OTA_MAX_SIGNED_PAYLOAD_SIZE]; // SIZE set in setupEnv.json
 
-void vOta(void *pvParameters);
-
-void Ota_Worker(ed25519_key *pk);
-
-/* Writes file_buffer[ED25519_SIG_SIZE .. ED25519_SIG_SIZE+fsize-1] to the filesystem */
-void Write_Payload_To_FS(size_t fsize);
+/* Sets file_buffer[0 .. OTA_MAX_SIGNED_PAYLOAD_SIZE-1] to all zero bytes */
+void Initialize_Receipt_Buffer(void);
 
 /* Writes file_buffer[ED25519_SIG_SIZE .. ED25519_SIG_SIZE+fsize-1] to the log */
 void Write_Payload_To_Log(size_t fsize);
 
-void Initialize_Receipt_Buffer(void);
+/* Writes file_buffer[ED25519_SIG_SIZE .. ED25519_SIG_SIZE+fsize-1] to the filesystem */
+void Write_Payload_To_FS(size_t fsize);
+
+void Receive_And_Process_One_OTA_Request(ed25519_key *pk);
+
+void Ota_Worker(ed25519_key *pk);
+
+void vOta(void *pvParameters);
+
 
 // This is the Public Key used for Ed25519 signature verification
 static const byte raw_pk[ED25519_KEY_SIZE] = {
@@ -99,77 +103,87 @@ void Write_Payload_To_Log(size_t fsize)
     fettPrintf("\n");
 }
 
-void Ota_Worker(ed25519_key *pk)
+void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
 {
-    do
-    {
-        int signature_ok;
-        uint32_t received_file_size;
-        int r;
-        char tftp_filename[tftpconfigMAX_FILENAME];
+    char tftp_filename[tftpconfigMAX_FILENAME];
+    int signature_ok;
+    uint32_t received_file_size;
+    int r;
 
-        memset(tftp_filename, 0, tftpconfigMAX_FILENAME);
+    memset(tftp_filename, 0, tftpconfigMAX_FILENAME);
 
-        Initialize_Receipt_Buffer();
+    tftp_filename[0] = 0;
+    tftp_filename[tftpconfigMAX_FILENAME-1] = 0;
+    signature_ok = 0;
+    received_file_size = 0;
+    r = 0;
 
-        received_file_size =
-            TFTP_Receive_One_File(file_buffer, OTA_MAX_SIGNED_PAYLOAD_SIZE,
+    Initialize_Receipt_Buffer();
+
+    received_file_size =
+        TFTP_Receive_One_File(file_buffer, OTA_MAX_SIGNED_PAYLOAD_SIZE,
                                   tftp_filename, tftpconfigMAX_FILENAME);
-        if (received_file_size >= OTA_FILE_MIN_SIZE)
+    if (received_file_size >= OTA_FILE_MIN_SIZE)
+    {
+        fettPrintf("(Info)~ OTA received a file of %d bytes\n",
+                   (int)received_file_size);
+        fettPrintf("(Info)~ OTA requested file name is %s\n",
+                   tftp_filename);
+        fettPrintf(
+            "(Info)~ First four bytes of signature are %2x %2x %2x %2x\n",
+            file_buffer[0], file_buffer[1], file_buffer[2], file_buffer[3]);
+
+        r = wc_ed25519_verify_msg(
+            (byte *)file_buffer, // ptr to first byte of signature
+            ED25519_SIG_SIZE,    // size of signature
+
+            file_buffer + ED25519_SIG_SIZE, // ptr to first byte of message
+            received_file_size - ED25519_SIG_SIZE, // size of message
+
+            &signature_ok, // Returned status
+            pk);           // public key
+        if ((r == 0) && (signature_ok == 1))
         {
-            fettPrintf("(Info)~ OTA received a file of %d bytes\n",
-                       (int)received_file_size);
-            fettPrintf("(Info)~ OTA requested file name is %s\n",
-                       tftp_filename);
-            fettPrintf(
-                "(Info)~ First four bytes of signature are %2x %2x %2x %2x\n",
-                file_buffer[0], file_buffer[1], file_buffer[2], file_buffer[3]);
+            uint8_t *message_data = file_buffer + ED25519_SIG_SIZE;
 
-            r = wc_ed25519_verify_msg(
-                (byte *)file_buffer, // ptr to first byte of signature
-                ED25519_SIG_SIZE,    // size of signature
-
-                file_buffer + ED25519_SIG_SIZE, // ptr to first byte of message
-                received_file_size - ED25519_SIG_SIZE, // size of message
-
-                &signature_ok, // Returned status
-                pk);           // public key
-            if ((r == 0) && (signature_ok == 1))
+            // Check for the special STOP signed message
+            if (received_file_size == (ED25519_SIG_SIZE + 4) &&
+                message_data[0] == 'S' && message_data[1] == 'T' &&
+                message_data[2] == 'O' && message_data[3] == 'P')
             {
-                uint8_t *message_data = file_buffer + ED25519_SIG_SIZE;
-
-                // Check for the special STOP signed message
-                if (received_file_size == (ED25519_SIG_SIZE + 4) &&
-                    message_data[0] == 'S' && message_data[1] == 'T' &&
-                    message_data[2] == 'O' && message_data[3] == 'P')
-                {
-                    fettPrintf("(Info)~  vOta: Signed STOP message received\n");
-                    setStopRequested();
-                }
-                else
-                {
-                    fettPrintf("(Info)~  vOta: Signature is OK\n");
-                    // now write the payload (not including the signature) to disk.
-                    Write_Payload_To_FS((size_t)received_file_size -
-                                        ED25519_SIG_SIZE);
-                    // and to the log
-                    // Write_Payload_To_Log((size_t)received_file_size -
-                    //                      ED25519_SIG_SIZE);
-                }
+                fettPrintf("(Info)~  vOta: Signed STOP message received\n");
+                setStopRequested();
             }
             else
             {
-                // T3D3 - forged signature detected, so carry on...
-                fettPrintf("(Info)~  vOta: Signature is NOT OK\n");
+                fettPrintf("(Info)~  vOta: Signature is OK\n");
+                // now write the payload (not including the signature) to disk.
+                Write_Payload_To_FS((size_t)received_file_size -
+                                    ED25519_SIG_SIZE);
+                // and to the log
+                // Write_Payload_To_Log((size_t)received_file_size -
+                //                      ED25519_SIG_SIZE);
             }
         }
         else
         {
-            // T3D3 - odd, but harmless, so carry on...
-            fettPrintf(
-                "(Info)~  vOta: OTA: received file too small to be signed.\n");
+            // Forged signature detected, so carry on...
+            fettPrintf("(Info)~  vOta: Signature is NOT OK\n");
         }
+    }
+    else
+    {
+        // Odd, but harmless, so carry on...
+        fettPrintf(
+            "(Info)~  vOta: OTA: received file too small to be signed.\n");
+    }
+}
 
+void Ota_Worker(ed25519_key *pk)
+{
+    do
+    {
+        Receive_And_Process_One_OTA_Request(pk);
     } while (!StopRequested());
 
     fettPrintf("(Info)~  vOta: Ota_Worker returns after STOP message\n");
