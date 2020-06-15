@@ -48,8 +48,6 @@ def prepareFreeRTOS():
     # define some paths
     osImageAsm = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.asm")
     setSetting('osImageAsm',osImageAsm)
-    assetsPath = os.path.join(getSetting('repoDir'),getSettingDict('freertosAssets',['path']))
-    setSetting('assetsDir',assetsPath)
 
     if (not isEnabled('buildApps')): #just fetch the image
         importImage()
