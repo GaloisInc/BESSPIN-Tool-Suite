@@ -429,7 +429,7 @@ def removeKernelModules():
 @decorate.debugWrap
 def installKernelModules():
     """install necessary kernel modules for an AWS PV"""
-    awsModPath = os.path.join(getSetting('connectalPath'), 'kmods')
+    awsModPath = os.path.join(getSetting(f'{getSetting("pvAWS")}Path'), 'kmods')
 
     #load our modules
     if (isEqSetting('pvAWS','firesim')):

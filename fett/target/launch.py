@@ -83,7 +83,7 @@ def prepareEnv ():
             aws.installKernelModules()
             aws.configTapAdaptor()
             aws.programAFI()
-        if (isEqSetting('pvAWS', 'connectal')):
+        elif (isEqSetting('pvAWS', 'connectal')):
             aws.prepareConnectal()
             aws.removeKernelModules()
             aws.configTapAdaptor()
