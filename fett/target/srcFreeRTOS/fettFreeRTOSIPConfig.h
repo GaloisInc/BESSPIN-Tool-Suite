@@ -6,9 +6,21 @@
 #define ipconfigUSE_HTTP 1
 #define ipconfigUSE_FTP  0
 
-/* Set ipconfigUSE_DNS to 1 to include a basic DNS client/resolver.  DNS is used
-through the FreeRTOS_gethostbyname() API function. */
-#define ipconfigUSE_DNS 0
+/* For FETT only...
+   We include DHCP to offer CVE-2019-16602
+   We include DNS  to offer CVE-2019-16525
+
+   Note that the FETT application does NOT actually USE DNS or DHCP, but we
+   include the code in the build to include these CVEs in the application's
+   attack surface.
+
+   See comments in FreeRTOS/Demo/RISC-V_Galois_P1/FreeRTOSIPConfig.h
+*/
+#define ipconfigUSE_DHCP 1
+/* Short DHCP timeout so that DHCP fails fast and falls back on static IP assignment */
+#define ipconfigMAXIMUM_DISCOVER_TX_PERIOD ( 2000 / portTICK_PERIOD_MS )
+#define ipconfigUSE_DNS 1
+
 
 /* Debugging and logging flags for the TCP sources */
 #if( FETT_DEBUG == 1 )
@@ -16,7 +28,7 @@ through the FreeRTOS_gethostbyname() API function. */
 #endif
 #define ipconfigHAS_PRINTF 1
 
-/* Network configuration 
+/* Network configuration
 - These options gets filled up during the run
 - The values can be set in "fett/base/utils/setupEnv.json"
 - This is a list of the macros, and the settings names inside "setupEnv.json"

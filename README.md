@@ -99,7 +99,7 @@ Some useful configuration options:
     [FreeBSD](https://www.freebsd.org/), or [Linux Debian](https://www.debian.org/),
     or [Busybox](https://busybox.net/about.html).
 - `useCustomOsImage`: If disabled, Nix (if image is available) or FETT-Binaries images will be used.
-- `useCustomBitfile`: If disabled, Nix (if bitfile is available) or FETT-Binaries bitfiles will be used.
+- `useCustomProcessor`: If disabled, Nix (if applicable) or FETT-Binaries bitfiles will be used. If enabled, a source directory has to be provided where the required files exist.
 - `openConsole`: returns an open console for Unix targets.
 - `buildApps`: Cross-compile as instructed in `fett/apps/build.py`.
 

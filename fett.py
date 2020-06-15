@@ -89,7 +89,7 @@ def main (xArgs):
         exitFett(EXIT.Files_and_paths)
 
     # Entrypoint
-    listEntrypoints = ['devHost','ciOnPrem']
+    listEntrypoints = ['devHost','ciOnPrem','ciAWS']
     if ((xArgs.entrypoint) and (xArgs.entrypoint not in listEntrypoints)):
         print(f"(Error)~  ENTRYPOINT has to be in [{','.join(listEntrypoints)}].")
         exitFett(EXIT.Configuration)

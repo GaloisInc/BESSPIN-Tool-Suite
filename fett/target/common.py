@@ -16,6 +16,7 @@ from fett.apps.unix import database
 from fett.apps.unix import webserver
 from fett.apps.unix import voting
 from fett.apps.freertos import freertos
+from fett.apps.unix import ssh
 
 class commonTarget():
     def __init__(self):
@@ -48,11 +49,12 @@ class commonTarget():
         self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
 
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
-        # TODO: These passwords need to be different per run
         self.rootPassword = 'ssithdefault' if (isEqSetting('osImage','FreeBSD')) else 'riscv'
         self.rootGroup = 'wheel' if (isEqSetting('osImage','FreeBSD')) else 'root'
-        self.userPassword = 'fett_2020'
-        self.userName = 'researcher'
+        self.userPassword = "fett_2020"
+        self.userName = (getSetting('userName') if
+                         isEnabled("useCustomCredentials") else
+                         "researcher")
         self.userCreated = False
 
         self.AttemptShutdownFailed = False
@@ -251,8 +253,22 @@ class commonTarget():
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
         if (self.userCreated):
-            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
-            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+            if isEnabled("useCustomCredentials"):
+                # Log out to prompt user to log in using their credentials.
+                # We can't log in for them because we only have the hash of
+                # their password
+                output = self.runCommand("exit", endsWith="login:")[1]
+                printAndLog("Note that there is another user.  User name: "
+                            f"\'{self.userName}\'")
+                printAndLog("Please log in using the credentials you supplied")
+
+                # Print login prompt from OS.  Drop the first 2 lines because
+                # those contain the exit / logout messages from running the
+                # `exit` command
+                print("\n".join(output.split("\n")[2:]), end="")
+            else:
+                printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+                printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
         try:
             self.process.interact(escape_character='\x05')
             #escaping interact closes the logFile, which will make any read/write fail inside pexpect logging
@@ -290,6 +306,7 @@ class commonTarget():
             self.runCommand (self.userPassword,endsWith="Retype new password:")
             self.runCommand (self.userPassword,expectedContents='password updated successfully')
             self.runCommand (f"usermod --shell /bin/bash {self.userName}")
+            self.runCommand(f"echo \"PS1=\'\${{debian_chroot:+(\$debian_chroot)}}\\u@\\h:\\w\$ \'\" >> /home/{self.userName}/.bashrc")
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"echo \"{self.userName}::::::{self.userName}::sh:{self.userPassword}\" | adduser -f -",expectedContents=f"Successfully added ({self.userName}) to the user database.",timeout=90)
         elif (isEqSetting('osImage','busybox')):
@@ -302,12 +319,50 @@ class commonTarget():
         self.userCreated = True
 
     @decorate.debugWrap
+    @decorate.timeWrap
+    def changeUserPassword(self):
+        """
+        Change the user's password hash to userPasswordHash from the
+        configuration file.
+
+        Precondition:  useCustomCredentials must be True in the configuration
+        file
+        Precondition:  User must have already been created
+        """
+        if not isEnabled("useCustomCredentials"):
+            self.shutdownAndExit("<changeUserPassword> cannot be called if "
+                                 "<useCustomCredentials> is False.",
+                                 exitCode=EXIT.Dev_Bug)
+        if not self.userCreated:
+            self.shutdownAndExit("<changeUserPassword> cannot be called if "
+                                 "user has not been created.",
+                                 exitCode=EXIT.Dev_Bug)
+
+        if not self.isCurrentUserRoot:
+            self.switchUser()
+
+        printAndLog(f"Changing user {self.userName}'s password")
+        userPasswordHash = getSetting("userPasswordHash")
+        if isEqSetting('osImage', 'debian'):
+            command = f"usermod -p \'{userPasswordHash}\' {self.userName}"
+            res = self.runCommand(command)
+        elif isEqSetting('osImage', 'FreeBSD'):
+            command = (f"echo \'{userPasswordHash}\' | "
+                       f"pw usermod {self.userName} -H 0")
+            self.runCommand(command, erroneousContents="pw:")
+        else:
+            self.shutdownAndExit("<createUser> is not implemented for "
+                                 f"<{getSetting('osImage')}> on "
+                                 f"<{getSetting('target')}>.",
+                                 overwriteConsole=True,
+                                 exitCode=EXIT.Implementation)
+
+
+    @decorate.debugWrap
     def getDefaultEndWith (self):
         if (isEqSetting('osImage','debian')):
             if (self.isCurrentUserRoot):
                 return ":~#"
-            elif (self.isSshConn):
-                return '[00m:[01;34m~[00m$'
             else:
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
@@ -326,7 +381,7 @@ class commonTarget():
     @decorate.debugWrap
     def getAllEndsWith (self):
         if (isEqSetting('osImage','debian')):
-            return [":~#", ":~\$", '[00m:[01;34m~[00m$']
+            return [":~#", ":~\$"]
         elif (isEqSetting('osImage','FreeBSD')):
             return ["fettPrompt>", ":~ \$"]
         elif (isEqSetting('osImage','busybox')):
@@ -338,7 +393,7 @@ class commonTarget():
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
                     erroneousContents=None,shutdownOnError=True,timeout=60,
-                    suppressErrors=False,expectExact=False,tee=None):
+                    suppressErrors=False,tee=None):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
         "   ARGUMENTS:
@@ -350,7 +405,6 @@ class commonTarget():
         "   shutdownOnError: Boolean. Whether to return or shutdown in case of error (timeout or contents related error)
         "   timeout: how long to wait for endsWith before timing out.
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
-        "   expectExact: Matching the endsWith should be by regex or exact match. As defined in pexpect.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
         "   RETURNS:
         "   --------
@@ -363,9 +417,7 @@ class commonTarget():
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
-        if (isEqSetting('osImage','debian') and self.isSshConn and (not self.isCurrentUserRoot)):
-            expectExact = True
-        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,expectExact=expectExact)
+        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
         logging.debug(f"textBack:\n{textBack}")
@@ -407,10 +459,7 @@ class commonTarget():
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
         def returnFalse (message='',noRetries=False,exc=None,fileToClose=None):
-            try:
-                self.keyboardInterrupt (shutdownOnError=False)
-            except:
-                pass
+            self.keyboardInterrupt ()
             if (exc):
                 logging.error(traceback.format_exc())
             if ((not noRetries) and (self.resendAttempts < self.limitResendAttempts-1)):
@@ -435,23 +484,29 @@ class commonTarget():
         except Exception as exc:
             return returnFalse (f"Failed to obtain the checksum of <{pathToFile}/{xFile}>.",noRetries=True,exc=exc)
 
-        if (isEqSetting('osImage','FreeBSD') and (self.isSshConn)): #send through SSH
-            scpCommand = f"scp {pathToFile}/{xFile} root@{self.ipTarget}:/root/"
+        if (getSetting('osImage') in ['debian', 'FreeBSD'] and (self.isSshConn)): #send through SSH
+            currentUser = 'root' if self.isCurrentUserRoot else self.userName
+            user_path = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
+            portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
+            scpCommand = f"scp{portPart} {pathToFile}/{xFile} {currentUser}@{self.ipTarget}:/{user_path}/"
+            passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
+            self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
             try:
-                retExpect = scpProcess.expect(["Password for root@[\w-]+\:","root@[\w\-\.]+\'s password\:","\)\?"],timeout=timeout)
+                retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
                 if (retExpect == 2): #needs a yes
                     scpProcess.sendline("yes")
-                    retExpect = scpProcess.expect(f"Password for root@[\w-]+\:",timeout=timeout)
+                    retExpect = scpProcess.expect(passwordPrompt,timeout=timeout)
                 if (retExpect in [0,1]): #password prompt
-                    scpProcess.sendline(self.rootPassword)
+                    pwd = self.rootPassword if self.isCurrentUserRoot else self.userPassword
+                    scpProcess.sendline(pwd)
                 else:
                     return returnFalse (f"Failed to authenticate the scp process.")
             except Exception as exc:
@@ -540,7 +595,7 @@ class commonTarget():
         if (isEqSetting('osImage','FreeRTOS')):
             appModules = [freertos]
         elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-            appModules = [webserver, database, voting]
+            appModules = [ssh, webserver, database, voting]
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
@@ -574,7 +629,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15):
         if (self.terminateTargetStarted):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
@@ -583,17 +638,17 @@ class commonTarget():
             self.keyboardInterruptTriggered = True
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
-        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=15)
+        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout)
         textBack = retCommand[1]
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=15)[1]
+            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout)[1]
         #See if the order is correct
         if (self.process):
             for i in range(2):
                 readAfter = self.readFromTarget(readAfter=True)
                 if (self.getDefaultEndWith() in readAfter):
                     try:
-                        self.process.expect(self.getDefaultEndWith(),timeout=10)
+                        self.process.expect(self.getDefaultEndWith(),timeout=timeout)
                     except Exception as exc:
                         warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
                     textBack += readAfter
@@ -671,15 +726,12 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,expectExact=False,overwriteShutdown=False):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False):
         self.checkFallToTty ("expectFromTarget")
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
         try:
-            if (expectExact):
-                retExpect = self.process.expect_exact(endsWith,timeout=timeout)
-            else:
-                retExpect = self.process.expect(endsWith,timeout=timeout)
+            retExpect = self.process.expect(endsWith,timeout=timeout)
             if ( (endsWith == pexpect.EOF) or isinstance(endsWith,str)): #only one string or EOF
                 textBack += self.readFromTarget(endsWith=endsWith)
             else: #It is a list
@@ -763,14 +815,15 @@ class commonTarget():
             self.fSshOut.close()
 
         self.killSshConn()
-        if (not self.onlySsh):
-            self.runCommand(" ",endsWith=self.getAllEndsWith(),expectExact=True) #Get some entropy going on
-            time.sleep(3)
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
         try:
             self.sshProcess = pexpect.spawn(sshCommand,logfile=self.fSshOut,timeout=timeout)
         except Exception as exc:
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
+
+        if (not self.onlySsh):
+            self.genStdinEntropy(endsWith=self.getAllEndsWith())
+
         self.isSshConn = True
         self.process = self.sshProcess
         passwordPrompt = [f"Password for {userName}@[\w\-\.]+\:", f"{userName}@[\w\-\.]+\'s password\:"]
@@ -832,6 +885,13 @@ class commonTarget():
         pingOut.close()
         printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
         return
+
+    @decorate.debugWrap
+    def genStdinEntropy (self,endsWith=None):
+        lenText = 240 if (isEqSetting('target','aws')) else 1000 # A UART buffer issue, should be resolved soon --> avoid long strings
+        alphabet = string.ascii_letters + string.digits + ' '
+        randText = ''.join(random.choice(alphabet) for i in range(lenText))
+        self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
 
 # END OF CLASS commonTarget
 

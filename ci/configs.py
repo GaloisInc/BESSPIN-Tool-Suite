@@ -8,21 +8,26 @@
 """
 
 fettTargetAMI = 'ami-04c55ee64b3c6f758' #fett-target-060120
+ciAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
+ciAWSbucket = 'ssith-fett-target-ci-develop'
 
 commonDefaults = {
     ('mode',('test',)),
-    ('binarySource',('GFE',)),
     ('openConsole',('No',)),
     ('useCustomOsImage',('No',)),
-    ('useCustomBitfile',('No',))
+    ('useCustomProcessor',('No',))
 }
 
 unixDefaults = commonDefaults.union({
+    ('useCustomCredentials',('yes',)),
+    ('userName',('researcher',)),
+    ('userPasswordHash',('$6$xcnc07LxM26Xq$VBAn8.ZfCzEf5MEpftSsCndDaxfPs5gXWjdrvrHcSA6O6eRoV5etd9V8E.BE0/q4P8pGOz96Nav3PPuXOktmv.',)),
     ('buildApps',('no',)),
     ('appTimeout',(30,))
 })
 
-unixOnPremDefaults = unixDefaults.union({
+gfe_unixOnPremDefaults = unixDefaults.union({
+    ('binarySource',('GFE',)),
     ('elfLoader',('netboot',)),
     ('netbootPortRangeStart',(5000,)),
     ('netbootPortRangeEnd',(6000,)),
@@ -30,23 +35,24 @@ unixOnPremDefaults = unixDefaults.union({
     ('qemuNtkPortRangeEnd',(6000,))
 })
 
-unixAwsDefaults = unixDefaults.union({
+gfe_unixAwsDefaults = unixDefaults.union({
+    ('binarySource',('GFE',)),
     ('elfLoader',('JTAG',))
 })
 
-unixAllTargets_onprem = unixOnPremDefaults.union({
+gfe_unixAllTargets_onprem = gfe_unixOnPremDefaults.union({
     ('processor',('chisel_p2', 'bluespec_p2',)),
     ('target',('qemu', 'fpga',)),
     ('osImage',('FreeBSD', 'debian',))
 })
 
-unixDevPR_onprem = unixOnPremDefaults.union({
+gfe_unixDevPR_onprem = gfe_unixOnPremDefaults.union({
     ('processor',('chisel_p2',)),
     ('target',('fpga',)),
     ('osImage',('FreeBSD', 'debian',))
 })
 
-unixDevPR_aws = unixAwsDefaults.union({
+gfe_unixDevPR_aws = gfe_unixAwsDefaults.union({
     ('processor',('chisel_p2',)),
     ('target',('aws',)),
     ('osImage',('debian',))
@@ -56,33 +62,46 @@ freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',)),
     ('buildApps',('yes',)),
-    ('cross-compiler',('GCC',)),
-    ('linker',('GCC',))
+    ('appTimeout',(120,))
 })
 
-freertosAllTargets_onprem = freertosDefaults.union({
+gfe_freertosAllTargets_onprem = freertosDefaults.union({
+    ('binarySource',('GFE',)),
     ('processor',('chisel_p1',)),
     ('target',('fpga',)),
-    ('appTimeout',(90,))
+    ('cross-compiler',('GCC',)),
+    ('linker',('GCC',)) 
 })
 
-freertosDevPR_onprem = freertosAllTargets_onprem
+gfe_freertosDevPR_onprem = gfe_freertosAllTargets_onprem
 
-freertosDevPR_aws = freertosDefaults.union({
+gfe_freertosDevPR_aws = freertosDefaults.union({
+    ('binarySource',('GFE',)),
     ('processor',('chisel_p1',)),
     ('target',('aws',)),
-    ('appTimeout',(120,))
+    ('cross-compiler',('GCC','Clang',)),
+    ('linker',('GCC',)) # If cross-compiler is Clang, linker will be over-written to LLD
+})
+
+lmco_freertosDevPR_aws = freertosDefaults.union({
+    ('binarySource',('LMCO',)),
+    ('processor',('chisel_p1',)),
+    ('target',('aws',)),
+    ('cross-compiler',('GCC',)),
+    ('linker',('GCC',)) # If cross-compiler is Clang, linker will be over-written to LLD
 })
 
 appSets = {
     'runPeriodic' : {
-        'freertos' : { 'freertos' : freertosAllTargets_onprem },
-        'unix' : { 'unix' : unixAllTargets_onprem }
+        'freertos' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem },
+        'unix' : { 'gfe_unix' : gfe_unixAllTargets_onprem }
     },
     'runDevPR' : {
-        'freertos' : { 'freertos' : freertosDevPR_onprem },
-        'unix' : { 'unix' : unixDevPR_onprem },
-        'aws' : { 'unix' : unixDevPR_aws, 'freertos' : freertosDevPR_aws }
+        'freertos' : { 'gfe_freertos' : gfe_freertosDevPR_onprem },
+        'unix' : { 'gfe_unix' : gfe_unixDevPR_onprem },
+        'aws' : { 'gfe_unix' : gfe_unixDevPR_aws, 
+                'gfe_freertos' : gfe_freertosDevPR_aws,
+                'lmco_freertos' : lmco_freertosDevPR_aws}
     }
 }
 appSets['runRelease'] = appSets['runPeriodic']
