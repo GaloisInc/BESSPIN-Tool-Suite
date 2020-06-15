@@ -120,7 +120,6 @@ def deploymentTest(target):
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget'))
-    setSetting('clientTftp',clientTftp)
 
     printAndLog ("Starting HTTP Smoketests.",doPrint=True,tee=getSetting('appLog'))
 
@@ -205,20 +204,26 @@ def terminateAppStack (target):
     ###################################
     fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
     filePath = os.path.join(getSetting('assetsDir'),fileName)
-    printAndLog ("Sending STOP message via OTA.",doPrint=True,tee=getSetting('appLog'))
+    printAndLog ("Sending STOP message via OTA.",doPrint=True)
+
+    clientTftp = tftpy.TftpClient(target.ipTarget, getSetting('TFTPPortTarget'))
+
+    logging.getLogger('tftpy').propagate = False
+    logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.out'),'w'))
+
     try:
-        getSetting('clientTftp').upload(fileName, filePath, timeout=10)
+        clientTftp.upload(fileName, filePath, timeout=10)
     except Exception as exc:
         rtosShutdownAndExit(target, f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
-    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
+    printAndLog (f"\n(Host)~  {filePath} uploaded to the TFTP server.", doPrint=False)
 
     # Run to completion
-    rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=20)
+    rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=20,tee=False)
 
     return True
 
 @decorate.debugWrap
-def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,endOfApp=False):
+def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,endOfApp=False,tee=True):
     if isinstance(endsWith,str):
         endsWith = [endsWith]
     elif (not isinstance(endsWith,list)):
@@ -229,9 +234,10 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
     elif (not isinstance(erroneousContents,list)):
         rtosShutdownAndExit(target, f"rtosRunCommand: <erroneousContents> has to be list or str.",exitCode=EXIT.Dev_Bug)
 
+    teeFile = getSetting('appLog') if (tee) else None
     retCommand = target.runCommand(command,endsWith=[">>>End of Fett<<<"] + endsWith,
         expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],shutdownOnError=shutdownOnError,
-        timeout=timeout,suppressErrors=suppressErrors,tee=getSetting('appLog'))
+        timeout=timeout,suppressErrors=suppressErrors,tee=teeFile)
 
     if ((retCommand[3] == 0) and (not endOfApp)): #FETT exited prematurely
         target.shutdownAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
