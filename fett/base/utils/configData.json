@@ -47,13 +47,13 @@
             "condition" : "useCustomOsImage"
         },
         {
-            "name" : "useCustomBitfile",
+            "name" : "useCustomProcessor",
             "type" : "boolean"
         },
         {
-            "name" : "pathToCustomBitfile",
-            "type" : "filePath",
-            "condition" : "useCustomBitfile"
+            "name" : "pathToCustomProcessorSource",
+            "type" : "dirPath",
+            "condition" : "useCustomProcessor"
         },
         {
             "name" : "binarySource",
@@ -83,6 +83,18 @@
             "type" : "int",
             "min" : 1024,
             "max" : 65535
+        },
+        {
+            "name" : "userName",
+            "type" : "string"
+        },
+        {
+            "name" : "userPasswordHash",
+            "type" : "string"
+        },
+        {
+            "name" : "useCustomCredentials",
+            "type" : "boolean"
         }
     ],
 

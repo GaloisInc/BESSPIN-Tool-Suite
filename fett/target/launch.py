@@ -105,8 +105,11 @@ def launchFett ():
         xTarget.createUser()
     if (isEnabled('runApp')):
         xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
+
+    if (isEnabled('isUnix') and isEnabled("useCustomCredentials")):
+        xTarget.changeUserPassword()
+
     return xTarget
-    
 
 """ This is the teardown function """
 @decorate.debugWrap

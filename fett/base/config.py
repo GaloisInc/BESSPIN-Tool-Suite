@@ -57,6 +57,26 @@ def loadConfiguration(configFile):
     # Create an isUnix setting
     setSetting('isUnix',getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])
 
+    if isEnabled('useCustomCredentials'):
+        # Check username is legal
+        userName = getSetting("userName")
+        if re.fullmatch("[a-zA-Z0-9]{1,14}", userName) is None:
+            logAndExit(f"userName \"{userName}\" does not satisfy the username "
+                       "requirements.  Must be 1-14 characters long and may "
+                       "consist only of alphanumeric ASCII characters.")
+
+        # Check password hash is legal
+        # Should look like: $6$<salt>$<SHA-512 hash>
+        # The "6" at the beginning identifies the hash as SHA-512, which is what
+        # our debian and FreeBSD installs expect
+        # <salt> may be up to 16 characters [a-zA-Z0-9./]
+        # <SHA-512 hash> must be exactly 86 characters in [a-zA-Z0-9./]
+        userPasswordHash = getSetting("userPasswordHash")
+        if re.fullmatch("\\$6\\$[a-zA-Z0-9./]{0,16}\\$[a-zA-Z0-9./]{86}", userPasswordHash) is None:
+            logAndExit(f"userPasswordHash \"{userPasswordHash}\" is not a legal "
+                       "password hash.  Must be a SHA-512 encrypted hash produced "
+                       "by crypt(3).")
+
     printAndLog('Configuration loaded successfully.')
     dumpSettings()
     return
@@ -119,7 +139,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 logAndExit(f"{fileName}: Failed to read <{iPar['name']}> in section [{xSection}]. Is it empty?",exitCode=EXIT.Configuration)
             if ('#' in val):
                 logAndExit(f"{fileName}: Illegal character in <{iPar['name']}> in section [{xSection}]. Is there a comment next to the value?",exitCode=EXIT.Configuration)
-            if (iPar['type'] == 'filePath'):
+            if (iPar['type'] in ['filePath','dirPath']):
                 doCheckPath = True
                 if (setup):
                     val = os.path.join(getSetting('repoDir'),val)
@@ -133,13 +153,11 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                         logAndExit(f"Configuration file: The condition <{iPar['condition']}> is not found in section [{xSection}].",exitCode=EXIT.Configuration)
                 elif (setup and ('condition' in iPar)):
                     logAndExit (f"The <condition> option is not yet implemented for the setupEnv json.",exitCode=EXIT.Configuration)
-                if (doCheckPath and (not os.path.isfile(val))):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].",exitCode=EXIT.Configuration)
-            elif (iPar['type'] == 'dirPath'):
-                if (setup):
-                    val = os.path.join(getSetting('repoDir'),val)
-                if (not os.path.isdir(val)):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].",exitCode=EXIT.Configuration)
+                if (doCheckPath):
+                    if ((iPar['type'] == 'filePath') and (not os.path.isfile(val))):
+                        logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].",exitCode=EXIT.Configuration)
+                    if ((iPar['type'] == 'dirPath') and (not os.path.isdir(val))):
+                        logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].",exitCode=EXIT.Configuration)
             elif (iPar['type'] == 'ipAddress'):
                 ipMatch = re.match(r"(\d{1,3}\.){3}\d{1,3}$",val)
                 if (ipMatch is None):

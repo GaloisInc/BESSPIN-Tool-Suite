@@ -49,11 +49,12 @@ class commonTarget():
         self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
 
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
-        # TODO: These passwords need to be different per run
         self.rootPassword = 'ssithdefault' if (isEqSetting('osImage','FreeBSD')) else 'riscv'
         self.rootGroup = 'wheel' if (isEqSetting('osImage','FreeBSD')) else 'root'
-        self.userPassword = 'fett_2020'
-        self.userName = 'researcher'
+        self.userPassword = "fett_2020"
+        self.userName = (getSetting('userName') if
+                         isEnabled("useCustomCredentials") else
+                         "researcher")
         self.userCreated = False
 
         self.AttemptShutdownFailed = False
@@ -247,8 +248,22 @@ class commonTarget():
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
         if (self.userCreated):
-            printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
-            printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
+            if isEnabled("useCustomCredentials"):
+                # Log out to prompt user to log in using their credentials.
+                # We can't log in for them because we only have the hash of
+                # their password
+                output = self.runCommand("exit", endsWith="login:")[1]
+                printAndLog("Note that there is another user.  User name: "
+                            f"\'{self.userName}\'")
+                printAndLog("Please log in using the credentials you supplied")
+
+                # Print login prompt from OS.  Drop the first 2 lines because
+                # those contain the exit / logout messages from running the
+                # `exit` command
+                print("\n".join(output.split("\n")[2:]), end="")
+            else:
+                printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
+                printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
         try:
             self.process.interact(escape_character='\x05')
             #escaping interact closes the logFile, which will make any read/write fail inside pexpect logging
@@ -297,6 +312,46 @@ class commonTarget():
         else:
             self.shutdownAndExit(f"<createUser> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",overwriteConsole=True,exitCode=EXIT.Implementation)
         self.userCreated = True
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def changeUserPassword(self):
+        """
+        Change the user's password hash to userPasswordHash from the
+        configuration file.
+
+        Precondition:  useCustomCredentials must be True in the configuration
+        file
+        Precondition:  User must have already been created
+        """
+        if not isEnabled("useCustomCredentials"):
+            self.shutdownAndExit("<changeUserPassword> cannot be called if "
+                                 "<useCustomCredentials> is False.",
+                                 exitCode=EXIT.Dev_Bug)
+        if not self.userCreated:
+            self.shutdownAndExit("<changeUserPassword> cannot be called if "
+                                 "user has not been created.",
+                                 exitCode=EXIT.Dev_Bug)
+
+        if not self.isCurrentUserRoot:
+            self.switchUser()
+
+        printAndLog(f"Changing user {self.userName}'s password")
+        userPasswordHash = getSetting("userPasswordHash")
+        if isEqSetting('osImage', 'debian'):
+            command = f"usermod -p \'{userPasswordHash}\' {self.userName}"
+            res = self.runCommand(command)
+        elif isEqSetting('osImage', 'FreeBSD'):
+            command = (f"echo \'{userPasswordHash}\' | "
+                       f"pw usermod {self.userName} -H 0")
+            self.runCommand(command, erroneousContents="pw:")
+        else:
+            self.shutdownAndExit("<createUser> is not implemented for "
+                                 f"<{getSetting('osImage')}> on "
+                                 f"<{getSetting('target')}>.",
+                                 overwriteConsole=True,
+                                 exitCode=EXIT.Implementation)
+
 
     @decorate.debugWrap
     def getDefaultEndWith (self):

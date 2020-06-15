@@ -144,7 +144,7 @@ def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, j
             exitFettCi (message=f"Failed to <import importlib.util, tarfile>.",exc=exc)
 
         # Tar the artifact folder
-        tarFileName = f"{artifactSuffix}.tar.gz"
+        tarFileName = f"{artifactsPath}.tar.gz"
         try:
             xFile = tarfile.open(name=tarFileName, mode="w:gz")
             xFile.add(artifactsPath, arcname=None)
