@@ -22,7 +22,8 @@ unixDefaults = commonDefaults.union({
     ('useCustomCredentials',('yes',)),
     ('userName',('researcher',)),
     ('userPasswordHash',('$6$xcnc07LxM26Xq$VBAn8.ZfCzEf5MEpftSsCndDaxfPs5gXWjdrvrHcSA6O6eRoV5etd9V8E.BE0/q4P8pGOz96Nav3PPuXOktmv.',)),
-    ('buildApps',('no',))
+    ('buildApps',('no',)),
+    ('rootUserAccess',('yes',))
 })
 
 gfe_unixOnPremDefaults = unixDefaults.union({

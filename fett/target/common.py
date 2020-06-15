@@ -307,8 +307,22 @@ class commonTarget():
             self.runCommand (self.userPassword,expectedContents='password updated successfully')
             self.runCommand (f"usermod --shell /bin/bash {self.userName}")
             self.runCommand(f"echo \"PS1=\'\${{debian_chroot:+(\$debian_chroot)}}\\u@\\h:\\w\$ \'\" >> /home/{self.userName}/.bashrc")
+            if isEnabled("rootUserAccess"):
+                # Enable passwordless `su` for users in `wheel` group and add
+                # user to `wheel`
+                self.runCommand('sed -i "s/# auth       sufficient pam_wheel.so trust/auth sufficient pam_wheel.so trust/" '
+                                '/etc/pam.d/su')
+                self.runCommand("groupadd wheel")
+                self.runCommand(f"usermod -aG wheel {self.userName}")
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"echo \"{self.userName}::::::{self.userName}::sh:{self.userPassword}\" | adduser -f -",expectedContents=f"Successfully added ({self.userName}) to the user database.",timeout=90)
+            if isEnabled("rootUserAccess"):
+                # Enable passwordless `su` for users in `wheel` group and add
+                # user to `wheel`
+                self.runCommand('sed -i "" "s/auth\\t\\trequisite\\tpam_group.so/'
+                                'auth\\t\\tsufficient\\tpam_group.so/" '
+                                '/etc/pam.d/su')
+                self.runCommand(f"pw group mod wheel -m {self.userName}")
         elif (isEqSetting('osImage','busybox')):
             self.runCommand ("mkdir -p /home/{0}".format(self.userName))
             self.runCommand ("adduser {0}".format(self.userName),endsWith="New password:",expectedContents='Changing password')
