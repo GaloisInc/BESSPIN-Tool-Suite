@@ -85,8 +85,9 @@ def dumpLogs(target):
 
     # These are the standard nginx logs
     for l in weblogs["logs"]:
-        log = ftOpenFile(os.path.join(webserverDir, l), 'w')
-        target.sendFile(webserverDir, l, toTarget=False, targetPath=userRoot, shutdownOnError=False)
+        localLogName = os.path.join(webserverDir, l)
+        log = ftOpenFile(localLogName, 'w')
+        target.sendFile(localLogName, l, toTarget=False, targetPath=userRoot, shutdownOnError=False)
         log.close()
         printAndLog(f"Grabbed webserver log <{l}>")
 

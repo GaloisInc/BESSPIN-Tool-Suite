@@ -540,7 +540,7 @@ class commonTarget():
         targetPathRoot  = f"/{user_path}" if targetPath is None else targetPath
         targetPath      = f"{targetPathRoot}/{xFile}"
         # The path to the file on the host
-        hostPath    = f"{pathToFile}/{xFile}"
+        hostPath    = f"{pathToFile}"
 
         try:
             f = targetPath if toTarget else hostPath
