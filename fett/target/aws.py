@@ -209,14 +209,6 @@ class connectalTarget(commonTarget):
         return outCmd
 
     @decorate.debugWrap
-    def getDefaultEndWith(self):
-        """TODO: required for now -- dangerous"""
-        if (isEqSetting('osImage','debian')):
-            return "#"
-        else:
-            self.shutdownAndExit(f"<connectalTarget.getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
-
-    @decorate.debugWrap
     def targetTearDown(self):
         return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
