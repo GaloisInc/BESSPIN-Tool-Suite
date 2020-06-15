@@ -78,7 +78,7 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target a
 
    Nix will now perform the first time builds and installation of the FETT Environment. This will take ~20 minutes. After the first time installation, subsequent re-runs will only take a few seconds. 
 
-6. As was suggested in #323, the permissions can be changed for the amazon FPGA management toosl to not require `sudo`. This can be done with
+6. As was suggested in #323, the permissions can be changed for the amazon FPGA management tools to not require `sudo`. This can be done with
    
    ```
    # sudo chmod u+s /usr/bin/fpga-*
@@ -92,7 +92,7 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target a
      /home/centos/.gitconfig
      ```
 
-   * **IF NOT USING `besspin_fett`, delete the contents of `/home/centos/.config/nix` as they contain your login credentials**
+   * **IF NOT USING `besspin_fett`, delete the contents of `/home/centos/.config/nix` as it contains your login credentials**
 
    * **delete/deactivate the SSH keys associated with your GitHub/GitLab accounts**
 
