@@ -49,7 +49,7 @@ def startFett ():
     launchFett()
 
     # tear down
-    endFett ()
+    endFett () 
 
 
 """ This is the prepare function before launch (binaries, network,) """ 
