@@ -246,8 +246,7 @@ def rtosShutdownAndExit (target, message, exc=None, exitCode=None):
 
 @decorate.debugWrap
 def prepareAssets ():
-    assetsPath = os.path.join(getSetting('repoDir'),getSettingDict('freertosAssets',['path']))
-    setSetting('assetsDir',assetsPath)
+    assetsPath = getSetting('assetsDir')
     #copy the empty header to buildDir
     httpAssetsFilename = 'httpAssets.h'
     cp (os.path.join(assetsPath,httpAssetsFilename),getSetting('appLibDir'))
