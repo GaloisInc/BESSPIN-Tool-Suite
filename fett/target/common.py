@@ -476,9 +476,16 @@ class commonTarget():
             self.shutdownAndExit(f"runCommand: fatal error.",exitCode=EXIT.Run)
         return [isSuccess, textBack, wasTimeout, idxEndsWith] #the 3rd argument is "timed-out"
 
+    # Send a between host and target.
+    # xFile      : file to send
+    # pathToFile : directory containing xFile on host
+    # targetPath : directory containing xFile on target
+    # toTarget   : direction of send.
+    #                True[default] = send from host to target
+    #                False         = send from target to host. Requires an SSH connection.
     @decorate.debugWrap
     @decorate.timeWrap
-    def sendFile (self,pathToFile,xFile,timeout=30,shutdownOnError=True): #send File to target
+    def sendFile (self,pathToFile,xFile,targetPath=None,toTarget=True,timeout=30,shutdownOnError=True): #send File to target
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
@@ -490,7 +497,7 @@ class commonTarget():
                 logging.error(message)
                 errorAndLog (f"sendFile: Failed to send <{pathToFile}/{xFile}> to target. Trying again...")
                 self.resendAttempts += 1
-                return self.sendFile (pathToFile,xFile,timeout=timeout,shutdownOnError=shutdownOnError)
+                return self.sendFile (pathToFile,xFile,targetPath=targetPath,toTarget=toTarget,timeout=timeout,shutdownOnError=shutdownOnError)
             elif (shutdownOnError):
                 self.shutdownAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
             else:
@@ -501,18 +508,55 @@ class commonTarget():
         if ( (self.ipTarget is None) or (self.portTarget is None) or (self.portHost is None) ):
             return returnFalse ("Ethernet not properly activated. <sendFile> can not execute.",noRetries=True)
 
-        #find the sha256sum of the file
-        try:
-            shaSumTX = str(subprocess.check_output (f"sha256sum {pathToFile}/{xFile} | awk '{{ print $1 }}'",stderr=subprocess.STDOUT,shell=True),'utf-8').strip()
+        def checksumHost(f):
+            #find the sha256sum of the file
+            shaSumTX = str(subprocess.check_output (f"sha256sum {f} | awk '{{ print $1 }}'",stderr=subprocess.STDOUT,shell=True),'utf-8').strip()
             logging.debug(f"Output from <sha256sum>:\n{shaSumTX}")
+            return shaSumTX
+
+        def checksumTarget(f):
+            shaSumRX = None
+            if (isEqSetting('osImage','debian')):
+                retShaRX = self.runCommand(f"sha256sum {f}")[1]
+            elif (isEqSetting('osImage','FreeBSD')):
+                retShaRX = self.runCommand(f"sha256 {f}",timeout=90)[1]
+                retShaRX += self.runCommand(" ")[1]
+            logging.debug(f"retShaRX:\n{retShaRX}")
+            for line in retShaRX.splitlines():
+                if (isEqSetting('osImage','debian')):
+                    shaMatch = re.match(rf"^(?P<shaSum>[0-9a-f]+)\s+ {f}\s*$",line)
+                elif (isEqSetting('osImage','FreeBSD')):
+                    shaMatch = re.match(rf"^SHA256 \({f}\) = (?P<shaSum>[0-9a-f]+)$",line)
+                if (shaMatch is not None):
+                    shaSumRX = shaMatch.group('shaSum')
+                    break
+            if (shaSumRX is None):
+                raise
+            return shaSumRX
+
+        # The path to the file on the target
+        currentUser = 'root' if self.isCurrentUserRoot else self.userName
+        user_path   = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
+        targetPathRoot  = f"/{user_path}" if targetPath is None else targetPath
+        targetPath      = f"{targetPathRoot}/{xFile}"
+        # The path to the file on the host
+        hostPath    = f"{pathToFile}/{xFile}"
+
+        try:
+            f = targetPath if toTarget else hostPath
+            shaSumTX = checksumHost(hostPath) if toTarget else checksumTarget(targetPath)
         except Exception as exc:
-            return returnFalse (f"Failed to obtain the checksum of <{pathToFile}/{xFile}>.",noRetries=True,exc=exc)
+            return returnFalse (f"Failed to obtain the checksum of <{f}>.",noRetries=True,exc=exc)
+
 
         if (getSetting('osImage') in ['debian', 'FreeBSD'] and (self.isSshConn)): #send through SSH
-            currentUser = 'root' if self.isCurrentUserRoot else self.userName
-            user_path = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
             portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
-            scpCommand = f"scp{portPart} {pathToFile}/{xFile} {currentUser}@{self.ipTarget}:/{user_path}/"
+
+            # if sending TO target, then "scp host target" otherwise flipped
+            scpTargetPath = f"{currentUser}@{self.ipTarget}:{targetPath}"
+            scpArgs       = f"{hostPath} {scpTargetPath}" if toTarget else f"{scpTargetPath} {hostPath}"
+            scpCommand    = f"scp{portPart} {scpArgs}"
+
             passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
@@ -544,6 +588,10 @@ class commonTarget():
             self.keyboardInterrupt (shutdownOnError=True)
 
         else: #send the file through netcat
+            if not toTarget:
+                logging.warning(f"sendFile: sending a file FROM the target requires and SSH connection")
+                return returnFalse()
+
             if (isEqSetting('osImage','debian')):
                 listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
             elif (isEqSetting('osImage','FreeBSD')):
@@ -565,25 +613,10 @@ class commonTarget():
 
         #obtaining the checksum
         try:
-            shaSumRX = None
-            if (isEqSetting('osImage','debian')):
-                retShaRX = self.runCommand(f"sha256sum {xFile}")[1]
-            elif (isEqSetting('osImage','FreeBSD')):
-                retShaRX = self.runCommand(f"sha256 {xFile}",timeout=90)[1]
-                retShaRX += self.runCommand(" ")[1]
-            logging.debug(f"retShaRX:\n{retShaRX}")
-            for line in retShaRX.splitlines():
-                if (isEqSetting('osImage','debian')):
-                    shaMatch = re.match(rf"^(?P<shaSum>[0-9a-f]+)\s+ {xFile}\s*$",line)
-                elif (isEqSetting('osImage','FreeBSD')):
-                    shaMatch = re.match(rf"^SHA256 \({xFile}\) = (?P<shaSum>[0-9a-f]+)$",line)
-                if (shaMatch is not None):
-                    shaSumRX = shaMatch.group('shaSum')
-                    break
-            if (shaSumRX is None):
-                raise
+            f = targetPath if not toTarget else hostPath
+            shaSumRX = checksumTarget(targetPath) if toTarget else checksumHost(hostPath)
         except Exception as exc:
-            return returnFalse (f"sendFile: Failed to obtain the checksum of <{xFile}> from target.",exc=exc)
+            return returnFalse (f"Failed to obtain the checksum of <{f}>.",noRetries=True,exc=exc)
 
         if (shaSumRX != shaSumTX):
             return returnFalse(f"sendFile: Checksum from <{xFile}> on target does not match.")

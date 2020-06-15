@@ -62,20 +62,33 @@ def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
 @decorate.debugWrap
 @decorate.timeWrap
 def dumpLogs(target):
+    appLog = getSetting('appLog')
     webserverDir = os.path.join(getSetting('workDir'),'webserver')
-    printAndLog(f"Dumping webserver logs to {webserverDir}...",tee=getSetting('appLog'))
+    printAndLog(f"Dumping webserver logs to {webserverDir}...", tee=getSetting('appLog'))
     mkdir(webserverDir)
     weblogs = getSetting("webserverLogs")
     root    = weblogs["root"]
+    user    = target.userName
+    userRoot = os.path.join("/", "{user}", "{root}")
+
+    target.runCommand(f"mkdir -p {userRoot}", shutdownOnError=False, tee=appLog)
+    for l in weblogs["logs"]:
+        target.runCommand(f"chown -f {userRoot}/{l}", shutdownOnError=False, tee=appLog)
+        target.runCommand(f"mkdir -p {userRoot}")
+        target.runCommand(f"cp {root}/{l} {userRoot}/{l}", shutdownOnError=False, tee=appLog)
+
+    if target.isCurrentUserRoot:
+        target.switchUser()
+    if not target.isSshConn:
+        if not target.openSshConn(userName=target.userName,timeout=30):
+            printAndLog("Failed to open an SSH connection to the target, resorting to console")
 
     # These are the standard nginx logs
     for l in weblogs["logs"]:
         log = ftOpenFile(os.path.join(webserverDir, l), 'w')
-        # This is simpler than dealing with a potentially finicky network
-        # transfer. As long as the ability to run commands/tee the output is
-        # working then we will be able to grab the logs.
-        target.runCommand(f"cat {root}/{l}", shutdownOnError=False, tee=log)
+        target.sendFile(webserverDir, l, toTarget=False, targetPath=userRoot, shutdownOnError=False)
         log.close()
+        printAndLog(f"Grabbed webserver log <{l}>")
 
 @decorate.debugWrap
 @decorate.timeWrap
