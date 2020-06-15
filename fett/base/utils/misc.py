@@ -64,7 +64,7 @@ def exitFett (exitCode):
 
         jobStatus = 'success' if (exitCode == EXIT.Success) else 'failure'
         aws.sendSQS(inExit_GetSetting('prodSqsQueueTX'), inExit_logAndExit, jobStatus, 
-                    inExit_GetSetting('prodJobId'), inExit_GetSetting('prodJobId'),
+                    inExit_GetSetting('prodJobId'), f"{inExit_GetSetting('prodJobId')}-TERM",
                     reason='fett-target-production-termination',
                     hostIp=inExit_GetSetting('awsIpHost'),
                     fpgaIp=inExit_GetSetting('awsIpTarget')
