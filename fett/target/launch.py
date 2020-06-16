@@ -125,7 +125,7 @@ def launchFett ():
 def endFett (xTarget):
     if (isEqSetting('mode','production')):
         # Call-todo -- collect any remaining logs & dumps from target
-        pass
+        xTarget.collectAppLogs()
 
     xTarget.shutdown()
     

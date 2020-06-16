@@ -61,21 +61,21 @@ def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def dumpLogs(target):
-    appLog = getSetting('appLog')
-    webserverDir = os.path.join(getSetting('workDir'),'webserver')
-    printAndLog(f"Dumping webserver logs to {webserverDir}...", tee=getSetting('appLog'))
+def dumpLogs(target, destination):
+    # The app log is closed by this point
+    webserverDir = os.path.join(destination,'webserver')
+    printAndLog(f"Dumping webserver logs to {webserverDir}...")
     mkdir(webserverDir)
     weblogs = getSetting("webserverLogs")
     root    = weblogs["root"]
     user    = target.userName
     userRoot = os.path.join("/", user, root)
 
-    target.runCommand(f"mkdir -p {userRoot}", shutdownOnError=False, tee=appLog)
+    target.runCommand(f"mkdir -p {userRoot}", shutdownOnError=False)
     for l in weblogs["logs"]:
-        target.runCommand(f"chown -f {userRoot}/{l}", shutdownOnError=False, tee=appLog)
+        target.runCommand(f"chown -f {userRoot}/{l}", shutdownOnError=False)
         target.runCommand(f"mkdir -p {userRoot}")
-        target.runCommand(f"cp {root}/{l} {userRoot}/{l}", shutdownOnError=False, tee=appLog)
+        target.runCommand(f"cp {root}/{l} {userRoot}/{l}", shutdownOnError=False)
 
     if target.isCurrentUserRoot:
         target.switchUser()

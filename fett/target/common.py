@@ -675,6 +675,29 @@ class commonTarget():
         return
 
     @decorate.debugWrap
+    @decorate.timeWrap
+    def collectAppLogs (self):
+        if (isEqSetting('osImage','FreeRTOS')):
+            appModules = [freertos]
+        elif (getSetting('osImage') in ['debian', 'FreeBSD']):
+            appModules = [ssh, webserver, database, voting]
+        else:
+            logging.info (f"collectAppLogs: no logs to gather for: <{getSetting('osImage')}>")
+            return
+
+        # Can this fail?
+        artifactPath = getSetting('extraArtifactsPath')
+
+        for appModule in appModules:
+            if hasattr(appModule, "dumpLogs"):
+                appModule.dumpLogs(self, artifactPath)
+            else:
+                logging.info (f"collectAppLogs: nothing to do for module {appModule}.")
+        logging.info (f"collectAppLogs: done collecting logs.")
+        return
+
+
+    @decorate.debugWrap
     def keyboardInterrupt (self,shutdownOnError=True,timeout=15):
         if (self.terminateTargetStarted):
             return ''
