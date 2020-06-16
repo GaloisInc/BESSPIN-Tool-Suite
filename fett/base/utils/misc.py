@@ -40,9 +40,9 @@ def exitFett (exitCode):
         if (exc): #empty message
             message += f"\n{formatExc(exc)}."
      
-        printAndLog (f"inExit: {message}")
+        errorAndLog (f"inExit: {message}")
         exitCode = EXIT.AWS
-        printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
+        errorAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
         exit(exitCode.value)
 
     def inExit_GetSetting (setting):
