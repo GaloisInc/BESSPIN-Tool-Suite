@@ -11,5 +11,6 @@
     "useCustomCredentials" : "No",
     "userName" : "COND-REQUIRED-SETTING",
     "userPasswordHash" : "COND-REQUIRED-SETTING",
+    "rootUserAccess" : "No",
     "buildApps" : "No"
 }
