@@ -479,13 +479,13 @@ class commonTarget():
     # Send a between host and target.
     # xFile      : file to send
     # pathToFile : directory containing xFile on host
-    # targetPath : directory containing xFile on target
+    # targetPathToFile : directory containing xFile on target
     # toTarget   : direction of send.
     #                True[default] = send from host to target
     #                False         = send from target to host. Requires an SSH connection.
     @decorate.debugWrap
     @decorate.timeWrap
-    def sendFile (self,pathToFile,xFile,targetPath=None,toTarget=True,timeout=30,shutdownOnError=True): #send File to target
+    def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,timeout=30,shutdownOnError=True): #send File to target
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
@@ -497,7 +497,7 @@ class commonTarget():
                 logging.error(message)
                 errorAndLog (f"sendFile: Failed to send <{pathToFile}/{xFile}> to target. Trying again...")
                 self.resendAttempts += 1
-                return self.sendFile (pathToFile,xFile,targetPath=targetPath,toTarget=toTarget,timeout=timeout,shutdownOnError=shutdownOnError)
+                return self.sendFile (pathToFile,xFile,targetPathToFile=targetPathToFile,toTarget=toTarget,timeout=timeout,shutdownOnError=shutdownOnError)
             elif (shutdownOnError):
                 self.shutdownAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
             else:
@@ -537,10 +537,10 @@ class commonTarget():
         # The path to the file on the target
         currentUser = 'root' if self.isCurrentUserRoot else self.userName
         user_path   = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
-        targetPathRoot  = f"/{user_path}" if targetPath is None else targetPath
+        targetPathRoot  = f"/{user_path}" if targetPathToFile is None else targetPathToFile
         targetPath      = f"{targetPathRoot}/{xFile}"
         # The path to the file on the host
-        hostPath    = f"{pathToFile}"
+        hostPath        = f"{pathToFile}/{xFile}"
 
         try:
             f = targetPath if toTarget else hostPath

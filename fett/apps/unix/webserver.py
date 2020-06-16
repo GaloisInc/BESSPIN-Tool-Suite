@@ -69,7 +69,7 @@ def dumpLogs(target):
     weblogs = getSetting("webserverLogs")
     root    = weblogs["root"]
     user    = target.userName
-    userRoot = os.path.join("/", "{user}", "{root}")
+    userRoot = os.path.join("/", user, root)
 
     target.runCommand(f"mkdir -p {userRoot}", shutdownOnError=False, tee=appLog)
     for l in weblogs["logs"]:
@@ -87,7 +87,7 @@ def dumpLogs(target):
     for l in weblogs["logs"]:
         localLogName = os.path.join(webserverDir, l)
         log = ftOpenFile(localLogName, 'w')
-        target.sendFile(localLogName, l, toTarget=False, targetPath=userRoot, shutdownOnError=False)
+        target.sendFile(webserverDir, l, toTarget=False, targetPathToFile=userRoot, shutdownOnError=False)
         log.close()
         printAndLog(f"Grabbed webserver log <{l}>")
 
