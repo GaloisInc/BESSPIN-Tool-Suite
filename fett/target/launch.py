@@ -49,6 +49,7 @@ def startFett ():
     xTarget = launchFett()
 
     if (isEqSetting('mode','production')):
+        mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
         # Call-todo -- start any on-line logging
         pass
 

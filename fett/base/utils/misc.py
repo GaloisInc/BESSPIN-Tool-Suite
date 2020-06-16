@@ -458,6 +458,7 @@ def tarArtifacts (logAndExitFunc,getSettingFunc):
     outFiles = glob.glob(os.path.join(workDir,'*.out'))
     configFile = getSettingFunc('configFile')
 
+    # Tool's main artifacts
     listArtifacts = [configFile, logFile] +  outFiles
 
     for xArtifact in listArtifacts:
@@ -465,6 +466,14 @@ def tarArtifacts (logAndExitFunc,getSettingFunc):
             shutil.copy2(xArtifact,artifactsPath)
         except Exception as exc:
             logAndExitFunc (message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",exc=exc)
+
+    # Extra artifacts
+    extraArtifactsPath = getSettingFunc('extraArtifactsPath')
+    if (extraArtifactsPath != 'UNKNOWN'): #The tool didn't fail to deploy
+        try:
+            shutil.copytree(extraArtifactsPath,os.path.join(artifactsPath,os.path.basename(extraArtifactsPath)))
+        except Exception as exc:
+            logAndExitFunc (message=f"Failed to copy <{extraArtifactsPath}> to <{artifactsPath}>.",exc=exc)
 
     tarFileName = f"{artifactsPath}.tar.gz"
     try:
