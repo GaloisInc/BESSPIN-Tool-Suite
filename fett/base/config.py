@@ -18,6 +18,16 @@ def loadJsonFile (jsonFile):
         logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
+def loadIniFile (iniFile):
+    xConfig = configparser.ConfigParser()
+    try:
+        fConfig = open(iniFile,'r')
+        xConfig.read_file(fConfig)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to read configuration file <{iniFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    return xConfig
+
 @decorate.debugWrap
 def loadConfiguration(configFile):
     #loading dev setup environment
@@ -25,13 +35,7 @@ def loadConfiguration(configFile):
     loadConfigSection(None,setupEnvData,'setupEnv',setup=True)
 
     #loading the configuration file
-    xConfig = configparser.ConfigParser()
-    try:
-        fConfig = open(configFile,'r')
-        xConfig.read_file(fConfig)
-        fConfig.close()
-    except Exception as exc:
-        logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    xConfig = loadIniFile(configFile)
 
     #loading the configuration parameters data
     configDataFile = getSetting('jsonDataFile')
@@ -212,5 +216,37 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 warnAndLog("Configuration file: Unrecognized option <%s> in section [%s]. This value is going to be ignored." %(option,xSection))
 
     return
+
+@decorate.debugWrap
+def genProdConfig(configFileSerialized, configFile):
+    """
+    This function:
+    - Loads the template from config.ini.
+    - Overwrites the template using the production template.
+    - Overwrites whatever is provided from the serialized input.
+    - Generate the configFile to be used by the tool
+    """
+
+    #loading the template configuration file (the repo's default)
+    templateConfigPath = os.path.join(getSetting('repoDir'),'config.ini')
+    xConfig = loadIniFile(templateConfigPath)
+
+    # loading the production template
+    prodTemplatePath = os.path.join(getSetting('repoDir'),'fett','base','utils','productionTemplate.json')
+    prodTemplate = loadJsonFile(prodTemplatePath)
+    
+    #Overwrite the options based on the template
+    for xSetting, xValue in prodTemplate.items():
+        wasSet = False
+        for xSection in xConfig:
+            if (xSetting in xConfig[xSection]):
+                xConfig.set(xSection,xSetting,str(xValue))
+                wasSet = True
+                break
+        if (not wasSet):
+            logAndExit(f"Failed to find the production template setting <{xSetting}> in <{templateConfigPath}>.")
+
+
+
 
 

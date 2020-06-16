@@ -1,0 +1,10 @@
+{
+    "mode" : "production",
+    "target" : "aws",
+    "elfLoader" : "JTAG",
+    "openConsole" : "No",
+    "useCustomOsImage" : "No",
+    "useCustomProcessor" : "No",
+    "useCustomCredentials" : "No",
+    "buildApps" : "No"
+}
