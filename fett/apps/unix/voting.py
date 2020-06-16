@@ -117,7 +117,7 @@ def deploymentTest (target):
         if len(res["voter_q"]) != 1:
             target.shutdownAndExit(f"Test[Check Voter]: Failed! [Unexpected Contents]", exitCode=EXIT.Run)
     except json.JSONDecodeError as exc:
-        target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, doPrint=False)
+        target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Clearing voting database")
     clear_voter_table(target, "/var/www/data/bvrs.db")
