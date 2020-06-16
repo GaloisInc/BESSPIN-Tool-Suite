@@ -233,10 +233,19 @@ def genProdConfig(configFileSerialized, configFile):
 
     # loading the production template
     prodTemplatePath = os.path.join(getSetting('repoDir'),'fett','base','utils','productionTemplate.json')
-    prodTemplate = loadJsonFile(prodTemplatePath)
+    prodSettings = loadJsonFile(prodTemplatePath)
+
+    # deserialize the input
+    try:
+        inputSettings = json.loads(configFileSerialized)
+    except Exception as exc:
+        logAndExit(f"Failed to deserialize <{configFileSerialized}>. Please check the syntax.",exc=exc,exitCode=Configuration)
+
+    # Overwrites the settings
+    prodSettings.update(inputSettings)
     
-    #Overwrite the options based on the template
-    for xSetting, xValue in prodTemplate.items():
+    # Overwrite the options based on the production template + input settings
+    for xSetting, xValue in prodSettings.items():
         wasSet = False
         for xSection in xConfig:
             if (xSetting in xConfig[xSection]):
@@ -244,7 +253,18 @@ def genProdConfig(configFileSerialized, configFile):
                 wasSet = True
                 break
         if (not wasSet):
-            logAndExit(f"Failed to find the production template setting <{xSetting}> in <{templateConfigPath}>.")
+            logAndExit(f"Failed to find the production setting <{xSetting}> in <{templateConfigPath}>.",exitCode=Configuration)
+
+    # Create the config file
+    try:
+        fConfig = open(configFile,'w')
+        xConfig.write(fConfig)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to write configuration file <{configFile}>.",exc=exc,exitCode=Files_and_paths)
+    
+
+
 
 
 
