@@ -154,6 +154,11 @@ class connectalTarget(commonTarget):
         self.ipHost = getSetting('awsIpHost')
         self.portTarget = getSetting('awsPortTarget')
         self.portHost = getSetting('awsPortHost')
+        # Important for the Web Server
+        self.httpPortTarget  = getSetting('HTTPPortTarget')
+        self.httpsPortTarget = getSetting('HTTPSPortTarget')
+        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
+        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -165,6 +170,7 @@ class connectalTarget(commonTarget):
 
         # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
         warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
+        # ssithAwsFpgaExtraArgs may be specified in agfi_id.json
         extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
         tapName = getSetting('awsTapAdaptorName')
         connectalCommand = ' '.join([
@@ -368,6 +374,7 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
+    # fpgaLoadExtraSettings may be specified in agfi_id.json
     fpgaLoadExtraSettings = getSetting('fpgaLoadExtraSettings', default=[])
     shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 
@@ -467,7 +474,8 @@ def installKernelModules():
         _sendKmsg (f"FETT-connectal: Installing pcieportal.ko.")
         sudoShellCommand(['insmod', f"{awsModPath}/portalmem.ko"])
         _sendKmsg (f"FETT-connectal: Installing portalmem.ko.")
-
+        ## make the connectal device nodes accessible to non-root users
+        sudoShellCommand(['bash', '-c', 'chmod agu+rw /dev/portal* /dev/connectal'])
     else:
         logAndExit(f"<aws.installKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
@@ -494,11 +502,22 @@ def prepareConnectal():
     cp (dtbsrc, dtbFile)
     logging.info(f"copy {dtbsrc} to {dtbFile}")
 
+    # extraFiles may be specified in agfi_id.json
+    extraFiles = getSetting('extraFiles', default=[])
+    for extraFile in extraFiles:
+        dname = os.path.dirname(extraFile)
+        bname = os.path.basename(extraFile)
+        if dname == 'osImages':
+            srcname = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', bname)
+            dstname = os.path.join(getSetting('osImagesDir'), bname)
+            cp (srcname, dstname)
+        else:
+            warnAndLog(f"unhandled directory for extra file {extraFile}")
+
     # TODO: use different .img?
     pvAWS = "connectal"
     imageDir = getSetting('osImagesDir')
     imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
                                    'osImages', pvAWS, "debian.img")
-    warnAndLog(f"<aws.prepareConnectal>: adding {getSetting('osImage')}.img from {imageSourcePath}. This may be changed in the future.")
     imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
     cp(imageSourcePath, imageFile)
