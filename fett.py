@@ -3,8 +3,8 @@
 
 --- fett.py is the main FETT-Target program. All documentation and features are based on 
     solely executing this file. Please do not execute any other file.
---- Usage: fett.py [-h] [-c CONFIGFILE] [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
-               [-ep ENTRYPOINT]
+--- usage: fett.py [-h] [-c CONFIGFILE] [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
+               [-ep {devHost,ciOnPrem,ciAWS,awsProd}]
 
 FETT (Finding Exploits to Thwart Tampering)
 
@@ -17,8 +17,8 @@ optional arguments:
   -l LOGFILE, --logFile LOGFILE
                         Overwrites the default logFile: ./${workDir}/fett.log
   -d, --debug           Enable debugging mode.
-  -ep ENTRYPOINT, --entrypoint ENTRYPOINT
-                        Entrypoint: devHost | ciOnPrem
+  -ep {devHost,ciOnPrem,ciAWS,awsProd}, --entrypoint {devHost,ciOnPrem,ciAWS,awsProd}
+                        The entrypoint
 --- Defaults: 
         workingDirectory = ./workDir
         configFile = ./config.ini
@@ -90,11 +90,7 @@ def main (xArgs):
         exitFett(EXIT.Files_and_paths)
 
     # Entrypoint
-    listEntrypoints = ['devHost','ciOnPrem','ciAWS']
-    if ((xArgs.entrypoint) and (xArgs.entrypoint not in listEntrypoints)):
-        print(f"(Error)~  ENTRYPOINT has to be in [{','.join(listEntrypoints)}].")
-        exitFett(EXIT.Configuration)
-    elif(xArgs.entrypoint is None):
+    if(xArgs.entrypoint is None):
         xArgs.entrypoint = 'devHost'
 
     # setup the logging
@@ -144,9 +140,10 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-w', '--workingDirectory', help='Overwrites the default working directory: ./workDir/')
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
-    xArgParser.add_argument ('-ep', '--entrypoint', help='Entrypoint: devHost | ciOnPrem | ciAWS')
+    xArgParser.add_argument ('-ep', '--entrypoint', choices=['devHost','ciOnPrem','ciAWS','awsProd'], help='The entrypoint')
     xArgParser.add_argument ('-job', '--jobId', help='The job ID in production mode.')
     xArgs = xArgParser.parse_args()
+    exit(0)
 
     #Trapping the signals
     signalsToCatch = [signal.SIGINT, signal.SIGTERM]
