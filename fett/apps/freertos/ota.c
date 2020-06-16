@@ -108,6 +108,10 @@ void Write_Payload_To_Log(size_t fsize)
 
 void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
 {
+    // These variable declarations influence the size of the stack
+    // frame for this function. and hence any stack-based attack code.
+    // If these local variables are changed in any way, then any attacking
+    // code will also have to be updated.
     char tftp_filename[tftpconfigMAX_FILENAME];
     int signature_ok;
     uint32_t received_file_size;
