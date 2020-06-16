@@ -11,7 +11,7 @@
         {
             "name" : "mode",
             "type" : "string",
-            "choices" : [ "test", "deploy" ]
+            "choices" : [ "test", "production" ]
         },
         {
             "name" : "target",
@@ -99,12 +99,6 @@
     ],
 
     "applications" : [
-        {
-            "name" : "appTimeout",
-            "type" : "int",
-            "min" : 10,
-            "max" : 1800
-        },
         {
             "name" : "buildApps",
             "type" : "boolean"

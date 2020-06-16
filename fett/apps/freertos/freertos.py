@@ -16,17 +16,6 @@ WEB_NOT_FOUND = 404
 def install (target):
     return
 
-@decorate.debugWrap
-@decorate.timeWrap
-def deploy(target):
-    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
-
-    #Here we should send a message to the portal
-
-    #Here we should wait for a termination signal from the portal
-
-    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
-    return
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -62,10 +51,6 @@ def curlTest(target, url, extra=[], http2=False):
         clval = 0
     return (clval, codeval)
 
-@decorate.debugWrap
-@decorate.timeWrap
-def extensiveTest(target):
-    deploymentTest(target)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -136,7 +121,6 @@ def deploymentTest(target):
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
     clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget'))
 
-
     printAndLog ("Starting HTTP Smoketests.",doPrint=True,tee=getSetting('appLog'))
 
     ###################################
@@ -201,21 +185,6 @@ def deploymentTest(target):
     # OtaFile should NOT have been changed, so check it's still as was
     HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 8, 'Verify FS not changed by OTA TC 8')
 
-
-    ###################################
-    # STOP the FreeRTOS application
-    # uploading the signed stop.htm file
-    ###################################
-    fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
-    filePath = os.path.join(getSetting('assetsDir'),fileName)
-    printAndLog ("Sending STOP message via OTA.",doPrint=True,tee=getSetting('appLog'))
-    try:
-        clientTftp.upload(fileName, filePath, timeout=10)
-    except Exception as exc:
-        rtosShutdownAndExit(target, f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
-    getSetting('appLog').write(f"\n(Host)~  {filePath} uploaded to the TFTP server.")
-
-
     # downloading a file - NOT IMPLEMENTED ON TARGET YET
     # fileName = "fileToReceive.html"
     # fileToReceive = os.path.join(getSetting('workDir'),fileName)
@@ -224,13 +193,37 @@ def deploymentTest(target):
     # except Exception as exc:
     #    rtosShutdownAndExit(target, f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
 
-
-    # Run to completion
-    rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=20)
     return
 
 @decorate.debugWrap
-def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,endOfApp=False):
+@decorate.timeWrap
+def terminateAppStack (target):
+    ###################################
+    # STOP the FreeRTOS application
+    # uploading the signed stop.htm file
+    ###################################
+    fileName = f"{getSettingDict('freertosAssets',['StopHtml'])}.sig"
+    filePath = os.path.join(getSetting('assetsDir'),fileName)
+    printAndLog ("Sending STOP message via OTA.",doPrint=True)
+
+    clientTftp = tftpy.TftpClient(target.ipTarget, getSetting('TFTPPortTarget'))
+
+    logging.getLogger('tftpy').propagate = False
+    logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.out'),'w'))
+
+    try:
+        clientTftp.upload(fileName, filePath, timeout=10)
+    except Exception as exc:
+        rtosShutdownAndExit(target, f"clientTftp: Failed to upload <{filePath}> to the server.",exc=exc,exitCode=EXIT.Run)
+    printAndLog (f"\n(Host)~  {filePath} uploaded to the TFTP server.", doPrint=False)
+
+    # Run to completion
+    rtosRunCommand(target,"runFreeRTOSapps",endOfApp=True,timeout=20,tee=False)
+
+    return True
+
+@decorate.debugWrap
+def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,endOfApp=False,tee=True):
     if isinstance(endsWith,str):
         endsWith = [endsWith]
     elif (not isinstance(endsWith,list)):
@@ -241,9 +234,10 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
     elif (not isinstance(erroneousContents,list)):
         rtosShutdownAndExit(target, f"rtosRunCommand: <erroneousContents> has to be list or str.",exitCode=EXIT.Dev_Bug)
 
+    teeFile = getSetting('appLog') if (tee) else None
     retCommand = target.runCommand(command,endsWith=[">>>End of Fett<<<"] + endsWith,
         expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],shutdownOnError=shutdownOnError,
-        timeout=timeout,suppressErrors=suppressErrors,tee=getSetting('appLog'))
+        timeout=timeout,suppressErrors=suppressErrors,tee=teeFile)
 
     if ((retCommand[3] == 0) and (not endOfApp)): #FETT exited prematurely
         target.shutdownAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
@@ -258,8 +252,7 @@ def rtosShutdownAndExit (target, message, exc=None, exitCode=None):
 
 @decorate.debugWrap
 def prepareAssets ():
-    assetsPath = os.path.join(getSetting('repoDir'),getSettingDict('freertosAssets',['path']))
-    setSetting('assetsDir',assetsPath)
+    assetsPath = getSetting('assetsDir')
     #copy the empty header to buildDir
     httpAssetsFilename = 'httpAssets.h'
     cp (os.path.join(assetsPath,httpAssetsFilename),getSetting('appLibDir'))

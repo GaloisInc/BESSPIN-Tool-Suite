@@ -47,18 +47,6 @@ def install (target):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def deploy (target):
-    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
-    
-    #Here we should send a message to the portal
-
-    #Here we should wait for a termination signal from the portal
-    
-    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
-    return
-
-@decorate.debugWrap
-@decorate.timeWrap
 def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
     out = curlRequest(url, http2=http2, extra=extra, method=method, rawOutput=rawOutput)
     if (not out):
@@ -70,11 +58,6 @@ def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
         return (None,None)
     printAndLog(f"curl {url} extra={extra} http2={http2} returned:\n{out}", doPrint=False,tee=getSetting('appLog'))
     return (version, code)
-
-@decorate.debugWrap
-@decorate.timeWrap
-def extensiveTest(target):
-    deploymentTest(target)
 
 @decorate.debugWrap
 @decorate.timeWrap

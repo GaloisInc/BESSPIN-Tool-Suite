@@ -31,6 +31,7 @@ try:
     from fett.base.utils.misc import *
     from fett.base.config import loadConfiguration
     from fett.target.launch import startFett, endFett
+    from fett.base.utils import aws
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
     try:
@@ -108,6 +109,7 @@ def main (xArgs):
     setSetting('logFile', logFile)
     setSetting('debugMode', xArgs.debug)
     setSetting('fettEntrypoint',xArgs.entrypoint)
+    setSetting('prodJobId', xArgs.jobId)
     # Load all configuration and setup settings
     setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
@@ -118,8 +120,21 @@ def main (xArgs):
     atexit.register(exitPeacefully,getSetting('trash'))
     
     #launch the tool
-    startFett()
-    endFett()
+    xTarget = startFett()
+    if (isEqSetting('mode','production')):
+        # Notify portal that we have deployed successfully
+        aws.sendSQS(getSetting('prodSqsQueueTX'), logAndExit, 'success', 
+                    getSetting('prodJobId'), f"{getSetting('prodJobId')}-DEPLOY",
+                    reason='fett-target-production-deployment',
+                    hostIp=getSetting('awsIpHost'),
+                    fpgaIp=getSetting('awsIpTarget')
+                    )
+        printAndLog("Sent deployment message to the SQS queue.")
+
+        aws.pollPortalQueueIndefinitely (getSetting('prodSqsQueueRX'), logAndExit)
+        printAndLog("Received termination message from the SQS queue.")
+        
+    endFett(xTarget)
     exitFett(EXIT.Success)
 
 if __name__ == '__main__':
@@ -130,6 +145,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
     xArgParser.add_argument ('-ep', '--entrypoint', help='Entrypoint: devHost | ciOnPrem | ciAWS')
+    xArgParser.add_argument ('-job', '--jobId', help='The job ID in production mode.')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals

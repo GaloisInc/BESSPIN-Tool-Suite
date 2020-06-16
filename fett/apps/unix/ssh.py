@@ -12,25 +12,7 @@ def install(target):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def deploy (target):
-    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
-
-    #Here we should send a message to the portal
-
-    #Here we should wait for a termination signal from the portal
-
-    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
-    return
-
-@decorate.debugWrap
-@decorate.timeWrap
 def deploymentTest (target):
-    extensiveTest (target)
-    return
-
-@decorate.debugWrap
-@decorate.timeWrap
-def extensiveTest (target):
     printAndLog("Testing SSH and SCP...", tee=getSetting('appLog'))
 
     target.switchUser()
