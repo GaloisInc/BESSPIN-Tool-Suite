@@ -33,7 +33,7 @@ optional arguments:
 
 try:
     from fett.base.utils.misc import *
-    from fett.base.config import loadConfiguration
+    from fett.base.config import loadConfiguration, genProdConfig
     from fett.target.launch import startFett, endFett
     from fett.base.utils import aws
     import logging, argparse, os, shutil, atexit, signal
@@ -69,18 +69,6 @@ def main (xArgs):
         print(f"(Error)~  Failed to create the working directory <{workDir}>.\n{formatExc(exc)}.")
         exitFett(EXIT.Files_and_paths)
 
-    # Check config file
-    if (xArgs.configFile):
-        configFile = os.path.abspath(xArgs.configFile)
-    else:
-        configFile = os.path.join(repoDir,'config.ini')
-    try:
-        fConfig = open(configFile,'r')
-        fConfig.close()
-    except Exception as exc:
-        print(f"(Error)~  Failed to read the configuration file <{configFile}>.\n{formatExc(exc)}.")
-        exitFett(EXIT.Configuration)
-
     # Check log file
     if (xArgs.logFile):
         logFile = os.path.abspath(xArgs.logFile)
@@ -105,7 +93,6 @@ def main (xArgs):
     # Store critical settings
     setSetting('repoDir', repoDir)
     setSetting ('workDir', workDir)
-    setSetting('configFile', configFile)
     setSetting('logFile', logFile)
     setSetting('debugMode', xArgs.debug)
     setSetting('fettEntrypoint',xArgs.entrypoint)
@@ -113,6 +100,16 @@ def main (xArgs):
     # Load all configuration and setup settings
     setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
+    if (xArgs.configFile):
+        configFile = os.path.abspath(xArgs.configFile)
+    elif (xArgs.configFileSerialized):
+        configFile = os.path.join(workDir,'production.ini')
+        genProdConfig (xArgs.configFileSerialized, configFile)
+        printAndLog(f"Configuration deserialized successfully to <{configFile}>.")
+    else:
+        configFile = os.path.join(repoDir,'config.ini')
+        printAndLog(f"Using the default configuration in <{configFile}>.")
+    setSetting('configFile', configFile)
     loadConfiguration(configFile)
 
     #Prepare the peaceful exit
