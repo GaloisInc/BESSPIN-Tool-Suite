@@ -121,7 +121,7 @@ Note that the AWS platform variant is determined based on the `binarySource`-`pr
     - `renameFile(src,dest)`: To rename files.
     - `copyDir(src,dest,renameDest=False,copyContents=False)`: Copy directory `src` to `dest`. If `renameDest` is enabled, the `src` becomes `dest` instead of its child. If `copyContents` is enabled, the `src` contents are copied to `dest`.
     - `make(argsList,dirPath)`: makes a makefile inside dirPath. The `-C` flag is added in the function, you add any other flags to make.
-    - `ftOpenFile(filePath,mode)`: safely opens a file, and stores its handle in the trash can. You should still close it cleanly, but if the error handling is complicated, then don't worry about it, everything in the trash can object will be destroyed upon exit.
+    - `ftOpenFile(filePath,mode)`: safely opens a file, and stores its handle in the trash can. You should still close it cleanly, but if the error handling is complicated, then don't worry about it, everything in the trashcan object will be destroyed upon exit.
     - `ftReadLines (filePath)`: Returns the contents in `filePath` as a list of strings
     - `matchExprInLines (expr,lines)`: If you pass a regex `expr` and a list of strings, it returns the matched string.
 
