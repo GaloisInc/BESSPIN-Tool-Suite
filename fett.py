@@ -3,7 +3,8 @@
 
 --- fett.py is the main FETT-Target program. All documentation and features are based on 
     solely executing this file. Please do not execute any other file.
---- usage: fett.py [-h] [-c CONFIGFILE] [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
+--- usage: fett.py [-h] [-c CONFIGFILE | -cjson CONFIGFILESERIALIZED]
+               [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
                [-ep {devHost,ciOnPrem,ciAWS,awsProd}]
 
 FETT (Finding Exploits to Thwart Tampering)
@@ -12,6 +13,9 @@ optional arguments:
   -h, --help            show this help message and exit
   -c CONFIGFILE, --configFile CONFIGFILE
                         Overwrites the default config file: ./config.ini
+  -cjson CONFIGFILESERIALIZED, --configFileSerialized CONFIGFILESERIALIZED
+                        Overwrites and augments the default production
+                        settings
   -w WORKINGDIRECTORY, --workingDirectory WORKINGDIRECTORY
                         Overwrites the default working directory: ./workDir/
   -l LOGFILE, --logFile LOGFILE
@@ -136,14 +140,15 @@ def main (xArgs):
 if __name__ == '__main__':
     # Reading the bash arguments
     xArgParser = argparse.ArgumentParser (description='FETT (Finding Exploits to Thwart Tampering)')
-    xArgParser.add_argument ('-c', '--configFile', help='Overwrites the default config file: ./config.ini')
+    xGroupConfig = xArgParser.add_mutually_exclusive_group(required=False)
+    xGroupConfig.add_argument ('-c', '--configFile', help='Overwrites the default config file: ./config.ini')
+    xGroupConfig.add_argument ('-cjson', '--configFileSerialized', help='Overwrites and augments the default production settings')
     xArgParser.add_argument ('-w', '--workingDirectory', help='Overwrites the default working directory: ./workDir/')
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
     xArgParser.add_argument ('-ep', '--entrypoint', choices=['devHost','ciOnPrem','ciAWS','awsProd'], help='The entrypoint')
     xArgParser.add_argument ('-job', '--jobId', help='The job ID in production mode.')
     xArgs = xArgParser.parse_args()
-    exit(0)
 
     #Trapping the signals
     signalsToCatch = [signal.SIGINT, signal.SIGTERM]
