@@ -95,6 +95,10 @@
         {
             "name" : "useCustomCredentials",
             "type" : "boolean"
+        },
+        {
+            "name": "rootUserAccess",
+            "type": "boolean"
         }
     ],
 

@@ -298,6 +298,30 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
+    def enableRootUserAccess(self):
+        """
+        Enable passwordless `su` for users in the `wheel` group and add the
+        user to `wheel`.
+        """
+        printAndLog("Enabling root user access...")
+        if isEqSetting('osImage', 'debian'):
+            self.runCommand('sed -i "s/# auth       sufficient pam_wheel.so trust/auth sufficient pam_wheel.so trust/" '
+                            '/etc/pam.d/su')
+            self.runCommand("groupadd wheel")
+            self.runCommand(f"usermod -aG wheel {self.userName}")
+        elif isEqSetting('osImage', 'FreeBSD'):
+            self.runCommand('sed -i "" "s/auth\\t\\trequisite\\tpam_group.so/'
+                            'auth\\t\\tsufficient\\tpam_group.so/" '
+                            '/etc/pam.d/su')
+            self.runCommand(f"pw group mod wheel -m {self.userName}")
+        else:
+            self.shutdownAndExit("<enableRootUserAccess> is not implemented "
+                                 f"for <{getSetting('osImage')}>.",
+                                 overwriteConsole=True,
+                                 exitCode=EXIT.Implementation)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
     def createUser (self):
         printAndLog (f"Creating a user...")
         if (isEqSetting('osImage','debian')):
