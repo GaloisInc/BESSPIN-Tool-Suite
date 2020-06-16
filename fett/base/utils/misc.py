@@ -88,10 +88,12 @@ def setSetting (setting, val):
     except Exception as exc:
         logAndExit (f"Failed to set setting <{setting}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
-def getSetting (setting):
+def getSetting (setting, default=None):
     try:
         return _settings[setting]
     except Exception as exc:
+        if default is not None:
+            return default
         logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
 def getSettingDict (setting,hierarchy):

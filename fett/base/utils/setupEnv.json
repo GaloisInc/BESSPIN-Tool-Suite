@@ -182,12 +182,13 @@
                 },
                 "MIT" : {
                     "bluespec_p2" : {
-                        "FreeBSD" : "connectal"
+                        "busybox" : "connectal",
+                        "debian" : "connectal"
                     }
                 },
                 "SRI-Cambridge" : {
                     "bluespec_p2" : {
-                        "FreeBSD" : "awsteria"
+                        "FreeBSD" : "connectal"
                     }
                 }
             }

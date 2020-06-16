@@ -147,6 +147,73 @@ class firesimTarget(commonTarget):
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
+class connectalTarget(commonTarget):
+    def __init__(self):
+        super().__init__()
+        self.ipTarget = getSetting('awsIpTarget')
+        self.ipHost = getSetting('awsIpHost')
+        self.portTarget = getSetting('awsPortTarget')
+        self.portHost = getSetting('awsPortHost')
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def boot(self,endsWith="login:",timeout=90):
+        if (getSetting('osImage') != 'debian'):
+            logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
+
+        awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'sim')
+
+        # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
+        warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
+        extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
+        tapName = getSetting('awsTapAdaptorName')
+        connectalCommand = ' '.join([
+            os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
+            f"--dtb={getSetting('osImageDtb')}",
+            f"--block={getSetting('osImageImg')}",
+            f"--elf={getSetting('osImageElf')}",
+            f"--tun={tapName}"
+        ]
+                                    + extraArgs)
+
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+
+        try:
+            self.ttyProcess = pexpect.spawn(connectalCommand,logfile=self.fTtyOut,timeout=90,
+                                         cwd=awsConnectalHostPath)
+            self.process = self.ttyProcess
+            time.sleep(1)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+        except Exception as exc:
+            self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+         # The tap needs to be turned up AFTER booting
+        getTapAdaptorUp ()
+
+    def interact(self):
+        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl-A X\" to exit.")
+        super().interact()
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def activateEthernet(self):
+        if (isEqSetting('osImage','debian')):
+            outCmd = self.runCommand ("ifconfig eth0 up")
+            self.runCommand (f"ifconfig eth0 {self.ipTarget}")
+            self.runCommand (f"ifconfig eth0 netmask {getSetting('awsNetMaskTarget')}")
+            self.runCommand (f"ifconfig eth0 hw ether {getSetting('awsMacAddrTarget')}")
+        else:
+            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+
+        self.pingTarget()
+        return outCmd
+
+    @decorate.debugWrap
+    def targetTearDown(self):
+        return True
+    # ------------------ END OF CLASS connectalTarget ----------------------------------------
+
+
 @decorate.debugWrap
 def configTapAdaptor():
     tapAdaptor = getSetting('awsTapAdaptorName')
@@ -219,25 +286,6 @@ def getTapAdaptorUp ():
     sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'])
 
 @decorate.debugWrap
-def setupKernelModules():
-    if (isEqSetting('pvAWS','firesim')):
-        #remove all modules to be safe
-        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
-        for kmod in kmodsToClean:
-            sudoShellCommand(['rmmod', kmod],check=False)
-            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
-
-        awsFiresimModPath = os.path.join(getSetting('firesimPath'), 'kmods')
-
-        #load our modules
-        sudoShellCommand(['insmod', f"{awsFiresimModPath}/nbd.ko", 'nbds_max=128'])
-        _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
-        sudoShellCommand(['insmod', f"{awsFiresimModPath}/xdma.ko", 'poll_mode=1'])
-        _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
-    else:
-        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
-
-@decorate.debugWrap
 def _sendKmsg(message):
     """send message to /dev/kmsg"""
     # TODO: replace all whitespace with underscores?
@@ -296,7 +344,8 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'])
+    fpgaLoadExtraSettings = getSetting('fpgaLoadExtraSettings', default=[])
+    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 
     # wait until the FPGA has been flashed
     _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")
@@ -314,47 +363,118 @@ def flashFpgas(agfi):
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
-def prepareFiresim():
-    """prepare the firesim binaries for the FETT work directory"""
-    def getAgfiJson(jsonFile):
-        keyName = 'agfi_id'
-        contents = safeLoadJsonFile(jsonFile)
-        if keyName not in contents:
-            logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi_id> in {jsonFile}")
-        return contents[keyName]
+def getAgfiId(jsonFile):
+    keyName = 'agfi_id'
+    contents = safeLoadJsonFile(jsonFile)
+    if keyName not in contents:
+        logAndExit(f"<aws.getAgfiJson>: unable to find key <agfi_id> in {jsonFile}")
+    return contents[keyName]
 
-    # copy over the firesim kernel modules, simulation interfaces
-    if getSetting('useCustomProcessor'):
-        firesimSourcePath = getSetting('pathToCustomProcessorSource')
-    else:
-        firesimSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 
-                                    'bitfiles', 'firesim', getSetting('processor'))
+def getAgfiSettings(jsonFile):
+    contents = safeLoadJsonFile(jsonFile)
+    return contents
 
-    firesimModPath = os.path.join(firesimSourcePath, 'kmods')
-    firesimSimPath = os.path.join(firesimSourcePath, 'sim')
+def copyAWSSources():
+    pvAWS = getSetting('pvAWS')
 
-    firesimWorkPath = os.path.join(getSetting("workDir"), "firesim")
-    mkdir(firesimWorkPath,addToSettings='firesimPath')
+    if pvAWS not in ['firesim', 'connectal']:
+        logAndExit(f"<aws.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
 
-    # firesim needs two files: img and dwarf:
+    # copy over available paths
+    awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                 'bitfiles', pvAWS, getSetting('processor'))
+    awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
+
+    # populate workDir with available subdirectories
+    try:
+        subdirectories = [os.path.join(awsSourcePath, o) for o in os.listdir(awsSourcePath) if os.path.isdir(os.path.join(awsSourcePath,o))]
+        if len(subdirectories) > 0:
+            mkdir(awsWorkPath,addToSettings=f'{pvAWS}Path')
+            for awsDirPath in subdirectories:
+                copyDir(os.path.join(awsSourcePath, awsDirPath), awsWorkPath)
+    except Exception as exc:
+        logAndExit(f"<aws.copyAWSSources>: error populating subdirectories of AWS PV {pvAWS}", exc=exc, exitCode=EXIT.Files_and_paths)
+
+    # aws resources need an image file:
     imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
     setSetting("osImageImg",imageFile)
     if (isEqSetting('osImage','FreeRTOS')): # create a filesystem -- 256MB [Note that size >=256MB (for mkfs.fat 4.1, but for v.3.0 has to be >256Mb)]
         shellCommand(['dd','if=/dev/zero',f"of={imageFile}",'bs=256M','count=1'])
         shellCommand(['mkfs.vfat','-S','512','-n',"\"DATA42\"",'-F','32', imageFile])
-    else: #an empty file will do 
+    else: #an empty file will do
         touch(imageFile)
+
+    # extract the agfi and put it in setting
+    agfiJsonPath = os.path.join(awsSourcePath, 'agfi_id.json')
+    agfiSettings = getAgfiSettings(agfiJsonPath)
+    setSetting('agfiId', agfiSettings['agfi_id'])
+    for k in agfiSettings:
+        if k == "_afgi-id.json":
+            continue
+        setSetting(k, agfiSettings[k])
+
+@decorate.debugWrap
+def removeKernelModules():
+    if isEqSetting('pvAWS', 'firesim'):
+        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
+    elif isEqSetting('pvAWS', 'connectal'):
+        kmodsToClean = ['xocl', 'xdma', 'pcieportal', 'portalmem']
+    else:
+        printAndLog(f"<aws.removeKernelModules>: no kernel modules to remove for AWS PV {getSetting('pvAWS')}")
+        kmodsToClean = []
+    for kmod in kmodsToClean:
+        sudoShellCommand(['rmmod', kmod],check=False)
+        _sendKmsg (f"<aws.removeKernelModules>: Removing {kmod} if it exists.")
+
+@decorate.debugWrap
+def installKernelModules():
+    """install necessary kernel modules for an AWS PV"""
+    awsModPath = os.path.join(getSetting(f'{getSetting("pvAWS")}Path'), 'kmods')
+
+    #load our modules
+    if (isEqSetting('pvAWS','firesim')):
+        sudoShellCommand(['insmod', f"{awsModPath}/nbd.ko", 'nbds_max=128'])
+        _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
+        sudoShellCommand(['insmod', f"{awsModPath}/xdma.ko", 'poll_mode=1'])
+        _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
+
+    elif (isEqSetting('pvAWS', 'connectal')):
+        sudoShellCommand(['insmod', f"{awsModPath}/pcieportal.ko"])
+        _sendKmsg (f"FETT-connectal: Installing pcieportal.ko.")
+        sudoShellCommand(['insmod', f"{awsModPath}/portalmem.ko"])
+        _sendKmsg (f"FETT-connectal: Installing portalmem.ko.")
+
+    else:
+        logAndExit(f"<aws.installKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+
+# ------------------ FireSim Functions ----------------------------------------
+
+def prepareFiresim():
+    """prepare the firesim binaries for the FETT work directory"""
+    copyAWSSources()
+
     dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
     setSetting("osImageDwarf",dwarfFile)
     touch(dwarfFile)
 
-    # copy over sim and kmods
-    copyDir(firesimSimPath, firesimWorkPath)
-    copyDir(firesimModPath, firesimWorkPath)
+# ------------------ Connectal Functions ----------------------------------------
 
-    # extract the agfi and put it in setting
-    processorName = getSetting('processor')
-    agfiJsonPath = os.path.join(firesimSourcePath, 'agfi_id.json')
-    agfiId = getAgfiJson(agfiJsonPath)
-    setSetting("agfiId", agfiId)
+def prepareConnectal():
+    """connectal environment preparation"""
+    copyAWSSources()
 
+    # connectal requires a device tree blob
+    dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
+    setSetting("osImageDtb",dtbFile)
+    dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
+    cp (dtbsrc, dtbFile)
+    logging.info(f"copy {dtbsrc} to {dtbFile}")
+
+    # TODO: use different .img?
+    pvAWS = "connectal"
+    imageDir = getSetting('osImagesDir')
+    imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                   'osImages', pvAWS, "debian.img")
+    warnAndLog(f"<aws.prepareConnectal>: adding {getSetting('osImage')}.img from {imageSourcePath}. This may be changed in the future.")
+    imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
+    cp(imageSourcePath, imageFile)
