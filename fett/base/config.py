@@ -220,7 +220,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
 @decorate.debugWrap
 def genProdConfig(configFileSerialized, configFile):
     """
-    This function:
+    This generates "production.ini":
     - Loads the template from config.ini.
     - Overwrites the template using the production template.
     - Overwrites whatever is provided from the serialized input.
@@ -263,10 +263,3 @@ def genProdConfig(configFileSerialized, configFile):
     except Exception as exc:
         logAndExit(f"Failed to write configuration file <{configFile}>.",exc=exc,exitCode=Files_and_paths)
     
-
-
-
-
-
-
-
