@@ -113,9 +113,10 @@ def launchFett ():
         xTarget.createUser()
     if (isEnabled('runApp')):
         xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
-
     if (isEnabled('isUnix') and isEnabled("useCustomCredentials")):
         xTarget.changeUserPassword()
+    if isEnabled('isUnix') and isEnabled("rootUserAccess"):
+        xTarget.enableRootUserAccess()
 
     return xTarget
 
