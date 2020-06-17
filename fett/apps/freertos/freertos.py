@@ -109,11 +109,11 @@ def OTATest(clientTftp, fileName, TCNum, TCDesc):
         # an error
         printAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=False,tee=getSetting('appLog'))
 
-@decorate.debugWrap
-@decorate.timeWrap
 # Like OTATest but always transmits the contents of "lmcodemo.htm.sig" (which
 # has an invalid signature), BUT with a different fileName in the TFTP Write
 # Request header which can therefore be used to attack the target.
+@decorate.debugWrap
+@decorate.timeWrap
 def OTAHack(clientTftp, fileName, TCNum, TCDesc):
     filePath = os.path.join(getSetting('assetsDir'),"lmcodemo.htm.sig")
     getSetting('appLog').write(f"(Host)~  OTA HACK SmokeTest Case {TCNum} - SEND {fileName}, {TCDesc}\n")
