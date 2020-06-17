@@ -543,8 +543,8 @@ class commonTarget():
         hostPath        = f"{pathToFile}/{xFile}"
 
         try:
-            f = targetPath if toTarget else hostPath
-            shaSumTX = checksumHost(hostPath) if toTarget else checksumTarget(targetPath)
+            f = hostPath if toTarget else targetPath
+            shaSumTX = checksumHost(f) if toTarget else checksumTarget(f)
         except Exception as exc:
             return returnFalse (f"Failed to obtain the checksum of <{f}>.",noRetries=True,exc=exc)
 
@@ -589,8 +589,8 @@ class commonTarget():
 
         else: #send the file through netcat
             if not toTarget:
-                logging.warning(f"sendFile: sending a file FROM the target requires and SSH connection")
-                return returnFalse()
+                return returnFalse("sendFile: sending a file FROM the target requires and SSH connection",
+                                   noRetries=True)
 
             if (isEqSetting('osImage','debian')):
                 listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
