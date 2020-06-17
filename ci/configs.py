@@ -23,7 +23,7 @@ unixDefaults = commonDefaults.union({
     ('userName',('researcher',)),
     ('userPasswordHash',('$6$xcnc07LxM26Xq$VBAn8.ZfCzEf5MEpftSsCndDaxfPs5gXWjdrvrHcSA6O6eRoV5etd9V8E.BE0/q4P8pGOz96Nav3PPuXOktmv.',)),
     ('buildApps',('no',)),
-    ('appTimeout',(30,))
+    ('rootUserAccess',('yes',))
 })
 
 gfe_unixOnPremDefaults = unixDefaults.union({
@@ -61,8 +61,7 @@ gfe_unixDevPR_aws = gfe_unixAwsDefaults.union({
 freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',)),
-    ('buildApps',('yes',)),
-    ('appTimeout',(120,))
+    ('buildApps',('yes',))
 })
 
 gfe_freertosAllTargets_onprem = freertosDefaults.union({

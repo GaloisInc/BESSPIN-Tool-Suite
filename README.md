@@ -89,7 +89,7 @@ fett.py [-h] [-c CONFIGFILE] [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
 The default configuration file is `config.ini`, working directory is `$REPO/workDir`, and log file is `$REPO/$WRKDIR/fett.log`. If you run with the debug (`-d`) flag, the log file will have a lot of useful info.
 
 Some useful configuration options:
-- `mode`: Choose either `test` for the testing flow, or `deploy` for leaving the apps switched on for researchers interactions.
+- `mode`: Choose either `test` for the testing flow, or `production` for leaving the apps switched on for researchers interactions.
 - `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
 - `target`: Choose either `aws` for the main FETT target, `fpga` for Xilinx VCU118 hardware
     emulation, or `qemu` for [QEMU](https://www.qemu.org/) emulation.

@@ -9,7 +9,7 @@ from fett.target import common
 from fett.target import fpga
 from fett.target import qemu
 from fett.target import aws
-#from fett.target import aws
+from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
 import sys, os
 from importlib.machinery import SourceFileLoader
@@ -46,10 +46,14 @@ def startFett ():
     prepareEnv()
 
     # launch fett
-    launchFett()
+    xTarget = launchFett()
 
-    # tear down
-    endFett () 
+    if (isEqSetting('mode','production')):
+        mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
+        # Call-todo -- start any on-line logging
+        pass
+
+    return xTarget
 
 
 """ This is the prepare function before launch (binaries, network,) """ 
@@ -57,8 +61,8 @@ def startFett ():
 def prepareEnv ():
     printAndLog (f"Preparing the environment...")
     # cannot buildApps on aws
-    if (isEnabled('buildApps') and isEqSetting('target','aws') and isEqSetting('mode','deploy')):
-        warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <deploy> mode. This will be switched off.")
+    if (isEnabled('buildApps') and isEqSetting('target','aws') and isEqSetting('mode','production')):
+        warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <production> mode. This will be switched off.")
         setSetting('buildApps',False)
 
     # config sanity checks for building apps
@@ -109,16 +113,27 @@ def launchFett ():
         xTarget.createUser()
     if (isEnabled('runApp')):
         xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
-    if isEnabled("useCustomCredentials"):
+    if (isEnabled('isUnix') and isEnabled("useCustomCredentials")):
         xTarget.changeUserPassword()
+    if isEnabled('isUnix') and isEnabled("rootUserAccess"):
+        xTarget.enableRootUserAccess()
 
-    xTarget.shutdown()
-
+    return xTarget
 
 """ This is the teardown function """
 @decorate.debugWrap
-def endFett ():
-    pass
+def endFett (xTarget):
+    if (isEqSetting('mode','production')):
+        # Call-todo -- collect any remaining logs & dumps from target
+        pass
+
+    xTarget.shutdown()
+    
+    if (isEqSetting('mode','production')):
+        tarballPath = tarArtifacts (logAndExit,getSetting)
+        uploadToS3(getSetting('prodS3Bucket'), logAndExit, 
+                        tarballPath, 'fett-target/production/artifacts/')
+        printAndLog(f"Artifacts tarball uploaded to S3.")
 
 """ This decides the classes hierarchy """
 @decorate.debugWrap

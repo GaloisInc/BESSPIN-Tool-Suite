@@ -298,6 +298,30 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
+    def enableRootUserAccess(self):
+        """
+        Enable passwordless `su` for users in the `wheel` group and add the
+        user to `wheel`.
+        """
+        printAndLog("Enabling root user access...")
+        if isEqSetting('osImage', 'debian'):
+            self.runCommand('sed -i "s/# auth       sufficient pam_wheel.so trust/auth sufficient pam_wheel.so trust/" '
+                            '/etc/pam.d/su')
+            self.runCommand("groupadd wheel")
+            self.runCommand(f"usermod -aG wheel {self.userName}")
+        elif isEqSetting('osImage', 'FreeBSD'):
+            self.runCommand('sed -i "" "s/auth\\t\\trequisite\\tpam_group.so/'
+                            'auth\\t\\tsufficient\\tpam_group.so/" '
+                            '/etc/pam.d/su')
+            self.runCommand(f"pw group mod wheel -m {self.userName}")
+        else:
+            self.shutdownAndExit("<enableRootUserAccess> is not implemented "
+                                 f"for <{getSetting('osImage')}>.",
+                                 overwriteConsole=True,
+                                 exitCode=EXIT.Implementation)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
     def createUser (self):
         printAndLog (f"Creating a user...")
         if (isEqSetting('osImage','debian')):
@@ -586,7 +610,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def runApp (self,sendFiles=False,timeout=30): #executes the app
-        printAndLog ("Running app...")
+        printAndLog ("runApp: Starting the application stack...")
         if (sendFiles):
             #send any needed files to target
             self.sendTar(timeout=timeout)
@@ -608,24 +632,13 @@ class commonTarget():
             appModule.install(self)
             appLog.flush()
 
-        # Test and Deploy    
-        if (isEqSetting('mode','deploy')):
-            for appModule in appModules:
-                appModule.deploymentTest(self)
-                appLog.flush()
-            for appModule in appModules: 
-                #TODO: This should be threads and only collect the message once. Will be done in #247.
-                appModule.deploy(self)
-                appLog.flush()
-        elif (isEqSetting('mode','test')):
-            for appModule in appModules:
-                appModule.extensiveTest(self)
-                appLog.flush()
-        else:
-            self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('mode')}> mode.",exitCode=EXIT.Implementation)
+        # Test    
+        for appModule in appModules:
+            appModule.deploymentTest(self)
+            appLog.flush()
 
         appLog.close()
-        logging.info (f"runApp: app executed successfully!\n")
+        logging.info (f"runApp: The application stack is deployed successfully!\n")
         return
 
     @decorate.debugWrap
@@ -772,7 +785,7 @@ class commonTarget():
                 isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
                 textBack = textBack + textBack_2
         elif (isEqSetting('osImage','FreeRTOS')):
-            isSuccess, textBack, isTimeout, dumpIdx = [True, '', False, 0] #nothing to terminate
+            isSuccess, textBack, isTimeout, dumpIdx = [freertos.terminateAppStack(self), '', False, 0] #send STOP to OTA
         elif (not isEqSetting('osImage','FreeRTOS')):
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
         try:
@@ -888,7 +901,7 @@ class commonTarget():
 
     @decorate.debugWrap
     def genStdinEntropy (self,endsWith=None):
-        lenText = 240 if (isEqSetting('target','aws')) else 1000 # A UART buffer issue, should be resolved soon --> avoid long strings
+        lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
         alphabet = string.ascii_letters + string.digits + ' '
         randText = ''.join(random.choice(alphabet) for i in range(lenText))
         self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
