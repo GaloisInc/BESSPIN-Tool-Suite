@@ -239,7 +239,7 @@ def genProdConfig(configFileSerialized, configFile):
     try:
         inputSettings = json.loads(configFileSerialized)
     except Exception as exc:
-        logAndExit(f"Failed to deserialize <{configFileSerialized}>. Please check the syntax.",exc=exc,exitCode=Configuration)
+        logAndExit(f"Failed to deserialize <{configFileSerialized}>. Please check the syntax.",exc=exc,exitCode=EXIT.Configuration)
 
     # Overwrites the settings
     prodSettings.update(inputSettings)
@@ -253,7 +253,7 @@ def genProdConfig(configFileSerialized, configFile):
                 wasSet = True
                 break
         if (not wasSet):
-            logAndExit(f"Failed to find the production setting <{xSetting}> in <{templateConfigPath}>.",exitCode=Configuration)
+            logAndExit(f"Failed to find the production setting <{xSetting}> in <{templateConfigPath}>.",exitCode=EXIT.Configuration)
 
     # Create the config file
     try:
