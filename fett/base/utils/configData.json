@@ -99,6 +99,10 @@
         {
             "name": "rootUserAccess",
             "type": "boolean"
+        },
+        {
+            "name": "awsJumpBoxIp",
+            "type": "string"
         }
     ],
 
