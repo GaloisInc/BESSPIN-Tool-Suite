@@ -16,7 +16,7 @@ _settings = dict()
 # hardcoded URLs -- needed for emergency reporting
 _settings['prodSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-InstanceStatusQueue-1H71N09IEKG3F.fifo'
 _settings['prodSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-PortalToInstanceTerminationQueue-CND4M2WJAWOK' 
-_settings['prodS3Bucket'] = 'master-SSITH-FETT-Target-Researcher-Artifacts'
+_settings['prodS3Bucket'] = 'master-ssith-fett-target-researcher-artifacts'
 
 class EXIT (enum.Enum):
     Success = 0
