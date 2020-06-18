@@ -217,6 +217,7 @@ class connectalTarget(commonTarget):
 @decorate.debugWrap
 def configTapAdaptor():
     tapAdaptor = getSetting('awsTapAdaptorName')
+    bridgeAdaptor = getSetting('awsBridgeAdaptorName')
 
     def getMainAdaptor():
         for xAdaptor in psutil.net_if_addrs():
@@ -228,13 +229,24 @@ def configTapAdaptor():
         'create' : [
             ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()]
         ],
-        'natSetup' : [
+        'bridgeSetup' : [
             ['sysctl', '-w', 'net.ipv6.conf.tap0.disable_ipv6=1'],
-            ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
-            ['iptables', '-A', 'FORWARD', '-i', getMainAdaptor(), '-o', tapAdaptor, '-m', 'state',
-                '--state', 'RELATED,ESTABLISHED', '-j', 'ACCEPT'],
-            ['iptables', '-A', 'FORWARD', '-i', tapAdaptor, '-o', getMainAdaptor(), '-j', 'ACCEPT'],  
-            ['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-o', getMainAdaptor(), '-j', 'MASQUERADE']  
+            ['modprobe', 'l2tp_eth'],
+            ['ip', 'l2tp', 'add', 'tunnel', 'remote',
+             getSetting('awsJumpBoxIp'), 'local',
+             fpga.getAddrOfAdaptor(getMainAdaptor(), 'IP'), 'tunnel_id', '100',
+             'peer_tunnel_id', '100', 'udp_sport', '6001', 'udp_dport', '6000'],
+            ['ip', 'l2tp', 'add', 'session', 'tunnel_id', '100', 'session_id',
+             '101', 'peer_session_id', '101'],
+            ['ip', 'link', 'set', 'l2tpeth0', 'up', 'mtu', '1446'],
+            ['ip', 'link', 'add', bridgeAdaptor, 'type', 'bridge'],
+            ['ip', 'link', 'set', 'dev', bridgeAdaptor, 'address',
+             getSetting('awsBridgeAdaptorMacAddress')],
+            ['ip', 'link', 'set', 'l2tpeth0', 'master', bridgeAdaptor],
+            ['ip', 'link', 'set', tapAdaptor, 'master', bridgeAdaptor],
+            ['ip', 'addr', 'add', getSetting('awsBridgeAdaptorIp') + '/24',
+             'dev', bridgeAdaptor],
+            ['ip', 'link', 'set', bridgeAdaptor, 'up']
         ],
         'refresh' : [
             ['ip', 'addr', 'flush', 'dev', tapAdaptor]
@@ -257,7 +269,7 @@ def configTapAdaptor():
     # Check if the adaptor exists
     if (fpga.getAddrOfAdaptor(tapAdaptor,'MAC',exitIfNoAddr=False) == 'NotAnAddress'):
         printAndLog (f"configTapAdaptor: <{tapAdaptor}> was never configured. Configuring...",doPrint=False)
-        execSudoCommands(['create','config','natSetup'])
+        execSudoCommands(['create','config','bridgeSetup'])
     else:
         # was created --> re-configure
         execSudoCommands(['refresh','config'])

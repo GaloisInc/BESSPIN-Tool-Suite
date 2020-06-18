@@ -92,6 +92,21 @@
             "val" : "8e:6b:35:04:00:00"
         },
         {
+            "name" : "awsBridgeAdaptorName",
+            "type" : "string",
+            "val" : "br0"
+        },
+        {
+            "name" : "awsBridgeAdaptorMacAddress",
+            "type" : "macAddress",
+            "val" : "02:5d:2c:f8:00:00"
+        },
+        {
+            "name" : "awsBridgeAdaptorIp",
+            "type" : "ipAddress",
+            "val" : "172.16.0.3"
+        },
+        {
             "name" : "awsNetMaskTarget",
             "type" : "ipAddress",
             "val" : "255.255.255.0"
