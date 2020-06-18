@@ -485,7 +485,7 @@ class commonTarget():
     #                False         = send from target to host. Requires an SSH connection.
     @decorate.debugWrap
     @decorate.timeWrap
-    def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,timeout=30,shutdownOnError=True): #send File to target
+    def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,forceScp=False,timeout=30,shutdownOnError=True): #send File to target
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
@@ -549,7 +549,7 @@ class commonTarget():
             return returnFalse (f"Failed to obtain the checksum of <{f}>.",noRetries=True,exc=exc)
 
 
-        if (getSetting('osImage') in ['debian', 'FreeBSD'] and (self.isSshConn)): #send through SSH
+        if (getSetting('osImage') in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)): #send through SSH
             portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
 
             # if sending TO target, then "scp host target" otherwise flipped
@@ -589,7 +589,7 @@ class commonTarget():
 
         else: #send the file through netcat
             if not toTarget:
-                return returnFalse("sendFile: sending a file FROM the target requires and SSH connection",
+                return returnFalse("sendFile: sending a file FROM the target requires an SSH connection",
                                    noRetries=True)
 
             if (isEqSetting('osImage','debian')):
@@ -681,11 +681,18 @@ class commonTarget():
             appModules = [freertos]
         elif (getSetting('osImage') in ['debian', 'FreeBSD']):
             appModules = [ssh, webserver, database, voting]
+
+            # Let root log in to gather files
+            self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
+            if (getSetting('osImage') == 'debian'):
+                self.runCommand("service ssh restart")
+            else:
+                self.runCommand("/etc/rc.d/sshd start")
+
         else:
             logging.info (f"collectAppLogs: no logs to gather for: <{getSetting('osImage')}>")
             return
 
-        # Can this fail?
         artifactPath = getSetting('extraArtifactsPath')
 
         for appModule in appModules:

@@ -68,26 +68,16 @@ def dumpLogs(target, destination):
     mkdir(webserverDir)
     weblogs = getSetting("webserverLogs")
     root    = weblogs["root"]
-    user    = target.userName
-    userRoot = os.path.join("/", user, root)
-
-    target.runCommand(f"mkdir -p {userRoot}", shutdownOnError=False)
-    for l in weblogs["logs"]:
-        target.runCommand(f"chown -f {userRoot}/{l}", shutdownOnError=False)
-        target.runCommand(f"mkdir -p {userRoot}")
-        target.runCommand(f"cp {root}/{l} {userRoot}/{l}", shutdownOnError=False)
-
-    if target.isCurrentUserRoot:
-        target.switchUser()
-    if not target.isSshConn:
-        if not target.openSshConn(userName=target.userName,timeout=30):
-            printAndLog("Failed to open an SSH connection to the target, resorting to console")
 
     # These are the standard nginx logs
     for l in weblogs["logs"]:
         localLogName = os.path.join(webserverDir, l)
         log = ftOpenFile(localLogName, 'w')
-        target.sendFile(webserverDir, l, toTarget=False, targetPathToFile=userRoot, shutdownOnError=False)
+        target.sendFile(
+            webserverDir, l,        # To webserverDir/l
+            targetPathToFile=root,  # From root/
+            forceScp=True, toTarget=False, shutdownOnError=False
+        )
         log.close()
         printAndLog(f"Grabbed webserver log <{l}>")
 
