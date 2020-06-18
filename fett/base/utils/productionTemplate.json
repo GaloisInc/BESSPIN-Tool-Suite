@@ -1,0 +1,16 @@
+{
+    "mode" : "production",
+    "binarySource" : "REQUIRED-SETTING",
+    "target" : "aws",
+    "processor" : "REQUIRED-SETTING",
+    "osImage" : "REQUIRED-SETTING",
+    "elfLoader" : "JTAG",
+    "openConsole" : "No",
+    "useCustomOsImage" : "No",
+    "useCustomProcessor" : "No",
+    "useCustomCredentials" : "No",
+    "userName" : "COND-REQUIRED-SETTING",
+    "userPasswordHash" : "COND-REQUIRED-SETTING",
+    "rootUserAccess" : "No",
+    "buildApps" : "No"
+}

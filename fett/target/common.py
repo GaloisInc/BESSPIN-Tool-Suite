@@ -929,10 +929,8 @@ def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
         estimatedPrefix = "Estimated ~{:0>2}:{:0>2} ".format(int(minutesEst),int(secondsEst))
         if (isEqSetting('fettEntrypoint','devHost')):
             showTimePrefix = f"{estimatedPrefix}----- Elapsed: "
-        elif (getSetting('fettEntrypoint') in ['ciOnPrem','ciAWS']):
-            stdout.write(f"{estimatedPrefix}\n")
         else:
-            logAndExit(f"showElapsedTime: Not implemented for Entrypoint: <{getSetting('fettEntrypoint')}>.",exitCode=EXIT.Implementation)
+            stdout.write(f"{estimatedPrefix}\n")
         while (not stopThread.is_set()):
             minutes, seconds = divmod(time.time() - startTime, 60)
             if (isEqSetting('fettEntrypoint','devHost')):

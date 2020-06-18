@@ -14,8 +14,8 @@ from fett.base.utils import aws
 _settings = dict()
 
 # hardcoded URLs -- needed for emergency reporting
-_settings['prodSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
-_settings['prodSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/RafEC2Queue' 
+_settings['prodSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-InstanceStatusQueue-1H71N09IEKG3F.fifo'
+_settings['prodSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-PortalToInstanceTerminationQueue-CND4M2WJAWOK' 
 _settings['prodS3Bucket'] = 'ssith-fett-target-ci-develop'
 
 class EXIT (enum.Enum):
