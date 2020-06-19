@@ -952,7 +952,7 @@ class commonTarget():
         wasPingSuccessful = False
         for iPing in range(pingAttempts):
             try:
-                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=pingOut,stderr=pingOut)
+                subprocess.check_call(['ping', '-c', '1', '-W', '5', self.ipTarget],stdout=pingOut,stderr=pingOut)
                 wasPingSuccessful = True
                 break
             except Exception as exc:
