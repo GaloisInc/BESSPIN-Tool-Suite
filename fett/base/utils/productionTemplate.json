@@ -12,5 +12,6 @@
     "userName" : "COND-REQUIRED-SETTING",
     "userPasswordHash" : "COND-REQUIRED-SETTING",
     "rootUserAccess" : "No",
-    "buildApps" : "No"
+    "buildApps" : "No",
+    "awsJumpBoxIp" : "REQUIRED-SETTING"
 }
