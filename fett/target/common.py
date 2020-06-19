@@ -71,7 +71,7 @@ class commonTarget():
             except:
                 pass
         errorAndLog(message,exc=exc)
-        if ((not overwriteShutdown) and (not isEqSetting('osImage','FreeRTOS'))):
+        if (not overwriteShutdown):
             self.shutdown(overwriteConsole=overwriteConsole,isError=True)
         logAndExit("",exitCode=exitCode)
 
