@@ -6,6 +6,7 @@ This is executed after loading the app on the target to execute FreeRTOS app
 from fett.base.utils.misc import *
 import tftpy, os, re
 import logging
+import subprocess
 
 # HTTP Status code constants. These must match those in http_commands.h
 WEB_REPLY_OK = 200
@@ -131,11 +132,13 @@ def OTAHack(clientTftp, fileName, TCNum, TCDesc):
 def deploymentTest(target):
     # target is a fett target object
     targetIP = target.ipTarget
+    TFTPPort = getSetting('TFTPPortTarget')
+    hostIP = getSetting('awsIpHost')
 
     # Wait till TFTP server is up
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
-    clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget'))
+    clientTftp = tftpy.TftpClient(targetIP, TFTPPort)
 
     printAndLog ("Starting HTTP Smoketests.",doPrint=True,tee=getSetting('appLog'))
 
@@ -169,6 +172,13 @@ def deploymentTest(target):
 
     # uploading the signed ota.htm file
     OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 1, 'OTA, Crypto, Filesystem')
+
+    # TEMP FOR TESTING - Run sudoScapy.py to test TFTP with forged packets
+    try:
+        subprocess.run(['sudo',sys.executable,os.path.join(getSetting('repoDir'),'fett','apps','freertos','sudoScapy.py'),hostIP,targetIP,str(TFTPPort)], stdout=getSetting('appLog'),stderr=getSetting('appLog'), timeout=3, check=True, shell=False)
+    except Exception as exc:
+        target.shutdownAndExit(f"Failed to send the malicious packets using <sudoScapy.py>",exc=exc,exitCode=EXIT.Run)
+
 
     # uploading the signed ota.htm file AGAIN
     OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 2, 'OTA, Crypto, Filesystem')
