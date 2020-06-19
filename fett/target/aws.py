@@ -232,7 +232,7 @@ def configTapAdaptor():
         ],
         'bridgeSetup' : [
             # Disable IPv6 on the tap adaptor
-            ['sysctl', '-w', 'net.ipv6.conf.tap0.disable_ipv6=1'],
+            ['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1'],
             # Load l2tp_eth module to enable creation of L2 tunnel
             ['modprobe', 'l2tp_eth'],
             # Add an L2 tunnel from the main adaptor to the jump box
