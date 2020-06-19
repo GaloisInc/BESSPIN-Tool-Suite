@@ -25,7 +25,7 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     print ("Sending...")
     r = scapy.sr1(d, timeout=3, verbose=True)
 
-    r[UDP].dport = TFTPPort
+    r[scapy.UDP].dport = TFTPPort
     r = r.__class__(str(r))
     if TFTP_ERROR in r:
         print (r[TFTP_ERROR].errormsg)
@@ -33,13 +33,13 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     print ("Response is")
     print (r)
 
-    dport = r[UDP].sport
+    dport = r[scapy.UDP].sport
     print ("Target DATA port is")
     print (dport)
     print ("Source DATA port is")
     print (sport)
 
-    DATA=basic_pkt/UDP(sport=sport, dport=dport)/TFTP(op=3)/TFTP_DATA(block=1)/Raw(load="this is a test")
+    DATA=basic_pkt/scapy.UDP(sport=sport, dport=dport)/scapy.TFTP(op=3)/scapy.TFTP_DATA(block=1)/Raw(load="this is a test")
     r2 = scapy.sr1(DATA, timeout=3, verbose=True)
     r2 = r2.__class__(str(r2))
     print ("Response2 is")
