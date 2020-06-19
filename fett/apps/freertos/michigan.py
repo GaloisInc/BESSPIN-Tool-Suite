@@ -22,7 +22,7 @@ def deploymentTest(target):
         else:
             target.shutdownAndExit (f"Test [{testName}] - FAILED!",exitCode=EXIT.Run)
 
-    # Curl the help page
+    # Curl the help page -- note that it returns exit code 8. suprocess.getoutput ignores return code by default
     curlOut = subprocess.getoutput(f"curl -L -s -X GET -m 10 -I http://{serverUrl}/{curlTestPath}")
     reportTestResult ("Curl HTTP test page",("HTTP/1.0 200 OK" in curlOut))
     
