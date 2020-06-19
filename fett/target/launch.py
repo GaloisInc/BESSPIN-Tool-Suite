@@ -48,10 +48,8 @@ def startFett ():
     # launch fett
     xTarget = launchFett()
 
-    if (isEqSetting('mode','production')):
-        mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
-        # Call-todo -- start any on-line logging
-        pass
+    mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
+    # Call-todo -- start any on-line logging
 
     return xTarget
 
@@ -123,9 +121,8 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
-    if (isEqSetting('mode','production')):
-        # Call-todo -- collect any remaining logs & dumps from target
-        pass
+    # Call-todo -- collect any remaining logs & dumps from target
+    xTarget.collectAppLogs()
 
     xTarget.shutdown()
     
