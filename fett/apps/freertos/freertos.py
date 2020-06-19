@@ -202,7 +202,7 @@ def deploymentTest(target):
 @decorate.timeWrap
 def terminateAppStack (target):
     if (isEqSetting('binarySource','Michigan')):
-        return michigan.deploymentTest(target)
+        return michigan.terminateAppStack(target)
     ###################################
     # STOP the FreeRTOS application
     # uploading the signed stop.htm file
