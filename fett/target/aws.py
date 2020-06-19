@@ -111,7 +111,10 @@ class firesimTarget(commonTarget):
         getTapAdaptorUp ()
 
     def interact(self):
-        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + C\" to exit.")
+        if (isEqSetting('osImage','FreeRTOS')):
+            printAndLog (f"FreeRTOS interactive mode is for interacting through network from other terminals. Press \"Ctrl + E\" to exit.")
+        else:
+            printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         super().interact()
 
     @decorate.debugWrap

@@ -116,8 +116,7 @@ class commonTarget():
     @decorate.timeWrap
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
-            self.terminateTarget(shutdownOnError=True)
-            return 
+            timeout = 30
         if (getSetting('osImage') in ['debian','busybox']):
             timeout = 45
         else:
