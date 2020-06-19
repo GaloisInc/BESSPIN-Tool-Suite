@@ -414,41 +414,15 @@ static const char *prvValidateWriteRequest(Socket_t xSocket,
                                      pucUDPPayloadBuffer[Mode_Offset])) == 0);
         if (Mode_OK)
         {
-            bool File_Name_OK = true;
-            char *p = pcFileName;
-            while (*p != 0x00)
-            {
-                File_Name_OK = File_Name_OK && (*p >= ' ') && (*p <= '~');
-                p++;
-            }
+            size_t fnlen = strlen(pcFileName);
 
-            if (File_Name_OK)
-            {
-                size_t fnlen = strlen(pcFileName);
+            fettPrintf("(Info)~  validateWriteRequest pcFileName is %s\n",
+                       pcFileName);
+            fettPrintf("(Info)~  validateWriteRequest fnlen is %d\n",
+                       (int)fnlen);
 
-                fettPrintf("(Info)~  validateWriteRequest pcFileName is %s\n",
-                           pcFileName);
-                fettPrintf("(Info)~  validateWriteRequest fnlen is %d\n",
-                           (int)fnlen);
-
-                // fnlen needs to be less than MAX to allow for a final \0
-                if (fnlen >= tftpconfigMAX_FILENAME)
-                {
-                    fettPrintf("(Error)~  TFTP filename too long\n");
-                    prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
-                    // caller responsible
-                    pcFileName = NULL;
-                }
-                // else everything is fine, so leave pcFileName
-                // alone and return it below
-            }
-            else
-            {
-                fettPrintf("(Error)~  TFTP illegal character in filename\n");
-                prvSendTFTPError(xSocket, pxClient, eIllegalTFTPOperation);
-                // caller responsible
-                pcFileName = NULL;
-            }
+            // else everything is fine, so leave pcFileName
+            // alone and return it below
         }
         else
         {
