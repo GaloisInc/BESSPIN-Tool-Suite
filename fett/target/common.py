@@ -228,9 +228,11 @@ class commonTarget():
         #Adding 5 minutes to avoid being in the past
         if (isEqSetting('osImage','debian')):
             self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
-            #get the ssh up and running
-            self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
-            self.runCommand("chmod +x addEntropyDebian.riscv")
+
+            if (not isEqSetting('target','aws')) or (not isEqSetting('pvAWS','firesim')):
+                #get the ssh up and running
+                self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
+                self.runCommand("chmod +x addEntropyDebian.riscv")
             self.ensureCrngIsUp () #check we have enough entropy for ssh
                 
         elif (isEqSetting('osImage','FreeBSD')):
