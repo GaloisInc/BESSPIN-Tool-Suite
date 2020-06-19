@@ -229,12 +229,12 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
 
-            if (not isEqSetting('target','aws')) or (not isEqSetting('pvAWS','firesim')):
+            if not self.hasHardwareRNG():
                 #get the ssh up and running
                 self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
                 self.runCommand("chmod +x addEntropyDebian.riscv")
-            self.ensureCrngIsUp () #check we have enough entropy for ssh
-                
+                self.ensureCrngIsUp () #check we have enough entropy for ssh
+
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
                                 
@@ -560,7 +560,8 @@ class commonTarget():
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
-            self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
+            if not self.hasHardwareRNG():
+                self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
             try:
                 retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=timeout)
             except Exception as exc:
@@ -894,7 +895,7 @@ class commonTarget():
         except Exception as exc:
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
 
-        if (not self.onlySsh):
+        if (not self.onlySsh and not self.hasHardwareRNG()):
             self.genStdinEntropy(endsWith=self.getAllEndsWith())
 
         self.isSshConn = True
@@ -965,6 +966,9 @@ class commonTarget():
         alphabet = string.ascii_letters + string.digits + ' '
         randText = ''.join(random.choice(alphabet) for i in range(lenText))
         self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
+
+    def hasHardwareRNG (self):
+        return isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')
 
 # END OF CLASS commonTarget
 
