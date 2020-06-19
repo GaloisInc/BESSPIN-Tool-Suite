@@ -126,7 +126,12 @@ class firesimTarget(commonTarget):
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage','FreeRTOS')):
-            if (not isEqSetting('binarySource','Michigan')): # If Michigan, then just go ping
+            if (isEqSetting('binarySource','Michigan')):
+                getTapAdaptorDown () #needs to go down and up again
+                time.sleep(1)
+                getTapAdaptorUp ()
+                time.sleep(3)
+            else:
                 self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
@@ -288,6 +293,11 @@ def programAFI():
 @decorate.debugWrap
 def getTapAdaptorUp ():
     sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'])
+
+@decorate.debugWrap
+def getTapAdaptorDown ():
+    sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'down'])
+
 
 @decorate.debugWrap
 def _sendKmsg(message):
