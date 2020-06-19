@@ -251,7 +251,10 @@ def genProdConfig(configFileSerialized, configFile):
         for xSection in xConfig:
             if (xSetting in xConfig[xSection]):
               if(xSetting == "userPasswordHash"):
-                xValue = base64.b64decode(xValue).decode("utf-8")
+                try:
+                    xValue = base64.b64decode(xValue).decode("utf-8")
+                except Exception as exc:
+                    logAndExit(f"Failed to decode the <userPasswordHash>.",exc=exc,exitCode=Configuration)
               xConfig.set(xSection,xSetting,str(xValue))
               wasSet = True
               break
