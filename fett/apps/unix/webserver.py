@@ -61,6 +61,28 @@ def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
 
 @decorate.debugWrap
 @decorate.timeWrap
+def dumpLogs(target, destination):
+    # The app log is closed by this point
+    webserverDir = os.path.join(destination,'webserver')
+    printAndLog(f"Dumping webserver logs to {webserverDir}...")
+    mkdir(webserverDir)
+    weblogs = getSetting("webserverLogs")
+    root    = weblogs["root"]
+
+    # These are the standard nginx logs
+    for l in weblogs["logs"]:
+        localLogName = os.path.join(webserverDir, l)
+        log = ftOpenFile(localLogName, 'w')
+        target.sendFile(
+            webserverDir, l,        # To webserverDir/l
+            targetPathToFile=root,  # From root/
+            forceScp=True, toTarget=False, shutdownOnError=False
+        )
+        log.close()
+        printAndLog(f"Grabbed webserver log <{l}>")
+
+@decorate.debugWrap
+@decorate.timeWrap
 def deploymentTest(target):
     """
     Let's make sure that the deployed web app is working correctly by issuing

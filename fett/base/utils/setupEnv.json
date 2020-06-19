@@ -255,6 +255,15 @@
                 "StopHtml" : "stop.htm",
                 "assets" : ["index.htm", "ota.htm", "glogo.png"]
             }
+        },
+        {
+            "name" : "webserverLogs",
+            "type" : "dict",
+            "val"  : {
+                "root" : "/usr/local/nginx/logs",
+                "logs" : ["error.log", "access.log"]
+
+            }
         }
     ] 
 }
