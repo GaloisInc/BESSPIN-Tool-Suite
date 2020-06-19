@@ -108,6 +108,8 @@ class firesimTarget(commonTarget):
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # The tap needs to be turned up AFTER booting
+        if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
+            time.sleep(20)
         setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
 
     def interact(self):
@@ -127,12 +129,12 @@ class firesimTarget(commonTarget):
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('binarySource','Michigan')):
-                setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'down') #needs to go down and up again
-                time.sleep(1)
-                setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
-                time.sleep(3)
+                ntkReadyString = f"WebSocket server listening on port {getSettingDict('michiganInfo',['httpPort'])}"
+                timeout = 120 #Yes, it needs time
             else:
-                self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
+                ntkReadyString = "<NTK-READY>"
+                timeout = 30
+            self.runCommand("isNetworkUp",endsWith=ntkReadyString,erroneousContents="(Error)",timeout=timeout)
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
