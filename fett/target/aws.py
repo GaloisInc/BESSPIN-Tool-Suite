@@ -217,7 +217,8 @@ class connectalTarget(commonTarget):
 @decorate.debugWrap
 def configTapAdaptor():
     tapAdaptor = getSetting('awsTapAdaptorName')
-    bridgeAdaptor = getSetting('awsBridgeAdaptorName')
+    bridgeAdaptor = 'br0'
+    l2tpAdaptor = 'l2tpeth0'
 
     def getMainAdaptor():
         for xAdaptor in psutil.net_if_addrs():
@@ -230,22 +231,33 @@ def configTapAdaptor():
             ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()]
         ],
         'bridgeSetup' : [
+            # Disable IPv6 on the tap adaptor
             ['sysctl', '-w', 'net.ipv6.conf.tap0.disable_ipv6=1'],
+            # Load l2tp_eth module to enable creation of L2 tunnel
             ['modprobe', 'l2tp_eth'],
+            # Add an L2 tunnel from the main adaptor to the jump box
             ['ip', 'l2tp', 'add', 'tunnel', 'remote',
              getSetting('awsJumpBoxIp'), 'local',
              fpga.getAddrOfAdaptor(getMainAdaptor(), 'IP'), 'tunnel_id', '100',
              'peer_tunnel_id', '100', 'udp_sport', '6001', 'udp_dport', '6000'],
+            # Add a new session to the tunnel
             ['ip', 'l2tp', 'add', 'session', 'tunnel_id', '100', 'session_id',
              '101', 'peer_session_id', '101'],
-            ['ip', 'link', 'set', 'l2tpeth0', 'up', 'mtu', '1446'],
+            # Bring the l2tp interface up
+            ['ip', 'link', 'set', l2tpAdaptor, 'up', 'mtu', '1446'],
+            # Add a bridge adaptor
             ['ip', 'link', 'add', bridgeAdaptor, 'type', 'bridge'],
+            # Set the bridge adaptor's MAC address
             ['ip', 'link', 'set', 'dev', bridgeAdaptor, 'address',
              getSetting('awsBridgeAdaptorMacAddress')],
-            ['ip', 'link', 'set', 'l2tpeth0', 'master', bridgeAdaptor],
+            # Add the l2tp interface to the bridge adaptor
+            ['ip', 'link', 'set', l2tpAdaptor, 'master', bridgeAdaptor],
+            # Add the tap adaptor to the bridge adaptor
             ['ip', 'link', 'set', tapAdaptor, 'master', bridgeAdaptor],
+            # Set the bridge adaptor's IP address
             ['ip', 'addr', 'add', getSetting('awsBridgeAdaptorIp') + '/24',
              'dev', bridgeAdaptor],
+            # Bring the bridge adaptor up
             ['ip', 'link', 'set', bridgeAdaptor, 'up']
         ],
         'refresh' : [
