@@ -145,26 +145,6 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
             "(Info)~ First four bytes of signature are %2x %2x %2x %2x\n",
             file_buffer[0], file_buffer[1], file_buffer[2], file_buffer[3]);
 
-        // LMCO
-        if (strcmp (tftp_filename, "lmcodemo.htm.sig") == 0)
-        {
-            wptl = (intptr_t) Write_Payload_To_Log;
-            fettPrintf ("Address of Write_Payload_To_Log is %p\n", wptl);
-            // Explicitly corrupt this functions saved return address to
-            // point at Write_Payload_To_Log so that (on return) the app
-            // leaks the content of file_buffer to the Log, even if the
-            // signature is invalid.
-            //
-            // If this is demonstrated to work, then this code will be
-            // removed. The attack will then be triggered by a very
-            // long tftp_filename that will overflow its buffer on the
-            // stack and overwrite the return address in the same fashion.
-            tftp_filename[159] = ((wptl >> 24) & 0xff);
-            tftp_filename[158] = ((wptl >> 16) & 0xff);
-            tftp_filename[157] = ((wptl >> 8) & 0xff);
-            tftp_filename[156] = (wptl & 0xff);
-        }
-
         r = wc_ed25519_verify_msg(
             (byte *)file_buffer, // ptr to first byte of signature
             ED25519_SIG_SIZE,    // size of signature
