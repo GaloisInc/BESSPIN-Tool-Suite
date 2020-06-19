@@ -641,9 +641,6 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
                 {
                     // Copy the filename from the received request header
                     // to our persistent filename_buffer
-
-                    // LMCO
-                    // strncpy(file_name, pcFileName, file_name_len);
                     strcpy(file_name, pcFileName);
 
                     Receive_Result = prvReceiveFile(buffer, buffer_len,
