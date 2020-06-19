@@ -121,15 +121,16 @@ class firesimTarget(commonTarget):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            outCmd = self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
+            self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage','FreeRTOS')):
-            outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
+            if (not isEqSetting('binarySource','Michigan')): # If Michigan, then just go ping
+                self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
         self.pingTarget()
 
-        return outCmd
+        return
 
     @decorate.debugWrap
     def targetTearDown(self):
