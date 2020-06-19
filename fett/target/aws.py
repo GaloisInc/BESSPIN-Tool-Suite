@@ -108,7 +108,7 @@ class firesimTarget(commonTarget):
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # The tap needs to be turned up AFTER booting
-        getTapAdaptorUp ()
+        setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
 
     def interact(self):
         if (isEqSetting('osImage','FreeRTOS')):
@@ -127,9 +127,9 @@ class firesimTarget(commonTarget):
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('binarySource','Michigan')):
-                getTapAdaptorDown () #needs to go down and up again
+                setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'down') #needs to go down and up again
                 time.sleep(1)
-                getTapAdaptorUp ()
+                setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
                 time.sleep(3)
             else:
                 self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
@@ -197,7 +197,7 @@ class connectalTarget(commonTarget):
             self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
          # The tap needs to be turned up AFTER booting
-        getTapAdaptorUp ()
+        setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
 
     def interact(self):
         printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl-A X\" to exit.")
@@ -289,15 +289,6 @@ def programAFI():
     agfiId = getSetting("agfiId")
     clearFpgas()
     flashFpgas(agfiId)
-
-@decorate.debugWrap
-def getTapAdaptorUp ():
-    sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'])
-
-@decorate.debugWrap
-def getTapAdaptorDown ():
-    sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'down'])
-
 
 @decorate.debugWrap
 def _sendKmsg(message):

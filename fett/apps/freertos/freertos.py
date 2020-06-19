@@ -115,7 +115,7 @@ def OTATest(clientTftp, fileName, TCNum, TCDesc):
 @decorate.timeWrap
 def deploymentTest(target):
     if (isEqSetting('binarySource','Michigan')):
-        return michigan.deploymentTest(target)
+        return michigan.deploymentTest(target, curlTest, WEB_REPLY_OK)
     # target is a fett target object
     targetIP = target.ipTarget
 

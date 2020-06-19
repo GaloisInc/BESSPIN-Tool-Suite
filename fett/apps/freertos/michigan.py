@@ -4,12 +4,10 @@ This is executed after loading the app on the target to execute FreeRTOS app for
 """
 
 from fett.base.utils.misc import *
-from fett.apps.freertos import freertos
-from fett.target import aws
 
 @decorate.debugWrap
 @decorate.timeWrap
-def deploymentTest(target):
+def deploymentTest(target, curlTest, WEB_REPLY_OK):
     if (not isEqSetting('target','aws')):
         target.shutdownAndExit (f"<deploymentTest> is not implemented for Michigan on <{getSetting('target')}>",exitCode=EXIT.Implementation)
 
@@ -24,11 +22,11 @@ def deploymentTest(target):
             target.shutdownAndExit (f"Test [{testName}] - FAILED!",exitCode=EXIT.Run)
 
     # Curl the help page
-    contentLength,code = freertos.curlTest(target, f"http://{serverUrl}/{curlTestPath}")
-    reportTestResult("Curl HTTP test page", code==freertos.WEB_REPLY_OK)
+    contentLength,code = curlTest(target, f"http://{serverUrl}/{curlTestPath}")
+    reportTestResult("Curl HTTP test page", code==WEB_REPLY_OK)
 
     # lynx tests
-        
+
     return 
 
 
@@ -38,6 +36,6 @@ def terminateAppStack (target):
     if (not isEqSetting('target','aws')):
         target.shutdownAndExit (f"<terminateAppStack> is not implemented for Michigan on <{getSetting('target')}>",exitCode=EXIT.Implementation)
 
-    aws.getTapAdaptorDown () #This will ensure that the researcher don't have access anymore
+    setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'down') #This will ensure that the researcher don't have access anymore
     
     return True
