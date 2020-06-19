@@ -27,8 +27,8 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
 
     r[scapy.UDP].dport = TFTPPort
     r = r.__class__(str(r))
-    if TFTP_ERROR in r:
-        print (r[TFTP_ERROR].errormsg)
+    if scapy.TFTP_ERROR in r:
+        print (r[scapy.TFTP_ERROR].errormsg)
         sys.exit(0)
     print ("Response is")
     print (r)
