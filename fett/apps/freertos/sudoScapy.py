@@ -5,9 +5,6 @@ This program uses the SCAPY module so must be run as ROOT
 """
 
 def spoofTFTP(hostIP, targetIP, TFTPPort):
-    print (f"HostIP   is {hostIP}\n");
-    print (f"TargetIP is {targetIP}\n");
-    print (f"TFTPPort is {TFTPPort}\n");
 
     # attackString is a malicious "filename" for a TFTP Write-Request packet.
     # The filename herein is too long, so it will overflow the receiver's buffer.
@@ -79,16 +76,9 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
 if __name__ == '__main__':
     import sys
     na = len(sys.argv)
-    print (f"Arg count is {na}")
     if (na != 5):
         print ("\n<INVAID> Wrong number of arguments passed to sudoScapy.py\n")
         exit (0)
-    print ("Args are:\n")
-    print (sys.argv[0])
-    print (sys.argv[1])
-    print (sys.argv[2])
-    print (sys.argv[3])
-    print (sys.argv[4])
 
     # Restore the System Path of the calling program from sys.argv[1]
     parentPath = sys.argv[1].split('+')
