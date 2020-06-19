@@ -4,8 +4,6 @@ TFTP/OTA tests using SCAPY to forge malicious TFTP packets
 This program uses the SCAPY module so must be run as ROOT
 """
 
-import scapy.all as scapy
-
 def spoofTFTP(hostIP, targetIP, TFTPPort):
     print (f"HostIP   is {hostIP}\n");
     print (f"TargetIP is {targetIP}\n");
@@ -37,7 +35,7 @@ if __name__ == '__main__':
     import sys
     na = len(sys.argv)
     print (f"Arg count is {na}")
-    if (na != 4):
+    if (na != 5):
         print ("\n<INVAID> Wrong number of arguments passed to sudoScapy.py\n")
         exit (0)
     print ("Args are:\n")
@@ -45,10 +43,16 @@ if __name__ == '__main__':
     print (sys.argv[1])
     print (sys.argv[2])
     print (sys.argv[3])
+    print (sys.argv[4])
+
+    # Restore the System Path of the calling program from sys.argv[1]
     parentPath = sys.argv[1].split('+')
     sys.path = list(set(sys.path + parentPath))
+    # Now we can import Scapy
+    import scapy.all as scapy
+
     try:
-        spoofTFTP (sys.argv[1], sys.argv[2], int(sys.argv[3]))
+        spoofTFTP (sys.argv[2], sys.argv[3], int(sys.argv[4]))
     except:
         print ("\n<INVALID>: Failed to spoof TFTP\n")
     exit (0)
