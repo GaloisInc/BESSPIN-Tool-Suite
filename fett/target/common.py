@@ -201,8 +201,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 60
             elif (isEqSetting('target', 'aws')):
-                # TODO: ELEW get a better values
-                timeout = 120
+                timeout = 360
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -210,16 +209,21 @@ class commonTarget():
             self.boot(endsWith=bootEndsWith, timeout=timeout)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
+            # set the temporary prompt
+            tempPrompt = "~ #" if isEqSetting("binarySource", "SRI-Cambridge") else "\r\n#"
             # fpga freebsd would be already logged in if onlySsh
             if (isEqSetting('target','qemu')):
                 self.runCommand("root",endsWith="\r\n#")
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
             elif (not self.onlySsh):
-                self.runCommand ("root",endsWith='Password:')
-                self.runCommand (self.rootPassword,endsWith="\r\n#")
+                if not isEqSetting("binarySource", "SRI-Cambridge"):
+                    self.runCommand ("root",endsWith='Password:')
+                    self.runCommand (self.rootPassword,endsWith=tempPrompt)
+                else:
+                    self.runCommand ("root",endsWith=tempPrompt)
 
-            self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith="\r\n#") #this is to avoid having the prompt in the set prompt command
-            self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith="\r\n#")
+            self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
+            self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempPrompt)
             self.runCommand("set prompt = \"`cat promptText.txt`\"")
 
             printAndLog (f"start: Activating ethernet and setting system time...")
@@ -670,9 +674,11 @@ class commonTarget():
         appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
         setSetting("appLog",appLog)
         # Install
-        for appModule in self.appModules:
-            appModule.install(self)
-            appLog.flush()
+        # Everything is already installed on SRI-Cambridge source
+        if not isEqSetting('binarySource', 'SRI-Cambridge'):
+	    for appModule in self.appModules:
+                appModule.install(self)
+                appLog.flush()
 
         # Test    
         for appModule in self.appModules:

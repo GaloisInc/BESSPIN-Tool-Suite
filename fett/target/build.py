@@ -174,24 +174,35 @@ def prepareBusybox():
     importImage()
 
 @decorate.debugWrap
-def selectImagePath():
+def selectImagePaths():
     if isEnabled('useCustomOsImage'):
         return getSetting('pathToCustomOsImage')
     else:
-        imageType = getSetting('target') if getSetting('target') != 'aws' else getSetting('pvAWS')
+        # inconsistency
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            imageType = getSetting('target') if getSetting('target') != 'aws' else 'aws'
+        else:
+            imageType = getSetting('target') if getSetting('target') != 'aws' else getSetting('pvAWS')
         if getSetting('binarySource') == 'GFE':
             nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
             if (nixImage in os.environ):
                 return os.environ[nixImage]
             else:
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
-        imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType, f"{getSetting('osImage')}.elf")
+        # another inconsistency
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            # specify both elfs using pattern matching
+            baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType)
+            imagePath = [os.path.join(baseDir, f"bbl-cheri.elf"), os.path.join(baseDir, f"kernel-cheri.elf")]
+        else:
+            imagePath = [os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType, f"{getSetting('osImage')}.elf")]
         return imagePath
 
 @decorate.debugWrap
 def importImage():
-    imagePath = selectImagePath()
-    cp (imagePath, getSetting('osImageElf'))
+    imagePath = selectImagePaths()
+    for ip in imagePath:
+        cp (ip, getSetting('osImagesDir'))
     if not (isEqSetting('target', 'aws')):
         if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
             netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
