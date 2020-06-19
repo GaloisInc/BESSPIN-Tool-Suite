@@ -60,8 +60,7 @@ gfe_unixDevPR_aws = gfe_unixAwsDefaults.union({
 
 freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
-    ('elfLoader',('JTAG',)),
-    ('buildApps',('yes',))
+    ('elfLoader',('JTAG',))
 })
 
 gfe_freertosAllTargets_onprem = freertosDefaults.union({
@@ -69,7 +68,8 @@ gfe_freertosAllTargets_onprem = freertosDefaults.union({
     ('processor',('chisel_p1',)),
     ('target',('fpga',)),
     ('cross-compiler',('GCC',)),
-    ('linker',('GCC',)) 
+    ('linker',('GCC',)),
+    ('buildApps',('yes',))
 })
 
 gfe_freertosDevPR_onprem = gfe_freertosAllTargets_onprem
@@ -79,7 +79,8 @@ gfe_freertosDevPR_aws = freertosDefaults.union({
     ('processor',('chisel_p1',)),
     ('target',('aws',)),
     ('cross-compiler',('GCC','Clang',)),
-    ('linker',('GCC',)) # If cross-compiler is Clang, linker will be over-written to LLD
+    ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
+    ('buildApps',('yes',))
 })
 
 lmco_freertosDevPR_aws = freertosDefaults.union({
@@ -87,7 +88,15 @@ lmco_freertosDevPR_aws = freertosDefaults.union({
     ('processor',('chisel_p1',)),
     ('target',('aws',)),
     ('cross-compiler',('GCC',)),
-    ('linker',('GCC',)) # If cross-compiler is Clang, linker will be over-written to LLD
+    ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
+    ('buildApps',('yes',))
+})
+
+michigan_freertosDevPR_aws = freertosDefaults.union({
+    ('binarySource',('Michigan',)),
+    ('processor',('chisel_p1',)),
+    ('target',('aws',)),
+    ('buildApps',('no',))
 })
 
 appSets = {
@@ -100,7 +109,8 @@ appSets = {
         'unix' : { 'gfe_unix' : gfe_unixDevPR_onprem },
         'aws' : { 'gfe_unix' : gfe_unixDevPR_aws, 
                 'gfe_freertos' : gfe_freertosDevPR_aws,
-                'lmco_freertos' : lmco_freertosDevPR_aws}
+                'lmco_freertos' : lmco_freertosDevPR_aws,
+                'michigan_freertos' : michigan_freertosDevPR_aws}
     }
 }
 appSets['runRelease'] = appSets['runPeriodic']
