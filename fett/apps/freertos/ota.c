@@ -103,6 +103,7 @@ void Write_Payload_To_Log(size_t fsize)
         }
     }
     fettPrintf("\n");
+    exitFett(1);
 }
 
 
@@ -126,7 +127,7 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
     r = 0;
 
     fettPrintf(
-        "(Info)~ RA is %02x %02x %02x %02x\n",
+        "(Info)~ RAPOOR original RA is %02x %02x %02x %02x\n",
         (int) tftp_filename[159], (int) tftp_filename[158],
         (int) tftp_filename[157], (int) tftp_filename[156]);
 
@@ -189,6 +190,11 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
         fettPrintf(
             "(Info)~  vOta: OTA: received file too small to be signed.\n");
     }
+
+    fettPrintf(
+        "(Info)~ RAPOOR final RA is %02x %02x %02x %02x\n",
+        (int) tftp_filename[159], (int) tftp_filename[158],
+        (int) tftp_filename[157], (int) tftp_filename[156]);
 }
 
 void Ota_Worker(ed25519_key *pk)
