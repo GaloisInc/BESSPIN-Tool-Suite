@@ -854,12 +854,12 @@ class commonTarget():
             isSuccess, textBack, isTimeout, dumpIdx = [freertos.terminateAppStack(self), '', False, 0] #send STOP to OTA
         elif (not isEqSetting('osImage','FreeRTOS')):
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
+        if ((isSuccess and (not isTimeout)) or shutdownOnError):
+            isSuccess &= self.targetTearDown() #should be called before closing ttyOut because it is used in firesim
         try:
             self.fTtyOut.close()
         except Exception as exc:
             warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False,exc=exc)
-        if ((isSuccess and (not isTimeout)) or shutdownOnError):
-            isSuccess &= self.targetTearDown()
         return [isSuccess, textBack, isTimeout, dumpIdx]
 
     @decorate.debugWrap
