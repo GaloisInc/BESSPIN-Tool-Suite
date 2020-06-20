@@ -28,7 +28,7 @@ def deploymentTest(target):
     
     # lynx tests
     def lynxTest (query, testNum):
-        command = ['lynx', '-source', f"\"http://{serverUrl}/{query}\""]
+        command = ['lynx', '-source', f"http://{serverUrl}/{query}"]
         printAndLog(f"Lynx test-{testNum}: {' '.join(command)}",doPrint=False,tee=getSetting('appLog'))
         try:
             outLynx = str(subprocess.check_output(command, stderr=subprocess.STDOUT, timeout=30),'utf-8')
