@@ -15,7 +15,8 @@ commonDefaults = {
     ('mode',('test',)),
     ('openConsole',('No',)),
     ('useCustomOsImage',('No',)),
-    ('useCustomProcessor',('No',))
+    ('useCustomProcessor',('No',)),
+    ('awsJumpBoxIp',('172.31.30.56',))
 }
 
 unixDefaults = commonDefaults.union({
