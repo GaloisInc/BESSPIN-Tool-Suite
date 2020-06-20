@@ -5,6 +5,7 @@ json details are in: ./utils/configData.json
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 import configparser, json, os, re
+import base64
 from fett.base.utils.misc import *
 
 CONFIG_SECTIONS = ['backend', 'applications', 'build']
@@ -249,9 +250,14 @@ def genProdConfig(configFileSerialized, configFile):
         wasSet = False
         for xSection in xConfig:
             if (xSetting in xConfig[xSection]):
-                xConfig.set(xSection,xSetting,str(xValue))
-                wasSet = True
-                break
+              if(xSetting == "userPasswordHash"):
+                try:
+                    xValue = base64.b64decode(xValue).decode("utf-8")
+                except Exception as exc:
+                    logAndExit(f"Failed to decode the <userPasswordHash>.",exc=exc,exitCode=EXIT.Configuration)
+              xConfig.set(xSection,xSetting,str(xValue))
+              wasSet = True
+              break
         if (not wasSet):
             logAndExit(f"Failed to find the production setting <{xSetting}> in <{templateConfigPath}>.",exitCode=EXIT.Configuration)
 
