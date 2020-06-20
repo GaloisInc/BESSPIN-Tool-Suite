@@ -173,13 +173,6 @@ def deploymentTest(target):
     # uploading the signed ota.htm file
     OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 1, 'OTA, Crypto, Filesystem')
 
-    # TEMP FOR TESTING - Run sudoScapy.py to test TFTP with forged packets
-    try:
-        subprocess.run(['sudo',sys.executable,os.path.join(getSetting('repoDir'),'fett','apps','freertos','sudoScapy.py'),'+'.join(sys.path),hostIP,targetIP,str(TFTPPort)], stdout=getSetting('appLog'),stderr=getSetting('appLog'), timeout=3, check=True, shell=False)
-    except Exception as exc:
-        target.shutdownAndExit(f"Failed to send the malicious packets using <sudoScapy.py>",exc=exc,exitCode=EXIT.Run)
-
-
     # uploading the signed ota.htm file AGAIN
     OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 2, 'OTA, Crypto, Filesystem')
 
@@ -210,6 +203,16 @@ def deploymentTest(target):
     OTATest(clientTftp, "ota65537.htm.sig", 8, 'OTA too large file')
     # OtaFile should NOT have been changed, so check it's still as was
     HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 8, 'Verify FS not changed by OTA TC 8')
+
+    printAndLog("Going for LMCO SCAPY Test",doPrint=True,tee=getSetting('appLog'))
+
+    # TEMP FOR TESTING - Run sudoScapy.py to test TFTP with forged packets
+    try:
+        subprocess.run(['sudo',sys.executable,os.path.join(getSetting('repoDir'),'fett','apps','freertos','sudoScapy.py'),'+'.join(sys.path),hostIP,targetIP,str(TFTPPort)], stdout=getSetting('appLog'),stderr=getSetting('appLog'), timeout=3, check=True, shell=False)
+    except Exception as exc:
+        target.shutdownAndExit(f"Failed to send the malicious packets using <sudoScapy.py>",exc=exc,exitCode=EXIT.Run)
+
+    printAndLog("Back from LMCO SCAPY Test",doPrint=True,tee=getSetting('appLog'))
 
     # downloading a file - NOT IMPLEMENTED ON TARGET YET
     # fileName = "fileToReceive.html"
