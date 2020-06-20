@@ -39,7 +39,7 @@ def deploymentTest(target):
         reportTestResult (f"query-{testNum}",(('error' not in outLynx) and ('ERROR' not in outLynx)))
 
     for iQuery,xQuery in enumerate(lynxTestQueries):
-        lynxTest(xQuery,iQuery)
+        lynxTest(xQuery,iQuery+1)
 
     return 
 
