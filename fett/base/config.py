@@ -5,6 +5,7 @@ json details are in: ./utils/configData.json
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 import configparser, json, os, re
+import base64
 from fett.base.utils.misc import *
 
 CONFIG_SECTIONS = ['backend', 'applications', 'build']
@@ -18,6 +19,16 @@ def loadJsonFile (jsonFile):
         logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
+def loadIniFile (iniFile):
+    xConfig = configparser.ConfigParser()
+    try:
+        fConfig = open(iniFile,'r')
+        xConfig.read_file(fConfig)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to read configuration file <{iniFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    return xConfig
+
 @decorate.debugWrap
 def loadConfiguration(configFile):
     #loading dev setup environment
@@ -25,13 +36,7 @@ def loadConfiguration(configFile):
     loadConfigSection(None,setupEnvData,'setupEnv',setup=True)
 
     #loading the configuration file
-    xConfig = configparser.ConfigParser()
-    try:
-        fConfig = open(configFile,'r')
-        xConfig.read_file(fConfig)
-        fConfig.close()
-    except Exception as exc:
-        logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    xConfig = loadIniFile(configFile)
 
     #loading the configuration parameters data
     configDataFile = getSetting('jsonDataFile')
@@ -213,4 +218,54 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
 
     return
 
+@decorate.debugWrap
+def genProdConfig(configFileSerialized, configFile):
+    """
+    This generates "production.ini":
+    - Loads the template from config.ini.
+    - Overwrites the template using the production template.
+    - Overwrites whatever is provided from the serialized input.
+    - Generate the configFile to be used by the tool
+    """
 
+    #loading the template configuration file (the repo's default)
+    templateConfigPath = os.path.join(getSetting('repoDir'),'config.ini')
+    xConfig = loadIniFile(templateConfigPath)
+
+    # loading the production template
+    prodTemplatePath = os.path.join(getSetting('repoDir'),'fett','base','utils','productionTemplate.json')
+    prodSettings = loadJsonFile(prodTemplatePath)
+
+    # deserialize the input
+    try:
+        inputSettings = json.loads(configFileSerialized)
+    except Exception as exc:
+        logAndExit(f"Failed to deserialize <{configFileSerialized}>. Please check the syntax.",exc=exc,exitCode=EXIT.Configuration)
+
+    # Overwrites the settings
+    prodSettings.update(inputSettings)
+    
+    # Overwrite the options based on the production template + input settings
+    for xSetting, xValue in prodSettings.items():
+        wasSet = False
+        for xSection in xConfig:
+            if (xSetting in xConfig[xSection]):
+              if(xSetting == "userPasswordHash"):
+                try:
+                    xValue = base64.b64decode(xValue).decode("utf-8")
+                except Exception as exc:
+                    logAndExit(f"Failed to decode the <userPasswordHash>.",exc=exc,exitCode=EXIT.Configuration)
+              xConfig.set(xSection,xSetting,str(xValue))
+              wasSet = True
+              break
+        if (not wasSet):
+            logAndExit(f"Failed to find the production setting <{xSetting}> in <{templateConfigPath}>.",exitCode=EXIT.Configuration)
+
+    # Create the config file
+    try:
+        fConfig = open(configFile,'w')
+        xConfig.write(fConfig)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to write configuration file <{configFile}>.",exc=exc,exitCode=Files_and_paths)
+    

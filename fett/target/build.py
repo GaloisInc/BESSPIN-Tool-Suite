@@ -16,8 +16,6 @@ def prepareOsImage ():
     setSetting('osImageElf',osImageElf)
 
     if(isEqSetting('osImage','FreeRTOS')):
-        osImageAsm = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.asm")
-        setSetting('osImageAsm',osImageAsm)
         prepareFreeRTOS ()
     elif(isEqSetting('osImage','debian')):
         prepareDebian ()
@@ -46,6 +44,10 @@ def prepareFreeRTOS():
     if (isEqSetting('osImage','FreeRTOS') and isEqSetting('elfLoader','netboot')):
         warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
         setSetting('elfLoader','JTAG')
+
+    # define some paths
+    osImageAsm = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.asm")
+    setSetting('osImageAsm',osImageAsm)
 
     if (not isEnabled('buildApps')): #just fetch the image
         importImage()
@@ -80,8 +82,9 @@ def prepareFreeRTOS():
 
         #Include the relevant user configuration parameters
         #This is a list of tuples: (settingName,macroName)
-        listConfigParams = [('appTimeout','APP_TIMEOUT'),('HTTPPortTarget','HTTP_PORT'),
-                            ('TFTPPortTarget','TFTP_PORT'),('debugMode','FETT_DEBUG'),
+        listConfigParams = [('HTTPPortTarget','HTTP_PORT'),
+                            ('TFTPPortTarget','TFTP_PORT'),
+                            ('debugMode','FETT_DEBUG'),
                             ('OTAMaxSignedPayloadSize','OTA_MAX_SIGNED_PAYLOAD_SIZE')]
 
         configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')

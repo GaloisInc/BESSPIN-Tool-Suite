@@ -159,7 +159,7 @@ def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, j
         moduleSpec.loader.exec_module(awsModule)
 
         # Upload the folder to S3
-        awsModule.uploadToS3(ciAWSbucket, exitFettCi, tarFileName, 'fett-target/ci/artifacts/')
+        awsModule.uploadToS3(ciAWSbucket, exitFettCi, tarFileName, f"fett-target/ci/artifacts/{jobID}/")
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
         # Send termination message to SQS

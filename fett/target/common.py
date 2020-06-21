@@ -228,16 +228,13 @@ class commonTarget():
         #Adding 5 minutes to avoid being in the past
         if (isEqSetting('osImage','debian')):
             self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
-            #get the ssh up and running
-            self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
-            self.runCommand("chmod +x addEntropyDebian.riscv")
-            self.ensureCrngIsUp () #check we have enough entropy for ssh
 
-            if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
-                # start the ssh service
-                self.runCommand("systemctl unmask ssh.service", timeout=90)
-                self.runCommand("systemctl start ssh.service",erroneousContents=["Failed", "not found"])
-                
+            if not self.hasHardwareRNG():
+                #get the ssh up and running
+                self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
+                self.runCommand("chmod +x addEntropyDebian.riscv")
+                self.ensureCrngIsUp () #check we have enough entropy for ssh
+
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
                                 
@@ -295,6 +292,30 @@ class commonTarget():
                 f"<update root password> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",
                 exitCode=EXIT.Implementation)
         printAndLog(f"root password has been changed successfully!",doPrint=False)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def enableRootUserAccess(self):
+        """
+        Enable passwordless `su` for users in the `wheel` group and add the
+        user to `wheel`.
+        """
+        printAndLog("Enabling root user access...")
+        if isEqSetting('osImage', 'debian'):
+            self.runCommand('sed -i "s/# auth       sufficient pam_wheel.so trust/auth sufficient pam_wheel.so trust/" '
+                            '/etc/pam.d/su')
+            self.runCommand("groupadd wheel")
+            self.runCommand(f"usermod -aG wheel {self.userName}")
+        elif isEqSetting('osImage', 'FreeBSD'):
+            self.runCommand('sed -i "" "s/auth\\t\\trequisite\\tpam_group.so/'
+                            'auth\\t\\tsufficient\\tpam_group.so/" '
+                            '/etc/pam.d/su')
+            self.runCommand(f"pw group mod wheel -m {self.userName}")
+        else:
+            self.shutdownAndExit("<enableRootUserAccess> is not implemented "
+                                 f"for <{getSetting('osImage')}>.",
+                                 overwriteConsole=True,
+                                 exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -452,9 +473,16 @@ class commonTarget():
             self.shutdownAndExit(f"runCommand: fatal error.",exitCode=EXIT.Run)
         return [isSuccess, textBack, wasTimeout, idxEndsWith] #the 3rd argument is "timed-out"
 
+    # Send a between host and target.
+    # xFile      : file to send
+    # pathToFile : directory containing xFile on host
+    # targetPathToFile : directory containing xFile on target
+    # toTarget   : direction of send.
+    #                True[default] = send from host to target
+    #                False         = send from target to host. Requires an SSH connection.
     @decorate.debugWrap
     @decorate.timeWrap
-    def sendFile (self,pathToFile,xFile,timeout=30,shutdownOnError=True): #send File to target
+    def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,forceScp=False,timeout=30,shutdownOnError=True): #send File to target
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
@@ -466,7 +494,7 @@ class commonTarget():
                 logging.error(message)
                 errorAndLog (f"sendFile: Failed to send <{pathToFile}/{xFile}> to target. Trying again...")
                 self.resendAttempts += 1
-                return self.sendFile (pathToFile,xFile,timeout=timeout,shutdownOnError=shutdownOnError)
+                return self.sendFile (pathToFile,xFile,targetPathToFile=targetPathToFile,toTarget=toTarget,timeout=timeout,shutdownOnError=shutdownOnError)
             elif (shutdownOnError):
                 self.shutdownAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
             else:
@@ -477,25 +505,63 @@ class commonTarget():
         if ( (self.ipTarget is None) or (self.portTarget is None) or (self.portHost is None) ):
             return returnFalse ("Ethernet not properly activated. <sendFile> can not execute.",noRetries=True)
 
-        #find the sha256sum of the file
-        try:
-            shaSumTX = str(subprocess.check_output (f"sha256sum {pathToFile}/{xFile} | awk '{{ print $1 }}'",stderr=subprocess.STDOUT,shell=True),'utf-8').strip()
+        def checksumHost(f):
+            #find the sha256sum of the file
+            shaSumTX = str(subprocess.check_output (f"sha256sum {f} | awk '{{ print $1 }}'",stderr=subprocess.STDOUT,shell=True),'utf-8').strip()
             logging.debug(f"Output from <sha256sum>:\n{shaSumTX}")
-        except Exception as exc:
-            return returnFalse (f"Failed to obtain the checksum of <{pathToFile}/{xFile}>.",noRetries=True,exc=exc)
+            return shaSumTX
 
-        if (getSetting('osImage') in ['debian', 'FreeBSD'] and (self.isSshConn)): #send through SSH
-            currentUser = 'root' if self.isCurrentUserRoot else self.userName
-            user_path = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
+        def checksumTarget(f):
+            shaSumRX = None
+            if (isEqSetting('osImage','debian')):
+                retShaRX = self.runCommand(f"sha256sum {f}")[1]
+            elif (isEqSetting('osImage','FreeBSD')):
+                retShaRX = self.runCommand(f"sha256 {f}",timeout=90)[1]
+                retShaRX += self.runCommand(" ")[1]
+            logging.debug(f"retShaRX:\n{retShaRX}")
+            for line in retShaRX.splitlines():
+                if (isEqSetting('osImage','debian')):
+                    shaMatch = re.match(rf"^(?P<shaSum>[0-9a-f]+)\s+ {f}\s*$",line)
+                elif (isEqSetting('osImage','FreeBSD')):
+                    shaMatch = re.match(rf"^SHA256 \({f}\) = (?P<shaSum>[0-9a-f]+)$",line)
+                if (shaMatch is not None):
+                    shaSumRX = shaMatch.group('shaSum')
+                    break
+            if (shaSumRX is None):
+                raise
+            return shaSumRX
+
+        # The path to the file on the target
+        currentUser = 'root' if self.isCurrentUserRoot else self.userName
+        user_path   = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
+        targetPathRoot  = f"/{user_path}" if targetPathToFile is None else targetPathToFile
+        targetPath      = f"{targetPathRoot}/{xFile}"
+        # The path to the file on the host
+        hostPath        = f"{pathToFile}/{xFile}"
+
+        try:
+            f = hostPath if toTarget else targetPath
+            shaSumTX = checksumHost(f) if toTarget else checksumTarget(f)
+        except Exception as exc:
+            return returnFalse (f"Failed to obtain the checksum of <{f}>.",noRetries=True,exc=exc)
+
+
+        if (getSetting('osImage') in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)): #send through SSH
             portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
-            scpCommand = f"scp{portPart} {pathToFile}/{xFile} {currentUser}@{self.ipTarget}:/{user_path}/"
+
+            # if sending TO target, then "scp host target" otherwise flipped
+            scpTargetPath = f"{currentUser}@{self.ipTarget}:{targetPath}"
+            scpArgs       = f"{hostPath} {scpTargetPath}" if toTarget else f"{scpTargetPath} {hostPath}"
+            scpCommand    = f"scp{portPart} {scpArgs}"
+
             passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
             try:
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
-            self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
+            if not self.hasHardwareRNG():
+                self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
             try:
                 retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=timeout)
             except Exception as exc:
@@ -520,6 +586,10 @@ class commonTarget():
             self.keyboardInterrupt (shutdownOnError=True)
 
         else: #send the file through netcat
+            if not toTarget:
+                return returnFalse("sendFile: sending a file FROM the target requires an SSH connection",
+                                   noRetries=True)
+
             if (isEqSetting('osImage','debian')):
                 listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
             elif (isEqSetting('osImage','FreeBSD')):
@@ -541,25 +611,10 @@ class commonTarget():
 
         #obtaining the checksum
         try:
-            shaSumRX = None
-            if (isEqSetting('osImage','debian')):
-                retShaRX = self.runCommand(f"sha256sum {xFile}")[1]
-            elif (isEqSetting('osImage','FreeBSD')):
-                retShaRX = self.runCommand(f"sha256 {xFile}",timeout=90)[1]
-                retShaRX += self.runCommand(" ")[1]
-            logging.debug(f"retShaRX:\n{retShaRX}")
-            for line in retShaRX.splitlines():
-                if (isEqSetting('osImage','debian')):
-                    shaMatch = re.match(rf"^(?P<shaSum>[0-9a-f]+)\s+ {xFile}\s*$",line)
-                elif (isEqSetting('osImage','FreeBSD')):
-                    shaMatch = re.match(rf"^SHA256 \({xFile}\) = (?P<shaSum>[0-9a-f]+)$",line)
-                if (shaMatch is not None):
-                    shaSumRX = shaMatch.group('shaSum')
-                    break
-            if (shaSumRX is None):
-                raise
+            f = targetPath if not toTarget else hostPath
+            shaSumRX = checksumTarget(targetPath) if toTarget else checksumHost(hostPath)
         except Exception as exc:
-            return returnFalse (f"sendFile: Failed to obtain the checksum of <{xFile}> from target.",exc=exc)
+            return returnFalse (f"Failed to obtain the checksum of <{f}>.",noRetries=True,exc=exc)
 
         if (shaSumRX != shaSumTX):
             return returnFalse(f"sendFile: Checksum from <{xFile}> on target does not match.")
@@ -586,7 +641,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def runApp (self,sendFiles=False,timeout=30): #executes the app
-        printAndLog ("Running app...")
+        printAndLog ("runApp: Starting the application stack...")
         if (sendFiles):
             #send any needed files to target
             self.sendTar(timeout=timeout)
@@ -608,25 +663,44 @@ class commonTarget():
             appModule.install(self)
             appLog.flush()
 
-        # Test and Deploy    
-        if (isEqSetting('mode','deploy')):
-            for appModule in appModules:
-                appModule.deploymentTest(self)
-                appLog.flush()
-            for appModule in appModules: 
-                #TODO: This should be threads and only collect the message once. Will be done in #247.
-                appModule.deploy(self)
-                appLog.flush()
-        elif (isEqSetting('mode','test')):
-            for appModule in appModules:
-                appModule.extensiveTest(self)
-                appLog.flush()
-        else:
-            self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('mode')}> mode.",exitCode=EXIT.Implementation)
+        # Test    
+        for appModule in appModules:
+            appModule.deploymentTest(self)
+            appLog.flush()
 
         appLog.close()
-        logging.info (f"runApp: app executed successfully!\n")
+        logging.info (f"runApp: The application stack is deployed successfully!\n")
         return
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def collectAppLogs (self):
+        if (isEqSetting('osImage','FreeRTOS')):
+            appModules = [freertos]
+        elif (getSetting('osImage') in ['debian', 'FreeBSD']):
+            appModules = [ssh, webserver, database, voting]
+
+            # Let root log in to gather files
+            self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
+            if (getSetting('osImage') == 'debian'):
+                self.runCommand("service ssh restart")
+            else:
+                self.runCommand("/etc/rc.d/sshd start")
+
+        else:
+            logging.info (f"collectAppLogs: no logs to gather for: <{getSetting('osImage')}>")
+            return
+
+        artifactPath = getSetting('extraArtifactsPath')
+
+        for appModule in appModules:
+            if hasattr(appModule, "dumpLogs"):
+                appModule.dumpLogs(self, artifactPath)
+            else:
+                logging.info (f"collectAppLogs: nothing to do for module {appModule}.")
+        logging.info (f"collectAppLogs: done collecting logs.")
+        return
+
 
     @decorate.debugWrap
     def keyboardInterrupt (self,shutdownOnError=True,timeout=15):
@@ -772,7 +846,7 @@ class commonTarget():
                 isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
                 textBack = textBack + textBack_2
         elif (isEqSetting('osImage','FreeRTOS')):
-            isSuccess, textBack, isTimeout, dumpIdx = [True, '', False, 0] #nothing to terminate
+            isSuccess, textBack, isTimeout, dumpIdx = [freertos.terminateAppStack(self), '', False, 0] #send STOP to OTA
         elif (not isEqSetting('osImage','FreeRTOS')):
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
         try:
@@ -821,7 +895,7 @@ class commonTarget():
         except Exception as exc:
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
 
-        if (not self.onlySsh):
+        if (not self.onlySsh and not self.hasHardwareRNG()):
             self.genStdinEntropy(endsWith=self.getAllEndsWith())
 
         self.isSshConn = True
@@ -888,10 +962,13 @@ class commonTarget():
 
     @decorate.debugWrap
     def genStdinEntropy (self,endsWith=None):
-        lenText = 240 if (isEqSetting('target','aws')) else 1000 # A UART buffer issue, should be resolved soon --> avoid long strings
+        lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
         alphabet = string.ascii_letters + string.digits + ' '
         randText = ''.join(random.choice(alphabet) for i in range(lenText))
         self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
+
+    def hasHardwareRNG (self):
+        return isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')
 
 # END OF CLASS commonTarget
 
@@ -916,10 +993,8 @@ def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
         estimatedPrefix = "Estimated ~{:0>2}:{:0>2} ".format(int(minutesEst),int(secondsEst))
         if (isEqSetting('fettEntrypoint','devHost')):
             showTimePrefix = f"{estimatedPrefix}----- Elapsed: "
-        elif (getSetting('fettEntrypoint') in ['ciOnPrem','ciAWS']):
-            stdout.write(f"{estimatedPrefix}\n")
         else:
-            logAndExit(f"showElapsedTime: Not implemented for Entrypoint: <{getSetting('fettEntrypoint')}>.",exitCode=EXIT.Implementation)
+            stdout.write(f"{estimatedPrefix}\n")
         while (not stopThread.is_set()):
             minutes, seconds = divmod(time.time() - startTime, 60)
             if (isEqSetting('fettEntrypoint','devHost')):

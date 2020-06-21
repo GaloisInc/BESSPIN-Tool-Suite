@@ -3,8 +3,9 @@
 
 --- fett.py is the main FETT-Target program. All documentation and features are based on 
     solely executing this file. Please do not execute any other file.
---- Usage: fett.py [-h] [-c CONFIGFILE] [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
-               [-ep ENTRYPOINT]
+--- usage: fett.py [-h] [-c CONFIGFILE | -cjson CONFIGFILESERIALIZED]
+               [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
+               [-ep {devHost,ciOnPrem,ciAWS,awsProd}]
 
 FETT (Finding Exploits to Thwart Tampering)
 
@@ -12,13 +13,16 @@ optional arguments:
   -h, --help            show this help message and exit
   -c CONFIGFILE, --configFile CONFIGFILE
                         Overwrites the default config file: ./config.ini
+  -cjson CONFIGFILESERIALIZED, --configFileSerialized CONFIGFILESERIALIZED
+                        Overwrites and augments the default production
+                        settings
   -w WORKINGDIRECTORY, --workingDirectory WORKINGDIRECTORY
                         Overwrites the default working directory: ./workDir/
   -l LOGFILE, --logFile LOGFILE
                         Overwrites the default logFile: ./${workDir}/fett.log
   -d, --debug           Enable debugging mode.
-  -ep ENTRYPOINT, --entrypoint ENTRYPOINT
-                        Entrypoint: devHost | ciOnPrem
+  -ep {devHost,ciOnPrem,ciAWS,awsProd}, --entrypoint {devHost,ciOnPrem,ciAWS,awsProd}
+                        The entrypoint
 --- Defaults: 
         workingDirectory = ./workDir
         configFile = ./config.ini
@@ -29,8 +33,9 @@ optional arguments:
 
 try:
     from fett.base.utils.misc import *
-    from fett.base.config import loadConfiguration
+    from fett.base.config import loadConfiguration, genProdConfig
     from fett.target.launch import startFett, endFett
+    from fett.base.utils import aws
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
     try:
@@ -64,18 +69,6 @@ def main (xArgs):
         print(f"(Error)~  Failed to create the working directory <{workDir}>.\n{formatExc(exc)}.")
         exitFett(EXIT.Files_and_paths)
 
-    # Check config file
-    if (xArgs.configFile):
-        configFile = os.path.abspath(xArgs.configFile)
-    else:
-        configFile = os.path.join(repoDir,'config.ini')
-    try:
-        fConfig = open(configFile,'r')
-        fConfig.close()
-    except Exception as exc:
-        print(f"(Error)~  Failed to read the configuration file <{configFile}>.\n{formatExc(exc)}.")
-        exitFett(EXIT.Configuration)
-
     # Check log file
     if (xArgs.logFile):
         logFile = os.path.abspath(xArgs.logFile)
@@ -89,11 +82,7 @@ def main (xArgs):
         exitFett(EXIT.Files_and_paths)
 
     # Entrypoint
-    listEntrypoints = ['devHost','ciOnPrem','ciAWS']
-    if ((xArgs.entrypoint) and (xArgs.entrypoint not in listEntrypoints)):
-        print(f"(Error)~  ENTRYPOINT has to be in [{','.join(listEntrypoints)}].")
-        exitFett(EXIT.Configuration)
-    elif(xArgs.entrypoint is None):
+    if(xArgs.entrypoint is None):
         xArgs.entrypoint = 'devHost'
 
     # setup the logging
@@ -104,13 +93,23 @@ def main (xArgs):
     # Store critical settings
     setSetting('repoDir', repoDir)
     setSetting ('workDir', workDir)
-    setSetting('configFile', configFile)
     setSetting('logFile', logFile)
     setSetting('debugMode', xArgs.debug)
     setSetting('fettEntrypoint',xArgs.entrypoint)
+    setSetting('prodJobId', xArgs.jobId)
     # Load all configuration and setup settings
     setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
+    if (xArgs.configFile):
+        configFile = os.path.abspath(xArgs.configFile)
+    elif (xArgs.configFileSerialized):
+        configFile = os.path.join(workDir,'production.ini')
+        genProdConfig (xArgs.configFileSerialized, configFile)
+        printAndLog(f"Configuration deserialized successfully to <{configFile}>.")
+    else:
+        configFile = os.path.join(repoDir,'config.ini')
+        printAndLog(f"Using the default configuration in <{configFile}>.")
+    setSetting('configFile', configFile)
     loadConfiguration(configFile)
 
     #Prepare the peaceful exit
@@ -118,18 +117,34 @@ def main (xArgs):
     atexit.register(exitPeacefully,getSetting('trash'))
     
     #launch the tool
-    startFett()
-    endFett()
+    xTarget = startFett()
+    if (isEqSetting('mode','production')):
+        # Notify portal that we have deployed successfully
+        aws.sendSQS(getSetting('prodSqsQueueTX'), logAndExit, 'success', 
+                    getSetting('prodJobId'), f"{getSetting('prodJobId')}-DEPLOY",
+                    reason='fett-target-production-deployment',
+                    hostIp=getSetting('awsIpHost'),
+                    fpgaIp=getSetting('awsIpTarget')
+                    )
+        printAndLog("Sent deployment message to the SQS queue.")
+
+        aws.pollPortalQueueIndefinitely (getSetting('prodSqsQueueRX'), logAndExit)
+        printAndLog("Received termination message from the SQS queue.")
+        
+    endFett(xTarget)
     exitFett(EXIT.Success)
 
 if __name__ == '__main__':
     # Reading the bash arguments
     xArgParser = argparse.ArgumentParser (description='FETT (Finding Exploits to Thwart Tampering)')
-    xArgParser.add_argument ('-c', '--configFile', help='Overwrites the default config file: ./config.ini')
+    xGroupConfig = xArgParser.add_mutually_exclusive_group(required=False)
+    xGroupConfig.add_argument ('-c', '--configFile', help='Overwrites the default config file: ./config.ini')
+    xGroupConfig.add_argument ('-cjson', '--configFileSerialized', help='Overwrites and augments the default production settings')
     xArgParser.add_argument ('-w', '--workingDirectory', help='Overwrites the default working directory: ./workDir/')
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
-    xArgParser.add_argument ('-ep', '--entrypoint', help='Entrypoint: devHost | ciOnPrem | ciAWS')
+    xArgParser.add_argument ('-ep', '--entrypoint', choices=['devHost','ciOnPrem','ciAWS','awsProd'], help='The entrypoint')
+    xArgParser.add_argument ('-job', '--jobId', help='The job ID in production mode.')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals

@@ -11,7 +11,7 @@
         {
             "name" : "mode",
             "type" : "string",
-            "choices" : [ "test", "deploy" ]
+            "choices" : [ "test", "production" ]
         },
         {
             "name" : "target",
@@ -95,16 +95,18 @@
         {
             "name" : "useCustomCredentials",
             "type" : "boolean"
+        },
+        {
+            "name": "rootUserAccess",
+            "type": "boolean"
+        },
+        {
+            "name": "awsJumpBoxIp",
+            "type": "string"
         }
     ],
 
     "applications" : [
-        {
-            "name" : "appTimeout",
-            "type" : "int",
-            "min" : 10,
-            "max" : 1800
-        },
         {
             "name" : "buildApps",
             "type" : "boolean"

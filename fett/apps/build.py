@@ -43,6 +43,9 @@ def buildApps ():
 @decorate.debugWrap
 @decorate.timeWrap
 def buildFreeRTOSapps():
+    assetsPath = os.path.join(getSetting('repoDir'),getSettingDict('freertosAssets',['path']))
+    setSetting('assetsDir',assetsPath)
+    
     if (not isEnabled('buildApps')):
         pass #For readability
     else:
