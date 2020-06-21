@@ -126,11 +126,6 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
     received_file_size = 0;
     r = 0;
 
-    fettPrintf(
-        "(Info)~ RAPOOR original RA is %02x %02x %02x %02x\n",
-        (int) tftp_filename[159], (int) tftp_filename[158],
-        (int) tftp_filename[157], (int) tftp_filename[156]);
-
     Initialize_Receipt_Buffer();
 
     received_file_size =
@@ -191,19 +186,13 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
             "(Info)~  vOta: OTA: received file too small to be signed.\n");
     }
 
-    fettPrintf(
-        "(Info)~ RAPOOR final RA is %02x %02x %02x %02x\n",
-        (int) tftp_filename[159], (int) tftp_filename[158],
-        (int) tftp_filename[157], (int) tftp_filename[156]);
 }
 
 void Ota_Worker(ed25519_key *pk)
 {
     do
     {
-        fettPrintf ("Calling RAPOOR\n");
         Receive_And_Process_One_OTA_Request(pk);
-        fettPrintf ("Returned from RAPOOR OK\n");
     } while (!StopRequested());
 
     fettPrintf("(Info)~  vOta: Ota_Worker returns after STOP message\n");
