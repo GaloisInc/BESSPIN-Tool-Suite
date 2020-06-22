@@ -114,7 +114,7 @@ class firesimTarget(commonTarget):
 
     def interact(self):
         if (isEqSetting('osImage','FreeRTOS')):
-            printAndLog (f"FreeRTOS interactive mode is for interacting through network from other terminals. Press \"Ctrl + E\" to exit.")
+            printAndLog (f"FreeRTOS is left running on target. Press \"Ctrl + E\" to exit.")
         else:
             printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         super().interact()

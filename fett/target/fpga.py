@@ -195,7 +195,7 @@ class fpgaTarget (commonTarget):
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
         if (isEqSetting('osImage','FreeRTOS')):
-            printAndLog (f"FreeRTOS interactive mode is for interacting through network from other terminals. Enter \"--exit + Enter\" to exit.")
+            printAndLog (f"FreeRTOS is left running on target. Enter \"--exit + Enter\" to exit.")
         else:
             printAndLog (f"Entering pseudo-interactive mode. Root password: \'{self.rootPassword}\'. Enter \"--exit + Enter\" to exit.")
             printAndLog ("Please use \"--ctrlc\" for interrupts. (Ctrl-C would exit the whole FETT tool).")
