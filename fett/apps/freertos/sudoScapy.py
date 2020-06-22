@@ -40,13 +40,16 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     WRQ.show()
 
     print ("Sending WRQ...")
+    r = None
     try:
         r = scapy.sr1(WRQ, timeout=3, verbose=True)
     except Exception as exc:
         print (f"Failed to send WRQ with exception {exc}")
+        exit (1)
 
     print ("WRQ Response is")
-    r.show()
+    if r != None:
+        r.show()
 
     # Pick up the server's chosen port number as our destination port
     # for subsequent DATA packets
@@ -60,13 +63,16 @@ def spoofTFTP(hostIP, targetIP, TFTPPort):
     DATA.show()
 
     print ("Sending DATA...")
+    r2 = None
     try:
         r2 = scapy.sr1(DATA, timeout=3, verbose=True)
     except Exception as exc:
         print (f"Failed to send DATA with exception {exc}")
+        exit (1)
 
     print ("DATA Response is")
-    r2.show()
+    if r2 != None:
+        r2.show()
 
     return
 
@@ -76,7 +82,7 @@ if __name__ == '__main__':
     print (f"Number of args is {na}")
     if (na != 5):
         print ("\n<INVAID> Wrong number of arguments passed to sudoScapy.py\n")
-        exit (0)
+        exit (1)
 
     # Restore the System Path of the calling program from sys.argv[1]
     parentPath = sys.argv[1].split('+')
@@ -84,8 +90,5 @@ if __name__ == '__main__':
     # Now we can import Scapy
     import scapy.all as scapy
 
-    try:
-        spoofTFTP (sys.argv[2], sys.argv[3], int(sys.argv[4]))
-    except Exception as exc:
-        print (f"Failed to spoof TFTP - unhandled exception {exc}")
+    spoofTFTP (sys.argv[2], sys.argv[3], int(sys.argv[4]))
     exit (0)
