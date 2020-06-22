@@ -36,10 +36,6 @@ def prepareFreeRTOS():
     3. If 'buildApps' is disabled && useCustomImage is enabled --> customImage
     """
 
-    #Console mode on FreeRTOS?
-    if (isEqSetting('osImage','FreeRTOS') and isEnabled('openConsole')):
-        warnAndLog (f"Unable to <openConsole> on FreeRTOS. This will be switched off.", doPrint=False)
-        setSetting('openConsole',False)
     #Netboot on FreeRTOS?
     if (isEqSetting('osImage','FreeRTOS') and isEqSetting('elfLoader','netboot')):
         warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)

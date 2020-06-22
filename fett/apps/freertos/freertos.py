@@ -4,6 +4,7 @@ This is executed after loading the app on the target to execute FreeRTOS app
 """
 
 from fett.base.utils.misc import *
+from fett.apps.freertos import michigan
 import tftpy, os, re
 import logging
 import subprocess
@@ -113,6 +114,8 @@ def OTATest(clientTftp, fileName, TCNum, TCDesc):
 @decorate.debugWrap
 @decorate.timeWrap
 def deploymentTest(target):
+    if (isEqSetting('binarySource','Michigan')):
+        return michigan.deploymentTest(target)
     # target is a fett target object
     targetIP = target.ipTarget
     TFTPPort = getSetting('TFTPPortTarget')
@@ -209,6 +212,8 @@ def deploymentTest(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def terminateAppStack (target):
+    if (isEqSetting('binarySource','Michigan')):
+        return michigan.terminateAppStack(target)
     ###################################
     # STOP the FreeRTOS application
     # uploading the signed stop.htm file
@@ -258,7 +263,7 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 @decorate.debugWrap
 def rtosShutdownAndExit (target, message, exc=None, exitCode=None):
     # Run to completion
-    rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,shutdownOnError=False,timeout=30)
+    rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,shutdownOnError=False,timeout=30, tee=False)
     target.shutdownAndExit(message, exc=exc, exitCode=exitCode)
 
 @decorate.debugWrap

@@ -488,4 +488,8 @@ def tarArtifacts (logAndExitFunc,getSettingFunc):
     printAndLog(f"tarArtifacts: Created <{tarFileName}> including all artifacts.")
     return tarFileName
 
+@decorate.debugWrap
+def setAdaptorUpDown (adaptorName, direction):
+    sudoShellCommand(['ip','link','set', 'dev', adaptorName, direction])
+
 
