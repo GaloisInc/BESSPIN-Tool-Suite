@@ -195,9 +195,6 @@ class connectalTarget(commonTarget):
         if getSetting('osImage') not in ['debian', 'FreeBSD']:
             logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
-        # TODO: protect this
-        elfFiles = glob.glob(os.path.join(getSetting('osImagesDir'), "*.elf"))
-
         awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'sim')
 
         extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
@@ -206,10 +203,12 @@ class connectalTarget(commonTarget):
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
-            *[f"--elf={ef}" for ef in elfFiles],
+            f"--elf={getSetting('osImageElf')}",
+            f"--elf={getSetting('osImageExtraElf')}" if getSetting('osImageExtraElf') is not None else "",
             f"--tun={tapName}"
-        ]
-                                    + extraArgs)
+        ] + extraArgs)
+
+        printAndLog(f"<aws.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
 
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
@@ -443,14 +442,9 @@ def copyAWSSources():
     if pvAWS not in ['firesim', 'connectal']:
         logAndExit(f"<aws.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
 
-    # copy over available paths
-    # yet another inconsistency
-    if isEqSetting('binarySource', 'SRI-Cambridge'):
-        awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                     'bitfiles', pvAWS)
-    else:
-        awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                     'bitfiles', pvAWS, getSetting('processor'))
+    awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                 'bitfiles', pvAWS, getSetting('processor'))
+
     awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
 
     # populate workDir with available subdirectories
@@ -505,6 +499,8 @@ def installKernelModules():
         _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
 
     elif (isEqSetting('pvAWS', 'connectal')):
+        ## build the kernel modules from source
+        make([], awsModPath)
         sudoShellCommand(['insmod', f"{awsModPath}/pcieportal.ko"])
         _sendKmsg (f"FETT-connectal: Installing pcieportal.ko.")
         sudoShellCommand(['insmod', f"{awsModPath}/portalmem.ko"])
@@ -563,12 +559,12 @@ def prepareConnectal():
         # connectal requires a device tree blob
         dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
         setSetting("osImageDtb",dtbFile)
-        dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'aws', "devicetree.dtb")
+        dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'common', "devicetree.dtb")
         cp (dtbsrc, dtbFile)
         logging.info(f"copy {dtbsrc} to {dtbFile}")
 
         imageDir = getSetting('osImagesDir')
         imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                       'osImages', 'common', "disk-image-cheri.img")
+                                       'osImages', 'common', "disk-image-cheri.img.zst")
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
-        cp(imageSourcePath, imageFile)
+        zstdDecompress(imageSourcePath, imageFile)

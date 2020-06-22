@@ -201,7 +201,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 60
             elif (isEqSetting('target', 'aws')):
-                timeout = 360
+                timeout = 480
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)

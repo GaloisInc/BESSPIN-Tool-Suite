@@ -12,8 +12,17 @@ def prepareOsImage ():
     osImagesDir = os.path.join(getSetting('workDir'),'osImages')
     mkdir(osImagesDir,addToSettings='osImagesDir')
 
-    osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
-    setSetting('osImageElf',osImageElf)
+    # setup os image and extra images
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        osImageElf = os.path.join(getSetting('osImagesDir'),f"bbl-cheri.elf")
+        setSetting('osImageElf',osImageElf)
+        osImageExtraElf = os.path.join(getSetting('osImagesDir'),f"kernel-cheri.elf")
+        setSetting('osImageExtraElf', osImageExtraElf)
+    else:
+        osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
+        setSetting('osImageElf',osImageElf)
+        setSetting('osImageExtraElf', None)
+
 
     if(isEqSetting('osImage','FreeRTOS')):
         prepareFreeRTOS ()
