@@ -155,6 +155,15 @@ class firesimTarget(commonTarget):
             warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
 
         if (self.process.isalive()):
+            # When executing the firesim command, we run it with `stty intr ^]` which changes
+            # the interrupt char to be `^]` instead of `^C` to allow us sending the intr `^C`
+            # to the target through firesim without interrupting firesim. In case the firesim 
+            # process didn't return, which is the case for FreeRTOS as the scheduler never returns
+            # but goes to the idle hook, if we don't send `^]`, some children processes stay as 
+            # zombies, and if we run firesim again, the run gets messed up with those processes.
+            # This also happens if a unix OS didn't exit properly. Towards the end of making each
+            # run a standalone and independent of previous runs, we send this interrupt if the 
+            # process is still alive.
             self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=15)
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
         return True
