@@ -36,14 +36,14 @@ def prepareFreeRTOS():
     3. If 'buildApps' is disabled && useCustomImage is enabled --> customImage
     """
 
-    #Console mode on FreeRTOS?
-    if (isEqSetting('osImage','FreeRTOS') and isEnabled('openConsole')):
-        warnAndLog (f"Unable to <openConsole> on FreeRTOS. This will be switched off.", doPrint=False)
-        setSetting('openConsole',False)
     #Netboot on FreeRTOS?
     if (isEqSetting('osImage','FreeRTOS') and isEqSetting('elfLoader','netboot')):
         warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
         setSetting('elfLoader','JTAG')
+
+    # define some paths
+    osImageAsm = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.asm")
+    setSetting('osImageAsm',osImageAsm)
 
     if (not isEnabled('buildApps')): #just fetch the image
         importImage()
@@ -62,20 +62,25 @@ def prepareFreeRTOS():
             logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
 
         #cross-compiling sanity checks
-        if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
-            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
+        if (isEqSetting('cross-compiler','GCC') and (not isEqSetting('linker','GCC'))):
+            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <GCC> is not supported. Linking using <GCC> instead.")
             setSetting('linker','GCC')
+        if (isEqSetting('cross-compiler','Clang') and (not isEqSetting('linker','LLD'))):
+            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <Clang> is not supported. Linking using <LLD> instead.")
+            setSetting('linker','LLD')
 
-        if (isEqSetting('cross-compiler','Clang')):
-            logAndExit(f"<Clang> is not yet supported for FreeRTOS.",exitCode=EXIT.Implementation)
+        # C++ SD Arduino library causing issues with Clang
+        if (isEqSetting('cross-compiler','Clang') and (isEqSetting('target','fpga'))):
+            logAndExit(f"Building FreeRTOS using Clang/LLD is not yet implemented for target <fpga>.",exitCode=EXIT.Implementation)
 
         #copy the C files, .mk files, and any directory
         copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
 
         #Include the relevant user configuration parameters
         #This is a list of tuples: (settingName,macroName)
-        listConfigParams = [('appTimeout','APP_TIMEOUT'),('HTTPPortTarget','HTTP_PORT'),
-                            ('TFTPPortTarget','TFTP_PORT'),('debugMode','FETT_DEBUG'),
+        listConfigParams = [('HTTPPortTarget','HTTP_PORT'),
+                            ('TFTPPortTarget','TFTP_PORT'),
+                            ('debugMode','FETT_DEBUG'),
                             ('OTAMaxSignedPayloadSize','OTA_MAX_SIGNED_PAYLOAD_SIZE')]
 
         configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
@@ -87,6 +92,8 @@ def prepareFreeRTOS():
             configHfile.write(f"#define {xMacro} {intVal}\n")
         #Write the ota filename too (not list as it is unique)
         configHfile.write(f"#define OTA_FILENAME \"{getSettingDict('freertosAssets',['otaHtml'])}\"\n")
+        #Write the bianry source for team specific codes
+        configHfile.write(f"#define BIN_SOURCE_{getSetting('binarySource').replace('-','_')}\n")
         #Translate the mode to one char: T or D
         configHfile.write(f"#define FETT_MODE \'{getSetting('mode')[0].upper()}\'\n")
         configHfile.close()
@@ -102,7 +109,7 @@ def prepareFreeRTOS():
                 return int(val)
             elif (xType==hex):
                 return "0x{:02X}".format(int(val,16))
-        
+
         configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettFreeRTOSIPConfig.h'),'a')
         for xSetting,xMacro,xType in listConfigIpParams:
             for iPart,xPart in enumerate(re.split(r'[\.\:]',getSetting(xSetting))):
@@ -120,7 +127,13 @@ def prepareFreeRTOS():
         printAndLog (f"Cross-compiling...")
         envVars = []
         envVars.append(f"XLEN={getSetting('xlen')}")
-        envVars.append(f"USE_CLANG={int(isEqSetting('cross-compiler','Clang'))}")
+        envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
+        if (isEqSetting('cross-compiler','Clang')):
+            # check that the sysroot env variable exists:
+            sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
+            if (sysRootEnv not in os.environ):
+                logAndExit (f"<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
+            envVars.append(f"SYSROOT_DIR={os.environ[sysRootEnv]}")
         envVars.append(f"PROG=main_fett")
         envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
         envVars.append(f"BSP={getSetting('target')}")
@@ -129,9 +142,13 @@ def prepareFreeRTOS():
 
         #check if the elf file was created
         builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
+        builtAsm = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.asm')
         if (not os.path.isfile(builtElf)):
-            logAndExit(f"<make> executed without errors, but cannot fine <{builtElf}>.",exitCode=EXIT.Run)
+            logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
         cp(builtElf,getSetting('osImageElf'))
+        if (not os.path.isfile(builtAsm)):
+            logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
+        cp(builtAsm,getSetting('osImageAsm'))
         printAndLog(f"Files cross-compiled successfully.")
 
         #Cleaning all ".o" files post run
@@ -175,7 +192,7 @@ def selectImagePath():
 def importImage():
     imagePath = selectImagePath()
     cp (imagePath, getSetting('osImageElf'))
-    if not isEqSetting('target', 'aws'):
+    if not (isEqSetting('target', 'aws')):
         if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
             netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
             setSetting('netbootElf',netbootElf)

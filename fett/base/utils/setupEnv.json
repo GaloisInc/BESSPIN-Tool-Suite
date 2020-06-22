@@ -92,6 +92,16 @@
             "val" : "8e:6b:35:04:00:00"
         },
         {
+            "name" : "awsBridgeAdaptorMacAddress",
+            "type" : "macAddress",
+            "val" : "02:5d:2c:f8:00:00"
+        },
+        {
+            "name" : "awsBridgeAdaptorIp",
+            "type" : "ipAddress",
+            "val" : "172.16.0.3"
+        },
+        {
             "name" : "awsNetMaskTarget",
             "type" : "ipAddress",
             "val" : "255.255.255.0"
@@ -182,12 +192,13 @@
                 },
                 "MIT" : {
                     "bluespec_p2" : {
-                        "FreeBSD" : "connectal"
+                        "busybox" : "connectal",
+                        "debian" : "connectal"
                     }
                 },
                 "SRI-Cambridge" : {
                     "bluespec_p2" : {
-                        "FreeBSD" : "awsteria"
+                        "FreeBSD" : "connectal"
                     }
                 }
             }
@@ -212,6 +223,7 @@
                     "firesim" :  "FETT_GFE_BUSYBOX_FIRESIM"
                 },
                 "FreeRTOS" : {
+                    "clang-sysroot" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
                     "fpga" : "FETT_GFE_FREERTOS_FPGA",
                     "firesim" :  "FETT_GFE_FREERTOS_FIRESIM"
                 },
@@ -252,6 +264,27 @@
                 "otaHtml" : "ota.htm",
                 "StopHtml" : "stop.htm",
                 "assets" : ["index.htm", "ota.htm", "glogo.png"]
+            }
+        },
+        {
+            "name" : "webserverLogs",
+            "type" : "dict",
+            "val"  : {
+                "root" : "/usr/local/nginx/logs",
+                "logs" : ["error.log", "access.log"]
+
+            }
+        },
+        {
+            "name" : "michiganInfo",
+            "type" : "dict",
+            "val"  : {
+                "httpPort" : 9443,
+                "curlTestPath" : "help",
+                "lynxTestQueries" : [
+                    "query?avg(recenttravel)%20where%20(zipcode==48103%20&&%20reqo2==1)",
+                    "query?avg(recovered) where (zipcode == 48105)"
+                ]
             }
         }
     ] 

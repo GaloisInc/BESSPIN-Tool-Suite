@@ -108,10 +108,15 @@ class firesimTarget(commonTarget):
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # The tap needs to be turned up AFTER booting
-        getTapAdaptorUp ()
+        if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
+            time.sleep(20)
+        setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
 
     def interact(self):
-        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + C\" to exit.")
+        if (isEqSetting('osImage','FreeRTOS')):
+            printAndLog (f"FreeRTOS is left running on target. Press \"Ctrl + E\" to exit.")
+        else:
+            printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         super().interact()
 
     @decorate.debugWrap
@@ -121,15 +126,21 @@ class firesimTarget(commonTarget):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            outCmd = self.runCommand ("ifup eth0",expectedContents='IceNet: opened device')
+            self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage','FreeRTOS')):
-            outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
+            if (isEqSetting('binarySource','Michigan')):
+                ntkReadyString = f"WebSocket server listening on port {getSettingDict('michiganInfo',['httpPort'])}"
+                timeout = 120 #Yes, it needs time
+            else:
+                ntkReadyString = "<NTK-READY>"
+                timeout = 30
+            self.runCommand("isNetworkUp",endsWith=ntkReadyString,erroneousContents="(Error)",timeout=timeout)
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
         self.pingTarget()
 
-        return outCmd
+        return
 
     @decorate.debugWrap
     def targetTearDown(self):
@@ -142,14 +153,95 @@ class firesimTarget(commonTarget):
             self.fswitchOut.close()
         except Exception as exc:
             warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
+
+        if (self.process.isalive()):
+            # When executing the firesim command, we run it with `stty intr ^]` which changes
+            # the interrupt char to be `^]` instead of `^C` to allow us sending the intr `^C`
+            # to the target through firesim without interrupting firesim. In case the firesim 
+            # process didn't return, which is the case for FreeRTOS as the scheduler never returns
+            # but goes to the idle hook, if we don't send `^]`, some children processes stay as 
+            # zombies, and if we run firesim again, the run gets messed up with those processes.
+            # This also happens if a unix OS didn't exit properly. Towards the end of making each
+            # run a standalone and independent of previous runs, we send this interrupt if the 
+            # process is still alive.
+            self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=15)
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
         return True
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
+class connectalTarget(commonTarget):
+    def __init__(self):
+        super().__init__()
+        self.ipTarget = getSetting('awsIpTarget')
+        self.ipHost = getSetting('awsIpHost')
+        self.portTarget = getSetting('awsPortTarget')
+        self.portHost = getSetting('awsPortHost')
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def boot(self,endsWith="login:",timeout=90):
+        if (getSetting('osImage') != 'debian'):
+            logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
+
+        awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'sim')
+
+        # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
+        warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
+        extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
+        tapName = getSetting('awsTapAdaptorName')
+        connectalCommand = ' '.join([
+            os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
+            f"--dtb={getSetting('osImageDtb')}",
+            f"--block={getSetting('osImageImg')}",
+            f"--elf={getSetting('osImageElf')}",
+            f"--tun={tapName}"
+        ]
+                                    + extraArgs)
+
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+
+        try:
+            self.ttyProcess = pexpect.spawn(connectalCommand,logfile=self.fTtyOut,timeout=90,
+                                         cwd=awsConnectalHostPath)
+            self.process = self.ttyProcess
+            time.sleep(1)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+        except Exception as exc:
+            self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+         # The tap needs to be turned up AFTER booting
+        setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
+
+    def interact(self):
+        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl-A X\" to exit.")
+        super().interact()
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def activateEthernet(self):
+        if (isEqSetting('osImage','debian')):
+            outCmd = self.runCommand ("ifconfig eth0 up")
+            self.runCommand (f"ifconfig eth0 {self.ipTarget}")
+            self.runCommand (f"ifconfig eth0 netmask {getSetting('awsNetMaskTarget')}")
+            self.runCommand (f"ifconfig eth0 hw ether {getSetting('awsMacAddrTarget')}")
+        else:
+            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+
+        self.pingTarget()
+        return outCmd
+
+    @decorate.debugWrap
+    def targetTearDown(self):
+        return True
+    # ------------------ END OF CLASS connectalTarget ----------------------------------------
+
+
 @decorate.debugWrap
 def configTapAdaptor():
     tapAdaptor = getSetting('awsTapAdaptorName')
+    bridgeAdaptor = 'br0'
+    l2tpAdaptor = 'l2tpeth0'
 
     def getMainAdaptor():
         for xAdaptor in psutil.net_if_addrs():
@@ -161,13 +253,35 @@ def configTapAdaptor():
         'create' : [
             ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()]
         ],
-        'natSetup' : [
-            ['sysctl', '-w', 'net.ipv6.conf.tap0.disable_ipv6=1'],
-            ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
-            ['iptables', '-A', 'FORWARD', '-i', getMainAdaptor(), '-o', tapAdaptor, '-m', 'state',
-                '--state', 'RELATED,ESTABLISHED', '-j', 'ACCEPT'],
-            ['iptables', '-A', 'FORWARD', '-i', tapAdaptor, '-o', getMainAdaptor(), '-j', 'ACCEPT'],  
-            ['iptables', '-t', 'nat', '-A', 'POSTROUTING', '-o', getMainAdaptor(), '-j', 'MASQUERADE']  
+        'bridgeSetup' : [
+            # Disable IPv6 on the tap adaptor
+            ['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1'],
+            # Load l2tp_eth module to enable creation of L2 tunnel
+            ['modprobe', 'l2tp_eth'],
+            # Add an L2 tunnel from the main adaptor to the jump box
+            ['ip', 'l2tp', 'add', 'tunnel', 'remote',
+             getSetting('awsJumpBoxIp'), 'local',
+             fpga.getAddrOfAdaptor(getMainAdaptor(), 'IP'), 'tunnel_id', '100',
+             'peer_tunnel_id', '100', 'udp_sport', '6001', 'udp_dport', '6000'],
+            # Add a new session to the tunnel
+            ['ip', 'l2tp', 'add', 'session', 'tunnel_id', '100', 'session_id',
+             '101', 'peer_session_id', '101'],
+            # Bring the l2tp interface up
+            ['ip', 'link', 'set', l2tpAdaptor, 'up', 'mtu', '1446'],
+            # Add a bridge adaptor
+            ['ip', 'link', 'add', bridgeAdaptor, 'type', 'bridge'],
+            # Set the bridge adaptor's MAC address
+            ['ip', 'link', 'set', 'dev', bridgeAdaptor, 'address',
+             getSetting('awsBridgeAdaptorMacAddress')],
+            # Add the l2tp interface to the bridge adaptor
+            ['ip', 'link', 'set', l2tpAdaptor, 'master', bridgeAdaptor],
+            # Add the tap adaptor to the bridge adaptor
+            ['ip', 'link', 'set', tapAdaptor, 'master', bridgeAdaptor],
+            # Set the bridge adaptor's IP address
+            ['ip', 'addr', 'add', getSetting('awsBridgeAdaptorIp') + '/24',
+             'dev', bridgeAdaptor],
+            # Bring the bridge adaptor up
+            ['ip', 'link', 'set', bridgeAdaptor, 'up']
         ],
         'refresh' : [
             ['ip', 'addr', 'flush', 'dev', tapAdaptor]
@@ -190,7 +304,7 @@ def configTapAdaptor():
     # Check if the adaptor exists
     if (fpga.getAddrOfAdaptor(tapAdaptor,'MAC',exitIfNoAddr=False) == 'NotAnAddress'):
         printAndLog (f"configTapAdaptor: <{tapAdaptor}> was never configured. Configuring...",doPrint=False)
-        execSudoCommands(['create','config','natSetup'])
+        execSudoCommands(['create','config','bridgeSetup'])
     else:
         # was created --> re-configure
         execSudoCommands(['refresh','config'])
@@ -213,29 +327,6 @@ def programAFI():
     agfiId = getSetting("agfiId")
     clearFpgas()
     flashFpgas(agfiId)
-
-@decorate.debugWrap
-def getTapAdaptorUp ():
-    sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'])
-
-@decorate.debugWrap
-def setupKernelModules():
-    if (isEqSetting('pvAWS','firesim')):
-        #remove all modules to be safe
-        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
-        for kmod in kmodsToClean:
-            sudoShellCommand(['rmmod', kmod],check=False)
-            _sendKmsg (f"FETT-firesim: Removing {kmod} if it exists.")
-
-        awsFiresimModPath = os.path.join(getSetting('firesimPath'), 'kmods')
-
-        #load our modules
-        sudoShellCommand(['insmod', f"{awsFiresimModPath}/nbd.ko", 'nbds_max=128'])
-        _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
-        sudoShellCommand(['insmod', f"{awsFiresimModPath}/xdma.ko", 'poll_mode=1'])
-        _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
-    else:
-        logAndExit(f"<setupKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
 def _sendKmsg(message):
@@ -296,7 +387,8 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
-    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'])
+    fpgaLoadExtraSettings = getSetting('fpgaLoadExtraSettings', default=[])
+    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 
     # wait until the FPGA has been flashed
     _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")
@@ -314,43 +406,118 @@ def flashFpgas(agfi):
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
-def prepareFiresim():
-    """prepare the firesim binaries for the FETT work directory"""
-    def getAgfiJson(jsonFile):
-        keyName = 'agfi_id'
-        contents = safeLoadJsonFile(jsonFile)
-        if keyName not in contents:
-            logAndExit(f"<aws.prepareFiresim>: unable to find key <agfi_id> in {jsonFile}")
-        return contents[keyName]
+def getAgfiId(jsonFile):
+    keyName = 'agfi_id'
+    contents = safeLoadJsonFile(jsonFile)
+    if keyName not in contents:
+        logAndExit(f"<aws.getAgfiJson>: unable to find key <agfi_id> in {jsonFile}")
+    return contents[keyName]
 
-    # copy over the firesim kernel modules, simulation interfaces
-    firesimSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 
-                                    'bitfiles', 'firesim', getSetting('processor'))
-    firesimModPath = os.path.join(firesimSourcePath, 'kmods')
-    firesimSimPath = os.path.join(firesimSourcePath, 'sim')
+def getAgfiSettings(jsonFile):
+    contents = safeLoadJsonFile(jsonFile)
+    return contents
 
-    firesimWorkPath = os.path.join(getSetting("workDir"), "firesim")
-    mkdir(firesimWorkPath,addToSettings='firesimPath')
+def copyAWSSources():
+    pvAWS = getSetting('pvAWS')
 
-    # firesim needs two files: img and dwarf:
+    if pvAWS not in ['firesim', 'connectal']:
+        logAndExit(f"<aws.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
+
+    # copy over available paths
+    awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                 'bitfiles', pvAWS, getSetting('processor'))
+    awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
+
+    # populate workDir with available subdirectories
+    try:
+        subdirectories = [os.path.join(awsSourcePath, o) for o in os.listdir(awsSourcePath) if os.path.isdir(os.path.join(awsSourcePath,o))]
+        if len(subdirectories) > 0:
+            mkdir(awsWorkPath,addToSettings=f'{pvAWS}Path')
+            for awsDirPath in subdirectories:
+                copyDir(os.path.join(awsSourcePath, awsDirPath), awsWorkPath)
+    except Exception as exc:
+        logAndExit(f"<aws.copyAWSSources>: error populating subdirectories of AWS PV {pvAWS}", exc=exc, exitCode=EXIT.Files_and_paths)
+
+    # aws resources need an image file:
     imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
     setSetting("osImageImg",imageFile)
     if (isEqSetting('osImage','FreeRTOS')): # create a filesystem -- 256MB [Note that size >=256MB (for mkfs.fat 4.1, but for v.3.0 has to be >256Mb)]
         shellCommand(['dd','if=/dev/zero',f"of={imageFile}",'bs=256M','count=1'])
         shellCommand(['mkfs.vfat','-S','512','-n',"\"DATA42\"",'-F','32', imageFile])
-    else: #an empty file will do 
+    else: #an empty file will do
         touch(imageFile)
+
+    # extract the agfi and put it in setting
+    agfiJsonPath = os.path.join(awsSourcePath, 'agfi_id.json')
+    agfiSettings = getAgfiSettings(agfiJsonPath)
+    setSetting('agfiId', agfiSettings['agfi_id'])
+    for k in agfiSettings:
+        if k == "_afgi-id.json":
+            continue
+        setSetting(k, agfiSettings[k])
+
+@decorate.debugWrap
+def removeKernelModules():
+    if isEqSetting('pvAWS', 'firesim'):
+        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
+    elif isEqSetting('pvAWS', 'connectal'):
+        kmodsToClean = ['xocl', 'xdma', 'pcieportal', 'portalmem']
+    else:
+        printAndLog(f"<aws.removeKernelModules>: no kernel modules to remove for AWS PV {getSetting('pvAWS')}")
+        kmodsToClean = []
+    for kmod in kmodsToClean:
+        sudoShellCommand(['rmmod', kmod],check=False)
+        _sendKmsg (f"<aws.removeKernelModules>: Removing {kmod} if it exists.")
+
+@decorate.debugWrap
+def installKernelModules():
+    """install necessary kernel modules for an AWS PV"""
+    awsModPath = os.path.join(getSetting(f'{getSetting("pvAWS")}Path'), 'kmods')
+
+    #load our modules
+    if (isEqSetting('pvAWS','firesim')):
+        sudoShellCommand(['insmod', f"{awsModPath}/nbd.ko", 'nbds_max=128'])
+        _sendKmsg (f"FETT-firesim: Installing nbd.ko.")
+        sudoShellCommand(['insmod', f"{awsModPath}/xdma.ko", 'poll_mode=1'])
+        _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
+
+    elif (isEqSetting('pvAWS', 'connectal')):
+        sudoShellCommand(['insmod', f"{awsModPath}/pcieportal.ko"])
+        _sendKmsg (f"FETT-connectal: Installing pcieportal.ko.")
+        sudoShellCommand(['insmod', f"{awsModPath}/portalmem.ko"])
+        _sendKmsg (f"FETT-connectal: Installing portalmem.ko.")
+
+    else:
+        logAndExit(f"<aws.installKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+
+# ------------------ FireSim Functions ----------------------------------------
+
+def prepareFiresim():
+    """prepare the firesim binaries for the FETT work directory"""
+    copyAWSSources()
+
     dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
     setSetting("osImageDwarf",dwarfFile)
     touch(dwarfFile)
 
-    # copy over sim and kmods
-    copyDir(firesimSimPath, firesimWorkPath)
-    copyDir(firesimModPath, firesimWorkPath)
+# ------------------ Connectal Functions ----------------------------------------
 
-    # extract the agfi and put it in setting
-    processorName = getSetting('processor')
-    agfiJsonPath = os.path.join(firesimSourcePath, 'agfi_id.json')
-    agfiId = getAgfiJson(agfiJsonPath)
-    setSetting("agfiId", agfiId)
+def prepareConnectal():
+    """connectal environment preparation"""
+    copyAWSSources()
 
+    # connectal requires a device tree blob
+    dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
+    setSetting("osImageDtb",dtbFile)
+    dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
+    cp (dtbsrc, dtbFile)
+    logging.info(f"copy {dtbsrc} to {dtbFile}")
+
+    # TODO: use different .img?
+    pvAWS = "connectal"
+    imageDir = getSetting('osImagesDir')
+    imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                   'osImages', pvAWS, "debian.img")
+    warnAndLog(f"<aws.prepareConnectal>: adding {getSetting('osImage')}.img from {imageSourcePath}. This may be changed in the future.")
+    imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
+    cp(imageSourcePath, imageFile)

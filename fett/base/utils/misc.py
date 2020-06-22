@@ -5,12 +5,18 @@ Misc required functions for fett.py
 
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess, pathlib
-import tarfile, sys, json, re, getpass
+import tarfile, sys, json, re, getpass, time
 
 from fett.base.utils import decorate
+from fett.base.utils import aws
 
 # private; not available using import *
 _settings = dict()
+
+# hardcoded URLs -- needed for emergency reporting
+_settings['prodSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-InstanceStatusQueue-1H71N09IEKG3F.fifo'
+_settings['prodSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-PortalToInstanceTerminationQueue-CND4M2WJAWOK' 
+_settings['prodS3Bucket'] = 'master-ssith-fett-target-researcher-artifacts'
 
 class EXIT (enum.Enum):
     Success = 0
@@ -24,13 +30,47 @@ class EXIT (enum.Enum):
     Run = enum.auto()
     Network = enum.auto()
     Interrupted = enum.auto()
+    AWS = enum.auto()
 
     def __str__ (self): #to replace '_' by ' ' when printing
         return f"{self.name.replace('_',' ')}"
 
 def exitFett (exitCode):
+    def inExit_logAndExit (message,exc=None):
+        if (exc): #empty message
+            message += f"\n{formatExc(exc)}."
+     
+        errorAndLog (f"inExit: {message}")
+        exitCode = EXIT.AWS
+        errorAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
+        exit(exitCode.value)
+
+    def inExit_GetSetting (setting):
+        try:
+            return _settings[setting]
+        except:
+            return 'UNKNOWN'
+
     if (not isinstance(exitCode,EXIT)):
         exitCode = EXIT.Unspecified
+    
+    # notify portal if in production mode -- cannot rely on getSetting because it calls logAndExit
+    if (inExit_GetSetting('mode') == 'production'):
+        if (exitCode != EXIT.Success): # ERRONEOUS STATE!! -- emergency upload
+            tarballPath = tarArtifacts (inExit_logAndExit,inExit_GetSetting)
+            aws.uploadToS3(inExit_GetSetting('prodS3Bucket'), inExit_logAndExit, 
+                            tarballPath, 'fett-target/production/artifacts/')
+            printAndLog(f"Artifacts tarball uploaded to S3.")
+
+        jobStatus = 'success' if (exitCode == EXIT.Success) else 'failure'
+        aws.sendSQS(inExit_GetSetting('prodSqsQueueTX'), inExit_logAndExit, jobStatus, 
+                    inExit_GetSetting('prodJobId'), f"{inExit_GetSetting('prodJobId')}-TERM",
+                    reason='fett-target-production-termination',
+                    hostIp=inExit_GetSetting('awsIpHost'),
+                    fpgaIp=inExit_GetSetting('awsIpTarget')
+                    )
+        printAndLog("Sent termination message to the SQS queue.")       
+
     printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
     exit(exitCode.value)
 
@@ -88,10 +128,12 @@ def setSetting (setting, val):
     except Exception as exc:
         logAndExit (f"Failed to set setting <{setting}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
-def getSetting (setting):
+def getSetting (setting, default=None):
     try:
         return _settings[setting]
     except Exception as exc:
+        if default is not None:
+            return default
         logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
 def getSettingDict (setting,hierarchy):
@@ -399,3 +441,55 @@ def shellCommand (argsList, check=True, timeout=30, **kwargs):
     except Exception as exc:
         logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
     shellOut.close()
+
+""" the tarArtifacts function can be executed from within exitFett -- should not use other functions to avoid recursion """
+@decorate.debugWrap
+def tarArtifacts (logAndExitFunc,getSettingFunc):
+    artifactsPath = f"production-{getSettingFunc('prodJobId')}"
+
+    if (os.path.isdir(artifactsPath)): # already exists, add the date
+        artifactsPath += f"-{int(time.time())}"
+
+    try:
+        os.mkdir(artifactsPath)
+    except Exception as exc:
+        logAndExitFunc (message=f"Failed to create <{artifactsPath}>.",exc=exc)
+
+    workDir = getSettingFunc('workDir')
+    logFile = getSettingFunc('logFile')
+    outFiles = glob.glob(os.path.join(workDir,'*.out'))
+    configFile = getSettingFunc('configFile')
+
+    # Tool's main artifacts
+    listArtifacts = [configFile, logFile] +  outFiles
+
+    for xArtifact in listArtifacts:
+        try:
+            shutil.copy2(xArtifact,artifactsPath)
+        except Exception as exc:
+            logAndExitFunc (message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",exc=exc)
+
+    # Extra artifacts
+    extraArtifactsPath = getSettingFunc('extraArtifactsPath')
+    if (extraArtifactsPath != 'UNKNOWN'): #The tool didn't fail to deploy
+        try:
+            shutil.copytree(extraArtifactsPath,os.path.join(artifactsPath,os.path.basename(extraArtifactsPath)))
+        except Exception as exc:
+            logAndExitFunc (message=f"Failed to copy <{extraArtifactsPath}> to <{artifactsPath}>.",exc=exc)
+
+    tarFileName = f"{artifactsPath}.tar.gz"
+    try:
+        xFile = tarfile.open(name=tarFileName, mode="w:gz")
+        xFile.add(artifactsPath, arcname=None)
+        xFile.close()
+    except Exception as exc:
+        logAndExitFunc (message=f"tar: error creating {tarFileName}", exc=exc)
+
+    printAndLog(f"tarArtifacts: Created <{tarFileName}> including all artifacts.")
+    return tarFileName
+
+@decorate.debugWrap
+def setAdaptorUpDown (adaptorName, direction):
+    sudoShellCommand(['ip','link','set', 'dev', adaptorName, direction])
+
+

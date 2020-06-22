@@ -5,6 +5,7 @@ json details are in: ./utils/configData.json
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 import configparser, json, os, re
+import base64
 from fett.base.utils.misc import *
 
 CONFIG_SECTIONS = ['backend', 'applications', 'build']
@@ -18,6 +19,16 @@ def loadJsonFile (jsonFile):
         logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
+def loadIniFile (iniFile):
+    xConfig = configparser.ConfigParser()
+    try:
+        fConfig = open(iniFile,'r')
+        xConfig.read_file(fConfig)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to read configuration file <{iniFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    return xConfig
+
 @decorate.debugWrap
 def loadConfiguration(configFile):
     #loading dev setup environment
@@ -25,13 +36,7 @@ def loadConfiguration(configFile):
     loadConfigSection(None,setupEnvData,'setupEnv',setup=True)
 
     #loading the configuration file
-    xConfig = configparser.ConfigParser()
-    try:
-        fConfig = open(configFile,'r')
-        xConfig.read_file(fConfig)
-        fConfig.close()
-    except Exception as exc:
-        logAndExit(f"Failed to read configuration file <{configFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    xConfig = loadIniFile(configFile)
 
     #loading the configuration parameters data
     configDataFile = getSetting('jsonDataFile')
@@ -56,6 +61,26 @@ def loadConfiguration(configFile):
         logAndExit(f"Failed to determine the processor flavor <chisel or bluespec>.",exitCode=EXIT.Dev_Bug)
     # Create an isUnix setting
     setSetting('isUnix',getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])
+
+    if isEnabled('useCustomCredentials'):
+        # Check username is legal
+        userName = getSetting("userName")
+        if re.fullmatch("[a-zA-Z0-9]{1,14}", userName) is None:
+            logAndExit(f"userName \"{userName}\" does not satisfy the username "
+                       "requirements.  Must be 1-14 characters long and may "
+                       "consist only of alphanumeric ASCII characters.")
+
+        # Check password hash is legal
+        # Should look like: $6$<salt>$<SHA-512 hash>
+        # The "6" at the beginning identifies the hash as SHA-512, which is what
+        # our debian and FreeBSD installs expect
+        # <salt> may be up to 16 characters [a-zA-Z0-9./]
+        # <SHA-512 hash> must be exactly 86 characters in [a-zA-Z0-9./]
+        userPasswordHash = getSetting("userPasswordHash")
+        if re.fullmatch("\\$6\\$[a-zA-Z0-9./]{0,16}\\$[a-zA-Z0-9./]{86}", userPasswordHash) is None:
+            logAndExit(f"userPasswordHash \"{userPasswordHash}\" is not a legal "
+                       "password hash.  Must be a SHA-512 encrypted hash produced "
+                       "by crypt(3).")
 
     printAndLog('Configuration loaded successfully.')
     dumpSettings()
@@ -119,7 +144,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 logAndExit(f"{fileName}: Failed to read <{iPar['name']}> in section [{xSection}]. Is it empty?",exitCode=EXIT.Configuration)
             if ('#' in val):
                 logAndExit(f"{fileName}: Illegal character in <{iPar['name']}> in section [{xSection}]. Is there a comment next to the value?",exitCode=EXIT.Configuration)
-            if (iPar['type'] == 'filePath'):
+            if (iPar['type'] in ['filePath','dirPath']):
                 doCheckPath = True
                 if (setup):
                     val = os.path.join(getSetting('repoDir'),val)
@@ -133,13 +158,11 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                         logAndExit(f"Configuration file: The condition <{iPar['condition']}> is not found in section [{xSection}].",exitCode=EXIT.Configuration)
                 elif (setup and ('condition' in iPar)):
                     logAndExit (f"The <condition> option is not yet implemented for the setupEnv json.",exitCode=EXIT.Configuration)
-                if (doCheckPath and (not os.path.isfile(val))):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].",exitCode=EXIT.Configuration)
-            elif (iPar['type'] == 'dirPath'):
-                if (setup):
-                    val = os.path.join(getSetting('repoDir'),val)
-                if (not os.path.isdir(val)):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].",exitCode=EXIT.Configuration)
+                if (doCheckPath):
+                    if ((iPar['type'] == 'filePath') and (not os.path.isfile(val))):
+                        logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{xSection}].",exitCode=EXIT.Configuration)
+                    if ((iPar['type'] == 'dirPath') and (not os.path.isdir(val))):
+                        logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{xSection}].",exitCode=EXIT.Configuration)
             elif (iPar['type'] == 'ipAddress'):
                 ipMatch = re.match(r"(\d{1,3}\.){3}\d{1,3}$",val)
                 if (ipMatch is None):
@@ -195,4 +218,54 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
 
     return
 
+@decorate.debugWrap
+def genProdConfig(configFileSerialized, configFile):
+    """
+    This generates "production.ini":
+    - Loads the template from config.ini.
+    - Overwrites the template using the production template.
+    - Overwrites whatever is provided from the serialized input.
+    - Generate the configFile to be used by the tool
+    """
 
+    #loading the template configuration file (the repo's default)
+    templateConfigPath = os.path.join(getSetting('repoDir'),'config.ini')
+    xConfig = loadIniFile(templateConfigPath)
+
+    # loading the production template
+    prodTemplatePath = os.path.join(getSetting('repoDir'),'fett','base','utils','productionTemplate.json')
+    prodSettings = loadJsonFile(prodTemplatePath)
+
+    # deserialize the input
+    try:
+        inputSettings = json.loads(configFileSerialized)
+    except Exception as exc:
+        logAndExit(f"Failed to deserialize <{configFileSerialized}>. Please check the syntax.",exc=exc,exitCode=EXIT.Configuration)
+
+    # Overwrites the settings
+    prodSettings.update(inputSettings)
+    
+    # Overwrite the options based on the production template + input settings
+    for xSetting, xValue in prodSettings.items():
+        wasSet = False
+        for xSection in xConfig:
+            if (xSetting in xConfig[xSection]):
+              if(xSetting == "userPasswordHash"):
+                try:
+                    xValue = base64.b64decode(xValue).decode("utf-8")
+                except Exception as exc:
+                    logAndExit(f"Failed to decode the <userPasswordHash>.",exc=exc,exitCode=EXIT.Configuration)
+              xConfig.set(xSection,xSetting,str(xValue))
+              wasSet = True
+              break
+        if (not wasSet):
+            logAndExit(f"Failed to find the production setting <{xSetting}> in <{templateConfigPath}>.",exitCode=EXIT.Configuration)
+
+    # Create the config file
+    try:
+        fConfig = open(configFile,'w')
+        xConfig.write(fConfig)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to write configuration file <{configFile}>.",exc=exc,exitCode=Files_and_paths)
+    

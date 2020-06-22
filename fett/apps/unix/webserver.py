@@ -47,18 +47,6 @@ def install (target):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def deploy (target):
-    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
-    
-    #Here we should send a message to the portal
-
-    #Here we should wait for a termination signal from the portal
-    
-    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
-    return
-
-@decorate.debugWrap
-@decorate.timeWrap
 def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
     out = curlRequest(url, http2=http2, extra=extra, method=method, rawOutput=rawOutput)
     if (not out):
@@ -73,8 +61,25 @@ def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def extensiveTest(target):
-    deploymentTest(target)
+def dumpLogs(target, destination):
+    # The app log is closed by this point
+    webserverDir = os.path.join(destination,'webserver')
+    printAndLog(f"Dumping webserver logs to {webserverDir}...")
+    mkdir(webserverDir)
+    weblogs = getSetting("webserverLogs")
+    root    = weblogs["root"]
+
+    # These are the standard nginx logs
+    for l in weblogs["logs"]:
+        localLogName = os.path.join(webserverDir, l)
+        log = ftOpenFile(localLogName, 'w')
+        target.sendFile(
+            webserverDir, l,        # To webserverDir/l
+            targetPathToFile=root,  # From root/
+            forceScp=True, toTarget=False, shutdownOnError=False
+        )
+        log.close()
+        printAndLog(f"Grabbed webserver log <{l}>")
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -94,6 +99,8 @@ def deploymentTest(target):
     httpsPort = target.httpsPortTarget
 
     # 0. Fetch index page
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.html")
     if (not code):
@@ -102,6 +109,8 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 1. Nginx must be compiled with ssl support
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[HTTPS]: Fetching index via HTTPS", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html")
     if (not code):
@@ -110,6 +119,8 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTPS]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 2. HTTP2 support
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[HTTP2]: Fetching index via HTTP2", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html", http2=True)
     if (not code):
@@ -120,6 +131,8 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[HTTP2]: Failed! [Got wrong version <{version}>].",exitCode=EXIT.Run)
 
     # 3. Error redirect is working
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html")
     if (not code):
@@ -128,6 +141,8 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 4. "Hidden" resource
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[Private Resource]: Fetching private resource from hidden server", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html",
                                 extra=["-H", "Host: secret_server"])
@@ -137,6 +152,8 @@ def deploymentTest(target):
         target.shutdownAndExit (f"Test[Private Resource]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 5. Fetching text.txt via HTTP
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[Text File]: Fetching text.txt via HTTP", doPrint=False, tee=getSetting('appLog'))
     _, code = curlTest(target, f"http://{targetIP}:{httpPort}/test.txt")
     if (not code):
@@ -145,6 +162,8 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Text File]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 6. Fetching static.html  via HTTP
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[Static HTTP]: Fetching static.html via HTTP", doPrint=False, tee=getSetting('appLog'))
     _, code = curlTest(target, f"http://{targetIP}:{httpPort}/static.html")
     if (not code):
@@ -153,6 +172,8 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Static HTTP]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 7. Fetching stanford.png - an image via HTTP
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[Image Resource]: Fetching stanford.png via HTTP", doPrint=False, tee=getSetting('appLog'))
     _, code = curlTest(target, f"http://{targetIP}:{httpPort}/stanford.png")
     if (not code):
@@ -161,6 +182,8 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Image Resource]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 8. Fetching static https web page
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[Static HTTP2]: Fetching static https web page", doPrint=False, tee=getSetting('appLog'))
     version, code = curlTest(target, f"https://{targetIP}:{httpsPort}/static.html", http2=True)
     if (not code):
@@ -171,6 +194,8 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Got wrong version <{version}>].", exitCode=EXIT.Run)
 
     # 9. page opens another internet web page through a link
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[Web page through a link]: Web page opens another internet web page through a link", doPrint=False,
                 tee=getSetting('appLog'))
     _, code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html",
@@ -181,6 +206,8 @@ def deploymentTest(target):
         target.shutdownAndExit(f"Test[Web page through a link]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 10. page receives a request and saves on the local filesystem
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     printAndLog("Test[Upload text file]: Web page receives a request and saves on the local filesystem",
                 doPrint=False, tee=getSetting('appLog'))
     size_upload, code = curlTest(target, f"http://{targetIP}:{httpPort}/upload",

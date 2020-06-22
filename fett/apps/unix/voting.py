@@ -5,6 +5,7 @@ This is executed after loading the app on the target to execute this app
 
 from fett.base.utils.misc import *
 from fett.apps.unix.webserver import curlTest
+from fett.apps.unix.database import sqliteCmd
 import string, secrets, crypt
 import json
 
@@ -13,13 +14,7 @@ import json
 def clear_voter_table(target, dbfile):
     appLog = getSetting('appLog')
     sqlite   = "/usr/bin/sqlite"
-    target.switchUser()
-    target.runCommand(f"{sqlite} {dbfile}", expectedContents=["SQLite version", ".help"],
-                      erroneousContents=["Error:","near","error"], endsWith="sqlite>",tee=appLog)
-    target.runCommand("DELETE FROM voter;",
-                      endsWith="sqlite>", erroneousContents=["Error:", "near", "error"],tee=appLog)
-    target.runCommand(".exit",tee=appLog)
-    target.switchUser()
+    sqliteCmd(target, sqlite, dbfile, "DELETE FROM voter;", tee=appLog)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -32,16 +27,13 @@ def add_official(target, dbfile):
     # Generate the password and its hash
     alphabet = string.ascii_letters + string.digits + "!@#$%^&*(-_=+)"
     password = ''.join(secrets.choice(alphabet) for i in range(14))
-    salt     = "XY"
+    salt     = crypt.mksalt()
     passHash = crypt.crypt(password, salt)
 
     # Insert the record. The database will always be empty at this point,
     # so we give the official ID 0
-    target.runCommand(f"{sqlite} {dbfile}", expectedContents=["SQLite version", ".help"],
-                      erroneousContents=["Error:","near","error"], endsWith="sqlite>",tee=appLog)
-    target.runCommand(f"INSERT INTO electionofficial (id, username, hash) VALUES (0, \"{officialName}\", \"{passHash}\");",
-                      endsWith="sqlite>", tee=appLog)
-    target.runCommand(".exit",tee=appLog)
+    insert = f"INSERT INTO electionofficial (id, username, hash) VALUES (0, '{officialName}', '{passHash}');"
+    sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
 
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
 
@@ -73,17 +65,6 @@ def install (target):
     target.runCommand(f"/usr/local/sbin/kfcgi -s /var/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- /var/www/cgi-bin/bvrs /var/www/data/bvrs.db",tee=appLog)
     return
 
-@decorate.debugWrap
-@decorate.timeWrap
-def deploy (target):
-    printAndLog ("Deployment successful. Target is ready.",tee=getSetting('appLog'))
-
-    #Here we should send a message to the portal
-
-    #Here we should wait for a termination signal from the portal
-
-    printAndLog("Termination signal received. Preparing to exit...",tee=getSetting('appLog'))
-    return
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -91,6 +72,7 @@ def deploymentTest (target):
     printAndLog("Testing voting server...",tee=getSetting('appLog'))
     ip = target.ipTarget
 
+    target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_register.json?"
     req += "voter-birthdate=1986-02-04&"
     req += "voter-lastname=l&"
@@ -103,6 +85,7 @@ def deploymentTest (target):
     if not out:
         target.shutdownAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
 
+    target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
     req += "voter-birthdate=1986-02-04&"
     req += "voter-lastname=l&"
@@ -117,7 +100,7 @@ def deploymentTest (target):
         if len(res["voter_q"]) != 1:
             target.shutdownAndExit(f"Test[Check Voter]: Failed! [Unexpected Contents]", exitCode=EXIT.Run)
     except json.JSONDecodeError as exc:
-        target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, doPrint=False)
+        target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Clearing voting database")
     clear_voter_table(target, "/var/www/data/bvrs.db")
@@ -126,9 +109,3 @@ def deploymentTest (target):
 
     return
 
-@decorate.debugWrap
-@decorate.timeWrap
-def extensiveTest (target):
-    # Fill this in once the server is fully implemented
-    deploymentTest (target)
-    return

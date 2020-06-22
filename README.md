@@ -70,6 +70,14 @@ After launching, it is necessary to setup the git `name` and `email`, as well as
 
 See the instructions in `build/FireSimAMI.md` to recreate the image manually.
 
+#### Connectal
+
+A temporary AMI was made for connectal development. It is based on `ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20200408 (ami-003634241a8fcdec0)` . The changes are identical to the FireSim AMI.
+
+**AMI ID: `ami-0a8b6af85347cf024`**
+
+See the instructions in `build/TemporaryConnectalAMI.md` for build procedure.
+
 
 ## User Manual ##
 
@@ -81,7 +89,7 @@ fett.py [-h] [-c CONFIGFILE] [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
 The default configuration file is `config.ini`, working directory is `$REPO/workDir`, and log file is `$REPO/$WRKDIR/fett.log`. If you run with the debug (`-d`) flag, the log file will have a lot of useful info.
 
 Some useful configuration options:
-- `mode`: Choose either `test` for the testing flow, or `deploy` for leaving the apps switched on for researchers interactions.
+- `mode`: Choose either `test` for the testing flow, or `production` for leaving the apps switched on for researchers interactions.
 - `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
 - `target`: Choose either `aws` for the main FETT target, `fpga` for Xilinx VCU118 hardware
     emulation, or `qemu` for [QEMU](https://www.qemu.org/) emulation.
@@ -91,7 +99,7 @@ Some useful configuration options:
     [FreeBSD](https://www.freebsd.org/), or [Linux Debian](https://www.debian.org/),
     or [Busybox](https://busybox.net/about.html).
 - `useCustomOsImage`: If disabled, Nix (if image is available) or FETT-Binaries images will be used.
-- `useCustomBitfile`: If disabled, Nix (if bitfile is available) or FETT-Binaries bitfiles will be used.
+- `useCustomProcessor`: If disabled, Nix (if applicable) or FETT-Binaries bitfiles will be used. If enabled, a source directory has to be provided where the required files exist.
 - `openConsole`: returns an open console for Unix targets.
 - `buildApps`: Cross-compile as instructed in `fett/apps/build.py`.
 
