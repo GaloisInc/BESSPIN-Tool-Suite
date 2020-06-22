@@ -6,6 +6,7 @@ This is executed after loading the app on the target to execute FreeRTOS app
 from fett.base.utils.misc import *
 import tftpy, os, re
 import logging
+import subprocess
 
 # HTTP Status code constants. These must match those in http_commands.h
 WEB_REPLY_OK = 200
@@ -109,17 +110,18 @@ def OTATest(clientTftp, fileName, TCNum, TCDesc):
         # an error
         printAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=False,tee=getSetting('appLog'))
 
-
 @decorate.debugWrap
 @decorate.timeWrap
 def deploymentTest(target):
     # target is a fett target object
     targetIP = target.ipTarget
+    TFTPPort = getSetting('TFTPPortTarget')
+    hostIP = getSetting('awsIpHost')
 
     # Wait till TFTP server is up
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=30)
     # Creating a client - this does not throw an exception as it does not connect. It is jsust an initialization.
-    clientTftp = tftpy.TftpClient(targetIP, getSetting('TFTPPortTarget'))
+    clientTftp = tftpy.TftpClient(targetIP, TFTPPort)
 
     printAndLog ("Starting HTTP Smoketests.",doPrint=True,tee=getSetting('appLog'))
 
@@ -149,50 +151,59 @@ def deploymentTest(target):
     logging.getLogger('tftpy').propagate = False
     logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.out'),'w'))
 
-    printAndLog ("Starting OTA Smoketests.",doPrint=True,tee=getSetting('appLog'))
+    # TODO - Make this configurable in the INI file?
+    scapy_attack = False
 
-    # uploading the signed ota.htm file
-    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 1, 'OTA, Crypto, Filesystem')
+    if scapy_attack:
+        # Special buffer-overflow attack using SCAPY to forge TFTP packets.
+        # Results in the target being in an undefine state, so has to be run
+        # alone here
+        printAndLog("Going for LMCO SCAPY Test",doPrint=True,tee=getSetting('appLog'))
+        try:
+            subprocess.run(['sudo',sys.executable,os.path.join(getSetting('repoDir'),'fett','apps','freertos','sudoScapy.py'),'+'.join(sys.path),hostIP,targetIP,str(TFTPPort)], stdout=getSetting('appLog'),stderr=getSetting('appLog'), timeout=10, check=True, shell=False)
+        except Exception as exc:
+            target.shutdownAndExit(f"Failed to send the malicious packets using <sudoScapy.py>",exc=exc,exitCode=EXIT.Run)
 
-    # uploading the signed ota.htm file AGAIN
-    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 2, 'OTA, Crypto, Filesystem')
+            printAndLog("Back from LMCO SCAPY Test",doPrint=True,tee=getSetting('appLog'))
 
-    # uploading the signed badsig.htm file - Signature is corrupt
-    OTATest(clientTftp, "badsig.htm.sig", 3, 'OTA corrupt signature')
+    else:
 
-    # uploading ota512.htm.sig - exactly 1 TFTP block...
-    OTATest(clientTftp, "ota512.htm.sig", 4, 'OTA, TFTP 1 block')
-    # ...and fetch it back from the HTTP server - note the filename changes to ota.htm
-    # on the HTTP server. We should get back 448 bytes (512 minus the 64 byte signature)
-    HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK, 5, 'Roundtrip OTA TC 4')
+        printAndLog ("Starting OTA Smoketests.",doPrint=True,tee=getSetting('appLog'))
 
-    # uploading ota65535.htm.sig - just under the upper limit for our server.
-    OTATest(clientTftp, "ota65535.htm.sig", 5, 'OTA just below max file size')
-    HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK, 6, 'Roundtrip OTA TC 5')
+        # uploading the signed ota.htm file
+        OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 1, 'OTA, Crypto, Filesystem')
 
-    # uploading ota65536.htm.sig - the upper limit for our server.
-    # Should be rejected
-    OTATest(clientTftp, "ota65536.htm.sig", 6, 'OTA exactly max file size')
-    # OtaFile should NOT have been changed, so check it's still as was
-    HTTPSmokeTest(target, OtaFile, "ota65536.htm", WEB_REPLY_OK, 7, 'Roundtrip OTA TC 6')
+        # uploading the signed ota.htm file AGAIN
+        OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 2, 'OTA, Crypto, Filesystem')
 
-    # Restore the original ota.htm file
-    OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 7, 'Restore original OTA state')
+        # uploading the signed badsig.htm file - Signature is corrupt
+        OTATest(clientTftp, "badsig.htm.sig", 3, 'OTA corrupt signature')
 
-    # uploading ota65537.htm.sig - the upper limit for our server.
-    # Should be rejected
-    OTATest(clientTftp, "ota65537.htm.sig", 8, 'OTA too large file')
-    # OtaFile should NOT have been changed, so check it's still as was
-    HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 8, 'Verify FS not changed by OTA TC 8')
+        # uploading ota512.htm.sig - exactly 1 TFTP block...
+        OTATest(clientTftp, "ota512.htm.sig", 4, 'OTA, TFTP 1 block')
+        # ...and fetch it back from the HTTP server - note the filename changes to ota.htm
+        # on the HTTP server. We should get back 448 bytes (512 minus the 64 byte signature)
+        HTTPSmokeTest(target, OtaFile, "ota512.htm", WEB_REPLY_OK, 5, 'Roundtrip OTA TC 4')
 
-    # downloading a file - NOT IMPLEMENTED ON TARGET YET
-    # fileName = "fileToReceive.html"
-    # fileToReceive = os.path.join(getSetting('workDir'),fileName)
-    # try:
-    #    clientTftp.download(filename, output, packethook=None, timeout=10)
-    # except Exception as exc:
-    #    rtosShutdownAndExit(target, f"clientTftp: Failed to download <{fileToReceive}> from the server.",exc=exc,exitCode=EXIT.Run)
+        # uploading ota65535.htm.sig - just under the upper limit for our server.
+        OTATest(clientTftp, "ota65535.htm.sig", 5, 'OTA just below max file size')
+        HTTPSmokeTest(target, OtaFile, "ota65535.htm", WEB_REPLY_OK, 6, 'Roundtrip OTA TC 5')
 
+        # uploading ota65536.htm.sig - the upper limit for our server.
+        # Should be rejected
+        OTATest(clientTftp, "ota65536.htm.sig", 6, 'OTA exactly max file size')
+        # OtaFile should NOT have been changed, so check it's still as was
+        HTTPSmokeTest(target, OtaFile, "ota65536.htm", WEB_REPLY_OK, 7, 'Roundtrip OTA TC 6')
+        
+        # Restore the original ota.htm file
+        OTATest(clientTftp, f"{getSettingDict('freertosAssets',['otaHtml'])}.sig", 7, 'Restore original OTA state')
+
+        # uploading ota65537.htm.sig - the upper limit for our server.
+        # Should be rejected
+        OTATest(clientTftp, "ota65537.htm.sig", 8, 'OTA too large file')
+        # OtaFile should NOT have been changed, so check it's still as was
+        HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 8, 'Verify FS not changed by OTA TC 8')
+        
     return
 
 @decorate.debugWrap
