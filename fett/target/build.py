@@ -195,7 +195,7 @@ def selectImagePaths():
         if getSetting('binarySource') == 'GFE':
             nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
             if (nixImage in os.environ):
-                return os.environ[nixImage]
+                return [os.environ[nixImage]]
             else:
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
         # another inconsistency
