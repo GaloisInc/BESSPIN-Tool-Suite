@@ -37,14 +37,6 @@ Host fett-fpga
 ## Getting FETT running
 
 1. Create an SSH key on the FPGA host
-```bash
-git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
-cd SSITH-FETT-Target
-git submodule update --init
-cd SSITH-FETT-Binaries
-git-lfs pull
-cd ..
-nix-shell
-```
-5. `git config --global user.email "<email>" && git config --global user.name "<username"`
+2. `git config --global user.email "<email>" && git config --global user.name "<username"`
+3. Follow the instructions on the FETT-Target `README.md` to clone and initialize this repo.
 
