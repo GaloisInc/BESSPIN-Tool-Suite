@@ -151,8 +151,8 @@ def deploymentTest(target):
     logging.getLogger('tftpy').propagate = False
     logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.out'),'w'))
 
-    # Make this configurable in the INI file?
-    scapy_attack = True
+    # TODO - Make this configurable in the INI file?
+    scapy_attack = False
 
     if scapy_attack:
         # Special buffer-overflow attack using SCAPY to forge TFTP packets.
