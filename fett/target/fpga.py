@@ -158,6 +158,7 @@ class fpgaTarget (commonTarget):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+            self.runCommand("ip route add default via 10.88.88.1")
             outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
         elif (isEqSetting('osImage','busybox')):
             time.sleep(1)
@@ -166,6 +167,7 @@ class fpgaTarget (commonTarget):
         elif (isEqSetting('osImage','FreeRTOS')):
             outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
         elif (isEqSetting('osImage','FreeBSD')):
+            self.runCommand("route add default 10.88.88.1")
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
