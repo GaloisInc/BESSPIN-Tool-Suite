@@ -67,6 +67,14 @@ mit_unixDevPR_aws = unixDefaults.union({
     ('osImage',('debian',))
 })
 
+lmco_unixDevPR_aws = unixDefaults.union({
+    ('binarySource',('LMCO',)),
+    ('elfLoader',('JTAG',)),
+    ('processor',('chisel_p2',)),
+    ('target',('aws',)),
+    ('osImage',('debian',))
+})
+
 freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',))
@@ -120,7 +128,8 @@ appSets = {
                 'gfe_freertos' : gfe_freertosDevPR_aws,
                 'lmco_freertos' : lmco_freertosDevPR_aws,
                 'michigan_freertos' : michigan_freertosDevPR_aws,
-                'mit_unix' : mit_unixDevPR_aws}
+                'mit_unix' : mit_unixDevPR_aws,
+                'lmco_unix' : lmco_unixDevPR_aws}
     }
 }
 appSets['runRelease'] = appSets['runPeriodic']
