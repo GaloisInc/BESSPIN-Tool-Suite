@@ -676,7 +676,7 @@ class commonTarget():
         # Install
         # Everything is already installed on SRI-Cambridge source
         if not isEqSetting('binarySource', 'SRI-Cambridge'):
-	    for appModule in self.appModules:
+            for appModule in self.appModules:
                 appModule.install(self)
                 appLog.flush()
 
