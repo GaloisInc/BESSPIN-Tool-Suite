@@ -217,7 +217,7 @@ class connectalTarget(commonTarget):
         setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
 
     def interact(self):
-        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl-A X\" to exit.")
+        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         super().interact()
 
     @decorate.debugWrap
@@ -236,6 +236,10 @@ class connectalTarget(commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
+        if (self.process.isalive()):
+            # connectal exits with "Ctrl-A x". To make sure that each run is standalone and independent 
+            # of previous runs, we send this interrupt if the process is still alive.
+            self.runCommand("\x01 x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=15)
         return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
