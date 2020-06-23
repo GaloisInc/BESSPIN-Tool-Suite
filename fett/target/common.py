@@ -838,7 +838,7 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
-            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=["Power off",pexpect.EOF],suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
+            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=["Power off","Power down",pexpect.EOF],suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','busybox')):
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','FreeBSD') and (self.onlySsh)):
