@@ -125,7 +125,8 @@ def launchFett ():
 @decorate.debugWrap
 def endFett (xTarget):
     # Call-todo -- collect any remaining logs & dumps from target
-    xTarget.collectAppLogs()
+    if (isEnabled('runApp')):
+        xTarget.collectAppLogs()
 
     xTarget.shutdown()
     
