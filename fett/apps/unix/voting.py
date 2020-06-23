@@ -33,10 +33,12 @@ def add_official(target, dbfile):
     # Insert the record. The database will always be empty at this point,
     # so we give the official ID 0
     insert = f"INSERT INTO electionofficial (id, username, hash) VALUES (0, '{officialName}', '{passHash}');"
-    sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
-
+    result = sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
+    select = f"SELECT * from electionofficial WHERE id = 0;"
+    result = sqliteCmd(target, sqlite, dbfile, select, tee=appLog, 
+                       expectedContents=f"{passHash}")
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
-
+            
 @decorate.debugWrap
 @decorate.timeWrap
 def install (target):
@@ -79,13 +81,19 @@ def deploymentTest (target):
     req += "voter-lastname=l&"
     req += "voter-givennames=g&"
     req += "voter-resaddress=a&"
+    req += "voter-resaddress2=a2&"
+    req += "voter-reszip=00000&"
+    req += "voter-resstate=ZZ&"
     req += "voter-mailaddress=o&"
+    req += "voter-mailaddress2=o2&"
+    req += "voter-mailzip=00000&"
+    req += "voter-mailstate=ZZ&"
     req += "voter-registeredparty=t&"
-    req += "voter-idinfo=blob"
+    req += "voter-idinfo=blob&"
+    req += "voter-confidential=0"
     out = curlRequest(req, rawOutput=True)
-    if not out:
+    if out != '{}':
         target.shutdownAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
-
     if not target.hasHardwareRNG():
         target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
