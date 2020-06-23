@@ -690,6 +690,10 @@ class commonTarget():
                 self.runCommand("service ssh restart")
             else:
                 self.runCommand("/etc/rc.d/sshd start")
+            # needs some time to be able to scp
+            if (not self.hasHardwareRNG()):
+                self.genStdinEntropy()
+            time.sleep(10)
 
         artifactPath = getSetting('extraArtifactsPath')
 
