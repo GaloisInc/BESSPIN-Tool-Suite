@@ -71,7 +71,7 @@ class commonTarget():
             except:
                 pass
         errorAndLog(message,exc=exc)
-        if ((not overwriteShutdown) and (not isEqSetting('osImage','FreeRTOS'))):
+        if (not overwriteShutdown):
             self.shutdown(overwriteConsole=overwriteConsole,isError=True)
         logAndExit("",exitCode=exitCode)
 
@@ -116,8 +116,7 @@ class commonTarget():
     @decorate.timeWrap
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
-            self.terminateTarget(shutdownOnError=True)
-            return 
+            timeout = 30
         if (getSetting('osImage') in ['debian','busybox']):
             timeout = 45
         else:
@@ -183,7 +182,11 @@ class commonTarget():
             self.runCommand("cd root",timeout=10)
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
         elif (isEqSetting('osImage','FreeRTOS')):
-            self.boot (endsWith=">>>Beginning of Fett<<<",timeout=30)
+            if (isEqSetting('binarySource','Michigan')):
+                startMsg = 'INFO: Open database successfully'
+            else:
+                startMsg = '>>>Beginning of Fett<<<'
+            self.boot (endsWith=startMsg,timeout=30)
         elif (isEqSetting('osImage','FreeBSD')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             if (isEqSetting('target','fpga')):
@@ -228,16 +231,13 @@ class commonTarget():
         #Adding 5 minutes to avoid being in the past
         if (isEqSetting('osImage','debian')):
             self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
-            #get the ssh up and running
-            self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
-            self.runCommand("chmod +x addEntropyDebian.riscv")
-            self.ensureCrngIsUp () #check we have enough entropy for ssh
 
-            if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
-                # start the ssh service
-                self.runCommand("systemctl unmask ssh.service", timeout=90)
-                self.runCommand("systemctl start ssh.service",erroneousContents=["Failed", "not found"])
-                
+            if not self.hasHardwareRNG():
+                #get the ssh up and running
+                self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
+                self.runCommand("chmod +x addEntropyDebian.riscv")
+                self.ensureCrngIsUp () #check we have enough entropy for ssh
+
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
                                 
@@ -563,7 +563,8 @@ class commonTarget():
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
-            self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
+            if not self.hasHardwareRNG():
+                self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
             try:
                 retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=timeout)
             except Exception as exc:
@@ -851,12 +852,12 @@ class commonTarget():
             isSuccess, textBack, isTimeout, dumpIdx = [freertos.terminateAppStack(self), '', False, 0] #send STOP to OTA
         elif (not isEqSetting('osImage','FreeRTOS')):
             self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
+        if ((isSuccess and (not isTimeout)) or shutdownOnError):
+            isSuccess &= self.targetTearDown() #should be called before closing ttyOut because it is used in firesim
         try:
             self.fTtyOut.close()
         except Exception as exc:
             warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False,exc=exc)
-        if ((isSuccess and (not isTimeout)) or shutdownOnError):
-            isSuccess &= self.targetTearDown()
         return [isSuccess, textBack, isTimeout, dumpIdx]
 
     @decorate.debugWrap
@@ -897,7 +898,7 @@ class commonTarget():
         except Exception as exc:
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
 
-        if (not self.onlySsh):
+        if (not self.onlySsh and not self.hasHardwareRNG()):
             self.genStdinEntropy(endsWith=self.getAllEndsWith())
 
         self.isSshConn = True
@@ -949,7 +950,7 @@ class commonTarget():
         wasPingSuccessful = False
         for iPing in range(pingAttempts):
             try:
-                subprocess.check_call(['ping', '-c', '1', self.ipTarget],stdout=pingOut,stderr=pingOut)
+                subprocess.check_call(['ping', '-c', '1', '-W', '5', self.ipTarget],stdout=pingOut,stderr=pingOut)
                 wasPingSuccessful = True
                 break
             except Exception as exc:
@@ -968,6 +969,9 @@ class commonTarget():
         alphabet = string.ascii_letters + string.digits + ' '
         randText = ''.join(random.choice(alphabet) for i in range(lenText))
         self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
+
+    def hasHardwareRNG (self):
+        return isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')
 
 # END OF CLASS commonTarget
 

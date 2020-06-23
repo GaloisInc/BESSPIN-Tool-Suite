@@ -108,10 +108,15 @@ class firesimTarget(commonTarget):
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # The tap needs to be turned up AFTER booting
-        getTapAdaptorUp ()
+        if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
+            time.sleep(20)
+        setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
 
     def interact(self):
-        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + C\" to exit.")
+        if (isEqSetting('osImage','FreeRTOS')):
+            printAndLog (f"FreeRTOS is left running on target. Press \"Ctrl + E\" to exit.")
+        else:
+            printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         super().interact()
 
     @decorate.debugWrap
@@ -121,15 +126,21 @@ class firesimTarget(commonTarget):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            outCmd = self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
+            self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage','FreeRTOS')):
-            outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
+            if (isEqSetting('binarySource','Michigan')):
+                ntkReadyString = f"WebSocket server listening on port {getSettingDict('michiganInfo',['httpPort'])}"
+                timeout = 120 #Yes, it needs time
+            else:
+                ntkReadyString = "<NTK-READY>"
+                timeout = 30
+            self.runCommand("isNetworkUp",endsWith=ntkReadyString,erroneousContents="(Error)",timeout=timeout)
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
         self.pingTarget()
 
-        return outCmd
+        return
 
     @decorate.debugWrap
     def targetTearDown(self):
@@ -142,6 +153,18 @@ class firesimTarget(commonTarget):
             self.fswitchOut.close()
         except Exception as exc:
             warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
+
+        if (self.process.isalive()):
+            # When executing the firesim command, we run it with `stty intr ^]` which changes
+            # the interrupt char to be `^]` instead of `^C` to allow us sending the intr `^C`
+            # to the target through firesim without interrupting firesim. In case the firesim 
+            # process didn't return, which is the case for FreeRTOS as the scheduler never returns
+            # but goes to the idle hook, if we don't send `^]`, some children processes stay as 
+            # zombies, and if we run firesim again, the run gets messed up with those processes.
+            # This also happens if a unix OS didn't exit properly. Towards the end of making each
+            # run a standalone and independent of previous runs, we send this interrupt if the 
+            # process is still alive.
+            self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=15)
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
         return True
 
@@ -194,7 +217,7 @@ class connectalTarget(commonTarget):
             self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
          # The tap needs to be turned up AFTER booting
-        getTapAdaptorUp ()
+        setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
 
     def interact(self):
         printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl-A X\" to exit.")
@@ -310,10 +333,6 @@ def programAFI():
     agfiId = getSetting("agfiId")
     clearFpgas()
     flashFpgas(agfiId)
-
-@decorate.debugWrap
-def getTapAdaptorUp ():
-    sudoShellCommand(['ip','link','set', 'dev', getSetting('awsTapAdaptorName'), 'up'])
 
 @decorate.debugWrap
 def _sendKmsg(message):

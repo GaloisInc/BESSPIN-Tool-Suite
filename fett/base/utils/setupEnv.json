@@ -274,6 +274,18 @@
                 "logs" : ["error.log", "access.log"]
 
             }
+        },
+        {
+            "name" : "michiganInfo",
+            "type" : "dict",
+            "val"  : {
+                "httpPort" : 9443,
+                "curlTestPath" : "help",
+                "lynxTestQueries" : [
+                    "query?avg(recenttravel)%20where%20(zipcode==48103%20&&%20reqo2==1)",
+                    "query?avg(recovered) where (zipcode == 48105)"
+                ]
+            }
         }
     ] 
 }
