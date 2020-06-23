@@ -61,6 +61,8 @@ class commonTarget():
         self.keyboardInterruptTriggered = False
         self.terminateTargetStarted = False
 
+        self.appModules = []
+
         return
 
     @decorate.debugWrap
@@ -651,12 +653,12 @@ class commonTarget():
 
         # assign modules
         if (isEqSetting('osImage','FreeRTOS')):
-            appModules = [freertos]
+            self.appModules = [freertos]
         elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-            appModules = [ssh, webserver, database, voting]
+            self.appModules = [ssh, webserver, database, voting]
             if (isEqSetting('binarySource','MIT')): #Disable nginx
-                appModules.remove(webserver)
-                appModules.remove(voting) #hosted by the webserver
+                self.appModules.remove(webserver)
+                self.appModules.remove(voting) #hosted by the webserver
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
@@ -665,12 +667,12 @@ class commonTarget():
         appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
         setSetting("appLog",appLog)
         # Install
-        for appModule in appModules:
+        for appModule in self.appModules:
             appModule.install(self)
             appLog.flush()
 
         # Test    
-        for appModule in appModules:
+        for appModule in self.appModules:
             appModule.deploymentTest(self)
             appLog.flush()
 
@@ -681,11 +683,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def collectAppLogs (self):
-        if (isEqSetting('osImage','FreeRTOS')):
-            appModules = [freertos]
-        elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-            appModules = [ssh, webserver, database, voting]
-
+        if (getSetting('osImage') in ['debian', 'FreeBSD']):
             # Let root log in to gather files
             self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
             if (getSetting('osImage') == 'debian'):
@@ -693,18 +691,17 @@ class commonTarget():
             else:
                 self.runCommand("/etc/rc.d/sshd start")
 
-        else:
-            logging.info (f"collectAppLogs: no logs to gather for: <{getSetting('osImage')}>")
-            return
-
         artifactPath = getSetting('extraArtifactsPath')
 
-        for appModule in appModules:
+        for appModule in self.appModules:
             if hasattr(appModule, "dumpLogs"):
                 appModule.dumpLogs(self, artifactPath)
             else:
                 logging.info (f"collectAppLogs: nothing to do for module {appModule}.")
-        logging.info (f"collectAppLogs: done collecting logs.")
+        if (len(self.appModules) > 0):
+            logging.info (f"collectAppLogs: done collecting logs.")
+        else:
+            logging.info (f"collectAppLogs: No logs to collect.")
         return
 
 
