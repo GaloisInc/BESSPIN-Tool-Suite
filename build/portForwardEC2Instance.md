@@ -14,9 +14,9 @@ sudo sysctl -w net.ipv4.ip_forward=1
 
 `<FPGA_IP>` and `<TARGET_PORT>` and `<TARGET_ADAPTER>` are defined in [setupEnv.json](../fett/base/utils/setupEnv.json).
 `<HOST_PORT>` is defined by you, however it must be within the range of ports allowed by the AWS Security Group applied to your AWS instance.
-`<HOST_ADAPTER>` is found using `ip a`/
+`<HOST_ADAPTER>` is found using `ip a`
 
-When the OS is booted on the TARGET (and provided it is an OS that supports this), you should be able to `ssh` from the HOST to the TARGET (`root@<FPGA_IP>`) with no port forwarding rules.
+When the OS is booted on the TARGET, the TARGET's open network ports should be available to the HOST without any port forwarding required.
 
 ### Alternative Template Command
 
@@ -67,7 +67,7 @@ On the TARGET, run these commands (note IP and subnet mask are for the `aws` TAR
 
 ```bash
 ip route add default via 172.16.0.1
-ping 4.2.2.1
+ping -c 1 4.2.2.1
 ```
 
 Ensure that the `ping` works before continuing.
@@ -110,7 +110,7 @@ ip link set dev eth0 down
 ip link set dev eth0 up
 ip addr add 172.16.0.2/24 dev eth0
 ip route add default via 172.16.0.1
-ping 4.2.2.1
+ping -c 1 4.2.2.1
 ```
 
 Also check up on `ip a` 
