@@ -465,13 +465,11 @@ def copyAWSSources():
 
 @decorate.debugWrap
 def removeKernelModules():
-    if isEqSetting('pvAWS', 'firesim'):
-        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
-    elif isEqSetting('pvAWS', 'connectal'):
-        kmodsToClean = ['xocl', 'xdma', 'pcieportal', 'portalmem']
-    else:
-        printAndLog(f"<aws.removeKernelModules>: no kernel modules to remove for AWS PV {getSetting('pvAWS')}")
-        kmodsToClean = []
+    # Firesim:  ['xocl', 'xdma', 'edma', 'nbd']
+    # Connectal: ['xocl', 'xdma', 'pcieportal', 'portalmem']
+    # For production (i.e. on a fresh instance), it doesn't matter to remove the _other_ modules
+    # However, for dev, the _other_ modules interferes. Deleting them works.
+    kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd', 'pcieportal', 'portalmem']
     for kmod in kmodsToClean:
         sudoShellCommand(['rmmod', kmod],check=False)
         _sendKmsg (f"<aws.removeKernelModules>: Removing {kmod} if it exists.")
