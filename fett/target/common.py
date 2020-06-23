@@ -159,7 +159,7 @@ class commonTarget():
                 if isEqSetting('pvAWS', 'firesim'):
                     timeout = 240
                 elif isEqSetting('pvAWS', 'connectal'):
-                    timeout = 600
+                    timeout = 480
                 else:
                     self.shutdownAndExit(f"start: Unrecognized AWS PV <{getSetting('pvAWS')}>.", overwriteShutdown=False, exitCode=EXIT.Dev_Bug)
             else:
