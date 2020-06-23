@@ -191,9 +191,6 @@ class connectalTarget(commonTarget):
 
         awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'sim')
 
-        # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
-        warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
-        # ssithAwsFpgaExtraArgs may be specified in agfi_id.json
         extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
         tapName = getSetting('awsTapAdaptorName')
         connectalCommand = ' '.join([
