@@ -29,6 +29,8 @@ def buildApps ():
         buildWebserver(tarName)
         buildDatabase(tarName)
         buildVoting(tarName)
+        if (getSetting('binarySource') in ['MIT']):
+            buildEnclaves(tarName)
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
@@ -125,6 +127,25 @@ def copyVotingFiles(tarName):
     # We should probably just generate the initial database script here
     return filesList
 
+""" Special building for 'webserver' """
+@decorate.debugWrap
+@decorate.timeWrap
+def copyEnclavesFiles(tarName):
+    """
+    Build a tar containing:
+      - lib/security/pam_enclave.so
+      - ssith/pam-enclave.bin
+      - etc/pam.d/testing
+    """
+    cpDirToBuildDir(os.path.join(getBinDir('enclaves'), "lib"))
+    cpDirToBuildDir(os.path.join(getBinDir('enclaves'), "ssith"))
+    cpDirToBuildDir(os.path.join(getBinDir('enclaves'), "etc"))
+
+    tarFiles = ["lib", "ssith", "etc"]
+
+    filesList=map(buildDirPathTuple, tarFiles)
+    return filesList
+
 @decorate.debugWrap
 @decorate.timeWrap
 def buildWebserver(tarName):
@@ -163,6 +184,19 @@ def buildVoting(tarName):
         tarFiles = copyVotingFiles(tarName)
         tar (tarName, filesList=tarFiles)
 
+        setSetting('sendTarballToTarget',True)
+    return
+
+@decorate.debugWrap
+@decorate.timeWrap
+def buildEnclaves(tarName):
+    if (isEnabled('buildApps')):
+        logAndExit (f"Building from source is not supported for the enclaves application",
+                    exitCode=EXIT.Configuration)
+    else:
+        tarFiles = copyEnclavesFiles(tarName)
+        #Create the tarball here to be sent to target
+        tar (tarName, tarFiles)
         setSetting('sendTarballToTarget',True)
     return
 
