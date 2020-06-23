@@ -971,7 +971,7 @@ class commonTarget():
         self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
 
     def hasHardwareRNG (self):
-        return isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')
+        return isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])
 
 # END OF CLASS commonTarget
 
