@@ -236,7 +236,8 @@ class commonTarget():
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         #Adding 5 minutes to avoid being in the past
         if (isEqSetting('osImage','debian')):
-            self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
+            self.runCommand("systemctl start systemd-timesyncd.service")
+            self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
 
             if not self.hasHardwareRNG():
                 #get the ssh up and running
@@ -245,7 +246,8 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
         elif (isEqSetting('osImage','FreeBSD')):
-            self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
+            self.runCommand("service ntpd onestart")
+            self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
                                 
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
