@@ -203,8 +203,8 @@ class connectalTarget(commonTarget):
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
-            f"--elf={getSetting('osImageElf')}"] + [
-            f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else [] + [
+            f"--elf={getSetting('osImageElf')}"] + ([
+            f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else []) + [
             f"--tun={tapName}"] + extraArgs)
 
         printAndLog(f"<aws.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
@@ -498,8 +498,6 @@ def installKernelModules():
         _sendKmsg (f"FETT-firesim: Installing xdma.ko.")
 
     elif (isEqSetting('pvAWS', 'connectal')):
-        ## build the kernel modules from source
-        make([], awsModPath)
         sudoShellCommand(['insmod', f"{awsModPath}/pcieportal.ko"])
         _sendKmsg (f"FETT-connectal: Installing pcieportal.ko.")
         sudoShellCommand(['insmod', f"{awsModPath}/portalmem.ko"])
