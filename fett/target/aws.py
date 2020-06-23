@@ -523,9 +523,10 @@ def prepareConnectal():
     """connectal environment preparation"""
     copyAWSSources()
 
+    imageDir = getSetting('osImagesDir')
+    pvAWS = "connectal"
+    
     if isEqSetting('binarySource', 'MIT') and isEqSetting('osImage', 'debian'):
-        dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
-        
         # extraFiles may be specified in agfi_id.json
         extraFiles = getSetting('extraFiles', default=[])
         for extraFile in extraFiles:
@@ -538,25 +539,19 @@ def prepareConnectal():
             else:
                 warnAndLog(f"unhandled directory for extra file {extraFile}")
 
-        # TODO: use different .img?
-        pvAWS = "connectal"
-        imageDir = getSetting('osImagesDir')
         imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
                                        'osImages', pvAWS, "debian.img")
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
         cp(imageSourcePath, imageFile)
 
-    # TODO: change this
     elif isEqSetting('binarySource', 'SRI-Cambridge'):
-        dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'common', "devicetree.dtb")
-
-        imageDir = getSetting('osImagesDir')
         imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
                                        'osImages', 'common', "disk-image-cheri.img.zst")
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
         zstdDecompress(imageSourcePath, imageFile)
 
     # connectal requires a device tree blob
+    dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
     dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
     setSetting("osImageDtb",dtbFile)
     cp (dtbsrc, dtbFile)

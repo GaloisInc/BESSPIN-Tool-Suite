@@ -198,12 +198,11 @@ def selectImagePaths():
                 return [os.environ[nixImage]]
             else:
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
-        # another inconsistency
+        baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType)
         if isEqSetting('binarySource', 'SRI-Cambridge'):
-            baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType)
             imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), os.path.join(baseDir, f"kernel-cheri.elf")]
         else:
-            imagePaths = [os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType, f"{getSetting('osImage')}.elf")]
+            imagePaths = [os.path.join(baseDir, f"{getSetting('osImage')}.elf")]
         return imagePaths
 
 @decorate.debugWrap
