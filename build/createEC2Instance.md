@@ -20,7 +20,7 @@
 5. From the Network dropdown, select  the "elew-firesim" network, from the Subnet, select the us-west-2a subnet, then click "Next: Storage"
 6. The storage should default to a 100GB SSD and a 470GB NVME SSD. Click "Next: Tags"
 7. Click Add Tag, and Key: "Name", Value: whatever name you want to see when your box is referenced. Click "Next: Security Group"
-8. Select "Select an existing security group" and select the "elew-firesim" group. Click "Review and Launch"
+8. Select "Select an existing security group" and select the "elew-firesim" group (NOTE: this security group only allows ports 10000-11000 and 60000-61000 to be accessible). Click "Review and Launch"
 9. Click launch, and you will be prompted to choose your keypair that you made above.
 
 ## Connecting to FPGA
@@ -36,7 +36,7 @@ Host fett-fpga
 
 ## Getting FETT running
 
-1. Create an SSH key on the FPGA host
+1. Create an SSH key on the HOST
 2. `git config --global user.email "<email>" && git config --global user.name "<username"`
 3. Follow the instructions on the FETT-Target `README.md` to clone and initialize this repo.
 

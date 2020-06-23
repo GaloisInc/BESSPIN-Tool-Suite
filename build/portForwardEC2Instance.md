@@ -12,11 +12,11 @@ sudo iptables -A PREROUTING -t nat -i <HOST_ADAPTER> -p tcp --dport <HOST_PORT> 
 sudo sysctl -w net.ipv4.ip_forward=1
 ```
 
-`<FPGA_IP>` and `<TARGET_PORT>` are defined in [setupEnv.json](../fett/base/utils/setupEnv.json)
+`<FPGA_IP>` and `<TARGET_PORT>` and `<TARGET_ADAPTER>` are defined in [setupEnv.json](../fett/base/utils/setupEnv.json).
 `<HOST_PORT>` is defined by you, however it must be within the range of ports allowed by the AWS Security Group applied to your AWS instance.
-`<HOST_ADAPTER>` and `<TARGET_ADAPTER>` are found using `ip a` on the HOST.
+`<HOST_ADAPTER>` is found using `ip a`/
 
-When the OS is booted on the FPGA (and provided it is an OS that supports this), you should be able to `ssh` from the HOST to the TARGET (`root@<FPGA_IP>`) with no port forwarding rules.
+When the OS is booted on the TARGET (and provided it is an OS that supports this), you should be able to `ssh` from the HOST to the TARGET (`root@<FPGA_IP>`) with no port forwarding rules.
 
 ### Alternative Template Command
 
@@ -41,12 +41,6 @@ These commands correspond with these parameters on either 'template command':
 - `<TARGET_PORT>`: `22`
 - `<FPGA_IP>`: `172.16.0.2`
 
-On the TARGET, run these commands (note IP and subnet mask are for the `aws` fpga):
-
-```bash
-ip route add default via 172.16.0.1
-ping 4.2.2.1
-```
 On the HOST, run these commands:
 
 ```bash
@@ -69,21 +63,26 @@ sudo iptables -P FORWARD ACCEPT
 sudo sysctl -w net.ipv4.ip_forward=1
 ```
 
+On the TARGET, run these commands (note IP and subnet mask are for the `aws` TARGET):
+
+```bash
+ip route add default via 172.16.0.1
+ping 4.2.2.1
+```
+
+Ensure that the `ping` works before continuing.
+
 Now that these rules are in place, to SSH into the TARGET from outside the HOST, do
 
 ```bash
 ssh -p <HOST_PORT> researcher@<AWS_INSTANCE_IP>
 ```
 
-## Example: Forwarding `nginx` Server
+##Forwarding `nginx` Server
 
-As a second example, we would use similar parameters to those for SSH, with a different port. 
+To access the `nginx` server, we forward HOST port 10081 to TARET port 81 (the `nginx` port, defined in [setupEnv.json](../fett/base/utils/setupEnv.json)). 
 
-- `<HOST_ADAPTER>`: `eth0` 
-- `<HOST_PORT>`: `10081`
-- `<TARGET_ADAPTER>`: `tap0`
-- `<TARGET_PORT>`: `81`
-- `<FPGA_IP>`: `172.16.0.2`
+Once port forwarding steps are complete, `nginx` should be accessible at `http://<AWS_INSTANCE_IP>:10081/index.html`.
 
 ## Troubleshooting
 
