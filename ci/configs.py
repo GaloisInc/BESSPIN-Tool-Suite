@@ -38,7 +38,8 @@ gfe_unixOnPremDefaults = unixDefaults.union({
 
 gfe_unixAwsDefaults = unixDefaults.union({
     ('binarySource',('GFE',)),
-    ('elfLoader',('JTAG',))
+    ('elfLoader',('JTAG',)),
+    ('target',('aws',))
 })
 
 gfe_unixAllTargets_onprem = gfe_unixOnPremDefaults.union({
@@ -55,6 +56,13 @@ gfe_unixDevPR_onprem = gfe_unixOnPremDefaults.union({
 
 gfe_unixDevPR_aws = gfe_unixAwsDefaults.union({
     ('processor',('chisel_p2',)),
+    ('osImage',('debian',))
+})
+
+mit_unixDevPR_aws = unixDefaults.union({
+    ('binarySource',('MIT',)),
+    ('elfLoader',('JTAG',)),
+    ('processor',('bluespec_p2',)),
     ('target',('aws',)),
     ('osImage',('debian',))
 })
@@ -111,7 +119,8 @@ appSets = {
         'aws' : { 'gfe_unix' : gfe_unixDevPR_aws, 
                 'gfe_freertos' : gfe_freertosDevPR_aws,
                 'lmco_freertos' : lmco_freertosDevPR_aws,
-                'michigan_freertos' : michigan_freertosDevPR_aws}
+                'michigan_freertos' : michigan_freertosDevPR_aws,
+                'mit_unix' : mit_unixDevPR_aws}
     }
 }
 appSets['runRelease'] = appSets['runPeriodic']
