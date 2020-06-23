@@ -237,9 +237,8 @@ class connectalTarget(commonTarget):
     @decorate.debugWrap
     def targetTearDown(self):
         if (self.process.isalive()):
-            # connectal exits with "Ctrl-A x". To make sure that each run is standalone and independent 
-            # of previous runs, we send this interrupt if the process is still alive.
-            self.runCommand("\x01 x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=15)
+            # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
+            self.runCommand("\x01 x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
         return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
