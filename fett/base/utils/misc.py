@@ -67,8 +67,8 @@ def exitFett (exitCode):
         aws.sendSQS(inExit_GetSetting('prodSqsQueueTX'), inExit_logAndExit, jobStatus, 
                     inExit_GetSetting('prodJobId'), f"{inExit_GetSetting('prodJobId')}-TERM",
                     reason='fett-target-production-termination',
-                    hostIp=inExit_GetSetting('awsIpHost'),
-                    fpgaIp=inExit_GetSetting('awsIpTarget')
+                    hostIp=aws.getInstanceIp(inExit_logAndExit),
+                    fpgaIp=inExit_GetSetting('productionTargetIp')
                     )
         printAndLog("Sent termination message to the SQS queue.")       
 

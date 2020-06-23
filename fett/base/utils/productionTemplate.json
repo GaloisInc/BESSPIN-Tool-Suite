@@ -13,5 +13,5 @@
     "userPasswordHash" : "COND-REQUIRED-SETTING",
     "rootUserAccess" : "No",
     "buildApps" : "No",
-    "awsJumpBoxIp" : "REQUIRED-SETTING"
+    "productionTargetIp" : "REQUIRED-SETTING"
 }

@@ -15,6 +15,16 @@ def getInstanceId (exitFunc):
     except Exception as exc:
         exitFunc(message=f"Failed to obtain the instance ID.",exc=exc)
 
+def getInstanceIp (exitFunc):
+    try:
+        import urllib.request
+    except Exception as exc:
+        exitFunc(message=f"Failed to <import urllib.request>.",exc=exc)
+
+    try:
+        return urllib.request.urlopen('http://169.254.169.254/latest/meta-data/local-ipv4').read().decode()
+    except Exception as exc:
+        exitFunc(message=f"Failed to obtain the instance IP.",exc=exc)
 
 def sendSQS (urlQueue, exitFunc, status, jobId, nodeId, reason='fett', hostIp='None', fpgaIp='None'):
 
@@ -122,4 +132,3 @@ def pollPortalQueueIndefinitely (urlQueue, exitFunc):
 
         time.sleep(60)            
 
-    
