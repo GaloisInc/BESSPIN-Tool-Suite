@@ -33,10 +33,10 @@ def add_official(target, dbfile):
     # Insert the record. The database will always be empty at this point,
     # so we give the official ID 0
     insert = f"INSERT INTO electionofficial (id, username, hash) VALUES (0, '{officialName}', '{passHash}');"
-    result = sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
+    sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
     select = f"SELECT * from electionofficial WHERE id = 0;"
-    result = sqliteCmd(target, sqlite, dbfile, select, tee=appLog, 
-                       expectedContents=f"{passHash}")
+    sqliteCmd(target, sqlite, dbfile, select, tee=appLog, 
+              expectedContents=f"{passHash}")
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
             
 @decorate.debugWrap
