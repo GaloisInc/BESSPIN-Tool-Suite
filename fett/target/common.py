@@ -654,6 +654,9 @@ class commonTarget():
             appModules = [freertos]
         elif (getSetting('osImage') in ['debian', 'FreeBSD']):
             appModules = [ssh, webserver, database, voting]
+            if (isEqSetting('binarySource','MIT')): #Disable nginx
+                appModules.remove(webserver)
+                appModules.remove(voting) #hosted by the webserver
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
