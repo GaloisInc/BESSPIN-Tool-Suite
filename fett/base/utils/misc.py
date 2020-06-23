@@ -502,6 +502,6 @@ def zstdDecompress(inputFilePath, outputFilePath):
             with open(outputFilePath, 'wb') as destination:
                 decomp.copy_stream(cfp, destination)
     except FileNotFoundError as exc:
-        logAndExit(f"zstdDecompress: input file {inputFilePath} does not exist <{exc}>")
+        logAndExit(f"zstdDecompress: input file {inputFilePath} does not exist <{exc}>", exc=exc, exitCode=EXIT.Files_and_paths)
     except Exception as exc:
-        logAndExit(f"zstdDecompress: error decompressing file {inputFilePath} <{exc}>")
+        logAndExit(f"zstdDecompress: error decompressing file {inputFilePath} <{exc}>", exc=exc, exitCode=EXIT.Run)

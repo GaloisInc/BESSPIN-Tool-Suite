@@ -200,17 +200,16 @@ def selectImagePaths():
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
         # another inconsistency
         if isEqSetting('binarySource', 'SRI-Cambridge'):
-            # specify both elfs using pattern matching
             baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType)
-            imagePath = [os.path.join(baseDir, f"bbl-cheri.elf"), os.path.join(baseDir, f"kernel-cheri.elf")]
+            imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), os.path.join(baseDir, f"kernel-cheri.elf")]
         else:
-            imagePath = [os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType, f"{getSetting('osImage')}.elf")]
-        return imagePath
+            imagePaths = [os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType, f"{getSetting('osImage')}.elf")]
+        return imagePaths
 
 @decorate.debugWrap
 def importImage():
-    imagePath = selectImagePaths()
-    for ip in imagePath:
+    imagePaths = selectImagePaths()
+    for ip in imagePaths:
         cp (ip, getSetting('osImagesDir'))
     if not (isEqSetting('target', 'aws')):
         if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):

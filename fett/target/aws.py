@@ -203,10 +203,9 @@ class connectalTarget(commonTarget):
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
-            f"--elf={getSetting('osImageElf')}",
-            f"--elf={getSetting('osImageExtraElf')}" if getSetting('osImageExtraElf') is not None else "",
-            f"--tun={tapName}"
-        ] + extraArgs)
+            f"--elf={getSetting('osImageElf')}"] + [
+            f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else [] + [
+            f"--tun={tapName}"] + extraArgs)
 
         printAndLog(f"<aws.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
 
@@ -527,13 +526,8 @@ def prepareConnectal():
     copyAWSSources()
 
     if isEqSetting('binarySource', 'MIT') and isEqSetting('osImage', 'debian'):
-        # connectal requires a device tree blob
-        dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
-        setSetting("osImageDtb",dtbFile)
         dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
-        cp (dtbsrc, dtbFile)
-        logging.info(f"copy {dtbsrc} to {dtbFile}")
-    
+        
         # extraFiles may be specified in agfi_id.json
         extraFiles = getSetting('extraFiles', default=[])
         for extraFile in extraFiles:
@@ -556,15 +550,15 @@ def prepareConnectal():
 
     # TODO: change this
     elif isEqSetting('binarySource', 'SRI-Cambridge'):
-        # connectal requires a device tree blob
-        dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
-        setSetting("osImageDtb",dtbFile)
         dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'common', "devicetree.dtb")
-        cp (dtbsrc, dtbFile)
-        logging.info(f"copy {dtbsrc} to {dtbFile}")
 
         imageDir = getSetting('osImagesDir')
         imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
                                        'osImages', 'common', "disk-image-cheri.img.zst")
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
         zstdDecompress(imageSourcePath, imageFile)
+
+    # connectal requires a device tree blob
+    dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
+    setSetting("osImageDtb",dtbFile)
+    cp (dtbsrc, dtbFile)
