@@ -90,22 +90,22 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target a
 
    ```
    # UDev rules for setting up Bluespec emulation device drivers
-   
-ACTION=="add",SUBSYSTEM=="pci",ATTR{vendor}=="0x1be7", ATTR{device}="0xb100", RUN+="/sbin/modprobe -ba pcieportal portalmem"
+
+   ACTION=="add",SUBSYSTEM=="pci",ATTR{vendor}=="0x1be7", ATTR{device}="0xb100", RUN+="/sbin/modprobe -ba pcieportal portalmem"
    KERNEL=="portal*",MODE="666"
-KERNEL=="xdma*",MODE="666"
+   KERNEL=="xdma*",MODE="666"
    KERNEL=="portalmem",MODE="666"
-KERNEL=="connectal",MODE="666"
-   
-```
-   
+   KERNEL=="connectal",MODE="666"
+
+   ```
+
 8. Clear personal items and prepare image for AMI creation. 
 
    * remove git usernames if they are configured, clearing
 
-     ```
-     /home/centos/.gitconfig
-     ```
+   ```
+   /home/centos/.gitconfig
+   ```
 
    * **IF NOT USING `besspin_fett`, delete the contents of `/home/centos/.config/nix` as it contains your login credentials**
 
@@ -113,9 +113,10 @@ KERNEL=="connectal",MODE="666"
 
    * clear your command history
 
-     ```
-     $ rm ~/.bash_history
-     $ history -c
-     ```
+   ```
+   $ rm ~/.bash_history
+   $ history -c
+   ```
 
 9. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
+
