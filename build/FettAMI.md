@@ -84,7 +84,22 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target a
    # sudo chmod u+s /usr/bin/fpga-*
    ```
 
-7. Clear personal items and prepare image for AMI creation. 
+7. For use of connectal, modify the device rules so that nodes are accessible by non-root users. Create the file as root,
+
+   **/etc/udev/rules.d/99-pcieportal.rules**
+
+   ```
+   # UDev rules for setting up Bluespec emulation device drivers
+   
+ACTION=="add",SUBSYSTEM=="pci",ATTR{vendor}=="0x1be7", ATTR{device}="0xb100", RUN+="/sbin/modprobe -ba pcieportal portalmem"
+   KERNEL=="portal*",MODE="666"
+KERNEL=="xdma*",MODE="666"
+   KERNEL=="portalmem",MODE="666"
+KERNEL=="connectal",MODE="666"
+   
+```
+   
+8. Clear personal items and prepare image for AMI creation. 
 
    * remove git usernames if they are configured, clearing
 
@@ -103,4 +118,4 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target a
      $ history -c
      ```
 
-8. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
+9. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
