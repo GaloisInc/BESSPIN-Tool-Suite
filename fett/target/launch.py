@@ -128,9 +128,8 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
-    # Call-todo -- collect any remaining logs & dumps from target
     if (isEnabled('runApp')):
-        xTarget.collectAppLogs()
+        xTarget.collectLogs()
 
     xTarget.shutdown()
     

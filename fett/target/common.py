@@ -63,6 +63,13 @@ class commonTarget():
 
         self.appModules = []
 
+        # syslogs
+        self.syslogs = [] #todo: should contain all common files between FreeBSD/CheriBSD/debian
+        if (isEqSetting('osImage','debian')):
+            self.syslogs += ['/var/log/messages', '/var/log/auth.log', '/var/log/kern.log', '/var/log/syslog',
+                                '/var/log/dpkg.log', '/var/log/debug']
+        elif (isEqSetting('osImage','FreeBSD')):
+            warnAndLog("<sysLogs> are not yet defined for FreeBSD.")
         return
 
     @decorate.debugWrap
@@ -685,30 +692,34 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def collectAppLogs (self):
-        if (getSetting('osImage') in ['debian', 'FreeBSD']):
-            # Let root log in to gather files
-            self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
-            if (getSetting('osImage') == 'debian'):
-                self.runCommand("service ssh restart")
-            else:
-                self.runCommand("/etc/rc.d/sshd start")
-            # needs some time to be able to scp
-            if (not self.hasHardwareRNG()):
-                self.genStdinEntropy()
-            time.sleep(10)
+    def collectLogs (self):
+        if (getSetting('osImage') not in ['debian', 'FreeBSD']):
+            printAndLog(f"No logs to be collected from <{getSetting('osImage')}>.",doPrint=False)
+            return
+        # Let root log in to gather files
+        self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
+        if (getSetting('osImage') == 'debian'):
+            self.runCommand("service ssh restart")
+        else:
+            self.runCommand("/etc/rc.d/sshd start")
+        # needs some time to be able to scp
+        if (not self.hasHardwareRNG()):
+            self.genStdinEntropy()
+        time.sleep(10)
 
         artifactPath = getSetting('extraArtifactsPath')
 
+        # Apps logs
         for appModule in self.appModules:
             if hasattr(appModule, "dumpLogs"):
                 appModule.dumpLogs(self, artifactPath)
             else:
-                logging.info (f"collectAppLogs: nothing to do for module {appModule}.")
-        if (len(self.appModules) > 0):
-            logging.info (f"collectAppLogs: done collecting logs.")
-        else:
-            logging.info (f"collectAppLogs: No logs to collect.")
+                printAndLog (f"collectAppLogs: nothing to do for module {appModule}.",doPrint=False)
+
+        # syslogs -- collect syslogs here
+        
+
+        printAndLog(f"collectAppLogs: Done collecting logs.",doPrint=False)
         return
 
 
