@@ -29,7 +29,11 @@ sudo iptables -P FORWARD ACCEPT
 sudo sysctl -w net.ipv4.ip_forward=1
 ```
 
-## Example Port Forwarding for SSH on AWS
+## Example: Forwarding SSH on AWS
+
+> **NOTE**: `TARGET_ADAPTER`, `TARGET_PORT` and `FPGA_IP` are configured in [setupEnv.json](../fett/base/utils/setupEnv.json). If this configuration does not work, the first thing to double check would be that file. 
+
+> **NOTE**: `HOST_PORT` may violate security group policy. If this configuration does not work, double check the allowed ports on your AWS security group
 
 In this example we forward inbound `ssh` connections (to port 10022, on the HOST) to `ssh` port 22 on the TARGET.
 
@@ -78,11 +82,23 @@ Now that these rules are in place, to SSH into the TARGET from outside the HOST,
 ssh -p <HOST_PORT> researcher@<AWS_INSTANCE_IP>
 ```
 
-##Forwarding `nginx` Server
+## Example: Forwarding `nginx` Server on AWS
 
 To access the `nginx` server, we forward HOST port 10081 to TARET port 81 (the `nginx` port, defined in [setupEnv.json](../fett/base/utils/setupEnv.json)). 
 
 Once port forwarding steps are complete, `nginx` should be accessible at `http://<AWS_INSTANCE_IP>:10081/index.html`.
+
+## Example: On-Premises FPGA SSH Forwarding
+
+> **NOTE**: `TARGET_ADAPTER`, `TARGET_PORT` and `FPGA_IP` are configured in [setupEnv.json](../fett/base/utils/setupEnv.json). If this configuration does not work, the first thing to double check would be that file.
+
+An example configuration for on-premises FPGAs could look something like this:
+
+`HOST_ADAPTER`: `enp0s31f6`
+`TARGET_ADAPTER`: `eth0fpga`
+`FPGA_IP`: `10.88.88.2`
+`HOST_PORT`: `10022`
+`TARGET_PORT`: `22`
 
 ## Troubleshooting
 
