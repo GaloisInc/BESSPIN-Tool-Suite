@@ -18,6 +18,7 @@ This procedure describes how build the [ssith-aws-fpga](https://github.com/accel
      buildInputs = with pkgs; with besspin; [
        cmake
        libelf
+     ];
    }
    ```
 
