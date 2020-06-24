@@ -553,7 +553,7 @@ def startLogging (target):
             weblogs = getSetting("webserverLogs")
             logTuples += [(f"{weblogs['root']}/{logFile}",f"nginx_{os.path.splitext(logFile)[0]}") for logFile in weblogs["logs"]]
     elif (isEqSetting('osImage','FreeBSD')):
-        target.shutdownAndExit("<startLogging> is not yet implemented for FreeBSD.",exitCode=EXIT.Implementation)
+        warnAndLog("<startLogging> is not yet implemented for FreeBSD.")
 
     
     if (isEqSetting('osImage','debian')):
@@ -578,5 +578,5 @@ def startLogging (target):
         # restart rsyslog
         target.runCommand("service rsyslog restart",shutdownOnError=False)
     elif (isEqSetting('osImage','FreeBSD')):
-        target.shutdownAndExit("<configSysLogging> is not yet implemented for FreeBSD.",exitCode=EXIT.Implementation)
+        warnAndLog("<configSysLogging> is not yet implemented for FreeBSD.")
 
