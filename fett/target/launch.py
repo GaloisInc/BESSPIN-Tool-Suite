@@ -49,7 +49,11 @@ def startFett ():
     xTarget = launchFett()
 
     mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
-    # Call-todo -- start any on-line logging
+    
+    # Start on-line logging
+    # FPGA IS ONLY USED TO TEST -- TEMPORARY -- DO NOT MERGE LIKE THIS!!!
+    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws') or isEqSetting('target','fpga'))): 
+        aws.startLogging (xTarget)
 
     return xTarget
 

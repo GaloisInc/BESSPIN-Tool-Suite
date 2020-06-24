@@ -538,3 +538,45 @@ def prepareConnectal():
                                    'osImages', pvAWS, "debian.img")
     imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
     cp(imageSourcePath, imageFile)
+
+# ------------------ Logging Functions ----------------------------------------
+
+@decorate.debugWrap
+def startLogging (target):
+    # filesToLog
+    filesToLog = [] #todo: should contain all common files between FreeBSD/CheriBSD/debian
+    if (isEqSetting('osImage','debian')):
+        filesToLog += ['/var/log/messages', '/var/log/auth.log', '/var/log/kern.log', '/var/log/syslog',
+                        '/var/log/dpkg.log', '/var/log/debug']
+        logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in filesToLog]
+        if (webserver in target.appModules):
+            weblogs = getSetting("webserverLogs")
+            logTuples += [(f"{weblogs['root']}/{logFile}",f"nginx_{os.path.splitext(logFile)[0]}") for logFile in weblogs["logs"]]
+    elif (isEqSetting('osImage','FreeBSD')):
+        target.shutdownAndExit("<startLogging> is not yet implemented for FreeBSD.",exitCode=EXIT.Implementation)
+
+    
+    if (isEqSetting('osImage','debian')):
+        # Create conf file
+        syslogConfName = "logFett.conf"
+        syslogConfFile = ftOpenFile(os.path.join(getSetting('workDir'),syslogConfName),'w')
+        syslogConfFile.write('module(load="imfile")\n')
+        for logPath, logTag in logTuples:
+            syslogConfFile.write('\ninput(type="imfile"\n')
+            syslogConfFile.write(f'\tfile="{logPath}"\n')
+            syslogConfFile.write(f'\tTag="{logTag}:")\n')
+        syslogConfFile.write(f"\n*.* @@{self.ipHost}:{getSetting('rsyslogPort')}\n")
+        syslogConfFile.close()
+
+        # send the conf file
+        target.sendFile(
+                getSetting('workDir'), syslogConfName,
+                toTarget=True, shutdownOnError=False
+            )
+        target.runCommand(f"mv {syslogConfName} /etc/rsyslog.d/",shutdownOnError=False)
+
+        # restart rsyslog
+        target.runCommand("service rsyslog restart",shutdownOnError=False)
+    elif (isEqSetting('osImage','FreeBSD')):
+        target.shutdownAndExit("<configSysLogging> is not yet implemented for FreeBSD.",exitCode=EXIT.Implementation)
+

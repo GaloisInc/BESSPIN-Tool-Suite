@@ -286,6 +286,11 @@
                     "query?avg(recovered) where (zipcode == 48105)"
                 ]
             }
+        },
+        {
+            "name" : "rsyslogPort",
+            "type" : "int",
+            "val" : 514
         }
     ] 
 }
