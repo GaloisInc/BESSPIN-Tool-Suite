@@ -183,10 +183,16 @@ class connectalTarget(commonTarget):
         self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
+        # Important for the Web Server
+        self.httpPortTarget  = getSetting('HTTPPortTarget')
+        self.httpsPortTarget = getSetting('HTTPSPortTarget')
+        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
+        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
+
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
-        if (getSetting('osImage') != 'debian'):
+        if getSetting('osImage') not in ['debian', 'FreeBSD']:
             logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
         awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'sim')
@@ -197,10 +203,11 @@ class connectalTarget(commonTarget):
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
-            f"--elf={getSetting('osImageElf')}",
-            f"--tun={tapName}"
-        ]
-                                    + extraArgs)
+            f"--elf={getSetting('osImageElf')}"] + ([
+            f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else []) + [
+            f"--tun={tapName}"] + extraArgs)
+
+        printAndLog(f"<aws.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
 
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
@@ -228,6 +235,10 @@ class connectalTarget(commonTarget):
             self.runCommand (f"ifconfig eth0 {self.ipTarget}")
             self.runCommand (f"ifconfig eth0 netmask {getSetting('awsNetMaskTarget')}")
             self.runCommand (f"ifconfig eth0 hw ether {getSetting('awsMacAddrTarget')}")
+        elif (isEqSetting('osImage', 'FreeBSD')):
+            outCmd = self.runCommand ("ifconfig vtnet0 up")
+            self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
+            self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
@@ -430,9 +441,9 @@ def copyAWSSources():
     if pvAWS not in ['firesim', 'connectal']:
         logAndExit(f"<aws.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
 
-    # copy over available paths
     awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
                                  'bitfiles', pvAWS, getSetting('processor'))
+
     awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
 
     # populate workDir with available subdirectories
@@ -512,29 +523,35 @@ def prepareConnectal():
     """connectal environment preparation"""
     copyAWSSources()
 
+    imageDir = getSetting('osImagesDir')
+    pvAWS = "connectal"
+    
+    if isEqSetting('binarySource', 'MIT') and isEqSetting('osImage', 'debian'):
+        # extraFiles may be specified in agfi_id.json
+        extraFiles = getSetting('extraFiles', default=[])
+        for extraFile in extraFiles:
+            dname = os.path.dirname(extraFile)
+            bname = os.path.basename(extraFile)
+            if dname == 'osImages':
+                srcname = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', bname)
+                dstname = os.path.join(getSetting('osImagesDir'), bname)
+                cp (srcname, dstname)
+            else:
+                warnAndLog(f"unhandled directory for extra file {extraFile}")
+
+        imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                       'osImages', pvAWS, "debian.img")
+        imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
+        cp(imageSourcePath, imageFile)
+
+    elif isEqSetting('binarySource', 'SRI-Cambridge'):
+        imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                       'osImages', 'common', "disk-image-cheri.img.zst")
+        imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
+        zstdDecompress(imageSourcePath, imageFile)
+
     # connectal requires a device tree blob
+    dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
     dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
     setSetting("osImageDtb",dtbFile)
-    dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
     cp (dtbsrc, dtbFile)
-    logging.info(f"copy {dtbsrc} to {dtbFile}")
-
-    # extraFiles may be specified in agfi_id.json
-    extraFiles = getSetting('extraFiles', default=[])
-    for extraFile in extraFiles:
-        dname = os.path.dirname(extraFile)
-        bname = os.path.basename(extraFile)
-        if dname == 'osImages':
-            srcname = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', bname)
-            dstname = os.path.join(getSetting('osImagesDir'), bname)
-            cp (srcname, dstname)
-        else:
-            warnAndLog(f"unhandled directory for extra file {extraFile}")
-
-    # TODO: use different .img?
-    pvAWS = "connectal"
-    imageDir = getSetting('osImagesDir')
-    imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                   'osImages', pvAWS, "debian.img")
-    imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
-    cp(imageSourcePath, imageFile)

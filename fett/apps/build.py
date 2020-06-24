@@ -26,11 +26,14 @@ def buildApps ():
     if (isEqSetting('osImage','FreeRTOS')):
         buildFreeRTOSapps()
     elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-        buildWebserver(tarName)
-        buildDatabase(tarName)
-        buildVoting(tarName)
-        if (getSetting('binarySource') in ['MIT']):
-            buildEnclaves(tarName)
+        if not (getSetting('binarySource') in ['SRI-Cambridge']):
+            buildWebserver(tarName)
+            buildDatabase(tarName)
+            buildVoting(tarName)
+            if (getSetting('binarySource') in ['MIT']):
+                buildEnclaves(tarName)
+        else:
+            warnAndLog(f"<launch.buildApps> binary source {getSetting('binarySource')} has apps in image. Skipping builds")
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
