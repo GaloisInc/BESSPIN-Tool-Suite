@@ -693,6 +693,8 @@ class commonTarget():
     @decorate.timeWrap
     def collectAppLogs (self):
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
+            if (isEqSetting('binarySource','SRI-Cambridge')):
+                return #Will be handled in a different PR -- issue #236 (already in progress on a different branch)
             # Let root log in to gather files
             self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
             if (getSetting('osImage') == 'debian'):
