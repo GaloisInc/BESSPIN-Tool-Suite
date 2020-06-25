@@ -270,9 +270,8 @@ def configTapAdaptor():
         'create' : [
             ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()]
         ],
+        'disableIpv6' : ['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1'],
         'natSetup' : [
-            # Disable IPv6 on the tap adaptor
-            ['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1'],
             # Enable ipv4 forwarding
             ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
             # Add productionTargetIp to main adaptor
@@ -326,7 +325,10 @@ def configTapAdaptor():
     # Check if the adaptor exists
     if (fpga.getAddrOfAdaptor(tapAdaptor,'MAC',exitIfNoAddr=False) == 'NotAnAddress'):
         printAndLog (f"configTapAdaptor: <{tapAdaptor}> was never configured. Configuring...",doPrint=False)
-        execSudoCommands(['create','config','natSetup'])
+        configCommands = ['create','config','natSetup']
+        if (isEqSetting('pvAWS','firesim')):
+            configCommands.insert(-1,'disableIpv6') #insert before natSetup
+        execSudoCommands(configCommands)
     else:
         # was created --> re-configure
         execSudoCommands(['refresh','config'])
