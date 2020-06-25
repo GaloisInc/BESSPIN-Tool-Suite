@@ -107,17 +107,15 @@ def main (xArgs):
                 generateConfigFile(repoDir,outDir,dictConfig,xArgs.testOnly)
 
             if (xArgs.entrypoint == 'AWS'): #generate the info file
-                infoDict = {'nNodes' : actualNumConfigs, 'fettTargetAMI' : {}}
-                for iConfig, xConfig in enumerate(allConfigs):
-                    try:
-                        binSource = xConfig['binarySource']
-                    except Exception as exc:
-                        print(xConfig)
-                        exitFettCi (message=f"Failed to find the <binarySource> in <{xConfig['name']}>.",exc=exc)
-                    if (binSource == 'SRI-Cambridge'):
-                        infoDict['fettTargetAMI'][str(iConfig)] = fettTargetAMI_ubuntu
-                    else:
-                        infoDict['fettTargetAMI'][str(iConfig)] = fettTargetAMI_centos
+                try:
+                    binSource = allConfigs[nodeIndex]['binarySource']
+                except Exception as exc:
+                    exitFettCi (message=f"Failed to find the <binarySource> in <{xConfig['name']}>.",exc=exc)
+                if (binSource == 'SRI-Cambridge'):
+                    thisAmi = fettTargetAMI_ubuntu
+                else:
+                    thisAmi = fettTargetAMI_centos
+                infoDict = {'nNodes' : actualNumConfigs, 'fettTargetAMI' : thisAmi}
                 infoFilePath = os.path.join(outDir,'awsCiInfo.json')
                 try:
                     infoFile = open(infoFilePath,'w')
