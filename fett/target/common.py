@@ -672,7 +672,10 @@ class commonTarget():
         setSetting("appLog",appLog)
         # Install
         # Everything is already installed on SRI-Cambridge source
-        if not isEqSetting('binarySource', 'SRI-Cambridge'):
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            setSetting('sqliteBin','/fett/bin/sqlite3')
+        else:
+            setSetting('sqliteBin','/usr/bin/sqlite')
             for appModule in self.appModules:
                 appModule.install(self)
                 appLog.flush()

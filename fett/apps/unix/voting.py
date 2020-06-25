@@ -13,14 +13,14 @@ import json
 @decorate.timeWrap
 def clear_voter_table(target, dbfile):
     appLog = getSetting('appLog')
-    sqlite   = "/usr/bin/sqlite"
+    sqlite   = getSetting('sqliteBin')
     sqliteCmd(target, sqlite, dbfile, "DELETE FROM voter;", tee=appLog)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def add_official(target, dbfile):
     appLog = getSetting('appLog')
-    sqlite   = "/usr/bin/sqlite"
+    sqlite   = getSetting('sqliteBin')
 
     officialName = "official"
 
