@@ -413,7 +413,7 @@ def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
     # fpgaLoadExtraSettings may be specified in agfi_id.json
     fpgaLoadExtraSettings = getSetting('fpgaLoadExtraSettings', default=[])
-    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
+    shellCommand(['fpga-load-local-image','-F','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 
     # wait until the FPGA has been flashed
     _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")
