@@ -123,8 +123,8 @@ def main (xArgs):
         aws.sendSQS(getSetting('prodSqsQueueTX'), logAndExit, 'success', 
                     getSetting('prodJobId'), f"{getSetting('prodJobId')}-DEPLOY",
                     reason='fett-target-production-deployment',
-                    hostIp=getSetting('awsIpHost'),
-                    fpgaIp=getSetting('awsIpTarget')
+                    hostIp=aws.getInstanceIp(logAndExit),
+                    fpgaIp=getSetting('productionTargetIp')
                     )
         printAndLog("Sent deployment message to the SQS queue.")
 

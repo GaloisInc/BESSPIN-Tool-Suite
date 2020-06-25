@@ -101,8 +101,8 @@
             "type": "boolean"
         },
         {
-            "name": "awsJumpBoxIp",
-            "type": "string"
+            "name": "productionTargetIp",
+            "type": "ipAddress"
         }
     ],
 
