@@ -663,9 +663,6 @@ class commonTarget():
             if (isEqSetting('binarySource','MIT')): #Disable nginx
                 self.appModules.remove(webserver)
                 self.appModules.remove(voting) #hosted by the webserver
-            elif (isEqSetting('binarySource','LMCO')): #Disable sqlite
-                self.appModules.remove(database)
-                self.appModules.remove(voting) #uses sqlite
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
