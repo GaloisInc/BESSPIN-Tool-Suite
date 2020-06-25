@@ -446,7 +446,10 @@ def copyAWSSources():
     if pvAWS not in ['firesim', 'connectal']:
         logAndExit(f"<aws.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
 
-    awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+    if (isEnabled('useCustomProcessor')):
+        awsSourcePath = getSetting('pathToCustomProcessorSource')
+    else:
+        awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
                                  'bitfiles', pvAWS, getSetting('processor'))
 
     awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
