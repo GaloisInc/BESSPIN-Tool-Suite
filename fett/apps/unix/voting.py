@@ -42,30 +42,34 @@ def add_official(target, dbfile):
 @decorate.debugWrap
 @decorate.timeWrap
 def install (target):
+    if (isEqSetting('binarySource','SRI-Cambridge')):
+      prefix = "/fett/var"
+    else:
+      prefix = "/var"
     appLog = getSetting('appLog')
     printAndLog("Installing voting server")
     wwwUser = "www" if isEqSetting('osImage', 'FreeBSD') else "www-data"
 
-    target.runCommand("mkdir -p /var/www/run",tee=appLog)
-    target.runCommand("mkdir -p /var/www/cgi-bin",tee=appLog)
-    target.runCommand("mkdir -p /var/www/bvrs/bvrs",tee=appLog)
-    target.runCommand("mkdir -p /var/www/data",tee=appLog)
+    target.runCommand(f"mkdir -p {prefix}/www/run",tee=appLog)
+    target.runCommand(f"mkdir -p {prefix}/www/cgi-bin",tee=appLog)
+    target.runCommand(f"mkdir -p {prefix}/www/bvrs/bvrs",tee=appLog)
+    target.runCommand(f"mkdir -p {prefix}/www/data",tee=appLog)
 
     target.runCommand("install kfcgi /usr/local/sbin/kfcgi", erroneousContents="install:",tee=appLog)
-    target.runCommand("install bvrs /var/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
-    target.runCommand("install static/* /var/www/bvrs/bvrs", erroneousContents="install:",tee=appLog)
+    target.runCommand(f"install bvrs {prefix}/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
+    target.runCommand(f"install static/* {prefix}/www/bvrs/bvrs", erroneousContents="install:",tee=appLog)
     
     printAndLog("Adding a new election official")
     add_official(target, "bvrs.db")
     
     # This is important: restrict access to the database to the 'www' user.
-    target.runCommand(f"chmod 770 /var/www/data", tee=appLog)
+    target.runCommand(f"chmod 770 {prefix}/www/data", tee=appLog)
     target.runCommand(f"chown {wwwUser}:{wwwUser} /var/www/data", tee=appLog)
-    target.runCommand(f"install -m 770 -g {wwwUser} -o {wwwUser} bvrs.db /var/www/data/bvrs.db", erroneousContents="install:",tee=appLog)
+    target.runCommand(f"install -m 770 -g {wwwUser} -o {wwwUser} bvrs.db {prefix}/www/data/bvrs.db", erroneousContents="install:",tee=appLog)
 
     target.runCommand("echo \"Starting BVRS CGI Handler...\"",tee=appLog)
 
-    target.runCommand(f"/usr/local/sbin/kfcgi -s /var/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- /var/www/cgi-bin/bvrs /var/www/data/bvrs.db",tee=appLog)
+    target.runCommand(f"/usr/local/sbin/kfcgi -s {prefix}/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- {prefix}/www/cgi-bin/bvrs {prefix}/www/data/bvrs.db",tee=appLog)
     return
 
 
@@ -114,11 +118,7 @@ def deploymentTest (target):
         target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Clearing voting database")
-    if isEqSetting('binarySource', 'SRI-Cambridge'):
-        bvrsDbPath = '/fett/var/www/data'
-    else:
-        bvrsDbPath = '/var/www/data'
-    clear_voter_table(target, os.path.join(bvrsDbPath,'bvrs.db'))
+    clear_voter_table(target, f"{prefix}/www/data/bvrs.db")
 
     printAndLog("Voting tests OK!",tee=getSetting('appLog'))
 
