@@ -48,15 +48,16 @@ def install (target):
 
     target.runCommand("mkdir -p /var/www/run",tee=appLog)
     target.runCommand("mkdir -p /var/www/cgi-bin",tee=appLog)
-    target.runCommand("mkdir -p /var/www/html",tee=appLog)
+    target.runCommand("mkdir -p /var/www/bvrs/bvrs",tee=appLog)
     target.runCommand("mkdir -p /var/www/data",tee=appLog)
-
-    printAndLog("Adding a new election official")
-    add_official(target, "bvrs.db")
 
     target.runCommand("install kfcgi /usr/local/sbin/kfcgi", erroneousContents="install:",tee=appLog)
     target.runCommand("install bvrs /var/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
-
+    target.runCommand("install static/* /var/www/bvrs/bvrs", erroneousContents="install:",tee=appLog)
+    
+    printAndLog("Adding a new election official")
+    add_official(target, "bvrs.db")
+    
     # This is important: restrict access to the database to the 'www' user.
     target.runCommand(f"chmod 770 /var/www/data", tee=appLog)
     target.runCommand(f"chown {wwwUser}:{wwwUser} /var/www/data", tee=appLog)
