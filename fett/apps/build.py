@@ -118,6 +118,7 @@ def copyVotingFiles(tarName):
     cpFilesToBuildDir(getBinDir('voting'), 'bvrs')
     cpFilesToBuildDir(getBinDir('voting'), 'kfcgi')
     cpDirToBuildDir(os.path.join(getAppDir('voting'), 'common', 'conf', 'sites'))
+    cpDirToBuildDir(os.path.join(getAppDir('voting'), 'common', 'static'))
     cp(os.path.join(getAppDir('voting'), "common", "conf"),
        os.path.join(getSetting('buildDir'), "conf"),
        pattern="*.conf")
@@ -126,6 +127,7 @@ def copyVotingFiles(tarName):
        pattern="bvrs.db")
     filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf', 'bvrs.db']))
     filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
+    filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
     # Need kfcgi, webserver's nginx.conf, bvrs app
     # We should probably just generate the initial database script here
     return filesList
