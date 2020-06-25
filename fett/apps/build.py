@@ -136,15 +136,17 @@ def copyVotingFiles(tarName):
 def copyEnclavesFiles(tarName):
     """
     Build a tar containing:
-      - lib/security/pam_enclave.so
-      - ssith/pam-enclave.bin
-      - etc/pam.d/testing
+      - enclaves/lib/security/pam_enclave.so
+      - enclaves/ssith/pam-enclave.bin
+      - enclaves/ssith/aes-enclave.bin
+      - enclaves/ssith/aes-main
+      - enclaves/etc/pam.d/testing
+      - install-enclaves.sh
     """
-    cpDirToBuildDir(os.path.join(getBinDir('enclaves'), "lib"))
-    cpDirToBuildDir(os.path.join(getBinDir('enclaves'), "ssith"))
-    cpDirToBuildDir(os.path.join(getBinDir('enclaves'), "etc"))
+    cpDirToBuildDir(os.path.join(getBinDir('enclaves'), "enclaves"))
+    cpFilesToBuildDir(getBinDir('enclaves'), pattern="install-enclaves.sh")
 
-    tarFiles = ["lib", "ssith", "etc"]
+    tarFiles = ["enclaves", "install-enclaves.sh"]
 
     filesList=map(buildDirPathTuple, tarFiles)
     return filesList
