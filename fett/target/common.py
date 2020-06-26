@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 
 import os, sys, glob
 import pexpect, subprocess, threading
-import time, random, secrets
+import time, random, secrets, crypt
 import string, re
 import socket, errno, pty, termios
 from collections import Iterable
@@ -700,8 +700,8 @@ class commonTarget():
         
         # Collect all logs into one directory
         logsPathName = 'logsFromTarget'
-        logsPathOnTarget = f'/home/{self.userName}/{logsPathName}'
-        self.runCommand(f"mkdir {logsPathOnTarget}")
+        logsPathOnTarget = f'/root/{logsPathName}'
+        self.runCommand(f"mkdir {logsPathName}")
 
         # Apps logs
         for appModule in self.appModules:
@@ -718,14 +718,15 @@ class commonTarget():
         
         # Create the tarball
         logsTarball = 'logsFromTarget.tar'
-        self.runCommand(f"cd /home/{self.userName}",endsWith=f"{self.userName}#",erroneousContents=['cd:']) #not to get the warnings of removing leading '/'
-        self.runCommand(f"tar cvf {logsTarball} {logsPathName}",endsWith=f"{self.userName}#",erroneousContents=['gzip:','Error','tar:'])
-        self.runCommand(f"chown {self.userName}:{self.userName} {logsTarball}",endsWith=f"{self.userName}#",erroneousContents=['chown:'])
-        self.runCommand("cd /root")
+        self.runCommand(f"tar cvf {logsTarball} {logsPathName}",erroneousContents=['gzip:','Error','tar:'])
+        self.runCommand(f"mv {logsPathOnTarget} /home/{self.userName}/{logsPathName}")
+        self.runCommand(f"chown {self.userName}:{self.userName} /home/{self.userName}/{logsPathName}",erroneousContents=['chown:'])
 
         # Maybe the researcher has changed the password for some reason
         self.userPassword = 'newPassword'
-        newHash = '$6$1EAx3aihyQKPiN$JUzGSNhpam8HJi1oqHDoabcwbIF3WGbttPdJuC8cetgVvvC5Owlwyp1pHTe2ZzVe9nifnIbQpuHs8bZYNkWgx/'
+        salt     = crypt.mksalt()
+        newHashWithDollarSigns = crypt.crypt(self.userPassword, salt)
+        newHash = passHash.replace('$', '\\$')
         if isEqSetting('osImage', 'debian'):
             self.runCommand(f"usermod -p \'{newHash}\' {self.userName}")
         elif isEqSetting('osImage', 'FreeBSD'):
