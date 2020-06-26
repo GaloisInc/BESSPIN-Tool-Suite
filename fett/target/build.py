@@ -195,9 +195,11 @@ def selectImagePaths():
         if getSetting('binarySource') == 'GFE':
             nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
             if (nixImage in os.environ):
-                tempPath = os.path.join('/tmp',os.path.basename(getSetting('osImageElf')))
-                cp (os.environ[nixImage], tempPath) #to ensure it has the standard tool name
-                return [tempPath]
+                tempPath = os.path.join(getSetting('workDir'),'tmp')
+                mkdir (tempPath)
+                tempImagePath = os.path.join(tempPath,os.path.basename(getSetting('osImageElf')))
+                cp (os.environ[nixImage], tempImagePath) #to ensure it has the standard tool name
+                return [tempImagePath]
             else:
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
         baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType)
