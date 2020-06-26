@@ -551,9 +551,9 @@ class commonTarget():
         currentUser = 'root' if self.isCurrentUserRoot else self.userName
         user_path   = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
         targetPathRoot  = f"/{user_path}" if targetPathToFile is None else targetPathToFile
-        targetPath      = f"{targetPathRoot}/{xFile}"
+        targetPath      = os.path.join(targetPathRoot,xFile)
         # The path to the file on the host
-        hostPath        = f"{pathToFile}/{xFile}"
+        hostPath        = os.path.join(pathToFile,xFile)
 
         try:
             f = hostPath if toTarget else targetPath
@@ -607,12 +607,12 @@ class commonTarget():
                                    noRetries=True)
 
             if (isEqSetting('osImage','debian')):
-                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
+                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {targetPath}",timeout=timeout,shutdownOnError=False))
             elif (isEqSetting('osImage','FreeBSD')):
-                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
+                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {targetPath}",timeout=timeout,shutdownOnError=False))
             listenOnTarget.daemon = True
             getSetting('trash').throwThread(listenOnTarget,f"nc listening for <{xFile}> on Target")
-            sendFromHost = threading.Thread(target=subprocess.call, kwargs=dict(args=f"nc -w 1 {self.ipTarget} {self.portHost} <{pathToFile}/{xFile}",shell=True))
+            sendFromHost = threading.Thread(target=subprocess.call, kwargs=dict(args=f"nc -w 1 {self.ipTarget} {self.portHost} <{hostPath}",shell=True))
             sendFromHost.daemon = True
             getSetting('trash').throwThread(sendFromHost,f"nc sending <{pathToFile}/{xFile}> from host")
             listenOnTarget.start()
@@ -704,30 +704,48 @@ class commonTarget():
             return
         if (isEqSetting('binarySource','SRI-Cambridge')):
             return #Will be handled in a different PR -- issue #236 (already in progress on a different branch)
-        # Let root log in to gather files
-        self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
-        if (getSetting('osImage') == 'debian'):
-            self.runCommand("service ssh restart")
-        else:
-            self.runCommand("/etc/rc.d/sshd start")
-        # needs some time to be able to scp
-        if (not self.hasHardwareRNG()):
-            self.genStdinEntropy()
-        time.sleep(10)
-
-        artifactPath = getSetting('extraArtifactsPath')
+        
+        # Collect all logs into one directory
+        logsPathOnTarget = f'/home/{self.userName}/logsFromTarget'
+        self.runCommand(f"mkdir {logsPathOnTarget}")
 
         # Apps logs
         for appModule in self.appModules:
             if hasattr(appModule, "dumpLogs"):
-                appModule.dumpLogs(self, artifactPath)
+                appModule.dumpLogs(self, logsPathOnTarget)
+                printAndLog (f"collectLogs: Collected <{appModule.__name__}> logs.")
             else:
-                printAndLog (f"collectAppLogs: nothing to do for module {appModule}.",doPrint=False)
+                printAndLog (f"collectLogs: nothing to do for module <{appModule.__name__}>.",doPrint=False)
 
-        # syslogs -- collect syslogs here
+        # syslogs
+        for xSysLog in self.syslogs:
+            self.runCommand (f"cp {xSysLog} {logsPathOnTarget}")
         
+        # Create the tarball
+        logsTarball = 'logsFromTarget.tar'
+        self.runCommand(f"tar cvf /home/{self.userName}/{logsTarball} {logsPathOnTarget}",erroneousContents=['gzip:','Error','tar:'],timeout=120)
+        self.runCommand(f"chown {self.userName}:{self.userName} /home/{self.userName}/{logsTarball}")
 
-        printAndLog(f"collectAppLogs: Done collecting logs.",doPrint=False)
+        # Maybe the researcher has changed the password for some reason
+        self.userPassword = 'newPassword'
+        newHash = '\$6\$1EAx3aihyQKPiN\$JUzGSNhpam8HJi1oqHDoabcwbIF3WGbttPdJuC8cetgVvvC5Owlwyp1pHTe2ZzVe9nifnIbQpuHs8bZYNkWgx/'
+        if isEqSetting('osImage', 'debian'):
+            self.runCommand(f"usermod -p \'{newHash}\' {self.userName}")
+        elif isEqSetting('osImage', 'FreeBSD'):
+            self.runCommand (f"echo \"{newHash}\" | pw usermod {self.userName} -H 0",erroneousContents="pw:")
+
+        # send the tarball to the artifacts directory using non-root SCP
+        self.switchUser () #login as user
+        artifactPath = getSetting('extraArtifactsPath')
+        if(target.sendFile(
+            artifactPath, logsTarball,        # To webserverDir/l
+            targetPathToFile=f'/home/{self.userName}',  # From root/
+            forceScp=True, toTarget=False, shutdownOnError=False
+        )):
+            printAndLog(f"collectLogs: Done collecting logs from target.")
+        else:
+            errorAndLog(f"collectLogs: Failed to collect logs from target.")
+        self.switchUser () #back to root
         return
 
 

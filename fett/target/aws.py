@@ -602,3 +602,7 @@ def startLogging (target):
         target.runCommand("service rsyslog restart",shutdownOnError=False)
     elif (isEqSetting('osImage','FreeBSD')):
         warnAndLog("<configSysLogging> is not yet implemented for FreeBSD.")
+
+@decorate.debugWrap
+def finishLogging ():
+    warnAndLog("<finishLogging> is not yet implemented.")

@@ -61,28 +61,22 @@ def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def dumpLogs(target, destination):
+def dumpLogs(target, logsPathOnTarget):
     # The app log is closed by this point
-    webserverDir = os.path.join(destination,'webserver')
-    printAndLog(f"Dumping webserver logs to {webserverDir}...")
-    mkdir(webserverDir)
+    webserverLogDir = os.path.join(logsPathOnTarget,'nginx')
+    target.runCommand(f"mkdir {webserverLogDir}")
+    printAndLog(f"Copying webserver logs to {webserverLogDir}...")
+
     weblogs = getSetting("webserverLogs")
     if (isEqSetting('binarySource','SRI-Cambridge')):
-        root = weblogs["cheriRoot"]
+        logsRoot = weblogs["cheriRoot"]
     else:
-        root    = weblogs["root"]
+        logsRoot    = weblogs["root"]
 
     # These are the standard nginx logs
     for l in weblogs["logs"]:
-        localLogName = os.path.join(webserverDir, l)
-        log = ftOpenFile(localLogName, 'w')
-        target.sendFile(
-            webserverDir, l,        # To webserverDir/l
-            targetPathToFile=root,  # From root/
-            forceScp=True, toTarget=False, shutdownOnError=False
-        )
-        log.close()
-        printAndLog(f"Grabbed webserver log <{l}>")
+        target.runCommand(f"cp {logsRoot}/{l} {webserverLogDir}")
+        printAndLog(f"Grabbed webserver log <{logsRoot}/{l}>",doPrint=False)
 
 @decorate.debugWrap
 @decorate.timeWrap

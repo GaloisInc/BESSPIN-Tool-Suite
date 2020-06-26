@@ -130,6 +130,9 @@ def launchFett ():
 def endFett (xTarget):
     if (isEnabled('runApp')):
         xTarget.collectLogs()
+    # FPGA IS ONLY USED TO TEST -- TEMPORARY -- DO NOT MERGE LIKE THIS!!!
+    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws') or isEqSetting('target','fpga'))): 
+        aws.finishLogging ()
 
     xTarget.shutdown()
     
