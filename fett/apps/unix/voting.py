@@ -11,13 +11,6 @@ import json, os
 
 @decorate.debugWrap
 @decorate.timeWrap
-def clear_voter_table(target, dbfile):
-    appLog = getSetting('appLog')
-    sqlite   = getSetting('sqliteBin')
-    sqliteCmd(target, sqlite, dbfile, "DELETE FROM voter;", tee=appLog)
-
-@decorate.debugWrap
-@decorate.timeWrap
 def add_official(target, dbfile):
     appLog = getSetting('appLog')
     sqlite   = getSetting('sqliteBin')
@@ -83,7 +76,7 @@ def deploymentTest (target):
     if not target.hasHardwareRNG():
         target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_register.json?"
-    req += "voter-birthdate=1986-02-04&"
+    req += "voter-birthdate=1900-01-01&"
     req += "voter-lastname=l&"
     req += "voter-givennames=g&"
     req += "voter-resaddress=a&"
@@ -103,7 +96,7 @@ def deploymentTest (target):
     if not target.hasHardwareRNG():
         target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
-    req += "voter-birthdate=1986-02-04&"
+    req += "voter-birthdate=1900-01-01&"
     req += "voter-lastname=l&"
     req += "voter-givennames=g"
     out = curlRequest(req, rawOutput=True)
@@ -118,8 +111,17 @@ def deploymentTest (target):
     except json.JSONDecodeError as exc:
         target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, exitCode=EXIT.Run)
 
-    printAndLog("Clearing voting database")
-    clear_voter_table(target, f"{prefix}/www/data/bvrs.db")
+    printAndLog("Unregistering test voter")
+    sqlite = getSetting('sqliteBin')
+    appLog = getSetting('appLog')    
+    if (isEqSetting('binarySource','SRI-Cambridge')):
+      prefix = "/fett/var"
+    else:
+      prefix = "/var"
+    dbfile = f"{prefix}/www/data/bvrs.db"
+    sql = f"DELETE FROM voter WHERE birthdate='1900-01-01' and lastname='l' and givennames='g';"
+    sqliteCmd(target, sqlite, dbfile, sql, tee=appLog, 
+              expectedContents="")
 
     printAndLog("Voting tests OK!",tee=getSetting('appLog'))
 
