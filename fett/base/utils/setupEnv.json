@@ -281,7 +281,7 @@
         {
             "name" : "rsyslogPort",
             "type" : "int",
-            "val" : 731
+            "val" : 514
         }
     ] 
 }
