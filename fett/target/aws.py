@@ -609,7 +609,7 @@ def startRemoteLogging (target):
         # configure syslogd to use the UDP port
         target.runCommand('echo \'syslogd_enable="YES"\' >> /etc/rc.conf')
         target.runCommand('echo \'syslogd_flags="-s -v -v"\' >> /etc/rc.conf')
-        target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting('rsyslogPort')}" >> /etc/syslog.conf')
+        target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting("rsyslogPort")}" >> /etc/syslog.conf')
         if (not isEqSetting('binarySource','SRI-Cambridge')):
             target.runCommand("service syslogd restart")
         else: 
