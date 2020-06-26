@@ -695,8 +695,6 @@ class commonTarget():
         if (getSetting('osImage') not in ['debian', 'FreeBSD']):
             printAndLog(f"No logs to be collected from <{getSetting('osImage')}>.",doPrint=False)
             return
-        if (isEqSetting('binarySource','SRI-Cambridge')):
-            return #Will be handled in a different PR -- issue #236 (already in progress on a different branch)
         
         # Collect all logs into one directory
         logsPathName = 'logsFromTarget'
