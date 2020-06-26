@@ -185,7 +185,7 @@ def prepareBusybox():
 @decorate.debugWrap
 def selectImagePaths():
     if isEnabled('useCustomOsImage'):
-        return getSetting('pathToCustomOsImage')
+        return [getSetting('pathToCustomOsImage')]
     else:
         # inconsistency
         if isEqSetting('binarySource', 'SRI-Cambridge'):
