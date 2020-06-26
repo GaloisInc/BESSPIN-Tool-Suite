@@ -725,14 +725,14 @@ class commonTarget():
         
         # Create the tarball
         logsTarball = 'logsFromTarget.tar'
-        self.runCommand(f"cd /home/{self.userName}",erroneousContents=['cd:']) #not to get the warnings of removing '/'
-        self.runCommand(f"tar cvf {logsTarball} {logsPathName}",erroneousContents=['gzip:','Error','tar:'],timeout=120)
-        self.runCommand(f"chown {self.userName}:{self.userName} {logsTarball}")
+        self.runCommand(f"cd /home/{self.userName}",endsWith=f"{self.userName}#",erroneousContents=['cd:']) #not to get the warnings of removing leading '/'
+        self.runCommand(f"tar cvf {logsTarball} {logsPathName}",endsWith=f"{self.userName}#",erroneousContents=['gzip:','Error','tar:'])
+        self.runCommand(f"chown {self.userName}:{self.userName} {logsTarball}",endsWith=f"{self.userName}#",erroneousContents=['chown:'])
         self.runCommand("cd /root")
 
         # Maybe the researcher has changed the password for some reason
         self.userPassword = 'newPassword'
-        newHash = '\$6\$1EAx3aihyQKPiN\$JUzGSNhpam8HJi1oqHDoabcwbIF3WGbttPdJuC8cetgVvvC5Owlwyp1pHTe2ZzVe9nifnIbQpuHs8bZYNkWgx/'
+        newHash = '$6$1EAx3aihyQKPiN$JUzGSNhpam8HJi1oqHDoabcwbIF3WGbttPdJuC8cetgVvvC5Owlwyp1pHTe2ZzVe9nifnIbQpuHs8bZYNkWgx/'
         if isEqSetting('osImage', 'debian'):
             self.runCommand(f"usermod -p \'{newHash}\' {self.userName}")
         elif isEqSetting('osImage', 'FreeBSD'):
@@ -741,7 +741,7 @@ class commonTarget():
         # send the tarball to the artifacts directory using non-root SCP
         self.switchUser () #login as user
         artifactPath = getSetting('extraArtifactsPath')
-        if(target.sendFile(
+        if(self.sendFile(
             artifactPath, logsTarball,        # To webserverDir/l
             targetPathToFile=f'/home/{self.userName}',  # From root/
             forceScp=True, toTarget=False, shutdownOnError=False
