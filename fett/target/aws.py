@@ -593,7 +593,7 @@ def startLogging (target):
             syslogConfFile.write('\ninput(type="imfile"\n')
             syslogConfFile.write(f'\tfile="{logPath}"\n')
             syslogConfFile.write(f'\tTag="{logTag}:")\n')
-        syslogConfFile.write(f"\n*.* @@{self.ipHost}:{getSetting('rsyslogPort')}\n")
+        syslogConfFile.write(f"\n*.* @@{target.ipHost}:{getSetting('rsyslogPort')}\n")
         syslogConfFile.close()
 
         # send the conf file
@@ -611,7 +611,7 @@ def startLogging (target):
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
 
 @decorate.debugWrap
-def finishLogging ():
+def finishLogging (target):
     printAndLog ("Fetching remote logs if there are any.")
     # cp the directory for non-fresh instances
     sudoShellCommand(['cp','-r',f'/var/log/{target.ipTarget}',getSetting('extraArtifactsPath')],check=False)
