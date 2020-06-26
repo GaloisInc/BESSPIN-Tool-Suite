@@ -195,7 +195,7 @@ class commonTarget():
                 if (isEqSetting('procFlavor','bluespec')):
                     timeout = 1400 if isEqSetting('elfLoader','JTAG') else 700
                 elif (isEqSetting('procFlavor','chisel')):
-                    timeout = 1000 if isEqSetting('elfLoader','JTAG') else 450
+                    timeout = 1000 if isEqSetting('elfLoader','JTAG') else 540
                 else:
                     self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
             elif (isEqSetting('target','qemu')):
