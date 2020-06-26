@@ -261,6 +261,7 @@
             "type" : "dict",
             "val"  : {
                 "root" : "/usr/local/nginx/logs",
+                "cheriRoot" : "/fett/nginx/logs",
                 "logs" : ["error.log", "access.log"]
 
             }

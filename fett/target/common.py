@@ -201,7 +201,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 60
             elif (isEqSetting('target', 'aws')):
-                timeout = 480
+                timeout = 540
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -672,7 +672,10 @@ class commonTarget():
         setSetting("appLog",appLog)
         # Install
         # Everything is already installed on SRI-Cambridge source
-        if not isEqSetting('binarySource', 'SRI-Cambridge'):
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            setSetting('sqliteBin','/fett/bin/sqlite3')
+        else:
+            setSetting('sqliteBin','/usr/bin/sqlite')
             for appModule in self.appModules:
                 appModule.install(self)
                 appLog.flush()
@@ -690,6 +693,8 @@ class commonTarget():
     @decorate.timeWrap
     def collectAppLogs (self):
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
+            if (isEqSetting('binarySource','SRI-Cambridge')):
+                return #Will be handled in a different PR -- issue #236 (already in progress on a different branch)
             # Let root log in to gather files
             self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
             if (getSetting('osImage') == 'debian'):
@@ -855,10 +860,13 @@ class commonTarget():
         elif (isEqSetting('osImage','FreeBSD')):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
-            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
-            if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
-                isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
-                textBack = textBack + textBack_2
+            if (isEqSetting('binarySource','SRI-Cambridge')):
+                isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='System shutdown time has arrived',timeout=timeout,shutdownOnError=shutdownOnError)
+            else:
+                isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
+                if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
+                    isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
+                    textBack = textBack + textBack_2
         elif (isEqSetting('osImage','FreeRTOS')):
             isSuccess, textBack, isTimeout, dumpIdx = [freertos.terminateAppStack(self), '', False, 0] #send STOP to OTA
         elif (not isEqSetting('osImage','FreeRTOS')):

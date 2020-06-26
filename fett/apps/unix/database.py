@@ -36,7 +36,7 @@ def sqliteCmd(target, sqlite_bin, xDb, cmd, tee=None, expectedContents=None, shu
 def deploymentTest(target):
     appLog = getSetting('appLog')
     printAndLog("Testing sqlite...",tee=appLog)
-    sqlite_bin = '/usr/bin/sqlite'
+    sqlite_bin = getSetting('sqliteBin')
     xDb = 'test.db'
     tableName = 'food'
     foodstuff = 'Pancakes'
