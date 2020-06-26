@@ -2,7 +2,7 @@
 """ 
 This is executed after loading the app on the target to execute this app
 """
-import subprocess
+import subprocess, os
 
 from fett.base.utils.misc import *
 
@@ -63,9 +63,7 @@ def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
 @decorate.timeWrap
 def dumpLogs(target, logsPathOnTarget):
     # The app log is closed by this point
-    webserverLogDir = os.path.join(logsPathOnTarget,'nginx')
-    target.runCommand(f"mkdir {webserverLogDir}")
-    printAndLog(f"Copying webserver logs to {webserverLogDir}...")
+    printAndLog(f"Copying webserver logs to {logsPathOnTarget}...")
 
     weblogs = getSetting("webserverLogs")
     if (isEqSetting('binarySource','SRI-Cambridge')):
@@ -75,7 +73,7 @@ def dumpLogs(target, logsPathOnTarget):
 
     # These are the standard nginx logs
     for l in weblogs["logs"]:
-        target.runCommand(f"cp {logsRoot}/{l} {webserverLogDir}")
+        target.runCommand(f"cp {os.path.join(logsRoot,l)} {os.path.join(logsPathOnTarget,f"nginx_{l}")}")
         printAndLog(f"Grabbed webserver log <{logsRoot}/{l}>",doPrint=False)
 
 @decorate.debugWrap
