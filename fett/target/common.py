@@ -751,6 +751,11 @@ class commonTarget():
         else:
             errorAndLog(f"collectLogs: Failed to receive logs from target.")
         self.switchUser () #back to root
+
+        # untar the tarball to be more friendly
+        tarballPathOnHost = os.path.join(artifactPath,logsTarball)
+        shellCommand (['tar','xvf',tarballPathOnHost,'-C',artifactPath]) #check is True not to delete it by mistake
+        shellCommand (['rm',tarballPathOnHost])
         return
 
 
