@@ -570,6 +570,11 @@ def prepareConnectal():
 
 @decorate.debugWrap
 def startLogging (target):
+    printAndLog ("Setting up remote logging ...")
+    # clear the directory for non-fresh instances
+    sudoShellCommand(['rm','-rf',f'/var/log/{target.ipTarget}'],check=False)
+
+    # prepare the logTuples to create the conf file
     if (isEqSetting('osImage','debian')):
         logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in target.syslogs]
         if (webserver in target.appModules):
@@ -578,7 +583,7 @@ def startLogging (target):
     elif (isEqSetting('osImage','FreeBSD')):
         warnAndLog("<startLogging> is not yet implemented for FreeBSD.")
 
-    
+    # configure target rsyslog
     if (isEqSetting('osImage','debian')):
         # Create conf file
         syslogConfName = "logFett.conf"
@@ -603,6 +608,10 @@ def startLogging (target):
     elif (isEqSetting('osImage','FreeBSD')):
         warnAndLog("<configSysLogging> is not yet implemented for FreeBSD.")
 
+    printAndLog ("Setting up remote logging is _supposedly_ complete.")
+
 @decorate.debugWrap
 def finishLogging ():
-    warnAndLog("<finishLogging> is not yet implemented.")
+    printAndLog ("Fetching remote logs if there are any.")
+    # cp the directory for non-fresh instances
+    sudoShellCommand(['cp','-r',f'/var/log/{target.ipTarget}',getSetting('extraArtifactsPath')],check=False)
