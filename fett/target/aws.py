@@ -574,25 +574,17 @@ def startRemoteLogging (target):
     # clear the directory for non-fresh instances
     sudoShellCommand(['rm','-rf',f'/var/log/{target.ipTarget}'],check=False)
 
-    # prepare the logTuples to create the conf file
+    # configure target rsyslog
     if (isEqSetting('osImage','debian')):
+        # prepare the logTuples to create the conf file
         syslogsFiles = ['alternatives.log','bootstrap.log','debug','kern.log','private','apt','btmp',
                     'dpkg.log','lastlog','syslog','auth.log','daemon.log','faillog','messages','wtmp']
-    elif (isEqSetting('osImage','FreeBSD')):
-        syslogsFiles = ['auth','debug.log','maillog','security','utx.log','cron','devd.log','messages',
-                    'userlog','xferlog','daemon.log','lpd-errs','ppp.log','utx.lastlogin']
-    syslogs = [f"/var/log/{syslog}" for syslog in syslogsFiles]
-
-    if (isEqSetting('osImage','debian')):
+        syslogs = [f"/var/log/{syslog}" for syslog in syslogsFiles]
         logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in syslogs]
         if (webserver in target.appModules):
             weblogs = getSetting("webserverLogs")
             logTuples += [(f"{weblogs['root']}/{logFile}",f"nginx_{os.path.splitext(logFile)[0]}") for logFile in weblogs["logs"]]
-    elif (isEqSetting('osImage','FreeBSD')):
-        warnAndLog("<startLogging> is not yet implemented for FreeBSD.")
 
-    # configure target rsyslog
-    if (isEqSetting('osImage','debian')):
         # Create conf file
         syslogConfName = "logFett.conf"
         syslogConfFile = ftOpenFile(os.path.join(getSetting('workDir'),syslogConfName),'w')
@@ -614,7 +606,28 @@ def startRemoteLogging (target):
         # restart rsyslog
         target.runCommand("service rsyslog restart",shutdownOnError=False)
     elif (isEqSetting('osImage','FreeBSD')):
-        warnAndLog("<configSysLogging> is not yet implemented for FreeBSD.")
-
+        # configure syslogd to use the UDP port
+        target.runCommand('echo \'syslogd_enable="YES"\' >> /etc/rc.conf')
+        target.runCommand('echo \'syslogd_flags="-s -v -v"\' >> /etc/rc.conf')
+        target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting('rsyslogPort')}" >> /etc/syslog.conf')
+        if (not isEqSetting('binarySource','SRI-Cambridge')):
+            target.runCommand("service syslogd restart")
+        else: 
+            #This else should be removed if the SRI-Cambridge image included these modifications 
+            # Also, the top 3 commands will go under the if
+            target.runCommand("service syslogd onerestart")
+        # configure nginx to use syslog on the UDP port
+        sedCommandNginx = f'sed -i "" "s/server {{/server {{\n\taccess_log syslog:server={target.ipHost}:'
+        f'{getSetting("rsyslogPort")},tag=nginx_access,severity=info;\n\terror_log syslog:server={target.ipHost}:'
+        f'{getSetting("rsyslogPort")},tag=nginx_error,severity=debug;\n/"'
+        if (not isEqSetting('binarySource','SRI-Cambridge')):
+            target.runCommand(f'{sedCommandNginx} /usr/local/nginx/conf/nginx.conf',erroneousContents=["sed:"])
+            target.runCommand("service nginx restart")
+        else: 
+            #This else should be removed if the SRI-Cambridge image included these modifications
+            # Also, the sedCommandNginx should go under the if
+            target.runCommand(f'{sedCommandNginx} /fett/nginx/conf/nginx.conf',erroneousContents=["sed:"])
+            target.runCommand("service fett_nginx onerestart")
+         
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
 
