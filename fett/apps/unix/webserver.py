@@ -63,8 +63,6 @@ def curlTest(target, url, extra=[], http2=False, method="GET", rawOutput=False):
 @decorate.timeWrap
 def dumpLogs(target, logsPathOnTarget):
     # The app log is closed by this point
-    printAndLog(f"Copying webserver logs to {logsPathOnTarget}...")
-
     weblogs = getSetting("webserverLogs")
     if (isEqSetting('binarySource','SRI-Cambridge')):
         logsRoot = weblogs["cheriRoot"]
