@@ -746,9 +746,9 @@ class commonTarget():
             targetPathToFile=f'/home/{self.userName}',  # From root/
             forceScp=True, toTarget=False, shutdownOnError=False
         )):
-            printAndLog(f"collectLogs: Done collecting logs from target.")
+            printAndLog(f"collectLogs: Received logs from target.")
         else:
-            errorAndLog(f"collectLogs: Failed to collect logs from target.")
+            errorAndLog(f"collectLogs: Failed to receive logs from target.")
         self.switchUser () #back to root
         return
 
