@@ -270,7 +270,9 @@ def configTapAdaptor():
         'create' : [
             ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()]
         ],
-        'disableIpv6' : ['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1'],
+        'disableIpv6' : [
+			['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1']
+		],
         'natSetup' : [
             # Enable ipv4 forwarding
             ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
