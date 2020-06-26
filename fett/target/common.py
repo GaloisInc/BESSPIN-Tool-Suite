@@ -726,7 +726,7 @@ class commonTarget():
         self.userPassword = 'newPassword'
         salt     = crypt.mksalt()
         newHashWithDollarSigns = crypt.crypt(self.userPassword, salt)
-        newHash = passHash.replace('$', '\\$')
+        newHash = newHashWithDollarSigns.replace('$', '\\$')
         if isEqSetting('osImage', 'debian'):
             self.runCommand(f"usermod -p \'{newHash}\' {self.userName}")
         elif isEqSetting('osImage', 'FreeBSD'):
