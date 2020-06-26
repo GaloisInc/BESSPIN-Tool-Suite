@@ -73,7 +73,8 @@ def dumpLogs(target, logsPathOnTarget):
 
     # These are the standard nginx logs
     for l in weblogs["logs"]:
-        target.runCommand(f"cp {os.path.join(logsRoot,l)} {os.path.join(logsPathOnTarget,f"nginx_{l}")}")
+        prefixedName = os.path.join(logsPathOnTarget,f"nginx_{l}") # to avoid f-string inside an f-string
+        target.runCommand(f"cp {os.path.join(logsRoot,l)} {prefixedName}")
         printAndLog(f"Grabbed webserver log <{logsRoot}/{l}>",doPrint=False)
 
 @decorate.debugWrap
