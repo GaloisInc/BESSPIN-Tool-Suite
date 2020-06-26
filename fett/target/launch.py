@@ -53,7 +53,7 @@ def startFett ():
     # Start on-line logging
     # FPGA IS ONLY USED TO TEST -- TEMPORARY -- DO NOT MERGE LIKE THIS!!!
     if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws') or isEqSetting('target','fpga'))): 
-        aws.startLogging (xTarget)
+        aws.startRemoteLogging (xTarget)
 
     return xTarget
 
@@ -132,7 +132,7 @@ def endFett (xTarget):
         xTarget.collectLogs()
     # FPGA IS ONLY USED TO TEST -- TEMPORARY -- DO NOT MERGE LIKE THIS!!!
     if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws') or isEqSetting('target','fpga'))): 
-        aws.finishLogging (xTarget)
+        collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
     xTarget.shutdown()
     

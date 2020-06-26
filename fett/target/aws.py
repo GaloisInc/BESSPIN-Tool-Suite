@@ -569,7 +569,7 @@ def prepareConnectal():
 # ------------------ Logging Functions ----------------------------------------
 
 @decorate.debugWrap
-def startLogging (target):
+def startRemoteLogging (target):
     printAndLog ("Setting up remote logging ...")
     # clear the directory for non-fresh instances
     sudoShellCommand(['rm','-rf',f'/var/log/{target.ipTarget}'],check=False)
@@ -610,10 +610,3 @@ def startLogging (target):
 
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
 
-@decorate.debugWrap
-def finishLogging (target):
-    printAndLog ("Fetching remote logs if there are any.")
-    # cp the directory for non-fresh instances
-    rsyslogsPath = os.path.join(getSetting('extraArtifactsPath'),f"rsyslogs_{target.ipTarget}")
-    sudoShellCommand(['cp','-r',f'/var/log/{target.ipTarget}',rsyslogsPath],check=False)
-    sudoShellCommand(['chown','-R',f'{getpass.getuser()}:{getpass.getuser()}',rsyslogsPath],check=False)
