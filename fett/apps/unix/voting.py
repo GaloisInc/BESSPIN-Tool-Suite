@@ -36,7 +36,7 @@ def add_official(target, dbfile):
     sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
     select = f"SELECT * from electionofficial WHERE id = 0;"
     sqliteCmd(target, sqlite, dbfile, select, tee=appLog, 
-              expectedContents=f"{passHash}")
+              expectedContents="0|official|") # expecting the hash causes issues with some systems due to the `$`
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
             
 @decorate.debugWrap
