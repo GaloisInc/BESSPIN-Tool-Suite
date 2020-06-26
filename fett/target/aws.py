@@ -1,4 +1,4 @@
-import psutil
+import psutil, getpass
 from fett.target.common import *
 from fett.target import fpga
 
@@ -614,4 +614,6 @@ def startLogging (target):
 def finishLogging (target):
     printAndLog ("Fetching remote logs if there are any.")
     # cp the directory for non-fresh instances
-    sudoShellCommand(['cp','-r',f'/var/log/{target.ipTarget}',getSetting('extraArtifactsPath')],check=False)
+    rsyslogsPath = os.path.join(getSetting('extraArtifactsPath'),f"rsyslogs_{target.ipTarget}")
+    sudoShellCommand(['cp','-r',f'/var/log/{target.ipTarget}',rsyslogsPath],check=False)
+    sudoShellCommand(['chown','-R',f'{getpass.getuser()}:{getpass.getuser()}',rsyslogsPath],check=False)
