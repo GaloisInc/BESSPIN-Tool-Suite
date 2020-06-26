@@ -714,13 +714,14 @@ class commonTarget():
         for appModule in self.appModules:
             if hasattr(appModule, "dumpLogs"):
                 appModule.dumpLogs(self, logsPathOnTarget)
-                printAndLog (f"collectLogs: Collected <{appModule.__name__}> logs.")
+                printAndLog (f"collectLogs: Collected <{appModule.__name__.split('.')[-1]}> logs.")
             else:
-                printAndLog (f"collectLogs: nothing to do for module <{appModule.__name__}>.",doPrint=False)
+                printAndLog (f"collectLogs: nothing to do for module <{appModule.__name__.split('.')[-1]}>.",doPrint=False)
 
         # syslogs
         for xSysLog in self.syslogs:
             self.runCommand (f"cp {xSysLog} {logsPathOnTarget}")
+        printAndLog (f"collectLogs: Collected syslogs.")
         
         # Create the tarball
         logsTarball = 'logsFromTarget.tar'
