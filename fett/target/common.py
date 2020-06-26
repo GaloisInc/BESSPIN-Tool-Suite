@@ -721,6 +721,7 @@ class commonTarget():
         # syslogs
         for xSysLog in self.syslogs:
             self.runCommand (f"cp {xSysLog} {logsPathOnTarget}")
+        self.runCommand(f"dmesg > {os.path.join(logsPathOnTarget,'dmesg.txt')}")
         printAndLog (f"collectLogs: Collected syslogs.")
         
         # Create the tarball
