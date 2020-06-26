@@ -7,20 +7,20 @@ from fett.base.utils.misc import *
 from fett.apps.unix.webserver import curlTest
 from fett.apps.unix.database import sqliteCmd
 import string, secrets, crypt
-import json
+import json, os
 
 @decorate.debugWrap
 @decorate.timeWrap
 def clear_voter_table(target, dbfile):
     appLog = getSetting('appLog')
-    sqlite   = "/usr/bin/sqlite"
+    sqlite   = getSetting('sqliteBin')
     sqliteCmd(target, sqlite, dbfile, "DELETE FROM voter;", tee=appLog)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def add_official(target, dbfile):
     appLog = getSetting('appLog')
-    sqlite   = "/usr/bin/sqlite"
+    sqlite   = getSetting('sqliteBin')
 
     officialName = "official"
 
@@ -34,9 +34,11 @@ def add_official(target, dbfile):
     # so we give the official ID 0
     insert = f"INSERT INTO electionofficial (id, username, hash) VALUES (0, '{officialName}', '{passHash}');"
     sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
-
+    select = f"SELECT * from electionofficial WHERE id = 0;"
+    sqliteCmd(target, sqlite, dbfile, select, tee=appLog, 
+              expectedContents=f"{passHash}")
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
-
+            
 @decorate.debugWrap
 @decorate.timeWrap
 def install (target):
@@ -72,20 +74,28 @@ def deploymentTest (target):
     printAndLog("Testing voting server...",tee=getSetting('appLog'))
     ip = target.ipTarget
 
-    target.genStdinEntropy()
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_register.json?"
     req += "voter-birthdate=1986-02-04&"
     req += "voter-lastname=l&"
     req += "voter-givennames=g&"
     req += "voter-resaddress=a&"
+    req += "voter-resaddress2=a2&"
+    req += "voter-reszip=00000&"
+    req += "voter-resstate=ZZ&"
     req += "voter-mailaddress=o&"
+    req += "voter-mailaddress2=o2&"
+    req += "voter-mailzip=00000&"
+    req += "voter-mailstate=ZZ&"
     req += "voter-registeredparty=t&"
-    req += "voter-idinfo=blob"
+    req += "voter-idinfo=blob&"
+    req += "voter-confidential=0"
     out = curlRequest(req, rawOutput=True)
-    if not out:
+    if out != '{}':
         target.shutdownAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
-
-    target.genStdinEntropy()
+    if not target.hasHardwareRNG():
+        target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
     req += "voter-birthdate=1986-02-04&"
     req += "voter-lastname=l&"
@@ -103,7 +113,11 @@ def deploymentTest (target):
         target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Clearing voting database")
-    clear_voter_table(target, "/var/www/data/bvrs.db")
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        bvrsDbPath = '/fett/var/www/data'
+    else:
+        bvrsDbPath = '/var/www/data'
+    clear_voter_table(target, os.path.join(bvrsDbPath,'bvrs.db'))
 
     printAndLog("Voting tests OK!",tee=getSetting('appLog'))
 

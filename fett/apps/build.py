@@ -26,9 +26,14 @@ def buildApps ():
     if (isEqSetting('osImage','FreeRTOS')):
         buildFreeRTOSapps()
     elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-        buildWebserver(tarName)
-        buildDatabase(tarName)
-        buildVoting(tarName)
+        if not (getSetting('binarySource') in ['SRI-Cambridge']):
+            buildWebserver(tarName)
+            buildDatabase(tarName)
+            buildVoting(tarName)
+            if (getSetting('binarySource') in ['MIT']):
+                buildEnclaves(tarName)
+        else:
+            warnAndLog(f"<launch.buildApps> binary source {getSetting('binarySource')} has apps in image. Skipping builds")
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
@@ -125,6 +130,27 @@ def copyVotingFiles(tarName):
     # We should probably just generate the initial database script here
     return filesList
 
+""" Special building for 'webserver' """
+@decorate.debugWrap
+@decorate.timeWrap
+def copyEnclavesFiles(tarName):
+    """
+    Build a tar containing:
+      - enclaves/lib/security/pam_enclave.so
+      - enclaves/ssith/pam-enclave.bin
+      - enclaves/ssith/aes-enclave.bin
+      - enclaves/ssith/aes-main
+      - enclaves/etc/pam.d/testing
+      - install-enclaves.sh
+    """
+    cpDirToBuildDir(os.path.join(getBinDir('enclaves'), "enclaves"))
+    cpFilesToBuildDir(getBinDir('enclaves'), pattern="install-enclaves.sh")
+
+    tarFiles = ["enclaves", "install-enclaves.sh"]
+
+    filesList=map(buildDirPathTuple, tarFiles)
+    return filesList
+
 @decorate.debugWrap
 @decorate.timeWrap
 def buildWebserver(tarName):
@@ -163,6 +189,19 @@ def buildVoting(tarName):
         tarFiles = copyVotingFiles(tarName)
         tar (tarName, filesList=tarFiles)
 
+        setSetting('sendTarballToTarget',True)
+    return
+
+@decorate.debugWrap
+@decorate.timeWrap
+def buildEnclaves(tarName):
+    if (isEnabled('buildApps')):
+        logAndExit (f"Building from source is not supported for the enclaves application",
+                    exitCode=EXIT.Configuration)
+    else:
+        tarFiles = copyEnclavesFiles(tarName)
+        #Create the tarball here to be sent to target
+        tar (tarName, tarFiles)
         setSetting('sendTarballToTarget',True)
     return
 

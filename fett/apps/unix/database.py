@@ -22,17 +22,21 @@ def install(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def sqliteCmd(target, sqlite_bin, xDb, cmd, tee=None, expectedContents=None, shutdownOnError=True, suppressErrors=False):
-    return target.runCommand(f"{sqlite_bin} {xDb} \"{cmd}\"",
+    # any $ characters in the command need to be escaped so they don't
+    # end up getting substituted by the shell
+    escaped_cmd = cmd.replace('$', '\\$')
+    return target.runCommand(f"{sqlite_bin} {xDb} \"{escaped_cmd}\"",
                              expectedContents=expectedContents,
                              suppressErrors=suppressErrors,
                              shutdownOnError=shutdownOnError,
-                             erroneousContents=["Error:","near","error"],
+                             erroneousContents=["Error:","near","error",
+                                                "No such file or directory"],
                              tee=tee)
 
 def deploymentTest(target):
     appLog = getSetting('appLog')
     printAndLog("Testing sqlite...",tee=appLog)
-    sqlite_bin = '/usr/bin/sqlite'
+    sqlite_bin = getSetting('sqliteBin')
     xDb = 'test.db'
     tableName = 'food'
     foodstuff = 'Pancakes'

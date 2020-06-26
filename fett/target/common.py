@@ -61,6 +61,8 @@ class commonTarget():
         self.keyboardInterruptTriggered = False
         self.terminateTargetStarted = False
 
+        self.appModules = []
+
         return
 
     @decorate.debugWrap
@@ -159,7 +161,7 @@ class commonTarget():
                 if isEqSetting('pvAWS', 'firesim'):
                     timeout = 240
                 elif isEqSetting('pvAWS', 'connectal'):
-                    timeout = 90
+                    timeout = 480
                 else:
                     self.shutdownAndExit(f"start: Unrecognized AWS PV <{getSetting('pvAWS')}>.", overwriteShutdown=False, exitCode=EXIT.Dev_Bug)
             else:
@@ -199,8 +201,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 60
             elif (isEqSetting('target', 'aws')):
-                # TODO: ELEW get a better values
-                timeout = 120
+                timeout = 540
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -208,16 +209,21 @@ class commonTarget():
             self.boot(endsWith=bootEndsWith, timeout=timeout)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
+            # set the temporary prompt
+            tempPrompt = "~ #" if isEqSetting("binarySource", "SRI-Cambridge") else "\r\n#"
             # fpga freebsd would be already logged in if onlySsh
             if (isEqSetting('target','qemu')):
                 self.runCommand("root",endsWith="\r\n#")
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
             elif (not self.onlySsh):
-                self.runCommand ("root",endsWith='Password:')
-                self.runCommand (self.rootPassword,endsWith="\r\n#")
+                if not isEqSetting("binarySource", "SRI-Cambridge"):
+                    self.runCommand ("root",endsWith='Password:')
+                    self.runCommand (self.rootPassword,endsWith=tempPrompt)
+                else:
+                    self.runCommand ("root",endsWith=tempPrompt)
 
-            self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith="\r\n#") #this is to avoid having the prompt in the set prompt command
-            self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith="\r\n#")
+            self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
+            self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempPrompt)
             self.runCommand("set prompt = \"`cat promptText.txt`\"")
 
             printAndLog (f"start: Activating ethernet and setting system time...")
@@ -651,9 +657,12 @@ class commonTarget():
 
         # assign modules
         if (isEqSetting('osImage','FreeRTOS')):
-            appModules = [freertos]
+            self.appModules = [freertos]
         elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-            appModules = [ssh, webserver, database, voting]
+            self.appModules = [ssh, webserver, database, voting]
+            if (isEqSetting('binarySource','MIT')): #Disable nginx
+                self.appModules.remove(webserver)
+                self.appModules.remove(voting) #hosted by the webserver
         else:
             self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
@@ -662,12 +671,17 @@ class commonTarget():
         appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
         setSetting("appLog",appLog)
         # Install
-        for appModule in appModules:
-            appModule.install(self)
-            appLog.flush()
+        # Everything is already installed on SRI-Cambridge source
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            setSetting('sqliteBin','/fett/bin/sqlite3')
+        else:
+            setSetting('sqliteBin','/usr/bin/sqlite')
+            for appModule in self.appModules:
+                appModule.install(self)
+                appLog.flush()
 
         # Test    
-        for appModule in appModules:
+        for appModule in self.appModules:
             appModule.deploymentTest(self)
             appLog.flush()
 
@@ -678,30 +692,31 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def collectAppLogs (self):
-        if (isEqSetting('osImage','FreeRTOS')):
-            appModules = [freertos]
-        elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-            appModules = [ssh, webserver, database, voting]
-
+        if (getSetting('osImage') in ['debian', 'FreeBSD']):
+            if (isEqSetting('binarySource','SRI-Cambridge')):
+                return #Will be handled in a different PR -- issue #236 (already in progress on a different branch)
             # Let root log in to gather files
             self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
             if (getSetting('osImage') == 'debian'):
                 self.runCommand("service ssh restart")
             else:
                 self.runCommand("/etc/rc.d/sshd start")
-
-        else:
-            logging.info (f"collectAppLogs: no logs to gather for: <{getSetting('osImage')}>")
-            return
+            # needs some time to be able to scp
+            if (not self.hasHardwareRNG()):
+                self.genStdinEntropy()
+            time.sleep(10)
 
         artifactPath = getSetting('extraArtifactsPath')
 
-        for appModule in appModules:
+        for appModule in self.appModules:
             if hasattr(appModule, "dumpLogs"):
                 appModule.dumpLogs(self, artifactPath)
             else:
                 logging.info (f"collectAppLogs: nothing to do for module {appModule}.")
-        logging.info (f"collectAppLogs: done collecting logs.")
+        if (len(self.appModules) > 0):
+            logging.info (f"collectAppLogs: done collecting logs.")
+        else:
+            logging.info (f"collectAppLogs: No logs to collect.")
         return
 
 
@@ -835,7 +850,8 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
-            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=["Power off",pexpect.EOF],suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
+            shutdownString = "Power down" if (isEqSetting('binarySource','MIT')) else "Power off"
+            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=[shutdownString,pexpect.EOF],suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','busybox')):
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
         elif (isEqSetting('osImage','FreeBSD') and (self.onlySsh)):
@@ -844,10 +860,13 @@ class commonTarget():
         elif (isEqSetting('osImage','FreeBSD')):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
-            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
-            if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
-                isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
-                textBack = textBack + textBack_2
+            if (isEqSetting('binarySource','SRI-Cambridge')):
+                isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='System shutdown time has arrived',timeout=timeout,shutdownOnError=shutdownOnError)
+            else:
+                isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
+                if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
+                    isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
+                    textBack = textBack + textBack_2
         elif (isEqSetting('osImage','FreeRTOS')):
             isSuccess, textBack, isTimeout, dumpIdx = [freertos.terminateAppStack(self), '', False, 0] #send STOP to OTA
         elif (not isEqSetting('osImage','FreeRTOS')):
@@ -971,7 +990,7 @@ class commonTarget():
         self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
 
     def hasHardwareRNG (self):
-        return isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')
+        return isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])
 
 # END OF CLASS commonTarget
 

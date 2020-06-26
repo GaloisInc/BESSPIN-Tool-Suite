@@ -6,6 +6,7 @@ Misc required functions for fett.py
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess, pathlib
 import tarfile, sys, json, re, getpass, time
+import zstandard
 
 from fett.base.utils import decorate
 from fett.base.utils import aws
@@ -66,8 +67,8 @@ def exitFett (exitCode):
         aws.sendSQS(inExit_GetSetting('prodSqsQueueTX'), inExit_logAndExit, jobStatus, 
                     inExit_GetSetting('prodJobId'), f"{inExit_GetSetting('prodJobId')}-TERM",
                     reason='fett-target-production-termination',
-                    hostIp=inExit_GetSetting('awsIpHost'),
-                    fpgaIp=inExit_GetSetting('awsIpTarget')
+                    hostIp=aws.getInstanceIp(inExit_logAndExit),
+                    fpgaIp=inExit_GetSetting('productionTargetIp')
                     )
         printAndLog("Sent termination message to the SQS queue.")       
 
@@ -492,4 +493,15 @@ def tarArtifacts (logAndExitFunc,getSettingFunc):
 def setAdaptorUpDown (adaptorName, direction):
     sudoShellCommand(['ip','link','set', 'dev', adaptorName, direction])
 
-
+@decorate.debugWrap
+def zstdDecompress(inputFilePath, outputFilePath):
+    """decompress a zstd file to an outputFilePath"""
+    try:
+        with open(pathlib.Path(inputFilePath), 'rb') as cfp:
+            decomp = zstandard.ZstdDecompressor()
+            with open(outputFilePath, 'wb') as destination:
+                decomp.copy_stream(cfp, destination)
+    except FileNotFoundError as exc:
+        logAndExit(f"zstdDecompress: input file {inputFilePath} does not exist <{exc}>", exc=exc, exitCode=EXIT.Files_and_paths)
+    except Exception as exc:
+        logAndExit(f"zstdDecompress: error decompressing file {inputFilePath} <{exc}>", exc=exc, exitCode=EXIT.Run)

@@ -87,9 +87,12 @@ def prepareEnv ():
             aws.programAFI()
         elif (isEqSetting('pvAWS', 'connectal')):
             aws.prepareConnectal()
-            aws.removeKernelModules()
             aws.configTapAdaptor()
+            ## remove modules because sometimes kernel panics if the modules are loaded while programming the FPGA
+            aws.removeKernelModules()
             aws.programAFI()
+            ## remove the modules again because the AMI has xocl in /lib/modules and it is getting auto loaded
+            aws.removeKernelModules()
             aws.installKernelModules()
         else:
             logAndExit (f"<launch.prepareEnv> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
@@ -122,7 +125,8 @@ def launchFett ():
 @decorate.debugWrap
 def endFett (xTarget):
     # Call-todo -- collect any remaining logs & dumps from target
-    xTarget.collectAppLogs()
+    if (isEnabled('runApp')):
+        xTarget.collectAppLogs()
 
     xTarget.shutdown()
     

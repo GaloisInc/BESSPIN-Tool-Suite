@@ -127,6 +127,8 @@ class firesimTarget(commonTarget):
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
+            # Add a default route through the NAT
+            self.runCommand("ip route add default via 172.16.0.1")
         elif (isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('binarySource','Michigan')):
                 ntkReadyString = f"WebSocket server listening on port {getSettingDict('michiganInfo',['httpPort'])}"
@@ -177,27 +179,37 @@ class connectalTarget(commonTarget):
         self.ipHost = getSetting('awsIpHost')
         self.portTarget = getSetting('awsPortTarget')
         self.portHost = getSetting('awsPortHost')
+        # Important for the Web Server
+        self.httpPortTarget  = getSetting('HTTPPortTarget')
+        self.httpsPortTarget = getSetting('HTTPSPortTarget')
+        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
+        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
+
+        # Important for the Web Server
+        self.httpPortTarget  = getSetting('HTTPPortTarget')
+        self.httpsPortTarget = getSetting('HTTPSPortTarget')
+        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
+        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
-        if (getSetting('osImage') != 'debian'):
+        if getSetting('osImage') not in ['debian', 'FreeBSD']:
             logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
         awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'sim')
 
-        # TODO: these arguments need to be changed, but are required for what's in SSITH-FETT-Binaries
-        warnAndLog(f"<connectalTarget.boot>: launching connectal with arguments that will be changed")
         extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
         tapName = getSetting('awsTapAdaptorName')
         connectalCommand = ' '.join([
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
             f"--block={getSetting('osImageImg')}",
-            f"--elf={getSetting('osImageElf')}",
-            f"--tun={tapName}"
-        ]
-                                    + extraArgs)
+            f"--elf={getSetting('osImageElf')}"] + ([
+            f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else []) + [
+            f"--tun={tapName}"] + extraArgs)
+
+        printAndLog(f"<aws.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
 
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
@@ -214,7 +226,7 @@ class connectalTarget(commonTarget):
         setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
 
     def interact(self):
-        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl-A X\" to exit.")
+        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         super().interact()
 
     @decorate.debugWrap
@@ -225,6 +237,10 @@ class connectalTarget(commonTarget):
             self.runCommand (f"ifconfig eth0 {self.ipTarget}")
             self.runCommand (f"ifconfig eth0 netmask {getSetting('awsNetMaskTarget')}")
             self.runCommand (f"ifconfig eth0 hw ether {getSetting('awsMacAddrTarget')}")
+        elif (isEqSetting('osImage', 'FreeBSD')):
+            outCmd = self.runCommand ("ifconfig vtnet0 up")
+            self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
+            self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
@@ -233,6 +249,9 @@ class connectalTarget(commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
+        if (self.process.isalive()):
+            # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
+            self.runCommand("\x01 x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
         return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
@@ -240,8 +259,6 @@ class connectalTarget(commonTarget):
 @decorate.debugWrap
 def configTapAdaptor():
     tapAdaptor = getSetting('awsTapAdaptorName')
-    bridgeAdaptor = 'br0'
-    l2tpAdaptor = 'l2tpeth0'
 
     def getMainAdaptor():
         for xAdaptor in psutil.net_if_addrs():
@@ -253,35 +270,39 @@ def configTapAdaptor():
         'create' : [
             ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()]
         ],
-        'bridgeSetup' : [
-            # Disable IPv6 on the tap adaptor
-            ['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1'],
-            # Load l2tp_eth module to enable creation of L2 tunnel
-            ['modprobe', 'l2tp_eth'],
-            # Add an L2 tunnel from the main adaptor to the jump box
-            ['ip', 'l2tp', 'add', 'tunnel', 'remote',
-             getSetting('awsJumpBoxIp'), 'local',
-             fpga.getAddrOfAdaptor(getMainAdaptor(), 'IP'), 'tunnel_id', '100',
-             'peer_tunnel_id', '100', 'udp_sport', '6001', 'udp_dport', '6000'],
-            # Add a new session to the tunnel
-            ['ip', 'l2tp', 'add', 'session', 'tunnel_id', '100', 'session_id',
-             '101', 'peer_session_id', '101'],
-            # Bring the l2tp interface up
-            ['ip', 'link', 'set', l2tpAdaptor, 'up', 'mtu', '1446'],
-            # Add a bridge adaptor
-            ['ip', 'link', 'add', bridgeAdaptor, 'type', 'bridge'],
-            # Set the bridge adaptor's MAC address
-            ['ip', 'link', 'set', 'dev', bridgeAdaptor, 'address',
-             getSetting('awsBridgeAdaptorMacAddress')],
-            # Add the l2tp interface to the bridge adaptor
-            ['ip', 'link', 'set', l2tpAdaptor, 'master', bridgeAdaptor],
-            # Add the tap adaptor to the bridge adaptor
-            ['ip', 'link', 'set', tapAdaptor, 'master', bridgeAdaptor],
-            # Set the bridge adaptor's IP address
-            ['ip', 'addr', 'add', getSetting('awsBridgeAdaptorIp') + '/24',
-             'dev', bridgeAdaptor],
-            # Bring the bridge adaptor up
-            ['ip', 'link', 'set', bridgeAdaptor, 'up']
+        'disableIpv6' : ['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1'],
+        'natSetup' : [
+            # Enable ipv4 forwarding
+            ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
+            # Add productionTargetIp to main adaptor
+            ['ip', 'addr', 'add', getSetting('productionTargetIp'), 'dev',
+             getMainAdaptor()],
+            # Route packets from FPGA to productionTargetIp
+            ['iptables',
+             '-t', 'nat',
+             '-A', 'POSTROUTING',
+             '-o', getMainAdaptor(),
+             '-s', getSetting('awsIpTarget'),
+             '-j', 'SNAT',
+             '--to-source', getSetting('productionTargetIp')],
+            # Route packets from productionTargetIp to FPGA
+            ['iptables',
+             '-t', 'nat',
+             '-A', 'PREROUTING',
+             '-i', getMainAdaptor(),
+             '-d', getSetting('productionTargetIp'),
+             '-j', 'DNAT',
+             '--to-destination', getSetting('awsIpTarget')],
+            # Allow forwarding from productionTargetIp
+            ['iptables',
+             '-A', 'FORWARD',
+             '-s', getSetting('productionTargetIp'),
+             '-j', 'ACCEPT'],
+            # Allow forwarding to FPGA
+            ['iptables',
+             '-A', 'FORWARD',
+             '-d', getSetting('awsIpTarget'),
+             '-j', 'ACCEPT']
         ],
         'refresh' : [
             ['ip', 'addr', 'flush', 'dev', tapAdaptor]
@@ -304,7 +325,10 @@ def configTapAdaptor():
     # Check if the adaptor exists
     if (fpga.getAddrOfAdaptor(tapAdaptor,'MAC',exitIfNoAddr=False) == 'NotAnAddress'):
         printAndLog (f"configTapAdaptor: <{tapAdaptor}> was never configured. Configuring...",doPrint=False)
-        execSudoCommands(['create','config','bridgeSetup'])
+        configCommands = ['create','config','natSetup']
+        if (isEqSetting('pvAWS','firesim')):
+            configCommands.insert(-1,'disableIpv6') #insert before natSetup
+        execSudoCommands(configCommands)
     else:
         # was created --> re-configure
         execSudoCommands(['refresh','config'])
@@ -387,8 +411,9 @@ def clearFpgas():
 @decorate.debugWrap
 def flashFpga(agfi, slotno):
     """flash FPGA in a given slot with a given AGFI ID and wait until finished """
+    # fpgaLoadExtraSettings may be specified in agfi_id.json
     fpgaLoadExtraSettings = getSetting('fpgaLoadExtraSettings', default=[])
-    shellCommand(['fpga-load-local-image','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
+    shellCommand(['fpga-load-local-image','-F','-S',f"{slotno}",'-I', agfi,'-A'] + fpgaLoadExtraSettings)
 
     # wait until the FPGA has been flashed
     _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")
@@ -423,9 +448,12 @@ def copyAWSSources():
     if pvAWS not in ['firesim', 'connectal']:
         logAndExit(f"<aws.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
 
-    # copy over available paths
-    awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+    if (isEnabled('useCustomProcessor')):
+        awsSourcePath = getSetting('pathToCustomProcessorSource')
+    else:
+        awsSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
                                  'bitfiles', pvAWS, getSetting('processor'))
+
     awsWorkPath = os.path.join(getSetting("workDir"), pvAWS)
 
     # populate workDir with available subdirectories
@@ -458,13 +486,11 @@ def copyAWSSources():
 
 @decorate.debugWrap
 def removeKernelModules():
-    if isEqSetting('pvAWS', 'firesim'):
-        kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd']
-    elif isEqSetting('pvAWS', 'connectal'):
-        kmodsToClean = ['xocl', 'xdma', 'pcieportal', 'portalmem']
-    else:
-        printAndLog(f"<aws.removeKernelModules>: no kernel modules to remove for AWS PV {getSetting('pvAWS')}")
-        kmodsToClean = []
+    # Firesim:  ['xocl', 'xdma', 'edma', 'nbd']
+    # Connectal: ['xocl', 'xdma', 'pcieportal', 'portalmem']
+    # For production (i.e. on a fresh instance), it doesn't matter to remove the _other_ modules
+    # However, for dev, the _other_ modules interfere. Deleting them works.
+    kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd', 'pcieportal', 'portalmem']
     for kmod in kmodsToClean:
         sudoShellCommand(['rmmod', kmod],check=False)
         _sendKmsg (f"<aws.removeKernelModules>: Removing {kmod} if it exists.")
@@ -486,7 +512,8 @@ def installKernelModules():
         _sendKmsg (f"FETT-connectal: Installing pcieportal.ko.")
         sudoShellCommand(['insmod', f"{awsModPath}/portalmem.ko"])
         _sendKmsg (f"FETT-connectal: Installing portalmem.ko.")
-
+        ## make the connectal device nodes accessible to non-root users
+        sudoShellCommand(['bash', '-c', 'chmod agu+rw /dev/portal* /dev/connectal'])
     else:
         logAndExit(f"<aws.installKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
@@ -506,18 +533,35 @@ def prepareConnectal():
     """connectal environment preparation"""
     copyAWSSources()
 
+    imageDir = getSetting('osImagesDir')
+    pvAWS = "connectal"
+    
+    if isEqSetting('binarySource', 'MIT') and isEqSetting('osImage', 'debian'):
+        # extraFiles may be specified in agfi_id.json
+        extraFiles = getSetting('extraFiles', default=[])
+        for extraFile in extraFiles:
+            dname = os.path.dirname(extraFile)
+            bname = os.path.basename(extraFile)
+            if dname == 'osImages':
+                srcname = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', bname)
+                dstname = os.path.join(getSetting('osImagesDir'), bname)
+                cp (srcname, dstname)
+            else:
+                warnAndLog(f"unhandled directory for extra file {extraFile}")
+
+        imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                       'osImages', pvAWS, "debian.img")
+        imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
+        cp(imageSourcePath, imageFile)
+
+    elif isEqSetting('binarySource', 'SRI-Cambridge'):
+        imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                       'osImages', 'common', "disk-image-cheri.img.zst")
+        imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
+        zstdDecompress(imageSourcePath, imageFile)
+
     # connectal requires a device tree blob
+    dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
     dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')
     setSetting("osImageDtb",dtbFile)
-    dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
     cp (dtbsrc, dtbFile)
-    logging.info(f"copy {dtbsrc} to {dtbFile}")
-
-    # TODO: use different .img?
-    pvAWS = "connectal"
-    imageDir = getSetting('osImagesDir')
-    imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                   'osImages', pvAWS, "debian.img")
-    warnAndLog(f"<aws.prepareConnectal>: adding {getSetting('osImage')}.img from {imageSourcePath}. This may be changed in the future.")
-    imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
-    cp(imageSourcePath, imageFile)

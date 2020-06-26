@@ -12,8 +12,17 @@ def prepareOsImage ():
     osImagesDir = os.path.join(getSetting('workDir'),'osImages')
     mkdir(osImagesDir,addToSettings='osImagesDir')
 
-    osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
-    setSetting('osImageElf',osImageElf)
+    # setup os image and extra images
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        osImageElf = os.path.join(getSetting('osImagesDir'),f"bbl-cheri.elf")
+        setSetting('osImageElf',osImageElf)
+        osImageExtraElf = os.path.join(getSetting('osImagesDir'),f"kernel-cheri.elf")
+        setSetting('osImageExtraElf', osImageExtraElf)
+    else:
+        osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
+        setSetting('osImageElf',osImageElf)
+        setSetting('osImageExtraElf', None)
+
 
     if(isEqSetting('osImage','FreeRTOS')):
         prepareFreeRTOS ()
@@ -174,24 +183,37 @@ def prepareBusybox():
     importImage()
 
 @decorate.debugWrap
-def selectImagePath():
+def selectImagePaths():
     if isEnabled('useCustomOsImage'):
-        return getSetting('pathToCustomOsImage')
+        return [getSetting('pathToCustomOsImage')]
     else:
-        imageType = getSetting('target') if getSetting('target') != 'aws' else getSetting('pvAWS')
+        # inconsistency
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            imageType = getSetting('target') if getSetting('target') != 'aws' else 'aws'
+        else:
+            imageType = getSetting('target') if getSetting('target') != 'aws' else getSetting('pvAWS')
         if getSetting('binarySource') == 'GFE':
             nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
             if (nixImage in os.environ):
-                return os.environ[nixImage]
+                tempPath = os.path.join(getSetting('workDir'),'tmp')
+                mkdir (tempPath)
+                tempImagePath = os.path.join(tempPath,os.path.basename(getSetting('osImageElf')))
+                cp (os.environ[nixImage], tempImagePath) #to ensure it has the standard tool name
+                return [tempImagePath]
             else:
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
-        imagePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType, f"{getSetting('osImage')}.elf")
-        return imagePath
+        baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType)
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), os.path.join(baseDir, f"kernel-cheri.elf")]
+        else:
+            imagePaths = [os.path.join(baseDir, f"{getSetting('osImage')}.elf")]
+        return imagePaths
 
 @decorate.debugWrap
 def importImage():
-    imagePath = selectImagePath()
-    cp (imagePath, getSetting('osImageElf'))
+    imagePaths = selectImagePaths()
+    for ip in imagePaths:
+        cp (ip, getSetting('osImagesDir'))
     if not (isEqSetting('target', 'aws')):
         if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
             netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
