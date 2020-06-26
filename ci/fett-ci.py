@@ -34,7 +34,7 @@ try:
     import sys, os, glob, shutil, time, itertools, json
     import subprocess, argparse, signal, configparser, copy, socket
     from utils import exitFettCi, exitOnInterrupt, generateAllConfigs, generateConfigFile, prepareArtifact
-    from configs import fettTargetAMI
+    from configs import fettTargetAMI_centos, fettTargetAMI_ubuntu
 except Exception as exc:
     exitFettCi (exitCode=-1,exc=exc)
 
@@ -107,7 +107,15 @@ def main (xArgs):
                 generateConfigFile(repoDir,outDir,dictConfig,xArgs.testOnly)
 
             if (xArgs.entrypoint == 'AWS'): #generate the info file
-                infoDict = {'nNodes' : actualNumConfigs, 'fettTargetAMI' : fettTargetAMI}
+                try:
+                    binSource = allConfigs[nodeIndex]['binarySource']
+                except Exception as exc:
+                    exitFettCi (message=f"Failed to find the <binarySource> in <{xConfig['name']}>.",exc=exc)
+                if (binSource == 'SRI-Cambridge'):
+                    thisAmi = fettTargetAMI_ubuntu
+                else:
+                    thisAmi = fettTargetAMI_centos
+                infoDict = {'nNodes' : actualNumConfigs, 'fettTargetAMI' : thisAmi}
                 infoFilePath = os.path.join(outDir,'awsCiInfo.json')
                 try:
                     infoFile = open(infoFilePath,'w')

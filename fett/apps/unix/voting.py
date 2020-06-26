@@ -7,20 +7,20 @@ from fett.base.utils.misc import *
 from fett.apps.unix.webserver import curlTest
 from fett.apps.unix.database import sqliteCmd
 import string, secrets, crypt
-import json
+import json, os
 
 @decorate.debugWrap
 @decorate.timeWrap
 def clear_voter_table(target, dbfile):
     appLog = getSetting('appLog')
-    sqlite   = "/usr/bin/sqlite"
+    sqlite   = getSetting('sqliteBin')
     sqliteCmd(target, sqlite, dbfile, "DELETE FROM voter;", tee=appLog)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def add_official(target, dbfile):
     appLog = getSetting('appLog')
-    sqlite   = "/usr/bin/sqlite"
+    sqlite   = getSetting('sqliteBin')
 
     officialName = "official"
 
@@ -113,7 +113,11 @@ def deploymentTest (target):
         target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Clearing voting database")
-    clear_voter_table(target, "/var/www/data/bvrs.db")
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        bvrsDbPath = '/fett/var/www/data'
+    else:
+        bvrsDbPath = '/var/www/data'
+    clear_voter_table(target, os.path.join(bvrsDbPath,'bvrs.db'))
 
     printAndLog("Voting tests OK!",tee=getSetting('appLog'))
 

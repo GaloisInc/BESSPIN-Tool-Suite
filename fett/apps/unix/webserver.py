@@ -67,7 +67,10 @@ def dumpLogs(target, destination):
     printAndLog(f"Dumping webserver logs to {webserverDir}...")
     mkdir(webserverDir)
     weblogs = getSetting("webserverLogs")
-    root    = weblogs["root"]
+    if (isEqSetting('binarySource','SRI-Cambridge')):
+        root = weblogs["cheriRoot"]
+    else:
+        root    = weblogs["root"]
 
     # These are the standard nginx logs
     for l in weblogs["logs"]:
