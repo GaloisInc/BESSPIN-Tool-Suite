@@ -706,7 +706,8 @@ class commonTarget():
             return #Will be handled in a different PR -- issue #236 (already in progress on a different branch)
         
         # Collect all logs into one directory
-        logsPathOnTarget = f'/home/{self.userName}/logsFromTarget'
+        logsPathName = 'logsFromTarget'
+        logsPathOnTarget = f'/home/{self.userName}/{logsPathName}'
         self.runCommand(f"mkdir {logsPathOnTarget}")
 
         # Apps logs
@@ -723,8 +724,10 @@ class commonTarget():
         
         # Create the tarball
         logsTarball = 'logsFromTarget.tar'
-        self.runCommand(f"tar cvf /home/{self.userName}/{logsTarball} {logsPathOnTarget}",erroneousContents=['gzip:','Error','tar:'],timeout=120)
-        self.runCommand(f"chown {self.userName}:{self.userName} /home/{self.userName}/{logsTarball}")
+        self.runCommand(f"cd /home/{self.userName}",erroneousContents=['cd:']) #not to get the warnings of removing '/'
+        self.runCommand(f"tar cvf {logsTarball} {logsPathName}",erroneousContents=['gzip:','Error','tar:'],timeout=120)
+        self.runCommand(f"chown {self.userName}:{self.userName} {logsTarball}")
+        self.runCommand("cd /root")
 
         # Maybe the researcher has changed the password for some reason
         self.userPassword = 'newPassword'
