@@ -156,7 +156,7 @@ class commonTarget():
                 else:
                     self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
             elif (isEqSetting('target','qemu')):
-                timeout = 240
+                timeout = 120
             elif (isEqSetting('target', 'aws')):
                 if isEqSetting('pvAWS', 'firesim'):
                     timeout = 240
@@ -199,7 +199,7 @@ class commonTarget():
                 else:
                     self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
             elif (isEqSetting('target','qemu')):
-                timeout = 240
+                timeout = 120
             elif (isEqSetting('target', 'aws')):
                 timeout = 540
             else:
