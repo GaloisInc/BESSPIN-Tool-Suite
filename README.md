@@ -46,13 +46,9 @@ nix-shell
 
 ### AWS Setup
 
-AWS setup has the following platform variants (PV):
+To utilize its FireSim and Connectal integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of the FireSim, Connectal, and FETT projects. The AMI is referenced with:
 
-#### FireSim
-
-To utilize its FireSim integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of both the FireSim and FETT projects. The AMI is referenced with:
-
-**AMI ID: `ami-04c55ee64b3c6f758`**
+**AMI ID: `ami-0f52b92c0c299059f`**
 
 #### Contents
 
@@ -65,15 +61,7 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 
 After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access.
 
-See the instructions in `build/FireSimAMI.md` to recreate the image manually.
-
-#### Connectal
-
-A temporary AMI was made for connectal development. It is based on `ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20200408 (ami-003634241a8fcdec0)` . The changes are identical to the FireSim AMI.
-
-**AMI ID: `ami-0a8b6af85347cf024`**
-
-See the instructions in `build/TemporaryConnectalAMI.md` for build procedure.
+See the instructions in `build/FettAMI.md` to recreate the image manually. For a Ubuntu Connectal only AMI, see the image described in `build/TemporaryConnectalAMI.md`.
 
 
 ## User Manual ##
