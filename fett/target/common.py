@@ -719,38 +719,36 @@ class commonTarget():
         # Create the tarball
         logsTarball = 'logsFromTarget.tar'
         self.runCommand(f"tar cvf {logsTarball} {logsPathName}",erroneousContents=['gzip:','Error','tar:'])
-        self.runCommand(f"mv {logsPathOnTarget} /home/{self.userName}/{logsPathName}")
-        self.runCommand(f"chown {self.userName}:{self.userName} /home/{self.userName}/{logsPathName}",erroneousContents=['chown:'])
+        self.runCommand(f"mv {logsTarball} /home/{self.userName}/{logsTarball}")
+        self.runCommand(f"chown {self.userName}:{self.userName} /home/{self.userName}/{logsTarball}",erroneousContents=['chown:'])
 
         # Maybe the researcher has changed the password for some reason
         self.userPassword = 'newPassword'
         salt     = crypt.mksalt()
-        newHashWithDollarSigns = crypt.crypt(self.userPassword, salt)
-        newHash = newHashWithDollarSigns.replace('$', '\\$')
+        newHash = crypt.crypt(self.userPassword, salt)
         if isEqSetting('osImage', 'debian'):
             self.runCommand(f"usermod -p \'{newHash}\' {self.userName}")
         elif isEqSetting('osImage', 'FreeBSD'):
-            self.runCommand (f"echo \"{newHash}\" | pw usermod {self.userName} -H 0",erroneousContents="pw:")
+            self.runCommand (f"echo \'{newHash}\' | pw usermod {self.userName} -H 0",erroneousContents="pw:")
 
         # send the tarball to the artifacts directory using non-root SCP
         self.switchUser () #login as user
         artifactPath = getSetting('extraArtifactsPath')
         if(self.sendFile(
-            artifactPath, logsTarball,        # To webserverDir/l
+            artifactPath, logsTarball,       
             targetPathToFile=f'/home/{self.userName}',  # From root/
             forceScp=True, toTarget=False, shutdownOnError=False
         )):
             printAndLog(f"collectLogs: Received logs from target.")
+            # untar the tarball to be more friendly
+            tarballPathOnHost = os.path.join(artifactPath,logsTarball)
+            shellCommand (['tar','xvf',tarballPathOnHost,'-C',artifactPath]) #check is True not to delete it by mistake
+            shellCommand (['rm',tarballPathOnHost])
         else:
             errorAndLog(f"collectLogs: Failed to receive logs from target.")
         self.switchUser () #back to root
 
-        # untar the tarball to be more friendly
-        tarballPathOnHost = os.path.join(artifactPath,logsTarball)
-        shellCommand (['tar','xvf',tarballPathOnHost,'-C',artifactPath]) #check is True not to delete it by mistake
-        shellCommand (['rm',tarballPathOnHost])
         return
-
 
     @decorate.debugWrap
     def keyboardInterrupt (self,shutdownOnError=True,timeout=15):
