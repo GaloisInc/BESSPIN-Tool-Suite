@@ -63,13 +63,6 @@ class commonTarget():
 
         self.appModules = []
 
-        # syslogs
-        self.syslogs = [] #todo: should contain all common files between FreeBSD/CheriBSD/debian
-        if (isEqSetting('osImage','debian')):
-            self.syslogs += ['/var/log/messages', '/var/log/auth.log', '/var/log/kern.log', '/var/log/syslog',
-                                '/var/log/dpkg.log', '/var/log/debug']
-        elif (isEqSetting('osImage','FreeBSD')):
-            warnAndLog("<sysLogs> are not yet defined for FreeBSD.")
         return
 
     @decorate.debugWrap
@@ -719,8 +712,7 @@ class commonTarget():
                 printAndLog (f"collectLogs: nothing to do for module <{appModule.__name__.split('.')[-1]}>.",doPrint=False)
 
         # syslogs
-        for xSysLog in self.syslogs:
-            self.runCommand (f"cp {xSysLog} {logsPathOnTarget}")
+        self.runCommand (f"cp /var/log/* {logsPathOnTarget}")
         self.runCommand(f"dmesg > {os.path.join(logsPathOnTarget,'dmesg.txt')}")
         printAndLog (f"collectLogs: Collected syslogs.")
         

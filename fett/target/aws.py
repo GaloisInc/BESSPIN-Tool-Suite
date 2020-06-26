@@ -576,7 +576,15 @@ def startRemoteLogging (target):
 
     # prepare the logTuples to create the conf file
     if (isEqSetting('osImage','debian')):
-        logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in target.syslogs]
+        syslogsFiles = ['alternatives.log','bootstrap.log','debug','kern.log','private','apt','btmp',
+                    'dpkg.log','lastlog','syslog','auth.log','daemon.log','faillog','messages','wtmp']
+    elif (isEqSetting('osImage','FreeBSD')):
+        syslogsFiles = ['auth','debug.log','maillog','security','utx.log','cron','devd.log','messages',
+                    'userlog','xferlog','daemon.log','lpd-errs','ppp.log','utx.lastlogin']
+    syslogs = [f"/var/log/{syslog}" for syslog in syslogsFiles]
+
+    if (isEqSetting('osImage','debian')):
+        logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in syslogs]
         if (webserver in target.appModules):
             weblogs = getSetting("webserverLogs")
             logTuples += [(f"{weblogs['root']}/{logFile}",f"nginx_{os.path.splitext(logFile)[0]}") for logFile in weblogs["logs"]]
