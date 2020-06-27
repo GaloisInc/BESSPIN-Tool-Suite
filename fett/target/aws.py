@@ -610,14 +610,15 @@ def startRemoteLogging (target):
         target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting("rsyslogPort")}" > /etc/syslog.d/logFett.conf')
         target.runCommand("service syslogd restart")
         
-        # configure nginx to use syslog on the UDP port
-        sedCommandNginx = (f'sed -i "" "s/# insert-more-logging/access_log syslog:server={target.ipHost}:'
-        f'{getSetting("rsyslogPort")},tag=nginx_access,severity=info;\\n\\terror_log syslog:server={target.ipHost}:'
-        f'{getSetting("rsyslogPort")},tag=nginx_error,severity=debug;\\n/"')
-        nginxSrc = '/usr/local' if (not isEqSetting('binarySource','SRI-Cambridge')) else '/fett'
-        nginxService = 'nginx' if (not isEqSetting('binarySource','SRI-Cambridge')) else 'fett_nginx'
-        target.runCommand(f'{sedCommandNginx} {nginxSrc}/nginx/conf/nginx.conf',erroneousContents=["sed:","Unmatched"])
-        target.runCommand(f"service {nginxService} restart")
+        if (webserver in target.appModules):
+            # configure nginx to use syslog on the UDP port
+            sedCommandNginx = (f'sed -i "" "s/# insert-more-logging/access_log syslog:server={target.ipHost}:'
+            f'{getSetting("rsyslogPort")},tag=nginx_access,severity=info;\\n\\terror_log syslog:server={target.ipHost}:'
+            f'{getSetting("rsyslogPort")},tag=nginx_error,severity=debug;\\n/"')
+            nginxSrc = '/usr/local' if (not isEqSetting('binarySource','SRI-Cambridge')) else '/fett'
+            nginxService = 'nginx' if (not isEqSetting('binarySource','SRI-Cambridge')) else 'fett_nginx'
+            target.runCommand(f'{sedCommandNginx} {nginxSrc}/nginx/conf/nginx.conf',erroneousContents=["sed:","Unmatched"])
+            target.runCommand(f"service {nginxService} restart")
          
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
 
