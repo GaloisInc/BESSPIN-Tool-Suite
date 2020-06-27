@@ -734,7 +734,7 @@ class commonTarget():
         artifactPath = getSetting('extraArtifactsPath')
         if(self.sendFile(
             artifactPath, logsTarball,       
-            targetPathToFile=f'/home/{self.userName}',  # From root/
+            targetPathToFile=f'/home/{self.userName}',
             forceScp=True, toTarget=False, shutdownOnError=False
         )):
             printAndLog(f"collectLogs: Received logs from target.")
