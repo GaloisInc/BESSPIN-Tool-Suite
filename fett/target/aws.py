@@ -617,7 +617,7 @@ def startRemoteLogging (target):
             # Also, the top 3 commands will go under the if
             target.runCommand("service syslogd onerestart")
         # configure nginx to use syslog on the UDP port
-        sedCommandNginx = (f'sed -i "" "s/server {{/server {{\\n\\taccess_log syslog:server={target.ipHost}:'
+        sedCommandNginx = (f'sed -i "" "s/# insert-more-logging/access_log syslog:server={target.ipHost}:'
         f'{getSetting("rsyslogPort")},tag=nginx_access,severity=info;\\n\\terror_log syslog:server={target.ipHost}:'
         f'{getSetting("rsyslogPort")},tag=nginx_error,severity=debug;\\n/"')
         if (not isEqSetting('binarySource','SRI-Cambridge')):
