@@ -51,8 +51,7 @@ def startFett ():
     mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
     
     # Start on-line logging
-    # FPGA IS ONLY USED TO TEST -- TEMPORARY -- DO NOT MERGE LIKE THIS!!!
-    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws') or isEqSetting('target','fpga'))): 
+    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
         aws.startRemoteLogging (xTarget)
 
     return xTarget
@@ -130,8 +129,8 @@ def launchFett ():
 def endFett (xTarget):
     if (isEnabled('runApp')):
         xTarget.collectLogs()
-    # FPGA IS ONLY USED TO TEST -- TEMPORARY -- DO NOT MERGE LIKE THIS!!!
-    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws') or isEqSetting('target','fpga'))): 
+
+    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
         collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
     xTarget.shutdown()
