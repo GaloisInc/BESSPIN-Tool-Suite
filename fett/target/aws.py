@@ -607,11 +607,6 @@ def startRemoteLogging (target):
         target.runCommand("service rsyslog restart",shutdownOnError=False)
     elif (isEqSetting('osImage','FreeBSD')):
         # configure syslogd to use the UDP port
-        if (not isEqSetting('binarySource','SRI-Cambridge')): # They have them by default
-            target.runCommand('echo \'syslogd_enable="YES"\' >> /etc/rc.conf')
-            target.runCommand('echo \'syslogd_flags="-s"\' >> /etc/rc.conf')
-
-        # both need that
         target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting("rsyslogPort")}" > /etc/syslog.d/logFett.conf')
         target.runCommand("service syslogd restart")
         
