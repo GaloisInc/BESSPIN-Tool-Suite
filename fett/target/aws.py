@@ -607,27 +607,22 @@ def startRemoteLogging (target):
         target.runCommand("service rsyslog restart",shutdownOnError=False)
     elif (isEqSetting('osImage','FreeBSD')):
         # configure syslogd to use the UDP port
-        target.runCommand('echo \'syslogd_enable="YES"\' >> /etc/rc.conf')
-        target.runCommand('echo \'syslogd_flags="-s -v -v"\' >> /etc/rc.conf')
-        target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting("rsyslogPort")}" >> /etc/syslog.conf')
-        if (not isEqSetting('binarySource','SRI-Cambridge')):
-            target.runCommand("service syslogd restart")
-        else: 
-            #This else should be removed if the SRI-Cambridge image included these modifications 
-            # Also, the top 3 commands will go under the if
-            target.runCommand("service syslogd onerestart")
+        if (not isEqSetting('binarySource','SRI-Cambridge')): # They have them by default
+            target.runCommand('echo \'syslogd_enable="YES"\' >> /etc/rc.conf')
+            target.runCommand('echo \'syslogd_flags="-s"\' >> /etc/rc.conf')
+
+        # both need that
+        target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting("rsyslogPort")}" > /etc/syslog.d/logFett.conf')
+        target.runCommand("service syslogd restart")
+        
         # configure nginx to use syslog on the UDP port
         sedCommandNginx = (f'sed -i "" "s/# insert-more-logging/access_log syslog:server={target.ipHost}:'
         f'{getSetting("rsyslogPort")},tag=nginx_access,severity=info;\\n\\terror_log syslog:server={target.ipHost}:'
         f'{getSetting("rsyslogPort")},tag=nginx_error,severity=debug;\\n/"')
-        if (not isEqSetting('binarySource','SRI-Cambridge')):
-            target.runCommand(f'{sedCommandNginx} /usr/local/nginx/conf/nginx.conf',erroneousContents=["sed:","Unmatched"])
-            target.runCommand("service nginx restart")
-        else: 
-            #This else should be removed if the SRI-Cambridge image included these modifications
-            # Also, the sedCommandNginx should go under the if
-            target.runCommand(f'{sedCommandNginx} /fett/nginx/conf/nginx.conf',erroneousContents=["sed:","Unmatched"])
-            target.runCommand("service fett_nginx onerestart")
+        nginxSrc = '/usr/local' if (not isEqSetting('binarySource','SRI-Cambridge')) else '/fett'
+        nginxService = 'nginx' if (not isEqSetting('binarySource','SRI-Cambridge')) else 'fett_nginx'
+        target.runCommand(f'{sedCommandNginx} {nginxSrc}/nginx/conf/nginx.conf',erroneousContents=["sed:","Unmatched"])
+        target.runCommand(f"service {nginxService} restart")
          
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
 
