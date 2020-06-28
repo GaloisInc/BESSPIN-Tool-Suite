@@ -251,7 +251,7 @@ class connectalTarget(commonTarget):
     def targetTearDown(self):
         if (self.process.isalive()):
             # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
-            self.runCommand("\x01 x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+            self.runCommand("\x01x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
         return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
