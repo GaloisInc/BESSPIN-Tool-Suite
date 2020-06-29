@@ -128,7 +128,7 @@ class firesimTarget(commonTarget):
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
             # Add a default route through the NAT
-            self.runCommand("ip route add default via 172.16.0.1")
+            self.runCommand(f"ip route add default via {self.ipHost}")
         elif (isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('binarySource','Michigan')):
                 ntkReadyString = f"WebSocket server listening on port {getSettingDict('michiganInfo',['httpPort'])}"
