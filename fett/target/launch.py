@@ -127,7 +127,7 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
-    if (isEnabled('runApp') and (not isEqSetting('binarySource','MIT'))):
+    if (isEnabled('runApp')):
         xTarget.collectLogs()
 
     if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
