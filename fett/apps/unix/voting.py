@@ -32,10 +32,8 @@ def add_official(target, dbfile):
 
     # Insert the record. The database will always be empty at this point,
     # so we give the official ID 0
-    quotedPassHash = f"\"{passHash}\"" if (isEqSetting('osImage','FreeBSD')) else f"'{passHash}'"
-    quotedOfficialName = f"\"{officialName}\"" if (isEqSetting('osImage','FreeBSD')) else f"'{officialName}'"
-    insert = f"INSERT INTO electionofficial (id, username, hash) VALUES (0, {quotedOfficialName}, {quotedPassHash});"
-    sqliteCmd(target, sqlite, dbfile, insert, tee=appLog, useSingleQuotes=isEqSetting('osImage','FreeBSD'))
+    insert = f"INSERT INTO electionofficial (id, username, hash) VALUES (0, '{officialName}', '{passHash}');"
+    sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
     select = f"SELECT * from electionofficial WHERE id = 0;"
     sqliteCmd(target, sqlite, dbfile, select, tee=appLog, 
               expectedContents="0|official|") # expecting the hash causes issues with FreeBSD
