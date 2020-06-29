@@ -579,7 +579,7 @@ def startRemoteLogging (target):
     # configure target rsyslog
     if (isEqSetting('osImage','debian')):
         # prepare the logTuples to create the conf file
-        syslogsFiles = ['alternatives.log','bootstrap.log','debug','kern.log','private','apt','btmp',
+        syslogsFiles = ['alternatives.log','bootstrap.log','debug','kern.log','btmp',
                     'dpkg.log','lastlog','syslog','auth.log','daemon.log','faillog','messages','wtmp']
         syslogs = [f"/var/log/{syslog}" for syslog in syslogsFiles]
         logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in syslogs]
@@ -591,11 +591,14 @@ def startRemoteLogging (target):
         syslogConfName = "logFett.conf"
         syslogConfFile = ftOpenFile(os.path.join(getSetting('workDir'),syslogConfName),'w')
         syslogConfFile.write('module(load="imfile")\n')
+        syslogConfFile.write('\nruleset(name="sendToLogserver") {\n')
+        syslogConfFile.write(f'\taction(type="omfwd" Target="{target.ipHost}" Port="{getSetting("rsyslogPort")}" Protocol="udp")\n')
+        syslogConfFile.write('}\n')
         for logPath, logTag in logTuples:
             syslogConfFile.write('\ninput(type="imfile"\n')
             syslogConfFile.write(f'\tfile="{logPath}"\n')
-            syslogConfFile.write(f'\tTag="{logTag}:")\n')
-        syslogConfFile.write(f"\n*.* @@{target.ipHost}:{getSetting('rsyslogPort')}\n")
+            syslogConfFile.write(f'\tTag="{logTag}:"\n')
+            syslogConfFile.write(f'\tRuleset="sendToLogserver")\n')
         syslogConfFile.close()
 
         # send the conf file
