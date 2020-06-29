@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 
 import os, sys, glob
 import pexpect, subprocess, threading
-import time, random, secrets
+import time, random, secrets, crypt
 import string, re
 import socket, errno, pty, termios
 from collections import Iterable
@@ -195,7 +195,7 @@ class commonTarget():
                 if (isEqSetting('procFlavor','bluespec')):
                     timeout = 1400 if isEqSetting('elfLoader','JTAG') else 700
                 elif (isEqSetting('procFlavor','chisel')):
-                    timeout = 1000 if isEqSetting('elfLoader','JTAG') else 450
+                    timeout = 1000 if isEqSetting('elfLoader','JTAG') else 540
                 else:
                     self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
             elif (isEqSetting('target','qemu')):
@@ -544,9 +544,9 @@ class commonTarget():
         currentUser = 'root' if self.isCurrentUserRoot else self.userName
         user_path   = 'root' if self.isCurrentUserRoot else 'home/' + self.userName
         targetPathRoot  = f"/{user_path}" if targetPathToFile is None else targetPathToFile
-        targetPath      = f"{targetPathRoot}/{xFile}"
+        targetPath      = os.path.join(targetPathRoot,xFile)
         # The path to the file on the host
-        hostPath        = f"{pathToFile}/{xFile}"
+        hostPath        = os.path.join(pathToFile,xFile)
 
         try:
             f = hostPath if toTarget else targetPath
@@ -600,12 +600,12 @@ class commonTarget():
                                    noRetries=True)
 
             if (isEqSetting('osImage','debian')):
-                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
+                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {targetPath}",timeout=timeout,shutdownOnError=False))
             elif (isEqSetting('osImage','FreeBSD')):
-                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {xFile}",timeout=timeout,shutdownOnError=False))
+                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {targetPath}",timeout=timeout,shutdownOnError=False))
             listenOnTarget.daemon = True
             getSetting('trash').throwThread(listenOnTarget,f"nc listening for <{xFile}> on Target")
-            sendFromHost = threading.Thread(target=subprocess.call, kwargs=dict(args=f"nc -w 1 {self.ipTarget} {self.portHost} <{pathToFile}/{xFile}",shell=True))
+            sendFromHost = threading.Thread(target=subprocess.call, kwargs=dict(args=f"nc -w 1 {self.ipTarget} {self.portHost} <{hostPath}",shell=True))
             sendFromHost.daemon = True
             getSetting('trash').throwThread(sendFromHost,f"nc sending <{pathToFile}/{xFile}> from host")
             listenOnTarget.start()
@@ -691,34 +691,62 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def collectAppLogs (self):
-        if (getSetting('osImage') in ['debian', 'FreeBSD']):
-            if (isEqSetting('binarySource','SRI-Cambridge')):
-                return #Will be handled in a different PR -- issue #236 (already in progress on a different branch)
-            # Let root log in to gather files
-            self.runCommand("echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config", shutdownOnError=False)
-            if (getSetting('osImage') == 'debian'):
-                self.runCommand("service ssh restart")
-            else:
-                self.runCommand("/etc/rc.d/sshd start")
-            # needs some time to be able to scp
-            if (not self.hasHardwareRNG()):
-                self.genStdinEntropy()
-            time.sleep(10)
+    def collectLogs (self):
+        if (getSetting('osImage') not in ['debian', 'FreeBSD']):
+            printAndLog(f"No logs to be collected from <{getSetting('osImage')}>.",doPrint=False)
+            return
+        
+        # Collect all logs into one directory
+        logsPathName = 'logsFromTarget'
+        logsPathOnTarget = f'/root/{logsPathName}'
+        self.runCommand(f"mkdir {logsPathName}")
 
-        artifactPath = getSetting('extraArtifactsPath')
-
+        # Apps logs
         for appModule in self.appModules:
             if hasattr(appModule, "dumpLogs"):
-                appModule.dumpLogs(self, artifactPath)
+                appModule.dumpLogs(self, logsPathOnTarget)
+                printAndLog (f"collectLogs: Collected <{appModule.__name__.split('.')[-1]}> logs.")
             else:
-                logging.info (f"collectAppLogs: nothing to do for module {appModule}.")
-        if (len(self.appModules) > 0):
-            logging.info (f"collectAppLogs: done collecting logs.")
-        else:
-            logging.info (f"collectAppLogs: No logs to collect.")
-        return
+                printAndLog (f"collectLogs: nothing to do for module <{appModule.__name__.split('.')[-1]}>.",doPrint=False)
 
+        # syslogs
+        self.runCommand (f"cp /var/log/* {logsPathOnTarget}") #On debian, this returns `cp: ommitted directories`
+        self.runCommand(f"dmesg > {os.path.join(logsPathOnTarget,'dmesg.txt')}")
+        printAndLog (f"collectLogs: Collected syslogs.")
+        
+        # Create the tarball
+        logsTarball = 'logsFromTarget.tar'
+        self.runCommand(f"tar cvf {logsTarball} {logsPathName}",erroneousContents=['gzip:','Error','tar:'])
+        self.runCommand(f"mv {logsTarball} /home/{self.userName}/{logsTarball}")
+        self.runCommand(f"chown {self.userName}:{self.userName} /home/{self.userName}/{logsTarball}",erroneousContents=['chown:'])
+
+        # Maybe the researcher has changed the password for some reason
+        self.userPassword = 'newPassword'
+        salt     = crypt.mksalt()
+        newHash = crypt.crypt(self.userPassword, salt)
+        if isEqSetting('osImage', 'debian'):
+            self.runCommand(f"usermod -p \'{newHash}\' {self.userName}")
+        elif isEqSetting('osImage', 'FreeBSD'):
+            self.runCommand (f"echo \'{newHash}\' | pw usermod {self.userName} -H 0",erroneousContents="pw:")
+
+        # send the tarball to the artifacts directory using non-root SCP
+        self.switchUser () #login as user
+        artifactPath = getSetting('extraArtifactsPath')
+        if(self.sendFile(
+            artifactPath, logsTarball,       
+            targetPathToFile=f'/home/{self.userName}',
+            forceScp=True, toTarget=False, shutdownOnError=False
+        )):
+            printAndLog(f"collectLogs: Received logs from target.")
+            # untar the tarball to be more friendly
+            tarballPathOnHost = os.path.join(artifactPath,logsTarball)
+            shellCommand (['tar','xvf',tarballPathOnHost,'-C',artifactPath]) #check is True not to delete it by mistake
+            shellCommand (['rm',tarballPathOnHost])
+        else:
+            errorAndLog(f"collectLogs: Failed to receive logs from target.")
+        self.switchUser () #back to root
+
+        return
 
     @decorate.debugWrap
     def keyboardInterrupt (self,shutdownOnError=True,timeout=15):
