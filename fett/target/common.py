@@ -234,10 +234,15 @@ class commonTarget():
         self.activateEthernet()
                                   
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
-        #Adding 5 minutes to avoid being in the past
+        awsNtpServer = "169.254.169.123"
         if (isEqSetting('osImage','debian')):
+            if isEqSetting('target', 'aws'):
+                # Use AWS NTP server
+                self.runCommand(f"echo 'NTP={awsNtpServer}' >> "
+                                "/etc/systemd/timesyncd.conf")
+            else:
+                self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
             self.runCommand("systemctl start systemd-timesyncd.service")
-            self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
 
             if not self.hasHardwareRNG():
                 #get the ssh up and running
@@ -246,8 +251,21 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
         elif (isEqSetting('osImage','FreeBSD')):
+            ntpServer = "pool.ntp.org"
+            if isEqSetting('target', 'aws'):
+                # Delete default NTP pool
+                self.runCommand('sed -i "" "/^pool/d" /etc/ntp.conf')
+                # Add AWS NTP server
+                ntpServer = awsNtpServer
+                self.runCommand(f"echo 'server {ntpServer} iburst' >> "
+                                "/etc/ntp.conf")
+            else:
+                self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
+
+            # Manually sync first time (ntpd will refuse to start if the clock
+            # is too far off) then start the ntpd daemon
+            self.runCommand(f"ntpdate -u {ntpServer}")
             self.runCommand("service ntpd onestart")
-            self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
                                 
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
