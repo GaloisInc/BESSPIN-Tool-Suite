@@ -251,7 +251,7 @@ class connectalTarget(commonTarget):
     def targetTearDown(self):
         if (self.process.isalive()):
             # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
-            self.runCommand("\x01 x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+            self.runCommand("\x01x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
         return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
@@ -270,7 +270,9 @@ def configTapAdaptor():
         'create' : [
             ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()]
         ],
-        'disableIpv6' : ['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1'],
+        'disableIpv6' : [
+			['sysctl', '-w', 'net.ipv6.conf.' + tapAdaptor + '.disable_ipv6=1']
+		],
         'natSetup' : [
             # Enable ipv4 forwarding
             ['sysctl', '-w', 'net.ipv4.ip_forward=1'],

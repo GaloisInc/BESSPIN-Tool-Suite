@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<title>BESSPIN Voter Registration System</title>
+
+<head>
+    <script src="jquery-3.5.1.min.js"></script>
+    <script src="index.js" charset="utf-8" defer></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    
+    <h1>
+        BESSPIN Voter Registration System
+    </h1>
+    <h2>
+        New Voter Registration
+    </h2>
+
+    <br>
+    <br>
+
+    <div class=dataFormOuter>
+    <div class=dataFormInner>
+        <form enctype="multipart/form-data" id="voter_register_form" method="POST" action="voter_register">
+            <label class=firstColLabel for="voter-givennames">First name:</label>
+            <input class=firstColInput type="text" id="voter-givennames" name="voter-givennames">
+            <label class=secondColLabel for="voter-lastname">Last name:</label>
+            <input class=secondColInput type="text" id="voter-lastname" name="voter-lastname">
+
+            <br><br>
+         
+            <label class=firstColLabel for="voter-birthdate">Date of Birth:</label>
+            <input class=firstColInput type="date" id="voter-birthdate" name="voter-birthdate">
+
+            <br><br>
+            
+            <label class=firstColLabel for="voter-mailaddress">Mailing Address:</label>
+            <input class=firstColInput type="text" id="voter-mailaddress" name="voter-mailaddress">
+            <label class=secondColLabel for="voter-mailzip">Zip Code:</label>
+            <input class=secondColInput type="number" id="voter-mailzip" name="voter-mailzip">
+
+            <br><br>
+      
+            <label class=firstColLabel for="voter-mailaddress2">Mailing Address Line 2:</label>
+            <input class=firstColInput type="text" id="voter-mailaddress2" name="voter-mailaddress2">
+            <label class=secondColLabel for="voter-mailstate">State:</label>
+            <input class=secondColInput type="text" id="voter-mailstate" name="voter-mailstate">
+
+            <br><br>
+             
+            <label class=firstColLabel for="ra_1">Residential Address:</label>
+            <input class=firstColInput type="text" id="ra_1" name="voter-resaddress">
+            <label class=secondColLabel for="voter-reszip">Zip Code:</label>
+            <input class=secondColInput type="number" id="voter-reszip" name="voter-reszip">
+
+            <br><br>
+      
+            <label class=firstColLabel for="ra_2">Residential Address Line 2:</label>
+            <input class=firstColInput type="text" id="ra_2" name="voter-ressaddress2">
+            <label class=secondColLabel for="voter-resstate">State:</label>
+            <input class=secondColInput type="text" id="voter-resstate" name="voter-resstate">
+
+            <br><br>
+
+            <label class=firstColLabel for="voter-registeredparty">Registered Party:</label>
+            <select class=firstColInput name="voter-registeredparty">
+                <option>---</option>
+                <option>SSITH</option>
+                <option>REBEL</option>
+                <option>Unaffiliated</option>
+            </select>
+
+            <br><br>
+
+            <!-- <label class=firstColLabel for="supporting_type">Supporting Document Type:</label>
+            <input class=firstColInput type="text" id="supporting_type" name="supporting_type">
+            -->
+            <br><br>
+            
+            <label class=firstColLabel for="voter-idinfo">Upload Document:</label>
+            <input class=formButton type="file" id="voter-idinfo" name="voter-idinfo">
+            <!-- <label class=firstColLabel for="supporting_doc">ID Info:</label>
+            <input type="text" id="voter-idinfo" name="voter-idinfo"> -->
+
+
+            <br><br>
+         
+            <label class=firstColLabel for="voter-confidential">Mark My Information as Confidential:</label>
+            <input class=formButton type="checkbox" value="1" id="voter-confidential" name="voter-confidential">
+
+            <br><br>
+         
+            <label class=firstColLabel for="submit"> </label>
+            <input class=formButton id="submit_voter_registration" type="submit" value="Submit">
+    </form>
+</div>
+</div>
+
+</body>
+
+</html>
