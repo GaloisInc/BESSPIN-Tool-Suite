@@ -121,3 +121,4 @@ Note that the AWS platform variant is determined based on the `binarySource`-`pr
 
 - To add a configuration option, you have to update the json dictionary in `fett/base/utils/configData.json`.
 - To add/change a system setting, you have to update the json dictionary in `fett/base/utils/setupEnv.json`.
+
