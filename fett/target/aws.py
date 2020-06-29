@@ -611,13 +611,14 @@ def startRemoteLogging (target):
         target.runCommand("service syslogd restart")
         
         if (webserver in target.appModules):
-            # configure nginx to use syslog on the UDP port
-            sedCommandNginx = (f'sed -i "" "s/# insert-more-logging/access_log syslog:server={target.ipHost}:'
-            f'{getSetting("rsyslogPort")},tag=nginx_access,severity=info;\\n\\terror_log syslog:server={target.ipHost}:'
-            f'{getSetting("rsyslogPort")},tag=nginx_error,severity=debug;\\n/"')
             nginxSrc = '/usr/local' if (not isEqSetting('binarySource','SRI-Cambridge')) else '/fett'
             nginxService = 'nginx' if (not isEqSetting('binarySource','SRI-Cambridge')) else 'fett_nginx'
-            target.runCommand(f'{sedCommandNginx} {nginxSrc}/nginx/conf/nginx.conf',erroneousContents=["sed:","Unmatched"])
+
+            remoteLogsCommands = (f'access_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_access,'
+            f'severity=info;\\nerror_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_error,'
+            f'severity=debug;\\n')
+
+            target.runCommand(f'echo "{remoteLogsCommands}" > {nginxSrc}/nginx/conf/sites/remoteLogFett.conf',erroneousContents=["No such file or directory"])
             target.runCommand(f"service {nginxService} restart")
          
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
