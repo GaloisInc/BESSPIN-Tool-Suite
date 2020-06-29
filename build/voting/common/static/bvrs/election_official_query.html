@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<title>BESSPIN Voter Registration System</title>
+
+<head>
+    <script src="jquery-3.5.1.min.js"></script>
+    <script src="query.js" charset="utf-8" defer></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+    <div id=headerDiv>
+        <div id="logout"><a href="/bvrs/official_logout">Logout</a></div>
+        <h1>
+            BESSPIN Voter Registration System
+        </h1>
+
+        <div class=dataFormOuter>
+        <div class=dataFormInner>
+            <form enctype="multipart/form-data" id="official_query_form" method="POST" action="official_query_voters">
+            	
+                <label class=firstColLabel for="field-name">Field:</label>
+        		<select class=firstColInput id="field-name" name="field-name">
+                    <option></option>
+        			<option>lastname</option>
+        		    <option>givennames</option>
+                    <option>resaddress</option>
+                    <option>mailaddress</option>
+                    <option>registeredparty</option>
+                    <option>status</option>
+        		</select>
+
+                <label class=secondColLabelVariable for="field-contains">Field Contains:</label>
+                <input class=secondColInput type="text" id="field-contains" name="field-contains">
+                <label class=secondColLabelVariable for="invert-contains">Invert Selection:</label>
+                <input class=secondColInput type="checkbox" id="invert-contains" name="invert-contains">
+
+                <br><br>
+
+                <label class=firstColLabel for="select-active">Select Only Active Registrations:</label>
+                <input class=firstColInput type="checkbox" id="select-active" name="select-active">
+
+                <br><br>
+             
+              	<label class=firstColLabel for="select-updated">Select Only Updated Registrations:</label>
+                <input class=firstColInput type="checkbox" id="select-updated" name="select-updated">
+
+                <br><br>
+             
+                <label class=firstColLabel for="date-field">Date Field:</label>
+        		<select class=firstColInput id="date-field" name="date-field">
+                    <option></option>
+                    <option>birthdate</option>
+                    <option>initialregtime</option>
+                    <option>lastupdatetime</option>
+                </select>
+                <label class=secondColLabelVariable for="date-from">between:</label>
+                <input class=secondColInput type="date" id="date-from" name="date-from">
+                <label class=secondColLabelVariable for="date-thru">and:</label>
+                <input class=secondColInput type="date" id="date-thru" name="date-thru">
+                <label class=secondColLabelVariable for="date-invert">Invert Selection:</label>
+                <input class=secondColInput type="checkbox" id="date-invert" name="date-invert">
+
+                <br><br>
+
+                <label class=firstColLabel for="submit"> </label>
+                <input class=formButton id="submit_voter_query" type="submit" value="Search">
+            </form>
+        </div>
+        </div>
+        <div class="error" id="errors" style="text-align: center;"></div>
+    </div>
+
+
+    <br><br>
+
+    <form enctype="multipart/form-data" method=post  id="offical_update_voters" action="offical_update_voters">
+        
+        <div class=centeredDiv id=queryData>
+        <div id=queryDataInner>
+
+        <!-- filled with JS -->
+
+        </div>
+        </div>
+
+        <br><br>
+
+        <div id=footerDiv class=centeredDiv>
+        <div class=flexDiv>
+
+            <div class="flexMemberDiv updateOption">
+                <input type="radio" name="form-action" id="mark-as-active" value="mark-active" name="mark-as-active">
+                <label for="mark-active">Mark as Active:</label>
+            </div>
+            <div class="flexMemberDiv updateOption">
+                <input type="radio" name="form-action" value="mark-inactive" id="mark-inactive" name="mark-inactive">
+                <label for="mark-inactive">Mark as Inactive:</label>
+            </div>
+            <div class="flexMemberDiv updateOption">
+                <input type="radio" id="delete-registrations" value="delete" name="form-action">
+                <label for="delete-registrations">Delete Registrations:</label>
+            </div>
+            <div class="flexMemberDiv updateOption">
+                <input type="radio" id="mark-confidential" value="mark-confidential" name="form-action">
+                <label for="mark-confidential">Mark as Confidential:</label>
+            </div>
+            <div class="flexMemberDiv updateOption">
+                <input type="radio" id="mark-not-confidential"value="mark-not-confidential" name="form-action">
+                <label for="mark-not-confidential">Mark as Not Confidential:</label>
+            </div>
+
+            <input type="hidden" id="voter-ids" name="voter-ids">
+            <div class=flexMemberDiv>
+                <label for="submit"> </label>
+                <input type="submit" value="Apply" id="submit" name="submit">
+            </div>
+
+    </form>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+		

@@ -22,10 +22,10 @@ def install(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def sqliteCmd(target, sqlite_bin, xDb, cmd, tee=None, expectedContents=None, shutdownOnError=True, suppressErrors=False):
-    # any $ characters in the command need to be escaped so they don't
-    # end up getting substituted by the shell
-    escaped_cmd = cmd.replace('$', '\\$')
-    return target.runCommand(f"{sqlite_bin} {xDb} \"{escaped_cmd}\"",
+    # change all single-quotes in the command to '"'"' to prevent shell
+    # variable parsing issues
+    escaped_cmd = cmd.replace('\'', '\'"\'"\'')
+    return target.runCommand(f"{sqlite_bin} {xDb} '{escaped_cmd}'",
                              expectedContents=expectedContents,
                              suppressErrors=suppressErrors,
                              shutdownOnError=shutdownOnError,

@@ -199,7 +199,7 @@ class commonTarget():
                 else:
                     self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
             elif (isEqSetting('target','qemu')):
-                timeout = 60
+                timeout = 120
             elif (isEqSetting('target', 'aws')):
                 timeout = 540
             else:
