@@ -48,7 +48,7 @@ nix-shell
 
 To utilize its FireSim and Connectal integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of the FireSim, Connectal, and FETT projects. The AMI is referenced with:
 
-**AMI ID: `ami-0f52b92c0c299059f`**
+**AMI ID: `ami-093e3a35324b72b87`**
 
 #### Contents
 
@@ -57,7 +57,8 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 * An updated version of Git, required by the FETT Environment nix shell installation
 * Git LFS, needed by FETT Binaries
 * [The Nix Package Manager](https://nixos.org/nix/)
-* [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) checked out at `2430b00b1becf8957d7fe4a304fb820e74e66972`, with the environment pre-populated at `nix/store`
+* [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) checked out at `c1a1dccadd5c8b5d99b66546d267714444183a43`, with the environment pre-populated at `/nix/store`
+* [Cloudwatch](https://aws.amazon.com/cloudwatch/)
 
 After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access.
 
