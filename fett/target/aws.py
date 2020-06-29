@@ -620,7 +620,7 @@ def startRemoteLogging (target):
             f'severity=info;\\nerror_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_error,'
             f'severity=debug;\\n')
 
-            target.runCommand(f'echo "{remoteLogsCommands}" > {nginxSrc}/nginx/conf/sites/remoteLogFett.conf',erroneousContents=["No such file or directory"])
+            target.runCommand(f'printf "{remoteLogsCommands}" > {nginxSrc}/nginx/conf/sites/remoteLogFett.conf',erroneousContents=["Unmatched", "No such file or directory"])
             target.runCommand(f"service {nginxService} restart")
          
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
