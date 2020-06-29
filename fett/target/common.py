@@ -710,7 +710,7 @@ class commonTarget():
                 printAndLog (f"collectLogs: nothing to do for module <{appModule.__name__.split('.')[-1]}>.",doPrint=False)
 
         # syslogs
-        self.runCommand (f"cp /var/log/* {logsPathOnTarget}")
+        self.runCommand (f"cp /var/log/* {logsPathOnTarget}") #On debian, this returns `cp: ommitted directories`
         self.runCommand(f"dmesg > {os.path.join(logsPathOnTarget,'dmesg.txt')}")
         printAndLog (f"collectLogs: Collected syslogs.")
         
