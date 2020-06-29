@@ -26,6 +26,7 @@ def deploymentTest (target):
 
     # SCP Test
     target.sendFile (pathToFile=getSetting('repoDir'),xFile='README.md',timeout=120)
+    target.runCommand("rm README.md") # researchers don't need to see that
     printAndLog("Test SCP passed successfully!", doPrint=False, tee=getSetting('appLog'))
 
     printAndLog("SSH and SCP test OK!", tee=getSetting('appLog'))

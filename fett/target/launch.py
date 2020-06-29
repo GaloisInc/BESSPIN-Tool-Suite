@@ -49,7 +49,10 @@ def startFett ():
     xTarget = launchFett()
 
     mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
-    # Call-todo -- start any on-line logging
+    
+    # Start on-line logging
+    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+        aws.startRemoteLogging (xTarget)
 
     return xTarget
 
@@ -124,9 +127,11 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
-    # Call-todo -- collect any remaining logs & dumps from target
     if (isEnabled('runApp')):
-        xTarget.collectAppLogs()
+        xTarget.collectLogs()
+
+    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+        collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
     xTarget.shutdown()
     
