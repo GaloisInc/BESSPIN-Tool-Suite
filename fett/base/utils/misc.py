@@ -52,12 +52,27 @@ def exitFett (exitCode):
         except:
             return 'UNKNOWN'
 
+    def inExit_sudoShellCommand (argsList, check=True, **kwargs):
+        try:
+            shellOut = open(os.path.join(inExit_GetSetting('workDir'),'shell.out'),'a')
+        except Exception as exc:
+            inExit_logAndExit (f"Failed to open <{os.path.join(inExit_GetSetting('workDir'),'shell.out')}> to append.",exc=exc)
+
+        shellOut.write(f"\n\n{argsList}\n")
+        shellOut.flush()
+        try:
+            subprocess.run(argsList, stdout=shellOut, stderr=shellOut, check=check, **kwargs)
+        except Exception as exc:
+            inExit_logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc)
+        shellOut.close()
+
     if (not isinstance(exitCode,EXIT)):
         exitCode = EXIT.Unspecified
     
     # notify portal if in production mode -- cannot rely on getSetting because it calls logAndExit
     if (inExit_GetSetting('mode') == 'production'):
         if (exitCode != EXIT.Success): # ERRONEOUS STATE!! -- emergency upload
+            collectRemoteLogging (inExit_logAndExit,inExit_GetSetting,inExit_sudoShellCommand) #Maybe we have some remote logs
             tarballPath = tarArtifacts (inExit_logAndExit,inExit_GetSetting)
             aws.uploadToS3(inExit_GetSetting('prodS3Bucket'), inExit_logAndExit, 
                             tarballPath, 'fett-target/production/artifacts/')
@@ -505,3 +520,11 @@ def zstdDecompress(inputFilePath, outputFilePath):
         logAndExit(f"zstdDecompress: input file {inputFilePath} does not exist <{exc}>", exc=exc, exitCode=EXIT.Files_and_paths)
     except Exception as exc:
         logAndExit(f"zstdDecompress: error decompressing file {inputFilePath} <{exc}>", exc=exc, exitCode=EXIT.Run)
+
+def collectRemoteLogging (logAndExitFunc,getSettingFunc,sudoShellCommandFunc):
+    printAndLog ("Fetching remote logs if there are any.")
+    ipTarget = getSettingFunc(f"{getSettingFunc('target')}IpTarget")
+    # cp the directory for non-fresh instances
+    rsyslogsPath = os.path.join(getSettingFunc('extraArtifactsPath'),f"rsyslogs_{ipTarget}")
+    sudoShellCommandFunc(['cp','-r',f'/var/log/{ipTarget}',rsyslogsPath],check=False)
+    sudoShellCommandFunc(['chown','-R',f'{getpass.getuser()}:{getpass.getuser()}',rsyslogsPath],check=False) 

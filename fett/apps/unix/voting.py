@@ -11,13 +11,6 @@ import json, os
 
 @decorate.debugWrap
 @decorate.timeWrap
-def clear_voter_table(target, dbfile):
-    appLog = getSetting('appLog')
-    sqlite   = getSetting('sqliteBin')
-    sqliteCmd(target, sqlite, dbfile, "DELETE FROM voter;", tee=appLog)
-
-@decorate.debugWrap
-@decorate.timeWrap
 def add_official(target, dbfile):
     appLog = getSetting('appLog')
     sqlite   = getSetting('sqliteBin')
@@ -36,35 +29,41 @@ def add_official(target, dbfile):
     sqliteCmd(target, sqlite, dbfile, insert, tee=appLog)
     select = f"SELECT * from electionofficial WHERE id = 0;"
     sqliteCmd(target, sqlite, dbfile, select, tee=appLog, 
-              expectedContents=f"{passHash}")
+              expectedContents="0|official|") # expecting the hash causes issues with FreeBSD
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
             
 @decorate.debugWrap
 @decorate.timeWrap
 def install (target):
+    if (isEqSetting('binarySource','SRI-Cambridge')):
+      prefix = "/fett/var"
+    else:
+      prefix = "/var"
     appLog = getSetting('appLog')
     printAndLog("Installing voting server")
     wwwUser = "www" if isEqSetting('osImage', 'FreeBSD') else "www-data"
 
-    target.runCommand("mkdir -p /var/www/run",tee=appLog)
-    target.runCommand("mkdir -p /var/www/cgi-bin",tee=appLog)
-    target.runCommand("mkdir -p /var/www/html",tee=appLog)
-    target.runCommand("mkdir -p /var/www/data",tee=appLog)
-
-    printAndLog("Adding a new election official")
-    add_official(target, "bvrs.db")
+    target.runCommand(f"mkdir -p {prefix}/www/run",tee=appLog)
+    target.runCommand(f"mkdir -p {prefix}/www/cgi-bin",tee=appLog)
+    target.runCommand(f"mkdir -p {prefix}/www/bvrs/bvrs",tee=appLog)
+    target.runCommand(f"mkdir -p {prefix}/www/data",tee=appLog)
 
     target.runCommand("install kfcgi /usr/local/sbin/kfcgi", erroneousContents="install:",tee=appLog)
-    target.runCommand("install bvrs /var/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
-
+    target.runCommand(f"install bvrs {prefix}/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
+    target.runCommand(f"install static/index.html {prefix}/www/bvrs", erroneousContents="install:",tee=appLog)
+    target.runCommand(f"install static/bvrs/* {prefix}/www/bvrs/bvrs", erroneousContents="install:",tee=appLog)
+    
+    printAndLog("Adding a new election official")
+    add_official(target, "bvrs.db")
+    
     # This is important: restrict access to the database to the 'www' user.
-    target.runCommand(f"chmod 770 /var/www/data", tee=appLog)
+    target.runCommand(f"chmod 770 {prefix}/www/data", tee=appLog)
     target.runCommand(f"chown {wwwUser}:{wwwUser} /var/www/data", tee=appLog)
-    target.runCommand(f"install -m 770 -g {wwwUser} -o {wwwUser} bvrs.db /var/www/data/bvrs.db", erroneousContents="install:",tee=appLog)
+    target.runCommand(f"install -m 770 -g {wwwUser} -o {wwwUser} bvrs.db {prefix}/www/data/bvrs.db", erroneousContents="install:",tee=appLog)
 
     target.runCommand("echo \"Starting BVRS CGI Handler...\"",tee=appLog)
 
-    target.runCommand(f"/usr/local/sbin/kfcgi -s /var/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- /var/www/cgi-bin/bvrs /var/www/data/bvrs.db",tee=appLog)
+    target.runCommand(f"/usr/local/sbin/kfcgi -s {prefix}/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- {prefix}/www/cgi-bin/bvrs {prefix}/www/data/bvrs.db",tee=appLog)
     return
 
 
@@ -77,7 +76,7 @@ def deploymentTest (target):
     if not target.hasHardwareRNG():
         target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_register.json?"
-    req += "voter-birthdate=1986-02-04&"
+    req += "voter-birthdate=1900-01-01&"
     req += "voter-lastname=l&"
     req += "voter-givennames=g&"
     req += "voter-resaddress=a&"
@@ -97,7 +96,7 @@ def deploymentTest (target):
     if not target.hasHardwareRNG():
         target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
-    req += "voter-birthdate=1986-02-04&"
+    req += "voter-birthdate=1900-01-01&"
     req += "voter-lastname=l&"
     req += "voter-givennames=g"
     out = curlRequest(req, rawOutput=True)
@@ -112,12 +111,17 @@ def deploymentTest (target):
     except json.JSONDecodeError as exc:
         target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, exitCode=EXIT.Run)
 
-    printAndLog("Clearing voting database")
-    if isEqSetting('binarySource', 'SRI-Cambridge'):
-        bvrsDbPath = '/fett/var/www/data'
+    printAndLog("Unregistering test voter")
+    sqlite = getSetting('sqliteBin')
+    appLog = getSetting('appLog')    
+    if (isEqSetting('binarySource','SRI-Cambridge')):
+      prefix = "/fett/var"
     else:
-        bvrsDbPath = '/var/www/data'
-    clear_voter_table(target, os.path.join(bvrsDbPath,'bvrs.db'))
+      prefix = "/var"
+    dbfile = f"{prefix}/www/data/bvrs.db"
+    sql = f"DELETE FROM voter WHERE birthdate='1900-01-01' and lastname='l' and givennames='g';"
+    sqliteCmd(target, sqlite, dbfile, sql, tee=appLog, 
+              expectedContents="")
 
     printAndLog("Voting tests OK!",tee=getSetting('appLog'))
 
