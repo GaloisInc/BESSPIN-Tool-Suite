@@ -1,12 +1,16 @@
-# Building FETT Target AMI with FireSim
+# Building the FETT Target AMI 
 
 ## Overview
 
-This guide outlines how to modify a FPGA Developer AMI to run both FETT Target and FireSim built FPGA tools. This image is designed for FETT Target development, and contains a minimal cloudGFE to start with a working OS boot. The critical modifications are
+This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, FireSim built FPGA tools and Connectal tools. This image is designed for FETT Target development. The critical modifications are
 
 * Update `git` so that the FETT Environment can aquire its sources correctly
 * Produce a FETT Environment by populating packages in `nix/store`
 * Setup the FPGA tools, and required kernel modules
+* Configure device rules in `udev` to let connectal run as non-root
+* Configure `rsyslog` for logging
+* Put `SSITH-FETT-Target` in the user's home directory
+* Install AWS Cloudwatch
 
 ## Procedure
 
@@ -99,24 +103,186 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target a
 
    ```
 
-8. Clear personal items and prepare image for AMI creation. 
+8. Update `rsyslog.conf`. 
 
-   * remove git usernames if they are configured, clearing
+   1. Inside the file,
+
+      **/etc/rsyslog.conf**
+
+      ```
+      # Provides UDP syslog reception
+      #$ModLoad imudp.so
+      #$UDPServerRun 514
+      
+      # Provides TCP syslog reception
+      #$ModLoad imtcp.so
+      #$InputTCPServerRun 514
+      ```
+
+      Change to
+
+      ```
+      # Provides UDP syslog reception
+      $ModLoad imudp.so
+      $UDPServerRun 514
+      
+      # Provides TCP syslog reception
+      $ModLoad imtcp.so
+      $InputTCPServerRun 514
+      
+      $template RemoteLogs,"/var/log/%FROMHOST-IP%/%PROGRAMNAME%.log"
+      *.* ?RemoteLogs
+      ```
+
+   2. Enable the service by running,
+
+      ```
+      $ sudo service rsyslog restart
+      ```
+
+9. Install cloudwatch
+
+   1. Download and install the cloudwatch rpm
+
+      ```
+      $ wget https://s3.amazonaws.com/amazoncloudwatch-agent/centos/amd64/latest/amazon-cloudwatch-agent.rpm
+      $ sudo rpm -U ./amazon-cloudwatch-agent.rpm
+      ```
+
+   2. Make the file
+
+      **/opt/aws/amazon-cloudwatch-agent/bin/config.json**
+
+      ```json
+      {
+          "agent": {
+              "metrics_collection_interval": 60,
+              "run_as_user": "root"
+          },
+          "logs": {
+              "logs_collected": {
+                  "files": {
+                      "collect_list": [
+                          {
+                              "file_path": "/var/log/**",
+                              "log_group_name": "instance-varlogs",
+                              "log_stream_name": "{instance_id}"
+                          },
+                          {
+                              "file_path": "/home/centos/SSITH-FETT-Target/workDir/**",
+                              "log_group_name": "FETT-workDir",
+                              "log_stream_name": "{instance_id}"
+                          }
+                      ]
+                  }
+              }
+          },
+          "metrics": {
+              "append_dimensions": {
+                  "AutoScalingGroupName": "${aws:AutoScalingGroupName}",
+                  "ImageId": "${aws:ImageId}",
+                  "InstanceId": "${aws:InstanceId}",
+                  "InstanceType": "${aws:InstanceType}"
+              },
+              "metrics_collected": {
+                  "cpu": {
+                      "measurement": [
+                          "cpu_usage_idle",
+                          "cpu_usage_iowait",
+                          "cpu_usage_user",
+                          "cpu_usage_system"
+                      ],
+                      "metrics_collection_interval": 60,
+                      "resources": [
+                          "*"
+                      ],
+                      "totalcpu": false
+                  },
+                  "disk": {
+                      "measurement": [
+                          "used_percent",
+                          "inodes_free"
+                      ],
+                      "metrics_collection_interval": 60,
+                      "resources": [
+                          "*"
+                      ]
+                  },
+                  "diskio": {
+                      "measurement": [
+                          "io_time",
+                          "write_bytes",
+                          "read_bytes",
+                          "writes",
+                          "reads"
+                      ],
+                      "metrics_collection_interval": 60,
+                      "resources": [
+                          "*"
+                      ]
+                  },
+                  "mem": {
+                      "measurement": [
+                          "mem_used_percent"
+                      ],
+                      "metrics_collection_interval": 60
+                  },
+                  "netstat": {
+                      "measurement": [
+                          "tcp_established",
+                          "tcp_time_wait"
+                      ],
+                      "metrics_collection_interval": 60
+                  },
+                  "statsd": {
+                      "metrics_aggregation_interval": 60,
+                      "metrics_collection_interval": 10,
+                      "service_address": ":8125"
+                  },
+                  "swap": {
+                      "measurement": [
+                          "swap_used_percent"
+                      ],
+                      "metrics_collection_interval": 60
+                  }
+              }
+          }
+      }
+      ```
+
+   3. For the startup script, run
+
+      ```
+      $ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+      ```
+
+10. Install SSITH-FETT-Target on master branch
 
    ```
-   /home/centos/.gitconfig
+   $ git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
+   $ cd SSITH-FETT-Target
+   $ git submodule init
+   $ git submodule update
    ```
 
-   * **IF NOT USING `besspin_fett`, delete the contents of `/home/centos/.config/nix` as it contains your login credentials**
+11. Clear personal items and prepare image for AMI creation. 
 
-   * **delete/deactivate the SSH keys associated with your GitHub/GitLab accounts**
+    * remove git usernames if they are configured, clearing
 
-   * clear your command history
+    ```
+    /home/centos/.gitconfig
+    ```
 
-   ```
-   $ rm ~/.bash_history
-   $ history -c
-   ```
+    * **IF NOT USING `besspin_fett`, delete the contents of `/home/centos/.config/nix` as it contains your login credentials**
 
-9. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
+    * **delete/deactivate the SSH keys associated with your GitHub/GitLab accounts**
+
+    * clear your command history
+
+    ```
+    $ rm ~/.bash_history
+    $ history -c
+    ```
+
+12. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
 
