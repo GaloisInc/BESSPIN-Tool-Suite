@@ -49,13 +49,17 @@ def install (target):
     target.runCommand(f"mkdir -p {prefix}/www/cgi-bin",tee=appLog)
     target.runCommand(f"mkdir -p {prefix}/www/bvrs/bvrs",tee=appLog)
     target.runCommand(f"mkdir -p {prefix}/www/data",tee=appLog)
-    target.runCommand(f"mkdir -p  {prefix}/www/ssl", tee=appLog)
+    target.runCommand("mkdir -p /etc/ssl/certs",tee=appLog)
+    target.runCommand("mkdir -p /etc/ssl/private",tee=appLog)
+
+    target.runCommand("cp -r certs/* /etc/ssl/certs",tee=appLog)
+    target.runCommand("cp -r keys/* /etc/ssl/private",tee=appLog)
+
 
     target.runCommand("install kfcgi /usr/local/sbin/kfcgi", erroneousContents="install:",tee=appLog)
     target.runCommand(f"install bvrs {prefix}/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
     target.runCommand(f"install static/index.html {prefix}/www/bvrs", erroneousContents="install:",tee=appLog)
     target.runCommand(f"install static/bvrs/* {prefix}/www/bvrs/bvrs", erroneousContents="install:",tee=appLog)
-    target.runCommand(f"install ssl/* {prefix}/www/ssl", erroneousContents="install:",tee=appLog)
 
     printAndLog("Adding a new election official")
     add_official(target, "bvrs.db")
@@ -66,11 +70,6 @@ def install (target):
     # This is important: restrict access to the database to the 'www' user.
     target.runCommand(f"chmod 770 {prefix}/www/data", tee=appLog)
     target.runCommand(f"chown {wwwUser}:{wwwUser} /var/www/data", tee=appLog)
-
-
-    # Restrict access to SSL key / cert
-    target.runCommand(f"chmod 770 {prefix}/www/ssl", tee=appLog)
-    target.runCommand(f"chown -R {wwwUser}:{wwwUser} {prefix}/www/ssl", tee=appLog)
 
     target.runCommand(f"install -m 770 -g {wwwUser} -o {wwwUser} bvrs.db {prefix}/www/data/bvrs.db", erroneousContents="install:",tee=appLog)
 

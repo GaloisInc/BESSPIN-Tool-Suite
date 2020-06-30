@@ -1,5 +1,6 @@
 import os
 import subprocess
+from fett.base.utils.misc import *
 
 def gen_cert(name, key_path, cert_path, passw):
     key_name = os.path.join(key_path, "%s.key" % name)

@@ -16,6 +16,8 @@ def buildApps ():
     # create the build directory
     buildDir = os.path.join(getSetting('workDir'),'build')
     mkdir(buildDir,addToSettings='buildDir')
+    mkdir(os.path.join(buildDir, "keys"))
+    mkdir(os.path.join(buildDir, "certs"))
 
     setSetting('sendTarballToTarget',False) #any app has to enable this to send the tarball to target
     tarName = os.path.join(getSetting('buildDir'),getSetting('tarballName'))
@@ -76,16 +78,17 @@ def copyWebserverFiles(tarName):
     cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
     cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "conf"))
     cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "html"))
-    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
-    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
+    #cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
+    #cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
+
+    tarFiles = ["nginx", "conf", "html", "certs", "keys"]
 
     gen_cert("fett-webserver",
-        os.path.join(getSetting('buildDir'), "common", keys),
-        os.path.join(getSetting('buildDir'), "common", certs),
+        os.path.join(getSetting('buildDir'), "keys"),
+        os.path.join(getSetting('buildDir'), "certs"),
         "OwYYyov06GkP9LN1mnvFxoY6qy"
     )
 
-    tarFiles = ["nginx", "conf", "html", "certs", "keys"]
 
     runtimeFilesDir = os.path.join(getAppDir('webserver'), getSetting('osImage'))
     if getSetting('osImage') == 'debian':
@@ -126,16 +129,18 @@ def copyVotingFiles(tarName):
     cpFilesToBuildDir(getBinDir('voting'), 'kfcgi')
     cpDirToBuildDir(os.path.join(getAppDir('voting'), 'common', 'conf', 'sites'))
     cpDirToBuildDir(os.path.join(getAppDir('voting'), 'common', 'static'))
+    #cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
+    #cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
     cp(os.path.join(getAppDir('voting'), "common", "conf"),
        os.path.join(getSetting('buildDir'), "conf"),
        pattern="*.conf")
     cp(os.path.join(getAppDir('voting'), "common"),
        os.path.join(getSetting('buildDir')),
        pattern="bvrs.db")
-    # mkdir(os.path.join(getAppDir('voting'), "common", "ssl"))
+    
     gen_cert("fett-voting",
-        os.path.join(getSetting('buildDir'), "common", keys),
-        os.path.join(getSetting('buildDir'), "common", certs),
+        os.path.join(getSetting('buildDir'), "keys"),
+        os.path.join(getSetting('buildDir'), "certs"),
         "OwYYyov06GkP9LN1mnvFxoY6qy"
     )
 
