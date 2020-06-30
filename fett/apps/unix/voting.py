@@ -6,6 +6,7 @@ This is executed after loading the app on the target to execute this app
 from fett.base.utils.misc import *
 from fett.apps.unix.webserver import curlTest
 from fett.apps.unix.database import sqliteCmd
+from fett.base.utils.ssl import gen_cert
 import string, secrets, crypt
 import json, os
 
@@ -31,7 +32,8 @@ def add_official(target, dbfile):
     sqliteCmd(target, sqlite, dbfile, select, tee=appLog, 
               expectedContents="0|official|") # expecting the hash causes issues with FreeBSD
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
-            
+
+
 @decorate.debugWrap
 @decorate.timeWrap
 def install (target):
@@ -47,6 +49,7 @@ def install (target):
     target.runCommand(f"mkdir -p {prefix}/www/cgi-bin",tee=appLog)
     target.runCommand(f"mkdir -p {prefix}/www/bvrs/bvrs",tee=appLog)
     target.runCommand(f"mkdir -p {prefix}/www/data",tee=appLog)
+    target.runCommand(f"mkdir -p  {prefix}/www/ssl", tee=appLog)
 
     target.runCommand("install kfcgi /usr/local/sbin/kfcgi", erroneousContents="install:",tee=appLog)
     target.runCommand(f"install bvrs {prefix}/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
@@ -56,9 +59,20 @@ def install (target):
     printAndLog("Adding a new election official")
     add_official(target, "bvrs.db")
     
+    gen_cert("fett-voting","{prefix}/www/ssl", "OwYYyov06GkP9LN1mnvFxoY6qy")
+
+    target.runCommand("install kfcgi /usr/local/sbin/kfcgi", erroneousContents="install:",tee=appLog)
+    target.runCommand("install bvrs /var/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
+
     # This is important: restrict access to the database to the 'www' user.
     target.runCommand(f"chmod 770 {prefix}/www/data", tee=appLog)
     target.runCommand(f"chown {wwwUser}:{wwwUser} /var/www/data", tee=appLog)
+
+
+    # Restrict access to SSL key / cert
+    target.runCommand(f"chmod 770 {prefix}/www/ssl", tee=appLog)
+    target.runCommand(f"chown -R {wwwUser}:{wwwUser} {prefix}/www/ssl", tee=appLog)
+
     target.runCommand(f"install -m 770 -g {wwwUser} -o {wwwUser} bvrs.db {prefix}/www/data/bvrs.db", erroneousContents="install:",tee=appLog)
 
     target.runCommand("echo \"Starting BVRS CGI Handler...\"",tee=appLog)
