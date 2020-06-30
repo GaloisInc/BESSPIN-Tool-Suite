@@ -6,7 +6,6 @@ This is executed after loading the app on the target to execute this app
 from fett.base.utils.misc import *
 from fett.apps.unix.webserver import curlTest
 from fett.apps.unix.database import sqliteCmd
-from fett.base.utils.ssl import gen_cert
 import string, secrets, crypt
 import json, os
 
