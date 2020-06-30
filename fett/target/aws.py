@@ -237,10 +237,14 @@ class connectalTarget(commonTarget):
             self.runCommand (f"ifconfig eth0 {self.ipTarget}")
             self.runCommand (f"ifconfig eth0 netmask {getSetting('awsNetMaskTarget')}")
             self.runCommand (f"ifconfig eth0 hw ether {getSetting('awsMacAddrTarget')}")
+            # Add a default route through the NAT
+            self.runCommand(f"ip route add default via {self.ipHost}")
         elif (isEqSetting('osImage', 'FreeBSD')):
             outCmd = self.runCommand ("ifconfig vtnet0 up")
             self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
             self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
+            # Add a default route through the NAT
+            self.runCommand(f"route add default {self.ipHost}")
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
