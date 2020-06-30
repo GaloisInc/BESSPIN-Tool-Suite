@@ -265,10 +265,12 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    $ git submodule update
    $ cd SSITH-FETT-Binaries
    $ git-lfs pull
+   ```
+   For a machine that will checkout and pull different versions of `SSITH-FETT-Target` (like one for CI), it is useful to stash the binary repo before updating it as a submodule and pulling. Use
+   ```
    $ git stash
    ```
-
-11. Clear personal items and prepare image for AMI creation. 
+12. Clear personal items and prepare image for AMI creation. 
 
     * remove git usernames if they are configured, clearing
 
@@ -287,5 +289,7 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
     $ history -c
     ```
 
-12. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
+13. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
+
+14. Go to `AMIs` in the EC2 dashboard. Select the new AMI and `Modify Image Permissions`. Add the production accounts to the AMI permissions.
 
