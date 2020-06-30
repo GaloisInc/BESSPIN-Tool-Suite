@@ -251,7 +251,6 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
         elif (isEqSetting('osImage','FreeBSD')):
-            ntpServer = "pool.ntp.org"
             if isEqSetting('target', 'aws'):
                 # Delete default NTP pool
                 self.runCommand('sed -i "" "/^pool/d" /etc/ntp.conf')
@@ -260,6 +259,7 @@ class commonTarget():
                 self.runCommand(f"echo 'server {ntpServer} iburst' >> "
                                 "/etc/ntp.conf")
             else:
+                ntpServer = "0.freebsd.pool.ntp.org"
                 self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
 
             # Manually sync first time (ntpd will refuse to start if the clock
