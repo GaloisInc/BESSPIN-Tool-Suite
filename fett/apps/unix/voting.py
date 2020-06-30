@@ -55,12 +55,11 @@ def install (target):
     target.runCommand(f"install bvrs {prefix}/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
     target.runCommand(f"install static/index.html {prefix}/www/bvrs", erroneousContents="install:",tee=appLog)
     target.runCommand(f"install static/bvrs/* {prefix}/www/bvrs/bvrs", erroneousContents="install:",tee=appLog)
-    
+    target.runCommand(f"install ssl/* {prefix}/www/ssl", erroneousContents="install:",tee=appLog)
+
     printAndLog("Adding a new election official")
     add_official(target, "bvrs.db")
     
-    gen_cert("fett-voting",f"{prefix}/www/ssl", "OwYYyov06GkP9LN1mnvFxoY6qy")
-
     target.runCommand("install kfcgi /usr/local/sbin/kfcgi", erroneousContents="install:",tee=appLog)
     target.runCommand("install bvrs /var/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
 

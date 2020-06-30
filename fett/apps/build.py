@@ -4,6 +4,7 @@ Building apps
 """
 
 from fett.base.utils.misc import *
+from fett.base.utils.ssl import gen_cert
 from fett.apps.freertos import freertos
 import os
 
@@ -125,9 +126,16 @@ def copyVotingFiles(tarName):
     cp(os.path.join(getAppDir('voting'), "common"),
        os.path.join(getSetting('buildDir')),
        pattern="bvrs.db")
+
+    gen_cert("fett-voting",
+        os.path.join(getAppDir("voting"), "common", "ssl"),
+        "OwYYyov06GkP9LN1mnvFxoY6qy")
+
     filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf', 'bvrs.db']))
     filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
     filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
+    filesList.append('ssl', os.path.join(getSetting('buildDir'), 'ssl')))
+
     # Need kfcgi, webserver's nginx.conf, bvrs app
     # We should probably just generate the initial database script here
     return filesList
