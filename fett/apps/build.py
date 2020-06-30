@@ -79,6 +79,12 @@ def copyWebserverFiles(tarName):
     cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
     cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
 
+    gen_cert("fett-webserver",
+        os.path.join(getSetting('buildDir'), "common", keys),
+        os.path.join(getSetting('buildDir'), "common", certs),
+        "OwYYyov06GkP9LN1mnvFxoY6qy"
+    )
+
     tarFiles = ["nginx", "conf", "html", "certs", "keys"]
 
     runtimeFilesDir = os.path.join(getAppDir('webserver'), getSetting('osImage'))
@@ -126,15 +132,16 @@ def copyVotingFiles(tarName):
     cp(os.path.join(getAppDir('voting'), "common"),
        os.path.join(getSetting('buildDir')),
        pattern="bvrs.db")
-
+    # mkdir(os.path.join(getAppDir('voting'), "common", "ssl"))
     gen_cert("fett-voting",
-        os.path.join(getAppDir("voting"), "common", "ssl"),
-        "OwYYyov06GkP9LN1mnvFxoY6qy")
+        os.path.join(getSetting('buildDir'), "common", keys),
+        os.path.join(getSetting('buildDir'), "common", certs),
+        "OwYYyov06GkP9LN1mnvFxoY6qy"
+    )
 
     filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf', 'bvrs.db']))
     filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
     filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
-    filesList.append('ssl', os.path.join(getSetting('buildDir'), 'ssl')))
 
     # Need kfcgi, webserver's nginx.conf, bvrs app
     # We should probably just generate the initial database script here

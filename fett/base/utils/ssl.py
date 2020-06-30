@@ -1,10 +1,10 @@
 import os
 import subprocess
 
-def gen_cert(name, path, passw):
-    key_name = os.path.join(path, "%s.key" % name)
-    csr_name = os.path.join(path, "%s.csr" % name)
-    crt_name = os.path.join(path, "%s.crt" % name)
+def gen_cert(name, key_path, cert_path, passw):
+    key_name = os.path.join(key_path, "%s.key" % name)
+    csr_name = os.path.join(key_path, "%s.csr" % name)
+    crt_name = os.path.join(cert_path, "%s.crt" % name)
     cur_dir = os.path.abspath(os.path.dirname(__file__))
     ca_path = os.path.join(cur_dir, "../../../apps/ssl/")
     ca_key = os.path.join(ca_path, "fettCA.key")
