@@ -7,6 +7,10 @@ inputs:
   run:
     required: true
     description: ""
+  image:
+    required: false
+    description: ""
+    default: "artifactory.galois.com:5008/fett-target:ci"
 runs:
   using: node12
   main: index.js
