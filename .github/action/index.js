@@ -3,6 +3,8 @@ const process = require("process");
 
 const toInpt = (n) => `INPUT_${n.replace(/ /g, "_").toUpperCase()}`;
 const getInput = (n) => (process.env[toInpt(n)] || "").trim();
+const group = (g) => console.log(`::group::${g}`);
+const endGroup = () => console.log("::endgroup::");
 
 const env = ["-e HOME=/home/besspinuser", "-e CI=true"].concat(
   [
@@ -23,17 +25,14 @@ const env = ["-e HOME=/home/besspinuser", "-e CI=true"].concat(
     "EVENT_PATH",
     "ACTIONS=true",
   ].map((e) => `-e GITHUB_${e}`),
-  ["ssh-key", "run"].map((e) => `-e ${toInpt(e)}`),
+  ["ssh-key", "run", "image"].map((e) => `-e ${toInpt(e)}`),
   ["RUNTIME_URL", "RUNTIME_TOKEN", "CACHE_URL"].map((e) => `-e ACTIONS_${e}`),
   ["OS", "TOOL_CACHE", "TEMP", "WORKSPACE"].map((e) => `-e RUNNER_${e}`)
 );
 
-try {
+function runDocker(image) {
   const sshKey = getInput("ssh-key");
   const run = getInput("run");
-  // This works because the VM with the self hosted runner has already pulled the image.
-  const image =
-    getInput("image") || "artifactory.galois.com:5008/fett-target:ci";
   const hash = require("crypto").randomBytes(4).toString("hex");
 
   const work = "/root/actions-runner/_work";
@@ -50,6 +49,7 @@ try {
       "--workdir /github/workspace",
       ...env,
       "-v /var/run/docker.sock:/var/run/docker.sock",
+      `-v ${work}/_cache/nix/store:/nix/store:ro`,
       `-v ${work}/_temp/_github_home:/github/home`,
       `-v ${work}/_temp/_github_workflow:/github/workflow`,
       `-v ${work}/SSITH-FETT-Target/SSITH-FETT-Target:/github/workspace`,
@@ -65,7 +65,22 @@ try {
     ],
     { shell: true, stdio: "inherit" }
   );
-  docker.on("exit", (c) => process.exit(c));
+  docker.on("exit", (c) => endGroup() || process.exit(c));
+}
+
+try {
+  // This works because the machines with the self hosted runner have already logged into artifactory
+  const image =
+    getInput("image") || "artifactory.galois.com:5008/fett-target:ci";
+
+  group("Pulling docker image");
+  const child = child_process.spawn(`docker pull ${image}`, {
+    shell: true,
+    stdio: "inherit",
+  });
+  child.on("exit", (c) =>
+    c === 0 ? endGroup() || runDocker(image) : process.exit(c)
+  );
 } catch (error) {
   process.stderr.write(error.message);
   process.exitCode = 1;
