@@ -23,6 +23,7 @@ def gen_cert(name, path, passw):
         stdin = subprocess.PIPE,
         stdout = subprocess.PIPE,
         stderr = subprocess.PIPE,
+        encoding = "utf8",
         shell=False
     )
     process.communicate("%s\n" % passw)
