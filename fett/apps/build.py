@@ -144,7 +144,7 @@ def copyVotingFiles(tarName):
         "OwYYyov06GkP9LN1mnvFxoY6qy"
     )
 
-    filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf', 'bvrs.db']))
+    filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf','keys','certs', 'bvrs.db']))
     filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
     filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
 
