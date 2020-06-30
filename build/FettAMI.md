@@ -263,6 +263,9 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    $ cd SSITH-FETT-Target
    $ git submodule init
    $ git submodule update
+   $ cd SSITH-FETT-Binaries
+   $ git-lfs pull
+   $ git stash
    ```
 
 11. Clear personal items and prepare image for AMI creation. 
