@@ -73,6 +73,7 @@ try {
   const image =
     getInput("image") || "artifactory.galois.com:5008/fett-target:ci";
 
+  console.log(`Hostname is: ${require("os").hostname()}`);
   group("Pulling docker image");
   const child = child_process.spawn(`docker pull ${image}`, {
     shell: true,
