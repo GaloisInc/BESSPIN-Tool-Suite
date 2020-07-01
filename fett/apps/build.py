@@ -78,8 +78,6 @@ def copyWebserverFiles(tarName):
     cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
     cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "conf"))
     cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "html"))
-    #cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
-    #cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
 
     tarFiles = ["nginx", "conf", "html", "certs", "keys"]
 
@@ -128,8 +126,6 @@ def copyVotingFiles(tarName):
     cpFilesToBuildDir(getBinDir('voting'), 'kfcgi')
     cpDirToBuildDir(os.path.join(getAppDir('voting'), 'common', 'conf', 'sites'))
     cpDirToBuildDir(os.path.join(getAppDir('voting'), 'common', 'static'))
-    #cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
-    #cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
     cp(os.path.join(getAppDir('voting'), "common", "conf"),
        os.path.join(getSetting('buildDir'), "conf"),
        pattern="*.conf")
