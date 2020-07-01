@@ -49,7 +49,6 @@ function runDocker(image) {
       "--workdir /github/workspace",
       ...env,
       "-v /var/run/docker.sock:/var/run/docker.sock",
-      `-v ${work}/_cache/nix/store:/nix/store:ro`,
       `-v ${work}/_temp/_github_home:/github/home`,
       `-v ${work}/_temp/_github_workflow:/github/workflow`,
       `-v ${work}/SSITH-FETT-Target/SSITH-FETT-Target:/github/workspace`,
