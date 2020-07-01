@@ -530,6 +530,15 @@ def prepareFiresim():
     """prepare the firesim binaries for the FETT work directory"""
     copyAWSSources()
 
+    if isEqSetting('osImage', 'debian'):
+        nixImage = getSettingDict('nixEnv', ['debian-rootfs', 'firesim'])
+        if isEqSetting('binarySource', 'GFE') and nixImage in os.environ:
+            imageSourcePath = os.environ[nixImage]
+        else:
+            imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'firesim', 'debian.img.zst')
+        imageFile = os.path.join(imageDir, 'debian.img')
+        zstdDecompress(imageSourcePath, imageFile)
+
     dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
     setSetting("osImageDwarf",dwarfFile)
     touch(dwarfFile)
