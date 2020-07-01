@@ -536,8 +536,9 @@ def prepareFiresim():
             imageSourcePath = os.environ[nixImage]
         else:
             imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'firesim', 'debian.img.zst')
-        imageFile = os.path.join(imageDir, 'debian.img')
+        imageFile = os.path.join(getSetting('osImagesDir'), 'debian.img')
         zstdDecompress(imageSourcePath, imageFile)
+        os.chmod(imageFile, 0o664) # If the image was copied from the Nix store, it was read-only
 
     dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
     setSetting("osImageDwarf",dwarfFile)
