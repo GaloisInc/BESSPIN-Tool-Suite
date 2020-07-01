@@ -262,10 +262,10 @@ class commonTarget():
                 ntpServer = "0.freebsd.pool.ntp.org"
                 self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
 
-            # Manually sync first time (ntpd will refuse to start if the clock
-            # is too far off) then start the ntpd daemon
-            self.runCommand(f"ntpdate -u {ntpServer}")
-            self.runCommand("service ntpd onestart")
+            # Add ntpd to rc.conf and start it
+            self.runCommand("echo 'ntpd_enable=\"YES\"' >> /etc/rc.conf")
+            self.runCommand("echo 'ntpd_sync_on_start=\"YES\"' >> /etc/rc.conf")
+            self.runCommand("service ntpd start")
                                 
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
