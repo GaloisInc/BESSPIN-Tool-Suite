@@ -674,6 +674,7 @@ class commonTarget():
         # Everything is already installed on SRI-Cambridge source
         if isEqSetting('binarySource', 'SRI-Cambridge'):
             setSetting('sqliteBin','/fett/bin/sqlite3')
+            voting.sriCambdridgeSetup(self)
         else:
             setSetting('sqliteBin','/usr/bin/sqlite')
             for appModule in self.appModules:
