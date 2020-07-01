@@ -85,8 +85,7 @@ def copyWebserverFiles(tarName):
 
     gen_cert("fett-webserver",
         os.path.join(getSetting('buildDir'), "keys"),
-        os.path.join(getSetting('buildDir'), "certs"),
-        "OwYYyov06GkP9LN1mnvFxoY6qy"
+        os.path.join(getSetting('buildDir'), "certs")
     )
 
 
@@ -140,8 +139,7 @@ def copyVotingFiles(tarName):
     
     gen_cert("fett-voting",
         os.path.join(getSetting('buildDir'), "keys"),
-        os.path.join(getSetting('buildDir'), "certs"),
-        "OwYYyov06GkP9LN1mnvFxoY6qy"
+        os.path.join(getSetting('buildDir'), "certs")
     )
 
     filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf','keys','certs', 'bvrs.db']))

@@ -2,29 +2,22 @@ import os
 import subprocess
 from fett.base.utils.misc import *
 
-def gen_cert(name, key_path, cert_path, passw):
-    key_name = os.path.join(key_path, "%s.key" % name)
-    csr_name = os.path.join(key_path, "%s.csr" % name)
-    crt_name = os.path.join(cert_path, "%s.crt" % name)
-    cur_dir = os.path.abspath(os.path.dirname(__file__))
-    ca_path = os.path.join(cur_dir, "../../../apps/ssl/")
+def gen_cert(name, key_path, cert_path):
+    key_name = os.path.join(key_path, f"{name}.key")
+    csr_name = os.path.join(key_path, f"{name}.csr")
+    crt_name = os.path.join(cert_path, f"{name}.crt")
+    ca_path = os.path.join(getSetting('repoDir'), 'apps', 'ssl')
     ca_key = os.path.join(ca_path, "fettCA.key")
     ca_pem = os.path.join(ca_path, "fettCA.pem")
 
-    subj = "/C=US/ST=OR/L=Portland/O=Galois, Inc/CN=%s" % name
+    subj = f"/C=US/ST=OR/L=Portland/O=Galois, Inc/CN={name}"
     # Private Key
-    subprocess.call(['openssl', 'genrsa', '-out', key_name, '2048'])
+    shellCommand(['openssl', 'genrsa', '-out', key_name, '2048'])
     # Certificate Signing Request
-    subprocess.call(['openssl', 'req', '-new', '-key', key_name, '-out', csr_name,
+    shellCommand(['openssl', 'req', '-new', '-key', key_name, '-out', csr_name,
     '-subj', subj])
     # Certificate
-    process = subprocess.Popen(['openssl', 'x509', '-req', '-in', csr_name, '-CA', ca_pem,
+    shellCommand(['openssl', 'x509', '-req', '-in', csr_name, '-CA', ca_pem,
         '-CAkey', ca_key, '-CAcreateserial', '-out', crt_name, '-days', '825',
-         '-sha256', '-passin', 'stdin'],
-        stdin = subprocess.PIPE,
-        stdout = subprocess.PIPE,
-        stderr = subprocess.PIPE,
-        encoding = "utf8",
-        shell=False
+         '-sha256']
     )
-    process.communicate("%s\n" % passw)
