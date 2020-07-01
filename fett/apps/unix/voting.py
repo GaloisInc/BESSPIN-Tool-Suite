@@ -6,7 +6,7 @@ This is executed after loading the app on the target to execute this app
 from fett.base.utils.misc import *
 from fett.apps.unix.webserver import curlTest
 from fett.apps.unix.database import sqliteCmd
-import string, secrets, crypt
+import string, secrets, crypt, base64
 import json, os
 
 @decorate.debugWrap
@@ -77,6 +77,17 @@ def install (target):
     target.runCommand(f"/usr/local/sbin/kfcgi -s {prefix}/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- {prefix}/www/cgi-bin/bvrs {prefix}/www/data/bvrs.db",tee=appLog)
     return
 
+@decorate.debugWrap
+@decorate.timeWrap
+def sriCambdridgeSetup(target):
+    if (not isEqSetting('binarySource', 'SRI-Cambridge')):
+        target.shutdownAndExit("<sriCambdridgeSetup> should only be called for <binarySource=SRI-Cambdrdige>.",exitCode=EXIT.Dev_Bug)
+    # Add the voting password to the logs
+    retCatPassword = target.runCommand("cat /root/bvrs-offical-password")[1]
+    passwordMatch = matchExprInLines (r"^(?P<b64Password>[A-Za-z0-9+/]{16})$",retCatPassword.splitlines())
+    if (not passwordMatch):
+        target.shutdownAndExit("<sriCambdridgeSetup>: Failed to obtain the election official password.",exitCode=EXIT.Run)
+    printAndLog(f"The election official credentials are: username 'official' and password (base64) '{passwordMatch.group('b64Password')}'")
 
 @decorate.debugWrap
 @decorate.timeWrap
