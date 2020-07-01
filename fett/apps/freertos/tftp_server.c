@@ -575,19 +575,9 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
         // caller responsible
         return 0;
     }
-    else
-    {
-        fettPrintf("(Info)~  TFTP created Listening Socket OK\n");
-    }
 
     /* Bind to the standard TFTP port. */
     FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
-    {
-        uint8_t IP_Address_String[16]; // "255.255.255.255\0" is 16 chars
-        FreeRTOS_inet_ntoa(ulIPAddress, IP_Address_String);
-        fettPrintf("(Info)~  TFTP Target IP address is %s\n",
-                   IP_Address_String);
-    }
 
     xBindAddress.sin_addr = ulIPAddress;
     xBindAddress.sin_port = FreeRTOS_htons(TFTP_PORT);
@@ -668,12 +658,16 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     }
     else
     {
-        // Timeout or something weird happened, but carry on
-        fettPrintf("(Warning)~  TFTP recvfrom() failed with return code %d\n",
-                   (int)lBytes);
+        // ERRNO_EWOULDBLOCK indicates timeout, which can happen when
+        // there are no incoming TFTP requests, so ignore it
+        if (lBytes != -pdFREERTOS_ERRNO_EWOULDBLOCK)
+        {
+            // Something weird happened, but carry on
+            fettPrintf("(Warning)~  TFTP recvfrom() failed with return code %d\n",
+                       (int)lBytes);
+        }
     }
 
-    fettPrintf("(Info)~  TFTP Closing main listening socket.\n");
     FreeRTOS_closesocket(xTFTPListeningSocket);
 
     if (Receive_Result == pdFAIL)

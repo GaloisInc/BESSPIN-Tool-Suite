@@ -7,8 +7,6 @@
 
 #define OTA_FILE_MIN_SIZE (ED25519_SIG_SIZE + 1)
 
-static intptr_t wptl = 0;
-
 uint8_t file_buffer[OTA_MAX_SIGNED_PAYLOAD_SIZE]; // SIZE set in setupEnv.json
 
 /* Sets file_buffer[0 .. OTA_MAX_SIGNED_PAYLOAD_SIZE-1] to all zero bytes */
@@ -181,9 +179,13 @@ void Receive_And_Process_One_OTA_Request(ed25519_key *pk)
     }
     else
     {
-        // Odd, but harmless, so carry on...
-        fettPrintf(
-            "(Info)~  vOta: OTA: received file too small to be signed.\n");
+        // received_file_size == 0 indicates that the TFTP server
+        // just timed out on its listening socket, so ignore that
+        if (received_file_size != 0)
+        {
+            fettPrintf(
+                "(Info)~  vOta: OTA: received file too small to be signed.\n");
+        }
     }
 
 }
