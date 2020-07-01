@@ -538,7 +538,10 @@ def prepareFiresim():
             imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'firesim', 'debian.img.zst')
         imageFile = os.path.join(getSetting('osImagesDir'), 'debian.img')
         zstdDecompress(imageSourcePath, imageFile)
-        os.chmod(imageFile, 0o664) # If the image was copied from the Nix store, it was read-only
+        try:
+            os.chmod(imageFile, 0o664) # If the image was copied from the Nix store, it was read-only
+        except Exception as exc:
+            logAndExit(f"Could not change permissions on file {imageFile}", exitCode=EXIT.Files_and_paths)
 
     dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
     setSetting("osImageDwarf",dwarfFile)
