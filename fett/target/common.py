@@ -255,11 +255,9 @@ class commonTarget():
                 # Delete default NTP pool
                 self.runCommand('sed -i "" "/^pool/d" /etc/ntp.conf')
                 # Add AWS NTP server
-                ntpServer = awsNtpServer
-                self.runCommand(f"echo 'server {ntpServer} iburst' >> "
+                self.runCommand(f"echo 'server {awsNtpServer} iburst' >> "
                                 "/etc/ntp.conf")
             else:
-                ntpServer = "0.freebsd.pool.ntp.org"
                 self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
 
             # Add ntpd to rc.conf and start it
