@@ -291,6 +291,13 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    ```
    $ git stash
    ```
+
+11. In `/etc/pam.d/system-auth`, comment out this line:
+```
+-session     optional      pam_systemd.so
+```
+This causes the polling timeout on a system bus socket when using sudo with cloud-hook. More info can be found [here](https://bugs.launchpad.net/tripleo/+bug/1819461).
+
 12. Clear personal items and prepare image for AMI creation. 
 
     * remove git usernames if they are configured, clearing
