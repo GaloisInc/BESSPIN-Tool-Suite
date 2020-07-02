@@ -161,6 +161,7 @@ size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStrea
     bytes = xSize * xItems;
     #ifdef FETT_AWS
         int res = f_write(&(pxStream->fatfsFile), (uint8_t *)pvBuffer, bytes, &bytes_written); /* Write data to the file */
+	fettPrintf("bytes=%u, bytes_written=%u\r\n",bytes,bytes_written);
         if (res != FR_OK) {
             fettPrintf ("(Error)~ ff_fwrite: failed to write to file. [ret=%d]\r\n",res);
             return 0; // 0 items written
