@@ -638,7 +638,13 @@ class commonTarget():
     def sendTar(self,timeout=15): #send tarball to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
-        self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            self.switchUser() #this is assuming it was on root
+            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=30,forceScp=True)
+            self.switchUser()
+            self.runCommand(f"mv /home/{self.userName}/{getSetting('tarballName')} /root/")
+        else:
+            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
         #---untar
         if (isEqSetting('osImage','debian')):
             self.runCommand(f"tar xvf {getSetting('tarballName')} --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
