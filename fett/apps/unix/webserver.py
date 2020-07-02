@@ -10,6 +10,8 @@ from fett.base.utils.misc import *
 @decorate.timeWrap
 def install (target):
     # target is a fett target object
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        return
     appLog = getSetting('appLog')
     printAndLog("Installing nginx...",tee=appLog)
     target.runCommand("echo \"Installing nginx...\"",tee=appLog)

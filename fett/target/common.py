@@ -670,16 +670,16 @@ class commonTarget():
         appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
         appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
         setSetting("appLog",appLog)
-        # Install
-        # Everything is already installed on SRI-Cambridge source
+
         if isEqSetting('binarySource', 'SRI-Cambridge'):
             setSetting('sqliteBin','/fett/bin/sqlite3')
-            voting.sriCambdridgeSetup(self)
         else:
             setSetting('sqliteBin','/usr/bin/sqlite')
-            for appModule in self.appModules:
-                appModule.install(self)
-                appLog.flush()
+
+        # Install
+        for appModule in self.appModules:
+            appModule.install(self)
+            appLog.flush()
 
         # Test    
         for appModule in self.appModules:

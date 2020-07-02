@@ -37,9 +37,16 @@ def add_official(target, dbfile):
 @decorate.timeWrap
 def install (target):
     if (isEqSetting('binarySource','SRI-Cambridge')):
-      prefix = "/fett/var"
+        prefix = "/fett/var"
+        # Add the voting password to the logs
+        retCatPassword = target.runCommand("cat /root/bvrs-offical-password")[1]
+        passwordMatch = matchExprInLines (r"^(?P<b64Password>[A-Za-z0-9+/]{16})$",retCatPassword.splitlines())
+        if (not passwordMatch):
+            target.shutdownAndExit("<sriCambdridgeSetup>: Failed to obtain the election official password.",exitCode=EXIT.Run)
+        printAndLog(f"The election official credentials are: username 'official' and password (base64) '{passwordMatch.group('b64Password')}'")
+        return
     else:
-      prefix = "/var"
+        prefix = "/var"
     appLog = getSetting('appLog')
     printAndLog("Installing voting server")
     wwwUser = "www" if isEqSetting('osImage', 'FreeBSD') else "www-data"
@@ -76,18 +83,6 @@ def install (target):
 
     target.runCommand(f"/usr/local/sbin/kfcgi -s {prefix}/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- {prefix}/www/cgi-bin/bvrs {prefix}/www/data/bvrs.db",tee=appLog)
     return
-
-@decorate.debugWrap
-@decorate.timeWrap
-def sriCambdridgeSetup(target):
-    if (not isEqSetting('binarySource', 'SRI-Cambridge')):
-        target.shutdownAndExit("<sriCambdridgeSetup> should only be called for <binarySource=SRI-Cambdrdige>.",exitCode=EXIT.Dev_Bug)
-    # Add the voting password to the logs
-    retCatPassword = target.runCommand("cat /root/bvrs-offical-password")[1]
-    passwordMatch = matchExprInLines (r"^(?P<b64Password>[A-Za-z0-9+/]{16})$",retCatPassword.splitlines())
-    if (not passwordMatch):
-        target.shutdownAndExit("<sriCambdridgeSetup>: Failed to obtain the election official password.",exitCode=EXIT.Run)
-    printAndLog(f"The election official credentials are: username 'official' and password (base64) '{passwordMatch.group('b64Password')}'")
 
 @decorate.debugWrap
 @decorate.timeWrap
