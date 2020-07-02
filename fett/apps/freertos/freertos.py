@@ -30,6 +30,10 @@ def curlTest(target, url, extra=[], http2=False):
     out = curlRequest(url, http2=http2, extra=extra, rawOutput=False)
     if (not out):
         return (0,0)
+
+    printAndLog("(Host)~  curl returned:", doPrint=False,tee=getSetting('appLog'))
+    printAndLog(f"{out}", doPrint=False,tee=getSetting('appLog'))
+
     # Line 0 of "out" should be something like "HTTP/1.1 200 OK".
     # We're mainly interested in the middle one - the return status code
     try:
@@ -127,6 +131,17 @@ def deploymentTest(target):
     clientTftp = tftpy.TftpClient(targetIP, TFTPPort)
 
     printAndLog ("Starting HTTP Smoketests.",doPrint=True,tee=getSetting('appLog'))
+
+    ####################################
+    # SPECIAL TEST FOR 534
+    getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 1 - GET index.htm\n")
+    HTTPSmokeTest(target, 'index.htm', 'index.htm', WEB_REPLY_OK, 1, 'TTY, UART, HTTP')
+    #OtaFile = f"{getSettingDict('freertosAssets',['otaHtml'])}"
+    #getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 534 - GET ota.htm\n")
+    #HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 534, 'HTTP GET')
+
+    return 
+    ####################################
 
     ###################################
     # SmokeTests for the HTTP Server
