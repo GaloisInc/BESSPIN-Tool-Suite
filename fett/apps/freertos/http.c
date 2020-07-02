@@ -29,7 +29,9 @@ void Initialize_HTTP_Assets(void)
     // Code below must always reach a call to ff_release()
     ff_lock();
 
-    for (int i = 0; i < asset_files; i++)
+    // Special test case for #534 - only initialize asset 0
+    for (int i = 0; i < 1; i++)
+    //    for (int i = 0; i < asset_files; i++)
     {
         FF_FILE *fd;
         size_t written;
@@ -45,6 +47,14 @@ void Initialize_HTTP_Assets(void)
         fd = ff_fopen(this_name, "w");
         if (fd != NULL)
         {
+
+	    fettPrintf("(Info)~  Initialize_HTTP_Assets writing...\n");
+	    for (size_t j = 0; j < this_size; j++)
+	      fettPrintf ("%c ", asset_data[i][j]);
+	    fettPrintf("(Info)~  Initialize_HTTP_Assets writing done...\n");
+
+
+
             written = ff_fwrite((void *)asset_data[i], 1, this_size, fd);
             if (written != this_size)
             {
