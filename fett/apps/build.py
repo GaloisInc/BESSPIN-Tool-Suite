@@ -91,6 +91,8 @@ def copyWebserverFiles(tarName):
     elif getSetting('osImage') == 'FreeBSD':
         cpFilesToBuildDir (runtimeFilesDir, pattern="rcfile")
         tarFiles += ["rcfile"]
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            tarFiles = ["certs", "keys"] #Only those are needed
     else:
         logAndExit (f"Installing nginx is not supported on <{getSetting('osImage')}>",
                     exitCode=EXIT.Dev_Bug)
@@ -135,9 +137,12 @@ def copyVotingFiles(tarName):
         os.path.join(getSetting('buildDir'), "certs")
     )
 
-    filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf','keys','certs', 'bvrs.db']))
-    filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
-    filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        filesList = list(map(buildDirPathTuple, ['keys','certs']))
+    else:
+        filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf','keys','certs', 'bvrs.db']))
+        filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
+        filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
 
     # Need kfcgi, webserver's nginx.conf, bvrs app
     # We should probably just generate the initial database script here
@@ -170,8 +175,6 @@ def buildWebserver(tarName):
     if (isEnabled('buildApps')):
         logAndExit (f"Building from source is not supported for the webserver application",
                     exitCode=EXIT.Configuration)
-    elif isEqSetting('binarySource', 'SRI-Cambridge'):
-        return
     else:
         tarFiles = copyWebserverFiles(tarName)
         #Create the tarball here to be sent to target
@@ -202,8 +205,6 @@ def buildVoting(tarName):
     if (isEnabled('buildApps')):
         logAndExit (f"Building from source is not supported for the voting application",
                     exitCode=EXIT.Configuration)
-    elif isEqSetting('binarySource', 'SRI-Cambridge'):
-        return
     else:
         tarFiles = copyVotingFiles(tarName)
         tar (tarName, filesList=tarFiles)
