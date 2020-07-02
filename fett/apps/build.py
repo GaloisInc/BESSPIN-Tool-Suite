@@ -29,14 +29,11 @@ def buildApps ():
     if (isEqSetting('osImage','FreeRTOS')):
         buildFreeRTOSapps()
     elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-        if not (getSetting('binarySource') in ['SRI-Cambridge']):
-            buildWebserver(tarName)
-            buildDatabase(tarName)
-            buildVoting(tarName)
-            if (getSetting('binarySource') in ['MIT']):
-                buildEnclaves(tarName)
-        else:
-            warnAndLog(f"<launch.buildApps> binary source {getSetting('binarySource')} has apps in image. Skipping builds")
+        buildWebserver(tarName)
+        buildDatabase(tarName)
+        buildVoting(tarName)
+        if (getSetting('binarySource') in ['MIT']):
+            buildEnclaves(tarName)
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
@@ -173,6 +170,8 @@ def buildWebserver(tarName):
     if (isEnabled('buildApps')):
         logAndExit (f"Building from source is not supported for the webserver application",
                     exitCode=EXIT.Configuration)
+    elif isEqSetting('binarySource', 'SRI-Cambridge'):
+        return
     else:
         tarFiles = copyWebserverFiles(tarName)
         #Create the tarball here to be sent to target
@@ -187,6 +186,8 @@ def buildDatabase(tarName):
     if (isEnabled('buildApps')):
         logAndExit (f"Building from source is not supported for the database application",
                     exitCode=EXIT.Configuration)
+    elif isEqSetting('binarySource', 'SRI-Cambridge'):
+        return
     else:
         tarFiles = copyDatabaseFiles(tarName)
         tar (tarName, filesList=tarFiles)
@@ -201,6 +202,8 @@ def buildVoting(tarName):
     if (isEnabled('buildApps')):
         logAndExit (f"Building from source is not supported for the voting application",
                     exitCode=EXIT.Configuration)
+    elif isEqSetting('binarySource', 'SRI-Cambridge'):
+        return
     else:
         tarFiles = copyVotingFiles(tarName)
         tar (tarName, filesList=tarFiles)

@@ -9,6 +9,8 @@ from fett.base.utils.misc import *
 @decorate.debugWrap
 @decorate.timeWrap
 def install(target):
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        return
     # target is a fett target object
     printAndLog("Installing sqlite...",tee=getSetting('appLog'))
 
