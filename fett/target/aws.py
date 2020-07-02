@@ -580,6 +580,17 @@ def prepareConnectal():
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
         zstdDecompress(imageSourcePath, imageFile)
 
+    elif isEqSetting('binarySource', 'GFE') and isEqSetting("osImage", "FreeBSD"):
+        # TODO: reflect this in the setupEnv.json file somewhere
+        rootfsVar = "FETT_GFE_FREEBSD_ROOTFS_CONNECTAL"
+        if rootfsVar not in os.environ:
+            logAndExit(f"<prepareConnectal>: required image os environment variable {rootfsVar} not found in environment!")
+        zstSourcePath = os.environ["FETT_GFE_FREEBSD_ROOTFS_CONNECTAL"]
+        zstFilePath = os.path.join(imageDir, f"{getSetting('osImage')}.img.zst")
+        imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
+        cp(zstSourcePath, zstFilePath)
+        zstdDecompress(zstFilePath, imageFile)
+ 
     # connectal requires a device tree blob
     dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
     dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')

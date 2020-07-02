@@ -210,7 +210,10 @@ class commonTarget():
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             # set the temporary prompt
-            tempPrompt = "~ #" if isEqSetting("binarySource", "SRI-Cambridge") else "\r\n#"
+            if isEqSetting("binarySource", "SRI-Cambridge") or (isEqSetting("binarySource", "GFE") and isEqSetting("pvAWS", "connectal")):
+                tempPrompt = "~ #"
+            else:
+                tempPrompt = "\r\n#"
             # fpga freebsd would be already logged in if onlySsh
             if (isEqSetting('target','qemu')):
                 self.runCommand("root",endsWith="\r\n#")
