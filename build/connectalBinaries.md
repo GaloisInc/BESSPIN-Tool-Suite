@@ -17,7 +17,7 @@ This procedure describes how to build the [ssith-aws-fpga](https://github.com/ac
      pkgs = import /path/to/ssith-fett-environment/pinned-pkgs.nix {};
      inherit (pkgs) mkShell;
    in mkShell {
-     buildInputs = with pkgs; with besspin; [
+     buildInputs = with pkgs; [
        cmake
        libelf
      ];
