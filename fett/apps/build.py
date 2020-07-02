@@ -72,17 +72,20 @@ def copyWebserverFiles(tarName):
       - certs/<certname>
       - keys/<keyname>
     """
-    cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
-    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "conf"))
-    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "html"))
-
-    tarFiles = ["nginx", "conf", "html", "certs", "keys"]
-
     gen_cert("fett-webserver",
         os.path.join(getSetting('buildDir'), "keys"),
         os.path.join(getSetting('buildDir'), "certs")
     )
 
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        tarFiles = ["certs", "keys"] #Only those are needed
+        return map(buildDirPathTuple, tarFiles)
+
+    cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
+    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "conf"))
+    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "html"))
+
+    tarFiles = ["nginx", "conf", "html", "certs", "keys"]
 
     runtimeFilesDir = os.path.join(getAppDir('webserver'), getSetting('osImage'))
     if getSetting('osImage') == 'debian':
@@ -91,8 +94,6 @@ def copyWebserverFiles(tarName):
     elif getSetting('osImage') == 'FreeBSD':
         cpFilesToBuildDir (runtimeFilesDir, pattern="rcfile")
         tarFiles += ["rcfile"]
-        if isEqSetting('binarySource', 'SRI-Cambridge'):
-            tarFiles = ["certs", "keys"] #Only those are needed
     else:
         logAndExit (f"Installing nginx is not supported on <{getSetting('osImage')}>",
                     exitCode=EXIT.Dev_Bug)
@@ -121,6 +122,14 @@ def copyVotingFiles(tarName):
     # Nginx + config + service files
     # serverFiles = copyWebserverFiles(tarName)
 
+    gen_cert("fett-voting",
+        os.path.join(getSetting('buildDir'), "keys"),
+        os.path.join(getSetting('buildDir'), "certs")
+    )
+
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        return list(map(buildDirPathTuple, ['keys','certs']))        
+
     cpFilesToBuildDir(getBinDir('voting'), 'bvrs')
     cpFilesToBuildDir(getBinDir('voting'), 'kfcgi')
     cpDirToBuildDir(os.path.join(getAppDir('voting'), 'common', 'conf', 'sites'))
@@ -131,18 +140,10 @@ def copyVotingFiles(tarName):
     cp(os.path.join(getAppDir('voting'), "common"),
        os.path.join(getSetting('buildDir')),
        pattern="bvrs.db")
-    
-    gen_cert("fett-voting",
-        os.path.join(getSetting('buildDir'), "keys"),
-        os.path.join(getSetting('buildDir'), "certs")
-    )
 
-    if isEqSetting('binarySource', 'SRI-Cambridge'):
-        filesList = list(map(buildDirPathTuple, ['keys','certs']))
-    else:
-        filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf','keys','certs', 'bvrs.db']))
-        filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
-        filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
+    filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf','keys','certs', 'bvrs.db']))
+    filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
+    filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
 
     # Need kfcgi, webserver's nginx.conf, bvrs app
     # We should probably just generate the initial database script here
