@@ -640,7 +640,7 @@ class commonTarget():
         #---send the archive
         if isEqSetting('binarySource', 'SRI-Cambridge'):
             self.switchUser() #this is assuming it was on root
-            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=30,forceScp=True)
+            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=60,forceScp=True)
             self.switchUser()
             self.runCommand(f"mv /home/{self.userName}/{getSetting('tarballName')} /root/")
         else:
