@@ -43,7 +43,7 @@ def install (target):
         passwordMatch = matchExprInLines (r"^(?P<b64Password>[A-Za-z0-9+/]{16})$",retCatPassword.splitlines())
         if (not passwordMatch):
             target.shutdownAndExit("<sriCambdridgeSetup>: Failed to obtain the election official password.",exitCode=EXIT.Run)
-        printAndLog(f"The election official credentials are: username 'official' and password (base64) '{passwordMatch.group('b64Password')}'")
+        printAndLog(f"The election official credentials are: username 'official' and password '{passwordMatch.group('b64Password')}'")
         return
     else:
         prefix = "/var"
