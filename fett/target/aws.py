@@ -126,9 +126,8 @@ class firesimTarget(commonTarget):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+            self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
-            # Add a default route through the NAT
-            self.runCommand("ip route add default via 172.16.0.1")
         elif (isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('binarySource','Michigan')):
                 ntkReadyString = f"WebSocket server listening on port {getSettingDict('michiganInfo',['httpPort'])}"
@@ -233,19 +232,25 @@ class connectalTarget(commonTarget):
     @decorate.timeWrap
     def activateEthernet(self):
         if (isEqSetting('osImage','debian')):
-            outCmd = self.runCommand ("ifconfig eth0 up")
-            self.runCommand (f"ifconfig eth0 {self.ipTarget}")
-            self.runCommand (f"ifconfig eth0 netmask {getSetting('awsNetMaskTarget')}")
-            self.runCommand (f"ifconfig eth0 hw ether {getSetting('awsMacAddrTarget')}")
+            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+            self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
+            self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage', 'FreeBSD')):
-            outCmd = self.runCommand ("ifconfig vtnet0 up")
+            self.runCommand ("ifconfig vtnet0 up")
             self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
             self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
+            self.runCommand(f"route add default {self.ipHost}")
+            # For future restart
+            self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsMacAddrTarget')}\"' >> /etc/rc.conf")
+            self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
+            self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
         self.pingTarget()
-        return outCmd
+        return 
 
     @decorate.debugWrap
     def targetTearDown(self):
@@ -524,6 +529,19 @@ def installKernelModules():
 def prepareFiresim():
     """prepare the firesim binaries for the FETT work directory"""
     copyAWSSources()
+
+    if isEqSetting('osImage', 'debian'):
+        nixImage = getSettingDict('nixEnv', ['debian-rootfs', 'firesim'])
+        if isEqSetting('binarySource', 'GFE') and nixImage in os.environ:
+            imageSourcePath = os.environ[nixImage]
+        else:
+            imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'firesim', 'debian.img.zst')
+        imageFile = os.path.join(getSetting('osImagesDir'), 'debian.img')
+        zstdDecompress(imageSourcePath, imageFile)
+        try:
+            os.chmod(imageFile, 0o664) # If the image was copied from the Nix store, it was read-only
+        except Exception as exc:
+            logAndExit(f"Could not change permissions on file {imageFile}", exitCode=EXIT.Files_and_paths)
 
     dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
     setSetting("osImageDwarf",dwarfFile)

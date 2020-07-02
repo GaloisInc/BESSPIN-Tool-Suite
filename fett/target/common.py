@@ -161,7 +161,7 @@ class commonTarget():
                 if isEqSetting('pvAWS', 'firesim'):
                     timeout = 240
                 elif isEqSetting('pvAWS', 'connectal'):
-                    timeout = 480
+                    timeout = 510
                 else:
                     self.shutdownAndExit(f"start: Unrecognized AWS PV <{getSetting('pvAWS')}>.", overwriteShutdown=False, exitCode=EXIT.Dev_Bug)
             else:
@@ -234,9 +234,15 @@ class commonTarget():
         self.activateEthernet()
                                   
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
-        #Adding 5 minutes to avoid being in the past
+        awsNtpServer = "169.254.169.123"
         if (isEqSetting('osImage','debian')):
-            self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
+            if isEqSetting('target', 'aws'):
+                # Use AWS NTP server
+                self.runCommand(f"echo 'NTP={awsNtpServer}' >> "
+                                "/etc/systemd/timesyncd.conf")
+            else:
+                self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
+            self.runCommand("systemctl start systemd-timesyncd.service")
 
             if not self.hasHardwareRNG():
                 #get the ssh up and running
@@ -245,7 +251,19 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
         elif (isEqSetting('osImage','FreeBSD')):
-            self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
+            if isEqSetting('target', 'aws'):
+                # Delete default NTP pool
+                self.runCommand('sed -i "" "/^pool/d" /etc/ntp.conf')
+                # Add AWS NTP server
+                self.runCommand(f"echo 'server {awsNtpServer} iburst' >> "
+                                "/etc/ntp.conf")
+            else:
+                self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
+
+            # Add ntpd to rc.conf and start it
+            self.runCommand("echo 'ntpd_enable=\"YES\"' >> /etc/rc.conf")
+            self.runCommand("echo 'ntpd_sync_on_start=\"YES\"' >> /etc/rc.conf")
+            self.runCommand("service ntpd start")
                                 
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
