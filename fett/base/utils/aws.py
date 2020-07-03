@@ -140,7 +140,7 @@ def pollPortalQueueIndefinitely (urlQueue, exitFunc):
     instanceId = getInstanceId(exitFunc)
 
     while (True):
-        logging.debug("pollPortalQueueIndefinitely: polling...")
+        logging.debug("pollPortalQueueIndefinitely: polling (version key-value)...")
         try:
             response = sqs.receive_message(
                 QueueUrl=urlQueue,
