@@ -323,6 +323,8 @@ This causes the polling timeout on a system bus socket when using sudo with clou
     $ history -c
     ```
 
+    Also, you may run `history -c` inside `nix-shell`.
+
 14. Go to `Instances` in the EC2 dashboard. Select your instance, and stop it and wait for it to shutdown. Then, `Image->Create Image`. The AMI will be created and ready for use shortly.
 
 15. Go to `AMIs` in the EC2 dashboard. Select the new AMI and `Modify Image Permissions`. Add the production accounts to the AMI permissions. 
