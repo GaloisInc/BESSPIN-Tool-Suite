@@ -74,6 +74,9 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    $ git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
    $ cd SSITH-FETT-Target
    $ git submodule update --init
+   $ cd SSITH-FETT-Binaries
+   $ git lfs pull
+   $ cd ..
    $ nix-shell
    $ exit
    $ cd ~
