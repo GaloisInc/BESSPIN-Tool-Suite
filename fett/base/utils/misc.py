@@ -521,6 +521,7 @@ def zstdDecompress(inputFilePath, outputFilePath):
     except Exception as exc:
         logAndExit(f"zstdDecompress: error decompressing file {inputFilePath} <{exc}>", exc=exc, exitCode=EXIT.Run)
 
+@decorate.debugWrap
 def collectRemoteLogging (logAndExitFunc,getSettingFunc,sudoShellCommandFunc):
     printAndLog ("Fetching remote logs if there are any.")
     ipTarget = getSettingFunc(f"{getSettingFunc('target')}IpTarget")
