@@ -147,7 +147,7 @@ def pollPortalQueueIndefinitely (urlQueue, exitFunc):
                 MessageAttributeNames=[
                     'instance_id',
                 ],
-                VisibilityTimeout=60, # this is large enough
+                VisibilityTimeout=3, # should be small not to hold each other's message
                 WaitTimeSeconds=20 # Long-polling for messages, reduce number of empty receives
             )
         except Exception as exc:
