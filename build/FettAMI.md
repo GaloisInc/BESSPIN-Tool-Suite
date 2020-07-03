@@ -14,7 +14,7 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
 
 ## Procedure
 
-1. Launch a `f1.2xlarge` instance (or any other instance, we often c4.4xlarge). Importantly, search for the AMI
+1. Launch a `f1.2xlarge` instance (or any other instance, we often use c4.4xlarge). Importantly, search for the AMI
 
    ```
    FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e251a40fd1fc-ami-0b1edf08d56c2da5c.4 (ami-02b792770bf83b668)
