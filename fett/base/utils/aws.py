@@ -145,9 +145,9 @@ def pollPortalQueueIndefinitely (urlQueue, exitFunc):
             response = sqs.receive_message(
                 QueueUrl=urlQueue,
                 MessageAttributeNames=[
-                    'instance_id',
+                    instanceId,
                 ],
-                VisibilityTimeout=3, # should be small not to hold each other's message
+                VisibilityTimeout=5, # 5 seconds are enough
                 WaitTimeSeconds=20 # Long-polling for messages, reduce number of empty receives
             )
         except Exception as exc:
@@ -156,7 +156,7 @@ def pollPortalQueueIndefinitely (urlQueue, exitFunc):
         if ('Messages' in response):
             for message in response['Messages']:
                 try:
-                    msgInstanceId = message['MessageAttributes']['instance_id']['StringValue']
+                    msgInstanceId = message['MessageAttributes'][instanceId]['StringValue'] #just a sanity check
                 except Exception as exc:
                     logging.debug(f"pollPortalQueueIndefinitely: Failed to get msgInstanceId.\n{formatExc(exc)}.")
                     continue
