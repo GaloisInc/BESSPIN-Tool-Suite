@@ -71,13 +71,12 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
 
    ```
    $ cd ~
-   $ git clone https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git && cd SSITH-FETT-Target
-   $ git submodule init
-   $ git submodule update
+   $ git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
+   $ cd SSITH-FETT-Target
+   $ git submodule update --init
    $ nix-shell
    $ exit
    $ cd ~
-   $ rm -rf SSITH-FETT-Target
    ```
 
    Nix will now perform the first time builds and installation of the FETT Environment. This will take \~20 minutes. After the first time installation, subsequent re-runs will only take a few seconds. 
