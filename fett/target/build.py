@@ -146,6 +146,7 @@ def prepareFreeRTOS():
         envVars.append(f"PROG=main_fett")
         envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
         envVars.append(f"BSP={getSetting('target')}")
+        envVars.append(f"AWS_FREERTOS_FS={getSetting('aws_freertos_fs')}")
         logging.debug(f"going to make using {envVars}")
         make (envVars,getSetting('FreeRTOSprojDir'))
 
