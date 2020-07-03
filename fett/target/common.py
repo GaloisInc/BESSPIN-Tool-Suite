@@ -656,7 +656,13 @@ class commonTarget():
     def sendTar(self,timeout=15): #send tarball to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
-        self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            self.switchUser() #this is assuming it was on root
+            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=60,forceScp=True)
+            self.switchUser()
+            self.runCommand(f"mv /home/{self.userName}/{getSetting('tarballName')} /root/")
+        else:
+            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
         #---untar
         if (isEqSetting('osImage','debian')):
             self.runCommand(f"tar xvf {getSetting('tarballName')} --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
@@ -688,15 +694,16 @@ class commonTarget():
         appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
         appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
         setSetting("appLog",appLog)
-        # Install
-        # Everything is already installed on SRI-Cambridge source
+
         if isEqSetting('binarySource', 'SRI-Cambridge'):
             setSetting('sqliteBin','/fett/bin/sqlite3')
         else:
             setSetting('sqliteBin','/usr/bin/sqlite')
-            for appModule in self.appModules:
-                appModule.install(self)
-                appLog.flush()
+
+        # Install
+        for appModule in self.appModules:
+            appModule.install(self)
+            appLog.flush()
 
         # Test    
         for appModule in self.appModules:

@@ -4,6 +4,7 @@ Building apps
 """
 
 from fett.base.utils.misc import *
+from fett.base.utils.ssl import gen_cert
 from fett.apps.freertos import freertos
 import os
 
@@ -15,6 +16,8 @@ def buildApps ():
     # create the build directory
     buildDir = os.path.join(getSetting('workDir'),'build')
     mkdir(buildDir,addToSettings='buildDir')
+    mkdir(os.path.join(buildDir, "keys"))
+    mkdir(os.path.join(buildDir, "certs"))
 
     setSetting('sendTarballToTarget',False) #any app has to enable this to send the tarball to target
     tarName = os.path.join(getSetting('buildDir'),getSetting('tarballName'))
@@ -26,14 +29,11 @@ def buildApps ():
     if (isEqSetting('osImage','FreeRTOS')):
         buildFreeRTOSapps()
     elif (getSetting('osImage') in ['debian', 'FreeBSD']):
-        if not (getSetting('binarySource') in ['SRI-Cambridge']):
-            buildWebserver(tarName)
-            buildDatabase(tarName)
-            buildVoting(tarName)
-            if (getSetting('binarySource') in ['MIT']):
-                buildEnclaves(tarName)
-        else:
-            warnAndLog(f"<launch.buildApps> binary source {getSetting('binarySource')} has apps in image. Skipping builds")
+        buildWebserver(tarName)
+        buildDatabase(tarName)
+        buildVoting(tarName)
+        if (getSetting('binarySource') in ['MIT']):
+            buildEnclaves(tarName)
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
@@ -72,11 +72,18 @@ def copyWebserverFiles(tarName):
       - certs/<certname>
       - keys/<keyname>
     """
+    gen_cert("fett-webserver",
+        os.path.join(getSetting('buildDir'), "keys"),
+        os.path.join(getSetting('buildDir'), "certs")
+    )
+
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        tarFiles = ["certs", "keys"] #Only those are needed
+        return map(buildDirPathTuple, tarFiles)
+
     cpFilesToBuildDir(getBinDir('webserver'), pattern="sbin/nginx")
     cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "conf"))
     cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "html"))
-    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "certs"))
-    cpDirToBuildDir(os.path.join(getAppDir('webserver'), "common", "keys"))
 
     tarFiles = ["nginx", "conf", "html", "certs", "keys"]
 
@@ -115,6 +122,14 @@ def copyVotingFiles(tarName):
     # Nginx + config + service files
     # serverFiles = copyWebserverFiles(tarName)
 
+    gen_cert("fett-voting",
+        os.path.join(getSetting('buildDir'), "keys"),
+        os.path.join(getSetting('buildDir'), "certs")
+    )
+
+    if isEqSetting('binarySource', 'SRI-Cambridge'):
+        return list(map(buildDirPathTuple, ['keys','certs']))        
+
     cpFilesToBuildDir(getBinDir('voting'), 'bvrs')
     cpFilesToBuildDir(getBinDir('voting'), 'kfcgi')
     cpDirToBuildDir(os.path.join(getAppDir('voting'), 'common', 'conf', 'sites'))
@@ -125,9 +140,11 @@ def copyVotingFiles(tarName):
     cp(os.path.join(getAppDir('voting'), "common"),
        os.path.join(getSetting('buildDir')),
        pattern="bvrs.db")
-    filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf', 'bvrs.db']))
+
+    filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf','keys','certs', 'bvrs.db']))
     filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
     filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
+
     # Need kfcgi, webserver's nginx.conf, bvrs app
     # We should probably just generate the initial database script here
     return filesList
@@ -173,6 +190,8 @@ def buildDatabase(tarName):
     if (isEnabled('buildApps')):
         logAndExit (f"Building from source is not supported for the database application",
                     exitCode=EXIT.Configuration)
+    elif isEqSetting('binarySource', 'SRI-Cambridge'):
+        return
     else:
         tarFiles = copyDatabaseFiles(tarName)
         tar (tarName, filesList=tarFiles)
