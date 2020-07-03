@@ -51,11 +51,18 @@ ifeq ($(BSP),aws)
 	# AWS & IceBlk driver
 	CFLAGS += -DFETT_AWS
 	SD_SOURCE_DIR = ./FatFs/source
-	DEMO_SRC += $(SD_SOURCE_DIR)/diskio.c \
-			 	$(SD_SOURCE_DIR)/ff.c \
+	DEMO_SRC += $(SD_SOURCE_DIR)/ff.c \
 				$(SD_SOURCE_DIR)/ffsystem.c \
 				$(SD_SOURCE_DIR)/ffunicode.c
 	INCLUDES += -I$(SD_SOURCE_DIR)
+
+ifeq ($(AWS_FREERTOS_FS),ramdisk)
+	CFLAGS += -DFETT_AWS_RAMDISK
+	DEMO_SRC += $(SD_SOURCE_DIR)/diskio_ram.c
+else
+	DEMO_SRC += $(SD_SOURCE_DIR)/diskio.c
+endif
+
 else
 	# FPGA & SD Lib
 	SD_SOURCE_DIR = ./SD/src
