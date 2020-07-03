@@ -85,10 +85,22 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
 
    Nix will now perform the first time builds and installation of the FETT Environment. This will take \~20 minutes. After the first time installation, subsequent re-runs will only take a few seconds. 
 
-6. As was suggested in #323, the permissions can be changed for the amazon FPGA management tools to not require `sudo`. This can be done with
+6. Install FPGA SDK tools.
+
+  ```
+  $ cd ~
+  $ git clone https://github.com/aws/aws-fpga
+  $ cd aws-fpga
+  $ git checkout 6c707ab4a26c2766b916dad9d40727266fa0e4ef
+  $ source sdk_setup.sh
+  $ cd ..
+  $ rm -rf aws-fpga
+  ```
+
+As was suggested in #323, the permissions can be changed for the amazon FPGA management tools to not require `sudo`. This can be done with
    
    ```
-   # sudo chmod u+s /usr/bin/fpga-*
+      $ sudo chmod u+s /usr/bin/fpga-*
    ```
 
 7. For use of connectal, modify the device rules so that nodes are accessible by non-root users. Create the file as root,
