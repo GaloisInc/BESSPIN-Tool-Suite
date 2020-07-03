@@ -20,7 +20,7 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e251a40fd1fc-ami-0b1edf08d56c2da5c.4 (ami-02b792770bf83b668)
    ```
 
-   to acquire a FireSim compatible image. Follow the usual AWS procedure, selecting a VPC with a public subnet. Ideally, add protection from accidental termination. Increase the storage to \~120GB and remove the ephemeral storage drive. 
+   to acquire a FireSim compatible image. Follow the usual AWS procedure, selecting a VPC with a public subnet. Ideally, add protection from accidental termination. Increase the storage to \~150GB and remove the ephemeral storage drive. 
 
 2. Install the Nix Package Manager. In this case, the `no-daemon` pathway was used due to difficulties in installing in CentOS 7. The command
 
