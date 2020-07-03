@@ -19,6 +19,11 @@
             "choices" : [ "qemu", "aws", "fpga" ]
         },
         {
+            "name" : "aws_freertos_fs",
+            "type" : "string",
+            "choices" : [ "iceblk", "ramdisk" ]
+        },
+        {
             "name" : "processor",
             "type" : "string",
             "choices" : [ "chisel_p1", "bluespec_p2", "chisel_p2" ]
