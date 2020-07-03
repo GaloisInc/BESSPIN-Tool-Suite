@@ -22,13 +22,12 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
 
    to acquire a FireSim compatible image. Follow the usual AWS procedure, selecting a VPC with a public subnet. Ideally, add protection from accidental termination. Increase the storage to \~150GB and remove the ephemeral storage drive. 
 
-2. Install the Nix Package Manager. In this case, the `no-daemon` pathway was used due to difficulties in installing in CentOS 7. The command
+2. Install the Nix Package Manager. Use the following command, then logout and re-login.
 
    ```
    $ sudo curl -L https://nixos.org/nix/install | sh
    ```
 
-   was used. 
 
 3. Install git 2.x.x and git lfs. You can install git using whatever technique you want, but since nix was just installed, it can be done conveniently,
 
@@ -60,6 +59,8 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    ```
    $ chmod 600 /home/centos/.config/nix/netrc
    ```
+
+   After you do that, you have to logout and re-login.
 
 5. Clone the [FETT Target Repository](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target). If `nix` has already been installed and you're modifying an existing AMI, it is a good idea to delete packages no longer used by the project, with
 
