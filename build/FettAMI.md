@@ -25,7 +25,7 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
 2. Install the Nix Package Manager. In this case, the `no-daemon` pathway was used due to difficulties in installing in CentOS 7. The command
 
    ```
-   $ sh <(curl https://nixos.org/nix/install) --no-daemon
+   $ sudo curl -L https://nixos.org/nix/install | sh
    ```
 
    was used. 
