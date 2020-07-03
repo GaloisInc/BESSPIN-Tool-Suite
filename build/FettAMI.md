@@ -14,7 +14,7 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
 
 ## Procedure
 
-1. Launch a `f1.2xlarge` instance. Importantly, search for the AMI
+1. Launch a `f1.2xlarge` instance (or any other instance, we often c4.4xlarge). Importantly, search for the AMI
 
    ```
    FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e251a40fd1fc-ami-0b1edf08d56c2da5c.4 (ami-02b792770bf83b668)
@@ -84,6 +84,16 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    ```
 
    Nix will now perform the first time builds and installation of the FETT Environment. This will take \~20 minutes. After the first time installation, subsequent re-runs will only take a few seconds. 
+
+   For a machine that will checkout and pull different versions of `SSITH-FETT-Target` (like one for CI or updating the AMI), you should stash the binary repo before updating it as a submodule and pulling. So for update, do the following
+   ```
+   $ cd ~/SSITH-FETT-Target/SSITH-FETT-Binaries
+   $ git stash
+   $ cd ..
+   $ git submodule update
+   $ cd SSITH-FETT-Binaries
+   $ git lfs pull
+   ```
 
 6. Install FPGA SDK tools.
 
@@ -284,28 +294,13 @@ As was suggested in #323, the permissions can be changed for the amazon FPGA man
       $ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
       ```
 
-10. Install SSITH-FETT-Target on master branch
-
-   ```
-   $ git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
-   $ cd SSITH-FETT-Target
-   $ git submodule init
-   $ git submodule update
-   $ cd SSITH-FETT-Binaries
-   $ git-lfs pull
-   ```
-   For a machine that will checkout and pull different versions of `SSITH-FETT-Target` (like one for CI), it is useful to stash the binary repo before updating it as a submodule and pulling. Use
-   ```
-   $ git stash
-   ```
-
-11. In `/etc/pam.d/system-auth`, comment out this line:
+12. In `/etc/pam.d/system-auth`, comment out this line:
 ```
 -session     optional      pam_systemd.so
 ```
 This causes the polling timeout on a system bus socket when using sudo with cloud-hook. More info can be found [here](https://bugs.launchpad.net/tripleo/+bug/1819461).
 
-12. Clear personal items and prepare image for AMI creation. 
+13. Clear personal items and prepare image for AMI creation. 
 
     * remove git usernames if they are configured, clearing
 
@@ -317,6 +312,10 @@ This causes the polling timeout on a system bus socket when using sudo with clou
 
     * **delete/deactivate the SSH keys associated with your GitHub/GitLab accounts**
 
+    ```
+    rm ~/.ssh/*
+    ```
+
     * clear your command history
 
     ```
@@ -324,7 +323,9 @@ This causes the polling timeout on a system bus socket when using sudo with clou
     $ history -c
     ```
 
-13. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
+14. Go to `Instances` in the EC2 dashboard. Select your instance, and stop it and wait for it to shutdown. Then, `Image->Create Image`. The AMI will be created and ready for use shortly.
 
-14. Go to `AMIs` in the EC2 dashboard. Select the new AMI and `Modify Image Permissions`. Add the production accounts to the AMI permissions.
+15. Go to `AMIs` in the EC2 dashboard. Select the new AMI and `Modify Image Permissions`. Add the production accounts to the AMI permissions. 
+
+16. Copy the AMI to North Virginia, then add the production account to the permissions of the N. Virginia version too.
 
