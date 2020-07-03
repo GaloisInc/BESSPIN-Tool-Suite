@@ -132,17 +132,6 @@ def deploymentTest(target):
 
     printAndLog ("Starting HTTP Smoketests.",doPrint=True,tee=getSetting('appLog'))
 
-    ####################################
-    # SPECIAL TEST FOR 534
-    getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 1 - GET index.htm\n")
-    HTTPSmokeTest(target, 'index.htm', 'index.htm', WEB_REPLY_OK, 1, 'TTY, UART, HTTP')
-    #OtaFile = f"{getSettingDict('freertosAssets',['otaHtml'])}"
-    #getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 534 - GET ota.htm\n")
-    #HTTPSmokeTest(target, OtaFile, OtaFile, WEB_REPLY_OK, 534, 'HTTP GET')
-
-    return 
-    ####################################
-
     ###################################
     # SmokeTests for the HTTP Server
     ###################################
@@ -156,6 +145,7 @@ def deploymentTest(target):
     # Now try a file that we know won't be there on the target. We should get error code WEB_NOT_FOUND
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 3 - GET notthere.htm\n")
     HTTPSmokeTest(target, 'notthere.htm', 'notthere.htm', WEB_NOT_FOUND, 3, 'HTTP GET missing file')
+
 
     # Now try to GET glogo.png - a larger binary format file
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 4 - GET glogo.png\n")
