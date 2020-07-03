@@ -128,10 +128,6 @@ As was suggested in #323, the permissions can be changed for the amazon FPGA man
       # Provides UDP syslog reception
       #$ModLoad imudp.so
       #$UDPServerRun 514
-      
-      # Provides TCP syslog reception
-      #$ModLoad imtcp.so
-      #$InputTCPServerRun 514
       ```
 
       Change to
@@ -140,10 +136,6 @@ As was suggested in #323, the permissions can be changed for the amazon FPGA man
       # Provides UDP syslog reception
       $ModLoad imudp.so
       $UDPServerRun 514
-      
-      # Provides TCP syslog reception
-      $ModLoad imtcp.so
-      $InputTCPServerRun 514
       
       $template RemoteLogs,"/var/log/%FROMHOST-IP%/%PROGRAMNAME%.log"
       *.* ?RemoteLogs
