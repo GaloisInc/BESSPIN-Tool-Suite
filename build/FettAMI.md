@@ -47,12 +47,12 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    netrc-file = /home/centos/.config/nix/netrc
    ```
 
-   **/home/centos/.config/netrc**
+   **/home/centos/.config/nix/netrc**
 
    ```
-    machine artifactory.galois.com
-    login <your username>
-    password <your password>
+   machine artifactory.galois.com
+   login <your username>
+   password <your password>
    ```
 
    For the permanent AMI, an account was created so the FETT Environment can be modified by the user and still interact with the artifactory resources. The user `besspin_fett` was added and a token key was registered. Also, for good practice,
@@ -288,6 +288,7 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
     $ rm ~/.bash_history
     $ history -c
     ```
+    * delete folders in `/home/centos/` that aren't the repository `SSITH-FETT-Target`
 
 13. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
 
