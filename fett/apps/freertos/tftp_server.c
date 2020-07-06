@@ -328,8 +328,8 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
 			        (int) usExpectedBlockNumber,
 			        aIPpxClient,
 			        aIPxClient,
-			        (int) pxClient->sin_port,
-			        (int) xClient.sin_port);
+			        FreeRTOS_ntohs( pxClient->sin_port ),
+              FreeRTOS_ntohs( xClient.sin_port ));
 
                     prvSendTFTPError(xTFTPRxSocket, pxClient,
                                      eIllegalTFTPOperation);
