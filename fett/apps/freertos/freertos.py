@@ -76,17 +76,12 @@ def HTTPSmokeTest(target, GETFileName, assetFileName, expectedCode, TCNum, TCDes
         expectedFileLength = 0
         expectedFileContent = ""
     else:
-        try:
-            filePath = os.path.join(getSetting('assetsDir'),assetFileName)
-            afile = open(filePath)
-            expectedFileContent = afile.read()
-            expectedFileLength = len(expectedFileContent)
-            afile.close()
-        except Exception as exc:
-            errorAndLog (f"Failed to find content of file: <{filePath}>", exc=exc, doPrint=False)
-            expectedFileLength = 0
-            expectedFileContent = ""
-            
+        filePath = os.path.join(getSetting('assetsDir'),assetFileName)
+        afile = ftOpenFile(filePath,'r')
+        expectedFileContent = afile.read()
+        expectedFileLength = len(expectedFileContent)
+        afile.close()
+        
     # Issue an HTTP GET Request for GETFilename
     contentLength,code,body = curlTest(target, f"http://{targetIP}:{httpPort}/{GETFileName}")
     if (code == 0):
