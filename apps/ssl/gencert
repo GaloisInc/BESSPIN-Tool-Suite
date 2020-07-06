@@ -26,7 +26,7 @@ def gen_cert(name):
     #Serial File
     hash = random.getrandbits(128)
     serfd = open(serial, "w+")
-    serfd.write(format(hash, 'x'))
+    serfd.write(format(hash, '32x'))
     serfd.close()
 
     # Certificate
