@@ -11,7 +11,7 @@
         {
             "name" : "mode",
             "type" : "string",
-            "choices" : [ "test", "production" ]
+            "choices" : [ "test", "production", "evaluateSecurityTests" ]
         },
         {
             "name" : "target",

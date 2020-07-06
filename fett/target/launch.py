@@ -11,6 +11,7 @@ from fett.target import qemu
 from fett.target import aws
 from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
+from fett.cwesEvaluation.build import buildCwesEvaluation
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -69,7 +70,12 @@ def prepareEnv ():
     # config sanity checks for building apps
     if (getSetting('osImage') in ['FreeRTOS', 'debian', 'FreeBSD']):
         setSetting('runApp',True)
-        buildApps ()
+
+        # TODO: Should this test go elsewhere?
+        if isEqSetting("mode", "evaluateSecurityTests"):
+            buildCwesEvaluation()
+        else:
+            buildApps ()
     elif (isEqSetting('osImage','busybox')):
         printAndLog(f"<busybox> is only used for smoke testing the target/network. No applications are supported.")
         setSetting('runApp',False)
