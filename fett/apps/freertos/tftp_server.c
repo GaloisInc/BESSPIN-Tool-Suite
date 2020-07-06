@@ -316,13 +316,18 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                 }
                 else
                 {
+                char aIPpxClient [16];
+                FreeRTOS_inet_ntoa(pxClient->sin_addr, aIPpxClient);
+                char aIPxClient [16];
+                FreeRTOS_inet_ntoa(xClient.sin_addr, aIPxClient);
+
 		    fettPrintf("(Info)~  TFTP packet addresses or sequence numbers do not match\n");
-    	            fettPrintf ("(Info)~  TFTP packet opcode %d, BNs (%d, %d), IPs (%08x, %08x), ports (%d, %d)\n",
+    	            fettPrintf ("(Info)~  TFTP packet opcode %d, BNs (%d, %d), IPs (%s, %s), ports (%d, %d)\n",
 			        (int) pxHeader->usOpcode,
 			        (int) pxHeader->usBlockNumber,
 			        (int) usExpectedBlockNumber,
-			        pxClient->sin_addr,
-			        xClient.sin_addr,
+			        aIPpxClient,
+			        aIPxClient,
 			        (int) pxClient->sin_port,
 			        (int) xClient.sin_port);
 
@@ -525,6 +530,7 @@ static void prvSendTFTPError(Socket_t xSocket,
                return the buffer once it has been sent. */
         }
     }
+    return;
 }
 
 #if (DUMMY_TFTP == 1)
