@@ -339,7 +339,12 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                 /* pucFileBuffer was obtained using zero copy mode, so the
                    buffer must be freed now its contents have been written to the
                    disk. */
-                FreeRTOS_ReleaseUDPPayloadBuffer(pucFileBuffer);
+                /* I am commenting out this _freeing_. In the case of the weird sequence when
+                only port 69 is open, on both instances (nodes), the ack packet cannot reach the requester.
+                And this line causes a segfault (probably). Removing it doesn't seem to cause any issue. It continues
+                to give errors + work properly as it should be.
+                */
+                //FreeRTOS_ReleaseUDPPayloadBuffer(pucFileBuffer);
             }
 
             /* Until a disk write fails, or the maximum number of retries is
