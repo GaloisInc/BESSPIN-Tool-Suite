@@ -242,13 +242,12 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
 		the special case block number 0 is used. */
         usExpectedBlockNumber = 0;
 
+	/* Send ACK for the WRQ message */
+	prvSendAcknowledgement(xTFTPRxSocket, pxClient,
+			       usExpectedBlockNumber);
+
         do
         {
-            /* The acknowledgment sent here may be a duplicate if the last call
-               to FreeRTOS_recvfrom() timee out. */
-            prvSendAcknowledgement(xTFTPRxSocket, pxClient,
-                                   usExpectedBlockNumber);
-
             /* Wait for next data packet.  Zero copy is used so it is the
                responsibility of this task to free the received data once it is no
                longer required. */
@@ -317,6 +316,16 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                 }
                 else
                 {
+		    fettPrintf("(Info)~  TFTP packet addresses or sequence numbers do not match\n");
+    	            fettPrintf ("(Info)~  TFTP packet opcode %d, BNs (%d, %d), IPs (%08x, %08x), ports (%d, %d)\n",
+			        (int) pxHeader->usOpcode,
+			        (int) pxHeader->usBlockNumber,
+			        (int) usExpectedBlockNumber,
+			        pxClient->sin_addr,
+			        xClient.sin_addr,
+			        (int) pxClient->sin_port,
+			        (int) xClient.sin_port);
+
                     prvSendTFTPError(xTFTPRxSocket, pxClient,
                                      eIllegalTFTPOperation);
                     xReturn = pdFAIL;
