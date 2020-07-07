@@ -51,11 +51,22 @@ ifeq ($(BSP),aws)
 	# AWS & IceBlk driver
 	CFLAGS += -DFETT_AWS
 	SD_SOURCE_DIR = ./FatFs/source
-	DEMO_SRC += $(SD_SOURCE_DIR)/diskio.c \
-			 	$(SD_SOURCE_DIR)/ff.c \
+	DEMO_SRC += $(SD_SOURCE_DIR)/ff.c \
 				$(SD_SOURCE_DIR)/ffsystem.c \
 				$(SD_SOURCE_DIR)/ffunicode.c
 	INCLUDES += -I$(SD_SOURCE_DIR)
+
+ifeq ($(FREERTOS_USE_RAMDISK),1)
+	ifeq ($(RAMDISK_NUM_SECTORS),)
+		$(error "RAMDISK_NUM_SECTORS not set even though FREERTOS_USE_RAMDISK=1")
+        endif
+	CFLAGS += -DFREERTOS_USE_RAMDISK
+        CFLAGS += -DRAMDISK_NUM_SECTORS=$(RAMDISK_NUM_SECTORS)
+	DEMO_SRC += $(SD_SOURCE_DIR)/diskio_ram.c
+else
+	DEMO_SRC += $(SD_SOURCE_DIR)/diskio.c
+endif
+
 else
 	# FPGA & SD Lib
 	SD_SOURCE_DIR = ./SD/src

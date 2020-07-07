@@ -2,6 +2,7 @@
     "mode" : "production",
     "binarySource" : "REQUIRED-SETTING",
     "target" : "aws",
+    "FreeRTOSUseRAMDisk" : "Yes",
     "processor" : "REQUIRED-SETTING",
     "osImage" : "REQUIRED-SETTING",
     "elfLoader" : "JTAG",
@@ -11,7 +12,7 @@
     "useCustomCredentials" : "No",
     "userName" : "COND-REQUIRED-SETTING",
     "userPasswordHash" : "COND-REQUIRED-SETTING",
-    "rootUserAccess" : "No",
+    "rootUserAccess" : "Yes",
     "buildApps" : "No",
     "productionTargetIp" : "REQUIRED-SETTING"
 }

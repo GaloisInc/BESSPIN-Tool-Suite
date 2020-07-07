@@ -203,6 +203,10 @@
                     "qemu" : "FETT_GFE_DEBIAN_QEMU",
                     "firesim" :  "FETT_GFE_DEBIAN_FIRESIM"
                 },
+                "debian-rootfs" : {
+                    "qemu" : "FETT_GFE_DEBIAN_ROOTFS_QEMU",
+                    "firesim" : "FETT_GFE_DEBIAN_ROOTFS_FIRESIM"
+                },
                 "FreeBSD" : {
                     "fpga" : "FETT_GFE_FREEBSD_FPGA",
                     "qemu" : "FETT_GFE_FREEBSD_QEMU",
@@ -255,6 +259,11 @@
                 "StopHtml" : "stop.htm",
                 "assets" : ["index.htm", "ota.htm", "glogo.png"]
             }
+        },
+        {
+            "name" : "freertosRamdiskNumSectors",
+            "type" : "int",
+            "val"  : 32768
         },
         {
             "name" : "webserverLogs",

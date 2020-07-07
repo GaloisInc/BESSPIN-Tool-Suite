@@ -161,7 +161,7 @@ class commonTarget():
                 if isEqSetting('pvAWS', 'firesim'):
                     timeout = 240
                 elif isEqSetting('pvAWS', 'connectal'):
-                    timeout = 480
+                    timeout = 510
                 else:
                     self.shutdownAndExit(f"start: Unrecognized AWS PV <{getSetting('pvAWS')}>.", overwriteShutdown=False, exitCode=EXIT.Dev_Bug)
             else:
@@ -234,9 +234,15 @@ class commonTarget():
         self.activateEthernet()
                                   
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
-        #Adding 5 minutes to avoid being in the past
+        awsNtpServer = "169.254.169.123"
         if (isEqSetting('osImage','debian')):
-            self.runCommand (f"date -s '@{int(time.time()) + 300}'",expectedContents='UTC')
+            if isEqSetting('target', 'aws'):
+                # Use AWS NTP server
+                self.runCommand(f"echo 'NTP={awsNtpServer}' >> "
+                                "/etc/systemd/timesyncd.conf")
+            else:
+                self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
+            self.runCommand("systemctl start systemd-timesyncd.service")
 
             if not self.hasHardwareRNG():
                 #get the ssh up and running
@@ -245,7 +251,19 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
         elif (isEqSetting('osImage','FreeBSD')):
-            self.runCommand (f"date -f \"%s\" {int(time.time()) + 300}",expectedContents='UTC')
+            if isEqSetting('target', 'aws'):
+                # Delete default NTP pool
+                self.runCommand('sed -i "" "/^pool/d" /etc/ntp.conf')
+                # Add AWS NTP server
+                self.runCommand(f"echo 'server {awsNtpServer} iburst' >> "
+                                "/etc/ntp.conf")
+            else:
+                self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
+
+            # Add ntpd to rc.conf and start it
+            self.runCommand("echo 'ntpd_enable=\"YES\"' >> /etc/rc.conf")
+            self.runCommand("echo 'ntpd_sync_on_start=\"YES\"' >> /etc/rc.conf")
+            self.runCommand("service ntpd start")
                                 
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
@@ -638,7 +656,13 @@ class commonTarget():
     def sendTar(self,timeout=15): #send tarball to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
-        self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
+        if isEqSetting('binarySource', 'SRI-Cambridge'):
+            self.switchUser() #this is assuming it was on root
+            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=60,forceScp=True)
+            self.switchUser()
+            self.runCommand(f"mv /home/{self.userName}/{getSetting('tarballName')} /root/")
+        else:
+            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
         #---untar
         if (isEqSetting('osImage','debian')):
             self.runCommand(f"tar xvf {getSetting('tarballName')} --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
@@ -670,15 +694,16 @@ class commonTarget():
         appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
         appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
         setSetting("appLog",appLog)
-        # Install
-        # Everything is already installed on SRI-Cambridge source
+
         if isEqSetting('binarySource', 'SRI-Cambridge'):
             setSetting('sqliteBin','/fett/bin/sqlite3')
         else:
             setSetting('sqliteBin','/usr/bin/sqlite')
-            for appModule in self.appModules:
-                appModule.install(self)
-                appLog.flush()
+
+        # Install
+        for appModule in self.appModules:
+            appModule.install(self)
+            appLog.flush()
 
         # Test    
         for appModule in self.appModules:

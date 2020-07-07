@@ -14,21 +14,20 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
 
 ## Procedure
 
-1. Launch a `f1.2xlarge` instance. Importantly, search for the AMI
+1. Launch a `f1.2xlarge` instance (or any other instance, we often use c4.4xlarge). Importantly, search for the AMI
 
    ```
    FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e251a40fd1fc-ami-0b1edf08d56c2da5c.4 (ami-02b792770bf83b668)
    ```
 
-   to acquire a FireSim compatible image. Follow the usual AWS procedure, selecting a VPC with a public subnet. Ideally, add protection from accidental termination. Increase the storage to ~100GB and remove the ephemeral storage drive. 
+   to acquire a FireSim compatible image. Follow the usual AWS procedure, selecting a VPC with a public subnet. Ideally, add protection from accidental termination. Increase the storage to \~150GB and remove the ephemeral storage drive. 
 
-2. Install the Nix Package Manager. In this case, the `no-daemon` pathway was used due to difficulties in installing in CentOS 7. The command
+2. Install the Nix Package Manager. Use the following command, then logout and re-login.
 
    ```
-   $ sh <(curl https://nixos.org/nix/install) --no-daemon
+   $ sudo curl -L https://nixos.org/nix/install | sh
    ```
 
-   was used. 
 
 3. Install git 2.x.x and git lfs. You can install git using whatever technique you want, but since nix was just installed, it can be done conveniently,
 
@@ -47,12 +46,12 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    netrc-file = /home/centos/.config/nix/netrc
    ```
 
-   **/home/centos/.config/netrc**
+   **/home/centos/.config/nix/netrc**
 
    ```
-    machine artifactory.galois.com
-    login <your username>
-    password <your password>
+   machine artifactory.galois.com
+   login <your username>
+   password <your password>
    ```
 
    For the permanent AMI, an account was created so the FETT Environment can be modified by the user and still interact with the artifactory resources. The user `besspin_fett` was added and a token key was registered. Also, for good practice,
@@ -60,6 +59,8 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
    ```
    $ chmod 600 /home/centos/.config/nix/netrc
    ```
+
+   After you do that, you have to logout and re-login.
 
 5. Clone the [FETT Target Repository](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target). If `nix` has already been installed and you're modifying an existing AMI, it is a good idea to delete packages no longer used by the project, with
 
@@ -71,21 +72,45 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
 
    ```
    $ cd ~
-   $ git clone https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git && cd SSITH-FETT-Target
-   $ git submodule init
-   $ git submodule update
+   $ git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
+   $ cd SSITH-FETT-Target
+   $ git submodule update --init
+   $ cd SSITH-FETT-Binaries
+   $ git lfs pull
+   $ cd ..
    $ nix-shell
    $ exit
    $ cd ~
-   $ rm -rf SSITH-FETT-Target
    ```
 
-   Nix will now perform the first time builds and installation of the FETT Environment. This will take ~20 minutes. After the first time installation, subsequent re-runs will only take a few seconds. 
+   Nix will now perform the first time builds and installation of the FETT Environment. This will take \~20 minutes. After the first time installation, subsequent re-runs will only take a few seconds. 
 
-6. As was suggested in #323, the permissions can be changed for the amazon FPGA management tools to not require `sudo`. This can be done with
+   For a machine that will checkout and pull different versions of `SSITH-FETT-Target` (like one for CI or updating the AMI), you should stash the binary repo before updating it as a submodule and pulling. So for update, do the following
+   ```
+   $ cd ~/SSITH-FETT-Target/SSITH-FETT-Binaries
+   $ git stash
+   $ cd ..
+   $ git submodule update
+   $ cd SSITH-FETT-Binaries
+   $ git lfs pull
+   ```
+
+6. Install FPGA SDK tools.
+
+  ```
+  $ cd ~
+  $ git clone https://github.com/aws/aws-fpga
+  $ cd aws-fpga
+  $ git checkout 6c707ab4a26c2766b916dad9d40727266fa0e4ef
+  $ source sdk_setup.sh
+  $ cd ..
+  $ rm -rf aws-fpga
+  ```
+
+As was suggested in #323, the permissions can be changed for the amazon FPGA management tools to not require `sudo`. This can be done with
    
    ```
-   # sudo chmod u+s /usr/bin/fpga-*
+      $ sudo chmod u+s /usr/bin/fpga-*
    ```
 
 7. For use of connectal, modify the device rules so that nodes are accessible by non-root users. Create the file as root,
@@ -113,10 +138,6 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
       # Provides UDP syslog reception
       #$ModLoad imudp.so
       #$UDPServerRun 514
-      
-      # Provides TCP syslog reception
-      #$ModLoad imtcp.so
-      #$InputTCPServerRun 514
       ```
 
       Change to
@@ -125,10 +146,6 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
       # Provides UDP syslog reception
       $ModLoad imudp.so
       $UDPServerRun 514
-      
-      # Provides TCP syslog reception
-      $ModLoad imtcp.so
-      $InputTCPServerRun 514
       
       $template RemoteLogs,"/var/log/%FROMHOST-IP%/%PROGRAMNAME%.log"
       *.* ?RemoteLogs
@@ -164,13 +181,34 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
                   "files": {
                       "collect_list": [
                           {
-                              "file_path": "/var/log/**",
-                              "log_group_name": "instance-varlogs",
+                              "file_path": "/var/log/172.0.16.2/**",
+                              "log_group_name": "FETT-172-syslogs",
                               "log_stream_name": "{instance_id}"
                           },
                           {
-                              "file_path": "/home/centos/SSITH-FETT-Target/workDir/**",
-                              "log_group_name": "FETT-workDir",
+                              "file_path": "/var/log/user-data.log",
+                              "log_group_name": "user-data.log",
+                              "log_stream_name": "{instance_id}"
+                          },
+                          {
+                              "file_path": "/var/log/cloud-init.log",
+                              "log_group_name": "cloud-init.log",
+                              "log_stream_name": "{instance_id}"
+                          },
+                          {
+                              "file_path": "/home/centos/SSITH-FETT-Target/workDir/fett.log",
+                              "log_group_name": "fett.log",
+                              "log_stream_name": "{instance_id}"
+                          },
+                          {
+                              "file_path": "/home/centos/SSITH-FETT-Target/workDir/shell.out",
+                              "log_group_name": "shell.out",
+                              "log_stream_name": "{instance_id}"
+
+                          },
+                          {
+                              "file_path": "/home/centos/SSITH-FETT-Target/workDir/tty.out",
+                              "log_group_name": "tty.out",
                               "log_stream_name": "{instance_id}"
                           }
                       ]
@@ -256,21 +294,13 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
       $ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
       ```
 
-10. Install SSITH-FETT-Target on master branch
+12. In `/etc/pam.d/system-auth`, comment out this line:
+```
+-session     optional      pam_systemd.so
+```
+This causes the polling timeout on a system bus socket when using sudo with cloud-hook. More info can be found [here](https://bugs.launchpad.net/tripleo/+bug/1819461).
 
-   ```
-   $ git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
-   $ cd SSITH-FETT-Target
-   $ git submodule init
-   $ git submodule update
-   $ cd SSITH-FETT-Binaries
-   $ git-lfs pull
-   ```
-   For a machine that will checkout and pull different versions of `SSITH-FETT-Target` (like one for CI), it is useful to stash the binary repo before updating it as a submodule and pulling. Use
-   ```
-   $ git stash
-   ```
-12. Clear personal items and prepare image for AMI creation. 
+13. Clear personal items and prepare image for AMI creation. 
 
     * remove git usernames if they are configured, clearing
 
@@ -282,14 +312,23 @@ This guide outlines how to modify a FPGA Developer AMI to run both FETT Target, 
 
     * **delete/deactivate the SSH keys associated with your GitHub/GitLab accounts**
 
+    ```
+    rm ~/.ssh/*
+    ```
+
     * clear your command history
 
     ```
     $ rm ~/.bash_history
     $ history -c
     ```
+    * delete folders in `/home/centos/` that aren't the repository `SSITH-FETT-Target`
 
-13. Go to `Instances` in the EC2 dashboard. Select the `f1` instances, and `Image->Create Image`. The AMI will be created and ready for use shortly.
+    Also, you may run `history -c` inside `nix-shell`.
 
-14. Go to `AMIs` in the EC2 dashboard. Select the new AMI and `Modify Image Permissions`. Add the production accounts to the AMI permissions.
+14. Go to `Instances` in the EC2 dashboard. Select your instance, and stop it and wait for it to shutdown. Then, `Image->Create Image`. The AMI will be created and ready for use shortly.
+
+15. Go to `AMIs` in the EC2 dashboard. Select the new AMI and `Modify Image Permissions`. Add the production accounts to the AMI permissions. 
+
+16. Copy the AMI to North Virginia, then add the production account to the permissions of the N. Virginia version too.
 

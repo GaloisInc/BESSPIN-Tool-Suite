@@ -58,12 +58,13 @@ def exitFett (exitCode):
         except Exception as exc:
             inExit_logAndExit (f"Failed to open <{os.path.join(inExit_GetSetting('workDir'),'shell.out')}> to append.",exc=exc)
 
-        shellOut.write(f"\n\n{argsList}\n")
+        command = ['sudo'] + argsList
+        shellOut.write(f"\n\n{command}\n")
         shellOut.flush()
         try:
-            subprocess.run(argsList, stdout=shellOut, stderr=shellOut, check=check, **kwargs)
+            subprocess.run(command, stdout=shellOut, stderr=shellOut, check=check, **kwargs)
         except Exception as exc:
-            inExit_logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc)
+            inExit_logAndExit (f"shell: Failed to <{command}>. Check <shell.out> for more details.",exc=exc)
         shellOut.close()
 
     if (not isinstance(exitCode,EXIT)):
@@ -521,6 +522,7 @@ def zstdDecompress(inputFilePath, outputFilePath):
     except Exception as exc:
         logAndExit(f"zstdDecompress: error decompressing file {inputFilePath} <{exc}>", exc=exc, exitCode=EXIT.Run)
 
+@decorate.debugWrap
 def collectRemoteLogging (logAndExitFunc,getSettingFunc,sudoShellCommandFunc):
     printAndLog ("Fetching remote logs if there are any.")
     ipTarget = getSettingFunc(f"{getSettingFunc('target')}IpTarget")

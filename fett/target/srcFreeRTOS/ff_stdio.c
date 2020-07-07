@@ -43,6 +43,23 @@ int ff_init( void )
     (void) xSemaphoreGive (ff_mutex);
 
     #ifdef FETT_AWS
+
+        #ifdef FREERTOS_USE_RAMDISK
+        {
+          FRESULT res;
+	  BYTE work[FF_MAX_SS];
+
+	  // For RAMDisk, we need to format the disk.  FM_ANY means that a choice
+	  // of FAT variant (16, 32 etc) will be automatically made based on the
+	  // number of sectors and the sector size supplied by the diskio_ram.c
+	  // module.
+          res = f_mkfs("0:", FM_ANY, 0, work, sizeof(work));
+          fettPrintf ("(Info)~ ff_init: mkfs returns %d\n", (int) res);
+          res = f_mount(&FatFs, "", 0); 
+          fettPrintf ("(Info)~ ff_init: mount returns %d\n", (int) res);
+	  return res;
+	}
+        #else
         // IceBlk is already initialized upon boot,
         // check if the disk is present instead
         if (IceblkDevInstance.disk_present) {
@@ -52,6 +69,8 @@ int ff_init( void )
             fettPrintf ("(Error)~ iceclk disk is not present\r\n");
             return 1;
         }
+        #endif
+
     #else
         return sdlib_initialize();
     #endif

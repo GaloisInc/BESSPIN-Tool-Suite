@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+import argparse
+import uuid
+import random
+import os
+import subprocess
+
+parser = argparse.ArgumentParser(description='Generate a cert using the FETT CA')
+parser.add_argument("--name", required=True, help="Optional cert name")
+
+def gen_cert(name):
+
+    print(f"Generating cert for {name}")
+    key_name = f"{name}.key"
+    csr_name = f"{name}.csr"
+    crt_name = f"{name}.crt"
+    serial = f"{name}.srl"
+    subj = "/C=US/ST=OR/L=Portland/O=Galois, Inc/CN=localhost"
+    # Private Key
+    subprocess.call(['openssl', 'genrsa', '-out', key_name, '2048'])
+    # Certificate Signing Request
+    subprocess.call(['openssl', 'req', '-new', '-key', key_name, '-out', csr_name,
+    '-subj', subj])
+
+    #Serial File
+    hash = random.getrandbits(128)
+    serfd = open(serial, "w+")
+    serfd.write(format(hash, '032x'))
+    serfd.close()
+
+    # Certificate
+    subprocess.call(['openssl', 'x509', '-req', '-in', csr_name, '-CA', 'fettCA.pem',
+        '-CAkey', 'fettCA.key', '-CAserial', serial, '-out', crt_name, '-days', '825',
+         '-sha256']
+    )
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    gen_cert(args.name)

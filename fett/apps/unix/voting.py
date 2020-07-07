@@ -6,7 +6,7 @@ This is executed after loading the app on the target to execute this app
 from fett.base.utils.misc import *
 from fett.apps.unix.webserver import curlTest
 from fett.apps.unix.database import sqliteCmd
-import string, secrets, crypt
+import string, secrets, crypt, base64
 import json, os
 
 @decorate.debugWrap
@@ -31,14 +31,22 @@ def add_official(target, dbfile):
     sqliteCmd(target, sqlite, dbfile, select, tee=appLog, 
               expectedContents="0|official|") # expecting the hash causes issues with FreeBSD
     printAndLog(f"Added election official with username '{officialName}' and password '{password}'")
-            
+
+
 @decorate.debugWrap
 @decorate.timeWrap
 def install (target):
     if (isEqSetting('binarySource','SRI-Cambridge')):
-      prefix = "/fett/var"
+        prefix = "/fett/var"
+        # Add the voting password to the logs
+        retCatPassword = target.runCommand("cat /root/bvrs-offical-password")[1]
+        passwordMatch = matchExprInLines (r"^(?P<b64Password>[A-Za-z0-9+/]{16})$",retCatPassword.splitlines())
+        if (not passwordMatch):
+            target.shutdownAndExit("<sriCambdridgeSetup>: Failed to obtain the election official password.",exitCode=EXIT.Run)
+        printAndLog(f"The election official credentials are: username 'official' and password '{passwordMatch.group('b64Password')}'")
+        return
     else:
-      prefix = "/var"
+        prefix = "/var"
     appLog = getSetting('appLog')
     printAndLog("Installing voting server")
     wwwUser = "www" if isEqSetting('osImage', 'FreeBSD') else "www-data"
@@ -47,25 +55,34 @@ def install (target):
     target.runCommand(f"mkdir -p {prefix}/www/cgi-bin",tee=appLog)
     target.runCommand(f"mkdir -p {prefix}/www/bvrs/bvrs",tee=appLog)
     target.runCommand(f"mkdir -p {prefix}/www/data",tee=appLog)
+    target.runCommand("mkdir -p /etc/ssl/certs",tee=appLog)
+    target.runCommand("mkdir -p /etc/ssl/private",tee=appLog)
+
+    target.runCommand("cp -r certs/* /etc/ssl/certs",tee=appLog)
+    target.runCommand("cp -r keys/* /etc/ssl/private",tee=appLog)
+
 
     target.runCommand("install kfcgi /usr/local/sbin/kfcgi", erroneousContents="install:",tee=appLog)
     target.runCommand(f"install bvrs {prefix}/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
     target.runCommand(f"install static/index.html {prefix}/www/bvrs", erroneousContents="install:",tee=appLog)
     target.runCommand(f"install static/bvrs/* {prefix}/www/bvrs/bvrs", erroneousContents="install:",tee=appLog)
-    
+
     printAndLog("Adding a new election official")
     add_official(target, "bvrs.db")
     
+    target.runCommand("install kfcgi /usr/local/sbin/kfcgi", erroneousContents="install:",tee=appLog)
+    target.runCommand("install bvrs /var/www/cgi-bin/bvrs", erroneousContents="install:",tee=appLog)
+
     # This is important: restrict access to the database to the 'www' user.
     target.runCommand(f"chmod 770 {prefix}/www/data", tee=appLog)
     target.runCommand(f"chown {wwwUser}:{wwwUser} /var/www/data", tee=appLog)
+
     target.runCommand(f"install -m 770 -g {wwwUser} -o {wwwUser} bvrs.db {prefix}/www/data/bvrs.db", erroneousContents="install:",tee=appLog)
 
     target.runCommand("echo \"Starting BVRS CGI Handler...\"",tee=appLog)
 
     target.runCommand(f"/usr/local/sbin/kfcgi -s {prefix}/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- {prefix}/www/cgi-bin/bvrs {prefix}/www/data/bvrs.db",tee=appLog)
     return
-
 
 @decorate.debugWrap
 @decorate.timeWrap
