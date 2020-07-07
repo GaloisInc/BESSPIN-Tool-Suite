@@ -581,17 +581,10 @@ def prepareConnectal():
         zstdDecompress(imageSourcePath, imageFile)
 
     elif isEqSetting('binarySource', 'GFE') and isEqSetting("osImage", "FreeBSD"):
-        # an environment variable refers to the image path
-        rootfsVar = getSettingDict('nixEnv', [getSetting('osImage'), getSetting('pvAWS')+'Image'])
-        if rootfsVar not in os.environ:
-            logAndExit(f"<prepareConnectal>: required image os environment variable {rootfsVar} not found in "
-                       f"environment!", exitCode=EXIT.Dev_Bug)
-        zstSourcePath = os.environ[rootfsVar]
-        zstFilePath = os.path.join(imageDir, f"{getSetting('osImage')}.img.zst")
+        imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                       'osImages', 'connectal', "freebsd.img.zst")
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
-        cp(zstSourcePath, zstFilePath)
-
-        zstdDecompress(zstFilePath, imageFile)
+        zstdDecompress(imageSourcePath, imageFile)
  
     # connectal requires a device tree blob
     dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
