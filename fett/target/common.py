@@ -123,7 +123,7 @@ class commonTarget():
             timeout = 45
         elif (isEqSetting('target', 'fpga')):
             timeout = 90
-        elif (isEqSetting('osImage','FreeBSD') and isEqSetting('pvAWS', 'connectal')):
+        elif (isEqSetting('osImage','FreeBSD') and isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')):
             timeout = 150
         else:
             timeout = 45
@@ -214,7 +214,7 @@ class commonTarget():
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             # set the temporary prompt
-            if isEqSetting("binarySource", "SRI-Cambridge") or (isEqSetting("binarySource", "GFE") and isEqSetting("pvAWS", "connectal")):
+            if isEqSetting("binarySource", "SRI-Cambridge") or (isEqSetting("binarySource", "GFE") and isEqSetting('target', 'aws') and isEqSetting("pvAWS", "connectal")):
                 tempPrompt = "~ #"
             else:
                 tempPrompt = "\r\n#"
