@@ -44,7 +44,7 @@ int ff_init( void )
 
     #ifdef FETT_AWS
 
-        #ifdef FETT_AWS_RAMDISK
+        #ifdef FREERTOS_USE_RAMDISK
         {
           FRESULT res;
 	  BYTE work[FF_MAX_SS];

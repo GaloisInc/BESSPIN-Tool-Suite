@@ -56,8 +56,12 @@ ifeq ($(BSP),aws)
 				$(SD_SOURCE_DIR)/ffunicode.c
 	INCLUDES += -I$(SD_SOURCE_DIR)
 
-ifeq ($(AWS_FREERTOS_FS),ramdisk)
-	CFLAGS += -DFETT_AWS_RAMDISK
+ifeq ($(FREERTOS_USE_RAMDISK),1)
+	ifeq ($(RAMDISK_NUM_SECTORS),)
+		$(error "RAMDISK_NUM_SECTORS not set even though FREERTOS_USE_RAMDISK=1")
+        endif
+	CFLAGS += -DFREERTOS_USE_RAMDISK
+        CFLAGS += -DRAMDISK_NUM_SECTORS=$(RAMDISK_NUM_SECTORS)
 	DEMO_SRC += $(SD_SOURCE_DIR)/diskio_ram.c
 else
 	DEMO_SRC += $(SD_SOURCE_DIR)/diskio.c

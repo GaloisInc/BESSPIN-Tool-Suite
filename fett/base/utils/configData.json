@@ -19,9 +19,8 @@
             "choices" : [ "qemu", "aws", "fpga" ]
         },
         {
-            "name" : "aws_freertos_fs",
-            "type" : "string",
-            "choices" : [ "iceblk", "ramdisk" ]
+            "name" : "FreeRTOSUseRAMDisk",
+            "type" : "bool"
         },
         {
             "name" : "processor",

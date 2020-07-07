@@ -182,15 +182,9 @@ static BaseType_t prvSendFile(HTTPClient_t *pxClient)
                 {
                     uxCount = sizeof(pxClient->pxParent->pcFileBuffer);
                 }
-
                 ff_fread(pxClient->pxParent->pcFileBuffer, 1, uxCount,
                          pxClient->pxFileHandle);
                 pxClient->uxBytesLeft -= uxCount;
-
-		//fettPrintf("(Info)~  HTTP prvSendFile sending...\n");
-                //for (size_t j = 0; j < uxCount; j++)
-		//  fettPrintf ("%c ", pxClient->pxParent->pcFileBuffer[j]);
-                //fettPrintf("(Info)~  HTTP prvSendFile done...\n");
 
                 xRc =
                     FreeRTOS_send(pxClient->xSocket,
