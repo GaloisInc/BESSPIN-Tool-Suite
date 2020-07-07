@@ -656,10 +656,10 @@ class commonTarget():
         return self.runCommand(f"ls {pathToFile}/{xFile}",suppressErrors=True,expectedContents=xFile,erroneousContents=['ls:', 'cannot access', 'No such file or directory'],timeout=timeout,shutdownOnError=shutdownOnError)[0]
 
     @decorate.debugWrap
-    def sendTar(self,timeout=15): #send tarball to target
+    def sendTar(self,timeout=30): #send tarball to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
-        if isEqSetting('binarySource', 'SRI-Cambridge'):
+        if isEqSetting('binarySource', 'SRI-Cambridge') or isEqSetting('osImage', 'FreeBSD'):
             self.switchUser() #this is assuming it was on root
             self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=60,forceScp=True)
             self.switchUser()

@@ -211,7 +211,8 @@
                     "fpga" : "FETT_GFE_FREEBSD_FPGA",
                     "qemu" : "FETT_GFE_FREEBSD_QEMU",
                     "firesim" :  "FETT_GFE_FREEBSD_FIRESIM",
-                    "connectal" : "FETT_GFE_FREEBSD_CONNECTAL"
+                    "connectal" : "FETT_GFE_FREEBSD_CONNECTAL",
+                    "connectalImage" : "FETT_GFE_FREEBSD_ROOTFS_CONNECTAL"
                 },
                 "busybox" : {
                     "fpga" : "FETT_GFE_BUSYBOX_FPGA",

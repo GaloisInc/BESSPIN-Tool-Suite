@@ -45,8 +45,10 @@ def install (target):
     elif isEqSetting('osImage','FreeBSD'):
         target.runCommand("install -d /usr/local/etc/rc.d",tee=appLog)
         target.runCommand("install rcfile /usr/local/etc/rc.d/nginx", erroneousContents="install:",tee=appLog)
-        target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog)
-        target.runCommand("service nginx start", erroneousContents=["failed"], tee=appLog)
+        # GFE FreeBSD is slow with these commands
+        nginxTimeout = 60 if not (isEqSetting('osImage', 'FreeBSD') and isEqSetting('binarySource', 'GFE')) else 120
+        target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog, timeout=nginxTimeout)
+        target.runCommand("service nginx start", erroneousContents=["failed"], tee=appLog, timeout=nginxTimeout)
     else:
         target.shutdownAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
                      exitCode=EXIT.Dev_Bug)
