@@ -19,6 +19,10 @@
             "choices" : [ "qemu", "aws", "fpga" ]
         },
         {
+            "name" : "FreeRTOSUseRAMDisk",
+            "type" : "bool"
+        },
+        {
             "name" : "processor",
             "type" : "string",
             "choices" : [ "chisel_p1", "bluespec_p2", "chisel_p2" ]

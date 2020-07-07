@@ -146,6 +146,9 @@ def prepareFreeRTOS():
         envVars.append(f"PROG=main_fett")
         envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
         envVars.append(f"BSP={getSetting('target')}")
+        if getSetting('FreeRTOSUseRAMDisk'):
+            envVars.append(f"FREERTOS_USE_RAMDISK=1")
+        envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
         logging.debug(f"going to make using {envVars}")
         make (envVars,getSetting('FreeRTOSprojDir'))
 

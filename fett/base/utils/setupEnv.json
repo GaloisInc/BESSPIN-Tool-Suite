@@ -261,6 +261,11 @@
             }
         },
         {
+            "name" : "freertosRamdiskNumSectors",
+            "type" : "int",
+            "val"  : 32768
+        },
+        {
             "name" : "webserverLogs",
             "type" : "dict",
             "val"  : {
