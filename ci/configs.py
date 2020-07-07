@@ -105,7 +105,8 @@ gfe_freertosDevPR_aws = freertosDefaults.union({
     ('target',('aws',)),
     ('cross-compiler',('GCC','Clang',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
-    ('buildApps',('yes',))
+    ('FreeRTOSUseRAMDisk',('yes',)),
+    ('buildApps',('no',))
 })
 
 lmco_freertosDevPR_aws = freertosDefaults.union({
@@ -114,7 +115,8 @@ lmco_freertosDevPR_aws = freertosDefaults.union({
     ('target',('aws',)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
-    ('buildApps',('yes',))
+    ('FreeRTOSUseRAMDisk',('yes',)),
+    ('buildApps',('no',))
 })
 
 michigan_freertosDevPR_aws = freertosDefaults.union({
