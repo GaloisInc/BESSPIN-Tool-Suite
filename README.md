@@ -84,6 +84,7 @@ Some useful configuration options:
     SSITH OSs are either [FreeRTOS](https://www.freertos.org/),
     [FreeBSD](https://www.freebsd.org/), or [Linux Debian](https://www.debian.org/),
     or [Busybox](https://busybox.net/about.html).
+- `FreeRTOSUseRAMDisk` : Use RAM disk as a filesystem instead of the FAT `.img` file.
 - `useCustomOsImage`: If disabled, Nix (if image is available) or FETT-Binaries images will be used.
 - `useCustomProcessor`: If disabled, Nix (if applicable) or FETT-Binaries bitfiles will be used. If enabled, a source directory has to be provided where the required files exist.
 - `openConsole`: returns an open console for Unix targets.
