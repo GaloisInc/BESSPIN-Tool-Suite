@@ -119,10 +119,14 @@ class commonTarget():
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
             timeout = 30
-        if (getSetting('osImage') in ['debian','busybox']):
+        elif (getSetting('osImage') in ['debian','busybox']):
             timeout = 45
+        elif (isEqSetting('target', 'fpga')):
+            timeout = 90
+        elif (isEqSetting('osImage','FreeBSD') and isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')):
+            timeout = 150
         else:
-            timeout = 90 if isEqSetting('target','fpga') else 45
+            timeout = 45
         if (self.AttemptShutdownFailed):
             self.shutdownAndExit(f"shutdown: Unable to shutdown the {getSetting('target')} properly.",overwriteShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
@@ -210,7 +214,10 @@ class commonTarget():
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             # set the temporary prompt
-            tempPrompt = "~ #" if isEqSetting("binarySource", "SRI-Cambridge") else "\r\n#"
+            if isEqSetting("binarySource", "SRI-Cambridge") or (isEqSetting("binarySource", "GFE") and isEqSetting('target', 'aws') and isEqSetting("pvAWS", "connectal")):
+                tempPrompt = "~ #"
+            else:
+                tempPrompt = "\r\n#"
             # fpga freebsd would be already logged in if onlySsh
             if (isEqSetting('target','qemu')):
                 self.runCommand("root",endsWith="\r\n#")
@@ -653,10 +660,10 @@ class commonTarget():
         return self.runCommand(f"ls {pathToFile}/{xFile}",suppressErrors=True,expectedContents=xFile,erroneousContents=['ls:', 'cannot access', 'No such file or directory'],timeout=timeout,shutdownOnError=shutdownOnError)[0]
 
     @decorate.debugWrap
-    def sendTar(self,timeout=15): #send tarball to target
+    def sendTar(self,timeout=30): #send tarball to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
-        if isEqSetting('binarySource', 'SRI-Cambridge'):
+        if (getSetting('binarySource') in ['GFE', 'SRI-Cambridge']) and isEqSetting('osImage', 'FreeBSD'):
             self.switchUser() #this is assuming it was on root
             self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=60,forceScp=True)
             self.switchUser()
