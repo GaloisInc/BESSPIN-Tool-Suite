@@ -146,7 +146,6 @@ def deploymentTest(target):
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 3 - GET notthere.htm\n")
     HTTPSmokeTest(target, 'notthere.htm', 'notthere.htm', WEB_NOT_FOUND, 3, 'HTTP GET missing file')
 
-
     # Now try to GET glogo.png - a larger binary format file
     getSetting('appLog').write(f"(Host)~  HTTP SmokeTest Case 4 - GET glogo.png\n")
     HTTPSmokeTest(target, 'glogo.png', 'glogo.png', WEB_REPLY_OK, 4, 'HTTP GET PNG file')
