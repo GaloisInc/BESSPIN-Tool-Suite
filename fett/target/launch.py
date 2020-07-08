@@ -12,6 +12,7 @@ from fett.target import aws
 from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
 from fett.cwesEvaluation.build import buildCwesEvaluation
+from fett.cwesEvaluation.target.qemu import qemuTarget as cwesEvaluationQemuTarget
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -153,7 +154,10 @@ def getClassType():
     if (isEqSetting('target','aws')):
         return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
-        return qemu.qemuTarget
+        if isEqSetting('mode', 'evaluateSecurityTests'):
+            return cwesEvaluationQemuTarget
+        else:
+            return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):
         gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
         if (gfeTestingScripts not in os.environ):

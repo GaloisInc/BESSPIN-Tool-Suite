@@ -2,7 +2,7 @@
 Building CWEs Evaluation
 """
 
-# TODO: Unused?
+import glob
 import os
 
 from fett.apps.build import cpFilesToBuildDir
@@ -50,7 +50,12 @@ def buildCwesEvaluation():
 
     crossCompileUnix()
 
-    logAndExit(f"<buildCwesEvaluation> not implemented", exitCode=EXIT.Dev_Bug)
+    # TODO: Use list comprehension to flatten tarball
+    fileList = [(os.path.basename(f), f) for f in
+                glob.glob(os.path.join(buildDir, "*.riscv"))]
+    tar(os.path.join(buildDir, getSetting('tarballName')), fileList)
+
+    setSetting('sendTarballToTarget', True)
 
 @decorate.debugWrap
 @decorate.timeWrap
