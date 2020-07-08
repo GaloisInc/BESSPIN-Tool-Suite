@@ -242,9 +242,9 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
 		the special case block number 0 is used. */
         usExpectedBlockNumber = 0;
 
-	/* Send ACK for the WRQ message */
-	prvSendAcknowledgement(xTFTPRxSocket, pxClient,
-			       usExpectedBlockNumber);
+        /* Send ACK for the WRQ message */
+        prvSendAcknowledgement(xTFTPRxSocket, pxClient,
+                               usExpectedBlockNumber);
 
         do
         {
@@ -255,7 +255,8 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                 FreeRTOS_recvfrom(xTFTPRxSocket, (void *)&pucFileBuffer, 0,
                                   FREERTOS_ZERO_COPY, &xClient, &xClientLength);
 
-            if (lBytes == 0)
+            if (lBytes == FREERTOS_EWOULDBLOCK || // returned when no bytes are received
+                lBytes == 0)                      // just in case a zero-length packet is received
             {
                 /* Timed out. */
                 fettPrintf("(Error)~  TFTP Timeout.\n");
@@ -266,6 +267,11 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                     fettPrintf("(Error)~  TFTP Retry limit exceeded.\n");
                     xReturn = pdFAIL;
                 }
+            }
+            else if (lBytes < 0) // some other error occurred
+            {
+                fettPrintf("(Error)~  UDP receive error code %d", lBytes);
+                xReturn = pdFAIL;
             }
             else
             {
@@ -299,7 +305,7 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                             (void *)&buffer[Total_Bytes_Written], // Destination
                             (void *)(pucFileBuffer +
                                      sizeof(TFTPBlockNumberHeader_t)), // Source
-                            xBytesOfFileDataReceived); // Number of bytes to copy
+                            xBytesOfFileDataReceived);                 // Number of bytes to copy
                         Total_Bytes_Written += xBytesOfFileDataReceived;
                     }
                     else
@@ -316,20 +322,20 @@ static BaseType_t prvReceiveFile(uint8_t *buffer,     // out
                 }
                 else
                 {
-                char aIPpxClient [16];
-                FreeRTOS_inet_ntoa(pxClient->sin_addr, aIPpxClient);
-                char aIPxClient [16];
-                FreeRTOS_inet_ntoa(xClient.sin_addr, aIPxClient);
+                    char aIPpxClient[16];
+                    FreeRTOS_inet_ntoa(pxClient->sin_addr, aIPpxClient);
+                    char aIPxClient[16];
+                    FreeRTOS_inet_ntoa(xClient.sin_addr, aIPxClient);
 
-		    fettPrintf("(Info)~  TFTP packet addresses or sequence numbers do not match\n");
-    	            fettPrintf ("(Info)~  TFTP packet opcode %d, BNs (%d, %d), IPs (%s, %s), ports (%d, %d)\n",
-			        (int) pxHeader->usOpcode,
-			        (int) pxHeader->usBlockNumber,
-			        (int) usExpectedBlockNumber,
-			        aIPpxClient,
-			        aIPxClient,
-			        FreeRTOS_ntohs( pxClient->sin_port ),
-              FreeRTOS_ntohs( xClient.sin_port ));
+                    fettPrintf("(Info)~  TFTP packet addresses or sequence numbers do not match\n");
+                    fettPrintf("(Info)~  TFTP packet opcode %d, BNs (%d, %d), IPs (%s, %s), ports (%d, %d)\n",
+                               (int)pxHeader->usOpcode,
+                               (int)pxHeader->usBlockNumber,
+                               (int)usExpectedBlockNumber,
+                               aIPpxClient,
+                               aIPxClient,
+                               FreeRTOS_ntohs(pxClient->sin_port),
+                               FreeRTOS_ntohs(xClient.sin_port));
 
                     prvSendTFTPError(xTFTPRxSocket, pxClient,
                                      eIllegalTFTPOperation);
