@@ -20,7 +20,8 @@ class qemuTarget(fett.target.qemu.qemuTarget):
         mkdir(os.path.join(getSetting('workDir'), 'cwesEvaluationLogs'),
               "cwesEvaluationLogDir")
 
-        self.executeTest("test_188.riscv")
+        for test in getSetting("enabledCwesEvaluations"):
+            self.executeTest(test)
         #self.interact()
 
         self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
@@ -29,6 +30,7 @@ class qemuTarget(fett.target.qemu.qemuTarget):
     def executeTest (self,binTest):
         testName = binTest.split('.')[0]
         if (hasattr(cweTests,testName)):
+            printAndLog(f"Executing {testName}...")
             outLog = getattr(getattr(cweTests,testName),testName)(
                     testgenTargetCompatabilityLayer(self), binTest)
         else:

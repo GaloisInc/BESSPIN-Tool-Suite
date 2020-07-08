@@ -57,6 +57,10 @@ def buildCwesEvaluation():
 
     setSetting('sendTarballToTarget', True)
 
+    # TODO: Put this somewhere else, use it to determine what to compile, and
+    # maybe rename it
+    setSetting('enabledCwesEvaluations', [x[0] for x in fileList])
+
 @decorate.debugWrap
 @decorate.timeWrap
 def crossCompileUnix():
