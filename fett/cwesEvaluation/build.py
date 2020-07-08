@@ -23,7 +23,7 @@ def buildCwesEvaluation():
     # Copy apps over
     # TODO: Use buildApps instead, rather than second parameter here?
     # TODO: Use os.path.join
-    cpFilesToBuildDir("fett/cwesEvaluation/tests/3_ResourceManagement/sources",
+    cpFilesToBuildDir("fett/cwesEvaluation/tests/resourceManagement/sources",
                       "*.c")
     cp(os.path.join(getSetting('repoDir'),
                     'fett',
