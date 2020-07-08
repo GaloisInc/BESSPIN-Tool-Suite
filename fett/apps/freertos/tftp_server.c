@@ -679,9 +679,9 @@ uint32_t TFTP_Receive_One_File(uint8_t *buffer,        // out
     }
     else
     {
-        // ERRNO_EWOULDBLOCK indicates timeout, which can happen when
+        // FREERTOS_EWOULDBLOCK indicates timeout, which can happen when
         // there are no incoming TFTP requests, so ignore it
-        if (lBytes != -pdFREERTOS_ERRNO_EWOULDBLOCK)
+        if (lBytes != FREERTOS_EWOULDBLOCK)
         {
             // Something weird happened, but carry on
             fettPrintf("(Warning)~  TFTP recvfrom() failed with return code %d\n",
