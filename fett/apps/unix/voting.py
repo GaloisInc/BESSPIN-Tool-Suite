@@ -39,7 +39,7 @@ def install (target):
     if (isEqSetting('binarySource','SRI-Cambridge')):
         prefix = "/fett/var"
         # Add the voting password to the logs
-        retCatPassword = target.runCommand("cat /root/bvrs-offical-password")[1]
+        retCatPassword = target.runCommand("cat /root/bvrs-official-password")[1]
         passwordMatch = matchExprInLines (r"^(?P<b64Password>[A-Za-z0-9+/]{16})$",retCatPassword.splitlines())
         if (not passwordMatch):
             target.shutdownAndExit("<sriCambdridgeSetup>: Failed to obtain the election official password.",exitCode=EXIT.Run)
