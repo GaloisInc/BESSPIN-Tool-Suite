@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def print_and_exit(message = ''):
-    print(message + '\n(Error)~ Exiting nightly testing.')
+    print(f'{ message }\n(Error)~ Exiting nightly testing.')
     exit(0)
 
 
@@ -62,8 +62,9 @@ def handle_init(args):
         region = region if region != '' else 'us-west-2'
 
         # NOTE: Should be replaced with subprocess
-        os.system('echo "[default]\naws_access_key_id = ' + id + '\naws_secret_access_key = ' + secret + '\naws_session_token = ' + session + '" > ~/.aws/credentials')
-        os.system('echo "[default]\nregion = ' + region + '\noutput = ' + output + '" > ~/.aws/config')
+        # Somehow subprocess.call() echoes everything instead of saving
+        os.system(f'echo "[default]\naws_access_key_id = { id }\naws_secret_access_key = { secret }\naws_session_token = { session }" > ~/.aws/credentials')
+        os.system(f'echo "[default]\nregion = { region }\noutput = { output }" > ~/.aws/config')
 
         if id == '' or secret == '' or session == '':
             print_and_exit('(Error)~ At least one required input is empty.')
@@ -87,24 +88,26 @@ def handle_init(args):
         if shell == 'zsh':
             with open(Path.home() / '.zshrc', 'r+') as f:
                 lines = f.readlines()
+                zshrc = f'~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="{ id }"\nexport AWS_SECRET_ACCESS_KEY="{ secret }"\nexport AWS_SESSION_TOKEN="{ session }"'
                 if '~~~~~~~ AWS ~~~~~~~\n' in lines:
                     i = lines.index('~~~~~~~ AWS ~~~~~~~\n')
                     non_aws = lines[0:i]
-                    zshrc = ''.join(non_aws) + '~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="' + id + '"\nexport AWS_SECRET_ACCESS_KEY="' + secret + '"\nexport AWS_SESSION_TOKEN="' + session + '"'
+                    zshrc = f'{ ''.join(non_aws) }{ zshrc }'
                 else:
-                    zshrc = ''.join(lines) + '\n\n~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="' + id + '"\nexport AWS_SECRET_ACCESS_KEY="' + secret + '"\nexport AWS_SESSION_TOKEN="' + session + '"'
+                    zshrc = f'{ ''.join(lines) }\n\n{ zshrc }'
                 f.seek(0)
                 f.write(zshrc)
                 f.truncate()
         elif shell == 'bash':
             with open(Path.home() / '.bashrc', 'r+') as f:
                 lines = f.readlines()
+                bashrc = f'~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="{ id }"\nexport AWS_SECRET_ACCESS_KEY="{ secret }"\nexport AWS_SESSION_TOKEN="{ session }"'
                 if '~~~~~~~ AWS ~~~~~~~\n' in lines:
                     i = lines.index('~~~~~~~ AWS ~~~~~~~\n')
                     non_aws = lines[0:i]
-                    bashrc = ''.join(non_aws) + '~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="' + id + '"\nexport AWS_SECRET_ACCESS_KEY="' + secret + '"\nexport AWS_SESSION_TOKEN="' + session + '"'
+                    bashrc = f'{ ''.join(non_aws) }{ bashrc }'
                 else:
-                    bashrc = ''.join(lines) + '~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="' + id + '"\nexport AWS_SECRET_ACCESS_KEY="' + secret + '"\nexport AWS_SESSION_TOKEN="' + session + '"'
+                    bashrc = f'{ ''.join(lines) }\n\n{ bashrc }'
                 f.seek(0)
                 f.write(bashrc)
                 f.truncate()
@@ -116,17 +119,17 @@ def handle_init(args):
 def start_instance(ami, name):
     print('(Info)~ Launching instance...\n(Info)~ This process may take a few minutes.')
 
-    raw_payload = subprocess_check_output('aws ec2 run-instances --image-id ' + ami + ' --count 1 --instance-type f1.2xlarge --key-name nightly-testing --security-group-ids sg-047b87871fa61178f --subnet-id subnet-0ae96c15a09f122a1')
+    raw_payload = subprocess_check_output(f'aws ec2 run-instances --image-id { ami } --count 1 --instance-type f1.2xlarge --key-name nightly-testing --security-group-ids sg-047b87871fa61178f --subnet-id subnet-0ae96c15a09f122a1')
     payload = json.loads(raw_payload)
 
     id = payload['Instances'][0]['InstanceId']
     sleep(5) # NOTE: Ultra-jank alert, also is sleep necessary?
-    subprocess_call('aws ec2 create-tags --resources ' + id + ' --tags Key=Name,Value=' + name)
+    subprocess_call(f'aws ec2 create-tags --resources { id } --tags Key=Name,Value={ name }')
     print('(Info)~ Instance launched! 🚀')
 
 
 def ssh(name):
-    raw_payload = subprocess_check_output('aws ec2 describe-instances --filters "Name=tag:' + name + '"')
+    raw_payload = subprocess_check_output(f'aws ec2 describe-instances --filters "Name=tag:{ name }"')
     payload = json.loads(raw_payload)
     print(payload)
 
@@ -150,7 +153,7 @@ def main():
             print_and_exit('(Error)~ AWS CLI is not installed.\n(Error)~ Visit https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html to install the required command line tools.')
         else:
             err = str(e)
-            print_and_exit('(Error)~ ' + err)
+            print_and_exit(f'(Error)~ { err }')
 
 
 if __name__ == '__main__':
