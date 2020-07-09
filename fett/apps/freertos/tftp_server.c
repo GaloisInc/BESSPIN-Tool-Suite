@@ -97,12 +97,14 @@
 //#error The TFTP server uses the pdMS_TO_TICKS() macro, so configTICK_RATE_HZ must be less than or equal to 1000
 //#endif
 
+/* the timeout for receiving packets during a transfer */
 #ifndef ipconfigTFTP_TIME_OUT_MS
-#define ipconfigTFTP_TIME_OUT_MS (10000)
+#define ipconfigTFTP_TIME_OUT_MS (5000)
 #endif
 
+/* number of times to retry a TFTP operation; three strikes and you're out */
 #ifndef ipconfigTFTP_MAX_RETRIES
-#define ipconfigTFTP_MAX_RETRIES (6)
+#define ipconfigTFTP_MAX_RETRIES (3)
 #endif
 
 /* Offset to the file name within the frame. */
