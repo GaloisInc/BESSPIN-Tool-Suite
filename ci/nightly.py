@@ -52,7 +52,7 @@ def validate_arguments(args):
 def handle_init(args):
     try:
         print('(Info)~ Testing AWS...')
-        subprocess_call('asdf')
+        subprocess_call('aws')
         print('(Info)~ AWS installed!')
 
         id = input('(Input)~ AWS Access Key ID: ')
