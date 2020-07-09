@@ -125,6 +125,12 @@ def start_instance(ami, name):
     print('(Info)~ Instance launched! 🚀')
 
 
+def ssh(name):
+    raw_payload = subprocess_check_output('aws ec2 describe-instances --filters "Name=tag:' + name + '"')
+    payload = json.loads(raw_payload)
+    print(payload)
+
+
 def main():
     print('(Info)~ Welcome to the nightly testing command line app!')
     try:
@@ -135,6 +141,7 @@ def main():
             handle_init(args)
 
         start_instance(ami, name)
+        ssh(name)
 
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
