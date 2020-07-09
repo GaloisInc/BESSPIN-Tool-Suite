@@ -229,9 +229,11 @@ class commonTarget():
                 else:
                     self.runCommand ("root",endsWith=tempPrompt)
 
-            self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
-            self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempPrompt)
-            self.runCommand("set prompt = \"`cat promptText.txt`\"")
+            if not isEqSetting('target', 'aws'):
+                self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
+                self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempPrompt)
+                self.runCommand("set prompt = \"`cat promptText.txt`\"")
+                self.runCommand("rm promptText.txt")
 
             printAndLog (f"start: Activating ethernet and setting system time...")
         else:
@@ -422,7 +424,10 @@ class commonTarget():
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
             if (self.isCurrentUserRoot):
-                return "fettPrompt>"
+                if isEqSetting('target', 'aws'):
+                    return ":~ #"
+                else:
+                    return "fettPrompt>"
             else:
                 return ":~ \$"
         elif (isEqSetting('osImage','busybox')):
@@ -438,7 +443,10 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             return [":~#", ":~\$"]
         elif (isEqSetting('osImage','FreeBSD')):
-            return ["fettPrompt>", ":~ \$"]
+            if isEqSetting('target', 'aws'):
+                return [":~ #", ":~ \$"]
+            else:
+                return ["fettPrompt>", ":~ \$"]
         elif (isEqSetting('osImage','busybox')):
             return ["~ #", "\$"]
         else:
