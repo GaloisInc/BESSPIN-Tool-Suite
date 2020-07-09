@@ -1,9 +1,10 @@
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.compat import testgenTargetCompatabilityLayer
+import fett.cwesEvaluation.scoreTests as scoreTests
 import fett.target.qemu
 
-# TODO: This import wont work once we have multiple vuln classes
-from fett.cwesEvaluation.tests.resourceManagement.scripts import cweTests
+# TODO: These imports wont work once we have multiple vuln classes
+from fett.cwesEvaluation.tests.resourceManagement.scripts import cweTests, cweScores
 
 class qemuTarget(fett.target.qemu.qemuTarget):
 
@@ -23,6 +24,8 @@ class qemuTarget(fett.target.qemu.qemuTarget):
         for test in getSetting("enabledCwesEvaluations"):
             self.executeTest(test)
         #self.interact()
+
+        self.score()
 
         self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
@@ -44,5 +47,19 @@ class qemuTarget(fett.target.qemu.qemuTarget):
             # TODO: Log file will be empty if fell into the `else` branch above
             f.write(outLog)
 
+    def score(self):
+        # TODO: Load modules using SourceFileLoader
+        module = cweScores
 
+        # TODO: Allow custom scoring
+        scorer = scoreTests.customScorerObj(False, None)
+
+        # TODO: Make this configurable?
+        csvPath = os.path.join(getSetting('workDir'), "scores.csv")
+
+        # TODO: Generate report file?  Is CSV + console output enough?  Perhaps
+        # we just hijack stdout in the print calls to write to a file (probably
+        # shouldn't be calling `print` anyway).  Or modify the script to use
+        # the logging functions FETT uses (probably best)
+        scoreTests.main(module, scorer, csvPath)
 
