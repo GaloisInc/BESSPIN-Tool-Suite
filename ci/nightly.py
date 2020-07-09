@@ -1,5 +1,6 @@
-import subprocess, sys, json
+import subprocess, sys, json, os
 from time import sleep
+from pathlib import Path
 
 
 def print_and_exit(message = ''):
@@ -9,13 +10,10 @@ def print_and_exit(message = ''):
 
 def subprocess_call(command):
     return subprocess.call(command.split(sep=' '))
-    # pass
 
 
 def subprocess_check_output(command):
     return subprocess.check_output(command.split(sep=' '))
-    # pass
-
 
 def validate_arguments(args):
     if '--ami' not in args and '-a' not in args:
@@ -51,9 +49,9 @@ def validate_arguments(args):
 
 def handle_init(args):
     try:
-        print('(Info)~ Testing AWS...')
+        print('(Info)~ Testing AWS CLI...')
         subprocess_call('aws')
-        print('(Info)~ AWS installed!')
+        print('(Info)~ AWS CLI installed!')
 
         id = input('(Input)~ AWS Access Key ID: ')
         secret = input('(Input)~ AWS Secret Access Key: ')
@@ -63,14 +61,18 @@ def handle_init(args):
 
         region = region if region != '' else 'us-west-2'
 
-        subprocess_call('echo "[default]\naws_access_key_id = ' + id + '\naws_secret_access_key = ' + secret + '" > ~/.aws/credentials')
-        subprocess_call('echo "[default]\nregion = ' + region + '\noutput = ' + output + '" > ~/.aws/config')
+        # NOTE: Should be replaced with subprocess
+        os.system('echo "[default]\naws_access_key_id = ' + id + '\naws_secret_access_key = ' + secret + '\naws_session_token = ' + session + '" > ~/.aws/credentials')
+        os.system('echo "[default]\nregion = ' + region + '\noutput = ' + output + '" > ~/.aws/config')
 
         if id == '' or secret == '' or session == '':
             print_and_exit('(Error)~ At least one required input is empty.')
 
         try:
             shell = args[args.index('--init') + 1]
+            if shell[0] == '-':
+                shell = 'zsh'
+                print('(Info)~ Shell not provided, using default zsh.')
         except Exception as e:
             if isinstance(e, IndexError):
                 shell = 'zsh'
@@ -79,12 +81,33 @@ def handle_init(args):
                 try:
                     shell = args[args.index('-i') + 1]
                 except IndexError:
+                    shell = 'zsh'
                     print('(Info)~ Shell not provided, using default zsh.')
 
         if shell == 'zsh':
-            subprocess_call('echo "\n\n~~~~~~~ AWS ~~~~~~\nexport AWS_ACCESS_KEY_ID=\"' + id + '\"\nexport AWS_SECRET_ACCESS_KEY=\"' + secret + '\"\nexport AWS_SESSION_TOKEN=\"' + session + '\" >> ~/.zshrc')
+            with open(Path.home() / '.zshrc', 'r+') as f:
+                lines = f.readlines()
+                if '~~~~~~~ AWS ~~~~~~~\n' in lines:
+                    i = lines.index('~~~~~~~ AWS ~~~~~~~\n')
+                    non_aws = lines[0:i]
+                    zshrc = ''.join(non_aws) + '~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="' + id + '"\nexport AWS_SECRET_ACCESS_KEY="' + secret + '"\nexport AWS_SESSION_TOKEN="' + session + '"'
+                else:
+                    zshrc = ''.join(lines) + '\n\n~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="' + id + '"\nexport AWS_SECRET_ACCESS_KEY="' + secret + '"\nexport AWS_SESSION_TOKEN="' + session + '"'
+                f.seek(0)
+                f.write(zshrc)
+                f.truncate()
         elif shell == 'bash':
-            subprocess_call('echo "\n\n~~~~~~~ AWS ~~~~~~\nexport AWS_ACCESS_KEY_ID=\"' + id + '\"\nexport AWS_SECRET_ACCESS_KEY=\"' + secret + '\"\nexport AWS_SESSION_TOKEN=\"' + session + '\" >> ~/.bashrc')
+            with open(Path.home() / '.bashrc', 'r+') as f:
+                lines = f.readlines()
+                if '~~~~~~~ AWS ~~~~~~~\n' in lines:
+                    i = lines.index('~~~~~~~ AWS ~~~~~~~\n')
+                    non_aws = lines[0:i]
+                    bashrc = ''.join(non_aws) + '~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="' + id + '"\nexport AWS_SECRET_ACCESS_KEY="' + secret + '"\nexport AWS_SESSION_TOKEN="' + session + '"'
+                else:
+                    bashrc = ''.join(lines) + '~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="' + id + '"\nexport AWS_SECRET_ACCESS_KEY="' + secret + '"\nexport AWS_SESSION_TOKEN="' + session + '"'
+                f.seek(0)
+                f.write(bashrc)
+                f.truncate()
 
     except OSError:
         print_and_exit('(Error)~ AWS CLI is not installed.\n(Error)~ Visit https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html to install the required command line tools.')
@@ -119,7 +142,8 @@ def main():
         elif isinstance(e, OSError):
             print_and_exit('(Error)~ AWS CLI is not installed.\n(Error)~ Visit https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html to install the required command line tools.')
         else:
-            print_and_exit('(Error)~ Unknown error ¯\_(ツ)_/¯')
+            err = str(e)
+            print_and_exit('(Error)~ ' + err)
 
 
 if __name__ == '__main__':
