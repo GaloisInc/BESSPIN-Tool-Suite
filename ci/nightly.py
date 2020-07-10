@@ -131,7 +131,7 @@ def handle_init(args):
             print_and_exit()
 
 
-def start_instance(ami, name, number):
+def start_instance(ami, name):
     print('(Info)~ Launching instance...\n(Info)~ This process may take a few minutes.')
 
     raw_payload = subprocess_check_output(f'aws ec2 run-instances --image-id { ami } --count 8 --instance-type f1.2xlarge --key-name nightly-testing --security-group-ids sg-047b87871fa61178f --subnet-id subnet-0ae96c15a09f122a1')
@@ -146,8 +146,9 @@ def start_instance(ami, name, number):
         id = ids[i]
         subprocess_call(f'aws ec2 create-tags --resources { id } --tags Key=Name,Value={ name }-{ i }')
         names.append(f'{ name }-{ i }')
+        print(f'(Info)~ Launched { name }-{ i }.')
 
-    print(f'(Info)~ Instances launched! 🚀')
+    print(f'(Info)~ All instances launched! 🚀')
 
     return names
 
@@ -169,9 +170,31 @@ def ssh(names):
         ip = payload[0]
 
         # TODO: Add develop functionality
-        print(f'(Info)~ Attempting to ssh into instances')
+        print(f'(Info)~ Attempting to ssh into instance { name }.')
         config_num = i + 1
-        subprocess_call(f'ssh -i { pem } centos@{ ip } \'( cd SSITH-FETT-Target/ && nix-shell --command \'( ci/fett-ci.py -ep AWS runDevPR -job { config_num } -i { config_num } && ./fett.py -c /tmp/dumpIni/ -d)\' )\'') # Note: What do I put here?
+        raw_b_output = subprocess_check_output(f'ssh -i { pem } centos@{ ip } cd SSITH-FETT-Target/ && nix-shell --command ci/fett-ci.py -ep AWS runDevPR -job { config_num } -i { config_num } && echo "(~~~ BEGIN LOGS ~~~)" && for each in workDir/*.log; do echo "${{each##*/}}---FILE---" && cat $each; echo "~~~~~~"; done && for each in workDir/*.out; do echo "${{each##*/}}---FILE---" cat $each; echo "~~~~~~"; done && for each in /tmp/*.ini; do echo "${{each##*/}}---FILE---" cat $each; echo "~~~~~~"; done')
+        raw_output = raw_b_output.decode('utf-8')
+        raw_logs = raw_output.split(sep='(~~~ BEGIN LOGS ~~~)')[1]
+        filtered_raw_logs = raw_logs.split('~~~~~~')
+        print('(Info)~ Testing complete and acquired artifacts.\n(Info)~ Sending artifacts to nightly-testing-bucket.\n(Info)~ Making tmp_logs/ directory.')
+
+        subprocess_call('mkdir tmp_logs/')
+
+        for raw_file in filtered_raw_logs:
+            file_split = raw_file.split('---FILE---')
+            filename = file_split[0]
+            file = file_split[1]
+
+            print(f'(Info)~ Saving { file } to tmp_logs/.')
+            # Using os.system() since I know it works
+            # But should switch to subprocess if possible
+            os.system(f'touch tmp_logs/{ file } && echo "{ filename }" > tmp_logs/{ file }')
+
+        subprocess_call('aws s3 cp tmp_logs/ s3://nightly-testing-bucket --recursive')
+        print('(Info)~ Saved artifacts to nightly-testing-bucket.')
+
+        subprocess_call('rm -rf tmp_logs/')
+        print('(Info)~ Deleted tmp_logs/.')
 
 
 def main():
@@ -185,6 +208,10 @@ def main():
 
         names = start_instance(ami, name)
         ssh(names)
+
+        print('(Info)~ Testing completed!')
+        print('(Info)~ Exiting...')
+        exit(0)
 
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
