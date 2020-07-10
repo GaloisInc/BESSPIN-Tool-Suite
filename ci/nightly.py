@@ -88,26 +88,30 @@ def handle_init(args):
         if shell == 'zsh':
             with open(Path.home() / '.zshrc', 'r+') as f:
                 lines = f.readlines()
-                zshrc = f'~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="{ id }"\nexport AWS_SECRET_ACCESS_KEY="{ secret }"\nexport AWS_SESSION_TOKEN="{ session }"'
-                if '~~~~~~~ AWS ~~~~~~~\n' in lines:
-                    i = lines.index('~~~~~~~ AWS ~~~~~~~\n')
+                zshrc = f'#~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="{ id }"\nexport AWS_SECRET_ACCESS_KEY="{ secret }"\nexport AWS_SESSION_TOKEN="{ session }"'
+                if '#~~~~~~~ AWS ~~~~~~~\n' in lines:
+                    i = lines.index('#~~~~~~~ AWS ~~~~~~~\n')
                     non_aws = lines[0:i]
-                    zshrc = f'{ ''.join(non_aws) }{ zshrc }'
+                    non_aws_str = ''.join(non_aws)
+                    zshrc = f'{ non_aws_str }{ zshrc }'
                 else:
-                    zshrc = f'{ ''.join(lines) }\n\n{ zshrc }'
+                    lines_str = ''.join(lines)
+                    zshrc = f'{ lines_str }\n\n{ zshrc }'
                 f.seek(0)
                 f.write(zshrc)
                 f.truncate()
         elif shell == 'bash':
             with open(Path.home() / '.bashrc', 'r+') as f:
                 lines = f.readlines()
-                bashrc = f'~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="{ id }"\nexport AWS_SECRET_ACCESS_KEY="{ secret }"\nexport AWS_SESSION_TOKEN="{ session }"'
-                if '~~~~~~~ AWS ~~~~~~~\n' in lines:
-                    i = lines.index('~~~~~~~ AWS ~~~~~~~\n')
+                bashrc = f'#~~~~~~~ AWS ~~~~~~~\nexport AWS_ACCESS_KEY_ID="{ id }"\nexport AWS_SECRET_ACCESS_KEY="{ secret }"\nexport AWS_SESSION_TOKEN="{ session }"'
+                if '#~~~~~~~ AWS ~~~~~~~\n' in lines:
+                    i = lines.index('#~~~~~~~ AWS ~~~~~~~\n')
                     non_aws = lines[0:i]
-                    bashrc = f'{ ''.join(non_aws) }{ bashrc }'
+                    non_aws_str = ''.join(non_aws)
+                    bashrc = f'{ non_aws_str }{ bashrc }'
                 else:
-                    bashrc = f'{ ''.join(lines) }\n\n{ bashrc }'
+                    lines_str = ''.join(lines)
+                    bashrc = f'{ lines_str }\n\n{ bashrc }'
                 f.seek(0)
                 f.write(bashrc)
                 f.truncate()
@@ -129,7 +133,7 @@ def start_instance(ami, name):
 
 
 def ssh(name):
-    raw_payload = subprocess_check_output(f'aws ec2 describe-instances --filters "Name=tag:{ name }"')
+    raw_payload = subprocess_check_output(f'aws ec2 describe-instances --filters "Name=tag:Name,Values={ name }"')
     payload = json.loads(raw_payload)
     print(payload)
 
