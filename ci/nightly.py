@@ -20,6 +20,8 @@ def validate_arguments(args):
         print_and_exit('(Error)~ AMI not specified.')
     if '--name' not in args and '-n' not in args:
         print_and_exit('(Error)~ Name not specified.')
+    if '--config' not in args and '-c' not in args:
+        print_and_exit('(Error)~ Config not specified.')
 
     try:
         ami = args[args.index('--ami') + 1]
@@ -43,8 +45,23 @@ def validate_arguments(args):
                 print_and_exit('(Error)~ Name not specified.')
         except IndexError:
             print_and_exit('(Error)~ Name not specified.')
+    try:
+        config = args[args.index('--config') + 1]
+        if config[0] == '-':
+            print_and_exit('(Error)~ Config not specified.')
+    except Exception:
+        try:
+            config = args[args.index('-c') + 1]
+            if config[0] == '-':
+                print_and_exit('(Error)~ Config not specified.')
+        except IndexError:
+            print_and_exit('(Error)~ Config not specified.')
+    try:
+        config = int(config)
+    except ValueError:
+        print_and_exit('(Error)~ Invalid config id.')
 
-    return ami, name
+    return ami, name, config
 
 
 def handle_init(args):
@@ -132,8 +149,9 @@ def start_instance(ami, name):
     print('(Info)~ Instance launched! 🚀')
 
 
-def ssh(name):
-    raw_payload = subprocess_check_output(f'aws ec2 describe-instances --filters "Name=tag:Name,Values={ name }"')
+def ssh(name, config):
+    sleep(20) # NOTE: Ultra-jank alert, also is sleep necessary?
+    raw_payload = subprocess_check_output(f'aws ec2 describe-instances --filters "Name=tag:Name,Values={ name }" --query "Reservations[].Instances[].PublicIpAddress"')
     payload = json.loads(raw_payload)
     print(payload)
 
@@ -142,13 +160,13 @@ def main():
     print('(Info)~ Welcome to the nightly testing command line app!')
     try:
         args = sys.argv[1::]
-        ami, name = validate_arguments(args)
+        ami, name, config = validate_arguments(args)
 
         if '--init' in args or '-i' in args:
             handle_init(args)
 
         start_instance(ami, name)
-        ssh(name)
+        ssh(name, config)
 
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
