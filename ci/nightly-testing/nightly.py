@@ -141,11 +141,12 @@ def start_instance(ami, name):
     print("(Info)~ Launching instance...\n(Info)~ This process may take a few minutes.")
 
     raw_payload = subprocess_check_output(
-        f"aws ec2 run-instances --image-id { ami } --count 8 --instance-type f1.2xlarge --key-name nightly-testing --security-group-ids sg-047b87871fa61178f --subnet-id subnet-0ae96c15a09f122a1"
+        f"aws ec2 run-instances --image-id { ami } --count 1 --instance-type f1.2xlarge --key-name nightly-testing --security-group-ids sg-047b87871fa61178f --subnet-id subnet-0ae96c15a09f122a1"
     )
     payload = json.loads(raw_payload)
 
-    ids = [instance["InstanceId"] for instance in payload["Instances"]]
+    # ids = [instance["InstanceId"] for instance in payload["Instances"]]
+    ids = [payload["Instances"][i]["InstanceId"] for i in len(payload["Instances"])]
     sleep(5)  # NOTE: Ultra-jank alert, also is sleep necessary?
 
     names = []
