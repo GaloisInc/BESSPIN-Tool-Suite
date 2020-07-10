@@ -24,38 +24,6 @@ def subprocess_check_output(command):
     return subprocess.check_output(command.split(sep=" "))
 
 
-def validate_arguments(args):
-    if "--ami" not in args and "-a" not in args:
-        print_and_exit("(Error)~ AMI not specified.")
-    if "--name" not in args and "-n" not in args:
-        print_and_exit("(Error)~ Name not specified.")
-
-    try:
-        ami = args[args.index("--ami") + 1]
-        if ami[0] == "-":
-            print_and_exit("(Error)~ AMI not specified.")
-    except Exception:
-        try:
-            ami = args[args.index("-a") + 1]
-            if ami[0] == "-":
-                print_and_exit("(Error)~ AMI not specified.")
-        except IndexError:
-            print_and_exit("(Error)~ AMI not specified.")
-    try:
-        name = args[args.index("--name") + 1]
-        if name[0] == "-":
-            print_and_exit("(Error)~ Name not specified.")
-    except Exception:
-        try:
-            name = args[args.index("-n") + 1]
-            if name[0] == "-":
-                print_and_exit("(Error)~ Name not specified.")
-        except IndexError:
-            print_and_exit("(Error)~ Name not specified.")
-
-    return ami, name
-
-
 def handle_init(args):
     try:
         print("(Info)~ Testing AWS CLI...")
