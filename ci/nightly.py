@@ -1,3 +1,9 @@
+"""
+TODO:
+1. Add -d flag for develop
+2. Address all notes
+"""
+
 import subprocess, sys, json, os
 from time import sleep
 from pathlib import Path
