@@ -91,7 +91,7 @@ def tryScoreTest(scorerModule, customScorer, testName, logTest, testsDir):
     except AttributeError as e:
         return scorerModule.scoreTest(SCORES, customScorer, testName, logTest, testsDir)
     except AttributeError as e:
-        print(e)
+        printAndLog(e)
         throw(e)
 
 def scoreLogs(scorerModule, customScorer, logs, testsDir):
@@ -109,17 +109,20 @@ def scoreLogs(scorerModule, customScorer, logs, testsDir):
     return ret
 
 def main (scorerModule, customScorer, csvPath):
+    reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     # TODO: Is there a better way to set this report file?
     global reportFile
     try:
         reportFile = open(os.path.join(getSetting("workDir"),
                                        "scoreReport.log"),
                           'a')
-    except:
+    except Exception as exc:
         # TODO: I don't think filename is defined if we don't go through
         # __main__...  Check this file for globals and fix them
-        print(f"Error in {fileName}: Failed to open the report file <{sys.argv[3]}> to append.")
-        exit (1)
+        logAndExit("<scoreTests.main>: Failed to open the report file "
+                   f"<{reportFileName}> to append.",
+                   exitCode=EXIT.Files_and_paths,
+                   exc=exc)
 
     # Get all the log files
     testsDir = getSetting("cwesEvaluationLogDir")
@@ -135,11 +138,14 @@ def main (scorerModule, customScorer, csvPath):
             for row in rows:
                 fcsv.write(f"{row[0].split('-')[1]},{row[1]},{row[1].value},{row[2]}\n")
             fcsv.close()
-        except:
-            report(f"Error in {fileName}: Failed to generate the csv output file <{csvPath}>.")
+        except Exception as exc:
+            logAndExit(f"<scoreTests.main> Failed to generate the csv output "
+                       f"file <{csvPath}>.",
+                       exc=exc,
+                       exitCode=EXIT.Files_and_paths)
         # Build table for scoring
         for row in tabulate(rows):
-            report(row)
+            printAndLog(row, tee=reportFile)
 
 
 def tabulate(elements):
@@ -182,10 +188,6 @@ def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
         message = centralize(elements[0],widthCols[0]) + centralize(str(elements[1]),widthCols[1]) + centralize(elements[2],widthCols[2]) + '|'
     return (message)
 
-def report (message):
-    print (message)
-    reportFile.write(message + "\n")
-
 class customScorerObj:
     def __init__(self, useCustomScoring, customScoringConfigFile):
         self.isCustomized = useCustomScoring
@@ -197,9 +199,11 @@ class customScorerObj:
             fConfig = open(customScoringConfigFile,"r")
             configLines = fConfig.read().splitlines()
             fConfig.close()
-        except:
-            report(f"Error in {fileName}: Failed to read the custom scoring configuration file <{customScoringConfigFile}>.")
-            exit (1)
+        except Exception as exc:
+            logAndExit(f"<customScoreObj>: Failed to read the custom scoring "
+                       f"configuration file <{customScoringConfigFile}>.",
+                       exc=exc,
+                       exitCode=EXIT.Files_and_paths)
         self.configDict = {}
         for line in configLines:
             items = line.split('=')
@@ -220,14 +224,18 @@ class customScorerObj:
             try:
                 with redirectPrintToFile(reportFile): #disable print
                     customModule = SourceFileLoader("customScorerModule", self.configDict['pathToCustomFunction']).load_module()
-            except:
-                report(f"Warning in {fileName}: Failed to load custom scorer module. Ignoring the option.")
+            except Exception as exc:
+                warnAndLog(f"<customScoreObj>: Failed to load custom scorer "
+                           "module. Ignoring the option.",
+                           exc=exc)
                 return SCORES.NINF
             try:
                 with redirectPrintToFile(reportFile): #disable print
                     retScore = customModule.main(lines,SCORES)
-            except:
-                report(f"Warning in {fileName}: Failed to score using main in <{self.configDict['pathToCustomFunction']}>.")
+            except Exception as exc:
+                warnAndLog(f"<customScoreObj>: Failed to score using main in "
+                           f"<{self.configDict['pathToCustomFunction']}>.",
+                           exc=exc)
                 return SCORES.NINF
             return retScore
 
@@ -244,7 +252,10 @@ class customScorerObj:
             memMatch = re.match(r"^\d+\: /x \* \(int \*\) 0x(?P<memAddress>[abcdef\d]{8}) = 0x(?P<memValue>[abcdef\d]{1,8})\s*$",line)
             if (memMatch is not None):
                 if (int(memMatch.group('memAddress'),16) != int(self.configDict['memAddress'])):
-                    report(f"Warning in {fileName}: Encountered unexpected memory address in the GDB line <{line}>. Was expecting <0x{int(self.configDict['memAddress']):08x}>.")
+                    warnAndLog("<customScorerObj>: Encountered unexpected "
+                               f"memory address in the GDB line <{line}>. Was "
+                               "expecting "
+                               f"<0x{int(self.configDict['memAddress']):08x}>.")
                 else: #This is fine
                     memValue = int(memMatch.group('memValue'),16)
                     if (memValue == int(self.configDict['memResetValue'])):

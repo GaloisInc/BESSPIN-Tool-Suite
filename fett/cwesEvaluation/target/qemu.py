@@ -27,9 +27,6 @@ class qemuTarget(fett.target.qemu.qemuTarget):
 
         self.score()
 
-        self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
-
-
     def executeTest (self,binTest):
         testName = binTest.split('.')[0]
         if (hasattr(cweTests,testName)):
@@ -37,14 +34,14 @@ class qemuTarget(fett.target.qemu.qemuTarget):
             outLog = getattr(getattr(cweTests,testName),testName)(
                     testgenTargetCompatabilityLayer(self), binTest)
         else:
-            # TODO: I don't think reportAndExit is a real function
-            self.reportAndExit ("Error in {0}: Calling unknown method <{1}>.".format(self.filename,testName))
-            outLog = ''
+            self.shutdownAndExit(f"<cwesEvaluation qemu>: Calling unknown "
+                                 f"method <testName>.",
+                                 exitCode=EXIT.Dev_Bug)
+
 
         logFile = os.path.join(getSetting('cwesEvaluationLogDir'),
                                f'{testName}.log')
         with open(logFile, 'w') as f:
-            # TODO: Log file will be empty if fell into the `else` branch above
             f.write(outLog)
 
     def score(self):
