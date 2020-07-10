@@ -128,5 +128,13 @@
             "type" : "string",
             "choices" : [ "GCC", "LLD" ]
         }
+    ],
+
+    "evaluateSecurityTests" : [
+        {
+            "name" : "vulClasses",
+            "type" : "stringsList",
+            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "codeInjection", "informationLeakage", "cryptoErrors", "numericErrors" ]
+        }
     ]
 }

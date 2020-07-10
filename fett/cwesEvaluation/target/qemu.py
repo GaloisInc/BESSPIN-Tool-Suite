@@ -54,9 +54,5 @@ class qemuTarget(fett.target.qemu.qemuTarget):
         # TODO: Make this configurable?
         csvPath = os.path.join(getSetting('workDir'), "scores.csv")
 
-        # TODO: Generate report file?  Is CSV + console output enough?  Perhaps
-        # we just hijack stdout in the print calls to write to a file (probably
-        # shouldn't be calling `print` anyway).  Or modify the script to use
-        # the logging functions FETT uses (probably best)
         scoreTests.main(module, scorer, csvPath)
 
