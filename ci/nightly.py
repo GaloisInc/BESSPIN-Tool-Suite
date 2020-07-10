@@ -4,6 +4,7 @@ TODO:
 2. Address all notes
 """
 
+
 import subprocess, sys, json, os
 from time import sleep
 from pathlib import Path
@@ -20,6 +21,7 @@ def subprocess_call(command):
 
 def subprocess_check_output(command):
     return subprocess.check_output(command.split(sep=' '))
+
 
 def validate_arguments(args):
     if '--ami' not in args and '-a' not in args:
@@ -129,32 +131,47 @@ def handle_init(args):
             print_and_exit()
 
 
-def start_instance(ami, name):
+def start_instance(ami, name, number):
     print('(Info)~ Launching instance...\n(Info)~ This process may take a few minutes.')
 
-    raw_payload = subprocess_check_output(f'aws ec2 run-instances --image-id { ami } --count 1 --instance-type f1.2xlarge --key-name nightly-testing --security-group-ids sg-047b87871fa61178f --subnet-id subnet-0ae96c15a09f122a1')
+    raw_payload = subprocess_check_output(f'aws ec2 run-instances --image-id { ami } --count 8 --instance-type f1.2xlarge --key-name nightly-testing --security-group-ids sg-047b87871fa61178f --subnet-id subnet-0ae96c15a09f122a1')
     payload = json.loads(raw_payload)
 
-    id = payload['Instances'][0]['InstanceId']
+    ids = [instance['InstanceId'] for instance in payload['Instances']]
     sleep(5) # NOTE: Ultra-jank alert, also is sleep necessary?
-    subprocess_call(f'aws ec2 create-tags --resources { id } --tags Key=Name,Value={ name }')
-    print('(Info)~ Instance launched! 🚀')
+
+    names = []
+
+    for i in range(ids):
+        id = ids[i]
+        subprocess_call(f'aws ec2 create-tags --resources { id } --tags Key=Name,Value={ name }-{ i }')
+        names.append(f'{ name }-{ i }')
+
+    print(f'(Info)~ Instances launched! 🚀')
+
+    return names
 
 
-def ssh(name, config):
+def ssh(names):
     sleep(20) # NOTE: Ultra-jank alert, also is sleep necessary?
-    raw_payload = subprocess_check_output(f'aws ec2 describe-instances --filters "Name=tag:Name,Values={ name }" --query "Reservations[].Instances[].PublicIpAddress"')
-    payload = json.loads(raw_payload)
-    if len(payload) != 1:
-        pass # NOTE: Do something here
-    ip = payload[0]
 
     print('(Info)~ Looking for \'nighly-testing.pem\' file in ~/Desktop/...')
     pem = Path.home() / 'Desktop/nightly-testing.pem'
     if not Path(pem).is_file():
         print_and_exit('(Error)~ Could not locate \'nightly-testing.pem\'.')
-    # TODO: Add develop functionality
-    subprocess_call(f'ssh -i { pem } centos@{ ip } \'( cd SSITH-FETT-Target/ && nix-shell --command \'( ci/fett-ci.py -X -ep AWS runDevPR -job 420 && ./fett.py -c /tmp/dumpIni/ -d)\' )\'') # Note: What do I put here?
+
+    for i in range(names):
+        name = names[i]
+        raw_payload = subprocess_check_output(f'aws ec2 describe-instances --filters "Name=tag:Name,Values={ name }" --query "Reservations[].Instances[].PublicIpAddress"')
+        payload = json.loads(raw_payload)
+        if len(payload) != 1:
+            pass # NOTE: Do something here
+        ip = payload[0]
+
+        # TODO: Add develop functionality
+        print(f'(Info)~ Attempting to ssh into instances')
+        config_num = i + 1
+        subprocess_call(f'ssh -i { pem } centos@{ ip } \'( cd SSITH-FETT-Target/ && nix-shell --command \'( ci/fett-ci.py -ep AWS runDevPR -job { config_num } -i { config_num } && ./fett.py -c /tmp/dumpIni/ -d)\' )\'') # Note: What do I put here?
 
 
 def main():
@@ -166,8 +183,8 @@ def main():
         if '--init' in args or '-i' in args:
             handle_init(args)
 
-        start_instance(ami, name)
-        ssh(name)
+        names = start_instance(ami, name)
+        ssh(names)
 
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
