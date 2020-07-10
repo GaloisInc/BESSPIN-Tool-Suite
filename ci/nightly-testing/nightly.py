@@ -58,7 +58,7 @@ def validate_arguments(args):
 def handle_init(args):
     try:
         print("(Info)~ Testing AWS CLI...")
-        subprocess_call("aws")
+        subprocess_call("aws --version")
         print("(Info)~ AWS CLI installed!")
 
         id = input("(Input)~ AWS Access Key ID: ")
@@ -72,10 +72,10 @@ def handle_init(args):
         # NOTE: Should be replaced with subprocess
         # Somehow subprocess.call() echoes everything instead of saving
         # Probably because of subprocess_call's hacky implementation
-        if not Path(Path.home() / '.aws/credentials').is_file():
-            subprocess_call('touch ~/.aws/credentials')
-        if not Path(Path.home() / '.aws/config').is_file():
-            subprocess_call('touch ~/.aws/config')
+        if not Path(Path.home() / ".aws/credentials").is_file():
+            subprocess_call("touch ~/.aws/credentials")
+        if not Path(Path.home() / ".aws/config").is_file():
+            subprocess_call("touch ~/.aws/config")
         os.system(
             f'echo "[default]\naws_access_key_id = { id }\naws_secret_access_key = { secret }\naws_session_token = { session }" > ~/.aws/credentials'
         )
