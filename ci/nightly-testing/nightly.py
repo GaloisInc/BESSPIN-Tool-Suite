@@ -145,13 +145,12 @@ def start_instance(ami, name):
     )
     payload = json.loads(raw_payload)
 
-    # ids = [instance["InstanceId"] for instance in payload["Instances"]]
-    ids = [payload["Instances"][i]["InstanceId"] for i in len(payload["Instances"])]
+    ids = [i["InstanceId"] for i in payload["Instances"]]
     sleep(5)  # NOTE: Ultra-jank alert, also is sleep necessary?
 
     names = []
 
-    for i in range(ids):
+    for i in range(len(ids)):
         id = ids[i]
         subprocess_call(
             f"aws ec2 create-tags --resources { id } --tags Key=Name,Value={ name }-{ i }"
@@ -167,12 +166,12 @@ def start_instance(ami, name):
 def ssh(names):
     sleep(20)  # NOTE: Ultra-jank alert, also is sleep necessary?
 
-    print("(Info)~ Looking for 'nighly-testing.pem' file in ~/Desktop/...")
-    pem = Path.home() / "Desktop/nightly-testing.pem"
+    print("(Info)~ Looking for 'nighly-testing.pem' file in ~/.ssh/")
+    pem = Path.home() / ".ssh/nightly-testing.pem"
     if not Path(pem).is_file():
         print_and_exit("(Error)~ Could not locate 'nightly-testing.pem'.")
 
-    for i in range(names):
+    for i in range(len(names)):
         name = names[i]
         raw_payload = subprocess_check_output(
             f'aws ec2 describe-instances --filters "Name=tag:Name,Values={ name }" --query "Reservations[].Instances[].PublicIpAddress"'
@@ -218,30 +217,30 @@ def ssh(names):
 
 def main():
     print("(Info)~ Welcome to the nightly testing command line app!")
-    try:
-        args = sys.argv[1::]
-        ami, name = validate_arguments(args)
+    # try:
+    args = sys.argv[1::]
+    ami, name = validate_arguments(args)
 
-        if "--init" in args or "-i" in args:
-            handle_init(args)
+    if "--init" in args or "-i" in args:
+        handle_init(args)
 
-        names = start_instance(ami, name)
-        ssh(names)
+    names = start_instance(ami, name)
+    ssh(names)
 
-        print("(Info)~ Testing completed!")
-        print("(Info)~ Exiting...")
-        exit(0)
+    print("(Info)~ Testing completed!")
+    print("(Info)~ Exiting...")
+    exit(0)
 
-    except Exception as e:
-        if isinstance(e, KeyboardInterrupt):
-            print_and_exit()
-        elif isinstance(e, OSError):
-            print_and_exit(
-                "(Error)~ AWS CLI is not installed.\n(Error)~ Visit https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html to install the required command line tools."
-            )
-        else:
-            err = str(e)
-            print_and_exit(f"(Error)~ { err }")
+    # except Exception as e:
+    #     if isinstance(e, KeyboardInterrupt):
+    #         print_and_exit()
+    #     elif isinstance(e, OSError):
+    #         print_and_exit(
+    #             "(Error)~ AWS CLI is not installed.\n(Error)~ Visit https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html to install the required command line tools."
+    #         )
+    #     else:
+    #         err = str(e)
+    #         print_and_exit(f"(Error)~ { err }")
 
 
 if __name__ == "__main__":
