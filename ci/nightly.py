@@ -133,8 +133,11 @@ def handle_init(args):
                 f.write(bashrc)
                 f.truncate()
 
-    except OSError:
-        print_and_exit('(Error)~ AWS CLI is not installed.\n(Error)~ Visit https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html to install the required command line tools.')
+    except Exception as e:
+        if isinstance(e, OSError):
+            print_and_exit('(Error)~ AWS CLI is not installed.\n(Error)~ Visit https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html to install the required command line tools.')
+        else: # KeyboardInterrupt
+            print_and_exit()
 
 
 def start_instance(ami, name):
