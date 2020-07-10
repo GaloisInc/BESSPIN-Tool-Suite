@@ -156,7 +156,16 @@ def ssh(name, config):
     sleep(20) # NOTE: Ultra-jank alert, also is sleep necessary?
     raw_payload = subprocess_check_output(f'aws ec2 describe-instances --filters "Name=tag:Name,Values={ name }" --query "Reservations[].Instances[].PublicIpAddress"')
     payload = json.loads(raw_payload)
-    print(payload)
+    if len(payload) != 1:
+        pass # NOTE: Do something here
+    ip = payload[0]
+
+    print('(Info)~ Looking for \'nighly-testing.pem\' file in ~/Desktop/...')
+    pem = Path.home() / 'Desktop/nightly-testing.pem'
+    if not Path(pem).is_file():
+        print_and_exit('(Error)~ Could not locate \'nightly-testing.pem\'.')
+    # TODO: Add develop functionality
+    subprocess_call(f'ssh -i { pem } centos@{ ip } \'( cd SSITH-FETT-Target/ && nix-shell --command \'( ci/fett-ci.py -X -ep AWS runDevPR -job 420 && ./fett.py -c /tmp/dumpIni/ -d)\' )\'') # Note: What do I put here?
 
 
 def main():
