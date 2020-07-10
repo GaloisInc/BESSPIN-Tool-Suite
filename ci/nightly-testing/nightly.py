@@ -8,6 +8,7 @@ TODO:
 import subprocess, sys, json, os
 from time import sleep
 from pathlib import Path
+import argparse
 
 
 def print_and_exit(message=""):
@@ -223,12 +224,29 @@ def ssh(names):
 def main():
     print("(Info)~ Welcome to the nightly testing command line app!")
     # try:
-    args = sys.argv[1::]
-    ami, name = validate_arguments(args)
 
-    if "--init" in args or "-i" in args:
+    # Parse Arguments
+    args = sys.argv[1::]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "ami", type=str, help="AWS AMI id to use, i.e. 'ami-00000000000000000'"
+    )
+    parser.add_argument(
+        "name", type=str, help="Base name to assign to instances created by this script"
+    )
+    parser.add_argument(
+        "-i", "--init", help="Initialize (first run)", action="store_true"
+    )
+    args = parser.parse_args()
+
+    if args.init:
         handle_init(args)
 
+    ami = args.ami
+    name = args.name
+
+    # Run program
     names = start_instance(ami, name)
     ssh(names)
 
