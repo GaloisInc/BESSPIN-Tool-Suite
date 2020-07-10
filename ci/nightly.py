@@ -26,8 +26,6 @@ def validate_arguments(args):
         print_and_exit('(Error)~ AMI not specified.')
     if '--name' not in args and '-n' not in args:
         print_and_exit('(Error)~ Name not specified.')
-    if '--config' not in args and '-c' not in args:
-        print_and_exit('(Error)~ Config not specified.')
 
     try:
         ami = args[args.index('--ami') + 1]
@@ -51,23 +49,8 @@ def validate_arguments(args):
                 print_and_exit('(Error)~ Name not specified.')
         except IndexError:
             print_and_exit('(Error)~ Name not specified.')
-    try:
-        config = args[args.index('--config') + 1]
-        if config[0] == '-':
-            print_and_exit('(Error)~ Config not specified.')
-    except Exception:
-        try:
-            config = args[args.index('-c') + 1]
-            if config[0] == '-':
-                print_and_exit('(Error)~ Config not specified.')
-        except IndexError:
-            print_and_exit('(Error)~ Config not specified.')
-    try:
-        config = int(config)
-    except ValueError:
-        print_and_exit('(Error)~ Invalid config id.')
 
-    return ami, name, config
+    return ami, name
 
 
 def handle_init(args):
@@ -178,13 +161,13 @@ def main():
     print('(Info)~ Welcome to the nightly testing command line app!')
     try:
         args = sys.argv[1::]
-        ami, name, config = validate_arguments(args)
+        ami, name = validate_arguments(args)
 
         if '--init' in args or '-i' in args:
             handle_init(args)
 
         start_instance(ami, name)
-        ssh(name, config)
+        ssh(name)
 
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
