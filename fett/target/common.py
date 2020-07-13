@@ -320,9 +320,10 @@ class commonTarget():
             self.runCommand(self.rootPassword, endsWith="Retype new password:")
             self.runCommand(self.rootPassword, expectedContents='password updated successfully')
         elif isEqSetting('osImage', 'FreeBSD'):
-            self.runCommand(f"passwd root",expectedContents='Changing local password for root', endsWith="New Password:")
-            self.runCommand(self.rootPassword, endsWith="Retype New Password:")
-            self.runCommand(self.rootPassword)
+            userPasswordHash = sha512_crypt(self.rootPassword)
+            command = (f"echo \'{userPasswordHash}\' | "
+                       f"pw usermod root -H 0")
+            self.runCommand(command, erroneousContents="pw:")
         else:
             self.shutdownAndExit(
                 f"<update root password> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",
