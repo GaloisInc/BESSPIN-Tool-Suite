@@ -93,8 +93,9 @@ th, td {
     padding: 0;
 	position: fixed;
     bottom: 0;
-    left: 0;
-    height: 25px;
+	left: 0;
+	padding-top: 5px;
+    height: 35px;
     width: 100%;
     background-color: #FDFDFD;
 }
@@ -106,7 +107,7 @@ th, td {
     top: 0;
     left:0;
     width: 100%;
-    height: 250px;
+    height: 275px;
     background-color: #D2D2D2;
 }
 
@@ -116,7 +117,7 @@ th, td {
 #queryDataInner{
 	display: block;
 	position:fixed;
-	top: 250px;
+	top: 275px;
 	width: 100%;
 	left: 0;
 	height: calc(100% - 275px);
