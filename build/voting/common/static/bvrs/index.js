@@ -130,6 +130,12 @@ $(document).ready(function(){
     	e.preventDefault();
 
         console.log("Query Clicked");
+        // Clear previous errors
+        clearError();
+
+        // Preserve any checked items
+        var checked = [];
+        $("[name^=vsel_]:checked").each(function(){checked.push(this.id)});
 
         $.ajax({
             url : 'official_query_voters', 
@@ -154,7 +160,8 @@ $(document).ready(function(){
                 	console.log(value);
                 	addVoterToTable(value);
                 });
-
+                // Restore checked items
+                $(checked).each(function(i,v ) { $("#" + v).attr("checked", "checked") });
             },
             error: function(xhr, result, text) {
                 // Handle Form Errors
