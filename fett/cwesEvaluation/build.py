@@ -5,7 +5,6 @@ Building CWEs Evaluation
 import glob
 import os
 
-from fett.apps.build import cpFilesToBuildDir
 from fett.base.utils.misc import *
 
 
@@ -18,52 +17,74 @@ def buildCwesEvaluation():
 
     # Create build directory
     buildDir = os.path.join(getSetting('workDir'), 'build')
-    mkdir(buildDir,addToSettings='buildDir')
+    mkdir(buildDir, addToSettings="buildDir")
 
     # Copy apps over
-    # TODO: Use buildApps instead, rather than second parameter here?
-    # TODO: Use os.path.join
-    cpFilesToBuildDir("fett/cwesEvaluation/tests/resourceManagement/sources",
-                      "*.c")
-    cp(os.path.join(getSetting('repoDir'),
-                    'fett',
-                    'target',
-                    'utils',
-                    'Makefile.xcompileDir'),
-       os.path.join(buildDir, 'Makefile'))
-    cp(os.path.join(getSetting('repoDir'),
-                    'fett',
-                    'cwesEvaluation',
-                    'tests',
-                    'scripts',
-                    'emulation',
-                    'defaultEnvLinux.mk'),
-        buildDir)
+    for vulClass in getSetting('vulClasses'):
+        # Create class dir and build
+        vulClassDir = os.path.join(buildDir, vulClass)
+        mkdir(vulClassDir)
+        cp(os.path.join(getSetting('repoDir'),
+                        'fett',
+                        'cwesEvaluation',
+                        'tests',
+                        vulClass,
+                        'sources'),
+            vulClassDir,
+            "*.c")
+        cp(os.path.join(getSetting('repoDir'),
+                        'fett',
+                        'target',
+                        'utils',
+                        'Makefile.xcompileDir'),
+           os.path.join(vulClassDir, 'Makefile'))
+        cp(os.path.join(getSetting('repoDir'),
+                        'fett',
+                        'cwesEvaluation',
+                        'tests',
+                        'scripts',
+                        'emulation',
+                        'defaultEnvLinux.mk'),
+            vulClassDir)
 
-    # Write configuration header file
-    # TODO: Write this based on values in the config file.  You'll also have to
-    # change it based on the suite being run.  Lastly, it doesn't seem to exist
-    # for all classes of vulnerabilities.
-    with open(os.path.join(buildDir, "testsParameters.h"), 'w') as f:
-        f.write("#define nResourceLimit 10\n")
+        if vulClass == "resourceManagement":
+            # Write configuration header file
+            # TODO: Write this based on values in the config file.  You'll also
+            # have to change it based on the suite being run.  Lastly, it
+            # doesn't seem to exist for all classes of vulnerabilities.
+            with open(os.path.join(vulClassDir, "testsParameters.h"), 'w') as f:
+                f.write("#define nResourceLimit 10\n")
 
 
-    crossCompileUnix()
+        crossCompileUnix(vulClassDir)
 
     # TODO: Use list comprehension to flatten tarball
     fileList = [(os.path.basename(f), f) for f in
-                glob.glob(os.path.join(buildDir, "*.riscv"))]
-    tar(os.path.join(buildDir, getSetting('tarballName')), fileList)
+                glob.glob(os.path.join(buildDir,"*", "*.riscv"))]
 
+    enabledCwesEvaluations = {}
+    for (test, path) in fileList:
+        vulClass = os.path.basename(os.path.split(path)[0])
+        try:
+            enabledCwesEvaluations[vulClass].append(test)
+        except KeyError:
+            enabledCwesEvaluations[vulClass] = [test]
+    setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
+
+    # TODO: Do I need this += part here?  I thought it would capture the
+    # entropy thing, but it looks like it doesn't?
+    fileList += [(os.path.basename(f), f) for f in
+                 glob.glob(os.path.join(buildDir, "*.riscv"))]
+    tar(os.path.join(buildDir, getSetting('tarballName')), fileList)
     setSetting('sendTarballToTarget', True)
 
     # TODO: Put this somewhere else, use it to determine what to compile, and
     # maybe rename it
-    setSetting('enabledCwesEvaluations', [x[0] for x in fileList])
+
 
 @decorate.debugWrap
 @decorate.timeWrap
-def crossCompileUnix():
+def crossCompileUnix(directory):
     #cross-compiling sanity checks
     if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
         # TODO: Is this true for testgen?
@@ -78,5 +99,5 @@ def crossCompileUnix():
     envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
     envLinux.append(f"LINKER={getSetting('linker').upper()}")
     logging.debug(f"going to make using {envLinux}")
-    make (envLinux,getSetting('buildDir'))
+    make(envLinux, directory)
     printAndLog(f"Files cross-compiled successfully.")

@@ -102,13 +102,15 @@ def scoreLogs(scorerModule, customScorer, logs, testsDir):
         for testName, log in logs:
             try:
                 ret.append(tryScoreTest(scorerModule, customScorer, testName, log, testsDir))
-            except:
-                report ("Error in {0}: Failed to parse <{1}>.".format(testName,log))
+            except Exception as exc:
+                errorAndLog("<{0}>: Failed to parse <{1}>.".format(testName,log),
+                            exc=exc)
                 testNum = testName.split('_')[1]
                 ret.append(["TEST-{0}".format(testNum), SCORES.FAIL, "Failed to Score!"])
     return ret
 
-def main (scorerModule, customScorer, csvPath):
+# TODO: Renmae testsDir to something more like logDir
+def main (scorerModule, customScorer, csvPath, testsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     # TODO: Is there a better way to set this report file?
     global reportFile
@@ -125,12 +127,11 @@ def main (scorerModule, customScorer, csvPath):
                    exc=exc)
 
     # Get all the log files
-    testsDir = getSetting("cwesEvaluationLogDir")
     contents = sorted(os.listdir(testsDir))
     logs = [(f.split('.')[0], f) for f in contents if f.endswith(".log")]
     rows = scoreLogs(scorerModule, customScorer, logs, testsDir)
     if (len(rows) < 1): #nothing to score
-        report (f"Warning in {fileName}: There are no logs to score.")
+        warnAndLog("<scoreTests>: There are no logs to score.")
     else:
         # output a csv file
         try:
