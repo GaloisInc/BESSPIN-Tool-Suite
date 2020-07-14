@@ -580,6 +580,12 @@ def prepareConnectal():
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
         zstdDecompress(imageSourcePath, imageFile)
 
+    elif isEqSetting('binarySource', 'GFE') and isEqSetting("osImage", "FreeBSD"):
+        imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
+                                       'osImages', 'connectal', "freebsd.img.zst")
+        imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
+        zstdDecompress(imageSourcePath, imageFile)
+ 
     # connectal requires a device tree blob
     dtbsrc = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'connectal', "devicetree.dtb")
     dtbFile = os.path.join(getSetting('osImagesDir'), 'devicetree.dtb')

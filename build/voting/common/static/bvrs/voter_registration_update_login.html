@@ -4,6 +4,7 @@
 <title>BESSPIN Voter Registration System</title>
 
 <head>
+    <script src="jquery-3.5.1.min.js" charset="utf-8"></script>
     <script src="index.js" charset="utf-8" defer></script>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
@@ -19,71 +20,72 @@
 
     <div class=centeredDiv>
         <h3>
-            Please verify your identity by filling out the following with the same information you submitted when you registered or last updated. TODO: ‘*’ Indicates a required field.
+            Please verify your identity by filling out the following with the same information you submitted when you registered or last updated.
         </h3>
     </div>
-
+    <div class="error" id="errors" style="text-align: center;"></div>
+    <div class="messages" id="messages" style="text-align: center;"></div>
     <div class=dataFormOuter>
-    <div class=dataFormInner>
+        <div class=dataFormInner>
+            <form enctype="multipart/form-data" id="voter_login_form" method="POST" action="voter_update_login">
+                <label class=firstColLabel for="voter-givennames">First name:</label>
+                <input class=firstColInput autocomplete="given-name" type="text" id="voter-givennames" name="voter-givennames">
+                <label class=secondColLabel for="voter-lastname">Last name:</label>
+                <input class=secondColInput autocomplete="family-name" type="text" id="voter-lastname" name="voter-lastname">
     
-        <form enctype="multipart/form-data" method=post action="bvrs/voter_update_login">
-            <label class=firstColLabel for="fname">First name:</label>
-            <input class=firstColInput type="text" id="fname" name="given_name">
-            <label class=secondColLabel for="lname">Last name:</label>
-            <input class=secondColInput type="text" id="lname" name="last_name">
-
-            <br><br>
-         
-            <label class=firstColLabel for="dob">Date of Birth:</label>
-            <input class=firstColInput type="date" id="dob" name="date_of_birth">
-
-            <br><br>
-            
-            <label class=firstColLabel for="ma_1">Mailing Address:</label>
-            <input class=firstColInput type="text" id="ma_1" name="ma_line_1">
-            <label class=secondColLabel for="ma_zip">Zip Code:</label>
-            <input class=secondColInput type="number" id="ma_zip" name="ma_zip">
-
-            <br><br>
-      
-            <label class=firstColLabel for="ma_2">Mailing Address Line 2:</label>
-            <input class=firstColInput type="text" id="ma_2" name="ma_line_2">
-            <label class=secondColLabel for="ma_state">State:</label>
-            <input class=secondColInput type="text" id="ma_state" name="ma_state">
-
-            <br><br>
+                <br><br>
              
-            <label class=firstColLabel for="ra_1">Residential Address:</label>
-            <input class=firstColInput type="text" id="ra_1" name="ra_line_1">
-            <label class=secondColLabel for="ra_zip">Zip Code:</label>
-            <input class=secondColInput type="number" id="ra_zip" name="ra_zip">
-
-            <br><br>
-      
-            <label class=firstColLabel for="ra_2">Residential Address Line 2:</label>
-            <input class=firstColInput type="text" id="ra_2" name="ra_line_2">
-            <label class=secondColLabel for="ra_state">State:</label>
-            <input class=secondColInput type="text" id="ra_state" name="ra_state">
-
-            <br><br>
+                <label class=firstColLabel for="voter-birthdate">Date of Birth:</label>
+                <input class=firstColInput autocomplete="bday" type="date" id="voter-birthdate" name="voter-birthdate">
+    
+                <br><br>
+                
+                <label class=firstColLabel for="voter-mailaddress">Mailing Address:</label>
+                <input class=firstColInput autocomplete="address-line1" type="text" id="voter-mailaddress" name="voter-mailaddress">
+                <label class=secondColLabel for="voter-mailzip">Zip Code:</label>
+                <input class=secondColInput autocomplete="postal-code" id="voter-mailzip" name="voter-mailzip">
+    
+                <br><br>
+          
+                <label class=firstColLabel for="voter-mailaddress2">Mailing Address Line 2:</label>
+                <input class=firstColInput autocomplete="address-line2" type="text" id="voter-mailaddress2" name="voter-mailaddress2">
+                <label class=secondColLabel for="voter-mailstate">State:</label>
+                <input class=secondColInput autocomplete="address-level1" type="text" id="voter-mailstate" name="voter-mailstate">
+    
+                <br><br>
              
-            <label class=firstColLabel for="supporting_type">Supporting Document Type:</label>
-            <input class=firstColInput type="text" id="supporting_type" name="supporting_type">
+                <label class=firstColLabel for="ra_1">Residential Address:</label>
+                <input class=firstColInput autocomplete="address-line1" type="text" id="ra_1" name="voter-resaddress">
+                <label class=secondColLabel for="voter-reszip">Zip Code:</label>
+                <input class=secondColInput autocomplete="postal-code" id="voter-reszip" name="voter-reszip">
+    
+                <br><br>
+      
+                <label class=firstColLabel for="ra_2">Residential Address Line 2:</label>
+                <input class=firstColInput autocomplete="address-line2" type="text" id="ra_2" name="voter-ressaddress2">
+                <label class=secondColLabel for="voter-resstate">State:</label>
+                <input class=secondColInput autocomplete="address-level1" type="text" id="voter-resstate" name="voter-resstate">
 
-            <br><br>
+                <br><br>
 
-            <label class=firstColLabel for="supporting_doc">Upload Document:</label>
-            <input class=formButton type="file" id="supporting_doc" name="supporting_doc">
+                <label class=firstColLabel for="voter-registeredparty">Registered Party:</label>
+                <select class=firstColInput name="voter-registeredparty">
+                    <option>---</option>
+                    <option>SSITH</option>
+                    <option>REBEL</option>
+                    <option>Unaffiliated</option>
+                </select>
 
-            <br><br>
-         
-            <label class=firstColLabel for="confidential">Mark My Information as Confidential:</label>
-            <input class=formButton type="checkbox" id="confidential" name="confidential">
+                <br><br>
+    
+                <label class=firstColLabel for="voter-idinfo">Upload Document:</label>
+                <input class=formButton type="file" id="voter-idinfo" name="voter-idinfo">
+                <br><br>
 
-            <br><br>
-         
-            <label class=firstColLabel for="submit"> </label>
-            <input class=formButton type="submit" value="Validate">
+                <div id="extra-fields"></div>
+
+                <label class=firstColLabel for="submit"> </label>
+                <input class=formButton id="submit_voter_registration" type="submit" value="Submit">
         </form>
     </div>
     </div>

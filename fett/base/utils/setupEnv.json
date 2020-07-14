@@ -163,7 +163,7 @@
                     },
                     "bluespec_p2" : {
                         "debian" : "notOnAWS",
-                        "FreeBSD" : "awsteria",
+                        "FreeBSD" : "connectal",
                         "busybox" : "notOnAWS"
                     }
                 },
@@ -210,7 +210,8 @@
                 "FreeBSD" : {
                     "fpga" : "FETT_GFE_FREEBSD_FPGA",
                     "qemu" : "FETT_GFE_FREEBSD_QEMU",
-                    "firesim" :  "FETT_GFE_FREEBSD_FIRESIM"
+                    "firesim" :  "FETT_GFE_FREEBSD_FIRESIM",
+                    "connectal" : "FETT_GFE_FREEBSD_CONNECTAL"
                 },
                 "busybox" : {
                     "fpga" : "FETT_GFE_BUSYBOX_FPGA",

@@ -5,7 +5,7 @@
 
 <head>
     <script src="jquery-3.5.1.min.js"></script>
-    <script src="query.js" charset="utf-8" defer></script>
+    <script src="index.js" charset="utf-8" defer></script>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 
@@ -33,19 +33,14 @@
         		</select>
 
                 <label class=secondColLabelVariable for="field-contains">Field Contains:</label>
-                <input class=secondColInput type="text" id="field-contains" name="field-contains">
+                <input class=secondColInput autocomplete="on" type="text" id="field-contains" name="field-contains">
                 <label class=secondColLabelVariable for="invert-contains">Invert Selection:</label>
-                <input class=secondColInput type="checkbox" id="invert-contains" name="invert-contains">
+                <input class=secondColInput type="checkbox" value="1" id="invert-contains" name="invert-contains">
 
                 <br><br>
 
                 <label class=firstColLabel for="select-active">Select Only Active Registrations:</label>
-                <input class=firstColInput type="checkbox" id="select-active" name="select-active">
-
-                <br><br>
-             
-              	<label class=firstColLabel for="select-updated">Select Only Updated Registrations:</label>
-                <input class=firstColInput type="checkbox" id="select-updated" name="select-updated">
+                <input class=firstColInput type="checkbox" value="1" id="select-active" name="select-active">
 
                 <br><br>
              
@@ -57,11 +52,11 @@
                     <option>lastupdatetime</option>
                 </select>
                 <label class=secondColLabelVariable for="date-from">between:</label>
-                <input class=secondColInput type="date" id="date-from" name="date-from">
+                <input class=secondColInput autocomplete="on" type="date" id="date-from" name="date-from">
                 <label class=secondColLabelVariable for="date-thru">and:</label>
-                <input class=secondColInput type="date" id="date-thru" name="date-thru">
+                <input class=secondColInput autocomplete="on" type="date" id="date-thru" name="date-thru">
                 <label class=secondColLabelVariable for="date-invert">Invert Selection:</label>
-                <input class=secondColInput type="checkbox" id="date-invert" name="date-invert">
+                <input class=secondColInput type="checkbox" value="1" id="date-invert" name="date-invert">
 
                 <br><br>
 

@@ -54,9 +54,14 @@ gfe_unixDevPR_onprem = gfe_unixOnPremDefaults.union({
     ('osImage',('FreeBSD', 'debian',))
 })
 
-gfe_unixDevPR_aws = gfe_unixAwsDefaults.union({
+gfe_debianDevPR_aws = gfe_unixAwsDefaults.union({
     ('processor',('chisel_p2',)),
     ('osImage',('debian',))
+})
+
+gfe_freebsdDevPR_aws = gfe_unixAwsDefaults.union({
+    ('processor',('bluespec_p2',)),
+    ('osImage',('FreeBSD',))
 })
 
 mit_unixDevPR_aws = unixDefaults.union({
@@ -105,7 +110,8 @@ gfe_freertosDevPR_aws = freertosDefaults.union({
     ('target',('aws',)),
     ('cross-compiler',('GCC','Clang',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
-    ('buildApps',('yes',))
+    ('FreeRTOSUseRAMDisk',('yes',)),
+    ('buildApps',('no',))
 })
 
 lmco_freertosDevPR_aws = freertosDefaults.union({
@@ -114,7 +120,8 @@ lmco_freertosDevPR_aws = freertosDefaults.union({
     ('target',('aws',)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
-    ('buildApps',('yes',))
+    ('FreeRTOSUseRAMDisk',('yes',)),
+    ('buildApps',('no',))
 })
 
 michigan_freertosDevPR_aws = freertosDefaults.union({
@@ -132,7 +139,8 @@ appSets = {
     'runDevPR' : {
         'freertos' : { 'gfe_freertos' : gfe_freertosDevPR_onprem },
         'unix' : { 'gfe_unix' : gfe_unixDevPR_onprem },
-        'aws' : { 'gfe_unix' : gfe_unixDevPR_aws, 
+        'aws' : { 'gfe_debian' : gfe_debianDevPR_aws, 
+                'gfe_freebsd' : gfe_freebsdDevPR_aws, 
                 'gfe_freertos' : gfe_freertosDevPR_aws,
                 'lmco_freertos' : lmco_freertosDevPR_aws,
                 'michigan_freertos' : michigan_freertosDevPR_aws,
