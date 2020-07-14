@@ -6,6 +6,7 @@ Misc required functions for fett.py
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess, pathlib
 import tarfile, sys, json, re, getpass, time
+import crypt
 import zstandard
 
 from fett.base.utils import decorate
@@ -530,3 +531,10 @@ def collectRemoteLogging (logAndExitFunc,getSettingFunc,sudoShellCommandFunc):
     rsyslogsPath = os.path.join(getSettingFunc('extraArtifactsPath'),f"rsyslogs_{ipTarget}")
     sudoShellCommandFunc(['cp','-r',f'/var/log/{ipTarget}',rsyslogsPath],check=False)
     sudoShellCommandFunc(['chown','-R',f'{getpass.getuser()}:{getpass.getuser()}',rsyslogsPath],check=False) 
+
+@decorate.debugWrap
+def sha512_crypt(password, salt=None, rounds=None):
+    """matches mkpasswd -m sha-512"""
+    if salt is None:
+        salt = crypt.mksalt(crypt.METHOD_SHA512, rounds=rounds)
+    return crypt.crypt(password, salt)
