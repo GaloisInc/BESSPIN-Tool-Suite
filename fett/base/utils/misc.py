@@ -6,8 +6,7 @@ Misc required functions for fett.py
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess, pathlib
 import tarfile, sys, json, re, getpass, time
-from secrets import choice
-import crypt, string
+import crypt
 import zstandard
 
 from fett.base.utils import decorate
@@ -535,14 +534,7 @@ def collectRemoteLogging (logAndExitFunc,getSettingFunc,sudoShellCommandFunc):
 
 @decorate.debugWrap
 def sha512_crypt(password, salt=None, rounds=None):
-    """matches mkpasswd -m sha-512
-    taken from https://stackoverflow.com/a/34463995
-    """
+    """matches mkpasswd -m sha-512"""
     if salt is None:
-        salt = ''.join([choice(string.ascii_letters + string.digits)
-                        for _ in range(8)])
-    prefix = '$6$'
-    if rounds is not None:
-        rounds = max(1000, min(999999999, rounds or 5000))
-        prefix += 'rounds={0}$'.format(rounds)
-    return crypt.crypt(password, prefix + salt)
+        salt = crypt.mksalt(crypt.METHOD_SHA512)
+    return crypt.crypt(password, salt)
