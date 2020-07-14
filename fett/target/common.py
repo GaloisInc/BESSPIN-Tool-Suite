@@ -118,7 +118,7 @@ class commonTarget():
     @decorate.timeWrap
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
-            timeout = 30
+            timeout = 60
         elif (getSetting('osImage') in ['debian','busybox']):
             timeout = 45
         elif (isEqSetting('target', 'fpga')):
