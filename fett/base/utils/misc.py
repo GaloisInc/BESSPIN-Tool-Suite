@@ -536,5 +536,5 @@ def collectRemoteLogging (logAndExitFunc,getSettingFunc,sudoShellCommandFunc):
 def sha512_crypt(password, salt=None, rounds=None):
     """matches mkpasswd -m sha-512"""
     if salt is None:
-        salt = crypt.mksalt(crypt.METHOD_SHA512)
+        salt = crypt.mksalt(crypt.METHOD_SHA512, rounds=rounds)
     return crypt.crypt(password, salt)
