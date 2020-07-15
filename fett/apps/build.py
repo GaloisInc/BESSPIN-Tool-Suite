@@ -148,6 +148,12 @@ def copyVotingFiles(tarName):
     if isEqSetting('osImage', 'debian'):
         cpFilesToBuildDir(os.path.join(getAppDir('voting'), 'debian'), 'bvrs.service')
         filesList.append(buildDirPathTuple('bvrs.service'))
+    elif isEqSetting('osImage', 'FreeBSD'):
+        cpFilesToBuildDir(os.path.join(getAppDir('voting'), 'FreeBSD'), 'bvrs.sh')
+        filesList.append(buildDirPathTuple('bvrs.sh'))
+    else:
+        logAndExit (f"Installing bvrs is not supported on <{getSetting('osImage')}>",
+                    exitCode=EXIT.Dev_Bug)
 
     # Need kfcgi, webserver's nginx.conf, bvrs app
     # We should probably just generate the initial database script here
