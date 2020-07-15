@@ -12,6 +12,7 @@ from fett.target import aws
 from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
 from fett.cwesEvaluation.build import buildCwesEvaluation
+import fett.cwesEvaluation.target.aws as cwesEvaluationAws
 from fett.cwesEvaluation.target.qemu import qemuTarget as cwesEvaluationQemuTarget
 import sys, os
 from importlib.machinery import SourceFileLoader
@@ -152,13 +153,19 @@ def endFett (xTarget):
 @decorate.debugWrap
 def getClassType():
     if (isEqSetting('target','aws')):
-        return getattr(aws,f"{getSetting('pvAWS')}Target")
+        if isEqSetting('mode', 'evaluateSecurityTests'):
+            return getattr(cwesEvaluationAws, f"{getSetting('pvAWS')}Target")
+        else:
+            return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
         if isEqSetting('mode', 'evaluateSecurityTests'):
             return cwesEvaluationQemuTarget
         else:
             return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):
+        if isEqSetting('mode', 'evaluateSecurityTests'):
+            logAndExit("<evaluateSecurityTests> is not implemented for <fpga>",
+                       exitCode=EXIT.Implementation)
         gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
         if (gfeTestingScripts not in os.environ):
             logAndExit (f"<${gfeTestingScripts}> not found in the nix path.",exitCode=EXIT.Environment)
