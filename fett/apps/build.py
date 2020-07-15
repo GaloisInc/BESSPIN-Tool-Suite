@@ -145,6 +145,10 @@ def copyVotingFiles(tarName):
     filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
     filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
 
+    if isEqSetting('osImage', 'debian'):
+        cpFilesToBuildDir(os.path.join(getAppDir('voting'), 'debian'), 'bvrs.service')
+        filesList.append(buildDirPathTuple('bvrs.service'))
+
     # Need kfcgi, webserver's nginx.conf, bvrs app
     # We should probably just generate the initial database script here
     return filesList
