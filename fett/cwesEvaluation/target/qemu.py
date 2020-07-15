@@ -72,7 +72,7 @@ class qemuTarget(fett.target.qemu.qemuTarget):
         scorer = scoreTests.customScorerObj(False, None)
 
         # TODO: Make this configurable?
-        csvPath = os.path.join(getSetting('workDir'), "scores.csv")
+        csvPath = os.path.join(testLogDir, "scores.csv")
 
         scoreTests.main(module, scorer, csvPath, testLogDir)
 
