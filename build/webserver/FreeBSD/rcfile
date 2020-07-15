@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# PROVIDE: nginx
+# REQUIRE: DAEMON
+# KEYWORD: shutdown
+
 . /etc/rc.subr
 
 name=nginx
