@@ -3,18 +3,23 @@ from fett.cwesEvaluation.compat import testgenTargetCompatabilityLayer
 import fett.cwesEvaluation.scoreTests as scoreTests
 import fett.target.qemu
 
-# TODO: These imports wont work once we have multiple vuln classes
-import fett.cwesEvaluation.tests.resourceManagement.scripts.cweTests
+import fett.cwesEvaluation.tests.resourceManagement.scripts.vulClassTester
 import fett.cwesEvaluation.tests.resourceManagement.scripts.cweScores
+import fett.cwesEvaluation.tests.numericErrors.scripts.vulClassTester
+import fett.cwesEvaluation.tests.numericErrors.scripts.cweScores
 
 cweTests = {
     "resourceManagement" :
-        fett.cwesEvaluation.tests.resourceManagement.scripts.cweTests
+        fett.cwesEvaluation.tests.resourceManagement.scripts.vulClassTester.vulClassTester,
+    "numericErrors" :
+        fett.cwesEvaluation.tests.numericErrors.scripts.vulClassTester.vulClassTester
 }
 
 cweScores = {
     "resourceManagement" :
-        fett.cwesEvaluation.tests.resourceManagement.scripts.cweScores
+        fett.cwesEvaluation.tests.resourceManagement.scripts.cweScores,
+    "numericErrors" :
+        fett.cwesEvaluation.tests.numericErrors.scripts.cweScores
 }
 
 class qemuTarget(fett.target.qemu.qemuTarget):
@@ -54,24 +59,13 @@ class qemuTarget(fett.target.qemu.qemuTarget):
 
     def executeTest (self, vulClass, binTest, logDir):
         testName = binTest.split('.')[0]
-
-        if (hasattr(cweTests[vulClass],testName)):
-            printAndLog(f"Executing {testName}...")
-            outLog = getattr(getattr(cweTests[vulClass],testName),testName)(
-                    testgenTargetCompatabilityLayer(self),
-                    binTest)
-        else:
-            self.shutdownAndExit(f"<cwesEvaluation qemu>: Calling unknown "
-                                 f"method <testName>.",
-                                 exitCode=EXIT.Dev_Bug)
-
-
+        printAndLog(f"Executing {testName}...")
+        outLog = cweTests[vulClass](self).executeTest(binTest)
         logFile = os.path.join(logDir, f'{testName}.log')
         with open(logFile, 'w') as f:
             f.write(outLog)
 
     def score(self, testLogDir, vulClass):
-        # TODO: Load modules using SourceFileLoader
         module = cweScores[vulClass]
 
         # TODO: Allow custom scoring

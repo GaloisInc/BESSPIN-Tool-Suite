@@ -16,6 +16,9 @@ class testgenTargetCompatabilityLayer:
         # TODO: Set this to match target?
         self.filename = "compatability"
 
+        # TODO: Make this configurable?
+        self.showExecutionOnScreen = False
+
     @property
     def osImage(self):
         return getSetting("osImage")
@@ -23,6 +26,10 @@ class testgenTargetCompatabilityLayer:
     def typCommand(self, command):
         # TODO: Better endsWith (will this even work for freebsd?)
         return self.target.runCommand(command)[1]
+
+    def runCommand(self, command):
+        # TODO: Are these interfaces compatable enough?
+        return self.target.runCommand(command)
 
     # TODO: The real reportAndExit takes a bunch of optional params that we
     # should support

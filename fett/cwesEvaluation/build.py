@@ -47,13 +47,18 @@ def buildCwesEvaluation():
                         'defaultEnvLinux.mk'),
             vulClassDir)
 
+        testsParametersHeader = os.path.join(vulClassDir, "testsParameters.h")
         if vulClass == "resourceManagement":
             # Write configuration header file
             # TODO: Write this based on values in the config file.  You'll also
             # have to change it based on the suite being run.  Lastly, it
             # doesn't seem to exist for all classes of vulnerabilities.
-            with open(os.path.join(vulClassDir, "testsParameters.h"), 'w') as f:
+            with open(os.path.join(testsParametersHeader), 'w') as f:
                 f.write("#define nResourceLimit 10\n")
+        elif vulClass == "numericErrors":
+            # Write empty configuration header file (nothing to configure)
+            open(testsParametersHeader, 'w').close()
+
 
 
         crossCompileUnix(vulClassDir)

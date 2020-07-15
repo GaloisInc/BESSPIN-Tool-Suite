@@ -5,10 +5,11 @@ Note that the file will be loaded as a sourceFileModule, so using '.' is mandato
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 from . import cweTests
 
-class vulClassTester:
-    """ should not be instantiated standalone; has to be done through classesHierarchy.py """
-    def __init__(self,settings):
-        super().__init__(settings)
+from fett.cwesEvaluation.compat import testgenTargetCompatabilityLayer
+
+class vulClassTester(testgenTargetCompatabilityLayer):
+    def __init__(self, target):
+        super().__init__(target)
         return
 
     def executeTest (self,binTest):
@@ -19,7 +20,3 @@ class vulClassTester:
             self.reportAndExit ("Error in {0}: Calling unknown method <{1}>.".format(self.filename,testName))
             outLog = ''
         return outLog
-
-    def typCommand (self, command):
-        return self.runCommand(command,showOnScreen=self.showExecutionOnScreen,shutdownOnError=False)[1]
-    
