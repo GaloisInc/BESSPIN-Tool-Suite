@@ -7,7 +7,7 @@
     Each "values" should be a tuple. Please note that a 1-element tuple should be: ('element',)
 """
 
-fettTargetAMI = 'ami-0f52b92c0c299059f' #fett-target-062420 -- this will change again
+fettTargetAMI = 'ami-06eb7aca685175332' #fett-target-062420 -- this will change again
 ciAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
 ciAWSbucket = 'ssith-fett-target-ci-develop'
 
