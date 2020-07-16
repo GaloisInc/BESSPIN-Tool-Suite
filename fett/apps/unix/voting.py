@@ -81,7 +81,17 @@ def install (target):
 
     target.runCommand("echo \"Starting BVRS CGI Handler...\"",tee=appLog)
 
-    target.runCommand(f"/usr/local/sbin/kfcgi -s {prefix}/www/run/httpd.sock -U {wwwUser} -u {wwwUser} -p / -- {prefix}/www/cgi-bin/bvrs {prefix}/www/data/bvrs.db",tee=appLog)
+    if isEqSetting('osImage', 'debian'):
+        target.runCommand("install bvrs.service /lib/systemd/system/bvrs.service", erroneousContents="install:", tee=appLog)
+        target.runCommand("systemctl enable bvrs.service", tee=appLog)
+        target.runCommand("systemctl start bvrs.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
+    elif isEqSetting('osImage', 'FreeBSD'):
+        serviceTimeout = 60 if not (isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')) else 120
+        target.runCommand("install bvrs.sh /usr/local/etc/rc.d/bvrs", erroneousContents="install:",tee=appLog)
+        target.runCommand("service bvrs enable", erroneousContents="bvrs does not exist",tee=appLog,timeout=serviceTimeout)
+        target.runCommand("service bvrs start", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
+    else:
+        target.shutdownAndExit (f"Can't start bvrs service on <{getSetting('osImage')}>", exitCode=EXIT.Dev_Bug)
     return
 
 @decorate.debugWrap

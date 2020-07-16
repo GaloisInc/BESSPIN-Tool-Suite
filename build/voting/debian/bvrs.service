@@ -1,0 +1,12 @@
+[Unit]
+Description=FastCGI server for the BESSPIN Voter Registration System
+After=syslog.target network.target
+Requires=nginx.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/kfcgi -d -s /var/www/run/httpd.sock -U www-data -u www-data -p / -- /var/www/cgi-bin/bvrs /var/www/data/bvrs.db
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
