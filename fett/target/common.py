@@ -273,6 +273,11 @@ class commonTarget():
             self.runCommand("echo 'ntpd_enable=\"YES\"' >> /etc/rc.conf")
             self.runCommand("echo 'ntpd_sync_on_start=\"YES\"' >> /etc/rc.conf")
             self.runCommand("service ntpd start")
+
+        # Instruct the kernel debugger to restart
+        if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','aws')):
+            self.runCommand("sysctl debug.debugger_on_panic=0")
+            self.runCommand('echo "debug.debugger_on_panic=0" >> /etc/sysctl.conf')
                                 
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
