@@ -120,7 +120,7 @@ def main (xArgs):
     xTarget = startFett()
     if (isEqSetting('mode','production')):
         # Notify portal that we have deployed successfully
-        aws.sendSQS(getSetting('prodSqsQueueTX'), logAndExit, 'success', 
+        aws.sendSQS(getSetting(f'{getSetting("fettEntrypoint")}SqsQueueTX'), logAndExit, 'success', 
                     getSetting('prodJobId'), f"{getSetting('prodJobId')}-DEPLOY",
                     reason='fett-target-production-deployment',
                     hostIp=aws.getInstanceIp(logAndExit),
@@ -128,7 +128,7 @@ def main (xArgs):
                     )
         printAndLog("Sent deployment message to the SQS queue.")
 
-        aws.pollPortalQueueIndefinitely (getSetting('prodSqsQueueRX'), logAndExit)
+        aws.pollPortalQueueIndefinitely (getSetting(f'{getSetting("fettEntrypoint")}SqsQueueRX'), logAndExit)
         printAndLog("Received termination message from the SQS queue.")
         
     endFett(xTarget)
