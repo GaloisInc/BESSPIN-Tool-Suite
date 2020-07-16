@@ -16,9 +16,13 @@ from fett.base.utils import aws
 _settings = dict()
 
 # hardcoded URLs -- needed for emergency reporting
-_settings['prodSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-InstanceStatusQueue-1H71N09IEKG3F.fifo'
-_settings['prodSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-PortalToInstanceTerminationQueue-CND4M2WJAWOK' 
-_settings['prodS3Bucket'] = 'master-ssith-fett-target-researcher-artifacts'
+_settings['awsProdSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-InstanceStatusQueue-1H71N09IEKG3F.fifo'
+_settings['awsProdSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-PortalToInstanceTerminationQueue-CND4M2WJAWOK' 
+_settings['awsProdS3Bucket'] = 'master-ssith-fett-target-researcher-artifacts'
+
+_settings['awsDevSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/363527286999/develop-fettportal-InstanceStatusQueue-1DQ91T9W5DFZ1.fifo'
+_settings['awsDevSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/363527286999/develop-fettportal-PortalToInstanceTerminationQueue-1YKQ0ZBH4B50' 
+_settings['awsDevS3Bucket'] = 'Develop-ssith-fett-target-researcher-artifacts/fett-target/develop/artifacts'
 
 class EXIT (enum.Enum):
     Success = 0
@@ -76,12 +80,12 @@ def exitFett (exitCode):
         if (exitCode != EXIT.Success): # ERRONEOUS STATE!! -- emergency upload
             collectRemoteLogging (inExit_logAndExit,inExit_GetSetting,inExit_sudoShellCommand) #Maybe we have some remote logs
             tarballPath = tarArtifacts (inExit_logAndExit,inExit_GetSetting)
-            aws.uploadToS3(inExit_GetSetting('prodS3Bucket'), inExit_logAndExit, 
+            aws.uploadToS3(inExit_GetSetting(f'{inExit_GetSetting("fettEntrypoint")}S3Bucket'), inExit_logAndExit, 
                             tarballPath, 'fett-target/production/artifacts/')
             printAndLog(f"Artifacts tarball uploaded to S3.")
 
         jobStatus = 'success' if (exitCode == EXIT.Success) else 'failure'
-        aws.sendSQS(inExit_GetSetting('prodSqsQueueTX'), inExit_logAndExit, jobStatus, 
+        aws.sendSQS(inExit_GetSetting(f'{inExit_GetSetting("fettEntrypoint")}SqsQueueTX'), inExit_logAndExit, jobStatus, 
                     inExit_GetSetting('prodJobId'), f"{inExit_GetSetting('prodJobId')}-TERM",
                     reason='fett-target-production-termination',
                     hostIp=aws.getInstanceIp(inExit_logAndExit),
