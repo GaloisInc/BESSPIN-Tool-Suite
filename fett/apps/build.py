@@ -92,8 +92,8 @@ def copyWebserverFiles(tarName):
         cpFilesToBuildDir (runtimeFilesDir, pattern="nginx.service")
         tarFiles += ["nginx.service"]
     elif getSetting('osImage') == 'FreeBSD':
-        cpFilesToBuildDir (runtimeFilesDir, pattern="rcfile")
-        tarFiles += ["rcfile"]
+        cpFilesToBuildDir (runtimeFilesDir, pattern="nginx.sh")
+        tarFiles += ["nginx.sh"]
     else:
         logAndExit (f"Installing nginx is not supported on <{getSetting('osImage')}>",
                     exitCode=EXIT.Dev_Bug)
