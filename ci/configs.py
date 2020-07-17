@@ -90,7 +90,8 @@ sri_cambridge_unixDevPR_aws = unixDefaults.union({
 
 freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
-    ('elfLoader',('JTAG',))
+    ('elfLoader',('JTAG',)),
+    ('FreeRTOSUseRAMDisk',('no',))
 })
 
 gfe_freertosAllTargets_onprem = freertosDefaults.union({
@@ -110,7 +111,6 @@ gfe_freertosDevPR_aws = freertosDefaults.union({
     ('target',('aws',)),
     ('cross-compiler',('GCC','Clang',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
-    ('FreeRTOSUseRAMDisk',('yes',)),
     ('buildApps',('no',))
 })
 
@@ -120,7 +120,6 @@ lmco_freertosDevPR_aws = freertosDefaults.union({
     ('target',('aws',)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
-    ('FreeRTOSUseRAMDisk',('yes',)),
     ('buildApps',('no',))
 })
 
