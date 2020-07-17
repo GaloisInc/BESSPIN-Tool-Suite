@@ -22,7 +22,7 @@ _settings['awsProdS3Bucket'] = 'master-ssith-fett-target-researcher-artifacts'
 
 _settings['awsDevSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/363527286999/develop-fettportal-InstanceStatusQueue-1DQ91T9W5DFZ1.fifo'
 _settings['awsDevSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/363527286999/develop-fettportal-PortalToInstanceTerminationQueue-1YKQ0ZBH4B50' 
-_settings['awsDevS3Bucket'] = 'Develop-ssith-fett-target-researcher-artifacts/fett-target/develop/artifacts'
+_settings['awsDevS3Bucket'] = 'Develop-ssith-fett-target-researcher-artifacts'
 
 class EXIT (enum.Enum):
     Success = 0
