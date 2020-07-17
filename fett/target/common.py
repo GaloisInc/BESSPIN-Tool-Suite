@@ -278,7 +278,15 @@ class commonTarget():
         if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','aws')):
             self.runCommand("sysctl debug.debugger_on_panic=0")
             self.runCommand('echo "debug.debugger_on_panic=0" >> /etc/sysctl.conf')
-                                
+
+        if getSetting('osImage') in ['debian', 'FreeBSD'] and not isEqSetting('binarySource', 'SRI-Cambridge'):
+            printAndLog("start: setting motd...")
+            motdPath = '/etc/motd.template' if isEqSetting('osImage', 'FreeBSD') else '/etc/motd'
+            instanceType = f"{getSetting('binarySource')} / {getSetting('osImage')} / {getSetting('processor')}"
+            self.runCommand(f"printf '\\nInstance type: {instanceType}\\n\\n' > {motdPath}")
+            if isEqSetting('osImage', 'FreeBSD'):
+                self.runCommand("service motd restart")
+
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
 
