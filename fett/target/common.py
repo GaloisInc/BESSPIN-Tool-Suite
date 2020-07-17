@@ -604,6 +604,9 @@ class commonTarget():
 
             passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
+
+            if (not self.sshECDSAkeyWasUpdated):
+                self.clearHostKey()
             try:
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
@@ -954,6 +957,17 @@ class commonTarget():
         return [isSuccess, textBack, isTimeout, dumpIdx]
 
     @decorate.debugWrap
+    def clearHostKey (self):
+        ipUpdateECDSA = self.ipTarget if (not self.sshHostPort) else f"[{self.ipTarget}]:{self.sshHostPort}"
+        self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
+        try:
+            subprocess.check_call (['ssh-keygen', '-R', ipUpdateECDSA],stdout=self.fSshOut,stderr=self.fSshOut)
+        except Exception as exc:
+            warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",doPrint=False)
+        self.sshECDSAkeyWasUpdated = True
+        self.fSshOut.close()
+
+    @decorate.debugWrap
     @decorate.timeWrap
     def openSshConn (self,userName='root',endsWith=None,timeout=60):
         def returnFail (message,exc=None):
@@ -975,14 +989,7 @@ class commonTarget():
         sshPassword = self.rootPassword  if (userName=='root') else self.userPassword
         #Need to clear the ECDSA key first in case it is not the first time
         if (not self.sshECDSAkeyWasUpdated):
-            ipUpdateECDSA = self.ipTarget if (not self.sshHostPort) else f"[{self.ipTarget}]:{self.sshHostPort}"
-            self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
-            try:
-                subprocess.check_call (['ssh-keygen', '-R', ipUpdateECDSA],stdout=self.fSshOut,stderr=self.fSshOut)
-            except Exception as exc:
-                warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",doPrint=False)
-            self.sshECDSAkeyWasUpdated = True
-            self.fSshOut.close()
+            self.clearHostKey()
 
         self.killSshConn()
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
