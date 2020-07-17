@@ -171,7 +171,7 @@ class firesimTarget(commonTarget):
             # This also happens if a unix OS didn't exit properly. Towards the end of making each
             # run a standalone and independent of previous runs, we send this interrupt if the 
             # process is still alive.
-            self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=15)
+            self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
 
             if (self.process.isalive()):
                 try:
@@ -179,7 +179,7 @@ class firesimTarget(commonTarget):
                                         stdout=self.fTtyOut, stderr=self.fTtyOut)
                 except Exception as exc:
                     warnAndLog("targetTearDown: Failed to kill <firesim> process.",doPrint=False,exc=exc)
-                    
+
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
         return True
 
