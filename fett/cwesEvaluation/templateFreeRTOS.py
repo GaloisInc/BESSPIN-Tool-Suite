@@ -74,7 +74,7 @@ def main (testsDir):
 
             #The main function
             fmain.write("\n\nvoid main_fett (void)\n{\n")
-            fmain.write("\tprintf (\">>>Beginning of Testgen<<<\\n\");\n\n")
+            fmain.write("\tprintf (\">>>Beginning of Fett<<<\\n\");\n\n")
             fmain.write("\tmain_{0} ();\n".format(testName))
-            fmain.write("\n\tprintf (\">>>End of Testgen<<<\\n\");\n}\n")
+            fmain.write("\n\tprintf (\">>>End of Fett<<<\\n\");\n}\n")
             fmain.close()

@@ -92,7 +92,6 @@ def buildCwesEvaluation():
     buildFreeRTOSTest("test_188.c", "resourceManagement", 1)
 
     # TODO: Need to build enabledCwesEvaluations for FreeRTOS
-    exit(1)
 
 
 @decorate.debugWrap
