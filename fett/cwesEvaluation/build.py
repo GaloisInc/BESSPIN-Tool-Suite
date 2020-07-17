@@ -17,14 +17,15 @@ def buildCwesEvaluation():
     # with the default makefile.  Do we want to support custom makefiles /
     # build options?
 
-    # create the osImages directory
-    osImagesDir = os.path.join(getSetting('workDir'),'osImages')
-    mkdir(osImagesDir,addToSettings='osImagesDir')
-    # TODO: Might need do do something special for SRI-Cambridge (see
-    # prepareOsImage in target/build.py)
-    osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
-    setSetting('osImageElf',osImageElf)
-    setSetting('osImageExtraElf', None)
+    if isEqSetting('osImage', 'FreeRTOS'):
+        # create the osImages directory
+        osImagesDir = os.path.join(getSetting('workDir'),'osImages')
+        mkdir(osImagesDir,addToSettings='osImagesDir')
+        # TODO: Might need do do something special for SRI-Cambridge (see
+        # prepareOsImage in target/build.py)
+        osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
+        setSetting('osImageElf',osImageElf)
+        setSetting('osImageExtraElf', None)
 
     # Create build directory
     buildDir = os.path.join(getSetting('workDir'), 'build')
@@ -89,7 +90,7 @@ def buildCwesEvaluation():
                                 f"{getSetting('osImage')}.asm"))
 
     # TODO: Remove me
-    buildFreeRTOSTest("test_188.c", "resourceManagement", 1)
+    #buildFreeRTOSTest("test_188.c", "resourceManagement", 1)
 
     # TODO: Need to build enabledCwesEvaluations for FreeRTOS
 
@@ -113,8 +114,9 @@ def buildTarball():
     # TODO: Do I need this += part here?  I thought it would capture the
     # entropy thing, but it looks like it doesn't?
     fileList += [(os.path.basename(f), f) for f in
-                 glob.glob(os.path.join(buildDir, "*.riscv"))]
-    tar(os.path.join(buildDir, getSetting('tarballName')), fileList)
+                 glob.glob(os.path.join(getSetting("buildDir"), "*.riscv"))]
+    tar(os.path.join(getSetting("buildDir"), getSetting('tarballName')),
+        fileList)
     setSetting('sendTarballToTarget', True)
 
     # TODO: Put this somewhere else, use it to determine what to compile, and
