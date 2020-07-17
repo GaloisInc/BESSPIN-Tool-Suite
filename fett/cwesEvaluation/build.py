@@ -6,6 +6,8 @@ import glob
 import os
 
 from fett.base.utils.misc import *
+from fett.cwesEvaluation.templateFreeRTOS import main as templateFreeRTOS
+import fett.target.build
 
 
 @decorate.debugWrap
@@ -14,6 +16,15 @@ def buildCwesEvaluation():
     # TODO: Even for this case, I skipped a bunch of options and just stuck
     # with the default makefile.  Do we want to support custom makefiles /
     # build options?
+
+    # create the osImages directory
+    osImagesDir = os.path.join(getSetting('workDir'),'osImages')
+    mkdir(osImagesDir,addToSettings='osImagesDir')
+    # TODO: Might need do do something special for SRI-Cambridge (see
+    # prepareOsImage in target/build.py)
+    osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
+    setSetting('osImageElf',osImageElf)
+    setSetting('osImageExtraElf', None)
 
     # Create build directory
     buildDir = os.path.join(getSetting('workDir'), 'build')
@@ -59,14 +70,38 @@ def buildCwesEvaluation():
             # Write empty configuration header file (nothing to configure)
             open(testsParametersHeader, 'w').close()
 
+        if isEqSetting('osImage', 'FreeRTOS'):
+            prepareFreeRTOS(vulClassDir)
+        elif getSetting('osImage') in ['debian', 'FreeBSD']:
+            crossCompileUnix(vulClassDir)
+        else:
+            logAndExit("<buildCwesEvaluation> is not implemented for "
+                       f"<{getSetting('osImage')}>.",
+                       exitCode=EXIT.Implementation)
 
 
-        crossCompileUnix(vulClassDir)
+    if getSetting('osImage') in ['debian', 'FreeBSD']:
+        buildTarball()
+    elif isEqSetting('osImage', 'FreeRTOS'):
+        # define some paths
+        setSetting('osImageAsm',
+                   os.path.join(getSetting('osImagesDir'),
+                                f"{getSetting('osImage')}.asm"))
 
-    # TODO: Use list comprehension to flatten tarball
+    # TODO: Remove me
+    buildFreeRTOSTest("test_188.c", "resourceManagement", 1)
+
+    # TODO: Need to build enabledCwesEvaluations for FreeRTOS
+    exit(1)
+
+
+@decorate.debugWrap
+@decorate.timeWrap
+def buildTarball():
     fileList = [(os.path.basename(f), f) for f in
-                glob.glob(os.path.join(buildDir,"*", "*.riscv"))]
-
+                glob.glob(os.path.join(getSetting('buildDir'),
+                                       "*",
+                                       "*.riscv"))]
     enabledCwesEvaluations = {}
     for (test, path) in fileList:
         vulClass = os.path.basename(os.path.split(path)[0])
@@ -85,7 +120,6 @@ def buildCwesEvaluation():
 
     # TODO: Put this somewhere else, use it to determine what to compile, and
     # maybe rename it
-
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -106,3 +140,62 @@ def crossCompileUnix(directory):
     logging.debug(f"going to make using {envLinux}")
     make(envLinux, directory)
     printAndLog(f"Files cross-compiled successfully.")
+
+
+@decorate.debugWrap
+@decorate.timeWrap
+def prepareFreeRTOS(directory):
+    # TODO: Just inline this function if its just a one liner
+    # Generate main files
+    templateFreeRTOS(directory)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def buildFreeRTOSTest(test, vulClass, part):
+    # TODO: Some options in target.build.prepareFreeRTOS are omitted here
+    # TODO: Can I refactor this to reuse code in target.build.prepareFreeRTOS?
+
+    fett.target.build.freeRTOSBuildChecks()
+
+    #copy the C files, .mk files, and any directory
+    copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),
+            getSetting('buildDir'),
+            copyContents=True)
+    # Remove existing main file
+    os.remove(os.path.join(getSetting('buildDir'), "main_fett.c"))
+
+    cp(os.path.join(getSetting('repoDir'),
+                    'fett',
+                    'target',
+                    'srcFreeRTOS'),
+       getSetting('buildDir'),
+       pattern="*.h")  # TODO: Do I really want ALL of these headers?
+    # TODO: it feels silly to copy from a subdir to the build dir like this
+    cp(os.path.join(getSetting('buildDir'), vulClass),
+       getSetting('buildDir'),
+       pattern=f"*{test}")
+    cp(os.path.join(getSetting('buildDir'), vulClass),
+       getSetting('buildDir'),
+       pattern=f"*.h")
+
+
+    # TODO: Put listConfigParams back in to fill the header file?
+    # Write empty fett configuration header file (nothing to configure)
+    open(os.path.join(getSetting('buildDir'), "fettUserConfig.h"), 'w').close()
+
+    fett.target.build.prepareFreeRTOSNetworkParameters()
+
+    # TODO: Should probably modify the source files to support AWS instead of
+    # this hack
+    backend = ("FPGA" if isEqSetting("target", "aws")
+                      else getSetting("target").upper())
+
+    # Define variables testgen uses
+    with open(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a') as mk:
+        mk.write("CFLAGS += "
+                 "-DtestgenOnFreeRTOS "
+                 f"-Dtestgen{backend} "
+                 f"-DTESTGEN_TEST_PART={part}")
+
+    # Build
+    fett.target.build.buildFreeRTOS()
