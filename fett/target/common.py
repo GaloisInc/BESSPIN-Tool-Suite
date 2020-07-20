@@ -106,13 +106,14 @@ class commonTarget():
                         if (retCommand[3] == 0):
                             loginSuccess = True
                         elif (retCommand[3] == 1): # try again
+                            printAndLog("Failed to login. Trying again...",doPrint=False)
                             self.runCommand (loginName,endsWith="Password:")
                             iAttempt += 1
                     if (not loginSuccess):
                         self.shutdownAndExit(f"Failed to login ({maxLoginAttempts} times).",exitCode=EXIT.Run)
                 else:
                     self.runCommand (loginPassword)
-                    
+
             else: #open and close sshConnections
                 self.closeSshConn()
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
