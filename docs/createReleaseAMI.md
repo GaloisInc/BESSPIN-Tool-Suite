@@ -82,3 +82,22 @@ Note that `N` is the next point release.
 
 12. Send to FTS:
 Send both AMI IDs to Kurt Hopfer and make sure he confirms the receipt.
+
+## Additional Tasks ##
+
+### CloudWatch ####
+
+If you want to update the CloudWatch configuration, then before step 7 or 8, do the following:
+
+- Kill the current cloudWatch process:
+```
+ps -A | grep cloud
+sudo kill <PID-FROM-STEP-1>
+```
+
+- Update the `/opt/aws/amazon-cloudwatch-agent/bin/config.json` as you desire.
+
+- Relaunch:
+```
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+```
