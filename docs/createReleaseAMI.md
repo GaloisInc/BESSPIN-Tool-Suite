@@ -60,7 +60,6 @@ history -c
     - Now you have all the configs in `/tmp/dumpIni`. 
     - Create one instance per config, and launch that config and ensure that it gives `Success`.
     - If something fails, then after a fix is merged to master, all steps have to be repeated.
-    - Please note ticket #516. Firesim target sometimes work on the third run (on the same instance).
 
 10. Tag master branch:
 On any machine, get the AMI ID, let's say `ami-xxxxxxxxxxxx`.
