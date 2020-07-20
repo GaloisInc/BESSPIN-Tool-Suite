@@ -1,1 +1,0 @@
-#define DRIVER_VERSION "0ERSION"

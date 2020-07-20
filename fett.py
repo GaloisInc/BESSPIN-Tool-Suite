@@ -21,7 +21,7 @@ optional arguments:
   -l LOGFILE, --logFile LOGFILE
                         Overwrites the default logFile: ./${workDir}/fett.log
   -d, --debug           Enable debugging mode.
-  -ep {devHost,ciOnPrem,ciAWS,awsProd}, --entrypoint {devHost,ciOnPrem,ciAWS,awsProd}
+  -ep {devHost,ciOnPrem,ciAWS,awsProd}, --entrypoint {devHost,ciOnPrem,ciAWS,awsProd,awsDev}
                         The entrypoint
 --- Defaults: 
         workingDirectory = ./workDir
@@ -120,7 +120,7 @@ def main (xArgs):
     xTarget = startFett()
     if (isEqSetting('mode','production')):
         # Notify portal that we have deployed successfully
-        aws.sendSQS(getSetting('prodSqsQueueTX'), logAndExit, 'success', 
+        aws.sendSQS(getSetting(f'{getSetting("fettEntrypoint")}SqsQueueTX'), logAndExit, 'success', 
                     getSetting('prodJobId'), f"{getSetting('prodJobId')}-DEPLOY",
                     reason='fett-target-production-deployment',
                     hostIp=aws.getInstanceIp(logAndExit),
@@ -128,7 +128,7 @@ def main (xArgs):
                     )
         printAndLog("Sent deployment message to the SQS queue.")
 
-        aws.pollPortalQueueIndefinitely (getSetting('prodSqsQueueRX'), logAndExit)
+        aws.pollPortalQueueIndefinitely (getSetting(f'{getSetting("fettEntrypoint")}SqsQueueRX'), logAndExit)
         printAndLog("Received termination message from the SQS queue.")
         
     endFett(xTarget)
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-w', '--workingDirectory', help='Overwrites the default working directory: ./workDir/')
     xArgParser.add_argument ('-l', '--logFile', help='Overwrites the default logFile: ./${workDir}/fett.log')
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
-    xArgParser.add_argument ('-ep', '--entrypoint', choices=['devHost','ciOnPrem','ciAWS','awsProd'], help='The entrypoint')
+    xArgParser.add_argument ('-ep', '--entrypoint', choices=['devHost','ciOnPrem','ciAWS','awsProd','awsDev'], help='The entrypoint')
     xArgParser.add_argument ('-job', '--jobId', help='The job ID in production mode.')
     xArgs = xArgParser.parse_args()
 

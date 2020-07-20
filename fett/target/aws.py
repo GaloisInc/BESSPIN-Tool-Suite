@@ -31,10 +31,14 @@ class firesimTarget(commonTarget):
         awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
 
         # 1. Switch0
-        self.fswitchOut = ftOpenFile(os.path.join(getSetting('workDir'),'switch0.out'),'a')
-        self.switch0Proc = subprocess.Popen(['sudo', './switch0']+self.switch0timing,
-                                            stdout=self.fswitchOut, stderr=self.fswitchOut,
-                                            cwd=awsFiresimSimPath, preexec_fn=os.setpgrp)
+        self.fswitchOut = ftOpenFile(os.path.join(getSetting('workDir'),'switch0.out'),'ab')
+
+        try:
+            self.switch0Proc = pexpect.spawn(f"sudo ./switch0 {' '.join(self.switch0timing)}",logfile=self.fswitchOut,timeout=10,
+                                        cwd=awsFiresimSimPath)
+            self.switch0Proc.expect("Assuming tap0",timeout=10)
+        except Exception as exc:
+            self.shutdownAndExit(f"boot: Failed to spawn the switch0 process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # 2. fsim
         firesimCommand = ' '.join([
@@ -145,15 +149,17 @@ class firesimTarget(commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
-        try:
-            subprocess.check_call(['sudo', 'kill', f"{os.getpgid(self.switch0Proc.pid)}"],
-                                stdout=self.fswitchOut, stderr=self.fswitchOut)
-        except Exception as exc:
-            warnAndLog("targetTearDown: Failed to kill <switch0> process.",doPrint=False,exc=exc)
-        try:
-            self.fswitchOut.close()
-        except Exception as exc:
-            warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
+        if (self.switch0Proc.isalive()):
+            try:
+                subprocess.check_call(['sudo', 'kill', '-9', f"{self.switch0Proc.pid}"],
+                                    stdout=self.fswitchOut, stderr=self.fswitchOut)
+            except Exception as exc:
+                warnAndLog("targetTearDown: Failed to kill <switch0> process.",doPrint=False,exc=exc)
+            
+            try:
+                self.fswitchOut.close()
+            except Exception as exc:
+                warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
 
         if (self.process.isalive()):
             # When executing the firesim command, we run it with `stty intr ^]` which changes
@@ -165,7 +171,15 @@ class firesimTarget(commonTarget):
             # This also happens if a unix OS didn't exit properly. Towards the end of making each
             # run a standalone and independent of previous runs, we send this interrupt if the 
             # process is still alive.
-            self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=15)
+            self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+
+            if (self.process.isalive()):
+                try:
+                    subprocess.check_call(['sudo', 'kill', '-9', f"{self.process.pid}"],
+                                        stdout=self.fTtyOut, stderr=self.fTtyOut)
+                except Exception as exc:
+                    warnAndLog("targetTearDown: Failed to kill <firesim> process.",doPrint=False,exc=exc)
+
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
         return True
 

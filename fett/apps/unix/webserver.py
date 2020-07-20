@@ -44,7 +44,7 @@ def install (target):
         target.runCommand("systemctl start nginx.service", erroneousContents=["Failed to start", "error code"],tee=appLog)
     elif isEqSetting('osImage','FreeBSD'):
         target.runCommand("install -d /usr/local/etc/rc.d",tee=appLog)
-        target.runCommand("install rcfile /usr/local/etc/rc.d/nginx", erroneousContents="install:",tee=appLog)
+        target.runCommand("install nginx.sh /usr/local/etc/rc.d/nginx", erroneousContents="install:",tee=appLog)
         # connectal FreeBSD is slow with these commands
         nginxTimeout = 60 if not (isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')) else 120
         target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog, timeout=nginxTimeout)
