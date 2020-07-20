@@ -10,7 +10,7 @@ This guide outlines how to updated an existing FETT-Target AMI for a newer relea
 
 2. Get the hash of the master's tip. Let's say "1234567xxxxxxxxxxxxx".
 
-3. Launch any instance (we often use c4.4xlarge) with the most recent `fett-target-centos-mmddyy-zzzzzzz` AMI.
+3. Launch any instance (we often use c4.xlarge) with the most recent `fett-target-centos-mmddyy-zzzzzzz` AMI.
 
 4. Figure out your SSH keys situation to be able to `git pull`. Either by creating a new key and adding it to your github account, or by forwarding your keys from somewhere.
 
