@@ -106,11 +106,13 @@ class commonTarget():
                         if (retCommand[3] == 0):
                             loginSuccess = True
                         elif (retCommand[3] == 1): # try again
-                            printAndLog("Failed to login. Trying again...",doPrint=False)
+                            printAndLog("switchUser: Failed to login. Trying again...",doPrint=False)
                             self.runCommand (loginName,endsWith="Password:")
                             iAttempt += 1
+                        else:
+                            printAndLog(f"switchUser: Failed to login <iAttempt={iAttempt}>, and this part should never be executed!",doPrint=False)
                     if (not loginSuccess):
-                        self.shutdownAndExit(f"Failed to login ({maxLoginAttempts} times).",exitCode=EXIT.Run)
+                        self.shutdownAndExit(f"switchUser: Failed to login ({maxLoginAttempts} times).",exitCode=EXIT.Run)
                 else:
                     self.runCommand (loginPassword)
 
