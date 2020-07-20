@@ -102,7 +102,7 @@ class commonTarget():
                     iAttempt = 0
                     loginSuccess = False
                     while ((not loginSuccess) and (iAttempt < maxLoginAttempts)):
-                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"login:"],timeout=120)
+                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],timeout=120)
                         if (retCommand[3] == 0):
                             loginSuccess = True
                         elif (retCommand[3] == 1): # try again
