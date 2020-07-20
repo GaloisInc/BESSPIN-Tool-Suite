@@ -88,12 +88,31 @@ class commonTarget():
                 isPrevUserRoot = self.isCurrentUserRoot
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
                 self.runCommand ("exit",endsWith="login:")
+
                 if (isPrevUserRoot): #switch to the other user
-                    self.runCommand (self.userName,endsWith="Password:")
-                    self.runCommand (self.userPassword)
+                    loginName = self.userName
+                    loginPassword = self.userPassword
                 else: #switch to root
-                    self.runCommand ("root",endsWith="Password:")
-                    self.runCommand (self.rootPassword)
+                    loginName = 'root'
+                    loginPassword = self.rootPassword
+
+                self.runCommand (loginName,endsWith="Password:")
+                if (isEqSetting('osImage','FreeBSD')): #Work around the occasional login failures
+                    maxLoginAttempts = 3
+                    iAttempt = 0
+                    loginSuccess = False
+                    while ((not loginSuccess) and (iAttempt < maxLoginAttempts)):
+                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"login:"],timeout=120)
+                        if (retCommand[3] == 0):
+                            loginSuccess = True
+                        elif (retCommand[3] == 1): # try again
+                            self.runCommand (loginName,endsWith="Password:")
+                            iAttempt += 1
+                    if (not loginSuccess):
+                        self.shutdownAndExit(f"Failed to login ({maxLoginAttempts} times).",exitCode=EXIT.Run)
+                else:
+                    self.runCommand (loginPassword)
+                    
             else: #open and close sshConnections
                 self.closeSshConn()
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
