@@ -80,6 +80,11 @@ Note that `N` is the next point release.
     - Wait for the AMI to be available
     - Share it with the production account `065510690417` as you did with the Oregon AMI
 
+P.S. If you want to share it with all accounts, you can just do:
+```
+aws ec2 modify-image-attribute --image-id ami-xxxxxxxxxxxx --attribute launchPermission --operation-type add --user-ids 053515949713 065510690417 104428437022 127763453929 450440740352 494240662784 592505567353 803897408424 845509001885 910658170027 938711909478
+```
+
 12. Send to FTS:
 Send both AMI IDs to Kurt Hopfer and make sure he confirms the receipt.
 
