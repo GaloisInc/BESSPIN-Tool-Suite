@@ -83,7 +83,7 @@ def install (target):
 
     if isEqSetting('osImage', 'debian'):
         target.runCommand("install bvrs.service /lib/systemd/system/bvrs.service", erroneousContents="install:", tee=appLog)
-        target.runCommand("systemctl enable bvrs.service", tee=appLog)
+        target.runCommand("systemctl enable bvrs.service", timeout=120, tee=appLog)
         target.runCommand("systemctl start bvrs.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
     elif isEqSetting('osImage', 'FreeBSD'):
         serviceTimeout = 60 if not (isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')) else 120
