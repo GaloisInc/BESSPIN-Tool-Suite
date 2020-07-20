@@ -108,6 +108,7 @@ class commonTarget():
                         elif (retCommand[3] == 1): # try again
                             printAndLog("switchUser: Failed to login. Trying again...",doPrint=False)
                             self.runCommand (loginName,endsWith="Password:")
+                            time.sleep(3) #wait for the OS to be ready for the password (maybe this works)
                             iAttempt += 1
                         else:
                             printAndLog(f"switchUser: Failed to login <iAttempt={iAttempt}>, and this part should never be executed!",doPrint=False)
