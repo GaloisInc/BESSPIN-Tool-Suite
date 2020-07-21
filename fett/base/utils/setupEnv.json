@@ -292,6 +292,13 @@
             "name" : "rsyslogPort",
             "type" : "int",
             "val" : 514
+        },
+        {
+            "name" : "uartFwdPort",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 10234
         }
     ] 
 }
