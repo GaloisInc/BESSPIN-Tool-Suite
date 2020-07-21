@@ -128,7 +128,7 @@ def main (xArgs):
                     )
         printAndLog("Sent deployment message to the SQS queue.")
 
-        aws.pollPortalIndefinitely (getSetting(f'{inExit_GetSetting("fettEntrypoint")}S3Bucket'), logAndExit)
+        aws.pollPortalIndefinitely (getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), logAndExit)
         printAndLog("Received termination notice from Portal.")
         
     endFett(xTarget)
