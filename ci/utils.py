@@ -7,141 +7,163 @@
 from configs import *
 import configparser, os, copy, time, glob, shutil
 
-def exitFettCi (exitCode=-1,exc=None,message=None):
-    if (message):
+
+def exitFettCi(exitCode=-1, exc=None, message=None):
+    if message:
         print(f"(Error)~  FETT-CI: {message}")
-    if (exc):
+    if exc:
         print(f"(Error)~  <{exc.__class__.__name__}>: {exc}")
-    if (exitCode == -1):
+    if exitCode == -1:
         print(f"(FATAL)~  End of FETT-CI: <JOB-FAILURE>")
-    elif (exitCode == 0):
+    elif exitCode == 0:
         print(f"(Info)~  End of FETT-CI: <JOB-SUCCESS>")
     else:
         print(f"(Info)~  End of FETT-CI: <JOB-FAILURE>")
     exit(exitCode)
 
-def exitOnInterrupt (xSig,xFrame):
-    signalNames = {2:'SIGINT', 15:'SIGTERM', 5:'SIGTRAP', 6:'SIGABRT'}
-    if (xSig in signalNames):
+
+def exitOnInterrupt(xSig, xFrame):
+    signalNames = {2: "SIGINT", 15: "SIGTERM", 5: "SIGTRAP", 6: "SIGABRT"}
+    if xSig in signalNames:
         sigName = signalNames[xSig]
     else:
         sigName = f"signal#{xSig}"
     exitFettCi(message=f"Received <{sigName}>!")
 
-def generateAllConfigs(baseRunType,flavor):
-    #create a list of unique dictionaries. Each dictionary can become a .ini instance
-    def createConfig (inputSet, inputDict):
-        if (not inputSet): #we're done
+
+def generateAllConfigs(baseRunType, flavor):
+    # create a list of unique dictionaries. Each dictionary can become a .ini instance
+    def createConfig(inputSet, inputDict):
+        if not inputSet:  # we're done
             return
 
         newSetting = inputSet.pop()
         settingName = newSetting[0]
         values = list(newSetting[1])
-        
-        #Create a new set/dict for every extra value
+
+        # Create a new set/dict for every extra value
         for iValue in values[1:]:
             newDict = copy.deepcopy(inputDict)
             allConfigs.append(newDict)
             newDict[settingName] = iValue
-            newDict['name'] += [str(iValue)]
+            newDict["name"] += [str(iValue)]
             newSet = copy.deepcopy(inputSet)
-            createConfig (newSet, newDict)
+            createConfig(newSet, newDict)
 
-        #Keep the inputDict for values[0]
-        if (len(values) > 1):
-            inputDict['name'] += [str(values[0])]
+        # Keep the inputDict for values[0]
+        if len(values) > 1:
+            inputDict["name"] += [str(values[0])]
         inputDict[settingName] = values[0]
-        createConfig (inputSet, inputDict)
-         
-    allConfigs = []
-    for xApp,xSet in appSets[baseRunType][flavor].items():
-        inputSet = copy.deepcopy(xSet)
-        inputDict = {'name': [xApp]}
-        allConfigs.append(inputDict)
-        createConfig (inputSet, inputDict)
+        createConfig(inputSet, inputDict)
 
-    #Produce a consistent naming order:
+    allConfigs = []
+    for xApp, xSet in appSets[baseRunType][flavor].items():
+        inputSet = copy.deepcopy(xSet)
+        inputDict = {"name": [xApp]}
+        allConfigs.append(inputDict)
+        createConfig(inputSet, inputDict)
+
+    # Produce a consistent naming order:
     for xConfig in allConfigs:
-        xConfig['name'] = '_'.join(sorted(xConfig['name'])) #sort the name components, then join them with '_'
-    allConfigs.sort(key = lambda item: item['name']) #sort the list based on item['name']
-    
+        xConfig["name"] = "_".join(
+            sorted(xConfig["name"])
+        )  # sort the name components, then join them with '_'
+    allConfigs.sort(
+        key=lambda item: item["name"]
+    )  # sort the list based on item['name']
+
     return allConfigs
 
-def generateConfigFile (repoDir,outDir,dictConfig,testMode):
-    #loading the template configuration file (the repo's default)
-    templateConfigPath = os.path.join(repoDir,'config.ini')
+
+def generateConfigFile(repoDir, outDir, dictConfig, testMode):
+    # loading the template configuration file (the repo's default)
+    templateConfigPath = os.path.join(repoDir, "config.ini")
     xConfig = configparser.ConfigParser()
     try:
-        fConfig = open(templateConfigPath,'r')
+        fConfig = open(templateConfigPath, "r")
         xConfig.read_file(fConfig)
         fConfig.close()
     except Exception as exc:
-        exitFettCi(message=f"Failed to read configuration file <{templateConfigPath}>.",exc=exc)
+        exitFettCi(
+            message=f"Failed to read configuration file <{templateConfigPath}>.",
+            exc=exc,
+        )
 
-    #Adjusting the xConfig
+    # Adjusting the xConfig
     fileName = None
     for xSetting, xValue in dictConfig.items():
         wasSet = False
-        if (xSetting == 'name'):
+        if xSetting == "name":
             fileName = f"{xValue}.ini"
             continue
         for xSection in xConfig:
-            if (xSetting in xConfig[xSection]):
-                xConfig.set(xSection,xSetting,str(xValue))
+            if xSetting in xConfig[xSection]:
+                xConfig.set(xSection, xSetting, str(xValue))
                 wasSet = True
                 break
-        if (not wasSet):
-            exitFettCi(message=f"Failed to find the setting <{xSetting}> in <{templateConfigPath}>.")
-    if (not fileName):
+        if not wasSet:
+            exitFettCi(
+                message=f"Failed to find the setting <{xSetting}> in <{templateConfigPath}>."
+            )
+    if not fileName:
         exitFettCi(message=f"Failed to find the key <name> in dictConfig.")
 
-    #Creating the config file
-    if (testMode):
-        dumpDir = os.path.join(outDir,'dumpIni')
-        xConfigFilePath = os.path.join(dumpDir,fileName)
+    # Creating the config file
+    if testMode:
+        dumpDir = os.path.join(outDir, "dumpIni")
+        xConfigFilePath = os.path.join(dumpDir, fileName)
         print(f"\t{fileName}")
     else:
-        xConfigFilePath = os.path.join(outDir,fileName)
+        xConfigFilePath = os.path.join(outDir, fileName)
 
     try:
-        fConfig = open(xConfigFilePath,'w')
+        fConfig = open(xConfigFilePath, "w")
         xConfig.write(fConfig)
         fConfig.close()
     except Exception as exc:
-        exitFettCi(message=f"Failed to write configuration file <{xConfigFilePath}>.",exc=exc)
+        exitFettCi(
+            message=f"Failed to write configuration file <{xConfigFilePath}>.", exc=exc
+        )
 
     return xConfigFilePath
 
-def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, jobID, nodeIndex):
-    #decide on the folder's name
-    artifactsPath = f"{os.path.splitext(os.path.basename(configFile))[0]}-{artifactSuffix}"
-    if (os.path.isdir(artifactsPath)): # already exists, add the date
+
+def prepareArtifact(
+    repoDir, configFile, artifactSuffix, entrypoint, exitCode, jobID, nodeIndex
+):
+    # decide on the folder's name
+    artifactsPath = (
+        f"{os.path.splitext(os.path.basename(configFile))[0]}-{artifactSuffix}"
+    )
+    if os.path.isdir(artifactsPath):  # already exists, add the date
         artifactsPath += f"-{int(time.time())}"
-    
-    #create the directory
+
+    # create the directory
     try:
         os.mkdir(artifactsPath)
     except Exception as exc:
-        exitFettCi (message=f"Failed to create <{artifactsPath}>.",exc=exc)
-    
-    #Move the important files there
-    #This is assuming fett-ci uses the default workDir and logFile
-    workDir = os.path.join(repoDir,'workDir')
-    logFile = os.path.join(workDir,'fett.log')
-    outFiles = glob.glob(os.path.join(workDir,'*.out'))
-    listArtifacts = [configFile, logFile] +  outFiles
+        exitFettCi(message=f"Failed to create <{artifactsPath}>.", exc=exc)
+
+    # Move the important files there
+    # This is assuming fett-ci uses the default workDir and logFile
+    workDir = os.path.join(repoDir, "workDir")
+    logFile = os.path.join(workDir, "fett.log")
+    outFiles = glob.glob(os.path.join(workDir, "*.out"))
+    listArtifacts = [configFile, logFile] + outFiles
     for xArtifact in listArtifacts:
         try:
-            shutil.copy2(xArtifact,artifactsPath)
+            shutil.copy2(xArtifact, artifactsPath)
         except Exception as exc:
-            exitFettCi (message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",exc=exc)
+            exitFettCi(
+                message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.", exc=exc
+            )
 
-    if (entrypoint == 'AWS'):
+    if entrypoint in ["AWS", "AWSNightly"]:
         # import the required modules
         try:
             import importlib.util, tarfile
         except Exception as exc:
-            exitFettCi (message=f"Failed to <import importlib.util, tarfile>.",exc=exc)
+            exitFettCi(message=f"Failed to <import importlib.util, tarfile>.", exc=exc)
 
         # Tar the artifact folder
         tarFileName = f"{artifactsPath}.tar.gz"
@@ -150,22 +172,51 @@ def prepareArtifact(repoDir, configFile, artifactSuffix, entrypoint, exitCode, j
             xFile.add(artifactsPath, arcname=None)
             xFile.close()
         except Exception as exc:
-            exitFettCi (message=f"tar: error creating {tarFileName}", exc=exc)
+            exitFettCi(message=f"tar: error creating {tarFileName}", exc=exc)
         print(f"(Info)~  FETT-CI: Created <{tarFileName}> including all artifacts.")
 
         # import the shared module: aws.py
-        moduleSpec = importlib.util.spec_from_file_location("aws", os.path.join(repoDir,'fett','base','utils','aws.py'))
+        moduleSpec = importlib.util.spec_from_file_location(
+            "aws", os.path.join(repoDir, "fett", "base", "utils", "aws.py")
+        )
         awsModule = importlib.util.module_from_spec(moduleSpec)
         moduleSpec.loader.exec_module(awsModule)
 
         # Upload the folder to S3
-        awsModule.uploadToS3(ciAWSbucket, exitFettCi, tarFileName, f"fett-target/ci/artifacts/{jobID}/")
+        if entrypoint == "AWS":
+            awsModule.uploadToS3(
+                ciAWSbucket,
+                exitFettCi,
+                tarFileName,
+                f"fett-target/ci/artifacts/{jobID}/",
+            )
+        else:  # AWS Nightly
+            awsModule.uploadToS3(
+                ciAWSbucketNightly,
+                exitFettCi,
+                tarFileName,
+                f"fett-target/ci/artifacts/{jobID}/",
+            )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
         # Send termination message to SQS
         jobStatus = "success" if (exitCode == 0) else "failure"
-        awsModule.sendSQS(ciAWSqueue, exitFettCi, jobStatus, jobID, nodeIndex,reason='fett-target-ci-termination')
+        if entrypoint == "AWS":
+            awsModule.sendSQS(
+                ciAWSqueue,
+                exitFettCi,
+                jobStatus,
+                jobID,
+                nodeIndex,
+                reason="fett-target-ci-termination",
+            )
+        else:  # AWS Nightly
+            awsModule.sendSQS(
+                ciAWSqueueNightly,
+                exitFettCi,
+                jobStatus,
+                jobID,
+                nodeIndex,
+                reason="fett-target-ci-termination",
+            )
         print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
-
-
-
