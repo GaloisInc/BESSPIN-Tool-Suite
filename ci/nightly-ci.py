@@ -35,9 +35,6 @@ def subprocess_check_output(command):
     return out
 
 
--[]
-
-
 def append_to_userdata(command_list):
     print(f"(Info)~ Adding to userdata.txt.")
     with open(Path().absolute() / "userdata.txt", "a") as f:
