@@ -92,8 +92,8 @@ def copyWebserverFiles(tarName):
         cpFilesToBuildDir (runtimeFilesDir, pattern="nginx.service")
         tarFiles += ["nginx.service"]
     elif getSetting('osImage') == 'FreeBSD':
-        cpFilesToBuildDir (runtimeFilesDir, pattern="rcfile")
-        tarFiles += ["rcfile"]
+        cpFilesToBuildDir (runtimeFilesDir, pattern="nginx.sh")
+        tarFiles += ["nginx.sh"]
     else:
         logAndExit (f"Installing nginx is not supported on <{getSetting('osImage')}>",
                     exitCode=EXIT.Dev_Bug)
@@ -144,6 +144,16 @@ def copyVotingFiles(tarName):
     filesList = list(map(buildDirPathTuple, ['bvrs', 'kfcgi', 'conf','keys','certs', 'bvrs.db']))
     filesList.append(('conf/sites', os.path.join(getSetting('buildDir'), 'sites')))
     filesList.append(('static', os.path.join(getSetting('buildDir'), 'static')))
+
+    if isEqSetting('osImage', 'debian'):
+        cpFilesToBuildDir(os.path.join(getAppDir('voting'), 'debian'), 'bvrs.service')
+        filesList.append(buildDirPathTuple('bvrs.service'))
+    elif isEqSetting('osImage', 'FreeBSD'):
+        cpFilesToBuildDir(os.path.join(getAppDir('voting'), 'FreeBSD'), 'bvrs.sh')
+        filesList.append(buildDirPathTuple('bvrs.sh'))
+    else:
+        logAndExit (f"Installing bvrs is not supported on <{getSetting('osImage')}>",
+                    exitCode=EXIT.Dev_Bug)
 
     # Need kfcgi, webserver's nginx.conf, bvrs app
     # We should probably just generate the initial database script here

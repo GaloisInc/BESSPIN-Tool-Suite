@@ -10,7 +10,7 @@ This guide outlines how to updated an existing FETT-Target AMI for a newer relea
 
 2. Get the hash of the master's tip. Let's say "1234567xxxxxxxxxxxxx".
 
-3. Launch any instance (we often use c4.4xlarge) with the most recent `fett-target-centos-mmddyy-zzzzzzz` AMI.
+3. Launch any instance (we often use c4.xlarge) with the most recent `fett-target-centos-mmddyy-zzzzzzz` AMI.
 
 4. Figure out your SSH keys situation to be able to `git pull`. Either by creating a new key and adding it to your github account, or by forwarding your keys from somewhere.
 
@@ -60,7 +60,6 @@ history -c
     - Now you have all the configs in `/tmp/dumpIni`. 
     - Create one instance per config, and launch that config and ensure that it gives `Success`.
     - If something fails, then after a fix is merged to master, all steps have to be repeated.
-    - Please note ticket #516. Firesim target sometimes work on the third run (on the same instance).
 
 10. Tag master branch:
 On any machine, get the AMI ID, let's say `ami-xxxxxxxxxxxx`.
@@ -80,5 +79,31 @@ Note that `N` is the next point release.
     - Wait for the AMI to be available
     - Share it with the production account `065510690417` as you did with the Oregon AMI
 
+P.S. If you want to share it with all accounts, you can just do:
+```
+aws ec2 modify-image-attribute --image-id ami-xxxxxxxxxxxx --attribute launchPermission --operation-type add --user-ids 053515949713 065510690417 104428437022 127763453929 450440740352 494240662784 592505567353 803897408424 845509001885 910658170027 938711909478
+```
+
+For the N. Virginia one, just add the flag `--region us-east-1` after `ec2`.
+
 12. Send to FTS:
 Send both AMI IDs to Kurt Hopfer and make sure he confirms the receipt.
+
+## Additional Tasks ##
+
+### CloudWatch ####
+
+If you want to update the CloudWatch configuration, then before step 7 or 8, do the following:
+
+- Kill the current cloudWatch process:
+```
+ps -A | grep cloud
+sudo kill <PID-FROM-STEP-1>
+```
+
+- Update the `/opt/aws/amazon-cloudwatch-agent/bin/config.json` as you desire.
+
+- Relaunch:
+```
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+```

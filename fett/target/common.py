@@ -88,12 +88,35 @@ class commonTarget():
                 isPrevUserRoot = self.isCurrentUserRoot
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
                 self.runCommand ("exit",endsWith="login:")
+
                 if (isPrevUserRoot): #switch to the other user
-                    self.runCommand (self.userName,endsWith="Password:")
-                    self.runCommand (self.userPassword)
+                    loginName = self.userName
+                    loginPassword = self.userPassword
                 else: #switch to root
-                    self.runCommand ("root",endsWith="Password:")
-                    self.runCommand (self.rootPassword)
+                    loginName = 'root'
+                    loginPassword = self.rootPassword
+
+                self.runCommand (loginName,endsWith="Password:")
+                if (isEqSetting('osImage','FreeBSD')): #Work around the occasional login failures
+                    maxLoginAttempts = 3
+                    iAttempt = 0
+                    loginSuccess = False
+                    while ((not loginSuccess) and (iAttempt < maxLoginAttempts)):
+                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],timeout=120)
+                        if (retCommand[3] == 0):
+                            loginSuccess = True
+                        elif (retCommand[3] == 1): # try again
+                            printAndLog("switchUser: Failed to login. Trying again...",doPrint=False)
+                            self.runCommand (loginName,endsWith="Password:")
+                            time.sleep(3) #wait for the OS to be ready for the password (maybe this works)
+                            iAttempt += 1
+                        else:
+                            printAndLog(f"switchUser: Failed to login <iAttempt={iAttempt}>, and this part should never be executed!",doPrint=False)
+                    if (not loginSuccess):
+                        self.shutdownAndExit(f"switchUser: Failed to login ({maxLoginAttempts} times).",exitCode=EXIT.Run)
+                else:
+                    self.runCommand (loginPassword)
+
             else: #open and close sshConnections
                 self.closeSshConn()
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
@@ -273,7 +296,20 @@ class commonTarget():
             self.runCommand("echo 'ntpd_enable=\"YES\"' >> /etc/rc.conf")
             self.runCommand("echo 'ntpd_sync_on_start=\"YES\"' >> /etc/rc.conf")
             self.runCommand("service ntpd start")
-                                
+
+        # Instruct the kernel debugger to restart instead of debugging mode when the kernel panics
+        if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','aws')):
+            self.runCommand("sysctl debug.debugger_on_panic=0")
+            self.runCommand('echo "debug.debugger_on_panic=0" >> /etc/sysctl.conf')
+
+        if getSetting('osImage') in ['debian', 'FreeBSD'] and not isEqSetting('binarySource', 'SRI-Cambridge'):
+            printAndLog("start: setting motd...")
+            motdPath = '/etc/motd.template' if isEqSetting('osImage', 'FreeBSD') else '/etc/motd'
+            instanceType = f"{getSetting('binarySource')} / {getSetting('osImage')} / {getSetting('processor')}"
+            self.runCommand(f"printf '\\nInstance type: {instanceType}\\n\\n' > {motdPath}")
+            if isEqSetting('osImage', 'FreeBSD'):
+                self.runCommand("service motd restart")
+
         printAndLog (f"start: {getSetting('osImage')} booted successfully!")
         return
 
@@ -320,9 +356,10 @@ class commonTarget():
             self.runCommand(self.rootPassword, endsWith="Retype new password:")
             self.runCommand(self.rootPassword, expectedContents='password updated successfully')
         elif isEqSetting('osImage', 'FreeBSD'):
-            self.runCommand(f"passwd root",expectedContents='Changing local password for root', endsWith="New Password:")
-            self.runCommand(self.rootPassword, endsWith="Retype New Password:")
-            self.runCommand(self.rootPassword)
+            userPasswordHash = sha512_crypt(self.rootPassword)
+            command = (f"echo \'{userPasswordHash}\' | "
+                       f"pw usermod root -H 0")
+            self.runCommand(command, erroneousContents="pw:")
         else:
             self.shutdownAndExit(
                 f"<update root password> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",
@@ -598,6 +635,9 @@ class commonTarget():
 
             passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
+
+            if (not self.sshECDSAkeyWasUpdated):
+                self.clearHostKey()
             try:
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
             except Exception as exc:
@@ -948,6 +988,17 @@ class commonTarget():
         return [isSuccess, textBack, isTimeout, dumpIdx]
 
     @decorate.debugWrap
+    def clearHostKey (self):
+        ipUpdateECDSA = self.ipTarget if (not self.sshHostPort) else f"[{self.ipTarget}]:{self.sshHostPort}"
+        self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
+        try:
+            subprocess.check_call (['ssh-keygen', '-R', ipUpdateECDSA],stdout=self.fSshOut,stderr=self.fSshOut)
+        except Exception as exc:
+            warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",doPrint=False)
+        self.sshECDSAkeyWasUpdated = True
+        self.fSshOut.close()
+
+    @decorate.debugWrap
     @decorate.timeWrap
     def openSshConn (self,userName='root',endsWith=None,timeout=60):
         def returnFail (message,exc=None):
@@ -969,14 +1020,7 @@ class commonTarget():
         sshPassword = self.rootPassword  if (userName=='root') else self.userPassword
         #Need to clear the ECDSA key first in case it is not the first time
         if (not self.sshECDSAkeyWasUpdated):
-            ipUpdateECDSA = self.ipTarget if (not self.sshHostPort) else f"[{self.ipTarget}]:{self.sshHostPort}"
-            self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
-            try:
-                subprocess.check_call (['ssh-keygen', '-R', ipUpdateECDSA],stdout=self.fSshOut,stderr=self.fSshOut)
-            except Exception as exc:
-                warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",doPrint=False)
-            self.sshECDSAkeyWasUpdated = True
-            self.fSshOut.close()
+            self.clearHostKey()
 
         self.killSshConn()
         self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')

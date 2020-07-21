@@ -137,7 +137,7 @@ def endFett (xTarget):
     
     if (isEqSetting('mode','production')):
         tarballPath = tarArtifacts (logAndExit,getSetting)
-        uploadToS3(getSetting('prodS3Bucket'), logAndExit, 
+        uploadToS3(getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), logAndExit, 
                         tarballPath, 'fett-target/production/artifacts/')
         printAndLog(f"Artifacts tarball uploaded to S3.")
 
