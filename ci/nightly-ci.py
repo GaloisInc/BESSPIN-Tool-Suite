@@ -35,6 +35,9 @@ def subprocess_check_output(command):
     return out
 
 
+-[]
+
+
 def append_to_userdata(command_list):
     print(f"(Info)~ Adding to userdata.txt.")
     with open(Path().absolute() / "userdata.txt", "a") as f:
@@ -294,10 +297,10 @@ def terminate_instances(ids, name, num, status):
 
     for i in range(len(ids)):
         print(
-            f"(Result)~ { name }-{ num } [{ run_names[num - 1] }] finished with status { status }. Logs are in nightly-testing-bucket."
+            f"(Result)~ { name }-{ num } [{ run_names[num] }] finished with status { status }. Logs are in nightly-testing-bucket."
         )
         with open("results.txt", "a") as f:
-            f.write(f"{ run_names[num - 1] } ({ num }) : { status }\n")
+            f.write(f"{ run_names[num] } ({ num }) : { status }\n")
 
         subprocess_check_output(
             f"aws ec2 terminate-instances --instance-ids { ids[i] }"
@@ -414,7 +417,7 @@ def main():
     # Generate list of all launches - these are formatted as [run, index]
     to_run = []
     for run in range(1, runs + 1):
-        for x in range(1, count + 1):
+        for x in range(0, count):
             to_run.append([run, x])
 
     # Keep running batches until we have run them all
@@ -434,7 +437,7 @@ def main():
 
         for launch in run_this_iteration:
             print(
-                f"(Info)~ Launching Run { launch[0] }, Target { run_names[launch[1]-1] } ({ launch[1] })"
+                f"(Info)~ Launching Run { launch[0] }, Target { run_names[launch[1]] } ({ launch[1] })"
             )
             id = start_instance(ami, name, launch[1], branch, binaries_branch, key_path)
             ids.append(id)

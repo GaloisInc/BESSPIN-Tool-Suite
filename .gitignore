@@ -5,3 +5,5 @@ myConfig.ini
 core
 *.mypy_cache/
 .DS_STORE
+ci/userdata.txt
+ci/results.txt
