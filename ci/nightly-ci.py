@@ -370,6 +370,12 @@ def config_parser():
         help="How many complete runs of all targets to make. Default 1.",
         default=1,
     )
+    parser.add_argument(
+        "-i",
+        "--instance-index",
+        type=int,
+        help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this instance",
+    )
     return parser.parse_args()
 
 
@@ -408,6 +414,7 @@ def main():
     binaries_branch = args.binaries_branch
     key_path = args.key_path
     runs = args.runs
+    instance_index = args.instance_index
 
     # Check for and remove results file
     if os.path.isfile("results.txt"):
@@ -416,8 +423,11 @@ def main():
     # Generate list of all launches - these are formatted as [run, index]
     to_run = []
     for run in range(1, runs + 1):
-        for x in range(0, count):
-            to_run.append([run, x])
+        if instance_index:
+            to_run.append([run, instance_index])
+        else:
+            for x in range(0, count):
+                to_run.append([run, x])
 
     # Keep running batches until we have run them all
     while len(to_run) > 0:
@@ -441,6 +451,11 @@ def main():
             id = start_instance(ami, name, launch[1], branch, binaries_branch, key_path)
             ids.append(id)
             print(f"(Info)~ Launched Instance 🚀.")
+
+            if instance_index:
+                # Offset boots of the same instance to try to stagger SQS results
+                #   to keep the messages from overloading.
+                time.sleep(30)
 
         print("(Info)~ All Instances Launched! Waiting on SQS.")
         wait_on_ids_sqs(ids, name)
