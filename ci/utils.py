@@ -192,10 +192,7 @@ def prepareArtifact(
             )
         else:  # AWS Nightly
             awsModule.uploadToS3(
-                ciAWSbucketNightly,
-                exitFettCi,
-                tarFileName,
-                f"fett-target/ci/artifacts/{jobID}/",
+                ciAWSbucketNightly, exitFettCi, tarFileName, f"nightly-ci/{jobID}/",
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 

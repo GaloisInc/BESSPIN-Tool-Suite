@@ -171,6 +171,8 @@ def handle_init():
 
 def start_instance(ami, name, i, branch, binaries_branch, key_path):
 
+    global run_names
+
     # Collect AWS Credentials from ~/.aws/credentials
     with open(os.path.expanduser("~/.aws/credentials"), "r") as f:
         lines = f.readlines()
@@ -225,7 +227,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
                 git-lfs pull && 
                 cd .. "'""",
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { i } -i { i }"' """,
+                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ branch }-{ binaries_branch }-{ run_names[i] } -i { i }"' """,
         ]
 
         append_to_userdata(userdata_common)
@@ -247,7 +249,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
                 git-lfs pull && 
                 cd .. "'""",
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { i } -i { i }"' """,
+                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ branch }-{ run_names[i] } -i { i }"' """,
         ]
 
         append_to_userdata(userdata_common)
@@ -258,7 +260,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
     else:
         lines = [
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-            nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { i } -i { i }"' """
+            nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ run_names[i] } -i { i }"' """
         ]
 
         append_to_userdata(userdata_common)
