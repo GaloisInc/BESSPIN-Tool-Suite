@@ -239,6 +239,11 @@ class commonTarget():
         else:
             self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
 
+        if (isEqSetting('mode', 'evaluateSecurityTests') and
+            isEqSetting('osImage', 'FreeRTOS')):
+            printAndLog (f"start: {getSetting('osImage')} booted successfully!")
+            return
+
         #up the ethernet adaptor and get the ip address
         self.activateEthernet()
                                   

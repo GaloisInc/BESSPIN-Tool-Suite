@@ -11,7 +11,7 @@ from fett.target import qemu
 from fett.target import aws
 from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
-from fett.cwesEvaluation.build import buildCwesEvaluation
+from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
 from fett.cwesEvaluation.common import runTests
 import sys, os
 from importlib.machinery import SourceFileLoader
@@ -83,7 +83,9 @@ def prepareEnv ():
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
-    prepareOsImage ()
+    if not (isEqSetting('mode', 'evaluateSecurityTests') and
+            isEqSetting('osImage', 'FreeRTOS')):
+        prepareOsImage ()
 
     if (isEqSetting('target','fpga')):
         fpga.programBitfile()
@@ -117,6 +119,10 @@ def launchFett ():
         xTarget = getClassType()()
     except Exception as exc:
         logAndExit (f"launchFett: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
+    if (isEqSetting('mode', 'evaluateSecurityTests') and
+        isEqSetting('osImage', 'FreeRTOS')):
+        # Build the image for the upcoming test
+        buildFreeRTOSTest(*getSetting("currentTest"))
     xTarget.start()
     if (isEnabled('isUnix')):
         if (getSetting('osImage') in ['debian','FreeBSD']):

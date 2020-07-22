@@ -15,6 +15,10 @@ def buildCwesEvaluation():
     # TODO: Generalize
     # TODO: Add support for custom build options and custom makefiles
 
+    # Create build directory
+    buildDir = os.path.join(getSetting('workDir'), 'build')
+    mkdir(buildDir, addToSettings="buildDir")
+
     if isEqSetting('osImage', 'FreeRTOS'):
         # create the osImages directory
         osImagesDir = os.path.join(getSetting('workDir'),'osImages')
@@ -24,10 +28,11 @@ def buildCwesEvaluation():
         osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
         setSetting('osImageElf',osImageElf)
         setSetting('osImageExtraElf', None)
+        setSetting('osImageAsm',
+                   os.path.join(getSetting('osImagesDir'),
+                                f"{getSetting('osImage')}.asm"))
+        setSetting('sendTarballToTarget', False)
 
-    # Create build directory
-    buildDir = os.path.join(getSetting('workDir'), 'build')
-    mkdir(buildDir, addToSettings="buildDir")
 
     # Copy apps over
     for vulClass in getSetting('vulClasses'):
@@ -78,19 +83,8 @@ def buildCwesEvaluation():
                        f"<{getSetting('osImage')}>.",
                        exitCode=EXIT.Implementation)
 
-
     if getSetting('osImage') in ['debian', 'FreeBSD']:
         buildTarball()
-    elif isEqSetting('osImage', 'FreeRTOS'):
-        # define some paths
-        setSetting('osImageAsm',
-                   os.path.join(getSetting('osImagesDir'),
-                                f"{getSetting('osImage')}.asm"))
-
-    # TODO: Remove me
-    #buildFreeRTOSTest("test_188.c", "resourceManagement", 1)
-
-    # TODO: Need to build enabledCwesEvaluations for FreeRTOS
 
 
 @decorate.debugWrap
@@ -155,6 +149,13 @@ def buildFreeRTOSTest(test, vulClass, part):
     # TODO: Can I refactor this to reuse code in target.build.prepareFreeRTOS?
 
     fett.target.build.freeRTOSBuildChecks()
+
+    # Remove all files, but not folders, from build directory
+    for f in os.listdir(getSetting('buildDir')):
+        try:
+            os.remove(os.path.join(getSetting('buildDir'), f))
+        except IsADirectoryError:
+            pass
 
     #copy the C files, .mk files, and any directory
     copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),

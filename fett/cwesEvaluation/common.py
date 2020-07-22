@@ -43,27 +43,52 @@ def score(testLogDir, vulClass):
 
     scoreTests.scoreTests(module, scorer, csvPath, testLogDir)
 
-
 @decorate.debugWrap
 @decorate.timeWrap
 def runTests(target, sendFiles=False, timeout=30): #executes the app
-    if not sendFiles:
-        target.shutdownAndExit("<runApp>: sendFiles must be True for CWEs "
-                             "evaluation",
-                             exitCode = EXIT.Configuration)
-    target.sendTar(timeout=timeout)
-
     # Create directory for logs
     baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
-    mkdir(baseLogDir)
+    mkdir(baseLogDir,
+          addToSettings="cwesEvaluationLogs",
+          exitIfExists=(not isEqSetting('osImage', 'FreeRTOS')))
 
-    # Batch tests by vulnerability class
-    for vulClass, tests in getSetting("enabledCwesEvaluations").items():
-        # TODO: Correct endsWith
+    if isEqSetting('osImage', 'FreeRTOS'):
+        # Exctract test output
+        # TODO: Play around with the timeout.  Some tests timeout at 15
+        # seconds, and even 60 seconds.  Set low for now to enable faster
+        # debugging.
+        output = target.expectFromTarget(">>>End of Fett<<<",
+                                         None,
+                                         shutdownOnError=False,
+                                         timeout=15)
+
+        test, vulClass, _ = getSetting("currentTest")
+        if output[1]:
+            warnAndLog(f"{test} timed out.  Skipping.")
+            return
+
+        # Save in correct log file
         logDir = os.path.join(baseLogDir, vulClass)
-        mkdir(logDir)
-        for test in tests:
-            executeTest(target, vulClass, test, logDir)
+        mkdir(logDir, exitIfExists=False)
+        testName = test.split('.')[0]
+        with open(os.path.join(logDir, f"{testName}.log"), 'a') as f:
+            f.write(output[0])
 
-        score(logDir, vulClass)
+    elif getSetting('osImage') in ['debian', 'FreeBSD']:
+        if not sendFiles:
+            target.shutdownAndExit("<runApp>: sendFiles must be True for CWEs "
+                                   "evaluation on unix hosts",
+                                   exitCode = EXIT.Configuration)
+        target.sendTar(timeout=timeout)
 
+        # Batch tests by vulnerability class
+        for vulClass, tests in getSetting("enabledCwesEvaluations").items():
+            logDir = os.path.join(baseLogDir, vulClass)
+            mkdir(logDir)
+            for test in tests:
+                executeTest(target, vulClass, test, logDir)
+
+            score(logDir, vulClass)
+    else:
+        logAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
+                   exitCode=EXIT.Implementation)
