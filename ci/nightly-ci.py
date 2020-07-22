@@ -20,6 +20,7 @@ moduleSpec.loader.exec_module(awsModule)
 #  - General neatness
 #  - Robustness to exceeding vCPU capacity
 #  - Ability to run multiple identical tests at the same time and get SQS results.
+#  - Remove Userdata better.
 
 
 def print_and_exit(message=""):
