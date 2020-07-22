@@ -170,6 +170,8 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
 
     global run_names
 
+    print(f"(Info)~ Started start_instance with i={ i }")
+
     # Collect AWS Credentials from ~/.aws/credentials
     with open(os.path.expanduser("~/.aws/credentials"), "r") as f:
         lines = f.readlines()
@@ -213,6 +215,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
         userdata_specific = [
             f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/aws-ci-gh && 
                 cd /home/centos/SSITH-FETT-Target/ && 
+                git fetch &&
                 cd SSITH-FETT-Binaries && 
                 git stash && 
                 cd .. && 
@@ -221,10 +224,11 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
                 git submodule update && 
                 cd SSITH-FETT-Binaries && 
                 git checkout { binaries_branch } &&
+                git pull &&
                 git-lfs pull && 
                 cd .. "'""",
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ branch }-{ binaries_branch }-{ run_names[i] } -i { i }"' """,
+                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i } -i { i }"' """,
         ]
 
         append_to_userdata(userdata_common)
@@ -266,6 +270,9 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
     print(
         f"(Info)~ Updated userdata.txt for { name }-{ i }.\n(Info)~ Launching instance and running tests...\n(Info)~ This process may take a few minutes."
     )
+
+    with open("userdata.txt", "r") as f:
+        print(f.readlines())
 
     # Start up an instance
     raw_payload = subprocess_check_output(
@@ -371,10 +378,10 @@ def config_parser():
         default=1,
     )
     parser.add_argument(
-        "-i",
+        "-idx",
         "--instance-index",
         type=int,
-        help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this instance",
+        help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this instance index only.",
     )
     return parser.parse_args()
 
