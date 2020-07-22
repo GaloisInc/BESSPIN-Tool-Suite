@@ -10,7 +10,7 @@ from fett.base.utils.misc import *
 
 def renameMain (testsDir,cTest):
     lines = ftReadLines(f"{testsDir}/{cTest}")
-    (declIndex, declMatch) = matchExprInLines(r'^\s*(?P<retType>void|int)\s+main\s*(?P<args>\([^)]*\))\s*(?P<brace>\{?)\s*', lines, returnIndex=True)
+    (declMatch, declIndex) = matchExprInLines(r'^\s*(?P<retType>void|int)\s+main\s*(?P<args>\([^)]*\))\s*(?P<brace>\{?)\s*', lines, returnIndex=True)
     if (not declIndex):
         logAndExit("<templateFreeRTOS>: Failed to find the declaration in <{0}/{1}>.".format(testsDir,cTest))
     declParts = [declMatch.group('retType'),declMatch.group('args'),declMatch.group('brace')]
