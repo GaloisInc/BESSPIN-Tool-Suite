@@ -18,6 +18,8 @@ moduleSpec.loader.exec_module(awsModule)
 ## TODO
 #  - Add `source ~/.zshrc` robustness
 #  - General neatness
+#  - Robustness to exceeding vCPU capacity
+#  - Ability to run multiple identical tests at the same time and get SQS results.
 
 
 def print_and_exit(message=""):
@@ -36,7 +38,6 @@ def subprocess_check_output(command):
 
 
 def append_to_userdata(command_list):
-    print(f"(Info)~ Adding to userdata.txt.")
     with open(Path().absolute() / "userdata.txt", "a") as f:
         f.write("\n".join(command_list))
         f.write("\n")
@@ -46,11 +47,10 @@ def collect_run_names():
     global run_names
 
     subprocess_call("./fett-ci.py -X -ep AWS runDevPR -job 420")
-    print(os.listdir("/tmp/dumpIni/"))
     run_names = [run_name[:-4] for run_name in os.listdir("/tmp/dumpIni/")]
     run_names.sort()
 
-    print(run_names)
+    print(f"(Info)~ Collected run names { run_names }")
 
 
 def wait_on_ids_sqs(ids, name):
@@ -68,9 +68,9 @@ def wait_on_ids_sqs(ids, name):
                 QueueUrl=configs.ciAWSqueueNightly,
                 ReceiptHandle=message["ReceiptHandle"],
             )
-            logging.debug(f"pollPortalQueueIndefinitely: Message deleted!")
+            print("(Info)~ Succeeded in removing message from SQS queue.")
         except Exception as exc:
-            print("Failed to delete the message from the SQS queue.")
+            print("(Warning)~ Failed to delete the message from the SQS queue.")
 
     # Keep seeking messages until we have heard from all ids
     while len(ids) > 0:
@@ -82,18 +82,15 @@ def wait_on_ids_sqs(ids, name):
                 WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
             )
         except Exception as exc:
-            print(f"Failed to receive a response from the SQS queue.")
+            print_and_exit(f"(Error)~ Failed to receive a response from the SQS queue.")
 
         if "Messages" in response:
-            print(response)
             for message in response["Messages"]:
-
-                # print(f"()~ Caught SQS: { message}")
                 body = json.loads(message["Body"])
                 instance_id = body["instance"]["id"]
 
                 print(
-                    f'(Info)~ SQS was about { body["instance"]["id"] }, which had status { body["job"]["status"] }. Comparing against { ids }'
+                    f'(Info)~ { body["instance"]["id"] }, exited with status { body["job"]["status"] }. Comparing against { ids }'
                 )
 
                 # If we have a message about an ID we have to terminate, terminate it, and remove the message.
@@ -240,6 +237,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
         userdata_specific = [
             f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/aws-ci-gh && 
                 cd /home/centos/SSITH-FETT-Target/ && 
+                git fetch &&
                 cd SSITH-FETT-Binaries && 
                 git stash && 
                 cd .. && 
@@ -270,9 +268,6 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
     print(
         f"(Info)~ Updated userdata.txt for { name }-{ i }.\n(Info)~ Launching instance and running tests...\n(Info)~ This process may take a few minutes."
     )
-
-    with open("userdata.txt", "r") as f:
-        print(f.readlines())
 
     # Start up an instance
     raw_payload = subprocess_check_output(
@@ -472,6 +467,10 @@ def main():
         print("(Info)~ All Instances Launched! Waiting on SQS.")
         wait_on_ids_sqs(ids, name)
         print(f"(Info)~ Got SQS for all { len(run_this_iteration) } Instances")
+
+        # Wait for the instances to terminate before running the next run
+        if len(to_run) != 0:
+            time.sleep(120)
 
     print(f"(Info)~ All { len(to_run) } Instances Completed. Exiting.")
     exit(0)
