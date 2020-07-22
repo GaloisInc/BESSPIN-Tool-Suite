@@ -436,6 +436,11 @@ def main():
             for x in range(0, count):
                 to_run.append([run, x])
 
+    # Fix to make sure that only one of the same instances is run at once
+    #   the idx flag is passed
+    if instance_index:
+        cap = 1
+
     # Keep running batches until we have run them all
     while len(to_run) > 0:
 
