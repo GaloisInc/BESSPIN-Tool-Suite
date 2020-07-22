@@ -1,7 +1,7 @@
-from .helpers import *
+from fett.cwesEvaluation.tests.resourceManagement.cweScores.helpers import *
 
-def test_763 (SCORES, customScorer, logTest,testsDir):
-    testNum = 763
+def test_690 (SCORES, customScorer, logTest,testsDir):
+    testNum = 690
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
     testLines = readLogLines(logTest,testsDir)
@@ -13,18 +13,16 @@ def test_763 (SCORES, customScorer, logTest,testsDir):
         partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        part01 = partitionLines(testLines,"<wrong_shift_address_assignment>", "<wrong_address_assignment>",testNum=testNum)
-        part02 = partitionLines(testLines,"<wrong_address_assignment>", "-"*50,testNum=testNum)
+        part01 = partitionLines(testLines,"<test regular>", "<test malicious>",testNum=testNum)
+        part02 = partitionLines(testLines,"<test malicious>", "-"*50,testNum=testNum)
 
         if (doesKeywordExist(testLines,"<INVALID>")):
             partsScores[1] = SCORES.CALL_ERR
-        elif (doesKeywordExist(part01,"<ERROR-SIGABRT>")):
+        elif (not doesKeywordExist(part01,"<REGULAR_PASSED>")):
+            partsScores[1] = SCORES.INVALID
+        elif (doesKeywordExist(part02,"<ERROR-SEGFAULT>")):
             partsScores[1] = SCORES.V_HIGH
-        elif (not doesKeywordExist(part01,"<RELEASE_OF_INVALID_POINTER_ERROR>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02,"<ERROR-SIGABRT>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (not doesKeywordExist(part02,"<RELEASE_OF_INVALID_POINTER_ERROR>")):
+        elif (doesKeywordExist(part02,"<DEREFERENCE_VIOLATION_PASSED_SUCCESSFULLY>")):
             partsScores[1] = SCORES.V_HIGH
         else:
             partsScores[1] = SCORES.FAIL
@@ -35,18 +33,18 @@ def test_763 (SCORES, customScorer, logTest,testsDir):
         partsLines = regPartitionTestFreeRTOS(testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        if (doesKeywordExist(partsLines[1],"<RELEASE_OF_INVALID_POINTER_PASSED_SUCCESSFULLY>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif(doesKeywordExist(partsLines[1],"<GDB-SIGTRAP>")):
-            partsScores[1] = SCORES.V_HIGH
+        if (doesKeywordExist(partsLines[1],"<REGULAR_PASSED>")):
+            partsScores[1] = SCORES.NONE
         else:
-            partsScores[1] = SCORES.HIGH
-        if (doesKeywordExist(partsLines[2],"<RELEASE_OF_INVALID_POINTER_PASSED_SUCCESSFULLY>")):
+            partsScores[1] = SCORES.V_HIGH
+        if (not doesKeywordExist(partsLines[2],"<DEREFERENCE_VIOLATION_PASSED_SUCCESSFULLY>")):
             partsScores[2] = SCORES.V_HIGH
-        elif(doesKeywordExist(partsLines[2],"<GDB-SIGTRAP>")):
+        elif(doesKeywordExist(partsLines[2],"<GDB-SIGINT>")):
+            partsScores[2] = SCORES.V_HIGH
+        elif(doesKeywordExist(partsLines[2],"<DEREFERENCE_VIOLATION_PASSED_SUCCESSFULLY>")):
             partsScores[2] = SCORES.V_HIGH
         else:
-            partsScores[2] = SCORES.HIGH
+            partsScores[2] = SCORES.NONE
 
     else:
         print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")

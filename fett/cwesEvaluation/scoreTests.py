@@ -68,23 +68,8 @@ class SCORES (enum.Enum):
         avgValue = sumScores // len(scoreList)
         return SCORES(avgValue)
 
-class redirectPrintToFile:
-    def __init__(self,reportFile=None):
-        self.reportFile = reportFile
-
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        if (self.reportFile is None): #just disable
-            sys.stdout = open(os.devnull, 'w')
-        else:
-            sys.stdout = self.reportFile
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if (self.reportFile is None):
-            sys.stdout.close()
-        sys.stdout = self._original_stdout
-
-
+@decorate.debugWrap
+@decorate.timeWrap
 def tryScoreTest(scorerModule, customScorer, testName, logTest, testsDir):
     try:
         return getattr(getattr(scorerModule,testName),testName)(SCORES, customScorer, logTest, testsDir)
@@ -110,18 +95,12 @@ def scoreLogs(scorerModule, customScorer, logs, testsDir):
     return ret
 
 # TODO: Renmae testsDir to something more like logDir
-def main (scorerModule, customScorer, csvPath, testsDir):
+def scoreTests(scorerModule, customScorer, csvPath, testsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
-    # TODO: Is there a better way to set this report file?
-    global reportFile
     try:
-        reportFile = open(os.path.join(getSetting("workDir"),
-                                       "scoreReport.log"),
-                          'a')
+        setSetting("reportFile", open(reportFileName, 'a'))
     except Exception as exc:
-        # TODO: I don't think filename is defined if we don't go through
-        # __main__...  Check this file for globals and fix them
-        logAndExit("<scoreTests.main>: Failed to open the report file "
+        logAndExit("<scoreTests>: Failed to open the report file "
                    f"<{reportFileName}> to append.",
                    exitCode=EXIT.Files_and_paths,
                    exc=exc)
@@ -140,13 +119,13 @@ def main (scorerModule, customScorer, csvPath, testsDir):
                 fcsv.write(f"{row[0].split('-')[1]},{row[1]},{row[1].value},{row[2]}\n")
             fcsv.close()
         except Exception as exc:
-            logAndExit(f"<scoreTests.main> Failed to generate the csv output "
+            logAndExit(f"<scoreTests> Failed to generate the csv output "
                        f"file <{csvPath}>.",
                        exc=exc,
                        exitCode=EXIT.Files_and_paths)
         # Build table for scoring
         for row in tabulate(rows):
-            printAndLog(row, tee=reportFile)
+            printAndLog(row, tee=getSetting("reportFile"))
 
 
 def tabulate(elements):
@@ -223,7 +202,7 @@ class customScorerObj:
         #checking custom function -- it overrides the other options.
         if (self.configDict['useCustomFunction'] == '1'): #use custom function
             try:
-                with redirectPrintToFile(reportFile): #disable print
+                with redirectPrintToFile(getSetting("reportFile")): #disable print
                     customModule = SourceFileLoader("customScorerModule", self.configDict['pathToCustomFunction']).load_module()
             except Exception as exc:
                 warnAndLog(f"<customScoreObj>: Failed to load custom scorer "
@@ -231,7 +210,7 @@ class customScorerObj:
                            exc=exc)
                 return SCORES.NINF
             try:
-                with redirectPrintToFile(reportFile): #disable print
+                with redirectPrintToFile(getSetting("reportFile")): #disable print
                     retScore = customModule.main(lines,SCORES)
             except Exception as exc:
                 warnAndLog(f"<customScoreObj>: Failed to score using main in "
@@ -278,35 +257,3 @@ class customScorerObj:
             return customScore 
         else:
             return defaultScore
-        
-
-# TODO: Remove this main function
-# scoreTests.py module_name module_path class_name tests_dir
-if __name__ == '__main__':
-    fileName = os.path.basename(__file__)
-    nArgs = 6 #0:thisFile 1:ScorerModulePath 2:testsDir 3:reportFile 4:useCustomScoring 5:customScoringConfigFile
-    if (len(sys.argv) != nArgs):
-        print(f"Error in {fileName}: Wrong number of arguments [!= {nArgs}] passed to the scorer.")
-        exit (1)
-    modulePath = sys.argv[1]
-    testsDir   = sys.argv[2]
-
-    try:
-        reportFile = open(sys.argv[3], "a")
-    except:
-        print(f"Error in {fileName}: Failed to open the report file <{sys.argv[3]}> to append.")
-        exit (1)
-
-    try:
-        scorerModule = SourceFileLoader("scorer", modulePath).load_module()
-    except:
-        report(f"Error in {fileName}: Failed to load the scorer module <{modulePath}>.")
-        exit (1)
-
-    customScorer = customScorerObj(sys.argv[4]=='1',sys.argv[5])
-
-    csvPath = os.path.dirname(sys.argv[3]) + "/scores.csv"
-
-    main (scorerModule, customScorer, csvPath)
-    reportFile.close()
-

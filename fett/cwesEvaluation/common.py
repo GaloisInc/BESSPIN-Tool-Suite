@@ -1,23 +1,23 @@
 from fett.base.utils.misc import *
 import fett.cwesEvaluation.scoreTests as scoreTests
 
-import fett.cwesEvaluation.tests.resourceManagement.scripts.vulClassTester
-import fett.cwesEvaluation.tests.resourceManagement.scripts.cweScores
-import fett.cwesEvaluation.tests.numericErrors.scripts.vulClassTester
-import fett.cwesEvaluation.tests.numericErrors.scripts.cweScores
+import fett.cwesEvaluation.tests.resourceManagement.vulClassTester
+import fett.cwesEvaluation.tests.resourceManagement.cweScores
+import fett.cwesEvaluation.tests.numericErrors.vulClassTester
+import fett.cwesEvaluation.tests.numericErrors.cweScores
 
 cweTests = {
     "resourceManagement" :
-        fett.cwesEvaluation.tests.resourceManagement.scripts.vulClassTester.vulClassTester,
+        fett.cwesEvaluation.tests.resourceManagement.vulClassTester.vulClassTester,
     "numericErrors" :
-        fett.cwesEvaluation.tests.numericErrors.scripts.vulClassTester.vulClassTester
+        fett.cwesEvaluation.tests.numericErrors.vulClassTester.vulClassTester
 }
 
 cweScores = {
     "resourceManagement" :
-        fett.cwesEvaluation.tests.resourceManagement.scripts.cweScores,
+        fett.cwesEvaluation.tests.resourceManagement.cweScores,
     "numericErrors" :
-        fett.cwesEvaluation.tests.numericErrors.scripts.cweScores
+        fett.cwesEvaluation.tests.numericErrors.cweScores
 }
 
 @decorate.debugWrap
@@ -41,7 +41,7 @@ def score(testLogDir, vulClass):
     # TODO: Make this configurable?
     csvPath = os.path.join(testLogDir, "scores.csv")
 
-    scoreTests.main(module, scorer, csvPath, testLogDir)
+    scoreTests.scoreTests(module, scorer, csvPath, testLogDir)
 
 
 @decorate.debugWrap

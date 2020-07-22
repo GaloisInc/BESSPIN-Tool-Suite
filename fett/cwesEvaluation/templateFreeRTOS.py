@@ -9,23 +9,11 @@ import copy
 from fett.base.utils.misc import *
 
 def renameMain (testsDir,cTest):
-    try:
-        ftest = open("{0}/{1}".format(testsDir,cTest), "r")
-        lines = ftest.read().splitlines()
-        ftest.close()
-    except Exception as exc:
-        logAndExit("<templateFreeRTOS>: Failed to open <{0}/{1}> for reading.".format(testsDir,cTest), exc=exc)
-    declIndex = False
-    declComponents = []
-    for index,line in enumerate(lines):
-        declMatch = re.match(r'^\s*(?P<retType>void|int)\s+main\s*(?P<args>\([^)]*\))\s*(?P<brace>\{?)\s*',line)
-        #sed -E -i "s/^\s*(void|int)\s+(\w+)\s*(\([^)]*\))\s*(\{?)\s*/\1 \2_$testName \3 \4/" $cTest
-        if (declMatch is not None):
-            declIndex = index
-            declParts = [declMatch.group('retType'),declMatch.group('args'),declMatch.group('brace')]
-            break
+    lines = ftReadLines(f"{testsDir}/{cTest}")
+    (declIndex, declMatch) = matchExprInLines(r'^\s*(?P<retType>void|int)\s+main\s*(?P<args>\([^)]*\))\s*(?P<brace>\{?)\s*', lines, returnIndex=True)
     if (not declIndex):
         logAndExit("<templateFreeRTOS>: Failed to find the declaration in <{0}/{1}>.".format(testsDir,cTest))
+    declParts = [declMatch.group('retType'),declMatch.group('args'),declMatch.group('brace')]
     #1. change the file
     testName = cTest.split('.')[0]
     lines[declIndex] = "{0} main_{1} {2} {3}".format(declParts[0],testName,*declParts[1:])
@@ -39,7 +27,7 @@ def renameMain (testsDir,cTest):
     return "{0} main_{1} {2}".format(declParts[0],testName,declParts[1])
 
 
-def main (testsDir):
+def templateFreeRTOS(testsDir):
     #For each file: rename main + Generating the main_testgen wrapper
     for srcTest in sorted(os.listdir(testsDir)):
         if (srcTest.endswith(".c")):

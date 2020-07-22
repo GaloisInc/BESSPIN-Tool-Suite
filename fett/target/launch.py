@@ -12,8 +12,7 @@ from fett.target import aws
 from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
 from fett.cwesEvaluation.build import buildCwesEvaluation
-import fett.cwesEvaluation.target.aws as cwesEvaluationAws
-from fett.cwesEvaluation.target.qemu import qemuTarget as cwesEvaluationQemuTarget
+from fett.cwesEvaluation.common import runTests
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -124,7 +123,10 @@ def launchFett ():
             xTarget.changeRootPassword()
         xTarget.createUser()
     if (isEnabled('runApp')):
-        xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
+        if isEqSetting('mode', 'evaluateSecurityTests'):
+            runTests(xTarget, isEnabled('sendTarballToTarget'), 30)
+        else:
+            xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
     if (isEnabled('isUnix') and isEnabled("useCustomCredentials")):
         xTarget.changeUserPassword()
     if isEnabled('isUnix') and isEnabled("rootUserAccess"):
@@ -153,19 +155,10 @@ def endFett (xTarget):
 @decorate.debugWrap
 def getClassType():
     if (isEqSetting('target','aws')):
-        if isEqSetting('mode', 'evaluateSecurityTests'):
-            return getattr(cwesEvaluationAws, f"{getSetting('pvAWS')}Target")
-        else:
-            return getattr(aws,f"{getSetting('pvAWS')}Target")
+        return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
-        if isEqSetting('mode', 'evaluateSecurityTests'):
-            return cwesEvaluationQemuTarget
-        else:
-            return qemu.qemuTarget
+        return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):
-        if isEqSetting('mode', 'evaluateSecurityTests'):
-            logAndExit("<evaluateSecurityTests> is not implemented for <fpga>",
-                       exitCode=EXIT.Implementation)
         gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
         if (gfeTestingScripts not in os.environ):
             logAndExit (f"<${gfeTestingScripts}> not found in the nix path.",exitCode=EXIT.Environment)

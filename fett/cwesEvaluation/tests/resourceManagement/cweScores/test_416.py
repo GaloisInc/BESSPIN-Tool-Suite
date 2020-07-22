@@ -1,7 +1,7 @@
-from .helpers import *
+from fett.cwesEvaluation.tests.resourceManagement.cweScores.helpers import *
 
-def test_415 (SCORES, customScorer, logTest, testsDir):
-    testNum = 415
+def test_416 (SCORES, customScorer, logTest, testsDir):
+    testNum = 416
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
     testLines = readLogLines(logTest, testsDir)
@@ -12,18 +12,20 @@ def test_415 (SCORES, customScorer, logTest, testsDir):
         nParts = 1
         partsLines = regPartitionTest(testLines, nParts, testNum=testNum)
         partsScores = {}
-        part01 = partitionLines(testLines,"<double_free>", "<double_free_str_int>", testNum=testNum)
-        part02 = partitionLines(testLines,"<double_free_str_int>", "-"*50, testNum=testNum)
+        part01 = partitionLines(testLines,"<weakness_after_free>", "<weakness_after_double_free>", testNum=testNum)
+        part02 = partitionLines(testLines,"<weakness_after_double_free>", "-"*50, testNum=testNum)
 
         if (doesKeywordExist(testLines, "INVALID")):
             partsScores[1] = SCORES.CALL_ERR
         elif (doesKeywordExist(part01, "<ERROR-SIGABRT>")):
             partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part01, "<DOUBLE_FREE_OF_STACK>")):
+        elif (doesKeywordExist(part01, "<POINTER_USED_IMPROPERLY>")):
             partsScores[1] = SCORES.V_HIGH
         elif (doesKeywordExist(part02, "<ERROR-SIGABRT>")):
             partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02, "<DOUBLE_FREE_OF_STR_INT_ON_STACK>")):
+        elif (doesKeywordExist(part02, "<POINTER_USED_IMPROPERLY>")):
+            partsScores[1] = SCORES.V_HIGH
+        elif (doesKeywordExist(part02, "<DOUBLE_FREE_OF_STACK>")):
             partsScores[1] = SCORES.V_HIGH
         else:
             partsScores[1] = SCORES.FAIL
@@ -35,7 +37,7 @@ def test_415 (SCORES, customScorer, logTest, testsDir):
 
         if (doesKeywordExist(partsLines[1], "<ERROR-SIGABRT>")):
             partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(partsLines[1], "<DOUBLE_FREE_OF_STACK>")):
+        elif (doesKeywordExist(partsLines[1], "<POINTER_USED_IMPROPERLY>")):
             partsScores[1] = SCORES.V_HIGH
         elif (doesKeywordExist(partsLines[1], "<GDB-SIGTRAP>")):
             partsScores[1] = SCORES.V_HIGH
@@ -45,7 +47,9 @@ def test_415 (SCORES, customScorer, logTest, testsDir):
             partsScores[2] = SCORES.V_HIGH
         elif (doesKeywordExist(partsLines[2], "<GDB-SIGTRAP>")):
             partsScores[2] = SCORES.V_HIGH
-        elif (doesKeywordExist(partsLines[2], "<DOUBLE_FREE_OF_STR_INT_ON_STACK>")):
+        elif (doesKeywordExist(partsLines[2], "<POINTER_USED_IMPROPERLY>")):
+            partsScores[2] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[2], "<DOUBLE_FREE_OF_STACK>")):
             partsScores[2] = SCORES.V_HIGH
         else:
             partsScores[2] = SCORES.FAIL

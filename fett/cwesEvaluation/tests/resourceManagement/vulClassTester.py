@@ -1,9 +1,8 @@
 #! /usr/bin/env python3
 """  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 This file has the custom resourceManagement methods to run tests on qemu|fpga.
-Note that the file will be loaded as a sourceFileModule, so using '.' is mandatory
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
-from . import cweTests
+from fett.cwesEvaluation.tests.resourceManagement import cweTests
 
 from fett.cwesEvaluation.compat import testgenTargetCompatabilityLayer
 

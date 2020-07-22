@@ -1,4 +1,4 @@
-from .helpers import *
+from fett.cwesEvaluation.tests.resourceManagement.cweScores.helpers import *
 
 def test_771 (SCORES, customScorer, logTest,testsDir):
     testNum = 771

@@ -1,11 +1,11 @@
-from .helpers import *
+from fett.cwesEvaluation.tests.resourceManagement.cweScores.helpers import *
+import time
 
-def test_588 (SCORES, customScorer, logTest,testsDir):
-    testNum = 588
+def test_476 (SCORES, customScorer, logTest,testsDir):
+    testNum = 476
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
     testLines = readLogLines(logTest,testsDir)
-
     osImage = getOsImage(testLines,testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
@@ -13,11 +13,14 @@ def test_588 (SCORES, customScorer, logTest,testsDir):
         partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        partMalRead = partitionLines(testLines,"<struct_pointer_cast_of_scalar_pointer>", "<struct_pointer_cast_of_void_pointer>",testNum=testNum)
-        partMalWrite = partitionLines(testLines,"<struct_pointer_cast_of_void_pointer>", "-"*50,testNum=testNum)
+        partReg = partitionLines(testLines,"<Regular test>", "<Malicious test read>",testNum=testNum)
+        partMalRead = partitionLines(testLines,"<Malicious test read>", "<Malicious test write>",testNum=testNum)
+        partMalWrite = partitionLines(testLines,"<Malicious test write>", "-"*50,testNum=testNum)
 
         if (doesKeywordExist(testLines,"<INVALID>")):
             partsScores[1] = SCORES.CALL_ERR
+        elif (not doesKeywordExist(partReg,"<REGULAR>")):
+             partsScores[1] = SCORES.V_HIGH
         elif (doesKeywordExist(partMalRead,"<ERROR-SEGFAULT>")):
             partsScores[1] = SCORES.V_HIGH
         elif (not doesKeywordExist(partMalRead,"<DEREFERENCE-VIOLATION>")):
@@ -34,15 +37,14 @@ def test_588 (SCORES, customScorer, logTest,testsDir):
         partsLines = regPartitionTestFreeRTOS(testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        if (doesKeywordExist(partsLines[1],"<CAST_PASSED_SUCCESSFULLY>")):
+        if (doesKeywordExist(partsLines[1],"<DEREFERENCE-VIOLATION_PASSED_SUCCESSFULLY>")):
             partsScores[1] = SCORES.V_HIGH
         else:
-            partsScores[1] = SCORES.V_HIGH
-        if (doesKeywordExist(partsLines[2],"<CAST_PASSED_SUCCESSFULLY>")):
+            partsScores[1] = SCORES.HIGH
+        if (doesKeywordExist(partsLines[2],"<DEREFERENCE-VIOLATION_PASSED_SUCCESSFULLY>")):
             partsScores[2] = SCORES.V_HIGH
         else:
-            partsScores[2] = SCORES.V_HIGH
-
+            partsScores[2] = SCORES.HIGH
 
     else:
         print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")

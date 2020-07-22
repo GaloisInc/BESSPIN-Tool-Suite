@@ -1,7 +1,7 @@
-from .helpers import *
+from fett.cwesEvaluation.tests.resourceManagement.cweScores.helpers import *
 
-def test_825 (SCORES, customScorer, logTest,testsDir):
-    testNum = 825
+def test_395 (SCORES, customScorer, logTest,testsDir):
+    testNum = 395
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
     testLines = readLogLines(logTest,testsDir)
@@ -13,31 +13,32 @@ def test_825 (SCORES, customScorer, logTest,testsDir):
         partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        partDoubleFree = partitionLines(testLines,"<test-double-free>", "<test-free-no-longer-valid>",testNum=testNum)
-        partNoLongerValid = partitionLines(testLines,"<test-free-no-longer-valid>", "-"*50,testNum=testNum)
+        partMalRead = partitionLines(testLines,"<try-catch-read>", "<try-catch-write>",testNum=testNum)
+        partMalWrite = partitionLines(testLines,"<try-catch-write>", "-"*50,testNum=testNum)
 
         if (doesKeywordExist(testLines,"<INVALID>")):
             partsScores[1] = SCORES.CALL_ERR
-        elif (not doesKeywordExist(partDoubleFree,"<REGULAR_PASSED>")):
-            partsScores[1] = SCORES.FAIL
-        elif (doesKeywordExist(partNoLongerValid,"<ERROR-SEGFAULT>")):
+        elif (doesKeywordExist(partMalRead,"<ERROR-SEGFAULT>")):
             partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(partNoLongerValid,"<POINTER_USED_IMPROPERLY>")):
+        elif (not doesKeywordExist(partMalRead,"<DEREFERENCE-VIOLATION>")):
+            partsScores[1] = SCORES.V_HIGH
+        elif (doesKeywordExist(partMalWrite,"<ERROR-SEGFAULT>")):
+            partsScores[1] = SCORES.V_HIGH
+        elif (not doesKeywordExist(partMalWrite,"<DEREFERENCE-VIOLATION>")):
             partsScores[1] = SCORES.V_HIGH
         else:
             partsScores[1] = SCORES.FAIL
-
 
     elif (osImage == 'FreeRTOS'):
         nParts = 2
         partsLines = regPartitionTestFreeRTOS(testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        if (doesKeywordExist(partsLines[1],"<REGULAR_PASSED>")):
-            partsScores[1] = SCORES.NONE
+        if (doesKeywordExist(partsLines[1],"<DEREFERENCE-VIOLATION_PASSED_SUCCESSFULLY>")):
+            partsScores[1] = SCORES.V_HIGH
         else:
             partsScores[1] = SCORES.HIGH
-        if (doesKeywordExist(partsLines[2],"<POINTER_USED_IMPROPERLY>")):
+        if (doesKeywordExist(partsLines[2],"<DEREFERENCE-VIOLATION_PASSED_SUCCESSFULLY>")):
             partsScores[2] = SCORES.V_HIGH
         else:
             partsScores[2] = SCORES.HIGH

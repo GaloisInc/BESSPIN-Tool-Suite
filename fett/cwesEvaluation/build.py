@@ -6,16 +6,14 @@ import glob
 import os
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.templateFreeRTOS import main as templateFreeRTOS
+from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
 import fett.target.build
 
 
 @decorate.debugWrap
 def buildCwesEvaluation():
     # TODO: Generalize
-    # TODO: Even for this case, I skipped a bunch of options and just stuck
-    # with the default makefile.  Do we want to support custom makefiles /
-    # build options?
+    # TODO: Add support for custom build options and custom makefiles
 
     if isEqSetting('osImage', 'FreeRTOS'):
         # create the osImages directory
