@@ -54,7 +54,9 @@ def collect_run_names():
     run_names = [run_name[:-4] for run_name in unsorted]
     run_names.sort()
 
-    print(f'(Info)~ Listing launch targets:\n{ run_names }\n(Info)~ Done Gathering Targets.')
+    print(
+        f"(Info)~ Listing launch targets:\n{ run_names }\n(Info)~ Done Gathering Targets."
+    )
 
 
 def wait_on_ids_sqs(ids, name):
@@ -389,7 +391,7 @@ def test_aws():
     print("(Info)~ AWS CLI installed!")
 
 
-def get_runs():
+def generate_runs(runs, instance_index, count):
     to_run = []
     for run in range(1, runs + 1):
         if instance_index:
@@ -397,7 +399,7 @@ def get_runs():
         else:
             for x in range(0, count):
                 to_run.append([run, x])
-    return to_run, len(to_run)
+    return to_run
 
 
 def main():
@@ -416,35 +418,31 @@ def main():
 
         if args.init:
             handle_init()
-        # else:
-        #     with open(Path.home() / ".zshrc", "r") as f:
-        #         lines = f.readlines()
-        #         string = "".join(lines[-3:])
 
-    ami = args.ami
-    name = args.name
-    count = args.count
-    cap = args.cap
-    branch = args.branch
-    binaries_branch = args.binaries_branch
-    key_path = args.key_path
-    runs = args.runs
-    instance_index = args.instance_index
+        ami = args.ami
+        name = args.name
+        count = args.count
+        cap = args.cap
+        branch = args.branch
+        binaries_branch = args.binaries_branch
+        key_path = args.key_path
+        runs = args.runs
+        instance_index = args.instance_index
 
         # Check for and remove results file
         if os.path.isfile("results.txt"):
             os.remove("results.txt")
 
         # Generate list of all launches - these are formatted as [run, index]
-        to_run, total = get_runs()
+        to_run = generate_runs(runs, instance_index, count)
 
-    # Fix to make sure that only one of the same instances is run at once
-    #   the idx flag is passed
-    if instance_index:
-        cap = 1
+        # Fix to make sure that only one of the same instances is run at once
+        #   the idx flag is passed
+        if instance_index:
+            cap = 1
 
-    # Keep running batches until we have run them all
-    while len(to_run) > 0:
+        # Keep running batches until we have run them all
+        while len(to_run) > 0:
 
             run_this_iteration = []
             ids = []
@@ -462,7 +460,9 @@ def main():
                 print(
                     f"(Info)~ Launching Run { launch[0] }, Target { run_names[launch[1]] } ({ launch[1] })"
                 )
-                id = start_instance(ami, name, launch[1], branch, binaries_branch, key_path)
+                id = start_instance(
+                    ami, name, launch[1], branch, binaries_branch, key_path
+                )
                 ids.append(id)
                 print(f"(Info)~ Launched Instance 🚀.")
 
@@ -471,16 +471,16 @@ def main():
                 #   to keep the messages from overloading.
                 time.sleep(30)
 
-        print("(Info)~ All Instances Launched! Waiting on SQS.")
-        wait_on_ids_sqs(ids, name)
-        print(f"(Info)~ Got SQS for all { len(run_this_iteration) } Instances")
+            print("(Info)~ All Instances Launched! Waiting on SQS.")
+            wait_on_ids_sqs(ids, name)
+            print(f"(Info)~ Got SQS for all { len(run_this_iteration) } Instances")
 
-        # Wait for the instances to terminate before running the next run
-        if len(to_run) != 0:
-            time.sleep(120)
+            # Wait for the instances to terminate before running the next run
+            if len(to_run) != 0:
+                time.sleep(120)
 
-    print(f"(Info)~ All { len(total) } Instances Completed. Exiting.")
-    exit(0)
+        print(f"(Info)~ All { len(to_run) } Instances Completed. Exiting.")
+        exit(0)
 
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
