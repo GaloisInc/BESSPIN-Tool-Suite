@@ -298,6 +298,16 @@ def configTapAdaptor():
             # Add productionTargetIp to main adaptor
             ['ip', 'addr', 'add', getSetting('productionTargetIp'), 'dev',
              getMainAdaptor()],
+            # Route incoming to productionTargetIp:uartFwdPort to mainIP
+            ['iptables',
+             '-t', 'nat',
+             '-A', 'PREROUTING',
+             '-i', getMainAdaptor(),
+             '-p', 'tcp',
+             '--dport', str(getSetting('uartFwdPort')),
+             '-d', getSetting('productionTargetIp'),
+             '-j', 'DNAT',
+             '--to-destination', fpga.getAddrOfAdaptor(getMainAdaptor(),'IP')],
             # Route packets from FPGA to productionTargetIp
             ['iptables',
              '-t', 'nat',
