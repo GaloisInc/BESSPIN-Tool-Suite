@@ -409,14 +409,14 @@ def ftReadLines (filePath,exitOnFileError=True):
         logAndExit (f"Failed to read lines from <{filePath}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap    
-def matchExprInLines (expr,lines):
+def matchExprInLines (expr,lines,returnIndex=False):
     if (not lines):
-        return None
-    for line in lines:
+        return (None, False) if returnIndex else None
+    for index, line in enumerate(lines):
         xMatch = re.match(expr,line)
         if (xMatch is not None):
-            return xMatch
-    return None
+            return (xMatch, index) if returnIndex else xMatch
+    return (None, False) if returnIndex else None
 
 @decorate.debugWrap    
 def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False, timeout=60):

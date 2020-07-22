@@ -11,6 +11,8 @@ from fett.target import qemu
 from fett.target import aws
 from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
+from fett.cwesEvaluation.build import buildCwesEvaluation
+from fett.cwesEvaluation.common import runTests
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -69,7 +71,12 @@ def prepareEnv ():
     # config sanity checks for building apps
     if (getSetting('osImage') in ['FreeRTOS', 'debian', 'FreeBSD']):
         setSetting('runApp',True)
-        buildApps ()
+
+        # TODO: Should this test go elsewhere?
+        if isEqSetting("mode", "evaluateSecurityTests"):
+            buildCwesEvaluation()
+        else:
+            buildApps ()
     elif (isEqSetting('osImage','busybox')):
         printAndLog(f"<busybox> is only used for smoke testing the target/network. No applications are supported.")
         setSetting('runApp',False)
@@ -116,7 +123,10 @@ def launchFett ():
             xTarget.changeRootPassword()
         xTarget.createUser()
     if (isEnabled('runApp')):
-        xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
+        if isEqSetting('mode', 'evaluateSecurityTests'):
+            runTests(xTarget, isEnabled('sendTarballToTarget'), 30)
+        else:
+            xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
     if (isEnabled('isUnix') and isEnabled("useCustomCredentials")):
         xTarget.changeUserPassword()
     if isEnabled('isUnix') and isEnabled("rootUserAccess"):

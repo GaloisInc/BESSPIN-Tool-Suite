@@ -46,6 +46,10 @@ def loadConfiguration(configFile):
     for xSection in CONFIG_SECTIONS:
         loadConfigSection (xConfig,configData,xSection)
 
+    if isEqSetting("mode", "evaluateSecurityTests"):
+        # Load evaluateSecurityTests related sections
+        loadConfigSection(xConfig, configData, "evaluateSecurityTests")
+
     # Get the XLEN and processor flavor
     if (getSetting('processor') in ['chisel_p1']):
         setSetting('xlen',32)
@@ -135,7 +139,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                     val = xConfig.getboolean(xSection,iPar['name'])
             except Exception as exc:
                 logAndExit(f"{fileName}: <{iPar['name']}> has to be boolean in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
-        elif ( iPar['type'] in ['str', 'string', 'filePath', 'dirPath', 'ipAddress', 'dict', 'macAddress']): 
+        elif ( iPar['type'] in ['str', 'string', 'stringsList', 'filePath', 'dirPath', 'ipAddress', 'dict', 'macAddress']): 
             if (setup):
                 val = iPar['val']
             else:
@@ -171,7 +175,19 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 macAddressMatch = re.match(r"([0-9a-fA-F]{2}\:){5}[0-9a-fA-F]{2}$",val)
                 if (macAddressMatch is None):
                     logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid MAC address in section [{xSection}].",exitCode=EXIT.Configuration)
-
+            elif (iPar['type'] == 'stringsList'):
+                if ((val[0] != '[') or (val[-1] != ']')):
+                    logAndExit("ValueError in reading configuration "
+                               f"file. <{iPar['name']}> has to be of type "
+                               f"{iPar['type']} in section [{xSection}]. A "
+                               f"{iPar['type']} has to have contents between "
+                               f"brackets.",
+                               exitCode = EXIT.Configuration)
+                if (len(val[1:-1]) == 0):
+                    vals = []
+                else:
+                    # transform val into a python list of strings
+                    vals = [x.strip() for x in val[1:-1].split(',')]
         else:
             logAndExit("Json info file: Unknown type <%s> for <%s> in section [%s]." %(iPar['type'],iPar['name'],xSection),exitCode=EXIT.Configuration)
 
@@ -180,7 +196,9 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
         isMin = False
         isMax = False
         if ('choices' in iPar):
-            if ( (iPar['type'] not in 'string') and (iPar['type'] not in 'integer') ):
+            if ( (iPar['type'] not in 'string') and
+                 (iPar['type'] not in 'integer') and
+                 (iPar['type'] not in 'stringsList') ):
                 warnAndLog("Json configuration info file: For <%s> in section [%s]: Ignoring <choices> for type <%s>." %(iPar['name'],xSection,iPar['type']))
             else: #int, str, stringsList
                 isChoices = True
@@ -203,13 +221,26 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
             if ((iPar['type'] in 'integer') or (iPar['type'] in 'string')):
                 if (val not in iPar['choices']):
                     logAndExit("Configuration file: Illegal value for <%s> in section [%s]. Value has to be in [%s]." %(iPar['name'],xSection,','.join([str(x) for x in iPar['choices']])))     
+            elif (iPar['type'] == 'stringsList'):
+                for val in vals:
+                    if (val not in iPar['choices']):
+                        # Leaving the "str(x) for x in case we need to
+                        # implement a list of integers"
+                        logAndExit("ValueError in reading configuration file. "
+                                   "Illegal value for <%s> in section [%s]. "
+                                   "Value has to be in [%s]." %
+                                   (iPar['name'],
+                                    xSection,
+                                    ','.join([str(x) for x in iPar['choices']])),
+                                   exitCode = EXIT.Configuration)
         if (isMin):
             if (val < iPar['min']):
                 logAndExit(f"Configuration file: The minimum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['min']))
         if (isMax and (val > iPar['max'])):
             logAndExit(f"Configuration file: The maximum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['max']))
 
-        setSetting(iPar['name'],val)
+        setSetting(iPar['name'],
+                   vals if iPar['type'] == 'stringsList' else val)
 
     if (not setup):
         for option,isItLegal in optionsInConfig.items():
