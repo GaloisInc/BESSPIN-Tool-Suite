@@ -18,6 +18,9 @@ moduleSpec.loader.exec_module(awsModule)
 ## TODO
 #  - Add `source ~/.zshrc` robustness
 #  - General neatness
+#  - Robustness to exceeding vCPU capacity
+#  - Ability to run multiple identical tests at the same time and get SQS results.
+#  - Remove Userdata better.
 
 
 def print_and_exit(message=""):
@@ -45,7 +48,7 @@ def append_to_userdata(command_list):
 def collect_run_names():
     global run_names
 
-    print("(Info)~ Gathering list of launch argets.")
+    print("(Info)~ Gathering list of launch targets.")
     subprocess_call("./fett-ci.py -X -ep AWS runDevPR -job 420")
     unsorted = os.listdir("/tmp/dumpIni/")
     run_names = [run_name[:-4] for run_name in unsorted]
@@ -69,9 +72,9 @@ def wait_on_ids_sqs(ids, name):
                 QueueUrl=configs.ciAWSqueueNightly,
                 ReceiptHandle=message["ReceiptHandle"],
             )
-            logging.debug(f"pollPortalQueueIndefinitely: Message deleted!")
-        except Exception as exc:
-            print("Failed to delete the message from the SQS queue.")
+            print("(Info)~ Succeeded in removing message from SQS queue.")
+        except Exception:
+            print("(Warning)~ Failed to delete the message from the SQS queue.")
 
     # Keep seeking messages until we have heard from all ids
     while len(ids) > 0:
@@ -83,18 +86,15 @@ def wait_on_ids_sqs(ids, name):
                 WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
             )
         except Exception as exc:
-            print(f"Failed to receive a response from the SQS queue.")
+            print_and_exit(f"(Error)~ Failed to receive a response from the SQS queue.")
 
         if "Messages" in response:
-            print(response)
             for message in response["Messages"]:
-
-                # print(f"()~ Caught SQS: { message}")
                 body = json.loads(message["Body"])
                 instance_id = body["instance"]["id"]
 
                 print(
-                    f'(Info)~ SQS was about { body["instance"]["id"] }, which had status { body["job"]["status"] }. Comparing against { ids }'
+                    f'(Info)~ { body["instance"]["id"] }, exited with status { body["job"]["status"] }. Comparing against { ids }'
                 )
 
                 # If we have a message about an ID we have to terminate, terminate it, and remove the message.
@@ -169,6 +169,8 @@ def handle_init():
 def start_instance(ami, name, i, branch, binaries_branch, key_path):
     global run_names
 
+    print(f"(Info)~ Started start_instance with i={ i }")
+
     # Collect AWS Credentials from ~/.aws/credentials
     with open(os.path.expanduser("~/.aws/credentials"), "r") as f:
         lines = f.readlines()
@@ -212,6 +214,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
         userdata_specific = [
             f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/aws-ci-gh && 
                 cd /home/centos/SSITH-FETT-Target/ && 
+                git fetch &&
                 cd SSITH-FETT-Binaries && 
                 git stash && 
                 cd .. && 
@@ -220,10 +223,11 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
                 git submodule update && 
                 cd SSITH-FETT-Binaries && 
                 git checkout { binaries_branch } &&
+                git pull &&
                 git-lfs pull && 
                 cd .. "'""",
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ branch }-{ binaries_branch }-{ run_names[i] } -i { i }"' """,
+                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i } -i { i }"' """,
         ]
 
         append_to_userdata(userdata_common)
@@ -235,6 +239,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
         userdata_specific = [
             f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/aws-ci-gh && 
                 cd /home/centos/SSITH-FETT-Target/ && 
+                git fetch &&
                 cd SSITH-FETT-Binaries && 
                 git stash && 
                 cd .. && 
@@ -369,6 +374,12 @@ def config_parser():
         help="How many complete runs of all targets to make. Default 1.",
         default=1,
     )
+    parser.add_argument(
+        "-idx",
+        "--instance-index",
+        type=int,
+        help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this instance index only.",
+    )
     return parser.parse_args()
 
 
@@ -381,8 +392,11 @@ def test_aws():
 def get_runs():
     to_run = []
     for run in range(1, runs + 1):
-        for i in range(0, count):
-            to_run.append([run, i])
+        if instance_index:
+            to_run.append([run, instance_index])
+        else:
+            for x in range(0, count):
+                to_run.append([run, x])
     return to_run, len(to_run)
 
 
@@ -407,14 +421,15 @@ def main():
         #         lines = f.readlines()
         #         string = "".join(lines[-3:])
 
-        ami = args.ami
-        name = args.name
-        count = args.count
-        cap = args.cap
-        branch = args.branch
-        binaries_branch = args.binaries_branch
-        key_path = args.key_path
-        runs = args.runs
+    ami = args.ami
+    name = args.name
+    count = args.count
+    cap = args.cap
+    branch = args.branch
+    binaries_branch = args.binaries_branch
+    key_path = args.key_path
+    runs = args.runs
+    instance_index = args.instance_index
 
         # Check for and remove results file
         if os.path.isfile("results.txt"):
@@ -423,8 +438,13 @@ def main():
         # Generate list of all launches - these are formatted as [run, index]
         to_run, total = get_runs()
 
-        # Keep running batches until we have run them all
-        while len(to_run) > 0:
+    # Fix to make sure that only one of the same instances is run at once
+    #   the idx flag is passed
+    if instance_index:
+        cap = 1
+
+    # Keep running batches until we have run them all
+    while len(to_run) > 0:
 
             run_this_iteration = []
             ids = []
@@ -446,12 +466,21 @@ def main():
                 ids.append(id)
                 print(f"(Info)~ Launched Instance 🚀.")
 
-            print("(Info)~ All Instances Launched! Waiting on SQS.")
-            wait_on_ids_sqs(ids, name)
-            print(f"(Info)~ Got SQS for all { len(run_this_iteration) } Instances")
+            if instance_index:
+                # Offset boots of the same instance to try to stagger SQS results
+                #   to keep the messages from overloading.
+                time.sleep(30)
 
-        print(f"(Info)~ All { total } instances completed. Exiting.")
-        exit(0)
+        print("(Info)~ All Instances Launched! Waiting on SQS.")
+        wait_on_ids_sqs(ids, name)
+        print(f"(Info)~ Got SQS for all { len(run_this_iteration) } Instances")
+
+        # Wait for the instances to terminate before running the next run
+        if len(to_run) != 0:
+            time.sleep(120)
+
+    print(f"(Info)~ All { len(total) } Instances Completed. Exiting.")
+    exit(0)
 
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
