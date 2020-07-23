@@ -26,16 +26,19 @@ moduleSpec.loader.exec_module(awsModule)
 
 
 def print_and_exit(message=""):
-    print_and_log(f"{ message }\n(Error)~ Exiting nightly testing.", "red")
+    print_and_log(f"{ message }", "red")
+    print_and_log("(Error)~ Exiting nightly testing.", "red")
     exit(0)
+
 
 def log(text):
     # Write to log
     with open("nightly-ci.log", "a") as f:
         f.write(text + "\n")
 
+
 def print_and_log(text, color="white"):
-    log(text)    
+    log(text)
 
     # Print to Console in Color
     print(colored(text.split(" ")[0], color) + " " + " ".join(text.split(" ")[1:]))
@@ -63,7 +66,7 @@ def collect_run_names():
     global run_names
 
     print_and_log("(Info)~ Gathering list of launch targets.", "green")
-    subprocess_call("./fett-ci.py -X -ep AWS runDevPR -job 420")
+    log(str(subprocess_check_output("./fett-ci.py -X -ep AWS runDevPR -job 420")))
     unsorted = os.listdir("/tmp/dumpIni/")
     run_names = [run_name[:-4] for run_name in unsorted]
     run_names.sort()
@@ -228,12 +231,15 @@ def start_instance(ami, name, r, i, branch, binaries_branch, key_path):
             "runuser -l centos -c 'touch /home/centos/.ssh/aws-ci-gh'",
             "cat >/home/centos/.ssh/aws-ci-gh <<EOL",
         ]
-        userdata_ssh.extend(key + ["EOL", "runuser -l centos -c 'chmod 600 /home/centos/.ssh/aws-ci-gh'"])
+        userdata_ssh.extend(
+            key
+            + ["EOL", "runuser -l centos -c 'chmod 600 /home/centos/.ssh/aws-ci-gh'"]
+        )
 
     # Compose userdata contents, depending on whether path was specified.
     # Binaries branch and Target branch provided
     if branch and binaries_branch:
-        instance_name = f"{ name }-r{ r }-i{ i }-{ branch.strip("/+=-_") }-{ binaries_branch.strip("/+=-_") }-{ run_names[i] }"
+        instance_name = f"{ name }-r{ r }-i{ i }-{ branch.strip('/+=-_') }-{ binaries_branch.strip('/+=-_') }-{ run_names[i] }"
         userdata_specific = [
             f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/aws-ci-gh && 
                 cd /home/centos/SSITH-FETT-Target/ && 
@@ -256,7 +262,9 @@ def start_instance(ami, name, r, i, branch, binaries_branch, key_path):
         append_to_userdata(userdata_common + userdata_ssh + userdata_specific)
     # Only Target branch provided
     elif branch and not binaries_branch:
-        instance_name = f"{ name }-r{ r }-i{ i }-{ branch.strip("/+=-_") }-{ run_names[i] }"
+        instance_name = (
+            f"{ name }-r{ r }-i{ i }-{ branch.strip('/+=-_') }-{ run_names[i] }"
+        )
         userdata_specific = [
             f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/aws-ci-gh && 
                 cd /home/centos/SSITH-FETT-Target/ && 
@@ -286,7 +294,9 @@ def start_instance(ami, name, r, i, branch, binaries_branch, key_path):
         append_to_userdata(userdata_common + userdata_specific)
 
     if len(instance_name) > 256:
-        print_and_log(f"(Warning)~ Generated Instance Name [{ instance_name }] is too long, Trimming for name tag.")
+        print_and_log(
+            f"(Warning)~ Generated Instance Name [{ instance_name }] is too long, Trimming for name tag."
+        )
         instance_name = instance_name[:256]
 
     print_and_log(
@@ -294,7 +304,9 @@ def start_instance(ami, name, r, i, branch, binaries_branch, key_path):
         "green",
     )
 
-    log(f"(Debug)~ Specific Userdata Section Contained: { userdata_specific } for instance { instance_name }")
+    log(
+        f"(Debug)~ Specific Userdata Section Contained: { userdata_specific } for instance { instance_name }"
+    )
 
     # Start up an instance
     raw_payload = subprocess_check_output(
@@ -306,7 +318,9 @@ def start_instance(ami, name, r, i, branch, binaries_branch, key_path):
     id = payload["Instances"][0]["InstanceId"]
 
     # Add a name to our instance
-    subprocess_check_output(f"aws ec2 create-tags --resources { id } --tags Key=Name,Value={instance_name}")
+    subprocess_check_output(
+        f"aws ec2 create-tags --resources { id } --tags Key=Name,Value={instance_name}"
+    )
 
     print_and_log(f"(Info)~ Launched { instance_name } and running tests.", "cyan")
 
@@ -459,8 +473,12 @@ def main():
         if os.path.isfile("results.txt"):
             os.remove("results.txt")
 
+        # Check for and remove log file
+        if os.path.isfile("nightly-ci.log"):
+            os.remove("nightly-ci.log")
+
         # Generate list of all launches - these are formatted as [run, index]
-        to_run, total = get_runs(count, runs, instance_index)
+        to_run = get_runs(count, runs, instance_index)
 
         # Fix to make sure that only one of the same instances is run at once
         #   the idx flag is passed
@@ -506,12 +524,8 @@ def main():
             if len(to_run) != 0:
                 time.sleep(120)
 
-        print_and_log(
-            f"(Info)~ All { len(to_run) } Instances Completed. Exiting.", "cyan"
-        )
+        print_and_log(f"(Info)~ All Instances Completed. Exiting.", "cyan")
         exit(0)
-            print(f"(Info)~ All { str(total) } Instances Completed. Exiting.")
-            exit(0)
 
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
