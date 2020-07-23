@@ -21,8 +21,6 @@ moduleSpec.loader.exec_module(awsModule)
 #  - General neatness
 #  - Robustness to exceeding vCPU capacity
 #  - Ability to run multiple identical tests at the same time and get SQS results.
-#  - Remove Userdata better.
-#  - Run names include run name
 
 
 def print_and_exit(message=""):
@@ -60,6 +58,11 @@ def append_to_userdata(command_list):
     with open(Path().absolute() / "userdata.txt", "a") as f:
         f.write("\n".join(command_list))
         f.write("\n")
+
+
+def check_and_remove(filename):
+    if os.path.isfile(filename):
+        os.remove(filename)
 
 
 def collect_run_names():
@@ -181,8 +184,6 @@ def handle_init():
             f.write(zshrc)
             f.truncate()
 
-            # Source zshrc to update changes
-            os.system("source $HOME/.zshrc")
     except Exception as e:
         if isinstance(e, OSError):
             print_and_exit(
@@ -444,6 +445,11 @@ def main():
 
     print_and_log("(Info)~ Welcome to the nightly testing command line app!", "cyan")
     try:
+        # Check for and remove results, log, userdata file
+        check_and_remove("results.txt")
+        check_and_remove("userdata.txt")
+        check_and_remove("nightly-ci.log")
+
         # Test for presence of AWS CLI
         test_aws()
 
@@ -469,21 +475,17 @@ def main():
         if args.init:
             handle_init()
 
-        # Check for and remove results file
-        if os.path.isfile("results.txt"):
-            os.remove("results.txt")
-
-        # Check for and remove log file
-        if os.path.isfile("nightly-ci.log"):
-            os.remove("nightly-ci.log")
+        # Source zshrc to update changes
+        subprocess_call("source $HOME/.zshrc")
+        exit()
 
         # Generate list of all launches - these are formatted as [run, index]
         to_run = get_runs(count, runs, instance_index)
 
         # Fix to make sure that only one of the same instances is run at once
         #   the idx flag is passed
-        if instance_index:
-            cap = 1
+        # if instance_index:
+        #     cap = 1
 
         # Keep running batches until we have run them all
         while len(to_run) > 0:
@@ -509,10 +511,10 @@ def main():
                 ids.append(id)
                 print_and_log(f"(Info)~ Launched Instance 🚀.", "green")
 
-            if instance_index:
-                # Offset boots of the same instance to try to stagger SQS results
-                #   to keep the messages from overloading.
-                time.sleep(30)
+                if instance_index:
+                    # Offset boots of the same instance to try to stagger SQS results
+                    #   to keep the messages from overloading.
+                    time.sleep(30)
 
             print_and_log("(Info)~ All Instances Launched! Waiting on SQS.", "cyan")
             wait_on_ids_sqs(ids, name)
