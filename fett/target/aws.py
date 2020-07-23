@@ -298,6 +298,15 @@ def configTapAdaptor():
             # Add productionTargetIp to main adaptor
             ['ip', 'addr', 'add', getSetting('productionTargetIp'), 'dev',
              getMainAdaptor()],
+            # Reject mainIP:uartFwdPort if coming from FPGA
+            ['iptables',
+             '-A', 'INPUT',
+             '-i', tapAdaptor,
+             '-p', 'tcp',
+             '--dport', str(getSetting('uartFwdPort')),
+             '-d', fpga.getAddrOfAdaptor(getMainAdaptor(),'IP'),
+             '-s', getSetting('awsIpTarget'),
+             '-j', 'REJECT'],
             # Route incoming to productionTargetIp:uartFwdPort to mainIP
             ['iptables',
              '-t', 'nat',
