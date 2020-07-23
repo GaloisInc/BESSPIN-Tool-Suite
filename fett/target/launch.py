@@ -19,6 +19,8 @@ from importlib.machinery import SourceFileLoader
 @decorate.timeWrap
 def startFett ():
     # ------- Global/Misc sanity checks
+    if (isEqSetting('mode','production') and isEnabled('openConsole')):
+        logAndExit(f"<openConsole> is not compatible with production mode.",exitCode=EXIT.Configuration)
 
     # --------   binarySource-Processor-osImage-PV Matrix --------
     # Check that the processor is provided by this team
