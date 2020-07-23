@@ -50,9 +50,14 @@ def startFett ():
 
     mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
     
-    # Start on-line logging
-    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
-        aws.startRemoteLogging (xTarget)
+    # Start monitoring
+    if (isEqSetting('target','aws')):
+        # Start on-line logging
+        if (getSetting('osImage') in ['debian', 'FreeBSD']):
+            aws.startRemoteLogging(xTarget)
+
+        # Pipe UART to the network
+        aws.startUartPiping(xTarget)
 
     return xTarget
 
