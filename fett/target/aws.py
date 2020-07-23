@@ -625,7 +625,7 @@ def prepareConnectal():
     setSetting("osImageDtb",dtbFile)
     cp (dtbsrc, dtbFile)
 
-# ------------------ Logging Functions ----------------------------------------
+# ------------------ Monitoring Functions ----------------------------------------
 
 @decorate.debugWrap
 def startRemoteLogging (target):
@@ -684,4 +684,8 @@ def startRemoteLogging (target):
             target.runCommand(f"service {nginxService} restart")
          
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
+
+@decorate.debugWrap
+def startUartPiping(target):
+    pass
 
