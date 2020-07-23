@@ -5,5 +5,8 @@ myConfig.ini
 core
 *.mypy_cache/
 .DS_STORE
+
+# CI Gitignores
 ci/userdata.txt
 ci/results.txt
+ci/nightly-ci.log

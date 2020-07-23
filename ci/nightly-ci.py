@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import subprocess, json, os, argparse, math, time, boto3, importlib, json
+from termcolor import colored
 from pathlib import Path
 from datetime import datetime
 
@@ -21,11 +22,21 @@ moduleSpec.loader.exec_module(awsModule)
 #  - Robustness to exceeding vCPU capacity
 #  - Ability to run multiple identical tests at the same time and get SQS results.
 #  - Remove Userdata better.
+#  - Run names include run name
 
 
 def print_and_exit(message=""):
-    print(f"{ message }\n(Error)~ Exiting nightly testing.")
+    print_and_log(f"{ message }\n(Error)~ Exiting nightly testing.", "red")
     exit(0)
+
+
+def print_and_log(text, color="white"):
+    # Write to log
+    with open("nightly-ci.log", "a") as f:
+        f.write(text + "\n")
+
+    # Print to Console in Color
+    print(colored(text.split(" ")[0], color) + " " + " ".join(text.split(" ")[1:]))
 
 
 def subprocess_call(command):
@@ -39,7 +50,6 @@ def subprocess_check_output(command):
 
 
 def append_to_userdata(command_list):
-    print(f"(Info)~ Adding to userdata.txt.")
     with open(Path().absolute() / "userdata.txt", "a") as f:
         f.write("\n".join(command_list))
         f.write("\n")
@@ -48,14 +58,15 @@ def append_to_userdata(command_list):
 def collect_run_names():
     global run_names
 
-    print("(Info)~ Gathering list of launch targets.")
+    print_and_log("(Info)~ Gathering list of launch targets.", "green")
     subprocess_call("./fett-ci.py -X -ep AWS runDevPR -job 420")
     unsorted = os.listdir("/tmp/dumpIni/")
     run_names = [run_name[:-4] for run_name in unsorted]
     run_names.sort()
 
-    print(
-        f"(Info)~ Listing launch targets:\n{ run_names }\n(Info)~ Done Gathering Targets."
+    print_and_log(
+        f"(Info)~ Launch targets:\n{ run_names }\n(Info)~ Done Gathering Targets.",
+        "green",
     )
 
 
@@ -65,7 +76,7 @@ def wait_on_ids_sqs(ids, name):
     try:
         sqs = boto3.client("sqs", region_name="us-west-2")
     except Exception as exc:
-        print(f"Failed to create the SQS client.")
+        print_and_exit(f"(Error)~ Failed to create the SQS client.")
 
     # Define a way to delete a message
     def delete_message(message):
@@ -74,9 +85,13 @@ def wait_on_ids_sqs(ids, name):
                 QueueUrl=configs.ciAWSqueueNightly,
                 ReceiptHandle=message["ReceiptHandle"],
             )
-            print("(Info)~ Succeeded in removing message from SQS queue.")
+            print_and_log(
+                "(Info)~ Succeeded in removing message from SQS queue.", "green"
+            )
         except Exception:
-            print("(Warning)~ Failed to delete the message from the SQS queue.")
+            print_and_log(
+                "(Warning)~ Failed to delete the message from the SQS queue.", "yellow"
+            )
 
     # Keep seeking messages until we have heard from all ids
     while len(ids) > 0:
@@ -95,8 +110,9 @@ def wait_on_ids_sqs(ids, name):
                 body = json.loads(message["Body"])
                 instance_id = body["instance"]["id"]
 
-                print(
-                    f'(Info)~ { body["instance"]["id"] }, exited with status { body["job"]["status"] }. Comparing against { ids }'
+                print_and_log(
+                    f'(Info)~ { body["instance"]["id"] }, exited with status { body["job"]["status"] }. Comparing against { ids }',
+                    "cyan",
                 )
 
                 # If we have a message about an ID we have to terminate, terminate it, and remove the message.
@@ -108,7 +124,7 @@ def wait_on_ids_sqs(ids, name):
                         int(body["job"]["node"]),
                         body["job"]["status"],
                     )
-                    print(f"(Info)~ Removed Instance { instance_id }")
+                    print_and_log(f"(Info)~ Removed Instance { instance_id }", "green")
 
                 delete_message(message)
 
@@ -171,7 +187,7 @@ def handle_init():
 def start_instance(ami, name, i, branch, binaries_branch, key_path):
     global run_names
 
-    print(f"(Info)~ Started start_instance with i={ i }")
+    print_and_log(f"(Info)~ Started start_instance with i={ i }", "green")
 
     # Collect AWS Credentials from ~/.aws/credentials
     with open(os.path.expanduser("~/.aws/credentials"), "r") as f:
@@ -198,7 +214,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
                 key = f.readlines()
                 key = [x.strip() for x in key]
         except:
-            print("(Error)~ Invalid Key Path")
+            print_and_exit("(Error)~ Invalid Key Path")
 
         userdata_ssh = [
             "runuser -l centos -c 'touch /home/centos/.ssh/aws-ci-gh'",
@@ -269,8 +285,9 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
         append_to_userdata(userdata_common)
         append_to_userdata(userdata_specific)
 
-    print(
-        f"(Info)~ Updated userdata.txt for { name }-{ i }.\n(Info)~ Launching instance and running tests...\n(Info)~ This process may take a few minutes."
+    print_and_log(
+        f"(Info)~ Launching instance { name }-{ i }: this process may take a few minutes.",
+        "green",
     )
 
     # Start up an instance
@@ -287,11 +304,10 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
         f"aws ec2 create-tags --resources { id } --tags Key=Name,Value={ name }-{ i }"
     )
 
-    print(f"(Info)~ Launched { name }-{ i } and running tests.")
+    print_and_log(f"(Info)~ Launched { name }-{ i } and running tests.", "cyan")
 
     # Comment for debug
     os.remove("userdata.txt")
-    print(f"(Info)~ Deleted userdata.txt for { name }-{ i }.")
 
     return id
 
@@ -301,16 +317,19 @@ def terminate_instances(ids, name, num, status):
     global run_names
 
     for i in range(len(ids)):
-        print(
-            f"(Result)~ { name }-{ num } [{ run_names[num] }] finished with status { status }. Logs are in nightly-testing-bucket."
+        print_and_log(
+            f"(Result)~ { name }-{ num } [{ run_names[num] }] finished with status { status }. Logs are in nightly-testing-bucket.",
+            "cyan",
         )
+
+        # Write to Results
         with open("results.txt", "a") as f:
             f.write(f"{ run_names[num] } ({ num }) : { status }\n")
 
         subprocess_check_output(
             f"aws ec2 terminate-instances --instance-ids { ids[i] }"
         )
-        print(f"(Info)~ Terminated { name }-{ num }.")
+        print_and_log(f"(Info)~ Terminated { name }-{ num }.", "green")
 
 
 def config_parser():
@@ -386,9 +405,9 @@ def config_parser():
 
 
 def test_aws():
-    print("(Info)~ Testing AWS CLI...")
+    print_and_log("(Info)~ Testing AWS CLI...", "green")
     subprocess_call("aws --version")
-    print("(Info)~ AWS CLI installed!")
+    print_and_log("(Info)~ AWS CLI installed!", "green")
 
 
 def generate_runs(runs, instance_index, count):
@@ -405,7 +424,7 @@ def generate_runs(runs, instance_index, count):
 def main():
     global run_names
 
-    print("(Info)~ Welcome to the nightly testing command line app!")
+    print_and_log("(Info)~ Welcome to the nightly testing command line app!", "cyan")
     try:
         # Test for presence of AWS CLI
         test_aws()
@@ -416,9 +435,6 @@ def main():
         # Parse Arguments
         args = config_parser()
 
-        if args.init:
-            handle_init()
-
         ami = args.ami
         name = args.name
         count = args.count
@@ -428,6 +444,10 @@ def main():
         key_path = args.key_path
         runs = args.runs
         instance_index = args.instance_index
+
+        # If init flag passed, run initialization
+        if args.init:
+            handle_init()
 
         # Check for and remove results file
         if os.path.isfile("results.txt"):
@@ -457,29 +477,34 @@ def main():
                 to_run = to_run[cap:]
 
             for launch in run_this_iteration:
-                print(
-                    f"(Info)~ Launching Run { launch[0] }, Target { run_names[launch[1]] } ({ launch[1] })"
+                print_and_log(
+                    f"(Info)~ Launching Run { launch[0] }, Target { run_names[launch[1]] } ({ launch[1] })",
+                    "green",
                 )
                 id = start_instance(
                     ami, name, launch[1], branch, binaries_branch, key_path
                 )
                 ids.append(id)
-                print(f"(Info)~ Launched Instance 🚀.")
+                print_and_log(f"(Info)~ Launched Instance 🚀.", "green")
 
             if instance_index:
                 # Offset boots of the same instance to try to stagger SQS results
                 #   to keep the messages from overloading.
                 time.sleep(30)
 
-            print("(Info)~ All Instances Launched! Waiting on SQS.")
+            print_and_log("(Info)~ All Instances Launched! Waiting on SQS.", "cyan")
             wait_on_ids_sqs(ids, name)
-            print(f"(Info)~ Got SQS for all { len(run_this_iteration) } Instances")
+            print_and_log(
+                f"(Info)~ Got SQS for all { len(run_this_iteration) } Instances", "cyan"
+            )
 
             # Wait for the instances to terminate before running the next run
             if len(to_run) != 0:
                 time.sleep(120)
 
-        print(f"(Info)~ All { len(to_run) } Instances Completed. Exiting.")
+        print_and_log(
+            f"(Info)~ All { len(to_run) } Instances Completed. Exiting.", "cyan"
+        )
         exit(0)
 
     except Exception as e:
