@@ -102,11 +102,21 @@ class commonTarget():
                     iAttempt = 0
                     loginSuccess = False
                     while ((not loginSuccess) and (iAttempt < maxLoginAttempts)):
-                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],timeout=120)
+                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"Login incorrect"],timeout=120) 
                         if (retCommand[3] == 0):
                             loginSuccess = True
                         elif (retCommand[3] == 1): # try again
-                            printAndLog("switchUser: Failed to login. Trying again...",doPrint=False)
+                            printAndLog("switchUser: Failed to login. Trying again...",doPrint=False) 
+                            # wait for login string
+                            try:
+                                 endsWith = "login:"
+                                 retExpect = self.process.expect(endsWith, timeout=5) 
+                                 if ( (endsWith == pexpect.EOF) or isinstance(endsWith,str)): #only one string or EOF
+                                     self.readFromTarget(endsWith=endsWith)
+                                 else: #It is a list
+                                     self.readFromTarget(endsWith=endsWith[retExpect])   
+                            except Exception as exc:
+                                self.shutdownAndExit(f"switchUser: unexpected error from target while logging in",exc=exc,exitCode=EXIT.Run)
                             self.runCommand (loginName,endsWith="Password:")
                             time.sleep(3) #wait for the OS to be ready for the password (maybe this works)
                             iAttempt += 1
