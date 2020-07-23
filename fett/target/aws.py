@@ -689,3 +689,7 @@ def startRemoteLogging (target):
 def startUartPiping(target):
     pass
 
+@decorate.debugWrap
+def endUartPiping(target):
+    pass
+
