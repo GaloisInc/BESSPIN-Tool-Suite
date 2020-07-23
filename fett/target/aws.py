@@ -279,11 +279,16 @@ class connectalTarget(commonTarget):
 def configTapAdaptor():
     tapAdaptor = getSetting('awsTapAdaptorName')
 
-    def getMainAdaptor():
-        for xAdaptor in psutil.net_if_addrs():
-            if (xAdaptor not in ['lo', tapAdaptor]):
-                return xAdaptor
-        logAndExit(f"configTapAdaptor: Failed to find the main Eth adaptor.",exitCode=EXIT.Network)
+    #get main adaptor and its main IP
+    gotMainAdaptorInfo = False
+    for xAdaptor in psutil.net_if_addrs():
+        if (xAdaptor not in ['lo', tapAdaptor]):
+            setSetting('awsMainAdaptorName',xAdaptor)
+            setSetting('awsMainAdaptorIP',fpga.getAddrOfAdaptor(xAdaptor,'IP'))
+            gotMainAdaptorInfo = True
+            break
+    if (not gotMainAdaptorInfo):
+        logAndExit(f"configTapAdaptor: Failed to find the main ethernet adaptor info.",exitCode=EXIT.Network)
 
     commands = {
         'create' : [
@@ -297,31 +302,31 @@ def configTapAdaptor():
             ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
             # Add productionTargetIp to main adaptor
             ['ip', 'addr', 'add', getSetting('productionTargetIp'), 'dev',
-             getMainAdaptor()],
+             getSetting('awsMainAdaptorName')],
             # Reject mainIP:uartFwdPort if coming from FPGA
             ['iptables',
              '-A', 'INPUT',
              '-i', tapAdaptor,
              '-p', 'tcp',
              '--dport', str(getSetting('uartFwdPort')),
-             '-d', fpga.getAddrOfAdaptor(getMainAdaptor(),'IP'),
+             '-d', getSetting('awsMainAdaptorIP'),
              '-s', getSetting('awsIpTarget'),
              '-j', 'REJECT'],
             # Route incoming to productionTargetIp:uartFwdPort to mainIP
             ['iptables',
              '-t', 'nat',
              '-A', 'PREROUTING',
-             '-i', getMainAdaptor(),
+             '-i', getSetting('awsMainAdaptorName'),
              '-p', 'tcp',
              '--dport', str(getSetting('uartFwdPort')),
              '-d', getSetting('productionTargetIp'),
              '-j', 'DNAT',
-             '--to-destination', fpga.getAddrOfAdaptor(getMainAdaptor(),'IP')],
+             '--to-destination', getSetting('awsMainAdaptorIP')],
             # Route packets from FPGA to productionTargetIp
             ['iptables',
              '-t', 'nat',
              '-A', 'POSTROUTING',
-             '-o', getMainAdaptor(),
+             '-o', getSetting('awsMainAdaptorName'),
              '-s', getSetting('awsIpTarget'),
              '-j', 'SNAT',
              '--to-source', getSetting('productionTargetIp')],
@@ -329,7 +334,7 @@ def configTapAdaptor():
             ['iptables',
              '-t', 'nat',
              '-A', 'PREROUTING',
-             '-i', getMainAdaptor(),
+             '-i', getSetting('awsMainAdaptorName'),
              '-d', getSetting('productionTargetIp'),
              '-j', 'DNAT',
              '--to-destination', getSetting('awsIpTarget')],
