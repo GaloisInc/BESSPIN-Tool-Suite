@@ -52,15 +52,13 @@ def startFett ():
 
     mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
     
-    # Start monitoring
-    if (isEqSetting('target','aws')):
-        # Start on-line logging
-        if (getSetting('osImage') in ['debian', 'FreeBSD']):
-            aws.startRemoteLogging(xTarget)
+    # Start on-line logging
+    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+        aws.startRemoteLogging (xTarget)
 
-        if (isEqSetting('mode','production')):
-            # Pipe UART to the network
-            aws.startUartPiping(xTarget)
+    # Pipe UART to the network
+    if (isEqSetting('mode','production')):
+        aws.startUartPiping(xTarget) # Shoud not execute any command after piping start
 
     return xTarget
 
@@ -135,6 +133,9 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
+    if (isEqSetting('mode','production')):
+        aws.endUartPiping(xTarget)
+
     if (isEnabled('runApp')):
         xTarget.collectLogs()
 
