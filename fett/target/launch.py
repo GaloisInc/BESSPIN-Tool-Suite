@@ -58,8 +58,9 @@ def startFett ():
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
             aws.startRemoteLogging(xTarget)
 
-        # Pipe UART to the network
-        aws.startUartPiping(xTarget)
+        if (isEqSetting('mode','production')):
+            # Pipe UART to the network
+            aws.startUartPiping(xTarget)
 
     return xTarget
 
