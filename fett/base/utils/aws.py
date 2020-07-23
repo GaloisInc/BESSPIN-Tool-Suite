@@ -109,26 +109,11 @@ def uploadToS3 (s3Bucket, exitFunc, tarball, pathInBucket):
         exitFunc(message=f"Failed to upload the tarball to the bucket.",exc=exc)
 
 @debugWrap
-def pollPortalQueueIndefinitely (urlQueue, exitFunc):
+def pollPortalIndefinitely (s3Bucket, exitFunc):
     try:
-        import boto3, time
+        import boto3, time, botocore
     except Exception as exc:
-        exitFunc(message=f"Failed to <import boto3, time>.",exc=exc)
-
-    try:
-        sqs = boto3.client('sqs', region_name='us-west-2')
-    except Exception as exc:
-        exitFunc(message=f"Failed to create the SQS client.",exc=exc)
-
-    def delete_message(message):
-        try:
-            sqs.delete_message(
-                QueueUrl=urlQueue,
-                ReceiptHandle=message['ReceiptHandle']
-            )
-            logging.debug(f"pollPortalQueueIndefinitely: Message deleted!")
-        except Exception as exc:
-            exitFunc(message=f"Failed to delete the message from the SQS queue.",exc=exc)
+        exitFunc(message=f"Failed to <import boto3, time, botocore>.",exc=exc)
 
     def formatExc (exc):
         """ format the exception for printing """
@@ -137,33 +122,35 @@ def pollPortalQueueIndefinitely (urlQueue, exitFunc):
         except:
             return '<Non-recognized Exception>'
 
+    try:
+        s3 = boto3.client('s3', region_name='us-west-2')
+    except Exception as exc:
+        exitFunc(message=f"Failed to create the S3 client.",exc=exc)
+
     instanceId = getInstanceId(exitFunc)
 
+    pathInBucket = f'fett-target/production/communication/termination/{instanceId}'
+    logging.debug(f"pollPortalIndefinitely: polling <s3://{s3Bucket}/{pathInBucket}>...")
     while (True):
-        logging.debug("pollPortalQueueIndefinitely: polling (version key-value)...")
+        time.sleep(5)
+
         try:
-            response = sqs.receive_message(
-                QueueUrl=urlQueue,
-                MessageAttributeNames=[
-                    instanceId,
-                ],
-                VisibilityTimeout=5, # 5 seconds are enough
-                WaitTimeSeconds=20 # Long-polling for messages, reduce number of empty receives
-            )
+            s3.head_object(Bucket=s3Bucket, Key=pathInBucket)
+        except botocore.errorfactory.ClientError:
+            continue #File not there yet
         except Exception as exc:
-            exitFunc(message=f"Failed to receive a response from the SQS queue.",exc=exc)
+            exitFunc(message=f"pollPortalIndefinitely: Failed to check the S3 bucket for the file.",exc=exc)
 
-        if ('Messages' in response):
-            for message in response['Messages']:
-                try:
-                    msgInstanceId = message['MessageAttributes'][instanceId]['StringValue'] #just a sanity check
-                except Exception as exc:
-                    logging.debug(f"pollPortalQueueIndefinitely: Failed to get msgInstanceId.\n{formatExc(exc)}.")
-                    continue
-                if (msgInstanceId == instanceId):
-                    logging.debug(f"pollPortalQueueIndefinitely: Received message's instance ID matches!")
-                    delete_message(message)
-                    return
+        # Delete the file and return
+        logging.debug("pollPortalIndefinitely: File found! Deleting it...")
 
-        time.sleep(60)            
+        try:
+            s3.delete_object(Bucket=s3Bucket, Key=pathInBucket)
+        except Exception as exc:
+            logging.error(f"pollPortalIndefinitely: Failed to delete the termination file from the S3 bucket.\n{formatExc(exc)}.")
+
+        logging.debug(f"pollPortalIndefinitely: Deleted <s3://{s3Bucket}/{pathInBucket}>.")
+        break
+
+    return
 

@@ -54,7 +54,9 @@ def collect_run_names():
     run_names = [run_name[:-4] for run_name in unsorted]
     run_names.sort()
 
-    print(f'(Info)~ Listing launch targets:\n{ run_names }\n(Info)~ Done Gathering Targets.')
+    print(
+        f"(Info)~ Listing launch targets:\n{ run_names }\n(Info)~ Done Gathering Targets."
+    )
 
 
 def wait_on_ids_sqs(ids, name):
@@ -383,7 +385,7 @@ def get_runs(count, runs, instance_index):
         else:
             for x in range(0, count):
                 to_run.append([run, x])
-    return to_run, len(to_run)
+    return to_run
 
 
 def main():
@@ -442,7 +444,9 @@ def main():
                 print(
                     f"(Info)~ Launching Run { launch[0] }, Target { run_names[launch[1]] } ({ launch[1] })"
                 )
-                id = start_instance(ami, name, launch[1], branch, binaries_branch, key_path)
+                id = start_instance(
+                    ami, name, launch[1], branch, binaries_branch, key_path
+                )
                 ids.append(id)
                 print(f"(Info)~ Launched Instance 🚀.")
 

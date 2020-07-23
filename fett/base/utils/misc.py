@@ -17,11 +17,9 @@ _settings = dict()
 
 # hardcoded URLs -- needed for emergency reporting
 _settings['awsProdSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-InstanceStatusQueue-1H71N09IEKG3F.fifo'
-_settings['awsProdSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-PortalToInstanceTerminationQueue-CND4M2WJAWOK' 
 _settings['awsProdS3Bucket'] = 'master-ssith-fett-target-researcher-artifacts'
 
 _settings['awsDevSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/363527286999/develop-fettportal-InstanceStatusQueue-1DQ91T9W5DFZ1.fifo'
-_settings['awsDevSqsQueueRX'] = 'https://sqs.us-west-2.amazonaws.com/363527286999/develop-fettportal-PortalToInstanceTerminationQueue-1YKQ0ZBH4B50' 
 _settings['awsDevS3Bucket'] = 'develop-ssith-fett-target-researcher-artifacts'
 
 class EXIT (enum.Enum):
