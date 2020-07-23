@@ -85,7 +85,7 @@ def wait_on_ids_sqs(ids, name):
                 VisibilityTimeout=5,  # 5 seconds are enough
                 WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
             )
-        except Exception as exc:
+        except Exception:
             print_and_exit(f"(Error)~ Failed to receive a response from the SQS queue.")
 
         if "Messages" in response:
@@ -124,7 +124,7 @@ def handle_init():
             print_and_exit("(Error)~ At least one required input is empty.")
 
         # Collect region
-        region = input("(Input)~ Default region name [us-west-2]: ")
+        region = input("(Input)~ Region name [us-west-2]: ")
         output = "json"
 
         region = region if region != "" else "us-west-2"
@@ -156,7 +156,7 @@ def handle_init():
             f.truncate()
 
             # Source zshrc to update changes
-            os.system("source " + str(Path.home()) + "/" + ".zshrc")
+            os.system("source $HOME/.zshrc")
     except Exception as e:
         if isinstance(e, OSError):
             print_and_exit(
@@ -169,7 +169,7 @@ def handle_init():
 def start_instance(ami, name, i, branch, binaries_branch, key_path):
     global run_names
 
-    print(f"(Info)~ Started start_instance with i={ i }")
+    print(f"(Info)~ Started start_instance with i={ i }.")
 
     # Collect AWS Credentials from ~/.aws/credentials
     with open(os.path.expanduser("~/.aws/credentials"), "r") as f:
@@ -190,23 +190,18 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
 
     # If either branch is specified, we need to get a SSH key - best solution so far
     if branch or binaries_branch:
-
         try:
             with open(os.path.expanduser(key_path), "r") as f:
                 key = f.readlines()
                 key = [x.strip() for x in key]
-        except:
+        except Exception:
             print("(Error)~ Invalid Key Path")
 
         userdata_ssh = [
             "runuser -l centos -c 'touch /home/centos/.ssh/aws-ci-gh'",
             "cat >/home/centos/.ssh/aws-ci-gh <<EOL",
         ]
-        userdata_ssh.extend(key)
-        userdata_ssh.append("EOL")
-        userdata_ssh.append(
-            "runuser -l centos -c 'chmod 600 /home/centos/.ssh/aws-ci-gh'"
-        )
+        userdata_ssh.extend(key + ["EOL", "runuser -l centos -c 'chmod 600 /home/centos/.ssh/aws-ci-gh'"])
 
     # Compose userdata contents, depending on whether path was specified.
     # Binaries branch and Target branch provided
@@ -230,10 +225,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
                 nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i } -i { i }"' """,
         ]
 
-        append_to_userdata(userdata_common)
-        append_to_userdata(userdata_ssh)
-        append_to_userdata(userdata_specific)
-
+        append_to_userdata(userdata_common + userdata_ssh + userdata_specific)
     # Only Target branch provided
     elif branch and not binaries_branch:
         userdata_specific = [
@@ -253,19 +245,15 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
                 nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ branch }-{ run_names[i] } -i { i }"' """,
         ]
 
-        append_to_userdata(userdata_common)
-        append_to_userdata(userdata_ssh)
-        append_to_userdata(userdata_specific)
-
+        append_to_userdata(userdata_common + userdata_ssh + userdata_specific)
     # Default branch on both
     else:
-        lines = [
+        userdata_specific = [
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-            nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ run_names[i] } -i { i }"' """
+            nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ run_names[i] } -i { i }"'"""
         ]
 
-        append_to_userdata(userdata_common)
-        append_to_userdata(userdata_specific)
+        append_to_userdata(userdata_common + userdata_specific)
 
     print(
         f"(Info)~ Updated userdata.txt for { name }-{ i }.\n(Info)~ Launching instance and running tests...\n(Info)~ This process may take a few minutes."
@@ -281,9 +269,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
     id = payload["Instances"][0]["InstanceId"]
 
     # Add a name to our instance
-    subprocess_check_output(
-        f"aws ec2 create-tags --resources { id } --tags Key=Name,Value={ name }-{ i }"
-    )
+    subprocess_check_output(f"aws ec2 create-tags --resources { id } --tags Key=Name,Value={ name }-{ i }")
 
     print(f"(Info)~ Launched { name }-{ i } and running tests.")
 
@@ -389,7 +375,7 @@ def test_aws():
     print("(Info)~ AWS CLI installed!")
 
 
-def get_runs():
+def get_runs(count, runs, instance_index):
     to_run = []
     for run in range(1, runs + 1):
         if instance_index:
@@ -416,37 +402,31 @@ def main():
 
         if args.init:
             handle_init()
-        # else:
-        #     with open(Path.home() / ".zshrc", "r") as f:
-        #         lines = f.readlines()
-        #         string = "".join(lines[-3:])
 
-    ami = args.ami
-    name = args.name
-    count = args.count
-    cap = args.cap
-    branch = args.branch
-    binaries_branch = args.binaries_branch
-    key_path = args.key_path
-    runs = args.runs
-    instance_index = args.instance_index
+        ami = args.ami
+        name = args.name
+        count = args.count
+        cap = args.cap
+        branch = args.branch
+        binaries_branch = args.binaries_branch
+        key_path = args.key_path
+        runs = args.runs
+        instance_index = args.instance_index
 
         # Check for and remove results file
         if os.path.isfile("results.txt"):
             os.remove("results.txt")
 
         # Generate list of all launches - these are formatted as [run, index]
-        to_run, total = get_runs()
+        to_run, total = get_runs(count, runs, instance_index)
 
-    # Fix to make sure that only one of the same instances is run at once
-    #   the idx flag is passed
-    if instance_index:
-        cap = 1
+        # Fix to make sure that only one of the same instances is run at once
+        #   the idx flag is passed
+        if instance_index:
+            cap = 1
 
-    # Keep running batches until we have run them all
-    while len(to_run) > 0:
-
-            run_this_iteration = []
+        # Keep running batches until we have run them all
+        while len(to_run) > 0:
             ids = []
 
             # If there are fewer left in to_run than we have capacity, then run them all
@@ -471,16 +451,16 @@ def main():
                 #   to keep the messages from overloading.
                 time.sleep(30)
 
-        print("(Info)~ All Instances Launched! Waiting on SQS.")
-        wait_on_ids_sqs(ids, name)
-        print(f"(Info)~ Got SQS for all { len(run_this_iteration) } Instances")
+            print("(Info)~ All Instances Launched! Waiting on SQS.")
+            wait_on_ids_sqs(ids, name)
+            print(f"(Info)~ Got SQS for all { len(run_this_iteration) } Instances")
 
-        # Wait for the instances to terminate before running the next run
-        if len(to_run) != 0:
-            time.sleep(120)
+            # Wait for the instances to terminate before running the next run
+            if len(to_run) != 0:
+                time.sleep(120)
 
-    print(f"(Info)~ All { len(total) } Instances Completed. Exiting.")
-    exit(0)
+            print(f"(Info)~ All { str(total) } Instances Completed. Exiting.")
+            exit(0)
 
     except Exception as e:
         if isinstance(e, KeyboardInterrupt):
