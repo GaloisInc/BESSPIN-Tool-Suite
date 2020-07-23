@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-"""
+""" 
 Main commonTarget class + misc common functions
 """
 
@@ -228,7 +228,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 120
             elif (isEqSetting('target', 'aws')):
-                timeout = 540
+                timeout = 480
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -264,7 +264,7 @@ class commonTarget():
 
         #up the ethernet adaptor and get the ip address
         self.activateEthernet()
-
+                                  
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         awsNtpServer = "169.254.169.123"
         if (isEqSetting('osImage','debian')):
@@ -505,7 +505,7 @@ class commonTarget():
         "   shutdownOnError: Boolean. Whether to return or shutdown in case of error (timeout or contents related error)
         "   timeout: how long to wait for endsWith before timing out.
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
-        "   tee: A file object to write the text output to. Has to be a valid file object to write.
+        "   tee: A file object to write the text output to. Has to be a valid file object to write. 
         "   RETURNS:
         "   --------
         "   A list: [isSuccess  : "Boolean. True on no-errors.",
@@ -760,7 +760,7 @@ class commonTarget():
             appModule.install(self)
             appLog.flush()
 
-        # Test
+        # Test    
         for appModule in self.appModules:
             appModule.deploymentTest(self)
             appLog.flush()
@@ -775,7 +775,7 @@ class commonTarget():
         if (getSetting('osImage') not in ['debian', 'FreeBSD']):
             printAndLog(f"No logs to be collected from <{getSetting('osImage')}>.",doPrint=False)
             return
-
+        
         # Collect all logs into one directory
         logsPathName = 'logsFromTarget'
         logsPathOnTarget = f'/root/{logsPathName}'
@@ -793,7 +793,7 @@ class commonTarget():
         self.runCommand (f"cp /var/log/* {logsPathOnTarget}") #On debian, this returns `cp: ommitted directories`
         self.runCommand(f"dmesg > {os.path.join(logsPathOnTarget,'dmesg.txt')}")
         printAndLog (f"collectLogs: Collected syslogs.")
-
+        
         # Create the tarball
         logsTarball = 'logsFromTarget.tar'
         self.runCommand(f"tar cvf {logsTarball} {logsPathName}",erroneousContents=['gzip:','Error','tar:'])
@@ -813,7 +813,7 @@ class commonTarget():
         self.switchUser () #login as user
         artifactPath = getSetting('extraArtifactsPath')
         if(self.sendFile(
-            artifactPath, logsTarball,
+            artifactPath, logsTarball,       
             targetPathToFile=f'/home/{self.userName}',
             forceScp=True, toTarget=False, shutdownOnError=False
         )):
