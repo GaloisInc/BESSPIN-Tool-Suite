@@ -42,10 +42,12 @@ def print_and_log(text, color="white"):
 
 
 def subprocess_call(command):
+    log(f"(Debug)~ Called Command { command }")
     return subprocess.call(command.split(sep=" "))
 
 
 def subprocess_check_output(command):
+    log(f"(Debug)~ Called Command { command }")
     proc = subprocess.Popen(command.split(sep=" "), stdout=subprocess.PIPE)
     out = proc.stdout.read()
     return out
@@ -108,6 +110,7 @@ def wait_on_ids_sqs(ids, name):
             print_and_exit(f"(Error)~ Failed to receive a response from the SQS queue.")
 
         if "Messages" in response:
+            log(f"(Debug)~ Got SQS Response { response }")
             for message in response["Messages"]:
                 body = json.loads(message["Body"])
                 instance_id = body["instance"]["id"]
@@ -186,16 +189,18 @@ def handle_init():
             print_and_exit()
 
 
-def start_instance(ami, name, i, branch, binaries_branch, key_path):
+def start_instance(ami, name, r, i, branch, binaries_branch, key_path):
     global run_names
 
-    print_and_log(f"(Info)~ Started start_instance with i={ i }", "green")
+    log(f"(Debug)~ Started start_instance with i={ i }")
 
     # Collect AWS Credentials from ~/.aws/credentials
     with open(os.path.expanduser("~/.aws/credentials"), "r") as f:
         lines = f.readlines()
 
     aws_creds = [line.split(" ")[2].strip() for line in lines[1:]]
+
+    instance_name = ""
 
     userdata_common = [
         "#!/bin/bash",
@@ -228,6 +233,7 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
     # Compose userdata contents, depending on whether path was specified.
     # Binaries branch and Target branch provided
     if branch and binaries_branch:
+        instance_name = f"{ name }-r{ r }-i{ i }-{ branch.strip("/+=-_") }-{ binaries_branch.strip("/+=-_") }-{ run_names[i] }"
         userdata_specific = [
             f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/aws-ci-gh && 
                 cd /home/centos/SSITH-FETT-Target/ && 
@@ -244,12 +250,13 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
                 git-lfs pull && 
                 cd .. "'""",
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i } -i { i }"' """,
+                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { instance_name } -i { i }"' """,
         ]
 
         append_to_userdata(userdata_common + userdata_ssh + userdata_specific)
     # Only Target branch provided
     elif branch and not binaries_branch:
+        instance_name = f"{ name }-r{ r }-i{ i }-{ branch.strip("/+=-_") }-{ run_names[i] }"
         userdata_specific = [
             f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/aws-ci-gh && 
                 cd /home/centos/SSITH-FETT-Target/ && 
@@ -264,23 +271,30 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
                 git-lfs pull && 
                 cd .. "'""",
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ branch }-{ run_names[i] } -i { i }"' """,
+                nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { instance_name } -i { i }"' """,
         ]
 
         append_to_userdata(userdata_common + userdata_ssh + userdata_specific)
     # Default branch on both
     else:
+        instance_name = f"{ name }-r{ r }-i{ i }-{ run_names[i] }"
         userdata_specific = [
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-            nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { name }-{ i }-{ run_names[i] } -i { i }"'"""
+            nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job { instance_name } -i { i }"'"""
         ]
 
         append_to_userdata(userdata_common + userdata_specific)
 
+    if len(instance_name) > 256:
+        print_and_log(f"(Warning)~ Generated Instance Name [{ instance_name }] is too long, Trimming for name tag.")
+        instance_name = instance_name[:256]
+
     print_and_log(
-        f"(Info)~ Launching instance { name }-{ i }: this process may take a few minutes.",
+        f"(Info)~ Launching instance { instance_name }: this process may take a few minutes.",
         "green",
     )
+
+    log(f"(Debug)~ Specific Userdata Section Contained: { userdata_specific } for instance { instance_name }")
 
     # Start up an instance
     raw_payload = subprocess_check_output(
@@ -292,9 +306,9 @@ def start_instance(ami, name, i, branch, binaries_branch, key_path):
     id = payload["Instances"][0]["InstanceId"]
 
     # Add a name to our instance
-    subprocess_check_output(f"aws ec2 create-tags --resources { id } --tags Key=Name,Value={ name }-{ i }")
+    subprocess_check_output(f"aws ec2 create-tags --resources { id } --tags Key=Name,Value={instance_name}")
 
-    print_and_log(f"(Info)~ Launched { name }-{ i } and running tests.", "cyan")
+    print_and_log(f"(Info)~ Launched { instance_name } and running tests.", "cyan")
 
     # Comment for debug
     os.remove("userdata.txt")
@@ -425,6 +439,8 @@ def main():
         # Parse Arguments
         args = config_parser()
 
+        log(f"(Debug)~ Arguments: { args }")
+
         ami = args.ami
         name = args.name
         count = args.count
@@ -470,7 +486,7 @@ def main():
                     "green",
                 )
                 id = start_instance(
-                    ami, name, launch[1], branch, binaries_branch, key_path
+                    ami, name, launch[0], launch[1], branch, binaries_branch, key_path
                 )
                 ids.append(id)
                 print_and_log(f"(Info)~ Launched Instance 🚀.", "green")
