@@ -29,11 +29,13 @@ def print_and_exit(message=""):
     print_and_log(f"{ message }\n(Error)~ Exiting nightly testing.", "red")
     exit(0)
 
-
-def print_and_log(text, color="white"):
+def log(text):
     # Write to log
     with open("nightly-ci.log", "a") as f:
         f.write(text + "\n")
+
+def print_and_log(text, color="white"):
+    log(text)    
 
     # Print to Console in Color
     print(colored(text.split(" ")[0], color) + " " + " ".join(text.split(" ")[1:]))
