@@ -477,7 +477,6 @@ def main():
 
         # Source zshrc to update changes
         subprocess_call("source $HOME/.zshrc")
-        exit()
 
         # Generate list of all launches - these are formatted as [run, index]
         to_run = get_runs(count, runs, instance_index)
