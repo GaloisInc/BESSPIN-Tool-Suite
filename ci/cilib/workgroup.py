@@ -35,8 +35,13 @@ class AWSCredentials:
     @staticmethod
     def has_credential_file(filename=''):
         """checks if suitable file exists for from_credentials_file classmethod"""
-        # TODO: implement has_credential_file
-        raise NotImplementedError
+        if filename == '':
+            assert os.path.exists("~/.aws/credentials"), "Credentials file doesn't exist: use 'aws configure' or set " \
+                                                         "your credentials in ~/.aws/credentials"
+        else:
+            assert os.path.exists(filename), "Credentials file doesn't exist: use 'aws configure', set " \
+                                             "your credentials in ~/.aws/credentials, or create a " \
+                                             "credentials file somewhere else "
 
     @classmethod
     def from_env_vars(cls):
@@ -46,10 +51,21 @@ class AWSCredentials:
         return cls([os.environ[v] for v in vars])
 
     @classmethod
-    def from_credentials_file(self, filepath):
+    def from_credentials_file(cls, filepath=''):
         """get AWS credentials from file"""
-        # TODO: Implement from_credential_files
-        raise NotImplementedError
+        cls.has_credential_file(filepath)
+
+        keys = {id: '', secret: '', session: ''}
+        with open(filepath, 'r') as f:
+            lines = f.readlines()
+            for l in lines:
+                if 'aws_access_key_id' in l:
+                    keys['id'] = l.strip().split('=')[1][1:]
+                elif 'aws_secret_access_key' in l:
+                    keys['secret'] = l.strip().split('=')[1][1:]
+                elif 'aws_session_token' in l:
+                    keys['session'] = l.strip().split('=')[1][1:]
+        return cls([keys.id, keys.secret, keys.session])
 
     @classmethod
     def from_interactive(cls):
@@ -93,7 +109,7 @@ class AWSCredentials:
         assert re.fullmatch(
             '[a-zA-Z0-9+/]{19}[/]{10}[a-zA-Z0-9+/]{119,121}[/]{10}[a-zA-Z0-9+/]{662,664}==',
             cred[2]
-        ), "AWS Session Token follows an incorrect pattern."
+        ), "AWS Session Token follows an incorrect pattern"
 
     def __getitem__(self, index):
         return self._credentials[index]
