@@ -693,8 +693,8 @@ def startRemoteLogging (target):
 @decorate.debugWrap
 def startUartPiping(target):
     try:
-        target.uartNetcatProc = subprocess.Popen(
-            ['nc', '-k', '-l', getSetting('awsMainAdaptorIP'),str(getSetting('uartFwdPort'))],
+        target.uartSocatProc = subprocess.Popen(
+            ['socat', 'STDIO,ignoreeof', f"TCP-LISTEN:{getSetting('uartFwdPort')},reuseaddr,fork,max-children=1"],
             stdout=target.process.child_fd,stdin=target.process.child_fd,stderr=target.process.child_fd)
     except Exception as exc:
         target.shutdownAndExit(f"startUartPiping: Failed to start the netcat listening process.",exc=exc,exitCode=EXIT.Run)
@@ -702,7 +702,7 @@ def startUartPiping(target):
 @decorate.debugWrap
 def endUartPiping(target):
     try:
-        target.uartNetcatProc.kill() # No need for fancier ways as we use Popen with shell=False
+        target.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
     except Exception as exc:
         warnAndLog("endUartPiping: Failed to kill the netcat listening process.",doPrint=False,exc=exc)
 
