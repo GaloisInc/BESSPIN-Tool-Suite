@@ -5,6 +5,7 @@ import time
 import os
 import functools
 import subprocess
+import re
 import multiprocessing.pool as mpool
 
 import paramiko
@@ -75,7 +76,23 @@ class AWSCredentials:
         # credentials must assume the string type
         for c in cred:
             assert isinstance(c, str), f"element of credentials '{c}' must be a string instance"
-        # TODO: implement better checks for the contents
+
+        # access key ID checks
+        assert len(cred[0]) == 20, "AWS Access Key ID must be of length 20"
+        assert re.fullmatch('[A-Z0-9]+', cred[0]), "AWS Access Key ID must be a combination of numbers and uppercase " \
+                                                   "letters"
+
+        # secret access key checks
+        assert len(cred[1]) == 40, "AWS Secret Access Key must be of length 40"
+        assert re.fullmatch('[a-zA-Z0-9+/]+', cred[0]), "AWS Secret Access key must be a combination of numbers, " \
+                                                        "letters, '+', and '/' "
+
+        # session token checks
+        assert len(cred[2]) == 824, "AWS Session Token must be of length 824"
+        assert re.fullmatch(
+            '[a-zA-Z0-9+/]{19}[/]{10}[a-zA-Z0-9+/]{119,121}[/]{10}[a-zA-Z0-9+/]{662,664}==',
+            cred[2]
+        ), "AWS Session Token follows an incorrect pattern."
 
     def __getitem__(self, index):
         return self._credentials[index]
