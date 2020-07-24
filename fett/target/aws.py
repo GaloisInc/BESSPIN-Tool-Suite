@@ -697,12 +697,12 @@ def startUartPiping(target):
             ['socat', 'STDIO,ignoreeof', f"TCP-LISTEN:{getSetting('uartFwdPort')},reuseaddr,fork,max-children=1"],
             stdout=target.process.child_fd,stdin=target.process.child_fd,stderr=target.process.child_fd)
     except Exception as exc:
-        target.shutdownAndExit(f"startUartPiping: Failed to start the netcat listening process.",exc=exc,exitCode=EXIT.Run)
+        target.shutdownAndExit(f"startUartPiping: Failed to start the listening process.",exc=exc,exitCode=EXIT.Run)
 
 @decorate.debugWrap
 def endUartPiping(target):
     try:
         target.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
     except Exception as exc:
-        warnAndLog("endUartPiping: Failed to kill the netcat listening process.",doPrint=False,exc=exc)
+        warnAndLog("endUartPiping: Failed to kill the listening process.",doPrint=False,exc=exc)
 
