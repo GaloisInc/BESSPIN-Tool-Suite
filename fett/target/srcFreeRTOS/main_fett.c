@@ -102,7 +102,9 @@ void vMain (void *pvParameters) {
                 if (recvNotification & NOTIFY_FAIL_OTA) {
                     fettPrintf("(Error)~  vMain: Received OTA fail notification.\r\n");
                 }
-                if (!(recvNotification & NOTIFY_FAIL_HTTP) && !(recvNotification & NOTIFY_FAIL_OTA)) {
+
+		// Only HTTP or OTA or BOTH should have notified. Any other bit set is an error
+		if ((recvNotification & (NOTIFY_FAIL_HTTP | NOTIFY_FAIL_OTA)) != recvNotification) {
                     fettPrintf("(Error)~  vMain: Received unknown fail notification. [notif=0x%lx]\r\n",recvNotification);
                 }
                 exitCode = 1;
@@ -115,7 +117,9 @@ void vMain (void *pvParameters) {
                     fettPrintf("(Success)~  vMain: Received OTA success notification.\r\n");
                     iNotif++;
                 }
-                if (!(recvNotification & NOTIFY_SUCCESS_HTTP) && !(recvNotification & NOTIFY_SUCCESS_OTA)) {
+
+		// Only HTTP or OTA or BOTH should have notified. Any other bit set is an error
+		if ((recvNotification & (NOTIFY_SUCCESS_HTTP | NOTIFY_SUCCESS_OTA)) != recvNotification) {
                     fettPrintf("(Error)~  vMain: Received unknown success notification. [notif=0x%lx]\r\n",recvNotification);
                     exitCode = 1;
                 }
