@@ -68,11 +68,11 @@ def buildCwesEvaluation():
             # TODO: Write this based on values in the config file.  You'll also
             # have to change it based on the suite being run.  Lastly, it
             # doesn't seem to exist for all classes of vulnerabilities.
-            with open(os.path.join(testsParametersHeader), 'w') as f:
+            with ftOpenFile(os.path.join(testsParametersHeader), 'w') as f:
                 f.write("#define nResourceLimit 10\n")
         elif vulClass == "numericErrors":
             # Write empty configuration header file (nothing to configure)
-            open(testsParametersHeader, 'w').close()
+            ftOpenFile(testsParametersHeader, 'w').close()
 
         if isEqSetting('osImage', 'FreeRTOS'):
             prepareFreeRTOS(vulClassDir)
@@ -146,16 +146,20 @@ def prepareFreeRTOS(directory):
 @decorate.timeWrap
 def buildFreeRTOSTest(test, vulClass, part):
     # TODO: Some options in target.build.prepareFreeRTOS are omitted here
-    # TODO: Can I refactor this to reuse code in target.build.prepareFreeRTOS?
 
     fett.target.build.freeRTOSBuildChecks()
 
     # Remove all files, but not folders, from build directory
     for f in os.listdir(getSetting('buildDir')):
+        path = os.path.join(getSetting('buildDir'), f)
         try:
-            os.remove(os.path.join(getSetting('buildDir'), f))
+            os.remove(path)
         except IsADirectoryError:
             pass
+        except Exception as exc:
+            logAndExit(f'<buildFreeRTOSTest> Failed to remove <{path}>',
+                       exc=exc,
+                       exitCode=EXIT.Files_and_paths)
 
     #copy the C files, .mk files, and any directory
     copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),
@@ -181,7 +185,7 @@ def buildFreeRTOSTest(test, vulClass, part):
 
     # TODO: Put listConfigParams back in to fill the header file?
     # Write empty fett configuration header file (nothing to configure)
-    open(os.path.join(getSetting('buildDir'), "fettUserConfig.h"), 'w').close()
+    ftOpenFile(os.path.join(getSetting('buildDir'), "fettUserConfig.h"), 'w').close()
 
     fett.target.build.prepareFreeRTOSNetworkParameters()
 
@@ -191,7 +195,7 @@ def buildFreeRTOSTest(test, vulClass, part):
                       else getSetting("target").upper())
 
     # Define variables testgen uses
-    with open(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a') as mk:
+    with ftOpenFile(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a') as mk:
         mk.write("CFLAGS += "
                  "-DtestgenOnFreeRTOS "
                  f"-Dtestgen{backend} "

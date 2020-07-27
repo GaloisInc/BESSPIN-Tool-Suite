@@ -27,7 +27,7 @@ def executeTest(target, vulClass, binTest, logDir):
     printAndLog(f"Executing {testName}...")
     outLog = cweTests[vulClass](target).executeTest(binTest)
     logFile = os.path.join(logDir, f'{testName}.log')
-    with open(logFile, 'w') as f:
+    with ftOpenFile(logFile, 'w') as f:
         f.write(outLog)
 
 @decorate.debugWrap
@@ -71,7 +71,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         logDir = os.path.join(baseLogDir, vulClass)
         mkdir(logDir, exitIfExists=False)
         testName = test.split('.')[0]
-        with open(os.path.join(logDir, f"{testName}.log"), 'a') as f:
+        with ftOpenFile(os.path.join(logDir, f"{testName}.log"), 'a') as f:
             f.write(output[0])
 
     elif getSetting('osImage') in ['debian', 'FreeBSD']:
