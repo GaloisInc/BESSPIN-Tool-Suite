@@ -30,7 +30,7 @@ void vStartNetwork (void *pvParameters) {
     xTaskStartNtk = xTaskGetCurrentTaskHandle();
 
 
-    fettPrintf("vStartNetwork: task initial SHWM is %u\n",
+    fettPrintf("(Info)~  vStartNetwork: task initial SHWM is %u\n",
                (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
 
@@ -53,7 +53,7 @@ void vStartNetwork (void *pvParameters) {
     funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_NTK ,eSetBits);
     ASSERT_OR_DELETE_TASK((funcReturn == pdPASS), "startNetwork: Notify <main:task>.");
 
-    fettPrintf("vStartNetwork: task final SHWM is %u\n",
+    fettPrintf("(Info)~  vStartNetwork: task final SHWM is %u\n",
                (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
     vTaskDelete (NULL);

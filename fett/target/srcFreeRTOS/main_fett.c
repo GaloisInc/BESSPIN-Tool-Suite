@@ -21,11 +21,11 @@ void main_fett () {
 
     if (funcReturn == pdPASS)
     {
-        fettPrintf ("(Info)~  main_fett: Creating vMain task OK.");
+        fettPrintf ("(Info)~  main_fett: Creating vMain task OK.\n");
     }
     else
     {
-        fettPrintf ("(Error)~  main_fett: Creating vMain task.");
+        fettPrintf ("(Error)~  main_fett: Creating vMain task.\n");
     }
     return;
 }
@@ -39,8 +39,8 @@ void vMain (void *pvParameters) {
 
     xMainTask = xTaskGetCurrentTaskHandle();
 
-    fettPrintf("vMain: Main task started...\r\n");
-    fettPrintf("vMain: Main task initial SHWM is %u\n",
+    fettPrintf("(Info)~  vMain: Main task started...\n");
+    fettPrintf("(Info)~  vMain: Main task initial SHWM is %u\n",
                (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
     // Start the network task to configure the network before the hook -- has to be the first thing
@@ -135,7 +135,7 @@ void vMain (void *pvParameters) {
         exitCode = 1;
     }
 
-    fettPrintf("vMain: Main task final SHWM is %u\n",
+    fettPrintf("(Info)~  vMain: Main task final SHWM is %u\n",
                (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
     exitFett(exitCode);
