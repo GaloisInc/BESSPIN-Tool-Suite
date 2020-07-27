@@ -241,7 +241,7 @@ class commonTarget():
 
         if (isEqSetting('mode', 'evaluateSecurityTests') and
             isEqSetting('osImage', 'FreeRTOS')):
-            printAndLog (f"start: {getSetting('osImage')} booted successfully!")
+            # Return early to save time by avoiding unnecessary setup
             return
 
         #up the ethernet adaptor and get the ip address
