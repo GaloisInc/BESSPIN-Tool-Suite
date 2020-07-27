@@ -108,14 +108,20 @@ void vHttp(void *pvParameters)
     BaseType_t funcReturn;
 
     fettPrintf("(Info)~  vHttp: Starting HTTP...\r\n");
+    fettPrintf("(Info)~  vHttp: task initial SHWM is %u\n",
+               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
     Http_Worker();
 
     fettPrintf("(Info)~  vHttp: Exiting HTTP...\r\n");
+    fettPrintf("(Info)~  vHttp: task final SHWM is %u\n",
+               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
     // notify main
     ASSERT_OR_DELETE_TASK((xMainTask != NULL),
                           "vHttp: Get handle of <main:task>.");
+    fettPrintf("(Info)~  vHttp: Notifying xMainTask with value %u\n",
+               (uint32_t) NOTIFY_SUCCESS_HTTP);
     funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_HTTP, eSetBits);
     ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
                           "vHttp: Notify <main:task>.");
