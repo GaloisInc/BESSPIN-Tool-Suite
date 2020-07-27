@@ -29,6 +29,11 @@ void vStartNetwork (void *pvParameters) {
     BaseType_t funcReturn;
     xTaskStartNtk = xTaskGetCurrentTaskHandle();
 
+
+    fettPrintf("vStartNetwork: task initial SHWM is %u\n",
+               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
+
+
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
     ASSERT_OR_DELETE_TASK ((funcReturn == pdPASS), "startNetwork: Initialize Network IP.");
 
@@ -47,6 +52,9 @@ void vStartNetwork (void *pvParameters) {
     ASSERT_OR_DELETE_TASK((xMainTask != NULL), "startNetwork: Get handle of <main:task>.");
     funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_NTK ,eSetBits);
     ASSERT_OR_DELETE_TASK((funcReturn == pdPASS), "startNetwork: Notify <main:task>.");
+
+    fettPrintf("vStartNetwork: task final SHWM is %u\n",
+               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
     vTaskDelete (NULL);
 } //vStartNetwork
