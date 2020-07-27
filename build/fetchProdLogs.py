@@ -23,9 +23,7 @@ def main():
 if __name__ == '__main__':
     # Reading the bash arguments
     xArgParser = argparse.ArgumentParser (description='Fetch FETT logs from production')
-    xGroupConfig = xArgParser.add_mutually_exclusive_group(required=True)
-    xGroupConfig.add_argument ('-a', '--allLogs', help='Download all production artifacts.', action='store_true')
-    xGroupConfig.add_argument ('-g', '--grepFilter', help='Download the tarballs containing the search string.')
+    xArgParser.add_argument ('-g', '--grepFilter', help='Download the tarballs containing the search string.')
     xArgParser.add_argument ('-ts', '--startTime', help='Download the tarballs created after start time.')
     xArgParser.add_argument ('-tf', '--endTime', help='Download the tarballs created before end time.')
     xArgParser.add_argument ('-o', '--outputDirectory', help='Overwrites the default output directory: ./logsDir/')
