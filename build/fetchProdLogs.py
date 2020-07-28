@@ -35,6 +35,26 @@ def exitOnInterrupt (xSig,xFrame):
         sigName = f"signal#{xSig}"
     errorExit(f"Received <{sigName}>!")
 
+def parseTimeInput (argDatetime):
+    def parseTimestamp(timestamp):
+        try:
+            return datetime.datetime.fromtimestamp(timestamp).replace(tzinfo=datetime.timezone.utc)
+        except Exception as exc:
+            errorExit(f"Invalid input timestamp <{timestamp}>.",exc=exc)
+    
+    def parseDate(date):
+        try:
+            return datetime.datetime(*[int(elem) for elem in date.split('-')], tzinfo=datetime.timezone.utc)
+        except Exception as exc:
+            errorExit(f"Invalid input date <{date}>. Please use the format <yyyy-mm-dd>.",exc=exc)
+
+    try:
+        timestamp = int(argDatetime)
+    except:
+        return parseDate(argDatetime)
+    
+    return parseTimestamp(timestamp)
+
 def main(xArgs):
 
     try:
@@ -71,17 +91,11 @@ def main(xArgs):
     if (xArgs.startTime or xArgs.endTime):
         doCheckTime = True
         if (xArgs.startTime): # check starting time
-            try:
-                timeStart = datetime.datetime.fromtimestamp(xArgs.startTime)
-            except Exception as exc:
-                errorExit(f"Invalid input timestamp fpr <startTime>.",exc=exc)
+            timeStart = parseTimeInput(xArgs.startTime)
         else:
             timeStart = datetime.datetime(2020, 7, 14, tzinfo=datetime.timezone.utc) #before launch date
         if (xArgs.endTime): # check ending time
-            try:
-                timeEnd = datetime.datetime.fromtimestamp(xArgs.endTime)
-            except Exception as exc:
-                errorExit(f"Invalid input timestamp fpr <endTime>.",exc=exc)
+            timeEnd = parseTimeInput(xArgs.endTime)
         else:
             timeEnd = datetime.datetime(2100, 1, 1, tzinfo=datetime.timezone.utc) #We're all be dead by then
 
@@ -147,8 +161,8 @@ if __name__ == '__main__':
     # Reading the bash arguments
     xArgParser = argparse.ArgumentParser (description='Fetch FETT logs from production')
     xArgParser.add_argument ('-g', '--grepFilter', help='Download the tarballs containing the search string.')
-    xArgParser.add_argument ('-ts', '--startTime', help='Download the tarballs created after start time (timestamp).',type=int)
-    xArgParser.add_argument ('-tf', '--endTime', help='Download the tarballs created before end time (timestamp).',type=int)
+    xArgParser.add_argument ('-ts', '--startTime', help='Download the tarballs created after start time (timestamp or yyyy-mm-dd).')
+    xArgParser.add_argument ('-tf', '--endTime', help='Download the tarballs created before end time (timestamp or yyyy-mm-dd).')
     xArgParser.add_argument ('-o', '--outputDirectory', help='Overwrites the default output directory: $repoDir/logsDir/')
     xArgParser.add_argument ('-v', '--Verbose', help='Prints the names of the files that are downloaded.', action='store_true')
     xArgs = xArgParser.parse_args()
