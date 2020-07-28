@@ -22,37 +22,47 @@ def subprocess_check_output(command=""):
 
 
 class AWSCredentials:
-    """Obtain, Set and Get AWS Credentials for AWSPowerUserAccess"""
+    """Obtain, set and get AWS credentials for AWSPowerUserAccess."""
+    def __init__(self, credentials):
+        """
+        Store length 3 list of AWS credentials
 
-    @staticmethod
-    def has_env_vars():
-        """checks if necessary enviroment variables exist for from_env_vars classmethod"""
-        vars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']
-        for v in vars:
-            assert v in os.environ, f"AWSCredentials must have environment variable {v} for from_env_vars " \
-                                    f"classmethod"
+        :param credentials: List of AWS credentials: AWS Access Key ID, AWS Secret Access Key, and AWS Session Token
+        :type credentials: list
 
-    @staticmethod
-    def has_credential_file(filename=''):
-        """checks if suitable file exists for from_credentials_file classmethod"""
-        if filename == '':
-            assert os.path.exists("~/.aws/credentials"), "Credentials file doesn't exist: use 'aws configure' or set " \
-                                                         "your credentials in ~/.aws/credentials"
-        else:
-            assert os.path.exists(filename), "Credentials file doesn't exist: use 'aws configure', set " \
-                                             "your credentials in ~/.aws/credentials, or create a " \
-                                             "credentials file somewhere else "
+        :return: A new AWSCredentials instance
+        :rtype: AWSCredentials
+        """
+
+        self._check_credentials(credentials)
+        self._credentials = credentials
+        logging.info(f"{self.__class__.__name__} successfully obtained credentials")
 
     @classmethod
     def from_env_vars(cls):
-        """get AWS credentials from environment variables"""
+        """
+        Get AWS credentials from environment variables
+
+        :return: A new AWSCredentials instance
+        :rtype: AWSCredentials
+        """
+
         vars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']
         cls.has_env_vars()
         return cls([os.environ[v] for v in vars])
 
     @classmethod
-    def from_credentials_file(cls, filepath=''):
-        """get AWS credentials from file"""
+    def from_credentials_file(cls, filepath='~/.aws/credentials'):
+        """
+        Get AWS credentials from file
+
+        :param filepath: (Optional) Path for the AWS credentials file, defaults to '~/.aws/credentials'
+        :type filepath: str, optional
+
+        :return: A new AWSCredentials instance
+        :rtype: AWSCredentials
+        """
+
         cls.has_credential_file(filepath)
 
         keys = {id: '', secret: '', session: ''}
@@ -69,7 +79,13 @@ class AWSCredentials:
 
     @classmethod
     def from_interactive(cls):
-        """get AWS credentials from interactive sessions"""
+        """
+        Get AWS credentials from interactive session
+
+        :return: A new AWSCredentials instance
+        :rtype: AWSCredentials
+        """
+
         logging.info(
             f"{cls.__class__.__name__} classmethod from_interactive: performing interactive session to get AWS "
             f"credentials from the user")
@@ -80,19 +96,52 @@ class AWSCredentials:
         logging.info(f"{cls.__class__.__name__} classmethod from_interactive: finished interactive session")
         return cls([id, secret, session])
 
-    def __init__(self, credentials):
-        """store length 3 list of AWS credentials"""
-        self._check_credentials(credentials)
-        self._credentials = credentials
-        logging.info(f"{self.__class__.__name__} successfully obtained credentials")
+    @staticmethod
+    def has_env_vars():
+        """
+        Checks if necessary environment variables exist for from_env_vars classmethod
+
+        :raises AssertionError: Credentials not found in environment variables
+        """
+
+        vars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']
+        for v in vars:
+            assert v in os.environ, f"AWSCredentials must have environment variable {v} for from_env_vars " \
+                                    f"classmethod"
+
+    @staticmethod
+    def has_credential_file(filename):
+        """
+        Checks if suitable file exists for from_credentials_file classmethod
+
+        :raises AssertionError: Credentials could not be found in specified filepath
+        """
+
+        assert os.path.exists(filename), "Credentials file doesn't exist: use 'aws configure', set " \
+                                         "your credentials in ~/.aws/credentials, or create a " \
+                                         "credentials file somewhere else "
 
     def _check_credentials(self, cred):
-        """ensure that the credentials are valid"""
+        """
+        Ensure that the credentials are valid
+
+        :param cred: List of credentials
+        :type cred: list
+
+        :raises AssertionError (1): Must have 3 credentials in the list
+        :raises AssertionError (2): First key must be length 20 (AWS Access Key ID)
+        :raises AssertionError (3): First key must conform to key pattern (AWS Access Key ID)
+        :raises AssertionError (4): Second key must be length 40 (AWS Secret Access Key)
+        :raises AssertionError (5): Second key must conform to key pattern (AWS Secret Access Key)
+        :raises AssertionError (6): Third key must be length 846 (AWS Session Token)
+        :raises AssertionError (7): Third key must conform to key pattern (AWS Session Token)
+        """
+
         # credentials must be an array of length 3
-        assert len(cred) == 3, f"credentials '{cred}' must be of length 3"
+        assert len(cred) == 3, f"Credentials '{cred}' must be of length 3"
         # credentials must assume the string type
         for c in cred:
-            assert isinstance(c, str), f"element of credentials '{c}' must be a string instance"
+            assert isinstance(c, str), f"Element of credentials '{c}' must be a string instance"
 
         # access key ID checks
         assert len(cred[0]) == 20, "AWS Access Key ID must be of length 20"
@@ -102,7 +151,7 @@ class AWSCredentials:
         # secret access key checks
         assert len(cred[1]) == 40, "AWS Secret Access Key must be of length 40"
         assert re.fullmatch('[a-zA-Z0-9+/]+', cred[0]), "AWS Secret Access key must be a combination of numbers, " \
-                                                        "letters, '+', and '/' "
+                                                        "letters, '+', and '/'"
 
         # session token checks
         assert len(cred[2]) == 824, "AWS Session Token must be of length 824"
@@ -112,27 +161,70 @@ class AWSCredentials:
         ), "AWS Session Token follows an incorrect pattern"
 
     def __getitem__(self, index):
+        """
+        Gets a specified credential
+
+        :param index: Index of the credential (0-2)
+        :type index: int
+
+        :return: The specified credential
+        :rtype: str
+        """
+
+        assert 0 < index < 2, "Index must be between 0 and 2, inclusive"
+
         return self._credentials[index]
 
     @property
     def credentials(self):
+        """
+        Getter for the 'credentials' property. Returns the list of credentials.
+
+        :return: The list of credentials
+        :rtype: list
+        """
+
         return self._credentials
 
     @credentials.setter
     def credentials(self, cred):
+        """
+        Setter for the 'credentials' property.
+
+        :param cred: List of credentials
+        :type cred: list
+        """
         self._check_credentials(cred)
         self._credentials = cred
 
     @property
     def access_key_id(self):
+        """
+        Getter for the AWS Access Key ID.
+
+        :return: AWS Access Key ID
+        :rtype: str
+        """
         return self._credentials[0]
 
     @property
     def secret_key_access(self):
+        """
+        Getter for the AWS Secret Access Key.
+
+        :return: AWS Secret Access Key
+        :rtype: str
+        """
         return self._credentials[1]
 
     @property
     def session_token(self):
+        """
+        Getter for the AWS Session Token.
+
+        :return: AWS Session Token
+        :rtype: str
+        """
         return self._credentials[2]
 
 
