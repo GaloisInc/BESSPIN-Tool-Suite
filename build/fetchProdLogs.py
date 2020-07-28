@@ -2,7 +2,26 @@
 
 """
 --- fetchProdLogs.py is a utility to fetch logs from FETT production.
---- usage:
+--- usage: fetchProdLogs.py [-h] [-g GREPFILTER] [-ts STARTTIME] [-tf ENDTIME]
+                        [-o OUTPUTDIRECTORY] [-x] [-v]
+
+Fetch FETT logs from production
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -g GREPFILTER, --grepFilter GREPFILTER
+                        Download the tarballs containing the search string.
+  -ts STARTTIME, --startTime STARTTIME
+                        Download the tarballs created after start time
+                        (timestamp or yyyy-mm-dd).
+  -tf ENDTIME, --endTime ENDTIME
+                        Download the tarballs created before end time
+                        (timestamp or yyyy-mm-dd).
+  -o OUTPUTDIRECTORY, --outputDirectory OUTPUTDIRECTORY
+                        Overwrites the default output directory:
+                        $repoDir/logsDir/
+  -x, --untar           Extracts all the tarballs after downloading.
+  -v, --verbose         Prints the names of the files that are downloaded.
 """
 
 import sys, os, traceback, shutil, signal, glob
