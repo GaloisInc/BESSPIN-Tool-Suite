@@ -6,7 +6,7 @@
 """
 
 import sys, os, traceback, shutil, signal
-import boto3, botocore, argparse
+import boto3, botocore, argparse, datetime
 
 prodBucket = 'master-ssith-fett-target-researcher-artifacts'
 artifactsPath = 'fett-target/production/artifacts'
@@ -22,8 +22,9 @@ def errorExit(message,exc=None):
     if (exc):
         message += f"\n{formatExc(exc)}."
     print(f"(ERROR)~ {message}")
-    if (exc):
-        print(traceback.format_exc())
+    # Uncomment for traceback.
+    #if (exc):
+    #    print(traceback.format_exc())
     exit(1)
 
 def exitOnInterrupt (xSig,xFrame):
@@ -63,6 +64,38 @@ def main(xArgs):
         os.mkdir(outDir)
     except Exception as exc:
         errorExit(f"Failed to create the output directory <{outDir}>.",exc=exc)
+
+    print(f"Downloading files to <{outDir}>.")
+
+    # Check that the input times are valid
+    if (xArgs.startTime or xArgs.endTime):
+        doCheckTime = True
+        if (xArgs.startTime): # check starting time
+            try:
+                timeStart = datetime.datetime.fromtimestamp(xArgs.startTime)
+            except Exception as exc:
+                errorExit(f"Invalid input timestamp fpr <startTime>.",exc=exc)
+        else:
+            timeStart = datetime.datetime(2020, 7, 14, tzinfo=datetime.timezone.utc) #before launch date
+        if (xArgs.endTime): # check ending time
+            try:
+                timeEnd = datetime.datetime.fromtimestamp(xArgs.endTime)
+            except Exception as exc:
+                errorExit(f"Invalid input timestamp fpr <endTime>.",exc=exc)
+        else:
+            timeEnd = datetime.datetime(2100, 1, 1, tzinfo=datetime.timezone.utc) #We're all be dead by then
+
+        if (timeEnd < timeStart):
+            errorExit(f"<endTime={timeEnd}> should be after <startTime={timeStart}>.",exc=exc)
+
+        print(f"Downloading files modified between <{timeStart}> and <{timeEnd}>.")
+
+    else:
+        doCheckTime = False
+
+    # Be more verbose
+    if (xArgs.grepFilter):
+        print(f"Downloading files containing <{xArgs.grepFilter}> in their name.")
                 
     # Get a paginator (instead of looping using termination tokens ourselves in case >1000 files)
     try:
@@ -85,8 +118,16 @@ def main(xArgs):
             filename = os.path.basename(content['Key'])
 
             # Check if this file should be selected
+            # ----Check the grep filter
             if (xArgs.grepFilter):
                 if (xArgs.grepFilter not in filename):
+                    continue #skip this file
+
+            # ---- Check the start and end time
+            if (doCheckTime):
+                # get the time of the file itself
+                timeFile = content['LastModified']
+                if ((timeFile<timeStart) or (timeFile>timeEnd)):
                     continue #skip this file
             
             # Download the file
@@ -106,8 +147,8 @@ if __name__ == '__main__':
     # Reading the bash arguments
     xArgParser = argparse.ArgumentParser (description='Fetch FETT logs from production')
     xArgParser.add_argument ('-g', '--grepFilter', help='Download the tarballs containing the search string.')
-    xArgParser.add_argument ('-ts', '--startTime', help='Download the tarballs created after start time.')
-    xArgParser.add_argument ('-tf', '--endTime', help='Download the tarballs created before end time.')
+    xArgParser.add_argument ('-ts', '--startTime', help='Download the tarballs created after start time (timestamp).',type=int)
+    xArgParser.add_argument ('-tf', '--endTime', help='Download the tarballs created before end time (timestamp).',type=int)
     xArgParser.add_argument ('-o', '--outputDirectory', help='Overwrites the default output directory: $repoDir/logsDir/')
     xArgParser.add_argument ('-v', '--Verbose', help='Prints the names of the files that are downloaded.', action='store_true')
     xArgs = xArgParser.parse_args()
