@@ -221,27 +221,56 @@ class AWSCredentials:
         return self.__getitem__(2)
 
 
-class FettDataWriter:
-    """create FETT Target userdata file to define workload on AWS instances"""
+class UserdataCreator:
+    """Create FETT Target userdata file to define workload on AWS instances"""
+
+    def __init__(self, userdata):
+        """
+        Store userdata
+
+        :param userdata: Userdata file to be sent to AWS instances
+        :type userdata: str
+
+        :return: A new UserdataCreator instance
+        :rtype: UserdataCreator
+        """
+
+        self._userdata = userdata
 
     @classmethod
     def with_fett_repo(cls, credentials, branch=None, binaries_branch=None, key_path='~/.ssh/id_rsa.pub'):
-        """add userdata to start with FETT Target at specific branch and binaries branch"""
+        """
+        Add userdata to start with FETT Target at specific branch and binaries branch
+
+        :param credentials: AWS credentials.
+        :type credentials: AWSCredentials
+
+        :param branch: What branch of SSITH-FETT-Target to run on AWS instances, defaults to 'master'
+        :type branch: str, optional
+
+        :param binaries_branch: What branch of SSITH-FETT-Binaries to run on AWS instances, defaults to 'master'
+        :type binaries_branch: str, optional
+
+        :param key_path: Path of the SSH public key, defaults to '~/.ssh/id_rsa.pub'
+        :type key_path: str, optional
+
+        :return: A new UserdataCreator instance
+        :rtype: UserdataCreator
+        """
 
         # Default branch on both
         if not (branch or binaries_branch):
             pass
 
         # If either branch is specified, we need to get a SSH key - best solution so far
-
         userdata = [
             "#!/bin/bash",
             "yum install -y git-lfs",
             "runuser -l centos -c 'sudo ssh-keyscan github.com >> ~/.ssh/known_hosts'",
             "cat >>/home/centos/.bashrc << EOL",
-            f'export AWS_ACCESS_KEY_ID="{credentials[0]}"',
-            f'export AWS_SECRET_ACCESS_KEY="{credentials[1]}"',
-            f'export AWS_SESSION_TOKEN="{credentials[2]}"',
+            f'export AWS_ACCESS_KEY_ID="{credentials.access_key_id}"',
+            f'export AWS_SECRET_ACCESS_KEY="{credentials.secret_key_access}"',
+            f'export AWS_SESSION_TOKEN="{credentials.session_token}"',
             "EOL",
         ]
 
@@ -286,38 +315,47 @@ class FettDataWriter:
 
         return cls(userdata)
 
-    def __init__(self, userdata):
-        self._userdata = userdata
+    def append_to_userdata(self, ul=''):
+        """
+        Convenience to append to self._userdata
 
-    def append_userdata(self, ul):
-        """convenience to append to self._userdata"""
+        :param ul: Script to append to userdata, defaults to ''
+        :type ul: str, list, optional
+        """
+
         if not isinstance(ul, str):
             self._userdata += ul
         else:
             self._userdata.append(ul)
 
-    def with_indicator_file(self):
-        """touch indicator_file as last step of userdata"""
-        return self._userdata + [f"runuser -l centos -c 'touch {self.indicator_filepath()}'"]
-
     def append_file(self, dest, path):
-        """add file contents of path to userdata"""
+        """
+        Add file contents of path to userdata
+
+        :param dest: Destination of file contents
+        :type dest: str
+
+        :param path: Filepath
+        :type path: str
+        """
+
         assert os.path.exists(path)
-        self.append_userdata(f"cat > {dest} << EOL")
+        self.append_to_userdata(f"cat > {dest} << EOL")
         with open(path, 'r') as fp:
-            self.append_userdata([l.strip() for l in fp.readlines()])
-        self.append_userdata("EOL")
+            self.append_to_userdata([l.strip() for l in fp.readlines()])
+        self.append_to_userdata("EOL")
 
     def to_file(self, fname):
-        """write userdata to a userdata file"""
+        """
+        Write userdata to a userdata file
+
+        :param fname: Filename
+        :type fname: str
+        """
         with open(fname, 'w') as fp:
-            ud = self.with_indicator_file()
+            ud = [f"runuser -l centos -c 'touch {self.indicator_filepath()}'"]
             fp.write('\n'.join(ud))
         logging.info(f"{self.__class__.__name__} wrote UserData to '{fname}'")
-
-    def to_str(self):
-        ud = self.with_indicator_file()
-        return '\n'.join(ud)
 
     @staticmethod
     def indicator_filepath():
