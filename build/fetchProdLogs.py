@@ -5,8 +5,8 @@
 --- usage:
 """
 
-import sys, os, traceback, shutil, signal
-import boto3, botocore, argparse, datetime
+import sys, os, traceback, shutil, signal, glob
+import boto3, botocore, argparse, datetime, tarfile
 
 prodBucket = 'master-ssith-fett-target-researcher-artifacts'
 artifactsPath = 'fett-target/production/artifacts'
@@ -152,8 +152,23 @@ def main(xArgs):
             except Exception as exc:
                 errorExit("Failed to download!",exc=exc)
 
+    # Extract the tarballs if instructed to do so
+    if (xArgs.untar):
+        for tarball in glob.glob(os.path.join(outDir,'*.tar.gz')):
+            tarName = os.path.basename(tarball).split('.tar.gz')[0]
+            try:
+                xTar = tarfile.open(tarball)
+                xTar.extractall(path=outDir)
+                xTar.close()
+                os.remove(tarball)
+            except Exception as exc:
+                errorExit(f"Failed to extract <{tarball}> to <{os.path.join(outDir,tarName)}>.") 
+
+    
     print(f"\n{nFilesTot} available files.")
-    print(f"{nFilesDownloaded} downloaded to <{outDir}>.")
+    textExtracted = 'and extracted in' if (xArgs.untar) else 'to'
+    print(f"{nFilesDownloaded} tarballs downloaded {textExtracted} <{outDir}>.")
+
 
 if __name__ == '__main__':
     # Reading the bash arguments
@@ -162,6 +177,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-ts', '--startTime', help='Download the tarballs created after start time (timestamp or yyyy-mm-dd).')
     xArgParser.add_argument ('-tf', '--endTime', help='Download the tarballs created before end time (timestamp or yyyy-mm-dd).')
     xArgParser.add_argument ('-o', '--outputDirectory', help='Overwrites the default output directory: $repoDir/logsDir/')
+    xArgParser.add_argument ('-x', '--untar', help='Extracts all the tarballs after downloading.', action='store_true')
     xArgParser.add_argument ('-v', '--verbose', help='Prints the names of the files that are downloaded.', action='store_true')
     xArgs = xArgParser.parse_args()
 
