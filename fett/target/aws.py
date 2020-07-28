@@ -171,7 +171,7 @@ class firesimTarget(commonTarget):
             # This also happens if a unix OS didn't exit properly. Towards the end of making each
             # run a standalone and independent of previous runs, we send this interrupt if the 
             # process is still alive.
-            self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+            self.runCommand('\x1d\x1d',endsWith=pexpect.EOF,shutdownOnError=False,timeout=5,sendToNonUnix=True)
 
             if (self.process.isalive()):
                 try:

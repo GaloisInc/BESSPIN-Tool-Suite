@@ -496,7 +496,7 @@ class commonTarget():
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
                     erroneousContents=None,shutdownOnError=True,timeout=60,
-                    suppressErrors=False,tee=None):
+                    suppressErrors=False,tee=None,sendToNonUnix=False):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
         "   ARGUMENTS:
@@ -509,6 +509,7 @@ class commonTarget():
         "   timeout: how long to wait for endsWith before timing out.
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
+        "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
         "   RETURNS:
         "   --------
         "   A list: [isSuccess  : "Boolean. True on no-errors.",
@@ -516,7 +517,7 @@ class commonTarget():
         "            wasTimeout : "Boolean. True if timed-out waiting for endsWith.",
         "            idxEndsWith: The index of the endsWith received. If endsWith was a string, this would be 0. -1 on time-out.
         """
-        if (isEnabled('isUnix')):
+        if (isEnabled('isUnix') or sendToNonUnix):
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
