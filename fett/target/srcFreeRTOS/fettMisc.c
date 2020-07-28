@@ -49,15 +49,6 @@ void exitFett (uint8_t exitCode) {
 }
 
 
-extern uint32_t fettGetNotification (TaskHandle_t t)
-{
-    StaticTask_t *tcb = (StaticTask_t *) t;
-    return tcb->ulDummy18;
-}
-
-
-
-
 /*
 --- This function is called by FreeRTOS_TCP_IP.c. This is a dirty implementation
  * Callback that provides the inputs necessary to generate a randomized TCP
