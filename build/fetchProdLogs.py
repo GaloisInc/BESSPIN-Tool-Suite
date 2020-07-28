@@ -144,7 +144,7 @@ def main(xArgs):
             
             # Download the file
             nFilesDownloaded += 1
-            if (xArgs.Verbose):
+            if (xArgs.verbose):
                 print(f"{filename}")
             try:
                 s3.download_file(Bucket=prodBucket, Key=content['Key'], 
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-ts', '--startTime', help='Download the tarballs created after start time (timestamp or yyyy-mm-dd).')
     xArgParser.add_argument ('-tf', '--endTime', help='Download the tarballs created before end time (timestamp or yyyy-mm-dd).')
     xArgParser.add_argument ('-o', '--outputDirectory', help='Overwrites the default output directory: $repoDir/logsDir/')
-    xArgParser.add_argument ('-v', '--Verbose', help='Prints the names of the files that are downloaded.', action='store_true')
+    xArgParser.add_argument ('-v', '--verbose', help='Prints the names of the files that are downloaded.', action='store_true')
     xArgs = xArgParser.parse_args()
 
     #Trapping the signals
