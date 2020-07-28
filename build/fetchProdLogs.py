@@ -85,8 +85,6 @@ def main(xArgs):
     except Exception as exc:
         errorExit(f"Failed to create the output directory <{outDir}>.",exc=exc)
 
-    print(f"Downloading files to <{outDir}>.")
-
     # Check that the input times are valid
     if (xArgs.startTime or xArgs.endTime):
         doCheckTime = True
@@ -100,7 +98,7 @@ def main(xArgs):
             timeEnd = datetime.datetime(2100, 1, 1, tzinfo=datetime.timezone.utc) #We're all be dead by then
 
         if (timeEnd < timeStart):
-            errorExit(f"<endTime={timeEnd}> should be after <startTime={timeStart}>.",exc=exc)
+            errorExit(f"<endTime={timeEnd}> should be after <startTime={timeStart}>.")
 
         print(f"Downloading files modified between <{timeStart}> and <{timeEnd}>.")
 
