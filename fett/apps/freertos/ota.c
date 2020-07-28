@@ -238,8 +238,6 @@ void vOta(void *pvParameters)
     // notify main
     ASSERT_OR_DELETE_TASK((xMainTask != NULL),
                           "vOta: Get handle of <main:task>.");
-    fettPrintf("(Info)~  vOta: Notifying xMainTask with value %u\n",
-               (uint32_t) NOTIFY_SUCCESS_OTA);
     funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_OTA, eSetBits);
     ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
                           "vOta: Notify <main:task>.");

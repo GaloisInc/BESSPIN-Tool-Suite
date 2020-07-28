@@ -120,8 +120,6 @@ void vHttp(void *pvParameters)
     // notify main
     ASSERT_OR_DELETE_TASK((xMainTask != NULL),
                           "vHttp: Get handle of <main:task>.");
-    fettPrintf("(Info)~  vHttp: Notifying xMainTask with value %u\n",
-               (uint32_t) NOTIFY_SUCCESS_HTTP);
     funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_HTTP, eSetBits);
     ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
                           "vHttp: Notify <main:task>.");
