@@ -52,7 +52,7 @@ void exitFett (uint8_t exitCode) {
 extern uint32_t fettGetNotification (TaskHandle_t t)
 {
     StaticTask_t *tcb = (StaticTask_t *) t;
-    return t->ulDummy18;
+    return tcb->ulDummy18;
 }
 
 
