@@ -4,21 +4,12 @@ AWS WorkGroup
 import time
 import os
 import functools
-import subprocess
 import re
-import shlex
 import multiprocessing.pool as mpool
 
 import paramiko
 
 from .aws_manage import *
-
-
-def subprocess_check_output(command=""):
-    """convenience to run command and return its output"""
-    proc = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
-    out = proc.stdout.read()
-    return out
 
 
 class AWSCredentials:
