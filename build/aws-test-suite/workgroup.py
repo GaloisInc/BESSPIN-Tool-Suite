@@ -2,13 +2,11 @@
 AWS WorkGroup
 """
 import time
-import os
 import functools
 import multiprocessing.pool as mpool
-
 import paramiko
 
-from .aws_manage import *
+from .aws_tools import *
 
 
 class EC2WorkGroup:
