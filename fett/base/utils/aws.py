@@ -111,7 +111,7 @@ def uploadToS3 (s3Bucket, exitFunc, tarball, pathInBucket):
 @debugWrap
 def pollPortalIndefinitely (s3Bucket, exitFunc):
     try:
-        import boto3, time, botocore
+        import boto3, time, botocore, os
     except Exception as exc:
         exitFunc(message=f"Failed to <import boto3, time, botocore>.",exc=exc)
 
@@ -129,28 +129,31 @@ def pollPortalIndefinitely (s3Bucket, exitFunc):
 
     instanceId = getInstanceId(exitFunc)
 
-    pathInBucket = f'fett-target/production/communication/termination/{instanceId}'
+    instructions = ['termination', 'reset']
+    keyPrefix = 'fett-target/production/communication'
+    instructionsDict = {instruction:os.path.join(keyPrefix,instruction,instanceId) for instruction in instructions}
+    
     logging.debug(f"pollPortalIndefinitely: polling <s3://{s3Bucket}/{pathInBucket}>...")
-    while (True):
+    receivedInstruction = False
+    while (not receivedInstruction):
         time.sleep(5)
-
-        try:
-            s3.head_object(Bucket=s3Bucket, Key=pathInBucket)
-        except botocore.errorfactory.ClientError:
-            continue #File not there yet
-        except Exception as exc:
-            exitFunc(message=f"pollPortalIndefinitely: Failed to check the S3 bucket for the file.",exc=exc)
+        for instruction, instructionKey in instructionsDict.items():
+            try:
+                s3.head_object(Bucket=s3Bucket, Key=instructionKey)
+                receivedInstruction = instruction
+            except botocore.errorfactory.ClientError:
+                continue #File not there yet
+            except Exception as exc:
+                exitFunc(message=f"pollPortalIndefinitely: Failed to check the S3 bucket for <{instructionKey}>.",exc=exc)
 
         # Delete the file and return
         logging.debug("pollPortalIndefinitely: File found! Deleting it...")
 
         try:
-            s3.delete_object(Bucket=s3Bucket, Key=pathInBucket)
+            s3.delete_object(Bucket=s3Bucket, Key=instructionsDict[receivedInstruction])
+            logging.debug(f"pollPortalIndefinitely: Deleted <s3://{s3Bucket}/{instructionsDict[receivedInstruction]}>.")
         except Exception as exc:
-            logging.error(f"pollPortalIndefinitely: Failed to delete the termination file from the S3 bucket.\n{formatExc(exc)}.")
+            logging.error(f"pollPortalIndefinitely: Failed to delete <{instructionsDict[receivedInstruction]}> from the S3 bucket.\n{formatExc(exc)}.")
 
-        logging.debug(f"pollPortalIndefinitely: Deleted <s3://{s3Bucket}/{pathInBucket}>.")
-        break
-
-    return
+    return receivedInstruction
 
