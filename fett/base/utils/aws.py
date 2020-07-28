@@ -51,7 +51,7 @@ def sendSQS (urlQueue, exitFunc, status, jobId, nodeId, reason='fett', hostIp='N
     logging.debug (f"sendSQS: args: status={status}, jobId={jobId}, nodeId={nodeId}," 
                     f" reason={reason}, hostIp={hostIp}, fpgaIp={fpgaIp}")
     try:
-        import boto3, json
+        import boto3, json,time
     except Exception as exc:
         exitFunc(message=f"Failed to <import boto3, json>.",exc=exc)
 
@@ -82,7 +82,7 @@ def sendSQS (urlQueue, exitFunc, status, jobId, nodeId, reason='fett', hostIp='N
                 QueueUrl=urlQueue,
                 MessageBody=msg,
                 DelaySeconds=0,
-                MessageDeduplicationId=str(nodeId),
+                MessageDeduplicationId=f"{nodeId}-{time.time()}", #To ensure it's unique
                 MessageGroupId=str(jobId)
             )
     except Exception as exc:
@@ -133,7 +133,7 @@ def pollPortalIndefinitely (s3Bucket, exitFunc):
     keyPrefix = 'fett-target/production/communication'
     instructionsDict = {instruction:os.path.join(keyPrefix,instruction,instanceId) for instruction in instructions}
     
-    logging.debug(f"pollPortalIndefinitely: polling <s3://{s3Bucket}/{pathInBucket}>...")
+    logging.debug(f"pollPortalIndefinitely: polling <s3://{s3Bucket}/{keyPrefix}>...")
     receivedInstruction = False
     while (not receivedInstruction):
         time.sleep(5)
@@ -146,14 +146,14 @@ def pollPortalIndefinitely (s3Bucket, exitFunc):
             except Exception as exc:
                 exitFunc(message=f"pollPortalIndefinitely: Failed to check the S3 bucket for <{instructionKey}>.",exc=exc)
 
-        # Delete the file and return
-        logging.debug("pollPortalIndefinitely: File found! Deleting it...")
+    # Delete the file and return
+    logging.debug(f"pollPortalIndefinitely: {receivedInstruction} file found! Deleting it...")
 
-        try:
-            s3.delete_object(Bucket=s3Bucket, Key=instructionsDict[receivedInstruction])
-            logging.debug(f"pollPortalIndefinitely: Deleted <s3://{s3Bucket}/{instructionsDict[receivedInstruction]}>.")
-        except Exception as exc:
-            logging.error(f"pollPortalIndefinitely: Failed to delete <{instructionsDict[receivedInstruction]}> from the S3 bucket.\n{formatExc(exc)}.")
+    try:
+        s3.delete_object(Bucket=s3Bucket, Key=instructionsDict[receivedInstruction])
+        logging.debug(f"pollPortalIndefinitely: Deleted <s3://{s3Bucket}/{instructionsDict[receivedInstruction]}>.")
+    except Exception as exc:
+        logging.error(f"pollPortalIndefinitely: Failed to delete <{instructionsDict[receivedInstruction]}> from the S3 bucket.\n{formatExc(exc)}.")
 
     return receivedInstruction
 
