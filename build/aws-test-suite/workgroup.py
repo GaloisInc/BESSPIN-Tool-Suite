@@ -23,6 +23,7 @@ def subprocess_check_output(command=""):
 
 class AWSCredentials:
     """Obtain, set and get AWS credentials for AWSPowerUserAccess."""
+
     def __init__(self, credentials):
         """
         Store length 3 list of AWS credentials
@@ -121,7 +122,8 @@ class AWSCredentials:
                                          "your credentials in ~/.aws/credentials, or create a " \
                                          "credentials file somewhere else "
 
-    def _check_credentials(self, cred):
+    @staticmethod
+    def _check_credentials(cred):
         """
         Ensure that the credentials are valid
 
@@ -205,7 +207,7 @@ class AWSCredentials:
         :return: AWS Access Key ID
         :rtype: str
         """
-        return self._credentials[0]
+        return self.__getitem__(0)
 
     @property
     def secret_key_access(self):
@@ -215,7 +217,7 @@ class AWSCredentials:
         :return: AWS Secret Access Key
         :rtype: str
         """
-        return self._credentials[1]
+        return self.__getitem__(1)
 
     @property
     def session_token(self):
@@ -225,7 +227,7 @@ class AWSCredentials:
         :return: AWS Session Token
         :rtype: str
         """
-        return self._credentials[2]
+        return self.__getitem__(2)
 
 
 class FettDataWriter:
