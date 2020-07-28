@@ -104,6 +104,7 @@ extern bool StopRequested(void);
 extern void fettPrintf (const char * textToPrint, ...);
 extern void exitFett (uint8_t exitCode);
 
+extern uint32_t fettGetNotification (TaskHandle_t t);
 
 extern void _open (const char * dump1, int dump2, ...); //Needed for WolfSSL to compile -- should never be called
 extern void _gettimeofday (struct timeval *__p, void *__tz); //Needed for WolfSSL to compile -- should never be called

@@ -43,6 +43,9 @@ void vMain (void *pvParameters) {
     fettPrintf("(Info)~  vMain: Main task initial SHWM is %u\n",
                (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
+    fettPrintf("vMain: Main task initial NV is 0x%08x\n",
+               fettGetNotification (xMainTask));
+
     // Start the network task to configure the network before the hook -- has to be the first thing
     funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
