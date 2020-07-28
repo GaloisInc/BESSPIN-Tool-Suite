@@ -48,7 +48,6 @@ void exitFett (uint8_t exitCode) {
     return;
 }
 
-
 /*
 --- This function is called by FreeRTOS_TCP_IP.c. This is a dirty implementation
  * Callback that provides the inputs necessary to generate a randomized TCP
