@@ -3,58 +3,110 @@
 # +-----------+
 # |  Imports  |
 # +-----------+
-
+import json
 import logging
+import os
+import shlex
+import subprocess
+import time
+
 import boto3
+
 
 # +-----------------------------+
 # |  AWS Instance Manipulation  |
 # +-----------------------------+
 
 
-def get_ami_id_from_name(ami_name):
+def subprocess_check_output(command=""):
+    """
+    Convenience to run command and return its output
 
+    :param command: Shell command, defaults to ''
+    :type command: str, optional
+
+    :return: Standard output
+    :rtype: str
     """
-    from AMI name, get AMI ID
-    allows the name to be passed to AWS management tools, rather than specifying the id
+
+    proc = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
+    out = proc.stdout.read()
+    return out
+
+
+def get_ami_id_from_name(ami_name):
     """
-    
+    From AMI name, get AMI ID
+
+    Allows the name to be passed to AWS management tools, rather than specifying the id
+
+    :param ami_name: Name of the AMI instance
+    :type ami_name: str
+
+    :return: AMI ID
+    :rtype: str
+    """
+
     client = boto3.client("ec2")
     response = client.describe_images(Filters=[{"Name": "name", "Values": [ami_name]}])
     assert (
-        len(response["Images"]) == 1
+            len(response["Images"]) == 1
     ), f"No unique images found '{response['Images']}'"
     return response["Images"][0]["ImageId"]
 
 
 def terminate_instance(instance_id, dry_run=True):
-    
     """
-    terminate an instance by its instance id
-    :param dry_run: set to true, for safety
+    Terminate an instance by its instance id
+
+    :param dry_run: Set to true, for safety
+    :type dry_run: bool, optional
     """
-    
+
     client = boto3.client("ec2")
     client.terminate_instances(InstanceIds=[instance_id], DryRun=dry_run)
 
 
 def launch_instance(
-    ami_name,
-    vpc_name="aws-controltower-VPC",
-    security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
-    instance_type="f1.2xlarge",
-    keyname="nightly-testing",
-    user_data=None,
-    tags={"Name": "cilib-default"},
-    **ec2_kwargs,
+        ami_name,
+        vpc_name="aws-controltower-VPC",
+        security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
+        instance_type="f1.2xlarge",
+        keyname="nightly-testing",
+        user_data=None,
+        tags={"Name": "aws-test-suite-default"},
+        **ec2_kwargs,
 ):
-
     """
-    create an ec2 instance
+    Creates an EC2 instance
 
-    convenience handling of boto3.create_instances -- allows the AMI, VPC and security to be referred to by name, rather
+    Convenience handling of boto3.create_instances -- allows the AMI, VPC and security to be referred to by name, rather
     than id. Also, defaults to values typically used during FETT development, only requiring the AMI name. Keyword
     arguments are passed directly to launch_instances call for extensibility.
+
+    :param ami_name: AMI name
+    :type ami_name: str
+
+    :param vpc_name: VPC name, defaults to 'aws-controltower-VPC'
+    :type vpc_name: str
+
+    :param security_group_name: Security group name, defaults to 'FPGA Developer AMI-1-8-1-AutogenByAWSMP-1'
+    :type security_group_name: str
+
+    :param instance_type: AMI instance type, defaults to 'f1.2xlarge'
+    :type instance_type: str
+
+    :param keyname: SSH key name, defaults to 'nightly-testing'
+    :type keyname: str
+
+    :param user_data: Script to be executed on the EC2 instance
+    :type user_data: str
+
+    :param tags: Other tags, such as instance name, defaults to {"Name": "aws-test-suite-default"}
+    :type tags: dict
+
+    :return: The instance object
+    :rtype: dict
     """
 
     ec2 = boto3.resource("ec2")
@@ -98,7 +150,7 @@ def launch_instance(
         instance = ec2.create_instances(
             ImageId=image_id,
             EbsOptimized=True,
-            BlockDeviceMappings=([{"DeviceName": "/dev/sdb", "NoDevice": "",},]),
+            BlockDeviceMappings=([{"DeviceName": "/dev/sdb", "NoDevice": "", }, ]),
             InstanceType=instance_type,
             MinCount=1,
             MaxCount=1,
@@ -119,11 +171,14 @@ def launch_instance(
 
     return instance[0]
 
-def collect_run_names():
 
-	"""
-	run fett-ci.py as a dryrun to generate a list of targets in their corresponding indexes to be run remotely
-	"""
+def collect_run_names():
+    """
+    Run fett-ci.py as a dryrun to generate a list of targets in their corresponding indexes to be run remotely
+
+    :return: List of ini files to run
+    :rtype: list
+    """
 
     logging.debug(str(subprocess_check_output("../../ci/fett-ci.py -X -ep AWS runDevPR -job 420")))
     unsorted = os.listdir("/tmp/dumpIni/")
@@ -131,38 +186,44 @@ def collect_run_names():
     run_names.sort()
 
     logging.info(
-        f"Gathered Launch targets:\n{ run_names }"
+        f"Gathered Launch targets:\n{run_names}"
     )
 
     return run_names
+
 
 # +-----------+
 # |  AWS SQS  |
 # +-----------+
 
-def wait_on_id_sqs(ids, name):
+def wait_on_id_sqs(ids, name):  # TODO: name param not used
+    """
+    Wait for an SQS message concerning all target in <ids> and terminate them, logging results
 
-	"""
-	Wait for an SQS message concerning all target in <ids> and terminate them, logging results
-	"""
+    :param ids: List of instance ids started by AWS Tool Suite
+    :type ids: list
+
+    :param name: ?
+    :type name: str
+    """
 
     # Start Boto3 Client
     try:
         sqs = boto3.client("sqs", region_name="us-west-2")
-    except Exception as exc:
+    except:
         logging.error(f"Failed to create the SQS client.")
 
     # Define a way to delete a message
     def delete_message(message):
         try:
             sqs.delete_message(
-                QueueUrl=configs.ciAWSqueueNightly,
+                QueueUrl=configs.ciAWSqueueNightly,  # TODO: import configs somehow
                 ReceiptHandle=message["ReceiptHandle"],
             )
             logging.info(
                 "Succeeded in removing message from SQS queue."
             )
-        except Exception:
+        except:
             logging.warning(
                 "Failed to delete the message from the SQS queue."
             )
@@ -171,22 +232,22 @@ def wait_on_id_sqs(ids, name):
     while len(ids) > 0:
         try:
             response = sqs.receive_message(
-                QueueUrl=configs.ciAWSqueueNightly,
+                QueueUrl=configs.ciAWSqueueNightly,  # TODO: import configs somehow
                 VisibilityTimeout=5,  # 5 seconds are enough
                 WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
             )
-        except Exception:
+        except:
             logging.error(f"Failed to receive a response from the SQS queue.")
 
         if "Messages" in response:
-            logging.debug(f"Got SQS Response { response }")
+            logging.debug(f"Got SQS Response {response}")
             for message in response["Messages"]:
                 body = json.loads(message["Body"])
                 instance_id = body["instance"]["id"]
                 logging.info(
-                    f'FINISHED: { body["instance"]["id"] }, exited with status { body["job"]["status"] }.'
+                    f'FINISHED: {body["instance"]["id"]}, exited with status {body["job"]["status"]}.'
                 )
-                logging.debug(f'Comparing against { ids }')
+                logging.debug(f'Comparing against {ids}')
 
                 # If we have a message about an ID we have to terminate, terminate it, and remove the message.
                 if instance_id in ids:
@@ -195,9 +256,8 @@ def wait_on_id_sqs(ids, name):
                         instance_id,
                         False
                     )
-                    logging.info(f"Removed Instance { instance_id }")
+                    logging.info(f"Removed Instance {instance_id}")
 
                 delete_message(message)
 
         time.sleep(2)
-

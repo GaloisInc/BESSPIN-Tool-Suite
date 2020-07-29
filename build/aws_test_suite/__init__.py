@@ -2,9 +2,10 @@
 TODO:
     1. Documentation
         a. aws_tools.py
-    2. Use typing module for type hints
-    3. More error handling
-    4. Test
+    2. Address TODOs (esp. in aws_tools.py)
+    3. Use typing module for type hints
+    4. More error handling
+    5. Test
 """
 
 """
