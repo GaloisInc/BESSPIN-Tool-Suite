@@ -154,6 +154,45 @@ def endFett (xTarget):
                         tarballPath, 'fett-target/production/artifacts/')
         printAndLog(f"Artifacts tarball uploaded to S3.")
 
+""" This resets the target without changing the .img + without deployment tests """
+@decorate.debugWrap
+@decorate.timeWrap
+def resetTarget (curTarget):
+    if ((not isEqSetting('target','aws')) or (not isEqSetting('mode','production'))):
+        logAndExit(f"<resetTarget> is not compatible with <{getSetting('target')}> target in <{getSetting('mode')}> mode.")
+    """
+    A big decision here is whether to collectLogs and shutdown or just tear it down.
+    We'll assume smth is wrong with the target, so we'll just tear it down.
+    collectLogs can err in any step, no need for crazy error handling, especially that we rsyslog them anyway.
+    """
+    printAndLog("resetTarget: tearing down the current target...")
+    curTarget.targetTearDown() 
+    del curTarget
+
+    printAndLog("resetTarget: Re-preparing the environment...")
+    # Reload the FPGA
+    if (isEqSetting('pvAWS','firesim')):
+        aws.removeKernelModules()
+        aws.installKernelModules()
+        aws.programAFI()
+    elif (isEqSetting('pvAWS', 'connectal')):
+        aws.removeKernelModules()
+        aws.programAFI()
+        aws.removeKernelModules()
+        aws.installKernelModules()
+    else:
+        logAndExit (f"<resetTarget> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
+    
+    printAndLog("resetTarget: Re-launching...")
+    try:
+        newTarget = getClassType()()
+    except Exception as exc:
+        logAndExit (f"resetTarget: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
+
+    newTarget.start(restartMode=True)
+
+    return newTarget
+
 """ This decides the classes hierarchy """
 @decorate.debugWrap
 def getClassType():

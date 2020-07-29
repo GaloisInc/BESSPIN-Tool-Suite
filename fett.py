@@ -34,7 +34,7 @@ optional arguments:
 try:
     from fett.base.utils.misc import *
     from fett.base.config import loadConfiguration, genProdConfig
-    from fett.target.launch import startFett, endFett
+    from fett.target.launch import startFett, endFett, resetTarget
     from fett.base.utils import aws
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
@@ -139,7 +139,7 @@ def main (xArgs):
 
             if (instruction == 'reset'):
                 # execute reset flow 
-                # ---------------- [TODO]
+                xTarget = resetTarget(xTarget)
                 # Notify portal that we have reset successfully
                 sendSuccessMsgToPortal('RESET','reset')
         
