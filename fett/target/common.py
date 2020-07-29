@@ -173,8 +173,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def start (self,restartMode=False,timeout=15):
-        self.restartMode = restartMode
+    def start (self,timeout=15):
         if (isEqSetting('osImage','debian')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             if (isEqSetting('target','fpga')):
