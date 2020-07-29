@@ -164,6 +164,7 @@ def resetTarget (curTarget):
     printAndLog("resetTarget: tearing down the current target...")
     aws.endUartPiping(curTarget)
     curTarget.targetTearDown() 
+    rootPassword = curTarget.rootPassword
     del curTarget
 
     printAndLog("resetTarget: Re-preparing the environment...")
@@ -186,6 +187,10 @@ def resetTarget (curTarget):
     except Exception as exc:
         logAndExit (f"resetTarget: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
 
+    # Adjust the needed members for reset
+    newTarget.restartMode = True
+    newTarget.rootPassword = rootPassword
+    
     newTarget.start(restartMode=True)
     aws.startUartPiping(newTarget)
 
