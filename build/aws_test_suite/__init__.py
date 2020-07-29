@@ -1,7 +1,7 @@
 """
 FETT CI Library
 """
-from .workgroup import *
+from .ec2_work_group import *
 from .aws_credentials import AWSCredentials
 from .userdata_creator import UserdataCreator
 
