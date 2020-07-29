@@ -190,8 +190,9 @@ def resetTarget (curTarget):
     # Adjust the needed members for reset
     newTarget.restartMode = True
     newTarget.rootPassword = rootPassword
-    
-    newTarget.start(restartMode=True)
+    newTarget.userCreated = True
+
+    newTarget.start()
     aws.startUartPiping(newTarget)
 
     return newTarget
