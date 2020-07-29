@@ -1,0 +1,35 @@
+name: Add files to S3
+on:
+  push:
+    branches:
+      - develop
+      - master
+
+jobs:
+  addToS3:
+    name: Add to S3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+          lfs: true
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.FETT_TARGET_GH_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.FETT_TARGET_GH_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - run: |
+          if [[ "${{ github.ref }}" == "develop" ]]; then folder=dev; else folder=prod; fi
+          echo "::set-env name=folder::$folder"
+
+      - name: Copy GFE to S3
+        run: aws s3 sync SSITH-FETT-Binaries/GFE/osImages/firesim/FreeRTOS.elf s3://my-s3/$folder/GFE_FreeRTOS.elf
+
+      - name: Copy LMCO to S3
+        run: aws s3 sync SSITH-FETT-Binaries/LMCO/osImages/firesim/FreeRTOS.elf s3://my-s3/$folder/LMCO_FreeRTOS.elf
+
+      - name: Copy Michigan to S3
+        run: aws s3 sync SSITH-FETT-Binaries/Michigan/osImages/firesim/FreeRTOS.elf s3://my-s3/$folder/Michigan_FreeRTOS.elf
