@@ -1,8 +1,7 @@
 """
 TODO:
     1. Documentation
-        a. __init__.py
-        b. aws_tools.py
+        a. aws_tools.py
     2. Use typing module for type hints
     3. More error handling
     4. Test
@@ -17,7 +16,16 @@ from .userdata_creator import UserdataCreator
 
 
 def setup_logger(log_fname="aws-test-suite.log", level="info"):
-    """global logger setup"""
+    """
+    Global logger setup
+
+    :param log_fname: Output log filename, defaults to 'aws-test-suite.log'
+    :type log_fname: str, optional
+
+    :param level: Output information level, defaults to 'info'
+    :type level: str, optional
+    """
+
     # empty out log file
     open(log_fname, 'w').close()
     import logging
