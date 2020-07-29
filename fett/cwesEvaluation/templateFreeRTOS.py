@@ -18,7 +18,7 @@ def renameMain (testsDir,cTest):
     testName = cTest.split('.')[0]
     lines[declIndex] = "{0} main_{1} {2} {3}".format(declParts[0],testName,*declParts[1:])
     try:
-        ftest = open("{0}/{1}".format(testsDir,cTest), "w")
+        ftest = ftOpenFile("{0}/{1}".format(testsDir,cTest), "w")
         ftest.write('\n'.join(lines))
         ftest.close()
     except Exception as exc:
@@ -33,10 +33,7 @@ def templateFreeRTOS(testsDir):
         if (srcTest.endswith(".c")):
             testName = srcTest.split('.')[0]
             mainDeclaration = renameMain(testsDir,srcTest)
-            try:
-                fmain = open("{0}/main_{1}.c".format(testsDir,testName), "w")
-            except Exception as exc:
-                logAndExit("<templateFreeRTOS>: Failed to open <{0}/main_{1}.c> for writing.".format(testsDir,testName), exc=exc)
+            fmain = ftOpenFile("{0}/main_{1}.c".format(testsDir,testName), "w")
             fmain.write("// This file is generated automatically by testgen\n\n")
             #standard includes
             fmain.write("#include <stdio.h>\n#include <string.h>\n#include <unistd.h>\n\n")

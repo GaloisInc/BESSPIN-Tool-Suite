@@ -186,10 +186,15 @@ def doesSettingExist (setting):
 def dumpSettings ():
     logging.debug(f"settings = {_settings}")
 
-def mkdir(dirPath, addToSettings=None):
+def mkdir(dirPath, addToSettings=None, exitIfExists=True):
     try:
         os.mkdir(dirPath)
         logging.debug(f"Created directory <{dirPath}>.")
+    except FileExistsError as exc:
+        if exitIfExists:
+            logAndExit(f"<{dirPath}> already exists.",
+                       exitCode=EXIT.Files_and_paths,
+                       exc=exc)
     except Exception as exc:
         logAndExit (f"Failed to create <{dirPath}>.",exitCode=EXIT.Files_and_paths,exc=exc)
     if (addToSettings):

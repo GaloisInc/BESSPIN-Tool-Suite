@@ -25,6 +25,8 @@ scoring functions for each CWE test
 import re
 from importlib.machinery import SourceFileLoader
 
+from fett.base.utils.misc import *
+
 def partitionLines (lines,testPart,testNum):
     startFound = False
     iStart = 0
@@ -51,7 +53,7 @@ def scoreAllTests(SCORES, customScorer, logs, testsDir):
         testNum = name.split('_')[1]
         scores[testNum] = {}
         try:
-            fLog = open("{0}/{1}".format(testsDir,log),"r")
+            fLog = ftOpenFile("{0}/{1}".format(testsDir,log),"r")
             logLines = fLog.read().splitlines()
             fLog.close()
             nPartsMatch = re.match(r'^<NUMPARTS=(?P<numParts>\d+)>$',logLines[0])

@@ -5,8 +5,10 @@ helpers functions for scoring the CWE tests
 
 import re
 
+from fett.base.utils.misc import *
+
 def readLogLines (logTest,testsDir):
-    fLog = open("{0}/{1}".format(testsDir,logTest),"r")
+    fLog = ftOpenFile("{0}/{1}".format(testsDir,logTest),"r")
     lines = fLog.read().splitlines()
     fLog.close()
     return lines

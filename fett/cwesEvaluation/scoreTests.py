@@ -98,7 +98,7 @@ def scoreLogs(scorerModule, customScorer, logs, testsDir):
 def scoreTests(scorerModule, customScorer, csvPath, testsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     try:
-        setSetting("reportFile", open(reportFileName, 'a'))
+        setSetting("reportFile", ftOpenFile(reportFileName, 'a'))
     except Exception as exc:
         logAndExit("<scoreTests>: Failed to open the report file "
                    f"<{reportFileName}> to append.",
@@ -176,7 +176,7 @@ class customScorerObj:
 
     def parseConfigFile (self,customScoringConfigFile):
         try:
-            fConfig = open(customScoringConfigFile,"r")
+            fConfig = ftOpenFile(customScoringConfigFile,"r")
             configLines = fConfig.read().splitlines()
             fConfig.close()
         except Exception as exc:
