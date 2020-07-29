@@ -274,6 +274,13 @@ class connectalTarget(commonTarget):
         if (self.process.isalive()):
             # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
             self.runCommand("\x01x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+
+            if (self.process.isalive()):
+                try:
+                    subprocess.check_call(['sudo', 'kill', '-9', f"{self.process.pid}"],
+                                        stdout=self.fTtyOut, stderr=self.fTtyOut)
+                except Exception as exc:
+                    warnAndLog("targetTearDown: Failed to kill <connectal> process.",doPrint=False,exc=exc)
         return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
