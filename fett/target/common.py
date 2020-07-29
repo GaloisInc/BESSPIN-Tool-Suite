@@ -110,6 +110,8 @@ class commonTarget():
                             # wait for login string
                             try:
                                  endsWith = "login:"
+                                 retExpect = self.process.expect(endsWith, timeout=5)
+                                 self.readFromTarget(endsWith=endsWith)
                                  retExpect = self.process.expect(endsWith, timeout=5) 
                                  if ( (endsWith == pexpect.EOF) or isinstance(endsWith,str)): #only one string or EOF
                                      self.readFromTarget(endsWith=endsWith)
@@ -1171,6 +1173,5 @@ def charByCharEncoding (inBytes):
             xChar = '<!>'
         textBack += xChar
     return textBack
-
 
 
