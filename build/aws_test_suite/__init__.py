@@ -1,4 +1,14 @@
 """
+TODO:
+    1. Documentation
+        a. __init__.py
+        b. aws_tools.py
+    2. Use typing module for type hints
+    3. More error handling
+    4. Test
+"""
+
+"""
 FETT CI Library
 """
 from .ec2_work_group import *
