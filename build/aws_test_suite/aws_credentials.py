@@ -19,7 +19,7 @@ class AWSCredentials:
 
         self._check_credentials(credentials)
         self._credentials = credentials
-        logging.info(f"{self.__class__.__name__} successfully obtained credentials")
+        logging.info("AWSCredentials: successfully obtained credentials")
 
     @classmethod
     def from_env_vars(cls):
@@ -69,14 +69,13 @@ class AWSCredentials:
         :rtype: AWSCredentials
         """
 
-        logging.info(
-            f"{cls.__class__.__name__} class method from_interactive: performing interactive session to get AWS "
-            f"credentials from the user")
-        print(f"{cls.__class__.__name__} Credentials Interactive Session")
+        logging.info("AWSCredentials: class method from_interactive: performing interactive session to get AWS "
+                     "credentials from the user")
+        print("AWSCredentials: Credentials Interactive Session")
         key_id = input("\tEnter AWS Access Key ID: ")
         secret = input("\tEnter AWS Secret Access Key: ")
         session = input("\tEnter AWS Session Token: ")
-        logging.info(f"{cls.__class__.__name__} class method from_interactive: finished interactive session")
+        logging.info("AWSCredentials: class method from_interactive: finished interactive session")
         return cls([key_id, secret, session])
 
     @staticmethod

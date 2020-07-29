@@ -143,7 +143,7 @@ class UserdataCreator:
         with open(fname, 'w') as fp:
             ud = [f"runuser -l centos -c 'touch {self.indicator_filepath()}'"]
             fp.write('\n'.join(ud))
-        logging.info(f"{self.__class__.__name__} wrote UserData to '{fname}'")
+        logging.info(f"UserdataCreator: Wrote userdata to '{fname}'")
 
     @staticmethod
     def indicator_filepath():
