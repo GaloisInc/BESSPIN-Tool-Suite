@@ -26,6 +26,7 @@ class commonTarget():
         self.fTtyOut = None
         self.sshProcess = None
         self.fSshOut = None
+        self.restartMode = False
 
         # all OSs settings
         self.portTarget = None
@@ -173,6 +174,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def start (self,restartMode=False,timeout=15):
+        self.restartMode = restartMode
         if (isEqSetting('osImage','debian')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             if (isEqSetting('target','fpga')):
