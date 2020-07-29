@@ -1,12 +1,16 @@
 from fett.base.utils.misc import *
 import fett.cwesEvaluation.scoreTests as scoreTests
 
+import fett.cwesEvaluation.tests.bufferErrors.vulClassTester
+import fett.cwesEvaluation.tests.bufferErrors.cweScores
 import fett.cwesEvaluation.tests.resourceManagement.vulClassTester
 import fett.cwesEvaluation.tests.resourceManagement.cweScores
 import fett.cwesEvaluation.tests.numericErrors.vulClassTester
 import fett.cwesEvaluation.tests.numericErrors.cweScores
 
 cweTests = {
+    "bufferErrors" :
+        fett.cwesEvaluation.tests.bufferErrors.vulClassTester.vulClassTester,
     "resourceManagement" :
         fett.cwesEvaluation.tests.resourceManagement.vulClassTester.vulClassTester,
     "numericErrors" :
@@ -14,6 +18,8 @@ cweTests = {
 }
 
 cweScores = {
+    "bufferErrors" :
+        fett.cwesEvaluation.tests.bufferErrors.cweScores,
     "resourceManagement" :
         fett.cwesEvaluation.tests.resourceManagement.cweScores,
     "numericErrors" :
@@ -39,8 +45,9 @@ def score(testLogDir, vulClass):
     # TODO: Allow custom scoring
     scorer = scoreTests.customScorerObj(False, None)
 
-    # TODO: Make this configurable?
-    csvPath = os.path.join(testLogDir, "scores.csv")
+    csvPath = (os.path.join(testLogDir, "scores.csv")
+               if vulClass != "bufferErrors" or isEnabledDict('bufferErrors', 'csvFile')
+               else None)
 
     scoreTests.scoreTests(module, scorer, csvPath, testLogDir)
 
