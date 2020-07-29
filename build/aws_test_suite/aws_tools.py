@@ -13,6 +13,21 @@ import time
 import boto3
 
 
+def test_aws():
+    """
+    Tests the presence of the AWS CLI
+
+    :return: A boolean for whether or not AWS CLI is installed
+    :rtype: bool
+    """
+
+    try:
+        subprocess_check_output("aws --version")
+        return True
+    except Exception as e:
+        logging.error(f'Test AWS: {e}')
+        return False
+
 # +-----------------------------+
 # |  AWS Instance Manipulation  |
 # +-----------------------------+
