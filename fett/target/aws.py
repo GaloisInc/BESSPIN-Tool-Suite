@@ -127,10 +127,11 @@ class firesimTarget(commonTarget):
     @decorate.timeWrap
     def activateEthernet(self):
         if (isEqSetting('osImage','debian')):
-            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
-            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
+            if (not self.restartMode): #Was already done in the first start
+                self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+                self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('binarySource','Michigan')):
@@ -246,20 +247,22 @@ class connectalTarget(commonTarget):
     @decorate.timeWrap
     def activateEthernet(self):
         if (isEqSetting('osImage','debian')):
-            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
-            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
+            if (not self.restartMode): #Was already done in the first start
+                self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+                self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage', 'FreeBSD')):
             self.runCommand ("ifconfig vtnet0 up")
             self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
             self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
             self.runCommand(f"route add default {self.ipHost}")
-            # For future restart
-            self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsMacAddrTarget')}\"' >> /etc/rc.conf")
-            self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
-            self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
+            if (not self.restartMode): #Was already done in the first start
+                # For future restart
+                self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsMacAddrTarget')}\"' >> /etc/rc.conf")
+                self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
+                self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
