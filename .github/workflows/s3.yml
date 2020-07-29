@@ -4,6 +4,7 @@ on:
     branches:
       - develop
       - master
+      - "actions/**"
 
 jobs:
   addToS3:
@@ -14,22 +15,31 @@ jobs:
         with:
           submodules: true
           lfs: true
+
+      - name: Get branch name
+        run: echo "::set-env name=branch::${GITHUB_REF#refs/heads/}"
+
       - name: Configure AWS credentials
+        if: github.ref == 'refs/heads/master'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.FETT_TARGET_GH_PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.FETT_TARGET_GH_PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Configure AWS credentials
+        if: github.ref == 'refs/heads/develop'
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.FETT_TARGET_GH_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.FETT_TARGET_GH_AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
 
-      - run: |
-          if [[ "${{ github.ref }}" == "develop" ]]; then folder=dev; else folder=prod; fi
-          echo "::set-env name=folder::$folder"
-
       - name: Copy GFE to S3
-        run: aws s3 sync SSITH-FETT-Binaries/GFE/osImages/firesim/FreeRTOS.elf s3://my-s3/$folder/GFE_FreeRTOS.elf
+        run: echo aws s3 sync SSITH-FETT-Binaries/GFE/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/GFE_FreeRTOS.elf
 
       - name: Copy LMCO to S3
-        run: aws s3 sync SSITH-FETT-Binaries/LMCO/osImages/firesim/FreeRTOS.elf s3://my-s3/$folder/LMCO_FreeRTOS.elf
+        run: echo aws s3 sync SSITH-FETT-Binaries/LMCO/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/LMCO_FreeRTOS.elf
 
       - name: Copy Michigan to S3
-        run: aws s3 sync SSITH-FETT-Binaries/Michigan/osImages/firesim/FreeRTOS.elf s3://my-s3/$folder/Michigan_FreeRTOS.elf
+        run: echo aws s3 sync SSITH-FETT-Binaries/Michigan/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/Michigan_FreeRTOS.elf
