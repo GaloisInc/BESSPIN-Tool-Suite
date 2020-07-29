@@ -1,17 +1,16 @@
 """
 TODO:
-    1. Documentation
-        a. aws_tools.py
-    2. Address TODOs (esp. in aws_tools.py)
-    3. Use typing module for type hints
-    4. More error handling
-    5. Test
+    1. Address TODOs (esp. in aws_tools.py)
+    2. Use typing module for type hints
+    3. More error handling
+    4. Test
 """
 
 """
 FETT CI Library
 """
 from .ec2_work_group import *
+from .helper import *
 from .aws_credentials import AWSCredentials
 from .userdata_creator import UserdataCreator
 
