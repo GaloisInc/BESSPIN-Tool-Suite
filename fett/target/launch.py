@@ -153,6 +153,11 @@ def endFett (xTarget):
 """ This decides the classes hierarchy """
 @decorate.debugWrap
 def getClassType():
+    # This function gets executed in try/except
+    def errorAndRaise(message,exc=None):
+        errorAndLog(message,exc=exc)
+        raise
+
     if (isEqSetting('target','aws')):
         return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
@@ -160,20 +165,20 @@ def getClassType():
     elif (isEqSetting('target','fpga')):
         gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
         if (gfeTestingScripts not in os.environ):
-            logAndExit (f"<${gfeTestingScripts}> not found in the nix path.",exitCode=EXIT.Environment)
+            errorAndRaise (f"<${gfeTestingScripts}> not found in the nix path.")
         try:
             sys.path.append(os.environ[gfeTestingScripts])
             from test_gfe_unittest import TestLinux, TestFreeRTOS
         except Exception as exc:
-            logAndExit (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc,exitCode=EXIT.Environment)
+            errorAndRaise (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc)
         if (isEqSetting('xlen',32)):
             return type('classFpgaTarget',(fpga.fpgaTarget,TestFreeRTOS),dict())
         elif(isEqSetting('xlen',64)):
             return type('classFpgaTarget',(fpga.fpgaTarget,TestLinux),dict())
         else:
-            logAndExit (f"Invalid <xlen={getSetting('xlen')}> value.",exitCode=EXIT.Dev_Bug)
+            errorAndRaise (f"Invalid <xlen={getSetting('xlen')}> value.")
 
     else:
-        logAndExit (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.",exitCode=EXIT.Dev_Bug)
+        errorAndRaise (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.")
 
 
