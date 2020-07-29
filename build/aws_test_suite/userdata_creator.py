@@ -5,21 +5,26 @@ import os
 class UserdataCreator:
     """Create FETT Target userdata file to define workload on AWS instances"""
 
-    def __init__(self, userdata):
+    def __init__(self, userdata=None):
         """
         Store userdata
 
         :param userdata: Userdata file to be sent to AWS instances
-        :type userdata: str
+        :type userdata: str, list, optional
 
         :return: A new UserdataCreator instance
         :rtype: UserdataCreator
         """
 
+        if userdata is None:
+            userdata = []
+        elif isinstance(userdata, str):
+            userdata = userdata.split('\n')
+
         self._userdata = userdata
 
     @classmethod
-    def with_fett_repo(cls, credentials, branch=None, binaries_branch=None, key_path='~/.ssh/id_rsa.pub'):
+    def with_fett_branch(cls, credentials, branch=None, binaries_branch=None, key_path='~/.ssh/id_rsa.pub'):
         """
         Add userdata to start with FETT Target at specific branch and binaries branch
 
@@ -41,7 +46,7 @@ class UserdataCreator:
 
         # Default branch on both
         if not (branch or binaries_branch):
-            pass
+            return cls()
 
         # If either branch is specified, we need to get a SSH key - best solution so far
         userdata = [
@@ -60,14 +65,16 @@ class UserdataCreator:
             with open(os.path.expanduser(key_path), "r") as f:
                 key = f.readlines()
                 key = [x.strip() for x in key]
-        except Exception:
-            logging.error("FettDataWriter: Invalid Key Path")
+        except BaseException as e:
+            logging.error("UserdataCreator: Invalid Key Path")
+            logging.error(f"UserdataCreator: { e }")
 
         userdata_ssh = [
             "runuser -l centos -c 'touch /home/centos/.ssh/id_rsa'",
             "cat >/home/centos/.ssh/id_rsa <<EOL",
         ]
-        userdata_ssh.extend(key + "EOL" + [
+        userdata_ssh.extend(key + [
+            "EOL",
             "runuser -l centos -c 'chmod 600 /home/centos/.ssh/id_rsa'",
             "ssh-keygen -y -f /home/centos/.ssh/id_rsa > ~/.ssh/id_rsa.pub"
         ])
@@ -122,8 +129,8 @@ class UserdataCreator:
 
         assert os.path.exists(path)
         self.append_to_userdata(f"cat > {dest} << EOL")
-        with open(path, 'r') as fp:
-            self.append_to_userdata([l.strip() for l in fp.readlines()])
+        with open(path, 'r') as f:
+            self.append_to_userdata([line.strip() for line in f.readlines()])
         self.append_to_userdata("EOL")
 
     def to_file(self, fname):
@@ -141,3 +148,13 @@ class UserdataCreator:
     @staticmethod
     def indicator_filepath():
         return "/home/centos/fett_userdata_complete"
+
+    @property
+    def userdata(self):
+        """
+        Userdata getter
+
+        :return: Userdata
+        :rtype: str
+        """
+        return '\n'.join(self._userdata)
