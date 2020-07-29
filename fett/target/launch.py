@@ -162,6 +162,7 @@ def resetTarget (curTarget):
     collectLogs can err in any step, no need for crazy error handling, especially that we rsyslog them anyway.
     """
     printAndLog("resetTarget: tearing down the current target...")
+    aws.endUartPiping(curTarget)
     curTarget.targetTearDown() 
     del curTarget
 
@@ -186,6 +187,7 @@ def resetTarget (curTarget):
         logAndExit (f"resetTarget: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
 
     newTarget.start(restartMode=True)
+    aws.startUartPiping(newTarget)
 
     return newTarget
 
