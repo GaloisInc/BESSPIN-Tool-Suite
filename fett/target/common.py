@@ -268,7 +268,10 @@ class commonTarget():
 
         #up the ethernet adaptor and get the ip address
         self.activateEthernet()
-                                  
+        
+        if (self.restartMode):
+            printAndLog (f"start: {getSetting('osImage')} booted _again_ successfully!")
+            return
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         awsNtpServer = "169.254.169.123"
         if (isEqSetting('osImage','debian')):
