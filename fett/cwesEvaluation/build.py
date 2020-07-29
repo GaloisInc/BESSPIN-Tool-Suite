@@ -68,12 +68,13 @@ def buildCwesEvaluation():
             # TODO: Write this based on values in the config file.  You'll also
             # have to change it based on the suite being run.  Lastly, it
             # doesn't seem to exist for all classes of vulnerabilities.
-            with ftOpenFile(os.path.join(testsParametersHeader), 'w') as f:
-                f.write("#define nResourceLimit 10\n")
+            header = ftOpenFile(os.path.join(testsParametersHeader), 'w')
+            header.write("#define nResourceLimit 10\n")
+            header.close()
         elif vulClass == "numericErrors":
             # Write empty configuration header file (nothing to configure)
-            ftOpenFile(testsParametersHeader, 'w').close()
-
+            header = ftOpenFile(testsParametersHeader, 'w')
+            header.close()
         if isEqSetting('osImage', 'FreeRTOS'):
             prepareFreeRTOS(vulClassDir)
         elif getSetting('osImage') in ['debian', 'FreeBSD']:
@@ -185,7 +186,8 @@ def buildFreeRTOSTest(test, vulClass, part):
 
     # TODO: Put listConfigParams back in to fill the header file?
     # Write empty fett configuration header file (nothing to configure)
-    ftOpenFile(os.path.join(getSetting('buildDir'), "fettUserConfig.h"), 'w').close()
+    header = ftOpenFile(os.path.join(getSetting('buildDir'), "fettUserConfig.h"), 'w')
+    header.close()
 
     fett.target.build.prepareFreeRTOSNetworkParameters()
 
@@ -195,11 +197,12 @@ def buildFreeRTOSTest(test, vulClass, part):
                       else getSetting("target").upper())
 
     # Define variables testgen uses
-    with ftOpenFile(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a') as mk:
-        mk.write("CFLAGS += "
-                 "-DtestgenOnFreeRTOS "
-                 f"-Dtestgen{backend} "
-                 f"-DTESTGEN_TEST_PART={part}")
+    mk = ftOpenFile(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a')
+    mk.write("CFLAGS += "
+             "-DtestgenOnFreeRTOS "
+             f"-Dtestgen{backend} "
+             f"-DTESTGEN_TEST_PART={part}")
+    mk.close()
 
     # Build
     fett.target.build.buildFreeRTOS()

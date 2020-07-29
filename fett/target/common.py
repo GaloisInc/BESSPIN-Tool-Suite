@@ -241,6 +241,8 @@ class commonTarget():
 
         if (isEqSetting('mode', 'evaluateSecurityTests') and
             isEqSetting('osImage', 'FreeRTOS')):
+            printAndLog(f"start: {getSetting('osImage')} booted successfully!",
+                        doPrint=False)
             # Return early to save time by avoiding unnecessary setup
             return
 
