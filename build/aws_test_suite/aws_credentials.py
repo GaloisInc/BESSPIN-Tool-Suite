@@ -30,9 +30,9 @@ class AWSCredentials:
         :rtype: AWSCredentials
         """
 
-        vars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']
+        variables = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']
         cls.has_env_vars()
-        return cls([os.environ[v] for v in vars])
+        return cls([os.environ[v] for v in variables])
 
     @classmethod
     def from_credentials_file(cls, filepath='~/.aws/credentials'):
@@ -51,13 +51,13 @@ class AWSCredentials:
         keys = {'id': '', 'secret': '', 'session': ''}
         with open(filepath, 'r') as f:
             lines = f.readlines()
-            for l in lines:
-                if 'aws_access_key_id' in l:
-                    keys['id'] = l.strip().split('=')[1][1:]
-                elif 'aws_secret_access_key' in l:
-                    keys['secret'] = l.strip().split('=')[1][1:]
-                elif 'aws_session_token' in l:
-                    keys['session'] = l.strip().split('=')[1][1:]
+            for line in lines:
+                if 'aws_access_key_id' in line:
+                    keys['id'] = line.strip().split('=')[1][1:]
+                elif 'aws_secret_access_key' in line:
+                    keys['secret'] = line.strip().split('=')[1][1:]
+                elif 'aws_session_token' in line:
+                    keys['session'] = line.strip().split('=')[1][1:]
         return cls([keys['id'], keys['secret'], keys['session']])
 
     @classmethod
@@ -70,32 +70,32 @@ class AWSCredentials:
         """
 
         logging.info(
-            f"{cls.__class__.__name__} classmethod from_interactive: performing interactive session to get AWS "
+            f"{cls.__class__.__name__} class method from_interactive: performing interactive session to get AWS "
             f"credentials from the user")
         print(f"{cls.__class__.__name__} Credentials Interactive Session")
-        id = input("\tEnter AWS Access Key ID: ")
+        key_id = input("\tEnter AWS Access Key ID: ")
         secret = input("\tEnter AWS Secret Access Key: ")
         session = input("\tEnter AWS Session Token: ")
-        logging.info(f"{cls.__class__.__name__} classmethod from_interactive: finished interactive session")
-        return cls([id, secret, session])
+        logging.info(f"{cls.__class__.__name__} class method from_interactive: finished interactive session")
+        return cls([key_id, secret, session])
 
     @staticmethod
     def has_env_vars():
         """
-        Checks if necessary environment variables exist for from_env_vars classmethod
+        Checks if necessary environment variables exist for from_env_vars class method
 
         :raises AssertionError: Credentials not found in environment variables
         """
 
-        vars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']
-        for v in vars:
+        variables = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']
+        for v in variables:
             assert v in os.environ, f"AWSCredentials must have environment variable {v} for from_env_vars " \
-                                    f"classmethod"
+                                    f"class method"
 
     @staticmethod
     def has_credential_file(filename):
         """
-        Checks if suitable file exists for from_credentials_file classmethod
+        Checks if suitable file exists for from_credentials_file class method
 
         :raises AssertionError: Credentials could not be found in specified filepath
         """
