@@ -88,12 +88,35 @@ class commonTarget():
                 isPrevUserRoot = self.isCurrentUserRoot
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
                 self.runCommand ("exit",endsWith="login:")
+
                 if (isPrevUserRoot): #switch to the other user
-                    self.runCommand (self.userName,endsWith="Password:")
-                    self.runCommand (self.userPassword)
+                    loginName = self.userName
+                    loginPassword = self.userPassword
                 else: #switch to root
-                    self.runCommand ("root",endsWith="Password:")
-                    self.runCommand (self.rootPassword)
+                    loginName = 'root'
+                    loginPassword = self.rootPassword
+
+                self.runCommand (loginName,endsWith="Password:")
+                if (isEqSetting('osImage','FreeBSD')): #Work around the occasional login failures
+                    maxLoginAttempts = 3
+                    iAttempt = 0
+                    loginSuccess = False
+                    while ((not loginSuccess) and (iAttempt < maxLoginAttempts)):
+                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],timeout=120)
+                        if (retCommand[3] == 0):
+                            loginSuccess = True
+                        elif (retCommand[3] == 1): # try again
+                            printAndLog("switchUser: Failed to login. Trying again...",doPrint=False)
+                            self.runCommand (loginName,endsWith="Password:")
+                            time.sleep(3) #wait for the OS to be ready for the password (maybe this works)
+                            iAttempt += 1
+                        else:
+                            printAndLog(f"switchUser: Failed to login <iAttempt={iAttempt}>, and this part should never be executed!",doPrint=False)
+                    if (not loginSuccess):
+                        self.shutdownAndExit(f"switchUser: Failed to login ({maxLoginAttempts} times).",exitCode=EXIT.Run)
+                else:
+                    self.runCommand (loginPassword)
+
             else: #open and close sshConnections
                 self.closeSshConn()
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
@@ -205,7 +228,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 120
             elif (isEqSetting('target', 'aws')):
-                timeout = 480
+                timeout = 540
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)

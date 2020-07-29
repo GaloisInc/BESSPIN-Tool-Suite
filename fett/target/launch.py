@@ -21,6 +21,8 @@ from importlib.machinery import SourceFileLoader
 @decorate.timeWrap
 def startFett ():
     # ------- Global/Misc sanity checks
+    if (isEqSetting('mode','production') and isEnabled('openConsole')):
+        logAndExit(f"<openConsole> is not compatible with production mode.",exitCode=EXIT.Configuration)
 
     # --------   binarySource-Processor-osImage-PV Matrix --------
     # Check that the processor is provided by this team
@@ -55,6 +57,10 @@ def startFett ():
     # Start on-line logging
     if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
         aws.startRemoteLogging (xTarget)
+
+    # Pipe UART to the network
+    if (isEqSetting('mode','production')):
+        aws.startUartPiping(xTarget) # Shoud not execute any command after piping start
 
     return xTarget
 
@@ -143,6 +149,9 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
+    if (isEqSetting('mode','production')):
+        aws.endUartPiping(xTarget)
+
     if (isEnabled('runApp')):
         xTarget.collectLogs()
 
