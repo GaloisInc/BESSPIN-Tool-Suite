@@ -211,15 +211,12 @@ def collect_run_names():
 # +-----------+
 
 
-def wait_on_id_sqs(ids, name):  # TODO: name param not used
+def wait_on_id_sqs(ids):
     """
     Wait for an SQS message concerning all target in <ids> and terminate them, logging results
 
     :param ids: List of instance ids started by AWS Tool Suite
     :type ids: list
-
-    :param name: ?
-    :type name: str
     """
 
     # Get path to the repoDir
