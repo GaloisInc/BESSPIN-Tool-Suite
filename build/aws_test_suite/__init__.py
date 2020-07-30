@@ -9,9 +9,9 @@ TODO:
 """
 FETT CI Library
 """
-from .ec2_work_group import *
-from .helper import *
 from .aws_credentials import AWSCredentials
+from .helper import *
+from .instance_manager import *
 from .userdata_creator import UserdataCreator
 
 
