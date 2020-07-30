@@ -4,9 +4,11 @@ import argparse
 from datetime import datetime
 from build.aws_test_suite import *
 
+h = 'Nightly CI: '
+
 
 def main(args):
-    console.log('Nightly CI: Welcome to the nightly testing app!')
+    console.log(f'{h}Welcome to the nightly testing app!')
 
     if args.init:
         a = AWSCredentials.from_interactive()
@@ -19,21 +21,26 @@ def main(args):
             try:
                 a = AWSCredentials.from_env_vars()
             except AssertionError:
-                console.log('Nightly CI: Cannot get AWS credentials.', 'Error')
+                console.log(f'{h}Cannot get AWS credentials.', 'Error')
 
-    console.log('Nightly CI: Gathering run targets')
+    console.log(f'{h}Gathering run targets.')
     r = collect_run_names()
 
     i = InstanceManager(args.cap)
 
-    console.log('Nightly CI: Creating userdata')
+    console.log(f'{h}Creating userdata and instances.')
 
-    for j in range(args.count):
+    count = args.count if 0 < args.count < len(r) else len(r)
+
+    for j in range(count):
         u = UserdataCreator.default(a, args.branch, args.binaries_branch, args.key_path)
         u.append(f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
                        nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job  -i {str(j)}"' """)
         i.add_instance(Instance(args.ami, f'{args.name}-{str(j)}', userdata=u))
-        console.log(f'Nightly CI: Queueing {r[j]}')
+        console.log(f'{h}Queueing {r[j]}.')
+
+    console.log(f'{h}Starting instances.')
+    i.start_instances()
 
 
 if __name__ == "__main__":
@@ -60,7 +67,7 @@ if __name__ == "__main__":
         "--count",
         type=int,
         help="Number of possible configurations (same as length of the output of a dry run of the CI script).",
-        default=8,
+        default=-1,
     )
     parser.add_argument(
         "-cp",
