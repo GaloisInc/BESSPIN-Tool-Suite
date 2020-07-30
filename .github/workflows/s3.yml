@@ -15,6 +15,7 @@ jobs:
         with:
           submodules: true
           lfs: true
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Get branch name
         run: echo "::set-env name=branch::${GITHUB_REF#refs/heads/}"
