@@ -9,4 +9,4 @@ core
 # CI Gitignores
 ci/userdata.txt
 ci/results.txt
-ci/aws-testing-ci.log
+ci/aws-test-suite.log
