@@ -24,7 +24,7 @@ class UserdataCreator:
         self._userdata = userdata
 
     @classmethod
-    def with_fett_branch(cls, credentials, branch=None, binaries_branch=None, key_path='~/.ssh/id_rsa.pub'):
+    def default(cls, credentials, branch=None, binaries_branch=None, key_path='~/.ssh/id_rsa.pub'):
         """
         Add userdata to start with FETT Target at specific branch and binaries branch
 
@@ -45,8 +45,6 @@ class UserdataCreator:
         """
 
         # Default branch on both
-        if not (branch or binaries_branch):
-            return cls()
 
         # If either branch is specified, we need to get a SSH key - best solution so far
         userdata = [
@@ -57,7 +55,7 @@ class UserdataCreator:
             f'export AWS_ACCESS_KEY_ID="{credentials.access_key_id}"',
             f'export AWS_SECRET_ACCESS_KEY="{credentials.secret_key_access}"',
             f'export AWS_SESSION_TOKEN="{credentials.session_token}"',
-            "EOL",
+            "EOL"
         ]
 
         assert os.path.exists(os.path.expanduser(key_path)), f"key path {key_path} does not exist!"
@@ -67,19 +65,20 @@ class UserdataCreator:
                 key = [x.strip() for x in key]
         except BaseException as e:
             logging.error("UserdataCreator: Invalid Key Path")
-            logging.error(f"UserdataCreator: { e }")
+            logging.error(f"UserdataCreator: {e}")
 
-        userdata_ssh = [
-            "runuser -l centos -c 'touch /home/centos/.ssh/id_rsa'",
-            "cat >/home/centos/.ssh/id_rsa <<EOL",
-        ]
-        userdata_ssh.extend(key + [
-            "EOL",
-            "runuser -l centos -c 'chmod 600 /home/centos/.ssh/id_rsa'",
-            "ssh-keygen -y -f /home/centos/.ssh/id_rsa > ~/.ssh/id_rsa.pub"
-        ])
+        if branch or binaries_branch:
+            userdata_ssh = [
+                "runuser -l centos -c 'touch /home/centos/.ssh/id_rsa'",
+                "cat >/home/centos/.ssh/id_rsa <<EOL"
+            ]
+            userdata_ssh.extend(key + [
+                "EOL",
+                "runuser -l centos -c 'chmod 600 /home/centos/.ssh/id_rsa'",
+                "ssh-keygen -y -f /home/centos/.ssh/id_rsa > ~/.ssh/id_rsa.pub"
+            ])
 
-        userdata += userdata_ssh
+            userdata += userdata_ssh
 
         # Compose userdata contents, depending on whether path was specified.
         # Binaries branch and Target branch provided
@@ -89,12 +88,10 @@ class UserdataCreator:
                 cd SSITH-FETT-Binaries && 
                 git stash && 
                 cd .. &&
-                git fetch &&\n""" + (
-                f"git checkout {branch} &&\n" if branch else "") +
+                git fetch &&\n""" + (f"git checkout {branch} &&\n" if branch else "") +
             """git pull && 
                 git submodule update && 
-                cd SSITH-FETT-Binaries &&\n""" + (
-                f"git checkout {binaries_branch} &&\n" if binaries_branch else "") +
+                cd SSITH-FETT-Binaries &&\n""" + (f"git checkout {binaries_branch} &&\n" if binaries_branch else "") +
             """git-lfs pull && 
                 cd .. "'"""
         ]
@@ -103,7 +100,7 @@ class UserdataCreator:
 
         return cls(userdata)
 
-    def append_to_userdata(self, ul=''):
+    def append(self, ul=''):
         """
         Convenience to append to self._userdata
 
@@ -128,10 +125,10 @@ class UserdataCreator:
         """
 
         assert os.path.exists(path)
-        self.append_to_userdata(f"cat > {dest} << EOL")
+        self.append(f"cat > {dest} << EOL")
         with open(path, 'r') as f:
-            self.append_to_userdata([line.strip() for line in f.readlines()])
-        self.append_to_userdata("EOL")
+            self.append([line.strip() for line in f.readlines()])
+        self.append("EOL")
 
     def to_file(self, fname):
         """

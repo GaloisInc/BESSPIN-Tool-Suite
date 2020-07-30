@@ -2,33 +2,45 @@
 
 import argparse
 from datetime import datetime
-from build import aws_test_suite as ats
+from build.aws_test_suite import *
 
 
 def main(args):
-    ats.print('Welcome to the nightly testing app!')
+    console.log('Nightly CI: Welcome to the nightly testing app!')
 
     if args.init:
-        a = ats.AWSCredentials.from_interactive()
+        a = AWSCredentials.from_interactive()
     elif args.credentials:
-        a = ats.AWSCredentials.from_credentials_file(args.credentials)
+        a = AWSCredentials.from_credentials_file(args.credentials)
     else:
         try:
-            a = ats.AWSCredentials.from_credentials_file()
+            a = AWSCredentials.from_credentials_file()
         except AssertionError:
             try:
-                a = ats.AWSCredentials.from_env_vars()
+                a = AWSCredentials.from_env_vars()
             except AssertionError:
-                ats.print('Cannot get AWS credentials', 'Error')
+                console.log('Nightly CI: Cannot get AWS credentials.', 'Error')
 
-    e = ats.EC2WorkGroup(args.cap)  # TODO: do something??
+    console.log('Nightly CI: Gathering run targets')
+    r = collect_run_names()
+
+    i = InstanceManager(args.cap)
+
+    console.log('Nightly CI: Creating userdata')
+
+    for j in range(args.count):
+        u = UserdataCreator.default(a, args.branch, args.binaries_branch, args.key_path)
+        u.append(f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
+                       nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job  -i {str(j)}"' """)
+        i.add_instance(Instance(args.ami, f'{args.name}-{str(j)}', userdata=u))
+        console.log(f'Nightly CI: Queueing {r[j]}')
 
 
 if __name__ == "__main__":
     today = datetime.now().strftime("%m%d%y")
 
     parser = argparse.ArgumentParser()
-    # parser.add_argument("ami", type=str, help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'")
+    parser.add_argument("ami", type=str, help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'")
     parser.add_argument(
         "-b",
         "--branch",

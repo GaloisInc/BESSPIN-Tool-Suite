@@ -28,6 +28,7 @@ def test_aws():
         logging.error(f'Test AWS: {e}')
         return False
 
+
 # +-----------------------------+
 # |  AWS Instance Manipulation  |
 # +-----------------------------+
@@ -83,7 +84,7 @@ def terminate_instance(instance_id, dry_run=True):
 
 
 def launch_instance(
-        ami_name,
+        image_id,
         vpc_name="aws-controltower-VPC",
         security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
         instance_type="f1.2xlarge",
@@ -99,8 +100,8 @@ def launch_instance(
     than id. Also, defaults to values typically used during FETT development, only requiring the AMI name. Keyword
     arguments are passed directly to launch_instances call for extensibility.
 
-    :param ami_name: AMI name
-    :type ami_name: str
+    :param image_id: AMI ID
+    :type image_id: str
 
     :param vpc_name: VPC name, defaults to 'aws-controltower-VPC'
     :type vpc_name: str
@@ -135,8 +136,6 @@ def launch_instance(
     security_group = client.describe_security_groups(
         Filters=[{"Name": "group-name", "Values": [security_group_name]}]
     )["SecurityGroups"][0]["GroupId"]
-
-    image_id = get_ami_id_from_name(ami_name)
 
     # get subnets and choose a public one
     subnets = list(
