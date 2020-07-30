@@ -269,7 +269,11 @@ class commonTarget():
         #up the ethernet adaptor and get the ip address
         self.activateEthernet()
         
-        if (self.restartMode):
+        if (self.restartMode): #this only in aws/production mode -- skip the reset of start()
+            if (isEqSetting('osImage','debian')):
+                self.runCommand("systemctl start systemd-timesyncd.service")
+            elif (isEqSetting('osImage','FreeBSD')):
+                self.runCommand("service ntpd start")
             printAndLog (f"start: {getSetting('osImage')} booted _again_ successfully!")
             return
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
