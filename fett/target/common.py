@@ -273,8 +273,6 @@ class commonTarget():
             if (isEqSetting('osImage','debian')): # timesync is not in the boot sequence of neither GFE nor MIT images
                 ntpTimeout = 150 if isEqSetting('binarySource','MIT') else 60 # MIT needs some more time to be responsive
                 self.runCommand("systemctl start systemd-timesyncd.service",timeout=ntpTimeout)
-            elif (isEqSetting('osImage','FreeBSD')):
-                self.runCommand("service ntpd start")
             printAndLog (f"start: {getSetting('osImage')} booted _again_ successfully!")
             return
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.

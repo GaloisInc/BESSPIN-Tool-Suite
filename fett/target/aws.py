@@ -254,11 +254,12 @@ class connectalTarget(commonTarget):
                 self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage', 'FreeBSD')):
-            self.runCommand ("ifconfig vtnet0 up")
-            self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
-            self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
-            self.runCommand(f"route add default {self.ipHost}")
             if (not self.restartMode): #Was already done in the first start
+                self.runCommand ("ifconfig vtnet0 up")
+                self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
+                self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
+                self.runCommand(f"route add default {self.ipHost}")
+            
                 # For future restart
                 self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsMacAddrTarget')}\"' >> /etc/rc.conf")
                 self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
