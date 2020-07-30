@@ -247,7 +247,7 @@ class commonTarget():
                 self.runCommand("root",endsWith="\r\n#")
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
             elif (not self.onlySsh):
-                if not isEqSetting("binarySource", "SRI-Cambridge"):
+                if ((not isEqSetting("binarySource", "SRI-Cambridge")) or self.restartMode):
                     self.runCommand ("root",endsWith='Password:')
                     self.runCommand (self.rootPassword,endsWith=tempPrompt)
                 else:
