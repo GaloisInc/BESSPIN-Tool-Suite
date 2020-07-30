@@ -10,6 +10,7 @@ import shlex
 import subprocess
 import time
 import boto3
+import importlib.util
 
 
 def test_aws():
@@ -221,6 +222,18 @@ def wait_on_id_sqs(ids, name):  # TODO: name param not used
     :type name: str
     """
 
+    # Get path to the repoDir
+    awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
+    buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
+    repoDir = os.path.abspath(os.path.join(buildDir, os.pardir))
+
+    # Import Configs from $repoDir/ci/configs.py
+    moduleSpec = importlib.util.spec_from_file_location(
+        "configs", os.path.join(repoDir, "ci", "configs.py")
+    )
+    configs = importlib.util.module_from_spec(moduleSpec)
+    moduleSpec.loader.exec_module(configs)
+
     # Start Boto3 Client
     try:
         sqs = boto3.client("sqs", region_name="us-west-2")
@@ -231,7 +244,7 @@ def wait_on_id_sqs(ids, name):  # TODO: name param not used
     def delete_message(message):
         try:
             sqs.delete_message(
-                QueueUrl=configs.ciAWSqueueTesting,  # TODO: import configs somehow
+                QueueUrl=configs.ciAWSqueueTesting,
                 ReceiptHandle=message["ReceiptHandle"],
             )
             logging.info("Succeeded in removing message from SQS queue.")
@@ -242,7 +255,7 @@ def wait_on_id_sqs(ids, name):  # TODO: name param not used
     while len(ids) > 0:
         try:
             response = sqs.receive_message(
-                QueueUrl=configs.ciAWSqueueTesting,  # TODO: import configs somehow
+                QueueUrl=configs.ciAWSqueueTesting,
                 VisibilityTimeout=5,  # 5 seconds are enough
                 WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
             )
