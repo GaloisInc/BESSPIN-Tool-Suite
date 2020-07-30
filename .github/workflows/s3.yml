@@ -38,10 +38,10 @@ jobs:
           aws-region: us-west-2
 
       - name: Copy GFE to S3
-        run: aws s3 sync SSITH-FETT-Binaries/GFE/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/GFE_FreeRTOS.elf
+        run: aws s3 cp SSITH-FETT-Binaries/GFE/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/GFE_FreeRTOS.elf
 
       - name: Copy LMCO to S3
-        run: aws s3 sync SSITH-FETT-Binaries/LMCO/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/LMCO_FreeRTOS.elf
+        run: aws s3 cp SSITH-FETT-Binaries/LMCO/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/LMCO_FreeRTOS.elf
 
       - name: Copy Michigan to S3
-        run: aws s3 sync SSITH-FETT-Binaries/Michigan/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/Michigan_FreeRTOS.elf
+        run: aws s3 cp SSITH-FETT-Binaries/Michigan/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/Michigan_FreeRTOS.elf
