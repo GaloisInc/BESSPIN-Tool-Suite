@@ -23,3 +23,7 @@ def print(message=None, level='Info'):
 
     command = level.lower()
     exec(f'logging.{command}("{message}")')
+
+    if command == 'error':
+        print('(Error)~ Exiting.')
+        exit(0)
