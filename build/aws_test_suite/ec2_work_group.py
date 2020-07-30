@@ -10,7 +10,7 @@ from .aws_tools import *
 from .userdata_creator import UserdataCreator
 
 
-class EC2WorkGroup:
+class EC2WorkGroup:  # TODO: what is an ec2workgroup??
     """
     An EC2WorkGroup acts a collection of AWS instances that work can be queued to run
 
