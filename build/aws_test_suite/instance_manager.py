@@ -10,17 +10,34 @@ class InstanceManager:
 
         self._cap = cap
         self._instances = instances
+        self._running = []
+        self._terminated = []
+        self._capped = False
 
     def add_instance(self, instance):
         self._instances.append(instance)
+        return self
 
     def start_instances(self, **ec2_kwargs):
-        for instance in self._instances:
-            instance.start(**ec2_kwargs)
+        assert self._capped, 'Maximum number of instances reached. call InstanceManager.terminate_instance first ' \
+                             'before starting another instance'
+
+        start = len(self._terminated)
+        end = (self._cap + start) if self._cap + start < len(self._instances) else len(self._instances)
+        for i in range(start, end):
+            if self._instances[i].id not in self._running:
+                self._instances[i].start(**ec2_kwargs)
+                self._running.append(self._instances[i].id)
+        self._capped = True
+        return self
 
     def terminate_instances(self):
-        for instance in self._instances:
-            instance.terminate()
+        for i in self._running:
+            self._instances[i].terminate()
+            self._terminated.append(i)
+        self._running = []
+        self._capped = False
+        return self
 
     @property
     def instances(self):
