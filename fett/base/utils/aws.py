@@ -127,6 +127,9 @@ def pollPortalIndefinitely (s3Bucket, exitFunc):
     except Exception as exc:
         exitFunc(message=f"Failed to create the S3 client.",exc=exc)
 
+    #botocore logging is intense. It smothers our logging.
+    logging.getLogger('botocore').setLevel(logging.CRITICAL)
+
     instanceId = getInstanceId(exitFunc)
 
     instructions = ['termination', 'reset']
