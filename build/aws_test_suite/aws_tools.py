@@ -25,7 +25,7 @@ def test_aws():
         subprocess_check_output("aws --version")
         return True
     except Exception as e:
-        logging.error(f'Test AWS: {e}')
+        logging.error(f"Test AWS: {e}")
         return False
 
 
@@ -66,7 +66,7 @@ def get_ami_id_from_name(ami_name):
     client = boto3.client("ec2")
     response = client.describe_images(Filters=[{"Name": "name", "Values": [ami_name]}])
     assert (
-            len(response["Images"]) == 1
+        len(response["Images"]) == 1
     ), f"No unique images found '{response['Images']}'"
     return response["Images"][0]["ImageId"]
 
@@ -84,14 +84,14 @@ def terminate_instance(instance_id, dry_run=True):
 
 
 def launch_instance(
-        image_id,
-        vpc_name="aws-controltower-VPC",
-        security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
-        instance_type="f1.2xlarge",
-        keyname="nightly-testing",
-        user_data=None,
-        tags={"Name": "aws-test-suite-default"},
-        **ec2_kwargs,
+    image_id,
+    vpc_name="aws-controltower-VPC",
+    security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
+    instance_type="f1.2xlarge",
+    keyname="nightly-testing",
+    user_data=None,
+    tags={"Name": "aws-test-suite-default"},
+    **ec2_kwargs,
 ):
     """
     Creates an EC2 instance
@@ -164,7 +164,7 @@ def launch_instance(
         instance = ec2.create_instances(
             ImageId=image_id,
             EbsOptimized=True,
-            BlockDeviceMappings=([{"DeviceName": "/dev/sdb", "NoDevice": "", }, ]),
+            BlockDeviceMappings=([{"DeviceName": "/dev/sdb", "NoDevice": "",},]),
             InstanceType=instance_type,
             MinCount=1,
             MaxCount=1,
@@ -194,14 +194,14 @@ def collect_run_names():
     :rtype: list
     """
 
-    logging.debug(str(subprocess_check_output("../../ci/fett-ci.py -X -ep AWS runDevPR -job 420")))
+    logging.debug(
+        str(subprocess_check_output("../../ci/fett-ci.py -X -ep AWS runDevPR -job 420"))
+    )
     unsorted = os.listdir("/tmp/dumpIni/")
     run_names = [run_name[:-4] for run_name in unsorted]
     run_names.sort()
 
-    logging.info(
-        f"Gathered Launch targets:\n{run_names}"
-    )
+    logging.info(f"Gathered Launch targets:\n{run_names}")
 
     return run_names
 
@@ -209,6 +209,7 @@ def collect_run_names():
 # +-----------+
 # |  AWS SQS  |
 # +-----------+
+
 
 def wait_on_id_sqs(ids, name):  # TODO: name param not used
     """
@@ -231,22 +232,18 @@ def wait_on_id_sqs(ids, name):  # TODO: name param not used
     def delete_message(message):
         try:
             sqs.delete_message(
-                QueueUrl=configs.ciAWSqueueNightly,  # TODO: import configs somehow
+                QueueUrl=configs.ciAWSqueueTesting,  # TODO: import configs somehow
                 ReceiptHandle=message["ReceiptHandle"],
             )
-            logging.info(
-                "Succeeded in removing message from SQS queue."
-            )
+            logging.info("Succeeded in removing message from SQS queue.")
         except:
-            logging.warning(
-                "Failed to delete the message from the SQS queue."
-            )
+            logging.warning("Failed to delete the message from the SQS queue.")
 
     # Keep seeking messages until we have heard from all ids
     while len(ids) > 0:
         try:
             response = sqs.receive_message(
-                QueueUrl=configs.ciAWSqueueNightly,  # TODO: import configs somehow
+                QueueUrl=configs.ciAWSqueueTesting,  # TODO: import configs somehow
                 VisibilityTimeout=5,  # 5 seconds are enough
                 WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
             )
@@ -261,15 +258,12 @@ def wait_on_id_sqs(ids, name):  # TODO: name param not used
                 logging.info(
                     f'FINISHED: {body["instance"]["id"]}, exited with status {body["job"]["status"]}.'
                 )
-                logging.debug(f'Comparing against {ids}')
+                logging.debug(f"Comparing against {ids}")
 
                 # If we have a message about an ID we have to terminate, terminate it, and remove the message.
                 if instance_id in ids:
                     ids.remove(instance_id)
-                    terminate_instance(
-                        instance_id,
-                        False
-                    )
+                    terminate_instance(instance_id, False)
                     logging.info(f"Removed Instance {instance_id}")
 
                 delete_message(message)

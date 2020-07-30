@@ -2,7 +2,7 @@
 """
 --- fett-ci.py is the CI entry to the FETT-Target program. 
 --- usage: fett-ci.py [-h] (-art ARTIFACTSUFFIX | -job JOBID) [-i NODEINDEX]
-                  [-N NNODES] [-t JOBTIMEOUT] [-X] [-n] -ep {OnPrem,AWS,AWSNightly}
+                  [-N NNODES] [-t JOBTIMEOUT] [-X] [-n] -ep {OnPrem,AWS,AWSTesting}
                   runType
 
 FETT-CI (CI Entry to FETT-Target)
@@ -26,8 +26,8 @@ optional arguments:
                         minutes.
   -X, --testOnly        This dumps all possible config permutations and some
                         meta data. Does not run anything.
-  -ep {OnPrem,AWS}, --entrypoint {OnPrem,AWS,AWSNightly}
-                        Entrypoint: OnPrem | AWS | AWSNightly
+  -ep {OnPrem,AWS}, --entrypoint {OnPrem,AWS,AWSTesting}
+                        Entrypoint: OnPrem | AWS | AWSTesting
 """
 
 try:
@@ -54,7 +54,7 @@ def main(xArgs):
 
     # Check runType
     baseRunTypes = ["runOnPush", "runDevPR", "runPeriodic", "runRelease"]
-    if xArgs.entrypoint in ["AWS", "AWSNightly"]:
+    if xArgs.entrypoint in ["AWS", "AWSTesting"]:
         if xArgs.runType not in baseRunTypes[1:2]:  # Only allow runDevPR on AWS for now
             exitFettCi(
                 message=f"Invalid runType argument. For AWS, runType has to be in {baseRunTypes[1:2]}."
@@ -131,7 +131,7 @@ def main(xArgs):
             for dictConfig in allConfigs:
                 generateConfigFile(repoDir, outDir, dictConfig, xArgs.testOnly)
 
-            if xArgs.entrypoint in ["AWS", "AWSNightly"]:  # generate the info file
+            if xArgs.entrypoint in ["AWS", "AWSTesting"]:  # generate the info file
                 infoDict = {"nNodes": actualNumConfigs, "fettTargetAMI": fettTargetAMI}
                 infoFilePath = os.path.join(outDir, "awsCiInfo.json")
                 try:
@@ -190,8 +190,8 @@ def main(xArgs):
 
     # Run the FETT Tool
 
-    # Set the entrypoint to be same for AWSNightly and AWS for fett.py
-    if xArgs.entrypoint == "AWSNightly":
+    # Set the entrypoint to be same for AWSTesting and AWS for fett.py
+    if xArgs.entrypoint == "AWSTesting":
         fettEntrypoint = "AWS"
     else:
         fettEntrypoint = xArgs.entrypoint
@@ -266,8 +266,8 @@ if __name__ == "__main__":
         "-ep",
         "--entrypoint",
         required=True,
-        choices=["OnPrem", "AWS", "AWSNightly"],
-        help="Entrypoint: OnPrem | AWS | AWSNightly",
+        choices=["OnPrem", "AWS", "AWSTesting"],
+        help="Entrypoint: OnPrem | AWS | AWSTesting",
     )
     xArgs = xArgParser.parse_args()
 
