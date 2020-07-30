@@ -4,6 +4,7 @@ on:
     branches:
       - develop
       - master
+      - actions/add-s3-sync
 
 jobs:
   addToS3:
@@ -17,7 +18,8 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Get branch name
-        run: echo "::set-env name=branch::${GITHUB_REF#refs/heads/}"
+        # run: echo "::set-env name=branch::${GITHUB_REF#refs/heads/}"
+        run: echo "::set-env name=branch::develop"
 
       - name: Configure AWS credentials
         if: github.ref == 'refs/heads/master'
@@ -28,7 +30,7 @@ jobs:
           aws-region: us-west-2
 
       - name: Configure AWS credentials
-        if: github.ref == 'refs/heads/develop'
+        if: github.ref != 'refs/heads/develop'
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.FETT_TARGET_GH_AWS_ACCESS_KEY_ID }}
