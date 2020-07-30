@@ -158,7 +158,7 @@ def prepareArtifact(
                 message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.", exc=exc
             )
 
-    if entrypoint in ["AWS", "AWSNightly"]:
+    if entrypoint in ["AWS", "AWSTesting"]:
         # import the required modules
         try:
             import importlib.util, tarfile
@@ -190,9 +190,9 @@ def prepareArtifact(
                 tarFileName,
                 f"fett-target/ci/artifacts/{jobID}/",
             )
-        else:  # AWS Nightly
+        else:  # AWS Testing
             awsModule.uploadToS3(
-                ciAWSbucketNightly, exitFettCi, tarFileName, f"nightly-ci/{jobID}/",
+                ciAWSbucketTesting, exitFettCi, tarFileName, f"aws-testing/{jobID}/",
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
@@ -207,13 +207,13 @@ def prepareArtifact(
                 nodeIndex,
                 reason="fett-target-ci-termination",
             )
-        else:  # AWS Nightly
+        else:  # AWS Testing
             awsModule.sendSQS(
-                ciAWSqueueNightly,
+                ciAWSqueueTesting,
                 exitFettCi,
                 jobStatus,
                 jobID,
                 nodeIndex,
-                reason="fett-target-ci-termination",
+                reason="aws-testing-fett-target-ci-termination",
             )
         print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
