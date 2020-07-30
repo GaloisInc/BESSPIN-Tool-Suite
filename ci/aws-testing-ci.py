@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 from build.aws_test_suite import *
 
-h = 'Nightly CI: '
+h = 'AWS Testing / CI: '
 
 
 def main(args):
@@ -35,7 +35,7 @@ def main(args):
     for j in range(count):
         u = UserdataCreator.default(a, args.branch, args.binaries_branch, args.key_path)
         u.append(f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                       nix-shell --command "ci/fett-ci.py -ep AWSNightly runDevPR -job  -i {str(j)}"' """)
+                       nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job  -i {str(j)}"' """)
         i.add_instance(Instance(args.ami, f'{args.name}-{str(j)}', userdata=u))
         console.log(f'{h}Queueing {r[j]}.')
 
