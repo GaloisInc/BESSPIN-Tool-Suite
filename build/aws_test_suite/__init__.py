@@ -9,6 +9,7 @@ TODO:
 """
 FETT CI Library
 """
+from .logger import console
 from .aws_credentials import AWSCredentials
 from .instance_manager import *
 from .userdata_creator import UserdataCreator
