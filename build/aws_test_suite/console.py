@@ -1,3 +1,6 @@
+import logging
+
+
 class console:
     @staticmethod
     def log(message=None, level='Info'):
