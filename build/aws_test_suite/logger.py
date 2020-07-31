@@ -29,7 +29,7 @@ class Logger:
             format="%(asctime)s: (%(levelname)s)~  %(message)s",
             datefmt="%I:%M:%S %p",
             level=log_level,
-            handlers=[logging.FileHandler(log_fname), logging.StreamHandler()],
+            handlers=[logging.FileHandler(log_fname)],
         )
         logging.info(
             f"AWS Test Suite Logger Initialized\nLog File: {log_fname}\nLog Level: {level}"
