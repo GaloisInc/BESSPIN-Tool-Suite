@@ -146,7 +146,8 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False,
                     val = xConfig.getboolean(xSection,iPar['name'])
             except Exception as exc:
                 logAndExit(f"{fileName}: <{iPar['name']}> has to be boolean in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
-        elif ( iPar['type'] in ['str', 'string', 'stringsList', 'filePath', 'dirPath', 'ipAddress', 'dict', 'macAddress']): 
+        elif ( iPar['type'] in ['str', 'string', 'stringsList', 'filePath', 'dirPath', 'ipAddress', 
+                                'dict', 'macAddress', 'hex', 'hexList', 'hexPairsList']): 
             if (setup):
                 val = iPar['val']
             else:
@@ -182,21 +183,57 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False,
                 macAddressMatch = re.match(r"([0-9a-fA-F]{2}\:){5}[0-9a-fA-F]{2}$",val)
                 if (macAddressMatch is None):
                     logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid MAC address in section [{xSection}].",exitCode=EXIT.Configuration)
-            elif (iPar['type'] == 'stringsList'):
+            elif (iPar['type'] == 'hex'):
+                try:
+                    val = int(val,16)
+                except Exception as exc:
+                    logAndExit(f"ValueError in reading configuration file. <{iPar['name']}> has to be hex in"
+                            f" section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
+            elif ('List' in iPar['type']):
                 if ((val[0] != '[') or (val[-1] != ']')):
-                    logAndExit("ValueError in reading configuration "
-                               f"file. <{iPar['name']}> has to be of type "
-                               f"{iPar['type']} in section [{xSection}]. A "
-                               f"{iPar['type']} has to have contents between "
-                               f"brackets.",
+                    logAndExit("ValueError in reading configuration file. <{iPar['name']}> has to be of type "
+                               f"{iPar['type']} in section [{xSection}]. A {iPar['type']} has to have contents between brackets.",
                                exitCode = EXIT.Configuration)
                 if (len(val[1:-1]) == 0):
                     vals = []
                 else:
                     # transform val into a python list of strings
                     vals = [x.strip() for x in val[1:-1].split(',')]
+                if (iPar['type'] == 'hexPairsList'): #check that they are hex
+                    for val in vals:
+                        items = val.split(':')
+                        if (len(items)!=2):
+                            logAndExit(f"ValueError in reading configuration file. <{iPar['name']}> has to be a colon-separated hex-pair"
+                                    f" in section [{xSection}].",exitCode=EXIT.Configuration)
+                        for item in items:
+                            try:
+                                xHex = int(item,16)
+                            except Exception as exc:
+                                logAndExit(f"ValueError in reading configuration file. The value <{item}> in the pair <{val}> of the"
+                                        f" parameter <{iPar['name']}> is not hex in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
+                elif (iPar['type'] == 'hexList'): #check that they are hex
+                    if (('wildValue' in iPar) and (iPar['wildValue'] in vals)):
+                        vals = ['ALL']
+                    else:
+                        exceptionValue = None
+                        if ("exception" in iPar): #the value in this option is not allowed
+                            if (xConfig.has_option(xSection,iPar['exception'])):
+                                try:
+                                    exceptionValue = int(xConfig.get(xSection,iPar['exception']),16)
+                                except Exception as exc:
+                                    logAndExit(f"ValueError in reading configuration file. <{iPar['exception']}> has to be hex in "
+                                            f"section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
+                        for iVal in range(len(vals)):
+                            try:
+                                vals[iVal] = int(vals[iVal],16)
+                            except Exception as exc:
+                                logAndExit(f"ValueError in reading configuration file. The value <{vals[iVal]}> in <{iPar['name']}> is"
+                                            f" not hex in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
+                            if ((exceptionValue is not None) and (vals[iVal] == exceptionValue)):
+                                logAndExit(f"ValueError in reading configuration file. The value <{vals[iVal]}> in <{iPar['name']}> cannot "
+                                            f"equal the exception value <{iPar['exception']}> in section [{xSection}].",exitCode=EXIT.Configuration)
         else:
-            logAndExit("Json info file: Unknown type <%s> for <%s> in section [%s]." %(iPar['type'],iPar['name'],xSection),exitCode=EXIT.Configuration)
+            logAndExit(f"Json info file: Unknown type <{iPar['type']}> for <{iPar['name']}> in section [{xSection}].",exitCode=EXIT.Configuration)
 
         #checking the values choices + limits
         isChoices= False
