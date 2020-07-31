@@ -40,8 +40,7 @@ def main(args):
     console.log(f"{h}Creating userdata and instances.")
 
     count = args.count if 0 < args.count < len(r) else len(r)
-
-    for j in range(args.run):
+    for j in range(args.runs):
         for k in range(count):
             b = f"-{args.branch}" if args.branch else ""
             bb = f"-{args.binaries_branch}" if args.binaries_branch else ""

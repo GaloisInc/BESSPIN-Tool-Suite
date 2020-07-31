@@ -92,7 +92,7 @@ class Instance:
         self.id = 1
 
     def start(self, **ec2_kwargs):
-        self._instance = launch_instance(
+        self._instance_id = launch_instance(
             self._ami,
             self._vpc_name,
             self._security_group_name,
@@ -102,7 +102,6 @@ class Instance:
             self._tags,
             **ec2_kwargs
         )
-        self._instance_id = self._instance["Instances"][0]["InstanceId"]
         return self
 
     def terminate(self):

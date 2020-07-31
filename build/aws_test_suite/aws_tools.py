@@ -183,7 +183,7 @@ def launch_instance(
         logging.error(f"boto3.create_instances failed with error '{e}'")
         instance = None
 
-    return instance[0]
+    return instance[0].id
 
 
 def collect_run_names():
