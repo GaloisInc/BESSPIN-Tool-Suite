@@ -13,6 +13,7 @@ from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
 from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
 from fett.cwesEvaluation.common import runTests
+from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -49,6 +50,11 @@ def startFett ():
     # prepare the environment
     prepareEnv()
 
+    if (isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')):
+        # Run the tool in a loop when evaluating security tests on FreeRTOS
+        runFreeRTOSCwesEvaluation()
+        return None
+
     # launch fett
     xTarget = launchFett()
 
@@ -78,7 +84,6 @@ def prepareEnv ():
     if (getSetting('osImage') in ['FreeRTOS', 'debian', 'FreeBSD']):
         setSetting('runApp',True)
 
-        # TODO: Should this test go elsewhere?
         if isEqSetting("mode", "evaluateSecurityTests"):
             buildCwesEvaluation()
         else:
@@ -108,7 +113,9 @@ def prepareEnv ():
             aws.configTapAdaptor()
             ## remove modules because sometimes kernel panics if the modules are loaded while programming the FPGA
             aws.removeKernelModules()
-            aws.programAFI()
+            if not (isEqSetting('mode', 'evaluateSecurityTests') and
+                    isEqSetting('osImage', 'FreeRTOS')):
+                aws.programAFI()
             ## remove the modules again because the AMI has xocl in /lib/modules and it is getting auto loaded
             aws.removeKernelModules()
             aws.installKernelModules()
@@ -149,6 +156,10 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
+    if (isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')):
+        # The tool was running in loops -- nothing to do
+        return
+
     if (isEqSetting('mode','production')):
         aws.endUartPiping(xTarget)
 

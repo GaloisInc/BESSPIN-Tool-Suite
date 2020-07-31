@@ -96,8 +96,8 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                    exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
-def isTestEnabled (vulClass, testName):
+def isTestEnabled (vulClass, cTestName):
     if (getSettingDict(vulClass,'runAllTests')):
         return True
     else:
-        return getSettingDict(vulClass,'configCWEs',testName)
+        return getSettingDict(vulClass,['configCWEs',os.path.splitext(cTestName)[0]])
