@@ -194,8 +194,18 @@ def collect_run_names():
     :rtype: list
     """
 
+    # Get path to the repoDir
+    awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
+    buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
+    repoDir = os.path.abspath(os.path.join(buildDir, os.pardir))
+
     logging.debug(
-        str(subprocess_check_output("../../ci/fett-ci.py -X -ep AWS runDevPR -job 420"))
+        str(
+            subprocess_check_output(
+                str(os.path.join(repoDir, "ci", "fett-ci.py"))
+                + " -X -ep AWS runDevPR -job 420"
+            )
+        )
     )
     unsorted = os.listdir("/tmp/dumpIni/")
     run_names = [run_name[:-4] for run_name in unsorted]

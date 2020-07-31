@@ -168,7 +168,7 @@ class AWSCredentials:
         :rtype: str
         """
 
-        assert 0 < index < 2, "Index must be between 0 and 2, inclusive"
+        assert 0 <= index <= 2, "Index must be between 0 and 2, inclusive"
 
         return self._credentials[index]
 
