@@ -1,11 +1,15 @@
 {
     "_usage" : "This json file has the fett parameters. This is the guide to check that the configuration file is legal.",
     "_name" : "The option name.",
-    "_type" : "int (or integer), str (or string), bool (or boolean), filePath",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, hex, hexPairsList, hexList",
+    "_type_cont" : "stringsList, ipAddress, macAddress, dict",
     "_choices" : "a list of acceptable choices. Use for int or str",
     "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
     "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
     "_condition" : "only for filePath. If present, only check the path validity if the option in the condition is True.",
+    "_size" : "only for hex. Number of hex characters (if less, it will be padded by zeros)",
+    "_wildValue" : "only for hexList. If present, this value means something special.",
+    "_exception" : "only for hexList. If present, this option's value is not legal",
 
     "backend" : [
         {
