@@ -361,7 +361,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
 
         if (vulClass in ['bufferErrors']):
             setSettingDict(vulClass,'runAllTests',True)
-            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>")
+            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
 
         # Load selected tests
         sectionName = 'configCWEs'
@@ -376,13 +376,13 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             dictConfigCWEs = dict() 
             for xTest in configCWEs.options(sectionName):
                 try:
-                    dictConfigCWEs[xTest] = configCWEs.getboolean (sectionName,testName)
+                    dictConfigCWEs[xTest] = configCWEs.getboolean(sectionName,xTest)
                 except Exception as exc:
-                    logAndExit(f"The value of <{xTest}> should be boolena in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+                    logAndExit(f"The value of <{xTest}> should be boolean in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
 
             setSettingDict(vulClass,'configCWEs',dictConfigCWEs)
-        
 
-
-
+        # Load custom dev options (setupEnv.json)
+        setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',vulClass,'setupEnv.json'))
+        loadConfigSection(None,setupEnvData,vulClass,setup=True,setSettingsToSectDict=True)
         
