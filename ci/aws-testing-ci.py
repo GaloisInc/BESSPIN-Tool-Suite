@@ -1,5 +1,12 @@
 #! /usr/bin/env python3
 
+
+# Fixing module imports ################################################################################################
+import os
+import sys
+sys.path.insert(1, os.path.dirname(os.getcwd()))
+########################################################################################################################
+
 import argparse
 from datetime import datetime
 from build.aws_test_suite import *
@@ -55,14 +62,14 @@ if __name__ == "__main__":
         "--branch",
         type=str,
         help="The branch of FETT-Target to check out on the AWS instance, and run tests on. Defaults to whatever is "
-        "present on AMI",
+             "present on AMI",
     )
     parser.add_argument(
         "-bb",
         "--binaries-branch",
         type=str,
         help="The branch of FETT-Bineries to check out on the AWS instance, and run tests on. Defaults to whatever is "
-        "present on AMI",
+             "present on AMI",
     )
     parser.add_argument(
         "-c",
@@ -95,7 +102,7 @@ if __name__ == "__main__":
         "--instance-index",
         type=int,
         help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this "
-        "instance index only.",
+             "instance index only.",
     )
     parser.add_argument(
         "-k",
