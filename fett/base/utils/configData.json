@@ -177,10 +177,6 @@
             "type" : "bool"
         },
         {
-            "name" : "dashboardImage",
-            "type" : "bool"
-        },
-        {
             "name" : "useSeed",
             "type" : "bool"
         },
