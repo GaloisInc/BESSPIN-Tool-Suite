@@ -29,7 +29,7 @@ class Logger:
             format="%(asctime)s: (%(levelname)s)~  %(message)s",
             datefmt="%I:%M:%S %p",
             level=log_level,
-            handlers=[logging.FileHandler(log_fname)],
+            handlers=[logging.FileHandler(log_fname), logging.StreamHandler()],
         )
         logging.info(
             f"AWS Test Suite Logger Initialized\nLog File: {log_fname}\nLog Level: {level}"
@@ -64,7 +64,7 @@ class Logger:
         cprint(f"({level})~ {message}", levels[level])
 
         command = level.lower()
-        exec(f'logging.{command}("{message}")')
+        logging.log(command, message)
 
         if command == "error":
             print("(Error)~ Exiting.")
