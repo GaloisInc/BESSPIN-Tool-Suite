@@ -28,19 +28,30 @@ jobs:
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
           - { os: freertos, index: 2, total: 2, host: docker-fpga-io }
     steps:
+      - run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
+          echo "::set-env:: name=ref::$ref"
+
       - uses: actions/checkout@v2
-        if: github.event_name == 'schedule'
+        id: checkout
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
-          ref: "develop"
+          ref: ${{ env.ref }}
+
+      - name: Remove existing lock file if necessary
+        if: steps.checkout.outcome == "failure"
+        run: find .git -name index.lock | xargs rm -f
+
       - uses: actions/checkout@v2
-        if: github.event_name == 'push'
+        if: steps.checkout.outcome == "failure"
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
+          ref: ${{ env.ref }}
+
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -69,19 +80,29 @@ jobs:
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
           - { os: freertos, index: 2, total: 2, host: docker-fpga-io }
     steps:
+      - run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
+          echo "::set-env:: name=ref::$ref"
+
       - uses: actions/checkout@v2
-        if: github.event_name == 'schedule'
+        id: checkout
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
-          ref: "develop"
+          ref: ${{ env.ref }}
+
+      - name: Remove existing lock file if necessary
+        if: steps.checkout.outcome == "failure"
+        run: find .git -name index.lock | xargs rm -f
+
       - uses: actions/checkout@v2
-        if: github.event_name == 'push'
+        if: steps.checkout.outcome == "failure"
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
+          ref: ${{ env.ref }}
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}

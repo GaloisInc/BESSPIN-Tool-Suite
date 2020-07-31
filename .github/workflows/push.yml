@@ -12,6 +12,20 @@ jobs:
           - { os: freertos, host: docker-fpga-io }
     steps:
       - uses: actions/checkout@v2
+        id: checkout
+        continue-on-error: true
+        with:
+          submodules: recursive
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          lfs: true
+
+      - name: Remove existing lock file if necessary
+        if: steps.checkout.outcome == "failure"
+        run: find .git -name index.lock | xargs rm -f
+
+      - name: Re-fetch if previous checkout failed
+        uses: actions/checkout@v2
+        if: steps.checkout.outcome == "failure"
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
