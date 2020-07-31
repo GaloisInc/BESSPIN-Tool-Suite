@@ -183,7 +183,7 @@ def launch_instance(
         logging.error(f"boto3.create_instances failed with error '{e}'")
         instance = None
 
-    return instance[0]
+    return instance[0].id
 
 
 def collect_run_names():
@@ -209,9 +209,8 @@ def collect_run_names():
     )
     unsorted = os.listdir("/tmp/dumpIni/")
     run_names = [run_name[:-4] for run_name in unsorted]
-    run_names.sort()
 
-    logging.info(f"Gathered Launch targets:\n{run_names}")
+    logging.info(f"Gathered Launch Targets:\n{run_names}")
 
     return run_names
 

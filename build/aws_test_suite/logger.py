@@ -26,7 +26,7 @@ class Logger:
         }
         log_level = llevel[level]
         logging.basicConfig(
-            format="%(asctime)s: (%(levelname)s)  %(message)s",
+            format="%(asctime)s: (%(levelname)s)~  %(message)s",
             datefmt="%I:%M:%S %p",
             level=log_level,
             handlers=[logging.FileHandler(log_fname), logging.StreamHandler()],
@@ -54,13 +54,14 @@ class Logger:
             "Debug": "yellow",
             "Error": "red",
             "Info": "cyan",
-            "Warning": "yellow"
+            "Warning": "yellow",
         }
 
-        assert (
-            level in list(levels.keys())
+        assert level in list(
+            levels.keys()
         ), f"{level} is not a valid level, must be one of Critical, Debug, Error, Info, Warning"
 
+        # print(f"({level})~ {message}"
         cprint(f"({level})~ {message}", levels[level])
 
         command = level.lower()

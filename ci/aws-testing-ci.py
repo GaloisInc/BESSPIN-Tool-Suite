@@ -40,19 +40,22 @@ def main(args):
     console.log(f"{h}Creating userdata and instances.")
 
     count = args.count if 0 < args.count < len(r) else len(r)
-
-    for j in range(args.run):
+    for j in range(args.runs):
         for k in range(count):
-            b = f'-{args.branch}' if args.branch else ''
-            bb = f'-{args.binaries_branch}' if args.binaries_branch else ''
-            jn = f'{args.name}-r{j}-i{k}{b}{bb}-{r[k]}'
+            b = f"-{args.branch}" if args.branch else ""
+            bb = f"-{args.binaries_branch}" if args.binaries_branch else ""
+            jn = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
 
-            u = UserdataCreator.default(a, args.branch, args.binaries_branch, args.key_path)
+            u = UserdataCreator.default(
+                a, args.branch, args.binaries_branch, args.key_path
+            )
             u.append(
                 f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
                            nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job { jn } -i {str(k)}"' """
             )
-            i.add_instance(Instance(args.ami, f"{args.name}-{str(k)}", userdata=u))
+            i.add_instance(
+                Instance(args.ami, f"{args.name}-{str(k)}", userdata=u.userdata)
+            )
             console.log(f"{h}Queueing {r[k]}.")
 
     console.log(f"{h}Starting instances and running tests.")
