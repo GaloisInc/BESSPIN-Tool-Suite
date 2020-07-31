@@ -7,6 +7,7 @@ import os
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
+from fett.cwesEvaluation.common import isTestEnabled
 import fett.target.build
 
 
@@ -39,14 +40,17 @@ def buildCwesEvaluation():
         # Create class dir and build
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
-        cp(os.path.join(getSetting('repoDir'),
-                        'fett',
-                        'cwesEvaluation',
-                        'tests',
-                        vulClass,
-                        'sources'),
-            vulClassDir,
-            "*.c")
+
+        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                    vulClass, 'sources')
+        for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
+            # Check if the test should be skipped:
+            cTestName = os.path.basename(test)
+            if (isTestEnabled(vulClass,cTestName)):
+                cp (test, vulClassDir)
+            else:
+                printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
+            
         cp(os.path.join(getSetting('repoDir'),
                         'fett',
                         'target',

@@ -36,7 +36,6 @@ try:
     from fett.base.config import loadConfiguration, genProdConfig
     from fett.target.launch import startFett, endFett
     from fett.base.utils import aws
-    from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
     try:
@@ -116,13 +115,6 @@ def main (xArgs):
     #Prepare the peaceful exit
     setSetting('trash',trashCanObj())
     atexit.register(exitPeacefully,getSetting('trash'))
-
-    if (isEqSetting('mode', 'evaluateSecurityTests') and
-        isEqSetting('osImage', 'FreeRTOS')):
-        # Run the main tool in a loop when evaluating security tests on
-        # FreeRTOS
-        runFreeRTOSCwesEvaluation()
-        exitFett(EXIT.Success)
 
     #launch the tool
     xTarget = startFett()
