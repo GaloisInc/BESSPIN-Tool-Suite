@@ -17,7 +17,7 @@ h = "[AWS Testing CI] : "
 
 
 def main(args):
-    console.log(f"{h}Welcome to the nightly testing app!")
+    console.log(f"{h}Welcome to the AWS testing app!")
 
     if args.init:
         a = AWSCredentials.from_interactive()
@@ -41,14 +41,19 @@ def main(args):
 
     count = args.count if 0 < args.count < len(r) else len(r)
 
-    for j in range(count):
-        u = UserdataCreator.default(a, args.branch, args.binaries_branch, args.key_path)
-        u.append(
-            f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                       nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job  -i {str(j)}"' """
-        )
-        i.add_instance(Instance(args.ami, f"{args.name}-{str(j)}", userdata=u))
-        console.log(f"{h}Queueing {r[j]}.")
+    for j in range(args.run):
+        for k in range(count):
+            b = f'-{args.branch}' if args.branch else ''
+            bb = f'-{args.binaries_branch}' if args.binaries_branch else ''
+            jn = f'{args.name}-r{j}-i{k}{b}{bb}-{r[k]}'
+
+            u = UserdataCreator.default(a, args.branch, args.binaries_branch, args.key_path)
+            u.append(
+                f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
+                           nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job { jn } -i {str(k)}"' """
+            )
+            i.add_instance(Instance(args.ami, f"{args.name}-{str(k)}", userdata=u))
+            console.log(f"{h}Queueing {r[k]}.")
 
     console.log(f"{h}Starting instances and running tests.")
     while not i.done:

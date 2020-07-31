@@ -58,7 +58,6 @@ class InstanceManager:
 
 
 class Instance:
-
     # https://stackoverflow.com/questions/68645/are-static-class-variables-possible-in-python
     _id = 0
 
