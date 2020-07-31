@@ -46,8 +46,13 @@ def main(args):
         i.add_instance(Instance(args.ami, f'{args.name}-{str(j)}', userdata=u))
         console.log(f'{h}Queueing {r[j]}.')
 
-    console.log(f'{h}Starting instances.')
-    i.start_instances()
+    console.log(f'{h}Starting instances and running tests.')
+    while not i.done:
+        i.start_instances().terminate_instances(True)
+
+    console.log(f'{h}Tests done, and logs uploaded to S3.')
+    console.log(f'{h}Exiting')
+    exit(0)
 
 
 if __name__ == "__main__":
