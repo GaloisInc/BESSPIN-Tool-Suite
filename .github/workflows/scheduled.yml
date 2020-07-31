@@ -30,7 +30,7 @@ jobs:
     steps:
       - run: |
           if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
-          echo "::set-env:: name=ref::$ref"
+          echo "::set-env name=ref::$ref"
 
       - uses: actions/checkout@v2
         id: checkout
@@ -82,7 +82,7 @@ jobs:
     steps:
       - run: |
           if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
-          echo "::set-env:: name=ref::$ref"
+          echo "::set-env name=ref::$ref"
 
       - uses: actions/checkout@v2
         id: checkout
