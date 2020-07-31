@@ -228,6 +228,8 @@ def wait_on_id_sqs(ids):
     :type ids: list
     """
 
+    logging.info(f"Waiting for SQS Messages concerning ids { ids }")
+
     # Get path to the repoDir
     awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
     buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
@@ -259,6 +261,9 @@ def wait_on_id_sqs(ids):
 
     # Keep seeking messages until we have heard from all ids
     while len(ids) > 0:
+        # logging.debug("Polling SQS")
+        logging.info("Polling SQS")
+
         try:
             response = sqs.receive_message(
                 QueueUrl=configs.ciAWSqueueTesting,
