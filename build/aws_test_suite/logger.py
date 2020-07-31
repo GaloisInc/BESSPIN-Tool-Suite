@@ -64,7 +64,7 @@ class Logger:
         cprint(f"({level})~ {message}", levels[level])
 
         command = level.lower()
-        logging.log(command, message)
+        exec(f'logging.{command}("{message}")')
 
         if command == "error":
             print("(Error)~ Exiting.")
