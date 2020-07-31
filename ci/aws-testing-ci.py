@@ -47,7 +47,7 @@ def main(args):
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
                        nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job  -i {str(j)}"' """
         )
-        i.add_instance(Instance(args.ami, f"{args.name}-{str(j)}", userdata=u))
+        i.add_instance(Instance(args.ami, f"{args.name}-{str(j)}", userdata=u.userdata))
         console.log(f"{h}Queueing {r[j]}.")
 
     console.log(f"{h}Starting instances and running tests.")

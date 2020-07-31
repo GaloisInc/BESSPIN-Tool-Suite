@@ -19,10 +19,10 @@ class InstanceManager:
         return self
 
     def start_instances(self, **ec2_kwargs):
-        assert self._capped, (
-            "Maximum number of instances reached. call InstanceManager.terminate_instance first "
-            "before starting another instance"
-        )
+        # assert self._capped, (
+        #     "Maximum number of instances reached. call InstanceManager.terminate_instance first "
+        #     "before starting another instance"
+        # )
 
         start = len(self._terminated)
         end = (
