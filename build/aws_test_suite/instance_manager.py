@@ -38,12 +38,14 @@ class InstanceManager:
         return self
 
     def terminate_instances(self, on_sqs=False):
-        for i in self._running:
-            if on_sqs:
-                self._instances[i].terminate_on_sqs()
-            else:
-                self._instances[i].terminate()
-            self._terminated.append(i)
+        for id in self._running:
+            for instance in self._instances:
+                if id == instance.id:
+                    if on_sqs:
+                        instance.terminate_on_sqs()
+                    else:
+                        instance.terminate()
+                    self._terminated.append(id)
         self._running = []
         self._capped = False
         return self
@@ -58,9 +60,6 @@ class InstanceManager:
 
 
 class Instance:
-    # https://stackoverflow.com/questions/68645/are-static-class-variables-possible-in-python
-    _id = 0
-
     def __init__(self, ami, name, **kwargs):
         if not re.fullmatch("ami-[A-Za-z0-9]+", ami):
             ami = get_ami_id_from_name(ami)
@@ -68,8 +67,7 @@ class Instance:
         self._ami = ami
         self._name = name
 
-        self._instance = None
-        self._instance_id = None
+        self._id = None
 
         self._vpc_name = (
             kwargs["vpc_name"] if "vpc_name" in kwargs else "aws-controltower-VPC"
@@ -89,10 +87,8 @@ class Instance:
         self._tags = kwargs["tags"] if "tags" in kwargs else {}
         self._tags["Name"] = self._name
 
-        self.id = 1
-
     def start(self, **ec2_kwargs):
-        self._instance = launch_instance(
+        self._id = launch_instance(
             self._ami,
             self._vpc_name,
             self._security_group_name,
@@ -102,21 +98,20 @@ class Instance:
             self._tags,
             **ec2_kwargs
         )
-        self._instance_id = self._instance["Instances"][0]["InstanceId"]
         return self
 
     def terminate(self):
         assert (
-            self._instance_id is not None
+            self._id is not None
         ), "Cannot terminate instance that has not started"
-        terminate_instance(self._instance_id)
+        terminate_instance(self._id)
         return self
 
     def terminate_on_sqs(self):
         assert (
-            self._instance_id is not None
+            self._id is not None
         ), "Cannot terminate instance that has not started"
-        wait_on_id_sqs(self._instance_id)
+        wait_on_id_sqs(self._id)
         return self
 
     @property
@@ -157,12 +152,8 @@ class Instance:
 
     @property
     def id(self):
-        return type(self)._id
+        return self._id
 
     @userdata.setter
     def userdata(self, userdata):
         self._userdata = userdata
-
-    @id.setter
-    def id(self, value):
-        type(self)._id += value
