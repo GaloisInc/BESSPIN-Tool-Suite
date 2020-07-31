@@ -11,8 +11,8 @@ fettTargetAMI = 'ami-0747018f37927b976' #fett-target-071120-89f0e8f / FETT AMI 8
 
 ciAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
 ciAWSbucket = 'ssith-fett-target-ci-develop'
-ciAWSqueueTesting = 'https://sqs.us-west-2.amazonaws.com/363527286999/aws-testing-queue.fifo'
-ciAWSbucketTesting = 'aws-testing-bucket'
+ciAWSqueueTesting = 'https://sqs.us-west-2.amazonaws.com/363527286999/aws-test-suite-queue.fifo'
+ciAWSbucketTesting = 'aws-test-suite-bucket'
 
 commonDefaults = {
     ('mode',('test',)),
