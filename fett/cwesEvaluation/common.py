@@ -94,3 +94,10 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
     else:
         logAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
                    exitCode=EXIT.Implementation)
+
+@decorate.debugWrap
+def isTestEnabled (vulClass, testName):
+    if (getSettingDict(vulClass,'runAllTests')):
+        return True
+    else:
+        return getSettingDict(vulClass,'configCWEs',testName)

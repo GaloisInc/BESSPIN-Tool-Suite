@@ -352,9 +352,37 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
     #load main global configs
     loadConfigSection(xConfig, configData, "evaluateSecurityTests")
 
-    #load vulClass configs
+    # load vulClass configs
     for vulClass in getSetting('vulClasses'): #load settings per vulClass
         vulClassDict = dict()
         setSetting(vulClass,vulClassDict)
         loadConfigSection(xConfig, configData, vulClass, 
                 addSectionToConfigDict='commonVulClassesParameters', setSettingsToSectDict=True)
+
+        if (vulClass in ['bufferErrors']):
+            setSettingDict(vulClass,'runAllTests',True)
+            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>")
+
+        # Load selected tests
+        sectionName = 'configCWEs'
+        if (not getSettingDict(vulClass,'runAllTests')):
+            configCWEsPath = os.path.join(getSetting('repoDir'),'configSecurityTests',f'{vulClass}.ini')
+            configCWEs = loadIniFile(configCWEsPath)
+            try:
+                assert configCWEs.has_section(sectionName)
+            except Exception as exc:
+                logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+
+            dictConfigCWEs = dict() 
+            for xTest in configCWEs.options(sectionName):
+                try:
+                    dictConfigCWEs[xTest] = configCWEs.getboolean (sectionName,testName)
+                except Exception as exc:
+                    logAndExit(f"The value of <{xTest}> should be boolena in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+
+            setSettingDict(vulClass,'configCWEs',dictConfigCWEs)
+        
+
+
+
+        
