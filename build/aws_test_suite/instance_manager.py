@@ -31,9 +31,12 @@ class InstanceManager:
         self._capped = True
         return self
 
-    def terminate_instances(self):
+    def terminate_instances(self, on_sqs=False):
         for i in self._running:
-            self._instances[i].terminate()
+            if on_sqs:
+                self._instances[i].terminate_on_sqs()
+            else:
+                self._instances[i].terminate()
             self._terminated.append(i)
         self._running = []
         self._capped = False
@@ -91,6 +94,11 @@ class Instance:
     def terminate(self):
         assert self._instance_id is not None, 'Cannot terminate instance that has not started'
         terminate_instance(self._instance_id)
+        return self
+
+    def terminate_on_sqs(self):
+        assert self._instance_id is not None, 'Cannot terminate instance that has not started'
+        wait_on_id_sqs(self._instance_id)
         return self
 
     @property
