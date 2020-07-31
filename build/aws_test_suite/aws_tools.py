@@ -210,7 +210,7 @@ def collect_run_names():
     unsorted = os.listdir("/tmp/dumpIni/")
     run_names = [run_name[:-4] for run_name in unsorted]
 
-    logging.info(f"Gathered Launch Targets:\n{run_names}")
+    logging.info(f"Gathered Launch Targets:\t{run_names}")
 
     return run_names
 

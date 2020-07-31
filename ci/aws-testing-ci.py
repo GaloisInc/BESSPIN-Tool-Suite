@@ -31,9 +31,11 @@ def main(args):
                 a = AWSCredentials.from_env_vars()
             except AssertionError:
                 console.log(f"{h}Cannot get AWS credentials.", "Error")
+    console.log(f"{h}AWSCredentials gathered!")
 
     console.log(f"{h}Gathering run targets.")
     r = collect_run_names()
+    console.log(f"{h}Run targets gathered!\t{r}")
 
     i = InstanceManager(args.cap)
 
@@ -56,14 +58,15 @@ def main(args):
             i.add_instance(
                 Instance(args.ami, f"{args.name}-{str(k)}", userdata=u.userdata)
             )
-            console.log(f"{h}Queueing {r[k]}.")
+            console.log(f"{h}Queueing {r[k]}, with job name {jn}.")
 
     console.log(f"{h}Starting instances and running tests.")
     while not i.done:
         i.start_instances().terminate_instances(True)
+        console.log(f"{h}Finished testing {args.cap} instances. Shutting down {args.cap} instances.")
 
     console.log(f"{h}Tests done, and logs uploaded to S3.")
-    console.log(f"{h}Exiting")
+    console.log(f"{h}Exiting...")
     exit(0)
 
 
