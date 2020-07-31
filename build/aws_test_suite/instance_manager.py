@@ -19,10 +19,10 @@ class InstanceManager:
         return self
 
     def start_instances(self, **ec2_kwargs):
-        assert self._capped, (
-            "Maximum number of instances reached. call InstanceManager.terminate_instance first "
-            "before starting another instance"
-        )
+        # assert self._capped, (
+        #     "Maximum number of instances reached. call InstanceManager.terminate_instance first "
+        #     "before starting another instance"
+        # )
 
         start = len(self._terminated)
         end = (
@@ -101,16 +101,12 @@ class Instance:
         return self
 
     def terminate(self):
-        assert (
-            self._id is not None
-        ), "Cannot terminate instance that has not started"
+        assert self._id is not None, "Cannot terminate instance that has not started"
         terminate_instance(self._id)
         return self
 
     def terminate_on_sqs(self):
-        assert (
-            self._id is not None
-        ), "Cannot terminate instance that has not started"
+        assert self._id is not None, "Cannot terminate instance that has not started"
         wait_on_id_sqs(self._id)
         return self
 
