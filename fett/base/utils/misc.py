@@ -168,6 +168,12 @@ def getSettingDict (setting,hierarchy):
             logAndExit (f"getSetting: Failed to obtain the value of <{setting}{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
     return xSetting
 
+def setSettingDict (key, setting, val):
+    try:
+        _settings[key][setting] = val
+    except Exception as exc:
+        logAndExit (f"Failed to set setting <{setting}> in dict <{key}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+
 def isEnabled(setting):
     val = getSetting(setting)
     if (isinstance(val,bool)):

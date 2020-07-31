@@ -48,7 +48,7 @@ def loadConfiguration(configFile):
 
     # Load evaluateSecurityTests related sections
     if isEqSetting("mode", "evaluateSecurityTests"):
-        loadSecurityEvaluationConfiguration(xConfig)
+        loadSecurityEvaluationConfiguration(xConfig,configData)
 
     # Get the XLEN and processor flavor
     if (getSetting('processor') in ['chisel_p1']):
@@ -91,7 +91,8 @@ def loadConfiguration(configFile):
     return
 
 @decorate.debugWrap
-def loadConfigSection (xConfig, jsonData,xSection,setup=False):
+def loadConfigSection (xConfig, jsonData,xSection,setup=False,
+                        addSectionToConfigDict=None,setSettingsToSectDict=False):
     if (setup):
         fileName = "SetupEnv file"
     else:
@@ -108,6 +109,12 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
         jsonPars = jsonData[xSection]
     except Exception as exc:
         logAndExit(f"Section <{xSection}> not found in json configuration info file.",exc=exc,exitCode=EXIT.Configuration)
+
+    if (addSectionToConfigDict):
+        try:
+            jsonPars += jsonData[addSectionToConfigDict]
+        except Exception as exc:
+            logAndExit(f"Section <{addSectionToConfigDict}> not found in json configuration info file.",exc=exc,exitCode=EXIT.Dev_Bug)
 
     for iPar in jsonPars:
         if (('name' not in iPar) or ('type' not in iPar)):
@@ -239,8 +246,11 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
         if (isMax and (val > iPar['max'])):
             logAndExit(f"Configuration file: The maximum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['max']))
 
-        setSetting(iPar['name'],
-                   vals if iPar['type'] == 'stringsList' else val)
+        settingVal = vals if (iPar['type'] == 'stringsList') else val
+        if (setSettingsToSectDict):
+            setSettingDict(xSection,iPar['name'],settingVal)
+        else:
+            setSetting(iPar['name'],settingVal)
 
     if (not setup):
         for option,isItLegal in optionsInConfig.items():
@@ -301,10 +311,13 @@ def genProdConfig(configFileSerialized, configFile):
         logAndExit(f"Failed to write configuration file <{configFile}>.",exc=exc,exitCode=Files_and_paths)
     
 @decorate.debugWrap
-def loadSecurityEvaluationConfiguration (xConfig):
+def loadSecurityEvaluationConfiguration (xConfig,configData):
     #load main global configs
     loadConfigSection(xConfig, configData, "evaluateSecurityTests")
 
     #load vulClass configs
     for vulClass in getSetting('vulClasses'): #load settings per vulClass
-        loadConfigSection(xConfig, configData, vulClass)
+        vulClassDict = dict()
+        setSetting(vulClass,vulClassDict)
+        loadConfigSection(xConfig, configData, vulClass, 
+                addSectionToConfigDict='commonVulClassesParameters', setSettingsToSectDict=True)
