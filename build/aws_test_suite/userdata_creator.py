@@ -19,12 +19,18 @@ class UserdataCreator:
         if userdata is None:
             userdata = []
         elif isinstance(userdata, str):
-            userdata = userdata.split('\n')
+            userdata = userdata.split("\n")
 
         self._userdata = userdata
 
     @classmethod
-    def default(cls, credentials, branch=None, binaries_branch=None, key_path='~/.ssh/id_rsa.pub'):
+    def default(
+        cls,
+        credentials,
+        branch=None,
+        binaries_branch=None,
+        key_path="~/.ssh/id_rsa.pub",
+    ):
         """
         Add userdata to start with FETT Target at specific branch and binaries branch
 
@@ -55,10 +61,12 @@ class UserdataCreator:
             f'export AWS_ACCESS_KEY_ID="{credentials.access_key_id}"',
             f'export AWS_SECRET_ACCESS_KEY="{credentials.secret_key_access}"',
             f'export AWS_SESSION_TOKEN="{credentials.session_token}"',
-            "EOL"
+            "EOL",
         ]
 
-        assert os.path.exists(os.path.expanduser(key_path)), f"key path {key_path} does not exist!"
+        assert os.path.exists(
+            os.path.expanduser(key_path)
+        ), f"key path {key_path} does not exist!"
         try:
             with open(os.path.expanduser(key_path), "r") as f:
                 key = f.readlines()
@@ -70,13 +78,16 @@ class UserdataCreator:
         if branch or binaries_branch:
             userdata_ssh = [
                 "runuser -l centos -c 'touch /home/centos/.ssh/id_rsa'",
-                "cat >/home/centos/.ssh/id_rsa <<EOL"
+                "cat >/home/centos/.ssh/id_rsa <<EOL",
             ]
-            userdata_ssh.extend(key + [
-                "EOL",
-                "runuser -l centos -c 'chmod 600 /home/centos/.ssh/id_rsa'",
-                "ssh-keygen -y -f /home/centos/.ssh/id_rsa > ~/.ssh/id_rsa.pub"
-            ])
+            userdata_ssh.extend(
+                key
+                + [
+                    "EOL",
+                    "runuser -l centos -c 'chmod 600 /home/centos/.ssh/id_rsa'",
+                    "ssh-keygen -y -f /home/centos/.ssh/id_rsa > ~/.ssh/id_rsa.pub",
+                ]
+            )
 
             userdata += userdata_ssh
 
@@ -88,11 +99,13 @@ class UserdataCreator:
                 cd SSITH-FETT-Binaries && 
                 git stash && 
                 cd .. &&
-                git fetch &&\n""" + (f"git checkout {branch} &&\n" if branch else "") +
-            """git pull && 
+                git fetch &&\n"""
+            + (f"git checkout {branch} &&\n" if branch else "")
+            + """git pull && 
                 git submodule update && 
-                cd SSITH-FETT-Binaries &&\n""" + (f"git checkout {binaries_branch} &&\n" if binaries_branch else "") +
-            """git-lfs pull && 
+                cd SSITH-FETT-Binaries &&\n"""
+            + (f"git checkout {binaries_branch} &&\n" if binaries_branch else "")
+            + """git-lfs pull && 
                 cd .. "'"""
         ]
 
@@ -100,7 +113,7 @@ class UserdataCreator:
 
         return cls(userdata)
 
-    def append(self, ul=''):
+    def append(self, ul=""):
         """
         Convenience to append to self._userdata
 
@@ -126,7 +139,7 @@ class UserdataCreator:
 
         assert os.path.exists(path)
         self.append(f"cat > {dest} << EOL")
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             self.append([line.strip() for line in f.readlines()])
         self.append("EOL")
 
@@ -137,9 +150,9 @@ class UserdataCreator:
         :param fname: Filename
         :type fname: str
         """
-        with open(fname, 'w') as fp:
+        with open(fname, "w") as fp:
             ud = [f"runuser -l centos -c 'touch {self.indicator_filepath()}'"]
-            fp.write('\n'.join(ud))
+            fp.write("\n".join(ud))
         logging.info(f"UserdataCreator: Wrote userdata to '{fname}'")
 
     @staticmethod
@@ -154,4 +167,4 @@ class UserdataCreator:
         :return: Userdata
         :rtype: str
         """
-        return '\n'.join(self._userdata)
+        return "\n".join(self._userdata)

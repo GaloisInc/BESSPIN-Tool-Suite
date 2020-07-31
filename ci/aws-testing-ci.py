@@ -1,21 +1,22 @@
 #! /usr/bin/env python3
 
 
-# Fixing module imports ################################################################################################
-import os
+# Import modules
+
 import sys
+import os
+
 sys.path.insert(1, os.path.dirname(os.getcwd()))
-########################################################################################################################
 
 import argparse
 from datetime import datetime
 from build.aws_test_suite import *
 
-h = 'AWS Testing / CI: '
+h = "[AWS Testing CI] : "
 
 
 def main(args):
-    console.log(f'{h}Welcome to the nightly testing app!')
+    console.log(f"{h}Welcome to the nightly testing app!")
 
     if args.init:
         a = AWSCredentials.from_interactive()
@@ -28,30 +29,32 @@ def main(args):
             try:
                 a = AWSCredentials.from_env_vars()
             except AssertionError:
-                console.log(f'{h}Cannot get AWS credentials.', 'Error')
+                console.log(f"{h}Cannot get AWS credentials.", "Error")
 
-    console.log(f'{h}Gathering run targets.')
+    console.log(f"{h}Gathering run targets.")
     r = collect_run_names()
 
     i = InstanceManager(args.cap)
 
-    console.log(f'{h}Creating userdata and instances.')
+    console.log(f"{h}Creating userdata and instances.")
 
     count = args.count if 0 < args.count < len(r) else len(r)
 
     for j in range(count):
         u = UserdataCreator.default(a, args.branch, args.binaries_branch, args.key_path)
-        u.append(f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                       nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job  -i {str(j)}"' """)
-        i.add_instance(Instance(args.ami, f'{args.name}-{str(j)}', userdata=u))
-        console.log(f'{h}Queueing {r[j]}.')
+        u.append(
+            f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
+                       nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job  -i {str(j)}"' """
+        )
+        i.add_instance(Instance(args.ami, f"{args.name}-{str(j)}", userdata=u))
+        console.log(f"{h}Queueing {r[j]}.")
 
-    console.log(f'{h}Starting instances and running tests.')
+    console.log(f"{h}Starting instances and running tests.")
     while not i.done:
         i.start_instances().terminate_instances(True)
 
-    console.log(f'{h}Tests done, and logs uploaded to S3.')
-    console.log(f'{h}Exiting')
+    console.log(f"{h}Tests done, and logs uploaded to S3.")
+    console.log(f"{h}Exiting")
     exit(0)
 
 
@@ -67,14 +70,14 @@ if __name__ == "__main__":
         "--branch",
         type=str,
         help="The branch of FETT-Target to check out on the AWS instance, and run tests on. Defaults to whatever is "
-             "present on AMI",
+        "present on AMI",
     )
     parser.add_argument(
         "-bb",
         "--binaries-branch",
         type=str,
         help="The branch of FETT-Bineries to check out on the AWS instance, and run tests on. Defaults to whatever is "
-             "present on AMI",
+        "present on AMI",
     )
     parser.add_argument(
         "-c",
@@ -107,7 +110,7 @@ if __name__ == "__main__":
         "--instance-index",
         type=int,
         help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this "
-             "instance index only.",
+        "instance index only.",
     )
     parser.add_argument(
         "-k",

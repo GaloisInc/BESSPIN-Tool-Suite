@@ -30,12 +30,12 @@ class AWSCredentials:
         :rtype: AWSCredentials
         """
 
-        variables = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']
+        variables = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
         cls.has_env_vars()
         return cls([os.environ[v] for v in variables])
 
     @classmethod
-    def from_credentials_file(cls, filepath='~/.aws/credentials'):
+    def from_credentials_file(cls, filepath="~/.aws/credentials"):
         """
         Get AWS credentials from file
 
@@ -48,17 +48,17 @@ class AWSCredentials:
 
         cls.has_credential_file(filepath)
 
-        keys = {'id': '', 'secret': '', 'session': ''}
-        with open(filepath, 'r') as f:
+        keys = {"id": "", "secret": "", "session": ""}
+        with open(filepath, "r") as f:
             lines = f.readlines()
             for line in lines:
-                if 'aws_access_key_id' in line:
-                    keys['id'] = line.strip().split('=')[1][1:]
-                elif 'aws_secret_access_key' in line:
-                    keys['secret'] = line.strip().split('=')[1][1:]
-                elif 'aws_session_token' in line:
-                    keys['session'] = line.strip().split('=')[1][1:]
-        return cls([keys['id'], keys['secret'], keys['session']])
+                if "aws_access_key_id" in line:
+                    keys["id"] = line.strip().split("=")[1][1:]
+                elif "aws_secret_access_key" in line:
+                    keys["secret"] = line.strip().split("=")[1][1:]
+                elif "aws_session_token" in line:
+                    keys["session"] = line.strip().split("=")[1][1:]
+        return cls([keys["id"], keys["secret"], keys["session"]])
 
     @classmethod
     def from_interactive(cls):
@@ -69,13 +69,17 @@ class AWSCredentials:
         :rtype: AWSCredentials
         """
 
-        logging.info("AWSCredentials: class method from_interactive: performing interactive session to get AWS "
-                     "credentials from the user")
+        logging.info(
+            "AWSCredentials: class method from_interactive: performing interactive session to get AWS "
+            "credentials from the user"
+        )
         print("AWSCredentials: Credentials Interactive Session")
         key_id = input("\tEnter AWS Access Key ID: ")
         secret = input("\tEnter AWS Secret Access Key: ")
         session = input("\tEnter AWS Session Token: ")
-        logging.info("AWSCredentials: class method from_interactive: finished interactive session")
+        logging.info(
+            "AWSCredentials: class method from_interactive: finished interactive session"
+        )
         return cls([key_id, secret, session])
 
     @staticmethod
@@ -86,10 +90,12 @@ class AWSCredentials:
         :raises AssertionError: Credentials not found in environment variables
         """
 
-        variables = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN']
+        variables = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
         for v in variables:
-            assert v in os.environ, f"AWSCredentials must have environment variable {v} for from_env_vars " \
-                                    f"class method"
+            assert v in os.environ, (
+                f"AWSCredentials must have environment variable {v} for from_env_vars "
+                f"class method"
+            )
 
     @staticmethod
     def has_credential_file(filename):
@@ -99,9 +105,11 @@ class AWSCredentials:
         :raises AssertionError: Credentials could not be found in specified filepath
         """
 
-        assert os.path.exists(filename), "Credentials file doesn't exist: use 'aws configure', set " \
-                                         "your credentials in ~/.aws/credentials, or create a " \
-                                         "credentials file somewhere else "
+        assert os.path.exists(filename), (
+            "Credentials file doesn't exist: use 'aws configure', set "
+            "your credentials in ~/.aws/credentials, or create a "
+            "credentials file somewhere else "
+        )
 
     @staticmethod
     def _check_credentials(cred):
@@ -124,23 +132,29 @@ class AWSCredentials:
         assert len(cred) == 3, f"Credentials '{cred}' must be of length 3"
         # credentials must assume the string type
         for c in cred:
-            assert isinstance(c, str), f"Element of credentials '{c}' must be a string instance"
+            assert isinstance(
+                c, str
+            ), f"Element of credentials '{c}' must be a string instance"
 
         # access key ID checks
         assert len(cred[0]) == 20, "AWS Access Key ID must be of length 20"
-        assert re.fullmatch('[A-Z0-9]+', cred[0]), "AWS Access Key ID must be a combination of numbers and uppercase " \
-                                                   "letters"
+        assert re.fullmatch("[A-Z0-9]+", cred[0]), (
+            "AWS Access Key ID must be a combination of numbers and uppercase "
+            "letters"
+        )
 
         # secret access key checks
         assert len(cred[1]) == 40, "AWS Secret Access Key must be of length 40"
-        assert re.fullmatch('[a-zA-Z0-9+/]+', cred[0]), "AWS Secret Access key must be a combination of numbers, " \
-                                                        "letters, '+', and '/'"
+        assert re.fullmatch("[a-zA-Z0-9+/]+", cred[0]), (
+            "AWS Secret Access key must be a combination of numbers, "
+            "letters, '+', and '/'"
+        )
 
         # session token checks
-        assert len(cred[2]) == 824, "AWS Session Token must be of length 824"
+        assert len(cred[2]) >= 800, "AWS Session Token must be of length 824"
         assert re.fullmatch(
-            '[a-zA-Z0-9+/]{19}[/]{10}[a-zA-Z0-9+/]{119,121}[/]{10}[a-zA-Z0-9+/]{662,664}==',
-            cred[2]
+            "[a-zA-Z0-9+/]{19}[/]{10}[a-zA-Z0-9+/]{119,121}[/]{10}[a-zA-Z0-9+/]{662,664}==",
+            cred[2],
         ), "AWS Session Token follows an incorrect pattern"
 
     def __getitem__(self, index):
