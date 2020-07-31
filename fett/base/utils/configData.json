@@ -135,6 +135,138 @@
             "name" : "vulClasses",
             "type" : "stringsList",
             "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "codeInjection", "informationLeakage", "cryptoErrors", "numericErrors" ]
+        }       
+    ],
+
+    "commonVulClassesParameters" : [
+        {
+            "name" : "runAllTests",
+            "type" : "bool"
         }
+    ],
+
+    "bufferErrors": [
+        {
+            "name" : "nTests",
+            "type" : "int",
+            "min" : 1
+        },
+        {
+            "name" : "nSkip",
+            "type" : "int",
+            "min" : 0
+        },
+        {
+            "name" : "heapSize",
+            "type" : "string"
+        },
+        {
+            "name" : "stackSize",
+            "type" : "string"
+        },
+        {
+            "name" : "useExtraTests",
+            "type" : "bool"
+        },
+        {
+            "name" : "extraSources",
+            "type" : "string"
+        },
+        {
+            "name" : "csvFile",
+            "type" : "bool"
+        },
+        {
+            "name" : "dashboardImage",
+            "type" : "bool"
+        },
+        {
+            "name" : "useSeed",
+            "type" : "bool"
+        },
+        {
+            "name" : "seed",
+            "type" : "int"
+        },
+        {
+            "name" : "poc_heartbleed_real_payload_len",
+            "type" : "int",
+            "min" : 0,
+            "max" : 65535
+        },
+        {
+            "name" : "poc_heartbleed_nominal_payload_len",
+            "type" : "int",
+            "min" : 0,
+            "max" : 65535
+        }
+    ],
+
+    "PPAC": [
+        {
+            "name" : "randomizeParameters",
+            "type" : "bool"
+        },
+        {
+            "name" : "test_nAllowedAuthAttempts",
+            "type" : "int",
+            "min" : 1,
+            "max" : 10
+        },
+        {
+            "name" : "useSeedForWolfSSL",
+            "type" : "bool"
+        },
+        {
+            "name" : "seedForWolfSSL",
+            "type" : "int",
+            "min" : 0,
+            "max" : 255
+        },
+        {
+            "name" : "test_nAllowedInteractions",
+            "type" : "int",
+            "min" : 1,
+            "max" : 9
+        },
+        {
+            "name" : "poc_dictionaryAttack_rootPassword",
+            "type" : "string"
+        },
+        {
+            "name" : "poc_dictionaryAttack_usePamTally",
+            "type" : "bool"
+        }
+    ],
+
+    "resourceManagement": [
+        {
+            "name" : "randomizeParameters",
+            "type" : "bool"
+        },
+        {
+            "name" : "test_nResourceLimit",
+            "type" : "int",
+            "min" : 5,
+            "max" : 100
+        }
+    ],
+
+    "codeInjection": [
+    ],
+
+    "informationLeakage": [
+        {
+            "name" : "poc_paddingLeakage_secret",
+            "type" : "hex",
+            "size" : 8,
+            "min" : 0
+        }
+    ],
+
+    "cryptoErrors": [
+    ],
+    
+    "numericErrors": [
     ]
 }

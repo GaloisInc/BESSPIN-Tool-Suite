@@ -46,9 +46,9 @@ def loadConfiguration(configFile):
     for xSection in CONFIG_SECTIONS:
         loadConfigSection (xConfig,configData,xSection)
 
+    # Load evaluateSecurityTests related sections
     if isEqSetting("mode", "evaluateSecurityTests"):
-        # Load evaluateSecurityTests related sections
-        loadConfigSection(xConfig, configData, "evaluateSecurityTests")
+        loadSecurityEvaluationConfiguration(xConfig)
 
     # Get the XLEN and processor flavor
     if (getSetting('processor') in ['chisel_p1']):
@@ -300,3 +300,11 @@ def genProdConfig(configFileSerialized, configFile):
     except Exception as exc:
         logAndExit(f"Failed to write configuration file <{configFile}>.",exc=exc,exitCode=Files_and_paths)
     
+@decorate.debugWrap
+def loadSecurityEvaluationConfiguration (xConfig):
+    #load main global configs
+    loadConfigSection(xConfig, configData, "evaluateSecurityTests")
+
+    #load vulClass configs
+    for vulClass in getSetting('vulClasses'): #load settings per vulClass
+        loadConfigSection(xConfig, configData, vulClass)
