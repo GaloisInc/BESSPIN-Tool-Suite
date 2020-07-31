@@ -62,19 +62,15 @@ def buildCwesEvaluation():
                         'defaultEnvLinux.mk'),
             vulClassDir)
 
-        testsParametersHeader = os.path.join(vulClassDir, "testsParameters.h")
-        if vulClass == "resourceManagement":
-            # Write configuration header file
-            # TODO: Write this based on values in the config file.  You'll also
-            # have to change it based on the suite being run.  Lastly, it
-            # doesn't seem to exist for all classes of vulnerabilities.
-            header = ftOpenFile(os.path.join(testsParametersHeader), 'w')
-            header.write("#define nResourceLimit 10\n")
-            header.close()
-        elif vulClass == "numericErrors":
-            # Write empty configuration header file (nothing to configure)
-            header = ftOpenFile(testsParametersHeader, 'w')
-            header.close()
+        # Write the extra testsParameters.h
+        fHeader = ftOpenFile(os.path.join(vulClassDir, "testsParameters.h"), 'w')
+        # TODO: The randomizeParameters
+        for xSetting, xVal in getSetting(vulClass).items():
+            if (xSetting.startswith('test_')):
+                settingName = xSetting.split('test_')[-1]
+                fHeader.write(f"#define {settingName} {xVal}\n")
+        fHeader.close()
+
         if isEqSetting('osImage', 'FreeRTOS'):
             prepareFreeRTOS(vulClassDir)
         elif getSetting('osImage') in ['debian', 'FreeBSD']:
