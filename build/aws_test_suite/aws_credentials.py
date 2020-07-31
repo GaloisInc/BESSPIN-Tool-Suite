@@ -152,10 +152,10 @@ class AWSCredentials:
 
         # session token checks
         assert len(cred[2]) >= 800, "AWS Session Token must be of length 824"
-        assert re.fullmatch(
-            "[a-zA-Z0-9+/]{19}[/]{10}[a-zA-Z0-9+/]{119,121}[/]{10}[a-zA-Z0-9+/]{662,664}==",
-            cred[2],
-        ), "AWS Session Token follows an incorrect pattern"
+        # assert re.fullmatch(
+        #     "[a-zA-Z0-9+/]{19}[/]{10}[a-zA-Z0-9+/]{119,121}[/]{10}[a-zA-Z0-9+/]{662,664}==",
+        #     cred[2],
+        # ), "AWS Session Token follows an incorrect pattern"
 
     def __getitem__(self, index):
         """
