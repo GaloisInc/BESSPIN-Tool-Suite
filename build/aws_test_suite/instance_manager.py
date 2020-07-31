@@ -107,7 +107,7 @@ class Instance:
 
     def terminate_on_sqs(self):
         assert self._id is not None, "Cannot terminate instance that has not started"
-        wait_on_id_sqs(self._id)
+        wait_on_id_sqs([self._id])
         return self
 
     @property

@@ -29,7 +29,7 @@ class Logger:
             format="%(asctime)s: (%(levelname)s)~  %(message)s",
             datefmt="%I:%M:%S %p",
             level=log_level,
-            handlers=[logging.FileHandler(log_fname)],
+            handlers=[logging.FileHandler(log_fname), logging.StreamHandler()],
         )
         logging.info(
             f"AWS Test Suite Logger Initialized\nLog File: {log_fname}\nLog Level: {level}"
@@ -61,7 +61,6 @@ class Logger:
             levels.keys()
         ), f"{level} is not a valid level, must be one of Critical, Debug, Error, Info, Warning"
 
-        # print(f"({level})~ {message}"
         cprint(f"({level})~ {message}", levels[level])
 
         command = level.lower()
