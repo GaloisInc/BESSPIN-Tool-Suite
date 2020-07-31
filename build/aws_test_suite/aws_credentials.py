@@ -125,7 +125,6 @@ class AWSCredentials:
         :raises AssertionError (4): Second key must be length 40 (AWS Secret Access Key)
         :raises AssertionError (5): Second key must conform to key pattern (AWS Secret Access Key)
         :raises AssertionError (6): Third key must be length 846 (AWS Session Token)
-        :raises AssertionError (7): Third key must conform to key pattern (AWS Session Token)
         """
 
         # credentials must be an array of length 3
@@ -151,7 +150,7 @@ class AWSCredentials:
         )
 
         # session token checks
-        assert len(cred[2]) >= 800, "AWS Session Token must be of length 824"
+        assert len(cred[2]) >= 800, "AWS Session Token must be of length 800"
         # assert re.fullmatch(
         #     "[a-zA-Z0-9+/]{19}[/]{10}[a-zA-Z0-9+/]{119,121}[/]{10}[a-zA-Z0-9+/]{662,664}==",
         #     cred[2],
