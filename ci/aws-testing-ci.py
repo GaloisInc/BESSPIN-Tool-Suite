@@ -45,17 +45,17 @@ def main(args):
     console.log(f"{h}Creating userdata and instances.")
 
     if args.instance_index:
-        indicies_to_run = [int(args.instance_index)]
+        indices_to_run = [int(args.instance_index)]
     else:
-        indicies_to_run = [x for x in range(0, len(r))]
+        indices_to_run = list(range(len(r)))
 
-    console.log(f"Indicies to run { indicies_to_run }")
+    console.log(f"Indices to run { indices_to_run }")
 
     # Repeat number of runs
     for j in range(args.runs):
 
         # Repeat for targets
-        for k in indicies_to_run:
+        for k in indices_to_run:
 
             # Determine branches for the job and instance name string
             b = f"-{args.branch}" if args.branch else ""
