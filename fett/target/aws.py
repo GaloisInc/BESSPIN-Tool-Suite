@@ -127,10 +127,11 @@ class firesimTarget(commonTarget):
     @decorate.timeWrap
     def activateEthernet(self):
         if (isEqSetting('osImage','debian')):
-            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
-            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
+            if (not self.restartMode): #Was already done in the first start
+                self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+                self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('binarySource','Michigan')):
@@ -171,7 +172,7 @@ class firesimTarget(commonTarget):
             # This also happens if a unix OS didn't exit properly. Towards the end of making each
             # run a standalone and independent of previous runs, we send this interrupt if the 
             # process is still alive.
-            self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+            self.runCommand('\x1d\x1d',endsWith=pexpect.EOF,shutdownOnError=False,timeout=5,sendToNonUnix=True)
 
             if (self.process.isalive()):
                 try:
@@ -246,20 +247,23 @@ class connectalTarget(commonTarget):
     @decorate.timeWrap
     def activateEthernet(self):
         if (isEqSetting('osImage','debian')):
-            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
-            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
+            if (not self.restartMode): #Was already done in the first start
+                self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+                self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage', 'FreeBSD')):
-            self.runCommand ("ifconfig vtnet0 up")
-            self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
-            self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
-            self.runCommand(f"route add default {self.ipHost}")
-            # For future restart
-            self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsMacAddrTarget')}\"' >> /etc/rc.conf")
-            self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
-            self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
+            if (not self.restartMode): #Was already done in the first start
+                self.runCommand ("ifconfig vtnet0 up")
+                self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
+                self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
+                self.runCommand(f"route add default {self.ipHost}")
+            
+                # For future restart
+                self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsMacAddrTarget')}\"' >> /etc/rc.conf")
+                self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
+                self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
@@ -271,6 +275,13 @@ class connectalTarget(commonTarget):
         if (self.process.isalive()):
             # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
             self.runCommand("\x01x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+
+            if (self.process.isalive()):
+                try:
+                    subprocess.check_call(['sudo', 'kill', '-9', f"{self.process.pid}"],
+                                        stdout=self.fTtyOut, stderr=self.fTtyOut)
+                except Exception as exc:
+                    warnAndLog("targetTearDown: Failed to kill <connectal> process.",doPrint=False,exc=exc)
         return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
@@ -279,11 +290,16 @@ class connectalTarget(commonTarget):
 def configTapAdaptor():
     tapAdaptor = getSetting('awsTapAdaptorName')
 
-    def getMainAdaptor():
-        for xAdaptor in psutil.net_if_addrs():
-            if (xAdaptor not in ['lo', tapAdaptor]):
-                return xAdaptor
-        logAndExit(f"configTapAdaptor: Failed to find the main Eth adaptor.",exitCode=EXIT.Network)
+    #get main adaptor and its main IP
+    gotMainAdaptorInfo = False
+    for xAdaptor in psutil.net_if_addrs():
+        if (xAdaptor not in ['lo', tapAdaptor]):
+            setSetting('awsMainAdaptorName',xAdaptor)
+            setSetting('awsMainAdaptorIP',fpga.getAddrOfAdaptor(xAdaptor,'IP'))
+            gotMainAdaptorInfo = True
+            break
+    if (not gotMainAdaptorInfo):
+        logAndExit(f"configTapAdaptor: Failed to find the main ethernet adaptor info.",exitCode=EXIT.Network)
 
     commands = {
         'create' : [
@@ -297,12 +313,31 @@ def configTapAdaptor():
             ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
             # Add productionTargetIp to main adaptor
             ['ip', 'addr', 'add', getSetting('productionTargetIp'), 'dev',
-             getMainAdaptor()],
+             getSetting('awsMainAdaptorName')],
+            # Reject mainIP:uartFwdPort if coming from FPGA
+            ['iptables',
+             '-A', 'INPUT',
+             '-i', tapAdaptor,
+             '-p', 'tcp',
+             '--dport', str(getSetting('uartFwdPort')),
+             '-d', getSetting('awsMainAdaptorIP'),
+             '-s', getSetting('awsIpTarget'),
+             '-j', 'REJECT'],
+            # Route incoming to productionTargetIp:uartFwdPort to mainIP
+            ['iptables',
+             '-t', 'nat',
+             '-A', 'PREROUTING',
+             '-i', getSetting('awsMainAdaptorName'),
+             '-p', 'tcp',
+             '--dport', str(getSetting('uartFwdPort')),
+             '-d', getSetting('productionTargetIp'),
+             '-j', 'DNAT',
+             '--to-destination', getSetting('awsMainAdaptorIP')],
             # Route packets from FPGA to productionTargetIp
             ['iptables',
              '-t', 'nat',
              '-A', 'POSTROUTING',
-             '-o', getMainAdaptor(),
+             '-o', getSetting('awsMainAdaptorName'),
              '-s', getSetting('awsIpTarget'),
              '-j', 'SNAT',
              '--to-source', getSetting('productionTargetIp')],
@@ -310,7 +345,7 @@ def configTapAdaptor():
             ['iptables',
              '-t', 'nat',
              '-A', 'PREROUTING',
-             '-i', getMainAdaptor(),
+             '-i', getSetting('awsMainAdaptorName'),
              '-d', getSetting('productionTargetIp'),
              '-j', 'DNAT',
              '--to-destination', getSetting('awsIpTarget')],
@@ -589,8 +624,9 @@ def prepareConnectal():
         cp(imageSourcePath, imageFile)
 
     elif isEqSetting('binarySource', 'SRI-Cambridge'):
+        imageVariant = '-purecap' if (isEqSetting('sourceVariant','purecap')) else ''
         imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                       'osImages', 'common', "disk-image-cheri.img.zst")
+                                       'osImages', 'common', f"disk-image-cheri{imageVariant}.img.zst")
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
         zstdDecompress(imageSourcePath, imageFile)
 
@@ -606,7 +642,7 @@ def prepareConnectal():
     setSetting("osImageDtb",dtbFile)
     cp (dtbsrc, dtbFile)
 
-# ------------------ Logging Functions ----------------------------------------
+# ------------------ Monitoring Functions ----------------------------------------
 
 @decorate.debugWrap
 def startRemoteLogging (target):
@@ -665,4 +701,20 @@ def startRemoteLogging (target):
             target.runCommand(f"service {nginxService} restart")
          
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
+
+@decorate.debugWrap
+def startUartPiping(target):
+    try:
+        target.uartSocatProc = subprocess.Popen(
+            ['socat', 'STDIO,ignoreeof', f"TCP-LISTEN:{getSetting('uartFwdPort')},reuseaddr,fork,max-children=1"],
+            stdout=target.process.child_fd,stdin=target.process.child_fd,stderr=target.process.child_fd)
+    except Exception as exc:
+        target.shutdownAndExit(f"startUartPiping: Failed to start the listening process.",exc=exc,exitCode=EXIT.Run)
+
+@decorate.debugWrap
+def endUartPiping(target):
+    try:
+        target.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
+    except Exception as exc:
+        warnAndLog("endUartPiping: Failed to kill the listening process.",doPrint=False,exc=exc)
 
