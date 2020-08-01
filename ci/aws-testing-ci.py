@@ -37,7 +37,6 @@ def main(args):
     # Get list of all targets for fett-ci.py
     log.info(f"{h}Gathering run targets.")
     r = collect_run_names()
-    log.info(f"{h}Run targets gathered: {r}")
 
     # Start an instance manager
     i = InstanceManager(args.cap)

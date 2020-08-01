@@ -211,7 +211,7 @@ def collect_run_names():
     unsorted = os.listdir("/tmp/dumpIni/")
     run_names = [run_name[:-4] for run_name in unsorted]
 
-    log.info(f"Gathered Launch Targets:\t{run_names}")
+    log.info(f"Gathered Launch Targets:{run_names}")
 
     return run_names
 
@@ -274,12 +274,16 @@ def wait_on_id_sqs(ids):
             log.error(f"Failed to receive a response from the SQS queue.")
 
         if "Messages" in response:
+
+            # Log the contents of the reponse
             log.debug(f"Got SQS Response {response}")
             for message in response["Messages"]:
+
+                # Extract the body
                 body = json.loads(message["Body"])
                 instance_id = body["instance"]["id"]
-                log.info(
-                    f'FINISHED: {body["instance"]["id"]}, exited with status {body["job"]["status"]}.'
+                log.results(
+                    f'FINISHED: {body["job"]["id"]}, exited with status {body["job"]["status"]}.'
                 )
                 log.debug(f"Comparing against {ids}")
 

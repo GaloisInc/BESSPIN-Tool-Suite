@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 class Logger:
-    def __init__(self, log_fname="aws-test-suite.log"):
+    def __init__(self, log_fname="aws-test-suite.log", results_fname="results.txt"):
         """
         Global logger setup
 
@@ -14,11 +14,13 @@ class Logger:
         :type level: str, optional
         """
 
-        # Store the name of the log file
+        # Store the name of the log files
         self.log_fname = log_fname
+        self.results_fname = results_fname
 
-        # Empty out log file
+        # Empty out log files
         open(log_fname, "w").close()
+        open(results_fname, "w").close()
 
     def log_out(self, message=None, level="Info"):
         """
@@ -37,8 +39,9 @@ class Logger:
         levels = {
             "Debug": "yellow",
             "Error": "red",
-            "Info": "cyan",
+            "Info": "white",
             "Warning": "yellow",
+            "Results": "cyan",
         }
 
         # Check log level in levels.
@@ -46,11 +49,20 @@ class Logger:
             levels.keys()
         ), f"{level} is not a valid level, must be one of Critical, Debug, Error, Info, Warning"
 
-        # Print all but debug to screen
-        if level.lower() != "debug":
+        # Print all but debug (to file) and info (to default color) to screen
+        if level.lower() != "debug" and level.lower() != "info":
             # Print to screen in color
             cprint(f"({level})~ {message}", levels[level])
 
+        if level.lower() == "info":
+            print(f"({level})~ {message}")
+
+        # Write results to results file
+        if level.lower() == "results":
+            with open(self.results_fname, "a") as f:
+                f.write(f"[ { datetime.now().strftime('%Y/%m/%d') } ] : { message }\n")
+
+        # Write log message
         with open(self.log_fname, "a") as f:
             f.write(
                 f"[ { datetime.now().strftime('%Y/%m/%d @ %H:%M:%S:%f') } ] : ({level})~ {message}\n"
@@ -71,6 +83,9 @@ class Logger:
 
     def warning(self, message):
         self.log_out(message, "Warning")
+
+    def results(self, message):
+        self.log_out(message, "Results")
 
 
 log = Logger()

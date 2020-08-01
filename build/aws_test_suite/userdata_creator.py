@@ -123,8 +123,9 @@ class UserdataCreator:
 
         userdata += userdata_specific
 
-        log.debug(f"Userdata Specific: {'\n'.join(userdata_specific)}")
-        
+        userdata_specific_loggable = "\n".join(userdata_specific)
+        log.debug(f"Userdata Specific: {userdata_specific_loggable}")
+
         return cls(userdata)
 
     def append(self, ul=""):
