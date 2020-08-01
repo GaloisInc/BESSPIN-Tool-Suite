@@ -292,3 +292,4 @@ def wait_on_id_sqs(ids):
                 delete_message(message)
 
         time.sleep(2)
+    time.sleep(120)
