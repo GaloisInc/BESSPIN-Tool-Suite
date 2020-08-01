@@ -4,13 +4,14 @@
 # |  Imports  |
 # +-----------+
 import json
-import logging
 import os
 import shlex
 import subprocess
 import time
 import boto3
 import importlib.util
+
+from .logger import *
 
 
 def test_aws():
@@ -25,7 +26,7 @@ def test_aws():
         subprocess_check_output("aws --version")
         return True
     except Exception as e:
-        logging.error(f"Test AWS: {e}")
+        log.error(f"Test AWS: {e}")
         return False
 
 
@@ -180,7 +181,7 @@ def launch_instance(
             **optional_kwargs,
         )
     except client.exceptions.ClientError as e:
-        logging.error(f"boto3.create_instances failed with error '{e}'")
+        log.error(f"boto3.create_instances failed with error '{e}'")
         instance = None
 
     return instance[0].id
@@ -199,7 +200,7 @@ def collect_run_names():
     buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
     repoDir = os.path.abspath(os.path.join(buildDir, os.pardir))
 
-    logging.debug(
+    log.debug(
         str(
             subprocess_check_output(
                 str(os.path.join(repoDir, "ci", "fett-ci.py"))
@@ -210,7 +211,7 @@ def collect_run_names():
     unsorted = os.listdir("/tmp/dumpIni/")
     run_names = [run_name[:-4] for run_name in unsorted]
 
-    logging.info(f"Gathered Launch Targets:\t{run_names}")
+    log.info(f"Gathered Launch Targets:\t{run_names}")
 
     return run_names
 
@@ -222,13 +223,13 @@ def collect_run_names():
 
 def wait_on_id_sqs(ids):
     """
-    Wait for an SQS message concerning all target in <ids> and terminate them, logging results
+    Wait for an SQS message concerning all target in <ids> and terminate them, log results
 
     :param ids: List of instance ids started by AWS Tool Suite
     :type ids: list
     """
 
-    logging.info(f"Waiting for SQS Messages concerning ids { ids }")
+    log.info(f"Waiting for SQS Messages concerning ids { ids }")
 
     # Get path to the repoDir
     awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
@@ -246,7 +247,7 @@ def wait_on_id_sqs(ids):
     try:
         sqs = boto3.client("sqs", region_name="us-west-2")
     except:
-        logging.error(f"Failed to create the SQS client.")
+        log.error(f"Failed to create the SQS client.")
 
     # Define a way to delete a message
     def delete_message(message):
@@ -255,14 +256,13 @@ def wait_on_id_sqs(ids):
                 QueueUrl=configs.ciAWSqueueTesting,
                 ReceiptHandle=message["ReceiptHandle"],
             )
-            logging.info("Succeeded in removing message from SQS queue.")
+            log.info("Succeeded in removing message from SQS queue.")
         except:
-            logging.warning("Failed to delete the message from the SQS queue.")
+            log.warning("Failed to delete the message from the SQS queue.")
 
     # Keep seeking messages until we have heard from all ids
     while len(ids) > 0:
-        # logging.debug("Polling SQS")
-        logging.info("Polling SQS")
+        log.debug("Polling SQS")
 
         try:
             response = sqs.receive_message(
@@ -271,23 +271,23 @@ def wait_on_id_sqs(ids):
                 WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
             )
         except:
-            logging.error(f"Failed to receive a response from the SQS queue.")
+            log.error(f"Failed to receive a response from the SQS queue.")
 
         if "Messages" in response:
-            logging.debug(f"Got SQS Response {response}")
+            log.debug(f"Got SQS Response {response}")
             for message in response["Messages"]:
                 body = json.loads(message["Body"])
                 instance_id = body["instance"]["id"]
-                logging.info(
+                log.info(
                     f'FINISHED: {body["instance"]["id"]}, exited with status {body["job"]["status"]}.'
                 )
-                logging.debug(f"Comparing against {ids}")
+                log.debug(f"Comparing against {ids}")
 
                 # If we have a message about an ID we have to terminate, terminate it, and remove the message.
                 if instance_id in ids:
                     ids.remove(instance_id)
                     terminate_instance(instance_id, False)
-                    logging.info(f"Removed Instance {instance_id}")
+                    log.info(f"Removed Instance {instance_id}")
 
                 delete_message(message)
 

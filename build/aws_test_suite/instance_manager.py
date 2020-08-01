@@ -1,6 +1,7 @@
 import re
 
 from .aws_tools import *
+from .logger import *
 
 
 class InstanceManager:

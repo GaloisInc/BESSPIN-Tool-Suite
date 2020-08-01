@@ -1,6 +1,7 @@
 import os
 import re
-import logging
+
+from .logger import *
 
 
 class AWSCredentials:
@@ -19,7 +20,7 @@ class AWSCredentials:
 
         self._check_credentials(credentials)
         self._credentials = credentials
-        logging.info("AWSCredentials: successfully obtained credentials")
+        log.info("AWSCredentials: successfully obtained credentials")
 
     @classmethod
     def from_env_vars(cls):
@@ -69,7 +70,7 @@ class AWSCredentials:
         :rtype: AWSCredentials
         """
 
-        logging.info(
+        log.info(
             "AWSCredentials: class method from_interactive: performing interactive session to get AWS "
             "credentials from the user"
         )
@@ -77,7 +78,7 @@ class AWSCredentials:
         key_id = input("\tEnter AWS Access Key ID: ")
         secret = input("\tEnter AWS Secret Access Key: ")
         session = input("\tEnter AWS Session Token: ")
-        logging.info(
+        log.info(
             "AWSCredentials: class method from_interactive: finished interactive session"
         )
         return cls([key_id, secret, session])

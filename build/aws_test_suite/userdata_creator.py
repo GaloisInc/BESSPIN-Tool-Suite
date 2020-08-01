@@ -1,5 +1,7 @@
-import logging
 import os
+
+from .aws_tools import *
+from .logger import *
 
 
 class UserdataCreator:
@@ -80,8 +82,8 @@ class UserdataCreator:
                 key = f.readlines()
                 key = [x.strip() for x in key]
         except BaseException as e:
-            logging.error("UserdataCreator: Invalid Key Path")
-            logging.error(f"UserdataCreator: {e}")
+            log.error("UserdataCreator: Invalid Key Path")
+            log.error(f"UserdataCreator: {e}")
 
         if branch or binaries_branch:
             userdata_ssh = [
@@ -116,7 +118,7 @@ class UserdataCreator:
             + """git-lfs pull && 
                 cd .. "'""",
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                                   nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """
+                                   nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """,
         ]
 
         userdata += userdata_specific
@@ -163,7 +165,7 @@ class UserdataCreator:
         with open(fname, "w") as fp:
             ud = [f"runuser -l centos -c 'touch {self.indicator_filepath()}'"]
             fp.write("\n".join(ud))
-        logging.info(f"UserdataCreator: Wrote userdata to '{fname}'")
+        log.info(f"UserdataCreator: Wrote userdata to '{fname}'")
 
     @staticmethod
     def indicator_filepath():

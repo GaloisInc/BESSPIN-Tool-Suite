@@ -1,9 +1,8 @@
-import logging
 from termcolor import cprint
 
 
 class Logger:
-    def __init__(self, log_fname="aws-test-suite.log", level="info"):
+    def __init__(self, log_fname="aws-test-suite.log"):
         """
         Global logger setup
 
@@ -14,28 +13,13 @@ class Logger:
         :type level: str, optional
         """
 
-        # empty out log file
-        open(log_fname, "w").close()
-        llevel = {
-            "critical": logging.CRITICAL,
-            "error": logging.ERROR,
-            "warning": logging.WARNING,
-            "info": logging.INFO,
-            "debug": logging.DEBUG,
-            "notset": logging.NOTSET,
-        }
-        log_level = llevel[level]
-        logging.basicConfig(
-            format="%(asctime)s: (%(levelname)s)~  %(message)s",
-            datefmt="%I:%M:%S %p",
-            level=log_level,
-            handlers=[logging.FileHandler(log_fname), logging.StreamHandler()],
-        )
-        logging.info(
-            f"AWS Test Suite Logger Initialized\nLog File: {log_fname}\nLog Level: {level}"
-        )
+        # Store the name of the log file
+        self.log_fname = log_fname
 
-    def log(self, message=None, level="Info"):
+        # Empty out log file
+        open(log_fname, "w").close()
+
+    def log_out(self, message=None, level="Info"):
         """
         Prints message to console with the specified level and outputs to log accordingly
 
@@ -50,25 +34,46 @@ class Logger:
             pass
 
         levels = {
-            "Critical": "red",
             "Debug": "yellow",
             "Error": "red",
             "Info": "cyan",
             "Warning": "yellow",
         }
 
+        # Check log level in levels.
         assert level in list(
             levels.keys()
         ), f"{level} is not a valid level, must be one of Critical, Debug, Error, Info, Warning"
 
-        cprint(f"({level})~ {message}", levels[level])
+        # Print all but debug to screen
+        if level.lower() != "debug":
+            # Print to screen in color
+            cprint(f"({level})~ {message}", levels[level])
 
-        command = level.lower()
-        exec(f'logging.{command}("{message}")')
+        with open(self.log_fname, "a") as f:
+            f.write(f"({level})~ {message}\n")
 
-        if command == "error":
-            print("(Error)~ Exiting.")
+        if level.lower() == "error":
+            cprint("(Error)~ Exiting.", "red")
             exit(0)
 
+    def debug(self, message):
+        self.log_out(message, "Debug")
 
-console = Logger()
+    def error(self, message):
+        self.log_out(message, "Error")
+
+    def info(self, message):
+        self.log_out(message, "Info")
+
+    def warning(self, message):
+        self.log_out(message, "Warning")
+
+
+log = Logger()
+
+
+# log.info("This is a test info")
+# log.debug("This is a test debug")
+# log.warning("This is a test warning")
+# log.error("This is a test error")

@@ -17,7 +17,10 @@ h = "[AWS Testing CI] : "
 
 
 def main(args):
-    console.log(f"{h}Welcome to the AWS testing app!")
+    log.info(f"{h}Welcome to the AWS testing app!")
+
+    # log arguments to main()
+    log.debug(f"aws-testing-ci.py started with arguments { args }")
 
     # Handle init and credentials
     if args.init:
@@ -31,18 +34,18 @@ def main(args):
             try:
                 a = AWSCredentials.from_env_vars()
             except AssertionError:
-                console.log(f"{h}Cannot get AWS credentials.", "Error")
-    console.log(f"{h}AWSCredentials gathered!")
+                log.error(f"{h}Cannot get AWS credentials.")
+    log.info(f"{h}AWSCredentials gathered!")
 
     # Get list of all targets for fett-ci.py
-    console.log(f"{h}Gathering run targets.")
+    log.info(f"{h}Gathering run targets.")
     r = collect_run_names()
-    console.log(f"{h}Run targets gathered!\t{r}")
+    log.info(f"{h}Run targets gathered!\t{r}")
 
     # Start an instance manager
     i = InstanceManager(args.cap)
 
-    console.log(f"{h}Creating userdata and instances.")
+    log.info(f"{h}Creating userdata and instances.")
 
     # Generate a list of indicies to be tested on each run
     if args.instance_index:
@@ -50,7 +53,9 @@ def main(args):
     else:
         indices_to_run = list(range(len(r)))
 
-    console.log(f"Indices to run { indices_to_run }")
+    log.debug(f"Indices to run { indices_to_run }")
+
+    log.info(f"Queueing { len(indices_to_run) } instances over { args.runs } runs...")
 
     # Repeat number of runs
     for j in range(args.runs):
@@ -72,19 +77,19 @@ def main(args):
 
             # Add this instance to InstanceManager
             i.add_instance(Instance(args.ami, f"{n}", userdata=u.userdata))
-            console.log(f"{h}Queueing {r[k]}, with name {n}.")
+            log.debug(f"{h}Queueing {r[k]}, with name {n}.")
 
-    console.log(f"{h}Starting instances and running tests.")
+    log.info(f"{h}Queued all instances. Starting and testing instances")
 
     # Run all instances according to the capacity specified.
     while not i.done:
         i.start_instances().terminate_instances(True)
-        console.log(
+        log.info(
             f"{h}Finished testing {args.cap} instances. Shutting down {args.cap} instances."
         )
 
-    console.log(f"{h}Tests done, and logs uploaded to S3.")
-    console.log(f"{h}Exiting...")
+    log.info(f"{h}Tests done, and logs uploaded to S3.")
+    log.info(f"{h}Exiting...")
     exit(0)
 
 
