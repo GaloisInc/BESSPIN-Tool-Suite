@@ -44,6 +44,7 @@ def main(args):
 
     console.log(f"{h}Creating userdata and instances.")
 
+    # Generate a list of indicies to be tested on each run
     if args.instance_index:
         indicies_to_run = [int(args.instance_index)]
     else:
@@ -74,6 +75,8 @@ def main(args):
             console.log(f"{h}Queueing {r[k]}, with name {n}.")
 
     console.log(f"{h}Starting instances and running tests.")
+
+    # Run all instances according to the capacity specified.
     while not i.done:
         i.start_instances().terminate_instances(True)
         console.log(
