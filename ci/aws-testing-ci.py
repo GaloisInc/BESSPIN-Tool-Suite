@@ -46,7 +46,7 @@ def main(args):
         for k in range(count):
             b = f"-{args.branch}" if args.branch else ""
             bb = f"-{args.binaries_branch}" if args.binaries_branch else ""
-            n = args.name if args.name else f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
+            n = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
 
             u = UserdataCreator.default(
                 a, args.branch, args.binaries_branch, args.key_path
@@ -55,15 +55,15 @@ def main(args):
                 f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
                            nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job { n } -i {str(k)}"' """
             )
-            i.add_instance(
-                Instance(args.ami, f"{n}", userdata=u.userdata)
-            )
+            i.add_instance(Instance(args.ami, f"{n}", userdata=u.userdata))
             console.log(f"{h}Queueing {r[k]}, with name {n}.")
 
     console.log(f"{h}Starting instances and running tests.")
     while not i.done:
         i.start_instances().terminate_instances(True)
-        console.log(f"{h}Finished testing {args.cap} instances. Shutting down {args.cap} instances.")
+        console.log(
+            f"{h}Finished testing {args.cap} instances. Shutting down {args.cap} instances."
+        )
 
     console.log(f"{h}Tests done, and logs uploaded to S3.")
     console.log(f"{h}Exiting...")
@@ -82,68 +82,68 @@ if __name__ == "__main__":
         "--branch",
         type=str,
         help="The branch of FETT-Target to check out on the AWS instance, and run tests on. Defaults to whatever is "
-        "present on AMI"
+        "present on AMI",
     )
     parser.add_argument(
         "-bb",
         "--binaries-branch",
         type=str,
         help="The branch of FETT-Bineries to check out on the AWS instance, and run tests on. Defaults to whatever is "
-        "present on AMI"
+        "present on AMI",
     )
     parser.add_argument(
         "-c",
         "--count",
         type=int,
         help="Number of possible configurations (same as length of the output of a dry run of the CI script).",
-        default=-1
+        default=-1,
     )
     parser.add_argument(
         "-cp",
         "--cap",
         type=int,
         help="The maximum number of instances running at once (default is 1)",
-        default=1
+        default=1,
     )
     parser.add_argument(
         "-cd",
         "--credentials",
         type=str,
-        help="AWS credentials file (Use either --init (-i) or --credentials (-cd))"
+        help="AWS credentials file (Use either --init (-i) or --credentials (-cd))",
     )
     parser.add_argument(
         "-i",
         "--init",
         help="Initialize (first run or if tokens have expired) (Use either --init (-i) or --credentials (-cd))",
-        action="store_true"
+        action="store_true",
     )
     parser.add_argument(
         "-idx",
         "--instance-index",
         type=int,
         help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this "
-        "instance index only."
+        "instance index only.",
     )
     parser.add_argument(
         "-k",
         "--key-path",
         type=str,
         help='Path to the SSH key to be used with -b || -bb flags. Default: ["~/.ssh/aws-ci-gh"]',
-        default="~/.ssh/aws-ci-gh"
+        default="~/.ssh/aws-ci-gh",
     )
     parser.add_argument(
         "-n",
         "--name",
         type=str,
         help="Base name to assign to instances created by this script (default is <current-date>-aws-testing)",
-        default=f"{today}-aws-test-suite"
+        default=f"{today}-aws-test-suite",
     )
     parser.add_argument(
         "-r",
         "--runs",
         type=int,
         help="How many complete runs of all targets to make. Default 1.",
-        default=1
+        default=1,
     )
 
     main(parser.parse_args())
