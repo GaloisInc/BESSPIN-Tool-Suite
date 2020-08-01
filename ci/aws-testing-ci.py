@@ -45,20 +45,19 @@ def main(args):
         for k in range(count):
             b = f"-{args.branch}" if args.branch else ""
             bb = f"-{args.binaries_branch}" if args.binaries_branch else ""
-            jn = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
-            n = args.name if args.name else jn
+            n = args.name if args.name else f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
 
             u = UserdataCreator.default(
                 a, args.branch, args.binaries_branch, args.key_path
             )
             u.append(
                 f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                           nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job { jn } -i {str(k)}"' """
+                           nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job { n } -i {str(k)}"' """
             )
             i.add_instance(
                 Instance(args.ami, f"{n}", userdata=u.userdata)
             )
-            console.log(f"{h}Queueing {r[k]}, with job name {jn} and instance name {n}.")
+            console.log(f"{h}Queueing {r[k]}, with name {n}.")
 
     console.log(f"{h}Starting instances and running tests.")
     while not i.done:
