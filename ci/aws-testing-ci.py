@@ -49,11 +49,7 @@ def main(args):
             n = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
 
             u = UserdataCreator.default(
-                a, args.branch, args.binaries_branch, args.key_path
-            )
-            u.append(
-                f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                           nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job { n } -i {str(k)}"' """
+                a, n, k, args.branch, args.binaries_branch, args.key_path
             )
             i.add_instance(Instance(args.ami, f"{n}", userdata=u.userdata))
             console.log(f"{h}Queueing {r[k]}, with name {n}.")
