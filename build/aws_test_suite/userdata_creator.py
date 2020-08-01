@@ -123,6 +123,8 @@ class UserdataCreator:
 
         userdata += userdata_specific
 
+        log.debug(f"Userdata Specific: {'\n'.join(userdata_specific)}")
+        
         return cls(userdata)
 
     def append(self, ul=""):

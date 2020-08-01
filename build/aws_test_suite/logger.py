@@ -1,4 +1,5 @@
 from termcolor import cprint
+from datetime import datetime
 
 
 class Logger:
@@ -51,7 +52,9 @@ class Logger:
             cprint(f"({level})~ {message}", levels[level])
 
         with open(self.log_fname, "a") as f:
-            f.write(f"({level})~ {message}\n")
+            f.write(
+                f"[ { datetime.now().strftime('%Y/%m/%d @ %H:%M:%S:%f') } ] : ({level})~ {message}\n"
+            )
 
         if level.lower() == "error":
             cprint("(Error)~ Exiting.", "red")

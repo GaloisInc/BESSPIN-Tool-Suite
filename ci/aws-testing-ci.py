@@ -1,9 +1,6 @@
 #! /usr/bin/env python3
 
-# TODO: Add job to command added to userdata
-
 # Import modules
-
 import sys
 import os
 
@@ -40,7 +37,7 @@ def main(args):
     # Get list of all targets for fett-ci.py
     log.info(f"{h}Gathering run targets.")
     r = collect_run_names()
-    log.info(f"{h}Run targets gathered!\t{r}")
+    log.info(f"{h}Run targets gathered: {r}")
 
     # Start an instance manager
     i = InstanceManager(args.cap)
@@ -55,7 +52,9 @@ def main(args):
 
     log.debug(f"Indices to run { indices_to_run }")
 
-    log.info(f"Queueing { len(indices_to_run) } instances over { args.runs } runs...")
+    log.info(
+        f"Queueing { len(indices_to_run)*args.runs } instances ({ args.runs } runs)..."
+    )
 
     # Repeat number of runs
     for j in range(args.runs):
@@ -69,6 +68,7 @@ def main(args):
 
             # Build instance name string
             n = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
+            log.debug(f"Name String: { n }")
 
             # Compose userdata based on args
             u = UserdataCreator.default(
