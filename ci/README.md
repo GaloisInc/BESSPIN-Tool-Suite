@@ -28,22 +28,21 @@ Flavors:
 1. **unix:** Runs on machines tagged `docker-fpga`.
 2. **freertos:** Runs on machines tagges `docker-fpga-io`.
 
-## Nightly Testing CI
+## AWS Testing CI
 
 ### Setup
 
 - Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
 - Create an SSH key (named `~/.ssh/aws-ci-gh`) and associate it with your github account - this will facilitate checking out the branches specified with the `-b` and `-bb` flags.
-- `pip3 install boto3 --user`
 
 ### Usage
 
 ```bash
-python3 nightly.py [-h] [-n NAME] [-i] [-c COUNT] [-cp CAP] [-b BRANCH] [-bb BINARIES_BRANCH] ami
+./aws-testing-ci.py [-h] [-n NAME] [-i] [-cp CAP] [-b BRANCH] [-bb BINARIES_BRANCH] ami
 ```
 
 **Only if the `init` flag is used:** When prompted, add your AWS Keys
 
 ### Results
 
-The results will be posted to the AWS S3 bucket for Nightly-CI.
+The results will be posted to the AWS S3 bucket described in [`configs.py`](configs.py), under the job name.

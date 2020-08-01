@@ -4,11 +4,13 @@
 import sys
 import os
 
-sys.path.insert(1, os.path.dirname(os.getcwd()))
+sys.path.insert(1, print(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))))
+
+from build.aws_test_suite import *
 
 import argparse
 from datetime import datetime
-from build.aws_test_suite import *
+
 
 h = "[AWS Testing CI] : "
 
