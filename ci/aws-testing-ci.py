@@ -19,6 +19,7 @@ h = "[AWS Testing CI] : "
 def main(args):
     console.log(f"{h}Welcome to the AWS testing app!")
 
+    # Handle init and credentials
     if args.init:
         a = AWSCredentials.from_interactive()
     elif args.credentials:
@@ -33,28 +34,48 @@ def main(args):
                 console.log(f"{h}Cannot get AWS credentials.", "Error")
     console.log(f"{h}AWSCredentials gathered!")
 
+    # Get list of all targets for fett-ci.py
     console.log(f"{h}Gathering run targets.")
     r = collect_run_names()
     console.log(f"{h}Run targets gathered!\t{r}")
 
+    # Start an instance manager
     i = InstanceManager(args.cap)
 
     console.log(f"{h}Creating userdata and instances.")
 
-    count = args.count if 0 < args.count < len(r) else len(r)
+    if args.instance_index:
+        indicies_to_run = [int(args.instance_index)]
+    else:
+        indicies_to_run = [x for x in range(0, len(r))]
+
+    console.log(f"Indicies to run { indicies_to_run }")
+
+    # Repeat number of runs
     for j in range(args.runs):
-        for k in range(count):
+
+        # Repeat for targets
+        for k in indicies_to_run:
+
+            # Determine branches for the job and instance name string
             b = f"-{args.branch}" if args.branch else ""
             bb = f"-{args.binaries_branch}" if args.binaries_branch else ""
+
+            # Build instance name string
             n = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
 
+            # Compose userdata based on args
             u = UserdataCreator.default(
                 a, args.branch, args.binaries_branch, args.key_path
             )
+
+            # Append command to userdata, with specific name string
             u.append(
                 f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
                            nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job { n } -i {str(k)}"' """
             )
+
+            # Add this instance to InstanceManager
             i.add_instance(Instance(args.ami, f"{n}", userdata=u.userdata))
             console.log(f"{h}Queueing {r[k]}, with name {n}.")
 
@@ -90,13 +111,6 @@ if __name__ == "__main__":
         type=str,
         help="The branch of FETT-Bineries to check out on the AWS instance, and run tests on. Defaults to whatever is "
         "present on AMI",
-    )
-    parser.add_argument(
-        "-c",
-        "--count",
-        type=int,
-        help="Number of possible configurations (same as length of the output of a dry run of the CI script).",
-        default=-1,
     )
     parser.add_argument(
         "-cp",
