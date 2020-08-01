@@ -10,6 +10,7 @@ import os
 sys.path.insert(1, os.path.dirname(os.getcwd()))
 
 import argparse
+from datetime import datetime
 from build.aws_test_suite import *
 
 h = "[AWS Testing CI] : "
@@ -70,6 +71,8 @@ def main(args):
 
 
 if __name__ == "__main__":
+    today = datetime.now().strftime("%m%d%y")
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "ami", type=str, help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'"
@@ -133,6 +136,7 @@ if __name__ == "__main__":
         "--name",
         type=str,
         help="Base name to assign to instances created by this script (default is <current-date>-aws-testing)",
+        default=f"{today}-aws-test-suite"
     )
     parser.add_argument(
         "-r",
