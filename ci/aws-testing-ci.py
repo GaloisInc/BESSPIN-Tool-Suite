@@ -66,13 +66,7 @@ def main(args):
 
             # Compose userdata based on args
             u = UserdataCreator.default(
-                a, args.branch, args.binaries_branch, args.key_path
-            )
-
-            # Append command to userdata, with specific name string
-            u.append(
-                f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                           nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job { n } -i {str(k)}"' """
+                a, n, k, args.branch, args.binaries_branch, args.key_path
             )
 
             # Add this instance to InstanceManager

@@ -27,15 +27,23 @@ class UserdataCreator:
     def default(
         cls,
         credentials,
+        name,
+        index,
         branch=None,
         binaries_branch=None,
-        key_path="~/.ssh/id_rsa.pub",
+        key_path="~/.ssh/id_rsa",
     ):
         """
         Add userdata to start with FETT Target at specific branch and binaries branch
 
         :param credentials: AWS credentials.
         :type credentials: AWSCredentials
+
+        :param name: Job name
+        :type name: str
+
+        :param index: FETT Target index
+        :type index: int
 
         :param branch: What branch of SSITH-FETT-Target to run on AWS instances, defaults to 'master'
         :type branch: str, optional
@@ -106,7 +114,9 @@ class UserdataCreator:
                 cd SSITH-FETT-Binaries &&\n"""
             + (f"git checkout {binaries_branch} &&\n" if binaries_branch else "")
             + """git-lfs pull && 
-                cd .. "'"""
+                cd .. "'""",
+            f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
+                                   nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """
         ]
 
         userdata += userdata_specific
