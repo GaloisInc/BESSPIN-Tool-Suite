@@ -29,7 +29,11 @@ def generateTests(outdir):
                              "tests",
                              "bufferErrors",
                              "BufferErrors.cfr")
-    model = featureModelUtil.loadFM(modelPath)
+    try:
+        model = featureModelUtil.loadFM(modelPath)
+    except Exception as exc:
+        logAndExit(f'<generateTests> Failed to load feature model {modelPath}',
+                   exc=exc)
     printAndLog(f"<generateTests> Loaded model from {modelPath}")
 
     # Prune out other vulnerability classes

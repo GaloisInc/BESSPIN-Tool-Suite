@@ -3,6 +3,7 @@ import os
 import json
 
 from fett.base.utils.misc import *
+import fett.cwesEvaluation.scoreTests
 
 QEMU_FPGA_LOOKFOR  = [
             # (indicated result, line contain)
@@ -60,9 +61,10 @@ def scoreLog(SCORES, customScorer, logFile, lookfor):
         fLog = ftOpenFile(logFile,'r')
         logLines = fLog.read().splitlines()
         fLog.close()
-        return customScorer.adjustToCustomScore(logLines,thisScore)
+        return (customScorer.adjustToCustomScore(logLines,thisScore),
+                logSymbol)
     except:
-        return SCORES.FAIL
+        return (SCORES.FAIL, logSymbol)
 
 def bfparams(filepath):
     # we might want template parameters too...
@@ -83,7 +85,7 @@ def bfparams(filepath):
 
 def test_ord(t):
     try:
-        return int(t['TestNumber'])
+        return int(t[0]['TestNumber'])
     except:
         return -1
 
@@ -100,15 +102,40 @@ def tabulate(SCORES, customScorer, dirpath,lookfor):
                                       f"{path.stem}.c"))
             if not cfile.is_file():
                 logAndExit(f"<bufferErrors.count.tabulate> C file {cfile} not found")
-            result = scoreLog (SCORES, customScorer, path, lookfor)
-            row = {'TestNumber': path.stem,
-                   'Result': result}
-            row.update(bfparams(cfile))
+            result, logSymbol = scoreLog (SCORES, customScorer, path, lookfor)
+            row = ({'TestNumber': path.stem,
+                    'Result': result},
+                   logSymbol)
+            row[0].update(bfparams(cfile))
             # TODO: also record simulator and binary hashes?
             rows.append(row)
     rows.sort(key=test_ord)
     if not rows:
-        print('No log files found!')
-        exit(1)
-    return rows
+        logAndExit('<bufferErrors.count.tabulate> No log files found in '
+                   f'<{dirpath}>',
+                   exitCode=EXIT.Dev_Bug)
+    if isEnabledDict('bufferErrors', 'csvFile'):
+        writeCSV(rows)
+    return [row[0] for row in rows]
+
+def writeCSV(rows):
+    csvOut = ftOpenFile(os.path.join(getSetting('cwesEvaluationLogs'),
+                                     'bufferErrors',
+                                     'bufferErrors.csv'),
+                        'w')
+    # this works since Py3 dicts preserve insertion order
+    csvOut.write(','.join(rows[0][0].keys()) + '\n')
+    for row, logSymbol in rows:
+        vs = row.values()
+        vss = [ fixup(v, logSymbol) for v in vs ]
+        csvOut.write(','.join(vss) + '\n')
+    csvOut.close()
+
+def fixup(v, logSymbol):
+    if type(v) == list:
+        vals = ','.join(v)
+        return f"\"[{vals}]\""
+    elif type(v) == fett.cwesEvaluation.scoreTests.SCORES:
+        return logSymbol
+    return v
 

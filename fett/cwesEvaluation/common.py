@@ -44,11 +44,7 @@ def score(testLogDir, vulClass):
 
     # TODO: Allow custom scoring
     scorer = scoreTests.customScorerObj(False, None)
-
-    csvPath = (os.path.join(testLogDir, "scores.csv")
-               if vulClass != "bufferErrors" or isEnabledDict('bufferErrors', 'csvFile')
-               else None)
-
+    csvPath = os.path.join(testLogDir, "scores.csv")
     scoreTests.scoreTests(module, scorer, csvPath, testLogDir)
 
 @decorate.debugWrap

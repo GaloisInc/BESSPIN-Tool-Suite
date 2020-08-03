@@ -112,18 +112,17 @@ def scoreTests(scorerModule, customScorer, csvPath, testsDir):
     if (len(rows) < 1): #nothing to score
         warnAndLog("<scoreTests>: There are no logs to score.")
     else:
-        if csvPath:
-            # output a csv file
-            try:
-                fcsv = ftOpenFile(csvPath, "w")
-                for row in rows:
-                    fcsv.write(f"{row[0].split('-')[1]},{row[1]},{row[1].value},{row[2]}\n")
-                fcsv.close()
-            except Exception as exc:
-                logAndExit(f"<scoreTests> Failed to generate the csv output "
-                           f"file <{csvPath}>.",
-                           exc=exc,
-                           exitCode=EXIT.Files_and_paths)
+        # output a csv file
+        try:
+            fcsv = ftOpenFile(csvPath, "w")
+            for row in rows:
+                fcsv.write(f"{row[0].split('-')[1]},{row[1]},{row[1].value},{row[2]}\n")
+            fcsv.close()
+        except Exception as exc:
+            logAndExit(f"<scoreTests> Failed to generate the csv output "
+                       f"file <{csvPath}>.",
+                       exc=exc,
+                       exitCode=EXIT.Files_and_paths)
         # Build table for scoring
         for row in tabulate(rows):
             printAndLog(row, tee=getSetting("reportFile"))
