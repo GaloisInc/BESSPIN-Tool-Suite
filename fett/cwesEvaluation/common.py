@@ -80,7 +80,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         if not sendFiles:
             target.shutdownAndExit("<runApp>: sendFiles must be True for CWEs "
                                    "evaluation on unix hosts",
-                                   exitCode = EXIT.Configuration)
+                                   exitCode = EXIT.Dev_Bug)
         target.sendTar(timeout=timeout)
 
         # Batch tests by vulnerability class
