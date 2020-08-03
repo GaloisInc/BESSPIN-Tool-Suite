@@ -18,10 +18,6 @@ RUN git clone https://github.com/CTSRD-CHERI/qemu.git \
         && git checkout 24c4f92aac23b5d34454feafd25a9596db326dfd \
         && git submodule update --init --recursive
 
-RUN git clone https://github.com/CTSRD-CHERI/cheribsd.git \
-        && cd cheribsd \
-        && git checkout 70d364d1cc8e77790d786751c2f5531cd29d8575
-
 RUN git clone https://github.com/CTSRD-CHERI/gdb.git \
         && cd gdb \
         && git checkout d6b055eb61eebf176e2c218f0e88a41dbb78f90f
@@ -35,10 +31,7 @@ RUN ./cheribuild/cheribuild.py --source-root=/root \
         --skip-update gdb-native
 
 RUN ./cheribuild/cheribuild.py --source-root=/root \
-        --skip-update qemu cheribsd-riscv64-purecap
-
-RUN ./cheribuild/cheribuild.py --source-root=/root \
-        --skip-update cheribsd-sysroot-riscv64-purecap
+        --skip-update qemu
 
 RUN git clone https://github.com/CTSRD-CHERI/riscv-pk.git bbl \
         && cd bbl \
