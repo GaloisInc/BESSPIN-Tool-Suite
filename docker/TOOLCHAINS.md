@@ -7,8 +7,12 @@ contains the standard GCC and LLVM toolchains for RISC-V
 processors. Programs in each GCC toolchain are prefixed with the name
 of their target. The targets are:
 - `riscv64-unknown-elf`
-- `riscv64-unknown-linux`
+- `riscv64-unknown-linux-gnu`
 - `riscv64-unknown-freebsd12.1`
+
+The `riscv64-unknown-elf` target is for binaries running on bare
+metal. Binaries compiled for this target will not run on Debian or
+FreeBSD.
 
 If you are using Clang, you will need to use the `--sysroot` flag to
 specify the location of the headers and libraries for your target
