@@ -167,7 +167,10 @@ class commonTarget():
             if (not self.isCurrentUserRoot):
                 self.switchUser()
             self.terminateTarget(timeout=timeout,shutdownOnError=True)
-        printAndLog (f"{getSetting('target')} shut down successfully!")
+        printAndLog (f"{getSetting('target')} shut down successfully!",
+            doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and
+                            isEqSetting('osImage', 'FreeRTOS')) 
+                    )
         return
 
     @decorate.debugWrap

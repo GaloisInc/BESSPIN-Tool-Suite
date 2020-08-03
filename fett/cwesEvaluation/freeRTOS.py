@@ -27,6 +27,7 @@ def collectTests():
 @decorate.debugWrap
 @decorate.timeWrap
 def runFreeRTOSCwesEvaluation():
+    printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
     for vulClass, tests in collectTests().items():
         for test, parts in tests:
             for part in range(1, parts+1):
@@ -37,7 +38,7 @@ def runFreeRTOSCwesEvaluation():
                     if isEqSetting('pvAWS', 'firesim'):
                         # TODO: Is there a way to avoid reflashing the
                         # FPGA?
-                        aws.programAFI()
+                        aws.programAFI(doPrint=False)
                     else:
                         logAndExit("<runFreeRTOSCwesEvaluation> is not "
                                    "implemented for "

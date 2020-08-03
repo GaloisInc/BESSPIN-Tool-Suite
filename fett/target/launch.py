@@ -129,7 +129,6 @@ def prepareEnv ():
 @decorate.debugWrap
 @decorate.timeWrap
 def launchFett ():
-    printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
     try:
         xTarget = getClassType()()
     except Exception as exc:
@@ -138,6 +137,8 @@ def launchFett ():
         isEqSetting('osImage', 'FreeRTOS')):
         # Build the image for the upcoming test
         buildFreeRTOSTest(*getSetting("currentTest"))
+    else:
+        printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
     xTarget.start()
     if (isEnabled('isUnix')):
         if (getSetting('osImage') in ['debian','FreeBSD']):

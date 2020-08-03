@@ -391,11 +391,11 @@ def configTapAdaptor():
     printAndLog (f"aws.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=False)
 
 @decorate.debugWrap
-def programAFI():
+def programAFI(doPrint=True):
     """ perform AFI Management Commands for f1.2xlarge """
     agfiId = getSetting("agfiId")
-    clearFpgas()
-    flashFpgas(agfiId)
+    clearFpgas(doPrint=doPrint)
+    flashFpgas(agfiId,doPrint=doPrint)
 
 @decorate.debugWrap
 def _sendKmsg(message):
@@ -446,10 +446,10 @@ def getNumFpgas():
     return numLines
 
 @decorate.debugWrap
-def clearFpgas():
+def clearFpgas(doPrint=True):
     """ clear ALL FPGAs """
     numFpgas = getNumFpgas()
-    printAndLog(f"<aws.clearFpgas>: Found {numFpgas} FPGA(s) to clear")
+    printAndLog(f"<aws.clearFpgas>: Found {numFpgas} FPGA(s) to clear",doPrint=doPrint)
     for sn in range(numFpgas):
         clearFpga(sn)
 
@@ -464,15 +464,15 @@ def flashFpga(agfi, slotno):
     _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")
 
 @decorate.debugWrap
-def flashFpgas(agfi):
+def flashFpgas(agfi,doPrint=True):
     """
     NOTE: FireSim documentation came with a note. If an instance is chosen that has more than one FPGA, leaving one
     in a cleared state can cause XDMA to hang. Accordingly, it is advised to flash all the FPGAs in a slot with
     something. This method might need to be extended to flash all available slots with our AGFI
     """
-    printAndLog(f"<aws.flashFpgas>: Flashing FPGAs with agfi: {agfi}.")
+    printAndLog(f"<aws.flashFpgas>: Flashing FPGAs with agfi: {agfi}.",doPrint=doPrint)
     numFpgas = getNumFpgas()
-    printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGA(s) to flash")
+    printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGA(s) to flash",doPrint=doPrint)
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
