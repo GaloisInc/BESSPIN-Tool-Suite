@@ -16,6 +16,9 @@ jobs:
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
 
     steps:
+      - name: Remove lock file if it exists to prevent git fetch failures
+        run: find .git -name index.lock -print -exec rm -f {} +
+        continue-on-error: true
       - uses: actions/checkout@v2
         with:
           submodules: recursive
