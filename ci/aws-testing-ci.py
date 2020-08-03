@@ -15,6 +15,34 @@ from datetime import datetime
 h = "[AWS Testing CI] : "
 
 
+def collect_run_names():
+    """
+    Run fett-ci.py as a dryrun to generate a list of targets in their corresponding indexes to be run remotely
+
+    :return: List of ini files to run
+    :rtype: list
+    """
+
+    # Get path to the repoDir
+    ciDir = os.path.abspath(os.path.dirname(__file__))
+    repoDir = os.path.abspath(os.path.join(ciDir, os.pardir))
+
+    log.debug(
+        str(
+            subprocess_check_output(
+                str(os.path.join(repoDir, "ci", "fett-ci.py"))
+                + " -X -ep AWS runDevPR -job 420"
+            )
+        )
+    )
+    unsorted = os.listdir("/tmp/dumpIni/")
+    run_names = [run_name[:-4] for run_name in unsorted]
+
+    log.info(f"Gathered Launch Targets:{run_names}")
+
+    return run_names
+
+
 def main(args):
     log.info(f"{h}Welcome to the AWS testing app!")
 
@@ -73,7 +101,13 @@ def main(args):
 
             # Compose userdata based on args
             u = UserdataCreator.default(
-                a, n, k, args.branch, args.binaries_branch, args.key_path, not args.no_git
+                a,
+                n,
+                k,
+                args.branch,
+                args.binaries_branch,
+                args.key_path,
+                not args.no_git,
             )
 
             # Add this instance to InstanceManager
@@ -95,6 +129,7 @@ def main(args):
 
 
 if __name__ == "__main__":
+
     today = datetime.now().strftime("%m%d%y")
 
     parser = argparse.ArgumentParser()
