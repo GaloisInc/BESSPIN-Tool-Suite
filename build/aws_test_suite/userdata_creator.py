@@ -27,14 +27,14 @@ class UserdataCreator:
 
     @classmethod
     def default(
-        cls,
-        credentials,
-        name,
-        index,
-        branch=None,
-        binaries_branch=None,
-        key_path="~/.ssh/id_rsa",
-        git=True
+            cls,
+            credentials,
+            name,
+            index,
+            branch=None,
+            binaries_branch=None,
+            key_path="~/.ssh/id_rsa",
+            git=True
     ):
         """
         Add userdata to start with FETT Target at specific branch and binaries branch
@@ -65,8 +65,8 @@ class UserdataCreator:
         :rtype: UserdataCreator
         """
 
-        assert not git and (branch is not None or binaries_branch is not None), "Git is set to False but branch or " \
-                                                                                "binaries_branch is not None "
+        assert not (not git and (branch is not None or binaries_branch is not None)), "Git is set to False but branch" \
+                                                                                      " or binaries_branch is not None"
 
         # Default branch on both
 
