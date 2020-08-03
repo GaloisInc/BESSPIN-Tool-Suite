@@ -58,7 +58,7 @@ class InstanceManager:
 
     @property
     def done(self):
-        return len(self._instances) == len(self._terminated)
+        return len(self._instances) <= len(self._terminated)
 
 
 class Instance:
