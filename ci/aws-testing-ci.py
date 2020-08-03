@@ -24,9 +24,8 @@ def collect_run_names():
     """
 
     # Get path to the repoDir
-    awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
-    buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
-    repoDir = os.path.abspath(os.path.join(buildDir, os.pardir))
+    ciDir = os.path.abspath(os.path.dirname(__file__))
+    repoDir = os.path.abspath(os.path.join(ciDir, os.pardir))
 
     log.debug(
         str(
@@ -102,7 +101,13 @@ def main(args):
 
             # Compose userdata based on args
             u = UserdataCreator.default(
-                a, n, k, args.branch, args.binaries_branch, args.key_path, not args.no_git
+                a,
+                n,
+                k,
+                args.branch,
+                args.binaries_branch,
+                args.key_path,
+                not args.no_git,
             )
 
             # Add this instance to InstanceManager
@@ -124,6 +129,7 @@ def main(args):
 
 
 if __name__ == "__main__":
+
     today = datetime.now().strftime("%m%d%y")
 
     parser = argparse.ArgumentParser()
