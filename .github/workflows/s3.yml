@@ -1,0 +1,48 @@
+name: Add files to S3
+on:
+  push:
+    branches:
+      - develop
+      - master
+
+jobs:
+  addToS3:
+    name: Add to S3
+    runs-on: self-hosted
+    steps:
+      - name: Remove lock file if it exists to prevent git fetch failures
+        run: find .git -name index.lock -print -exec rm -f {} +
+        continue-on-error: true
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          lfs: true
+
+      - name: Get branch name
+        run: echo "::set-env name=branch::${GITHUB_REF#refs/heads/}"
+
+      - name: Configure AWS credentials
+        if: github.ref == 'refs/heads/master'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.FETT_TARGET_GH_PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.FETT_TARGET_GH_PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Configure AWS credentials
+        if: github.ref == 'refs/heads/develop'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.FETT_TARGET_GH_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.FETT_TARGET_GH_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Copy GFE to S3
+        run: aws s3 cp SSITH-FETT-Binaries/GFE/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/GFE_FreeRTOS.elf
+
+      - name: Copy LMCO to S3
+        run: aws s3 cp SSITH-FETT-Binaries/LMCO/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/LMCO_FreeRTOS.elf
+
+      - name: Copy Michigan to S3
+        run: aws s3 cp SSITH-FETT-Binaries/Michigan/osImages/firesim/FreeRTOS.elf s3://$branch-ssith-fett-target-learn-docs/staging/Michigan_FreeRTOS.elf

@@ -28,19 +28,19 @@ jobs:
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
           - { os: freertos, index: 2, total: 2, host: docker-fpga-io }
     steps:
+      - run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
+          echo "::set-env name=ref::$ref"
+
+      - name: Remove lock file if it exists to prevent git fetch failures
+        run: find .git -name index.lock -print -exec rm -f {} +
+        continue-on-error: true
       - uses: actions/checkout@v2
-        if: github.event_name == 'schedule'
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
-          ref: "develop"
-      - uses: actions/checkout@v2
-        if: github.event_name == 'push'
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          lfs: true
+          ref: ${{ env.ref }}
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -69,19 +69,19 @@ jobs:
           - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
           - { os: freertos, index: 2, total: 2, host: docker-fpga-io }
     steps:
+      - run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
+          echo "::set-env name=ref::$ref"
+
+      - name: Remove lock file if it exists to prevent git fetch failures
+        run: find .git -name index.lock -print -exec rm -f {} +
+        continue-on-error: true
       - uses: actions/checkout@v2
-        if: github.event_name == 'schedule'
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
-          ref: "develop"
-      - uses: actions/checkout@v2
-        if: github.event_name == 'push'
-        with:
-          submodules: recursive
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          lfs: true
+          ref: ${{ env.ref }}
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}

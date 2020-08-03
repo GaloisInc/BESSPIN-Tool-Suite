@@ -16,7 +16,8 @@ def prepareOsImage ():
     if isEqSetting('binarySource', 'SRI-Cambridge'):
         osImageElf = os.path.join(getSetting('osImagesDir'),f"bbl-cheri.elf")
         setSetting('osImageElf',osImageElf)
-        osImageExtraElf = os.path.join(getSetting('osImagesDir'),f"kernel-cheri.elf")
+        imageVariant = '-purecap' if (isEqSetting('sourceVariant','purecap')) else ''
+        osImageExtraElf = os.path.join(getSetting('osImagesDir'),f"kernel-cheri{imageVariant}.elf")
         setSetting('osImageExtraElf', osImageExtraElf)
     else:
         osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
@@ -224,7 +225,8 @@ def selectImagePaths():
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
         baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType)
         if isEqSetting('binarySource', 'SRI-Cambridge'):
-            imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), os.path.join(baseDir, f"kernel-cheri.elf")]
+            imageVariant = '-purecap' if (isEqSetting('sourceVariant','purecap')) else ''
+            imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), os.path.join(baseDir, f"kernel-cheri{imageVariant}.elf")]
         else:
             imagePaths = [os.path.join(baseDir, f"{getSetting('osImage')}.elf")]
         return imagePaths

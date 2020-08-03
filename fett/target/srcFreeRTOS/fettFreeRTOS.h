@@ -34,14 +34,14 @@ fett header for includes, externs, and global variables
 #define STACKSIZEMUL 12 //For tasks. Needs to be larger on 64-bit (not for FETT)
 #include "fettUserConfig.h"
 /* Task notifications values */
-#define NOTIFY_SUCCESS 0x0000FFFF //This allows us 16 distinct successes
-#define NOTIFY_SUCCESS_NTK 0x00000001
+#define NOTIFY_SUCCESS      0x0000FFFF //This allows us 16 distinct successes
+#define NOTIFY_SUCCESS_NTK  0x00000001
 #define NOTIFY_SUCCESS_HTTP 0x00000002
-#define NOTIFY_SUCCESS_OTA 0x00000004
-#define NOTIFY_FAIL 0xFFFF0000 //This allows us 16 distinct failures
-#define NOTIFY_FAIL_NTK 0x00010000
+#define NOTIFY_SUCCESS_OTA  0x00000004
+#define NOTIFY_FAIL      0xFFFF0000 //This allows us 16 distinct failures
+#define NOTIFY_FAIL_NTK  0x00010000
 #define NOTIFY_FAIL_HTTP 0x00020000
-#define NOTIFY_FAIL_OTA 0x00040000
+#define NOTIFY_FAIL_OTA  0x00040000
 /* True and False values */
 #define uTRUE 1
 #define uFALSE 0

@@ -21,11 +21,11 @@ void main_fett () {
 
     if (funcReturn == pdPASS)
     {
-        fettPrintf ("(Info)~  main_fett: Creating vMain task OK.");
+        fettPrintf ("(Info)~  main_fett: Creating vMain task OK.\n");
     }
     else
     {
-        fettPrintf ("(Error)~  main_fett: Creating vMain task.");
+        fettPrintf ("(Error)~  main_fett: Creating vMain task.\n");
     }
     return;
 }
@@ -33,20 +33,24 @@ void main_fett () {
 //This is the entry point task
 void vMain (void *pvParameters) {
     (void) pvParameters;
-    BaseType_t funcReturn;
     uint32_t recvNotification;
+    BaseType_t funcReturn;
     int r;
 
     xMainTask = xTaskGetCurrentTaskHandle();
 
-    fettPrintf("vMain: Main task started...\r\n");
+    fettPrintf("(Info)~  vMain: Main task started...\n");
+    fettPrintf("(Info)~  vMain: Main task initial SHWM is %u\n",
+               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
     // Start the network task to configure the network before the hook -- has to be the first thing
     funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
     ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
                           "vMain: Creating vStartNetwork task.");
 
-    funcReturn = xTaskNotifyWait(0xffffffff, 0xffffffff, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
+    recvNotification = 0;
+    funcReturn = xTaskNotifyWait(0xffffffffUL, 0xffffffffUL, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
+    fettPrintf ("(Info)~  vMain: FIRST notification value is %08x\n", recvNotification);
     ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
                           "vMain: Receive notification from vStartNetwork.");
     ASSERT_OR_DELETE_TASK((recvNotification == NOTIFY_SUCCESS_NTK),
@@ -84,11 +88,13 @@ void vMain (void *pvParameters) {
     uint8_t exitCode = 0;
     TickType_t xStartTime = xTaskGetTickCount();
     do {
-        funcReturn = xTaskNotifyWait(0x00000000, 0xffffffff, &recvNotification, pdMS_TO_TICKS(10000)); //10 seconds arbitrary value
+        recvNotification = 0;
+        funcReturn = xTaskNotifyWait(0x00000000UL, 0xffffffffUL, &recvNotification, pdMS_TO_TICKS(10000)); //10 seconds arbitrary value
         if (funcReturn != pdPASS) {
             //the following should be printed in debug mode only (Not yet implemented)
             fettPrintf("(Debug)~  vMain: <%d seconds> elapsed with <%d notification(s)> received.\r\n",pdTICKS_TO_S(xTaskGetTickCount() - xStartTime),iNotif);
         } else {
+            fettPrintf ("(Info)~  vMain: notification value is %08x\n", recvNotification);
             if (recvNotification & NOTIFY_FAIL) { //There is a fail somewhere
                 if (recvNotification & NOTIFY_FAIL_HTTP) {
                     fettPrintf("(Error)~  vMain: Received HTTP fail notification.\r\n");
@@ -96,7 +102,9 @@ void vMain (void *pvParameters) {
                 if (recvNotification & NOTIFY_FAIL_OTA) {
                     fettPrintf("(Error)~  vMain: Received OTA fail notification.\r\n");
                 }
-                if (!(recvNotification & NOTIFY_FAIL_HTTP) && !(recvNotification & NOTIFY_FAIL_OTA)) {
+
+		// Only HTTP or OTA or BOTH should have notified. Any other bit set is an error
+		if ((recvNotification & (NOTIFY_FAIL_HTTP | NOTIFY_FAIL_OTA)) != recvNotification) {
                     fettPrintf("(Error)~  vMain: Received unknown fail notification. [notif=0x%lx]\r\n",recvNotification);
                 }
                 exitCode = 1;
@@ -109,7 +117,9 @@ void vMain (void *pvParameters) {
                     fettPrintf("(Success)~  vMain: Received OTA success notification.\r\n");
                     iNotif++;
                 }
-                if (!(recvNotification & NOTIFY_SUCCESS_HTTP) && !(recvNotification & NOTIFY_SUCCESS_OTA)) {
+
+		// Only HTTP or OTA or BOTH should have notified. Any other bit set is an error
+		if ((recvNotification & (NOTIFY_SUCCESS_HTTP | NOTIFY_SUCCESS_OTA)) != recvNotification) {
                     fettPrintf("(Error)~  vMain: Received unknown success notification. [notif=0x%lx]\r\n",recvNotification);
                     exitCode = 1;
                 }
@@ -124,6 +134,10 @@ void vMain (void *pvParameters) {
         fettPrintf("(Error)~  vMain: Missing notifications. [received %d/%d]\r\n",iNotif,nTasksNotif);
         exitCode = 1;
     }
+
+    fettPrintf("(Info)~  vMain: Main task final SHWM is %u\n",
+               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
+
     exitFett(exitCode);
     vTaskDelete(NULL);
 }

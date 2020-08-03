@@ -69,6 +69,11 @@
             "choices" : [ "GFE", "LMCO", "Michigan", "MIT", "SRI-Cambridge" ]
         },
         {
+            "name" : "sourceVariant",
+            "type" : "string",
+            "choices" : [ "default", "purecap" ]
+        },
+        {
             "name" : "qemuNtkPortRangeStart",
             "type" : "int",
             "min" : 1024,

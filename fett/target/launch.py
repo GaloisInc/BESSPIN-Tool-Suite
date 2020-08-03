@@ -43,6 +43,10 @@ def startFett ():
         elif (pvAWS in ['awsteria']):
             logAndExit(f"<{pvAWS}> PV is not yet implemented.",exitCode=EXIT.Implementation)
         setSetting('pvAWS',pvAWS)
+    # check the source variant
+    if (not isEqSetting('sourceVariant','default')): # check the variants compatibility
+        if (isEqSetting('sourceVariant','purecap') and not isEqSetting('binarySource','SRI-Cambridge')):
+            logAndExit(f"<purecap> variant is not compatible with <{getSetting('binarySource')}>.",exitCode=EXIT.Configuration)
 
     #qemu on FreeRTOS and Busybox
     if ((getSetting('osImage') in ['FreeRTOS','busybox']) and isEqSetting('target','qemu')):
@@ -180,9 +184,61 @@ def endFett (xTarget):
     elif (isEqSetting('mode', 'evaluateSecurityTests')):
         checkValidScores()
 
+""" This resets the target without changing the .img + without deployment tests """
+@decorate.debugWrap
+@decorate.timeWrap
+def resetTarget (curTarget):
+    if ((not isEqSetting('target','aws')) or (not isEqSetting('mode','production'))):
+        logAndExit(f"<resetTarget> is not compatible with <{getSetting('target')}> target in <{getSetting('mode')}> mode.")
+    """
+    A big decision here is whether to collectLogs and shutdown or just tear it down.
+    We'll assume smth is wrong with the target, so we'll just tear it down.
+    collectLogs can err in any step, no need for crazy error handling, especially that we rsyslog them anyway.
+    """
+    printAndLog("resetTarget: tearing down the current target...")
+    aws.endUartPiping(curTarget)
+    curTarget.targetTearDown() 
+    rootPassword = curTarget.rootPassword
+    del curTarget
+
+    printAndLog("resetTarget: Re-preparing the environment...")
+    # Reload the FPGA
+    if (isEqSetting('pvAWS','firesim')):
+        aws.removeKernelModules()
+        aws.installKernelModules()
+        aws.programAFI()
+    elif (isEqSetting('pvAWS', 'connectal')):
+        aws.removeKernelModules()
+        aws.programAFI()
+        aws.removeKernelModules()
+        aws.installKernelModules()
+    else:
+        logAndExit (f"<resetTarget> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
+    
+    printAndLog("resetTarget: Re-launching...")
+    try:
+        newTarget = getClassType()()
+    except Exception as exc:
+        logAndExit (f"resetTarget: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
+
+    # Adjust the needed members for reset
+    newTarget.restartMode = True
+    newTarget.rootPassword = rootPassword
+    newTarget.userCreated = True
+
+    newTarget.start()
+    aws.startUartPiping(newTarget)
+
+    return newTarget
+
 """ This decides the classes hierarchy """
 @decorate.debugWrap
 def getClassType():
+    # This function gets executed in try/except
+    def errorAndRaise(message,exc=None):
+        errorAndLog(message,exc=exc)
+        raise
+
     if (isEqSetting('target','aws')):
         return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
@@ -190,20 +246,20 @@ def getClassType():
     elif (isEqSetting('target','fpga')):
         gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
         if (gfeTestingScripts not in os.environ):
-            logAndExit (f"<${gfeTestingScripts}> not found in the nix path.",exitCode=EXIT.Environment)
+            errorAndRaise (f"<${gfeTestingScripts}> not found in the nix path.")
         try:
             sys.path.append(os.environ[gfeTestingScripts])
             from test_gfe_unittest import TestLinux, TestFreeRTOS
         except Exception as exc:
-            logAndExit (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc,exitCode=EXIT.Environment)
+            errorAndRaise (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc)
         if (isEqSetting('xlen',32)):
             return type('classFpgaTarget',(fpga.fpgaTarget,TestFreeRTOS),dict())
         elif(isEqSetting('xlen',64)):
             return type('classFpgaTarget',(fpga.fpgaTarget,TestLinux),dict())
         else:
-            logAndExit (f"Invalid <xlen={getSetting('xlen')}> value.",exitCode=EXIT.Dev_Bug)
+            errorAndRaise (f"Invalid <xlen={getSetting('xlen')}> value.")
 
     else:
-        logAndExit (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.",exitCode=EXIT.Dev_Bug)
+        errorAndRaise (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.")
 
 
