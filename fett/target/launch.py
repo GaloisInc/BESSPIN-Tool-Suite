@@ -14,6 +14,7 @@ from fett.apps.build import buildApps
 from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
 from fett.cwesEvaluation.common import runTests
 from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
+from fett.cwesEvaluation.checkValidScores import checkValidScores
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -58,11 +59,12 @@ def startFett ():
     # launch fett
     xTarget = launchFett()
 
-    mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
-    
-    # Start on-line logging
-    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
-        aws.startRemoteLogging (xTarget)
+    if (not isEqSetting('mode', 'evaluateSecurityTests')):
+        mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
+        
+        # Start on-line logging
+        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+            aws.startRemoteLogging (xTarget)
 
     # Pipe UART to the network
     if (isEqSetting('mode','production')):
@@ -156,26 +158,26 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
-    if (isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')):
-        # The tool was running in loops -- nothing to do
-        return
-
     if (isEqSetting('mode','production')):
         aws.endUartPiping(xTarget)
 
-    if (isEnabled('runApp')):
-        xTarget.collectLogs()
+    if (not isEqSetting('mode', 'evaluateSecurityTests')):
+        if (isEnabled('runApp')):
+            xTarget.collectLogs()
 
-    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
-        collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
+        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+            collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
-    xTarget.shutdown()
+    if not (isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')):
+        xTarget.shutdown()
     
     if (isEqSetting('mode','production')):
         tarballPath = tarArtifacts (logAndExit,getSetting)
         uploadToS3(getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), logAndExit, 
                         tarballPath, 'fett-target/production/artifacts/')
         printAndLog(f"Artifacts tarball uploaded to S3.")
+    elif (isEqSetting('mode', 'evaluateSecurityTests')):
+        checkValidScores()
 
 """ This decides the classes hierarchy """
 @decorate.debugWrap
