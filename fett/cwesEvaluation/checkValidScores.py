@@ -28,18 +28,7 @@ class cweException:
     def getLegitValues (self, xOS):
         return self.legitValues[xOS]
 
-def loadCWEsExceptions (exceptionsFile):
-    cwesExceptions = defaultdict(cweException)
-    for line in ftReadLines (exceptionsFile):
-        if ((len(line)==0) or (line.strip()[0] == '#')):
-            continue
-        items = line.split(',')
-        if (len(items) != 3):
-            logAndExit (f"Unrecognized entry <{line}> in <{exceptionsFile}>.",exitCode=EXIT.Dev_Bug)
-        cwesExceptions[items[0]].addException(*items[1:])
-
-    return cwesExceptions
-
+@decorate.debugWrap
 def checkValidScores ():
     # This is only to check the scores are as expected -- only valid for GFE
     if (not isEqSetting('binarySource','GFE')):
@@ -47,7 +36,7 @@ def checkValidScores ():
         return
 
     #Load CWEs exceptions
-    cweExceptionsFile = os.path.join(repoDir,'fett','cwesEvaluation','validScoresGFE.csv')
+    cweExceptionsFile = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','validScoresGFE.csv')
     cwesExceptions = defaultdict(cweException)
     for line in ftReadLines(cweExceptionsFile):
         if ((len(line)==0) or (line.strip()[0] == '#')):
@@ -64,7 +53,7 @@ def checkValidScores ():
         csvScoresFile = os.path.join(baseLogDir, vulClass, 'scores.csv')
 
         #check for the scores.csv file
-        if (os.path.isfile(csvScoresFile)):
+        if (not os.path.isfile(csvScoresFile)):
             warnAndLog(f"No scores found for <{vulClass}>.")
             continue
 
@@ -79,12 +68,13 @@ def checkValidScores ():
                 scoreVal = int(items[2])
             except Exception as exc:
                 logAndExit (f"Non-integer value <{items[2]}> in <{csvScoresFile}>.",exitCode=EXIT.Dev_Bug)
-            if (scoreVal not in cwesExceptions[items[0]].getLegitValues(osImage)):
+            if (scoreVal not in cwesExceptions[items[0]].getLegitValues(getSetting('osImage'))):
                 errorAndLog (f"checkValidScores: Unaccepted score in <{vulClass}>: (cwe-{items[0]}:{items[1]})")
                 errCount += 1
                 
     if (errCount > 0):
-        logAndExit(f"checkValidScores: {errCount} unaccepted scores.")
+        pluralS = 's' if (errCount>1) else ''
+        logAndExit(f"checkValidScores: {errCount} unaccepted score{pluralS}.")
     else:
         printAndLog (f"checkValidScores: Scores were successfully validated.")
     
