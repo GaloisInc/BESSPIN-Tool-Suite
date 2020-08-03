@@ -47,7 +47,7 @@ class Logger:
         # Check log level in levels.
         assert level in list(
             levels.keys()
-        ), f"{level} is not a valid level, must be one of Critical, Debug, Error, Info, Warning"
+        ), f"{level} is not a valid level, must be one of {', '.join(levels.keys())}"
 
         # Print all but debug (to file) and info (to default color) to screen
         if level.lower() != "debug" and level.lower() != "info":

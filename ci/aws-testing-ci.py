@@ -73,7 +73,7 @@ def main(args):
 
             # Compose userdata based on args
             u = UserdataCreator.default(
-                a, n, k, args.branch, args.binaries_branch, args.key_path
+                a, n, k, args.branch, args.binaries_branch, args.key_path, not args.no_git
             )
 
             # Add this instance to InstanceManager
@@ -154,6 +154,12 @@ if __name__ == "__main__":
         type=str,
         help="Base name to assign to instances created by this script (default is <current-date>-aws-testing)",
         default=f"{today}-aws-test-suite",
+    )
+    parser.add_argument(
+        "-ng",
+        "--no-git",
+        help="Do not do any git operations (i.e. pull, checkout) on target. Must not be set if -b or -bb is set",
+        action="store_true",
     )
     parser.add_argument(
         "-r",
