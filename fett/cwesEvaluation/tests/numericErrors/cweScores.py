@@ -27,6 +27,7 @@ from importlib.machinery import SourceFileLoader
 
 from fett.base.utils.misc import *
 
+@decorate.debugWrap
 def partitionLines (lines,testPart,testNum):
     startFound = False
     iStart = 0
@@ -47,6 +48,7 @@ def partitionLines (lines,testPart,testNum):
 
 ## NAME FORMAT IS: test_DDD((__D*_D*)|[_D*])
 ## Test Variant and SEED parts are not currently used in the Numeric_Errors tests
+@decorate.debugWrap
 def scoreAllTests(SCORES, customScorer, logs, testsDir):
     scores = {}
     for name, log in logs:
@@ -58,7 +60,8 @@ def scoreAllTests(SCORES, customScorer, logs, testsDir):
             fLog.close()
             nPartsMatch = re.match(r'^<NUMPARTS=(?P<numParts>\d+)>$',logLines[0])
             numParts = int(nPartsMatch.group('numParts'))
-        except:
+        except Exception as exc:
+            errorAndLog(f"Failed to score {log}.",exc=exc,doPrint=False)
             scores[testNum][1] = SCORES.FAIL
             continue
 
@@ -74,6 +77,7 @@ def scoreAllTests(SCORES, customScorer, logs, testsDir):
         ret.append([f"TEST-{testNum}", SCORES.minScore(xScores),', '.join([str(x) for x in xScores])])
     return ret
 
+@decorate.debugWrap
 def scoreTestPart(SCORES, logLines, testNum, testPart):
     if (len(logLines) == 0):
         return SCORES.FAIL

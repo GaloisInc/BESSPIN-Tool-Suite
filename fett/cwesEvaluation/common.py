@@ -47,12 +47,6 @@ def score(testLogDir, vulClass):
 @decorate.debugWrap
 @decorate.timeWrap
 def runTests(target, sendFiles=False, timeout=30): #executes the app
-    # Create directory for logs
-    baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
-    mkdir(baseLogDir,
-          addToSettings="cwesEvaluationLogs",
-          exitIfExists=(not isEqSetting('osImage', 'FreeRTOS')))
-
     if isEqSetting('osImage', 'FreeRTOS'):
         # Exctract test output
         # TODO: Play around with the timeout.  Some tests timeout at 15
@@ -63,20 +57,19 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                                          shutdownOnError=False,
                                          timeout=15)
 
-        test, vulClass, _ = getSetting("currentTest")
+        test, vulClass, _, logFile = getSetting("currentTest")
         if output[1]:
             warnAndLog(f"{test} timed out.  Skipping.")
             return
 
         # Save in correct log file
-        logDir = os.path.join(baseLogDir, vulClass)
-        mkdir(logDir, exitIfExists=False)
-        testName = test.split('.')[0]
-        logFile = ftOpenFile(os.path.join(logDir, f"{testName}.log"), 'a')
         logFile.write(output[0])
-        logFile.close()
 
     elif getSetting('osImage') in ['debian', 'FreeBSD']:
+        # Create directory for logs
+        baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
+        mkdir(baseLogDir, addToSettings="cwesEvaluationLogs")
+
         if not sendFiles:
             target.shutdownAndExit("<runApp>: sendFiles must be True for CWEs "
                                    "evaluation on unix hosts",

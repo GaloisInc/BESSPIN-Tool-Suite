@@ -79,6 +79,7 @@ def tryScoreTest(scorerModule, customScorer, testName, logTest, testsDir):
         printAndLog(e)
         throw(e)
 
+@decorate.debugWrap
 def scoreLogs(scorerModule, customScorer, logs, testsDir):
     try:
         return scorerModule.scoreAllTests(SCORES, customScorer, logs, testsDir)
@@ -95,6 +96,7 @@ def scoreLogs(scorerModule, customScorer, logs, testsDir):
     return ret
 
 # TODO: Renmae testsDir to something more like logDir
+@decorate.debugWrap
 def scoreTests(scorerModule, customScorer, csvPath, testsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     try:
@@ -127,7 +129,7 @@ def scoreTests(scorerModule, customScorer, csvPath, testsDir):
         for row in tabulate(rows):
             printAndLog(row, tee=getSetting("reportFile"))
 
-
+@decorate.debugWrap
 def tabulate(elements):
     table = []
     widths = [ (len(e[0]), len(e[1]), len(e[2])) for e in elements ]
@@ -151,6 +153,7 @@ def tabulate(elements):
     table.append(tabulate_row([],widthCols,drawLine=True))
     return table
 
+@decorate.debugWrap
 def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
     def centralize (msg, width):
         if (len(msg)>width):

@@ -74,7 +74,7 @@ def checkValidScores ():
                 
     if (errCount > 0):
         pluralS = 's' if (errCount>1) else ''
-        logAndExit(f"checkValidScores: {errCount} unaccepted score{pluralS}.")
+        logAndExit(f"checkValidScores: {errCount} unaccepted score{pluralS}.",exitCode=EXIT.Run)
     else:
         printAndLog (f"checkValidScores: Scores were successfully validated.")
     

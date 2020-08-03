@@ -28,11 +28,21 @@ def collectTests():
 @decorate.timeWrap
 def runFreeRTOSCwesEvaluation():
     printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
+    baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
+    mkdir(baseLogDir, addToSettings="cwesEvaluationLogs")
+
     for vulClass, tests in collectTests().items():
+        logsDir = os.path.join(baseLogDir, vulClass)
+        mkdir(logsDir)
+
         for test, parts in tests:
+            testName = test.split('.')[0]
+            logFile = ftOpenFile(os.path.join(logsDir, f"{testName}.log"), 'w')
+            logFile.write(f"<NUMPARTS={parts}>\n")
+            
             for part in range(1, parts+1):
                 printAndLog(f"Running {vulClass}/{test} part {part}")
-                setSetting("currentTest", (test, vulClass, part))
+                setSetting("currentTest", (test, vulClass, part, logFile))
 
                 if isEqSetting('target', 'aws'):
                     if isEqSetting('pvAWS', 'firesim'):
@@ -52,6 +62,7 @@ def runFreeRTOSCwesEvaluation():
                 target = fett.target.launch.launchFett()
                 target.shutdown()
 
+            logFile.close()
         # Score the tests
         score(os.path.join(getSetting("cwesEvaluationLogs"), vulClass),
               vulClass)
