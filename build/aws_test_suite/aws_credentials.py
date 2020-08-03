@@ -26,13 +26,18 @@ class AWSCredentials:
     def from_env_vars(cls):
         """
         Get AWS credentials from environment variables
+        
+        :raises AssertionError: Credentials not found in environment variables
 
         :return: A new AWSCredentials instance
         :rtype: AWSCredentials
         """
 
         variables = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
-        cls.has_env_vars()
+        assert cls.has_env_vars(), (
+            f"AWSCredentials must have environment variable {v} for from_env_vars "
+            f"class method"
+        )
         return cls([os.environ[v] for v in variables])
 
     @classmethod
@@ -43,11 +48,17 @@ class AWSCredentials:
         :param filepath: Path for the AWS credentials file, defaults to '~/.aws/credentials'
         :type filepath: str, optional
 
+        :raises AssertionError: Credentials could not be found in specified filepath
+
         :return: A new AWSCredentials instance
         :rtype: AWSCredentials
         """
 
-        cls.has_credential_file(filepath)
+        assert cls.has_credential_file(filepath), (
+            "Credentials file doesn't exist: use 'aws configure', set "
+            "your credentials in ~/.aws/credentials, or create a "
+            "credentials file somewhere else "
+        )
 
         keys = {"id": "", "secret": "", "session": ""}
         with open(filepath, "r") as f:
@@ -87,30 +98,27 @@ class AWSCredentials:
     def has_env_vars():
         """
         Checks if necessary environment variables exist for from_env_vars class method
-
-        :raises AssertionError: Credentials not found in environment variables
+        
+        :return: Whether env vars are present
+        :rtype: Bool
         """
 
         variables = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
         for v in variables:
-            assert v in os.environ, (
-                f"AWSCredentials must have environment variable {v} for from_env_vars "
-                f"class method"
-            )
+            if v not in os.environ:
+                return False
+        return True
 
     @staticmethod
     def has_credential_file(filename):
         """
         Checks if suitable file exists for from_credentials_file class method
-
-        :raises AssertionError: Credentials could not be found in specified filepath
+        
+        :return: Whether credential file exists
+        :rtype: Bool
         """
 
-        assert os.path.exists(filename), (
-            "Credentials file doesn't exist: use 'aws configure', set "
-            "your credentials in ~/.aws/credentials, or create a "
-            "credentials file somewhere else "
-        )
+        return os.path.exists(filename)
 
     @staticmethod
     def _check_credentials(cred):
