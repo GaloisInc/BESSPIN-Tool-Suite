@@ -34,6 +34,7 @@ class UserdataCreator:
         branch=None,
         binaries_branch=None,
         key_path="~/.ssh/id_rsa",
+        git=True
     ):
         """
         Add userdata to start with FETT Target at specific branch and binaries branch
@@ -56,9 +57,16 @@ class UserdataCreator:
         :param key_path: Path of the SSH public key, defaults to '~/.ssh/id_rsa.pub'
         :type key_path: str, optional
 
+        :param git: Use git operations to pull or not, must be True is branch or binaries_branch is not None,
+        defaults to True
+        :type git: bool, optional
+
         :return: A new UserdataCreator instance
         :rtype: UserdataCreator
         """
+
+        assert not git and (branch is not None or binaries_branch is not None), "Git is set to False but branch or " \
+                                                                                "binaries_branch is not None "
 
         # Default branch on both
 
@@ -103,23 +111,27 @@ class UserdataCreator:
 
         # Compose userdata contents, depending on whether path was specified.
         # Binaries branch and Target branch provided
-        userdata_specific = [
-            f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/id_rsa && 
-                cd /home/centos/SSITH-FETT-Target/ && 
-                cd SSITH-FETT-Binaries && 
-                git stash && 
-                cd .. &&
-                git fetch &&\n"""
-            + (f"git checkout {branch} &&\n" if branch else "")
-            + """git pull && 
-                git submodule update && 
-                cd SSITH-FETT-Binaries &&\n"""
-            + (f"git checkout {binaries_branch} &&\n" if binaries_branch else "")
-            + """git-lfs pull && 
-                cd .. "'""",
-            f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                                   nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """,
-        ]
+        userdata_specific = []
+
+        if git:
+            userdata_specific = [
+                f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/id_rsa && 
+                            cd /home/centos/SSITH-FETT-Target/ && 
+                            cd SSITH-FETT-Binaries && 
+                            git stash && 
+                            cd .. &&
+                            git fetch &&\n"""
+                + (f"git checkout {branch} &&\n" if branch else "")
+                + """git pull && 
+                            git submodule update && 
+                            cd SSITH-FETT-Binaries &&\n"""
+                + (f"git checkout {binaries_branch} &&\n" if binaries_branch else "")
+                + """git-lfs pull && 
+                            cd .. "'"""
+            ]
+
+        userdata_specific.append(f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
+                                   nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """)
 
         userdata += userdata_specific
 
