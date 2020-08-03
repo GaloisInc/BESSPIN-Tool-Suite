@@ -145,13 +145,13 @@ def prepareFreeRTOS():
     return
 
 
-def buildFreeRTOS():
+def buildFreeRTOS(doPrint=True):
     #Cleaning all ".o" and ".elf" files in site
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
 
     #Compile
-    printAndLog (f"Cross-compiling...")
+    printAndLog (f"Cross-compiling...",doPrint=doPrint)
     envVars = []
     envVars.append(f"XLEN={getSetting('xlen')}")
     envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
@@ -179,7 +179,7 @@ def buildFreeRTOS():
     if (not os.path.isfile(builtAsm)):
         logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
     cp(builtAsm,getSetting('osImageAsm'))
-    printAndLog(f"Files cross-compiled successfully.")
+    printAndLog(f"Files cross-compiled successfully.",doPrint=doPrint)
 
     #Cleaning all ".o" files post run
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')

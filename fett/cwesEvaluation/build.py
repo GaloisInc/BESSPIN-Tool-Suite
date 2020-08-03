@@ -205,4 +205,4 @@ def buildFreeRTOSTest(test, vulClass, part):
     mk.close()
 
     # Build
-    fett.target.build.buildFreeRTOS()
+    fett.target.build.buildFreeRTOS(doPrint=False)
