@@ -34,12 +34,12 @@ def regPartitionTestFreeRTOS (testLines,nParts,testNum=None):
     partsLines = {}
     for iPart in range(1,nParts+1):
         start = f"---Part{iPart:02d}:"
-        end = [f">>>End", "<GDB-SIG", "Error", "error"]
-        partsLines[iPart] = partitionLines(testLines,start,end,testNum=testNum)
+        end = [f">>>End", "<GDB-SIG", "Error", "error", "---Part{:02d}:".format(iPart+1)]
+        partsLines[iPart] = partitionLines(testLines,start,end,testNum=testNum,doPrintWarnings=False)
         #print(partsLines[iPart])
     return partsLines
 
-def partitionLines (lines,start,end,testNum=None):
+def partitionLines (lines,start,end,testNum=None,doPrintWarnings=True):
     warnText = "" if (testNum is None) else " in test_{0}.log".format(testNum)
     startFound = False
     iStart = 0
@@ -70,10 +70,10 @@ def partitionLines (lines,start,end,testNum=None):
                         return lines[iStart:iEnd+1]
 
     if (startFound):
-        print ("Warning: part end <{0}> not found{1}.".format(end,warnText))
+        warnAndLog ("partitionLines: part end <{0}> not found{1}.".format(end,warnText),doPrint=doPrintWarnings)
         return lines[iStart:iEnd+1]   
     else:
-        print ("Warning: part start <{0}> not found{1}.".format(start,warnText))
+        warnAndLog ("partitionLines: part start <{0}> not found{1}.".format(start,warnText))
         return []
 
 def overallScore (SCORES, listScores, testNum):

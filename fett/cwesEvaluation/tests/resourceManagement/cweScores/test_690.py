@@ -36,15 +36,13 @@ def test_690 (SCORES, customScorer, logTest,testsDir):
         if (doesKeywordExist(partsLines[1],"<REGULAR_PASSED>")):
             partsScores[1] = SCORES.NONE
         else:
-            partsScores[1] = SCORES.V_HIGH
-        if (not doesKeywordExist(partsLines[2],"<DEREFERENCE_VIOLATION_PASSED_SUCCESSFULLY>")):
+            partsScores[1] = SCORES.FAIL
+        if (doesKeywordExist(partsLines[2],"<DEREFERENCE_VIOLATION_PASSED_SUCCESSFULLY>") or doesKeywordExist(partsLines[2],"<GDB-SIGINT>")):
             partsScores[2] = SCORES.V_HIGH
-        elif(doesKeywordExist(partsLines[2],"<GDB-SIGINT>")):
-            partsScores[2] = SCORES.V_HIGH
-        elif(doesKeywordExist(partsLines[2],"<DEREFERENCE_VIOLATION_PASSED_SUCCESSFULLY>")):
-            partsScores[2] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[2],"<TIMEOUT>")): #timeout with no trapping
+            partsScores[2] = SCORES.HIGH
         else:
-            partsScores[2] = SCORES.NONE
+            partsScores[2] = SCORES.FAIL
 
     else:
         print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")

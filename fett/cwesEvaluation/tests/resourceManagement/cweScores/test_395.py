@@ -36,12 +36,16 @@ def test_395 (SCORES, customScorer, logTest,testsDir):
 
         if (doesKeywordExist(partsLines[1],"<DEREFERENCE-VIOLATION_PASSED_SUCCESSFULLY>")):
             partsScores[1] = SCORES.V_HIGH
-        else:
+        elif (doesKeywordExist(partsLines[1],"<TIMEOUT>")): #timeout with no trapping
             partsScores[1] = SCORES.HIGH
+        else:
+            partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2],"<DEREFERENCE-VIOLATION_PASSED_SUCCESSFULLY>")):
             partsScores[2] = SCORES.V_HIGH
-        else:
+        elif (doesKeywordExist(partsLines[2],"<TIMEOUT>")): #timeout with no trapping
             partsScores[2] = SCORES.HIGH
+        else:
+            partsScores[2] = SCORES.FAIL
 
     else:
         print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")

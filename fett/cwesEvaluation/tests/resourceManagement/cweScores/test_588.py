@@ -36,12 +36,16 @@ def test_588 (SCORES, customScorer, logTest,testsDir):
 
         if (doesKeywordExist(partsLines[1],"<CAST_PASSED_SUCCESSFULLY>")):
             partsScores[1] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[1],"<TIMEOUT>")): #timeout with no trapping
+            partsScores[1] = SCORES.HIGH
         else:
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2],"<CAST_PASSED_SUCCESSFULLY>")):
             partsScores[2] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[2],"<TIMEOUT>")): #timeout with no trapping
+            partsScores[2] = SCORES.HIGH
         else:
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.FAIL
 
 
     else:

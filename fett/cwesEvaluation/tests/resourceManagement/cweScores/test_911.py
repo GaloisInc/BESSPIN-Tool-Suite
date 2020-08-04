@@ -33,19 +33,17 @@ def test_911 (SCORES, customScorer, logTest, testsDir):
         partsLines = regPartitionTestFreeRTOS(testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        if (doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_FIRST_TIME>")):
-            partsScores[1] = SCORES.NONE
-        elif (doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_SECOND_TIME>")):
+        if (doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_FIRST_TIME>") and 
+            doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_SECOND_TIME>")):
             partsScores[1] = SCORES.NONE
         else:
             partsScores[1] = SCORES.FAIL
 
-        if (doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_CHUNK_FREE>")):
+        if (doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_CHUNK_FREE>") or
+            doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_UNION_DATA_SET_TO_ONE>")):
             partsScores[2] = SCORES.V_HIGH
-        elif (doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_UNION_DATA_SET_TO_ONE>")):
-            partsScores[2] = SCORES.V_HIGH
-        elif (doesKeywordExist(partsLines[2], "<GDB-SIGINT>")):
-            partsScores[2] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[2], "<GDB-SIGINT>") or doesKeywordExist(partsLines[2],"<TIMEOUT>")):
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.FAIL
 

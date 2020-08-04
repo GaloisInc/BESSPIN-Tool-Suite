@@ -42,6 +42,11 @@
 384,FreeRTOS,-6
 
 #3_ResourceManagement
+395,FreeRTOS,1
+476,FreeRTOS,1
+588,FreeRTOS,1
+690,FreeRTOS,1
+911,FreeRTOS,1
 
 #4_CodeInjection
 
