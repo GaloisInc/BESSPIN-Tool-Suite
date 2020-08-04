@@ -8,7 +8,9 @@ class InstanceManager:
         if instances is None:
             instances = []
 
-        self._cap = cap
+        # Decrease cap by 1 to make sure there is turnaround room for instances
+        #   Terminating.
+        self._cap = max(cap - 1, 1)
         self._instances = instances
         self._running = []
         self._terminated = []
@@ -71,8 +73,9 @@ class InstanceManager:
                             replace_index = running_instances.index(i)
                             running_instances[replace_index] = self._instances.pop()
 
-                            # Wait 120 s to ensure spot has freed up.
-                            time.sleep(120)
+                            # Wait 120 s to ensure spot has freed up if we are running only 1 instance.
+                            if self._cap == 1:
+                                time.sleep(120)
 
                             # Run new Instance
                             running_instances[replace_index].start()
