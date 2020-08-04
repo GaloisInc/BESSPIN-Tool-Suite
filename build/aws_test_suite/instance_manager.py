@@ -1,8 +1,7 @@
 import re
-
 from .aws_tools import *
 from .logger import *
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from multiprocessing import Pool
 
 
 class InstanceManager:
@@ -22,23 +21,18 @@ class InstanceManager:
         self._instances.append(instance)
         return self
 
-    def run_all_instances(self, **ec2_kwargs):
-        self._run(self._cap, **ec2_kwargs)
+    def run_all_instances(self):
+        groups = [[] for _ in range(self._cap)]
+        for i in range(len(self._instances)):
+            groups[i % self._cap].append(self._instances[i])
 
-    def _run(self, cap, **ec2_kwargs):
-        log.info(f"Started _run with {locals()}")
-        if self._i >= len(self._instances):
-            pass
-        with ProcessPoolExecutor() as e:
-            results = [
-                e.submit(
-                    self._instances[self._i + i].start(**ec2_kwargs).terminate_on_sqs
-                )
-                for i in range(cap)
-            ]
-            self._i += cap
-            for _ in as_completed(results):
-                self._run(1, **ec2_kwargs)
+        p = Pool(processes=self._cap)
+        p.map(self._run, groups)
+
+    @staticmethod
+    def _run(collection):
+        for instance in collection:
+            instance.start().terminate_on_sqs()
 
     def start_instances(self, **ec2_kwargs):
         assert not self._capped, (
@@ -61,7 +55,7 @@ class InstanceManager:
 
     def pool_run_instances(self):
         log.info(f"Pool Run Instances started with instances {self._instances} and capacity {self._cap}")
-        
+
         running_instances = []
 
         assert(len(self._instances)) > 0, "No instances were found."
@@ -73,9 +67,7 @@ class InstanceManager:
         while len(self._instances) > 0 and not(running_instances.count(None) == len(running_instances)):
             # There are still instances left to run / running
             #   Therefore, we must check SQS to see if anything has happened
-            
-
-
+            pass
 
     def terminate_instances(self, on_sqs=False):
         for id in self._running:
@@ -181,10 +173,6 @@ class Instance:
     @property
     def tags(self):
         return self._tags
-
-    @property
-    def instance(self):
-        return self._instance
 
     @property
     def id(self):

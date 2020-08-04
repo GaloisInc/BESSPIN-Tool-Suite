@@ -340,4 +340,3 @@ def wait_on_id_sqs(id):
 
         time.sleep(2)
     time.sleep(120)
-    return True
