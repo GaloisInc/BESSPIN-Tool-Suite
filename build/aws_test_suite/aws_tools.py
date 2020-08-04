@@ -68,7 +68,7 @@ def get_ami_id_from_name(ami_name):
     response = client.describe_images(Filters=[{"Name": "name", "Values": [ami_name]}])
     assert (
         len(response["Images"]) == 1
-    ), f"No unique images found '{response['Images']}'"
+    ), f"No unique images found '{response['Images']}' for ami name {ami_name}"
     return response["Images"][0]["ImageId"]
 
 
