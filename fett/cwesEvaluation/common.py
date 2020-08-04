@@ -58,12 +58,14 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                                          timeout=15)
 
         test, vulClass, _, logFile = getSetting("currentTest")
-        if output[1]:
-            warnAndLog(f"{test} timed out.  Skipping.")
-            return
 
-        # Save in correct log file
-        logFile.write(output[0])
+        if output[1]:
+            logFile.write(target.readFromTarget())
+            logFile.write("\n<TIMEOUT>\n")
+            warnAndLog(f"{test} timed out.  Skipping.",doPrint=False)
+            return
+        else:
+            logFile.write(output[0])
 
     elif getSetting('osImage') in ['debian', 'FreeBSD']:
         # Create directory for logs

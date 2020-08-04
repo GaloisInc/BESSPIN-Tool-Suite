@@ -62,6 +62,12 @@ def runFreeRTOSCwesEvaluation():
                 target = fett.target.launch.launchFett()
                 target.shutdown()
 
+                #Log the GDB log
+                gdbOutLines = '\n'.join(ftReadLines(target.fGdbOut.name))
+                printAndLog(f"\n~~~GDB LOGGING -- {testName}~~~\n",doPrint=False)
+                printAndLog(gdbOutLines,doPrint=False)
+                printAndLog("\n~~~~~~~~~~~~~~~~~",doPrint=False)
+
             logFile.close()
         # Score the tests
         score(os.path.join(getSetting("cwesEvaluationLogs"), vulClass),
