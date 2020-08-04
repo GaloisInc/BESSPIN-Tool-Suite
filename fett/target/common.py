@@ -104,11 +104,11 @@ class commonTarget():
                     loginSuccess = False
                     while ((not loginSuccess) and (iAttempt < maxLoginAttempts)):
                         #  will timeout on error, not return Login failed
-                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],timeout=120, shutdownOnError=False)
+                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],timeout=120,suppressErrors=True,shutdownOnError=False)
                         if retCommand[2]:
                             printAndLog("switchUser: Failed to login and received timeout. Trying again...",doPrint=False)
                             #  for some reason, needs to accept input to see the login failed string
-                            self.runCommand(" ", endsWith=["Login incorrect"], timeout=120)
+                            self.runCommand(" ",endsWith=["Login incorrect"],timeout=120)
                             self.runCommand (loginName,endsWith="Password:")
                             time.sleep(3) #wait for the OS to be ready for the password (maybe this works)
                             iAttempt += 1
