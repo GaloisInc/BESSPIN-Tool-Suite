@@ -99,8 +99,9 @@ def scoreLogs(scorerModule, customScorer, logs, testsDir):
 @decorate.debugWrap
 def scoreTests(scorerModule, customScorer, csvPath, testsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
+    fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
-        setSetting("reportFile", ftOpenFile(reportFileName, 'a'))
+        setSetting("reportFile", fScoresReport)
     except Exception as exc:
         logAndExit("<scoreTests>: Failed to open the report file "
                    f"<{reportFileName}> to append.",
@@ -127,7 +128,9 @@ def scoreTests(scorerModule, customScorer, csvPath, testsDir):
                        exitCode=EXIT.Files_and_paths)
         # Build table for scoring
         for row in tabulate(rows):
-            printAndLog(row, tee=getSetting("reportFile"))
+            printAndLog(row, tee=fScoresReport)
+
+    fScoresReport.close()
 
 @decorate.debugWrap
 def tabulate(elements):
