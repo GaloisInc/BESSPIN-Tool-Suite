@@ -75,9 +75,9 @@ def main(args):
 
     log.info(f"{h}Creating userdata and instances.")
 
-    # Generate a list of indicies to be tested on each run
+    # Generate a list of indices to be tested on each run
     if args.instance_index:
-        indices_to_run = [int(args.instance_index)]
+        indices_to_run = [args.instance_index]
     else:
         indices_to_run = list(range(len(r)))
 
