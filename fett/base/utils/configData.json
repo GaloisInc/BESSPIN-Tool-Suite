@@ -144,7 +144,55 @@
             "name" : "vulClasses",
             "type" : "stringsList",
             "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "codeInjection", "informationLeakage", "cryptoErrors", "numericErrors" ]
+        },
+        {
+            "name" : "useCustomScoring",
+            "type" : "boolean"
         }       
+    ],
+
+    "customizedScoring" : [
+        {
+            "name" : "stdoutKeywords",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "gdbKeywords",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "funcCheckpoints",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "memAddress",
+            "type" : "hex",
+            "size" : 8,
+            "min" : -1
+        },
+        {
+            "name" : "memResetValue",
+            "type" : "hex",
+            "size" : 8,
+            "min" : 0
+        },
+        {
+            "name" : "memViolationValues",
+            "type" : "hexList",
+            "size" : 8,
+            "min" : 0,
+            "wildValue" : "*",
+            "exception" : "memResetValue"
+        },
+        {
+            "name" : "useCustomFunction",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomFunction",
+            "type" : "filePath",
+            "condition" : "useCustomFunction"
+        }
     ],
 
     "commonVulClassesParameters" : [

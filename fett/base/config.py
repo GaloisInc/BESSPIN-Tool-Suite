@@ -7,6 +7,8 @@ json details are in: ./utils/configData.json
 import configparser, json, os, re
 import base64
 from fett.base.utils.misc import *
+from importlib.machinery import SourceFileLoader
+from fett.cwesEvaluation.scoreTests import SCORES
 
 CONFIG_SECTIONS = ['backend', 'applications', 'build']
 
@@ -239,6 +241,7 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False,
         isChoices= False
         isMin = False
         isMax = False
+        isSize = False
         if ('choices' in iPar):
             if ( (iPar['type'] not in 'string') and
                  (iPar['type'] not in 'integer') and
@@ -260,6 +263,13 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False,
                 warnAndLog("Json configuration info file: For <%s> in section [%s]: Ignoring <max> when used with <choices> for type <%s>." %(iPar['name'],xSection,iPar['type']))
             else: #float or (int && noChoice)
                 isMax = True
+        if ('size' in iPar):
+            if (iPar['type'] == 'hexPairsList'):
+                warnAndLog("Json configuration info file: For <%s> in section [%s]: Ignoring <size> for type <%s>. Not implemented." %(iPar['name'],xSection,iPar['type']))
+            elif ('hex' not in iPar['type']):
+                warnAndLog("Json configuration info file: For <%s> in section [%s]: Ignoring <size> for type <%s>." %(iPar['name'],xSection,iPar['type']))
+            else:
+                isSize = True
  
         if (isChoices):
             if ((iPar['type'] in 'integer') or (iPar['type'] in 'string')):
@@ -278,12 +288,25 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False,
                                     ','.join([str(x) for x in iPar['choices']])),
                                    exitCode = EXIT.Configuration)
         if (isMin):
-            if (val < iPar['min']):
-                logAndExit(f"Configuration file: The minimum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['min']))
+            if ('List' in iPar['type']):
+                if (vals != ['ALL']):
+                    for val in vals:
+                        if (val < iPar['min']):
+                            logAndExit("Configuration file: The minimum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['min']))
+            elif (val < iPar['min']):
+                logAndExit("Configuration file: The minimum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['min']))
         if (isMax and (val > iPar['max'])):
-            logAndExit(f"Configuration file: The maximum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['max']))
+            logAndExit("Configuration file: The maximum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['max']))
+        if (isSize):
+            if ('List' in iPar['type']):
+                if (vals != ['ALL']):
+                    for val in vals:
+                        if (val > int('0x' + 'F'*iPar['size'] ,16)):
+                            logAndExit("Configuration file: The maximum size of the elements of <%s> in section [%s] is %d nibbles." %(iPar['name'],xSection,iPar['size']))
+            elif (val > int('0x' + 'F'*iPar['size'] ,16)):
+                logAndExit("Configuration file: The maximum size of <%s> in section [%s] is %d nibbles." %(iPar['name'],xSection,iPar['size']))
 
-        settingVal = vals if (iPar['type'] == 'stringsList') else val
+        settingVal = vals if ('List' in iPar['type']) else val
         if (setSettingsToSectDict):
             setSettingDict(xSection,iPar['name'],settingVal)
         else:
@@ -385,4 +408,52 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         # Load custom dev options (setupEnv.json)
         setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',vulClass,'setupEnv.json'))
         loadConfigSection(None,setupEnvData,vulClass,setup=True,setSettingsToSectDict=True)
-        
+
+    # Load custom scoring options if enabled
+    if (isEnabled('useCustomScoring')):
+        customizedScoringDict = dict()
+        setSetting('customizedScoring',customizedScoringDict)
+        loadConfigSection(xConfig, configData, 'customizedScoring', 
+                setSettingsToSectDict=True)
+
+        # Check that the custom function is legit
+        if (isEnabledDict('customizedScoring','useCustomFunction')):
+            if (not checkCustomScorerFunction()):
+                logAndExit(f"loadSecurityEvaluationConfiguration: <{getSettingDict('customizedScoring','pathToCustomFunction')}> has to be a valid scoring script.",exitCode=EXIT.Configuration)
+
+@decorate.debugWrap
+def checkCustomScorerFunction():
+    """
+    if both of useCustomScoring and useCustomFunction are enabled, check that the function is working
+    """
+    customCheckOut = os.path.join(getSetting('workDir'),'customScorerFunctionCheck.out')
+    customFuncPath = getSettingDict('customizedScoring','pathToCustomFunction')
+    try:
+        with redirectPrintToFile(customCheckOut): #disable print
+            moduleUnderTest = SourceFileLoader("customScorer", customFuncPath).load_module()
+    except Exception as exc:
+        errorAndLog(f"Failed to load {customFuncPath} using SourceFileLoader.",exc=exc)
+        return False  
+
+    testLines = []
+    testLines.append(["One line no end of line"])
+    testLines.append([]) #empty list
+    testLines.append ([f"Line #{i}" for i in range(25)])
+    testLines.append ([f"Line #{i}\r" for i in range(25)])
+    for test in testLines:
+        try:
+            with redirectPrintToFile(customCheckOut): #disable print
+                ret = moduleUnderTest.main(test,SCORES)
+        except Exception as exc:
+            errorAndLog (f"Failed to test main in <{customFuncPath}>.",exc=exc)
+            return False
+        if (('__class__' not in dir(ret)) or (ret.__class__ != SCORES)):
+            errorAndLog(f"Wrong return type in main in <{customFuncPath}>.")
+            return False
+    return True
+
+
+
+
+
+
