@@ -104,7 +104,12 @@ class commonTarget():
                     loginSuccess = False
                     while ((not loginSuccess) and (iAttempt < maxLoginAttempts)):
                         #  will timeout on error, not return Login failed
-                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],timeout=120,suppressErrors=True,shutdownOnError=False)
+                        retCommand = self.runCommand(loginPassword,
+                                                     endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],
+                                                     timeout=120,
+                                                     suppressErrors=True,
+                                                     shutdownOnError=False,
+                                                     issueInterrupt=False)
                         if retCommand[2]:
                             printAndLog("switchUser: Failed to login and received timeout. Trying again...",doPrint=False)
                             #  for some reason, needs to accept input to see the login failed string
@@ -512,7 +517,7 @@ class commonTarget():
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
                     erroneousContents=None,shutdownOnError=True,timeout=60,
-                    suppressErrors=False,tee=None,sendToNonUnix=False):
+                    suppressErrors=False,tee=None,sendToNonUnix=False,issueInterrupt=True):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
         "   ARGUMENTS:
@@ -526,6 +531,7 @@ class commonTarget():
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
         "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
+        "   issueInterrupt: use keyboardInterrupt to resolve timeout recovery
         "   RETURNS:
         "   --------
         "   A list: [isSuccess  : "Boolean. True on no-errors.",
@@ -537,7 +543,7 @@ class commonTarget():
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
-        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout)
+        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,issueInterrupt=issueInterrupt)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
         logging.debug(f"textBack:\n{textBack}")
@@ -946,7 +952,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True):
         self.checkFallToTty ("expectFromTarget")
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
@@ -961,7 +967,7 @@ class commonTarget():
                 self.shutdownAndExit(f"expectFromTarget: {getSetting('target').capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
             elif (not isEqSetting('osImage','FreeRTOS')):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
-                textBack += self.keyboardInterrupt (shutdownOnError=True)
+                textBack += self.keyboardInterrupt (shutdownOnError=True) if issueInterrupt else ""
             return [textBack, True, -1]
         except Exception as exc:
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
