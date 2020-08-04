@@ -2,6 +2,7 @@ import re
 
 from .aws_tools import *
 from .logger import *
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 class InstanceManager:
@@ -19,11 +20,23 @@ class InstanceManager:
         self._instances.append(instance)
         return self
 
+    def run_all_instances(self, **ec2_kwargs):
+        self._run(0, self._cap, **ec2_kwargs)
+
+    def _run(self, i, cap, **ec2_kwargs):
+        if i >= len(self._instances):
+            pass
+        with ProcessPoolExecutor() as e:
+            results = [e.submit(self._instances[i + j].start(**ec2_kwargs).terminate_on_sqs) for j in range(cap)]
+            i += cap
+            for _ in as_completed(results):
+                self._run(i, 1, **ec2_kwargs)
+
     def start_instances(self, **ec2_kwargs):
-        # assert self._capped, (
-        #     "Maximum number of instances reached. call InstanceManager.terminate_instance first "
-        #     "before starting another instance"
-        # )
+        assert not self._capped, (
+            "Maximum number of instances reached. call InstanceManager.terminate_instance first "
+            "before starting another instance"
+        )
 
         start = len(self._terminated)
         end = (
@@ -39,15 +52,14 @@ class InstanceManager:
         return self
 
     def terminate_instances(self, on_sqs=False):
-        if on_sqs:
-            wait_on_id_sqs(self._running)
-            self._terminated.extend(self._running)
-        else:
-            for id in self._running:
+        for id in self._running:
+            if on_sqs:
+                wait_on_id_sqs(id)
+            else:
                 for instance in self._instances:
                     if id == instance.id:
                         instance.terminate()
-                        self._terminated.append(id)
+            self._terminated.append(id)
         self._running = []
         self._capped = False
         return self
@@ -105,6 +117,11 @@ class Instance:
     def terminate(self):
         assert self._id is not None, "Cannot terminate instance that has not started"
         terminate_instance(self._id)
+        return self
+
+    def terminate_on_sqs(self):
+        assert self._id is not None, "Cannot terminate instance that has not started"
+        wait_on_id_sqs(self._id)
         return self
 
     @property

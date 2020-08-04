@@ -192,15 +192,17 @@ def launch_instance(
 # +-----------+
 
 
-def wait_on_id_sqs(ids):
+def wait_on_id_sqs(id):
     """
     Wait for an SQS message concerning all target in <ids> and terminate them, log results
 
-    :param ids: List of instance ids started by AWS Tool Suite
-    :type ids: list
+    :param id: The instance id started by AWS Tool Suite
+    :type id: str
     """
 
-    log.info(f"Waiting for SQS Messages concerning ids { ids }")
+    ids = [id]
+
+    log.info(f"Waiting for SQS Messages for ids { ids }")
 
     # Get path to the repoDir
     awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
@@ -268,3 +270,4 @@ def wait_on_id_sqs(ids):
 
         time.sleep(2)
     time.sleep(120)
+    return True

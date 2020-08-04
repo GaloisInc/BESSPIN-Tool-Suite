@@ -117,11 +117,7 @@ def main(args):
     log.info(f"{h}Queued all instances. Starting and testing instances")
 
     # Run all instances according to the capacity specified.
-    while not i.done:
-        i.start_instances().terminate_instances(True)
-        log.info(
-            f"{h}Finished testing {args.cap} instances. Shutting down {args.cap} instances."
-        )
+    i.run_all_instances()
 
     log.info(f"{h}Tests done, and logs uploaded to S3.")
     log.info(f"{h}Exiting...")
