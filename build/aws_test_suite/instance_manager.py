@@ -16,21 +16,23 @@ class InstanceManager:
         self._terminated = []
         self._capped = False
 
+        self._i = cap
+
     def add_instance(self, instance):
         self._instances.append(instance)
         return self
 
     def run_all_instances(self, **ec2_kwargs):
-        self._run(0, self._cap, **ec2_kwargs)
+        self._run(self._cap, **ec2_kwargs)
 
-    def _run(self, i, cap, **ec2_kwargs):
-        if i >= len(self._instances):
+    def _run(self, cap, **ec2_kwargs):
+        if self._i >= len(self._instances):
             pass
         with ProcessPoolExecutor() as e:
-            results = [e.submit(self._instances[i + j].start(**ec2_kwargs).terminate_on_sqs) for j in range(cap)]
-            i += cap
+            results = [e.submit(self._instances[self._i + i].start(**ec2_kwargs).terminate_on_sqs) for i in range(cap)]
+            self._i += cap
             for _ in as_completed(results):
-                self._run(i, 1, **ec2_kwargs)
+                self._run(1, **ec2_kwargs)
 
     def start_instances(self, **ec2_kwargs):
         assert not self._capped, (
