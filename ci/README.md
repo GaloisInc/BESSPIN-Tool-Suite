@@ -38,7 +38,9 @@ Flavors:
 ### Usage
 
 ```bash
-./aws-testing-ci.py [-h] [-n NAME] [-i] [-cp CAP] [-b BRANCH] [-bb BINARIES_BRANCH] ami
+usage: aws-testing-ci.py [-h] [-b BRANCH] [-bb BINARIES_BRANCH] [-cp CAP] [-cd CREDENTIALS]
+                         [-i] [-idx INSTANCE_INDEX] [-k KEY_PATH] [-n NAME] [-r RUNS]
+                         ami
 ```
 
 **Only if the `init` flag is used:** When prompted, add your AWS Keys
