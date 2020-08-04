@@ -77,8 +77,13 @@ class InstanceManager:
                             )
                         # Else we replace it with the next item from _instances
                         else:
-                            replace_index = index(i)
+                            replace_index = running_instances.index(i)
                             running_instances[replace_index] = self._instances.pop()
+
+                            # Wait 120 s to ensure spot has freed up.
+                            time.sleep(120)
+
+                            # Run new Instance
                             running_instances[replace_index].start()
                             log.info(
                                 f"Replaced instance { i.id } with { running_instances[replace_index].id }"
