@@ -71,9 +71,8 @@ class InstanceManager:
                             replace_index = running_instances.index(i)
                             running_instances[replace_index] = self._instances.pop()
 
-                            # Wait 120 s to ensure spot has freed up if we are running only 1 instance.
-                            if self._cap == 1:
-                                time.sleep(120)
+                            # Wait 120 s to ensure spot has freed up.
+                            time.sleep(120)
 
                             # Run new Instance
                             running_instances[replace_index].start()
@@ -85,10 +84,6 @@ class InstanceManager:
     @property
     def instances(self):
         return self._instances
-
-    @property
-    def done(self):
-        return len(self._instances) <= len(self._terminated)
 
 
 class Instance:
