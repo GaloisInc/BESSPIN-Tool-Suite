@@ -26,10 +26,16 @@ class InstanceManager:
         self._run(self._cap, **ec2_kwargs)
 
     def _run(self, cap, **ec2_kwargs):
+        log.info(f"Started _run with {locals()}")
         if self._i >= len(self._instances):
             pass
         with ProcessPoolExecutor() as e:
-            results = [e.submit(self._instances[self._i + i].start(**ec2_kwargs).terminate_on_sqs) for i in range(cap)]
+            results = [
+                e.submit(
+                    self._instances[self._i + i].start(**ec2_kwargs).terminate_on_sqs
+                )
+                for i in range(cap)
+            ]
             self._i += cap
             for _ in as_completed(results):
                 self._run(1, **ec2_kwargs)
@@ -52,6 +58,24 @@ class InstanceManager:
                 self._running.append(self._instances[i].id)
         self._capped = True
         return self
+
+    def pool_run_instances(self):
+        log.info(f"Pool Run Instances started with instances {self._instances} and capacity {self._cap}")
+        
+        running_instances = []
+
+        assert(len(self._instances)) > 0, "No instances were found."
+
+        # Populate running_instances with $cap instances
+
+        # Repeat while we still have instances left to add to running_instances
+        #   or we still have running instances.
+        while len(self._instances) > 0 and not(running_instances.count(None) == len(running_instances)):
+            # There are still instances left to run / running
+            #   Therefore, we must check SQS to see if anything has happened
+            
+
+
 
     def terminate_instances(self, on_sqs=False):
         for id in self._running:
@@ -112,7 +136,7 @@ class Instance:
             self._key_name,
             self._userdata,
             self._tags,
-            **ec2_kwargs
+            **ec2_kwargs,
         )
         return self
 

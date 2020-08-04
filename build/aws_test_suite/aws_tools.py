@@ -192,6 +192,76 @@ def launch_instance(
 # +-----------+
 
 
+def poll_sqs():
+    """
+    Get any new SQS messages that are in queue. Returns instance_id for a message.
+
+    :return: instance id or ""
+    :rtype: str
+    """
+
+    log.debug(f"Polling SQS Once")
+
+    # Get path to the repoDir
+    awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
+    buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
+    repoDir = os.path.abspath(os.path.join(buildDir, os.pardir))
+
+    # Import Configs from $repoDir/ci/configs.py
+    moduleSpec = importlib.util.spec_from_file_location(
+        "configs", os.path.join(repoDir, "ci", "configs.py")
+    )
+    configs = importlib.util.module_from_spec(moduleSpec)
+    moduleSpec.loader.exec_module(configs)
+
+    # Start Boto3 Client
+    try:
+        sqs = boto3.client("sqs", region_name="us-west-2")
+    except:
+        log.error(f"Failed to create the SQS client.")
+
+    # Define a way to delete a message
+    def delete_message(message):
+        try:
+            sqs.delete_message(
+                QueueUrl=configs.ciAWSqueueTesting,
+                ReceiptHandle=message["ReceiptHandle"],
+            )
+            log.info("Succeeded in removing message from SQS queue.")
+        except:
+            log.warning("Failed to delete the message from the SQS queue.")
+
+    log.debug("Polling SQS")
+
+    try:
+        response = sqs.receive_message(
+            QueueUrl=configs.ciAWSqueueTesting,
+            VisibilityTimeout=5,  # 5 seconds are enough
+            WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
+        )
+    except:
+        log.error(f"Failed to receive a response from the SQS queue.")
+
+    if "Messages" in response:
+
+        # Log the contents of the reponse
+        log.debug(f"Got SQS Response {response}")
+        for message in response["Messages"]:
+
+            # Extract the body
+            body = json.loads(message["Body"])
+            instance_id = body["instance"]["id"]
+            log.results(
+                f'SQS Poll got SQS: FINISHED: {body["job"]["id"]}, exited with status {body["job"]["status"]}.'
+            )
+            delete_message(message)
+
+            return instance_id
+
+    # Nothing got, return empty string.
+    return ""
+
+
 def wait_on_id_sqs(id):
     """
     Wait for an SQS message concerning all target in <ids> and terminate them, log results
