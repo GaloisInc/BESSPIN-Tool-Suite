@@ -79,6 +79,7 @@ class firesimTarget(commonTarget):
             '+mm_llc_setBits=12',
             '+mm_llc_blockBits=7',
             '+mm_llc_activeMSHRs=8',
+            '+debug_enable' if (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')) else '\b',
             '+slotid=0',
             '+profile-interval=-1',
             f"+macaddr0={getSetting('awsMacAddrTarget')}",
@@ -107,9 +108,31 @@ class firesimTarget(commonTarget):
                                         cwd=awsFiresimSimPath)
             self.process = self.ttyProcess
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
         except Exception as exc:
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+        if (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')):
+            self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
+            self.fOpenOcdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'),'wb')
+            self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'),'gdb.out'),'wb')
+            openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils','openocd.cfg')
+
+            try:
+                self.openocdProcess = subprocess.Popen(['openocd', '--file', openocdCfg],stdout=self.fOpenOcdOut,stderr=self.fOpenOcdOut)
+            except Exception as exc:
+                self.shutdownAndExit(f"boot: Failed to start the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+            try:
+                self.gdbProcess = pexpect.spawn(f'riscv64-unknown-elf-gdb {getSetting("osImageElf")}',logfile=self.fGdbOut,timeout=30)
+                self.gdbProcess.sendline(f"target remote localhost:{getSetting('gdbRemotePort')}")
+                self.gdbProcess.expect(r"\(gdb\)")
+                self.gdbProcess.sendline('set $pc=0xC0000000')
+                self.gdbProcess.expect(r"\(gdb\)")
+                self.gdbProcess.sendline('continue')
+            except Exception as exc:
+                self.shutdownAndExit(f"boot: Failed to run the gdb process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+        
+        self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
 
         # The tap needs to be turned up AFTER booting
         if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
@@ -180,6 +203,31 @@ class firesimTarget(commonTarget):
                                         stdout=self.fTtyOut, stderr=self.fTtyOut)
                 except Exception as exc:
                     warnAndLog("targetTearDown: Failed to kill <firesim> process.",doPrint=False,exc=exc)
+
+        if (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')):
+            # exit gdb and openocd
+            try:
+                self.openocdProcess.kill() # No need for fancier ways as we use Popen with shell=False
+            except Exception as exc:
+                warnAndLog("targetTearDown: Failed to kill the openocd process.",doPrint=False,exc=exc)
+
+            try:
+                self.gdbProcess.sendline('\x03')
+                self.gdbProcess.expect(r"\(gdb\)")
+                self.gdbProcess.sendline('quit')
+                self.gdbProcess.expect(pexpect.EOF,timeout=3)
+            except Exception as exc:
+                warnAndLog("targetTearDown: Failed to exit the gdb process.",doPrint=False,exc=exc)
+
+            if (self.gdbProcess.isalive()):
+                try:
+                    subprocess.check_call(['sudo', 'kill', '-9', f"{os.getpgid(self.gdbProcess.pid)}"],
+                                        stdout=self.fGdbOut, stderr=self.fGdbOut)
+                except Exception as exc:
+                    warnAndLog("targetTearDown: Failed to kill the gdb process.",doPrint=False,exc=exc)
+
+            self.fOpenOcdOut.close()
+            self.fGdbOut.close()
 
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
         return True

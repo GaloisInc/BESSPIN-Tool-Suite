@@ -299,6 +299,13 @@
             "min" : 1024,
             "max" : 65535,
             "val" : 8278
+        },
+        {
+            "name" : "gdbRemotePort",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 10000,
+            "val" : 3333
         }
     ] 
 }
