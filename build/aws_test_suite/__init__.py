@@ -1,15 +1,4 @@
 """
-TODO:
-    . Documentation
-        . logger.py
-        . instance_manager.py
-    . Address TODOs (esp. in aws_tools.py)
-    . Use typing module for type hints
-    . More error handling
-    . Test
-"""
-
-"""
 FETT CI Library
 """
 from .logger import log
