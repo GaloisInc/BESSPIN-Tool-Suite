@@ -80,8 +80,12 @@ def terminate_instance(instance_id, dry_run=True):
     :type dry_run: bool, optional
     """
 
+    log.info(f"terminate_instances called with {locals()}")
+
     client = boto3.client("ec2")
-    client.terminate_instances(InstanceIds=[instance_id], DryRun=dry_run)
+    resp = client.terminate_instances(InstanceIds=[instance_id], DryRun=dry_run)
+
+    log.debug(f"terminate_instances got response from terminate_instances() {resp}")
 
 
 def launch_instance(
@@ -125,6 +129,8 @@ def launch_instance(
     :return: The instance object
     :rtype: dict
     """
+
+    log.debug(f"launch_instance called with { locals() }")
 
     ec2 = boto3.resource("ec2")
     client = boto3.client("ec2")
