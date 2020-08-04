@@ -27,14 +27,13 @@ class UserdataCreator:
 
     @classmethod
     def default(
-            cls,
-            credentials,
-            name,
-            index,
-            branch=None,
-            binaries_branch=None,
-            key_path="~/.ssh/id_rsa",
-            git=True
+        cls,
+        credentials,
+        name,
+        index,
+        branch=None,
+        binaries_branch=None,
+        key_path="~/.ssh/id_rsa",
     ):
         """
         Add userdata to start with FETT Target at specific branch and binaries branch
@@ -57,16 +56,9 @@ class UserdataCreator:
         :param key_path: Path of the SSH public key, defaults to '~/.ssh/id_rsa.pub'
         :type key_path: str, optional
 
-        :param git: Use git operations to pull or not, must be True is branch or binaries_branch is not None,
-        defaults to True
-        :type git: bool, optional
-
         :return: A new UserdataCreator instance
         :rtype: UserdataCreator
         """
-
-        assert not (not git and (branch is not None or binaries_branch is not None)), "Git is set to False but branch" \
-                                                                                      " or binaries_branch is not None"
 
         # Default branch on both
 
@@ -113,7 +105,7 @@ class UserdataCreator:
         # Binaries branch and Target branch provided
         userdata_specific = []
 
-        if git:
+        if branch or binaries_branch:
             userdata_specific = [
                 f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/id_rsa && 
                             cd /home/centos/SSITH-FETT-Target/ && 
@@ -130,8 +122,10 @@ class UserdataCreator:
                             cd .. "'"""
             ]
 
-        userdata_specific.append(f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                                   nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """)
+        userdata_specific.append(
+            f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
+                                   nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """
+        )
 
         userdata += userdata_specific
 
