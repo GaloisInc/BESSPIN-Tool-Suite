@@ -24,7 +24,7 @@ class InstanceManager:
 
     def run_all_instances(self):
         log.debug(
-            f"Pool Run Instances started with instances { [x.tags for x self._instances] }in capacity {self._cap}"
+            f"Pool Run Instances started with instances { [x.tags for x in self._instances] }in capacity {self._cap}"
         )
 
         running_instances = []
@@ -49,7 +49,7 @@ class InstanceManager:
 
         # Repeat while we still have instances left to add to running_instances
         #   or we still have running instances.
-        while len(self._instances) > 0 and len(running_instances) > 0:
+        while len(self._instances) > 0 or len(running_instances) > 0:
             # There are still instances left to run / running
             #   Therefore, we must check SQS to see if anything has happened
             sqs = poll_sqs()
@@ -65,9 +65,7 @@ class InstanceManager:
                         # If we have no more instances, remove from list, and do not replace
                         if len(self._instances) == 0:
                             running_instances.remove(i)
-                            log.debug(
-                                f"Removed instance { i.id } _instances."
-                            )
+                            log.debug(f"Removed instance { i.id } _instances.")
                         # Else we replace it with the next item from _instances
                         else:
                             replace_index = running_instances.index(i)
