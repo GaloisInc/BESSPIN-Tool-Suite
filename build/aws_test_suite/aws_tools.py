@@ -80,7 +80,7 @@ def terminate_instance(instance_id, dry_run=True):
     :type dry_run: bool, optional
     """
 
-    log.info(f"terminate_instances called with {locals()}")
+    log.debug(f"terminate_instances called with {locals()}")
 
     client = boto3.client("ec2")
     resp = client.terminate_instances(InstanceIds=[instance_id], DryRun=dry_run)

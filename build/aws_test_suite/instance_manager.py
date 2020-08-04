@@ -23,8 +23,8 @@ class InstanceManager:
         return self
 
     def run_all_instances(self):
-        log.info(
-            f"Pool Run Instances started with instances {self._instances} and capacity {self._cap}"
+        log.debug(
+            f"Pool Run Instances started with instances { [x.tags for x self._instances] }in capacity {self._cap}"
         )
 
         running_instances = []
@@ -44,7 +44,7 @@ class InstanceManager:
             i.start()
 
         log.info(
-            f"running_instances all started: { [x.id for x in running_instances] }"
+            f"running_instances succeeded in starting instances: { [x.id for x in running_instances] }"
         )
 
         # Repeat while we still have instances left to add to running_instances
@@ -65,8 +65,8 @@ class InstanceManager:
                         # If we have no more instances, remove from list, and do not replace
                         if len(self._instances) == 0:
                             running_instances.remove(i)
-                            log.info(
-                                f"Removed instance { i.id } _instances: { self._instances }"
+                            log.debug(
+                                f"Removed instance { i.id } _instances."
                             )
                         # Else we replace it with the next item from _instances
                         else:
@@ -122,7 +122,7 @@ class Instance:
         self._tags["Name"] = self._name
 
     def start(self, **ec2_kwargs):
-        log.info(f"Start() called on instance { self._tags }")
+        log.debug(f"Start() called on instance { self._tags }")
         self._id = launch_instance(
             self._ami,
             self._vpc_name,
@@ -133,7 +133,7 @@ class Instance:
             self._tags,
             **ec2_kwargs,
         )
-        log.info(f"Start() finished with instance { self._id }")
+        log.debug(f"Start() finished with instance { self._id }")
         return self
 
     def terminate(self):
