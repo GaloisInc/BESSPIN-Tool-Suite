@@ -6,6 +6,7 @@ import glob
 import os
 
 from fett.base.utils.misc import *
+from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
 import fett.target.build
@@ -41,16 +42,30 @@ def buildCwesEvaluation():
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
 
-        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
-                                    vulClass, 'sources')
-        for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
-            # Check if the test should be skipped:
-            cTestName = os.path.basename(test)
-            if (isTestEnabled(vulClass,cTestName)):
-                cp (test, vulClassDir)
-            else:
-                printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
-            
+        if vulClass == 'bufferErrors':
+            # Generate test sources
+            generateTests(vulClassDir)
+            if isEnabledDict('bufferErrors', 'useExtraTests'):
+                # Copy extra tests over, prepending C files with 'test_extra_'
+                extraSources = getSettingDict('bufferErrors', 'extraSources')
+                if extraSources[0] != '/':
+                    extraSources = os.path.join(getSetting('repoDir'),
+                                                extraSources)
+                for source in glob.glob(os.path.join(extraSources, '*.c')):
+                    cp(source,
+                       os.path.join(vulClassDir,
+                                    f'test_extra_{os.path.basename(source)}'))
+        else:
+            sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                        vulClass, 'sources')
+            for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
+                # Check if the test should be skipped:
+                cTestName = os.path.basename(test)
+                if (isTestEnabled(vulClass,cTestName)):
+                    cp (test, vulClassDir)
+                else:
+                    printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
+
         cp(os.path.join(getSetting('repoDir'),
                         'fett',
                         'target',
@@ -169,16 +184,11 @@ def buildFreeRTOSTest(test, vulClass, part):
     # Remove existing main file
     os.remove(os.path.join(getSetting('buildDir'), "main_fett.c"))
 
-    cp(os.path.join(getSetting('repoDir'),
-                    'fett',
-                    'target',
-                    'srcFreeRTOS'),
-       getSetting('buildDir'),
-       pattern="*.h")  # TODO: Do I really want ALL of these headers?
-    # TODO: it feels silly to copy from a subdir to the build dir like this
-    cp(os.path.join(getSetting('buildDir'), vulClass),
-       getSetting('buildDir'),
-       pattern=f"*{test}")
+    # Copy test files over
+    cp(os.path.join(getSetting('buildDir'), vulClass, test),
+       getSetting('buildDir'))
+    cp(os.path.join(getSetting('buildDir'), vulClass, f'main_{test}'),
+       getSetting('buildDir'))
     cp(os.path.join(getSetting('buildDir'), vulClass),
        getSetting('buildDir'),
        pattern=f"*.h")

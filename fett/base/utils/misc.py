@@ -181,6 +181,15 @@ def isEnabled(setting):
     else:
         logAndExit (f"isEnabled: The value of <{setting}> is not boolean: <{val}>.",exitCode=EXIT.Dev_Bug)
 
+def isEnabledDict(setting, hierarchy):
+    val = getSettingDict(setting, hierarchy)
+    if isinstance(val, bool):
+        return val
+    else:
+        logAndExit(f"isEnabledDict: The value of <{setting}[{hierarchy}]> is "
+                   f"not boolean: <{val}>",
+                   exitCode=EXIT.Dev_Bug)
+
 def isEqSetting (setting,val):
     return (getSetting(setting) == val)
 

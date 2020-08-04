@@ -114,7 +114,7 @@ def scoreTests(scorerModule, customScorer, csvPath, testsDir):
     else:
         # output a csv file
         try:
-            fcsv = open (csvPath, "w")
+            fcsv = ftOpenFile(csvPath, "w")
             for row in rows:
                 fcsv.write(f"{row[0].split('-')[1]},{row[1]},{row[1].value},{row[2]}\n")
             fcsv.close()
