@@ -5,6 +5,7 @@ myConfig.ini
 core
 *.mypy_cache/
 .DS_STORE
+.idea/
 
 # CI Gitignores
 ci/userdata.txt
