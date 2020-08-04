@@ -79,7 +79,7 @@ class firesimTarget(commonTarget):
             '+mm_llc_setBits=12',
             '+mm_llc_blockBits=7',
             '+mm_llc_activeMSHRs=8',
-            '+debug_enable' if (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')) else '\b',
+            '+debug_enable' if (isEqSetting('mode','evaluateSecurityTests')) else '\b',
             '+slotid=0',
             '+profile-interval=-1',
             f"+macaddr0={getSetting('awsMacAddrTarget')}",
@@ -111,7 +111,7 @@ class firesimTarget(commonTarget):
         except Exception as exc:
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
-        if (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')):
+        if (isEqSetting('mode','evaluateSecurityTests')):
             self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
             self.fOpenOcdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'),'wb')
             self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'),'gdb.out'),'wb')
@@ -173,36 +173,37 @@ class firesimTarget(commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
-        if (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')):
-            # Analyze GDB output if needed
+        if (isEqSetting('mode','evaluateSecurityTests')):
             try:
                 self.gdbProcess.sendline('\x03')
                 self.gdbProcess.expect(r"\(gdb\)")
             except Exception as exc:
                 warnAndLog("targetTearDown: Failed to interrupt the gdb process.",doPrint=False,exc=exc)
-
-            gdbOutLines = ftReadLines(self.fGdbOut.name)
-            relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
-            testLogFile = getSetting("currentTest")[3]
-            sigFound = None
-            for xSig in relvSigs:
-                if (matchExprInLines(rf"^.*{xSig}.*$",gdbOutLines)):
-                    sigFound = xSig
-                    break
-            # Fetch relevant registers values
-            if (sigFound):
-                relvRegs = {'mcause':'Unknown', 'mepc':'Unknown'}
-                for relvReg in relvRegs:
-                    try:
-                        self.gdbProcess.sendline(f"p/x ${relvReg}")
-                        self.gdbProcess.expect(r"\$\d+\s*=\s*0x[\dabcdef]+", timeout=5)
-                        regpxStr = str(self.gdbProcess.after,'utf-8')
-                        regpxVal = regpxStr.split('=')[-1].strip()
-                        relvRegs[relvReg] = regpxVal
-                    except Exception as exc:
-                        warnAndLog (f"targetTearDown: Failed to fetch the value of ${relvReg}.",exc=exc,doPrint=False) 
-                regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
-                testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
+            
+            # Analyze gdb output for FreeRTOS
+            if (isEqSetting('osImage','FreeRTOS')):
+                gdbOutLines = ftReadLines(self.fGdbOut.name)
+                relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
+                testLogFile = getSetting("currentTest")[3]
+                sigFound = None
+                for xSig in relvSigs:
+                    if (matchExprInLines(rf"^.*{xSig}.*$",gdbOutLines)):
+                        sigFound = xSig
+                        break
+                # Fetch relevant registers values
+                if (sigFound):
+                    relvRegs = {'mcause':'Unknown', 'mepc':'Unknown'}
+                    for relvReg in relvRegs:
+                        try:
+                            self.gdbProcess.sendline(f"p/x ${relvReg}")
+                            self.gdbProcess.expect(r"\$\d+\s*=\s*0x[\dabcdef]+", timeout=5)
+                            regpxStr = str(self.gdbProcess.after,'utf-8')
+                            regpxVal = regpxStr.split('=')[-1].strip()
+                            relvRegs[relvReg] = regpxVal
+                        except Exception as exc:
+                            warnAndLog (f"targetTearDown: Failed to fetch the value of ${relvReg}.",exc=exc,doPrint=False) 
+                    regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
+                    testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
 
             # exit gdb and openocd
             try:
