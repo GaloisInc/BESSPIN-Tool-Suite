@@ -5,8 +5,6 @@
 # +-----------+
 import json
 import os
-import shlex
-import subprocess
 import boto3
 import importlib.util
 
@@ -16,23 +14,6 @@ from .logger import *
 # +-----------------------------+
 # |  AWS Instance Manipulation  |
 # +-----------------------------+
-
-
-def subprocess_check_output(command=""):
-    """
-    Convenience to run command and return its output
-
-    :param command: Shell command, defaults to ''
-    :type command: str, optional
-
-    :return: Standard output
-    :rtype: str
-    """
-
-    proc = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
-    out = proc.stdout.read()
-    return out
-
 
 def get_ami_id_from_name(ami_name):
     """

@@ -9,6 +9,8 @@ sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from build.aws_test_suite import *
 
 import argparse
+import subprocess
+import shlex
 from datetime import datetime
 
 
@@ -29,10 +31,8 @@ def collect_run_names():
 
     log.debug(
         str(
-            subprocess_check_output(
-                str(os.path.join(repoDir, "ci", "fett-ci.py"))
-                + " -X -ep AWS runDevPR -job 420"
-            )
+            subprocess.check_output(shlex.split(str(os.path.join(repoDir, "ci", "fett-ci.py")) + "-X -ep AWS runDevPR "
+                                                                                                 "-job 420"))
         )
     )
     unsorted = os.listdir("/tmp/dumpIni/")
