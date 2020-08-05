@@ -6,6 +6,7 @@ helpers functions for scoring the CWE tests
 import re
 
 from fett.base.utils.misc import *
+from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 
 def readLogLines (logTest,testsDir):
     fLog = ftOpenFile("{0}/{1}".format(testsDir,logTest),"r")
@@ -76,7 +77,7 @@ def partitionLines (lines,start,end,testNum=None,doPrintWarnings=True):
         warnAndLog ("partitionLines: part start <{0}> not found{1}.".format(start,warnText))
         return []
 
-def overallScore (SCORES, listScores, testNum):
+def overallScore (listScores, testNum):
     if (len(listScores)==0): #not implemented
         return ["TEST-{0}".format(testNum), SCORES.NOT_IMPLEMENTED, "Not Implemented"]
     ovrScore = SCORES.minScore(listScores)
