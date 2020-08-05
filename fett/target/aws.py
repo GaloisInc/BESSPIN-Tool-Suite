@@ -131,7 +131,7 @@ class firesimTarget(commonTarget):
                     else:
                         self.runGDBcommand (f"watch * (int *) 0x{memAddress:08x}",
                                         errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb watch command.")
-                        setCmd = f"set * (int *) 0x{memAddress:08x} = {self.settings['memResetValue']}"
+                        setCmd = f"set * (int *) 0x{memAddress:08x} = {getSettingDict('customizedScoring','memResetValue')}"
                         self.runGDBcommand (f"commands\n{setCmd}\nc\nend",
                                         errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb set/watch command.")
             
@@ -146,7 +146,8 @@ class firesimTarget(commonTarget):
                 self.shutdownAndExit(f"boot: Failed to start the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
             try:
-                self.gdbProcess = pexpect.spawn(f'riscv64-unknown-elf-gdb {getSetting("osImageElf")}',logfile=self.fGdbOut,timeout=30)
+                self.gdbProcess = pexpect.spawn(f'riscv64-unknown-elf-gdb {getSetting("osImageElf")}',
+                                                logfile=self.fGdbOut,timeout=30,echo=False)
             except Exception as exc:
                 self.shutdownAndExit(f"boot: Failed to spawn the gdb process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
