@@ -42,6 +42,8 @@ def buildCwesEvaluation():
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
 
+        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                    vulClass, 'sources')
         if vulClass == 'bufferErrors':
             # Generate test sources
             generateTests(vulClassDir)
@@ -56,8 +58,6 @@ def buildCwesEvaluation():
                        os.path.join(vulClassDir,
                                     f'test_extra_{os.path.basename(source)}'))
         else:
-            sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
-                                        vulClass, 'sources')
             for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
                 # Check if the test should be skipped:
                 cTestName = os.path.basename(test)
@@ -88,6 +88,29 @@ def buildCwesEvaluation():
             if (xSetting.startswith('test_')):
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
+        if vulClass == "PPAC":
+            # TODO: Can I merge this vulclass branch with the other vulclass
+            # conditional at the top of this loop?  Might make things easier to
+            # read
+            # TODO: Check whether the other vulClasses have these kinds of
+            # writes from the dev configs too
+            fHeader.write(
+                    f'#define SPOOFING_IP {getSettingDict("PPAC", "spoofingIP")}\n'
+                    f'#define TCP_PORT_NUMBER {getSetting("fpgaPortTarget")}\n')
+
+            if isEqSetting('osImage', 'FreeRTOS'):
+                print("TODO: FreeRTOS support")
+                exit(1)
+            else:
+                # TODO: Test FreeBSD
+                pattern = os.path.join(sourcesDir,
+                                       f'*_{getSetting("osImage")}')
+                for source in glob.glob(pattern):
+                    suffixLen = len(getSetting('osImage')) + 1
+                    cp(source,
+                       os.path.join(vulClassDir,
+                                    os.path.basename(source)[:-suffixLen]))
+
         fHeader.close()
 
         if isEqSetting('osImage', 'FreeRTOS'):

@@ -43,7 +43,7 @@
         {
             "name" : "pathToTraceHooksFreeRTOS",
             "type" : "filePath",
-            "val"  : "sources/libFreeRTOS/incTraceHooks.h"
+            "val"  : "fett/cwesEvaluation/tests/PPAC/sources/libFreeRTOS/incTraceHooks.h"
         },
         {
             "name" : "spoofingIP",
