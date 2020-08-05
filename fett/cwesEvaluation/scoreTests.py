@@ -43,12 +43,12 @@ class SCORES (enum.Enum):
     def __lt__(self, other):
         if (str(self.__class__) == str(other.__class__)):
             return self.value < other.value
-        return NotImplemented
+        logAndExit (f"SCORES: __lt__ not implemented for inputs of type {type(self)} and {type(other)}.",exitCode=EXIT.Dev_Bug)
 
     def __gt__(self, other):
         if (str(self.__class__) == str(other.__class__)):
             return self.value > other.value
-        return NotImplemented
+        logAndExit (f"SCORES: __lt__ not implemented for inputs of type {type(self)} and {type(other)}.",exitCode=EXIT.Dev_Bug)
 
     def __len__(self):
         return len(str(self))
@@ -70,23 +70,24 @@ class SCORES (enum.Enum):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def tryScoreTest(scorerModule, customScorer, testName, logTest, testsDir):
+def tryScoreTest(scorerModule, testName, logTest, testsDir):
     try:
-        return getattr(getattr(scorerModule,testName),testName)(SCORES, customScorer, logTest, testsDir)
+        return getattr(getattr(scorerModule,testName),testName)(logTest, testsDir)
     except AttributeError as e:
-        return scorerModule.scoreTest(SCORES, customScorer, testName, logTest, testsDir)
-    except AttributeError as e:
-        printAndLog(e)
-        throw(e)
+        return scorerModule.scoreTest(testName, logTest, testsDir)
+    except Exception as exc:
+        errorAndLog("tryScoreTest: Failed to score.",exc=exc,doPrint=False)
+        throw(exc)
 
-def scoreLogs(scorerModule, customScorer, logs, testsDir):
+@decorate.debugWrap
+def scoreLogs(scorerModule, logs, testsDir):
     try:
-        return scorerModule.scoreAllTests(SCORES, customScorer, logs, testsDir)
+        return scorerModule.scoreAllTests(logs, testsDir)
     except AttributeError as e:
         ret = []
         for testName, log in logs:
             try:
-                ret.append(tryScoreTest(scorerModule, customScorer, testName, log, testsDir))
+                ret.append(tryScoreTest(scorerModule, testName, log, testsDir))
             except Exception as exc:
                 errorAndLog("<{0}>: Failed to parse <{1}>.".format(testName,log),
                             exc=exc)
@@ -95,10 +96,12 @@ def scoreLogs(scorerModule, customScorer, logs, testsDir):
     return ret
 
 # TODO: Renmae testsDir to something more like logDir
-def scoreTests(scorerModule, customScorer, csvPath, testsDir):
+@decorate.debugWrap
+def scoreTests(scorerModule, csvPath, testsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
+    fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
-        setSetting("reportFile", ftOpenFile(reportFileName, 'a'))
+        setSetting("reportFile", fScoresReport)
     except Exception as exc:
         logAndExit("<scoreTests>: Failed to open the report file "
                    f"<{reportFileName}> to append.",
@@ -108,7 +111,7 @@ def scoreTests(scorerModule, customScorer, csvPath, testsDir):
     # Get all the log files
     contents = sorted(os.listdir(testsDir))
     logs = [(f.split('.')[0], f) for f in contents if f.endswith(".log")]
-    rows = scoreLogs(scorerModule, customScorer, logs, testsDir)
+    rows = scoreLogs(scorerModule, logs, testsDir)
     if (len(rows) < 1): #nothing to score
         warnAndLog("<scoreTests>: There are no logs to score.")
     else:
@@ -125,9 +128,11 @@ def scoreTests(scorerModule, customScorer, csvPath, testsDir):
                        exitCode=EXIT.Files_and_paths)
         # Build table for scoring
         for row in tabulate(rows):
-            printAndLog(row, tee=getSetting("reportFile"))
+            printAndLog(row, tee=fScoresReport)
 
+    fScoresReport.close()
 
+@decorate.debugWrap
 def tabulate(elements):
     table = []
     widths = [ (len(e[0]), len(e[1]), len(e[2])) for e in elements ]
@@ -151,6 +156,7 @@ def tabulate(elements):
     table.append(tabulate_row([],widthCols,drawLine=True))
     return table
 
+@decorate.debugWrap
 def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
     def centralize (msg, width):
         if (len(msg)>width):
@@ -168,92 +174,68 @@ def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
         message = centralize(elements[0],widthCols[0]) + centralize(str(elements[1]),widthCols[1]) + centralize(elements[2],widthCols[2]) + '|'
     return (message)
 
-class customScorerObj:
-    def __init__(self, useCustomScoring, customScoringConfigFile):
-        self.isCustomized = useCustomScoring
-        if (self.isCustomized):
-            self.parseConfigFile(customScoringConfigFile)
-
-    def parseConfigFile (self,customScoringConfigFile):
+@decorate.debugWrap
+def customScorePart (lines): #should return: NINF (for PASS), DETECTED, or NONE (for prevented)
+    
+    #checking custom function -- it overrides the other options.
+    if (isEnabledDict('customizedScoring','useCustomFunction')): #use custom function
+        customScorerFuncOut = os.path.join(getSetting('workDir'),'customScorerFunction.out')
+        pathToCustomFunction = getSettingDict('customizedScoring','pathToCustomFunction')
         try:
-            fConfig = ftOpenFile(customScoringConfigFile,"r")
-            configLines = fConfig.read().splitlines()
-            fConfig.close()
+            with redirectPrintToFile(customScorerFuncOut): #disable print
+                customModule = SourceFileLoader("customScorerModule", pathToCustomFunction).load_module()
         except Exception as exc:
-            logAndExit(f"<customScoreObj>: Failed to read the custom scoring "
-                       f"configuration file <{customScoringConfigFile}>.",
-                       exc=exc,
-                       exitCode=EXIT.Files_and_paths)
-        self.configDict = {}
-        for line in configLines:
-            items = line.split('=')
-            self.configDict[items[0]] = items[1].strip('\"')
-
-        for keywords in ['stdoutKeywords', 'gdbKeywords', 'funcCheckpoints', 'memViolationValues']:
-            if ((keywords in self.configDict) and (len(self.configDict[keywords])>0)):
-                self.configDict[keywords] = self.configDict[keywords].split(" ")
-            else:
-                self.configDict[keywords] = []
-
-    def scorePart (self,lines): #should return: NINF (for PASS), DETECTED, or NONE (for prevented)
-        if (not self.isCustomized):
+            warnAndLog(f"<customScorer>: Failed to load custom scorer "
+                       "module. Ignoring the option.",
+                       exc=exc)
             return SCORES.NINF
+        try:
+            with redirectPrintToFile(customScorerFuncOut): #disable print
+                retScore = customModule.main(lines,SCORES)
+        except Exception as exc:
+            warnAndLog(f"<customScorer>: Failed to score using main in "
+                       f"<{pathToCustomFunction}>.",
+                       exc=exc)
+            return SCORES.NINF
+        return retScore
 
-        #checking custom function -- it overrides the other options.
-        if (self.configDict['useCustomFunction'] == '1'): #use custom function
-            try:
-                with redirectPrintToFile(getSetting("reportFile")): #disable print
-                    customModule = SourceFileLoader("customScorerModule", self.configDict['pathToCustomFunction']).load_module()
-            except Exception as exc:
-                warnAndLog(f"<customScoreObj>: Failed to load custom scorer "
-                           "module. Ignoring the option.",
-                           exc=exc)
-                return SCORES.NINF
-            try:
-                with redirectPrintToFile(getSetting("reportFile")): #disable print
-                    retScore = customModule.main(lines,SCORES)
-            except Exception as exc:
-                warnAndLog(f"<customScoreObj>: Failed to score using main in "
-                           f"<{self.configDict['pathToCustomFunction']}>.",
-                           exc=exc)
-                return SCORES.NINF
-            return retScore
-
-        for line in lines:
-            #checking stdoutKeywords and gdbKeywords
-            for keywords in ['stdoutKeywords', 'gdbKeywords']:
-                for keyword in self.configDict[keywords]:
-                    if (keyword in line):
-                        return SCORES.DETECTED
-            #checking funcCheckpoints
-            if ('<GDB-CHECKPOINT>' in line):
+    for line in lines:
+        #checking stdoutKeywords and gdbKeywords
+        for keyword in getSettingDict('customizedScoring','stdoutKeywords') + getSettingDict('customizedScoring','gdbKeywords'):
+            if (keyword in line):
                 return SCORES.DETECTED
-            #checking memValues
-            memMatch = re.match(r"^\d+\: /x \* \(int \*\) 0x(?P<memAddress>[abcdef\d]{8}) = 0x(?P<memValue>[abcdef\d]{1,8})\s*$",line)
-            if (memMatch is not None):
-                if (int(memMatch.group('memAddress'),16) != int(self.configDict['memAddress'])):
-                    warnAndLog("<customScorerObj>: Encountered unexpected "
-                               f"memory address in the GDB line <{line}>. Was "
-                               "expecting "
-                               f"<0x{int(self.configDict['memAddress']):08x}>.")
-                else: #This is fine
-                    memValue = int(memMatch.group('memValue'),16)
-                    if (memValue == int(self.configDict['memResetValue'])):
-                        continue
-                    elif (self.configDict['memViolationValues'] == ['ALL']):
-                        return SCORES.DETECTED
-                    else:
-                        for memViolationValue in self.configDict['memViolationValues']:
-                            if (memValue == int(memViolationValue)):
-                                return SCORES.DETECTED
+        #checking funcCheckpoints
+        if ('<GDB-CHECKPOINT>' in line):
+            return SCORES.DETECTED
+        #checking memValues
+        memMatch = re.match(r"^\d+\: /x \* \(int \*\) 0x(?P<memAddress>[abcdef\d]{8}) = 0x(?P<memValue>[abcdef\d]{1,8})\s*$",line)
+        if (memMatch is not None):
+            if (int(memMatch.group('memAddress'),16) != getSettingDict('customizedScoring','memAddress')):
+                warnAndLog("<customScorer>: Encountered unexpected "
+                           f"memory address in the GDB line <{line}>. Was "
+                           "expecting "
+                           f"<0x{getSettingDict('customizedScoring','memAddress'):08x}>.")
+            else: #This is fine
+                memValue = int(memMatch.group('memValue'),16)
+                if (memValue == getSettingDict('customizedScoring','memResetValue')):
+                    continue
+                elif (getSettingDict('customizedScoring','memViolationValues') == ['ALL']):
+                    return SCORES.DETECTED
+                else:
+                    for memViolationValue in getSettingDict('customizedScoring','memViolationValues'):
+                        if (memValue == memViolationValue):
+                            return SCORES.DETECTED
 
-        return SCORES.NINF
+    return SCORES.NINF
 
-    def adjustToCustomScore (self,lines,defaultScore):
-        customScore = self.scorePart(lines)
-        if ((customScore == SCORES.DETECTED) and (defaultScore == SCORES.CALL_ERR)): #The test was prevented from continuing
-            return SCORES.NONE #PREVENTED
-        elif (customScore > defaultScore):
-            return customScore 
-        else:
-            return defaultScore
+@decorate.debugWrap
+def adjustToCustomScore (lines,defaultScore):
+    if (not isEnabled('useCustomScoring')):
+        return defaultScore
+    customScore = customScorePart(lines)
+    if ((customScore == SCORES.DETECTED) and (defaultScore == SCORES.CALL_ERR)): #The test was prevented from continuing
+        return SCORES.NONE #PREVENTED
+    elif (customScore > defaultScore):
+        return customScore 
+    else:
+        return defaultScore

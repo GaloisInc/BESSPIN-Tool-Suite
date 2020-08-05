@@ -79,6 +79,7 @@ class firesimTarget(commonTarget):
             '+mm_llc_setBits=12',
             '+mm_llc_blockBits=7',
             '+mm_llc_activeMSHRs=8',
+            '+debug_enable' if (isEqSetting('mode','evaluateSecurityTests')) else '\b',
             '+slotid=0',
             '+profile-interval=-1',
             f"+macaddr0={getSetting('awsMacAddrTarget')}",
@@ -107,9 +108,60 @@ class firesimTarget(commonTarget):
                                         cwd=awsFiresimSimPath)
             self.process = self.ttyProcess
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
         except Exception as exc:
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+        if (isEqSetting('mode','evaluateSecurityTests')):
+            def setupGdbCustomScoring ():
+                for funcCheckpoint in getSettingDict('customizedScoring','funcCheckpoints'):
+                    cmdOut = self.runGDBcommand (f"dprintf {funcCheckpoint},\"<GDB-CHECKPOINT>:{funcCheckpoint}\\n\"",
+                                            errorMessage=f"setupGdbCustomScoring: Failed to insert GDB checkpoint at <{funcCheckpoint}> commands.",
+                                            readCmdOut=True)
+                    if ("not defined" in cmdOut):
+                        warnAndLog (f"setupGdbCustomScoring: Encountered <not defined> while inserting a checkpoint at {funcCheckpoint}."
+                                    f"See <{self.fGdbOut.name}> for more details.")
+                if (getSettingDict('customizedScoring','memAddress') != -1):
+                    memAddress = getSettingDict('customizedScoring','memAddress')
+                    cmdOut = self.runGDBcommand (f"display/x * (int *) 0x{memAddress:08x}",
+                                            errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb memory display command.",
+                                            readCmdOut=True)
+                    if (('No symbol' in cmdOut) or ('warning' in cmdOut)):
+                        warnAndLog (f"setupGdbCustomScoring: Encountered <No symbol> or <warning> while reading 0x{memAddress:08x}."
+                                    f"See <{self.fGdbOut.name}> for more details.")
+                    else:
+                        self.runGDBcommand (f"watch * (int *) 0x{memAddress:08x}",
+                                        errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb watch command.")
+                        setCmd = f"set * (int *) 0x{memAddress:08x} = {getSettingDict('customizedScoring','memResetValue')}"
+                        self.runGDBcommand (f"commands\n{setCmd}\nc\nend",
+                                        errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb set/watch command.")
+            
+            self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
+            self.fOpenOcdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'),'wb')
+            self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'),'gdb.out'),'wb')
+            openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils','openocd.cfg')
+
+            try:
+                self.openocdProcess = subprocess.Popen(['openocd', '--file', openocdCfg],stdout=self.fOpenOcdOut,stderr=self.fOpenOcdOut)
+            except Exception as exc:
+                self.shutdownAndExit(f"boot: Failed to start the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+            try:
+                self.gdbProcess = pexpect.spawn(f'riscv64-unknown-elf-gdb {getSetting("osImageElf")}',
+                                                logfile=self.fGdbOut,timeout=30,echo=False)
+            except Exception as exc:
+                self.shutdownAndExit(f"boot: Failed to spawn the gdb process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+            self.runGDBcommand (f"target remote localhost:{getSetting('gdbRemotePort')}",
+                            errorMessage=f"boot: Failed to connect the gdb to openocd.")
+            self.runGDBcommand ('set $pc=0xC0000000')
+            if (isEnabled('useCustomScoring')):
+                setupGdbCustomScoring()
+            try:
+                self.gdbProcess.sendline('continue')
+            except Exception as exc:
+                self.shutdownAndExit(f"boot: Failed to send <continue> to GDB.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+        
+        self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
 
         # The tap needs to be turned up AFTER booting
         if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
@@ -127,10 +179,11 @@ class firesimTarget(commonTarget):
     @decorate.timeWrap
     def activateEthernet(self):
         if (isEqSetting('osImage','debian')):
-            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
-            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
+            if (not self.restartMode): #Was already done in the first start
+                self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+                self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('binarySource','Michigan')):
@@ -149,6 +202,60 @@ class firesimTarget(commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
+        if (isEqSetting('mode','evaluateSecurityTests')):
+            self.runGDBcommand ('\x03', 
+                                exitOnError=False,
+                                errorMessage="targetTearDown: Failed to interrupt the gdb process.")
+            
+            # Analyze gdb output for FreeRTOS
+            if (isEqSetting('osImage','FreeRTOS')):
+                gdbOutLines = ftReadLines(self.fGdbOut.name)
+                relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
+                testLogFile = getSetting("currentTest")[3]
+                sigFound = None
+                for xSig in relvSigs:
+                    if (matchExprInLines(rf"^.*{xSig}.*$",gdbOutLines)):
+                        sigFound = xSig
+                        break
+                # Fetch relevant registers values
+                if (sigFound):
+                    relvRegs = {'mcause':'Unknown', 'mepc':'Unknown'}
+                    for relvReg in relvRegs:
+                        try:
+                            self.gdbProcess.sendline(f"p/x ${relvReg}")
+                            self.gdbProcess.expect(r"\$\d+\s*=\s*0x[\dabcdef]+", timeout=5)
+                            regpxStr = str(self.gdbProcess.after,'utf-8')
+                            regpxVal = regpxStr.split('=')[-1].strip()
+                            relvRegs[relvReg] = regpxVal
+                        except Exception as exc:
+                            warnAndLog (f"targetTearDown: Failed to fetch the value of ${relvReg}.",exc=exc,doPrint=False) 
+                    regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
+                    testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
+
+            # exit gdb and openocd
+            self.runGDBcommand ('detach', 
+                                exitOnError=False,
+                                errorMessage="targetTearDown: Failed to detach the target in gdb.")
+
+            try:
+                self.openocdProcess.kill() # No need for fancier ways as we use Popen with shell=False
+            except Exception as exc:
+                warnAndLog("targetTearDown: Failed to kill the openocd process.",doPrint=False,exc=exc)
+
+            self.runGDBcommand ('quit', endsWith=pexpect.EOF,
+                                exitOnError=False,
+                                errorMessage="targetTearDown: Failed to exit the gdb process.")
+
+            if (self.gdbProcess.isalive()):
+                try:
+                    subprocess.check_call(['sudo', 'kill', '-9', f"{os.getpgid(self.gdbProcess.pid)}"],
+                                        stdout=self.fGdbOut, stderr=self.fGdbOut)
+                except Exception as exc:
+                    warnAndLog("targetTearDown: Failed to kill the gdb process.",doPrint=False,exc=exc)
+
+            self.fOpenOcdOut.close()
+            self.fGdbOut.close()
+        
         if (self.switch0Proc.isalive()):
             try:
                 subprocess.check_call(['sudo', 'kill', '-9', f"{self.switch0Proc.pid}"],
@@ -171,7 +278,7 @@ class firesimTarget(commonTarget):
             # This also happens if a unix OS didn't exit properly. Towards the end of making each
             # run a standalone and independent of previous runs, we send this interrupt if the 
             # process is still alive.
-            self.runCommand("^]",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+            self.runCommand('\x1d\x1d',endsWith=pexpect.EOF,shutdownOnError=False,timeout=5,sendToNonUnix=True)
 
             if (self.process.isalive()):
                 try:
@@ -182,6 +289,28 @@ class firesimTarget(commonTarget):
 
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
         return True
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def runGDBcommand (self,command,endsWith=r"\(gdb\)",exitOnError=True,errorMessage=None,readCmdOut=False,timeout=5):
+        if (not errorMessage):
+            errorMessage = f"runGDBcommand: Failed to run <{command}>."
+
+        try:
+            self.gdbProcess.sendline(command)
+            self.gdbProcess.expect(endsWith,timeout=timeout)
+        except Exception as exc:
+            if (exitOnError):
+                self.shutdownAndExit(errorMessage,overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            else:
+                warnAndLog(errorMessage,doPrint=False,exc=exc)
+
+        if (readCmdOut):
+            try:
+                return str(self.gdbProcess.before,'utf-8')
+            except Exception as exc:
+                warnAndLog(f"runGDBcommand: Failed to read the cmdOut of <{command}>.",doPrint=False,exc=exc)
+                return ''
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
@@ -246,20 +375,23 @@ class connectalTarget(commonTarget):
     @decorate.timeWrap
     def activateEthernet(self):
         if (isEqSetting('osImage','debian')):
-            self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
-            self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
+            if (not self.restartMode): #Was already done in the first start
+                self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
+                self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
+                self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0") # nothing comes out, but the ping should tell us
         elif (isEqSetting('osImage', 'FreeBSD')):
-            self.runCommand ("ifconfig vtnet0 up")
-            self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
-            self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
-            self.runCommand(f"route add default {self.ipHost}")
-            # For future restart
-            self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsMacAddrTarget')}\"' >> /etc/rc.conf")
-            self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
-            self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
+            if (not self.restartMode): #Was already done in the first start
+                self.runCommand ("ifconfig vtnet0 up")
+                self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
+                self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
+                self.runCommand(f"route add default {self.ipHost}")
+            
+                # For future restart
+                self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsMacAddrTarget')}\"' >> /etc/rc.conf")
+                self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
+                self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
@@ -271,6 +403,13 @@ class connectalTarget(commonTarget):
         if (self.process.isalive()):
             # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
             self.runCommand("\x01x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+
+            if (self.process.isalive()):
+                try:
+                    subprocess.check_call(['sudo', 'kill', '-9', f"{self.process.pid}"],
+                                        stdout=self.fTtyOut, stderr=self.fTtyOut)
+                except Exception as exc:
+                    warnAndLog("targetTearDown: Failed to kill <connectal> process.",doPrint=False,exc=exc)
         return True
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
@@ -391,11 +530,11 @@ def configTapAdaptor():
     printAndLog (f"aws.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=False)
 
 @decorate.debugWrap
-def programAFI():
+def programAFI(doPrint=True):
     """ perform AFI Management Commands for f1.2xlarge """
     agfiId = getSetting("agfiId")
-    clearFpgas()
-    flashFpgas(agfiId)
+    clearFpgas(doPrint=doPrint)
+    flashFpgas(agfiId,doPrint=doPrint)
 
 @decorate.debugWrap
 def _sendKmsg(message):
@@ -446,10 +585,10 @@ def getNumFpgas():
     return numLines
 
 @decorate.debugWrap
-def clearFpgas():
+def clearFpgas(doPrint=True):
     """ clear ALL FPGAs """
     numFpgas = getNumFpgas()
-    printAndLog(f"<aws.clearFpgas>: Found {numFpgas} FPGA(s) to clear")
+    printAndLog(f"<aws.clearFpgas>: Found {numFpgas} FPGA(s) to clear",doPrint=doPrint)
     for sn in range(numFpgas):
         clearFpga(sn)
 
@@ -464,15 +603,15 @@ def flashFpga(agfi, slotno):
     _poll_command(f"fpga-describe-local-image -S {slotno} -R -H", "loaded")
 
 @decorate.debugWrap
-def flashFpgas(agfi):
+def flashFpgas(agfi,doPrint=True):
     """
     NOTE: FireSim documentation came with a note. If an instance is chosen that has more than one FPGA, leaving one
     in a cleared state can cause XDMA to hang. Accordingly, it is advised to flash all the FPGAs in a slot with
     something. This method might need to be extended to flash all available slots with our AGFI
     """
-    printAndLog(f"<aws.flashFpgas>: Flashing FPGAs with agfi: {agfi}.")
+    printAndLog(f"<aws.flashFpgas>: Flashing FPGAs with agfi: {agfi}.",doPrint=doPrint)
     numFpgas = getNumFpgas()
-    printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGA(s) to flash")
+    printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGA(s) to flash",doPrint=doPrint)
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
@@ -613,8 +752,9 @@ def prepareConnectal():
         cp(imageSourcePath, imageFile)
 
     elif isEqSetting('binarySource', 'SRI-Cambridge'):
+        imageVariant = '-purecap' if (isEqSetting('sourceVariant','purecap')) else ''
         imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                       'osImages', 'common', "disk-image-cheri.img.zst")
+                                       'osImages', 'common', f"disk-image-cheri{imageVariant}.img.zst")
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
         zstdDecompress(imageSourcePath, imageFile)
 

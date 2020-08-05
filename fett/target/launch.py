@@ -14,6 +14,7 @@ from fett.apps.build import buildApps
 from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
 from fett.cwesEvaluation.common import runTests
 from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
+from fett.cwesEvaluation.checkValidScores import checkValidScores
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -42,6 +43,18 @@ def startFett ():
         elif (pvAWS in ['awsteria']):
             logAndExit(f"<{pvAWS}> PV is not yet implemented.",exitCode=EXIT.Implementation)
         setSetting('pvAWS',pvAWS)
+        # Some not implemented scoring features
+        if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
+            if (pvAWS != 'firesim'):
+                for listOption in ['gdbKeywords','funcCheckpoints']:
+                    if (len(getSettingDict('customizedScoring',listOption))>0):
+                        warnAndLog(f"customizedScoring: <{listOption}> is not implemented for <{pvAWS}> targets.")
+                if (getSettingDict('customizedScoring','memAddress')>=0):
+                    warnAndLog(f"customizedScoring: <memAddress> is not implemented for <{pvAWS}> targets.")
+    # check the source variant
+    if (not isEqSetting('sourceVariant','default')): # check the variants compatibility
+        if (isEqSetting('sourceVariant','purecap') and not isEqSetting('binarySource','SRI-Cambridge')):
+            logAndExit(f"<purecap> variant is not compatible with <{getSetting('binarySource')}>.",exitCode=EXIT.Configuration)
 
     #qemu on FreeRTOS and Busybox
     if ((getSetting('osImage') in ['FreeRTOS','busybox']) and isEqSetting('target','qemu')):
@@ -58,11 +71,12 @@ def startFett ():
     # launch fett
     xTarget = launchFett()
 
-    mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
-    
-    # Start on-line logging
-    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
-        aws.startRemoteLogging (xTarget)
+    if (not isEqSetting('mode', 'evaluateSecurityTests')):
+        mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
+        
+        # Start on-line logging
+        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+            aws.startRemoteLogging (xTarget)
 
     # Pipe UART to the network
     if (isEqSetting('mode','production')):
@@ -127,7 +141,6 @@ def prepareEnv ():
 @decorate.debugWrap
 @decorate.timeWrap
 def launchFett ():
-    printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
     try:
         xTarget = getClassType()()
     except Exception as exc:
@@ -136,6 +149,8 @@ def launchFett ():
         isEqSetting('osImage', 'FreeRTOS')):
         # Build the image for the upcoming test
         buildFreeRTOSTest(*getSetting("currentTest"))
+    else:
+        printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
     xTarget.start()
     if (isEnabled('isUnix')):
         if (getSetting('osImage') in ['debian','FreeBSD']):
@@ -156,30 +171,82 @@ def launchFett ():
 """ This is the teardown function """
 @decorate.debugWrap
 def endFett (xTarget):
-    if (isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')):
-        # The tool was running in loops -- nothing to do
-        return
-
     if (isEqSetting('mode','production')):
         aws.endUartPiping(xTarget)
 
-    if (isEnabled('runApp')):
-        xTarget.collectLogs()
+    if (not isEqSetting('mode', 'evaluateSecurityTests')):
+        if (isEnabled('runApp')):
+            xTarget.collectLogs()
 
-    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
-        collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
+        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+            collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
-    xTarget.shutdown()
+    if not (isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')):
+        xTarget.shutdown()
     
     if (isEqSetting('mode','production')):
         tarballPath = tarArtifacts (logAndExit,getSetting)
         uploadToS3(getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), logAndExit, 
                         tarballPath, 'fett-target/production/artifacts/')
         printAndLog(f"Artifacts tarball uploaded to S3.")
+    elif (isEqSetting('mode', 'evaluateSecurityTests')):
+        checkValidScores()
+
+""" This resets the target without changing the .img + without deployment tests """
+@decorate.debugWrap
+@decorate.timeWrap
+def resetTarget (curTarget):
+    if ((not isEqSetting('target','aws')) or (not isEqSetting('mode','production'))):
+        logAndExit(f"<resetTarget> is not compatible with <{getSetting('target')}> target in <{getSetting('mode')}> mode.")
+    """
+    A big decision here is whether to collectLogs and shutdown or just tear it down.
+    We'll assume smth is wrong with the target, so we'll just tear it down.
+    collectLogs can err in any step, no need for crazy error handling, especially that we rsyslog them anyway.
+    """
+    printAndLog("resetTarget: tearing down the current target...")
+    aws.endUartPiping(curTarget)
+    curTarget.targetTearDown() 
+    rootPassword = curTarget.rootPassword
+    del curTarget
+
+    printAndLog("resetTarget: Re-preparing the environment...")
+    # Reload the FPGA
+    if (isEqSetting('pvAWS','firesim')):
+        aws.removeKernelModules()
+        aws.installKernelModules()
+        aws.programAFI()
+    elif (isEqSetting('pvAWS', 'connectal')):
+        aws.removeKernelModules()
+        aws.programAFI()
+        aws.removeKernelModules()
+        aws.installKernelModules()
+    else:
+        logAndExit (f"<resetTarget> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
+    
+    printAndLog("resetTarget: Re-launching...")
+    try:
+        newTarget = getClassType()()
+    except Exception as exc:
+        logAndExit (f"resetTarget: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
+
+    # Adjust the needed members for reset
+    newTarget.restartMode = True
+    newTarget.rootPassword = rootPassword
+    newTarget.userCreated = True
+
+    newTarget.start()
+    aws.startUartPiping(newTarget)
+
+    return newTarget
 
 """ This decides the classes hierarchy """
 @decorate.debugWrap
 def getClassType():
+    # This function gets executed in try/except
+    def errorAndRaise(message,exc=None):
+        errorAndLog(message,exc=exc)
+        raise
+
     if (isEqSetting('target','aws')):
         return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
@@ -187,20 +254,20 @@ def getClassType():
     elif (isEqSetting('target','fpga')):
         gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
         if (gfeTestingScripts not in os.environ):
-            logAndExit (f"<${gfeTestingScripts}> not found in the nix path.",exitCode=EXIT.Environment)
+            errorAndRaise (f"<${gfeTestingScripts}> not found in the nix path.")
         try:
             sys.path.append(os.environ[gfeTestingScripts])
             from test_gfe_unittest import TestLinux, TestFreeRTOS
         except Exception as exc:
-            logAndExit (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc,exitCode=EXIT.Environment)
+            errorAndRaise (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc)
         if (isEqSetting('xlen',32)):
             return type('classFpgaTarget',(fpga.fpgaTarget,TestFreeRTOS),dict())
         elif(isEqSetting('xlen',64)):
             return type('classFpgaTarget',(fpga.fpgaTarget,TestLinux),dict())
         else:
-            logAndExit (f"Invalid <xlen={getSetting('xlen')}> value.",exitCode=EXIT.Dev_Bug)
+            errorAndRaise (f"Invalid <xlen={getSetting('xlen')}> value.")
 
     else:
-        logAndExit (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.",exitCode=EXIT.Dev_Bug)
+        errorAndRaise (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.")
 
 

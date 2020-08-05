@@ -1,6 +1,6 @@
 from fett.cwesEvaluation.tests.resourceManagement.cweScores.helpers import *
 
-def test_562 (SCORES, customScorer, logTest, testsDir):
+def test_562 (logTest, testsDir):
     testNum = 562
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
@@ -53,8 +53,8 @@ def test_562 (SCORES, customScorer, logTest, testsDir):
 
     else:
         print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")
-        return overallScore (SCORES, [], testNum)
+        return overallScore ([], testNum)
 
-    listScores = [customScorer.adjustToCustomScore(partsLines[iPart],
+    listScores = [adjustToCustomScore(partsLines[iPart],
                                                    partsScores[iPart]) for iPart in range(1, nParts+1)]
-    return overallScore (SCORES, listScores, testNum)
+    return overallScore (listScores, testNum)

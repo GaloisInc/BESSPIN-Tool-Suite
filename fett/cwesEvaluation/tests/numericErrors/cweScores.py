@@ -23,10 +23,11 @@ scoring functions for each CWE test
 ## indicates that part 2 of the test for CWE 234 is a "TEST FAILED" result
 
 import re
-from importlib.machinery import SourceFileLoader
 
 from fett.base.utils.misc import *
+from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 
+@decorate.debugWrap
 def partitionLines (lines,testPart,testNum):
     startFound = False
     iStart = 0
@@ -47,7 +48,8 @@ def partitionLines (lines,testPart,testNum):
 
 ## NAME FORMAT IS: test_DDD((__D*_D*)|[_D*])
 ## Test Variant and SEED parts are not currently used in the Numeric_Errors tests
-def scoreAllTests(SCORES, customScorer, logs, testsDir):
+@decorate.debugWrap
+def scoreAllTests(logs, testsDir):
     scores = {}
     for name, log in logs:
         testNum = name.split('_')[1]
@@ -58,14 +60,15 @@ def scoreAllTests(SCORES, customScorer, logs, testsDir):
             fLog.close()
             nPartsMatch = re.match(r'^<NUMPARTS=(?P<numParts>\d+)>$',logLines[0])
             numParts = int(nPartsMatch.group('numParts'))
-        except:
+        except Exception as exc:
+            errorAndLog(f"Failed to score {log}.",exc=exc,doPrint=False)
             scores[testNum][1] = SCORES.FAIL
             continue
 
         for thisPart in range(1, numParts + 1):
             partLines = partitionLines (logLines,thisPart,testNum) #partitioning first make sure the scoring is done for this part only
-            thisScore = scoreTestPart(SCORES, partLines, testNum, thisPart)
-            scores[testNum][thisPart] = customScorer.adjustToCustomScore(partLines,thisScore)
+            thisScore = scoreTestPart(partLines, testNum, thisPart)
+            scores[testNum][thisPart] = adjustToCustomScore(partLines,thisScore)
 
 
     ret = []
@@ -74,7 +77,8 @@ def scoreAllTests(SCORES, customScorer, logs, testsDir):
         ret.append([f"TEST-{testNum}", SCORES.minScore(xScores),', '.join([str(x) for x in xScores])])
     return ret
 
-def scoreTestPart(SCORES, logLines, testNum, testPart):
+@decorate.debugWrap
+def scoreTestPart(logLines, testNum, testPart):
     if (len(logLines) == 0):
         return SCORES.FAIL
     minScore = SCORES.INF
