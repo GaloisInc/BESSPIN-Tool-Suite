@@ -3,6 +3,8 @@ import fett.cwesEvaluation.scoreTests as scoreTests
 
 import fett.cwesEvaluation.tests.bufferErrors.vulClassTester
 import fett.cwesEvaluation.tests.bufferErrors.cweScores
+import fett.cwesEvaluation.tests.PPAC.vulClassTester
+import fett.cwesEvaluation.tests.PPAC.cweScores
 import fett.cwesEvaluation.tests.resourceManagement.vulClassTester
 import fett.cwesEvaluation.tests.resourceManagement.cweScores
 import fett.cwesEvaluation.tests.numericErrors.vulClassTester
@@ -11,6 +13,8 @@ import fett.cwesEvaluation.tests.numericErrors.cweScores
 cweTests = {
     "bufferErrors" :
         fett.cwesEvaluation.tests.bufferErrors.vulClassTester.vulClassTester,
+    "PPAC" :
+        fett.cwesEvaluation.tests.PPAC.vulClassTester.vulClassTester,
     "resourceManagement" :
         fett.cwesEvaluation.tests.resourceManagement.vulClassTester.vulClassTester,
     "numericErrors" :
@@ -20,6 +24,8 @@ cweTests = {
 cweScores = {
     "bufferErrors" :
         fett.cwesEvaluation.tests.bufferErrors.cweScores,
+    "PPAC" :
+        fett.cwesEvaluation.tests.PPAC.cweScores,
     "resourceManagement" :
         fett.cwesEvaluation.tests.resourceManagement.cweScores,
     "numericErrors" :

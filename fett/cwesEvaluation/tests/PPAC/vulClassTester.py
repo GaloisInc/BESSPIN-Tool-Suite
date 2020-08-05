@@ -1,15 +1,14 @@
 #! /usr/bin/env python3
 """  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 This file has the custom PPAC methods to run tests on qemu|fpga.
-Note that the file will be loaded as a sourceFileModule, so using '.' is mandatory
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 import sys, os
-from . import cweTests
+from fett.cwesEvaluation.compat import testgenTargetCompatabilityLayer
+from fett.cwesEvaluation.tests.PPAC import cweTests
 from importlib.machinery import SourceFileLoader
 import threading
 
-class vulClassTester:
-    """ should not be instantiated standalone; has to be done through classesHierarchy.py """
+class vulClassTester(testgenTargetCompatabilityLayer):
     def __init__ (self,settings):
         super().__init__(settings)
         return
@@ -24,6 +23,8 @@ class vulClassTester:
                         self.reportAndExit (f"Error in {self.filename}: Encountered <INVALID> while executing <{testName}>.",testError=True)
         elif (self.settings['pocExploitsMode']):
             try:
+                # TODO: Maybe remove this and replace it with a "not supported"
+                # error?
                 pocTests = SourceFileLoader("pocTestsModule", os.path.join(sys.path[0],'..','..','poc-exploits','2_PPAC','pocTests','__init__.py')).load_module() 
             except:
                 self.reportAndExit ("Error in {0}: Failed to load pocTests module. [Maybe you did not 'git submodule update --init'].".format(self.filename))
