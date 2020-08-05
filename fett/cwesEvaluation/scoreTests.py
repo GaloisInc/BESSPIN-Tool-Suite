@@ -73,11 +73,11 @@ class SCORES (enum.Enum):
 def tryScoreTest(scorerModule, testName, logTest, testsDir):
     try:
         return getattr(getattr(scorerModule,testName),testName)(logTest, testsDir)
-    except:
-        return scorerModule.scoreTest(testName, logTest, testsDir)
     except AttributeError as e:
-        errorAndLog("tryScoreTest: Failed to score.",exc=e,doPrint=False)
-        throw(e)
+        return scorerModule.scoreTest(testName, logTest, testsDir)
+    except Exception as exc:
+        errorAndLog("tryScoreTest: Failed to score.",exc=exc,doPrint=False)
+        throw(exc)
 
 @decorate.debugWrap
 def scoreLogs(scorerModule, logs, testsDir):
@@ -175,7 +175,7 @@ def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
     return (message)
 
 @decorate.debugWrap
-def customScorePart (self,lines): #should return: NINF (for PASS), DETECTED, or NONE (for prevented)
+def customScorePart (lines): #should return: NINF (for PASS), DETECTED, or NONE (for prevented)
     
     #checking custom function -- it overrides the other options.
     if (isEnabledDict('customizedScoring','useCustomFunction')): #use custom function
