@@ -43,6 +43,14 @@ def startFett ():
         elif (pvAWS in ['awsteria']):
             logAndExit(f"<{pvAWS}> PV is not yet implemented.",exitCode=EXIT.Implementation)
         setSetting('pvAWS',pvAWS)
+        # Some not implemented scoring features
+        if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
+            if (pvAWS != 'firesim'):
+                for listOption in ['gdbKeywords','funcCheckpoints']:
+                    if (len(getSettingDict('customizedScoring',listOption))>0):
+                        warnAndLog(f"customizedScoring: <{listOption}> is not implemented for <{pvAWS}> targets.")
+                if (getSettingDict('customizedScoring','memAddress')>=0):
+                    warnAndLog(f"customizedScoring: <memAddress> is not implemented for <{pvAWS}> targets.")
     # check the source variant
     if (not isEqSetting('sourceVariant','default')): # check the variants compatibility
         if (isEqSetting('sourceVariant','purecap') and not isEqSetting('binarySource','SRI-Cambridge')):
