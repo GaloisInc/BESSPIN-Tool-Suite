@@ -2,13 +2,8 @@
 
 ## Usage
 ### Import
-To import the package, make sure it is in a directory where your Python interpreter searches for packages. Alternatively, add this to the top of your file:
-```python
-import os
-import sys
-sys.path.insert(1, os.path.dirname(os.getcwd()))
-```
-Then,
+To import the package, make sure it is in a directory where your Python interpreter searches for packages.
+
 ```python
 from aws_test_suite import *
 ```

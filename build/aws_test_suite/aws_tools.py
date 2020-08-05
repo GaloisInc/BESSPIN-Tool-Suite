@@ -112,7 +112,6 @@ def launch_instance(
     )
     chosensubnet = subnets[0]
 
-    # TODO: handle launch_instance error case better
     try:
         # build out optional arguments
         optional_kwargs = ec2_kwargs

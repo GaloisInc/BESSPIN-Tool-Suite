@@ -7,7 +7,7 @@
     Each "values" should be a tuple. Please note that a 1-element tuple should be: ('element',)
 """
 
-fettTargetAMI = 'ami-0747018f37927b976' #fett-target-071120-89f0e8f / FETT AMI 89f0e8f61c5c392f8b1fa0759484c11066954d4b - image to test fix for FreeRTOS dying of loneliness
+fettTargetAMI = 'ami-0ce567dfc18da2d2d' #fett-target-centos-080320-eb048a4 - ami-0ce567dfc18da2d2d / FETT AMI eb048a49a41540da619eafab3aa9d9b38defd899
 
 ciAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
 ciAWSbucket = 'ssith-fett-target-ci-develop'

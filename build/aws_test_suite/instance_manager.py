@@ -8,9 +8,7 @@ class InstanceManager:
         if instances is None:
             instances = []
 
-        # Decrease cap by 1 to make sure there is turnaround room for instances
-        #   Terminating.
-        self._cap = max(cap - 1, 1)
+        self._cap = cap
         self._instances = instances
         self._running = []
         self._terminated = []

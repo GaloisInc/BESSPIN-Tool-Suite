@@ -89,9 +89,3 @@ class Logger:
 
 
 log = Logger()
-
-
-# log.info("This is a test info")
-# log.debug("This is a test debug")
-# log.warning("This is a test warning")
-# log.error("This is a test error")
