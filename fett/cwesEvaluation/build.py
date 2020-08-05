@@ -160,7 +160,7 @@ def prepareFreeRTOS(directory):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def buildFreeRTOSTest(test, vulClass, part, nParts):
+def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     # TODO: Some options in target.build.prepareFreeRTOS are omitted here
 
     fett.target.build.freeRTOSBuildChecks()
