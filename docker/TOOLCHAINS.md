@@ -1,6 +1,12 @@
-# Toolchain Docker images
+# Toolchain Guide
 
-## Vanilla GFE
+This document outlines the infrastructure provided to cross-build applications for
+the FETT targets. Toolchains are provided in Docker images, where programs can be
+cross-compiled, transferred, and run on the target hardware.
+
+## Toolchain Docker Images
+
+### Vanilla GFE
 
 This image, available on Docker Hub as `galoisinc/besspin:gfe`,
 contains the standard GCC and LLVM toolchains for RISC-V
@@ -25,7 +31,7 @@ platform. The sysroot locations on the GFE image are:
 When using Clang and LLD, it is necessary to use the `-mno-relax`
 flag, as LLD does not support linker relaxation for RISC-V targets.
 
-# SRI/Cambridge (CHERI)
+### SRI/Cambridge (CHERI)
 
 The CHERI RISC-V processors have their own LLVM toolchain. This is
 included in the image along with versions of GDB and QEMU that work
@@ -55,8 +61,54 @@ Consult the [CHERI C/C++ Programming
 Guide](https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-947.pdf) for
 more information.
 
-# University of Michigan (Morpheus)
+### University of Michigan (Morpheus)
 
 Instructions on how to use the Morpheus toolchain can be found on the
 image in `/opt/morpheus/README`. The FreeRTOS demo source can be found
 in `/opt/morpheus/FreeRTOS-10.0.1/FreeRTOS/Demo/RISC-V_Galois_P1`.
+
+## Example Usage
+
+1. Acquire the docker image,
+    ```
+    docker pull galoisinc/besspin:gfe
+    ```
+
+2. Run the docker image, mounting the directory of the project to be compiled,
+    ```
+   docker run --rm -it -v /path/to/project:/projectname -w /projectname galoisinc/besspin:gfe
+   ```
+   
+3. Build the project. For example, if the file to be compiled is the simple C file,
+    
+    **hello_world.c**   
+    ```c
+    #include <stdio.h>
+    
+    int main()
+    {
+    	puts("Hello world!\n");
+    	return 0;
+    }
+    ```
+   
+    then the command,
+   
+    ```
+    riscv64-unknown-linux-gnu-gcc -o hello_world hello_world.c
+    ```
+   
+    would build `hello_world` for the host triple `riscv64-unknown-linux-gnu`.
+
+4. Exit the docker shell and secure copy the build to the target instance,
+
+    ```
+    scp <programname> <username>@<INSTANCE.IP.ADDRESS>
+    ```
+
+5. On the instance, run the executable,
+
+    ```
+    ./programname
+    ```
+
