@@ -1,5 +1,5 @@
 from fett.base.utils.misc import *
-import fett.cwesEvaluation.scoreTests as scoreTests
+from fett.cwesEvaluation.scoreTests import scoreTests
 
 import fett.cwesEvaluation.tests.bufferErrors.vulClassTester
 import fett.cwesEvaluation.tests.bufferErrors.cweScores
@@ -42,10 +42,8 @@ def executeTest(target, vulClass, binTest, logDir):
 def score(testLogDir, vulClass):
     module = cweScores[vulClass]
 
-    # TODO: Allow custom scoring
-    scorer = scoreTests.customScorerObj(False, None)
     csvPath = os.path.join(testLogDir, "scores.csv")
-    scoreTests.scoreTests(module, scorer, csvPath, testLogDir)
+    scoreTests(module, csvPath, testLogDir)
 
 @decorate.debugWrap
 @decorate.timeWrap
