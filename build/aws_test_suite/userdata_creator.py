@@ -1,5 +1,3 @@
-import os
-
 from .aws_tools import *
 from .logger import *
 
