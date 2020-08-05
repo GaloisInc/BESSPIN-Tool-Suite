@@ -7,27 +7,10 @@ import json
 import os
 import shlex
 import subprocess
-import time
 import boto3
 import importlib.util
 
 from .logger import *
-
-
-def test_aws():
-    """
-    Tests the presence of the AWS CLI
-
-    :return: A boolean for whether or not AWS CLI is installed
-    :rtype: bool
-    """
-
-    try:
-        subprocess_check_output("aws --version")
-        return True
-    except Exception as e:
-        log.error(f"Test AWS: {e}")
-        return False
 
 
 # +-----------------------------+
