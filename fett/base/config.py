@@ -421,6 +421,13 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             if (not checkCustomScorerFunction()):
                 logAndExit(f"loadSecurityEvaluationConfiguration: <{getSettingDict('customizedScoring','pathToCustomFunction')}> has to be a valid scoring script.",exitCode=EXIT.Configuration)
 
+    # Load custom compiling options if enabled
+    if (isEnabled('useCustomCompiling')):
+        customizedCompilingDict = dict()
+        setSetting('customizedCompiling',customizedCompilingDict)
+        loadConfigSection(xConfig, configData, 'customizedCompiling', 
+                setSettingsToSectDict=True)
+
 @decorate.debugWrap
 def checkCustomScorerFunction():
     """

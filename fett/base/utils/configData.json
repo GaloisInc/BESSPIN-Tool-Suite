@@ -150,6 +150,10 @@
             "type" : "boolean"
         },
         {
+            "name" : "useCustomCompiling",
+            "type" : "boolean"
+        },
+        {
             "name" : "FreeRTOStimeout",
             "type" : "int",
             "min" : 0
@@ -197,6 +201,18 @@
             "name" : "pathToCustomFunction",
             "type" : "filePath",
             "condition" : "useCustomFunction"
+        }
+    ],
+
+    "customizedCompiling" : [
+        {
+            "name" : "useCustomMakefile",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomMakefile",
+            "type" : "filePath",
+            "condition" : "useCustomMakefile"
         }
     ],
 
