@@ -93,19 +93,24 @@ def buildCwesEvaluation():
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
 
-        if not isEqSetting('osImage', 'FreeRTOS'):
-            cp(os.path.join(getSetting('repoDir'),
-                            'fett',
-                            'target',
-                            'utils',
-                            'Makefile.xcompileDir'),
-               os.path.join(vulClassDir, 'Makefile'))
-            cp(os.path.join(getSetting('repoDir'),
-                            'fett',
-                            'target',
-                            'utils',
-                            'defaultEnvLinux.mk'),
-                vulClassDir)
+        if (not isEqSetting('osImage', 'FreeRTOS')):
+            # copy makefile over
+            if (isEnabled('useCustomCompiling') and isEnabledDict('customizedCompiling','useCustomMakefile')):
+                cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
+                    os.path.join(vulClassDir, 'Makefile'))
+            else: # Use default environment
+                cp(os.path.join(getSetting('repoDir'),
+                                'fett',
+                                'target',
+                                'utils',
+                                'Makefile.xcompileDir'),
+                   os.path.join(vulClassDir, 'Makefile'))
+                cp(os.path.join(getSetting('repoDir'),
+                                'fett',
+                                'target',
+                                'utils',
+                                'defaultEnvLinux.mk'),
+                    vulClassDir)
 
         # Write the extra testsParameters.h
         fHeader = ftOpenFile(os.path.join(vulClassDir, "testsParameters.h"), 'w')
