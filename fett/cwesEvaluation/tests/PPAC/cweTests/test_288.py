@@ -12,11 +12,11 @@ def test_288 (target,binTest):
     if (target.osImage == 'debian'):
         def runAuthTest (useCorrectPassword):
             retLog = ''
-            retCommand = target.runCommand("./{0}".format(binTest),endsWith=[":~\$",":~$","Password:"],showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+            retCommand = target.runCommand("./{0}".format(binTest),endsWith=[":~\$",":~$","Password:"],shutdownOnError=False)
             retLog += retCommand[1]
             if (retCommand[3] == 2): #asked for password
                 pwUsed = target.userPassword if (useCorrectPassword) else 'x'
-                retLog += target.runCommand(pwUsed,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+                retLog += target.runCommand(pwUsed,shutdownOnError=False)[1]
             return retLog
         
         #some useful commands
@@ -28,7 +28,7 @@ def test_288 (target,binTest):
 
         outLog += "-"*20 + "Part01: Valid Keyring. No key. Wrong Password." + "-"*20 + "\n"
         target.executeOnRoot (createKeyring)
-        outLog += target.runCommand (linkKeyring,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand (linkKeyring,shutdownOnError=False)[1]
         outLog += runAuthTest (False)
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -44,7 +44,7 @@ def test_288 (target,binTest):
         outLog += "-"*20 + "Part03: Valid Keyring. Valid key. Wrong Password." + "-"*20 + "\n"
         #keyring already exists from p01 and p02
         target.executeOnRoot (createKey)
-        outLog += target.runCommand (linkKeyring,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #needs to be re-linked because of switchUser
+        outLog += target.runCommand (linkKeyring,shutdownOnError=False)[1] #needs to be re-linked because of switchUser
         outLog += runAuthTest (False)
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -52,8 +52,8 @@ def test_288 (target,binTest):
 
         outLog += "-"*20 + "Part04: Valid Keyring. Local key. Wrong Password." + "-"*20 + "\n"
         target.executeOnRoot (revokeKeyring + createKeyring)
-        outLog += target.runCommand (linkKeyring,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand (createKey[0],showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #local key -- no need to edit permissions
+        outLog += target.runCommand (linkKeyring,shutdownOnError=False)[1]
+        outLog += target.runCommand (createKey[0],shutdownOnError=False)[1] #local key -- no need to edit permissions
         outLog += runAuthTest (False)
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -61,8 +61,8 @@ def test_288 (target,binTest):
 
         outLog += "-"*20 + "Part05: Local Keyring. Local key. Wrong Password." + "-"*20 + "\n"
         target.executeOnRoot (revokeKeyring)
-        outLog += target.runCommand (createKeyring[0],showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #local keyring -- no need to edit permissions
-        outLog += target.runCommand (createKey[0],showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #local key -- no need to edit permissions
+        outLog += target.runCommand (createKeyring[0],shutdownOnError=False)[1] #local keyring -- no need to edit permissions
+        outLog += target.runCommand (createKey[0],shutdownOnError=False)[1] #local key -- no need to edit permissions
         outLog += runAuthTest (False)
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -72,14 +72,14 @@ def test_288 (target,binTest):
 
     elif (target.osImage == 'FreeBSD'):
         outLog += "-"*20 + "Part01: $CWD is home directory" + "-"*20 + "\n"
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part02: $CWD is cgi-bin directory" + "-"*20 + "\n"
-        outLog += target.runCommand("mkdir -p /tmp/ssith/cgi-bin",showOnScreen=target.showExecutionOnScreen,shutdownOnError=True)[1]
-        outLog += target.runCommand("mv ./{0} /tmp/ssith/cgi-bin/".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("cd /tmp/ssith/cgi-bin".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("mkdir -p /tmp/ssith/cgi-bin",shutdownOnError=True)[1]
+        outLog += target.runCommand("mv ./{0} /tmp/ssith/cgi-bin/".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("cd /tmp/ssith/cgi-bin".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"

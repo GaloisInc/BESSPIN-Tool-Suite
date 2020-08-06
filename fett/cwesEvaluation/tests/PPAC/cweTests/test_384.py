@@ -15,19 +15,17 @@ def test_384 (target,binTest):
         ## but debian must use the pam_env session module, so we set up the environment variables here by writing
         ## to each user's $HOME/.pam_environment
         if target.osImage == 'debian':
-            outLog += target.runCommand(f"echo SESSION_ID={target.userName}:1234 > ~/.pam_environment",
-                                        showOnScreen=target.showExecutionOnScreen)[1]
+            outLog += target.runCommand(f"echo SESSION_ID={target.userName}:1234 > ~/.pam_environment")[1]
         target.switchUser()
         if target.osImage == 'debian':
-            outLog += target.runCommand(f"echo SESSION_ID=root:1234 > ~/.pam_environment",
-                                        showOnScreen=target.showExecutionOnScreen)[1]
+            outLog += target.runCommand(f"echo SESSION_ID=root:1234 > ~/.pam_environment")[1]
 
-        outLog += target.runCommand(f"chown root /home/{target.userName}/{binTest}",showOnScreen=target.showExecutionOnScreen)[1]
-        outLog += target.runCommand(f"chmod 4755 /home/{target.userName}/{binTest}",showOnScreen=target.showExecutionOnScreen)[1]
+        outLog += target.runCommand(f"chown root /home/{target.userName}/{binTest}")[1]
+        outLog += target.runCommand(f"chmod 4755 /home/{target.userName}/{binTest}")[1]
         target.switchUser()
-        outLog += target.runCommand(f"./{binTest} root {target.userName}", endsWith="word:", erroneousContents="<INVALID>", showOnScreen=target.showExecutionOnScreen)[1]
-        outLog += target.runCommand(target.rootPassword, endsWith="word:", erroneousContents="<INVALID>", showOnScreen=target.showExecutionOnScreen)[1]
-        outLog += target.runCommand(target.userPassword,erroneousContents="<INVALID>",showOnScreen=target.showExecutionOnScreen)[1]
+        outLog += target.runCommand(f"./{binTest} root {target.userName}", endsWith="word:", erroneousContents="<INVALID>")[1]
+        outLog += target.runCommand(target.rootPassword, endsWith="word:", erroneousContents="<INVALID>")[1]
+        outLog += target.runCommand(target.userPassword,erroneousContents="<INVALID>")[1]
 
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()

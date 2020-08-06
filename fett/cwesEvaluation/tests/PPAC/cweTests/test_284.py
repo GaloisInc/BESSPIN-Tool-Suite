@@ -19,16 +19,16 @@ def test_284 (target,binTest):
          
         def checkAuthLog ():
             retLog = "\n" + "x"*10 + " Checking auth.log for \"pam_284\" " + "x"*10 + "\n"
-            target.runCommand ("touch authLog.dump",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+            target.runCommand ("touch authLog.dump",shutdownOnError=False)
             target.executeOnRoot (["cat /var/log/auth.log > /home/{0}/authLog.dump".format(target.userName)])
-            retLog += target.runCommand ("echo \"nOccurrences=`grep -c \"pam_284\" authLog.dump`\"",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #do not use $()
-            target.runCommand ("rm authLog.dump",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+            retLog += target.runCommand ("echo \"nOccurrences=`grep -c \"pam_284\" authLog.dump`\"",shutdownOnError=False)[1] #do not use $()
+            target.runCommand ("rm authLog.dump",shutdownOnError=False)
             time.sleep(1) #for some reason, it is necessary
             return retLog
 
         outLog += "-"*20 + "Part01: Valid permissions. List the username" + "-"*20 + "\n"
         target.executeOnRoot (addUserToUsersList)
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         outLog += checkAuthLog()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -36,7 +36,7 @@ def test_284 (target,binTest):
 
         outLog += "-"*20 + "Part02: Valid permissions. Do not list username" + "-"*20 + "\n"
         target.executeOnRoot (resetAuthLog + resetUsersList)
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         outLog += checkAuthLog()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -44,8 +44,8 @@ def test_284 (target,binTest):
 
         outLog += "-"*20 + "Part03: Use an exposed test284users. Attemp to breach." + "-"*20 + "\n"
         target.executeOnRoot (resetAuthLog + exposeUsersList)
-        outLog += target.runCommand("echo \"{0}\" > /etc/test284users".format(target.userName),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("echo \"{0}\" > /etc/test284users".format(target.userName),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         outLog += checkAuthLog()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -53,9 +53,9 @@ def test_284 (target,binTest):
 
         outLog += "-"*20 + "Part04: Add user to list. Use an exposed auth.log to delete traces." + "-"*20 + "\n"
         target.executeOnRoot (resetAuthLog + exposeAuthLog + resetUsersList + addUserToUsersList)
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("sed \"/pam_284/d\" /var/log/auth.log > temp.txt",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("cp temp.txt /var/log/auth.log",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("sed \"/pam_284/d\" /var/log/auth.log > temp.txt",shutdownOnError=False)[1]
+        outLog += target.runCommand("cp temp.txt /var/log/auth.log",shutdownOnError=False)[1]
         outLog += checkAuthLog()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -73,16 +73,16 @@ def test_284 (target,binTest):
 
         def checkDebugLog ():
             retLog = "\n" + "x"*10 + f" Checking auth.log for \"pam_{testNum}\" " + "x"*10 + "\n"
-            target.runCommand ("touch debugLog.dump",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+            target.runCommand ("touch debugLog.dump",shutdownOnError=False)
             target.executeOnRoot ([f"cat /var/log/debug.log > /home/{target.userName}/debugLog.dump"])
-            retLog += target.runCommand (f"echo \"nOccurrences=`grep -c \"test_{testNum}\" debugLog.dump`\"",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #do not use $()
-            target.runCommand ("rm debugLog.dump",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+            retLog += target.runCommand (f"echo \"nOccurrences=`grep -c \"test_{testNum}\" debugLog.dump`\"",shutdownOnError=False)[1] #do not use $()
+            target.runCommand ("rm debugLog.dump",shutdownOnError=False)
             time.sleep(1) #for some reason, it is necessary
             return retLog
 
         outLog += "-"*20 + "Part01: Valid permissions. Allow the user's group" + "-"*20 + "\n"
         target.executeOnRoot (allowUser)
-        outLog += target.runCommand(f"./{binTest}",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += checkDebugLog()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -90,7 +90,7 @@ def test_284 (target,binTest):
 
         outLog += "-"*20 + "Part02: Valid permissions. Deny user's group" + "-"*20 + "\n"
         target.executeOnRoot (resetDebugLog + denyUser)
-        outLog += target.runCommand(f"./{binTest}",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += checkDebugLog()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -101,9 +101,9 @@ def test_284 (target,binTest):
         exposeEtcGroup = ["cp /etc/group /tmp/group.bkp", "chmod 646 /etc/group"]
         target.executeOnRoot (resetDebugLog + exposeEtcGroup)
         #make myself wheel
-        outLog += target.runCommand(f"sed \"s/root/root,{target.userName}/g\" /etc/group > /tmp/group.tmp",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand(f"cp /tmp/group.tmp /etc/group",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand(f"./{binTest}",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand(f"sed \"s/root/root,{target.userName}/g\" /etc/group > /tmp/group.tmp",shutdownOnError=False)[1]
+        outLog += target.runCommand(f"cp /tmp/group.tmp /etc/group",shutdownOnError=False)[1]
+        outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += checkDebugLog()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -112,9 +112,9 @@ def test_284 (target,binTest):
         outLog += "-"*20 + "Part04: Allow the user's group. Use an exposed debug.log to delete traces." + "-"*20 + "\n"
         restoreEtcGroup = ["mv /tmp/group.bkp /etc/group", "chmod 644 /etc/group"]
         target.executeOnRoot (restoreEtcGroup + resetDebugLog + allowUser + exposeDebugLog)
-        outLog += target.runCommand(f"./{binTest}",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand(f"sed \"/test_{testNum}/d\" /var/log/debug.log > temp.txt",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("cp temp.txt /var/log/debug.log",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
+        outLog += target.runCommand(f"sed \"/test_{testNum}/d\" /var/log/debug.log > temp.txt",shutdownOnError=False)[1]
+        outLog += target.runCommand("cp temp.txt /var/log/debug.log",shutdownOnError=False)[1]
         outLog += checkDebugLog()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()

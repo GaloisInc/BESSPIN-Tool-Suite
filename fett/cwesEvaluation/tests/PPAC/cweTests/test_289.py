@@ -11,45 +11,48 @@ def test_289 (target,binTest):
 
     if (target.osImage == 'debian'):
         outLog += "-"*20 + "Part01: Use a fake username. Attempt to authenticate" + "-"*20 + "\n"
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         if (target.settings['useCustomScoring']): #will need the gdb output here
+            # TODO: What do I need to do to support custom scoring here?
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part02: Rename username. Attempt to authenticate" + "-"*20 + "\n"
         killAllUserProcesses = "for xPid in $(ps -u {0} -o pid=); do kill -9 $xPid; done" #To be customized -- This is important to be able to run usermod
         renameUserToFrom = "usermod --login {0} {1}" #To be customized 
-        target.switchUser () #NOW ON ROOT
-        target.runCommand (killAllUserProcesses.format(target.userName),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
-        target.runCommand ("sed -i \"s/&USERNAME&/{0}/\" /etc/pam.d/pam_289".format(target.userName), showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+        # TODO: It looks like this script is being called with target on root.
+        # I think I should change that?
+        #target.switchUser () #NOW ON ROOT
+        target.runCommand (killAllUserProcesses.format(target.userName),shutdownOnError=False)
+        target.runCommand ("sed -i \"s/&USERNAME&/{0}/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
         time.sleep (20) #Give time to close the process opened by the user
-        retCommand = target.runCommand (renameUserToFrom.format("ssithLord", target.userName),erroneousContents="usermod:",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+        retCommand = target.runCommand (renameUserToFrom.format("ssithLord", target.userName),erroneousContents="usermod:",shutdownOnError=False)
         if ((not retCommand[0]) or (retCommand[2])): #Error
             outLog += "\n<INVALID>\nFailed to execute \"usermod --login\"!\n"
         backupUserName = target.userName
         target.userName = "ssithLord" #To be able to login when using switchUser
         target.switchUser () #BACK ON USER: ssithLord
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         target.userName = backupUserName
         target.switchUser () #NOW ON ROOT
-        target.runCommand (killAllUserProcesses.format("ssithLord"),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+        target.runCommand (killAllUserProcesses.format("ssithLord"),shutdownOnError=False)
         time.sleep (20) #Give time to close the process opened by the user
-        target.runCommand (renameUserToFrom.format(target.userName,"ssithLord"),erroneousContents="usermod:",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False) #reset userName
+        target.runCommand (renameUserToFrom.format(target.userName,"ssithLord"),erroneousContents="usermod:",shutdownOnError=False) #reset userName
         target.switchUser () #Back on user
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part03: Change the bash. Attempt to authenticate" + "-"*20 + "\n"
-        retCommand = target.runCommand("chsh -s /bin/rbash",endsWith="Password:",timeout=15,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+        retCommand = target.runCommand("chsh -s /bin/rbash",endsWith="Password:",timeout=15,shutdownOnError=False)
         outLog += retCommand[1]
         if ((not retCommand[0]) or (retCommand[2])): #Error
             outLog += "\n<INVALID>\nFailed to execute \"chsh\"!\n"
         else:
-            outLog += target.runCommand(target.userPassword,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-            outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-            outLog += target.runCommand("chsh -s /bin/bash",endsWith="Password:",timeout=15,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-            outLog += target.runCommand(target.userPassword,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+            outLog += target.runCommand(target.userPassword,shutdownOnError=False)[1]
+            outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+            outLog += target.runCommand("chsh -s /bin/bash",endsWith="Password:",timeout=15,shutdownOnError=False)[1]
+            outLog += target.runCommand(target.userPassword,shutdownOnError=False)[1]
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
@@ -61,18 +64,18 @@ def test_289 (target,binTest):
         outLog += "-"*20 + "Part01: Sanity check: block user's group. Attempt to authenticate" + "-"*20 + "\n"
 
         target.switchUser() #NOW ON ROOT
-        target.runCommand ("sed -i -e \"s/NOTAGROUP/{0}/\" /etc/pam.d/pam_289".format(target.userName), showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+        target.runCommand ("sed -i -e \"s/NOTAGROUP/{0}/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
         target.switchUser() #NOW ON USER
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part02: Use a fake group name. Attempt to authenticate" + "-"*20 + "\n"
         target.switchUser() #NOW ON ROOT
-        target.runCommand ("sed -i -e \"s/{0}/NOT_A_GROUP/\" /etc/pam.d/pam_289".format(target.userName), showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+        target.runCommand ("sed -i -e \"s/{0}/NOT_A_GROUP/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
         target.switchUser() #NOW ON USER
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
@@ -82,17 +85,17 @@ def test_289 (target,binTest):
         # Add a group for the user
         userGroup = "bad_group"
         addGroup = f"pw groupadd {userGroup} -M {target.userName}"
-        target.runCommand (addGroup, showOnScreen=target.showExecutionOnScreen, shutdownOnError=False)
-        target.runCommand ("sed -i -e \"s/NOTAGROUP/{0}/\" /etc/pam.d/pam_289".format(userGroup), showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
-        retCommand = target.runCommand (renameGroupToFrom.format("ssithLord", userGroup),erroneousContents="usermod:",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)
+        target.runCommand (addGroup, shutdownOnError=False)
+        target.runCommand ("sed -i -e \"s/NOTAGROUP/{0}/\" /etc/pam.d/pam_289".format(userGroup),shutdownOnError=False)
+        retCommand = target.runCommand (renameGroupToFrom.format("ssithLord", userGroup),erroneousContents="usermod:",shutdownOnError=False)
         if ((not retCommand[0]) or (retCommand[2])): #Error
             outLog += "\n<INVALID>\nFailed to execute \"usermod --login\"!\n"
 
         target.switchUser () #BACK ON USER: ssithLord
-        outLog += target.runCommand("./{0}".format(binTest),endsWith="Password:",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),endsWith="Password:",shutdownOnError=False)[1]
         target.switchUser () #NOW ON ROOT
         time.sleep (1)
-        target.runCommand (renameGroupToFrom.format(userGroup,"ssithLord"),erroneousContents="usermod:",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False) #reset userName
+        target.runCommand (renameGroupToFrom.format(userGroup,"ssithLord"),erroneousContents="usermod:",shutdownOnError=False) #reset userName
         target.switchUser () #Back on user
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()

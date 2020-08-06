@@ -5,26 +5,22 @@ def runBinWithPass(target, binTest, old_password, new_password):
     outLog = ""
     outLog += ">>> Running password app\n"
     outLog += target.runCommand(f"./{binTest} {target.userName}",
-                                showOnScreen=target.showExecutionOnScreen,
                                 endsWith="Password:",
                                 erroneousContents="<INVALID>",
                                 shutdownOnError=False)[1]
     outLog += f">>> sending old password '{old_password}'\n"
     outLog += target.runCommand(f"{old_password}",
-                                showOnScreen=target.showExecutionOnScreen,
                                 endsWith="password:",
                                 erroneousContents="<INVALID>",
                                 shutdownOnError=False)[1]
     outLog += f">>> sending password '{new_password}'\n"
     outLog += target.runCommand(f"{new_password}",
-                                showOnScreen=target.showExecutionOnScreen,
                                 endsWith="password:",
                                 erroneousContents="<INVALID>",
                                 shutdownOnError=False)[1]
     outLog += f">>> confirming password '{new_password}'\n"
     outLog += target.runCommand(f"{new_password}",
                                 erroneousContents="<INVALID>",
-                                showOnScreen=target.showExecutionOnScreen,
                                 shutdownOnError=False)[1]
     return outLog
 
@@ -38,7 +34,7 @@ def test_521 (target,binTest):
 
     if (target.osImage in ['debian', 'FreeBSD']):
         target.switchUser()
-        outLog += target.runCommand(f"cp /home/{target.userName}/{binTest} .",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand(f"cp /home/{target.userName}/{binTest} .",shutdownOnError=False)[1]
 
         passwords = { 0: (target.userPassword, ""),
                       1: ("shortreg", "Too Short"),
@@ -55,14 +51,11 @@ def test_521 (target,binTest):
         # Reset user password
         outLog += target.runCommand(f"passwd {target.userName}",
                                     endsWith="word:",
-                                    showOnScreen=target.showExecutionOnScreen,
                                     shutdownOnError=False)[1]
         outLog += target.runCommand(f"{passwords[0][0]}",
                                     endsWith="word:",
-                                    showOnScreen=target.showExecutionOnScreen,
                                     shutdownOnError=False)[1]
         outLog += target.runCommand(f"{passwords[0][0]}",
-                                    showOnScreen=target.showExecutionOnScreen,
                                     shutdownOnError=False)[1]
         target.switchUser()
     else:

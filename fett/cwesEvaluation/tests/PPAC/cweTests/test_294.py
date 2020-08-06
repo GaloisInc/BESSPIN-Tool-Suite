@@ -37,19 +37,19 @@ def test_294(target, binTest):
 
         #deny all 
         if (target.osImage == 'debian'):
-            outLog += target.runCommand ("echo \"sshd: ALL\" >> /etc/hosts.deny",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+            outLog += target.runCommand ("echo \"sshd: ALL\" >> /etc/hosts.deny",shutdownOnError=False)[1]
         elif (target.osImage == 'FreeBSD'):
-            outLog += target.runCommand ("echo \"sshd : ALL : deny\" > /etc/hosts.allow",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+            outLog += target.runCommand ("echo \"sshd : ALL : deny\" > /etc/hosts.allow",shutdownOnError=False)[1]
 
         for iPart in range(2):
             outLog += "-" * 20 + f"Part0{iPart+1}: {partNames[iPart]}" + "-" * 20 + "\n"
 
             #only allow the part's IP
             if (target.osImage == 'debian'):
-                outLog += target.runCommand (f"echo \"sshd: {allowedIP[iPart]}\" >> /etc/hosts.allow",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+                outLog += target.runCommand (f"echo \"sshd: {allowedIP[iPart]}\" >> /etc/hosts.allow",shutdownOnError=False)[1]
                 time.sleep(20)
             elif (target.osImage == 'FreeBSD'):
-                outLog += target.runCommand (f"sed  -i \"\" \"1 s/^/sshd : {allowedIP[iPart]} : allow\\n/\" /etc/hosts.allow",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+                outLog += target.runCommand (f"sed  -i \"\" \"1 s/^/sshd : {allowedIP[iPart]} : allow\\n/\" /etc/hosts.allow",shutdownOnError=False)[1]
 
             if ((not target.onlySsh) or (iPart == 1)):
                 if (target.onlySsh):

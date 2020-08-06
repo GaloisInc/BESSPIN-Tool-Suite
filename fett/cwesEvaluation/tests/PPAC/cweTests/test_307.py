@@ -17,17 +17,17 @@ def test_307 (target,binTest):
             retCommand = [True, retLog, False]
             iAttempt = 0
             while (retCommand[0]) and (not retCommand[2]) and (iAttempt < actualNAttempts):
-                retCommand = target.runCommand("./{0}".format(binTest),expectedContents='PAM started',endsWith="Password:",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False,timeout=20)
+                retCommand = target.runCommand("./{0}".format(binTest),expectedContents='PAM started',endsWith="Password:",shutdownOnError=False,timeout=20)
                 retLog += retCommand[1]
                 if ( (not retCommand[0]) or (retCommand[2]) ): #Bad
                     return retLog
                 elif (iAttempt == actualNAttempts-1): #this is it, send correct password
-                    retCommand = target.runCommand(target.userPassword,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False,timeout=20)
+                    retCommand = target.runCommand(target.userPassword,shutdownOnError=False,timeout=20)
                     if (retCommand[2] and (target.settings['processor'] == 'bluespec_p3')): #timeout on bluespec_p3
                         retCommand[1] += target.keyboardInterrupt (shutdownOnError=False)
                         retCommand[1] += "\n<DENIED> Failed to authenticate. (pam timed-out)\n"
                 else:
-                    retCommand = target.runCommand("x",expectedContents='Failed to authenticate',suppressErrors=True,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False,timeout=20)
+                    retCommand = target.runCommand("x",expectedContents='Failed to authenticate',suppressErrors=True,shutdownOnError=False,timeout=20)
                     if (retCommand[2] and (target.settings['processor'] == 'bluespec_p3')): #timeout on bluespec_p3
                         retCommand[1] += target.keyboardInterrupt (shutdownOnError=False)
                         #reset the errors
@@ -36,7 +36,7 @@ def test_307 (target,binTest):
                 retLog += retCommand[1]
                 iAttempt += 1
                 if (intraCommand is not None):
-                    retLog += target.runCommand (intraCommand,showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+                    retLog += target.runCommand (intraCommand,shutdownOnError=False)[1]
             return retLog
 
         #For each part, the result should be Granted, Granted, Denied
@@ -185,13 +185,13 @@ def test_307 (target,binTest):
         for iPart in range(2):
             outLog += "-" * 20 + f"Part0{iPart+1}: {partNames[iPart]}" + "-" * 20 + "\n"
             if (iPart == 0): #backup config
-                outLog += target.runCommand ("cp /etc/ssh/sshd_config /root/",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+                outLog += target.runCommand ("cp /etc/ssh/sshd_config /root/",shutdownOnError=False)[1]
             else: #reset config
-                outLog += target.runCommand ("cp /root/sshd_config /etc/ssh/sshd_config",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+                outLog += target.runCommand ("cp /root/sshd_config /etc/ssh/sshd_config",shutdownOnError=False)[1]
             #apply ssh config
-            outLog += target.runCommand (f"echo \"PasswordAuthentication yes\" >> /etc/ssh/sshd_config",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-            outLog += target.runCommand (f"echo \"MaxAuthTries {maxAuthTries[iPart]}\" >> /etc/ssh/sshd_config",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-            outLog += target.runCommand ("service sshd restart",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"PasswordAuthentication yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"MaxAuthTries {maxAuthTries[iPart]}\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+            outLog += target.runCommand ("service sshd restart",shutdownOnError=False)[1]
             time.sleep(30)
             #try to authenticate
             outLog += authAtNp1thAttempt ()

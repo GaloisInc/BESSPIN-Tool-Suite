@@ -22,9 +22,9 @@ def test_799 (target,binTest):
     def dumpNoHup ():
         retLog = "\n" + "x"*10 + " Dumping root nohup.out " + "x"*10 + "\n"
         target.executeOnRoot (killRootNohup + catNoHup)
-        retLog += target.runCommand ("cat nohup.out",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        retLog += target.runCommand ("rm nohup.out",endsWith=["nohup.out?","\'nohup.out\'?"],showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]  
-        retLog += target.runCommand (" ",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]      
+        retLog += target.runCommand ("cat nohup.out",shutdownOnError=False)[1]
+        retLog += target.runCommand ("rm nohup.out",endsWith=["nohup.out?","\'nohup.out\'?"],shutdownOnError=False)[1]  
+        retLog += target.runCommand (" ",shutdownOnError=False)[1]      
         return retLog
 
     if (target.osImage == 'debian'):
@@ -39,9 +39,9 @@ def test_799 (target,binTest):
         outLog += "-"*20 + "Part01: PAM w/ exposed test799users and manipulate it" + "-"*20 + "\n"
         exposeUsersList = ["chown {0} /etc/test799users".format(target.userName)]
         target.executeOnRoot (cpTestToRoot + [writeNlimits.format(target.userName,nBytesMsgQueue)] + createUsersList + exposeUsersList + nohupTestOnRoot)
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("echo \"NotRealUser\" > /etc/test799users",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #attempt to breach
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("echo \"NotRealUser\" > /etc/test799users",shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1] #attempt to breach
         outLog += dumpNoHup()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -50,8 +50,8 @@ def test_799 (target,binTest):
         outLog += "-"*20 + "Part02: PAM w/ exposed limits and a longer queue" + "-"*20 + "\n"
         target.executeOnRoot (resetUsersList + exposeLimits + nohupTestOnRoot)
         nBytesForLongQueue = (nInteractions+1) * 2 * 49
-        outLog += target.runCommand (writeNlimits.format(target.userName,nBytesForLongQueue),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("./{0} 1".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #1 for long Queue
+        outLog += target.runCommand (writeNlimits.format(target.userName,nBytesForLongQueue),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0} 1".format(binTest),shutdownOnError=False)[1] #1 for long Queue
         outLog += dumpNoHup()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -60,8 +60,8 @@ def test_799 (target,binTest):
         outLog += "-"*20 + "Part03: PAM w/ exposed limits and a wider queue" + "-"*20 + "\n"
         target.executeOnRoot (resetUsersList + exposeLimits + nohupTestOnRoot)
         nBytesForWideQueue = nInteractions * (2+2) * 49
-        outLog += target.runCommand (writeNlimits.format(target.userName,nBytesForWideQueue),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand("./{0} 2".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #2 for wide Queue
+        outLog += target.runCommand (writeNlimits.format(target.userName,nBytesForWideQueue),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0} 2".format(binTest),shutdownOnError=False)[1] #2 for wide Queue
         outLog += dumpNoHup()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -69,7 +69,7 @@ def test_799 (target,binTest):
 
         outLog += "-"*20 + "Part04: Valid protection using limits and lisfile. Attempt a long queue." + "-"*20 + "\n"
         target.executeOnRoot (resetLimits + [writeNlimits.format(target.userName,nBytesMsgQueue)] + resetUsersList + nohupTestOnRoot)
-        outLog += target.runCommand("./{0} 1".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #1 for a long Queue
+        outLog += target.runCommand("./{0} 1".format(binTest),shutdownOnError=False)[1] #1 for a long Queue
         outLog += dumpNoHup()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -77,7 +77,7 @@ def test_799 (target,binTest):
 
         outLog += "-"*20 + "Part05: Valid protection using limits and lisfile. Attempt an extra token." + "-"*20 + "\n"
         target.executeOnRoot (resetUsersList + nohupTestOnRoot)
-        outLog += target.runCommand("./{0} 3".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1] #3 for an extra token
+        outLog += target.runCommand("./{0} 3".format(binTest),shutdownOnError=False)[1] #3 for an extra token
         outLog += dumpNoHup()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -85,7 +85,7 @@ def test_799 (target,binTest):
 
         outLog += "-"*20 + "Part06: Valid protection using limits and lisfile. No breaching." + "-"*20 + "\n"
         target.executeOnRoot (resetUsersList + nohupTestOnRoot)
-        outLog += target.runCommand("./{0}".format(binTest),showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         outLog += dumpNoHup()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -100,8 +100,8 @@ def test_799 (target,binTest):
 
         outLog += "-"*20 + "Part01: Valid protection. No breaching. Ask again after receiving tokens" + "-"*20 + "\n"
         target.executeOnRoot (cpTestToRoot + mountMqueuefs + createGroup + nohupTestOnRoot)
-        outLog += target.runCommand(f"./{binTest}",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand(f"./{binTest}",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
+        outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += dumpNoHup()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -109,7 +109,7 @@ def test_799 (target,binTest):
 
         outLog += "-"*20 + "Part02: Valid protection. Attempt an extra token." + "-"*20 + "\n"
         target.executeOnRoot (resetGroup + nohupTestOnRoot)
-        outLog += target.runCommand(f"./{binTest} 3",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand(f"./{binTest} 3",shutdownOnError=False)[1]
         outLog += dumpNoHup()
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -118,10 +118,10 @@ def test_799 (target,binTest):
         outLog += "-"*20 + "Part03: Exposed /etc/group. Attempt to get the service twice." + "-"*20 + "\n"
         exposeEtcGroup = ["cp /etc/group /tmp/group.bkp", "chmod 646 /etc/group"]
         target.executeOnRoot (resetGroup + exposeEtcGroup + nohupTestOnRoot)
-        outLog += target.runCommand(f"./{binTest}",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand(f"sed \"s/:{target.userName}/:/g\" /etc/group > /tmp/group.tmp",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand(f"cp /tmp/group.tmp /etc/group",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
-        outLog += target.runCommand(f"./{binTest}",showOnScreen=target.showExecutionOnScreen,shutdownOnError=False)[1]
+        outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
+        outLog += target.runCommand(f"sed \"s/:{target.userName}/:/g\" /etc/group > /tmp/group.tmp",shutdownOnError=False)[1]
+        outLog += target.runCommand(f"cp /tmp/group.tmp /etc/group",shutdownOnError=False)[1]
+        outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += dumpNoHup()
         restoreEtcGroup = ["mv /tmp/group.bkp /etc/group", "chmod 644 /etc/group"]
         target.executeOnRoot (restoreEtcGroup)
