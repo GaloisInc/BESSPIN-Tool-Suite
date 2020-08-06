@@ -113,7 +113,7 @@ class commonTarget():
                         if retCommand[2]:
                             printAndLog("switchUser: Failed to login and received timeout. Trying again...",doPrint=False)
                             #  for some reason, needs to accept input to see the login failed string
-                            self.runCommand(" ",endsWith=["Login incorrect"],timeout=120)
+                            self.runCommand(" ",endsWith=["Login incorrect"],timeout=20)
                             self.runCommand (loginName,endsWith="Password:")
                             time.sleep(3) #wait for the OS to be ready for the password (maybe this works)
                             iAttempt += 1
@@ -1187,6 +1187,5 @@ def charByCharEncoding (inBytes):
             xChar = '<!>'
         textBack += xChar
     return textBack
-
 
 
