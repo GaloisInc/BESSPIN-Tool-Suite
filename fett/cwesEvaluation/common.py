@@ -56,7 +56,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         output = target.expectFromTarget(">>>End of Fett<<<",
                                          None,
                                          shutdownOnError=False,
-                                         timeout=15)
+                                         timeout=getSetting('FreeRTOStimeout'))
 
         test, vulClass, _, logFile = getSetting("currentTest")
 

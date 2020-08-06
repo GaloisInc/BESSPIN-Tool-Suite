@@ -148,7 +148,12 @@
         {
             "name" : "useCustomScoring",
             "type" : "boolean"
-        }       
+        },
+        {
+            "name" : "FreeRTOStimeout",
+            "type" : "int",
+            "min" : 0
+        }
     ],
 
     "customizedScoring" : [
