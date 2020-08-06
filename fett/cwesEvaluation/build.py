@@ -9,7 +9,7 @@ from fett.base.utils.misc import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
-from fett.target.build import freeRTOSBuildChecks, prepareFreeRTOSNetworkParameters, buildFreeRTOS, crossCompileUnix
+from fett.target.build import freeRTOSBuildChecks, prepareFreeRTOSNetworkParameters, buildFreeRTOS, crossCompileUnix, cleanDirectory
 
 
 @decorate.debugWrap
@@ -34,6 +34,33 @@ def buildCwesEvaluation():
                    os.path.join(getSetting('osImagesDir'),
                                 f"{getSetting('osImage')}.asm"))
         setSetting('sendTarballToTarget', False)
+
+        freeRTOSBuildChecks()
+
+        #copy the C files, .mk files, and any directory
+        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),
+                getSetting('buildDir'),
+                copyContents=True)
+        # Remove existing main file
+        os.remove(os.path.join(getSetting('buildDir'), "main_fett.c"))
+
+        # TODO: Put listConfigParams back in to fill the header file?
+        # Write empty fett configuration header file (nothing to configure)
+        touch(os.path.join(getSetting('buildDir'), "fettUserConfig.h"))
+
+        prepareFreeRTOSNetworkParameters()
+
+        # TODO: Should probably modify the source files to support AWS instead of
+        # this hack
+        backend = ("FPGA" if isEqSetting("target", "aws")
+                          else getSetting("target").upper())
+
+        # Define variables testgen uses
+        mk = ftOpenFile(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a')
+        mk.write("CFLAGS += "
+                 "-DtestgenOnFreeRTOS "
+                 f"-Dtestgen{backend} ")
+        mk.close()
 
 
     # Copy apps over
@@ -143,56 +170,23 @@ def prepareFreeRTOS(directory):
 def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     # TODO: Some options in target.build.prepareFreeRTOS are omitted here
 
-    freeRTOSBuildChecks()
+    buildDir = getSetting('buildDir')
+    
+    # copy the test files
+    vTestsDir = os.path.join(buildDir, vulClass)
+    testFiles = [test, f'main_{test}', 'testsParameters.h']
+    for testFile in testFiles:
+        cp (os.path.join(vTestsDir,testFile), buildDir)
 
-    # Remove all files, but not folders, from build directory
-    for f in os.listdir(getSetting('buildDir')):
-        path = os.path.join(getSetting('buildDir'), f)
-        try:
-            os.remove(path)
-        except IsADirectoryError:
-            pass
-        except Exception as exc:
-            logAndExit(f'<buildFreeRTOSTest> Failed to remove <{path}>',
-                       exc=exc,
-                       exitCode=EXIT.Files_and_paths)
-
-    #copy the C files, .mk files, and any directory
-    copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),
-            getSetting('buildDir'),
-            copyContents=True)
-    # Remove existing main file
-    os.remove(os.path.join(getSetting('buildDir'), "main_fett.c"))
-
-    # Copy test files over
-    cp(os.path.join(getSetting('buildDir'), vulClass, test),
-       getSetting('buildDir'))
-    cp(os.path.join(getSetting('buildDir'), vulClass, f'main_{test}'),
-       getSetting('buildDir'))
-    cp(os.path.join(getSetting('buildDir'), vulClass),
-       getSetting('buildDir'),
-       pattern=f"*.h")
-
-
-    # TODO: Put listConfigParams back in to fill the header file?
-    # Write empty fett configuration header file (nothing to configure)
-    header = ftOpenFile(os.path.join(getSetting('buildDir'), "fettUserConfig.h"), 'w')
-    header.close()
-
-    prepareFreeRTOSNetworkParameters()
-
-    # TODO: Should probably modify the source files to support AWS instead of
-    # this hack
-    backend = ("FPGA" if isEqSetting("target", "aws")
-                      else getSetting("target").upper())
-
-    # Define variables testgen uses
-    mk = ftOpenFile(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a')
-    mk.write("CFLAGS += "
-             "-DtestgenOnFreeRTOS "
-             f"-Dtestgen{backend} "
-             f"-DTESTGEN_TEST_PART={part}")
-    mk.close()
+    fPars = ftOpenFile(os.path.join(buildDir,'testsParameters.h'),'a')
+    fPars.write(f"\n#define TESTGEN_TEST_PART {part}\n")
+    fPars.close()
 
     # Build
     buildFreeRTOS(doPrint=False)
+
+    #remove the current test files
+    for testFile in testFiles:
+        os.remove(os.path.join(buildDir,testFile))
+    #remove the object files
+    cleanDirectory (buildDir,endsWith='.o')
