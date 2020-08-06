@@ -169,7 +169,15 @@ def buildFreeRTOS(doPrint=True):
         envVars.append(f"FREERTOS_USE_RAMDISK=1")
     envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
     logging.debug(f"going to make using {envVars}")
-    make (envVars,getSetting('FreeRTOSprojDir'))
+    
+    if (isEqSetting('mode','evaluateSecurityTests') and
+        isEnabled('useCustomCompiling') and 
+        isEnabledDict('customizedCompiling','useCustomMakefile')
+        ):
+        make (envVars,getSetting('buildDir'))
+    else: 
+        # default environment
+        make (envVars,getSetting('FreeRTOSprojDir'))
 
     #check if the elf file was created
     builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
