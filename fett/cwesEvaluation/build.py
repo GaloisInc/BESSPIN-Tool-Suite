@@ -102,10 +102,8 @@ def buildCwesEvaluation():
                os.path.join(vulClassDir, 'Makefile'))
             cp(os.path.join(getSetting('repoDir'),
                             'fett',
-                            'cwesEvaluation',
-                            'tests',
-                            'scripts',
-                            'emulation',
+                            'target',
+                            'utils',
                             'defaultEnvLinux.mk'),
                 vulClassDir)
 
