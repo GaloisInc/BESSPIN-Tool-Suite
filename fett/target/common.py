@@ -106,7 +106,7 @@ class commonTarget():
                         #  will timeout on error, not return Login failed
                         retCommand = self.runCommand(loginPassword,
                                                      endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],
-                                                     timeout=120,
+                                                     timeout=60,
                                                      suppressErrors=True,
                                                      shutdownOnError=False,
                                                      issueInterrupt=False)
@@ -1187,5 +1187,4 @@ def charByCharEncoding (inBytes):
             xChar = '<!>'
         textBack += xChar
     return textBack
-
 
