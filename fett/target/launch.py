@@ -121,15 +121,15 @@ def prepareEnv ():
             aws.removeKernelModules()
             aws.installKernelModules()
             aws.configTapAdaptor()
-            aws.programAFI()
+            if not (isEqSetting('mode', 'evaluateSecurityTests') and
+                    isEqSetting('osImage', 'FreeRTOS')):
+                aws.programAFI()
         elif (isEqSetting('pvAWS', 'connectal')):
             aws.prepareConnectal()
             aws.configTapAdaptor()
             ## remove modules because sometimes kernel panics if the modules are loaded while programming the FPGA
             aws.removeKernelModules()
-            if not (isEqSetting('mode', 'evaluateSecurityTests') and
-                    isEqSetting('osImage', 'FreeRTOS')):
-                aws.programAFI()
+            aws.programAFI()
             ## remove the modules again because the AMI has xocl in /lib/modules and it is getting auto loaded
             aws.removeKernelModules()
             aws.installKernelModules()
