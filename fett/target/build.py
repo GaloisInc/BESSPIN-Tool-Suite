@@ -277,7 +277,7 @@ def crossCompileUnix(directory,extraString=''):
     envLinux = []
     osImageCap1 = getSetting('osImage')[0].upper() + getSetting('osImage')[1:]
     envLinux.append(f"OS_IMAGE={osImageCap1}")
-    envLinux.append(f"BACKEND={getSetting('target').upper()}")
+    envLinux.append(f"TARGET={getSetting('target').upper()}")
     envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
     envLinux.append(f"LINKER={getSetting('linker').upper()}")
     logging.debug(f"going to make using {envLinux}")
