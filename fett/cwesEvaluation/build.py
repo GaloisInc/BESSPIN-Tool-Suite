@@ -9,7 +9,7 @@ from fett.base.utils.misc import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
-import fett.target.build
+from fett.target.build import freeRTOSBuildChecks, prepareFreeRTOSNetworkParameters, buildFreeRTOS, crossCompileUnix
 
 
 @decorate.debugWrap
@@ -93,7 +93,7 @@ def buildCwesEvaluation():
         if isEqSetting('osImage', 'FreeRTOS'):
             prepareFreeRTOS(vulClassDir)
         elif getSetting('osImage') in ['debian', 'FreeBSD']:
-            crossCompileUnix(vulClassDir)
+            crossCompileUnix(vulClassDir,extraString=f'{vulClass} tests')
         else:
             logAndExit("<buildCwesEvaluation> is not implemented for "
                        f"<{getSetting('osImage')}>.",
@@ -132,27 +132,6 @@ def buildTarball():
 
 @decorate.debugWrap
 @decorate.timeWrap
-def crossCompileUnix(directory):
-    #cross-compiling sanity checks
-    if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
-        # TODO: Is this true for testgen?
-        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
-        setSetting('linker','GCC')
-
-    printAndLog (f"Cross-compiling ...")
-    envLinux = []
-    osImageCap1 = getSetting('osImage')[0].upper() + getSetting('osImage')[1:]
-    envLinux.append(f"OS_IMAGE={osImageCap1}")
-    envLinux.append(f"BACKEND={getSetting('target').upper()}")
-    envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
-    envLinux.append(f"LINKER={getSetting('linker').upper()}")
-    logging.debug(f"going to make using {envLinux}")
-    make(envLinux, directory)
-    printAndLog(f"Files cross-compiled successfully.")
-
-
-@decorate.debugWrap
-@decorate.timeWrap
 def prepareFreeRTOS(directory):
     # TODO: Just inline this function if its just a one liner
     # Generate main files
@@ -163,7 +142,7 @@ def prepareFreeRTOS(directory):
 def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     # TODO: Some options in target.build.prepareFreeRTOS are omitted here
 
-    fett.target.build.freeRTOSBuildChecks()
+    freeRTOSBuildChecks()
 
     # Remove all files, but not folders, from build directory
     for f in os.listdir(getSetting('buildDir')):
@@ -199,7 +178,7 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     header = ftOpenFile(os.path.join(getSetting('buildDir'), "fettUserConfig.h"), 'w')
     header.close()
 
-    fett.target.build.prepareFreeRTOSNetworkParameters()
+    prepareFreeRTOSNetworkParameters()
 
     # TODO: Should probably modify the source files to support AWS instead of
     # this hack
@@ -215,4 +194,4 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     mk.close()
 
     # Build
-    fett.target.build.buildFreeRTOS(doPrint=False)
+    buildFreeRTOS(doPrint=False)

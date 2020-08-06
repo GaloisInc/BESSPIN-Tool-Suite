@@ -264,3 +264,22 @@ def cleanDirectory (xDir,endsWith='.o'):
                     os.remove(os.path.join(xDirName,xFile))
                 except Exception as exc:
                     logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.", exitCode=EXIT.Files_and_paths)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def crossCompileUnix(directory,extraString=''):
+    #cross-compiling sanity checks
+    if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
+        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
+        setSetting('linker','GCC')
+
+    printAndLog (f"Cross-compiling {extraString}...")
+    envLinux = []
+    osImageCap1 = getSetting('osImage')[0].upper() + getSetting('osImage')[1:]
+    envLinux.append(f"OS_IMAGE={osImageCap1}")
+    envLinux.append(f"BACKEND={getSetting('target').upper()}")
+    envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
+    envLinux.append(f"LINKER={getSetting('linker').upper()}")
+    logging.debug(f"going to make using {envLinux}")
+    make (envLinux, directory)
+    printAndLog(f"Files cross-compiled successfully.")
