@@ -62,6 +62,10 @@ def buildCwesEvaluation():
                  f"-Dtestgen{backend} ")
         mk.close()
 
+        if (isEnabled('useCustomCompiling') and isEnabledDict('customizedCompiling','useCustomMakefile')):
+            cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
+                os.path.join(getSetting('buildDir'), 'Makefile'))
+
 
     # Copy apps over
     for vulClass in getSetting('vulClasses'):
