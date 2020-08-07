@@ -1,6 +1,6 @@
 from .helpers import *
 
-def test_521 (SCORES, customScorer, logTest,testsDir):
+def test_521 (logTest,testsDir):
     testNum = 521
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
@@ -46,11 +46,11 @@ def test_521 (SCORES, customScorer, logTest,testsDir):
                 partsScores[4] = SCORES.NONE
 
     elif (osImage == 'FreeRTOS'):
-        return overallScore (SCORES, [],testNum,msgIfNotImplemented="Not Applicable To FreeRTOS")
+        return overallScore ([],testNum,msgIfNotImplemented="Not Applicable To FreeRTOS")
 
     else:
         print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")
-        return overallScore (SCORES, [],testNum)
+        return overallScore ([],testNum)
 
-    listScores = [customScorer.adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
-    return overallScore (SCORES, listScores ,testNum)
+    listScores = [adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
+    return overallScore (listScores ,testNum)

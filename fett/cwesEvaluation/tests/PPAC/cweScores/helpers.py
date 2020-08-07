@@ -4,6 +4,9 @@ helpers functions for scoring the CWE tests
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 import re
+from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
+
+# TODO: Port over other changes from custom scoring PR?
 
 def readLogLines (logTest,testsDir):
     fLog = open("{0}/{1}".format(testsDir,logTest),"r")
@@ -74,7 +77,7 @@ def scoreGrantedDenied (SCORES, lines,lastGranted=False):
     else:
         return SCORES.FAIL
 
-def overallScore (SCORES, listScores, testNum,msgIfNotImplemented="Not Implemented"):
+def overallScore (listScores, testNum,msgIfNotImplemented="Not Implemented"):
     if (len(listScores)==0): #not implemented
         return ["TEST-{0}".format(testNum), SCORES.NOT_IMPLEMENTED, msgIfNotImplemented]
     ovrScore = SCORES.minScore(listScores)
