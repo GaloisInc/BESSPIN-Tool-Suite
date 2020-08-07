@@ -1,4 +1,5 @@
-from .helpers import *
+from fett.base.utils.misc import *
+from fett.cwesEvaluation.tests.PPAC.cweScores.helpers import *
 
 def test_799 (logTest,testsDir):
     testNum = 799
@@ -178,7 +179,7 @@ def test_799 (logTest,testsDir):
             partsScores[3] = SCORES.NONE
 
     else:
-        print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")
+        errorAndLog (f"parsing test_{testNum}.log is not implemented for <{osImage}>.")
         return overallScore ([],testNum)
 
     listScores = [adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]

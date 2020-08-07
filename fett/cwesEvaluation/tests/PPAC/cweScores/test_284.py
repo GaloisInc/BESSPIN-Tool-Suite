@@ -1,4 +1,5 @@
-from .helpers import *
+from fett.base.utils.misc import *
+from fett.cwesEvaluation.tests.PPAC.cweScores.helpers import *
 
 def test_284(logTest,testsDir):
     testNum = 284
@@ -22,7 +23,7 @@ def test_284(logTest,testsDir):
                         return (int(valueMatch.group('nOccurrences')) > 0)
                     except:
                         pass
-            print (f"Error in scoring test_{testNum}: could not match nOccurrences.")
+            errorAndLog(f"in scoring test_{testNum}: could not match nOccurrences.")
             return SCORES.FAIL
 
         #part01: Valid permissions. List the username
@@ -149,7 +150,7 @@ def test_284(logTest,testsDir):
             partsScores[4] = SCORES.NONE
 
     else:
-        print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")
+        errorAndLog (f"parsing test_{testNum}.log is not implemented for <{osImage}>.")
         return overallScore ([],testNum)
 
     listScores = [adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]

@@ -36,7 +36,6 @@ cweScores = {
 @decorate.timeWrap
 def executeTest(target, vulClass, binTest, logDir):
     if isEnabled('isUnix') and target.isCurrentUserRoot:
-        # TODO: Test that this didn't break anything
         # Tests expect to started as normal user
         target.switchUser()
     testName = binTest.split('.')[0]
@@ -60,9 +59,6 @@ def score(testLogDir, vulClass):
 def runTests(target, sendFiles=False, timeout=30): #executes the app
     if isEqSetting('osImage', 'FreeRTOS'):
         # Exctract test output
-        # TODO: Play around with the timeout.  Some tests timeout at 15
-        # seconds, and even 60 seconds.  Set low for now to enable faster
-        # debugging.
         output = target.expectFromTarget(">>>End of Fett<<<",
                                          None,
                                          shutdownOnError=False,

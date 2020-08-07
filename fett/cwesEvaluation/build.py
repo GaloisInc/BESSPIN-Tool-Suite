@@ -124,20 +124,14 @@ def buildCwesEvaluation():
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
         if vulClass == "PPAC":
-            # TODO: Can I merge this vulclass branch with the other vulclass
-            # conditional at the top of this loop?  Might make things easier to
-            # read
-            # TODO: Check whether the other vulClasses have these kinds of
-            # writes from the dev configs too
             fHeader.write(
                     f'#define SPOOFING_IP {getSettingDict("PPAC", "spoofingIP")}\n'
                     f'#define TCP_PORT_NUMBER {getSetting("fpgaPortTarget")}\n')
 
             if isEqSetting('osImage', 'FreeRTOS'):
-                print("TODO: FreeRTOS support")
-                exit(1)
+                logAndExit("<PPAC> tests not implemented for <FreeRTOS>",
+                           exitCode=EXIT.Implementation)
             else:
-                # TODO: Test FreeBSD
                 pattern = os.path.join(sourcesDir,
                                        f'*_{getSetting("osImage")}')
                 for source in glob.glob(pattern):

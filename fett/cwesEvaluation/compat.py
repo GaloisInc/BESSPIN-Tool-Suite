@@ -8,19 +8,16 @@ class testgenTargetCompatabilityLayer:
     """
     def __init__(self, target):
         self.target = target
-
-        # TODO: What exactly is targetObj in the tests?  It seems they only
-        # ever access (or in one case, set) the isSshConn field.  Dig into the
-        # testgen code for targetObj
         self.targetObj = target
 
-        # TODO: Populate dicts from config file
-        self.testsPars = {"nResourceLimit" : 10}
         self.settings = {"useCustomScoring" : getSetting("useCustomScoring")}
+        self.testsPars = {}
         if doesSettingExist("PPAC"):
             self.testsPars["SPOOFING_IP"] = getSettingDict("PPAC", "spoofingIP")
             self.testsPars["nAllowedInteractions"] = getSettingDict("PPAC", "test_nAllowedInteractions")
             self.testsPars["nAllowedAuthAttempts"] = getSettingDict("PPAC", "test_nAllowedAuthAttempts")
+        if doesSettingExist("resourceManagement"):
+            self.testsPars["nResourceLimit"] = getSettingDict("resourceManagement", "test_nResourceLimit")
 
 
         # TODO: Set this to match target?
@@ -29,7 +26,6 @@ class testgenTargetCompatabilityLayer:
         # TODO: Make this configurable?
         self.showExecutionOnScreen = False
 
-        # TODO: Something less hacky
         self.backend = ('fpga' if isEqSetting('target', 'aws')
                                else getSetting('target'))
 

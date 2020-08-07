@@ -66,10 +66,6 @@ def test_287 (target,binTest):
             return outLog
 
         def switchUser287 (typeOfSwitch,doPrintResult=True):
-            # TODO: Review whether the real switch user function works like
-            # this function before just adding a setter to isCurrentUserRoot.
-            # It would be nice to just remove this function altogether
-
             #this method has similar functionality as baseTarget.switchUser, but checks whether linux asks for password, 
             # and whether the switch was successful
             retLog = ''

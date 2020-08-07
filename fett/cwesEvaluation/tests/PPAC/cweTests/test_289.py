@@ -13,7 +13,6 @@ def test_289 (target,binTest):
         outLog += "-"*20 + "Part01: Use a fake username. Attempt to authenticate" + "-"*20 + "\n"
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         if (target.settings['useCustomScoring']): #will need the gdb output here
-            # TODO: What do I need to do to support custom scoring here?
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
