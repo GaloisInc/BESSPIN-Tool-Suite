@@ -19,6 +19,8 @@ class testgenTargetCompatabilityLayer:
         self.settings = {"useCustomScoring" : False}
         if doesSettingExist("PPAC"):
             self.testsPars["SPOOFING_IP"] = getSettingDict("PPAC", "spoofingIP")
+            self.testsPars["nAllowedInteractions"] = getSettingDict("PPAC", "test_nAllowedInteractions")
+            self.testsPars["nAllowedAuthAttempts"] = getSettingDict("PPAC", "test_nAllowedAuthAttempts")
 
 
         # TODO: Set this to match target?
@@ -39,6 +41,10 @@ class testgenTargetCompatabilityLayer:
     def isCurrentUserRoot(self):
         return self.target.isCurrentUserRoot
 
+    @isCurrentUserRoot.setter
+    def isCurrentUserRoot(self, value):
+        self.target.isCurrentUserRoot = value
+
     @property
     def userName(self):
         return self.target.userName
@@ -50,6 +56,14 @@ class testgenTargetCompatabilityLayer:
     @property
     def userPassword(self):
         return self.target.userPassword
+
+    @userPassword.setter
+    def userPassword(self, value):
+        self.target.userPassword = value
+
+    @property
+    def rootPassword(self):
+        return self.target.rootPassword
 
     def typCommand(self, command):
         # TODO: Better endsWith (will this even work for freebsd?)

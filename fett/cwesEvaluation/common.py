@@ -35,6 +35,10 @@ cweScores = {
 @decorate.debugWrap
 @decorate.timeWrap
 def executeTest(target, vulClass, binTest, logDir):
+    if isEnabled('isUnix') and target.isCurrentUserRoot:
+        # TODO: Test that this didn't break anything
+        # Tests expect to started as normal user
+        target.switchUser()
     testName = binTest.split('.')[0]
     printAndLog(f"Executing {testName}...")
     outLog = cweTests[vulClass](target).executeTest(binTest)
@@ -92,6 +96,15 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                                    exitCode = EXIT.Configuration)
         target.sendTar(timeout=timeout)
 
+        # Copy binaries to non-root user's home as well
+        wasRoot = target.isCurrentUserRoot
+        if not target.isCurrentUserRoot:
+            target.switchUser()
+        target.runCommand(f"cp *.riscv /home/{target.userName}")
+        target.runCommand(f"chown {target.userName}:{target.userName} "
+                          f"/home/{target.userName}/*.riscv")
+        target.switchUser()
+
         # Batch tests by vulnerability class
         for vulClass, tests in getSetting("enabledCwesEvaluations").items():
             logDir = os.path.join(baseLogDir, vulClass)
@@ -100,6 +113,9 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                 executeTest(target, vulClass, test, logDir)
 
             score(logDir, vulClass)
+
+        if target.isCurrentUserRoot != wasRoot:
+            target.switchUser()
     else:
         logAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
                    exitCode=EXIT.Implementation)

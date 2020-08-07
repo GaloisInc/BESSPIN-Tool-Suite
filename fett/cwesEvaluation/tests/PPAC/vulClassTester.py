@@ -37,8 +37,6 @@ class vulClassTester(testgenTargetCompatabilityLayer):
         else:
             self.reportAndExit ("Error in {0}: Calling unknown method <{1}>.".format(self.filename,testName))
             outLog = ''
-        if ((self.osImage == 'FreeRTOS') and self.showExecutionOnScreen):
-            print (outLog)
         return outLog
 
     def executeOnRoot (self,commands):
@@ -46,7 +44,7 @@ class vulClassTester(testgenTargetCompatabilityLayer):
         if (switchBack): #only do this if user is not root
             self.switchUser()
         for command in commands:
-            self.runCommand (command,showOnScreen=self.showExecutionOnScreen)
+            self.runCommand (command)
         if (switchBack):
             self.switchUser()
         return

@@ -20,9 +20,7 @@ def test_289 (target,binTest):
         outLog += "-"*20 + "Part02: Rename username. Attempt to authenticate" + "-"*20 + "\n"
         killAllUserProcesses = "for xPid in $(ps -u {0} -o pid=); do kill -9 $xPid; done" #To be customized -- This is important to be able to run usermod
         renameUserToFrom = "usermod --login {0} {1}" #To be customized 
-        # TODO: It looks like this script is being called with target on root.
-        # I think I should change that?
-        #target.switchUser () #NOW ON ROOT
+        target.switchUser () #NOW ON ROOT
         target.runCommand (killAllUserProcesses.format(target.userName),shutdownOnError=False)
         target.runCommand ("sed -i \"s/&USERNAME&/{0}/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
         time.sleep (20) #Give time to close the process opened by the user
