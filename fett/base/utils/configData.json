@@ -69,6 +69,11 @@
             "choices" : [ "GFE", "LMCO", "Michigan", "MIT", "SRI-Cambridge" ]
         },
         {
+            "name" : "sourceVariant",
+            "type" : "string",
+            "choices" : [ "default", "purecap" ]
+        },
+        {
             "name" : "qemuNtkPortRangeStart",
             "type" : "int",
             "min" : 1024,
@@ -139,7 +144,76 @@
             "name" : "vulClasses",
             "type" : "stringsList",
             "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "codeInjection", "informationLeakage", "cryptoErrors", "numericErrors" ]
-        }       
+        },
+        {
+            "name" : "useCustomScoring",
+            "type" : "boolean"
+        },
+        {
+            "name" : "useCustomCompiling",
+            "type" : "boolean"
+        },
+        {
+            "name" : "FreeRTOStimeout",
+            "type" : "int",
+            "min" : 0
+        }
+    ],
+
+    "customizedScoring" : [
+        {
+            "name" : "stdoutKeywords",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "gdbKeywords",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "funcCheckpoints",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "memAddress",
+            "type" : "hex",
+            "size" : 8,
+            "min" : -1
+        },
+        {
+            "name" : "memResetValue",
+            "type" : "hex",
+            "size" : 8,
+            "min" : 0
+        },
+        {
+            "name" : "memViolationValues",
+            "type" : "hexList",
+            "size" : 8,
+            "min" : 0,
+            "wildValue" : "*",
+            "exception" : "memResetValue"
+        },
+        {
+            "name" : "useCustomFunction",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomFunction",
+            "type" : "filePath",
+            "condition" : "useCustomFunction"
+        }
+    ],
+
+    "customizedCompiling" : [
+        {
+            "name" : "useCustomMakefile",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomMakefile",
+            "type" : "filePath",
+            "condition" : "useCustomMakefile"
+        }
     ],
 
     "commonVulClassesParameters" : [

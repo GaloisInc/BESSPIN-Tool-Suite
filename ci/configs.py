@@ -30,6 +30,7 @@ unixDefaults = commonDefaults.union({
 gfe_unixOnPremDefaults = unixDefaults.union({
     ('binarySource',('GFE',)),
     ('elfLoader',('netboot',)),
+    ('sourceVariant',('default',)),
     ('netbootPortRangeStart',(5000,)),
     ('netbootPortRangeEnd',(6000,)),
     ('qemuNtkPortRangeStart',(5000,)),
@@ -39,6 +40,7 @@ gfe_unixOnPremDefaults = unixDefaults.union({
 gfe_unixAwsDefaults = unixDefaults.union({
     ('binarySource',('GFE',)),
     ('elfLoader',('JTAG',)),
+    ('sourceVariant',('default',)),
     ('target',('aws',))
 })
 
@@ -67,6 +69,7 @@ gfe_freebsdDevPR_aws = gfe_unixAwsDefaults.union({
 mit_unixDevPR_aws = unixDefaults.union({
     ('binarySource',('MIT',)),
     ('elfLoader',('JTAG',)),
+    ('sourceVariant',('default',)),
     ('processor',('bluespec_p2',)),
     ('target',('aws',)),
     ('osImage',('debian',))
@@ -75,6 +78,7 @@ mit_unixDevPR_aws = unixDefaults.union({
 lmco_unixDevPR_aws = unixDefaults.union({
     ('binarySource',('LMCO',)),
     ('elfLoader',('JTAG',)),
+    ('sourceVariant',('default',)),
     ('processor',('chisel_p2',)),
     ('target',('aws',)),
     ('osImage',('debian',))
@@ -83,6 +87,7 @@ lmco_unixDevPR_aws = unixDefaults.union({
 sri_cambridge_unixDevPR_aws = unixDefaults.union({
     ('binarySource',('SRI-Cambridge',)),
     ('elfLoader',('JTAG',)),
+    ('sourceVariant',('default','purecap',)),
     ('processor',('bluespec_p2',)),
     ('target',('aws',)),
     ('osImage',('FreeBSD',))
@@ -91,6 +96,7 @@ sri_cambridge_unixDevPR_aws = unixDefaults.union({
 freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',)),
+    ('sourceVariant',('default',)),
     ('FreeRTOSUseRAMDisk',('no',))
 })
 

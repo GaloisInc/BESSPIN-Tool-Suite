@@ -1,6 +1,7 @@
 {
     "mode" : "production",
     "binarySource" : "REQUIRED-SETTING",
+    "sourceVariant" : "default",
     "target" : "aws",
     "processor" : "REQUIRED-SETTING",
     "osImage" : "REQUIRED-SETTING",

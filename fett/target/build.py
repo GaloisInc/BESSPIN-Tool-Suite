@@ -16,7 +16,8 @@ def prepareOsImage ():
     if isEqSetting('binarySource', 'SRI-Cambridge'):
         osImageElf = os.path.join(getSetting('osImagesDir'),f"bbl-cheri.elf")
         setSetting('osImageElf',osImageElf)
-        osImageExtraElf = os.path.join(getSetting('osImagesDir'),f"kernel-cheri.elf")
+        imageVariant = '-purecap' if (isEqSetting('sourceVariant','purecap')) else ''
+        osImageExtraElf = os.path.join(getSetting('osImagesDir'),f"kernel-cheri{imageVariant}.elf")
         setSetting('osImageExtraElf', osImageExtraElf)
     else:
         osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
@@ -145,13 +146,13 @@ def prepareFreeRTOS():
     return
 
 
-def buildFreeRTOS():
+def buildFreeRTOS(doPrint=True):
     #Cleaning all ".o" and ".elf" files in site
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
 
     #Compile
-    printAndLog (f"Cross-compiling...")
+    printAndLog (f"Cross-compiling...",doPrint=doPrint)
     envVars = []
     envVars.append(f"XLEN={getSetting('xlen')}")
     envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
@@ -168,7 +169,15 @@ def buildFreeRTOS():
         envVars.append(f"FREERTOS_USE_RAMDISK=1")
     envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
     logging.debug(f"going to make using {envVars}")
-    make (envVars,getSetting('FreeRTOSprojDir'))
+    
+    if (isEqSetting('mode','evaluateSecurityTests') and
+        isEnabled('useCustomCompiling') and 
+        isEnabledDict('customizedCompiling','useCustomMakefile')
+        ):
+        make (envVars,getSetting('buildDir'))
+    else: 
+        # default environment
+        make (envVars,getSetting('FreeRTOSprojDir'))
 
     #check if the elf file was created
     builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
@@ -179,7 +188,7 @@ def buildFreeRTOS():
     if (not os.path.isfile(builtAsm)):
         logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
     cp(builtAsm,getSetting('osImageAsm'))
-    printAndLog(f"Files cross-compiled successfully.")
+    printAndLog(f"Files cross-compiled successfully.",doPrint=doPrint)
 
     #Cleaning all ".o" files post run
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
@@ -224,7 +233,8 @@ def selectImagePaths():
                 printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
         baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType)
         if isEqSetting('binarySource', 'SRI-Cambridge'):
-            imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), os.path.join(baseDir, f"kernel-cheri.elf")]
+            imageVariant = '-purecap' if (isEqSetting('sourceVariant','purecap')) else ''
+            imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), os.path.join(baseDir, f"kernel-cheri{imageVariant}.elf")]
         else:
             imagePaths = [os.path.join(baseDir, f"{getSetting('osImage')}.elf")]
         return imagePaths
@@ -262,3 +272,22 @@ def cleanDirectory (xDir,endsWith='.o'):
                     os.remove(os.path.join(xDirName,xFile))
                 except Exception as exc:
                     logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.", exitCode=EXIT.Files_and_paths)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def crossCompileUnix(directory,extraString=''):
+    #cross-compiling sanity checks
+    if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
+        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
+        setSetting('linker','GCC')
+
+    printAndLog (f"Cross-compiling {extraString}...")
+    envLinux = []
+    osImageCap1 = getSetting('osImage')[0].upper() + getSetting('osImage')[1:]
+    envLinux.append(f"OS_IMAGE={osImageCap1}")
+    envLinux.append(f"TARGET={getSetting('target').upper()}")
+    envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
+    envLinux.append(f"LINKER={getSetting('linker').upper()}")
+    logging.debug(f"going to make using {envLinux}")
+    make (envLinux, directory)
+    printAndLog(f"Files cross-compiled successfully.")

@@ -26,6 +26,7 @@ class commonTarget():
         self.fTtyOut = None
         self.sshProcess = None
         self.fSshOut = None
+        self.restartMode = False
 
         # all OSs settings
         self.portTarget = None
@@ -167,7 +168,10 @@ class commonTarget():
             if (not self.isCurrentUserRoot):
                 self.switchUser()
             self.terminateTarget(timeout=timeout,shutdownOnError=True)
-        printAndLog (f"{getSetting('target')} shut down successfully!")
+        printAndLog (f"{getSetting('target')} shut down successfully!",
+            doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and
+                            isEqSetting('osImage', 'FreeRTOS')) 
+                    )
         return
 
     @decorate.debugWrap
@@ -228,7 +232,10 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 120
             elif (isEqSetting('target', 'aws')):
-                timeout = 540
+                if (isEqSetting('sourceVariant', 'purecap')):
+                    timeout = 1260
+                else:
+                    timeout = 540
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -246,7 +253,7 @@ class commonTarget():
                 self.runCommand("root",endsWith="\r\n#")
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
             elif (not self.onlySsh):
-                if not isEqSetting("binarySource", "SRI-Cambridge"):
+                if ((not isEqSetting("binarySource", "SRI-Cambridge")) or self.restartMode):
                     self.runCommand ("root",endsWith='Password:')
                     self.runCommand (self.rootPassword,endsWith=tempPrompt)
                 else:
@@ -271,7 +278,13 @@ class commonTarget():
 
         #up the ethernet adaptor and get the ip address
         self.activateEthernet()
-                                  
+        
+        if (self.restartMode): #this only in aws/production mode -- skip the reset of start()
+            if (isEqSetting('osImage','debian')): # timesync is not in the boot sequence of neither GFE nor MIT images
+                ntpTimeout = 150 if isEqSetting('binarySource','MIT') else 60 # MIT needs some more time to be responsive
+                self.runCommand("systemctl start systemd-timesyncd.service",timeout=ntpTimeout)
+            printAndLog (f"start: {getSetting('osImage')} booted _again_ successfully!")
+            return
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         awsNtpServer = "169.254.169.123"
         if (isEqSetting('osImage','debian')):
@@ -500,7 +513,7 @@ class commonTarget():
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
                     erroneousContents=None,shutdownOnError=True,timeout=60,
-                    suppressErrors=False,tee=None):
+                    suppressErrors=False,tee=None,sendToNonUnix=False):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
         "   ARGUMENTS:
@@ -513,6 +526,7 @@ class commonTarget():
         "   timeout: how long to wait for endsWith before timing out.
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
+        "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
         "   RETURNS:
         "   --------
         "   A list: [isSuccess  : "Boolean. True on no-errors.",
@@ -520,7 +534,7 @@ class commonTarget():
         "            wasTimeout : "Boolean. True if timed-out waiting for endsWith.",
         "            idxEndsWith: The index of the endsWith received. If endsWith was a string, this would be 0. -1 on time-out.
         """
-        if (isEnabled('isUnix')):
+        if (isEnabled('isUnix') or sendToNonUnix):
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()

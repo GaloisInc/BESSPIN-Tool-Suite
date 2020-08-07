@@ -1,6 +1,6 @@
 from fett.cwesEvaluation.tests.resourceManagement.cweScores.helpers import *
 
-def test_911 (SCORES, customScorer, logTest, testsDir):
+def test_911 (logTest, testsDir):
     testNum = 911
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
@@ -33,25 +33,23 @@ def test_911 (SCORES, customScorer, logTest, testsDir):
         partsLines = regPartitionTestFreeRTOS(testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        if (doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_FIRST_TIME>")):
-            partsScores[1] = SCORES.NONE
-        elif (doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_SECOND_TIME>")):
+        if (doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_FIRST_TIME>") and 
+            doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_SECOND_TIME>")):
             partsScores[1] = SCORES.NONE
         else:
             partsScores[1] = SCORES.FAIL
 
-        if (doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_CHUNK_FREE>")):
+        if (doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_CHUNK_FREE>") or
+            doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_UNION_DATA_SET_TO_ONE>")):
             partsScores[2] = SCORES.V_HIGH
-        elif (doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_UNION_DATA_SET_TO_ONE>")):
-            partsScores[2] = SCORES.V_HIGH
-        elif (doesKeywordExist(partsLines[2], "<GDB-SIGINT>")):
-            partsScores[2] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[2], "<GDB-SIGINT>") or doesKeywordExist(partsLines[2],"<TIMEOUT>")):
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.FAIL
 
     else:
         print(f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")
-        return overallScore (SCORES, [],testNum)
+        return overallScore ([],testNum)
 
-    listScores = [customScorer.adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
-    return overallScore (SCORES, listScores ,testNum)
+    listScores = [adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
+    return overallScore (listScores ,testNum)

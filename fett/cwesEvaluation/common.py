@@ -1,5 +1,5 @@
 from fett.base.utils.misc import *
-import fett.cwesEvaluation.scoreTests as scoreTests
+from fett.cwesEvaluation.scoreTests import scoreTests
 
 import fett.cwesEvaluation.tests.bufferErrors.vulClassTester
 import fett.cwesEvaluation.tests.bufferErrors.cweScores
@@ -48,20 +48,12 @@ def executeTest(target, vulClass, binTest, logDir):
 def score(testLogDir, vulClass):
     module = cweScores[vulClass]
 
-    # TODO: Allow custom scoring
-    scorer = scoreTests.customScorerObj(False, None)
     csvPath = os.path.join(testLogDir, "scores.csv")
-    scoreTests.scoreTests(module, scorer, csvPath, testLogDir)
+    scoreTests(module, csvPath, testLogDir)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def runTests(target, sendFiles=False, timeout=30): #executes the app
-    # Create directory for logs
-    baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
-    mkdir(baseLogDir,
-          addToSettings="cwesEvaluationLogs",
-          exitIfExists=(not isEqSetting('osImage', 'FreeRTOS')))
-
     if isEqSetting('osImage', 'FreeRTOS'):
         # Exctract test output
         # TODO: Play around with the timeout.  Some tests timeout at 15
@@ -70,26 +62,27 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         output = target.expectFromTarget(">>>End of Fett<<<",
                                          None,
                                          shutdownOnError=False,
-                                         timeout=15)
+                                         timeout=getSetting('FreeRTOStimeout'))
 
-        test, vulClass, _ = getSetting("currentTest")
+        test, vulClass, _, logFile = getSetting("currentTest")
+
         if output[1]:
-            warnAndLog(f"{test} timed out.  Skipping.")
+            logFile.write(target.readFromTarget())
+            logFile.write("\n<TIMEOUT>\n")
+            warnAndLog(f"{test} timed out.  Skipping.",doPrint=False)
             return
-
-        # Save in correct log file
-        logDir = os.path.join(baseLogDir, vulClass)
-        mkdir(logDir, exitIfExists=False)
-        testName = test.split('.')[0]
-        logFile = ftOpenFile(os.path.join(logDir, f"{testName}.log"), 'a')
-        logFile.write(output[0])
-        logFile.close()
+        else:
+            logFile.write(output[0])
 
     elif getSetting('osImage') in ['debian', 'FreeBSD']:
+        # Create directory for logs
+        baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
+        mkdir(baseLogDir, addToSettings="cwesEvaluationLogs")
+
         if not sendFiles:
             target.shutdownAndExit("<runApp>: sendFiles must be True for CWEs "
                                    "evaluation on unix hosts",
-                                   exitCode = EXIT.Configuration)
+                                   exitCode = EXIT.Dev_Bug)
         target.sendTar(timeout=timeout)
 
         # Batch tests by vulnerability class

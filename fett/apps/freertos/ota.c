@@ -209,6 +209,9 @@ void vOta(void *pvParameters)
 
     fettPrintf("(Info)~  vOta: Starting OTA...\r\n");
 
+    fettPrintf("(Info)~  vOta: task initial SHWM is %u\n",
+               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
+
     r = wc_ed25519_init(&pk);
     ASSERT_OR_DELETE_TASK((r == 0),
                           "vOta : wc_ed25519_init()");
@@ -229,6 +232,8 @@ void vOta(void *pvParameters)
     wc_ed25519_free(&pk);
 
     fettPrintf("(Info)~  vOta: Exiting OTA...\r\n");
+    fettPrintf("(Info)~  vOta: task final SHWM is %u\n",
+               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
     // notify main
     ASSERT_OR_DELETE_TASK((xMainTask != NULL),

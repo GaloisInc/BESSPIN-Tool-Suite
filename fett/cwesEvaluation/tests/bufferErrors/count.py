@@ -3,7 +3,7 @@ import os
 import json
 
 from fett.base.utils.misc import *
-import fett.cwesEvaluation.scoreTests
+from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 
 QEMU_FPGA_LOOKFOR  = [
             # (indicated result, line contain)
@@ -43,7 +43,7 @@ def triage(filepath,lookfor):
         return 'FAIL'
 
 
-def scoreLog(SCORES, customScorer, logFile, lookfor):
+def scoreLog(logFile, lookfor):
     #First, get the triage decision
     logSymbol = triage(logFile,lookfor)
     if (logSymbol == 'INVALID'):
@@ -61,7 +61,7 @@ def scoreLog(SCORES, customScorer, logFile, lookfor):
         fLog = ftOpenFile(logFile,'r')
         logLines = fLog.read().splitlines()
         fLog.close()
-        return (customScorer.adjustToCustomScore(logLines,thisScore),
+        return (adjustToCustomScore(logLines,thisScore),
                 logSymbol)
     except:
         return (SCORES.FAIL, logSymbol)
@@ -89,7 +89,7 @@ def test_ord(t):
     except:
         return -1
 
-def tabulate(SCORES, customScorer, dirpath,lookfor):
+def tabulate(dirpath,lookfor):
     dirpath = Path(dirpath)
     if not dirpath.is_dir():
         logAndExit(f"<bufferErrors.count.tabulate> <{dirpath}> is not a directory",
@@ -102,7 +102,7 @@ def tabulate(SCORES, customScorer, dirpath,lookfor):
                                       f"{path.stem}.c"))
             if not cfile.is_file():
                 logAndExit(f"<bufferErrors.count.tabulate> C file {cfile} not found")
-            result, logSymbol = scoreLog (SCORES, customScorer, path, lookfor)
+            result, logSymbol = scoreLog (path, lookfor)
             row = ({'TestNumber': path.stem,
                     'Result': result},
                    logSymbol)
@@ -135,7 +135,7 @@ def fixup(v, logSymbol):
     if type(v) == list:
         vals = ','.join(v)
         return f"\"[{vals}]\""
-    elif type(v) == fett.cwesEvaluation.scoreTests.SCORES:
+    elif type(v) == SCORES:
         return logSymbol
     return v
 
