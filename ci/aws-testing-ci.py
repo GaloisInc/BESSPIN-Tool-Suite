@@ -143,6 +143,11 @@ if __name__ == "__main__":
         "present on AMI",
     )
     parser.add_argument(
+        "-c",
+        "--config",
+        help="Filepath to the config file (Defaults to $repoDir/ci/configs.py)"
+    )
+    parser.add_argument(
         "-cp",
         "--cap",
         type=int,

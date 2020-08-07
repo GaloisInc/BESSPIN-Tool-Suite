@@ -21,7 +21,7 @@ class InstanceManager:
         self._instances.append(instance)
         return self
 
-    def run_all_instances(self):
+    def run_all_instances(self, config=None):
         log.debug(
             f"Pool Run Instances started with instances { [x.tags for x in self._instances] }in capacity {self._cap}"
         )
@@ -51,7 +51,7 @@ class InstanceManager:
         while len(self._instances) > 0 or len(running_instances) > 0:
             # There are still instances left to run / running
             #   Therefore, we must check SQS to see if anything has happened
-            sqs = poll_sqs()
+            sqs = poll_sqs(config)
 
             # Check for finished ID
             if sqs is not None:

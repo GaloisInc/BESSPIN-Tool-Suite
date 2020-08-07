@@ -159,7 +159,7 @@ def launch_instance(
 # +-----------+
 
 
-def poll_sqs():
+def poll_sqs(config):
     """
     Get any new SQS messages that are in queue. Returns instance_id for a message.
 
@@ -169,17 +169,24 @@ def poll_sqs():
 
     log.debug(f"Polling SQS Once")
 
-    # Get path to the repoDir
-    awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
-    buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
-    repoDir = os.path.abspath(os.path.join(buildDir, os.pardir))
+    if config is not None:
+        moduleSpec = importlib.util.spec_from_file_location(
+            "configs", config
+        )
+        configs = importlib.util.module_from_spec(moduleSpec)
+        moduleSpec.loader.exec_module(configs)
+    else:
+        # Get path to the repoDir
+        awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
+        buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
+        repoDir = os.path.abspath(os.path.join(buildDir, os.pardir))
 
-    # Import Configs from $repoDir/ci/configs.py
-    moduleSpec = importlib.util.spec_from_file_location(
-        "configs", os.path.join(repoDir, "ci", "configs.py")
-    )
-    configs = importlib.util.module_from_spec(moduleSpec)
-    moduleSpec.loader.exec_module(configs)
+        # Import Configs from $repoDir/ci/configs.py
+        moduleSpec = importlib.util.spec_from_file_location(
+            "configs", os.path.join(repoDir, "ci", "configs.py")
+        )
+        configs = importlib.util.module_from_spec(moduleSpec)
+        moduleSpec.loader.exec_module(configs)
 
     # Start Boto3 Client
     try:
