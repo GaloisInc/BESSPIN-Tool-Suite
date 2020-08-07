@@ -5,3 +5,9 @@ myConfig.ini
 core
 *.mypy_cache/
 .DS_STORE
+.idea/
+
+# CI Gitignores
+ci/userdata.txt
+ci/results.txt
+ci/aws-test-suite.log
