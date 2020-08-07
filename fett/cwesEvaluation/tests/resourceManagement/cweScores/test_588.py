@@ -1,6 +1,6 @@
 from fett.cwesEvaluation.tests.resourceManagement.cweScores.helpers import *
 
-def test_588 (SCORES, customScorer, logTest,testsDir):
+def test_588 (logTest,testsDir):
     testNum = 588
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
@@ -36,17 +36,21 @@ def test_588 (SCORES, customScorer, logTest,testsDir):
 
         if (doesKeywordExist(partsLines[1],"<CAST_PASSED_SUCCESSFULLY>")):
             partsScores[1] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[1],"<TIMEOUT>")): #timeout with no trapping
+            partsScores[1] = SCORES.HIGH
         else:
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2],"<CAST_PASSED_SUCCESSFULLY>")):
             partsScores[2] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[2],"<TIMEOUT>")): #timeout with no trapping
+            partsScores[2] = SCORES.HIGH
         else:
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.FAIL
 
 
     else:
         print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")
-        return overallScore (SCORES, [],testNum)
+        return overallScore ([],testNum)
 
-    listScores = [customScorer.adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
-    return overallScore (SCORES, listScores ,testNum)
+    listScores = [adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
+    return overallScore (listScores ,testNum)

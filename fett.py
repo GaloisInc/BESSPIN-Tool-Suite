@@ -34,7 +34,7 @@ optional arguments:
 try:
     from fett.base.utils.misc import *
     from fett.base.config import loadConfiguration, genProdConfig
-    from fett.target.launch import startFett, endFett
+    from fett.target.launch import startFett, endFett, resetTarget
     from fett.base.utils import aws
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
@@ -110,26 +110,39 @@ def main (xArgs):
         configFile = os.path.join(repoDir,'config.ini')
         printAndLog(f"Using the default configuration in <{configFile}>.")
     setSetting('configFile', configFile)
-    loadConfiguration(configFile)
 
     #Prepare the peaceful exit
     setSetting('trash',trashCanObj())
     atexit.register(exitPeacefully,getSetting('trash'))
 
+    loadConfiguration(configFile)
+
     #launch the tool
     xTarget = startFett()
     if (isEqSetting('mode','production')):
-        # Notify portal that we have deployed successfully
-        aws.sendSQS(getSetting(f'{getSetting("fettEntrypoint")}SqsQueueTX'), logAndExit, 'success', 
-                    getSetting('prodJobId'), f"{getSetting('prodJobId')}-DEPLOY",
-                    reason='fett-target-production-deployment',
+        def sendSuccessMsgToPortal (nodeSuffix, reasonSuffix):
+            aws.sendSQS(getSetting(f'{getSetting("fettEntrypoint")}SqsQueueTX'), logAndExit, 'success', 
+                    getSetting('prodJobId'), f"{getSetting('prodJobId')}-{nodeSuffix}",
+                    reason=f'fett-target-production-{reasonSuffix}',
                     hostIp=aws.getInstanceIp(logAndExit),
                     fpgaIp=getSetting('productionTargetIp')
                     )
-        printAndLog("Sent deployment message to the SQS queue.")
+            printAndLog(f"Sent {reasonSuffix} message to the SQS queue.")
 
-        aws.pollPortalIndefinitely (getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), logAndExit)
-        printAndLog("Received termination notice from Portal.")
+        # Notify portal that we have deployed successfully
+        sendSuccessMsgToPortal('DEPLOY','deployment')
+
+        # Wait for portal to instruct us to do something
+        instruction = 'notARealInstruction'
+        while (instruction != 'termination'):
+            instruction = aws.pollPortalIndefinitely (getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), logAndExit)
+            printAndLog(f"Received {instruction} notice from Portal.")
+
+            if (instruction == 'reset'):
+                # execute reset flow 
+                xTarget = resetTarget(xTarget)
+                # Notify portal that we have reset successfully
+                sendSuccessMsgToPortal('RESET','reset')
         
     endFett(xTarget)
     exitFett(EXIT.Success)

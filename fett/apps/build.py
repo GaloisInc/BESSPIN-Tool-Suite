@@ -265,22 +265,3 @@ def cpDirToBuildDir(sourceDir):
 @decorate.debugWrap
 def buildDirPathTuple(path):
     return (path, os.path.join(getSetting('buildDir'), path))
-
-@decorate.debugWrap
-@decorate.timeWrap
-def crossCompileUnix():
-    #cross-compiling sanity checks
-    if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
-        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
-        setSetting('linker','GCC')
-
-    printAndLog (f"Cross-compiling ...")
-    envLinux = []
-    osImageCap1 = getSetting('osImage')[0].upper() + getSetting('osImage')[1:]
-    envLinux.append(f"OS_IMAGE={osImageCap1}")
-    envLinux.append(f"TARGET={getSetting('target').upper()}")
-    envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
-    envLinux.append(f"LINKER={getSetting('linker').upper()}")
-    logging.debug(f"going to make using {envLinux}")
-    make (envLinux,getSetting('buildDir'))
-    printAndLog(f"Files cross-compiled successfully.")

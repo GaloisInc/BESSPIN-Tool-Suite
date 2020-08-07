@@ -9,7 +9,7 @@ from fett.base.utils.misc import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
-import fett.target.build
+from fett.target.build import freeRTOSBuildChecks, prepareFreeRTOSNetworkParameters, buildFreeRTOS, crossCompileUnix, cleanDirectory
 
 
 @decorate.debugWrap
@@ -34,6 +34,37 @@ def buildCwesEvaluation():
                    os.path.join(getSetting('osImagesDir'),
                                 f"{getSetting('osImage')}.asm"))
         setSetting('sendTarballToTarget', False)
+
+        freeRTOSBuildChecks()
+
+        #copy the C files, .mk files, and any directory
+        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),
+                getSetting('buildDir'),
+                copyContents=True)
+        # Remove existing main file
+        os.remove(os.path.join(getSetting('buildDir'), "main_fett.c"))
+
+        # TODO: Put listConfigParams back in to fill the header file?
+        # Write empty fett configuration header file (nothing to configure)
+        touch(os.path.join(getSetting('buildDir'), "fettUserConfig.h"))
+
+        prepareFreeRTOSNetworkParameters()
+
+        # TODO: Should probably modify the source files to support AWS instead of
+        # this hack
+        backend = ("FPGA" if isEqSetting("target", "aws")
+                          else getSetting("target").upper())
+
+        # Define variables testgen uses
+        mk = ftOpenFile(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a')
+        mk.write("CFLAGS += "
+                 "-DtestgenOnFreeRTOS "
+                 f"-Dtestgen{backend} ")
+        mk.close()
+
+        if (isEnabled('useCustomCompiling') and isEnabledDict('customizedCompiling','useCustomMakefile')):
+            cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
+                os.path.join(getSetting('buildDir'), 'Makefile'))
 
 
     # Copy apps over
@@ -66,20 +97,24 @@ def buildCwesEvaluation():
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
 
-        cp(os.path.join(getSetting('repoDir'),
-                        'fett',
-                        'target',
-                        'utils',
-                        'Makefile.xcompileDir'),
-           os.path.join(vulClassDir, 'Makefile'))
-        cp(os.path.join(getSetting('repoDir'),
-                        'fett',
-                        'cwesEvaluation',
-                        'tests',
-                        'scripts',
-                        'emulation',
-                        'defaultEnvLinux.mk'),
-            vulClassDir)
+        if (not isEqSetting('osImage', 'FreeRTOS')):
+            # copy makefile over
+            if (isEnabled('useCustomCompiling') and isEnabledDict('customizedCompiling','useCustomMakefile')):
+                cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
+                    os.path.join(vulClassDir, 'Makefile'))
+            else: # Use default environment
+                cp(os.path.join(getSetting('repoDir'),
+                                'fett',
+                                'target',
+                                'utils',
+                                'Makefile.xcompileDir'),
+                   os.path.join(vulClassDir, 'Makefile'))
+                cp(os.path.join(getSetting('repoDir'),
+                                'fett',
+                                'target',
+                                'utils',
+                                'defaultEnvLinux.mk'),
+                    vulClassDir)
 
         # Write the extra testsParameters.h
         fHeader = ftOpenFile(os.path.join(vulClassDir, "testsParameters.h"), 'w')
@@ -116,7 +151,7 @@ def buildCwesEvaluation():
         if isEqSetting('osImage', 'FreeRTOS'):
             prepareFreeRTOS(vulClassDir)
         elif getSetting('osImage') in ['debian', 'FreeBSD']:
-            crossCompileUnix(vulClassDir)
+            crossCompileUnix(vulClassDir,extraString=f'{vulClass} tests')
         else:
             logAndExit("<buildCwesEvaluation> is not implemented for "
                        f"<{getSetting('osImage')}>.",
@@ -155,27 +190,6 @@ def buildTarball():
 
 @decorate.debugWrap
 @decorate.timeWrap
-def crossCompileUnix(directory):
-    #cross-compiling sanity checks
-    if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
-        # TODO: Is this true for testgen?
-        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
-        setSetting('linker','GCC')
-
-    printAndLog (f"Cross-compiling ...")
-    envLinux = []
-    osImageCap1 = getSetting('osImage')[0].upper() + getSetting('osImage')[1:]
-    envLinux.append(f"OS_IMAGE={osImageCap1}")
-    envLinux.append(f"BACKEND={getSetting('target').upper()}")
-    envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
-    envLinux.append(f"LINKER={getSetting('linker').upper()}")
-    logging.debug(f"going to make using {envLinux}")
-    make(envLinux, directory)
-    printAndLog(f"Files cross-compiled successfully.")
-
-
-@decorate.debugWrap
-@decorate.timeWrap
 def prepareFreeRTOS(directory):
     # TODO: Just inline this function if its just a one liner
     # Generate main files
@@ -183,59 +197,26 @@ def prepareFreeRTOS(directory):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def buildFreeRTOSTest(test, vulClass, part):
+def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     # TODO: Some options in target.build.prepareFreeRTOS are omitted here
 
-    fett.target.build.freeRTOSBuildChecks()
+    buildDir = getSetting('buildDir')
+    
+    # copy the test files
+    vTestsDir = os.path.join(buildDir, vulClass)
+    testFiles = [test, f'main_{test}', 'testsParameters.h']
+    for testFile in testFiles:
+        cp (os.path.join(vTestsDir,testFile), buildDir)
 
-    # Remove all files, but not folders, from build directory
-    for f in os.listdir(getSetting('buildDir')):
-        path = os.path.join(getSetting('buildDir'), f)
-        try:
-            os.remove(path)
-        except IsADirectoryError:
-            pass
-        except Exception as exc:
-            logAndExit(f'<buildFreeRTOSTest> Failed to remove <{path}>',
-                       exc=exc,
-                       exitCode=EXIT.Files_and_paths)
-
-    #copy the C files, .mk files, and any directory
-    copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),
-            getSetting('buildDir'),
-            copyContents=True)
-    # Remove existing main file
-    os.remove(os.path.join(getSetting('buildDir'), "main_fett.c"))
-
-    # Copy test files over
-    cp(os.path.join(getSetting('buildDir'), vulClass, test),
-       getSetting('buildDir'))
-    cp(os.path.join(getSetting('buildDir'), vulClass, f'main_{test}'),
-       getSetting('buildDir'))
-    cp(os.path.join(getSetting('buildDir'), vulClass),
-       getSetting('buildDir'),
-       pattern=f"*.h")
-
-
-    # TODO: Put listConfigParams back in to fill the header file?
-    # Write empty fett configuration header file (nothing to configure)
-    header = ftOpenFile(os.path.join(getSetting('buildDir'), "fettUserConfig.h"), 'w')
-    header.close()
-
-    fett.target.build.prepareFreeRTOSNetworkParameters()
-
-    # TODO: Should probably modify the source files to support AWS instead of
-    # this hack
-    backend = ("FPGA" if isEqSetting("target", "aws")
-                      else getSetting("target").upper())
-
-    # Define variables testgen uses
-    mk = ftOpenFile(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a')
-    mk.write("CFLAGS += "
-             "-DtestgenOnFreeRTOS "
-             f"-Dtestgen{backend} "
-             f"-DTESTGEN_TEST_PART={part}")
-    mk.close()
+    fPars = ftOpenFile(os.path.join(buildDir,'testsParameters.h'),'a')
+    fPars.write(f"\n#define TESTGEN_TEST_PART {part}\n")
+    fPars.close()
 
     # Build
-    fett.target.build.buildFreeRTOS()
+    buildFreeRTOS(doPrint=False)
+
+    #remove the current test files
+    for testFile in testFiles:
+        os.remove(os.path.join(buildDir,testFile))
+    #remove the object files
+    cleanDirectory (buildDir,endsWith='.o')
