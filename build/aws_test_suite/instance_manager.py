@@ -54,7 +54,7 @@ class InstanceManager:
             sqs = poll_sqs()
 
             # Check for finished ID
-            if not sqs == "":
+            if sqs is not None:
                 # Not an empty message - we have an ID
                 for i in running_instances:
                     if i.id == sqs:

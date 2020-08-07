@@ -163,7 +163,7 @@ def poll_sqs():
     """
     Get any new SQS messages that are in queue. Returns instance_id for a message.
 
-    :return: instance id or ""
+    :return: instance id or None
     :rtype: str
     """
 
@@ -226,4 +226,4 @@ def poll_sqs():
             return instance_id
 
     # Nothing got, return empty string.
-    return ""
+    return None
