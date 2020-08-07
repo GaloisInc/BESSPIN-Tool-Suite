@@ -1125,6 +1125,15 @@ class commonTarget():
     def hasHardwareRNG (self):
         return isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])
 
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def getGdbOutput(self):
+        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'aws')
+                                               else getSetting('target'))
+        message = f"getGdbOutput is not implemented for <{target}>"
+        errorAndLog(message)
+        return message
+
 # END OF CLASS commonTarget
 
 def checkPort (portNum, host=''):

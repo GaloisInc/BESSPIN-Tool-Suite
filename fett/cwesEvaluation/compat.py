@@ -16,7 +16,7 @@ class testgenTargetCompatabilityLayer:
 
         # TODO: Populate dicts from config file
         self.testsPars = {"nResourceLimit" : 10}
-        self.settings = {"useCustomScoring" : False}
+        self.settings = {"useCustomScoring" : getSetting("useCustomScoring")}
         if doesSettingExist("PPAC"):
             self.testsPars["SPOOFING_IP"] = getSettingDict("PPAC", "spoofingIP")
             self.testsPars["nAllowedInteractions"] = getSettingDict("PPAC", "test_nAllowedInteractions")
@@ -80,4 +80,7 @@ class testgenTargetCompatabilityLayer:
 
     def switchUser(self):
         self.target.switchUser()
+
+    def getGdbOutput(self):
+        return self.target.getGdbOutput()
 

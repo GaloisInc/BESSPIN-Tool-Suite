@@ -312,6 +312,25 @@ class firesimTarget(commonTarget):
                 warnAndLog(f"runGDBcommand: Failed to read the cmdOut of <{command}>.",doPrint=False,exc=exc)
                 return ''
 
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def getGdbOutput(self):
+        gdbOut = ''
+        try:
+            self.fGdbOut.close()
+            gdbOutPath = os.path.join(getSetting('workDir'), 'gdb.out')
+            fGdb = ftOpenFile(gdbOutPath, "rb")
+            gdbOut = "\n~~~GDB LOGGING~~~\n" + fGdb.read() + "\n~~~~~~~~~~~~~~~~~\n"
+            fGdb.close()
+            os.remove(self.gdbOutPath) #clear the file for next test
+            self.fGdbOut = ftOpenFile(gdbOutPath, 'wb')
+        except Exception as exc:
+            warnAndLog("<getGdbOutput> failed to obtain the GDB output.",
+                        exc=exc)
+        return gdbOut
+
+
+
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
 class connectalTarget(commonTarget):
