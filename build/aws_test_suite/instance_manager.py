@@ -26,8 +26,6 @@ class InstanceManager:
             f"Pool Run Instances started with instances { [x.tags for x in self._instances] }in capacity {self._cap}"
         )
 
-        running_instances = []
-
         assert (len(self._instances)) > 0, "No instances were found."
 
         # Populate running_instances with $cap instances
