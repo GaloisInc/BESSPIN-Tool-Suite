@@ -34,6 +34,10 @@ class testgenTargetCompatabilityLayer:
                                else getSetting('target'))
 
     @property
+    def onlySsh(self):
+        return self.target.onlySsh
+
+    @property
     def osImage(self):
         return getSetting("osImage")
 
