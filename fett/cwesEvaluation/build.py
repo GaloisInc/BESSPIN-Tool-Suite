@@ -37,30 +37,8 @@ def buildCwesEvaluation():
 
         freeRTOSBuildChecks()
 
-        #copy the C files, .mk files, and any directory
-        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),
-                getSetting('buildDir'),
-                copyContents=True)
-        # Remove existing main file
-        os.remove(os.path.join(getSetting('buildDir'), "main_fett.c"))
-
-        # TODO: Put listConfigParams back in to fill the header file?
-        # Write empty fett configuration header file (nothing to configure)
         touch(os.path.join(getSetting('buildDir'), "fettUserConfig.h"))
-
-        prepareFreeRTOSNetworkParameters()
-
-        # TODO: Should probably modify the source files to support AWS instead of
-        # this hack
-        backend = ("FPGA" if isEqSetting("target", "aws")
-                          else getSetting("target").upper())
-
-        # Define variables testgen uses
-        mk = ftOpenFile(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a')
-        mk.write("CFLAGS += "
-                 "-DtestgenOnFreeRTOS "
-                 f"-Dtestgen{backend} ")
-        mk.close()
+        touch(os.path.join(getSetting('buildDir'), "fettFreeRTOSConfig.h"))
 
         if (isEnabled('useCustomCompiling') and isEnabledDict('customizedCompiling','useCustomMakefile')):
             cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
@@ -73,9 +51,9 @@ def buildCwesEvaluation():
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
 
-        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
-                                    vulClass, 'sources')
         if vulClass == 'bufferErrors':
+            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                    vulClass,'envFett.mk'), vulClassDir)
             # Generate test sources
             generateTests(vulClassDir)
             if isEnabledDict('bufferErrors', 'useExtraTests'):
@@ -89,6 +67,9 @@ def buildCwesEvaluation():
                        os.path.join(vulClassDir,
                                     f'test_extra_{os.path.basename(source)}'))
         else:
+            sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                    vulClass, 'sources')
+            cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
             for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
                 # Check if the test should be skipped:
                 cTestName = os.path.basename(test)
@@ -134,8 +115,9 @@ def buildCwesEvaluation():
                     f'#define TCP_PORT_NUMBER {getSetting("fpgaPortTarget")}\n')
 
             if isEqSetting('osImage', 'FreeRTOS'):
-                print("TODO: FreeRTOS support")
-                exit(1)
+                copyDir(os.path.join(sourcesDir,'libFreeRTOS'),
+                os.path.join(getSetting('buildDir'),'libFreeRTOS_PPAC'),
+                renameDest=True)
             else:
                 # TODO: Test FreeBSD
                 pattern = os.path.join(sourcesDir,
@@ -204,7 +186,7 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     
     # copy the test files
     vTestsDir = os.path.join(buildDir, vulClass)
-    testFiles = [test, f'main_{test}', 'testsParameters.h']
+    testFiles = [test, f'main_{test}', 'testsParameters.h', 'envFett.mk']
     for testFile in testFiles:
         cp (os.path.join(vTestsDir,testFile), buildDir)
 
