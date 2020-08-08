@@ -92,6 +92,14 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         target.runCommand(f"cp *.riscv /home/{target.userName}")
         target.runCommand(f"chown {target.userName}:{target.userName} "
                           f"/home/{target.userName}/*.riscv")
+
+        # Move any pam or limit files
+        target.runCommand(f"chown root:{target.rootGroup} pam*")
+        target.runCommand("mv pam* /etc/pam.d/")
+        target.runCommand(f"chown root:{target.rootGroup} limits*")
+        target.runCommand("mv limits* /etc/security/")
+
+        # Become a normal user
         target.switchUser()
 
         # Batch tests by vulnerability class

@@ -68,6 +68,7 @@ def buildCwesEvaluation():
 
 
     # Copy apps over
+    additionalFiles = []
     for vulClass in getSetting('vulClasses'):
         # Create class dir and build
         vulClassDir = os.path.join(buildDir, vulClass)
@@ -136,9 +137,11 @@ def buildCwesEvaluation():
                                        f'*_{getSetting("osImage")}')
                 for source in glob.glob(pattern):
                     suffixLen = len(getSetting('osImage')) + 1
-                    cp(source,
-                       os.path.join(vulClassDir,
-                                    os.path.basename(source)[:-suffixLen]))
+                    outFile = os.path.join(
+                            vulClassDir,
+                            os.path.basename(source)[:-suffixLen])
+                    cp(source, outFile)
+                    additionalFiles.append(outFile)
 
         fHeader.close()
 
@@ -152,12 +155,12 @@ def buildCwesEvaluation():
                        exitCode=EXIT.Implementation)
 
     if getSetting('osImage') in ['debian', 'FreeBSD']:
-        buildTarball()
+        buildTarball(additionalFiles)
 
 
 @decorate.debugWrap
 @decorate.timeWrap
-def buildTarball():
+def buildTarball(additionalFiles):
     fileList = [(os.path.basename(f), f) for f in
                 glob.glob(os.path.join(getSetting('buildDir'),
                                        "*",
@@ -170,6 +173,8 @@ def buildTarball():
         except KeyError:
             enabledCwesEvaluations[vulClass] = [test]
     setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
+
+    fileList += [(os.path.basename(f), f) for f in additionalFiles]
 
     # TODO: Do I need this += part here?  I thought it would capture the
     # entropy thing, but it looks like it doesn't?

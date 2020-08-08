@@ -27,7 +27,7 @@ class vulClassTester(testgenTargetCompatabilityLayer):
             logAndExit('<pocExploitsMode> not implemented',
                        exitCode=EXIT.Implementation)
         else:
-            self.reportAndExit ("Error in {0}: Calling unknown method <{1}>.".format(self.filename,testName))
+            logAndExit("{0}: Calling unknown method <{1}>.".format(self.filename,testName))
             outLog = ''
         return outLog
 
