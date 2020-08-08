@@ -4,6 +4,7 @@ helpers functions for scoring the CWE tests
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 import re
+from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 
 def readLogLines (logTest,testsDir):
