@@ -9,8 +9,8 @@ from fett.base.utils.misc import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
-from fett.target.build import freeRTOSBuildChecks, prepareFreeRTOSNetworkParameters, buildFreeRTOS, crossCompileUnix, cleanDirectory
-
+from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
+from fett.cwesEvaluation.tests.PPAC.freertos import prepareFreeRTOSforPPAC
 
 @decorate.debugWrap
 def buildCwesEvaluation():
@@ -115,10 +115,7 @@ def buildCwesEvaluation():
                     f'#define TCP_PORT_NUMBER {getSetting("fpgaPortTarget")}\n')
 
             if isEqSetting('osImage', 'FreeRTOS'):
-                copyDir(os.path.join(sourcesDir,'libFreeRTOS'),
-                        os.path.join(getSetting('buildDir'),'lib_PPAC'),
-                        renameDest=True)
-                prepareFreeRTOSNetworkParameters()
+                prepareFreeRTOSforPPAC()
             else:
                 # TODO: Test FreeBSD
                 pattern = os.path.join(sourcesDir,
