@@ -105,11 +105,11 @@ class testgenTargetCompatabilityLayer:
         return self.target.getGdbOutput()
 
     def closeSshConn(self):
-        target.closeSshConn()
+        self.target.closeSshConn()
 
     def killSshConn(self):
-        target.killSshConn()
+        self.target.killSshConn()
 
     def openSshConn(self, **kwargs):
-        return target.openSshConn(**kwargs)
+        return self.target.openSshConn(**kwargs)
 
