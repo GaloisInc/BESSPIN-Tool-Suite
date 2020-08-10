@@ -69,6 +69,22 @@ class testgenTargetCompatabilityLayer:
     def rootPassword(self):
         return self.target.rootPassword
 
+    @property
+    def sshRetries(self):
+        return self.target.sshRetries
+
+    @sshRetries.setter
+    def sshRetries(self, value):
+        self.target.sshRetries = value
+
+    @property
+    def sshLimitRetries(self):
+        return self.target.sshLimitRetries
+
+    @sshLimitRetries.setter
+    def sshLimitRetries(self, value):
+        self.target.sshLimitRetries = value
+
     def typCommand(self, command):
         # TODO: Better endsWith (will this even work for freebsd?)
         return self.target.runCommand(command)[1]
@@ -87,4 +103,10 @@ class testgenTargetCompatabilityLayer:
 
     def getGdbOutput(self):
         return self.target.getGdbOutput()
+
+    def closeSshConn(self):
+        target.closeSshConn()
+
+    def killSshConn(self):
+        target.killSshConn()
 
