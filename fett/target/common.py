@@ -950,6 +950,22 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True):
+        def warningThread(msg, waitingTime, stopEvent):
+            """thread will wait on an event, and display warning if not set by waiting time"""
+            dt = 0.1
+            dt = waitingTime / 10.0 if dt > waitingTime else dt
+            ct  = 0.0
+            while ct < waitingTime:
+                time.sleep(dt)
+                if stopEvent.is_set():
+                    sys.exit()
+                ct += dt
+            warnAndLog(msg)
+        # prepare thread to give warning message if the expect is near timing out
+        stopEvent = threading.Event()
+        warningTime = 0.8 * timeout
+        warningMsg = threading.Thread(target=warningThread, args=(f"expectFromTarget: command <{command}> is near timeout ({timeout} s) at time ({warningTime} s)", warningTime, stopEvent))
+        warningMsg.start()
         self.checkFallToTty ("expectFromTarget")
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
@@ -968,6 +984,8 @@ class commonTarget():
             return [textBack, True, -1]
         except Exception as exc:
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
+        # tell warning message thread that the expect is finished
+        stopEvent.set()
         if (isinstance(endsWith,str)): #only one string
             textBack += endsWith
         elif ((endsWith not in [pexpect.EOF, pexpect.TIMEOUT]) and isinstance(endsWith[retExpect],str)): #list
