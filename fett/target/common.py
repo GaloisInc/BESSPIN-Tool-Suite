@@ -958,13 +958,16 @@ class commonTarget():
             while ct < waitingTime:
                 time.sleep(dt)
                 if stopEvent.is_set():
-                    sys.exit()
+                    return
                 ct += dt
             warnAndLog(msg)
+
         # prepare thread to give warning message if the expect is near timing out
         stopEvent = threading.Event()
         warningTime = 0.8 * timeout
-        warningMsg = threading.Thread(target=warningThread, args=(f"expectFromTarget: command <{command}> is near timeout ({timeout} s) at time ({warningTime} s)", warningTime, stopEvent))
+        warningMsg = threading.Thread(target=warningThread, args=(f"expectFromTarget: command <{command}> is near timeout ({timeout} s)", warningTime, stopEvent))
+        warningMsg.daemon = True
+        getSetting('trash').throwThread(warningMsg, "warning message for expectFromTarget")
         warningMsg.start()
         self.checkFallToTty ("expectFromTarget")
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
