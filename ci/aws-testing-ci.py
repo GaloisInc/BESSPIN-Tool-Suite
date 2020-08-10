@@ -31,8 +31,12 @@ def collect_run_names():
 
     log.debug(
         str(
-            subprocess.check_output(shlex.split(str(os.path.join(repoDir, "ci", "fett-ci.py")) + "-X -ep AWS runDevPR "
-                                                                                                 "-job 420"))
+            subprocess.check_output(
+                shlex.split(
+                    str(os.path.join(repoDir, "ci", "fett-ci.py"))
+                    + " -X -ep AWS runDevPR -job 420"
+                )
+            )
         )
     )
     unsorted = os.listdir("/tmp/dumpIni/")
@@ -145,7 +149,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c",
         "--config",
-        help="Filepath to the config file (Defaults to $repoDir/ci/configs.py)"
+        help="Filepath to the config file (Defaults to $repoDir/ci/configs.py)",
     )
     parser.add_argument(
         "-cp",
