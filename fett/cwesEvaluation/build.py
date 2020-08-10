@@ -116,8 +116,9 @@ def buildCwesEvaluation():
 
             if isEqSetting('osImage', 'FreeRTOS'):
                 copyDir(os.path.join(sourcesDir,'libFreeRTOS'),
-                os.path.join(getSetting('buildDir'),'libFreeRTOS_PPAC'),
-                renameDest=True)
+                        os.path.join(getSetting('buildDir'),'lib_PPAC'),
+                        renameDest=True)
+                prepareFreeRTOSNetworkParameters()
             else:
                 # TODO: Test FreeBSD
                 pattern = os.path.join(sourcesDir,

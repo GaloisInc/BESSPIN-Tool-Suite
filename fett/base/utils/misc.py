@@ -306,8 +306,10 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
         for xDir in listDirs:
             copyDir(os.path.join(src,xDir),dest)
     else:
+        if (not renameDest):
+            dest = os.path.join(dest,os.path.basename(os.path.normpath(src)))
         try:
-            shutil.copytree(src, os.path.join(dest,os.path.basename(os.path.normpath(src))))
+            shutil.copytree(src, dest)
         except Exception as exc:
             logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
