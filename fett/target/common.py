@@ -1021,7 +1021,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def openSshConn (self,userName='root',endsWith=None,timeout=60):
+    def openSshConn (self,userName='root',endsWith=None,timeout=60,specialTest=False):
         def returnFail (message,exc=None):
             self.killSshConn()
             warnAndLog (message,doPrint=False,exc=exc)
@@ -1065,7 +1065,10 @@ class commonTarget():
         elif (retExpect[2]==4): # asking for yes/no for new host
             self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
-            return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
+            if specialTest:
+                return 'BLOCKED_IP'
+            else:
+                return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
         self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
         return True

@@ -110,3 +110,6 @@ class testgenTargetCompatabilityLayer:
     def killSshConn(self):
         target.killSshConn()
 
+    def openSshConn(self, **kwargs):
+        return target.openSshConn(**kwargs)
+
