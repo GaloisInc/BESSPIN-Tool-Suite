@@ -16,7 +16,7 @@ def test_287 (target,binTest):
             def suRoot287 ():
                 retLog = ''
                 shellRoot = "{0}#".format(target.userName)
-                shellUser = '[00m:[01;34m~[00m$'
+                shellUser = '[00m:[01;34m~[00m\$'
                 isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",endsWith=['Password:', shellRoot, shellUser],shutdownOnError=False,expectExact=True)
                 retLog += textBack
                 if (idxEndsWith == 0): #still asks for password
