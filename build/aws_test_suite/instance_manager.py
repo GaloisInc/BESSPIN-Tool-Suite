@@ -13,17 +13,19 @@ class InstanceManager:
         self._instances = instances
         self._running = []
         self._terminated = []
-        self._capped = False
 
         self._i = cap
 
     def add_instance(self, instance):
+        log.debug(
+            f"InstanceManager adding instance { instance.name } to { [x.name for x in self._instances] }"
+        )
         self._instances.append(instance)
         return self
 
     def run_all_instances(self, config=None):
         log.debug(
-            f"Pool Run Instances started with instances { [x.tags for x in self._instances] }in capacity {self._cap}"
+            f"Pool Run Instances started with instances { [[x.tags, x] for x in self._instances] } in capacity {self._cap}"
         )
 
         assert (len(self._instances)) > 0, "No instances were found."
@@ -84,17 +86,22 @@ class InstanceManager:
 
 
 class Instance:
-    def __init__(
-        self,
-        ami,
-        name,
-        vpc_name="aws-controltower-VPC",
-        security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
-        instance_type="f1.2xlarge",
-        key_name="nightly-testing",
-        userdata=None,
-        tags={"Name": "aws-test-suite"}
-    ):
+    # def __init__(
+    #     self,
+    #     ami,
+    #     name,
+    #     vpc_name="aws-controltower-VPC",
+    #     security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
+    #     instance_type="f1.2xlarge",
+    #     key_name="nightly-testing",
+    #     userdata=None,
+    #     tags={"Name": "aws-test-suite"},
+    # ):
+
+    def __init__(self, ami, name, **kwargs):
+
+        log.debug(f"Instance constructor called with { locals() }")
+
         if not re.fullmatch("ami-[A-Za-z0-9]+", ami):
             ami = get_ami_id_from_name(ami)
 
@@ -103,13 +110,27 @@ class Instance:
 
         self._id = None
 
-        self._vpc_name = vpc_name
-        self._security_group_name = security_group_name
-        self._instance_type = instance_type
-        self._key_name = key_name
-        self._userdata = userdata
-        self._tags = tags
+        self._vpc_name = (
+            kwargs["vpc_name"] if "vpc_name" in kwargs else "aws-controltower-VPC"
+        )
+        self._security_group_name = (
+            kwargs["security_group_name"]
+            if "security_group_name" in kwargs
+            else "FPGA Developer AMI-1-8-1-AutogenByAWSMP-1"
+        )
+        self._instance_type = (
+            kwargs["instance_type"] if "instance_type" in kwargs else "f1.2xlarge"
+        )
+        self._key_name = (
+            kwargs["key_name"] if "key_name" in kwargs else "nightly-testing"
+        )
+        self._userdata = kwargs["userdata"] if "userdata" in kwargs else None
+        self._tags = kwargs["tags"] if "tags" in kwargs else {}
         self._tags["Name"] = self._name
+
+        log.debug(
+            f"Tags after name assignment in instance_manager.py is { self._tags } while name is { self._name }"
+        )
 
     def start(self, **ec2_kwargs):
         log.debug(f"Start() called on instance { self._tags }")
