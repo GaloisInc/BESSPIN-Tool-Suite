@@ -374,7 +374,7 @@ def test_307 (target,binTest):
                 retAuthAttempts = serverAuthForNofAttempts (serverSocket, iSubPart)
                 outLog += retAuthAttempts[0]
                 if (retAuthAttempts[1] == 'INVALID'):
-                    outLog += target.runCommand("getTargetDump",endsWith=">>>End of Testgen<<<",onlySearchTheEnd=False,timeout=10,shutdownOnError=False)[1]
+                    outLog += target.runCommand("getTargetDump",endsWith=">>>End of Fett<<<",onlySearchTheEnd=False,timeout=10,shutdownOnError=False)[1]
                     outLog += "\n<INVALID> [host-server-{0}]: Failed to establish connection with target.\n".format(iSubPart)
                     break
                 
@@ -384,8 +384,8 @@ def test_307 (target,binTest):
             outLog += "\n<INVALID> This test has only two parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
             return outLog
 
-        if (">>>End of Testgen<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Testgen<<<",shutdownOnError=False,timeout=20)
+        if (">>>End of Fett<<<" not in outLog):
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"

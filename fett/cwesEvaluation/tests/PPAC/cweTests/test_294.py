@@ -115,8 +115,8 @@ def test_294(target, binTest):
         except:
             outLog += f"\n<INVALID> [host]: Failed to run <sudo sudo_{testNum}>.\n"
 
-        if (">>>End of Testgen<<<" not in outLog):
-            retFinish = target.runCommand("allProgram", endsWith=">>>End of Testgen<<<", shutdownOnError=False,
+        if (">>>End of Fett<<<" not in outLog):
+            retFinish = target.runCommand("allProgram", endsWith=">>>End of Fett<<<", shutdownOnError=False,
                                           timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]):  # bad

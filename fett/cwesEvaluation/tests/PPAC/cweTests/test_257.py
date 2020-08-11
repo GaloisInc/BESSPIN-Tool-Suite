@@ -94,8 +94,8 @@ def test_257 (target,binTest):
             socketThreadsCollect.append(target.socketCloseAndCollect(clientSocket))
             del TLS_CTX
         
-        if (">>>End of Testgen<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Testgen<<<",shutdownOnError=False,timeout=20)
+        if (">>>End of Fett<<<" not in outLog):
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"
