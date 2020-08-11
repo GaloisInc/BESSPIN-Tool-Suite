@@ -21,6 +21,7 @@ class testgenTargetCompatabilityLayer:
             self.testsPars["nAllowedInteractions"] = getSettingDict("PPAC", "test_nAllowedInteractions")
             self.testsPars["nAllowedAuthAttempts"] = getSettingDict("PPAC", "test_nAllowedAuthAttempts")
             self.testsPars['TESTGEN_TEST_PART'] = getSetting("currentTest")[2]
+            self.certsDir = os.path.join(getSetting('buildDir'),'lib_PPAC')
         if doesSettingExist("resourceManagement"):
             self.testsPars["nResourceLimit"] = getSettingDict("resourceManagement", "test_nResourceLimit")
 
@@ -116,4 +117,24 @@ class testgenTargetCompatabilityLayer:
 
     def activateEthernet(self):
         return self.target.activateEthernet()
+
+    @property
+    def ipTarget(self):
+        return self.target.ipTarget
+
+    @property
+    def portTarget(self):
+        return self.target.portTarget
+
+    @property
+    def ipHost(self):
+        return self.target.ipHost
+
+    @property
+    def portHost(self):
+        return self.target.portHost
+
+    def readFromTarget(self, *args, **kwargs):
+        # TODO: Are these interfaces compatable enough?
+        return self.target.readFromTarget(*args, **kwargs)
 
