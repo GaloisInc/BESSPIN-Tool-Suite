@@ -165,7 +165,7 @@ def test_799 (target,binTest):
                 TLS_CTX.verify_mode = ssl.CERT_REQUIRED 
                 TLS_CTX.load_verify_locations (cafile="{0}/caCert.pem".format(target.certsDir)) #load the CA cert
                 TLS_CTX.load_cert_chain(certfile="{0}/clientCert.pem".format(target.certsDir),keyfile="{0}/clientKey.pem".format(target.certsDir))
-            except Exception as exc::
+            except Exception as exc:
                 errorAndLog (f"test799: Failed to load the CA certificate into a TLS context.",exc=exc,doPrint=False)
                 outLog += "\n[host-client-{0}]: INVALID: Failed to load the CA certificate into a TLS context.\n".format(iSubPart)
                 break
