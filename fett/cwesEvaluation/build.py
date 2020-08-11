@@ -185,6 +185,12 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     # copy the test files
     vTestsDir = os.path.join(buildDir, vulClass)
     testFiles = [test, f'main_{test}', 'testsParameters.h', 'envFett.mk']
+    #Check for extra files
+    if (vulClass=='PPAC'):
+        extraFile = os.path.join(buildDir,'lib_PPAC','extraSources',test.replace('.c','_extra.c'))
+        if (os.path.isfile(extraFile)):
+            testFiles.append(os.path.join(os.pardir,os.pardir,extraFile)) #relative to vTestsDir
+
     for testFile in testFiles:
         cp (os.path.join(vTestsDir,testFile), buildDir)
 

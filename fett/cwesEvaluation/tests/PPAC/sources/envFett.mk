@@ -29,8 +29,6 @@ WOLFSSL_SRC = $(WOLFSSL_SOURCE_DIR)/src/ssl.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/pwdbased.c \
 			  $(WOLFSSL_SOURCE_DIR)/wolfcrypt/src/dh.c
 
-EXTRA_TEST_SOURCES = $(wildcard $(INC_FETT_APPS)/lib_PPAC/extraSources/test_$(testNum)_extra*.c)
-
 DEMO_SRC = main.c \
     $(wildcard $(INC_FETT_APPS)/*.c) \
     $(wildcard $(INC_FETT_APPS)/lib_PPAC/*.c) \
@@ -42,7 +40,6 @@ INCLUDES += -I$(INC_FETT_APPS)/lib_PPAC
 # Network
 CFLAGS += -I$(FREERTOS_IP_INCLUDE)
 FREERTOS_SRC += $(FREERTOS_IP_SRC)
-DEMO_SRC += $(FREERTOS_IP_DEMO_SRC)
 
 # WolfSSL
 CFLAGS += -I$(WOLFSSL_SOURCE_DIR)

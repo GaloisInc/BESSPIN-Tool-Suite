@@ -18,12 +18,24 @@ void onPrintf (const char * textToPrint, ...) {
     return;
 }
 
-//turn off printing. and print >>>EndofTestgen<<<
+// Easy fix
+void fettPrintf (const char * textToPrint, ...);
+void fettPrintf (const char * textToPrint, ...) {
+    if (!doEndTest) {
+        va_list args;
+        va_start(args, textToPrint);
+        vprintf(textToPrint, args);
+        va_end(args);
+    }
+    return;
+}
+
+//turn off printing. and print >>>End of Fett<<<
 void exitTest (uint8_t exitCode) {
     if (!doEndTest) {
         doEndTest = 1;
-        printf ("EXIT: exiting testgen with code <%x>\n",exitCode);
-        printf ("\n>>>End of Testgen<<<\n");
+        printf ("EXIT: exiting fett with code <%x>\n",exitCode);
+        printf ("\n>>>End of Fett<<<\n");
     }
     return;
 }
@@ -89,9 +101,9 @@ void *XREALLOC(void *p, size_t n, void* heap, int type)
 
     //This has the dangerous part
     #if __riscv_xlen == 64
-        unsigned int isItCustomCall = (heap != NULL) && ((intptr_t) heap == USE_TESTGEN_REALLOC);
+        unsigned int isItCustomCall = (heap != NULL) && ((intptr_t) heap == USE_FETT_REALLOC);
     #else
-        unsigned int isItCustomCall = (heap != NULL) && ((int) heap == USE_TESTGEN_REALLOC);
+        unsigned int isItCustomCall = (heap != NULL) && ((int) heap == USE_FETT_REALLOC);
     #endif
 
     if (isItCustomCall == 0) { //super dangerous method
@@ -117,7 +129,7 @@ void *XREALLOC(void *p, size_t n, void* heap, int type)
 
 /* Added as no /dev/urandom to give the seed for RNG -- Not for REAL APPLICATIONS */
 static uint8_t iSeed = 0; //start with the first one
-int testgen_wc_GenerateSeed(uint8_t* seed, uint8_t sz) {
+int fett_wc_GenerateSeed(uint8_t* seed, uint8_t sz) {
     uint8_t seedsArray [TESTGEN_WC_SEEDS_LEN] = { TESTGEN_WC_SEEDS };
     uint8_t seedOS = seedsArray[iSeed];
     memcpy (seed, &seedOS, sz); 

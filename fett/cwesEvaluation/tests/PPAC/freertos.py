@@ -41,7 +41,7 @@ def genWolfSSLseeds (fHeader):
         nSeeds = getSettingDict('PPAC','nSeedsForWolfSSL')
         random.seed()
         seeds = [str(x) for x in random.choices(range(0,256),k=nSeeds)]
-        fHeader.write(f"#define TESTGEN_WC_SEEDS {' '.join(seeds)}\n")
+        fHeader.write(f"#define TESTGEN_WC_SEEDS {','.join(seeds)}\n")
         fHeader.write(f"#define TESTGEN_WC_SEEDS_LEN {nSeeds}\n")
 
 @decorate.debugWrap
