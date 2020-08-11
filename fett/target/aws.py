@@ -185,6 +185,8 @@ class firesimTarget(commonTarget):
             if (pName in listProcesses):
                 sudoShellCommand(['kill','-9',str(pId)],check=False)
 
+        sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
+
     def interact(self):
         if (isEqSetting('osImage','FreeRTOS')):
             printAndLog (f"FreeRTOS is left running on target. Press \"Ctrl + E\" to exit.")
