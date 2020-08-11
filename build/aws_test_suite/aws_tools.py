@@ -14,7 +14,7 @@ from .logger import *
 # +-----------------------------+
 # |  AWS Instance Manipulation  |
 # +-----------------------------+
-
+@log_assertion_fails
 def get_ami_id_from_name(ami_name):
     """
     From AMI name, get AMI ID
