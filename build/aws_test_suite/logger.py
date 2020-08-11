@@ -20,6 +20,18 @@ def log_assertion_fails(func):
     return wrappedFn
 
 
+class LevelFilter(logging.Filter):
+    def __init__(self, low, high):
+        self._low = low
+        self._high = high
+        logging.Filter.__init__(self)
+
+    def filter(self, record):
+        if self._low <= record.levelno <= self._high:
+            return True
+        return False
+
+
 class SuiteLogger(logging.Logger):
     """AWS Test Suite Logger Configuration
     take the base logger in logging, configure it with handlers, and set log levels"""
@@ -46,12 +58,12 @@ class SuiteLogger(logging.Logger):
         # setup file logging
         self.filehandler = logging.FileHandler(log_filepath)
         self.filehandler.setFormatter(formatter)
-        self.filehandler.setLevel(filehandler_loglevel)
+        self.filehandler.addFilter(LevelFilter(filehandler_loglevel, 99))
 
         # results filepath
         self.results_filehandler = logging.FileHandler(results_filepath)
         self.results_filehandler.setFormatter(results_formatter)
-        self.results_filehandler.setLevel(self.RESULT_LEVEL_NUM)
+        self.results_filehandler.addFilter(LevelFilter(self.RESULT_LEVEL_NUM, self.RESULT_LEVEL_NUM))
 
         # setup console logging -- set to info log level
         self.streamhandler = logging.StreamHandler()
@@ -62,7 +74,6 @@ class SuiteLogger(logging.Logger):
         self.addHandler(self.filehandler)
         self.addHandler(self.streamhandler)
         self.addHandler(self.results_filehandler)
-
 
     def results(self, message, *args, **kwargs):
         """new logging category -- logs to RESULTS log level and at file handle for results"""
