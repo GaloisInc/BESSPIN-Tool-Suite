@@ -3,7 +3,7 @@ Building CWEs Evaluation
 """
 
 import glob
-import os
+import os, re
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
@@ -195,6 +195,12 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
 
     fPars = ftOpenFile(os.path.join(buildDir,'testsParameters.h'),'a')
     fPars.write(f"\n#define TESTGEN_TEST_PART {part}\n")
+    if (vulClass=='PPAC'):
+        try:
+            testNum = re.findall(r'\d+',test)[0]
+        except Exception as exc:
+            logAndExit(f"Failed to extract TESTNUM from <{test}>",exc=exc,exitCode=EXIT.Dev_Bug)
+        fPars.write(f"#define TESTNUM {testNum}\n")
     fPars.close()
 
     # Build
