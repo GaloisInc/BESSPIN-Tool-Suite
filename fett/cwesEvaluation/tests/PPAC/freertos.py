@@ -16,6 +16,8 @@ def prepareFreeRTOSforPPAC (fHeader):
             renameDest=True)
     
     # Needs fettFreeRTOSIPConfig.h
+    cp (os.path.join(sourcesDir,'libFreeRTOS','fettFreeRTOSIPConfig.h'),
+        os.path.join(getSetting('buildDir')))
     prepareFreeRTOSNetworkParameters()
 
     # Certificates
