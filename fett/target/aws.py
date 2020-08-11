@@ -28,6 +28,9 @@ class firesimTarget(commonTarget):
         if (getSetting('osImage') not in ['debian','FreeRTOS']):
             logAndExit (f"<firesimTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
+        if (not isEqSetting('mode','production')): #maybe there are leftovers -- easier for fellow devs
+            self.cleanProcesses()
+
         awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
 
         # 1. Switch0
@@ -167,6 +170,20 @@ class firesimTarget(commonTarget):
         if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
             time.sleep(20)
         setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
+
+    @decorate.debugWrap
+    def cleanProcesses(self):
+        listProcesses = ['FireSim-f1','switch0']
+        if (isEqSetting('mode','evaluateSecurityTests')):
+            listProcesses += ['openocd', 'riscv64-unknown-elf-gdb']
+        procList = subprocess.getoutput('ps -A -o %c,%p')
+        for entry in procList.splitlines():
+            try:
+                pName, pId = ''.join(entry.split()).strip().split(',')
+            except Exception as exc:
+                warnAndLog(f"Failed to split the ps entry <{entry}>.",exc=exc,doPrint=False)
+            if (pName in listProcesses):
+                sudoShellCommand(['kill','-9',str(pId)],check=False)
 
     def interact(self):
         if (isEqSetting('osImage','FreeRTOS')):
