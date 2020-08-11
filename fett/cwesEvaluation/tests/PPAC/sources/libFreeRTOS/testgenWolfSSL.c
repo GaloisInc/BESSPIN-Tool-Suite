@@ -75,6 +75,8 @@ void vInitServerWolfSSL (void *pvParameters)
     BaseType_t frReturn; //FreeRTOS return
     int wsReturn; //wolfss return
 
+    vTaskDelay(pdMS_TO_TICKS(1000)); //startWolfSSL() executes so fast on AWS
+
     /* Attempt to create a context that uses the TLS 1.2 server protocol. */
     WOLFSSL_METHOD * methodTLSv1_2 = wolfTLSv1_2_server_method();
     if (methodTLSv1_2 == NULL) {
@@ -140,6 +142,8 @@ void vInitClientWolfSSL (void *pvParameters)
     uint8_t useJediCert = * (uint8_t *) pvParameters;
     int wsReturn; //wolfss return
 
+    vTaskDelay(pdMS_TO_TICKS(1000)); //startWolfSSL() executes so fast on AWS
+    
     /* Attempt to create a context that uses the TLS 1.2 client protocol. */
     WOLFSSL_METHOD * methodTLSv1_2 = wolfTLSv1_2_client_method();
     if (methodTLSv1_2 == NULL) {
