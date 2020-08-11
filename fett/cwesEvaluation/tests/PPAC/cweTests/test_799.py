@@ -177,7 +177,8 @@ def test_799 (target,binTest):
             except socket.timeout:
                 outLog += "\n[host-client-{0}]: INVALID: Timed-out while trying to wrap the TCP socket.\n".format(iSubPart)
                 break
-            except:
+            except Exception as exc:
+                errorAndLog (f"test799: Failed to TLS wrap the TCP socket.",exc=exc,doPrint=False)
                 outLog += "\n[host-client-{0}]: INVALID: Failed to wrap the TCP socket due to non-CertificateError.\n".format(iSubPart)
                 break    
 
@@ -186,7 +187,7 @@ def test_799 (target,binTest):
             except:
                 outLog += "\n<INVALID> [host-client-{0}]: Failed to send message to target.\n".format(iSubPart)
                 break
-            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]
+            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
             try:
                 # Look for the response
                 ready = select.select([clientSocket], [], [], 10) #10 seconds timeout

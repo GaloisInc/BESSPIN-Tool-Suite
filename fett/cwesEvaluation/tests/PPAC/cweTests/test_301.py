@@ -67,7 +67,7 @@ def test_301 (target,binTest):
                     isFound = True
                     break
             if (not isFound):
-                logDict['target'] += target.runCommand("sendToTarget",endsWith=goldenString,erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]
+                logDict['target'] += target.runCommand("sendToTarget",endsWith=goldenString,erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
 
 
         def connectToTarget (iConn,retSockets,logDict,logLock):
@@ -205,7 +205,7 @@ def test_301 (target,binTest):
             except:
                 return
 
-            logDict[0] += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV-0-CHALLENGE>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]
+            logDict[0] += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV-0-CHALLENGE>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
 
             #read the resp-0 -- the challenge answer of req-0
             try:
@@ -226,7 +226,7 @@ def test_301 (target,binTest):
             except:
                 return
 
-            logDict[0] += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV-1-CHALLENGE>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]
+            logDict[0] += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV-1-CHALLENGE>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
 
             #read the resp-1 -- the challenge answer of req-1 (And should work as ans-0)
             try:

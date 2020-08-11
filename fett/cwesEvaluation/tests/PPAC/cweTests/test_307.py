@@ -254,7 +254,7 @@ def test_307 (target,binTest):
             for iSubPart, nOfSubPart in enumerate([1, nAttempts, nAttempts+1]):
                 message = "TESTGEN-307-P01.{0}".format(iSubPart)
                 #to enhance the control flow
-                outLog += target.runCommand("waitForTCPReady",endsWith="<TCP-READY>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=15,shutdownOnError=False)[1]
+                outLog += target.runCommand("waitForTCPReady",endsWith="<TCP-READY>",erroneousContents="<INVALID>",timeout=15,shutdownOnError=False)[1]
                 retAuthAttempts = clientAuthForNofAttempts (iSubPart, nOfSubPart)
                 outLog += retAuthAttempts[0]
                 if ((retAuthAttempts[1] == 'INVALID') or (retAuthAttempts[2] is None)):
@@ -267,7 +267,7 @@ def test_307 (target,binTest):
                     except:
                         outLog += "\n<INVALID> [host-client-{0}]: Failed to send message to target.\n".format(iSubPart)
                         break
-                    outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]
+                    outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
                 else: #DENIED
                     outLog += "\n[host-client-{0}]: DENIED: Failed to connect!\n".format(iSubPart)
                     continue
@@ -305,7 +305,7 @@ def test_307 (target,binTest):
                         retLog += "\n[host-server-{0}.{1}]: INVALID: Failed to accept a connection. (Unknown error)\n".format(iSubPart,iAttempt)
                         return [retLog, 'INVALID']
 
-                    retTLS = target.runCommand("waitForTLSReady",endsWith="<TLS-READY>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)
+                    retTLS = target.runCommand("waitForTLSReady",endsWith="<TLS-READY>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)
                     retLog += retTLS[1]
                     if ((not retTLS[0]) or retTLS[2]): #bad
                         retLog += "\n[host-server-{0}.{1}]: INVALID: Failed to detect <TLS-READY>.\n".format(iSubPart,iAttempt)
@@ -338,7 +338,7 @@ def test_307 (target,binTest):
                         except:
                             retLog += "\n[host-server-{0}.{1}]: INVALID: Failed to send message to target.\n".format(iSubPart,iAttempt)
                             return [retLog, 'INVALID']
-                        retSend = target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=10,shutdownOnError=False)
+                        retSend = target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=10,shutdownOnError=False)
                         retLog += retSend[1]
                         if ((not retSend[0]) or retSend[2]): #bad
                             retLog += "<INVALID> [host-server-{0}.{1}]: Failed to send message to target.\n".format(iSubPart,iAttempt)
@@ -369,7 +369,7 @@ def test_307 (target,binTest):
                 retAuthAttempts = serverAuthForNofAttempts (serverSocket, iSubPart)
                 outLog += retAuthAttempts[0]
                 if (retAuthAttempts[1] == 'INVALID'):
-                    outLog += target.runCommand("getTargetDump",endsWith=">>>End of Fett<<<",onlySearchTheEnd=False,timeout=10,shutdownOnError=False)[1]
+                    outLog += target.runCommand("getTargetDump",endsWith=">>>End of Fett<<<",timeout=10,shutdownOnError=False)[1]
                     outLog += "\n<INVALID> [host-server-{0}]: Failed to establish connection with target.\n".format(iSubPart)
                     break
                 

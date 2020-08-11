@@ -99,7 +99,7 @@ def test_294(target, binTest):
         sudoPrompt = f"\"Warning: You need sudo privileges to run test_{testNum}: [sudo] password for {getpass.getuser()}: \""
 
         outLog += target.runCommand("waitForServer", endsWith="<TCP-READY>", erroneousContents="<INVALID>",
-                                    onlySearchTheEnd=False, timeout=20, shutdownOnError=False)[1]
+                                    timeout=20, shutdownOnError=False)[1]
         try:
             outLog += str(subprocess.check_output(
                 f"sudo -p {sudoPrompt} {sys.executable} {pathToSudoPart} {'+'.join(sys.path)} {target.ipTarget} {target.portTarget} {spoofingIP} {ethAdaptorName} {target.testsPars['TESTGEN_TEST_PART']}",

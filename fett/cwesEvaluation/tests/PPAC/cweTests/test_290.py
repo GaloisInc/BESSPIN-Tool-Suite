@@ -33,7 +33,7 @@ def test_290 (target,binTest):
         outLog += "\n[host]: Pinging target successful!\n"
 
         for i in range(1): #easier construct to break -- loop executed only once
-            outLog += target.runCommand("waitForServer",endsWith="<UDP-READY>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]
+            outLog += target.runCommand("waitForServer",endsWith="<UDP-READY>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
             if (target.testsPars['TESTGEN_TEST_PART'] == 1):
                 outLog += ">>> [host-client]: Sending a good UDP packet..."
                 try:

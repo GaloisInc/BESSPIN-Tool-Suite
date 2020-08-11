@@ -145,7 +145,7 @@ def test_288 (target,binTest):
                     breakAttemptsLoop = True
                     break
 
-                outLog += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV{recvSuffix}>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]
+                outLog += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV{recvSuffix}>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
                 try:
                     # Look for the response
                     ready = select.select([clientSocket], [], [], 10) #10 seconds timeout

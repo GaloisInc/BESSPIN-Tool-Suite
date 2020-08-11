@@ -69,7 +69,7 @@ def test_259 (target,binTest):
                 except:
                     outLog += f"\n<INVALID> [host-client-{iAttempt}]: Failed to send message to target.\n"
                     break
-                outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]
+                outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
                 try:
                     # Look for the response
                     ready = select.select([clientSocket], [], [], 10) #10 seconds timeout
@@ -108,7 +108,7 @@ def test_259 (target,binTest):
                     outLog += "\n[host-server]: INVALID: Failed to accept a connection. (Unknown error)\n"
                     break
 
-                retTLS = target.runCommand("waitForTLSReady",endsWith="<TLS-READY>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)
+                retTLS = target.runCommand("waitForTLSReady",endsWith="<TLS-READY>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)
                 outLog += retTLS[1]
                 if ((not retTLS[0]) or retTLS[2]): #bad
                     outLog += "\n[host-server]: INVALID: Failed to detect <TLS-READY>.\n"
@@ -141,7 +141,7 @@ def test_259 (target,binTest):
                 except:
                     outLog += "\n[host-server]: INVALID: Failed to send message to target.\n"
                     break
-                retSend = target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=10,shutdownOnError=False)
+                retSend = target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=10,shutdownOnError=False)
                 outLog += retSend[1]
                 if ((not retSend[0]) or retSend[2]): #bad
                     outLog += "<INVALID> [host-server]: Failed to send message to target.\n"

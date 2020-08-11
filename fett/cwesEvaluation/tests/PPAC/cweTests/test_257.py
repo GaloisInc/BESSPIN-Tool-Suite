@@ -74,7 +74,7 @@ def test_257 (target,binTest):
             except:
                 outLog += f"\n<INVALID> [host-client-{iAttempt}]: Failed to send message to target.\n"
                 break
-            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]
+            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
             try:
                 # Look for the response
                 ready = select.select([clientSocket], [], [], 10) #10 seconds timeout
