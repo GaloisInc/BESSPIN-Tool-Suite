@@ -55,19 +55,15 @@ def main(args):
     # log arguments to main()
     log.debug(f"aws-testing-ci.py started with arguments { args }")
 
-    # Handle init and credentials
-    if args.init:
-        a = AWSCredentials.from_interactive()
-    elif args.credentials:
-        a = AWSCredentials.from_credentials_file(args.credentials)
-    else:
-        try:
-            a = AWSCredentials.from_credentials_file()
-        except AssertionError:
-            try:
-                a = AWSCredentials.from_env_vars()
-            except AssertionError:
-                log.error(f"{h}Cannot get AWS credentials.")
+    # Check in envs, otherwise error
+    try:
+        a = AWSCredentials.from_env_vars()
+    except AssertionError:
+        log.error(f"{h}Cannot get AWS credentials.")
+
+    # Make sure that the region and format are written in ~/.aws/config
+    AWSConfig.check_write_aws_config()
+
     log.info(f"{h}AWSCredentials gathered!")
 
     # Get list of all targets for fett-ci.py
