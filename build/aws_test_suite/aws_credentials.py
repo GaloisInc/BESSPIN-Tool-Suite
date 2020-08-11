@@ -23,6 +23,7 @@ class AWSCredentials:
         log.info("AWSCredentials: successfully obtained credentials")
 
     @classmethod
+    @log_assertion_fails
     def from_env_vars(cls):
         """
         Get AWS credentials from environment variables
@@ -42,6 +43,7 @@ class AWSCredentials:
         return cls([os.environ[v] for v in variables])
 
     @classmethod
+    @log_assertion_fails
     def from_credentials_file(cls, filepath="~/.aws/credentials"):
         """
         Get AWS credentials from file
@@ -122,6 +124,7 @@ class AWSCredentials:
         return os.path.exists(filename)
 
     @staticmethod
+    @log_assertion_fails
     def _check_credentials(cred):
         """
         Ensure that the credentials are valid. 
@@ -141,6 +144,7 @@ class AWSCredentials:
                 c, str
             ), f"Element of credentials '{c}' must be a string instance"
 
+    @log_assertion_fails
     def __getitem__(self, index):
         """
         Gets a specified credential

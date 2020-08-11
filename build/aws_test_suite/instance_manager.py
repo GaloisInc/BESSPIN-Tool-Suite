@@ -23,6 +23,7 @@ class InstanceManager:
         self._instances.append(instance)
         return self
 
+    @log_assertion_fails
     def run_all_instances(self, config=None):
         log.debug(
             f"Pool Run Instances started with instances { [[x.tags, x] for x in self._instances] } in capacity {self._cap}"
@@ -147,6 +148,7 @@ class Instance:
         log.debug(f"Start() finished with instance { self._id }")
         return self
 
+    @log_assertion_fails
     def terminate(self):
         assert self._id is not None, "Cannot terminate instance that has not started"
         terminate_instance(self._id, False)

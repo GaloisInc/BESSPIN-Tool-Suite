@@ -24,6 +24,7 @@ class UserdataCreator:
         self._userdata = userdata
 
     @classmethod
+    @log_assertion_fails
     def default(
         cls,
         credentials,
@@ -146,6 +147,7 @@ class UserdataCreator:
         else:
             self._userdata.append(ul)
 
+    @log_assertion_fails
     def append_file(self, dest, path):
         """
         Add file contents of path to userdata
