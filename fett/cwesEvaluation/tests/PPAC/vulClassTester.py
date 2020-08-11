@@ -19,10 +19,6 @@ class vulClassTester(testgenTargetCompatabilityLayer):
         testName = binTest.split('.')[0]
         if (hasattr(cweTests,testName)):
             outLog = getattr(getattr(cweTests,testName),testName)(self,binTest)
-            if ((self.osImage == 'FreeRTOS') and (self.backend == 'fpga')):
-                for line in outLog.splitlines():
-                    if ("INVALID" in line):
-                        self.reportAndExit (f"Error in {self.filename}: Encountered <INVALID> while executing <{testName}>.",testError=True)
         elif (self.settings['pocExploitsMode']):
             logAndExit('<pocExploitsMode> not implemented',
                        exitCode=EXIT.Implementation)
