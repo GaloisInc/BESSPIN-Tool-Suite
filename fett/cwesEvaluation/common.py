@@ -58,21 +58,24 @@ def score(testLogDir, vulClass):
 @decorate.timeWrap
 def runTests(target, sendFiles=False, timeout=30): #executes the app
     if isEqSetting('osImage', 'FreeRTOS'):
-        # Exctract test output
-        output = target.expectFromTarget(">>>End of Fett<<<",
-                                         None,
-                                         shutdownOnError=False,
-                                         timeout=getSetting('FreeRTOStimeout'))
-
         test, vulClass, _, logFile = getSetting("currentTest")
-
-        if output[1]:
-            logFile.write(target.readFromTarget())
-            logFile.write("\n<TIMEOUT>\n")
-            warnAndLog(f"{test} timed out.  Skipping.",doPrint=False)
-            return
+        if (vulClass=='PPAC'):
+            outLog = cweTests[vulClass](target).executeTest(test.replace('.c','.riscv'))
         else:
-            logFile.write(output[0])
+            # Exctract test output
+            output = target.expectFromTarget(">>>End of Fett<<<",
+                                             None,
+                                             shutdownOnError=False,
+                                             timeout=getSetting('FreeRTOStimeout'))
+
+            if output[1]:
+                logFile.write(target.readFromTarget())
+                logFile.write("\n<TIMEOUT>\n")
+                warnAndLog(f"{test} timed out.  Skipping.",doPrint=False)
+                return
+            outLog = output[0]
+        
+        logFile.write(outLog)
 
     elif getSetting('osImage') in ['debian', 'FreeBSD']:
         # Create directory for logs
