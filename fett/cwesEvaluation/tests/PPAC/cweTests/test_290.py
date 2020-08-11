@@ -4,6 +4,8 @@ import subprocess
 import sys, os
 import getpass
 
+from fett.base.utils.misc import *
+
 def test_290 (target,binTest):
     #This test is special -- is called using sudo
     testNum = 290
@@ -53,8 +55,8 @@ def test_290 (target,binTest):
                 sudoPrompt = f"\"Warning: You need sudo privileges to run test_{testNum}: [sudo] password for {getpass.getuser()}: \""
                 try:
                     outLog += str(subprocess.check_output (f"sudo -p {sudoPrompt} {sys.executable} {pathToSudoPart} {'+'.join(sys.path)} {target.ipTarget} {target.portTarget} {spoofingIP}",stderr=subprocess.STDOUT,shell=True),'utf-8')
-                except KeyboardInterrupt:
-                    print (f"[host]: Interrupted. Failed to run <sudo sudo_{testNum}>.\n")
+                except KeyboardInterrupt as exc:
+                    errorAndLog (f"[host]: Interrupted. Failed to run <sudo sudo_{testNum}>.\n", exc=exc)
                     outLog += f"\n<INVALID> [host]: Interrupted. Failed to run <sudo sudo_{testNum}>.\n"
                 except:
                     outLog += f"\n<INVALID> [host]: Failed to run <sudo sudo_{testNum}>.\n"

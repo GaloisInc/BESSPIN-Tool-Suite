@@ -1,6 +1,7 @@
-from .helpers import *
+from fett.base.utils.misc import *
+from fett.cwesEvaluation.tests.PPAC.cweScores.helpers import *
 
-def test_294(SCORES, customScorer, logTest,testsDir):
+def test_294(logTest,testsDir):
     testNum = 294
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
@@ -8,7 +9,7 @@ def test_294(SCORES, customScorer, logTest,testsDir):
 
     osImage = getOsImage(testLines,testNum=testNum)
     if (doesKeywordExist(testLines, '<QEMU-N/A>')):
-        return overallScore (SCORES, [],testNum,msgIfNotImplemented="Not Implemented on Qemu")
+        return overallScore ([],testNum,msgIfNotImplemented="Not Implemented on Qemu")
         
     if (osImage in ['debian','FreeBSD']):
         nParts = 2
@@ -55,8 +56,8 @@ def test_294(SCORES, customScorer, logTest,testsDir):
                 partsScores[2] = SCORES.NONE
 
     else:
-        print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")
-        return overallScore (SCORES, [],testNum)
+        errorAndLog(f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")
+        return overallScore ([],testNum)
 
-    listScores = [customScorer.adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
-    return overallScore (SCORES, listScores ,testNum)
+    listScores = [adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
+    return overallScore (listScores ,testNum)

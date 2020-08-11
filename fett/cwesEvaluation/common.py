@@ -35,6 +35,9 @@ cweScores = {
 @decorate.debugWrap
 @decorate.timeWrap
 def executeTest(target, vulClass, binTest, logDir):
+    if isEnabled('isUnix') and target.isCurrentUserRoot:
+        # Tests expect to started as normal user
+        target.switchUser()
     testName = binTest.split('.')[0]
     printAndLog(f"Executing {testName}...")
     outLog = cweTests[vulClass](target).executeTest(binTest)
@@ -56,9 +59,6 @@ def score(testLogDir, vulClass):
 def runTests(target, sendFiles=False, timeout=30): #executes the app
     if isEqSetting('osImage', 'FreeRTOS'):
         # Exctract test output
-        # TODO: Play around with the timeout.  Some tests timeout at 15
-        # seconds, and even 60 seconds.  Set low for now to enable faster
-        # debugging.
         output = target.expectFromTarget(">>>End of Fett<<<",
                                          None,
                                          shutdownOnError=False,
@@ -85,6 +85,23 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                                    exitCode = EXIT.Dev_Bug)
         target.sendTar(timeout=timeout)
 
+        # Copy binaries to non-root user's home as well
+        wasRoot = target.isCurrentUserRoot
+        if not target.isCurrentUserRoot:
+            target.switchUser()
+        target.runCommand(f"cp *.riscv /home/{target.userName}")
+        target.runCommand(f"chown {target.userName}:{target.userName} "
+                          f"/home/{target.userName}/*.riscv")
+
+        # Move any pam or limit files
+        target.runCommand(f"chown root:{target.rootGroup} pam*")
+        target.runCommand("mv pam* /etc/pam.d/")
+        target.runCommand(f"chown root:{target.rootGroup} limits*")
+        target.runCommand("mv limits* /etc/security/")
+
+        # Become a normal user
+        target.switchUser()
+
         # Batch tests by vulnerability class
         for vulClass, tests in getSetting("enabledCwesEvaluations").items():
             logDir = os.path.join(baseLogDir, vulClass)
@@ -93,6 +110,9 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                 executeTest(target, vulClass, test, logDir)
 
             score(logDir, vulClass)
+
+        if target.isCurrentUserRoot != wasRoot:
+            target.switchUser()
     else:
         logAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
                    exitCode=EXIT.Implementation)

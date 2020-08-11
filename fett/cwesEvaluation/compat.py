@@ -8,17 +8,20 @@ class testgenTargetCompatabilityLayer:
     """
     def __init__(self, target):
         self.target = target
-
-        # TODO: What exactly is targetObj in the tests?  It seems they only
-        # ever access (or in one case, set) the isSshConn field.  Dig into the
-        # testgen code for targetObj
         self.targetObj = target
 
-        # TODO: Populate dicts from config file
-        self.testsPars = {"nResourceLimit" : 10}
-        self.settings = {"useCustomScoring" : False}
+        self.settings = {"useCustomScoring" : getSetting("useCustomScoring"),
+                         "processor" : getSetting('processor'),
+                         "FPGANTK_IP_TARGET" : getSetting("fpgaIpTarget"),
+                         "FPGANTK_IP_HOST" : getSetting("fpgaIpHost")}
+
+        self.testsPars = {}
         if doesSettingExist("PPAC"):
             self.testsPars["SPOOFING_IP"] = getSettingDict("PPAC", "spoofingIP")
+            self.testsPars["nAllowedInteractions"] = getSettingDict("PPAC", "test_nAllowedInteractions")
+            self.testsPars["nAllowedAuthAttempts"] = getSettingDict("PPAC", "test_nAllowedAuthAttempts")
+        if doesSettingExist("resourceManagement"):
+            self.testsPars["nResourceLimit"] = getSettingDict("resourceManagement", "test_nResourceLimit")
 
 
         # TODO: Set this to match target?
@@ -27,9 +30,12 @@ class testgenTargetCompatabilityLayer:
         # TODO: Make this configurable?
         self.showExecutionOnScreen = False
 
-        # TODO: Something less hacky
         self.backend = ('fpga' if isEqSetting('target', 'aws')
                                else getSetting('target'))
+
+    @property
+    def onlySsh(self):
+        return self.target.onlySsh
 
     @property
     def osImage(self):
@@ -38,6 +44,10 @@ class testgenTargetCompatabilityLayer:
     @property
     def isCurrentUserRoot(self):
         return self.target.isCurrentUserRoot
+
+    @isCurrentUserRoot.setter
+    def isCurrentUserRoot(self, value):
+        self.target.isCurrentUserRoot = value
 
     @property
     def userName(self):
@@ -50,6 +60,30 @@ class testgenTargetCompatabilityLayer:
     @property
     def userPassword(self):
         return self.target.userPassword
+
+    @userPassword.setter
+    def userPassword(self, value):
+        self.target.userPassword = value
+
+    @property
+    def rootPassword(self):
+        return self.target.rootPassword
+
+    @property
+    def sshRetries(self):
+        return self.target.sshRetries
+
+    @sshRetries.setter
+    def sshRetries(self, value):
+        self.target.sshRetries = value
+
+    @property
+    def sshLimitRetries(self):
+        return self.target.sshLimitRetries
+
+    @sshLimitRetries.setter
+    def sshLimitRetries(self, value):
+        self.target.sshLimitRetries = value
 
     def typCommand(self, command):
         # TODO: Better endsWith (will this even work for freebsd?)
@@ -66,4 +100,16 @@ class testgenTargetCompatabilityLayer:
 
     def switchUser(self):
         self.target.switchUser()
+
+    def getGdbOutput(self):
+        return self.target.getGdbOutput()
+
+    def closeSshConn(self):
+        self.target.closeSshConn()
+
+    def killSshConn(self):
+        self.target.killSshConn()
+
+    def openSshConn(self, **kwargs):
+        return self.target.openSshConn(**kwargs)
 

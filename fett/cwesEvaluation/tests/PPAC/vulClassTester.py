@@ -8,6 +8,8 @@ from fett.cwesEvaluation.tests.PPAC import cweTests
 from importlib.machinery import SourceFileLoader
 import threading
 
+from fett.base.utils.misc import *
+
 class vulClassTester(testgenTargetCompatabilityLayer):
     def __init__ (self,settings):
         super().__init__(settings)
@@ -22,23 +24,11 @@ class vulClassTester(testgenTargetCompatabilityLayer):
                     if ("INVALID" in line):
                         self.reportAndExit (f"Error in {self.filename}: Encountered <INVALID> while executing <{testName}>.",testError=True)
         elif (self.settings['pocExploitsMode']):
-            try:
-                # TODO: Maybe remove this and replace it with a "not supported"
-                # error?
-                pocTests = SourceFileLoader("pocTestsModule", os.path.join(sys.path[0],'..','..','poc-exploits','2_PPAC','pocTests','__init__.py')).load_module() 
-            except:
-                self.reportAndExit ("Error in {0}: Failed to load pocTests module. [Maybe you did not 'git submodule update --init'].".format(self.filename))
-                outLog = ''
-            if (hasattr(pocTests,testName)): #for poc-exploits
-                outLog = getattr(getattr(pocTests,testName),testName)(self,binTest)
-            else:
-                self.reportAndExit ("Error in {0}: Calling unknown method <{1}>.".format(self.filename,testName))
-                outLog = ''
+            logAndExit('<pocExploitsMode> not implemented',
+                       exitCode=EXIT.Implementation)
         else:
-            self.reportAndExit ("Error in {0}: Calling unknown method <{1}>.".format(self.filename,testName))
+            logAndExit("{0}: Calling unknown method <{1}>.".format(self.filename,testName))
             outLog = ''
-        if ((self.osImage == 'FreeRTOS') and self.showExecutionOnScreen):
-            print (outLog)
         return outLog
 
     def executeOnRoot (self,commands):
@@ -46,7 +36,7 @@ class vulClassTester(testgenTargetCompatabilityLayer):
         if (switchBack): #only do this if user is not root
             self.switchUser()
         for command in commands:
-            self.runCommand (command,showOnScreen=self.showExecutionOnScreen)
+            self.runCommand (command)
         if (switchBack):
             self.switchUser()
         return

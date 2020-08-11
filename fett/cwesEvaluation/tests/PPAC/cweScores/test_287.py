@@ -1,6 +1,7 @@
-from .helpers import *
+from fett.base.utils.misc import *
+from fett.cwesEvaluation.tests.PPAC.cweScores.helpers import *
 
-def test_287(SCORES, customScorer, logTest,testsDir):
+def test_287(logTest,testsDir):
     testNum = 287
     if (logTest != "test_{0}.log".format(testNum)):
         return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
@@ -73,8 +74,8 @@ def test_287(SCORES, customScorer, logTest,testsDir):
         partsLines[3]['b'] = partitionLines(testLines,"---Part03b:", "-"*50,testNum=testNum)
 
         subPartsScores[1] = [scoreLoginAndSu(partsLines[1]['a']), scoreLoginAndSu(partsLines[1]['b'])]
-        tempPartsScoresAdjusted = [customScorer.adjustToCustomScore(partsLines[1]['a'],subPartsScores[1][0]),
-                                  customScorer.adjustToCustomScore(partsLines[1]['b'],subPartsScores[1][1])]
+        tempPartsScoresAdjusted = [adjustToCustomScore(partsLines[1]['a'],subPartsScores[1][0]),
+                                  adjustToCustomScore(partsLines[1]['b'],subPartsScores[1][1])]
         partsScores[1] = SCORES.minScore(tempPartsScoresAdjusted)
 
         p2Perm, p2PermGroup = findPermissionsAndGroup(partsLines[2]['ini'])
@@ -92,9 +93,9 @@ def test_287(SCORES, customScorer, logTest,testsDir):
             p2ScoreIni = SCORES.NONE
 
         subPartsScores[2] = [p2ScoreIni, scoreLoginAndSu(partsLines[2]['a']), scoreLoginAndSu(partsLines[2]['b'])]
-        tempPartsScoresAdjusted = [customScorer.adjustToCustomScore(partsLines[2]['ini'],subPartsScores[2][0]),
-                                  customScorer.adjustToCustomScore(partsLines[2]['a'],subPartsScores[2][1]),
-                                  customScorer.adjustToCustomScore(partsLines[2]['b'],subPartsScores[2][2])]
+        tempPartsScoresAdjusted = [adjustToCustomScore(partsLines[2]['ini'],subPartsScores[2][0]),
+                                  adjustToCustomScore(partsLines[2]['a'],subPartsScores[2][1]),
+                                  adjustToCustomScore(partsLines[2]['b'],subPartsScores[2][2])]
         partsScores[2] = SCORES.minScore(tempPartsScoresAdjusted)
 
         p3Perm, p3PermGroup = findPermissionsAndGroup(partsLines[3]['ini'])
@@ -106,9 +107,9 @@ def test_287(SCORES, customScorer, logTest,testsDir):
             p3ScoreIni = SCORES.NONE
 
         subPartsScores[3] = [p2ScoreIni, scoreLoginAndSu(partsLines[3]['a']), scoreLoginAndSu(partsLines[3]['b'])]
-        tempPartsScoresAdjusted = [customScorer.adjustToCustomScore(partsLines[3]['ini'],subPartsScores[3][0]),
-                                  customScorer.adjustToCustomScore(partsLines[3]['a'],subPartsScores[3][1]),
-                                  customScorer.adjustToCustomScore(partsLines[3]['b'],subPartsScores[3][2])]
+        tempPartsScoresAdjusted = [adjustToCustomScore(partsLines[3]['ini'],subPartsScores[3][0]),
+                                  adjustToCustomScore(partsLines[3]['a'],subPartsScores[3][1]),
+                                  adjustToCustomScore(partsLines[3]['b'],subPartsScores[3][2])]
         partsScores[3] = SCORES.minScore(tempPartsScoresAdjusted)
 
         listScores = list(partsScores.values())
@@ -127,7 +128,7 @@ def test_287(SCORES, customScorer, logTest,testsDir):
                 else:
                     partsScores[iPart] = allowedScore[iPart]
 
-        listScores = [customScorer.adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
+        listScores = [adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
 
     elif (osImage == 'FreeRTOS'):
         nParts = 3
@@ -166,10 +167,10 @@ def test_287(SCORES, customScorer, logTest,testsDir):
             else:
                 partsScores[3] = SCORES.NONE
 
-        listScores = [customScorer.adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
+        listScores = [adjustToCustomScore(partsLines[iPart],partsScores[iPart]) for iPart in range(1,nParts+1)]
 
     else:
-        print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")
-        return overallScore (SCORES, [],testNum)
+        errorAndLog (f"parsing test_{testNum}.log is not implemented for <{osImage}>.")
+        return overallScore ([],testNum)
 
-    return overallScore (SCORES, listScores ,testNum)
+    return overallScore (listScores ,testNum)

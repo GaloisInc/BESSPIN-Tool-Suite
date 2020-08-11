@@ -16,7 +16,7 @@ def test_287 (target,binTest):
             def suRoot287 ():
                 retLog = ''
                 shellRoot = "{0}#".format(target.userName)
-                shellUser = '[00m:[01;34m~[00m$'
+                shellUser = '[00m:[01;34m~[00m\$'
                 isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",endsWith=['Password:', shellRoot, shellUser],shutdownOnError=False,expectExact=True)
                 retLog += textBack
                 if (idxEndsWith == 0): #still asks for password
@@ -66,10 +66,6 @@ def test_287 (target,binTest):
             return outLog
 
         def switchUser287 (typeOfSwitch,doPrintResult=True):
-            # TODO: Review whether the real switch user function works like
-            # this function before just adding a setter to isCurrentUserRoot.
-            # It would be nice to just remove this function altogether
-
             #this method has similar functionality as baseTarget.switchUser, but checks whether linux asks for password, 
             # and whether the switch was successful
             retLog = ''
@@ -82,7 +78,7 @@ def test_287 (target,binTest):
             if (target.backend == "qemu"):
                 shellUser = ":~\$" 
             elif (target.backend == "fpga"):
-                shellUser = ":~$"
+                shellUser = ":~\$"
             isGranted = False
             isDenied = False
             msgHeader = typeOfSwitch + ('User' if (target.isCurrentUserRoot) else 'Root')

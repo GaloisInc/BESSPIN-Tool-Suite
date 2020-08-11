@@ -3,6 +3,7 @@ import subprocess
 import sys, os
 import getpass
 
+from fett.base.utils.misc import *
 
 def test_294(target, binTest):
     # This test is special -- is called using sudo
@@ -108,8 +109,8 @@ def test_294(target, binTest):
             outLog += str(subprocess.check_output(
                 f"sudo -p {sudoPrompt} {sys.executable} {pathToSudoPart} {'+'.join(sys.path)} {target.ipTarget} {target.portTarget} {spoofingIP} {ethAdaptorName} {target.testsPars['TESTGEN_TEST_PART']}",
                 stderr=subprocess.STDOUT, shell=True), 'utf-8')
-        except KeyboardInterrupt:
-            print(f"[host]: Interrupted. Failed to run <sudo sudo_{testNum}>.\n")
+        except KeyboardInterrupt as exc:
+            errorAndLog(f"[host]: Interrupted. Failed to run <sudo sudo_{testNum}>.\n", exc=exc)
             outLog += f"\n<INVALID> [host]: Interrupted. Failed to run <sudo sudo_{testNum}>.\n"
         except:
             outLog += f"\n<INVALID> [host]: Failed to run <sudo sudo_{testNum}>.\n"

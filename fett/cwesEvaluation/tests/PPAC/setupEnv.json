@@ -17,8 +17,7 @@
         {
             "name" : "interactWithFreeRTOS",
             "type" : "bool",
-            "val"  : 1,
-            "_comment": "TODO: Do we need this and other similar fields?  Isn't this handled by FETT already?"
+            "val"  : 1
         },
         {
             "name" : "createUser",

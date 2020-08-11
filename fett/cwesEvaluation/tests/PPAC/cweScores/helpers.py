@@ -4,9 +4,11 @@ helpers functions for scoring the CWE tests
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 import re
+from fett.base.utils.misc import *
+from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 
 def readLogLines (logTest,testsDir):
-    fLog = open("{0}/{1}".format(testsDir,logTest),"r")
+    fLog = ftOpenFile("{0}/{1}".format(testsDir,logTest),"r")
     lines = fLog.read().splitlines()
     fLog.close()
     return lines
@@ -17,7 +19,7 @@ def getOsImage (lines,testNum=None):
         lineMatch = re.match(r'^<OSIMAGE=(?P<osImage>\w+)>$',line)
         if (lineMatch is not None):
             return lineMatch.group('osImage')
-    print ("Error: Could not determine <osImage>{0}.".format(warnText))
+    errorAndLog("<PPAC scores> Could not determine <osImage>{0}.".format(warnText))
     return "NoOsImageFound"
 
 def regPartitionTest (testLines,nParts,testNum=None):
@@ -25,7 +27,7 @@ def regPartitionTest (testLines,nParts,testNum=None):
     for iPart in range(1,nParts+1):
         start = f"---Part{iPart:02d}:"
         end = f"---Part{iPart+1:02d}:" if (iPart<nParts) else "-"*50
-        partsLines[iPart] = partitionLines(testLines,start,end,testNum=testNum)
+        partsLines[iPart] = partitionLines(testLines,start,end,testNum=testNum,doPrintWarnings=False)
     return partsLines
 
 def matchLines(testLines, reString):
@@ -34,7 +36,7 @@ def matchLines(testLines, reString):
         if lineMatch is not None:
             yield lineMatch
 
-def partitionLines (lines,start,end,testNum=None):
+def partitionLines (lines,start,end,testNum=None,doPrintWarnings=True):
     warnText = "" if (testNum is None) else " in test_{0}.log".format(testNum)
     startFound = False
     iStart = 0
@@ -42,17 +44,17 @@ def partitionLines (lines,start,end,testNum=None):
     for iLine,line in enumerate(lines):
         if (start in line):
             if (startFound):
-                print ("Warning: part start <{0}> found again{1}.".format(start,warnText))
+                warnAndLog("<PPAC scores>: part start <{0}> found again{1}.".format(start,warnText),doPrint=doPrintWarnings)
             startFound = True
             iStart = iLine
         if (startFound and (end in line)):
             iEnd = iLine
             return lines[iStart:iEnd+1]
     if (startFound):
-        print ("Warning: part end <{0}> not found{1}.".format(end,warnText))
+        warnAndLog("<PPAC scores>: part end <{0}> not found{1}.".format(end,warnText),doPrint=doPrintWarnings)
         return lines[iStart:iEnd+1]   
     else:
-        print ("Warning: part start <{0}> not found{1}.".format(start,warnText))
+        warnAndLog("<PPAC scores>: part start <{0}> not found{1}.".format(start,warnText),doPrint=doPrintWarnings)
         return []
 
 def scoreGrantedDenied (SCORES, lines,lastGranted=False):
@@ -74,7 +76,7 @@ def scoreGrantedDenied (SCORES, lines,lastGranted=False):
     else:
         return SCORES.FAIL
 
-def overallScore (SCORES, listScores, testNum,msgIfNotImplemented="Not Implemented"):
+def overallScore (listScores, testNum,msgIfNotImplemented="Not Implemented"):
     if (len(listScores)==0): #not implemented
         return ["TEST-{0}".format(testNum), SCORES.NOT_IMPLEMENTED, msgIfNotImplemented]
     ovrScore = SCORES.minScore(listScores)
