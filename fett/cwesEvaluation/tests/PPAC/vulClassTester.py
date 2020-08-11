@@ -50,6 +50,6 @@ class vulClassTester(testgenTargetCompatabilityLayer):
         except:
             socketName = "UNKNOWN"
             self.reportFile.write("Warning: Unable to get socket name when closing. Maybe it was already closed.\n")
-        self.trash.throwThread(xThread,f"closing socket <{socketName}>")
+        getSetting('trash').throwThread(xThread,f"closing socket <{socketName}>")
         xThread.start()
         return xThread
