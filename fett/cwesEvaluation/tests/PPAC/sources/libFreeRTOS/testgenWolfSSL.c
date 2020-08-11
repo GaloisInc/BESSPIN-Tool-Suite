@@ -64,7 +64,8 @@ int startWolfSSL( void )
         exitTest (1); //cannot use prEXIT because this function is non-void
         return 1;
     }
-
+    //On AWS, this function returns too fast and then the consequent parts do not work well
+    vTaskDelay(pdMS_TO_TICKS(3000)); 
     return 0;
 }
 
@@ -74,8 +75,6 @@ void vInitServerWolfSSL (void *pvParameters)
     (void) pvParameters;
     BaseType_t frReturn; //FreeRTOS return
     int wsReturn; //wolfss return
-
-    vTaskDelay(pdMS_TO_TICKS(1000)); //startWolfSSL() executes so fast on AWS
 
     /* Attempt to create a context that uses the TLS 1.2 server protocol. */
     WOLFSSL_METHOD * methodTLSv1_2 = wolfTLSv1_2_server_method();
@@ -141,8 +140,6 @@ void vInitClientWolfSSL (void *pvParameters)
     BaseType_t frReturn; //FreeRTOS return
     uint8_t useJediCert = * (uint8_t *) pvParameters;
     int wsReturn; //wolfss return
-
-    vTaskDelay(pdMS_TO_TICKS(1000)); //startWolfSSL() executes so fast on AWS
     
     /* Attempt to create a context that uses the TLS 1.2 client protocol. */
     WOLFSSL_METHOD * methodTLSv1_2 = wolfTLSv1_2_client_method();
