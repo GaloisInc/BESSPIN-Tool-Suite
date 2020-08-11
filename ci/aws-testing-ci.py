@@ -56,10 +56,7 @@ def main(args):
     log.debug(f"aws-testing-ci.py started with arguments { args }")
 
     # Check in envs, otherwise error
-    try:
-        a = AWSCredentials.from_env_vars()
-    except AssertionError:
-        log.error(f"{h}Cannot get AWS credentials.")
+    a = AWSCredentials.from_env_vars()
 
     # Make sure that the region and format are written in ~/.aws/config
     AWSConfig.check_write_aws_config()
@@ -153,18 +150,6 @@ if __name__ == "__main__":
         type=int,
         help="The maximum number of instances running at once (default is 1)",
         default=1,
-    )
-    parser.add_argument(
-        "-cd",
-        "--credentials",
-        type=str,
-        help="AWS credentials file (Use either --init (-i) or --credentials (-cd))",
-    )
-    parser.add_argument(
-        "-i",
-        "--init",
-        help="Initialize (first run or if tokens have expired) (Use either --init (-i) or --credentials (-cd))",
-        action="store_true",
     )
     parser.add_argument(
         "-idx",
