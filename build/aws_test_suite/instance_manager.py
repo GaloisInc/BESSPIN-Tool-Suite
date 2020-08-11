@@ -1,10 +1,21 @@
+""" EC2 Instance and Group Management
+
+Convenience objects to access relevant fields from EC2 instances for CI type tasks. A
+manager is created to create groups of instances where jobs can be dispatched.
+"""
 import re
 import time
+
+import boto3
+
 from .aws_tools import *
 from .logger import *
 
 
 class InstanceManager:
+    """ Manage EC2 Instances
+    define group of EC2 instances, assign a workload and run
+    """
     def __init__(self, cap=1, instances=None):
         if instances is None:
             instances = []
@@ -16,7 +27,10 @@ class InstanceManager:
 
         self._i = cap
 
+    @log_assertion_fails
     def add_instance(self, instance):
+        """append ec2 instance to instance manager"""
+        assert isinstance(instance, boto3.resource('ec2').Instance)
         log.debug(
             f"InstanceManager adding instance { instance.name } to { [x.name for x in self._instances] }"
         )
@@ -25,6 +39,9 @@ class InstanceManager:
 
     @log_assertion_fails
     def run_all_instances(self, config=None):
+        """run all jobs at the same time
+        TODO: support running and terminating jobs non-uniformly
+        """
         log.debug(
             f"Pool Run Instances started with instances { [[x.tags, x] for x in self._instances] } in capacity {self._cap}"
         )
@@ -87,18 +104,7 @@ class InstanceManager:
 
 
 class Instance:
-    # def __init__(
-    #     self,
-    #     ami,
-    #     name,
-    #     vpc_name="aws-controltower-VPC",
-    #     security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
-    #     instance_type="f1.2xlarge",
-    #     key_name="nightly-testing",
-    #     userdata=None,
-    #     tags={"Name": "aws-test-suite"},
-    # ):
-
+    """convenience wrapper class for boto3 EC2 Instance"""
     def __init__(self, ami, name, **kwargs):
 
         log.debug(f"Instance constructor called with { locals() }")
@@ -134,6 +140,7 @@ class Instance:
         )
 
     def start(self, **ec2_kwargs):
+        """create boto3 ec2 instance"""
         log.debug(f"Start() called on instance { self._tags }")
         self._id = launch_instance(
             self._ami,
@@ -193,3 +200,4 @@ class Instance:
     @userdata.setter
     def userdata(self, userdata):
         self._userdata = userdata
+
