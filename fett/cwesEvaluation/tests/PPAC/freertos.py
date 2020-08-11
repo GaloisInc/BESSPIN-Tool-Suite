@@ -4,10 +4,10 @@ FreeRTOS prep for PPAC tests
 
 from fett.base.utils.misc import *
 from fett.target.build import prepareFreeRTOSNetworkParameters
-import subprocess, os, re
+import subprocess, os, re, time, random
 
 @decorate.debugWrap
-def prepareFreeRTOSforPPAC ():
+def prepareFreeRTOSforPPAC (fHeader):
     # copy extra sources + main FreeRTOS program over
     ppacDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests','PPAC')
     sourcesDir = os.path.join(ppacDir,'sources')
@@ -19,15 +19,33 @@ def prepareFreeRTOSforPPAC ():
     prepareFreeRTOSNetworkParameters()
 
     # Certificates
-    genPPACcertifications (ppacDir)
-    
+    genPPACcertifications(ppacDir)
+
     # Time fixes
-    #[TODO]
+    genFakeTimeFix(fHeader)
     
     # WolfSSL seeds
-    #[TODO]
+    genWolfSSLseeds(fHeader)
 
 @decorate.debugWrap
+def genFakeTimeFix (fHeader):
+    safeTimeOfDay = int(time.time()) + 180 #add 3 minutes to be safe 
+    fHeader.write(f"\n#define FAKETIMEOFDAY {safeTimeOfDay}\n") 
+
+@decorate.debugWrap
+def genWolfSSLseeds (fHeader):
+    if (isEnabledDict('PPAC','useSeedForWolfSSL')): # use the user configured seed
+        fHeader.write(f"#define TESTGEN_WC_SEEDS {getSettingDict('PPAC','seedForWolfSSL')}\n")
+        fHeader.write(f"#define TESTGEN_WC_SEEDS_LEN 1\n")
+    else:
+        nSeeds = getSettingDict('PPAC','nSeedsForWolfSSL')
+        random.seed()
+        seeds = [str(x) for x in random.choices(range(0,256),k=nSeeds)]
+        fHeader.write(f"#define TESTGEN_WC_SEEDS {' '.join(seeds)}\n")
+        fHeader.write(f"#define TESTGEN_WC_SEEDS_LEN {nSeeds}\n")
+
+@decorate.debugWrap
+@decorate.timeWrap
 def genPPACcertifications (ppacDir):
     printAndLog ("Generating CA keys and certifications for PPAC tests...")
 

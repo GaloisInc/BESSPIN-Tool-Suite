@@ -115,7 +115,7 @@ def buildCwesEvaluation():
                     f'#define TCP_PORT_NUMBER {getSetting("fpgaPortTarget")}\n')
 
             if isEqSetting('osImage', 'FreeRTOS'):
-                prepareFreeRTOSforPPAC()
+                prepareFreeRTOSforPPAC(fHeader)
             else:
                 # TODO: Test FreeBSD
                 pattern = os.path.join(sourcesDir,
