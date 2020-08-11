@@ -37,14 +37,15 @@ Flavors:
 
 ### Usage
 
+1. Export your AWS keys into the shell you are using by copying item 1 from the `Command line or Programatic access` field of the AWS login page.
+
+2.
 ```bash
-usage: aws-testing-ci.py [-h] [-b BRANCH] [-bb BINARIES_BRANCH] [-cp CAP] [-cd CREDENTIALS]
-                         [-i] [-idx INSTANCE_INDEX] [-k KEY_PATH] [-n NAME] [-r RUNS]
+usage: aws-testing-ci.py [-h] [-b BRANCH] [-bb BINARIES_BRANCH] [-cp CAP]
+                         [-idx INSTANCE_INDEX] [-k KEY_PATH] [-n NAME] [-r RUNS]
                          ami
 ```
 
-**Only if the `init` flag is used:** When prompted, add your AWS Keys
-
 ### Results
 
-The results will be posted to the AWS S3 bucket described in [`configs.py`](configs.py), under the job name.
+The results will be posted to the AWS S3 bucket described in [`configs.py`](configs.py), under the job name. Results will also be stored to `results.txt`, and logs will be written to `aws-test-suite.log`.
