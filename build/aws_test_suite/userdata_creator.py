@@ -72,18 +72,19 @@ class UserdataCreator:
             "EOL",
         ]
 
-        assert os.path.exists(
-            os.path.expanduser(key_path)
-        ), f"key path {key_path} does not exist!"
-        try:
-            with open(os.path.expanduser(key_path), "r") as f:
-                key = f.readlines()
-                key = [x.strip() for x in key]
-        except BaseException as e:
-            log.error("UserdataCreator: Invalid Key Path")
-            log.error(f"UserdataCreator: {e}")
-
         if branch or binaries_branch:
+
+            assert os.path.exists(
+                os.path.expanduser(key_path)
+            ), f"key path {key_path} does not exist!"
+            try:
+                with open(os.path.expanduser(key_path), "r") as f:
+                    key = f.readlines()
+                    key = [x.strip() for x in key]
+            except BaseException as e:
+                log.error("UserdataCreator: Invalid Key Path")
+                log.error(f"UserdataCreator: {e}")
+
             userdata_ssh = [
                 "runuser -l centos -c 'touch /home/centos/.ssh/id_rsa'",
                 "cat >/home/centos/.ssh/id_rsa <<EOL",
