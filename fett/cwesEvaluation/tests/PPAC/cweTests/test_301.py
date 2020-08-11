@@ -89,7 +89,7 @@ def test_301 (target,binTest):
 
             try:
                 #load the DH parameters from the certificate
-                xFile = open(f"{target.testsDir}/lib/dhParams.der",'rb')
+                xFile = open(f"{target.certsDir}/dhParams.der",'rb')
                 inDerDHParams = xFile.read()
                 xFile.close()
                 dhParams = serialization.load_der_parameters(inDerDHParams, backend=default_backend())

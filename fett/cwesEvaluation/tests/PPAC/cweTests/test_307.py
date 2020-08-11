@@ -227,8 +227,8 @@ def test_307 (target,binTest):
                     try:
                         TLS_CTX = ssl.SSLContext (ssl.PROTOCOL_TLSv1_2) #create a new context
                         TLS_CTX.verify_mode = ssl.CERT_REQUIRED 
-                        TLS_CTX.load_verify_locations (cafile="{0}/lib/caCert{1}.pem".format(target.testsDir,certSuffix)) #load the CA cert
-                        TLS_CTX.load_cert_chain(certfile="{0}/lib/clientCert{1}.pem".format(target.testsDir,certSuffix),keyfile="{0}/lib/clientKey{1}.pem".format(target.testsDir,certSuffix))
+                        TLS_CTX.load_verify_locations (cafile="{0}/caCert{1}.pem".format(target.certsDir,certSuffix)) #load the CA cert
+                        TLS_CTX.load_cert_chain(certfile="{0}/clientCert{1}.pem".format(target.certsDir,certSuffix),keyfile="{0}/clientKey{1}.pem".format(target.certsDir,certSuffix))
                     except:
                         retLog += "\n[host-client-{0}.{1}]: INVALID: Failed to load the CA certificate into a TLS context.\n".format(iSubPart,iAttempt)
                         return [retLog, 'INVALID', None]
@@ -312,8 +312,8 @@ def test_307 (target,binTest):
                         return [retLog, 'INVALID']
                     try:
                         TLS_CTX = ssl.SSLContext (ssl.PROTOCOL_TLSv1_2) #create a new context
-                        TLS_CTX.load_verify_locations (cafile="{0}/lib/caCert.pem".format(target.testsDir)) #load the CA cert
-                        TLS_CTX.load_cert_chain(certfile="{0}/lib/serverCert.pem".format(target.testsDir),keyfile="{0}/lib/serverKey.pem".format(target.testsDir))
+                        TLS_CTX.load_verify_locations (cafile="{0}/caCert.pem".format(target.certsDir)) #load the CA cert
+                        TLS_CTX.load_cert_chain(certfile="{0}/serverCert.pem".format(target.certsDir),keyfile="{0}/serverKey.pem".format(target.certsDir))
                     except:
                         retLog += "\n[host-server-{0}.{1}]: INVALID: Failed to load the CA certificate into a TLS context.\n".format(iSubPart,iAttempt)
                         return [retLog, 'INVALID']

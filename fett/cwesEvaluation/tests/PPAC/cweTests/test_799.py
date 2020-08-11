@@ -1,6 +1,7 @@
 import time
 import socket, ssl, select
 import threading
+from fett.base.utils.misc import *
 
 def test_799 (target,binTest):
     testNum = 799
@@ -155,15 +156,17 @@ def test_799 (target,binTest):
                 clientSocket.settimeout(90) #blocking operations
                 clientSocket.connect((target.ipTarget,target.portTarget+iSubPart))
                 #time.sleep(1)
-            except:
+            except Exception as exc:
+                errorAndLog (f"test799: Failed to connect to target.",exc=exc,doPrint=False)
                 outLog += "\n[host-client-{0}]: INVALID: Failed to connect to target.\n".format(iSubPart)
                 break
             try:
                 TLS_CTX = ssl.SSLContext (ssl.PROTOCOL_TLSv1_2) #create a new context
                 TLS_CTX.verify_mode = ssl.CERT_REQUIRED 
-                TLS_CTX.load_verify_locations (cafile="{0}/lib/caCert.pem".format(target.testsDir)) #load the CA cert
-                TLS_CTX.load_cert_chain(certfile="{0}/lib/clientCert.pem".format(target.testsDir),keyfile="{0}/lib/clientKey.pem".format(target.testsDir))
-            except:
+                TLS_CTX.load_verify_locations (cafile="{0}/caCert.pem".format(target.certsDir)) #load the CA cert
+                TLS_CTX.load_cert_chain(certfile="{0}/clientCert.pem".format(target.certsDir),keyfile="{0}/clientKey.pem".format(target.certsDir))
+            except Exception as exc::
+                errorAndLog (f"test799: Failed to load the CA certificate into a TLS context.",exc=exc,doPrint=False)
                 outLog += "\n[host-client-{0}]: INVALID: Failed to load the CA certificate into a TLS context.\n".format(iSubPart)
                 break
             try:

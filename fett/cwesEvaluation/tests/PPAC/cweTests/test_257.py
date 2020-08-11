@@ -52,8 +52,8 @@ def test_257 (target,binTest):
             try:
                 TLS_CTX = ssl.SSLContext (ssl.PROTOCOL_TLSv1_2) #create a new context
                 TLS_CTX.verify_mode = ssl.CERT_REQUIRED 
-                TLS_CTX.load_verify_locations (cafile="{0}/lib/caCert.pem".format(target.testsDir)) #load the CA cert
-                TLS_CTX.load_cert_chain(certfile="{0}/lib/clientCert.pem".format(target.testsDir),keyfile="{0}/lib/clientKey.pem".format(target.testsDir))
+                TLS_CTX.load_verify_locations (cafile="{0}/caCert.pem".format(target.certsDir)) #load the CA cert
+                TLS_CTX.load_cert_chain(certfile="{0}/clientCert.pem".format(target.certsDir),keyfile="{0}/clientKey.pem".format(target.certsDir))
             except:
                 outLog += f"\n[host-client-{iAttempt}]: INVALID: Failed to load the CA certificate into a TLS context.\n"
                 break
