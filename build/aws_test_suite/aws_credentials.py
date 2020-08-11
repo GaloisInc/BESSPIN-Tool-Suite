@@ -35,8 +35,9 @@ class AWSCredentials:
 
         variables = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
         assert cls.has_env_vars(), (
-            f"AWSCredentials must have environment variable {v} for from_env_vars "
-            f"class method"
+            "AWSCredentials: Could not find your environment variables with AWS access keys.",
+            "Please copy and paste option 1 from 'Command Line or Programatic Access' ",
+            "in the AWS account dashboard into this terminal and try again.",
         )
         return cls([os.environ[v] for v in variables])
 
