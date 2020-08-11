@@ -1,5 +1,9 @@
+""" Local AWS Configuration
+
+setup credentials and location of machine running the AWS Test Suite. filesystem requirements
+and checks are available as static members and methods.
+"""
 import os
-import re
 
 from .logger import *
 
@@ -214,17 +218,20 @@ class AWSCredentials:
 
 
 class AWSConfig:
+    """statics for checking and writing an AWS configuration"""
+
     aws_dir = os.path.expanduser("~/.aws")
 
     aws_config_filepath = os.path.join(aws_dir, "config")
 
     @staticmethod
     def has_config_file():
+        """that AWS directory and config is present on the filesystem"""
         return os.path.exists(AWSConfig.aws_dir) and os.path.exists(AWSConfig.aws_config_filepath)
 
     @staticmethod
     def check_write_aws_config(region="us-west-2", output="json"):
-
+        """produce a valid configuration in ~/.aws/config, specifying region and output only"""
         # make the directory if not present
         if not os.path.exists(AWSConfig.aws_dir):
             os.mkdir(AWSConfig.aws_dir)

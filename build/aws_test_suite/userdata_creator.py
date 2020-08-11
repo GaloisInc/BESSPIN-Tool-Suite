@@ -1,3 +1,9 @@
+"""AWS Instance UserData Creator
+
+AWS Test Suite uses the ec2 user data to describe work to be accomplished by the launched
+instances. UserDataCreator generates and writes valid userdata from a job description of
+a FETT-Target job.
+"""
 from .aws_tools import *
 from .logger import *
 
