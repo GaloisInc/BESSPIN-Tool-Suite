@@ -210,5 +210,9 @@ class AWSCredentials:
 
 class AWSConfig:
     def check_write_aws_config(region="us-west-2", output="json"):
+
+        if not os.path.exists(os.path.expanduser("~/.aws")):
+            os.mkdir(os.path.expanduser("~/.aws"))
+
         with open(os.path.expanduser("~/.aws/config"), "w") as f:
             f.write(f"[default]\nregion = { region }\noutput = { output }")
