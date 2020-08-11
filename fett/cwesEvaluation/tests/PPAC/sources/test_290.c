@@ -106,7 +106,7 @@ NONE
         if (nBytes <= 0) {
             onPrintf ("<INVALID> [target-server]: Failed to receive data from the connection. [nBytes=%d].\n",nBytes);
         } else {
-            onPrintf (">>> [target-server]: Received [%d Bytes]:\n<TARGET-RECV>:%s\n",nBytes,rxBuffer);
+            onPrintf (">>> [target-server]: Received [%d Bytes]:\n%s:<TARGET-RECV>\n",nBytes,rxBuffer);
         }
 
         // --------------------- reading the IP address --------------------------------

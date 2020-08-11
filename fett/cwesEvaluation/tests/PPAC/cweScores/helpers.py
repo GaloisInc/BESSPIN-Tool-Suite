@@ -90,7 +90,7 @@ def SendRecvCheck (lines,testNum=None):
     hostRecv = ''
     for line in lines:
         if ((len(targetRecv)==0)):
-            targetMatch = re.match(r'^<TARGET-RECV>:(?P<targetRecv>[\w\-\.]+)$',line)
+            targetMatch = re.match(r'^(?P<targetRecv>[\w\-\.]+):<TARGET-RECV>$',line)
             if (targetMatch is not None):
                 targetRecv = targetMatch.group('targetRecv')
         else:

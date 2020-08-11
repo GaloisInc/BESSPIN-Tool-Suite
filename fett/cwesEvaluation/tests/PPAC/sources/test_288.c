@@ -216,7 +216,7 @@ NONE
             }
 
             if (i ==0) {
-                onPrintf ("\t[%d]>>>>>> [communicateTCPaskForAuth]: Received [%d Bytes]:\n<TARGET-RECV>:%s\n",i,nBytes,rxBuffer);
+                onPrintf ("\t[%d]>>>>>> [communicateTCPaskForAuth]: Received [%d Bytes]:\n%s:<TARGET-RECV>\n",i,nBytes,rxBuffer);
                 recvMsg = (char *)pvPortMalloc(strlen((char *) rxBuffer) + 1);
                 if (recvMsg == NULL) {
                     onPrintf ("<INVALID> [communicateTCPaskForAuth-%d]: Malloc error while allocating <recvMsg>.\n",i);

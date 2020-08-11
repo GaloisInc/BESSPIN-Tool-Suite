@@ -402,7 +402,7 @@ static void vCommunicateTCP (void *pvParameters) {
         #endif
     } else {
         notificationToSend = NOTIFY_CONNECTED;
-        onPrintf ("\t[%d.%d]>>>>>> [communicateTCP]: Received [%d Bytes]:\n<TARGET-RECV>:%s\n",iPart[0],iPart[1],nBytes,rxBuffer);
+        onPrintf ("\t[%d.%d]>>>>>> [communicateTCP]: Received [%d Bytes]:\n%s:<TARGET-RECV>\n",iPart[0],iPart[1],nBytes,rxBuffer);
     }
 
     if (notificationToSend == NOTIFY_CONNECTED) {
