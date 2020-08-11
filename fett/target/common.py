@@ -1115,7 +1115,8 @@ class commonTarget():
                 else:
                     self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
         pingOut.close()
-        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!",
+                    doPrint=not (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')))
         return
 
     @decorate.debugWrap

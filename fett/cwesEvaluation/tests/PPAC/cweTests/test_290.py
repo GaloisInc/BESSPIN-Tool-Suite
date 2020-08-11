@@ -29,13 +29,8 @@ def test_290 (target,binTest):
 
         startTime = time.time()
         # start the network
-        retCommand = target.activateEthernet ()
-        outLog += retCommand[1]
-        if ( (not retCommand[0]) or (retCommand[2]) ): #Bad
-            outLog += "\n<INVALID> [host]: Failed to ping the target.\n"
-            return outLog
-        else:
-            outLog += "\n[host]: Pinging target successful!\n"
+        target.activateEthernet ()
+        outLog += "\n[host]: Pinging target successful!\n"
 
         for i in range(1): #easier construct to break -- loop executed only once
             outLog += target.runCommand("waitForServer",endsWith="<UDP-READY>",erroneousContents="<INVALID>",onlySearchTheEnd=False,timeout=20,shutdownOnError=False)[1]

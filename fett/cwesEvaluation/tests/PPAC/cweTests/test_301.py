@@ -33,13 +33,8 @@ def test_301 (target,binTest):
         socketThreadsCollect = []
         startTime = time.time()
         # start the network
-        retCommand = target.activateEthernet ()
-        outLog += retCommand[1]
-        if ( (not retCommand[0]) or (retCommand[2]) ): #Bad
-            outLog += "\n<INVALID> [host]: Failed to ping the target.\n"
-            return outLog
-        else:
-            outLog += "\n[host]: Pinging target successful!\n"
+        target.activateEthernet ()
+        outLog += "\n[host]: Pinging target successful!\n"
 
         nParallelRequests = 2
 
