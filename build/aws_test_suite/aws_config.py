@@ -214,10 +214,25 @@ class AWSCredentials:
 
 
 class AWSConfig:
+    aws_dir = os.path.expanduser("~/.aws")
+
+    aws_config_filepath = os.path.join(aws_dir, "config")
+
+    @staticmethod
+    def has_config_file():
+        return os.path.exists(AWSConfig.aws_dir) and os.path.exists(AWSConfig.aws_config_filepath)
+
+    @staticmethod
     def check_write_aws_config(region="us-west-2", output="json"):
 
-        if not os.path.exists(os.path.expanduser("~/.aws")):
-            os.mkdir(os.path.expanduser("~/.aws"))
+        # make the directory if not present
+        if not os.path.exists(AWSConfig.aws_dir):
+            os.mkdir(AWSConfig.aws_dir)
 
-        with open(os.path.expanduser("~/.aws/config"), "w") as f:
+        # if file exists and has contents, warn user
+        if os.path.exists(AWSConfig.aws_config_filepath) and os.path.getsize(AWSConfig.aws_config_filepath) > 0:
+            log.warning(f"AWSConfig writing over non-empty file {AWSConfig.aws_config_filepath}")
+
+        # write region and output to file
+        with open(AWSConfig.aws_config_filepath, "w") as f:
             f.write(f"[default]\nregion = { region }\noutput = { output }")
