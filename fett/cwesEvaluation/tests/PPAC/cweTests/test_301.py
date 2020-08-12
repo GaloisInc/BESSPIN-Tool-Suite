@@ -274,7 +274,7 @@ def test_301 (target,binTest):
                 retSockets[iConn] = None
                 connThread = threading.Thread(target=connectToTarget, args=(iConn,retSockets,logDict,logLock))
                 connThread.daemon = True
-                target.trash.throwThread(connThread,f"connThread #{iConn} of test-{testNum}")
+                getSetting('trash').throwThread(connThread,f"connThread #{iConn} of test-{testNum}")
                 connThread.start()
                 connThreads.append(connThread)
 
