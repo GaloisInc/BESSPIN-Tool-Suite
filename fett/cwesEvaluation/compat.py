@@ -20,8 +20,9 @@ class testgenTargetCompatabilityLayer:
             self.testsPars["SPOOFING_IP"] = getSettingDict("PPAC", "spoofingIP")
             self.testsPars["nAllowedInteractions"] = getSettingDict("PPAC", "test_nAllowedInteractions")
             self.testsPars["nAllowedAuthAttempts"] = getSettingDict("PPAC", "test_nAllowedAuthAttempts")
-            self.testsPars['TESTGEN_TEST_PART'] = getSetting("currentTest")[2]
             self.certsDir = os.path.join(getSetting('buildDir'),'lib_PPAC')
+            if isEqSetting('osImage', 'FreeRTOS'):
+                self.testsPars['TESTGEN_TEST_PART'] = getSetting("currentTest")[2]
         if doesSettingExist("resourceManagement"):
             self.testsPars["nResourceLimit"] = getSettingDict("resourceManagement", "test_nResourceLimit")
 
