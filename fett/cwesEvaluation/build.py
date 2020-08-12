@@ -7,6 +7,7 @@ import os, re
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
+from fett.cwesEvaluation.tests.informationLeakage.generateWrappers import generateWrappers
 from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
@@ -59,6 +60,8 @@ def buildCwesEvaluation():
         # Create class dir and build
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
+        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                vulClass, 'sources')
 
         if vulClass == 'bufferErrors':
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
@@ -75,9 +78,21 @@ def buildCwesEvaluation():
                     cp(source,
                        os.path.join(vulClassDir,
                                     f'test_extra_{os.path.basename(source)}'))
+        elif vulClass == 'informationLeakage':
+            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                    vulClass,'envFett.mk'), vulClassDir)
+            # Copy over concrete tests
+            copyDir(sourcesDir, vulClassDir, copyContents=True)
+
+            cp(os.path.join(getSetting('repoDir'),
+                            'fett',
+                            'cwesEvaluation',
+                            'tests',
+                            vulClass,
+                            'build_source.py'),
+                buildDir)
+            generateWrappers()
         else:
-            sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
-                                    vulClass, 'sources')
             cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
             for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
                 # Check if the test should be skipped:
@@ -93,12 +108,22 @@ def buildCwesEvaluation():
                 cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
                     os.path.join(vulClassDir, 'Makefile'))
             else: # Use default environment
-                cp(os.path.join(getSetting('repoDir'),
-                                'fett',
-                                'target',
-                                'utils',
-                                'Makefile.xcompileDir'),
-                   os.path.join(vulClassDir, 'Makefile'))
+                if (doesSettingExistDict(vulClass, "classSpecificMake") and
+                    isEnabledDict(vulClass, "classSpecificMake")):
+                    cp(os.path.join(getSetting('repoDir'),
+                                    'fett',
+                                    'cwesEvaluation',
+                                    'tests',
+                                    vulClass,
+                                    'Makefile.xcompileDir'),
+                       os.path.join(vulClassDir, 'Makefile'))
+                else:
+                    cp(os.path.join(getSetting('repoDir'),
+                                    'fett',
+                                    'target',
+                                    'utils',
+                                    'Makefile.xcompileDir'),
+                       os.path.join(vulClassDir, 'Makefile'))
                 cp(os.path.join(getSetting('repoDir'),
                                 'fett',
                                 'target',
@@ -213,7 +238,10 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     fPars.close()
 
     # Build
-    buildFreeRTOS(doPrint=False)
+    extraEnvVars = ([f"CWE_TEST={test[:-2]}"]
+                    if vulClass == "informationLeakage"
+                    else [])
+    buildFreeRTOS(doPrint=False, extraEnvVars=extraEnvVars)
 
     #remove the current test files
     for testFile in testFiles:

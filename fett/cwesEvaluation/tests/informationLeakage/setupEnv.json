@@ -4,6 +4,10 @@
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
 
     "informationLeakage" : [
-
+        {
+            "name" : "classSpecificMake",
+            "type" : "bool",
+            "val"  : 1
+        }
     ]
 }
