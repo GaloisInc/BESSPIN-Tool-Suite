@@ -1,5 +1,9 @@
+""" Local AWS Configuration
+
+setup credentials and location of machine running the AWS Test Suite. filesystem requirements
+and checks are available as static members and methods.
+"""
 import os
-import re
 
 from .logger import *
 
@@ -23,6 +27,7 @@ class AWSCredentials:
         log.info("AWSCredentials: successfully obtained credentials")
 
     @classmethod
+    @log_assertion_fails
     def from_env_vars(cls):
         """
         Get AWS credentials from environment variables
@@ -42,6 +47,7 @@ class AWSCredentials:
         return cls([os.environ[v] for v in variables])
 
     @classmethod
+    @log_assertion_fails
     def from_credentials_file(cls, filepath="~/.aws/credentials"):
         """
         Get AWS credentials from file
@@ -122,6 +128,7 @@ class AWSCredentials:
         return os.path.exists(filename)
 
     @staticmethod
+    @log_assertion_fails
     def _check_credentials(cred):
         """
         Ensure that the credentials are valid. 
@@ -141,6 +148,7 @@ class AWSCredentials:
                 c, str
             ), f"Element of credentials '{c}' must be a string instance"
 
+    @log_assertion_fails
     def __getitem__(self, index):
         """
         Gets a specified credential
@@ -210,10 +218,28 @@ class AWSCredentials:
 
 
 class AWSConfig:
+    """statics for checking and writing an AWS configuration"""
+
+    aws_dir = os.path.expanduser("~/.aws")
+
+    aws_config_filepath = os.path.join(aws_dir, "config")
+
+    @staticmethod
+    def has_config_file():
+        """that AWS directory and config is present on the filesystem"""
+        return os.path.exists(AWSConfig.aws_dir) and os.path.exists(AWSConfig.aws_config_filepath)
+
+    @staticmethod
     def check_write_aws_config(region="us-west-2", output="json"):
+        """produce a valid configuration in ~/.aws/config, specifying region and output only"""
+        # make the directory if not present
+        if not os.path.exists(AWSConfig.aws_dir):
+            os.mkdir(AWSConfig.aws_dir)
 
-        if not os.path.exists(os.path.expanduser("~/.aws")):
-            os.mkdir(os.path.expanduser("~/.aws"))
+        # if file exists and has contents, warn user
+        if os.path.exists(AWSConfig.aws_config_filepath) and os.path.getsize(AWSConfig.aws_config_filepath) > 0:
+            log.warning(f"AWSConfig writing over non-empty file {AWSConfig.aws_config_filepath}")
 
-        with open(os.path.expanduser("~/.aws/config"), "w") as f:
+        # write region and output to file
+        with open(AWSConfig.aws_config_filepath, "w") as f:
             f.write(f"[default]\nregion = { region }\noutput = { output }")

@@ -1,3 +1,9 @@
+"""AWS Instance UserData Creator
+
+AWS Test Suite uses the ec2 user data to describe work to be accomplished by the launched
+instances. UserDataCreator generates and writes valid userdata from a job description of
+a FETT-Target job.
+"""
 from .aws_tools import *
 from .logger import *
 
@@ -24,6 +30,7 @@ class UserdataCreator:
         self._userdata = userdata
 
     @classmethod
+    @log_assertion_fails
     def default(
         cls,
         credentials,
@@ -146,6 +153,7 @@ class UserdataCreator:
         else:
             self._userdata.append(ul)
 
+    @log_assertion_fails
     def append_file(self, dest, path):
         """
         Add file contents of path to userdata
