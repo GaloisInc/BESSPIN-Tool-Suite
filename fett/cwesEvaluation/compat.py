@@ -11,9 +11,7 @@ class testgenTargetCompatabilityLayer:
         self.targetObj = target
 
         self.settings = {"useCustomScoring" : getSetting("useCustomScoring"),
-                         "processor" : getSetting('processor'),
-                         "FPGANTK_IP_TARGET" : getSetting("fpgaIpTarget"),
-                         "FPGANTK_IP_HOST" : getSetting("fpgaIpHost")}
+                         "processor" : getSetting('processor')}
 
         self.testsPars = {}
         if doesSettingExist("PPAC"):

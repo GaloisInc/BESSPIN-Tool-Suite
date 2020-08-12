@@ -22,7 +22,7 @@ def test_294(target, binTest):
 
     elif (target.osImage in ['debian','FreeBSD']):
         partNames = ['Block the host\'s ip.', 'Allow the host\'s ip.']
-        allowedIP = [spoofingIP.strip('\"'),target.settings['FPGANTK_IP_HOST']]
+        allowedIP = [spoofingIP.strip('\"'),target.ipHost]
 
         target.switchUser () #this test is executed on root
 

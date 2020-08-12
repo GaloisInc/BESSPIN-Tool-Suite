@@ -110,7 +110,7 @@ def test_307 (target,binTest):
 
         def authAtNp1thAttempt ():
             retLog = f"Authenticating at the (N+1)th attempt ...\n"
-            sshCommand = f"ssh {target.userName}@{target.settings['FPGANTK_IP_TARGET']}"
+            sshCommand = f"ssh {target.userName}@{target.ipTarget}"
 
             def terminate (sshProcess):
                 if (sshProcess is not None):
