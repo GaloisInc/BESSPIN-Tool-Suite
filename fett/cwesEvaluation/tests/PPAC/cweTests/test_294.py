@@ -94,7 +94,14 @@ def test_294(target, binTest):
         target.activateEthernet ()
         outLog += "\n[host]: Pinging target successful!\n"
 
-        ethAdaptorName = target.settings['ETH_ADAPTOR_NAME']
+        if (isEqSetting('target','aws')):
+            ethAdaptorName = getSetting('awsTapAdaptorName')
+        elif (isEqSetting('target','fpga')):
+            ethAdaptorName = getSetting('fpgaEthAdaptorName')
+        else:
+            errorAndLog(f"<ethAdaptorName> is not defined in <test_290> for <{getSetting('target')}>.")
+            outLog += f"\n<INVALID> <ethAdaptorName> is not defined for <{getSetting('target')}>."
+            return outLog
         pathToSudoPart = os.path.dirname(__file__) + f"/sudoTests/sudo_{testNum}.py"
         sudoPrompt = f"\"Warning: You need sudo privileges to run test_{testNum}: [sudo] password for {getpass.getuser()}: \""
 
