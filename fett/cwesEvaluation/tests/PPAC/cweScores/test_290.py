@@ -19,7 +19,7 @@ def test_290(logTest,testsDir):
         #Part01: Baseline sanity check. No spoofing.
         partsScores[1] = scoreGrantedDenied (SCORES, partsLines[1])
         if ((partsScores[1] != SCORES.FAIL) and (partsScores[1] != SCORES.CALL_ERR)): #it's true or false
-            if (not doesKeywordExist(partsLines[1], '<TARGET-RECV>:JEDI CLNT')):
+            if (not doesKeywordExist(partsLines[1], 'JEDI CLNT:<TARGET-RECV>')):
                 partsScores[1] = SCORES.CALL_ERR
             elif (partsScores[1]):
                 partsScores[1] = SCORES.MED
@@ -29,7 +29,7 @@ def test_290(logTest,testsDir):
         #Part02: Don't authorize the IP. Try to spoof it.
         partsScores[2] = scoreGrantedDenied (SCORES, partsLines[2])
         if ((partsScores[2] != SCORES.FAIL) and (partsScores[2] != SCORES.CALL_ERR)): #it's true or false
-            if (not doesKeywordExist(partsLines[2], '<TARGET-RECV>:SSITH LORD')):
+            if (not doesKeywordExist(partsLines[2], 'SSITH LORD:<TARGET-RECV>')):
                 partsScores[2] = SCORES.CALL_ERR
             elif (partsScores[2]):
                 partsScores[2] = SCORES.V_HIGH
