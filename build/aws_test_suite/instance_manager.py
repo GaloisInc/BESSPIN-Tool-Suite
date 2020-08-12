@@ -30,7 +30,7 @@ class InstanceManager:
     @log_assertion_fails
     def add_instance(self, instance):
         """append ec2 instance to instance manager"""
-        assert isinstance(instance, boto3.resource('ec2').Instance)
+        assert isinstance(instance, Instance)
         log.debug(
             f"InstanceManager adding instance { instance.name } to { [x.name for x in self._instances] }"
         )
@@ -200,4 +200,3 @@ class Instance:
     @userdata.setter
     def userdata(self, userdata):
         self._userdata = userdata
-
