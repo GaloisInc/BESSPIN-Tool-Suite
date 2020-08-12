@@ -8,6 +8,8 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from fett.base.utils.misc import *
+
 def test_301 (target,binTest):
     testNum = 301
     if (binTest != "test_{0}.riscv".format(testNum)):

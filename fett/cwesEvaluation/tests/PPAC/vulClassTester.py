@@ -41,15 +41,15 @@ class vulClassTester(testgenTargetCompatabilityLayer):
         def closeSocket (xSocket):
             try:
                 xSocket.close()
-            except:
-                self.reportFile.write("Warning: Unable to close socket.\n")
+            except Exception as exc:
+                warnAndLog("Unable to close socket.\n",doPrint=False,exc=exc)
         xThread = threading.Thread(target=closeSocket, args=(xSocket,))
         xThread.daemon = True
         try:
             socketName = xSocket.getsockname()
-        except:
+        except Exception as exc:
             socketName = "UNKNOWN"
-            self.reportFile.write("Warning: Unable to get socket name when closing. Maybe it was already closed.\n")
+            warnAndLog("Unable to get socket name when closing. Maybe it was already closed.\n",doPrint=False,exc=exc)
         getSetting('trash').throwThread(xThread,f"closing socket <{socketName}>")
         xThread.start()
         return xThread
