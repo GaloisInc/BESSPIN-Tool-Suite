@@ -1021,7 +1021,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def openSshConn (self,userName='root',endsWith=None,timeout=60):
+    def openSshConn (self,userName='root',endsWith=None,timeout=60,specialTest=False):
         def returnFail (message,exc=None):
             self.killSshConn()
             warnAndLog (message,doPrint=False,exc=exc)
@@ -1065,7 +1065,10 @@ class commonTarget():
         elif (retExpect[2]==4): # asking for yes/no for new host
             self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
         elif (retExpect[2] in [2,3]): #the ip was blocked
-            return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
+            if specialTest:
+                return 'BLOCKED_IP'
+            else:
+                return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
         self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
         self.sshRetries = 0 #reset the retries
         return True
@@ -1112,7 +1115,8 @@ class commonTarget():
                 else:
                     self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
         pingOut.close()
-        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!")
+        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!",
+                    doPrint=not (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')))
         return
 
     @decorate.debugWrap
@@ -1124,6 +1128,15 @@ class commonTarget():
 
     def hasHardwareRNG (self):
         return isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def getGdbOutput(self):
+        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'aws')
+                                               else getSetting('target'))
+        message = f"getGdbOutput is not implemented for <{target}>"
+        errorAndLog(message)
+        return message
 
 # END OF CLASS commonTarget
 

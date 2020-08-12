@@ -46,16 +46,10 @@ def templateFreeRTOS(testsDir):
             # use but need for fettNtk.c.  Do we even need that?  It feels like
             # this build could be streamlined as we don't need all of the fett
             # stuff
-            fmain.write('\n#include "fettFreeRTOS.h"\n\n')
 
             #Declarations
             fmain.write("\nvoid main_fett (void);\n\n")
             fmain.write("extern {0};\n".format(mainDeclaration))
-
-            # Dummy xMainTask
-            # TODO: I needed this for compilation, but it seems pretty
-            # unnecessary
-            fmain.write("\nTaskHandle_t xMainTask = NULL;\n\n")
 
             #The main function
             fmain.write("\n\nvoid main_fett (void)\n{\n")

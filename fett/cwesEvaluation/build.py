@@ -3,14 +3,14 @@ Building CWEs Evaluation
 """
 
 import glob
-import os
+import os, re
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
-from fett.target.build import freeRTOSBuildChecks, prepareFreeRTOSNetworkParameters, buildFreeRTOS, crossCompileUnix, cleanDirectory
-
+from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
+from fett.cwesEvaluation.tests.PPAC.freertos import prepareFreeRTOSforPPAC
 
 @decorate.debugWrap
 def buildCwesEvaluation():
@@ -37,30 +37,8 @@ def buildCwesEvaluation():
 
         freeRTOSBuildChecks()
 
-        #copy the C files, .mk files, and any directory
-        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),
-                getSetting('buildDir'),
-                copyContents=True)
-        # Remove existing main file
-        os.remove(os.path.join(getSetting('buildDir'), "main_fett.c"))
-
-        # TODO: Put listConfigParams back in to fill the header file?
-        # Write empty fett configuration header file (nothing to configure)
         touch(os.path.join(getSetting('buildDir'), "fettUserConfig.h"))
-
-        prepareFreeRTOSNetworkParameters()
-
-        # TODO: Should probably modify the source files to support AWS instead of
-        # this hack
-        backend = ("FPGA" if isEqSetting("target", "aws")
-                          else getSetting("target").upper())
-
-        # Define variables testgen uses
-        mk = ftOpenFile(os.path.join(getSetting('buildDir'), 'envFett.mk'), 'a')
-        mk.write("CFLAGS += "
-                 "-DtestgenOnFreeRTOS "
-                 f"-Dtestgen{backend} ")
-        mk.close()
+        touch(os.path.join(getSetting('buildDir'), "fettFreeRTOSConfig.h"))
 
         if (isEnabled('useCustomCompiling') and isEnabledDict('customizedCompiling','useCustomMakefile')):
             cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
@@ -68,12 +46,15 @@ def buildCwesEvaluation():
 
 
     # Copy apps over
+    additionalFiles = []
     for vulClass in getSetting('vulClasses'):
         # Create class dir and build
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
 
         if vulClass == 'bufferErrors':
+            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                    vulClass,'envFett.mk'), vulClassDir)
             # Generate test sources
             generateTests(vulClassDir)
             if isEnabledDict('bufferErrors', 'useExtraTests'):
@@ -88,7 +69,8 @@ def buildCwesEvaluation():
                                     f'test_extra_{os.path.basename(source)}'))
         else:
             sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
-                                        vulClass, 'sources')
+                                    vulClass, 'sources')
+            cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
             for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
                 # Check if the test should be skipped:
                 cTestName = os.path.basename(test)
@@ -123,6 +105,24 @@ def buildCwesEvaluation():
             if (xSetting.startswith('test_')):
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
+        if vulClass == "PPAC":
+            fHeader.write(
+                    f'#define SPOOFING_IP "{getSettingDict("PPAC", "spoofingIP")}"\n'
+                    f'#define TCP_PORT_NUMBER {getSetting("fpgaPortTarget")}\n')
+
+            if isEqSetting('osImage', 'FreeRTOS'):
+                prepareFreeRTOSforPPAC(fHeader)
+            else:
+                pattern = os.path.join(sourcesDir,
+                                       f'*_{getSetting("osImage")}')
+                for source in glob.glob(pattern):
+                    suffixLen = len(getSetting('osImage')) + 1
+                    outFile = os.path.join(
+                            vulClassDir,
+                            os.path.basename(source)[:-suffixLen])
+                    cp(source, outFile)
+                    additionalFiles.append(outFile)
+
         fHeader.close()
 
         if isEqSetting('osImage', 'FreeRTOS'):
@@ -135,12 +135,12 @@ def buildCwesEvaluation():
                        exitCode=EXIT.Implementation)
 
     if getSetting('osImage') in ['debian', 'FreeBSD']:
-        buildTarball()
+        buildTarball(additionalFiles)
 
 
 @decorate.debugWrap
 @decorate.timeWrap
-def buildTarball():
+def buildTarball(additionalFiles):
     fileList = [(os.path.basename(f), f) for f in
                 glob.glob(os.path.join(getSetting('buildDir'),
                                        "*",
@@ -153,6 +153,8 @@ def buildTarball():
         except KeyError:
             enabledCwesEvaluations[vulClass] = [test]
     setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
+
+    fileList += [(os.path.basename(f), f) for f in additionalFiles]
 
     # TODO: Do I need this += part here?  I thought it would capture the
     # entropy thing, but it looks like it doesn't?
@@ -181,12 +183,25 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     
     # copy the test files
     vTestsDir = os.path.join(buildDir, vulClass)
-    testFiles = [test, f'main_{test}', 'testsParameters.h']
+    testFiles = [test, f'main_{test}', 'testsParameters.h', 'envFett.mk']
+    #Check for extra files
+    if (vulClass=='PPAC'):
+        extraFile = os.path.join(buildDir,'lib_PPAC','extraSources',test.replace('.c','_extra.c'))
+        if (os.path.isfile(extraFile)):
+            cp (extraFile,vTestsDir)
+            testFiles.append(test.replace('.c','_extra.c')) 
+
     for testFile in testFiles:
         cp (os.path.join(vTestsDir,testFile), buildDir)
 
     fPars = ftOpenFile(os.path.join(buildDir,'testsParameters.h'),'a')
     fPars.write(f"\n#define TESTGEN_TEST_PART {part}\n")
+    if (vulClass=='PPAC'):
+        try:
+            testNum = re.findall(r'\d+',test)[0]
+        except Exception as exc:
+            logAndExit(f"Failed to extract TESTNUM from <{test}>",exc=exc,exitCode=EXIT.Dev_Bug)
+        fPars.write(f"#define TESTNUM {testNum}\n")
     fPars.close()
 
     # Build

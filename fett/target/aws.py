@@ -28,6 +28,9 @@ class firesimTarget(commonTarget):
         if (getSetting('osImage') not in ['debian','FreeRTOS']):
             logAndExit (f"<firesimTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
+        if (not isEqSetting('mode','production')): #maybe there are leftovers -- easier for fellow devs
+            self.cleanProcesses()
+
         awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
 
         # 1. Switch0
@@ -167,6 +170,22 @@ class firesimTarget(commonTarget):
         if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
             time.sleep(20)
         setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
+
+    @decorate.debugWrap
+    def cleanProcesses(self):
+        listProcesses = ['FireSim-f1','switch0']
+        if (isEqSetting('mode','evaluateSecurityTests')):
+            listProcesses += ['openocd', 'riscv64-unknown-elf-gdb']
+        procList = subprocess.getoutput('ps -A -o %c,%p')
+        for entry in procList.splitlines():
+            try:
+                pName, pId = ''.join(entry.split()).strip().split(',')
+            except Exception as exc:
+                warnAndLog(f"Failed to split the ps entry <{entry}>.",exc=exc,doPrint=False)
+            if (pName in listProcesses):
+                sudoShellCommand(['kill','-9',str(pId)],check=False)
+
+        sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
 
     def interact(self):
         if (isEqSetting('osImage','FreeRTOS')):
@@ -311,6 +330,25 @@ class firesimTarget(commonTarget):
             except Exception as exc:
                 warnAndLog(f"runGDBcommand: Failed to read the cmdOut of <{command}>.",doPrint=False,exc=exc)
                 return ''
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def getGdbOutput(self):
+        gdbOut = ''
+        try:
+            self.fGdbOut.close()
+            gdbOutPath = os.path.join(getSetting('workDir'), 'gdb.out')
+            fGdb = ftOpenFile(gdbOutPath, "rb")
+            gdbOut = "\n~~~GDB LOGGING~~~\n" + fGdb.read() + "\n~~~~~~~~~~~~~~~~~\n"
+            fGdb.close()
+            os.remove(self.gdbOutPath) #clear the file for next test
+            self.fGdbOut = ftOpenFile(gdbOutPath, 'wb')
+        except Exception as exc:
+            warnAndLog("<getGdbOutput> failed to obtain the GDB output.",
+                        exc=exc)
+        return gdbOut
+
+
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
