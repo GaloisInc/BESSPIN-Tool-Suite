@@ -37,9 +37,13 @@ def test_294(target, binTest):
             target.sshRetries = 0 #temporarily
 
         #deny all 
+        outLog += target.runCommand ("echo \"PermitRootLogin yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
         if (target.osImage == 'debian'):
+            #allow root ssh first
+            outLog += target.runCommand ("service ssh restart",shutdownOnError=False)[1]
             outLog += target.runCommand ("echo \"sshd: ALL\" >> /etc/hosts.deny",shutdownOnError=False)[1]
         elif (target.osImage == 'FreeBSD'):
+            outLog += self.runCommand("/etc/rc.d/sshd start",shutdownOnError=False)[1]
             outLog += target.runCommand ("echo \"sshd : ALL : deny\" > /etc/hosts.allow",shutdownOnError=False)[1]
 
         for iPart in range(2):
