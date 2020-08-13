@@ -18,7 +18,7 @@ void onPrintf (const char * textToPrint, ...) {
     return;
 }
 
-// Easy fix -- fettPrintf and exitFett are called within FreeRTOS-10.0.1
+// Easy fix -- fettPrintf is called within FreeRTOS-10.0.1
 void fettPrintf (const char * textToPrint, ...);
 void fettPrintf (const char * textToPrint, ...) {
     if (!doEndTest) {
@@ -37,12 +37,6 @@ void exitTest (uint8_t exitCode) {
         printf ("EXIT: exiting fett with code <%x>\n",exitCode);
         printf ("\n>>>End of Fett<<<\n");
     }
-    return;
-}
-
-void exitFett (uint8_t exitCode);
-void exitFett (uint8_t exitCode) {
-    exitTest(exitCode);
     return;
 }
 
