@@ -63,11 +63,15 @@ def runFreeRTOSCwesEvaluation():
                 target.shutdown()
 
                 #Log the GDB log
-                gdbOutLines = '\n'.join(ftReadLines(target.fGdbOut.name))
-                tee = logFile if (isEnabled('useCustomScoring')) else None
-                printAndLog(f"\n~~~GDB LOGGING -- {testName}~~~\n",doPrint=False,tee=tee)
-                printAndLog(gdbOutLines,doPrint=False,tee=tee)
-                printAndLog("\n~~~~~~~~~~~~~~~~~",doPrint=False,tee=tee)
+                if (isEnabled('useCustomScoring')):
+                    logFile.write("\n\n~~~GDB LOGGING~~~\n")
+                    gdbLines = '\n'.join(target.gdbOutLines)
+                    logFile.write(gdbLines[gdbLines.find("Continuing."):]) # only the useful output
+                    logFile.write("\n~~~~~~~~~~~~~~~~~\n")
+
+                logging.debug(f"\n~~~GDB LOGGING -- {testName}~~~\n")
+                logging.debug('\n'.join(ftReadLines(target.fGdbOut.name))) # The whole thing for debug
+                logging.debug("\n~~~~~~~~~~~~~~~~~")
 
             logFile.close()
         # Score the tests
