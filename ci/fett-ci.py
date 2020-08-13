@@ -2,7 +2,7 @@
 """
 --- fett-ci.py is the CI entry to the FETT-Target program. 
 --- usage: fett-ci.py [-h] (-art ARTIFACTSUFFIX | -job JOBID) [-i NODEINDEX]
-                  [-N NNODES] [-t JOBTIMEOUT] [-X] [-n] -ep {OnPrem,AWS,AWSTesting}
+                  [-N NNODES] [-t JOBTIMEOUT] [-X] -ep {OnPrem,AWS,AWSTesting}
                   runType
 
 FETT-CI (CI Entry to FETT-Target)
@@ -26,7 +26,7 @@ optional arguments:
                         minutes.
   -X, --testOnly        This dumps all possible config permutations and some
                         meta data. Does not run anything.
-  -ep {OnPrem,AWS}, --entrypoint {OnPrem,AWS,AWSTesting}
+  -ep {OnPrem,AWS,AWSTesting}, --entrypoint {OnPrem,AWS,AWSTesting}
                         Entrypoint: OnPrem | AWS | AWSTesting
 """
 
@@ -84,6 +84,13 @@ def main(xArgs):
         nodeIndex = xArgs.nodeIndex - 1  # $CI_NODE_INDEX starts from 1
     else:
         nodeIndex = xArgs.nodeIndex
+
+    # Check jobId is valid, if provided
+    if xArgs.jobId:
+        if not (re.match("^[A-Za-z0-9-_+.]+$", xArgs.jobId)):
+            exitFettci(
+                message="Provided jobId contained invalid character(s). It must match regex '[A-Za-z0-9-_+.]'"
+            )
 
     # Decide on artifact name -- There is no else as they are argparser grouped
     if xArgs.artifactSuffix:
