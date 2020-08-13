@@ -89,7 +89,7 @@ def main(xArgs):
     # Check jobID is valid, if provided
     if xArgs.jobID:
         if not (re.match("^[A-Za-z0-9-_+.]+$", xArgs.jobID)):
-            exitFettci(
+            exitFettCi(
                 message="Provided jobID contained invalid character(s). It must match regex '[A-Za-z0-9-_+.]'"
             )
 
