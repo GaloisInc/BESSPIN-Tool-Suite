@@ -228,12 +228,12 @@ class firesimTarget(commonTarget):
             
             # Analyze gdb output for FreeRTOS
             if (isEqSetting('osImage','FreeRTOS')):
-                gdbOutLines = ftReadLines(self.fGdbOut.name)
+                self.gdbOutLines = ftReadLines(self.fGdbOut.name)
                 relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
                 testLogFile = getSetting("currentTest")[3]
                 sigFound = None
                 for xSig in relvSigs:
-                    if (matchExprInLines(rf"^.*{xSig}.*$",gdbOutLines)):
+                    if (matchExprInLines(rf"^.*{xSig}.*$",self.gdbOutLines)):
                         sigFound = xSig
                         break
                 # Fetch relevant registers values
