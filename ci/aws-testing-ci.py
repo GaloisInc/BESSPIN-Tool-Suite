@@ -95,7 +95,9 @@ def main(args):
             bb = f"-{args.binaries_branch}" if args.binaries_branch else ""
 
             # Build instance name string
-            n = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
+            #   Need to replace '/' with '_' so that when S3 files are created, it does not
+            #   Think it needs a new directory.
+            n = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}".replace("/", "_")
             log.debug(f"Name String: { n }")
 
             # Compose userdata based on args
