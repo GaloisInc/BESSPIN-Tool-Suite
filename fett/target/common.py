@@ -26,6 +26,7 @@ class commonTarget():
         self.fTtyOut = None
         self.sshProcess = None
         self.fSshOut = None
+        self.restartMode = False
 
         # all OSs settings
         self.portTarget = None
@@ -102,7 +103,21 @@ class commonTarget():
                     iAttempt = 0
                     loginSuccess = False
                     while ((not loginSuccess) and (iAttempt < maxLoginAttempts)):
-                        retCommand = self.runCommand(loginPassword,endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],timeout=120)
+                        #  will timeout on error, not return Login failed
+                        retCommand = self.runCommand(loginPassword,
+                                                     endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],
+                                                     timeout=60,
+                                                     suppressErrors=True,
+                                                     shutdownOnError=False,
+                                                     issueInterrupt=False)
+                        if retCommand[2]:
+                            printAndLog("switchUser: Failed to login and received timeout. Trying again...",doPrint=False)
+                            #  for some reason, needs to accept input to see the login failed string
+                            self.runCommand(" ",endsWith=["Login incorrect"],timeout=20)
+                            self.runCommand (loginName,endsWith="Password:")
+                            time.sleep(3) #wait for the OS to be ready for the password (maybe this works)
+                            iAttempt += 1
+                            continue
                         if (retCommand[3] == 0):
                             loginSuccess = True
                         elif (retCommand[3] == 1): # try again
@@ -228,7 +243,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 120
             elif (isEqSetting('target', 'aws')):
-                timeout = 480
+                timeout = 540
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -246,7 +261,7 @@ class commonTarget():
                 self.runCommand("root",endsWith="\r\n#")
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
             elif (not self.onlySsh):
-                if not isEqSetting("binarySource", "SRI-Cambridge"):
+                if ((not isEqSetting("binarySource", "SRI-Cambridge")) or self.restartMode):
                     self.runCommand ("root",endsWith='Password:')
                     self.runCommand (self.rootPassword,endsWith=tempPrompt)
                 else:
@@ -264,7 +279,13 @@ class commonTarget():
 
         #up the ethernet adaptor and get the ip address
         self.activateEthernet()
-                                  
+        
+        if (self.restartMode): #this only in aws/production mode -- skip the reset of start()
+            if (isEqSetting('osImage','debian')): # timesync is not in the boot sequence of neither GFE nor MIT images
+                ntpTimeout = 150 if isEqSetting('binarySource','MIT') else 60 # MIT needs some more time to be responsive
+                self.runCommand("systemctl start systemd-timesyncd.service",timeout=ntpTimeout)
+            printAndLog (f"start: {getSetting('osImage')} booted _again_ successfully!")
+            return
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         awsNtpServer = "169.254.169.123"
         if (isEqSetting('osImage','debian')):
@@ -493,7 +514,7 @@ class commonTarget():
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
                     erroneousContents=None,shutdownOnError=True,timeout=60,
-                    suppressErrors=False,tee=None):
+                    suppressErrors=False,tee=None,sendToNonUnix=False,issueInterrupt=True):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
         "   ARGUMENTS:
@@ -506,6 +527,8 @@ class commonTarget():
         "   timeout: how long to wait for endsWith before timing out.
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
+        "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
+        "   issueInterrupt: use keyboardInterrupt to resolve timeout recovery
         "   RETURNS:
         "   --------
         "   A list: [isSuccess  : "Boolean. True on no-errors.",
@@ -513,11 +536,11 @@ class commonTarget():
         "            wasTimeout : "Boolean. True if timed-out waiting for endsWith.",
         "            idxEndsWith: The index of the endsWith received. If endsWith was a string, this would be 0. -1 on time-out.
         """
-        if (isEnabled('isUnix')):
+        if (isEnabled('isUnix') or sendToNonUnix):
             self.sendToTarget (command,shutdownOnError=shutdownOnError)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
-        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout)
+        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,issueInterrupt=issueInterrupt)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
         logging.debug(f"textBack:\n{textBack}")
@@ -926,7 +949,26 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True):
+        def warningThread(msg, waitingTime, stopEvent):
+            """thread will wait on an event, and display warning if not set by waiting time"""
+            dt = 0.1
+            dt = waitingTime / 10.0 if dt > waitingTime else dt
+            ct  = 0.0
+            while ct < waitingTime:
+                time.sleep(dt)
+                if stopEvent.is_set():
+                    return
+                ct += dt
+            warnAndLog(msg)
+
+        # prepare thread to give warning message if the expect is near timing out
+        stopEvent = threading.Event()
+        warningTime = 0.8 * timeout
+        warningMsg = threading.Thread(target=warningThread, args=(f"expectFromTarget: command <{command}> is near timeout ({timeout} s)", warningTime, stopEvent))
+        warningMsg.daemon = True
+        getSetting('trash').throwThread(warningMsg, "warning message for expectFromTarget")
+        warningMsg.start()
         self.checkFallToTty ("expectFromTarget")
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
@@ -941,10 +983,12 @@ class commonTarget():
                 self.shutdownAndExit(f"expectFromTarget: {getSetting('target').capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
             elif (not isEqSetting('osImage','FreeRTOS')):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
-                textBack += self.keyboardInterrupt (shutdownOnError=True)
+                textBack += self.keyboardInterrupt (shutdownOnError=True) if issueInterrupt else ""
             return [textBack, True, -1]
         except Exception as exc:
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
+        # tell warning message thread that the expect is finished
+        stopEvent.set()
         if (isinstance(endsWith,str)): #only one string
             textBack += endsWith
         elif ((endsWith not in [pexpect.EOF, pexpect.TIMEOUT]) and isinstance(endsWith[retExpect],str)): #list
@@ -1161,6 +1205,4 @@ def charByCharEncoding (inBytes):
             xChar = '<!>'
         textBack += xChar
     return textBack
-
-
 
