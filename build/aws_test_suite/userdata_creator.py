@@ -70,6 +70,7 @@ class UserdataCreator:
         # If either branch is specified, we need to get a SSH key - best solution so far
         userdata = [
             "#!/bin/bash",
+            "exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1",
             "yum install -y git-lfs",
             "runuser -l centos -c 'sudo ssh-keyscan github.com >> ~/.ssh/known_hosts'",
             "cat >>/home/centos/.bashrc << EOL",
