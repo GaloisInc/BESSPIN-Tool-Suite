@@ -31,8 +31,9 @@ optional arguments:
 """
 
 try:
-    import sys, os, glob, shutil, time, itertools, json
-    import subprocess, argparse, signal, configparser, copy, socket
+    import sys, os, glob, shutil, time, itertools
+    import json, configparser, socket, re
+    import subprocess, argparse, signal, copy
     from utils import (
         exitFettCi,
         exitOnInterrupt,
