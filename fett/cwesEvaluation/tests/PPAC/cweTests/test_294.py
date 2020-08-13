@@ -36,12 +36,12 @@ def test_294(target, binTest):
             target.sshLimitRetries = 1 #temporarily
             target.sshRetries = 0 #temporarily
 
-        #deny all 
+        #allow root ssh first
         outLog += target.runCommand ("echo \"PermitRootLogin yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
         if (target.osImage == 'debian'):
-            #allow root ssh first
-            outLog += target.runCommand ("service ssh restart",shutdownOnError=False)[1]
-            outLog += target.runCommand ("echo \"sshd: ALL\" >> /etc/hosts.deny",shutdownOnError=False)[1]
+            #deny all 
+            outLog += target.runCommand ("echo \"PasswordAuthentication no\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+            # service will be reset again in the loop anyway
         elif (target.osImage == 'FreeBSD'):
             outLog += self.runCommand("/etc/rc.d/sshd start",shutdownOnError=False)[1]
             outLog += target.runCommand ("echo \"sshd : ALL : deny\" > /etc/hosts.allow",shutdownOnError=False)[1]
@@ -51,8 +51,10 @@ def test_294(target, binTest):
 
             #only allow the part's IP
             if (target.osImage == 'debian'):
-                outLog += target.runCommand (f"echo \"sshd: {allowedIP[iPart]}\" >> /etc/hosts.allow",shutdownOnError=False)[1]
-                time.sleep(20)
+                outLog += target.runCommand (f"echo \"Match Address {allowedIP[iPart]}\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+                outLog += target.runCommand ("echo \"    PasswordAuthentication yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+                outLog += target.runCommand ("service ssh restart",shutdownOnError=False)[1]
+                time.sleep(10)
             elif (target.osImage == 'FreeBSD'):
                 outLog += target.runCommand (f"sed  -i \"\" \"1 s/^/sshd : {allowedIP[iPart]} : allow\\n/\" /etc/hosts.allow",shutdownOnError=False)[1]
 
