@@ -1089,15 +1089,18 @@ class commonTarget():
         self.isSshConn = True
         self.process = self.sshProcess
         passwordPrompt = [f"Password for {userName}@[\w\-\.]+\:", f"{userName}@[\w\-\.]+\'s password\:"]
-        blockedIpResponse = ["Connection closed by remote host", "Connection reset by peer"]
+        blockedIpResponse = ["Connection closed by remote host", "Connection reset by peer", "Permission denied (publickey,keyboard-interactive)."]
         retExpect = self.expectFromTarget(passwordPrompt + blockedIpResponse + ['\)\?',pexpect.EOF],"openSshConn",timeout=timeout,shutdownOnError=False)
-        if (retExpect[2]==5): #Failed
-            return returnFail(f"openSshConn: Failed to spawn the ssh process.")
-        elif (retExpect[1]): #Failed
+        if (retExpect[1]): #Failed
             return returnFail(f"openSshConn: Spawning the ssh process timed out.")
-        elif (retExpect[2]==4): # asking for yes/no for new host
-            self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
-        elif (retExpect[2] in [2,3]): #the ip was blocked
+        elif (retExpect[2]==5): # asking for yes/no for new host
+            retYes = self.runCommand("yes",endsWith=passwordPrompt+blockedIpResponse+[pexpect.EOF],timeout=timeout,shutdownOnError=False)
+            if (retYes[3] not in [0,1]): #No password prompt
+                if (specialTest and (retYes[3] in [2,3,4,5])):
+                    return 'BLOCKED_IP'
+                else:
+                    return returnFail(f"openSshConn: Unexpected outcome when responding <yes> to the ssh process.")
+        elif (retExpect[2] in [2,3,4,6]): #the ip was blocked or connection refused
             if specialTest:
                 return 'BLOCKED_IP'
             else:
