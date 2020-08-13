@@ -5,7 +5,7 @@
     solely executing this file. Please do not execute any other file.
 --- usage: fett.py [-h] [-c CONFIGFILE | -cjson CONFIGFILESERIALIZED]
                [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
-               [-ep {devHost,ciOnPrem,ciAWS,awsProd}]
+               [-ep {devHost,ciOnPrem,ciAWS,awsProd,awsDev}] [-job JOBID]
 
 FETT (Finding Exploits to Thwart Tampering)
 
@@ -21,8 +21,11 @@ optional arguments:
   -l LOGFILE, --logFile LOGFILE
                         Overwrites the default logFile: ./${workDir}/fett.log
   -d, --debug           Enable debugging mode.
-  -ep {devHost,ciOnPrem,ciAWS,awsProd}, --entrypoint {devHost,ciOnPrem,ciAWS,awsProd,awsDev}
+  -ep {devHost,ciOnPrem,ciAWS,awsProd,awsDev}, --entrypoint {devHost,ciOnPrem,ciAWS,awsProd,awsDev}
                         The entrypoint
+  -job JOBID, --jobId JOBID
+                        The job ID in production mode.
+
 --- Defaults: 
         workingDirectory = ./workDir
         configFile = ./config.ini
@@ -85,6 +88,12 @@ def main (xArgs):
     if(xArgs.entrypoint is None):
         xArgs.entrypoint = 'devHost'
 
+    # Check jobId is valid, if provided
+    if(xArgs.jobId):
+        if(not(re.match("^[A-Za-z0-9-_+.]+$", xArgs.jobId))):
+            print("(Error)~  Provided jobId contained invalid character(s). It must match regex '[A-Za-z0-9-_+.]'")
+            exitFett(EXIT.Files_and_paths)
+
     # setup the logging
     logLevel = logging.DEBUG if (xArgs.debug) else logging.INFO 
     logging.basicConfig(filename=logFile,filemode='w',format='%(asctime)s: (%(levelname)s)~  %(message)s',datefmt='%I:%M:%S %p',level=logLevel)
@@ -97,6 +106,7 @@ def main (xArgs):
     setSetting('debugMode', xArgs.debug)
     setSetting('fettEntrypoint',xArgs.entrypoint)
     setSetting('prodJobId', xArgs.jobId)
+    
     # Load all configuration and setup settings
     setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
