@@ -85,11 +85,11 @@ def main(xArgs):
     else:
         nodeIndex = xArgs.nodeIndex
 
-    # Check jobId is valid, if provided
-    if xArgs.jobId:
-        if not (re.match("^[A-Za-z0-9-_+.]+$", xArgs.jobId)):
+    # Check jobID is valid, if provided
+    if xArgs.jobID:
+        if not (re.match("^[A-Za-z0-9-_+.]+$", xArgs.jobID)):
             exitFettci(
-                message="Provided jobId contained invalid character(s). It must match regex '[A-Za-z0-9-_+.]'"
+                message="Provided jobID contained invalid character(s). It must match regex '[A-Za-z0-9-_+.]'"
             )
 
     # Decide on artifact name -- There is no else as they are argparser grouped
