@@ -22,6 +22,8 @@ class firesimTarget(commonTarget):
         self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
+        self.readGdbOutputUnix = 0 #beginning of file
+
     @decorate.debugWrap
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeout=90):
@@ -334,18 +336,19 @@ class firesimTarget(commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def getGdbOutput(self):
-        gdbOut = ''
+        gdbOut = "\n~~~GDB LOGGING~~~\n"
         try:
-            self.fGdbOut.close()
-            gdbOutPath = os.path.join(getSetting('workDir'), 'gdb.out')
-            fGdb = ftOpenFile(gdbOutPath, "rb")
-            gdbOut = "\n~~~GDB LOGGING~~~\n" + fGdb.read() + "\n~~~~~~~~~~~~~~~~~\n"
-            fGdb.close()
-            os.remove(self.gdbOutPath) #clear the file for next test
-            self.fGdbOut = ftOpenFile(gdbOutPath, 'wb')
+            gdbLines = '\n'.join(ftReadLines(self.fGdbOut.name, "r"))
+            if (self.readGdbOutputUnix == 0): #We don't want the GDB out before the string "Continuing."
+                gdbOut += gdbLines[gdbLines.find("Continuing."):]
+            elif (self.readGdbOutputUnix < len(gdbLines)): #Only the new lines
+                gdbOut += gdbLines[self.readGdbOutputUnix:]
+            self.readGdbOutputUnix = len(gdbLines) #move the cursor
         except Exception as exc:
+            gdbOut += "<Warning-No-Logs>"
             warnAndLog("<getGdbOutput> failed to obtain the GDB output.",
                         exc=exc)
+        gdbOut += "\n~~~~~~~~~~~~~~~~~\n"
         return gdbOut
 
 
