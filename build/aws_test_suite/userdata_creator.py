@@ -73,6 +73,7 @@ class UserdataCreator:
             "exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1",
             "yum install -y git-lfs",
             "runuser -l centos -c 'sudo ssh-keyscan github.com >> ~/.ssh/known_hosts'",
+            "runuser -l centos -c 'sudo ssh-keyscan gitlab-ext.galois.com >> ~/.ssh/known_hosts'",
             "cat >>/home/centos/.bashrc << EOL",
             f'export AWS_ACCESS_KEY_ID="{credentials.access_key_id}"',
             f'export AWS_SECRET_ACCESS_KEY="{credentials.secret_key_access}"',
