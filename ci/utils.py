@@ -5,7 +5,7 @@
 """
 
 from configs import *
-import configparser, os, copy, time, glob, shutil
+import configparser, os, copy, time, glob, shutil, subprocess
 
 
 def exitFettCi(exitCode=-1, exc=None, message=None):
@@ -169,7 +169,15 @@ def prepareArtifact(
     # Collect logs that will not generate termination if they cannot be found.
     for xArtifact in listArtifacts:
         try:
-            shutil.copy2(xArtifact, artifactsPath)
+            subprocess.run(["sudo", "cp", xArtifact, artifactsPath])
+            subprocess.run(
+                [
+                    "sudo",
+                    "chown",
+                    os.getlogin() + ":" + os.getlogin(),
+                    os.join(artifactsPath, xArtifact),
+                ]
+            )
         except:
             print(f"(Warning)~  Unable to collect non-essential log file { xArtifact }")
 
