@@ -51,7 +51,7 @@ class InstanceManager:
         # Populate running_instances with $cap instances
         #   This uses the min of $cap and $(len(self._instances))
         running_instances = [
-            self._instances.pop() for x in range(min(self._cap, len(self._instances)))
+            self._instances.pop() for _ in range(min(self._cap, len(self._instances)))
         ]
 
         log.info(f"Populated running_instances with { len(running_instances) } items")
@@ -105,9 +105,23 @@ class InstanceManager:
 
 class Instance:
     """convenience wrapper class for boto3 EC2 Instance"""
-    def __init__(self, ami, name, **kwargs):
+
+    def __init__(
+            self,
+            ami,
+            name="aws-test-suite",
+            vpc_name="aws-controltower-VPC",
+            security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
+            instance_type="f1.2xlarge",
+            key_name="nightly-testing",
+            userdata=None,
+            tags=None
+    ):
 
         log.debug(f"Instance constructor called with { locals() }")
+
+        if tags is None:
+            tags = {}
 
         if not re.fullmatch("ami-[A-Za-z0-9]+", ami):
             ami = get_ami_id_from_name(ami)
@@ -117,22 +131,12 @@ class Instance:
 
         self._id = None
 
-        self._vpc_name = (
-            kwargs["vpc_name"] if "vpc_name" in kwargs else "aws-controltower-VPC"
-        )
-        self._security_group_name = (
-            kwargs["security_group_name"]
-            if "security_group_name" in kwargs
-            else "FPGA Developer AMI-1-8-1-AutogenByAWSMP-1"
-        )
-        self._instance_type = (
-            kwargs["instance_type"] if "instance_type" in kwargs else "f1.2xlarge"
-        )
-        self._key_name = (
-            kwargs["key_name"] if "key_name" in kwargs else "nightly-testing"
-        )
-        self._userdata = kwargs["userdata"] if "userdata" in kwargs else None
-        self._tags = kwargs["tags"] if "tags" in kwargs else {}
+        self._vpc_name = vpc_name
+        self._security_group_name = security_group_name
+        self._instance_type = instance_type
+        self._key_name = key_name
+        self._userdata = userdata
+        self._tags = tags
         self._tags["Name"] = self._name
 
         log.debug(
