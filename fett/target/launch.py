@@ -161,10 +161,11 @@ def launchFett ():
             runTests(xTarget, isEnabled('sendTarballToTarget'), 30)
         else:
             xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
-    if (isEnabled('isUnix') and isEnabled("useCustomCredentials")):
-        xTarget.changeUserPassword()
-    if isEnabled('isUnix') and isEnabled("rootUserAccess"):
-        xTarget.enableRootUserAccess()
+    if (not isEqSetting('mode','evaluateSecurityTests')):
+        if (isEnabled('isUnix') and isEnabled("useCustomCredentials")):
+            xTarget.changeUserPassword()
+        if isEnabled('isUnix') and isEnabled("rootUserAccess"):
+            xTarget.enableRootUserAccess()
 
     return xTarget
 
