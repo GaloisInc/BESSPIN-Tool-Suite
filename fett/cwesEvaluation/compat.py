@@ -137,3 +137,6 @@ class testgenTargetCompatabilityLayer:
         # TODO: Are these interfaces compatable enough?
         return self.target.readFromTarget(*args, **kwargs)
 
+    def getDefaultEndWith(self):
+        return self.target.getDefaultEndWith()
+

@@ -78,8 +78,13 @@ def test_288 (target,binTest):
         outLog += "-"*20 + "Part02: $CWD is cgi-bin directory" + "-"*20 + "\n"
         outLog += target.runCommand("mkdir -p /tmp/ssith/cgi-bin",shutdownOnError=True)[1]
         outLog += target.runCommand("mv ./{0} /tmp/ssith/cgi-bin/".format(binTest),shutdownOnError=False)[1]
-        outLog += target.runCommand("cd /tmp/ssith/cgi-bin".format(binTest),shutdownOnError=False)[1]
-        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("cd /tmp/ssith/cgi-bin".format(binTest),
+                        endsWith=[target.getDefaultEndWith(),"cgi-bin \$"],
+                        shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),
+                        endsWith=[target.getDefaultEndWith(),"cgi-bin \$"],
+                        shutdownOnError=False)[1]
+        outLog += target.runCommand("cd ~",shutdownOnError=True)[1]
         if (target.settings['useCustomScoring']): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
