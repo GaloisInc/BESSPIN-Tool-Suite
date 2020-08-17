@@ -26,7 +26,7 @@ LD_FLAGS_Debian += -I$(BESSPIN_TESTGEN_KEYUTILS_DIR)/include -L$(BESSPIN_TESTGEN
 LDFLAGS := $(ARCH_ABI) ${LD_FLAGS_$(OS_IMAGE)}
 
 CC_GCC := ${PREFIX_$(OS_IMAGE)}-gcc
-SYSROOT_Debian := $(shell $(CC_GCC) -print-sysroot)
+SYSROOT_Debian = $(shell $(CC_GCC) -print-sysroot)
 ifeq ($(BIN_SOURCE),SRI_Cambridge)
 	SYSROOT_FreeBSD := /opt/cheri/sdk/sysroot
 else
@@ -38,8 +38,8 @@ LD_GCC_GCC := $(CC_GCC)
 LD_CLANG_GCC := $(LD_GCC_GCC)
 LD_CLANG_LLD := $(CC_CLANG)
 
-GCC_LIB_DIR := $(shell dirname $(shell $(CC_GCC) -print-libgcc-file-name))
-LDFLAGS_Debian_LLD := -L$(GCC_LIB_DIR) -B$(GCC_LIB_DIR)
+GCC_LIB_DIR = $(shell dirname $(shell $(CC_GCC) -print-libgcc-file-name))
+LDFLAGS_Debian_LLD = -L$(GCC_LIB_DIR) -B$(GCC_LIB_DIR)
 LDFLAGS_FreeBSD_LLD := -fuse-ld=lld
 
 LDFLAGS += ${LDFLAGS_$(OS_IMAGE)_$(LINKER)}
