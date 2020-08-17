@@ -33,7 +33,7 @@ Flavors:
 ### Setup
 
 - Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-- Create an SSH key (named `~/.ssh/aws-ci-gh`) and associate it with your github account - this will facilitate checking out the branches specified with the `-b` and `-bb` flags.
+- Create an SSH key (named `~/.ssh/aws-ci-gh`) and associate it with your github and gitlab-ext accounts - this will facilitate checking out the branches specified with the `-b` and `-bb` flags.
 
 ### Usage
 
@@ -41,8 +41,9 @@ Flavors:
 
 2.
 ```bash
-usage: aws-testing-ci.py [-h] [-b BRANCH] [-bb BINARIES_BRANCH] [-cp CAP]
-                         [-idx INSTANCE_INDEX] [-k KEY_PATH] [-n NAME] [-r RUNS]
+usage: aws-testing-ci.py [-h] [-b BRANCH] [-bb BINARIES_BRANCH]
+                         [-c CAP] [-idx INSTANCE_INDEX] [-k KEY_PATH]
+                         [-n NAME] [-r RUNS]
                          ami
 ```
 
