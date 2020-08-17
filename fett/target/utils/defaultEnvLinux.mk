@@ -9,7 +9,7 @@ PREFIX_FreeBSD := riscv64-unknown-freebsd12.1
 PREFIX_Debian := riscv64-unknown-linux-gnu
 
 CFLAGS_FreeBSD_CLANG := -Wno-error=sign-compare -mno-relax
-CFLAGS += ${CFLAGS_$(OS_IMAGE)_$(COMPILER)}
+CFLAGS += ${CFLAGS_$(OS_IMAGE)_$(COMPILER)} ${BIN_SOURCE_$(BIN_SOURCE)}
 
 LD_FLAGS_FreeBSD := -L$(PREFIX_FreeBSD)-ld -lpam -lrt
 LD_FLAGS_Debian := -lpam -lpam_misc -lrt -lkeyutils 

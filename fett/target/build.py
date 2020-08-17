@@ -288,6 +288,7 @@ def crossCompileUnix(directory,extraString=''):
     envLinux.append(f"TARGET={getSetting('target').upper()}")
     envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
     envLinux.append(f"LINKER={getSetting('linker').upper()}")
+    envLinux.append(f"BIN_SOURCE={getSetting('binarySource').replace('-','_')}")
     logging.debug(f"going to make using {envLinux}")
     make (envLinux, directory)
     printAndLog(f"Files cross-compiled successfully.")
