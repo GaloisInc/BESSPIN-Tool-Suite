@@ -10,7 +10,6 @@ FETT_DEFS += -DtestgenOnLinux -DtestgenOn$(OS_IMAGE) -Dtestgen$(TARGET)
 
 CFLAGS := $(ARCH_ABI) -Wall -O0 $(FETT_DEFS)
 
-PREFIX_FreeBSD := riscv64-unknown-freebsd12.1
 ifeq ($(BIN_SOURCE),SRI_Cambridge)
 	PREFIX_FreeBSD := riscv64-unknown-freebsd13.0
 else
