@@ -26,6 +26,9 @@ def test_294(target, binTest):
 
         target.switchUser () #this test is executed on root
 
+        #allow root ssh first
+        target.enableSshOnRoot()
+
         if (not target.onlySsh): #special case. No JTAG available.
             #saving the ssh state
             bkpIsSshConn = target.targetObj.isSshConn
@@ -36,27 +39,17 @@ def test_294(target, binTest):
             target.sshLimitRetries = 1 #temporarily
             target.sshRetries = 0 #temporarily
 
-        #allow root ssh first
-        outLog += target.runCommand ("echo \"PermitRootLogin yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
-        if (target.osImage == 'debian'):
-            #deny all 
-            outLog += target.runCommand ("echo \"PasswordAuthentication no\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
-            # service will be reset again in the loop anyway
-        elif (target.osImage == 'FreeBSD'):
-            outLog += self.runCommand("/etc/rc.d/sshd start",shutdownOnError=False)[1]
-            outLog += target.runCommand ("echo \"sshd : ALL : deny\" > /etc/hosts.allow",shutdownOnError=False)[1]
+        #deny all 
+        outLog += target.runCommand ("echo \"PasswordAuthentication no\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
 
         for iPart in range(2):
             outLog += "-" * 20 + f"Part0{iPart+1}: {partNames[iPart]}" + "-" * 20 + "\n"
 
             #only allow the part's IP
-            if (target.osImage == 'debian'):
-                outLog += target.runCommand (f"echo \"Match Address {allowedIP[iPart]}\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
-                outLog += target.runCommand ("echo \"    PasswordAuthentication yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
-                outLog += target.runCommand ("service ssh restart",shutdownOnError=False)[1]
-                time.sleep(10)
-            elif (target.osImage == 'FreeBSD'):
-                outLog += target.runCommand (f"sed  -i \"\" \"1 s/^/sshd : {allowedIP[iPart]} : allow\\n/\" /etc/hosts.allow",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"Match Address {allowedIP[iPart]}\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+            outLog += target.runCommand ("echo \"    PasswordAuthentication yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+            target.retartSshService ()
+            time.sleep(10)
 
             if ((not target.onlySsh) or (iPart == 1)):
                 if (target.onlySsh):

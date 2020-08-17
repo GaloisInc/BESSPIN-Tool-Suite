@@ -27,6 +27,7 @@ class commonTarget():
         self.sshProcess = None
         self.fSshOut = None
         self.restartMode = False
+        self.isSshRootEnabled = not isEqSetting('target','aws')
 
         # all OSs settings
         self.portTarget = None
@@ -1173,6 +1174,32 @@ class commonTarget():
         message = f"getGdbOutput is not implemented for <{target}>"
         errorAndLog(message)
         return message
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def enableSshOnRoot (self):
+        if (self.isSshRootEnabled):
+            return #nothing to do
+        if (not self.isCurrentUserRoot):
+            self.switchUser() #has to be executed on root
+        self.runCommand ("echo \"PermitRootLogin yes\" >> /etc/ssh/sshd_config")
+        self.retartSshService()
+        self.isSshRootEnabled = True
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def retartSshService (self):
+        if (not self.isCurrentUserRoot):
+            self.switchUser() #has to be executed on root
+
+        if (isEqSetting('osImage','debian')):
+            self.runCommand ("service ssh restart")
+        if (isEqSetting('osImage','FreeBSD')):
+            if (isEqSetting('target','aws')):
+                self.runCommand("pkill -f /usr/sbin/sshd")
+                self.runCommand("/usr/sbin/sshd")
+            else:
+                self.runCommand("/etc/rc.d/sshd restart")
 
 # END OF CLASS commonTarget
 

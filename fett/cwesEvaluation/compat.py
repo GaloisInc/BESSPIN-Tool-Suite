@@ -140,3 +140,9 @@ class testgenTargetCompatabilityLayer:
     def getDefaultEndWith(self):
         return self.target.getDefaultEndWith()
 
+    def enableSshOnRoot (self):
+        return self.target.enableSshOnRoot()
+
+    def retartSshService (self):
+        return self.target.retartSshService()
+
