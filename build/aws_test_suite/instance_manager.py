@@ -16,6 +16,7 @@ class InstanceManager:
     """ Manage EC2 Instances
     define group of EC2 instances, assign a workload and run
     """
+
     def __init__(self, cap=1, instances=None):
         if instances is None:
             instances = []
@@ -107,18 +108,16 @@ class Instance:
     """convenience wrapper class for boto3 EC2 Instance"""
 
     def __init__(
-            self,
-            ami,
-            name="aws-test-suite",
-            vpc_name="aws-controltower-VPC",
-            security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
-            instance_type="f1.2xlarge",
-            key_name="nightly-testing",
-            userdata=None,
-            tags=None
+        self,
+        ami,
+        name="aws-test-suite",
+        vpc_name="aws-controltower-VPC",
+        security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
+        instance_type="f1.2xlarge",
+        key_name="nightly-testing",
+        userdata=None,
+        tags=None,
     ):
-
-        log.debug(f"Instance constructor called with { locals() }")
 
         if tags is None:
             tags = {}
