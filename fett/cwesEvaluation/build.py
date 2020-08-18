@@ -37,7 +37,15 @@ def buildCwesEvaluation():
 
         freeRTOSBuildChecks()
 
-        touch(os.path.join(getSetting('buildDir'), "fettUserConfig.h"))
+        if (isEqSetting('binarySource','LMCO')):
+            configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
+            configHfile.write(f"#define BIN_SOURCE_{getSetting('binarySource').replace('-','_')}\n")
+            configHfile.close()
+
+            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','utils','lmcoMiscFreeRTOS.c'),
+                getSetting('buildDir'))
+        else:
+            touch(os.path.join(getSetting('buildDir'), "fettUserConfig.h"))
         touch(os.path.join(getSetting('buildDir'), "fettFreeRTOSConfig.h"))
 
         if (isEnabled('useCustomCompiling') and isEnabledDict('customizedCompiling','useCustomMakefile')):

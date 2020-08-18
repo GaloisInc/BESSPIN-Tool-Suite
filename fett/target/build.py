@@ -276,9 +276,19 @@ def cleanDirectory (xDir,endsWith='.o'):
 @decorate.debugWrap
 @decorate.timeWrap
 def crossCompileUnix(directory,extraString=''):
+    if (isEqSetting('binarySource','SRI-Cambridge')):
+        if (not isEqSetting('cross-compiler','Clang')):
+            warnAndLog (f"Compiling using <{getSetting('cross-compiler')}> for <{getSetting('binarySource')}> is not supported."
+                " Compiling using <Clang> instead.")
+            setSetting('cross-compiler','Clang')
+        if (not isEqSetting('linker','LLD')):
+            warnAndLog (f"Linking using <{getSetting('linker')}> for <{getSetting('binarySource')}> is not supported."
+                " Linking using <LLD> instead.")
+            setSetting('linker','LLD')
+
     #cross-compiling sanity checks
     if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
-        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.>.")
+        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.")
         setSetting('linker','GCC')
 
     printAndLog (f"Cross-compiling {extraString}...")
@@ -288,6 +298,11 @@ def crossCompileUnix(directory,extraString=''):
     envLinux.append(f"TARGET={getSetting('target').upper()}")
     envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
     envLinux.append(f"LINKER={getSetting('linker').upper()}")
+    envLinux.append(f"BIN_SOURCE={getSetting('binarySource').replace('-','_')}")
     logging.debug(f"going to make using {envLinux}")
-    make (envLinux, directory)
+    if (isEqSetting('binarySource','SRI-Cambridge')):
+        dockerToolchainImage = 'cambridge-toolchain'
+    else:
+        dockerToolchainImage = None
+    make (envLinux, directory,dockerToolchainImage=dockerToolchainImage)
     printAndLog(f"Files cross-compiled successfully.")

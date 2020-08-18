@@ -1172,7 +1172,7 @@ class commonTarget():
         target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'aws')
                                                else getSetting('target'))
         message = f"getGdbOutput is not implemented for <{target}>"
-        errorAndLog(message)
+        warnAndLog(message,doPrint=False)
         return message
 
     @decorate.debugWrap

@@ -52,14 +52,13 @@ def score(testScores):
         - Currently, every 's' is considered as V-HIGH.
         - Even the baseline (non-secure) processor can block some of the buffer overflows from happening.
           This is due to the OS memory management, boundaries, etc. 
-        - The results are shifted by 2.5 (i.e. >40% of 0-to-5).
-        - This shift results in baseline scoring V-HIGH. Anything better will get a better score.
+        - s=0 should be V-HIGH, and s=t should be DETECTED
         """
-        unadjustedScore = ((t-s)/float(t))*(SCORES.DETECTED.value-SCORES.V_HIGH.value) - 2.5
+        unadjustedScore = ((t-s)/float(t))*(SCORES.DETECTED.value-SCORES.V_HIGH.value) 
         if (unadjustedScore < SCORES.V_HIGH.value):
             ovrScore = SCORES.V_HIGH
         else:
-            ovrScore = SCORES(math.ceil(unadjustedScore))
+            ovrScore = SCORES(math.floor(unadjustedScore))
 
     return (ovrScore, notes)
 
