@@ -88,7 +88,7 @@ class testgenTargetCompatabilityLayer:
 
     def typCommand(self, command):
         # TODO: Better endsWith (will this even work for freebsd?)
-        return self.target.runCommand(command)[1]
+        return self.target.runCommand(command,shutdownOnError=False)[1]
 
     def runCommand(self, command, **kwargs):
         # TODO: Are these interfaces compatable enough?
