@@ -73,8 +73,8 @@ def main(args):
     log.info(f"{h}Creating userdata and instances.")
 
     # Generate a list of indices to be tested on each run
-    if args.instance_index:
-        indices_to_run = [args.instance_index]
+    if args.instance_indices:
+        indices_to_run = args.instance_indices
     else:
         indices_to_run = list(range(len(r)))
 
@@ -125,7 +125,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "ami", type=str, help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'"
+        "-a",
+        "--ami",
+        nargs=None,
+        type=str,
+        help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'",
     )
     parser.add_argument(
         "-b",
@@ -150,8 +154,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-idx",
-        "--instance-index",
+        "--instance-indices",
         type=int,
+        nargs="*",
         help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this "
         "instance index only.",
     )
