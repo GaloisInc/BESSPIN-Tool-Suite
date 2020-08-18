@@ -114,12 +114,11 @@ def buildCwesEvaluation():
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
         if vulClass == "PPAC":
-            portTarget = getSetting(f"{getSetting('target')}PortTarget")
-            fHeader.write(
+            if isEqSetting('osImage', 'FreeRTOS'):
+                portTarget = getSetting(f"{getSetting('target')}PortTarget")
+                fHeader.write(
                     f'#define SPOOFING_IP "{getSettingDict("PPAC", "spoofingIP")}"\n'
                     f'#define TCP_PORT_NUMBER {portTarget}\n')
-
-            if isEqSetting('osImage', 'FreeRTOS'):
                 prepareFreeRTOSforPPAC(fHeader)
             else:
                 pattern = os.path.join(sourcesDir,
