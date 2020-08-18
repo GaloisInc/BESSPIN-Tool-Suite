@@ -159,7 +159,6 @@ def test_307 (target,binTest):
                     except Exception as e:
                         if (type(e) == pexpect.EOF):
                             textBack = getText(sshProcess)
-                            print("Here it comes:<",textBack,"> Ended here")
                             if ("Permission denied" in textBack):
                                 retLog += "<DENIED> -- EOF\n"
                             else:
