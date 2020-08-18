@@ -153,7 +153,7 @@ if __name__ == "__main__":
         default=1,
     )
     parser.add_argument(
-        "-idx",
+        "-i",
         "--instance-indices",
         type=int,
         nargs="*",
