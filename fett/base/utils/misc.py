@@ -333,14 +333,22 @@ def safeLoadJsonFile (jsonFile):
     return jsonData
 
 @decorate.debugWrap
-def make (argsList,dirPath):
+def make (argsList,dirPath,dockerToolchainImage=None):
     if ((not dirPath) or (argsList is None)):
         logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
     # open a file for stdout/stderr
     outMake = ftOpenFile(os.path.join(getSetting('buildDir'),'make.out'),'a')
 
-    argsList = ['make','-C',dirPath] + argsList
+    if (dockerToolchainImage):
+        argsList = ['sudo', 'docker', 'run', '-it', '--privileged=true',
+                    '-v', f'{dirPath}:/root/makeDir', dockerToolchainImage,
+                    'bash', '-c', f'cd /root/makeDir; make {" ".join(argsList)}']
+    else:
+        argsList = ['make','-C',dirPath] + argsList
+        
     logging.info(f"Executing <{' '.join(argsList)}>. Command output is appended to <{outMake.name}>.")
+    outMake.write(f"{' '.join(argsList)}\n\n")
+    outMake.flush()
     try:
         subprocess.check_call(argsList, stdout=outMake, stderr=outMake)
     except Exception as exc:
