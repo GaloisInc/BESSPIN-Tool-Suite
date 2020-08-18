@@ -157,8 +157,8 @@ if __name__ == "__main__":
         "--instance-indices",
         type=int,
         nargs="*",
-        help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this "
-        "instance index only.",
+        help="Specify a list of indices of target(s) to run - if entered, this program will run $RUNS worth of this set "
+        "of instance indices only.",
     )
     parser.add_argument(
         "-k",
