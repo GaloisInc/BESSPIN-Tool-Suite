@@ -55,6 +55,11 @@ def main(args):
     # log arguments to main()
     log.debug(f"aws-testing-ci.py started with arguments { args }")
 
+    # assert that we have ami argument
+    #   We do this here, as the ami would ideally be passed as a required
+    #   positional, but with -i as a list, this cannot be done
+    assert args.ami, "Please provide AMI as an argument, with the -a flag"
+
     # Check in envs, otherwise error
     a = AWSCredentials.from_env_vars()
 
@@ -127,7 +132,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "-a",
         "--ami",
-        nargs=None,
         type=str,
         help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'",
     )
