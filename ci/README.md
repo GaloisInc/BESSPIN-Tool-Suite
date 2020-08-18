@@ -41,10 +41,10 @@ Flavors:
 
 2.
 ```bash
-usage: aws-testing-ci.py [-h] [-b BRANCH] [-bb BINARIES_BRANCH]
-                         [-c CAP] [-idx INSTANCE_INDEX] [-k KEY_PATH]
-                         [-n NAME] [-r RUNS]
-                         ami
+usage: aws-testing-ci.py [-h] [-a AMI] [-b BRANCH] [-bb BINARIES_BRANCH]
+                         [-c CAP]
+                         [-idx [INSTANCE_INDICES [INSTANCE_INDICES ...]]]
+                         [-k KEY_PATH] [-n NAME] [-r RUNS]
 ```
 
 ### Results
