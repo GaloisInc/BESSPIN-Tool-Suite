@@ -1180,11 +1180,14 @@ class commonTarget():
     def enableSshOnRoot (self):
         if (self.isSshRootEnabled):
             return #nothing to do
-        if (not self.isCurrentUserRoot):
+        switchUsers = not self.isCurrentUserRoot
+        if (switchUsers):
             self.switchUser() #has to be executed on root
         self.runCommand ("echo \"PermitRootLogin yes\" >> /etc/ssh/sshd_config")
         self.retartSshService()
         self.isSshRootEnabled = True
+        if (switchUsers):
+            self.switchUser() #switch back
 
     @decorate.debugWrap
     @decorate.timeWrap
