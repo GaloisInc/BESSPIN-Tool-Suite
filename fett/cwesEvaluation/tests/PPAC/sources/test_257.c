@@ -216,9 +216,10 @@ NONE
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 #include <sys/types.h>
 #include <security/pam_appl.h>
-#include <security/pam_misc.h>
-#ifdef testgenOnFreeBSD
-#include <security/openpam.h>
+#ifdef testgenOnDebian
+    #include <security/pam_misc.h>
+#else //FreeBSD
+    #include <security/openpam.h>
 #endif
 #include <string.h>
 #include <stdio.h>
