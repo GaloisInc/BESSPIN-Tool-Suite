@@ -191,12 +191,12 @@ def test_307 (target,binTest):
         for iPart in range(2):
             outLog += "-" * 20 + f"Part0{iPart+1}: {partNames[iPart]}" + "-" * 20 + "\n"
             if (iPart == 0): #backup config
-                outLog += target.runCommand ("cp /etc/ssh/sshd_config /root/",shutdownOnError=False)[1]
+                outLog += target.runCommand (f"cp {getSetting('sshdConfigPath')} /root/",shutdownOnError=False)[1]
             else: #reset config
-                outLog += target.runCommand ("cp /root/sshd_config /etc/ssh/sshd_config",shutdownOnError=False)[1]
+                outLog += target.runCommand (f"cp /root/sshd_config {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
             #apply ssh config
-            outLog += target.runCommand (f"echo \"PasswordAuthentication yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
-            outLog += target.runCommand (f"echo \"MaxAuthTries {maxAuthTries[iPart]}\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"PasswordAuthentication yes\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"MaxAuthTries {maxAuthTries[iPart]}\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
             target.retartSshService ()
             time.sleep(10)
             #try to authenticate
@@ -205,7 +205,7 @@ def test_307 (target,binTest):
             outLog += "-"*60 + "\n\n\n"
 
         #reset config
-        target.runCommand ("mv /root/sshd_config /etc/ssh/sshd_config")
+        target.runCommand (f"mv /root/sshd_config {getSetting('sshdConfigPath')}")
         target.switchUser () #Go back to user
 
     elif (target.osImage == 'FreeRTOS'):

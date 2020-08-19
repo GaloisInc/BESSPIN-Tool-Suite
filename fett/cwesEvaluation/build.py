@@ -131,6 +131,12 @@ def buildCwesEvaluation():
                     cp(source, outFile)
                     additionalFiles.append(outFile)
 
+                # sshd_config location
+                if (isEqSetting('binarySource','SRI-Cambridge')):
+                    setSetting('sshdConfigPath','/fett/etc/sshd_config')
+                else: #default
+                    setSetting('sshdConfigPath','/etc/ssh/sshd_config')
+
         fHeader.close()
 
         if isEqSetting('osImage', 'FreeRTOS'):
