@@ -40,14 +40,14 @@ def test_294(target, binTest):
             target.sshRetries = 0 #temporarily
 
         #deny all 
-        outLog += target.runCommand ("echo \"PasswordAuthentication no\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+        outLog += target.runCommand (f"echo \"PasswordAuthentication no\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
 
         for iPart in range(2):
             outLog += "-" * 20 + f"Part0{iPart+1}: {partNames[iPart]}" + "-" * 20 + "\n"
 
             #only allow the part's IP
-            outLog += target.runCommand (f"echo \"Match Address {allowedIP[iPart]}\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
-            outLog += target.runCommand ("echo \"    PasswordAuthentication yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"Match Address {allowedIP[iPart]}\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"    PasswordAuthentication yes\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
             target.retartSshService ()
             time.sleep(10)
 

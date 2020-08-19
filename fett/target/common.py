@@ -1183,7 +1183,7 @@ class commonTarget():
         switchUsers = not self.isCurrentUserRoot
         if (switchUsers):
             self.switchUser() #has to be executed on root
-        self.runCommand ("echo \"PermitRootLogin yes\" >> /etc/ssh/sshd_config")
+        self.runCommand (f"echo \"PermitRootLogin yes\" >> {getSetting('sshdConfigPath')}")
         self.retartSshService()
         self.isSshRootEnabled = True
         if (switchUsers):
