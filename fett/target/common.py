@@ -596,7 +596,7 @@ class commonTarget():
                 logging.error(message)
                 errorAndLog (f"sendFile: Failed to send <{pathToFile}/{xFile}> to target. Trying again...")
                 self.resendAttempts += 1
-                return self.sendFile (pathToFile,xFile,targetPathToFile=targetPathToFile,toTarget=toTarget,timeout=timeout,shutdownOnError=shutdownOnError)
+                return self.sendFile (pathToFile,xFile,targetPathToFile=targetPathToFile,toTarget=toTarget,timeout=timeout,shutdownOnError=shutdownOnError,forceScp=forceScp)
             elif (shutdownOnError):
                 self.shutdownAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
             else:
@@ -618,7 +618,7 @@ class commonTarget():
             if (isEqSetting('osImage','debian')):
                 retShaRX = self.runCommand(f"sha256sum {f}")[1]
             elif (isEqSetting('osImage','FreeBSD')):
-                retShaRX = self.runCommand(f"sha256 {f}",timeout=90)[1]
+                retShaRX = self.runCommand(f"sha256 {f}",timeout=120)[1]
                 retShaRX += self.runCommand(" ")[1]
             logging.debug(f"retShaRX:\n{retShaRX}")
             for line in retShaRX.splitlines():
@@ -662,19 +662,19 @@ class commonTarget():
             if (not self.sshECDSAkeyWasUpdated):
                 self.clearHostKey()
             try:
-                scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
+                scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=15)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
             if not self.hasHardwareRNG():
                 self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
             try:
-                retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=timeout)
+                retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=15)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
                 if (retExpect == 2): #needs a yes
                     scpProcess.sendline("yes")
-                    retExpect = scpProcess.expect(passwordPrompt,timeout=timeout)
+                    retExpect = scpProcess.expect(passwordPrompt,timeout=15)
                 if (retExpect in [0,1]): #password prompt
                     pwd = self.rootPassword if self.isCurrentUserRoot else self.userPassword
                     scpProcess.sendline(pwd)
@@ -736,7 +736,7 @@ class commonTarget():
         #---send the archive
         if (getSetting('binarySource') in ['GFE', 'SRI-Cambridge']) and isEqSetting('osImage', 'FreeBSD'):
             self.switchUser() #this is assuming it was on root
-            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=60,forceScp=True)
+            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout,forceScp=True)
             self.switchUser()
             self.runCommand(f"mv /home/{self.userName}/{getSetting('tarballName')} /root/")
         else:
