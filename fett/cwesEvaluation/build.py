@@ -83,14 +83,6 @@ def buildCwesEvaluation():
                                     vulClass,'envFett.mk'), vulClassDir)
             # Copy over concrete tests
             copyDir(sourcesDir, vulClassDir, copyContents=True)
-
-            cp(os.path.join(getSetting('repoDir'),
-                            'fett',
-                            'cwesEvaluation',
-                            'tests',
-                            vulClass,
-                            'build_source.py'),
-                buildDir)
             generateWrappers()
         else:
             cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
@@ -238,9 +230,14 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     fPars.close()
 
     # Build
-    extraEnvVars = ([f"CWE_TEST={test[:-2]}"]
-                    if vulClass == "informationLeakage"
-                    else [])
+    if vulClass == "informationLeakage":
+        testInfo = os.path.splitext(os.path.basename(test))[0].split("_")[1:]
+        variantNames = (f"informationLeakage/tests/{testInfo[0]}.c "
+                        f"informationLeakage/stores/{testInfo[1]}.c "
+                        f"informationLeakage/interpreters/{testInfo[2]}.c")
+        extraEnvVars = [f"VARIANT_NAMES={variantNames}"]
+    else:
+        extraEnvVars = []
     buildFreeRTOS(doPrint=False, extraEnvVars=extraEnvVars)
 
     #remove the current test files
