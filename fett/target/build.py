@@ -146,14 +146,14 @@ def prepareFreeRTOS():
     return
 
 
-def buildFreeRTOS(doPrint=True):
+def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
     #Cleaning all ".o" and ".elf" files in site
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
 
     #Compile
     printAndLog (f"Cross-compiling...",doPrint=doPrint)
-    envVars = []
+    envVars = extraEnvVars
     envVars.append(f"XLEN={getSetting('xlen')}")
     envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
     if (isEqSetting('cross-compiler','Clang')):
