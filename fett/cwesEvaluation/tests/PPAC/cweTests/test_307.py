@@ -2,6 +2,8 @@ import time
 import socket, ssl, select
 import pexpect
 
+from fett.base.utils.misc import *
+
 def test_307 (target,binTest):
     testNum = 307
     if (binTest != "test_{0}.riscv".format(testNum)):
