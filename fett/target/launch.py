@@ -179,6 +179,7 @@ def resetTarget (curTarget):
         aws.installKernelModules()
         aws.programAFI()
     elif (isEqSetting('pvAWS', 'connectal')):
+        setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'down')
         aws.removeKernelModules()
         aws.programAFI()
         aws.removeKernelModules()
