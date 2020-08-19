@@ -1198,7 +1198,9 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             self.runCommand ("service ssh restart")
         if (isEqSetting('osImage','FreeBSD')):
-            if (isEqSetting('target','aws')):
+            if (isEqSetting('binarySource','SRI-Cambridge')):
+                self.runCommand("service fett_sshd restart")
+            elif (isEqSetting('target','aws')):
                 self.runCommand("pkill -f /usr/sbin/sshd")
                 self.runCommand("/usr/sbin/sshd")
             else:
