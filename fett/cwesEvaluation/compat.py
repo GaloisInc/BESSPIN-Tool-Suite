@@ -96,8 +96,8 @@ class testgenTargetCompatabilityLayer:
 
     # TODO: The real reportAndExit takes a bunch of optional params that we
     # should support
-    def reportAndExit(self, message):
-        logAndExit(message)
+    def reportAndExit(self, message, **kwargs):
+        logAndExit(message, **kwargs)
 
     def switchUser(self):
         self.target.switchUser()
