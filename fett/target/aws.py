@@ -696,4 +696,31 @@ def startRemoteLogging (target):
         
         if (webserver in target.appModules):
             nginxSrc = '/usr/local' if (not isEqSetting('binarySource','SRI-Cambridge')) else '/fett'
-            nginxService
+            nginxService = 'nginx' if (not isEqSetting('binarySource','SRI-Cambridge')) else 'fett_nginx'
+
+            remoteLogsCommands = (f'access_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_access,'
+            f'severity=info;\\nerror_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_error,'
+            f'severity=debug;\\n')
+
+            if (not target.restartMode):
+                target.runCommand(f'printf "{remoteLogsCommands}" > {nginxSrc}/nginx/conf/sites/remoteLogFett.conf',erroneousContents=["Unmatched", "No such file or directory"])
+            target.runCommand(f"service {nginxService} restart")
+         
+    printAndLog ("Setting up remote logging is _supposedly_ complete.")
+
+@decorate.debugWrap
+def startUartPiping(target):
+    try:
+        target.uartSocatProc = subprocess.Popen(
+            ['socat', 'STDIO,ignoreeof', f"TCP-LISTEN:{getSetting('uartFwdPort')},reuseaddr,fork,max-children=1"],
+            stdout=target.process.child_fd,stdin=target.process.child_fd,stderr=target.process.child_fd)
+    except Exception as exc:
+        target.shutdownAndExit(f"startUartPiping: Failed to start the listening process.",exc=exc,exitCode=EXIT.Run)
+
+@decorate.debugWrap
+def endUartPiping(target):
+    try:
+        target.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
+    except Exception as exc:
+        warnAndLog("endUartPiping: Failed to kill the listening process.",doPrint=False,exc=exc)
+
