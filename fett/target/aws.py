@@ -647,74 +647,53 @@ def prepareConnectal():
 @decorate.debugWrap
 def startRemoteLogging (target):
     printAndLog ("Setting up remote logging ...")
-    # clear the directory for non-fresh instances
-    sudoShellCommand(['rm','-rf',f'/var/log/{target.ipTarget}'],check=False)
+
+    if (not target.restartMode):
+        # clear the directory for non-fresh instances
+        sudoShellCommand(['rm','-rf',f'/var/log/{target.ipTarget}'],check=False)
 
     # configure target rsyslog
     if (isEqSetting('osImage','debian')):
-        # prepare the logTuples to create the conf file
-        syslogsFiles = ['alternatives.log','bootstrap.log','debug','kern.log','btmp',
-                    'dpkg.log','lastlog','syslog','auth.log','daemon.log','faillog','messages','wtmp']
-        syslogs = [f"/var/log/{syslog}" for syslog in syslogsFiles]
-        logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in syslogs]
-        if (webserver in target.appModules):
-            weblogs = getSetting("webserverLogs")
-            logTuples += [(f"{weblogs['root']}/{logFile}",f"nginx_{os.path.splitext(logFile)[0]}") for logFile in weblogs["logs"]]
+        if (not target.restartMode):
+            # prepare the logTuples to create the conf file
+            syslogsFiles = ['alternatives.log','bootstrap.log','debug','kern.log','btmp',
+                        'dpkg.log','lastlog','syslog','auth.log','daemon.log','faillog','messages','wtmp']
+            syslogs = [f"/var/log/{syslog}" for syslog in syslogsFiles]
+            logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in syslogs]
+            if (webserver in target.appModules):
+                weblogs = getSetting("webserverLogs")
+                logTuples += [(f"{weblogs['root']}/{logFile}",f"nginx_{os.path.splitext(logFile)[0]}") for logFile in weblogs["logs"]]
 
-        # Create conf file
-        syslogConfName = "logFett.conf"
-        syslogConfFile = ftOpenFile(os.path.join(getSetting('workDir'),syslogConfName),'w')
-        syslogConfFile.write('module(load="imfile")\n')
-        syslogConfFile.write('\nruleset(name="sendToLogserver") {\n')
-        syslogConfFile.write(f'\taction(type="omfwd" Target="{target.ipHost}" Port="{getSetting("rsyslogPort")}" Protocol="udp")\n')
-        syslogConfFile.write('}\n')
-        for logPath, logTag in logTuples:
-            syslogConfFile.write('\ninput(type="imfile"\n')
-            syslogConfFile.write(f'\tfile="{logPath}"\n')
-            syslogConfFile.write(f'\tTag="{logTag}:"\n')
-            syslogConfFile.write(f'\tRuleset="sendToLogserver")\n')
-        syslogConfFile.close()
+            # Create conf file
+            syslogConfName = "logFett.conf"
+            syslogConfFile = ftOpenFile(os.path.join(getSetting('workDir'),syslogConfName),'w')
+            syslogConfFile.write('module(load="imfile")\n')
+            syslogConfFile.write('\nruleset(name="sendToLogserver") {\n')
+            syslogConfFile.write(f'\taction(type="omfwd" Target="{target.ipHost}" Port="{getSetting("rsyslogPort")}" Protocol="udp")\n')
+            syslogConfFile.write('}\n')
+            for logPath, logTag in logTuples:
+                syslogConfFile.write('\ninput(type="imfile"\n')
+                syslogConfFile.write(f'\tfile="{logPath}"\n')
+                syslogConfFile.write(f'\tTag="{logTag}:"\n')
+                syslogConfFile.write(f'\tRuleset="sendToLogserver")\n')
+            syslogConfFile.close()
 
-        # send the conf file
-        target.sendFile(
-                getSetting('workDir'), syslogConfName,
-                toTarget=True, shutdownOnError=False
-            )
-        target.runCommand(f"mv {syslogConfName} /etc/rsyslog.d/",shutdownOnError=False)
+            # send the conf file
+            target.sendFile(
+                    getSetting('workDir'), syslogConfName,
+                    toTarget=True, shutdownOnError=False
+                )
+            target.runCommand(f"mv {syslogConfName} /etc/rsyslog.d/",shutdownOnError=False)
 
         # restart rsyslog
         target.runCommand("service rsyslog restart",shutdownOnError=False)
+
     elif (isEqSetting('osImage','FreeBSD')):
-        # configure syslogd to use the UDP port
-        target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting("rsyslogPort")}" > /etc/syslog.d/logFett.conf')
+        if (not target.restartMode):
+            # configure syslogd to use the UDP port
+            target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting("rsyslogPort")}" > /etc/syslog.d/logFett.conf')
         target.runCommand("service syslogd restart")
         
         if (webserver in target.appModules):
             nginxSrc = '/usr/local' if (not isEqSetting('binarySource','SRI-Cambridge')) else '/fett'
-            nginxService = 'nginx' if (not isEqSetting('binarySource','SRI-Cambridge')) else 'fett_nginx'
-
-            remoteLogsCommands = (f'access_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_access,'
-            f'severity=info;\\nerror_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_error,'
-            f'severity=debug;\\n')
-
-            target.runCommand(f'printf "{remoteLogsCommands}" > {nginxSrc}/nginx/conf/sites/remoteLogFett.conf',erroneousContents=["Unmatched", "No such file or directory"])
-            target.runCommand(f"service {nginxService} restart")
-         
-    printAndLog ("Setting up remote logging is _supposedly_ complete.")
-
-@decorate.debugWrap
-def startUartPiping(target):
-    try:
-        target.uartSocatProc = subprocess.Popen(
-            ['socat', 'STDIO,ignoreeof', f"TCP-LISTEN:{getSetting('uartFwdPort')},reuseaddr,fork,max-children=1"],
-            stdout=target.process.child_fd,stdin=target.process.child_fd,stderr=target.process.child_fd)
-    except Exception as exc:
-        target.shutdownAndExit(f"startUartPiping: Failed to start the listening process.",exc=exc,exitCode=EXIT.Run)
-
-@decorate.debugWrap
-def endUartPiping(target):
-    try:
-        target.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
-    except Exception as exc:
-        warnAndLog("endUartPiping: Failed to kill the listening process.",doPrint=False,exc=exc)
-
+            nginxService
