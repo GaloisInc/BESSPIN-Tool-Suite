@@ -58,6 +58,14 @@ def freeRTOSBuildChecks():
         logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
 
     #cross-compiling sanity checks
+    if (isEqSetting('binarySource', 'Michigan') and
+        not isEqSetting('cross-compiler', 'Clang')):
+        warnAndLog(f"Cross compiling with <{getSetting('cross-compiler')}> "
+                   f"while using binary source <{getSetting('binarySource')}> "
+                   "is not supported.  Cross compiling with <Clang> and "
+                   "linking with <LLD> instead.")
+        setSetting('cross-compiler', 'Clang')
+        setSetting('linker','LLD')
     if (isEqSetting('cross-compiler','GCC') and (not isEqSetting('linker','GCC'))):
         warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <GCC> is not supported. Linking using <GCC> instead.")
         setSetting('linker','GCC')
@@ -157,28 +165,47 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
     envVars = extraEnvVars
     envVars.append(f"XLEN={getSetting('xlen')}")
     envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
-    if (isEqSetting('cross-compiler','Clang')):
-        # check that the sysroot env variable exists:
-        sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
-        if (sysRootEnv not in os.environ):
-            logAndExit (f"<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
-        envVars.append(f"SYSROOT_DIR={os.environ[sysRootEnv]}")
     envVars.append(f"PROG=main_fett")
-    envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
     envVars.append(f"BSP={getSetting('target')}")
     if getSetting('FreeRTOSUseRAMDisk'):
         envVars.append(f"FREERTOS_USE_RAMDISK=1")
     envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
     logging.debug(f"going to make using {envVars}")
-    
+
+    if isEqSetting('binarySource', 'Michigan'):
+        dockerToolchainImage = 'michigan-image:1.0'
+        envVars.append("USE_MORPHEUS=yes")
+        envVars.append(f"INC_FETT_APPS=/root/makeDir/workDir/build")
+        dockerMountOverride = getSetting('repoDir')
+        dockerWorkDir = "/root/makeDir/FreeRTOS-10.0.1/FreeRTOS/Demo/RISC-V_Galois_P1"
+        # Do not set SYSROOT_DIR in the Michigan case, despite being built
+        # with clang, because SYSROOT_DIR is already set in the docker image
+    else:
+        dockerToolchainImage = None
+        dockerMountOverride = None
+        dockerWorkDir = None
+        envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
+        if (isEqSetting('cross-compiler','Clang')):
+            # check that the sysroot env variable exists:
+            sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
+            if (sysRootEnv not in os.environ):
+                logAndExit (f"<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
+            envVars.append(f"SYSROOT_DIR={os.environ[sysRootEnv]}")
+
     if (isEqSetting('mode','evaluateSecurityTests') and
         isEnabled('useCustomCompiling') and 
         isEnabledDict('customizedCompiling','useCustomMakefile')
         ):
-        make (envVars,getSetting('buildDir'))
+        make (envVars,getSetting('buildDir'),
+              dockerToolchainImage=dockerToolchainImage,
+              dockerMountOverride=dockerMountOverride,
+              dockerWorkDir=dockerWorkDir)
     else: 
         # default environment
-        make (envVars,getSetting('FreeRTOSprojDir'))
+        make (envVars,getSetting('FreeRTOSprojDir'),
+              dockerToolchainImage=dockerToolchainImage,
+              dockerMountOverride=dockerMountOverride,
+              dockerWorkDir=dockerWorkDir)
 
     #check if the elf file was created
     builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
@@ -190,6 +217,26 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
         logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
     cp(builtAsm,getSetting('osImageAsm'))
     printAndLog(f"Files cross-compiled successfully.",doPrint=doPrint)
+
+    if isEqSetting('binarySource', 'Michigan'):
+        # Encrypt elf file
+        argsList = ['sudo', 'docker', 'run', '-it', '--privileged=true',
+                    '-v', f'{getSetting("FreeRTOSprojDir")}:/root/makeDir',
+                    dockerToolchainImage,
+                    'bash', '-c', f'elf-parser -e /root/makeDir/main_fett.elf']
+        outElfParser = ftOpenFile(os.path.join(getSetting('buildDir'),
+                                               'elf-parser.out'),
+                                  'a')
+        try:
+            subprocess.check_call(argsList,
+                                  stdout=outElfParser,
+                                  stderr=outElfParser)
+        except Exception as exc:
+            outElfParser.close()
+            logAndExit(f"Failed to <{' '.join(argsList)}>",
+                       exc=exc,
+                       exitCode=EXIT.Run)
+        outElfParser.close()
 
     #Cleaning all ".o" files post run
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
