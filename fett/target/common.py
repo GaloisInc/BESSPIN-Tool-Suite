@@ -668,7 +668,7 @@ class commonTarget():
             if not self.hasHardwareRNG():
                 self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
             try:
-                retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=15)
+                retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=30)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
