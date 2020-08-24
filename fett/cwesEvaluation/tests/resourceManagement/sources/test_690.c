@@ -86,23 +86,30 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-#include <signal.h>
-void
-signal_callback_handler(int signum) {
-  printf("\n<ERROR-SEGFAULT> Caught signal - segfault occurred %d\n", signum);
-  exit(signum);
-}
-
 int main(int argc, char *argv[]) {
-  // Register signal and signal handler
-  signal(SIGSEGV, signal_callback_handler);
-  char dest[5];
-  char test_str [] = "test";
-  char *str = &test_str[0];
-  printf("\n<test regular>\n");
-  test_regular(str, dest);
-  printf("\n<test malicious>\n");
-  test_malicious(str, dest);
+    char dest[5];
+    char test_str [] = "test";
+    char *str = &test_str[0];
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<test regular>\n");
+            test_regular(str, dest);
+            break;
+        case 2 :
+            printf("\n<test malicious>\n");
+            test_malicious(str, dest);
+            break;
+        default :
+            printf("SCORE:415:%d:TEST ERROR\n",option);
+            return 1;
+    }  
+    return 0;
 }
 
 #endif // end of if FreeRTOS
