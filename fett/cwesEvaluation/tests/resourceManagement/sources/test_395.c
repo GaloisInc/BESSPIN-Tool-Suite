@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
             test_write(ptr1);
             break;
         default :
-            printf("SCORE:395:%d:TEST ERROR\n",argc);
+            printf("SCORE:395:%d:TEST ERROR\n",option);
             return 1;
     }  
     return 0;

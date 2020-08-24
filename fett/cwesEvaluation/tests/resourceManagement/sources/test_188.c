@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
             example_input_args_in_front_on_stack('A', 'B');
             break;
         default :
-            printf("SCORE:188:%d:TEST ERROR\n",argc);
+            printf("SCORE:188:%d:TEST ERROR\n",option);
             return 1;
     }  
     return 0;
