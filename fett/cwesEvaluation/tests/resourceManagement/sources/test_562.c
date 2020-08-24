@@ -91,30 +91,17 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-#include <setjmp.h>
-#include <signal.h>
-static sigjmp_buf jbuf;
-
-static void
-catch_segv(int signum) {
-  // Roll back to the checkpoint set by sigsetjmp().
-  printf("\n<ERROR-SEGFAULT> Caught signal - segfault occurred %d\n", signum);
-  siglongjmp(jbuf, 1);
-}
-
 void
 print_array(int *tab, int n) {
+  printf("\n<print_array>\n");
   int k = 0;
-  if (sigsetjmp(jbuf, 1) == 0) {
-    for (int i = 0; i < n; i++) {
-      printf("%d ", tab[i]); // prints the array
-      if (tab[i] == i) {
-        k = k + 1;
-      }
+  for (int i = 0; i < n; i++) {
+    printf("%d ", tab[i]); // prints the array
+    if (tab[i] == i) {
+      k = k + 1;
     }
-  } else {
-    printf("\n<DEREFERENCE-VIOLATION> handled in false branch.\n");
   }
+
   if (k == n) {
     printf("\n<VALID_ARRAY_CONTENT>\n");
   } else {
@@ -124,17 +111,33 @@ print_array(int *tab, int n) {
 
 int main(int argc, char *argv[])
 {
-  signal(SIGSEGV, catch_segv);
+  
   int *b;
   int *c;
-  printf("\n<fill_array>\n");
-  b = fill_array(5);
-  print_array(b, 5);
-  // no free here
-  printf("\n<fill_array_with_malloc>\n");
-  c = fill_array_with_malloc(5);
-  print_array(c, 5);
-  free(c);
+
+  int option;
+  if (argc > 1) { //be safe
+      option = atoi(argv[1]);
+  } else {
+      option = -1;
+  }
+  switch(option) {
+      case 1 :
+          printf("\n<fill_array>\n");
+          b = fill_array(5);
+          print_array(b, 5);
+          break;
+      case 2 :
+          // no free here
+          printf("\n<fill_array_with_malloc>\n");
+          c = fill_array_with_malloc(5);
+          print_array(c, 5);
+          free(c);
+          break;
+      default :
+          printf("SCORE:562:%d:TEST ERROR\n",option);
+          return 1;
+  }  
   return 0;
 }
 

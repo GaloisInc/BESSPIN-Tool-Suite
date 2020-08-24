@@ -14,7 +14,8 @@ testsInfo = {
     415 : { 'unix' : 2, 'FreeRTOS' : 2 },
     416 : { 'unix' : 2, 'FreeRTOS' : 2 },
     468 : { 'unix' : 2, 'FreeRTOS' : 2 },
-    476 : { 'unix' : 3, 'FreeRTOS' : 2 }
+    476 : { 'unix' : 3, 'FreeRTOS' : 2 },
+    562 : { 'unix' : 2, 'FreeRTOS' : 2 }
 }
 
 class vulClassTester(testgenTargetCompatabilityLayer):
