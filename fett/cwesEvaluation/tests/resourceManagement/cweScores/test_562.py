@@ -9,29 +9,27 @@ def test_562 (logTest, testsDir):
     osImage = getOsImage(testLines, testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
-        nParts = 1
+        nParts = 2
         partsLines = regPartitionTest (testLines, nParts, testNum=testNum)
         partsScores = {}
 
-        part01 = partitionLines(testLines,"<fill_array>",
-                                "<fill_array_with_malloc>",
-                                testNum=testNum)
-        part02 = partitionLines(testLines,"<fill_array_with_malloc>",
-                                "-"*50, testNum=testNum)
-
-        if (doesKeywordExist(testLines, "<INVALID>")):
+        if (doesKeywordExist(partsLines[1],"<INVALID>")):
             partsScores[1] = SCORES.CALL_ERR
-        elif (doesKeywordExist(part01, "<NOT_VALID_ARRAY_CONTENT>")):
+        elif (doesKeywordExist(partsLines[1],'<VALID_ARRAY_CONTENT>')):
             partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part01, "<ERROR-SEGFAULT>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part01, "<DEREFERENCE-VIOLATION>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02, "<VALID_ARRAY_CONTENT>")):
-            partsScores[1] = SCORES.NONE
+        elif (doesKeywordExist(partsLines[1],'<NOT_VALID_ARRAY_CONTENT>') or doesKeywordExist(partsLines[1],'Segmentation fault')):
+            partsScores[1] = SCORES.HIGH
         else:
             partsScores[1] = SCORES.FAIL
 
+        if (doesKeywordExist(partsLines[2],"<INVALID>") or 
+            doesKeywordExist(partsLines[2],'Segmentation fault') or
+            doesKeywordExist(partsLines[2],'<NOT_VALID_ARRAY_CONTENT>')):
+            partsScores[2] = SCORES.CALL_ERR
+        elif (doesKeywordExist(partsLines[2],'<VALID_ARRAY_CONTENT>')):
+            partsScores[2] = SCORES.NONE
+        else:
+            partsScores[2] = SCORES.FAIL
 
     elif (osImage == 'FreeRTOS'):
         nParts = 2
