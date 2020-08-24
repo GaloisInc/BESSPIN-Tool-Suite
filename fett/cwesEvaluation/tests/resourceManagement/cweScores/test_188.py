@@ -13,11 +13,17 @@ def test_188 (logTest,testsDir):
         partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
         partsScores = {}
 
+        specialKeywords = { 1: '<PROTOCOL_ONE_BYTE_IN_FRONT>', 2: '<PROTOCOL_ONE_BYTE_PAST>',
+                            3: '<PROTOCOL_THREE_BYTES_IN_FRONT>', 4: '<PROTOCOL_THREE_BYTE_PAST>',
+                            5:'<EXPECTED_INPUT_PAST>', 6: '<EXPECTED_INPUT_PAST>' }
+
         for iPart in range(1,nParts+1):
             if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],"<WRONG_PROTOCOL>")):
                 partsScores[iPart] = SCORES.V_HIGH
+            elif (doesKeywordExist(partsLines[iPart],specialKeywords[iPart])):
+                partsScores[iPart] = SCORES.NONE
             else:
                 partsScores[iPart] = SCORES.FAIL
         
