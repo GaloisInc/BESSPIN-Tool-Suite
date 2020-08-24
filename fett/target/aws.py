@@ -624,9 +624,8 @@ def prepareConnectal():
         cp(imageSourcePath, imageFile)
 
     elif isEqSetting('binarySource', 'SRI-Cambridge'):
-        imageVariant = '-purecap' if (isEqSetting('sourceVariant','purecap')) else ''
         imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                       'osImages', 'common', f"disk-image-cheri{imageVariant}.img.zst")
+                'osImages', 'common', f"disk-image-cheri{getSetting('SRI-Cambridge-imageVariantSuffix')}.img.zst")
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
         zstdDecompress(imageSourcePath, imageFile)
 
