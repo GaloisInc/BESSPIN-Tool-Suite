@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
         case 2 :
             printf("\n<write>\n");
             test_write(ptr1);
+            break;
         default :
             printf("SCORE:395:%d:TEST ERROR\n",argc);
             return 1;

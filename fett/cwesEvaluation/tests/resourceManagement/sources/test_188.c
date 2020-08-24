@@ -121,18 +121,23 @@ int main(int argc, char *argv[]) {
         case 2 :
             printf("\n<example_one_byte_past>\n");
             example_byte_past();
+            break;
         case 3 :
             printf("\n<example_three_bytes_in_front>\n");
             example_three_bytes_in_front();
+            break;
         case 4 :
             printf("\n<example_three_bytes_past>\n");
             example_three_bytes_past();
+            break;
         case 5 :
             printf("\n<example_input_args_past_on_stack>\n");
             example_input_args_past_on_stack('A', 'B');
+            break;
         case 6 :
             printf("\n<example_input_args_in_front_on_stack>\n");
             example_input_args_in_front_on_stack('A', 'B');
+            break;
         default :
             printf("SCORE:188:%d:TEST ERROR\n",argc);
             return 1;
