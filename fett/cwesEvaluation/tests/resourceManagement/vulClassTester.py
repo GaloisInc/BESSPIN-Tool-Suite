@@ -9,7 +9,8 @@ from fett.base.utils.misc import *
 
 # FreeRTOS numTests in case we ever needed to customize that here too
 testsInfo = {
-    188: { 'unix' : 6, 'FreeRTOS' : 3 }
+    188 : { 'unix' : 6, 'FreeRTOS' : 3 },
+    395 : { 'unix' : 2, 'FreeRTOS' : 2 }
 }
 
 class vulClassTester(testgenTargetCompatabilityLayer):
