@@ -67,7 +67,7 @@
         {
             "name" : "sourceVariant",
             "type" : "string",
-            "choices" : [ "default", "purecap" ]
+            "choices" : [ "default", "purecap", "temporal" ]
         },
         {
             "name" : "qemuNtkPortRangeStart",
