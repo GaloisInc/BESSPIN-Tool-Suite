@@ -90,7 +90,7 @@ lmco_unixDevPR_aws = unixDefaults.union({
 sri_cambridge_unixDevPR_aws = unixDefaults.union({
     ('binarySource',('SRI-Cambridge',)),
     ('elfLoader',('JTAG',)),
-    ('sourceVariant',('default','purecap',)),
+    ('sourceVariant',('default','purecap','temporal',)),
     ('processor',('bluespec_p2',)),
     ('target',('aws',)),
     ('osImage',('FreeBSD',))
