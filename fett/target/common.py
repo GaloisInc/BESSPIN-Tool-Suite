@@ -751,7 +751,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def runApp (self,sendFiles=False,timeout=30): #executes the app
+    def runApp (self,sendFiles=False,timeout=60): #executes the app
         printAndLog ("runApp: Starting the application stack...")
         if (sendFiles):
             #send any needed files to target
