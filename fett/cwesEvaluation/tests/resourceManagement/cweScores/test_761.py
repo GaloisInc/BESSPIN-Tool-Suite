@@ -9,27 +9,41 @@ def test_761 (logTest,testsDir):
     osImage = getOsImage(testLines,testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
-        nParts = 1
+        nParts = 4
         partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        part01 = partitionLines(testLines,"<contains_char_valid_success>", "<contains_char_valid_failure>",testNum=testNum)
-        part02 = partitionLines(testLines,"<contains_char_valid_failure>", "<contains_char_malicious_success>",testNum=testNum)
-        part03 = partitionLines(testLines,"<contains_char_malicious_success>", "<contains_char_malicious_failure>",testNum=testNum)
-        part04 = partitionLines(testLines,"<contains_char_malicious_failure>", "-"*50,testNum=testNum)
-
-        if (doesKeywordExist(testLines,"<INVALID>")):
+        if (doesKeywordExist(partsLines[1],"<INVALID>")):
             partsScores[1] = SCORES.CALL_ERR
-        elif (not doesKeywordExist(part01,"<MATCHED_CHAR>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (not doesKeywordExist(part02,"<VALID_RETURN_FAILURE>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (not doesKeywordExist(part03,"<MATCHED_CHAR>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part04,"<ERROR-SEGFAULT>")):
-            partsScores[1] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[1],'<MATCHED_CHAR>')):
+            partsScores[1] = SCORES.NONE
         else:
             partsScores[1] = SCORES.FAIL
+
+        if (doesKeywordExist(partsLines[2],"<INVALID>")):
+            partsScores[2] = SCORES.CALL_ERR
+        elif (doesKeywordExist(partsLines[2],'<VALID_RETURN_FAILURE>')):
+            partsScores[2] = SCORES.NONE
+        else:
+            partsScores[2] = SCORES.FAIL
+
+        if (doesKeywordExist(partsLines[3],"<INVALID>")):
+            partsScores[3] = SCORES.CALL_ERR
+        elif (doesKeywordExist(partsLines[3],'<MATCHED_CHAR>') or doesKeywordExist(partsLines[3],'<DEREFERENCE-VIOLATION>')):
+            partsScores[3] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[3],'Segmentation fault') or doesKeywordExist(partsLines[3],'Aborted')):
+            partsScores[3] = SCORES.HIGH
+        else:
+            partsScores[3] = SCORES.FAIL
+
+        if (doesKeywordExist(partsLines[4],"<INVALID>")):
+            partsScores[4] = SCORES.CALL_ERR
+        elif (doesKeywordExist(partsLines[4],'<DEREFERENCE-VIOLATION>')):
+            partsScores[4] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[4],'Segmentation fault') or doesKeywordExist(partsLines[4],'Aborted')):
+            partsScores[4] = SCORES.HIGH
+        else:
+            partsScores[4] = SCORES.FAIL
 
     elif (osImage == 'FreeRTOS'):
         nParts = 4
