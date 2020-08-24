@@ -19,30 +19,33 @@ class vulClassTester(testgenTargetCompatabilityLayer):
 
     def executeTest (self,binTest):
         outLog = ''
-        testName = binTest.split('.')[0]
-        testNum = testName.split('_')[1]
+        try:
+            testName = binTest.split('.')[0]
+            testNum = int(testName.split('_')[1])
+        except Exception as exc:
+            self.target.shutdownAndExit (f"executeTest: Failed to parse <{binTest}>.",exitCode=EXIT.Dev_Bug)
 
         if (not isEnabled('isUnix')):
-            target.shutdownAndExit (f"<executeTest> for FreeRTOS should never be called.",exitCode=EXIT.Dev_Bug)
+            self.target.shutdownAndExit (f"<executeTest> for FreeRTOS should never be called.",exitCode=EXIT.Dev_Bug)
 
         if (testNum not in testsInfo):
-            target.shutdownAndExit(f"<{testNum}> is missing from <testsInfo>.",exitCode=EXIT.Dev_Bug)
+            self.target.shutdownAndExit(f"<{testNum}> is missing from <testsInfo>.",exitCode=EXIT.Dev_Bug)
         
         if (testsInfo[testNum]['unix'] == 'method'):
             if (hasattr(cweTests,testName)):
                 outLog = getattr(getattr(cweTests,testName),testName)(self,binTest)
             else:
-                target.shutdownAndExit (f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
+                self.target.shutdownAndExit (f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
         else:
-            outLog = self.defaultUnixTest(testNum)
+            outLog = self.defaultUnixTest(testNum, binTest)
 
         return outLog
 
-    def defaultUnixTest(self,testNum):
+    def defaultUnixTest(self,testNum, binTest):
         outLog = "\n" + '*'*30 + f" TEST {testNum} " + '*'*30 + "\n\n"
         outLog += f"\n<OSIMAGE={getSetting('osImage')}>\n"
 
-        for iPart in testsInfo[testsInfo]['unix']:
+        for iPart in range(testsInfo[testNum]['unix']):
             outLog += "-"*20 + "Part{:02d}: <TEST>".format(iPart+1) + "-"*20 + "\n"
             outLog += self.typCommand(f"./{binTest} {iPart+1}")
             
