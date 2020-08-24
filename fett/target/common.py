@@ -683,7 +683,7 @@ class commonTarget():
             except Exception as exc:
                 return returnFalse (f"Unexpected error while using the scp command [sending password].",exc=exc)
             try:
-                scpProcess.expect(pexpect.EOF,timeout=timeout)
+                scpProcess.expect(pexpect.EOF,timeout=60)
             except Exception as exc:
                 return returnFalse (f"Unexpected error while using scp command [waiting for termination].",exc=exc)
             scpOutFile.close()
