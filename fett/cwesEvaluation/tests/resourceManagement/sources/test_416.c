@@ -9,14 +9,6 @@
 #define MALLOC pvPortMalloc
 #define FREE vPortFree
 
-#elif (defined(testgenOnDebian))
-
-#include <setjmp.h>
-#include <signal.h>
-#define MALLOC malloc
-#define FREE free
-static sigjmp_buf jbuf;
-
 #else
 
 #include <signal.h>
@@ -24,16 +16,6 @@ static sigjmp_buf jbuf;
 #define FREE free
 
 #endif
-
-void
-signal_callback_handler(int signum) {
-    printf("\n<ERROR-SIGABRT> Caught signal - segfault occurred %d\n", signum);
-#if (defined(testgenOnDebian))
-    siglongjmp(jbuf, 1);
-#elif(defined(testgenOnFreeBSD))
-    exit(signum);
-#endif
-}
 
 void
 weakness_after_free(int seg_guard){
@@ -46,19 +28,11 @@ weakness_after_free(int seg_guard){
     // free() p allocated memory
     FREE(p);
     // q now points to de-allocated memory
-    printf("<POINTER_USED_IMPROPERLY> q=%c\n", *q);
+    printf("q=%c\n", *q);
+    printf("<POINTER_USED_IMPROPERLY>\n");
     if(seg_guard == 1){
-#if (defined(testgenOnDebian))
-        if (sigsetjmp(jbuf, 1) == 0) {
-            // segfault occurred
-            FREE(p);
-        } else {
-            printf("\n<DOUBLE_FREE_OF_STACK>\n");
-        }
-#else
         FREE(p);
         printf("\n<DOUBLE_FREE_OF_STACK>\n");
-#endif
     }
 }
 
@@ -82,11 +56,26 @@ void main() {
 }
 
 #elif (defined(testgenOnFreeBSD) || defined(testgenOnDebian))
-int main(int argc, char **argv) {
-    printf("\n<weakness_after_free>\n");
-    weakness_after_free(0);
-    printf("\n<weakness_after_double_free>\n");
-    weakness_after_free(1);
+int main(int argc, char *argv[]) {
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<weakness_after_free>\n");
+            weakness_after_free(0);
+            break;
+        case 2 :
+            printf("\n<weakness_after_double_free>\n");
+            weakness_after_free(1);
+            break;
+        default :
+            printf("SCORE:416:%d:TEST ERROR\n",option);
+            return 1;
+    }  
     return 0;
 }
 
