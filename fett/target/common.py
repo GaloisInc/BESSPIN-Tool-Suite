@@ -852,7 +852,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True,timeout=15):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3):
         if (self.terminateTargetStarted):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
@@ -861,13 +861,20 @@ class commonTarget():
             self.keyboardInterruptTriggered = True
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
-        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout)
-        textBack = retCommand[1]
+        doTimeout = True
+        retryIdx = 0
+        while doTimeout and retryIdx < retryCount:
+            if retryIdx > 0:
+                warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
+            retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout,issueInterrupt=False)
+            textBack = retCommand[1]
+            doTimeout = retCommand[2]
+            retryIdx += 1
         if ((not retCommand[0]) or (retCommand[2])):
             textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout)[1]
         #See if the order is correct
         if (self.process):
-            for i in range(2):
+            for i in range(retryIdx + 1):
                 readAfter = self.readFromTarget(readAfter=True)
                 if (self.getDefaultEndWith() in readAfter):
                     try:
@@ -1143,7 +1150,7 @@ class commonTarget():
         lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
         alphabet = string.ascii_letters + string.digits + ' '
         randText = ''.join(random.choice(alphabet) for i in range(lenText))
-        self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
+        self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=60,shutdownOnError=False)
 
     def hasHardwareRNG (self):
         return isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])
