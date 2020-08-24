@@ -78,19 +78,6 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-#include <signal.h>
-#include <setjmp.h>
-
-static sigjmp_buf jbuf;
-
-static void catch_segv(int signum)
-{
-    // Roll back to the checkpoint set by sigsetjmp().
-    signal (signum, SIG_DFL);
-    printf("\n<ERROR-SEGFAULT> Caught signal - segfault occurred %d\n",signum);
-    siglongjmp(jbuf, 1);
-}
-
 int contains_char_valid(char c) {
     char *str;
     int i = 0;
@@ -127,26 +114,37 @@ int contains_char_malicious(char c) {
         str = str + 1;
     }
     // we did not match the char in the string, free mem and return failure.
-    if (sigsetjmp(jbuf, 1) == 0) {
-        signal(SIGABRT, &catch_segv);
-        free(str); //CRASH
-        signal (SIGABRT, SIG_DFL);
-    } else {
-        printf("\n<DEREFERENCE-VIOLATION> Exception bad access."
-               "handled in false branch.\n");
-    }
-    printf("\n After the exception handling "
-           "the program continues its execution.\n");
+    free(str); //CRASH
+    printf("\n<DEREFERENCE-VIOLATION>\n");
+
     return FAILURE;
 }
 
 int main(int argc, char *argv[]) {
-    // Register signal and signal handler
-    signal(SIGABRT, catch_segv);
-    printf("\n<contains_char_valid_success> Result is %d\n",contains_char_valid('S'));
-    printf("\n<contains_char_valid_failure>Result is %d\n",contains_char_valid('T'));
-    printf("\n<contains_char_malicious_success> Result is %d\n",contains_char_malicious('S'));
-    printf("\n<contains_char_malicious_failure> Result is %d\n",contains_char_malicious('G'));
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<contains_char_valid_success> Result is %d\n",contains_char_valid('S'));
+            break;
+        case 2 :
+            printf("\n<contains_char_valid_failure>Result is %d\n",contains_char_valid('T'));
+            break;
+        case 3 :
+            printf("\n<contains_char_malicious_success> Result is %d\n",contains_char_malicious('S'));
+            break;
+        case 4 :
+            printf("\n<contains_char_malicious_failure> Result is %d\n",contains_char_malicious('G'));
+            break;
+        default :
+            printf("SCORE:761:%d:TEST ERROR\n",option);
+            return 1;
+    }  
+    return 0;
 }
 
 #endif // end of if FreeRTOS

@@ -1,7 +1,6 @@
 #include "testsParameters.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 
 #define MAX_SIZE 100
 int a[MAX_SIZE]; //Global var
@@ -62,45 +61,46 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-#include <setjmp.h>
-
-static sigjmp_buf jbuf;
-
-void
-signal_callback_handler(int signum) {
-    printf("\n<ERROR-SIGABRT> Caught signal - segfault occurred %d\n", signum);
-    siglongjmp(jbuf, 1);
-}
 
 void
 array_allocated_globally(void){
-    if (sigsetjmp(jbuf, 1) == 0) {
-        free(a); //array is allocated globally, as part of the data segment of memory
-        //and the programmer attempts to call free() on the array.
-    }else {
-        printf("\n<INVALID_FREE_OF_MEMORY>\n");
-    }
+    free(a); //array is allocated globally, as part of the data segment of memory
+    //and the programmer attempts to call free() on the array.
+    printf("\n<INVALID_FREE_OF_MEMORY>\n");
 }
 
 void
 wrong_memory_free(void){
     int b[MAX_SIZE];
-    if (sigsetjmp(jbuf, 1) == 0) {
-        free(b); //array is allocated automatically on the stack as a local variable
-        //and the programmer attempts to call free() on the array.
-    }else {
-        printf("\n<INVALID_FREE_OF_STACK>\n");
-    }
+    free(b); //array is allocated automatically on the stack as a local variable
+    //and the programmer attempts to call free() on the array.
+    printf("\n<INVALID_FREE_OF_STACK>\n");
 }
 
-int main() {
-    signal(SIGABRT, signal_callback_handler);
-    printf("\n<correct_memory_free>\n");
-    correct_memory_free();
-    printf("\n<wrong_memory_free>\n");
-    wrong_memory_free();
-    printf("\n<array_allocated_globally>\n");
-    array_allocated_globally();
+int main(int argc, char *argv[]) {
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<correct_memory_free>\n");
+            correct_memory_free();
+            break;
+        case 2 :
+            printf("\n<wrong_memory_free>\n");
+            wrong_memory_free();
+            break;
+        case 3 :
+            printf("\n<array_allocated_globally>\n");
+            array_allocated_globally();
+            break;
+        default :
+            printf("SCORE:762:%d:TEST ERROR\n",option);
+            return 1;
+    }  
     return 0;
 }
 

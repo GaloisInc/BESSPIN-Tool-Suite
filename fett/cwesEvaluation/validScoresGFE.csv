@@ -51,6 +51,8 @@
 562,FreeBSD,1
 588,*,1
 690,FreeRTOS,1
+762,debian,1
+762,FreeBSD,1
 911,FreeRTOS,1
 
 #4_CodeInjection
