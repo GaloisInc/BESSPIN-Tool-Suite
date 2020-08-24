@@ -98,48 +98,41 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-#include <setjmp.h>
-#include <signal.h>
+#include <stdlib.h>
 
-static sigjmp_buf jbuf;
+void test_read(int const *ptr) {
+  int y = *ptr; //CRASH
 
-static void catch_segv(int signum)
-{
-  // Roll back to the checkpoint set by sigsetjmp().
-  printf("\n<ERROR-SEGFAULT> Caught signal - segfault occurred %d\n",signum);
-  siglongjmp(jbuf, 1);
+  printf("\n<DEREFERENCE-VIOLATION>\n"); 
 }
 
-void try_catch_test_read(int const *ptr) {
-  if (sigsetjmp(jbuf, 1) == 0) {
-    int y = *ptr; //CRASH
-  } else {
-    printf("\n<DEREFERENCE-VIOLATION> Null pointer dereference exception "
-           "handled in false branch.\n");
-  }
-  printf("\n After the exception handling "
-         "the program continues its execution.\n");
-}
+void test_write(int *ptr) {
+  *ptr = 5; //CRASH
 
-void try_catch_test_write(int *ptr) {
-  if (sigsetjmp(jbuf, 1) == 0) {
-    *ptr = 5; //CRASH
-  } else {
-    printf("\n<DEREFERENCE-VIOLATION> Null pointer dereference exception "
-           "handled in false branch.\n");
-  }
-  printf("\n After the exception handling "
-         "the program continues its execution.\n");
+  printf("\n<DEREFERENCE-VIOLATION>\n");
 }
 
 int main(int argc, char *argv[]) {
-  // Register a signal handler
-  signal(SIGSEGV, catch_segv);
-  int *ptr1=NULL;
-  printf("\n<try-catch-read>\n");
-  try_catch_test_read(ptr1);
-  printf("\n<try-catch-write>\n");
-  try_catch_test_write(ptr1);
+    int *ptr1=NULL;
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+      case 1 :
+            printf("\n<read>\n");
+            test_read(ptr1);
+            break;
+        case 2 :
+            printf("\n<write>\n");
+            test_write(ptr1);
+        default :
+            printf("SCORE:395:%d:TEST ERROR\n",argc);
+            return 1;
+    }  
+    return 0;
 }
 
 #endif // end of if FreeRTOS
