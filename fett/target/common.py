@@ -852,7 +852,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=2):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3):
         if (self.terminateTargetStarted):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
@@ -861,27 +861,29 @@ class commonTarget():
             self.keyboardInterruptTriggered = True
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
-        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout,suppressErrors=True,issueInterrupt=False)
-        textBack = retCommand[1]
-        if retCommand[2] and retryCount > 0:
-            warnAndLog(f"keyboardInterrupt: timed out sending interrupt. Trying again...")
-            self.keyboardInterruptTriggered = False #Safe to be called again
-            return self.keyboardInterrupt(shutdownOnError=shutdownOnError, timeout=timeout,retryCount=retryCount-1)
-        else:
-            if ((not retCommand[0]) or (retCommand[2])):
-                textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout)[1]
-            #See if the order is correct
-            if (self.process):
-                for i in range(2):
-                    readAfter = self.readFromTarget(readAfter=True)
-                    if (self.getDefaultEndWith() in readAfter):
-                        try:
-                            self.process.expect(self.getDefaultEndWith(),timeout=timeout)
-                        except Exception as exc:
-                            warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
-                        textBack += readAfter
-            self.keyboardInterruptTriggered = False #Safe to be called again
-            return textBack
+        doTimeout = True
+        retryIdx = 0
+        while doTimeout and retryIdx < retryCount:
+            if retryIdx > 0:
+                warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
+            retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout,issueInterrupt=False)
+            textBack = retCommand[1]
+            doTimeout = retCommand[2]
+            retryIdx += 1
+        if ((not retCommand[0]) or (retCommand[2])):
+            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout)[1]
+        #See if the order is correct
+        if (self.process):
+            for i in range(retryIdx + 1):
+                readAfter = self.readFromTarget(readAfter=True)
+                if (self.getDefaultEndWith() in readAfter):
+                    try:
+                        self.process.expect(self.getDefaultEndWith(),timeout=timeout)
+                    except Exception as exc:
+                        warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
+                    textBack += readAfter
+        self.keyboardInterruptTriggered = False #Safe to be called again
+        return textBack
 
     @decorate.debugWrap
     def ensureCrngIsUp (self):
