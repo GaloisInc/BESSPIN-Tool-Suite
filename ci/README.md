@@ -33,18 +33,20 @@ Flavors:
 ### Setup
 
 - Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-- Create an SSH key (named `~/.ssh/aws-ci-gh`) and associate it with your github account - this will facilitate checking out the branches specified with the `-b` and `-bb` flags.
+- Create an SSH key (named `~/.ssh/aws-ci-gh`) and associate it with your github and gitlab-ext accounts - this will facilitate checking out the branches specified with the `-b` and `-bb` flags.
 
 ### Usage
 
-```bash
-usage: aws-testing-ci.py [-h] [-b BRANCH] [-bb BINARIES_BRANCH] [-cp CAP] [-cd CREDENTIALS]
-                         [-i] [-idx INSTANCE_INDEX] [-k KEY_PATH] [-n NAME] [-r RUNS]
-                         ami
-```
+1. Export your AWS keys into the shell you are using by copying item 1 from the `Command line or Programatic access` field of the AWS login page.
 
-**Only if the `init` flag is used:** When prompted, add your AWS Keys
+2.
+```bash
+usage: aws-testing-ci.py [-h] [-a AMI] [-b BRANCH] [-bb BINARIES_BRANCH]
+                         [-c CAP]
+                         [-i [INSTANCE_INDICES [INSTANCE_INDICES ...]]]
+                         [-k KEY_PATH] [-n NAME] [-r RUNS]
+```
 
 ### Results
 
-The results will be posted to the AWS S3 bucket described in [`configs.py`](configs.py), under the job name.
+The results will be posted to the AWS S3 bucket described in [`configs.py`](configs.py), under the job name. Results will also be stored to `results.txt`, and logs will be written to `aws-test-suite.log`.

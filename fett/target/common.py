@@ -247,7 +247,7 @@ class commonTarget():
             elif (isEqSetting('target','qemu')):
                 timeout = 120
             elif (isEqSetting('target', 'aws')):
-                timeout = 540
+                timeout = 1000 if (isEqSetting('sourceVariant','temporal')) else 540
             else:
                 self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -607,7 +607,7 @@ class commonTarget():
                 logging.error(message)
                 errorAndLog (f"sendFile: Failed to send <{pathToFile}/{xFile}> to target. Trying again...")
                 self.resendAttempts += 1
-                return self.sendFile (pathToFile,xFile,targetPathToFile=targetPathToFile,toTarget=toTarget,timeout=timeout,shutdownOnError=shutdownOnError)
+                return self.sendFile (pathToFile,xFile,targetPathToFile=targetPathToFile,toTarget=toTarget,timeout=timeout,shutdownOnError=shutdownOnError,forceScp=forceScp)
             elif (shutdownOnError):
                 self.shutdownAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
             else:
@@ -629,7 +629,7 @@ class commonTarget():
             if (isEqSetting('osImage','debian')):
                 retShaRX = self.runCommand(f"sha256sum {f}")[1]
             elif (isEqSetting('osImage','FreeBSD')):
-                retShaRX = self.runCommand(f"sha256 {f}",timeout=90)[1]
+                retShaRX = self.runCommand(f"sha256 {f}",timeout=120)[1]
                 retShaRX += self.runCommand(" ")[1]
             logging.debug(f"retShaRX:\n{retShaRX}")
             for line in retShaRX.splitlines():
@@ -673,19 +673,19 @@ class commonTarget():
             if (not self.sshECDSAkeyWasUpdated):
                 self.clearHostKey()
             try:
-                scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=timeout)
+                scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=15)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
             if not self.hasHardwareRNG():
                 self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
             try:
-                retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=timeout)
+                retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=30)
             except Exception as exc:
                 return returnFalse (f"Unexpected outcome from the scp command.",exc=exc)
             try:
                 if (retExpect == 2): #needs a yes
                     scpProcess.sendline("yes")
-                    retExpect = scpProcess.expect(passwordPrompt,timeout=timeout)
+                    retExpect = scpProcess.expect(passwordPrompt,timeout=15)
                 if (retExpect in [0,1]): #password prompt
                     pwd = self.rootPassword if self.isCurrentUserRoot else self.userPassword
                     scpProcess.sendline(pwd)
@@ -747,7 +747,7 @@ class commonTarget():
         #---send the archive
         if (getSetting('binarySource') in ['GFE', 'SRI-Cambridge']) and isEqSetting('osImage', 'FreeBSD'):
             self.switchUser() #this is assuming it was on root
-            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=60,forceScp=True)
+            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout,forceScp=True)
             self.switchUser()
             self.runCommand(f"mv /home/{self.userName}/{getSetting('tarballName')} /root/")
         else:
@@ -762,7 +762,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def runApp (self,sendFiles=False,timeout=30): #executes the app
+    def runApp (self,sendFiles=False,timeout=60): #executes the app
         printAndLog ("runApp: Starting the application stack...")
         if (sendFiles):
             #send any needed files to target
@@ -863,7 +863,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True,timeout=15):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3):
         if (self.terminateTargetStarted):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
@@ -872,13 +872,20 @@ class commonTarget():
             self.keyboardInterruptTriggered = True
         if (not isEnabled('isUnix')):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
-        retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout)
-        textBack = retCommand[1]
+        doTimeout = True
+        retryIdx = 0
+        while doTimeout and retryIdx < retryCount:
+            if retryIdx > 0:
+                warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
+            retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout,issueInterrupt=False)
+            textBack = retCommand[1]
+            doTimeout = retCommand[2]
+            retryIdx += 1
         if ((not retCommand[0]) or (retCommand[2])):
             textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout)[1]
         #See if the order is correct
         if (self.process):
-            for i in range(2):
+            for i in range(retryIdx + 1):
                 readAfter = self.readFromTarget(readAfter=True)
                 if (self.getDefaultEndWith() in readAfter):
                     try:
@@ -1161,7 +1168,7 @@ class commonTarget():
         lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
         alphabet = string.ascii_letters + string.digits + ' '
         randText = ''.join(random.choice(alphabet) for i in range(lenText))
-        self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=30,shutdownOnError=False)
+        self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=60,shutdownOnError=False)
 
     def hasHardwareRNG (self):
         return isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])

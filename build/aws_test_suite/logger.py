@@ -1,15 +1,32 @@
+import functools
 from termcolor import cprint
 from datetime import datetime
+
+
+def log_assertion_fails(func):
+    """decorator to log assertion errors and other errors
+    catch an assertion exception from a function, log it, and the raise it
+    """
+    @functools.wraps(func)
+    def wrappedFn(*args, **kwargs):
+        try:
+            ret = func(*args, **kwargs)
+        except AssertionError as exc:
+            log.error(f"{func.__name__} failed an assertion <{exc}>")
+            raise exc
+        except Exception as exc:
+            log.error(f"{func.__name__} failed with non-assertion <{exc}>")
+            raise exc
+        return ret
+    return wrappedFn
 
 
 class Logger:
     def __init__(self, log_fname="aws-test-suite.log", results_fname="results.txt"):
         """
         Global logger setup
-
         :param log_fname: Output log filename, defaults to 'aws-test-suite.log'
         :type log_fname: str, optional
-
         :param level: Output information level, defaults to 'info'
         :type level: str, optional
         """
@@ -25,10 +42,8 @@ class Logger:
     def log_out(self, message=None, level="Info"):
         """
         Prints message to console with the specified level and outputs to log accordingly
-
         :param message: Message to print
         :type message: str
-
         :param level: Level of message
         :type level: str
         """
@@ -88,4 +103,6 @@ class Logger:
         self.log_out(message, "Results")
 
 
+## Global Package Logger
 log = Logger()
+
