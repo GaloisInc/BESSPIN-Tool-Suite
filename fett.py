@@ -108,7 +108,7 @@ def main (xArgs):
     setSetting('prodJobId', xArgs.jobId)
     
     # Load all configuration and setup settings
-    setupEnvFile = os.path.join(repoDir,'fett','base','utils','timeout.json')
+    setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
     if (xArgs.configFile):
         configFile = os.path.abspath(xArgs.configFile)
