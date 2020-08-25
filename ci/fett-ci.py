@@ -98,18 +98,27 @@ def main(xArgs):
     if xArgs.entrypoint == "AWSTesting":
         try:
             with open(os.path.join(repoDir, "branches"), "r") as f:
-                branches = f.read().split('\n')[:-1]
-                assert(len(branches) == 2), "Failed to find 2 branches in branches file."
+                branches = f.read().split("\n")[:-1]
+                assert len(branches) == 2, "Failed to find 2 branches in branches file."
         except Exception as exc:
             exitFettCi(message="Error when trying to read branches from file.", exc=exc)
 
         try:
             targetBranch = Repository(repoDir).head.shorthand
-            binariesBranch = Repository(os.path.join(repoDir, "SSITH-FETT-Binaries")).head.shorthand
-            if not branches[0] == 'None':
-                assert(targetBranch == branches[0]), f"Failed to check out Target branch: is {targetBranch}, supposed to be {branches[0]}"
-            if not branches[1] == 'None':
-                assert(binariesBranch == branches[1]), f"Failed to check out Binaries branch: is {binariesBranch}, supposed to be {branches[1]}"
+            binariesBranch = Repository(
+                os.path.join(repoDir, "SSITH-FETT-Binaries")
+            ).head.shorthand
+            if not branches[0] == "None":
+                assert (
+                    targetBranch == branches[0]
+                ), f"Failed to check out Target branch: is {targetBranch}, supposed to be {branches[0]}"
+            if not branches[1] == "None":
+                assert (
+                    binariesBranch == branches[1]
+                ), f"Failed to check out Binaries branch: is {binariesBranch}, supposed to be {branches[1]}"
+
+        except Exception as exc:
+            exitFettCi(message="Wrong branches were checked out.", exc=exc)
 
     # Decide on artifact name -- There is no else as they are argparser grouped
     if xArgs.artifactSuffix:
