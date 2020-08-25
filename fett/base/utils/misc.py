@@ -196,6 +196,15 @@ def isEqSetting (setting,val):
 def doesSettingExist (setting):
     return (setting in _settings)
 
+def doesSettingExistDict(setting, hierarchy):
+    xSetting = getSetting(setting)
+    if isinstance(hierarchy, str):
+        hierarchy = [hierarchy]
+    for item in hierarchy:
+        if item in xSetting:
+            return True
+    return False
+
 def dumpSettings ():
     logging.debug(f"settings = {_settings}")
 

@@ -2,6 +2,8 @@ import time
 import socket, ssl, select
 import pexpect
 
+from fett.base.utils.misc import *
+
 def test_307 (target,binTest):
     testNum = 307
     if (binTest != "test_{0}.riscv".format(testNum)):
@@ -101,16 +103,16 @@ def test_307 (target,binTest):
         if (target.backend == 'qemu'):
             outLog += f"<QEMU-N/A> test_{testNum} is not yet implemented on <qemu>."
             return outLog
-        elif (not target.targetObj.isSshConn):
-            if (not target.openSshConn()):
-                outLog += f"<INVALID> Failed to open an SSH connection for test_{testNum}."
-                return outLog
+
         timeout = 120
         target.switchUser () #this test is executed on ROOT
 
+        #allow root ssh first
+        target.enableSshOnRoot()
+
         def authAtNp1thAttempt ():
             retLog = f"Authenticating at the (N+1)th attempt ...\n"
-            sshCommand = f"ssh {target.userName}@{target.settings['FPGANTK_IP_TARGET']}"
+            sshCommand = f"ssh {target.userName}@{target.ipTarget}"
 
             def terminate (sshProcess):
                 if (sshProcess is not None):
@@ -134,7 +136,7 @@ def test_307 (target,binTest):
             
             try:
                 sshProcess = pexpect.spawn(sshCommand,timeout=timeout)
-                retExpect = sshProcess.expect([f"Password for {target.userName}@[\w\-\.]+\:",f"{target.userName}@[\w\-\.]+\'s password\:",'Too many authentication failures','Permission denied (publickey,keyboard-interactive).\r\r\n'])
+                retExpect = sshProcess.expect([f"Password for {target.userName}@[\w\-\.]+\:",f"{target.userName}@[\w\-\.]+\'s password\:",'Too many authentication failures','Permission denied'])
             except Exception as e:
                 if (type(e) == pexpect.TIMEOUT):
                     retLog += "<INVALID> Timed-out while opening an SSH connection.\n"
@@ -155,9 +157,15 @@ def test_307 (target,binTest):
                     else: #send a wrong password
                         sendCommand(sshProcess,'x')
                     try:
-                        retExpect = sshProcess.expect([f"Password for {target.userName}@[\w\-\.]+\:",f"{target.userName}@[\w\-\.]+\'s password\:",'Too many authentication failures','Permission denied (publickey,keyboard-interactive).\r\r\n',":~ \$"])
+                        retExpect = sshProcess.expect([f"Password for {target.userName}@[\w\-\.]+\:",f"{target.userName}@[\w\-\.]+\'s password\:",'Too many authentication failures','Permission denied',":~ \$"])
                     except Exception as e:
-                        if (type(e) in [pexpect.TIMEOUT, pexpect.EOF]):
+                        if (type(e) == pexpect.EOF):
+                            textBack = getText(sshProcess)
+                            if ("Permission denied" in textBack):
+                                retLog += "<DENIED> -- EOF\n"
+                            else:
+                                retLog += f"<INVALID> -- {type(e)}"
+                        elif (type(e) == pexpect.TIMEOUT):
                             retLog += f"<INVALID> -- {type(e)}"
                         else:
                             retLog += f"<INVALID> -- <UNKNOWN-EXCEPTION>"
@@ -185,19 +193,21 @@ def test_307 (target,binTest):
         for iPart in range(2):
             outLog += "-" * 20 + f"Part0{iPart+1}: {partNames[iPart]}" + "-" * 20 + "\n"
             if (iPart == 0): #backup config
-                outLog += target.runCommand ("cp /etc/ssh/sshd_config /root/",shutdownOnError=False)[1]
+                outLog += target.runCommand (f"cp {getSetting('sshdConfigPath')} /root/",shutdownOnError=False)[1]
             else: #reset config
-                outLog += target.runCommand ("cp /root/sshd_config /etc/ssh/sshd_config",shutdownOnError=False)[1]
+                outLog += target.runCommand (f"cp /root/sshd_config {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
             #apply ssh config
-            outLog += target.runCommand (f"echo \"PasswordAuthentication yes\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
-            outLog += target.runCommand (f"echo \"MaxAuthTries {maxAuthTries[iPart]}\" >> /etc/ssh/sshd_config",shutdownOnError=False)[1]
-            outLog += target.runCommand ("service sshd restart",shutdownOnError=False)[1]
-            time.sleep(30)
+            outLog += target.runCommand (f"echo \"PasswordAuthentication yes\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"MaxAuthTries {maxAuthTries[iPart]}\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+            target.retartSshService ()
+            time.sleep(10)
             #try to authenticate
             outLog += authAtNp1thAttempt ()
 
             outLog += "-"*60 + "\n\n\n"
 
+        #reset config
+        target.runCommand (f"mv /root/sshd_config {getSetting('sshdConfigPath')}")
         target.switchUser () #Go back to user
 
     elif (target.osImage == 'FreeRTOS'):

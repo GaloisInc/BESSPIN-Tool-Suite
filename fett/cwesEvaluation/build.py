@@ -7,6 +7,7 @@ import os, re
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
+from fett.cwesEvaluation.tests.informationLeakage.generateWrappers import generateWrappers
 from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
@@ -59,6 +60,8 @@ def buildCwesEvaluation():
         # Create class dir and build
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
+        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                vulClass, 'sources')
 
         if vulClass == 'bufferErrors':
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
@@ -75,9 +78,13 @@ def buildCwesEvaluation():
                     cp(source,
                        os.path.join(vulClassDir,
                                     f'test_extra_{os.path.basename(source)}'))
+        elif vulClass == 'informationLeakage':
+            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+                                    vulClass,'envFett.mk'), vulClassDir)
+            # Copy over concrete tests
+            copyDir(sourcesDir, vulClassDir, copyContents=True)
+            generateWrappers()
         else:
-            sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
-                                    vulClass, 'sources')
             cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
             for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
                 # Check if the test should be skipped:
@@ -93,12 +100,22 @@ def buildCwesEvaluation():
                 cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
                     os.path.join(vulClassDir, 'Makefile'))
             else: # Use default environment
-                cp(os.path.join(getSetting('repoDir'),
-                                'fett',
-                                'target',
-                                'utils',
-                                'Makefile.xcompileDir'),
-                   os.path.join(vulClassDir, 'Makefile'))
+                if (doesSettingExistDict(vulClass, "classSpecificMake") and
+                    isEnabledDict(vulClass, "classSpecificMake")):
+                    cp(os.path.join(getSetting('repoDir'),
+                                    'fett',
+                                    'cwesEvaluation',
+                                    'tests',
+                                    vulClass,
+                                    'Makefile.xcompileDir'),
+                       os.path.join(vulClassDir, 'Makefile'))
+                else:
+                    cp(os.path.join(getSetting('repoDir'),
+                                    'fett',
+                                    'target',
+                                    'utils',
+                                    'Makefile.xcompileDir'),
+                       os.path.join(vulClassDir, 'Makefile'))
                 cp(os.path.join(getSetting('repoDir'),
                                 'fett',
                                 'target',
@@ -114,11 +131,11 @@ def buildCwesEvaluation():
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
         if vulClass == "PPAC":
-            fHeader.write(
-                    f'#define SPOOFING_IP "{getSettingDict("PPAC", "spoofingIP")}"\n'
-                    f'#define TCP_PORT_NUMBER {getSetting("fpgaPortTarget")}\n')
-
             if isEqSetting('osImage', 'FreeRTOS'):
+                portTarget = getSetting(f"{getSetting('target')}PortTarget")
+                fHeader.write(
+                    f'#define SPOOFING_IP "{getSettingDict("PPAC", "spoofingIP")}"\n'
+                    f'#define TCP_PORT_NUMBER {portTarget}\n')
                 prepareFreeRTOSforPPAC(fHeader)
             else:
                 pattern = os.path.join(sourcesDir,
@@ -130,6 +147,12 @@ def buildCwesEvaluation():
                             os.path.basename(source)[:-suffixLen])
                     cp(source, outFile)
                     additionalFiles.append(outFile)
+
+                # sshd_config location
+                if (isEqSetting('binarySource','SRI-Cambridge')):
+                    setSetting('sshdConfigPath','/fett/etc/sshd_config')
+                else: #default
+                    setSetting('sshdConfigPath','/etc/ssh/sshd_config')
 
         fHeader.close()
 
@@ -213,7 +236,15 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     fPars.close()
 
     # Build
-    buildFreeRTOS(doPrint=False)
+    if vulClass == "informationLeakage":
+        testInfo = os.path.splitext(os.path.basename(test))[0].split("_")[1:]
+        variantNames = (f"informationLeakage/tests/{testInfo[0]}.c "
+                        f"informationLeakage/stores/{testInfo[1]}.c "
+                        f"informationLeakage/interpreters/{testInfo[2]}.c")
+        extraEnvVars = [f"VARIANT_NAMES={variantNames}"]
+    else:
+        extraEnvVars = []
+    buildFreeRTOS(doPrint=False, extraEnvVars=extraEnvVars)
 
     #remove the current test files
     for testFile in testFiles:

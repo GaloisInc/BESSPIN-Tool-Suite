@@ -9,39 +9,7 @@ def test_771 (logTest,testsDir):
     osImage = getOsImage(testLines,testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
-        nParts = 1
-        partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
-        partsScores = {}
-
-        part01 = partitionLines(testLines,"<f_not_freed>", "<g_input_param_empty_string>",testNum=testNum)
-        part02 = partitionLines(testLines,"<g_input_param_empty_string>", "<g_input_param_space>",testNum=testNum)
-        part03 = partitionLines(testLines,"<g_input_param_space>", "<g_first_input_param>",testNum=testNum)
-        part04 = partitionLines(testLines,"<g_first_input_param>", "<g_second_input_param>",testNum=testNum)
-        part05 = partitionLines(testLines,"<g_second_input_param>", "-"*50,testNum=testNum)
-
-        if (doesKeywordExist(testLines,"<INVALID>")):
-            partsScores[1] = SCORES.CALL_ERR
-        elif (doesKeywordExist(part01,"<F_MALLOC_SUCCEEDED>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02,"<FREE_WAS_NOT_TRAPPED>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02,"<POINTER_IS_NULL>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part03,"<FREE_WAS_NOT_TRAPPED>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part03,"<POINTER_IS_NULL>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part04,"<FREE_WAS_NOT_TRAPPED>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part04,"<POINTER_IS_NULL>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part05,"<FREE_WAS_NOT_TRAPPED>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part05,"<POINTER_IS_NULL>")):
-            partsScores[1] = SCORES.V_HIGH
-        else:
-            partsScores[1] = SCORES.FAIL
-
+        return overallScore ([],testNum)
 
     elif (osImage == 'FreeRTOS'):
         nParts = 5

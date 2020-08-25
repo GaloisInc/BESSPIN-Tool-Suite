@@ -38,18 +38,6 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-#include <signal.h>
-#include <setjmp.h>
-
-static sigjmp_buf jbuf;
-
-static void catch_segv(int signum)
-{
-    // Roll back to the checkpoint set by sigsetjmp().
-    printf("\n<ERROR-SEGFAULT> Caught signal - segfault occurred %d\n",signum);
-    siglongjmp(jbuf, 1);
-}
-
 void regular_test(int const *ptr) {
   int x = 5;
   ptr = &x;
@@ -59,40 +47,48 @@ void regular_test(int const *ptr) {
 void malicious_test_read(int const *ptr) {
   printf("\n malicious_test_read:Null pointer dereference exception "
          "trying to read it \n");
-    if (sigsetjmp(jbuf, 1) == 0) {
-        int y = *ptr; //CRASH
-    } else {
-        printf("\n<DEREFERENCE-VIOLATION> Exception bad access."
-               "handled in false branch.\n");
-    }
-    printf("\n After the exception handling "
-           "the program continues its execution.\n");
+    int y = *ptr; //CRASH
+    printf("\n<DEREFERENCE-VIOLATION>\n");
 
 }
 
 void malicious_test_write(int *ptr) {
   printf("\n malicious_test_write:Null pointer dereference exception "
          "trying to write it \n");
-    if (sigsetjmp(jbuf, 1) == 0) {
-        *ptr = 5; //CRASH
-    } else {
-        printf("\n<DEREFERENCE-VIOLATION> Exception bad access."
-               "handled in false branch.\n");
-    }
-    printf("\n After the exception handling "
-           "the program continues its execution.\n");
+    *ptr = 5; //CRASH
+    printf("\n<DEREFERENCE-VIOLATION>\n");
 }
 
 int main(int argc, char *argv[]) {
-  signal(SIGSEGV, catch_segv);
+  int option;
   int *ptr;
-  printf("\n<Regular test>\n");
-  regular_test(ptr);
   int *ptr1=NULL;
-  printf("\n<Malicious test read>\n");
-  malicious_test_read(ptr1);
-  printf("\n<Malicious test write>\n");
-  malicious_test_write(ptr1);
+  if (argc > 1) { //be safe
+      option = atoi(argv[1]);
+  } else {
+      option = -1;
+  }
+  switch(option) {
+      case 1 :
+          printf("\n<Regular test>\n");
+          regular_test(ptr);
+          break;
+      case 2 :
+          printf("\n<Malicious test read>\n");
+          malicious_test_read(ptr1);
+          break;
+      case 3 :
+          printf("\n<Malicious test write>\n");
+          malicious_test_write(ptr1);
+          break;
+      default :
+          printf("SCORE:476:%d:TEST ERROR\n",option);
+          return 1;
+  }  
+  return 0;
+  
+  
+  
 }
 
 #endif // end of if FreeRTOS

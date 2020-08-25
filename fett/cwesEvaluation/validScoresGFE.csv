@@ -32,6 +32,7 @@
 294,debian,-6
 301,debian,-6
 307,debian,-6
+307,FreeBSD,6
 259,FreeBSD,-6
 290,FreeBSD,-6
 294,FreeBSD,1
@@ -42,10 +43,19 @@
 384,FreeRTOS,-6
 
 #3_ResourceManagement
-395,FreeRTOS,1
-476,FreeRTOS,1
-588,FreeRTOS,1
+395,*,1
+415,debian,1
+476,*,1
+562,debian,1
+562,FreeBSD,1
+588,*,1
 690,FreeRTOS,1
+690,FreeBSD,1
+762,debian,1
+762,FreeBSD,1
+763,debian,1
+771,debian,-6
+771,FreeBSD,-6
 911,FreeRTOS,1
 
 #4_CodeInjection

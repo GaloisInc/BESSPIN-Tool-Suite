@@ -15,7 +15,6 @@ def test_799 (target,binTest):
     #The following is shared between debian and FreeBSD
     pathToMqueue = '/dev' if (target.osImage == 'debian') else '/mnt'
     extraNohup = '' if (target.osImage == 'debian') else '> nohup.out'
-    nohupTestOnRoot = [f"nohup ./{binTest} {extraNohup}&", " ", f"chmod 666 {pathToMqueue}/mqueue/Qroot"] #nohup+& needs an extra enter
     killRootNohup = ["./{0} shutdown".format(binTest), "sleep 1"]
     catNoHup = ["cat nohup.out > /home/{0}/nohup.out".format(target.userName), "rm nohup.out"]
     cpTestToRoot = [f"cp /home/{target.userName}/{binTest} ."]
@@ -30,6 +29,7 @@ def test_799 (target,binTest):
 
     if (target.osImage == 'debian'):
         #useful in many parts
+        nohupTestOnRoot = [f"nohup ./{binTest} {extraNohup}&", " ", f"chmod 666 {pathToMqueue}/mqueue/Qroot"] #nohup+& needs an extra enter
         nBytesMsgQueue = nInteractions * 2 * 49 #49 is emperical from Debian implementation. 2 is the token length (1 letter + null char)
         writeNlimits = "echo \"{0}  hard    msgqueue    {1}\" > /etc/security/limits_799.conf" #needs formatting
         exposeLimits = ["chown {0} /etc/security/limits_799.conf".format(target.userName)]
@@ -95,6 +95,7 @@ def test_799 (target,binTest):
         time.sleep (1)
 
     elif (target.osImage == 'FreeBSD'):
+        nohupTestOnRoot = [f"nohup ./{binTest} {extraNohup}&", " ", "sleep 3", f"chmod 666 {pathToMqueue}/mqueue/Qroot"] #nohup+& needs an extra enter
         mountMqueuefs = ["mkdir /mnt/mqueue", "mount -t mqueuefs null /mnt/mqueue"]
         createGroup = ["pw groupadd service799"]
         resetGroup = ["pw groupdel service799"] + createGroup
@@ -119,6 +120,7 @@ def test_799 (target,binTest):
         outLog += "-"*20 + "Part03: Exposed /etc/group. Attempt to get the service twice." + "-"*20 + "\n"
         exposeEtcGroup = ["cp /etc/group /tmp/group.bkp", "chmod 646 /etc/group"]
         target.executeOnRoot (resetGroup + exposeEtcGroup + nohupTestOnRoot)
+        time.sleep(3)
         outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += target.runCommand(f"sed \"s/:{target.userName}/:/g\" /etc/group > /tmp/group.tmp",shutdownOnError=False)[1]
         outLog += target.runCommand(f"cp /tmp/group.tmp /etc/group",shutdownOnError=False)[1]

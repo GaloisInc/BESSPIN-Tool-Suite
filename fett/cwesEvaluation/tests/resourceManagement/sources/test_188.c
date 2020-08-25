@@ -76,6 +76,8 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
+#include <stdlib.h>
+
 /** aligned on 32-bit boundaries.*/
 void
 example_three_bytes_past() {
@@ -104,19 +106,42 @@ example_three_bytes_in_front() {
 
 }
 
-int main() {
-    printf("\n<example_byte_in_front>\n");
-    example_byte_in_front();
-    printf("\n<example_one_byte_past>\n");
-    example_byte_past();
-    printf("\n<example_three_bytes_in_front>\n");
-    example_three_bytes_in_front();
-    printf("\n<example_three_bytes_past>\n");
-    example_three_bytes_past();
-    printf("\n<example_input_args_past_on_stack>\n");
-    example_input_args_past_on_stack('A', 'B');
-    printf("\n<example_input_args_in_front_on_stack>\n");
-    example_input_args_in_front_on_stack('A', 'B');
+int main(int argc, char *argv[]) {
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<example_byte_in_front>\n");
+            example_byte_in_front();
+            break;
+        case 2 :
+            printf("\n<example_one_byte_past>\n");
+            example_byte_past();
+            break;
+        case 3 :
+            printf("\n<example_three_bytes_in_front>\n");
+            example_three_bytes_in_front();
+            break;
+        case 4 :
+            printf("\n<example_three_bytes_past>\n");
+            example_three_bytes_past();
+            break;
+        case 5 :
+            printf("\n<example_input_args_past_on_stack>\n");
+            example_input_args_past_on_stack('A', 'B');
+            break;
+        case 6 :
+            printf("\n<example_input_args_in_front_on_stack>\n");
+            example_input_args_in_front_on_stack('A', 'B');
+            break;
+        default :
+            printf("SCORE:188:%d:TEST ERROR\n",option);
+            return 1;
+    }  
     return 0;
 }
 

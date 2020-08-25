@@ -22,9 +22,12 @@ def test_294(target, binTest):
 
     elif (target.osImage in ['debian','FreeBSD']):
         partNames = ['Block the host\'s ip.', 'Allow the host\'s ip.']
-        allowedIP = [spoofingIP.strip('\"'),target.settings['FPGANTK_IP_HOST']]
+        allowedIP = [spoofingIP.strip('\"'),target.ipHost]
 
         target.switchUser () #this test is executed on root
+
+        #allow root ssh first
+        target.enableSshOnRoot()
 
         if (not target.onlySsh): #special case. No JTAG available.
             #saving the ssh state
@@ -37,20 +40,16 @@ def test_294(target, binTest):
             target.sshRetries = 0 #temporarily
 
         #deny all 
-        if (target.osImage == 'debian'):
-            outLog += target.runCommand ("echo \"sshd: ALL\" >> /etc/hosts.deny",shutdownOnError=False)[1]
-        elif (target.osImage == 'FreeBSD'):
-            outLog += target.runCommand ("echo \"sshd : ALL : deny\" > /etc/hosts.allow",shutdownOnError=False)[1]
+        outLog += target.runCommand (f"echo \"PasswordAuthentication no\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
 
         for iPart in range(2):
             outLog += "-" * 20 + f"Part0{iPart+1}: {partNames[iPart]}" + "-" * 20 + "\n"
 
             #only allow the part's IP
-            if (target.osImage == 'debian'):
-                outLog += target.runCommand (f"echo \"sshd: {allowedIP[iPart]}\" >> /etc/hosts.allow",shutdownOnError=False)[1]
-                time.sleep(20)
-            elif (target.osImage == 'FreeBSD'):
-                outLog += target.runCommand (f"sed  -i \"\" \"1 s/^/sshd : {allowedIP[iPart]} : allow\\n/\" /etc/hosts.allow",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"Match Address {allowedIP[iPart]}\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"    PasswordAuthentication yes\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+            target.retartSshService ()
+            time.sleep(10)
 
             if ((not target.onlySsh) or (iPart == 1)):
                 if (target.onlySsh):

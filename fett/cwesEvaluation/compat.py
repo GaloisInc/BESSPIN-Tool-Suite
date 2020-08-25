@@ -11,9 +11,7 @@ class testgenTargetCompatabilityLayer:
         self.targetObj = target
 
         self.settings = {"useCustomScoring" : getSetting("useCustomScoring"),
-                         "processor" : getSetting('processor'),
-                         "FPGANTK_IP_TARGET" : getSetting("fpgaIpTarget"),
-                         "FPGANTK_IP_HOST" : getSetting("fpgaIpHost")}
+                         "processor" : getSetting('processor')}
 
         self.testsPars = {}
         if doesSettingExist("PPAC"):
@@ -98,8 +96,8 @@ class testgenTargetCompatabilityLayer:
 
     # TODO: The real reportAndExit takes a bunch of optional params that we
     # should support
-    def reportAndExit(self, message):
-        logAndExit(message)
+    def reportAndExit(self, message, **kwargs):
+        logAndExit(message, **kwargs)
 
     def switchUser(self):
         self.target.switchUser()
@@ -138,4 +136,13 @@ class testgenTargetCompatabilityLayer:
     def readFromTarget(self, *args, **kwargs):
         # TODO: Are these interfaces compatable enough?
         return self.target.readFromTarget(*args, **kwargs)
+
+    def getDefaultEndWith(self):
+        return self.target.getDefaultEndWith()
+
+    def enableSshOnRoot (self):
+        return self.target.enableSshOnRoot()
+
+    def retartSshService (self):
+        return self.target.retartSshService()
 

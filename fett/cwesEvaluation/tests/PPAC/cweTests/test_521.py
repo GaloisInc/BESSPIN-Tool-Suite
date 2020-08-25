@@ -1,6 +1,8 @@
 import time
 import socket, ssl, select
 
+from fett.base.utils.misc import *
+
 def runBinWithPass(target, binTest, old_password, new_password):
     outLog = ""
     outLog += ">>> Running password app\n"
@@ -9,16 +11,19 @@ def runBinWithPass(target, binTest, old_password, new_password):
                                 erroneousContents="<INVALID>",
                                 shutdownOnError=False)[1]
     outLog += f">>> sending old password '{old_password}'\n"
+    time.sleep(1)
     outLog += target.runCommand(f"{old_password}",
-                                endsWith="password:",
+                                endsWith="password:" if (isEqSetting('osImage','debian')) else 'new password:',
                                 erroneousContents="<INVALID>",
                                 shutdownOnError=False)[1]
     outLog += f">>> sending password '{new_password}'\n"
+    time.sleep(1)
     outLog += target.runCommand(f"{new_password}",
                                 endsWith="password:",
                                 erroneousContents="<INVALID>",
                                 shutdownOnError=False)[1]
     outLog += f">>> confirming password '{new_password}'\n"
+    time.sleep(1)
     outLog += target.runCommand(f"{new_password}",
                                 erroneousContents="<INVALID>",
                                 shutdownOnError=False)[1]

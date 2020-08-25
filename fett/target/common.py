@@ -27,6 +27,7 @@ class commonTarget():
         self.sshProcess = None
         self.fSshOut = None
         self.restartMode = False
+        self.isSshRootEnabled = not isEqSetting('target','aws')
 
         # all OSs settings
         self.portTarget = None
@@ -1089,15 +1090,18 @@ class commonTarget():
         self.isSshConn = True
         self.process = self.sshProcess
         passwordPrompt = [f"Password for {userName}@[\w\-\.]+\:", f"{userName}@[\w\-\.]+\'s password\:"]
-        blockedIpResponse = ["Connection closed by remote host", "Connection reset by peer"]
+        blockedIpResponse = ["Connection closed by remote host", "Connection reset by peer", "Permission denied (publickey,keyboard-interactive)."]
         retExpect = self.expectFromTarget(passwordPrompt + blockedIpResponse + ['\)\?',pexpect.EOF],"openSshConn",timeout=timeout,shutdownOnError=False)
-        if (retExpect[2]==5): #Failed
-            return returnFail(f"openSshConn: Failed to spawn the ssh process.")
-        elif (retExpect[1]): #Failed
+        if (retExpect[1]): #Failed
             return returnFail(f"openSshConn: Spawning the ssh process timed out.")
-        elif (retExpect[2]==4): # asking for yes/no for new host
-            self.runCommand("yes",endsWith=passwordPrompt,timeout=timeout,shutdownOnError=False)
-        elif (retExpect[2] in [2,3]): #the ip was blocked
+        elif (retExpect[2]==5): # asking for yes/no for new host
+            retYes = self.runCommand("yes",endsWith=passwordPrompt+blockedIpResponse+[pexpect.EOF],timeout=timeout,shutdownOnError=False)
+            if (retYes[3] not in [0,1]): #No password prompt
+                if (specialTest and (retYes[3] in [2,3,4,5])):
+                    return 'BLOCKED_IP'
+                else:
+                    return returnFail(f"openSshConn: Unexpected outcome when responding <yes> to the ssh process.")
+        elif (retExpect[2] in [2,3,4,6]): #the ip was blocked or connection refused
             if specialTest:
                 return 'BLOCKED_IP'
             else:
@@ -1170,6 +1174,37 @@ class commonTarget():
         message = f"getGdbOutput is not implemented for <{target}>"
         warnAndLog(message,doPrint=False)
         return message
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def enableSshOnRoot (self):
+        if (self.isSshRootEnabled):
+            return #nothing to do
+        switchUsers = not self.isCurrentUserRoot
+        if (switchUsers):
+            self.switchUser() #has to be executed on root
+        self.runCommand (f"echo \"PermitRootLogin yes\" >> {getSetting('sshdConfigPath')}")
+        self.retartSshService()
+        self.isSshRootEnabled = True
+        if (switchUsers):
+            self.switchUser() #switch back
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def retartSshService (self):
+        if (not self.isCurrentUserRoot):
+            self.switchUser() #has to be executed on root
+
+        if (isEqSetting('osImage','debian')):
+            self.runCommand ("service ssh restart")
+        if (isEqSetting('osImage','FreeBSD')):
+            if (isEqSetting('binarySource','SRI-Cambridge')):
+                self.runCommand("service fett_sshd restart")
+            elif (isEqSetting('target','aws')):
+                self.runCommand("pkill -f /usr/sbin/sshd")
+                self.runCommand("/usr/sbin/sshd")
+            else:
+                self.runCommand("/etc/rc.d/sshd restart")
 
 # END OF CLASS commonTarget
 

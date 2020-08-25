@@ -50,16 +50,8 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-#include <setjmp.h>
-#include <signal.h>
-static sigjmp_buf jbuf;
+#include <stdlib.h>
 
-static void catch_segv(int signum)
-{
-    // Roll back to the checkpoint set by sigsetjmp().
-    printf("\n<ERROR-SEGFAULT> Caught signal - segfault occurred %d\n",signum);
-    siglongjmp(jbuf, 1);
-}
 struct testStruct {
     int a;
 };
@@ -70,35 +62,37 @@ void *vp;
 
 void struct_pointer_cast_of_scalar_pointer(void) {
     f = (struct foo *)p; /* struct pointer cast of scalar pointer error */
-    if (sigsetjmp(jbuf, 1) == 0) {
-        printf ("a= %d\n", f->a);
-    } else {
-        printf("\n<DEREFERENCE-VIOLATION> Exception bad access."
-               "handled in false branch.\n");
-    }
-    printf("\n After the exception handling "
-           "the program continues its execution.\n");
+
+    printf ("a= %d\n", f->a);
+    printf("\n<DEREFERENCE-VIOLATION>\n");
 }
 
 void struct_pointer_cast_of_void_pointer(void) {
     f = (struct foo *)vp; /* struct pointer cast of void pointer error */
-    if (sigsetjmp(jbuf, 1) == 0) {
-        printf ("a= %d\n", f->a);
-    } else {
-        printf("\n<DEREFERENCE-VIOLATION> Exception bad access."
-               "handled in false branch.\n");
-    }
-    printf("\n After the exception handling "
-           "the program continues its execution.\n");
+    printf ("a= %d\n", f->a);
+    printf("\n<DEREFERENCE-VIOLATION>\n");
 }
 
-int main() {
-    // Register a signal handler
-    signal(SIGSEGV, catch_segv);
-    printf("\n<struct_pointer_cast_of_scalar_pointer>\n");
-    struct_pointer_cast_of_scalar_pointer();
-    printf("\n<struct_pointer_cast_of_void_pointer>\n");
-    struct_pointer_cast_of_void_pointer();
+int main(int argc, char *argv[]) {
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<struct_pointer_cast_of_scalar_pointer>\n");
+            struct_pointer_cast_of_scalar_pointer();
+            break;
+        case 2 :
+            printf("\n<struct_pointer_cast_of_void_pointer>\n");
+            struct_pointer_cast_of_void_pointer();
+            break;
+        default :
+            printf("SCORE:588:%d:TEST ERROR\n",option);
+            return 1;
+    }  
     return 0;
 }
 

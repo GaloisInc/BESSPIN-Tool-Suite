@@ -9,24 +9,19 @@ def test_415 (logTest, testsDir):
     osImage = getOsImage(testLines, testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
-        nParts = 1
+        nParts = 2
         partsLines = regPartitionTest(testLines, nParts, testNum=testNum)
         partsScores = {}
-        part01 = partitionLines(testLines,"<double_free>", "<double_free_str_int>", testNum=testNum)
-        part02 = partitionLines(testLines,"<double_free_str_int>", "-"*50, testNum=testNum)
 
-        if (doesKeywordExist(testLines, "INVALID")):
-            partsScores[1] = SCORES.CALL_ERR
-        elif (doesKeywordExist(part01, "<ERROR-SIGABRT>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part01, "<DOUBLE_FREE_OF_STACK>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02, "<ERROR-SIGABRT>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02, "<DOUBLE_FREE_OF_STR_INT_ON_STACK>")):
-            partsScores[1] = SCORES.V_HIGH
-        else:
-            partsScores[1] = SCORES.FAIL
+        for iPart in range(1,nParts+1):
+            if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
+                partsScores[iPart] = SCORES.CALL_ERR
+            elif (doesKeywordExist(partsLines[iPart],'<DOUBLE_FREE_OF_')):
+                partsScores[iPart] = SCORES.V_HIGH
+            elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or doesKeywordExist(partsLines[iPart],'double free detected')):
+                partsScores[iPart] = SCORES.HIGH
+            else:
+                partsScores[iPart] = SCORES.FAIL
 
     elif (osImage == 'FreeRTOS'):
         nParts = 2

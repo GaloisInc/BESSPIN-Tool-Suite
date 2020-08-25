@@ -280,11 +280,13 @@ def test_287 (target,binTest):
 
     elif (target.osImage == 'FreeBSD'):
         def suRoot287 ():
-            isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",endsWith=["testgenPrompt>",":~ \$",":~ $"],shutdownOnError=False)
-            if (idxEndsWith == 0):
+            isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",
+                        endsWith=["testgenPrompt>",f"{target.userName} #", ":~ \$",":~ $"],
+                        shutdownOnError=False)
+            if (idxEndsWith in [0,1]):
                 retLog = "<GRANTED> su root access!\n"
                 retLog += target.runCommand("exit",shutdownOnError=False)[1]
-            elif (idxEndsWith > 0):
+            elif (idxEndsWith > 1):
                 if ('su: Sorry' in textBack):
                     retLog = "<DENIED> su access denied!\n"
                 else:

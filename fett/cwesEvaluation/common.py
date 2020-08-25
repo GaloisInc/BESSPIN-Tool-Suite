@@ -7,6 +7,8 @@ import fett.cwesEvaluation.tests.PPAC.vulClassTester
 import fett.cwesEvaluation.tests.PPAC.cweScores
 import fett.cwesEvaluation.tests.resourceManagement.vulClassTester
 import fett.cwesEvaluation.tests.resourceManagement.cweScores
+import fett.cwesEvaluation.tests.informationLeakage.vulClassTester
+import fett.cwesEvaluation.tests.informationLeakage.cweScores
 import fett.cwesEvaluation.tests.numericErrors.vulClassTester
 import fett.cwesEvaluation.tests.numericErrors.cweScores
 
@@ -17,6 +19,8 @@ cweTests = {
         fett.cwesEvaluation.tests.PPAC.vulClassTester.vulClassTester,
     "resourceManagement" :
         fett.cwesEvaluation.tests.resourceManagement.vulClassTester.vulClassTester,
+    "informationLeakage" :
+        fett.cwesEvaluation.tests.informationLeakage.vulClassTester.vulClassTester,
     "numericErrors" :
         fett.cwesEvaluation.tests.numericErrors.vulClassTester.vulClassTester
 }
@@ -28,6 +32,8 @@ cweScores = {
         fett.cwesEvaluation.tests.PPAC.cweScores,
     "resourceManagement" :
         fett.cwesEvaluation.tests.resourceManagement.cweScores,
+    "informationLeakage" :
+        fett.cwesEvaluation.tests.informationLeakage.cweScores,
     "numericErrors" :
         fett.cwesEvaluation.tests.numericErrors.cweScores
 }
@@ -101,6 +107,8 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         target.runCommand("mv pam* /etc/pam.d/")
         target.runCommand(f"chown root:{target.rootGroup} limits*")
         target.runCommand("mv limits* /etc/security/")
+        if (isEqSetting('osImage','FreeBSD')): #need to be only writable by root
+            target.runCommand("chmod 644 /etc/pam.d/pam* /etc/security/limits*")
 
         # Become a normal user
         target.switchUser()

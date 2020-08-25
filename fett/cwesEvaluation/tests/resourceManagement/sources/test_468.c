@@ -51,14 +51,6 @@ void main() {
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
-
-#define EXIT_FAILURE 1
-void
-signal_callback_handler(int signum) {
-  printf("\n<ERROR-SEGFAULT> Caught signal - segfault occurred %d\n", signum);
-  exit(signum);
-}
 
 int example_bad_scaled(int i) {
   int intArray[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -70,7 +62,7 @@ int example_bad_scaled(int i) {
   if (p != i+1) {
     printf("\n<WRONG_OFFSET> p=%d\n", p);
   } else {
-    exit(EXIT_FAILURE);
+    printf("\n<CORRECT_SCALED> p=%d\n", p);
   }
   return p;
 }
@@ -83,18 +75,32 @@ int example_good_scaled(int i) {
   if (p == i+1) {
     printf("\n<CORRECT_SCALED> p=%d\n", p);
   } else {
-    printf ("\n<INVALID>\n");
-    exit(EXIT_FAILURE);
+    printf("\n<WRONG_OFFSET> p=%d\n", p);
   }
   return p;
 }
 
 int main(int argc, char *argv[]) {
-    signal(SIGSEGV, signal_callback_handler);
-    printf("\n<example-good-scaled>\n");
-    example_good_scaled(4);
-    printf("\n<example-bad-scaled>\n");
-    example_bad_scaled(4);
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<example-good-scaled>\n");
+            example_good_scaled(4);
+            break;
+        case 2 :
+            printf("\n<example-bad-scaled>\n");
+            example_bad_scaled(4);
+            break;
+        default :
+            printf("SCORE:468:%d:TEST ERROR\n",option);
+            return 1;
+    }  
+    return 0;
 }
 
 #endif // end of if FreeRTOS

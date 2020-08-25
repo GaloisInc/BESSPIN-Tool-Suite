@@ -10,17 +10,8 @@
 #define MALLOC pvPortMalloc
 #define FREE vPortFree
 
-#elif (defined(testgenOnDebian))
-
-#include <setjmp.h>
-#include <signal.h>
-#define MALLOC malloc
-#define FREE free
-static sigjmp_buf jbuf;
-
 #else
 
-#include <signal.h>
 #define MALLOC malloc
 #define FREE free
 
@@ -32,30 +23,13 @@ typedef struct Str_Int {
 
 
 void
-signal_callback_handler(int signum) {
-    printf("\n<ERROR-SIGABRT> Caught signal - segfault occurred %d\n", signum);
-#if (defined(testgenOnDebian))
-    siglongjmp(jbuf, 1);
-#elif(defined(testgenOnFreeBSD))
-    exit(signum);
-#endif
-}
-
-void
 double_free( char * src) {
     char* ptr = (char*)MALLOC(4);
     strcpy(ptr, src);
     FREE(ptr);
-#if (defined(testgenOnDebian))
-    if (sigsetjmp(jbuf, 1) == 0) {
-        FREE(ptr);
-    } else {
-        printf("\n<DOUBLE_FREE_OF_STACK>\n");
-    }
-#else
     FREE(ptr);
     printf("\n<DOUBLE_FREE_OF_STACK>\n");
-#endif
+
     return;
 }
 
@@ -64,16 +38,9 @@ double_free_str_int(int in) {
     Str_Int *mew = MALLOC(sizeof(Str_Int));
     mew->value = in;
     FREE(mew);
-#if (defined(testgenOnDebian))
-    if (sigsetjmp(jbuf, 1) == 0) {
-        FREE(mew);
-    } else {
-        printf("\n<DOUBLE_FREE_OF_STR_INT_ON_STACK>\n");
-    }
-#else
     FREE(mew);
     printf("\n<DOUBLE_FREE_OF_STR_INT_ON_STACK>\n");
-#endif
+
     return;
 }
 
@@ -102,14 +69,28 @@ void main() {
 
 #elif (defined(testgenOnFreeBSD) || defined(testgenOnDebian))
 
-int main()
-{
-    signal(SIGABRT, signal_callback_handler);
+
+int main(int argc, char *argv[]) {
     char src[4] = "Test";
-    printf("\n<double_free>\n");
-    double_free(&src[0]);
-    printf("\n<double_free_str_int>\n");
-    double_free_str_int(5);
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<double_free>\n");
+            double_free(&src[0]);
+            break;
+        case 2 :
+            printf("\n<double_free_str_int>\n");
+            double_free_str_int(5);
+            break;
+        default :
+            printf("SCORE:415:%d:TEST ERROR\n",option);
+            return 1;
+    }  
     return 0;
 }
 

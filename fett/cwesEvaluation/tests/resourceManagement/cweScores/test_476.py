@@ -9,28 +9,21 @@ def test_476 (logTest,testsDir):
     osImage = getOsImage(testLines,testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
-        nParts = 1
+        nParts = 3
         partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        partReg = partitionLines(testLines,"<Regular test>", "<Malicious test read>",testNum=testNum)
-        partMalRead = partitionLines(testLines,"<Malicious test read>", "<Malicious test write>",testNum=testNum)
-        partMalWrite = partitionLines(testLines,"<Malicious test write>", "-"*50,testNum=testNum)
-
-        if (doesKeywordExist(testLines,"<INVALID>")):
-            partsScores[1] = SCORES.CALL_ERR
-        elif (not doesKeywordExist(partReg,"<REGULAR>")):
-             partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(partMalRead,"<ERROR-SEGFAULT>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (not doesKeywordExist(partMalRead,"<DEREFERENCE-VIOLATION>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(partMalWrite,"<ERROR-SEGFAULT>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (not doesKeywordExist(partMalWrite,"<DEREFERENCE-VIOLATION>")):
-            partsScores[1] = SCORES.V_HIGH
-        else:
-            partsScores[1] = SCORES.FAIL
+        for iPart in range(1,nParts+1):
+            if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
+                partsScores[iPart] = SCORES.CALL_ERR
+            elif (doesKeywordExist(partsLines[iPart],'<DEREFERENCE-VIOLATION>')):
+                partsScores[iPart] = SCORES.V_HIGH
+            elif (doesKeywordExist(partsLines[iPart],'Segmentation fault')):
+                partsScores[iPart] = SCORES.HIGH
+            elif (doesKeywordExist(partsLines[iPart],'<REGULAR>') and (iPart==1)):
+                partsScores[iPart] = SCORES.NONE
+            else:
+                partsScores[iPart] = SCORES.FAIL
 
     elif (osImage == 'FreeRTOS'):
         nParts = 2
