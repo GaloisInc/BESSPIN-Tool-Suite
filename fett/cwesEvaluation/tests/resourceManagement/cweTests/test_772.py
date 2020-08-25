@@ -58,27 +58,6 @@ def test_772 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
         time.sleep (1)
 
- #   elif (target.osImage == 'FreeBSD'):
-#        outLog += f"<INVALID> test_{testNum} is not yet implemented on <{target.osImage}>."
-        
-    elif (target.osImage == 'FreeRTOS'):
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
-            outLog += "-"*20 + "Part01: Inbound test." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
-            outLog += "-"*20 + "Part02: Outbound test." + "-"*20 + "\n"
-        else:
-            outLog += "\n<INVALID> This test has only two parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
-            return outLog
-        if (">>>End of Testgen<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Testgen<<<",shutdownOnError=False,timeout=20)
-            outLog += retFinish[1]
-            if ((not retFinish[0]) or retFinish[2]): #bad
-                outLog += "\n<WARNING> Execution did not end properly.\n"
-        else: #just to be sure
-            outLog += target.readFromTarget() #for anything left
-
-        outLog += "-"*60 + "\n\n\n"
-
     else:
         target.reportAndExit("Error in {0}: <test_{2}> is not implemented for <{1}>.".format(target.filename,target.osImage,testNum))
     return outLog
