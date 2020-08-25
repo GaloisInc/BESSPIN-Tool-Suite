@@ -78,7 +78,7 @@ class UserdataCreator:
             f'export AWS_SESSION_TOKEN="{credentials.session_token}"',
             "EOL",
             f"""runuser -l centos -c 'echo "{ branch if branch else "None" }" >> /home/centos/SSITH-FETT-Target/branches'""",
-            f"""runuser -l centos -c 'echo "{ binaries_branch if binaries_branch else "None" }" >> home/centos/SSITH-FETT-Target/branches'""",
+            f"""runuser -l centos -c 'echo "{ binaries_branch if binaries_branch else "None" }" >> /home/centos/SSITH-FETT-Target/branches'""",
         ]
 
         # If either branch is specified, we need to get a SSH key - best solution so far
