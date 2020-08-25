@@ -101,11 +101,6 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-#include <signal.h>
-#include <setjmp.h>
-
-static sigjmp_buf jbuf;
-
 static SubStr *
 SubStr_new(char* s, unsigned int l)
 {
@@ -121,12 +116,6 @@ SubStr_new(char* s, unsigned int l)
   return r;
 }
 
-void signal_callback_handler(int signum) {
-  printf("\n<ERROR-SEGFAULT> Caught signal - segfault occurred %d\n",signum);
-  siglongjmp(jbuf, 1);
-  exit(signum);
-}
-
 void test_double_free(char *str, char *dest) {
   SubStr *r= SubStr_new(str, 4);
   if (r != NULL) {
@@ -137,11 +126,9 @@ void test_double_free(char *str, char *dest) {
     printf("Error! NUll pointer.");
     exit(EXIT_FAILURE);
   }
-  if (sigsetjmp(jbuf, 1) == 0) {
-    free(r); // pointer being freed was not allocated
-  } else {
-    printf("Continue..");
-  }
+
+  free(r); // pointer being freed was not allocated
+  printf("\n<POINTER_USED_IMPROPERLY>\n");
 }
 
 void test_free_no_longer_valid(char *str, char *dest) {
@@ -158,16 +145,29 @@ void test_free_no_longer_valid(char *str, char *dest) {
 }
 
 int main(int argc, char *argv[]) {
-  // Register signal and signal handler
-  signal(SIGABRT, signal_callback_handler);
-  signal(SIGSEGV, signal_callback_handler);
-  char dest[5];
-  char test_str [] = "test";
-  char *str = &test_str[0];
-  printf("\n<test-double-free>\n");
-  test_double_free(str, dest);
-  printf("\n<test-free-no-longer-valid>\n");
-  test_free_no_longer_valid(str, dest);
+    char dest[5];
+    char test_str [] = "test";
+    char *str = &test_str[0];
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+      case 1 :
+            printf("\n<test-double-free>\n");
+            test_double_free(str, dest);
+            break;
+        case 2 :
+            printf("\n<test-free-no-longer-valid>\n");
+            test_free_no_longer_valid(str, dest);
+            break;
+        default :
+            printf("SCORE:825:%d:TEST ERROR\n",option);
+            return 1;
+    }  
+    return 0;
 }
 
 #endif // end of if FreeRTOS

@@ -11,7 +11,6 @@
 
 #else
 
-#include <signal.h>
 #define MALLOC malloc
 #define FREE free
 #endif
@@ -95,11 +94,27 @@ void main() {
 }
 
 #elif (defined(testgenOnFreeBSD) || defined(testgenOnDebian))
-int main(int argc, char **argv) {
-    printf("\n<correct_implicit_reference_count>\n");
-    correct_implicit_reference_count();
-    printf("\n<unknown_reference_count>\n");
-    unknown_implicit_reference_count();
+
+int main(int argc, char *argv[]) {
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+      case 1 :
+            printf("\n<correct_implicit_reference_count>\n");
+            correct_implicit_reference_count();
+            break;
+        case 2 :
+            printf("\n<unknown_reference_count>\n");
+            unknown_implicit_reference_count();
+            break;
+        default :
+            printf("SCORE:911:%d:TEST ERROR\n",option);
+            return 1;
+    }  
     return 0;
 }
 

@@ -10,10 +10,8 @@ def test_822 (logTest,testsDir):
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
         nParts = 2
-        partsLines = {}
+        partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
         partsScores = {}
-        partsLines[1] = partitionLines(testLines,"<do_regular_compare>", "<do_malicious_modification>",testNum=testNum)
-        partsLines[2] = partitionLines(testLines,"<do_malicious_modification>", "-"*50, testNum=testNum)
 
         if (doesKeywordExist(partsLines[1], "<INVALID>")):
             partsScores[1] = SCORES.CALL_ERR
