@@ -562,7 +562,7 @@ def get_timeout_from_settings_dict():
         data = json.load(raw)
 
         if getSetting('osImage') not in list(data.keys()):
-            return [f'start: <{getSetting("osImage")}> is not implemented on <{getSetting("target")}>.', EXIT.Implementation]
+            return -1
         os_image = data[getSetting('osImage')]
 
         if getSetting('target') not in list(os_image.keys()):
