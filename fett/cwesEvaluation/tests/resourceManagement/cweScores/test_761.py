@@ -40,7 +40,9 @@ def test_761 (logTest,testsDir):
             partsScores[4] = SCORES.CALL_ERR
         elif (doesKeywordExist(partsLines[4],'<DEREFERENCE-VIOLATION>')):
             partsScores[4] = SCORES.V_HIGH
-        elif (doesKeywordExist(partsLines[4],'Segmentation fault') or doesKeywordExist(partsLines[4],'Aborted')):
+        elif (doesKeywordExist(partsLines[4],'Segmentation fault') or 
+                doesKeywordExist(partsLines[4],'Aborted') or
+                doesKeywordExist(partsLines[4],'Abort trap') ):
             partsScores[4] = SCORES.HIGH
         else:
             partsScores[4] = SCORES.FAIL
