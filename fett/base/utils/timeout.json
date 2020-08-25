@@ -37,7 +37,7 @@
     "qemu": 120,
     "aws": {
       "name": "sourceVariant",
-      "temporal": 900,
+      "temporal": 1000,
       "else": 540
     }
   }
