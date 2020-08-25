@@ -2,7 +2,6 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <signal.h>
 #define LENGTH 201 // the length of the character areas X, Y, Z
 
 /** There are two areas X and Y that program compares.
@@ -87,16 +86,33 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-int main()
-{
-  printf("\n<do_regular_compare>\n");
-  compare(&Y[0]);
-  // If the pointer is de-referenced for a write operation,
-  // the attack might allow modification
-  // of critical program state variables,
-  // cause a crash, or execute code.
-  printf("\n<do_malicious_modification>\n");
-  do_malicious_modification(&Y[0]);
-  return 0;
+#include <stdlib.h>
+
+int main(int argc, char *argv[]) {
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+      case 1 :
+            printf("\n<do_regular_compare>\n");
+            compare(&Y[0]);
+            break;
+        case 2 :
+            // If the pointer is de-referenced for a write operation,
+            // the attack might allow modification
+            // of critical program state variables,
+            // cause a crash, or execute code.
+            printf("\n<do_malicious_modification>\n");
+            do_malicious_modification(&Y[0]);
+            break;
+        default :
+            printf("SCORE:822:%d:TEST ERROR\n",option);
+            return 1;
+    }  
+    return 0;
 }
+
 #endif // end of if FreeRTOS

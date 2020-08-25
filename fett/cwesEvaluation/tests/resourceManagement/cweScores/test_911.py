@@ -9,24 +9,27 @@ def test_911 (logTest, testsDir):
     osImage = getOsImage(testLines, testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
-        nParts = 1
+        nParts = 2
         partsLines = regPartitionTest(testLines, nParts, testNum=testNum)
         partsScores = {}
-        part01 = partitionLines(testLines,"<correct_implicit_reference_count>", "<unknown_reference_count>", testNum=testNum)
-        part02 = partitionLines(testLines,"<unknown_reference_count>", "-"*50, testNum=testNum)
-
-        if (doesKeywordExist(testLines, "INVALID")):
+        
+        if (doesKeywordExist(partsLines[1], "INVALID")):
             partsScores[1] = SCORES.CALL_ERR
-        elif (not doesKeywordExist(part01, "<REFERENCE_COUNTER_DECREASED_BY_ONE_FIRST_TIME>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (not doesKeywordExist(part01, "<REFERENCE_COUNTER_DECREASED_BY_ONE_SECOND_TIME>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02, "<UNKNOWN_REFERENCE_COUNTER_AFTER_CHUNK_FREE>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02, "<UNKNOWN_REFERENCE_COUNTER_AFTER_UNION_DATA_SET_TO_ONE>")):
-            partsScores[1] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_FIRST_TIME>") and 
+            doesKeywordExist(partsLines[1], "<REFERENCE_COUNTER_DECREASED_BY_ONE_SECOND_TIME>")):
+            partsScores[1] = SCORES.NONE
         else:
             partsScores[1] = SCORES.FAIL
+
+        if (doesKeywordExist(partsLines[2], "INVALID")):
+            partsScores[2] = SCORES.CALL_ERR
+        elif (doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_CHUNK_FREE>") or
+            doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_UNION_DATA_SET_TO_ONE>")):
+            partsScores[2] = SCORES.V_HIGH
+        elif (doesKeywordExist(partsLines[2],'Segmentation fault') or doesKeywordExist(partsLines[2],'Aborted')):
+            partsScores[2] = SCORES.HIGH
+        else:
+            partsScores[2] = SCORES.FAIL
 
     elif (osImage == 'FreeRTOS'):
         nParts = 2
