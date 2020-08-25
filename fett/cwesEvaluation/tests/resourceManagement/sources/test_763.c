@@ -47,17 +47,6 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-#include <signal.h>
-#include <setjmp.h>
-
-static sigjmp_buf jbuf;
-
-void
-signal_callback_handler(int signum) {
-    printf("\n<ERROR-SIGABRT> Caught signal - segfault occurred %d\n", signum);
-    siglongjmp(jbuf, 1);
-}
-
 /**
   The free() has been provided a pointer to x
   in the middle of the allocated memory block.
@@ -67,11 +56,8 @@ signal_callback_handler(int signum) {
 void wrong_shift_address_assignment(void){
     int* x = malloc(sizeof(int) * 5); // Allocate space for 5 ints
     x += sizeof(int);                       // Shift the allocated memory by 1 int
-    if (sigsetjmp(jbuf, 1) == 0) {
-        free(x);
-    }else {
-        printf("\n<RELEASE_OF_INVALID_POINTER_ERROR>\n");
-    }
+    free(x);
+    printf("\n<RELEASE_OF_INVALID_POINTER_ERROR>\n");
 }
 
 void wrong_address_assignment(void){
@@ -79,20 +65,33 @@ void wrong_address_assignment(void){
     int *p = malloc(sizeof(*p)); /* dynamic allocation of memory */
     x = 12;
     p = &x; //assign the address of x to p
-    if (sigsetjmp(jbuf, 1) == 0) {
-        free(p); // p no longer points to dynamically allocated memory,
-                 // hence it is incorrect to call free() with it.
-    }else {
-        printf("\n<RELEASE_OF_INVALID_POINTER_ERROR>\n");
-    }
+    free(p); // p no longer points to dynamically allocated memory,
+            // hence it is incorrect to call free() with it.
+    printf("\n<RELEASE_OF_INVALID_POINTER_ERROR>\n");
 }
-int main() {
-    signal(SIGABRT, signal_callback_handler);
-    printf("\n<wrong_shift_address_assignment>\n");
-    wrong_shift_address_assignment();
-    printf("\n<wrong_address_assignment>\n");
-    wrong_address_assignment();
+
+int main(int argc, char *argv[]) {
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<wrong_shift_address_assignment>\n");
+            wrong_shift_address_assignment();
+            break;
+        case 2 :
+            printf("\n<wrong_address_assignment>\n");
+            wrong_address_assignment();
+            break;
+        default :
+            printf("SCORE:763:%d:TEST ERROR\n",option);
+            return 1;
+    }  
     return 0;
 }
+
 #endif // end of if FreeRTOS
 
