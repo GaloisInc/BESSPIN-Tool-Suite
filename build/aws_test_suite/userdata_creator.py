@@ -67,7 +67,7 @@ class UserdataCreator:
 
         userdata = [
             "#!/bin/bash",
-            "set -x"
+            "set -x",
             "exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1",
             "yum install -y git-lfs",
             "runuser -l centos -c 'sudo ssh-keyscan github.com >> ~/.ssh/known_hosts'",
