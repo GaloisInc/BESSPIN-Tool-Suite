@@ -187,27 +187,20 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def start (self,timeout=15):
+    def start (self):
+        if getSetting('osImage') not in ['debian', 'busybox', 'FreeRTOS', 'FreeBSD']:
+            self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
+                                 overwriteShutdown=True, exitCode=EXIT.Implementation)
+
+        if isEqSetting('osImage', 'FreeRTOS') or isEqSetting('osImage', 'debian'):
+            printAndLog(
+                f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
+        timeout = get_timeout_from_settings_dict()
+        if isinstance(timeout, list):
+            self.shutdownAndExit(timeout[0], overwriteShutdown=False, exitCode=timeout[1])
+            timeout = 15
+
         if (isEqSetting('osImage','debian')):
-            printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-            if (isEqSetting('target','fpga')):
-                if (isEqSetting('procFlavor','bluespec')):
-                    timeout = 1150 if isEqSetting('elfLoader','JTAG') else 560
-                elif (isEqSetting('procFlavor','chisel')):
-                    timeout = 1050 if isEqSetting('elfLoader','JTAG') else 500
-                else:
-                    self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
-            elif (isEqSetting('target','qemu')):
-                timeout = 120
-            elif (isEqSetting('target', 'aws')):
-                if isEqSetting('pvAWS', 'firesim'):
-                    timeout = 240
-                elif isEqSetting('pvAWS', 'connectal'):
-                    timeout = 510
-                else:
-                    self.shutdownAndExit(f"start: Unrecognized AWS PV <{getSetting('pvAWS')}>.", overwriteShutdown=False, exitCode=EXIT.Dev_Bug)
-            else:
-                self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             self.boot(endsWith="login:",timeout=timeout)
             self.stopShowingTime.set()
@@ -232,20 +225,6 @@ class commonTarget():
                 startMsg = '>>>Beginning of Fett<<<'
             self.boot (endsWith=startMsg,timeout=30)
         elif (isEqSetting('osImage','FreeBSD')):
-            printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-            if (isEqSetting('target','fpga')):
-                if (isEqSetting('procFlavor','bluespec')):
-                    timeout = 1400 if isEqSetting('elfLoader','JTAG') else 700
-                elif (isEqSetting('procFlavor','chisel')):
-                    timeout = 1000 if isEqSetting('elfLoader','JTAG') else 540
-                else:
-                    self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
-            elif (isEqSetting('target','qemu')):
-                timeout = 120
-            elif (isEqSetting('target', 'aws')):
-                timeout = 900 if (isEqSetting('sourceVariant','temporal')) else 540
-            else:
-                self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             bootEndsWith = "login:"
             self.boot(endsWith=bootEndsWith, timeout=timeout)
