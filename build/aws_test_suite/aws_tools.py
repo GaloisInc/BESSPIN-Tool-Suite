@@ -14,7 +14,7 @@ from .logger import *
 # +-----------------------------+
 # |  AWS Instance Manipulation  |
 # +-----------------------------+
-
+@log_assertion_fails
 def get_ami_id_from_name(ami_name):
     """
     From AMI name, get AMI ID
@@ -167,12 +167,10 @@ def poll_sqs(config):
     :rtype: str
     """
 
-    log.debug(f"Polling SQS Once")
+    log.debug(f"Beginning poll_sqs()")
 
     if config is not None:
-        moduleSpec = importlib.util.spec_from_file_location(
-            "configs", config
-        )
+        moduleSpec = importlib.util.spec_from_file_location("configs", config)
         configs = importlib.util.module_from_spec(moduleSpec)
         moduleSpec.loader.exec_module(configs)
     else:
@@ -205,7 +203,7 @@ def poll_sqs(config):
         except:
             log.warning("Failed to delete the message from the SQS queue.")
 
-    log.debug("Polling SQS")
+    log.debug("poll_sqs Polling SQS")
 
     try:
         response = sqs.receive_message(

@@ -1,3 +1,9 @@
+"""AWS Instance UserData Creator
+
+AWS Test Suite uses the ec2 user data to describe work to be accomplished by the launched
+instances. UserDataCreator generates and writes valid userdata from a job description of
+a FETT-Target job.
+"""
 from .aws_tools import *
 from .logger import *
 
@@ -24,6 +30,7 @@ class UserdataCreator:
         self._userdata = userdata
 
     @classmethod
+    @log_assertion_fails
     def default(
         cls,
         credentials,
@@ -63,8 +70,10 @@ class UserdataCreator:
         # If either branch is specified, we need to get a SSH key - best solution so far
         userdata = [
             "#!/bin/bash",
+            "exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1",
             "yum install -y git-lfs",
             "runuser -l centos -c 'sudo ssh-keyscan github.com >> ~/.ssh/known_hosts'",
+            "runuser -l centos -c 'sudo ssh-keyscan gitlab-ext.galois.com >> ~/.ssh/known_hosts'",
             "cat >>/home/centos/.bashrc << EOL",
             f'export AWS_ACCESS_KEY_ID="{credentials.access_key_id}"',
             f'export AWS_SECRET_ACCESS_KEY="{credentials.secret_key_access}"',
@@ -72,18 +81,19 @@ class UserdataCreator:
             "EOL",
         ]
 
-        assert os.path.exists(
-            os.path.expanduser(key_path)
-        ), f"key path {key_path} does not exist!"
-        try:
-            with open(os.path.expanduser(key_path), "r") as f:
-                key = f.readlines()
-                key = [x.strip() for x in key]
-        except BaseException as e:
-            log.error("UserdataCreator: Invalid Key Path")
-            log.error(f"UserdataCreator: {e}")
-
         if branch or binaries_branch:
+
+            assert os.path.exists(
+                os.path.expanduser(key_path)
+            ), f"key path {key_path} does not exist!"
+            try:
+                with open(os.path.expanduser(key_path), "r") as f:
+                    key = f.readlines()
+                    key = [x.strip() for x in key]
+            except BaseException as e:
+                log.error("UserdataCreator: Invalid Key Path")
+                log.error(f"UserdataCreator: {e}")
+
             userdata_ssh = [
                 "runuser -l centos -c 'touch /home/centos/.ssh/id_rsa'",
                 "cat >/home/centos/.ssh/id_rsa <<EOL",
@@ -115,7 +125,7 @@ class UserdataCreator:
                 + """git pull && 
                             git submodule update && 
                             cd SSITH-FETT-Binaries &&\n"""
-                + (f"git checkout {binaries_branch} &&\n" if binaries_branch else "")
+                + (f"git fetch; git checkout {binaries_branch} && git pull\n" if binaries_branch else "")
                 + """git-lfs pull && 
                             cd .. "'"""
             ]
@@ -145,6 +155,7 @@ class UserdataCreator:
         else:
             self._userdata.append(ul)
 
+    @log_assertion_fails
     def append_file(self, dest, path):
         """
         Add file contents of path to userdata

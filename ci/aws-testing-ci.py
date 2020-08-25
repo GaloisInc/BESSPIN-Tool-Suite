@@ -55,19 +55,12 @@ def main(args):
     # log arguments to main()
     log.debug(f"aws-testing-ci.py started with arguments { args }")
 
-    # Handle init and credentials
-    if args.init:
-        a = AWSCredentials.from_interactive()
-    elif args.credentials:
-        a = AWSCredentials.from_credentials_file(args.credentials)
-    else:
-        try:
-            a = AWSCredentials.from_credentials_file()
-        except AssertionError:
-            try:
-                a = AWSCredentials.from_env_vars()
-            except AssertionError:
-                log.error(f"{h}Cannot get AWS credentials.")
+    # Check in envs, otherwise error
+    a = AWSCredentials.from_env_vars()
+
+    # Make sure that the region and format are written in ~/.aws/config
+    AWSConfig.check_write_aws_config()
+
     log.info(f"{h}AWSCredentials gathered!")
 
     # Get list of all targets for fett-ci.py
@@ -80,8 +73,8 @@ def main(args):
     log.info(f"{h}Creating userdata and instances.")
 
     # Generate a list of indices to be tested on each run
-    if args.instance_index:
-        indices_to_run = [args.instance_index]
+    if args.instance_indices:
+        indices_to_run = args.instance_indices
     else:
         indices_to_run = list(range(len(r)))
 
@@ -102,7 +95,9 @@ def main(args):
             bb = f"-{args.binaries_branch}" if args.binaries_branch else ""
 
             # Build instance name string
-            n = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}"
+            #   Need to replace '/' with '_' so that when S3 files are created, it does not
+            #   Think it needs a new directory.
+            n = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}".replace("/", "_")
             log.debug(f"Name String: { n }")
 
             # Compose userdata based on args
@@ -130,7 +125,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "ami", type=str, help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'"
+        "-a",
+        "--ami",
+        type=str,
+        required=True,
+        help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'",
     )
     parser.add_argument(
         "-b",
@@ -148,34 +147,18 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-c",
-        "--config",
-        help="Filepath to the config file (Defaults to $repoDir/ci/configs.py)",
-    )
-    parser.add_argument(
-        "-cp",
         "--cap",
         type=int,
         help="The maximum number of instances running at once (default is 1)",
         default=1,
     )
     parser.add_argument(
-        "-cd",
-        "--credentials",
-        type=str,
-        help="AWS credentials file (Use either --init (-i) or --credentials (-cd))",
-    )
-    parser.add_argument(
         "-i",
-        "--init",
-        help="Initialize (first run or if tokens have expired) (Use either --init (-i) or --credentials (-cd))",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-idx",
-        "--instance-index",
+        "--instance-indices",
         type=int,
-        help="Specify a specific index of target to run - if entered, this program will run $RUNS worth of this "
-        "instance index only.",
+        nargs="*",
+        help="Specify a list of indices of target(s) to run - if entered, this program will run $RUNS worth of this set "
+        "of instance indices only.",
     )
     parser.add_argument(
         "-k",

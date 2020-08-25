@@ -1,10 +1,22 @@
+""" EC2 Instance and Group Management
+
+Convenience objects to access relevant fields from EC2 instances for CI type tasks. A
+manager is created to create groups of instances where jobs can be dispatched.
+"""
 import re
 import time
+
+import boto3
+
 from .aws_tools import *
 from .logger import *
 
 
 class InstanceManager:
+    """ Manage EC2 Instances
+    define group of EC2 instances, assign a workload and run
+    """
+
     def __init__(self, cap=1, instances=None):
         if instances is None:
             instances = []
@@ -13,17 +25,26 @@ class InstanceManager:
         self._instances = instances
         self._running = []
         self._terminated = []
-        self._capped = False
 
         self._i = cap
 
+    @log_assertion_fails
     def add_instance(self, instance):
+        """append ec2 instance to instance manager"""
+        assert isinstance(instance, Instance)
+        log.debug(
+            f"InstanceManager adding instance { instance.name } to { [x.name for x in self._instances] }"
+        )
         self._instances.append(instance)
         return self
 
+    @log_assertion_fails
     def run_all_instances(self, config=None):
+        """run all jobs at the same time
+        TODO: support running and terminating jobs non-uniformly
+        """
         log.debug(
-            f"Pool Run Instances started with instances { [x.tags for x in self._instances] }in capacity {self._cap}"
+            f"Pool Run Instances started with instances { [[x.tags, x] for x in self._instances] } in capacity {self._cap}"
         )
 
         assert (len(self._instances)) > 0, "No instances were found."
@@ -31,7 +52,7 @@ class InstanceManager:
         # Populate running_instances with $cap instances
         #   This uses the min of $cap and $(len(self._instances))
         running_instances = [
-            self._instances.pop() for x in range(min(self._cap, len(self._instances)))
+            self._instances.pop() for _ in range(min(self._cap, len(self._instances)))
         ]
 
         log.info(f"Populated running_instances with { len(running_instances) } items")
@@ -84,17 +105,23 @@ class InstanceManager:
 
 
 class Instance:
+    """convenience wrapper class for boto3 EC2 Instance"""
+
     def __init__(
         self,
         ami,
-        name,
+        name="aws-test-suite",
         vpc_name="aws-controltower-VPC",
         security_group_name="FPGA Developer AMI-1-8-1-AutogenByAWSMP-1",
         instance_type="f1.2xlarge",
         key_name="nightly-testing",
         userdata=None,
-        tags={"Name": "aws-test-suite"}
+        tags=None,
     ):
+
+        if tags is None:
+            tags = {}
+
         if not re.fullmatch("ami-[A-Za-z0-9]+", ami):
             ami = get_ami_id_from_name(ami)
 
@@ -111,7 +138,12 @@ class Instance:
         self._tags = tags
         self._tags["Name"] = self._name
 
+        log.debug(
+            f"Tags after name assignment in instance_manager.py is { self._tags } while name is { self._name }"
+        )
+
     def start(self, **ec2_kwargs):
+        """create boto3 ec2 instance"""
         log.debug(f"Start() called on instance { self._tags }")
         self._id = launch_instance(
             self._ami,
@@ -126,6 +158,7 @@ class Instance:
         log.debug(f"Start() finished with instance { self._id }")
         return self
 
+    @log_assertion_fails
     def terminate(self):
         assert self._id is not None, "Cannot terminate instance that has not started"
         terminate_instance(self._id, False)

@@ -793,9 +793,8 @@ def prepareConnectal():
         cp(imageSourcePath, imageFile)
 
     elif isEqSetting('binarySource', 'SRI-Cambridge'):
-        imageVariant = '-purecap' if (isEqSetting('sourceVariant','purecap')) else ''
         imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'),
-                                       'osImages', 'common', f"disk-image-cheri{imageVariant}.img.zst")
+                'osImages', 'common', f"disk-image-cheri{getSetting('SRI-Cambridge-imageVariantSuffix')}.img.zst")
         imageFile = os.path.join(imageDir, f"{getSetting('osImage')}.img")
         zstdDecompress(imageSourcePath, imageFile)
 
@@ -816,46 +815,51 @@ def prepareConnectal():
 @decorate.debugWrap
 def startRemoteLogging (target):
     printAndLog ("Setting up remote logging ...")
-    # clear the directory for non-fresh instances
-    sudoShellCommand(['rm','-rf',f'/var/log/{target.ipTarget}'],check=False)
+
+    if (not target.restartMode):
+        # clear the directory for non-fresh instances
+        sudoShellCommand(['rm','-rf',f'/var/log/{target.ipTarget}'],check=False)
 
     # configure target rsyslog
     if (isEqSetting('osImage','debian')):
-        # prepare the logTuples to create the conf file
-        syslogsFiles = ['alternatives.log','bootstrap.log','debug','kern.log','btmp',
-                    'dpkg.log','lastlog','syslog','auth.log','daemon.log','faillog','messages','wtmp']
-        syslogs = [f"/var/log/{syslog}" for syslog in syslogsFiles]
-        logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in syslogs]
-        if (webserver in target.appModules):
-            weblogs = getSetting("webserverLogs")
-            logTuples += [(f"{weblogs['root']}/{logFile}",f"nginx_{os.path.splitext(logFile)[0]}") for logFile in weblogs["logs"]]
+        if (not target.restartMode):
+            # prepare the logTuples to create the conf file
+            syslogsFiles = ['alternatives.log','bootstrap.log','debug','kern.log','btmp',
+                        'dpkg.log','lastlog','syslog','auth.log','daemon.log','faillog','messages','wtmp']
+            syslogs = [f"/var/log/{syslog}" for syslog in syslogsFiles]
+            logTuples = [(xPath,os.path.splitext(os.path.basename(xPath))[0]) for xPath in syslogs]
+            if (webserver in target.appModules):
+                weblogs = getSetting("webserverLogs")
+                logTuples += [(f"{weblogs['root']}/{logFile}",f"nginx_{os.path.splitext(logFile)[0]}") for logFile in weblogs["logs"]]
 
-        # Create conf file
-        syslogConfName = "logFett.conf"
-        syslogConfFile = ftOpenFile(os.path.join(getSetting('workDir'),syslogConfName),'w')
-        syslogConfFile.write('module(load="imfile")\n')
-        syslogConfFile.write('\nruleset(name="sendToLogserver") {\n')
-        syslogConfFile.write(f'\taction(type="omfwd" Target="{target.ipHost}" Port="{getSetting("rsyslogPort")}" Protocol="udp")\n')
-        syslogConfFile.write('}\n')
-        for logPath, logTag in logTuples:
-            syslogConfFile.write('\ninput(type="imfile"\n')
-            syslogConfFile.write(f'\tfile="{logPath}"\n')
-            syslogConfFile.write(f'\tTag="{logTag}:"\n')
-            syslogConfFile.write(f'\tRuleset="sendToLogserver")\n')
-        syslogConfFile.close()
+            # Create conf file
+            syslogConfName = "logFett.conf"
+            syslogConfFile = ftOpenFile(os.path.join(getSetting('workDir'),syslogConfName),'w')
+            syslogConfFile.write('module(load="imfile")\n')
+            syslogConfFile.write('\nruleset(name="sendToLogserver") {\n')
+            syslogConfFile.write(f'\taction(type="omfwd" Target="{target.ipHost}" Port="{getSetting("rsyslogPort")}" Protocol="udp")\n')
+            syslogConfFile.write('}\n')
+            for logPath, logTag in logTuples:
+                syslogConfFile.write('\ninput(type="imfile"\n')
+                syslogConfFile.write(f'\tfile="{logPath}"\n')
+                syslogConfFile.write(f'\tTag="{logTag}:"\n')
+                syslogConfFile.write(f'\tRuleset="sendToLogserver")\n')
+            syslogConfFile.close()
 
-        # send the conf file
-        target.sendFile(
-                getSetting('workDir'), syslogConfName,
-                toTarget=True, shutdownOnError=False
-            )
-        target.runCommand(f"mv {syslogConfName} /etc/rsyslog.d/",shutdownOnError=False)
+            # send the conf file
+            target.sendFile(
+                    getSetting('workDir'), syslogConfName,
+                    toTarget=True, shutdownOnError=False
+                )
+            target.runCommand(f"mv {syslogConfName} /etc/rsyslog.d/",shutdownOnError=False)
 
         # restart rsyslog
         target.runCommand("service rsyslog restart",shutdownOnError=False)
+
     elif (isEqSetting('osImage','FreeBSD')):
-        # configure syslogd to use the UDP port
-        target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting("rsyslogPort")}" > /etc/syslog.d/logFett.conf')
+        if (not target.restartMode):
+            # configure syslogd to use the UDP port
+            target.runCommand(f'echo "*.*     @{target.ipHost}:{getSetting("rsyslogPort")}" > /etc/syslog.d/logFett.conf')
         target.runCommand("service syslogd restart")
         
         if (webserver in target.appModules):
@@ -866,7 +870,8 @@ def startRemoteLogging (target):
             f'severity=info;\\nerror_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_error,'
             f'severity=debug;\\n')
 
-            target.runCommand(f'printf "{remoteLogsCommands}" > {nginxSrc}/nginx/conf/sites/remoteLogFett.conf',erroneousContents=["Unmatched", "No such file or directory"])
+            if (not target.restartMode):
+                target.runCommand(f'printf "{remoteLogsCommands}" > {nginxSrc}/nginx/conf/sites/remoteLogFett.conf',erroneousContents=["Unmatched", "No such file or directory"])
             target.runCommand(f"service {nginxService} restart")
          
     printAndLog ("Setting up remote logging is _supposedly_ complete.")
