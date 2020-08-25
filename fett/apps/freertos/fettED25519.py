@@ -134,11 +134,11 @@ def main(xArgs):
         #Check if the file is of an acceptable size
         if (xArgs.maxOTAfileSize): #user provided
             OTAMaxSignedPayloadSize = xArgs.maxOTAfileSize
-        else: #fetch from setupEnv.json
+        else: #fetch from timeout.json
             OTAMaxSignedPayloadSize = None
             appsFreeRTOSdir = os.path.abspath(os.path.dirname(__file__))
             fettDir = os.path.abspath(os.path.join(os.path.join(appsFreeRTOSdir,os.pardir),os.pardir))
-            jsonSetupPath = os.path.join(fettDir,'base','utils','setupEnv.json')
+            jsonSetupPath = os.path.join(fettDir,'base','utils','timeout.json')
             try:
                 fJson = open(jsonSetupPath,'r')
                 jsonData = json.load(fJson)

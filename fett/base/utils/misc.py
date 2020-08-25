@@ -557,7 +557,7 @@ def get_timeout_from_settings_dict():
         else:
             return layer
 
-    with open('setupEnv.json', 'r') as f:
+    with open('timeout.json', 'r') as f:
         raw = f.read()
         data = json.load(raw)
 
