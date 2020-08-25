@@ -45,7 +45,6 @@
 #3_ResourceManagement
 395,*,1
 415,debian,1
-415,FreeBSD,1
 476,*,1
 562,debian,1
 562,FreeBSD,1
@@ -55,7 +54,6 @@
 762,debian,1
 762,FreeBSD,1
 763,debian,1
-763,FreeBSD,1
 771,debian,-6
 771,FreeBSD,-6
 911,FreeRTOS,1
