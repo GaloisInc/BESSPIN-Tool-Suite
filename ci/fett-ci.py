@@ -42,6 +42,7 @@ try:
         prepareArtifact,
     )
     from configs import fettTargetAMI
+    from pygit2 import Repository
 except Exception as exc:
     exitFettCi(exitCode=-1, exc=exc)
 
@@ -92,6 +93,23 @@ def main(xArgs):
             exitFettCi(
                 message="Provided jobID contained invalid character(s). It must match regex '[A-Za-z0-9-_+.]'"
             )
+
+    # If we are in AWSTesting ep, we will check the git branches
+    if xArgs.entrypoint == "AWSTesting":
+        try:
+            with open(os.path.join(repoDir, "branches"), "r") as f:
+                branches = f.read().split('\n')[:-1]
+                assert(len(branches) == 2), "Failed to find 2 branches in branches file."
+        except Exception as exc:
+            exitFettCi(message="Error when trying to read branches from file.", exc=exc)
+
+        try:
+            targetBranch = Repository(repoDir).head.shorthand
+            binariesBranch = Repository(os.path.join(repoDir, "SSITH-FETT-Binaries")).head.shorthand
+            if not branches[0] == 'None':
+                assert(targetBranch == branches[0]), f"Failed to check out Target branch: is {targetBranch}, supposed to be {branches[0]}"
+            if not branches[1] == 'None':
+                assert(binariesBranch == branches[1]), f"Failed to check out Binaries branch: is {binariesBranch}, supposed to be {branches[1]}"
 
     # Decide on artifact name -- There is no else as they are argparser grouped
     if xArgs.artifactSuffix:
