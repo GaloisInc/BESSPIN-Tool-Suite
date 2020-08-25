@@ -1,0 +1,44 @@
+{
+  "debian": {
+    "fpga": {
+      "name": "procFlavor",
+      "bluespec": {
+        "name": "elfLoader",
+        "JTAG": 1150,
+        "else": 560
+      },
+      "chisel": {
+        "name": "elfLoader",
+        "JTAG": 1050,
+        "else": 500
+      }
+    },
+    "qemu": 120,
+    "aws": {
+      "name": "pvAWS",
+      "firesim": 240,
+      "connectal": 510
+    }
+  },
+  "FreeBSD": {
+    "fpga": {
+      "name": "procFlavor",
+      "bluespec": {
+        "name": "elfLoader",
+        "JTAG": 1400,
+        "else": 700
+      },
+      "chisel": {
+        "name": "elfLoader",
+        "JTAG": 1000,
+        "else": 540
+      }
+    },
+    "qemu": 120,
+    "aws": {
+      "name": "sourceVariant",
+      "temporal": 900,
+      "else": 540
+    }
+  }
+}
