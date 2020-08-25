@@ -125,7 +125,7 @@ class UserdataCreator:
                 + """git pull && 
                             git submodule update && 
                             cd SSITH-FETT-Binaries &&\n"""
-                + (f"git checkout {binaries_branch} &&\n" if binaries_branch else "")
+                + (f"git fetch; git checkout {binaries_branch} && git pull\n" if binaries_branch else "")
                 + """git-lfs pull && 
                             cd .. "'"""
             ]
