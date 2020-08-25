@@ -9,26 +9,19 @@ def test_763 (logTest,testsDir):
     osImage = getOsImage(testLines,testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
-        nParts = 1
+        nParts = 2
         partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
         partsScores = {}
 
-        part01 = partitionLines(testLines,"<wrong_shift_address_assignment>", "<wrong_address_assignment>",testNum=testNum)
-        part02 = partitionLines(testLines,"<wrong_address_assignment>", "-"*50,testNum=testNum)
-
-        if (doesKeywordExist(testLines,"<INVALID>")):
-            partsScores[1] = SCORES.CALL_ERR
-        elif (doesKeywordExist(part01,"<ERROR-SIGABRT>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (not doesKeywordExist(part01,"<RELEASE_OF_INVALID_POINTER_ERROR>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (doesKeywordExist(part02,"<ERROR-SIGABRT>")):
-            partsScores[1] = SCORES.V_HIGH
-        elif (not doesKeywordExist(part02,"<RELEASE_OF_INVALID_POINTER_ERROR>")):
-            partsScores[1] = SCORES.V_HIGH
-        else:
-            partsScores[1] = SCORES.FAIL
-
+        for iPart in range(1,nParts+1):
+            if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
+                partsScores[iPart] = SCORES.CALL_ERR
+            elif (doesKeywordExist(partsLines[iPart],'<RELEASE_OF_INVALID_POINTER_ERROR>')):
+                partsScores[iPart] = SCORES.V_HIGH
+            elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or doesKeywordExist(partsLines[iPart],'Abort')):
+                partsScores[iPart] = SCORES.HIGH
+            else:
+                partsScores[iPart] = SCORES.FAIL
 
     elif (osImage == 'FreeRTOS'):
         nParts = 2

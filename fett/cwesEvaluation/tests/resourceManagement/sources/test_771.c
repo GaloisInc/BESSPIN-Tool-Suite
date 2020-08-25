@@ -103,18 +103,45 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
-int main()
-{
-    printf("\n<f_not_freed>\n");
-    f();
-    printf("\n<g_input_param_empty_string>\n");
-    g("");
-    printf("\n<g_input_param_space>\n");
-    g(" ");
-    printf("\n<g_first_input_param>\n");
-    g("SSITH");
-    printf("\n<g_second_input_param>\n");
-    g("BESSPIN");
+int main(int argc, char *argv[]) {
+    printf ("<INVALID> This test is not implemented yet.\n");
+    return 1;
+}
+
+/*
+int main(int argc, char *argv[]) {
+    int option;
+    if (argc > 1) { //be safe
+        option = atoi(argv[1]);
+    } else {
+        option = -1;
+    }
+    switch(option) {
+        case 1 :
+            printf("\n<f_not_freed>\n");
+            f();
+            break;
+        case 2 :
+            printf("\n<g_input_param_empty_string>\n");
+            g("");
+            break;
+        case 3 :
+            printf("\n<g_input_param_space>\n");
+            g(" ");
+            break;
+        case 4 :
+            printf("\n<g_first_input_param>\n");
+            g("SSITH");
+            break;
+        case 5 :
+            printf("\n<g_second_input_param>\n");
+            g("BESSPIN");
+            break;
+        default :
+            printf("SCORE:771:%d:TEST ERROR\n",option);
+            return 1;
+    }  
     return 0;
 }
+*/
 #endif // end of if FreeRTOS
