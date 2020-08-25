@@ -25,7 +25,9 @@ def test_762 (logTest,testsDir):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<INVALID_FREE_OF_')):
                 partsScores[iPart] = SCORES.V_HIGH
-            elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or doesKeywordExist(partsLines[iPart],'Aborted')):
+            elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or 
+                    doesKeywordExist(partsLines[iPart],'Aborted') or
+                    doesKeywordExist(partsLines[iPart],'Abort trap') ):
                 partsScores[iPart] = SCORES.HIGH
             else:
                 partsScores[iPart] = SCORES.FAIL
