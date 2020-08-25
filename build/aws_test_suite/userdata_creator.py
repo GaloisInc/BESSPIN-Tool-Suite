@@ -65,11 +65,9 @@ class UserdataCreator:
         :rtype: UserdataCreator
         """
 
-        # Default branch on both
-
-        # If either branch is specified, we need to get a SSH key - best solution so far
         userdata = [
             "#!/bin/bash",
+            "set -x"
             "exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1",
             "yum install -y git-lfs",
             "runuser -l centos -c 'sudo ssh-keyscan github.com >> ~/.ssh/known_hosts'",
@@ -79,8 +77,11 @@ class UserdataCreator:
             f'export AWS_SECRET_ACCESS_KEY="{credentials.secret_key_access}"',
             f'export AWS_SESSION_TOKEN="{credentials.session_token}"',
             "EOL",
+            f"""runuser -l centos -c 'echo { branch if branch else "None" } >> ~/SSITH-FETT-Target/branches""",
+            f"""runuser -l centos -c 'echo { binaries_branch if binaries_branch else "None" } >> ~/SSITH-FETT-Target/branches""",
         ]
 
+        # If either branch is specified, we need to get a SSH key - best solution so far
         if branch or binaries_branch:
 
             assert os.path.exists(
@@ -115,24 +116,28 @@ class UserdataCreator:
 
         if branch or binaries_branch:
             userdata_specific = [
-                f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/id_rsa && 
-                            cd /home/centos/SSITH-FETT-Target/ && 
-                            cd SSITH-FETT-Binaries && 
-                            git stash && 
-                            cd .. &&
-                            git fetch &&\n"""
-                + (f"git checkout {branch} &&\n" if branch else "")
-                + """git pull && 
-                            git submodule update && 
-                            cd SSITH-FETT-Binaries &&\n"""
-                + (f"git fetch; git checkout {binaries_branch} && git pull\n" if binaries_branch else "")
-                + """git-lfs pull && 
-                            cd .. "'"""
+                f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/id_rsa; 
+                    cd /home/centos/SSITH-FETT-Target/; 
+                    cd SSITH-FETT-Binaries; 
+                    git stash; 
+                    cd ..;
+                    git fetch;\n"""
+                + (f"git checkout {branch};\n" if branch else "")
+                + """git pull; 
+                    git submodule update; 
+                    cd SSITH-FETT-Binaries;\n"""
+                + (
+                    f"git fetch; git checkout {binaries_branch} && git pull\n"
+                    if binaries_branch
+                    else ""
+                )
+                + """git-lfs pull; 
+                    cd .. "'"""
             ]
 
         userdata_specific.append(
-            f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target && 
-                                   nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """
+            f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target; 
+                nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """
         )
 
         userdata += userdata_specific
