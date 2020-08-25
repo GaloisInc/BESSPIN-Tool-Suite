@@ -1,5 +1,9 @@
+""" Local AWS Configuration
+
+setup credentials and location of machine running the AWS Test Suite. filesystem requirements
+and checks are available as static members and methods.
+"""
 import os
-import re
 
 from .logger import *
 
@@ -23,6 +27,7 @@ class AWSCredentials:
         log.info("AWSCredentials: successfully obtained credentials")
 
     @classmethod
+    @log_assertion_fails
     def from_env_vars(cls):
         """
         Get AWS credentials from environment variables
@@ -35,12 +40,14 @@ class AWSCredentials:
 
         variables = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
         assert cls.has_env_vars(), (
-            f"AWSCredentials must have environment variable {v} for from_env_vars "
-            f"class method"
+            "AWSCredentials: Could not find your environment variables with AWS access keys.",
+            "Please copy and paste option 1 from 'Command Line or Programatic Access' ",
+            "in the AWS account dashboard into this terminal and try again.",
         )
         return cls([os.environ[v] for v in variables])
 
     @classmethod
+    @log_assertion_fails
     def from_credentials_file(cls, filepath="~/.aws/credentials"):
         """
         Get AWS credentials from file
@@ -121,19 +128,16 @@ class AWSCredentials:
         return os.path.exists(filename)
 
     @staticmethod
+    @log_assertion_fails
     def _check_credentials(cred):
         """
-        Ensure that the credentials are valid
+        Ensure that the credentials are valid. 
 
         :param cred: List of credentials
         :type cred: list
 
         :raises AssertionError (1): Must have 3 credentials in the list
-        :raises AssertionError (2): First key must be length 20 (AWS Access Key ID)
-        :raises AssertionError (3): First key must conform to key pattern (AWS Access Key ID)
-        :raises AssertionError (4): Second key must be length 40 (AWS Secret Access Key)
-        :raises AssertionError (5): Second key must conform to key pattern (AWS Secret Access Key)
-        :raises AssertionError (6): Third key must be length 846 (AWS Session Token)
+        :raises AssertionError (2): All must be strings
         """
 
         # credentials must be an array of length 3
@@ -144,23 +148,7 @@ class AWSCredentials:
                 c, str
             ), f"Element of credentials '{c}' must be a string instance"
 
-        # access key ID checks
-        assert len(cred[0]) == 20, "AWS Access Key ID must be of length 20"
-        assert re.fullmatch("[A-Z0-9]+", cred[0]), (
-            "AWS Access Key ID must be a combination of numbers and uppercase "
-            "letters"
-        )
-
-        # secret access key checks
-        assert len(cred[1]) == 40, "AWS Secret Access Key must be of length 40"
-        assert re.fullmatch("[a-zA-Z0-9+/]+", cred[0]), (
-            "AWS Secret Access key must be a combination of numbers, "
-            "letters, '+', and '/'"
-        )
-
-        # session token checks
-        assert len(cred[2]) >= 800, "AWS Session Token must be of length 800"
-
+    @log_assertion_fails
     def __getitem__(self, index):
         """
         Gets a specified credential
@@ -227,3 +215,31 @@ class AWSCredentials:
         :rtype: str
         """
         return self.__getitem__(2)
+
+
+class AWSConfig:
+    """statics for checking and writing an AWS configuration"""
+
+    aws_dir = os.path.expanduser("~/.aws")
+
+    aws_config_filepath = os.path.join(aws_dir, "config")
+
+    @staticmethod
+    def has_config_file():
+        """that AWS directory and config is present on the filesystem"""
+        return os.path.exists(AWSConfig.aws_dir) and os.path.exists(AWSConfig.aws_config_filepath)
+
+    @staticmethod
+    def check_write_aws_config(region="us-west-2", output="json"):
+        """produce a valid configuration in ~/.aws/config, specifying region and output only"""
+        # make the directory if not present
+        if not os.path.exists(AWSConfig.aws_dir):
+            os.mkdir(AWSConfig.aws_dir)
+
+        # if file exists and has contents, warn user
+        if os.path.exists(AWSConfig.aws_config_filepath) and os.path.getsize(AWSConfig.aws_config_filepath) > 0:
+            log.warning(f"AWSConfig writing over non-empty file {AWSConfig.aws_config_filepath}")
+
+        # write region and output to file
+        with open(AWSConfig.aws_config_filepath, "w") as f:
+            f.write(f"[default]\nregion = { region }\noutput = { output }")

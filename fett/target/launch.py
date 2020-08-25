@@ -53,8 +53,9 @@ def startFett ():
                     warnAndLog(f"customizedScoring: <memAddress> is not implemented for <{pvAWS}> targets.")
     # check the source variant
     if (not isEqSetting('sourceVariant','default')): # check the variants compatibility
-        if (isEqSetting('sourceVariant','purecap') and not isEqSetting('binarySource','SRI-Cambridge')):
-            logAndExit(f"<purecap> variant is not compatible with <{getSetting('binarySource')}>.",exitCode=EXIT.Configuration)
+        if ( (isEqSetting('sourceVariant','purecap') or isEqSetting('sourceVariant','temporal')) and 
+                (not isEqSetting('binarySource','SRI-Cambridge')) ):
+            logAndExit(f"<{getSetting('sourceVariant')}> variant is not compatible with <{getSetting('binarySource')}>.",exitCode=EXIT.Configuration)
 
     #qemu on FreeRTOS and Busybox
     if ((getSetting('osImage') in ['FreeRTOS','busybox']) and isEqSetting('target','qemu')):

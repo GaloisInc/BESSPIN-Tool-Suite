@@ -5,7 +5,7 @@
 """
 
 from configs import *
-import configparser, os, copy, time, glob, shutil
+import configparser, os, copy, time, glob, shutil, subprocess
 
 
 def exitFettCi(exitCode=-1, exc=None, message=None):
@@ -148,9 +148,17 @@ def prepareArtifact(
     # This is assuming fett-ci uses the default workDir and logFile
     workDir = os.path.join(repoDir, "workDir")
     logFile = os.path.join(workDir, "fett.log")
+    userDataLogFile = os.path.join("/var", "log", "user-data.log")
     outFiles = glob.glob(os.path.join(workDir, "*.out"))
-    listArtifacts = [configFile, logFile] + outFiles
-    for xArtifact in listArtifacts:
+
+    # List all artifacts that generate a termination if they cannot be captured
+    listEssentialArtifacts = [configFile, logFile] + outFiles
+
+    # List all artifacts that are fine to ignore if they do not exist.
+    listArtifacts = [userDataLogFile]
+
+    # Collect the essential artifacts, exit fett-ci if it cannot be gotten
+    for xArtifact in listEssentialArtifacts:
         try:
             shutil.copy2(xArtifact, artifactsPath)
         except Exception as exc:
@@ -158,6 +166,22 @@ def prepareArtifact(
                 message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.", exc=exc
             )
 
+    # Collect logs that will not generate termination if they cannot be found.
+    for xArtifact in listArtifacts:
+        try:
+            subprocess.run(["sudo", "cp", xArtifact, artifactsPath])
+            subprocess.run(
+                [
+                    "sudo",
+                    "chown",
+                    os.getlogin() + ":" + os.getlogin(),
+                    os.join(artifactsPath, xArtifact),
+                ]
+            )
+        except:
+            print(f"(Warning)~  Unable to collect non-essential log file { xArtifact }")
+
+    # Determine what to do with the dir of logs
     if entrypoint in ["AWS", "AWSTesting"]:
         # import the required modules
         try:
