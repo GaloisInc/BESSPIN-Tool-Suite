@@ -18,7 +18,9 @@ def test_415 (logTest, testsDir):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<DOUBLE_FREE_OF_')):
                 partsScores[iPart] = SCORES.V_HIGH
-            elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or doesKeywordExist(partsLines[iPart],'double free detected')):
+            elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or 
+                    doesKeywordExist(partsLines[iPart],'double free detected') or 
+                    doesKeywordExist(partsLines[iPart],'Abort trap') ):
                 partsScores[iPart] = SCORES.HIGH
             else:
                 partsScores[iPart] = SCORES.FAIL
