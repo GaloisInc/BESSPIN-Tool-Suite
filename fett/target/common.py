@@ -330,13 +330,13 @@ class commonTarget():
             self.runCommand("service ntpd start")
 
         # Instruct the kernel debugger to restart instead of debugging mode when the kernel panics
-        if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD')):
-            if (isEqSetting('target','aws')):
-                self.runCommand("sysctl debug.debugger_on_panic=0")
-                self.runCommand('echo "debug.debugger_on_panic=0" >> /etc/sysctl.conf')
-            if (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('sourceVariant','temporal')):
-                # disable core dump
-                self.runCommand("sysctl kern.coredump=0")
+        if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','aws')):
+            self.runCommand("sysctl debug.debugger_on_panic=0")
+            self.runCommand('echo "debug.debugger_on_panic=0" >> /etc/sysctl.conf')
+        
+        # disable core dump for FreeBSD targets
+        if (isEqSetting('osImage','FreeBSD') and isEqSetting('mode','evaluateSecurityTests')):
+            self.runCommand("sysctl kern.coredump=0")
 
         if getSetting('osImage') in ['debian', 'FreeBSD'] and not isEqSetting('binarySource', 'SRI-Cambridge'):
             printAndLog("start: setting motd...")
