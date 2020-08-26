@@ -187,8 +187,8 @@ class firesimTarget(commonTarget):
         while ((iWait < nWaits) and (not wereKilled)):
             time.sleep(1)
             iWait += 1
-            wereKilled = ((sudoShellCommand(['pgrep', 'switch0']).returncode != 0) and 
-                            (sudoShellCommand(['pgrep', 'FireSim-f1']).returncode != 0))
+            wereKilled = ((sudoShellCommand(['pgrep', 'switch0'],check=False).returncode != 0) and 
+                            (sudoShellCommand(['pgrep', 'FireSim-f1'],check=False).returncode != 0))
         if (not wereKilled):    
             warnAndLog ("Failed to kill <switch0> and <FireSim-f1>.")
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) #clear shared memory
