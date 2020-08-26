@@ -188,17 +188,50 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def start (self):
+        def get_timeout_from_settings_dict():
+            errors = {'procFlavor': 'processor flavor', 'pvAWS': 'AWS PV'}
+
+            def traverse_data(layer):
+                if 'name' in layer:
+                    name = layer['name']
+                    setting = getSetting(name)
+                    if setting in layer:
+                        return traverse_data(layer[setting])
+                    elif 'else' in layer:
+                        return True, layer['else'], None
+                    else:
+                        return False, 15, {
+                            'message': f'start: Unrecognized {errors[setting]} <{setting}>.',
+                            'overwriteShutdown': False,
+                            'exitCode': EXIT.Dev_Bug
+                        }
+                else:
+                    return True, layer, None
+
+            data = safeLoadJsonFile('timeout.json')
+
+            os_image = data[getSetting('osImage')]
+
+            if getSetting('target') not in os_image:
+                return False, 15, {
+                    'message': f'start: Timeout is not recorded for target=<{getSetting("target")}>.',
+                    'overwriteShutdown': False,
+                    'exitCode': EXIT.Implementation
+                }
+            target = os_image[getSetting('target')]
+
+            return traverse_data(target)
+
         if getSetting('osImage') not in ['debian', 'busybox', 'FreeRTOS', 'FreeBSD']:
             self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
                                  overwriteShutdown=True, exitCode=EXIT.Implementation)
 
-        if isEqSetting('osImage', 'FreeRTOS') or isEqSetting('osImage', 'debian'):
+        if isEqSetting('osImage', 'FreeBSD') or isEqSetting('osImage', 'debian'):
             printAndLog(
                 f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-        timeout = get_timeout_from_settings_dict()
-        if isinstance(timeout, list):
-            self.shutdownAndExit(timeout[0], overwriteShutdown=False, exitCode=timeout[1])
-            timeout = 15
+        success, timeout, message = get_timeout_from_settings_dict()
+        if not success:
+            self.shutdownAndExit(**message)
 
         if (isEqSetting('osImage','debian')):
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
@@ -211,8 +244,8 @@ class commonTarget():
             self.runCommand (self.rootPassword)
         elif (isEqSetting('osImage','busybox')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=80,stdout=sys.stdout)
-            self.boot(endsWith="Please press Enter to activate this console.",timeout=80)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
+            self.boot(endsWith="Please press Enter to activate this console.",timeout=timeout)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             self.runCommand (" ",endsWith="/ #",timeout=10) #This is necessary
@@ -253,8 +286,6 @@ class commonTarget():
                 self.runCommand("rm promptText.txt")
 
             printAndLog (f"start: Activating ethernet and setting system time...")
-        else:
-            self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
 
         #up the ethernet adaptor and get the ip address
         self.activateEthernet()

@@ -540,33 +540,3 @@ def sha512_crypt(password, salt=None, rounds=None):
     if salt is None:
         salt = crypt.mksalt(crypt.METHOD_SHA512, rounds=rounds)
     return crypt.crypt(password, salt)
-
-def get_timeout_from_settings_dict():
-    errors = {'procFlavor': 'processor flavor', 'pvAWS': 'AWS PV'}
-
-    def traverse_data(layer):
-        if 'name' in layer:
-            name = layer['name']
-            setting = getSetting(name)
-            if setting in layer:
-                return traverse_data(layer[setting])
-            elif 'else' in layer:
-                return layer['else']
-            else:
-                return [f'start: Unrecognized {errors[setting]} <{setting}>.', EXIT.Dev_Bug]
-        else:
-            return layer
-
-    with open('timeout.json', 'r') as f:
-        raw = f.read()
-        data = json.load(raw)
-
-        if getSetting('osImage') not in list(data.keys()):
-            return -1
-        os_image = data[getSetting('osImage')]
-
-        if getSetting('target') not in list(os_image.keys()):
-            return [f'start: Timeout is not recorded for target=<{getSetting("target")}>.', EXIT.Implementation]
-        target = os_image[getSetting('target')]
-
-    return traverse_data(target)
