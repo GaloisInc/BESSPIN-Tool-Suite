@@ -32,7 +32,6 @@ class firesimTarget(commonTarget):
 
         # 0. Ensure the env is clear
         self.noNonsenseFiresim()
-        time.sleep(1)
         
         # 1. Switch0
         self.fswitchOut = ftOpenFile(os.path.join(getSetting('workDir'),'switch0.out'),'ab')
@@ -181,7 +180,17 @@ class firesimTarget(commonTarget):
         """
         sudoShellCommand(['pkill', '-9', 'switch0'],check=False)
         sudoShellCommand(['pkill', '-9', 'FireSim-f1'],check=False)
-        time.sleep(1)
+        # wait till the processes die
+        nWaits = 5
+        iWait = 0
+        wereKilled = False
+        while ((iWait < nWaits) and (not wereKilled)):
+            time.sleep(1)
+            iWait += 1
+            wereKilled = ((sudoShellCommand(['pgrep', 'switch0']).returncode != 0) and 
+                            (sudoShellCommand(['pgrep', 'FireSim-f1']).returncode != 0))
+        if (not wereKilled):    
+            warnAndLog ("Failed to kill <switch0> and <FireSim-f1>.")
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) #clear shared memory
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
