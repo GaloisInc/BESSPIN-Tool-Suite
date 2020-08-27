@@ -57,25 +57,44 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 * An updated version of Git, required by the FETT Environment nix shell installation
 * Git LFS, needed by FETT Binaries
 * [The Nix Package Manager](https://nixos.org/nix/)
-* [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) checked out at `c1a1dccadd5c8b5d99b66546d267714444183a43`, with the environment pre-populated at `/nix/store`
+* [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) with the environment pre-populated at `/nix/store`
 * [Cloudwatch](https://aws.amazon.com/cloudwatch/)
 
 After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access.
 
-See the instructions in `build/FettAMI.md` to recreate the image manually. For a Ubuntu Connectal only AMI, see the image described in `build/TemporaryConnectalAMI.md`.
+See the instructions in [docs/createFettAMI.md](./docs/createFettAMI.md) to recreate the image manually.
 
 
 ## User Manual ##
 
 To run the tool, use the following:
 ```
-fett.py [-h] [-c CONFIGFILE] [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
+usage: fett.py [-h] [-c CONFIGFILE | -cjson CONFIGFILESERIALIZED]
+               [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
+               [-ep {devHost,ciOnPrem,ciAWS,awsProd,awsDev}] [-job JOBID]
+
+FETT (Finding Exploits to Thwart Tampering)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIGFILE, --configFile CONFIGFILE
+                        Overwrites the default config file: ./config.ini
+  -cjson CONFIGFILESERIALIZED, --configFileSerialized CONFIGFILESERIALIZED
+                        Overwrites and augments the default production
+                        settings
+  -w WORKINGDIRECTORY, --workingDirectory WORKINGDIRECTORY
+                        Overwrites the default working directory: ./workDir/
+  -l LOGFILE, --logFile LOGFILE
+                        Overwrites the default logFile: ./${workDir}/fett.log
+  -d, --debug           Enable debugging mode.
+  -ep {devHost,ciOnPrem,ciAWS,awsProd,awsDev}, --entrypoint {devHost,ciOnPrem,ciAWS,awsProd,awsDev}
+                        The entrypoint
+  -job JOBID, --jobId JOBID
+                        The job ID in production mode.
 ```
 
-The default configuration file is `config.ini`, working directory is `$REPO/workDir`, and log file is `$REPO/$WRKDIR/fett.log`. If you run with the debug (`-d`) flag, the log file will have a lot of useful info.
-
 Some useful configuration options:
-- `mode`: Choose either `test` for the testing flow, or `production` for leaving the apps switched on for researchers interactions.
+- `mode`: Choose either `test` for the testing flow, or `production` for leaving the apps switched on for researchers interactions, or `evaluateSecurityTests` for the BESSPIN CWEs evaluation tests.
 - `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
 - `target`: Choose either `aws` for the main FETT target, `fpga` for Xilinx VCU118 hardware
     emulation, or `qemu` for [QEMU](https://www.qemu.org/) emulation.
@@ -84,13 +103,14 @@ Some useful configuration options:
     SSITH OSs are either [FreeRTOS](https://www.freertos.org/),
     [FreeBSD](https://www.freebsd.org/), or [Linux Debian](https://www.debian.org/),
     or [Busybox](https://busybox.net/about.html).
-- `FreeRTOSUseRAMDisk` : Use RAM disk as a filesystem instead of the FAT `.img` file.
 - `useCustomOsImage`: If disabled, Nix (if image is available) or FETT-Binaries images will be used.
 - `useCustomProcessor`: If disabled, Nix (if applicable) or FETT-Binaries bitfiles will be used. If enabled, a source directory has to be provided where the required files exist.
 - `openConsole`: returns an open console for Unix targets.
 - `buildApps`: Cross-compile as instructed in `fett/apps/build.py`.
 
 Note that the AWS platform variant is determined based on the `binarySource`-`processor`-`osImage` choice. More information about these decisions can be found in [the cloudGFE TA-1 and GFE tracker spreadsheet](https://docs.google.com/spreadsheets/d/1J8MSDQS1X0V-wPHiNdCTgu7Pwf8GcgTy91kcn8u9mt0/edit#gid=0).
+
+Also note that the details about running the tool in CWEs evaluation mode can be found in [docs/evaluateSecurityTestsMode.md](docs/evaluateSecurityTestsMode.md).
 
 
 ## Developer Manual ##
