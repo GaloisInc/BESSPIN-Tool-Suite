@@ -44,7 +44,7 @@ def test_799 (target,binTest):
         outLog += target.runCommand("echo \"NotRealUser\" > /etc/test799users",shutdownOnError=False)[1]
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1] #attempt to breach
         outLog += dumpNoHup()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -54,7 +54,7 @@ def test_799 (target,binTest):
         outLog += target.runCommand (writeNlimits.format(target.userName,nBytesForLongQueue),shutdownOnError=False)[1]
         outLog += target.runCommand("./{0} 1".format(binTest),shutdownOnError=False)[1] #1 for long Queue
         outLog += dumpNoHup()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -64,7 +64,7 @@ def test_799 (target,binTest):
         outLog += target.runCommand (writeNlimits.format(target.userName,nBytesForWideQueue),shutdownOnError=False)[1]
         outLog += target.runCommand("./{0} 2".format(binTest),shutdownOnError=False)[1] #2 for wide Queue
         outLog += dumpNoHup()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"        
 
@@ -72,7 +72,7 @@ def test_799 (target,binTest):
         target.executeOnRoot (resetLimits + [writeNlimits.format(target.userName,nBytesMsgQueue)] + resetUsersList + nohupTestOnRoot)
         outLog += target.runCommand("./{0} 1".format(binTest),shutdownOnError=False)[1] #1 for a long Queue
         outLog += dumpNoHup()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -80,7 +80,7 @@ def test_799 (target,binTest):
         target.executeOnRoot (resetUsersList + nohupTestOnRoot)
         outLog += target.runCommand("./{0} 3".format(binTest),shutdownOnError=False)[1] #3 for an extra token
         outLog += dumpNoHup()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -88,7 +88,7 @@ def test_799 (target,binTest):
         target.executeOnRoot (resetUsersList + nohupTestOnRoot)
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         outLog += dumpNoHup()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
     
@@ -105,7 +105,7 @@ def test_799 (target,binTest):
         outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += dumpNoHup()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -113,7 +113,7 @@ def test_799 (target,binTest):
         target.executeOnRoot (resetGroup + nohupTestOnRoot)
         outLog += target.runCommand(f"./{binTest} 3",shutdownOnError=False)[1]
         outLog += dumpNoHup()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -128,7 +128,7 @@ def test_799 (target,binTest):
         outLog += dumpNoHup()
         restoreEtcGroup = ["mv /tmp/group.bkp /etc/group", "chmod 644 /etc/group"]
         target.executeOnRoot (restoreEtcGroup)
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 

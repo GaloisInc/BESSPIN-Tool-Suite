@@ -1,6 +1,8 @@
 import time
 import socket, ssl, select
 
+from fett.base.utils.misc import *
+
 def test_288 (target,binTest):
     testNum = 288
     if (binTest != "test_{0}.riscv".format(testNum)):
@@ -30,14 +32,14 @@ def test_288 (target,binTest):
         target.executeOnRoot (createKeyring)
         outLog += target.runCommand (linkKeyring,shutdownOnError=False)[1]
         outLog += runAuthTest (False)
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part02: Valid Keyring. No key. Correct Password." + "-"*20 + "\n"
         #keyring already exists and linked from p01
         outLog += runAuthTest (True)
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -46,7 +48,7 @@ def test_288 (target,binTest):
         target.executeOnRoot (createKey)
         outLog += target.runCommand (linkKeyring,shutdownOnError=False)[1] #needs to be re-linked because of switchUser
         outLog += runAuthTest (False)
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -55,7 +57,7 @@ def test_288 (target,binTest):
         outLog += target.runCommand (linkKeyring,shutdownOnError=False)[1]
         outLog += target.runCommand (createKey[0],shutdownOnError=False)[1] #local key -- no need to edit permissions
         outLog += runAuthTest (False)
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -64,7 +66,7 @@ def test_288 (target,binTest):
         outLog += target.runCommand (createKeyring[0],shutdownOnError=False)[1] #local keyring -- no need to edit permissions
         outLog += target.runCommand (createKey[0],shutdownOnError=False)[1] #local key -- no need to edit permissions
         outLog += runAuthTest (False)
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -85,7 +87,7 @@ def test_288 (target,binTest):
                         endsWith=[target.getDefaultEndWith(),"cgi-bin \$"],
                         shutdownOnError=False)[1]
         outLog += target.runCommand("cd ~",shutdownOnError=True)[1]
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 

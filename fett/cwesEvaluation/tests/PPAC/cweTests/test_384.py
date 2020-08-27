@@ -1,6 +1,8 @@
 import time
 import socket, ssl, select
 
+from fett.base.utils.misc import *
+
 def test_384 (target,binTest):
     testNum = 384
     if (binTest != "test_{0}.riscv".format(testNum)):
@@ -27,7 +29,7 @@ def test_384 (target,binTest):
         outLog += target.runCommand(target.rootPassword, endsWith="word:", erroneousContents="<INVALID>")[1]
         outLog += target.runCommand(target.userPassword,erroneousContents="<INVALID>")[1]
 
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
     else:

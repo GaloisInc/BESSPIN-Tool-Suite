@@ -19,7 +19,7 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         testName = binTest.split('.')[0]
         if (hasattr(cweTests,testName)):
             outLog = getattr(getattr(cweTests,testName),testName)(self,binTest)
-        elif (self.settings['pocExploitsMode']):
+        elif (isEnabled('pocExploitsMode')):
             logAndExit('<pocExploitsMode> not implemented',
                        exitCode=EXIT.Implementation)
         else:
