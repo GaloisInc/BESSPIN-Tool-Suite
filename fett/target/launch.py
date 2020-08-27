@@ -159,8 +159,11 @@ def launchFett ():
         xTarget.createUser()
     if (isEnabled('runApp')):
         if isEqSetting('mode', 'evaluateSecurityTests'):
+            sendTimeout = 20*len(getSetting('vulClasses'))
+            if (('bufferErrors' in getSetting('vulClasses')) and (getSettingDict('bufferErrors','nTests')>100)):
+                sendTimeout += 20*int(getSettingDict('bufferErrors','nTests')/100) #add 20 sec for each extra 100 (ceiled)
             runTests(xTarget, sendFiles=isEnabled('sendTarballToTarget'), 
-                timeout=20*len(getSetting('vulClasses')))
+                timeout=sendTimeout)
         else:
             xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
     if (not isEqSetting('mode','evaluateSecurityTests')):
