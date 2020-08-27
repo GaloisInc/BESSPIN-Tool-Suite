@@ -8,7 +8,9 @@ from fett.target.common import *
 
 import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
+import pexpect
 from pexpect import fdpexpect
+
 
 class fpgaTarget (commonTarget):
     def __init__ (self):
@@ -28,7 +30,49 @@ class fpgaTarget (commonTarget):
 
         self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
         self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')
+
+        self.gfe = None
         return
+
+    def setupGfe(self):
+        # defer import for settings
+        from fett.base.utils.gfe import Gfe
+        if isEqSetting('osImage', 'FreeRTOS'):
+            self.gfe = Gfe(
+                gdb_path="riscv64-unknown-elf-gdb", xlen=int(getSetting('xlen')))
+            self.gfe.startGdb()
+            self.gfe.softReset()
+            self.path_to_freertos = os.path.join(
+                    os.path.dirname(os.path.dirname(os.getcwd())),
+                    'FreeRTOS-mirror', 'FreeRTOS', 'Demo',
+                    'RISC-V_Galois_P1')
+        else:
+            self.gfe = Gfe(gdb_path="riscv64-unknown-elf-gdb", xlen=int(getSetting('xlen')))
+            self.gfe.startGdb()
+            self.path_to_asm = os.path.join(
+                    os.path.dirname(os.getcwd()), 'baremetal', 'asm')
+            self.path_to_freertos = os.path.join(
+                    os.path.dirname(os.getcwd()), 'FreeRTOS-RISCV', 'Demo', 'p1-besspin')
+            self.gfe.softReset()
+
+    def setupUart(self, timeout=1, baud=115200, parity="NONE",
+        stopbits=2, bytesize=8):
+        self.gfe.setupUart(
+            timeout=timeout,
+            baud=baud,
+            parity=parity,
+            stopbits=stopbits,
+            bytesize=bytesize)
+
+    def terminateGfe(self):
+        if not self.gfe.gdb_session:
+            return
+        self.gfe.gdb_session.interrupt()
+        self.gfe.gdb_session.command("disassemble", ops=20)
+        self.gfe.gdb_session.command("info registers all", ops=100)
+        self.gfe.gdb_session.command("flush regs")
+        self.gfe.gdb_session.command("info threads", ops=100)
+        del self.gfe
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -77,7 +121,7 @@ class fpgaTarget (commonTarget):
             exc = None
             with redirectPrintToFile(self.gfeOutPath):
                 try:
-                    self.setUp()
+                    self.setupGfe()
                 except Exception as tempExc:
                     exc = tempExc
                     isException = True
@@ -181,7 +225,7 @@ class fpgaTarget (commonTarget):
     @decorate.debugWrap
     def targetTearDown(self):
         try:
-            self.tearDown()
+            self.terminateGfe()
             return True
         except Exception as exc:
             warnAndLog ("targetTearDown: Failed to tearDown peacefully.",doPrint=False,exc=exc)
