@@ -74,11 +74,7 @@ def test_287 (target,binTest):
                 shellRoot = "{0}#".format(target.userName)
             else: #login
                 shellRoot = ":~#"
-            shellUser = ''
-            if (target.backend == "qemu"):
-                shellUser = ":~\$" 
-            elif (target.backend == "fpga"):
-                shellUser = ":~\$"
+            shellUser = ":~\$" 
             isGranted = False
             isDenied = False
             msgHeader = typeOfSwitch + ('User' if (target.isCurrentUserRoot) else 'Root')

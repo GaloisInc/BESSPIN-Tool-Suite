@@ -29,8 +29,6 @@ class testgenTargetCompatibilityLayer:
         # TODO: Make this configurable?
         self.showExecutionOnScreen = False
 
-        self.backend = ('fpga' if isEqSetting('target', 'aws')
-                               else getSetting('target'))
         self.osImage = getSetting("osImage")
 
     def __getattr__ (self,attr):

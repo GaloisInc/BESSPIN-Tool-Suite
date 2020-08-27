@@ -100,7 +100,7 @@ def test_307 (target,binTest):
         time.sleep (1)
 
     elif (target.osImage == 'FreeBSD'):
-        if (target.backend == 'qemu'):
+        if (isEqSetting('target','qemu')):
             outLog += f"<QEMU-N/A> test_{testNum} is not yet implemented on <qemu>."
             return outLog
 
