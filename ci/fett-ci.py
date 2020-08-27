@@ -32,9 +32,12 @@ optional arguments:
 
 try:
     import sys, os, glob, shutil, time, itertools
-    import json, configparser, socket, re
+    import json, configparser, socket, re, logging
     import subprocess, argparse, signal, copy
     from utils import (
+        printAndLog,
+        warnAndLog,
+        errorAndLog,
         exitFettCi,
         exitOnInterrupt,
         generateAllConfigs,
@@ -53,6 +56,18 @@ def main(xArgs):
     ciDir = os.path.abspath(os.path.dirname(__file__))
     repoDir = os.path.abspath(os.path.join(ciDir, os.pardir))
     fettPyPath = os.path.join(repoDir, "fett.py")
+
+    # Set up Logging
+    logFile = os.path.join(repoDir, "fett-ci.log")
+    logLevel = logging.DEBUG
+    logging.basicConfig(
+        filename=logFile,
+        filemode="w",
+        format="%(asctime)s: (%(levelname)s)~  %(message)s",
+        datefmt="%I:%M:%S %p",
+        level=logLevel,
+    )
+    printAndLog(f"Fett CI Started")
 
     # Check runType
     baseRunTypes = ["runOnPush", "runDevPR", "runPeriodic", "runRelease"]
@@ -77,7 +92,7 @@ def main(xArgs):
         outDir = repoDir
 
     if xArgs.testOnly:
-        print("(Debug)~  FETT-CI: TestMode: Dumping some useful info...")
+        printAndLog("FETT-CI: TestMode: Dumping some useful info...", doPrint=False)
 
     # nodes control
     if not xArgs.nodeIndex:
@@ -115,12 +130,14 @@ def main(xArgs):
         allConfigs = generateAllConfigs(baseRunType, flavor)
         actualNumConfigs = len(allConfigs)
         if xArgs.testOnly:
-            print(
-                f"(Debug)~  FETT-CI: <{xArgs.runType}> has <{actualNumConfigs}> configurations in total."
+            printAndLog(
+                f"FETT-CI: <{xArgs.runType}> has <{actualNumConfigs}> configurations in total.",
+                doPrint=False,
             )
             dumpDir = os.path.join(outDir, "dumpIni")
-            print(
-                f"(Debug)~  FETT-CI: The configurations will be listed here and dumped in <{dumpDir}>:"
+            printAndLog(
+                f"FETT-CI: The configurations will be listed here and dumped in <{dumpDir}>:",
+                doPrint=False,
             )
 
             # If the dumpdir already exists, delete it
@@ -149,8 +166,8 @@ def main(xArgs):
                     infoFile.close()
                 except Exception as exc:
                     exitFettCi(message=f"Failed to generate <{infoFilePath}>.", exc=exc)
-                print(
-                    f"(Info)~  FETT-CI: Required info for AWS CI was generated into <{infoFilePath}>."
+                printAndLog(
+                    f"FETT-CI: Required info for AWS CI was generated into <{infoFilePath}>."
                 )
 
         if (xArgs.nNodes) and (xArgs.nNodes != actualNumConfigs):
@@ -169,8 +186,8 @@ def main(xArgs):
         listConfigs = [configFilePath]
 
     if xArgs.testOnly:
-        print("List of .ini files to execute:\n", listConfigs)
-        print("(Warning)~  FETT-CI: This is not a real CI run.")
+        printAndLog(f"List of .ini files to execute:\n { listConfigs }")
+        warnAndLog("FETT-CI: This is not a real CI run.")
         exitFettCi(exitCode=0)
 
         # If we are in AWSTesting ep, we will check the git branches
@@ -182,9 +199,7 @@ def main(xArgs):
                 assert len(branches) == 2, "Failed to find 2 branches in branches file."
         except Exception as exc:
             # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
-            print(
-                f"(Error)~  Error reading branches file. \n <{exc.__class__.__name__}>: {exc}"
-            )
+            erroAndLog(f"Error reading branches file.", exc=exc)
             prepareArtifact(
                 repoDir,
                 configFilePath,
@@ -213,9 +228,7 @@ def main(xArgs):
 
         except Exception as exc:
             # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
-            print(
-                f"(Error)~  Wrong branches were checked out. \n <{exc.__class__.__name__}>: {exc}"
-            )
+            printAndError(f"Wrong branches were checked out.", exc=exc)
             prepareArtifact(
                 repoDir,
                 configFilePath,
@@ -263,7 +276,7 @@ def main(xArgs):
     nErrs = 0
     for xConfig in listConfigs:
         exitCode = 0  # success
-        print(f"(Info)~  FETT-CI: Running <{os.path.basename(xConfig)}>.")
+        printAndLog(f"FETT-CI: Running <{os.path.basename(xConfig)}>.")
         sys.stdout.flush()
         try:
             subprocess.run(
