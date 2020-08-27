@@ -187,29 +187,55 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def start (self,timeout=15):
-        if (isEqSetting('osImage','debian')):
-            printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-            if (isEqSetting('target','fpga')):
-                if (isEqSetting('procFlavor','bluespec')):
-                    timeout = 1150 if isEqSetting('elfLoader','JTAG') else 560
-                elif (isEqSetting('procFlavor','chisel')):
-                    timeout = 1050 if isEqSetting('elfLoader','JTAG') else 500
+    def start (self):
+        def get_timeout_from_settings_dict():
+            def traverse_data(layer):
+                if 'name' in layer:
+                    name = layer['name']
+                    setting = getSetting(name)
+                    if setting in layer:
+                        return traverse_data(layer[setting])
+                    elif 'else' in layer:
+                        return True, layer['else'], None
+                    else:
+                        return False, 15, {
+                            'message': f'Unrecognized value <{setting}> for setting <{name}>',
+                            'overwriteShutdown': True,
+                            'exitCode': EXIT.Dev_Bug
+                        }
                 else:
-                    self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
-            elif (isEqSetting('target','qemu')):
-                timeout = 120
-            elif (isEqSetting('target', 'aws')):
-                if isEqSetting('pvAWS', 'firesim'):
-                    timeout = 240
-                elif isEqSetting('pvAWS', 'connectal'):
-                    timeout = 510
-                else:
-                    self.shutdownAndExit(f"start: Unrecognized AWS PV <{getSetting('pvAWS')}>.", overwriteShutdown=False, exitCode=EXIT.Dev_Bug)
-            else:
-                self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
+                    return True, layer, None
+
+            data = safeLoadJsonFile(os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'bootTimeout.json'))
+
+            os_image = data[getSetting('osImage')]
+
+            if getSetting('target') not in os_image:
+                return False, 15, {
+                    'message': f'start: Timeout is not recorded for target=<{getSetting("target")}>.',
+                    'overwriteShutdown': True,
+                    'exitCode': EXIT.Implementation
+                }
+            target = os_image[getSetting('target')]
+
+            return traverse_data(target)
+
+        if getSetting('osImage') not in ['debian', 'busybox', 'FreeRTOS', 'FreeBSD']:
+            self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
+                                 overwriteShutdown=True, exitCode=EXIT.Implementation)
+
+        success, timeout, message = get_timeout_from_settings_dict()
+
+        if isEqSetting('osImage', 'FreeBSD') or isEqSetting('osImage', 'debian'):
             if (self.restartMode):
                 timeout += 120 #takes longer to restart
+            printAndLog(
+                f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
+
+        if not success:
+            self.shutdownAndExit(**message)
+
+        if (isEqSetting('osImage','debian')):
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             self.boot(endsWith="login:",timeout=timeout)
             self.stopShowingTime.set()
@@ -220,8 +246,8 @@ class commonTarget():
             self.runCommand (self.rootPassword)
         elif (isEqSetting('osImage','busybox')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=80,stdout=sys.stdout)
-            self.boot(endsWith="Please press Enter to activate this console.",timeout=80)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
+            self.boot(endsWith="Please press Enter to activate this console.",timeout=timeout)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             self.runCommand (" ",endsWith="/ #",timeout=10) #This is necessary
@@ -234,22 +260,6 @@ class commonTarget():
                 startMsg = '>>>Beginning of Fett<<<'
             self.boot (endsWith=startMsg,timeout=30)
         elif (isEqSetting('osImage','FreeBSD')):
-            printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-            if (isEqSetting('target','fpga')):
-                if (isEqSetting('procFlavor','bluespec')):
-                    timeout = 1400 if isEqSetting('elfLoader','JTAG') else 700
-                elif (isEqSetting('procFlavor','chisel')):
-                    timeout = 1000 if isEqSetting('elfLoader','JTAG') else 540
-                else:
-                    self.shutdownAndExit(f"start: Unrecognized processor flavor: <{getSetting('procFlavor')}>.",overwriteShutdown=False,exitCode=EXIT.Dev_Bug)
-            elif (isEqSetting('target','qemu')):
-                timeout = 120
-            elif (isEqSetting('target', 'aws')):
-                timeout = 1000 if (isEqSetting('sourceVariant','temporal')) else 540
-            else:
-                self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
-            if (self.restartMode):
-                timeout += 120 #takes longer to restart
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             bootEndsWith = "login:"
             self.boot(endsWith=bootEndsWith, timeout=timeout)
@@ -278,8 +288,6 @@ class commonTarget():
                 self.runCommand("rm promptText.txt")
 
             printAndLog (f"start: Activating ethernet and setting system time...")
-        else:
-            self.shutdownAndExit (f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
 
         #up the ethernet adaptor and get the ip address
         self.activateEthernet()
@@ -1216,4 +1224,3 @@ def charByCharEncoding (inBytes):
             xChar = '<!>'
         textBack += xChar
     return textBack
-
