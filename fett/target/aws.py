@@ -30,6 +30,9 @@ class firesimTarget(commonTarget):
 
         awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
 
+        # 0. Ensure the env is clear
+        self.noNonsenseFiresim()
+        
         # 1. Switch0
         self.fswitchOut = ftOpenFile(os.path.join(getSetting('workDir'),'switch0.out'),'ab')
 
@@ -150,18 +153,6 @@ class firesimTarget(commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
-        if (self.switch0Proc.isalive()):
-            try:
-                subprocess.check_call(['sudo', 'kill', '-9', f"{self.switch0Proc.pid}"],
-                                    stdout=self.fswitchOut, stderr=self.fswitchOut)
-            except Exception as exc:
-                warnAndLog("targetTearDown: Failed to kill <switch0> process.",doPrint=False,exc=exc)
-            
-            try:
-                self.fswitchOut.close()
-            except Exception as exc:
-                warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
-
         if (self.process.isalive()):
             # When executing the firesim command, we run it with `stty intr ^]` which changes
             # the interrupt char to be `^]` instead of `^C` to allow us sending the intr `^C`
@@ -174,15 +165,33 @@ class firesimTarget(commonTarget):
             # process is still alive.
             self.runCommand('\x1d\x1d',endsWith=pexpect.EOF,shutdownOnError=False,timeout=5,sendToNonUnix=True)
 
-            if (self.process.isalive()):
-                try:
-                    subprocess.check_call(['sudo', 'kill', '-9', f"{self.process.pid}"],
-                                        stdout=self.fTtyOut, stderr=self.fTtyOut)
-                except Exception as exc:
-                    warnAndLog("targetTearDown: Failed to kill <firesim> process.",doPrint=False,exc=exc)
+        self.noNonsenseFiresim()
 
-        sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
+        try:
+            self.fswitchOut.close()
+        except Exception as exc:
+            warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
         return True
+
+    @decorate.debugWrap
+    def noNonsenseFiresim (self):
+        """
+        This method ensures all relvant processes are killed. In a no-nonsense and brute way.
+        """
+        sudoShellCommand(['pkill', '-9', 'switch0'],check=False)
+        sudoShellCommand(['pkill', '-9', 'FireSim-f1'],check=False)
+        # wait till the processes die
+        nWaits = 5
+        iWait = 0
+        wereKilled = False
+        while ((iWait < nWaits) and (not wereKilled)):
+            time.sleep(1)
+            iWait += 1
+            wereKilled = ((sudoShellCommand(['pgrep', 'switch0'],check=False).returncode != 0) and 
+                            (sudoShellCommand(['pgrep', 'FireSim-f1'],check=False).returncode != 0))
+        if (not wereKilled):    
+            warnAndLog ("Failed to kill <switch0> and <FireSim-f1>.")
+        sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) #clear shared memory
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 

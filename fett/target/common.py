@@ -232,6 +232,11 @@ class commonTarget():
             self.shutdownAndExit(**message)
 
         if (isEqSetting('osImage','debian')):
+                    self.shutdownAndExit(f"start: Unrecognized AWS PV <{getSetting('pvAWS')}>.", overwriteShutdown=False, exitCode=EXIT.Dev_Bug)
+            else:
+                self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
+            if (self.restartMode):
+                timeout += 120 #takes longer to restart
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             self.boot(endsWith="login:",timeout=timeout)
             self.stopShowingTime.set()
