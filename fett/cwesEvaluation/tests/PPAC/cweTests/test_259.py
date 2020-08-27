@@ -6,7 +6,7 @@ from fett.base.utils.misc import *
 def test_259 (target,binTest):
     testNum = 259
     if (binTest != "test_{0}.riscv".format(testNum)):
-        target.reportAndExit ("Error in {0}: Calling <test_{2}> for binary <{1}>.".format(target.filename,binTest,testNum))
+        target.shutdownAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
 
     outLog = "\n" + '*'*30 + " TEST {0} ".format(testNum) + '*'*30 + "\n\n"
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)
@@ -174,5 +174,5 @@ def test_259 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
 
     else:
-        target.reportAndExit("Error in {0}: <test_{2}> is not implemented for <{1}>.".format(target.filename,target.osImage,testNum))
+        target.shutdownAndExit(f"<test_{testNum}> is not implemented for <{target.osImage}>.",exitCode=EXIT.Dev_Bug)
     return outLog

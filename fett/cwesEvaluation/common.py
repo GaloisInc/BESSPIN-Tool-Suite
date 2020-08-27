@@ -125,7 +125,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         if target.isCurrentUserRoot != wasRoot:
             target.switchUser()
     else:
-        logAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
+        target.shutdownAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
                    exitCode=EXIT.Implementation)
 
 @decorate.debugWrap

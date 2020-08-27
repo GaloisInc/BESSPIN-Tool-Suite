@@ -15,9 +15,6 @@ class testgenTargetCompatibilityLayer:
             if isEqSetting('osImage', 'FreeRTOS'):
                 self.testPart = getSetting("currentTest")[2]
 
-        # TODO: Set this to match target?
-        self.filename = "compatibility"
-
         self.osImage = getSetting("osImage")
 
     def __getattr__ (self,attr):

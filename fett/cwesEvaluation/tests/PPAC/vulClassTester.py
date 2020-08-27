@@ -20,10 +20,10 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         if (hasattr(cweTests,testName)):
             outLog = getattr(getattr(cweTests,testName),testName)(self,binTest)
         elif (isEnabled('pocExploitsMode')):
-            logAndExit('<pocExploitsMode> not implemented',
+            self.shutdownAndExit('<pocExploitsMode> not implemented',
                        exitCode=EXIT.Implementation)
         else:
-            logAndExit("{0}: Calling unknown method <{1}>.".format(self.filename,testName))
+            self.shutdownAndExit(f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
             outLog = ''
         return outLog
 
