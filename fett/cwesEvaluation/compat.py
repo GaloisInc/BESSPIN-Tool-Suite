@@ -17,8 +17,7 @@ class testgenTargetCompatibilityLayer:
         self.osImage = getSetting("osImage")
 
     def __getattr__ (self,attr):
-        val = getattr(self.target,attr)
-        return val
+        return getattr(self.target,attr)
 
     def __setattr__ (self,name,value):
         if (name=='target'): # exception for the special 'target' member
