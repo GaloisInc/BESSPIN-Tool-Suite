@@ -126,9 +126,9 @@ following:
 ## Scoring for non-GFE CPUs
 
 These are the special known instructions:   
-    - LMCO P1: Add `exception_handler` to `funcCheckpoints`.
-    - LMCO P2: Add `Illegal` to `stdoutKeywords`.
-    - SRI-Cambridge P2: Add `security exception` to `stdoutKeywords`.
+- LMCO P1: Add `exception_handler` to `funcCheckpoints`.
+- LMCO P2: Add `Illegal` to `stdoutKeywords`.
+- SRI-Cambridge P2: Add `security exception` to `stdoutKeywords`.
 
 ## Customize Tests Compiling
 
