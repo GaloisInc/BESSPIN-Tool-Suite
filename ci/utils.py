@@ -5,7 +5,8 @@
 """
 
 from configs import *
-import configparser, os, copy, time, glob, shutil, subprocess, logging
+import configparser, os, copy, time, glob
+import traceback, shutil, subprocess, logging
 
 
 def formatExc(exc):
