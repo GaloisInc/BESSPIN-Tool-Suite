@@ -200,7 +200,7 @@ class commonTarget():
                     else:
                         return False, 15, {
                             'message': f'Unrecognized value <{setting}> for setting <{name}>',
-                            'overwriteShutdown': False,
+                            'overwriteShutdown': True,
                             'exitCode': EXIT.Dev_Bug
                         }
                 else:
