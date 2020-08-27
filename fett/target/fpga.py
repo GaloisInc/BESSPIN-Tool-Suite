@@ -36,24 +36,13 @@ class fpgaTarget (commonTarget):
 
     def setupGfe(self):
         # defer import for settings
-        from fett.base.utils.gfe import Gfe
+        from fett.target.utils.gfe import Gfe
         if isEqSetting('osImage', 'FreeRTOS'):
-            self.gfe = Gfe(
-                gdb_path="riscv64-unknown-elf-gdb", xlen=int(getSetting('xlen')))
-            self.gfe.startGdb()
-            self.gfe.softReset()
-            self.path_to_freertos = os.path.join(
-                    os.path.dirname(os.path.dirname(os.getcwd())),
-                    'FreeRTOS-mirror', 'FreeRTOS', 'Demo',
-                    'RISC-V_Galois_P1')
+            self.gfe = Gfe(gdb_path="riscv64-unknown-elf-gdb", xlen=int(getSetting('xlen')))
         else:
             self.gfe = Gfe(gdb_path="riscv64-unknown-elf-gdb", xlen=int(getSetting('xlen')))
-            self.gfe.startGdb()
-            self.path_to_asm = os.path.join(
-                    os.path.dirname(os.getcwd()), 'baremetal', 'asm')
-            self.path_to_freertos = os.path.join(
-                    os.path.dirname(os.getcwd()), 'FreeRTOS-RISCV', 'Demo', 'p1-besspin')
-            self.gfe.softReset()
+        self.gfe.startGdb()
+        self.gfe.softReset()
 
     def setupUart(self, timeout=1, baud=115200, parity="NONE",
         stopbits=2, bytesize=8):
