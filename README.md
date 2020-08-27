@@ -93,6 +93,21 @@ optional arguments:
                         The job ID in production mode.
 ```
 
+All the needed configuration is done using the main [INI
+file](https://en.wikipedia.org/wiki/INI_file) configuration.  The
+default file is [config.ini](./config.ini).
+
+[config.ini](./config.ini) is heavily commented with descriptions of
+the meaning of every parameter.  Please note that:
+  - Keep the comments on separate lines from values.  Order of
+    parameters does not matter.
+  - Section headers are required (Between square brackets).  The
+    `[backend]` is the top-level section to configure the main
+    options. 
+  - Parameters names are case sensitive.
+  - For boolean parameters, you can use 0/1, False/True, Yes/No [all
+  case insensitive].
+
 Some useful configuration options:
 - `mode`: Choose either `test` for the testing flow, or `production` for leaving the apps switched on for researchers interactions, or `evaluateSecurityTests` for the BESSPIN CWEs evaluation tests.
 - `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
