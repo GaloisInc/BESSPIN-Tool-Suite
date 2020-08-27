@@ -96,11 +96,26 @@ def main(xArgs):
 
     # If we are in AWSTesting ep, we will check the git branches
     if xArgs.entrypoint == "AWSTesting":
+        # Try to open the branches file, read the branches.
         try:
             with open(os.path.join(repoDir, "branches"), "r") as f:
-                branches = f.read().split("\n")[:-1]
+                branches = f.read().splitlines()
                 assert len(branches) == 2, "Failed to find 2 branches in branches file."
         except Exception as exc:
+            # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
+            print(
+                f"(Error)~  Error reading branches file. \n <{exc.__class__.__name__}>: {exc}"
+            )
+            prepareArtifact(
+                repoDir,
+                xConfig,
+                artifactSuffix,
+                xArgs.entrypoint,
+                -1,
+                xArgs.jobID,
+                nodeIndex,
+                targetLogs=False,
+            )
             exitFettCi(message="Error when trying to read branches from file.", exc=exc)
 
         try:
@@ -118,6 +133,20 @@ def main(xArgs):
                 ), f"Failed to check out Binaries branch: is {binariesBranch}, supposed to be {branches[1]}"
 
         except Exception as exc:
+            # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
+            print(
+                f"(Error)~  Wrong branches were checked out. \n <{exc.__class__.__name__}>: {exc}"
+            )
+            prepareArtifact(
+                repoDir,
+                xConfig,
+                artifactSuffix,
+                xArgs.entrypoint,
+                -1,
+                xArgs.jobID,
+                nodeIndex,
+                targetLogs=False,
+            )
             exitFettCi(message="Wrong branches were checked out.", exc=exc)
 
     # Decide on artifact name -- There is no else as they are argparser grouped

@@ -129,7 +129,14 @@ def generateConfigFile(repoDir, outDir, dictConfig, testMode):
 
 
 def prepareArtifact(
-    repoDir, configFile, artifactSuffix, entrypoint, exitCode, jobID, nodeIndex
+    repoDir,
+    configFile,
+    artifactSuffix,
+    entrypoint,
+    exitCode,
+    jobID,
+    nodeIndex,
+    targetLogs=True,
 ):
     # decide on the folder's name
     artifactsPath = (
@@ -144,27 +151,33 @@ def prepareArtifact(
     except Exception as exc:
         exitFettCi(message=f"Failed to create <{artifactsPath}>.", exc=exc)
 
-    # Move the important files there
     # This is assuming fett-ci uses the default workDir and logFile
-    workDir = os.path.join(repoDir, "workDir")
-    logFile = os.path.join(workDir, "fett.log")
-    userDataLogFile = os.path.join("/var", "log", "user-data.log")
-    outFiles = glob.glob(os.path.join(workDir, "*.out"))
-
     # List all artifacts that generate a termination if they cannot be captured
-    listEssentialArtifacts = [configFile, logFile] + outFiles
+    # This will run unless targetLogs=False, in which case we only add the non-
+    #   essential logs.
+    if targetLogs:
+        workDir = os.path.join(repoDir, "workDir")
+        logFile = os.path.join(workDir, "fett.log")
+        outFiles = glob.glob(os.path.join(workDir, "*.out"))
+
+        listEssentialArtifacts = [configFile, logFile] + outFiles
 
     # List all artifacts that are fine to ignore if they do not exist.
+    userDataLogFile = os.path.join("/var", "log", "user-data.log")
+
     listArtifacts = [userDataLogFile]
 
-    # Collect the essential artifacts, exit fett-ci if it cannot be gotten
-    for xArtifact in listEssentialArtifacts:
-        try:
-            shutil.copy2(xArtifact, artifactsPath)
-        except Exception as exc:
-            exitFettCi(
-                message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.", exc=exc
-            )
+    # Collect the essential artifacts, exit fett-ci if it cannot be gotten.
+    #   Only run this if we are collecting targetLogs
+    if targetLogs:
+        for xArtifact in listEssentialArtifacts:
+            try:
+                shutil.copy2(xArtifact, artifactsPath)
+            except Exception as exc:
+                exitFettCi(
+                    message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",
+                    exc=exc,
+                )
 
     # Collect logs that will not generate termination if they cannot be found.
     for xArtifact in listArtifacts:
