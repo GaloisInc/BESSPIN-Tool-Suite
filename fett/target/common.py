@@ -224,19 +224,18 @@ class commonTarget():
             self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
                                  overwriteShutdown=True, exitCode=EXIT.Implementation)
 
+        success, timeout, message = get_timeout_from_settings_dict()
+
         if isEqSetting('osImage', 'FreeBSD') or isEqSetting('osImage', 'debian'):
+            if (self.restartMode):
+                timeout += 120 #takes longer to restart
             printAndLog(
                 f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-        success, timeout, message = get_timeout_from_settings_dict()
+
         if not success:
             self.shutdownAndExit(**message)
 
         if (isEqSetting('osImage','debian')):
-                    self.shutdownAndExit(f"start: Unrecognized AWS PV <{getSetting('pvAWS')}>.", overwriteShutdown=False, exitCode=EXIT.Dev_Bug)
-            else:
-                self.shutdownAndExit(f"start: Timeout is not recorded for target=<{getSetting('target')}>.",overwriteShutdown=False,exitCode=EXIT.Implementation)
-            if (self.restartMode):
-                timeout += 120 #takes longer to restart
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             self.boot(endsWith="login:",timeout=timeout)
             self.stopShowingTime.set()
