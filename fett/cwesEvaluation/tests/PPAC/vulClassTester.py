@@ -3,14 +3,14 @@
 This file has the custom PPAC methods to run tests on qemu|fpga.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 import sys, os
-from fett.cwesEvaluation.compat import testgenTargetCompatabilityLayer
+from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 from fett.cwesEvaluation.tests.PPAC import cweTests
 from importlib.machinery import SourceFileLoader
 import threading
 
 from fett.base.utils.misc import *
 
-class vulClassTester(testgenTargetCompatabilityLayer):
+class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__ (self,settings):
         super().__init__(settings)
         return

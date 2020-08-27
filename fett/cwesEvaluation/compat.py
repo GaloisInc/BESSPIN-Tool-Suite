@@ -1,6 +1,6 @@
 from fett.base.utils.misc import *
 
-class testgenTargetCompatabilityLayer:
+class testgenTargetCompatibilityLayer:
     """
     This class wraps a FETT target and presents a testgen target interface
     """
@@ -24,7 +24,7 @@ class testgenTargetCompatabilityLayer:
 
 
         # TODO: Set this to match target?
-        self.filename = "compatability"
+        self.filename = "compatibility"
 
         # TODO: Make this configurable?
         self.showExecutionOnScreen = False

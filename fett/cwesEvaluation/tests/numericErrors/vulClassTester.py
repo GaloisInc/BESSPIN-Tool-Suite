@@ -4,14 +4,14 @@ This file has the custom numericErrors methods to run tests on qemu|fpga.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 import os
 
-from fett.cwesEvaluation.compat import testgenTargetCompatabilityLayer
+from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 ## All tests are assumed to have 1 part except for the following:
 partCount = {"test_456" : 3,
              "test_457" : 2,
              "test_665" : 2,
              "test_824" : 2}
 
-class vulClassTester(testgenTargetCompatabilityLayer):
+class vulClassTester(testgenTargetCompatibilityLayer):
     def executeTest (self,binTest):
         testName = binTest.split('.')[0]
         testNum = testName.split('_')[1]
