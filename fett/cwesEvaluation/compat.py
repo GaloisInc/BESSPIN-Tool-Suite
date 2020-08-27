@@ -18,9 +18,6 @@ class testgenTargetCompatibilityLayer:
         # TODO: Set this to match target?
         self.filename = "compatibility"
 
-        # TODO: Make this configurable?
-        self.showExecutionOnScreen = False
-
         self.osImage = getSetting("osImage")
 
     def __getattr__ (self,attr):

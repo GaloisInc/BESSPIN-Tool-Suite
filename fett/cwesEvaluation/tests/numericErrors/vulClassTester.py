@@ -29,9 +29,6 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             outLog += f"TEST {testNum} PART P0{p + 1}\n"
             command = f"./{binTest} {p + 1}"
             textBack = self.runCommand (command)[1]
-            if (self.showExecutionOnScreen):
-                self.stdout.write (textBack)
-                self.stdout.flush()
             outLog += textBack
             if (isEnabled('useCustomScoring')): #will need the gdb output here
                 outLog += self.getGdbOutput()
