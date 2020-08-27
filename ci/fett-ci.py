@@ -94,61 +94,6 @@ def main(xArgs):
                 message="Provided jobID contained invalid character(s). It must match regex '[A-Za-z0-9-_+.]'"
             )
 
-    # If we are in AWSTesting ep, we will check the git branches
-    if xArgs.entrypoint == "AWSTesting":
-        # Try to open the branches file, read the branches.
-        try:
-            with open(os.path.join(repoDir, "branches"), "r") as f:
-                branches = f.read().splitlines()
-                assert len(branches) == 2, "Failed to find 2 branches in branches file."
-        except Exception as exc:
-            # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
-            print(
-                f"(Error)~  Error reading branches file. \n <{exc.__class__.__name__}>: {exc}"
-            )
-            prepareArtifact(
-                repoDir,
-                xConfig,
-                artifactSuffix,
-                xArgs.entrypoint,
-                -1,
-                xArgs.jobID,
-                nodeIndex,
-                targetLogs=False,
-            )
-            exitFettCi(message="Error when trying to read branches from file.", exc=exc)
-
-        try:
-            targetBranch = Repository(repoDir).head.shorthand
-            binariesBranch = Repository(
-                os.path.join(repoDir, "SSITH-FETT-Binaries")
-            ).head.shorthand
-            if not branches[0] == "None":
-                assert (
-                    targetBranch == branches[0]
-                ), f"Failed to check out Target branch: is {targetBranch}, supposed to be {branches[0]}"
-            if not branches[1] == "None":
-                assert (
-                    binariesBranch == branches[1]
-                ), f"Failed to check out Binaries branch: is {binariesBranch}, supposed to be {branches[1]}"
-
-        except Exception as exc:
-            # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
-            print(
-                f"(Error)~  Wrong branches were checked out. \n <{exc.__class__.__name__}>: {exc}"
-            )
-            prepareArtifact(
-                repoDir,
-                xConfig,
-                artifactSuffix,
-                xArgs.entrypoint,
-                -1,
-                xArgs.jobID,
-                nodeIndex,
-                targetLogs=False,
-            )
-            exitFettCi(message="Wrong branches were checked out.", exc=exc)
-
     # Decide on artifact name -- There is no else as they are argparser grouped
     if xArgs.artifactSuffix:
         artifactSuffix = xArgs.artifactSuffix
@@ -227,6 +172,61 @@ def main(xArgs):
         print("List of .ini files to execute:\n", listConfigs)
         print("(Warning)~  FETT-CI: This is not a real CI run.")
         exitFettCi(exitCode=0)
+
+        # If we are in AWSTesting ep, we will check the git branches
+    if xArgs.entrypoint == "AWSTesting":
+        # Try to open the branches file, read the branches.
+        try:
+            with open(os.path.join(repoDir, "branches"), "r") as f:
+                branches = f.read().splitlines()
+                assert len(branches) == 2, "Failed to find 2 branches in branches file."
+        except Exception as exc:
+            # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
+            print(
+                f"(Error)~  Error reading branches file. \n <{exc.__class__.__name__}>: {exc}"
+            )
+            prepareArtifact(
+                repoDir,
+                configFilePath,
+                artifactSuffix,
+                xArgs.entrypoint,
+                -1,
+                xArgs.jobID,
+                nodeIndex,
+                targetLogs=False,
+            )
+            exitFettCi(message="Error when trying to read branches from file.", exc=exc)
+
+        try:
+            targetBranch = Repository(repoDir).head.shorthand
+            binariesBranch = Repository(
+                os.path.join(repoDir, "SSITH-FETT-Binaries")
+            ).head.shorthand
+            if not branches[0] == "None":
+                assert (
+                    targetBranch == branches[0]
+                ), f"Failed to check out Target branch: is {targetBranch}, supposed to be {branches[0]}"
+            if not branches[1] == "None":
+                assert (
+                    binariesBranch == branches[1]
+                ), f"Failed to check out Binaries branch: is {binariesBranch}, supposed to be {branches[1]}"
+
+        except Exception as exc:
+            # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
+            print(
+                f"(Error)~  Wrong branches were checked out. \n <{exc.__class__.__name__}>: {exc}"
+            )
+            prepareArtifact(
+                repoDir,
+                configFilePath,
+                artifactSuffix,
+                xArgs.entrypoint,
+                -1,
+                xArgs.jobID,
+                nodeIndex,
+                targetLogs=False,
+            )
+            exitFettCi(message="Wrong branches were checked out.", exc=exc)
 
     # Adjust optional arguments
     if xArgs.jobTimeout:
