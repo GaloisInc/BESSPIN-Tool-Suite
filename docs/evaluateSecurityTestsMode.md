@@ -22,10 +22,10 @@ to run in the `evaluateSecurityTests` mode, the `evaluateSecurityTests` section 
     separated. Choose among the NIST list: *bufferErrors, PPAC, resourceManagement, codeInjection, informationLeakage, cryptoErrors, numericErrors*. The names follow [attachment 3 of the
     SSITH BAA](https://www.ntsc.org/assets/uploads/HR001117S0023.pdf). When a `$vulClass` is included, its configuration section is loaded as well.
     - `useCustomScoring`: Configure the scoring methods as instructed in
-    the parameters in the `\[customizedScoring\]` section.  More
+    the parameters in the `[customizedScoring]` section.  More
     details are in the scoring section in this document.
     - `useCustomCompiling`: Configure the compilation flow as instructed
-    in the parameters in the `\[customizedCompiling\]` section.  More
+    in the parameters in the `[customizedCompiling]` section.  More
     details are in the compiling section in this document.
     - `FreeRTOStimeout`: How long to wait for a FreeRTOS non-interactive test to terminate.
 
@@ -125,7 +125,7 @@ following:
 
 ## Scoring for non-GFE CPUs
 
-These are the special known instructions:
+These are the special known instructions:   
     - LMCO P1: Add `exception_handler` to `funcCheckpoints`.
     - LMCO P2: Add `Illegal` to `stdoutKeywords`.
     - SRI-Cambridge P2: Add `security exception` to `stdoutKeywords`.
