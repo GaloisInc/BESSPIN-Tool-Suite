@@ -30,7 +30,7 @@ def test_294(target, binTest):
 
         if (not target.onlySsh): #special case. No JTAG available.
             #saving the ssh state
-            bkpIsSshConn = target.targetObj.isSshConn
+            bkpIsSshConn = target.isSshConn
             if (bkpIsSshConn): #there was an sshConnection
                 target.closeSshConn() 
             bkpSshLimitRetries = target.sshLimitRetries
@@ -73,7 +73,7 @@ def test_294(target, binTest):
             #restoring the state
             target.sshLimitRetries = bkpSshLimitRetries 
             target.sshRetries = bkpSshRetries
-            target.targetObj.isSshConn = bkpIsSshConn
+            target.isSshConn = bkpIsSshConn
 
         target.switchUser () #Go back to user
 
