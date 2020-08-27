@@ -17,7 +17,7 @@ def test_294(target, binTest):
 
     spoofingIP = target.testsPars['SPOOFING_IP']
 
-    if (target.backend == 'qemu'):
+    if (isEqSetting('target','qemu')):
         outLog += f"<QEMU-N/A> test_{testNum} is not yet implemented on <qemu>."
 
     elif (target.osImage in ['debian','FreeBSD']):
