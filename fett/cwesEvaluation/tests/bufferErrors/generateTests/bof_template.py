@@ -157,7 +157,7 @@ class BofTestGen:
 
             'buf_access'       : Choice(SCHEME[bof_instance.BufferIndexScheme]),
             'buf_cpy'          : Choice('LOOP'),# 'MEMCPY'),
-            'relop'            : Choice('<') if above else Choice('>'),
+            'relop'            : Choice('<=') if above else Choice('>='),
             'location'         : Choice(LOCATION[bof_instance.Location]),
             'read_write'       : Choice(ACCESS[bof_instance.Access]),
             'buf2'             : Choice('BUF2_PRESENT', 'BUF2_ABSENT'),
