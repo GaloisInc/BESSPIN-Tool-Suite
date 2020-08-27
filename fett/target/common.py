@@ -189,8 +189,6 @@ class commonTarget():
     @decorate.timeWrap
     def start (self):
         def get_timeout_from_settings_dict():
-            errors = {'procFlavor': 'processor flavor', 'pvAWS': 'AWS PV'}
-
             def traverse_data(layer):
                 if 'name' in layer:
                     name = layer['name']
@@ -201,21 +199,21 @@ class commonTarget():
                         return True, layer['else'], None
                     else:
                         return False, 15, {
-                            'message': f'start: Unrecognized {errors[setting]} <{setting}>.',
+                            'message': f'Unrecognized value <{setting}> for setting <{name}>',
                             'overwriteShutdown': False,
                             'exitCode': EXIT.Dev_Bug
                         }
                 else:
                     return True, layer, None
 
-            data = safeLoadJsonFile('timeout.json')
+            data = safeLoadJsonFile(os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'bootTimeout.json'))
 
             os_image = data[getSetting('osImage')]
 
             if getSetting('target') not in os_image:
                 return False, 15, {
                     'message': f'start: Timeout is not recorded for target=<{getSetting("target")}>.',
-                    'overwriteShutdown': False,
+                    'overwriteShutdown': True,
                     'exitCode': EXIT.Implementation
                 }
             target = os_image[getSetting('target')]
@@ -1222,4 +1220,3 @@ def charByCharEncoding (inBytes):
             xChar = '<!>'
         textBack += xChar
     return textBack
-
