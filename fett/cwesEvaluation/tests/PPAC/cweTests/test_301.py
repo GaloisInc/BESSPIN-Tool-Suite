@@ -22,14 +22,14 @@ def test_301 (target,binTest):
         outLog += f"<INVALID> test_{testNum} will only be implemented on <{target.osImage}> if specifically asked for."
 
     elif (target.osImage == 'FreeRTOS'):
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
             outLog += "-"*20 + "Part01: DH protocol. Diff key-pair." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
+        elif (target.testPart == 2):
             outLog += "-"*20 + "Part02: DH protocol. Same key-pair." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 3):
+        elif (target.testPart == 3):
             outLog += "-"*20 + "Part03: DH-style protocol. Reflection attack." + "-"*20 + "\n"
         else:
-            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
+            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testPart)
             return outLog
 
         socketThreadsCollect = []
@@ -263,7 +263,7 @@ def test_301 (target,binTest):
         logDict = dict()
 
         # --- diff part --- 
-        if (target.testsPars['TESTGEN_TEST_PART'] == 3):
+        if (target.testPart == 3):
             reflectionAttack(retSockets,logDict)
             for xSocket in retSockets.values():
                 socketThreadsCollect.append(target.socketCloseAndCollect(xSocket))
@@ -288,7 +288,7 @@ def test_301 (target,binTest):
         for iConn in range(nParallelRequests):
             if (iConn in logDict):
                 outLog += logDict[iConn]
-        if (target.testsPars['TESTGEN_TEST_PART'] < 3):
+        if (target.testPart < 3):
             outLog += logDict['target']
         
         if (">>>End of Fett<<<" not in outLog):

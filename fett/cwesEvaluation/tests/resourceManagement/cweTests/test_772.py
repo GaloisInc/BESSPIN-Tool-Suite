@@ -7,7 +7,7 @@ def test_772 (target,binTest):
     testNum = 772
     if (binTest != "test_{0}.riscv".format(testNum)):
         target.reportAndExit ("Error in {0}: Calling <test_{2}> for binary <{1}>.".format(target.filename,binTest,testNum))
-    nResourceLimit = target.testsPars['nResourceLimit']
+    nResourceLimit = getSettingDict("resourceManagement", "test_nResourceLimit")
 
     outLog = "\n" + '*'*30 + " TEST {0} ".format(testNum) + '*'*30 + "\n\n"
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)

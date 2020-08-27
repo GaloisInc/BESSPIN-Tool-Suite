@@ -19,12 +19,12 @@ def test_290 (target,binTest):
         outLog += f"<INVALID> test_{testNum} is covered by TEST-294 for <{target.osImage}>."
 
     elif (target.osImage == 'FreeRTOS'):
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
             outLog += "-"*20 + "Part01: Baseline sanity check. No spoofing." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
+        elif (target.testPart == 2):
             outLog += "-"*20 + "Part02: Don't authorize the IP. Try to spoof it." + "-"*20 + "\n"
         else:
-            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
+            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testPart)
             return outLog
 
         startTime = time.time()
@@ -34,7 +34,7 @@ def test_290 (target,binTest):
 
         for i in range(1): #easier construct to break -- loop executed only once
             outLog += target.runCommand("waitForServer",endsWith="<UDP-READY>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
-            if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+            if (target.testPart == 1):
                 outLog += ">>> [host-client]: Sending a good UDP packet..."
                 try:
                     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -45,7 +45,7 @@ def test_290 (target,binTest):
                 outLog += ">>> [host-client]: Packet sent!"
                 target.socketCloseAndCollect(clientSocket).join(timeout=3)
             else: #part2 -- spoofing
-                spoofingIP = target.testsPars['SPOOFING_IP']
+                spoofingIP = getSettingDict("PPAC", "spoofingIP")
                 pathToSudoPart = os.path.dirname(__file__) + f"/sudoTests/sudo_{testNum}.py"
                 sudoPrompt = f"\"Warning: You need sudo privileges to run test_{testNum}: [sudo] password for {getpass.getuser()}: \""
                 try:

@@ -313,16 +313,16 @@ def test_287 (target,binTest):
         time.sleep (1)
 
     elif (target.osImage == 'FreeRTOS'):
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
             outLog += "-"*20 + "Part01: Valid permissions. List the username." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
+        elif (target.testPart == 2):
             outLog += "-"*20 + "Part02: Valid permissions. Do not list the username." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 3):
+        elif (target.testPart == 3):
             outLog += "-"*20 + "Part03: List the username, do not verify the client." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 4):
+        elif (target.testPart == 4):
             outLog += "-"*20 + "Part04: Do not list the username, receive the actor's name from the connection." + "-"*20 + "\n"
         else:
-            outLog += "\n<INVALID> This test has only 4 parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
+            outLog += "\n<INVALID> This test has only 4 parts! (called with part #{0})\n".format(target.testPart)
             return outLog
 
         socketThreadsCollect = []
@@ -332,11 +332,11 @@ def test_287 (target,binTest):
         outLog += "\n[host]: Pinging target successful!\n"
 
         for i in range(1): #easier construct to break -- loop executed only once
-            if (target.testsPars['TESTGEN_TEST_PART'] == 3): #attempt to breach
+            if (target.testPart == 3): #attempt to breach
                 message = "Jedi Order CLNT"
                 certSuffix = 'SSITH'
             else: #the usual
-                message = f"TESTGEN-{testNum}-P0{target.testsPars['TESTGEN_TEST_PART']}.0"
+                message = f"TESTGEN-{testNum}-P0{target.testPart}.0"
                 certSuffix = ''
             try:
                 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -1,6 +1,8 @@
 import time
 import socket, ssl, select
 
+from fett.base.utils.misc import *
+
 def test_259 (target,binTest):
     testNum = 259
     if (binTest != "test_{0}.riscv".format(testNum)):
@@ -13,12 +15,12 @@ def test_259 (target,binTest):
         outLog += f"<INVALID> test_{testNum} is covered by TEST-257 for <{target.osImage}>."
 
     elif (target.osImage == 'FreeRTOS'):
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
             outLog += "-"*20 + "Part01: Inbound test." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
+        elif (target.testPart == 2):
             outLog += "-"*20 + "Part02: Outbound test." + "-"*20 + "\n"
         else:
-            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
+            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testPart)
             return outLog
 
         socketThreadsCollect = []
@@ -27,7 +29,7 @@ def test_259 (target,binTest):
         target.activateEthernet ()
         outLog += "\n[host]: Pinging target successful!\n"
 
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
 
             for iAttempt in range(2): #send the wrong password once, then the right one
                 if (iAttempt == 0):

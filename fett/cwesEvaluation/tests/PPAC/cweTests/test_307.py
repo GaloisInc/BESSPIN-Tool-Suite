@@ -8,7 +8,7 @@ def test_307 (target,binTest):
     testNum = 307
     if (binTest != "test_{0}.riscv".format(testNum)):
         target.reportAndExit ("Error in {0}: Calling <test_{2}> for binary <{1}>.".format(target.filename,binTest,testNum))
-    nAttempts = target.testsPars['nAllowedAuthAttempts']
+    nAttempts = getSettingDict("PPAC", "test_nAllowedAuthAttempts")
 
     outLog = "\n" + '*'*30 + " TEST {0} ".format(testNum) + '*'*30 + "\n\n"
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)
@@ -217,7 +217,7 @@ def test_307 (target,binTest):
         target.activateEthernet ()
         outLog += "\n[host]: Pinging target successful!\n"
 
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
             # ------------- PART-01 -------------------------
             def clientAuthForNofAttempts (iSubPart, actualNAttempts):
                 retLog = ''
@@ -296,7 +296,7 @@ def test_307 (target,binTest):
                 socketThreadsCollect.append(target.socketCloseAndCollect(clientSocket))
                 time.sleep(3)
 
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
+        elif (target.testPart == 2):
             # ------------- PART-02 -------------------------
             def serverAuthForNofAttempts (serverSocket, iSubPart):
                 retLog = ''
@@ -386,7 +386,7 @@ def test_307 (target,binTest):
                 socketThreadsCollect.append(target.socketCloseAndCollect(serverSocket))
                 
         else:
-            outLog += "\n<INVALID> This test has only two parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
+            outLog += "\n<INVALID> This test has only two parts! (called with part #{0})\n".format(target.testPart)
             return outLog
 
         if (">>>End of Fett<<<" not in outLog):

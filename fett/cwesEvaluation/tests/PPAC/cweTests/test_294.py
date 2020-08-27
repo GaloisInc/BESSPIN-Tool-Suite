@@ -15,7 +15,7 @@ def test_294(target, binTest):
     outLog = "\n" + '*' * 30 + " TEST {0} ".format(testNum) + '*' * 30 + "\n\n"
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)
 
-    spoofingIP = target.testsPars['SPOOFING_IP']
+    spoofingIP = getSettingDict("PPAC", "spoofingIP")
 
     if (isEqSetting('target','qemu')):
         outLog += f"<QEMU-N/A> test_{testNum} is not yet implemented on <qemu>."
@@ -79,13 +79,13 @@ def test_294(target, binTest):
         target.switchUser () #Go back to user
 
     elif (target.osImage == 'FreeRTOS'):
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
             outLog += "-" * 20 + "Part01: Baseline sanity check. No spoofing." + "-" * 20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
+        elif (target.testPart == 2):
             outLog += "-" * 20 + "Part02: Don't authorize the IP. Try to spoof it." + "-" * 20 + "\n"
         else:
             outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(
-                target.testsPars['TESTGEN_TEST_PART'])
+                target.testPart)
             return outLog
 
         startTime = time.time()
@@ -108,7 +108,7 @@ def test_294(target, binTest):
                                     timeout=20, shutdownOnError=False)[1]
         try:
             outLog += str(subprocess.check_output(
-                f"sudo -p {sudoPrompt} {sys.executable} {pathToSudoPart} {'+'.join(sys.path)} {target.ipTarget} {target.portTarget} {spoofingIP} {ethAdaptorName} {target.testsPars['TESTGEN_TEST_PART']}",
+                f"sudo -p {sudoPrompt} {sys.executable} {pathToSudoPart} {'+'.join(sys.path)} {target.ipTarget} {target.portTarget} {spoofingIP} {ethAdaptorName} {target.testPart}",
                 stderr=subprocess.STDOUT, shell=True), 'utf-8')
         except KeyboardInterrupt as exc:
             errorAndLog(f"[host]: Interrupted. Failed to run <sudo sudo_{testNum}>.\n", exc=exc)

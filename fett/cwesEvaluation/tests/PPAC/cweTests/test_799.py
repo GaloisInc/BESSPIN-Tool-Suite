@@ -7,7 +7,7 @@ def test_799 (target,binTest):
     testNum = 799
     if (binTest != "test_{0}.riscv".format(testNum)):
         target.reportAndExit ("Error in {0}: Calling <test_{2}> for binary <{1}>.".format(target.filename,binTest,testNum))
-    nInteractions = target.testsPars['nAllowedInteractions']
+    nInteractions = getSettingDict("PPAC", "test_nAllowedInteractions")
 
     outLog = "\n" + '*'*30 + " TEST {0} ".format(testNum) + '*'*30 + "\n\n"
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)
@@ -135,14 +135,14 @@ def test_799 (target,binTest):
         time.sleep (1)
 
     elif (target.osImage == 'FreeRTOS'):
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
             outLog += "-"*20 + "Part01: Baseline sanity check." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
+        elif (target.testPart == 2):
             outLog += "-"*20 + "Part02: Using an exposed semaphore." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 3):
+        elif (target.testPart == 3):
             outLog += "-"*20 + "Part03: Using an exposed structure." + "-"*20 + "\n"
         else:
-            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
+            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testPart)
             return outLog
 
         socketThreadsCollect = []
@@ -152,7 +152,7 @@ def test_799 (target,binTest):
         outLog += "\n[host]: Pinging target successful!\n"
 
         for iSubPart in range(nInteractions+1):
-            message = f"TESTGEN-{testNum}-P0{target.testsPars['TESTGEN_TEST_PART']}.{iSubPart}"
+            message = f"TESTGEN-{testNum}-P0{target.testPart}.{iSubPart}"
             try:
                 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 clientSocket.settimeout(90) #blocking operations

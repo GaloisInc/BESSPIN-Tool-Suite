@@ -92,14 +92,14 @@ def test_288 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
 
     elif (target.osImage == 'FreeRTOS'):
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
             outLog += "-"*20 + "Part01: Valid permissions. List the username." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
+        elif (target.testPart == 2):
             outLog += "-"*20 + "Part02: Valid permissions. Do not list the username." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 3):
+        elif (target.testPart == 3):
             outLog += "-"*20 + "Part03: List the username, do not verify the client." + "-"*20 + "\n"
         else:
-            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
+            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testPart)
             return outLog
 
         socketThreadsCollect = []
@@ -108,10 +108,10 @@ def test_288 (target,binTest):
         target.activateEthernet ()
         outLog += "\n[host]: Pinging target successful!\n"
 
-        certSuffix = 'SSITH' if (target.testsPars['TESTGEN_TEST_PART'] == 3) else ''
+        certSuffix = 'SSITH' if (target.testPart == 3) else ''
         breakAttemptsLoop = False
         for iAttempt in range(2): 
-            message = f"TESTGEN-{testNum}-P0{target.testsPars['TESTGEN_TEST_PART']}.{iAttempt}"
+            message = f"TESTGEN-{testNum}-P0{target.testPart}.{iAttempt}"
             try:
                 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 clientSocket.settimeout(60) #blocking operations
