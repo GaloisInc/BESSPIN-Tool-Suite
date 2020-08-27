@@ -1,6 +1,8 @@
 import time
 import socket, ssl, select
 
+from fett.base.utils.misc import *
+
 def test_257 (target,binTest):
     testNum = 257
     if (binTest != "test_{0}.riscv".format(testNum)):
@@ -24,14 +26,14 @@ def test_257 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
 
     elif (target.osImage == 'FreeRTOS'):
-        if (target.testsPars['TESTGEN_TEST_PART'] == 1):
+        if (target.testPart == 1):
             outLog += "-"*20 + "Part01: sha256 hashes stored." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 2):
+        elif (target.testPart == 2):
             outLog += "-"*20 + "Part02: base64 codes stored." + "-"*20 + "\n"
-        elif (target.testsPars['TESTGEN_TEST_PART'] == 3):
+        elif (target.testPart == 3):
             outLog += "-"*20 + "Part03: plaintext stored." + "-"*20 + "\n"
         else:
-            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testsPars['TESTGEN_TEST_PART'])
+            outLog += "\n<INVALID> This test has only three parts! (called with part #{0})\n".format(target.testPart)
             return outLog
 
         socketThreadsCollect = []
