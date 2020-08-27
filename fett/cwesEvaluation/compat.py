@@ -27,11 +27,6 @@ class testgenTargetCompatibilityLayer:
         else:
             setattr(self.target, name, value)
 
-    def typCommand(self, command):
-        # TODO: Better endsWith (will this even work for freebsd?)
+    def typCommand(self, command): #Note that this returns the `textBack`
         return self.target.runCommand(command,shutdownOnError=False)[1]
 
-    # TODO: The real reportAndExit takes a bunch of optional params that we
-    # should support
-    def reportAndExit(self, message, **kwargs):
-        logAndExit(message, **kwargs)
