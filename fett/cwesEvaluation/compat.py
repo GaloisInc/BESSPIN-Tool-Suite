@@ -6,7 +6,6 @@ class testgenTargetCompatibilityLayer:
     """
     def __init__(self, target):
         self.target = target
-        self.targetObj = target
 
         setSetting('pocExploitsMode',False)
 

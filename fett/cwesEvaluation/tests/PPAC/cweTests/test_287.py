@@ -13,7 +13,7 @@ def test_287 (target,binTest):
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)
 
     if (target.osImage == 'debian'):
-        if (target.targetObj.isSshConn): #Use the ssh test instead
+        if (target.isSshConn): #Use the ssh test instead
             outLog += "\n<SSH-TEST>\n"
             def suRoot287 ():
                 retLog = ''
