@@ -5,9 +5,9 @@ This file has the custom informationLeakage methods to run tests on qemu|fpga.
 import glob, os
 import re
 
-from fett.cwesEvaluation.compat import testgenTargetCompatabilityLayer
+from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 
-class vulClassTester(testgenTargetCompatabilityLayer):
+class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self,settings):
         super().__init__(settings)
         return

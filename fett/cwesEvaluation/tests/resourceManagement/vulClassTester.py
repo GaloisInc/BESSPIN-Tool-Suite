@@ -3,7 +3,7 @@
 This file has the custom resourceManagement methods to run tests on qemu|fpga.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 from fett.cwesEvaluation.tests.resourceManagement import cweTests
-from fett.cwesEvaluation.compat import testgenTargetCompatabilityLayer
+from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 
 from fett.base.utils.misc import *
 
@@ -28,7 +28,7 @@ testsInfo = {
     911 : { 'unix' : 2, 'FreeRTOS' : 2 }
 }
 
-class vulClassTester(testgenTargetCompatabilityLayer):
+class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
         return
