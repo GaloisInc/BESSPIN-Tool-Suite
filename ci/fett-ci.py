@@ -199,7 +199,7 @@ def main(xArgs):
                 assert len(branches) == 2, "Failed to find 2 branches in branches file."
         except Exception as exc:
             # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
-            erroAndLog(f"Error reading branches file.", exc=exc)
+            errorAndLog(f"Error reading branches file.", exc=exc)
             prepareArtifact(
                 repoDir,
                 configFilePath,
@@ -228,7 +228,7 @@ def main(xArgs):
 
         except Exception as exc:
             # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
-            printAndError(f"Wrong branches were checked out.", exc=exc)
+            errorAndLog(f"Wrong branches were checked out.", exc=exc)
             prepareArtifact(
                 repoDir,
                 configFilePath,
