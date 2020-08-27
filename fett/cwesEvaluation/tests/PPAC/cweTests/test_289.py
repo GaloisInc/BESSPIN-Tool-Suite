@@ -1,6 +1,8 @@
 import time
 import socket, ssl, select
 
+from fett.base.utils.misc import *
+
 def test_289 (target,binTest):
     testNum = 289
     if (binTest != "test_{0}.riscv".format(testNum)):
@@ -12,7 +14,7 @@ def test_289 (target,binTest):
     if (target.osImage == 'debian'):
         outLog += "-"*20 + "Part01: Use a fake username. Attempt to authenticate" + "-"*20 + "\n"
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -36,7 +38,7 @@ def test_289 (target,binTest):
         time.sleep (20) #Give time to close the process opened by the user
         target.runCommand (renameUserToFrom.format(target.userName,"ssithLord"),erroneousContents="usermod:",shutdownOnError=False) #reset userName
         target.switchUser () #Back on user
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -50,7 +52,7 @@ def test_289 (target,binTest):
             outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
             outLog += target.runCommand("chsh -s /bin/bash",endsWith="Password:",timeout=15,shutdownOnError=False)[1]
             outLog += target.runCommand(target.userPassword,shutdownOnError=False)[1]
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
         time.sleep (5)
@@ -64,7 +66,7 @@ def test_289 (target,binTest):
         target.runCommand ("sed -i -e \"s/NOTAGROUP/{0}/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
         target.switchUser() #NOW ON USER
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -73,7 +75,7 @@ def test_289 (target,binTest):
         target.runCommand ("sed -i -e \"s/{0}/NOT_A_GROUP/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
         target.switchUser() #NOW ON USER
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -94,7 +96,7 @@ def test_289 (target,binTest):
         time.sleep (1)
         target.runCommand (renameGroupToFrom.format(userGroup,"ssithLord"),erroneousContents="usermod:",shutdownOnError=False) #reset userName
         target.switchUser () #Back on user
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 

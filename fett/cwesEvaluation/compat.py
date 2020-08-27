@@ -8,8 +8,7 @@ class testgenTargetCompatibilityLayer:
         self.target = target
         self.targetObj = target
 
-        self.settings = {"useCustomScoring" : getSetting("useCustomScoring"),
-                         "processor" : getSetting('processor')}
+        setSetting('pocExploitsMode',False)
 
         self.testsPars = {}
         if doesSettingExist("PPAC"):

@@ -2,6 +2,8 @@ import time
 import re
 import socket, ssl, select
 
+from fett.base.utils.misc import *
+
 def test_287 (target,binTest):
     testNum = 287
     if (binTest != "test_{0}.riscv".format(testNum)):
@@ -157,7 +159,7 @@ def test_287 (target,binTest):
         time.sleep(1) #necessary
         outLog += switchUser287('login') #login to root
         #>>> ROOT <<<<------------------------------------------------------------
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -169,7 +171,7 @@ def test_287 (target,binTest):
         time.sleep(1) #necessary
         outLog += switchUser287('login') #login to root
         #>>> ROOT <<<<------------------------------------------------------------
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -185,7 +187,7 @@ def test_287 (target,binTest):
         #>>> USER <<<<------------------------------------------------------------
         outLog += target.runCommand(checkCommonAuth,shutdownOnError=False)[1]
         outLog += target.runCommand("groups",shutdownOnError=False)[1]
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -200,7 +202,7 @@ def test_287 (target,binTest):
         time.sleep(1)
         outLog += switchUser287('login') #login to user
         #>>> USER <<<<------------------------------------------------------------
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -214,7 +216,7 @@ def test_287 (target,binTest):
         time.sleep(1)
         outLog += switchUser287('login') #login to user
         #>>> USER <<<<------------------------------------------------------------
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -229,7 +231,7 @@ def test_287 (target,binTest):
         target.switchUser ()
         #>>> USER <<<<------------------------------------------------------------
         outLog += target.runCommand(checkCommonAuth,shutdownOnError=False)[1]
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -245,7 +247,7 @@ def test_287 (target,binTest):
         time.sleep(1)
         outLog += switchUser287('login') #login to user
         #>>> USER <<<<------------------------------------------------------------
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -259,7 +261,7 @@ def test_287 (target,binTest):
         time.sleep(1)
         outLog += switchUser287('login') #login to user
         #>>> USER <<<<------------------------------------------------------------
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 

@@ -5,6 +5,8 @@ This file has the custom numericErrors methods to run tests on qemu|fpga.
 import os
 
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from fett.base.utils.misc import *
+
 ## All tests are assumed to have 1 part except for the following:
 partCount = {"test_456" : 3,
              "test_457" : 2,
@@ -31,7 +33,7 @@ class vulClassTester(testgenTargetCompatibilityLayer):
                 self.stdout.write (textBack)
                 self.stdout.flush()
             outLog += textBack
-            if (self.settings['useCustomScoring']): #will need the gdb output here
+            if (isEnabled('useCustomScoring')): #will need the gdb output here
                 outLog += self.getGdbOutput()
 
         return outLog

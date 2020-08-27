@@ -1,6 +1,8 @@
 import time
 import socket, ssl, select
 
+from fett.base.utils.misc import *
+
 def test_284 (target,binTest):
     testNum = 284
     if (binTest != "test_{0}.riscv".format(testNum)):
@@ -30,7 +32,7 @@ def test_284 (target,binTest):
         target.executeOnRoot (addUserToUsersList)
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         outLog += checkAuthLog()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -38,7 +40,7 @@ def test_284 (target,binTest):
         target.executeOnRoot (resetAuthLog + resetUsersList)
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         outLog += checkAuthLog()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -47,7 +49,7 @@ def test_284 (target,binTest):
         outLog += target.runCommand("echo \"{0}\" > /etc/test284users".format(target.userName),shutdownOnError=False)[1]
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         outLog += checkAuthLog()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -57,7 +59,7 @@ def test_284 (target,binTest):
         outLog += target.runCommand("sed \"/pam_284/d\" /var/log/auth.log > temp.txt",shutdownOnError=False)[1]
         outLog += target.runCommand("cp temp.txt /var/log/auth.log",shutdownOnError=False)[1]
         outLog += checkAuthLog()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -84,7 +86,7 @@ def test_284 (target,binTest):
         target.executeOnRoot (allowUser)
         outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += checkDebugLog()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -92,7 +94,7 @@ def test_284 (target,binTest):
         target.executeOnRoot (resetDebugLog + denyUser)
         outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += checkDebugLog()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -105,7 +107,7 @@ def test_284 (target,binTest):
         outLog += target.runCommand(f"cp /tmp/group.tmp /etc/group",shutdownOnError=False)[1]
         outLog += target.runCommand(f"./{binTest}",shutdownOnError=False)[1]
         outLog += checkDebugLog()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -116,7 +118,7 @@ def test_284 (target,binTest):
         outLog += target.runCommand(f"sed \"/test_{testNum}/d\" /var/log/debug.log > temp.txt",shutdownOnError=False)[1]
         outLog += target.runCommand("cp temp.txt /var/log/debug.log",shutdownOnError=False)[1]
         outLog += checkDebugLog()
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 

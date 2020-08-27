@@ -25,12 +25,12 @@ def test_307 (target,binTest):
                     return retLog
                 elif (iAttempt == actualNAttempts-1): #this is it, send correct password
                     retCommand = target.runCommand(target.userPassword,shutdownOnError=False,timeout=20)
-                    if (retCommand[2] and (target.settings['processor'] == 'bluespec_p3')): #timeout on bluespec_p3
+                    if (retCommand[2] and isEqSetting('processor','bluespec_p3')): #timeout on bluespec_p3
                         retCommand[1] += target.keyboardInterrupt (shutdownOnError=False)
                         retCommand[1] += "\n<DENIED> Failed to authenticate. (pam timed-out)\n"
                 else:
                     retCommand = target.runCommand("x",expectedContents='Failed to authenticate',suppressErrors=True,shutdownOnError=False,timeout=20)
-                    if (retCommand[2] and (target.settings['processor'] == 'bluespec_p3')): #timeout on bluespec_p3
+                    if (retCommand[2] and isEqSetting('processor','bluespec_p3')): #timeout on bluespec_p3
                         retCommand[1] += target.keyboardInterrupt (shutdownOnError=False)
                         #reset the errors
                         retCommand[0] = True
@@ -49,7 +49,7 @@ def test_307 (target,binTest):
         outLog += OnlyAuthForNofAttempts(nAttempts)
         outLog += "\n<authForNofAttempts(N+1)>\n"
         outLog += OnlyAuthForNofAttempts(nAttempts+1)
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -63,7 +63,7 @@ def test_307 (target,binTest):
         outLog += OnlyAuthForNofAttempts(nAttempts)
         outLog += "\n<authForNofAttempts(N+1)>\n"
         outLog += OnlyAuthForNofAttempts(nAttempts+1)
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -78,7 +78,7 @@ def test_307 (target,binTest):
         target.executeOnRoot(["pam_tally2 -r -u {0}".format(target.userName)])
         outLog += "\n<authForNofAttempts(N+1)>\n"
         outLog += OnlyAuthForNofAttempts(nAttempts+1)
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
@@ -93,7 +93,7 @@ def test_307 (target,binTest):
         outLog += OnlyAuthForNofAttempts(nAttempts,intraCommand="rm localLog")
         outLog += "\n<authForNofAttempts(N+1)>\n"
         outLog += OnlyAuthForNofAttempts(nAttempts+1,intraCommand="rm localLog")
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 

@@ -1,6 +1,8 @@
 import time
 import re
 
+from fett.base.utils.misc import *
+
 def test_772 (target,binTest):
     testNum = 772
     if (binTest != "test_{0}.riscv".format(testNum)):
@@ -53,7 +55,7 @@ def test_772 (target,binTest):
         for limType in reversed(list(limBackup.keys())):
             outLog += target.typCommand(f"{limitCmd} -{limType}n {limBackup[limType]}")
 
-        if (target.settings['useCustomScoring']): #will need the gdb output here
+        if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
         time.sleep (1)
