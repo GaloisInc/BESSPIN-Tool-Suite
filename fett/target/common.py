@@ -199,7 +199,7 @@ class commonTarget():
                     elif 'else' in layer:
                         return True, layer['else'], None
                     else:
-                        return False, 15, {
+                        return False, 0, {
                             'message': f'Unrecognized value <{setting}> for setting <{name}>',
                             'overwriteShutdown': True,
                             'exitCode': EXIT.Dev_Bug
@@ -212,7 +212,7 @@ class commonTarget():
             os_image = data[getSetting('osImage')]
 
             if getSetting('target') not in os_image:
-                return False, 15, {
+                return False, 0, {
                     'message': f'start: Timeout is not recorded for target=<{getSetting("target")}>.',
                     'overwriteShutdown': True,
                     'exitCode': EXIT.Implementation
