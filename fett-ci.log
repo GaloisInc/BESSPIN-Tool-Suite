@@ -1,8 +1,0 @@
-10:02:30 AM: (INFO)~  Fett CI Started
-10:02:30 AM: (INFO)~  FETT-CI: TestMode: Dumping some useful info...
-10:02:30 AM: (INFO)~  FETT-CI: <runDevPR> has <11> configurations in total.
-10:02:30 AM: (INFO)~  FETT-CI: The configurations will be listed here and dumped in </tmp/dumpIni>:
-10:02:30 AM: (INFO)~  FETT-CI: Required info for AWS CI was generated into </tmp/awsCiInfo.json>.
-10:02:30 AM: (INFO)~  List of .ini files to execute:
- ['/tmp/Clang_gfe_freertos.ini']
-10:02:30 AM: (WARNING)~  FETT-CI: This is not a real CI run.
