@@ -1,5 +1,8 @@
-#!/bin/sh
+#! /usr/bin/env bash
 
-aws s3 cp s3://ta1-toolchain-images/cheri-sysroot.tar.gz .
-cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/qemu/kernel-cheri.elf .
-cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/common/disk-image-cheri.img.zst .
+sourceVariants=('' '-purecap' '-temporal')
+
+for idx in ${!sourceVariants[@]}; do
+    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/qemu/kernel-cheri${sourceVariants[$idx]}.elf .
+    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/common/disk-image-cheri${sourceVariants[$idx]}.img.zst .
+done
