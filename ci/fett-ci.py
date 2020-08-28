@@ -217,14 +217,20 @@ def main(xArgs):
             binariesBranch = Repository(
                 os.path.join(repoDir, "SSITH-FETT-Binaries")
             ).head.shorthand
+
+            # Log
+            printAndLog(
+                f"Branch check: Target branch: is {targetBranch}, supposed to be {branches[0]}"
+            )
+            printAndLog(
+                f"Branch check: Binaries branch: is {binariesBranch}, supposed to be {branches[1]}"
+            )
+
+            # Check branches
             if not branches[0] == "None":
-                assert (
-                    targetBranch == branches[0]
-                ), f"Failed to check out Target branch: is {targetBranch}, supposed to be {branches[0]}"
+                assert targetBranch == branches[0], "Failed branch check for Target."
             if not branches[1] == "None":
-                assert (
-                    binariesBranch == branches[1]
-                ), f"Failed to check out Binaries branch: is {binariesBranch}, supposed to be {branches[1]}"
+                assert binariesBranch == branches[1], "Failed branch check for Binaries"
 
         except Exception as exc:
             # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
