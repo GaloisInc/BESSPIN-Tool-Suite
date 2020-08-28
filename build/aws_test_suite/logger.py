@@ -7,6 +7,7 @@ def log_assertion_fails(func):
     """decorator to log assertion errors and other errors
     catch an assertion exception from a function, log it, and the raise it
     """
+
     @functools.wraps(func)
     def wrappedFn(*args, **kwargs):
         try:
@@ -18,6 +19,7 @@ def log_assertion_fails(func):
             log.error(f"{func.__name__} failed with non-assertion <{exc}>")
             raise exc
         return ret
+
     return wrappedFn
 
 
@@ -35,6 +37,15 @@ class Logger:
         self.log_fname = log_fname
         self.results_fname = results_fname
 
+        # Define colors for certain log levels
+        self.levels = {
+            "Debug": "yellow",
+            "Error": "red",
+            "Info": None,
+            "Warning": "yellow",
+            "Results": "cyan",
+        }
+
         # Empty out log files
         open(log_fname, "w").close()
         open(results_fname, "w").close()
@@ -48,41 +59,49 @@ class Logger:
         :type level: str
         """
 
+        # Do nothing with a blank message
         if message is None:
             pass
 
-        levels = {
-            "Debug": "yellow",
-            "Error": "red",
-            "Info": "white",
-            "Warning": "yellow",
-            "Results": "cyan",
-        }
-
         # Check log level in levels.
         assert level in list(
-            levels.keys()
+            self.levels.keys()
         ), f"{level} is not a valid level, must be one of {', '.join(levels.keys())}"
 
-        # Print all but debug (to file) and info (to default color) to screen
-        if level.lower() != "debug" and level.lower() != "info":
+        # Print all except:
+        # - debug (goes to file)
+        # - info (goes to screen un-colored)
+        # - results (varies in color dep. on result)
+        if (
+            (level.lower() != "debug")
+            and (level.lower() != "info")
+            and (level.lower() != "results")
+        ):
             # Print to screen in color
-            cprint(f"({level})~ {message}", levels[level])
+            cprint(f"({level})~ {message}", self.levels[level])
 
+        # Print info to screen uncolored
         if level.lower() == "info":
             print(f"({level})~ {message}")
 
-        # Write results to results file
+        # Write results to results file, and print in color
         if level.lower() == "results":
+            # Log
             with open(self.results_fname, "a") as f:
                 f.write(f"[ { datetime.now().strftime('%Y/%m/%d') } ] : { message }\n")
 
-        # Write log message
+            if "fail" in message:
+                cprint(f"({level})~ {message}", self.levels["Warning"])
+            else:
+                cprint(f"({level})~ {message}", self.levels[level])
+
+        # Write log message no matter what level
         with open(self.log_fname, "a") as f:
             f.write(
                 f"[ { datetime.now().strftime('%Y/%m/%d @ %H:%M:%S:%f') } ] : ({level})~ {message}\n"
             )
 
+        # Error hard, and quit if we have an error
         if level.lower() == "error":
             cprint("(Error)~ Exiting.", "red")
             exit(0)
@@ -105,4 +124,3 @@ class Logger:
 
 ## Global Package Logger
 log = Logger()
-
