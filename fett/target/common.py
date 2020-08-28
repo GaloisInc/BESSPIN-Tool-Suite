@@ -209,6 +209,12 @@ class commonTarget():
 
             data = safeLoadJsonFile(os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'bootTimeout.json'))
 
+            if (getSetting('osImage') not in data):
+                return False, 0, {
+                    'message': f'start: Timeout is not recorded for osImage=<{getSetting("osImage")}>.',
+                    'overwriteShutdown': True,
+                    'exitCode': EXIT.Implementation
+                }
             os_image = data[getSetting('osImage')]
 
             if getSetting('target') not in os_image:
