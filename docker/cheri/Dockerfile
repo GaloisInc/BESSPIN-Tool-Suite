@@ -7,20 +7,20 @@ WORKDIR /root
 
 RUN git clone https://github.com/CTSRD-CHERI/cheribuild.git \
         && cd cheribuild \
-        && git checkout 10733147e875923974d172f04f2e0bcc08179e17
+        && git checkout 47d91aedd2ab2bb11da25d05426f33ec3073029f
 
 RUN git clone https://github.com/CTSRD-CHERI/llvm-project.git \
         && cd llvm-project \
-        && git checkout fae644257050a3b1ec2cb1ee56d29643a77e26e4
+        && git checkout d8b11eced5be4ea102cc731a18d6f8e46b523f95
 
 RUN git clone https://github.com/CTSRD-CHERI/qemu.git \
         && cd qemu \
-        && git checkout 24c4f92aac23b5d34454feafd25a9596db326dfd \
+        && git checkout cd4044e3e294256e5b0b8e64e9b67dce55bae69c \
         && git submodule update --init --recursive
 
 RUN git clone https://github.com/CTSRD-CHERI/gdb.git \
         && cd gdb \
-        && git checkout d6b055eb61eebf176e2c218f0e88a41dbb78f90f
+        && git checkout 958549a5d72a3e3b56bed892b0996055e8c18b79
 
 RUN ./cheribuild/cheribuild.py --source-root=/root \
         --skip-update llvm
