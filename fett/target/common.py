@@ -190,7 +190,6 @@ class commonTarget():
     def start (self):
         def get_timeout_from_settings_dict():
             def traverse_data(layer):
-                print(f"Traverse data: layer is <{layer}>")
                 if 'name' in layer:
                     name = layer['name']
                     setting = getSetting(name)
