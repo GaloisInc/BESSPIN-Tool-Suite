@@ -190,21 +190,27 @@ class commonTarget():
     def start (self):
         def get_timeout_from_settings_dict():
             def traverse_data(layer):
-                if 'name' in layer:
+                if 'timeout' in layer:
+                    return True, layer['timeout'], None
+                elif 'name' in layer:
                     name = layer['name']
                     setting = getSetting(name)
                     if setting in layer:
                         return traverse_data(layer[setting])
                     elif 'else' in layer:
-                        return True, layer['else'], None
+                        return traverse_data(layer['else'])
                     else:
                         return False, 0, {
-                            'message': f'Unrecognized value <{setting}> for setting <{name}>',
+                            'message': f'Unrecognized value <{setting}> for setting <{name}> in <bootTimeout.json>.',
                             'overwriteShutdown': True,
                             'exitCode': EXIT.Dev_Bug
                         }
                 else:
-                    return True, layer, None
+                    return False, 0, {
+                        'message': f'Unrecognized layer <{layer}> in <bootTimeout.json>.',
+                        'overwriteShutdown': True,
+                        'exitCode': EXIT.Dev_Bug
+                    }
 
             data = safeLoadJsonFile(os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'bootTimeout.json'))
 
@@ -242,7 +248,6 @@ class commonTarget():
         else:
             self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
                                  overwriteShutdown=True, exitCode=EXIT.Implementation)
-        
 
         if (isEqSetting('osImage','debian')):
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
