@@ -17,7 +17,7 @@
     "aws": {
       "name": "pvAWS",
       "firesim": { "timeout" : 240 },
-      "connectal": { "timeout" : 510 }
+      "connectal": { "timeout" : 360 }
     }
   },
   "busybox": { "timeout" : 80 },
