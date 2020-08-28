@@ -257,7 +257,8 @@ class commonTarget():
             #logging in
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
             self.runCommand ("root",endsWith="Password:")
-            self.runCommand (self.rootPassword)
+            loginTimeout = 120 if (self.restartMode) else 60
+            self.runCommand (self.rootPassword,timeout=loginTimeout)
         elif (isEqSetting('osImage','busybox')):
             printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
