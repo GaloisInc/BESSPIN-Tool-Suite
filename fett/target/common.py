@@ -190,6 +190,7 @@ class commonTarget():
     def start (self):
         def get_timeout_from_settings_dict():
             def traverse_data(layer):
+                print(f"Traverse data: layer is <{layer}>")
                 if 'name' in layer:
                     name = layer['name']
                     setting = getSetting(name)
@@ -220,20 +221,23 @@ class commonTarget():
 
             return traverse_data(target)
 
-        if getSetting('osImage') not in ['debian', 'busybox', 'FreeRTOS', 'FreeBSD']:
-            self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
-                                 overwriteShutdown=True, exitCode=EXIT.Implementation)
+        if (getSetting('osImage') in ['FreeRTOS']):
+            pass #no timeout shenanigans
+        elif getSetting('osImage') in ['debian', 'busybox', 'FreeBSD']:
+            success, timeout, message = get_timeout_from_settings_dict()
 
-        success, timeout, message = get_timeout_from_settings_dict()
+            if not success:
+                self.shutdownAndExit(**message)
 
-        if isEqSetting('osImage', 'FreeBSD') or isEqSetting('osImage', 'debian'):
             if (self.restartMode):
                 timeout += 120 #takes longer to restart
+
             printAndLog(
                 f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
-
-        if not success:
-            self.shutdownAndExit(**message)
+        else:
+            self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
+                                 overwriteShutdown=True, exitCode=EXIT.Implementation)
+        
 
         if (isEqSetting('osImage','debian')):
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
