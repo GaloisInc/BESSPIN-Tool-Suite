@@ -36,8 +36,25 @@ sudo systemctl start docker
 sudo apt install -y zstd
 ```
 
+If you're going to modify the Dockerfile or any other files, please make sure your commits are not anonymous
+```
+git config --global user.name <yourName>
+git config --global user.email <yourEmail>
+```
+
 Now let's create the docker image:
 ```
 cd ~/SSITH-FETT-Target/docker/cheri/
 ./copy-files.sh
+sudo docker build --tag cambridge-toolchain .
+```
+
+Save it to a tar.gz file:
+```
+sudo docker save cambridge-toolchain | gzip > cambridge-toolchain.tar.gz
+```
+
+Delete the extra files:
+```
+./clear.sh
 ```

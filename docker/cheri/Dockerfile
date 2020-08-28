@@ -42,14 +42,19 @@ RUN ./cheribuild/cheribuild.py --source-root=/root \
 
 RUN rm -rf ./output/sdk/sysroot-riscv64-hybrid ./output/sdk/sysroot-riscv64-purecap ./output/sdk/cheribsd-sysroot-riscv64-purecap-sysroot.tar.gz
 
-COPY cheri-sysroot.tar.gz /root/
-RUN mkdir ./output/sdk/sysroot && tar -C ./output/sdk/sysroot -xzvf cheri-sysroot.tar.gz
-
 FROM debian:10
 
-COPY --from=0 /root/output/sdk /opt/cheri/sdk
 COPY kernel-cheri.elf /opt/cheri/
+COPY kernel-cheri-purecap.elf /opt/cheri/
+COPY kernel-cheri-temporal.elf /opt/cheri/
 COPY disk-image-cheri.img.zst /opt/cheri/
+COPY disk-image-cheri-purecap.img.zst /opt/cheri/
+COPY disk-image-cheri-temporal.img.zst /opt/cheri/
+
+COPY sysroot /opt/cheri/sdk/sysroot
+COPY sysroot-purecap /opt/cheri/sdk/sysroot-purecap
+COPY sysroot-temporal /opt/cheri/sdk/sysroot-temporal
+COPY researchersREADME.md /root/README.md
 
 RUN apt-get update
 RUN apt-get install -y libpython3.7 libmpfr6 libglib2.0 libpixman-1-0 flex make libarchive13 expat zstd
