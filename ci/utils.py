@@ -255,11 +255,11 @@ def prepareArtifact(
                 ciAWSbucket,
                 exitFettCi,
                 tarFileName,
-                f"fett-target/ci/artifacts/{jobID}/",
+                f"fett-target/ci/artifacts/",
             )
         else:  # AWS Testing
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, tarFileName, f"aws-testing/{jobID}/",
+                ciAWSbucketTesting, exitFettCi, tarFileName, f"aws-testing/",
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
