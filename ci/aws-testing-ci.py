@@ -67,6 +67,13 @@ def main(args):
     log.info(f"{h}Gathering run targets.")
     r = collect_run_names()
 
+    # Check the pem_key_name argument to make sure the user did
+    #   not input the .pem extension
+    pem_key_name = args.pem_key_name
+
+    if len(pem_key_name) > 4 and pem_key_name[-4:] == ".pem":
+        pem_key_name = pem_key_name[:-4]
+
     # Start an instance manager
     i = InstanceManager(args.cap)
 
@@ -106,7 +113,9 @@ def main(args):
             )
 
             # Add this instance to InstanceManager
-            i.add_instance(Instance(args.ami, f"{n}", userdata=u.userdata))
+            i.add_instance(
+                Instance(args.ami, f"{n}", userdata=u.userdata, key_name=pem_key_name)
+            )
             log.debug(f"{h}Queueing {r[k]}, with name {n}.")
 
     log.info(f"{h}Queued all instances. Starting and testing instances")
@@ -166,6 +175,13 @@ if __name__ == "__main__":
         type=str,
         help='Path to the SSH key to be used with -b || -bb flags. Default: ["~/.ssh/aws-ci-gh"]',
         default="~/.ssh/aws-ci-gh",
+    )
+    parser.add_argument(
+        "-p",
+        "--pem-key-name",
+        type=str,
+        help="Name of the *.pem key to use in AWS when creating the instance. Defaults to nightly-testing",
+        default="nightly-testing",
     )
     parser.add_argument(
         "-n",
