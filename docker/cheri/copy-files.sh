@@ -6,16 +6,16 @@ sourceVariants=('' '-purecap' '-temporal')
 mntPath=/mnt/cheridisk
 sudo mkdir -p $mntPath
 
-for idx in ${!sourceVariants[@]}; do
-    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/qemu/kernel-cheri${sourceVariants[$idx]}.elf .
-    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/common/disk-image-cheri${sourceVariants[$idx]}.img.zst .
-    diskImage=./disk-image-cheri${sourceVariants[$idx]}.img
+for sourceVariant in "${sourceVariants[@]}"; do
+    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/qemu/kernel-cheri${sourceVariant}.elf .
+    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/common/disk-image-cheri${sourceVariant}.img.zst .
+    diskImage=./disk-image-cheri${sourceVariant}.img
 
     unzstd ${diskImage}.zst
     devLoop=$(sudo losetup -f --show -P ${diskImage})
     sudo mount -t ufs -o ufstype=ufs2,loop,ro ${devLoop}p1 $mntPath
-    mkdir sysroot${sourceVariants[$idx]}
-    sudo cp -r $mntPath/lib $mntPath/usr sysroot${sourceVariants[$idx]} 
+    mkdir sysroot${sourceVariant}
+    sudo cp -a $mntPath/lib $mntPath/usr sysroot${sourceVariant} 
     sudo umount $mntPath
     sudo losetup -d $devLoop
 done
