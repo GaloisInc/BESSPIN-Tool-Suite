@@ -36,12 +36,20 @@ def get_ami_id_from_name(ami_name):
     return response["Images"][0]["ImageId"]
 
 
-def terminate_instance(instance_id, dry_run=True):
+def terminate_instance(instance_id, dry_run=True, wait_for_termination=False):
     """
     Terminate an instance by its instance id
 
+    dry_run sends a dry_run request, for testing purposes
+
+    wait_for_termination will hold execution at this function until the instance
+        has terminated.
+
     :param dry_run: Set to true, for safety
     :type dry_run: bool, optional
+
+    :param wait_for_termination: Set to false
+    :type wait_for_termination: bool, optional
     """
 
     log.debug(f"terminate_instances called with {locals()}")
@@ -50,6 +58,19 @@ def terminate_instance(instance_id, dry_run=True):
     resp = client.terminate_instances(InstanceIds=[instance_id], DryRun=dry_run)
 
     log.debug(f"terminate_instances got response from terminate_instances() {resp}")
+
+    # If wait_for_termination is passed, use boto3 waiter to wait for instance
+    #   state to be terminated.
+    if wait_for_termination:
+        log.info(f"Waiting for instance { instance_id } to terminate.")
+        log.debug(
+            f"terminate_instances calling a waiter on termination status for { [instance_id] }"
+        )
+
+        waiter = client.get_waiter("instance_terminated")
+        waiter.wait(InstanceIds=[instance_id])
+
+        log.debug(f"terminate_instances instance_terminated completed.")
 
 
 def launch_instance(

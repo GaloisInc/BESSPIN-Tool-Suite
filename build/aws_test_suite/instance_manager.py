@@ -89,9 +89,6 @@ class InstanceManager:
                             replace_index = running_instances.index(i)
                             running_instances[replace_index] = self._instances.pop()
 
-                            # Wait 120 s to ensure spot has freed up.
-                            time.sleep(120)
-
                             # Run new Instance
                             running_instances[replace_index].start()
                             log.info(
@@ -160,8 +157,8 @@ class Instance:
 
     @log_assertion_fails
     def terminate(self):
-        assert self._id is not None, "Cannot terminate instance that has not started"
-        terminate_instance(self._id, False)
+        assert self._id is not None, "Cannot terminate instance has an empty ID"
+        terminate_instance(self._id, False, True)
         return self
 
     @property
