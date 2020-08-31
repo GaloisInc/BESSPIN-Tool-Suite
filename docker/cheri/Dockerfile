@@ -60,7 +60,7 @@ COPY sysroot-temporal /opt/cheri/sdk/sysroot-temporal
 COPY researchersREADME.md /root/README.md
 
 RUN apt-get update
-RUN apt-get install -y libpython3.7 libmpfr6 libglib2.0 libpixman-1-0 flex make libarchive13 expat zstd
+RUN apt-get install -y libpython3.7 libmpfr6 libglib2.0 libpixman-1-0 flex make libarchive13 expat zstd less vim
 
 ENV CHERIBUILD_SDK "/opt/cheri/sdk"
 ENV PATH "${CHERIBUILD_SDK}/bin:${PATH}"
