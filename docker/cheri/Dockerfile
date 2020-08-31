@@ -44,6 +44,9 @@ RUN rm -rf ./output/sdk/sysroot-riscv64-hybrid ./output/sdk/sysroot-riscv64-pure
 
 FROM debian:10
 
+# Copy the built toolchain into the clean image
+COPY --from=0 /root/output/sdk /opt/cheri/sdk
+
 COPY kernel-cheri.elf /opt/cheri/
 COPY kernel-cheri-purecap.elf /opt/cheri/
 COPY kernel-cheri-temporal.elf /opt/cheri/
