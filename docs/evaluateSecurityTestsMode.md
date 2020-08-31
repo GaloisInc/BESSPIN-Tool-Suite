@@ -178,6 +178,6 @@ Both of SRI-Cambridge and Michigan targets require the use of a special toolchai
     ```
   - Load them to docker
     ```
-    sudo docker load < cambridge-toolchain.tar.gz
-    sudo docker load < michigan-toolchain.tar.gz
+    sudo docker load -i cambridge-toolchain.tar.gz
+    sudo docker load -i michigan-toolchain.tar.gz
     ```
