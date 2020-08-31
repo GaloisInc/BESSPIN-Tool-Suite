@@ -243,9 +243,21 @@ class firesimTarget(commonTarget):
                                 exitOnError=False,
                                 errorMessage="targetTearDown: Failed to detach the target in gdb.")
 
+            try:
+                self.openocdProcess.kill() # No need for fancier ways as we use Popen with shell=False
+            except Exception as exc:
+                warnAndLog("targetTearDown: Failed to kill the openocd process.",doPrint=False,exc=exc)
+
             self.runGDBcommand ('quit', endsWith=pexpect.EOF,
                                 exitOnError=False,
                                 errorMessage="targetTearDown: Failed to exit the gdb process.")
+
+            if (self.gdbProcess.isalive()):
+                try:
+                    subprocess.check_call(['sudo', 'kill', '-9', f"{os.getpgid(self.gdbProcess.pid)}"],
+                                        stdout=self.fGdbOut, stderr=self.fGdbOut)
+                except Exception as exc:
+                    warnAndLog("targetTearDown: Failed to kill the gdb process.",doPrint=False,exc=exc)
 
         if (self.process.isalive()):
             # When executing the firesim command, we run it with `stty intr ^]` which changes
@@ -319,7 +331,7 @@ class firesimTarget(commonTarget):
         """
         wereProcessesKilled = {'FireSim-f1':False, 'switch0':False} #False for wasKilled
         if (isEqSetting('mode','evaluateSecurityTests')):
-            dictProcesses.update({'openocd':False, 'riscv64-unknown-elf-gdb':False})
+            wereProcessesKilled.update({'openocd':False, 'riscv64-unknown-elf-gdb':False})
 
         def getAliveProcesses():
             return [proc for proc,wasKilled in wereProcessesKilled.items() if (not wasKilled)]
@@ -338,7 +350,7 @@ class firesimTarget(commonTarget):
                 wereProcessesKilled[proc] = (sudoShellCommand(['pgrep', proc],check=False).returncode != 0)
 
         if (not all(wereProcessesKilled.values())):    
-            warnAndLog (f"Failed to kill <{','.join(getAliveProcesses())}>.")
+            warnAndLog (f"Failed to kill <{','.join(getAliveProcesses())}>.",doPrint=False)
         sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) #clear shared memory
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
