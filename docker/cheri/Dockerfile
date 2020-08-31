@@ -7,20 +7,20 @@ WORKDIR /root
 
 RUN git clone https://github.com/CTSRD-CHERI/cheribuild.git \
         && cd cheribuild \
-        && git checkout 10733147e875923974d172f04f2e0bcc08179e17
+        && git checkout 47d91aedd2ab2bb11da25d05426f33ec3073029f
 
 RUN git clone https://github.com/CTSRD-CHERI/llvm-project.git \
         && cd llvm-project \
-        && git checkout fae644257050a3b1ec2cb1ee56d29643a77e26e4
+        && git checkout d8b11eced5be4ea102cc731a18d6f8e46b523f95
 
 RUN git clone https://github.com/CTSRD-CHERI/qemu.git \
         && cd qemu \
-        && git checkout 24c4f92aac23b5d34454feafd25a9596db326dfd \
+        && git checkout cd4044e3e294256e5b0b8e64e9b67dce55bae69c \
         && git submodule update --init --recursive
 
 RUN git clone https://github.com/CTSRD-CHERI/gdb.git \
         && cd gdb \
-        && git checkout d6b055eb61eebf176e2c218f0e88a41dbb78f90f
+        && git checkout 958549a5d72a3e3b56bed892b0996055e8c18b79
 
 RUN ./cheribuild/cheribuild.py --source-root=/root \
         --skip-update llvm
@@ -42,19 +42,33 @@ RUN ./cheribuild/cheribuild.py --source-root=/root \
 
 RUN rm -rf ./output/sdk/sysroot-riscv64-hybrid ./output/sdk/sysroot-riscv64-purecap ./output/sdk/cheribsd-sysroot-riscv64-purecap-sysroot.tar.gz
 
-COPY cheri-sysroot.tar.gz /root/
-RUN mkdir ./output/sdk/sysroot && tar -C ./output/sdk/sysroot -xzvf cheri-sysroot.tar.gz
-
 FROM debian:10
 
+# Copy the built toolchain into the clean image
 COPY --from=0 /root/output/sdk /opt/cheri/sdk
-COPY kernel-cheri.elf /opt/cheri/
-COPY disk-image-cheri.img.zst /opt/cheri/
+
+COPY kernel-cheri-default.elf /opt/cheri/
+COPY kernel-cheri-purecap.elf /opt/cheri/
+COPY kernel-cheri-temporal.elf /opt/cheri/
+COPY disk-image-cheri-default.img.zst /opt/cheri/
+COPY disk-image-cheri-purecap.img.zst /opt/cheri/
+COPY disk-image-cheri-temporal.img.zst /opt/cheri/
+
+COPY sysroot-default /opt/cheri/sdk/sysroot-default
+COPY sysroot-purecap /opt/cheri/sdk/sysroot-purecap
+COPY sysroot-temporal /opt/cheri/sdk/sysroot-temporal
+COPY researchersREADME.md /root/README.md
 
 RUN apt-get update
-RUN apt-get install -y libpython3.7 libmpfr6 libglib2.0 libpixman-1-0 flex make libarchive13 expat zstd
+RUN apt-get install -y libpython3.7 libmpfr6 libglib2.0 libpixman-1-0 flex make libarchive13 expat zstd less vim
 
-ENV PATH "/opt/cheri/sdk/bin:${PATH}"
-ENV CHERI_SYSROOT "/opt/cheri/sdk/sysroot"
+ENV CHERIBUILD_SDK "/opt/cheri/sdk"
+ENV PATH "${CHERIBUILD_SDK}/bin:${PATH}"
+ENV CLANG "${CHERIBUILD_SDK}/bin/clang"
+ENV SYSROOT "${CHERIBUILD_SDK}/sysroot-default"
+
+COPY smoke.c .
+RUN $CLANG -target riscv64-unknown-freebsd --sysroot=$SYSROOT -fuse-ld=lld -mno-relax -march=rv64gcxcheri -mabi=l64pc128d smoke.c -o /dev/null
+RUN rm smoke.c
 
 WORKDIR /root
