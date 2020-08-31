@@ -488,7 +488,7 @@ def sudoShellCommand (argsList, sudoPromptPrefix=None, check=True, timeout=30, *
         promptArgs = []
 
     command = ['sudo'] + promptArgs + argsList
-    shellCommand (command, check=check, timeout=timeout, **kwargs)
+    return shellCommand (command, check=check, timeout=timeout, **kwargs)
 
 @decorate.debugWrap
 def shellCommand (argsList, check=True, timeout=30, **kwargs):
@@ -496,10 +496,11 @@ def shellCommand (argsList, check=True, timeout=30, **kwargs):
     shellOut.write(f"\n\n{argsList}\n")
     shellOut.flush()
     try:
-        subprocess.run(argsList, stdout=shellOut, stderr=shellOut, timeout=timeout, check=check, **kwargs)
+        retRun = subprocess.run(argsList, stdout=shellOut, stderr=shellOut, timeout=timeout, check=check, **kwargs)
     except Exception as exc:
         logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
     shellOut.close()
+    return retRun
 
 """ the tarArtifacts function can be executed from within exitFett -- should not use other functions to avoid recursion """
 @decorate.debugWrap

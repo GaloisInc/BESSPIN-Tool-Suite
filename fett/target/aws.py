@@ -30,11 +30,11 @@ class firesimTarget(commonTarget):
         if (getSetting('osImage') not in ['debian','FreeRTOS']):
             logAndExit (f"<firesimTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
-        if (not isEqSetting('mode','production')): #maybe there are leftovers -- easier for fellow devs
-            self.cleanProcesses()
-
         awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
 
+        # 0. Ensure the env is clear
+        self.noNonsenseFiresim()
+        
         # 1. Switch0
         self.fswitchOut = ftOpenFile(os.path.join(getSetting('workDir'),'switch0.out'),'ab')
 
@@ -174,21 +174,6 @@ class firesimTarget(commonTarget):
         setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
 
     @decorate.debugWrap
-    def cleanProcesses(self):
-        listProcesses = ['FireSim-f1','switch0']
-        if (isEqSetting('mode','evaluateSecurityTests')):
-            listProcesses += ['openocd', 'riscv64-unknown-elf-gdb']
-        procList = subprocess.getoutput('ps -A -o %c,%p')
-        for entry in procList.splitlines():
-            try:
-                pName, pId = ''.join(entry.split()).strip().split(',')
-            except Exception as exc:
-                warnAndLog(f"Failed to split the ps entry <{entry}>.",exc=exc,doPrint=False)
-            if (pName in listProcesses):
-                sudoShellCommand(['kill','-9',str(pId)],check=False)
-
-        sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
-
     def interact(self):
         if (isEqSetting('osImage','FreeRTOS')):
             printAndLog (f"FreeRTOS is left running on target. Press \"Ctrl + E\" to exit.")
@@ -258,36 +243,9 @@ class firesimTarget(commonTarget):
                                 exitOnError=False,
                                 errorMessage="targetTearDown: Failed to detach the target in gdb.")
 
-            try:
-                self.openocdProcess.kill() # No need for fancier ways as we use Popen with shell=False
-            except Exception as exc:
-                warnAndLog("targetTearDown: Failed to kill the openocd process.",doPrint=False,exc=exc)
-
             self.runGDBcommand ('quit', endsWith=pexpect.EOF,
                                 exitOnError=False,
                                 errorMessage="targetTearDown: Failed to exit the gdb process.")
-
-            if (self.gdbProcess.isalive()):
-                try:
-                    subprocess.check_call(['sudo', 'kill', '-9', f"{os.getpgid(self.gdbProcess.pid)}"],
-                                        stdout=self.fGdbOut, stderr=self.fGdbOut)
-                except Exception as exc:
-                    warnAndLog("targetTearDown: Failed to kill the gdb process.",doPrint=False,exc=exc)
-
-            self.fOpenOcdOut.close()
-            self.fGdbOut.close()
-        
-        if (self.switch0Proc.isalive()):
-            try:
-                subprocess.check_call(['sudo', 'kill', '-9', f"{self.switch0Proc.pid}"],
-                                    stdout=self.fswitchOut, stderr=self.fswitchOut)
-            except Exception as exc:
-                warnAndLog("targetTearDown: Failed to kill <switch0> process.",doPrint=False,exc=exc)
-            
-            try:
-                self.fswitchOut.close()
-            except Exception as exc:
-                warnAndLog("targetTearDown: Failed to close <switch0.out>.",doPrint=False,exc=exc)
 
         if (self.process.isalive()):
             # When executing the firesim command, we run it with `stty intr ^]` which changes
@@ -301,14 +259,16 @@ class firesimTarget(commonTarget):
             # process is still alive.
             self.runCommand('\x1d\x1d',endsWith=pexpect.EOF,shutdownOnError=False,timeout=5,sendToNonUnix=True)
 
-            if (self.process.isalive()):
-                try:
-                    subprocess.check_call(['sudo', 'kill', '-9', f"{self.process.pid}"],
-                                        stdout=self.fTtyOut, stderr=self.fTtyOut)
-                except Exception as exc:
-                    warnAndLog("targetTearDown: Failed to kill <firesim> process.",doPrint=False,exc=exc)
+        self.noNonsenseFiresim()
 
-        sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) # clear shared memory
+        filesToClose = [self.fswitchOut, self.fTtyOut]
+        if (isEqSetting('mode','evaluateSecurityTests')):
+            filesToClose += [self.fOpenOcdOut, self.fGdbOut]
+        for xFile in filesToClose:
+            try:
+                xFile.close()
+            except Exception as exc:
+                warnAndLog(f"targetTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
         return True
 
     @decorate.debugWrap
@@ -351,7 +311,35 @@ class firesimTarget(commonTarget):
         gdbOut += "\n~~~~~~~~~~~~~~~~~\n"
         return gdbOut
 
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def noNonsenseFiresim (self):
+        """
+        This method ensures all relvant processes are killed. In a no-nonsense and brute way.
+        """
+        wereProcessesKilled = {'FireSim-f1':False, 'switch0':False} #False for wasKilled
+        if (isEqSetting('mode','evaluateSecurityTests')):
+            dictProcesses.update({'openocd':False, 'riscv64-unknown-elf-gdb':False})
 
+        def getAliveProcesses():
+            return [proc for proc,wasKilled in wereProcessesKilled.items() if (not wasKilled)]
+
+        # kill processes
+        for proc in wereProcessesKilled:
+            sudoShellCommand(['pkill', '-9', proc],check=False)
+
+        # wait till the processes die
+        nWaits = 5
+        iWait = 0
+        while ((iWait < nWaits) and (not all(wereProcessesKilled.values()))):
+            time.sleep(1)
+            iWait += 1
+            for proc in getAliveProcesses():
+                wereProcessesKilled[proc] = (sudoShellCommand(['pgrep', proc],check=False).returncode != 0)
+
+        if (not all(wereProcessesKilled.values())):    
+            warnAndLog (f"Failed to kill <{','.join(getAliveProcesses())}>.")
+        sudoShellCommand(['rm', '-rf', '/dev/shm/*'],check=False) #clear shared memory
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 

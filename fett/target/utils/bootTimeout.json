@@ -1,0 +1,45 @@
+{
+  "debian": {
+    "fpga": {
+      "name": "procFlavor",
+      "bluespec": {
+        "name": "elfLoader",
+        "JTAG": { "timeout" : 1150 },
+        "else": { "timeout" : 560 }
+      },
+      "chisel": {
+        "name": "elfLoader",
+        "JTAG": { "timeout" : 1050 },
+        "else": { "timeout" : 500 }
+      }
+    },
+    "qemu": { "timeout" : 120 },
+    "aws": {
+      "name": "pvAWS",
+      "firesim": { "timeout" : 240 },
+      "connectal": { "timeout" : 360 }
+    }
+  },
+  "busybox": { "timeout" : 80 },
+  "FreeBSD": {
+    "fpga": {
+      "name": "procFlavor",
+      "bluespec": {
+        "name": "elfLoader",
+        "JTAG": { "timeout" : 1400 },
+        "else": { "timeout" : 700 }
+      },
+      "chisel": {
+        "name": "elfLoader",
+        "JTAG": { "timeout" : 1000 },
+        "else": { "timeout" : 540 }
+      }
+    },
+    "qemu": { "timeout" : 120 },
+    "aws": {
+      "name": "sourceVariant",
+      "temporal": { "timeout" : 1000 },
+      "else": { "timeout" : 540 }
+    }
+  }
+}
