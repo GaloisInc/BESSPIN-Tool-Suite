@@ -180,7 +180,7 @@ def launch_instance(
 # +-----------+
 
 
-def poll_sqs(config):
+def poll_sqs(config, instance_ids):
     """
     Get any new SQS messages that are in queue. Returns instance_id for a message.
 
@@ -229,13 +229,15 @@ def poll_sqs(config):
     try:
         response = sqs.receive_message(
             QueueUrl=configs.ciAWSqueueTesting,
-            VisibilityTimeout=5,  # 5 seconds are enough
+            VisibilityTimeout=0,  # 5 seconds are enough
             WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
         )
     except:
         log.error(f"Failed to receive a response from the SQS queue.")
 
     if "Messages" in response:
+
+        instance_ids_caught = []
 
         # Log the contents of the reponse
         log.debug(f"Got SQS Response {response}")
@@ -244,12 +246,20 @@ def poll_sqs(config):
             # Extract the body
             body = json.loads(message["Body"])
             instance_id = body["instance"]["id"]
-            log.results(
-                f'SQS Poll got SQS: FINISHED: {body["job"]["id"]}, exited with status {body["job"]["status"]}.'
-            )
-            delete_message(message)
+            if instance_id in instance_ids:
+                log.results(
+                    f'SQS Poll got SQS: FINISHED: {body["job"]["id"]}, exited with status {body["job"]["status"]}.'
+                )
+                delete_message(message)
 
-            return instance_id
+            else:
+                log.debug(
+                    f'SQS Poll got SQS: {body["job"]["id"]}; status: {body["job"]["status"]}. Not in { instance_ids }'
+                )
 
-    # Nothing got, return empty string.
+            # Add the caught instance_id to the list
+            instance_ids_caught.append(body["job"]["id"])
+        return instance_ids_caught
+
+    # Nothing got, return None
     return None
