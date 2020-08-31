@@ -5,7 +5,36 @@
 """
 
 from configs import *
-import configparser, os, copy, time, glob, shutil, subprocess
+import configparser, os, copy, time, glob
+import traceback, shutil, subprocess, logging
+
+
+def formatExc(exc):
+    """ format the exception for printing """
+    try:
+        return f"<{exc.__class__.__name__}>: {exc}"
+    except:
+        return "<Non-recognized Exception>"
+
+
+def printAndLog(message, doPrint=True):
+    if doPrint:
+        print("(Info)~  " + message)
+    logging.info(message)
+
+
+def warnAndLog(message, doPrint=True):
+    if doPrint:
+        print("(Warning)~  " + message)
+    logging.warning(message)
+
+
+def errorAndLog(message, doPrint=True, exc=None):
+    if doPrint:
+        print("(Error)~  " + message)
+    logging.error(message)
+    if exc:
+        logging.error(traceback.format_exc())
 
 
 def exitFettCi(exitCode=-1, exc=None, message=None):
@@ -129,7 +158,14 @@ def generateConfigFile(repoDir, outDir, dictConfig, testMode):
 
 
 def prepareArtifact(
-    repoDir, configFile, artifactSuffix, entrypoint, exitCode, jobID, nodeIndex
+    repoDir,
+    configFile,
+    artifactSuffix,
+    entrypoint,
+    exitCode,
+    jobID,
+    nodeIndex,
+    targetLogs=True,
 ):
     # decide on the folder's name
     artifactsPath = (
@@ -144,27 +180,34 @@ def prepareArtifact(
     except Exception as exc:
         exitFettCi(message=f"Failed to create <{artifactsPath}>.", exc=exc)
 
-    # Move the important files there
-    # This is assuming fett-ci uses the default workDir and logFile
-    workDir = os.path.join(repoDir, "workDir")
-    logFile = os.path.join(workDir, "fett.log")
-    userDataLogFile = os.path.join("/var", "log", "user-data.log")
-    outFiles = glob.glob(os.path.join(workDir, "*.out"))
-
+    # This is assuming fett-ci uses the default workDir and targetLogFile
     # List all artifacts that generate a termination if they cannot be captured
-    listEssentialArtifacts = [configFile, logFile] + outFiles
+    # This will run unless targetLogs=False, in which case we only add the non-
+    #   essential logs.
+    if targetLogs:
+        workDir = os.path.join(repoDir, "workDir")
+        targetLogFile = os.path.join(workDir, "fett.log")
+        outFiles = glob.glob(os.path.join(workDir, "*.out"))
+
+        listEssentialArtifacts = [configFile, targetLogFile] + outFiles
 
     # List all artifacts that are fine to ignore if they do not exist.
-    listArtifacts = [userDataLogFile]
+    logFile = os.path.join(repoDir, "fett-ci.log")
+    userDatatargetLogFile = os.path.join("/var", "log", "user-data.log")
 
-    # Collect the essential artifacts, exit fett-ci if it cannot be gotten
-    for xArtifact in listEssentialArtifacts:
-        try:
-            shutil.copy2(xArtifact, artifactsPath)
-        except Exception as exc:
-            exitFettCi(
-                message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.", exc=exc
-            )
+    listArtifacts = [userDatatargetLogFile, logFile]
+
+    # Collect the essential artifacts, exit fett-ci if it cannot be gotten.
+    #   Only run this if we are collecting targetLogs
+    if targetLogs:
+        for xArtifact in listEssentialArtifacts:
+            try:
+                shutil.copy2(xArtifact, artifactsPath)
+            except Exception as exc:
+                exitFettCi(
+                    message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",
+                    exc=exc,
+                )
 
     # Collect logs that will not generate termination if they cannot be found.
     for xArtifact in listArtifacts:
@@ -212,11 +255,11 @@ def prepareArtifact(
                 ciAWSbucket,
                 exitFettCi,
                 tarFileName,
-                f"fett-target/ci/artifacts/{jobID}/",
+                f"fett-target/ci/artifacts/",
             )
         else:  # AWS Testing
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, tarFileName, f"aws-testing/{jobID}/",
+                ciAWSbucketTesting, exitFettCi, tarFileName, f"aws-testing/",
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
