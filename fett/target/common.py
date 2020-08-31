@@ -643,7 +643,7 @@ class commonTarget():
         def checksumTarget(f):
             shaSumRX = None
             if (isEqSetting('osImage','debian')):
-                retShaRX = self.runCommand(f"sha256sum {f}")[1]
+                retShaRX = self.runCommand(f"sha256sum {f}",timeout=120)[1]
             elif (isEqSetting('osImage','FreeBSD')):
                 retShaRX = self.runCommand(f"sha256 {f}",timeout=120)[1]
                 retShaRX += self.runCommand(" ")[1]
