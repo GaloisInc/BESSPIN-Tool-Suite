@@ -300,6 +300,7 @@ def crossCompileUnix(directory,extraString=''):
     envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
     envLinux.append(f"LINKER={getSetting('linker').upper()}")
     envLinux.append(f"BIN_SOURCE={getSetting('binarySource').replace('-','_')}")
+    envLinux.append(f"SOURCE_VARIANT={getSetting('sourceVariant')}")
     logging.debug(f"going to make using {envLinux}")
     if (isEqSetting('binarySource','SRI-Cambridge')):
         dockerToolchainImage = 'cambridge-toolchain'
