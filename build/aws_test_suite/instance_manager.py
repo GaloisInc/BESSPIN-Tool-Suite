@@ -70,13 +70,13 @@ class InstanceManager:
         while len(self._instances) > 0 or len(running_instances) > 0:
             # There are still instances left to run / running
             #   Therefore, we must check SQS to see if anything has happened
-            sqs = poll_sqs(config)
+            sqs = poll_sqs(config, [x.id for x in running_instances])
 
             # Check for finished ID
             if sqs is not None:
                 # Not an empty message - we have an ID
                 for i in running_instances:
-                    if i.id == sqs:
+                    if i.id in sqs:
                         i.terminate()
                         log.info(f"Terminated instance { i.id }")
 
