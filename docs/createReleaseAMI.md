@@ -54,12 +54,14 @@ history -c
     - AMI description: `FETT AMI 1234567xxxxxxxxxxxxx`
 
 9. Test the AMI:
-    - Create a fresh `f1.2xlarge` based on the instance.
-    - open nix-shell
-    - Run: `ci/fett-ci.py -X runDevPR -ep AWS -job 123`
-    - Now you have all the configs in `/tmp/dumpIni`. 
-    - Create one instance per config, and launch that config and ensure that it gives `Success`.
-    - If something fails, then after a fix is merged to master, all steps have to be repeated.
+    - Use the `aws-testing-ci` utility to test the AMI.
+    - Check how many slots are empty in `us-west-2` on `Galois_TA-2_dev` to determine the `C` (capacity) value. Note that the utility does not support other accounts/regions yet.
+    - Run the following:
+        ```
+        ./aws-testing-ci.py -a ami-xxxxxxxxxxxx -c C -n <UseAMeaningfulName> -r 3
+        ```
+    - That would test each combination 3 times.
+    - If something fails, then after a fix is merged to master, the tests should be repeated.
 
 10. Tag master branch:
 On any machine, get the AMI ID, let's say `ami-xxxxxxxxxxxx`.
@@ -71,23 +73,20 @@ git push --tags
 ```
 Note that `N` is the next point release.
 
-11. AMIs permissions:
-    - EC2 dashboard --> AMIs --> select the AMI 
-    - In the permissions tab (in the bottom), please add `065510690417` to the accounts with which this AMI is shared.
+11. Copy the AMI to Virginia.
     - select the AMI --> right click --> copy AMI --> Destination reigion: N. Virginia --> Copy AMI
     - Change your region on the top right to `N. Virginia`
     - Wait for the AMI to be available
-    - Share it with the production account `065510690417` as you did with the Oregon AMI
 
-P.S. If you want to share it with all accounts, you can just do:
-```
-aws ec2 modify-image-attribute --image-id ami-xxxxxxxxxxxx --attribute launchPermission --operation-type add --user-ids 053515949713 065510690417 104428437022 127763453929 450440740352 494240662784 592505567353 803897408424 845509001885 910658170027 938711909478
-```
+12. AMIs permissions:
+    - Add `065510690417` (production account) to the accounts with which both AMIs are shared.
+    - Run the following twice: 1. The Oregon AMI with `--region us-west-2`. 2. The Virginia AMI with `--region us-east-1`.
 
-For the N. Virginia one, just add the flag `--region us-east-1` after `ec2`.
+    ```
+    aws ec2 modify-image-attribute --region <REGION> --image-id <AMI-ID> --attribute launchPermission --operation-type add --user-ids 053515949713 065510690417 104428437022 127763453929 450440740352 494240662784 592505567353 803897408424 845509001885 910658170027 938711909478
+    ```
 
-12. Send to FTS:
-Send both AMI IDs to Kurt Hopfer and make sure he confirms the receipt.
+13. Share with FTS.
 
 ## Additional Tasks ##
 
@@ -96,14 +95,13 @@ Send both AMI IDs to Kurt Hopfer and make sure he confirms the receipt.
 If you want to update the CloudWatch configuration, then before step 7 or 8, do the following:
 
 - Kill the current cloudWatch process:
-```
-ps -A | grep cloud
-sudo kill <PID-FROM-STEP-1>
-```
+    ```
+    sudo pkill cloud
+    ```
 
 - Update the `/opt/aws/amazon-cloudwatch-agent/bin/config.json` as you desire.
 
 - Relaunch:
-```
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
-```
+    ```
+    sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+    ```
