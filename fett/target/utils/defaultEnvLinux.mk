@@ -28,7 +28,7 @@ LDFLAGS := $(ARCH_ABI) ${LD_FLAGS_$(OS_IMAGE)}
 CC_GCC := ${PREFIX_$(OS_IMAGE)}-gcc
 SYSROOT_Debian = $(shell $(CC_GCC) -print-sysroot)
 ifeq ($(BIN_SOURCE),SRI_Cambridge)
-	SYSROOT_FreeBSD := /opt/cheri/sdk/sysroot
+	SYSROOT_FreeBSD := /opt/cheri/sdk/sysroot-$(SOURCE_VARIANT)
 else
 	SYSROOT_FreeBSD := $(FETT_GFE_FREEBSD_SYSROOT)
 endif
