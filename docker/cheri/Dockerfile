@@ -62,7 +62,9 @@ COPY researchersREADME.md /root/README.md
 RUN apt-get update
 RUN apt-get install -y libpython3.7 libmpfr6 libglib2.0 libpixman-1-0 flex make libarchive13 expat zstd
 
-ENV PATH "/opt/cheri/sdk/bin:${PATH}"
-ENV CHERI_SYSROOT "/opt/cheri/sdk/sysroot"
+ENV CHERIBUILD_SDK "/opt/cheri/sdk"
+ENV PATH "${CHERIBUILD_SDK}/bin:${PATH}"
+ENV CLANG "${CHERIBUILD_SDK}/bin/clang"
+ENV SYSROOT "${CHERIBUILD_SDK}/sysroot"
 
 WORKDIR /root
