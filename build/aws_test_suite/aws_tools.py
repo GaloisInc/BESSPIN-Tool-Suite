@@ -208,7 +208,7 @@ def poll_sqs(config, instance_ids):
     try:
         response = sqs.receive_message(
             QueueUrl=configs.ciAWSqueueTesting,
-            VisibilityTimeout=0,  # 5 seconds are enough
+            VisibilityTimeout=5,  # 5 seconds are enough
             WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
         )
     except:
@@ -233,11 +233,11 @@ def poll_sqs(config, instance_ids):
 
             else:
                 log.debug(
-                    f'SQS Poll got SQS: {body["job"]["id"]}; status: {body["job"]["status"]}. Not in { instance_ids }'
+                    f'SQS Poll got SQS: {instance_id} ({body["job"]["id"]}); status: {body["job"]["status"]}. Not in { instance_ids }'
                 )
 
             # Add the caught instance_id to the list
-            instance_ids_caught.append(body["job"]["id"])
+            instance_ids_caught.append(instance_id)
         return instance_ids_caught
 
     # Nothing got, return None
