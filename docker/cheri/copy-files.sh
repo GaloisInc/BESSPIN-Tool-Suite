@@ -1,15 +1,17 @@
 #! /usr/bin/env bash
 set -x
 
-sourceVariants=('' '-purecap' '-temporal')
+sourceVariants=('-default' '-purecap' '-temporal')
 
 mntPath=/mnt/cheridisk
 sudo mkdir -p $mntPath
 
 for sourceVariant in "${sourceVariants[@]}"; do
-    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/qemu/kernel-cheri${sourceVariant}.elf .
-    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/common/disk-image-cheri${sourceVariant}.img.zst .
+    targetSuffix=${sourceVariant%-default}
+    kernel=./kernel-cheri${sourceVariant}.elf
     diskImage=./disk-image-cheri${sourceVariant}.img
+    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/qemu/kernel-cheri${targetSuffix}.elf ${kernel}
+    cp ../../SSITH-FETT-Binaries/SRI-Cambridge/osImages/common/disk-image-cheri${targetSuffix}.img.zst ${diskImage}.zst
 
     unzstd ${diskImage}.zst
     devLoop=$(sudo losetup -f --show -P ${diskImage})
