@@ -67,4 +67,8 @@ ENV PATH "${CHERIBUILD_SDK}/bin:${PATH}"
 ENV CLANG "${CHERIBUILD_SDK}/bin/clang"
 ENV SYSROOT "${CHERIBUILD_SDK}/sysroot"
 
+COPY smoke.c .
+RUN $CLANG -target riscv64-unknown-freebsd --sysroot=$SYSROOT -fuse-ld=lld -mno-relax -march=rv64gcxcheri -mabi=l64pc128d smoke.c -o /dev/null
+RUN rm smoke.c
+
 WORKDIR /root
