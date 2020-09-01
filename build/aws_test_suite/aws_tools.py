@@ -7,6 +7,8 @@ import json
 import os
 import boto3
 import importlib.util
+import random
+import time
 
 from .logger import *
 
@@ -225,19 +227,26 @@ def poll_sqs(config, instance_ids):
             # Extract the body
             body = json.loads(message["Body"])
             instance_id = body["instance"]["id"]
+
+            # Check if we have a SQS related to the instances we are looking for
             if instance_id in instance_ids:
+                # Related
                 log.results(
                     f'SQS Poll got SQS: FINISHED: {body["job"]["id"]}, exited with status {body["job"]["status"]}.'
                 )
                 delete_message(message)
 
+                # Add the caught instance_id to the list
+                instance_ids_caught.append(instance_id)
+
             else:
+                # Unrelated
                 log.debug(
                     f'SQS Poll got SQS: {instance_id} ({body["job"]["id"]}); status: {body["job"]["status"]}. Not in { instance_ids }'
                 )
+                # Wait a random amount of time to break cycles
+                time.sleep(random.randint(3, 8))
 
-            # Add the caught instance_id to the list
-            instance_ids_caught.append(instance_id)
         return instance_ids_caught
 
     # Nothing got, return None
