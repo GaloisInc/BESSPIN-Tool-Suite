@@ -253,7 +253,7 @@ def poll_s3(config, instance_ids):
         ]
         # Take the set intersection of the running ids and the completed ids in S3 to get
         #   Ids pertinant to this program.
-        completed_ids = list(intersection(set(s3_finished_ids), set(instance_ids)))
+        completed_ids = list(set(s3_finished_ids).intersection(set(instance_ids)))
 
         log.debug(f"Found instance(s) in S3: { instance_ids }")
 
