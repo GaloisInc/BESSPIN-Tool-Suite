@@ -313,7 +313,7 @@
             "val" : {
                 "gdbPort" : 3333,
                 "gdbPath" : "riscv64-unknown-elf-gdb",
-                "openocdCfgPath" : "ssith_gfe.cfg",
+                "openocdCfgPath" : "fett/target/utils/ssith_gfe.cfg",
                 "openocdCommand" : "openocd",
                 "uartSerialDev" : "auto",
                 "resetBase" : "0x6FFF0000",
