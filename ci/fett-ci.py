@@ -88,7 +88,9 @@ def main(xArgs):
         printAndLog("FETT-CI: TestMode: Dumping some useful info...", doPrint=False)
 
     # nodes control
-    if xArgs.entrypoint == "OnPrem":
+    if (not xArgs.nodeIndex):
+        nodeIndex = 0
+    elif xArgs.entrypoint == "OnPrem":
         nodeIndex = xArgs.nodeIndex - 1  # $CI_NODE_INDEX starts from 1
     else:
         nodeIndex = xArgs.nodeIndex
@@ -118,7 +120,11 @@ def main(xArgs):
 
     # Else, generate the config file
     else:
-        allConfigs = generateAllConfigs(baseRunType, flavor)
+        if (xArgs.runMode == 'all'):
+            runModes = ['fett', 'cwe']
+        else:
+            runModes = [xArgs.runMode]
+        allConfigs = generateAllConfigs(baseRunType, flavor, runModes)
         actualNumConfigs = len(allConfigs)
         if xArgs.testOnly:
             printAndLog(
@@ -320,7 +326,7 @@ if __name__ == "__main__":
     )
     xGroupArtifacts.add_argument("-job", "--jobID", help="The CI job ID.")
     xArgParser.add_argument(
-        "-i", "--nodeIndex", help="The node index within the job.", type=int, default=0
+        "-i", "--nodeIndex", help="The node index within the job.", type=int
     )
     xArgParser.add_argument(
         "-N", "--nNodes", help="The total number of nodes.", type=int
