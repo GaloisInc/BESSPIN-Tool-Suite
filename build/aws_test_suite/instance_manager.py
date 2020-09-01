@@ -38,6 +38,20 @@ class InstanceManager:
         self._instances.append(instance)
         return self
 
+    def log_results(self, instance_id, instance_name):
+
+        results_file_path = os.path.join("/tmp", instance_id)
+        try:
+            # Read the log file in /tmp to get exit status
+            with open(results_file_path, "r") as f:
+                status = f.read().splitlines()[0]
+        except:
+            log.error(f"Failed to open file { results_file_path }")
+
+        log.results(
+            f"FINISHED: {instance_name} ({instance_id}), exited with status {status}."
+        )
+
     @log_assertion_fails
     def run_all_instances(self, config=None):
         """run all jobs at the same time
@@ -69,14 +83,15 @@ class InstanceManager:
         #   or we still have running instances.
         while len(self._instances) > 0 or len(running_instances) > 0:
             # There are still instances left to run / running
-            #   Therefore, we must check SQS to see if anything has happened
-            sqs = poll_sqs(config, [x.id for x in running_instances])
+            #   Therefore, we must check S3 to see if anything has happened
+            s3 = poll_s3(config, [x.id for x in running_instances])
 
             # Check for finished ID
-            if sqs is not None:
+            if s3 != []:
                 # Not an empty message - we have an ID
                 for i in running_instances:
-                    if i.id in sqs:
+                    if i.id in s3:
+                        i.log_results(i.id, i.name)
                         i.terminate()
                         log.info(f"Terminated instance { i.id }")
 

@@ -10,6 +10,20 @@ import importlib.util
 
 from .logger import *
 
+# +-----------------+
+# |  General Tools  |
+# +-----------------+
+
+
+def safe_traverse(in_dictionary, hierarchy):
+    while hierarchy:
+        item = hierarchy.pop(0)
+        if item in in_dictionary:
+            return safe_traverse(in_dictionary[item], hierarchy)
+        else:
+            logging.error(f"{ hierarchy } not present in { in_dictionary }. Quitting.")
+    return in_dictionary
+
 
 # +-----------------------------+
 # |  AWS Instance Manipulation  |
@@ -173,6 +187,82 @@ def launch_instance(
         instance = None
 
     return instance[0].id
+
+
+def poll_s3(config, instance_ids):
+    """
+    Poll AWS S3 for a file whose name is the instance id of any instance we are running.
+
+    If found, read the termination status, log results, and then delete it.
+
+    :return: instance id or None
+    :rtype: str
+    """
+
+    log.debug(f"Beginning poll_s3()")
+
+    if config is not None:
+        moduleSpec = importlib.util.spec_from_file_location("configs", config)
+        configs = importlib.util.module_from_spec(moduleSpec)
+        moduleSpec.loader.exec_module(configs)
+    else:
+        # Get path to the repoDir
+        awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
+        buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
+        repoDir = os.path.abspath(os.path.join(buildDir, os.pardir))
+
+        # Import Configs from $repoDir/ci/configs.py
+        moduleSpec = importlib.util.spec_from_file_location(
+            "configs", os.path.join(repoDir, "ci", "configs.py")
+        )
+        configs = importlib.util.module_from_spec(moduleSpec)
+        moduleSpec.loader.exec_module(configs)
+
+    # Start Boto3 Client
+    try:
+        sqs = boto3.client("s3")
+    except:
+        log.error(f"Failed to create the S3 client.")
+
+    # Define a way to delete a message
+    def delete_object(bucket_name, file_name):
+        try:
+            s3.delete_object(Bucket=bucket_name, Key=file_name)
+            log.info(f"Succeeded in removing object { file_name } from { bucket_name }")
+        except:
+            log.warning(f"Failed to remove object { file_name } from { bucket_name }")
+
+    log.debug("poll_sqs Polling S3")
+
+    try:
+        s3 = boto3.client("s3")
+        response = s3.list_objects_v2(
+            Bucket=configs.ciAWSbucketTesting, Prefix="communication/"
+        )
+        contents = safe_traverse(response, ["Contents"])
+
+    except:
+        log.error(f"Failed to receive a response from the SQS queue.")
+
+    # Take the set intersection of the running ids and the completed ids to get
+    #   Ids pertinant to this program.
+    completed_ids = list(
+        set([safe_traverse(obj, ["Key"]) for obj in contents]) & set(instance_ids)
+    )
+
+    # Download each result to /tmp, to be read later
+    for instance_id in completed_ids:
+        try:
+            results_file_path = os.path.join("/tmp", instance_id)
+            s3.meta.client.download_file(
+                Bucket=ciAWSbucketTesting, Key=instance_id, Filename=results_file_path
+            )
+            delete_object(ciAWSbucketTesting, instance_id)
+
+        except:
+            logging.error(f"Failed to get file { instance_id } from AWS S3")
+
+    return completed_ids
 
 
 # +-----------+

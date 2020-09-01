@@ -252,14 +252,11 @@ def prepareArtifact(
         # Upload the folder to S3
         if entrypoint == "AWS":
             awsModule.uploadToS3(
-                ciAWSbucket,
-                exitFettCi,
-                tarFileName,
-                f"fett-target/ci/artifacts/",
+                ciAWSbucket, exitFettCi, tarFileName, f"fett-target/ci/artifacts/",
             )
         else:  # AWS Testing
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, tarFileName, f"aws-testing/",
+                ciAWSbucketTesting, exitFettCi, tarFileName, f"artifacts/",
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
@@ -274,13 +271,24 @@ def prepareArtifact(
                 nodeIndex,
                 reason="fett-target-ci-termination",
             )
+            print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
         else:  # AWS Testing
-            awsModule.sendSQS(
-                ciAWSqueueTesting,
-                exitFettCi,
-                jobStatus,
-                jobID,
-                nodeIndex,
-                reason="aws-testing-fett-target-ci-termination",
+
+            # Create a file containing results, named with the instance id
+            try:
+                proc = subprocess.run(
+                    ["curl", "http://169.254.169.254/latest/meta-data/instance-id"],
+                    capture_output=True,
+                )
+                instance_id = proc.stdout
+            except Exception as exc:
+                errorAndLog("Failed to get instance id", exc=exc)
+
+            resultFileName = os.path.join(repoDir, instance_id)
+            with open(resultFileName, "w") as f:
+                f.write(jobStatus)
+
+            awsModule.uploadToS3(
+                ciAWSbucketTesting, exitFettCi, resultFileName, f"communication/",
             )
-        print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
+            print(f"(Info)~  FETT-CI: Results uploaded to S3.")
