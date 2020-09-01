@@ -84,6 +84,8 @@ class InstanceManager:
         while len(self._instances) > 0 or len(running_instances) > 0:
             # There are still instances left to run / running
             #   Therefore, we must check S3 to see if anything has happened
+            #   We wait 5 s to keep polling down.
+            time.sleep(5)
             s3 = poll_s3(config, [x.id for x in running_instances])
 
             # Check for finished ID
@@ -91,7 +93,7 @@ class InstanceManager:
                 # Not an empty message - we have an ID
                 for i in running_instances:
                     if i.id in s3:
-                        i.log_results(i.id, i.name)
+                        self.log_results(i.id, i.name)
                         i.terminate()
                         log.info(f"Terminated instance { i.id }")
 
