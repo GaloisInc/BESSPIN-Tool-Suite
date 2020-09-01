@@ -280,13 +280,15 @@ def prepareArtifact(
                     ["curl", "http://169.254.169.254/latest/meta-data/instance-id"],
                     capture_output=True,
                 )
-                instance_id = proc.stdout
+                printAndLog(f"Got instance ID: { instance_id }")
+                instance_id = proc.stdout.decode("utf-8")
             except Exception as exc:
                 errorAndLog("Failed to get instance id", exc=exc)
 
             resultFileName = os.path.join(repoDir, instance_id)
             with open(resultFileName, "w") as f:
                 f.write(jobStatus)
+                f.close()
 
             awsModule.uploadToS3(
                 ciAWSbucketTesting, exitFettCi, resultFileName, f"communication/",

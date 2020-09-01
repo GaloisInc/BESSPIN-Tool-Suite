@@ -21,7 +21,7 @@ def safe_traverse(in_dictionary, hierarchy):
         if item in in_dictionary:
             return safe_traverse(in_dictionary[item], hierarchy)
         else:
-            logging.error(f"{ hierarchy } not present in { in_dictionary }. Quitting.")
+            log.error(f"{ item } not present in { in_dictionary }. Quitting.")
     return in_dictionary
 
 
@@ -239,30 +239,39 @@ def poll_s3(config, instance_ids):
         response = s3.list_objects_v2(
             Bucket=configs.ciAWSbucketTesting, Prefix="communication/"
         )
+
+    except Exception as exc:
+        log.error(
+            f"Failed to recieve the contents of bucket { configs.ciAWSbucketTesting }., {exc}"
+        )
+
+    if "Contents" in response:
         contents = safe_traverse(response, ["Contents"])
 
-    except:
-        log.error(f"Failed to receive a response from the SQS queue.")
+        # Take the set intersection of the running ids and the completed ids to get
+        #   Ids pertinant to this program.
+        completed_ids = list(
+            set([safe_traverse(obj, ["Key"]) for obj in contents]) & set(instance_ids)
+        )
 
-    # Take the set intersection of the running ids and the completed ids to get
-    #   Ids pertinant to this program.
-    completed_ids = list(
-        set([safe_traverse(obj, ["Key"]) for obj in contents]) & set(instance_ids)
-    )
+        # Download each result to /tmp, to be read later
+        for instance_id in completed_ids:
+            try:
+                results_file_path = os.path.join("/tmp", instance_id)
+                s3.meta.client.download_file(
+                    Bucket=configs.ciAWSbucketTesting,
+                    Key=instance_id,
+                    Filename=results_file_path,
+                )
+                delete_object(configs.ciAWSbucketTesting, instance_id)
 
-    # Download each result to /tmp, to be read later
-    for instance_id in completed_ids:
-        try:
-            results_file_path = os.path.join("/tmp", instance_id)
-            s3.meta.client.download_file(
-                Bucket=ciAWSbucketTesting, Key=instance_id, Filename=results_file_path
-            )
-            delete_object(ciAWSbucketTesting, instance_id)
+            except:
+                log.error(f"Failed to get file { instance_id } from AWS S3")
 
-        except:
-            logging.error(f"Failed to get file { instance_id } from AWS S3")
+        return completed_ids
 
-    return completed_ids
+    else:
+        return []
 
 
 # +-----------+
