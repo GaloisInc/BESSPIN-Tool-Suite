@@ -61,7 +61,7 @@ def exitOnInterrupt(xSig, xFrame):
     exitFettCi(message=f"Received <{sigName}>!")
 
 
-def generateAllConfigs(baseRunType, flavor):
+def generateAllConfigs(baseRunType, flavor, runModes):
     # create a list of unique dictionaries. Each dictionary can become a .ini instance
     def createConfig(inputSet, inputDict):
         if not inputSet:  # we're done
@@ -87,11 +87,14 @@ def generateAllConfigs(baseRunType, flavor):
         createConfig(inputSet, inputDict)
 
     allConfigs = []
-    for xApp, xSet in appSets[baseRunType][flavor].items():
-        inputSet = copy.deepcopy(xSet)
-        inputDict = {"name": [xApp]}
-        allConfigs.append(inputDict)
-        createConfig(inputSet, inputDict)
+    for runMode in runModes:
+        for xApp, xSet in appSets[baseRunType][flavor][runMode].items():
+            inputSet = copy.deepcopy(xSet)
+            inputDict = {"name": [xApp]}
+            if (len(runModes)>1):
+                inputDict["name"].append(runMode)
+            allConfigs.append(inputDict)
+            createConfig(inputSet, inputDict)
 
     # Produce a consistent naming order:
     for xConfig in allConfigs:
@@ -130,7 +133,8 @@ def generateConfigFile(repoDir, outDir, dictConfig, testMode):
             if xSetting in xConfig[xSection]:
                 xConfig.set(xSection, xSetting, str(xValue))
                 wasSet = True
-                break
+                if (xSetting not in ['runAllTests', 'randomizeParameters']): #repeated settings
+                    break
         if not wasSet:
             exitFettCi(
                 message=f"Failed to find the setting <{xSetting}> in <{templateConfigPath}>."
