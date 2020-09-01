@@ -34,17 +34,7 @@ try:
     import sys, os, glob, shutil, time, itertools
     import json, configparser, socket, re, logging
     import subprocess, argparse, signal, copy
-    from utils import (
-        printAndLog,
-        warnAndLog,
-        errorAndLog,
-        exitFettCi,
-        exitOnInterrupt,
-        generateAllConfigs,
-        generateConfigFile,
-        prepareArtifact,
-    )
-    from configs import fettTargetAMI
+    from utils import *
     from pygit2 import Repository
 except Exception as exc:
     exitFettCi(exitCode=-1, exc=exc)
@@ -158,7 +148,7 @@ def main(xArgs):
                 generateConfigFile(repoDir, outDir, dictConfig, xArgs.testOnly)
 
             if xArgs.entrypoint in ["AWS", "AWSTesting"]:  # generate the info file
-                infoDict = {"nNodes": actualNumConfigs, "fettTargetAMI": fettTargetAMI}
+                infoDict = {"nNodes": actualNumConfigs, "fettTargetAMI": getFettTargetAMI(repoDir)}
                 infoFilePath = os.path.join(outDir, "awsCiInfo.json")
                 try:
                     infoFile = open(infoFilePath, "w")

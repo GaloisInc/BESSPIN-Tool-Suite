@@ -7,6 +7,7 @@
 from configs import *
 import configparser, os, copy, time, glob
 import traceback, shutil, subprocess, logging
+from pygit2 import Repository
 
 
 def formatExc(exc):
@@ -284,3 +285,23 @@ def prepareArtifact(
                 reason="aws-testing-fett-target-ci-termination",
             )
         print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
+
+def getFettTargetAMI (repoDir):
+    try:
+        repo = Repository(repoDir)
+        maxVersion = (0, None)
+        for ref in repo.listall_references():
+            if (not ref.startswith('refs/tags/v')):
+                continue
+            xRef = ref.split('refs/tags/v')[1] #throw away the first part
+            xItems = xRef.split('-')
+            xVersion = xItems[0].split('.')
+            valVersion = 1000*int(xVersion[0]) + int(xVersion[1]) # so "3.10" --> 3,010
+            if (valVersion > maxVersion[0]):
+                maxVersion = (valVersion, xItems)
+        if (maxVersion[0]==0):
+            raise Exception("getFettTargetAMI: Failed to find the newest version.")
+        return '-'.join(maxVersion[1][1:])
+
+    except Exception as exc:
+        exitFettCi(message=f"Failed to get the AMI from the tags.", exc=exc)
