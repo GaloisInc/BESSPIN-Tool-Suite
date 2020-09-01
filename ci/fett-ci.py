@@ -3,6 +3,7 @@
 --- fett-ci.py is the CI entry to the FETT-Target program. 
 --- usage: fett-ci.py [-h] (-art ARTIFACTSUFFIX | -job JOBID) [-i NODEINDEX]
                   [-N NNODES] [-t JOBTIMEOUT] [-X] -ep {OnPrem,AWS,AWSTesting}
+                  [-tp {FETT,CWE,all}]
                   runType
 
 FETT-CI (CI Entry to FETT-Target)
@@ -28,6 +29,8 @@ optional arguments:
                         meta data. Does not run anything.
   -ep {OnPrem,AWS,AWSTesting}, --entrypoint {OnPrem,AWS,AWSTesting}
                         Entrypoint: OnPrem | AWS | AWSTesting
+  -tp {FETT,CWE,all}, --runType {FETT,CWE,all}
+                        Run Type: FETT | CWE | all
 """
 
 try:
@@ -339,6 +342,13 @@ if __name__ == "__main__":
         required=True,
         choices=["OnPrem", "AWS", "AWSTesting"],
         help="Entrypoint: OnPrem | AWS | AWSTesting",
+    )
+    xArgParser.add_argument(
+        "-tp",
+        "--runType",
+        choices=["FETT", "CWE", "all"],
+        default="FETT",
+        help="Run Type: FETT | CWE | all",
     )
     xArgs = xArgParser.parse_args()
 
