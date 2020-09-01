@@ -220,7 +220,7 @@ def poll_s3(config, instance_ids):
 
     # Start Boto3 Client
     try:
-        sqs = boto3.client("s3")
+        s3 = boto3.client("s3")
     except:
         log.error(f"Failed to create the S3 client.")
 
@@ -232,17 +232,18 @@ def poll_s3(config, instance_ids):
         except:
             log.warning(f"Failed to remove object { file_name } from { bucket_name }")
 
-    log.debug("poll_sqs Polling S3")
+    log.debug("poll_s3 Polling S3")
 
     try:
         s3 = boto3.client("s3")
         response = s3.list_objects_v2(
             Bucket=configs.ciAWSbucketTesting, Prefix="communication/"
         )
+        log.debug(f"Polling S3 got response: { response }")
 
-    except Exception as exc:
+    except:
         log.error(
-            f"Failed to recieve the contents of bucket { configs.ciAWSbucketTesting }., {exc}"
+            f"Failed to recieve the contents of bucket { configs.ciAWSbucketTesting }."
         )
 
     if "Contents" in response:
@@ -251,22 +252,28 @@ def poll_s3(config, instance_ids):
         # Take the set intersection of the running ids and the completed ids to get
         #   Ids pertinant to this program.
         completed_ids = list(
-            set([safe_traverse(obj, ["Key"]) for obj in contents]) & set(instance_ids)
+            set([safe_traverse(obj, ["Key"])[14:] for obj in contents])
+            & set(instance_ids)
         )
+
+        log.debug(f"Found an instance in S3 { instance_id }")
 
         # Download each result to /tmp, to be read later
         for instance_id in completed_ids:
             try:
+                s3_file_name = "communication/" + instance_id
                 results_file_path = os.path.join("/tmp", instance_id)
-                s3.meta.client.download_file(
+                s3.download_file(
                     Bucket=configs.ciAWSbucketTesting,
-                    Key=instance_id,
+                    Key=s3_file_name,
                     Filename=results_file_path,
                 )
-                delete_object(configs.ciAWSbucketTesting, instance_id)
+                log.debug(f"Downloaded result for instance { instance_id } from S3")
+                delete_object(configs.ciAWSbucketTesting, s3_file_name)
+                log.debug(f"Deleted result for instance { instance_id } from S3")
 
-            except:
-                log.error(f"Failed to get file { instance_id } from AWS S3")
+            except Exception as exc:
+                log.error(f"Failed to get file { instance_id } from AWS S3, { exc }")
 
         return completed_ids
 
@@ -319,7 +326,7 @@ def poll_sqs(config, instance_ids):
                 QueueUrl=configs.ciAWSqueueTesting,
                 ReceiptHandle=message["ReceiptHandle"],
             )
-            log.info("Succeeded in removing message from SQS queue.")
+            log.debug("Succeeded in removing message from SQS queue.")
         except:
             log.warning("Failed to delete the message from the SQS queue.")
 
