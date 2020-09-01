@@ -170,20 +170,34 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
     if getSetting('FreeRTOSUseRAMDisk'):
         envVars.append(f"FREERTOS_USE_RAMDISK=1")
     envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
-    logging.debug(f"going to make using {envVars}")
 
     if isEqSetting('binarySource', 'Michigan'):
         dockerToolchainImage = 'michigan-image:1.0'
         envVars.append("USE_MORPHEUS=yes")
-        envVars.append(f"INC_FETT_APPS=/root/makeDir/workDir/build")
-        dockerMountOverride = getSetting('repoDir')
-        dockerWorkDir = "/root/makeDir/FreeRTOS-10.0.1/FreeRTOS/Demo/RISC-V_Galois_P1"
+
+        # Build directory must be mounted at INC_FETT_APPS
+        dockerBuildMount = "/root/build"
+        envVars.append(f"INC_FETT_APPS={dockerBuildMount}")
+        dockerExtraMounts = {getSetting('buildDir') : dockerBuildMount}
+
+        # Common directory must be mounted in the parent of the working
+        # directory
+        hostCommon = os.path.join(getSetting("FreeRTOSprojDir"), "..", "Common")
+        dockerExtraMounts[hostCommon] = "/root/Common"
+
+        # Source directory must be moutned in the grandparent of the working
+        # directory
+        hostSource = os.path.join(getSetting("FreeRTOSprojDir"),
+                                  "..",
+                                  "..",
+                                  "Source")
+        dockerExtraMounts[hostSource] = "/Source"
+
         # Do not set SYSROOT_DIR in the Michigan case, despite being built
         # with clang, because SYSROOT_DIR is already set in the docker image
     else:
         dockerToolchainImage = None
-        dockerMountOverride = None
-        dockerWorkDir = None
+        dockerExtraMounts = {}
         envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
         if (isEqSetting('cross-compiler','Clang')):
             # check that the sysroot env variable exists:
@@ -192,20 +206,19 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
                 logAndExit (f"<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
             envVars.append(f"SYSROOT_DIR={os.environ[sysRootEnv]}")
 
+    logging.debug(f"going to make using {envVars}")
     if (isEqSetting('mode','evaluateSecurityTests') and
         isEnabled('useCustomCompiling') and 
         isEnabledDict('customizedCompiling','useCustomMakefile')
         ):
         make (envVars,getSetting('buildDir'),
               dockerToolchainImage=dockerToolchainImage,
-              dockerMountOverride=dockerMountOverride,
-              dockerWorkDir=dockerWorkDir)
+              dockerExtraMounts=dockerExtraMounts)
     else: 
         # default environment
         make (envVars,getSetting('FreeRTOSprojDir'),
               dockerToolchainImage=dockerToolchainImage,
-              dockerMountOverride=dockerMountOverride,
-              dockerWorkDir=dockerWorkDir)
+              dockerExtraMounts=dockerExtraMounts)
 
     #check if the elf file was created
     builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
@@ -220,23 +233,11 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
 
     if isEqSetting('binarySource', 'Michigan'):
         # Encrypt elf file
-        argsList = ['sudo', 'docker', 'run', '-it', '--privileged=true',
+        argsList = ['docker', 'run', '-it', '--privileged=true',
                     '-v', f'{getSetting("FreeRTOSprojDir")}:/root/makeDir',
                     dockerToolchainImage,
                     'bash', '-c', f'elf-parser -e /root/makeDir/main_fett.elf']
-        outElfParser = ftOpenFile(os.path.join(getSetting('buildDir'),
-                                               'elf-parser.out'),
-                                  'a')
-        try:
-            subprocess.check_call(argsList,
-                                  stdout=outElfParser,
-                                  stderr=outElfParser)
-        except Exception as exc:
-            outElfParser.close()
-            logAndExit(f"Failed to <{' '.join(argsList)}>",
-                       exc=exc,
-                       exitCode=EXIT.Run)
-        outElfParser.close()
+        sudoShellCommand(argsList)
 
     #Cleaning all ".o" files post run
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
