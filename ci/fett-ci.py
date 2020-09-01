@@ -85,9 +85,7 @@ def main(xArgs):
         printAndLog("FETT-CI: TestMode: Dumping some useful info...", doPrint=False)
 
     # nodes control
-    if not xArgs.nodeIndex:
-        nodeIndex = 0
-    elif xArgs.entrypoint == "OnPrem":
+    if xArgs.entrypoint == "OnPrem":
         nodeIndex = xArgs.nodeIndex - 1  # $CI_NODE_INDEX starts from 1
     else:
         nodeIndex = xArgs.nodeIndex
@@ -319,7 +317,7 @@ if __name__ == "__main__":
     )
     xGroupArtifacts.add_argument("-job", "--jobID", help="The CI job ID.")
     xArgParser.add_argument(
-        "-i", "--nodeIndex", help="The node index within the job.", type=int
+        "-i", "--nodeIndex", help="The node index within the job.", type=int, default=0
     )
     xArgParser.add_argument(
         "-N", "--nNodes", help="The total number of nodes.", type=int
