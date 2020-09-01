@@ -235,7 +235,6 @@ def poll_s3(config, instance_ids):
     log.debug("poll_s3 Polling S3")
 
     try:
-        s3 = boto3.client("s3")
         response = s3.list_objects_v2(
             Bucket=configs.ciAWSbucketTesting, Prefix="communication/"
         )
