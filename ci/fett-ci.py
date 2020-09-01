@@ -62,6 +62,7 @@ def main(xArgs):
     )
     printAndLog(f"Fett CI Started")
 
+    outDir = "/tmp"
     # Check runType
     baseRunTypes = ["runOnPush", "runDevPR", "runPeriodic", "runRelease"]
     if xArgs.entrypoint in ["AWS", "AWSTesting"]:
@@ -71,7 +72,6 @@ def main(xArgs):
             )
         baseRunType = xArgs.runType
         flavor = "aws"
-        outDir = "/tmp"
     elif xArgs.entrypoint == "OnPrem":
         flavors = ["unix", "freertos"]
         listRunTypes = [
@@ -82,7 +82,6 @@ def main(xArgs):
                 message=f"Invalid runType argument. For OnPrem, runType has to be in {listRunTypes}."
             )
         baseRunType, flavor = xArgs.runType.split("-")
-        outDir = repoDir
 
     if xArgs.testOnly:
         printAndLog("FETT-CI: TestMode: Dumping some useful info...", doPrint=False)
@@ -128,13 +127,11 @@ def main(xArgs):
         actualNumConfigs = len(allConfigs)
         if xArgs.testOnly:
             printAndLog(
-                f"FETT-CI: <{xArgs.runType}> has <{actualNumConfigs}> configurations in total.",
-                doPrint=False,
+                f"FETT-CI: <{xArgs.runType}> has <{actualNumConfigs}> configurations in total."
             )
             dumpDir = os.path.join(outDir, "dumpIni")
             printAndLog(
-                f"FETT-CI: The configurations will be listed here and dumped in <{dumpDir}>:",
-                doPrint=False,
+                f"FETT-CI: The configurations will be listed here and dumped in <{dumpDir}>:"
             )
 
             # If the dumpdir already exists, delete it
