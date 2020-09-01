@@ -248,14 +248,14 @@ def poll_s3(config, instance_ids):
     if "Contents" in response:
         contents = safe_traverse(response, ["Contents"])
 
-        # Take the set intersection of the running ids and the completed ids to get
+        s3_finished_ids = [
+            safe_traverse(obj, ["Key"]).split("communication/")[0] for obj in contents
+        ]
+        # Take the set intersection of the running ids and the completed ids in S3 to get
         #   Ids pertinant to this program.
-        completed_ids = list(
-            set([safe_traverse(obj, ["Key"])[14:] for obj in contents])
-            & set(instance_ids)
-        )
+        completed_ids = list(intersection(set(s3_finished_ids), set(instance_ids)))
 
-        log.debug(f"Found an instance in S3 { instance_id }")
+        log.debug(f"Found instance(s) in S3: { instance_ids }")
 
         # Download each result to /tmp, to be read later
         for instance_id in completed_ids:
