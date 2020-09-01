@@ -196,6 +196,11 @@ def prepareArtifact(
 
         listEssentialArtifacts = [configFile, targetLogFile] + outFiles
 
+        # optional file
+        makeOutPath = os.path.join(workDir, "build", "make.out")
+        if (os.path.isfile(makeOutPath)):
+            listEssentialArtifacts.append(makeOutPath)
+
     # List all artifacts that are fine to ignore if they do not exist.
     logFile = os.path.join(repoDir, "fett-ci.log")
     userDatatargetLogFile = os.path.join("/var", "log", "user-data.log")
@@ -211,6 +216,16 @@ def prepareArtifact(
             except Exception as exc:
                 exitFettCi(
                     message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",
+                    exc=exc,
+                )
+        #optional directories
+        cweLogsPath = os.path.join(workDir,"cwesEvaluationLogs")
+        if (os.path.isdir(cweLogsPath)):
+            try:
+                shutil.copytree(cweLogsPath, artifactsPath)
+            except Exception as exc:
+                exitFettCi(
+                    message=f"Failed to copy <{cweLogsPath}> to <{artifactsPath}>.",
                     exc=exc,
                 )
 
