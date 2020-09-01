@@ -156,11 +156,13 @@ class Gfe:
     def setupUart(
         self,
         timeout=None, # wait forever on read data
-        port=getSettingDict("gfeInfo", "uartSerialDev"),
+        port=None,
         baud=9600,
         parity="ODD",
         stopbits=2,
         bytesize=8):
+
+        port = getSettingDict("gfeInfo", "uartSerialDev") if port is None else port
 
         # Get the UART port
         if port == "auto":

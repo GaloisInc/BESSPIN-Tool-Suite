@@ -5,6 +5,7 @@ Main fpga class + misc fpga functions
 
 from fett.base.utils.misc import *
 from fett.target.common import *
+from fett.target.utils.gfe import Gfe
 
 import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
@@ -35,12 +36,7 @@ class fpgaTarget (commonTarget):
         return
 
     def setupGfe(self):
-        # defer import for settings
-        from fett.target.utils.gfe import Gfe
-        if isEqSetting('osImage', 'FreeRTOS'):
-            self.gfe = Gfe(gdb_path="riscv64-unknown-elf-gdb", xlen=int(getSetting('xlen')))
-        else:
-            self.gfe = Gfe(gdb_path="riscv64-unknown-elf-gdb", xlen=int(getSetting('xlen')))
+        self.gfe = Gfe(gdb_path="riscv64-unknown-elf-gdb", xlen=int(getSetting('xlen')))
         self.gfe.startGdb()
         self.gfe.softReset()
 
