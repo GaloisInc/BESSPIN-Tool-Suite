@@ -37,6 +37,62 @@ def prepareOsImage ():
     else:
         logAndExit (f"<target.prepareOsImage> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
+
+@decorate.debugWrap
+@decorate.timeWrap
+def freeRTOSBuildChecks():
+    """
+    Check FreeRTOS build parameters and set settings appropriately
+    """
+    # Check if FreeRTOS mirror is checked out properly
+    forkDir = os.path.join(getSetting('repoDir'),getSetting('FreeRTOSforkName'))
+    setSetting('FreeRTOSforkDir',forkDir)
+    if (not os.path.isdir(getSetting('FreeRTOSforkDir'))):
+        logAndExit (f"Failed to find the FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}>. Please use <git submodule update --init>.",exitCode=EXIT.Environment)
+    if (len(os.listdir(getSetting('FreeRTOSforkDir'))) == 0):
+        logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}> is empty. Please use <git submodule update>.",exitCode=EXIT.Environment)
+
+    projDir = os.path.join(getSetting('FreeRTOSforkDir'),getSetting('FreeRTOSprojName'))
+    setSetting('FreeRTOSprojDir',projDir)
+    if (not os.path.isdir(getSetting('FreeRTOSprojDir'))):
+        logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
+
+    #cross-compiling sanity checks
+    if (isEqSetting('cross-compiler','GCC') and (not isEqSetting('linker','GCC'))):
+        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <GCC> is not supported. Linking using <GCC> instead.")
+        setSetting('linker','GCC')
+    if (isEqSetting('cross-compiler','Clang') and (not isEqSetting('linker','LLD'))):
+        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <Clang> is not supported. Linking using <LLD> instead.")
+        setSetting('linker','LLD')
+
+    # C++ SD Arduino library causing issues with Clang
+    if (isEqSetting('cross-compiler','Clang') and (isEqSetting('target','fpga'))):
+        logAndExit(f"Building FreeRTOS using Clang/LLD is not yet implemented for target <fpga>.",exitCode=EXIT.Implementation)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def prepareFreeRTOSNetworkParameters():
+    #Include the network configuration parameters
+    #This is a list of tuples: (settingName, macroNameBase, int/hex)
+    thisTarget = getSetting('target')
+    listConfigIpParams = [(f"{thisTarget}MacAddrTarget",'configMAC_ADDR', hex), (f"{thisTarget}IpTarget",'configIP_ADDR', int),
+                          (f"{thisTarget}IpHost",'configGATEWAY_ADDR', int), (f"{thisTarget}NetMaskTarget",'configNET_MASK', int)]
+
+    def mapVal(val,xType):
+        if (xType==int):
+            return int(val)
+        elif (xType==hex):
+            return "0x{:02X}".format(int(val,16))
+
+    configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettFreeRTOSIPConfig.h'),'a')
+    for xSetting,xMacro,xType in listConfigIpParams:
+        for iPart,xPart in enumerate(re.split(r'[\.\:]',getSetting(xSetting))):
+            try:
+                configIpHfile.write(f"#define {xMacro}{iPart} {mapVal(xPart,xType)}\n")
+            except Exception as exc:
+                logAndExit(f"Failed to populate <fettFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+    configIpHfile.close()
+
 @decorate.debugWrap
 @decorate.timeWrap
 def prepareFreeRTOS():
@@ -59,30 +115,7 @@ def prepareFreeRTOS():
     if (not isEnabled('buildApps')): #just fetch the image
         importImage()
     else: #build it
-        # Check if FreeRTOS mirror is checked out properly
-        forkDir = os.path.join(getSetting('repoDir'),getSetting('FreeRTOSforkName'))
-        setSetting('FreeRTOSforkDir',forkDir)
-        if (not os.path.isdir(getSetting('FreeRTOSforkDir'))):
-            logAndExit (f"Failed to find the FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}>. Please use <git submodule update --init>.",exitCode=EXIT.Environment)
-        if (len(os.listdir(getSetting('FreeRTOSforkDir'))) == 0):
-            logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}> is empty. Please use <git submodule update>.",exitCode=EXIT.Environment)
-
-        projDir = os.path.join(getSetting('FreeRTOSforkDir'),getSetting('FreeRTOSprojName'))
-        setSetting('FreeRTOSprojDir',projDir)
-        if (not os.path.isdir(getSetting('FreeRTOSprojDir'))):
-            logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
-
-        #cross-compiling sanity checks
-        if (isEqSetting('cross-compiler','GCC') and (not isEqSetting('linker','GCC'))):
-            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <GCC> is not supported. Linking using <GCC> instead.")
-            setSetting('linker','GCC')
-        if (isEqSetting('cross-compiler','Clang') and (not isEqSetting('linker','LLD'))):
-            warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <Clang> is not supported. Linking using <LLD> instead.")
-            setSetting('linker','LLD')
-
-        # C++ SD Arduino library causing issues with Clang
-        if (isEqSetting('cross-compiler','Clang') and (isEqSetting('target','fpga'))):
-            logAndExit(f"Building FreeRTOS using Clang/LLD is not yet implemented for target <fpga>.",exitCode=EXIT.Implementation)
+        freeRTOSBuildChecks()
 
         #copy the C files, .mk files, and any directory
         copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
@@ -109,66 +142,58 @@ def prepareFreeRTOS():
         configHfile.write(f"#define FETT_MODE \'{getSetting('mode')[0].upper()}\'\n")
         configHfile.close()
 
-        #Include the network configuration parameters
-        #This is a list of tuples: (settingName, macroNameBase, int/hex)
-        thisTarget = getSetting('target')
-        listConfigIpParams = [(f"{thisTarget}MacAddrTarget",'configMAC_ADDR', hex), (f"{thisTarget}IpTarget",'configIP_ADDR', int),
-                              (f"{thisTarget}IpHost",'configGATEWAY_ADDR', int), (f"{thisTarget}NetMaskTarget",'configNET_MASK', int)]
+        prepareFreeRTOSNetworkParameters()
+        buildFreeRTOS()
+    return
 
-        def mapVal(val,xType):
-            if (xType==int):
-                return int(val)
-            elif (xType==hex):
-                return "0x{:02X}".format(int(val,16))
 
-        configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettFreeRTOSIPConfig.h'),'a')
-        for xSetting,xMacro,xType in listConfigIpParams:
-            for iPart,xPart in enumerate(re.split(r'[\.\:]',getSetting(xSetting))):
-                try:
-                    configIpHfile.write(f"#define {xMacro}{iPart} {mapVal(xPart,xType)}\n")
-                except Exception as exc:
-                    logAndExit(f"Failed to populate <fettFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
-        configIpHfile.close()
+def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
+    #Cleaning all ".o" and ".elf" files in site
+    cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
+    cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
 
-        #Cleaning all ".o" and ".elf" files in site
-        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
-        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
-
-        #Compile
-        printAndLog (f"Cross-compiling...")
-        envVars = []
-        envVars.append(f"XLEN={getSetting('xlen')}")
-        envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
-        if (isEqSetting('cross-compiler','Clang')):
-            # check that the sysroot env variable exists:
-            sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
-            if (sysRootEnv not in os.environ):
-                logAndExit (f"<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
-            envVars.append(f"SYSROOT_DIR={os.environ[sysRootEnv]}")
-        envVars.append(f"PROG=main_fett")
-        envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
-        envVars.append(f"BSP={getSetting('target')}")
-        if getSetting('FreeRTOSUseRAMDisk'):
-            envVars.append(f"FREERTOS_USE_RAMDISK=1")
-        envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
-        logging.debug(f"going to make using {envVars}")
+    #Compile
+    printAndLog (f"Cross-compiling...",doPrint=doPrint)
+    envVars = extraEnvVars
+    envVars.append(f"XLEN={getSetting('xlen')}")
+    envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
+    if (isEqSetting('cross-compiler','Clang')):
+        # check that the sysroot env variable exists:
+        sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
+        if (sysRootEnv not in os.environ):
+            logAndExit (f"<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
+        envVars.append(f"SYSROOT_DIR={os.environ[sysRootEnv]}")
+    envVars.append(f"PROG=main_fett")
+    envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
+    envVars.append(f"BSP={getSetting('target')}")
+    if getSetting('FreeRTOSUseRAMDisk'):
+        envVars.append(f"FREERTOS_USE_RAMDISK=1")
+    envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
+    logging.debug(f"going to make using {envVars}")
+    
+    if (isEqSetting('mode','evaluateSecurityTests') and
+        isEnabled('useCustomCompiling') and 
+        isEnabledDict('customizedCompiling','useCustomMakefile')
+        ):
+        make (envVars,getSetting('buildDir'))
+    else: 
+        # default environment
         make (envVars,getSetting('FreeRTOSprojDir'))
 
-        #check if the elf file was created
-        builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
-        builtAsm = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.asm')
-        if (not os.path.isfile(builtElf)):
-            logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
-        cp(builtElf,getSetting('osImageElf'))
-        if (not os.path.isfile(builtAsm)):
-            logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
-        cp(builtAsm,getSetting('osImageAsm'))
-        printAndLog(f"Files cross-compiled successfully.")
+    #check if the elf file was created
+    builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
+    builtAsm = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.asm')
+    if (not os.path.isfile(builtElf)):
+        logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
+    cp(builtElf,getSetting('osImageElf'))
+    if (not os.path.isfile(builtAsm)):
+        logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
+    cp(builtAsm,getSetting('osImageAsm'))
+    printAndLog(f"Files cross-compiled successfully.",doPrint=doPrint)
 
-        #Cleaning all ".o" files post run
-        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
-        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
-    return
+    #Cleaning all ".o" files post run
+    cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
+    cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -248,3 +273,38 @@ def cleanDirectory (xDir,endsWith='.o'):
                     os.remove(os.path.join(xDirName,xFile))
                 except Exception as exc:
                     logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.", exitCode=EXIT.Files_and_paths)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def crossCompileUnix(directory,extraString=''):
+    if (isEqSetting('binarySource','SRI-Cambridge')):
+        if (not isEqSetting('cross-compiler','Clang')):
+            warnAndLog (f"Compiling using <{getSetting('cross-compiler')}> for <{getSetting('binarySource')}> is not supported."
+                " Compiling using <Clang> instead.")
+            setSetting('cross-compiler','Clang')
+        if (not isEqSetting('linker','LLD')):
+            warnAndLog (f"Linking using <{getSetting('linker')}> for <{getSetting('binarySource')}> is not supported."
+                " Linking using <LLD> instead.")
+            setSetting('linker','LLD')
+
+    #cross-compiling sanity checks
+    if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
+        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.")
+        setSetting('linker','GCC')
+
+    printAndLog (f"Cross-compiling {extraString}...")
+    envLinux = []
+    osImageCap1 = getSetting('osImage')[0].upper() + getSetting('osImage')[1:]
+    envLinux.append(f"OS_IMAGE={osImageCap1}")
+    envLinux.append(f"TARGET={getSetting('target').upper()}")
+    envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
+    envLinux.append(f"LINKER={getSetting('linker').upper()}")
+    envLinux.append(f"BIN_SOURCE={getSetting('binarySource').replace('-','_')}")
+    envLinux.append(f"SOURCE_VARIANT={getSetting('sourceVariant')}")
+    logging.debug(f"going to make using {envLinux}")
+    if (isEqSetting('binarySource','SRI-Cambridge')):
+        dockerToolchainImage = 'cambridge-toolchain'
+    else:
+        dockerToolchainImage = None
+    make (envLinux, directory,dockerToolchainImage=dockerToolchainImage)
+    printAndLog(f"Files cross-compiled successfully.")

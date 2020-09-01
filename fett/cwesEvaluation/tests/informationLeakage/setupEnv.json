@@ -1,0 +1,13 @@
+{
+    "_usage" : "This json file has the environment setup that is not to be changed per run.",
+    "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
+    "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
+
+    "informationLeakage" : [
+        {
+            "name" : "classSpecificMake",
+            "type" : "bool",
+            "val"  : 1
+        }
+    ]
+}

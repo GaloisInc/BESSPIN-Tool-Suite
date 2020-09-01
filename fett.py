@@ -120,12 +120,13 @@ def main (xArgs):
         configFile = os.path.join(repoDir,'config.ini')
         printAndLog(f"Using the default configuration in <{configFile}>.")
     setSetting('configFile', configFile)
-    loadConfiguration(configFile)
 
     #Prepare the peaceful exit
     setSetting('trash',trashCanObj())
     atexit.register(exitPeacefully,getSetting('trash'))
-    
+
+    loadConfiguration(configFile)
+
     #launch the tool
     xTarget = startFett()
     if (isEqSetting('mode','production')):

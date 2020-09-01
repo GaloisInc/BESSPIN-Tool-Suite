@@ -1,17 +1,21 @@
 {
     "_usage" : "This json file has the fett parameters. This is the guide to check that the configuration file is legal.",
     "_name" : "The option name.",
-    "_type" : "int (or integer), str (or string), bool (or boolean), filePath",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, hex, hexPairsList, hexList",
+    "_type_cont" : "stringsList, ipAddress, macAddress, dict",
     "_choices" : "a list of acceptable choices. Use for int or str",
     "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
     "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
     "_condition" : "only for filePath. If present, only check the path validity if the option in the condition is True.",
+    "_size" : "only for hex. Number of hex characters (if less, it will be padded by zeros)",
+    "_wildValue" : "only for hexList. If present, this value means something special.",
+    "_exception" : "only for hexList. If present, this option's value is not legal",
 
     "backend" : [
         {
             "name" : "mode",
             "type" : "string",
-            "choices" : [ "test", "production" ]
+            "choices" : [ "test", "production", "evaluateSecurityTests" ]
         },
         {
             "name" : "target",
@@ -133,5 +137,210 @@
             "type" : "string",
             "choices" : [ "GCC", "LLD" ]
         }
+    ],
+
+    "evaluateSecurityTests" : [
+        {
+            "name" : "vulClasses",
+            "type" : "stringsList",
+            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors" ]
+        },
+        {
+            "name" : "useCustomScoring",
+            "type" : "boolean"
+        },
+        {
+            "name" : "useCustomCompiling",
+            "type" : "boolean"
+        },
+        {
+            "name" : "FreeRTOStimeout",
+            "type" : "int",
+            "min" : 0
+        }
+    ],
+
+    "customizedScoring" : [
+        {
+            "name" : "stdoutKeywords",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "gdbKeywords",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "funcCheckpoints",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "memAddress",
+            "type" : "hex",
+            "size" : 8,
+            "min" : -1
+        },
+        {
+            "name" : "memResetValue",
+            "type" : "hex",
+            "size" : 8,
+            "min" : 0
+        },
+        {
+            "name" : "memViolationValues",
+            "type" : "hexList",
+            "size" : 8,
+            "min" : 0,
+            "wildValue" : "*",
+            "exception" : "memResetValue"
+        },
+        {
+            "name" : "useCustomFunction",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomFunction",
+            "type" : "filePath",
+            "condition" : "useCustomFunction"
+        }
+    ],
+
+    "customizedCompiling" : [
+        {
+            "name" : "useCustomMakefile",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomMakefile",
+            "type" : "filePath",
+            "condition" : "useCustomMakefile"
+        }
+    ],
+
+    "commonVulClassesParameters" : [
+        {
+            "name" : "runAllTests",
+            "type" : "bool"
+        }
+    ],
+
+    "bufferErrors": [
+        {
+            "name" : "nTests",
+            "type" : "int",
+            "min" : 1
+        },
+        {
+            "name" : "nSkip",
+            "type" : "int",
+            "min" : 0
+        },
+        {
+            "name" : "heapSize",
+            "type" : "string"
+        },
+        {
+            "name" : "stackSize",
+            "type" : "string"
+        },
+        {
+            "name" : "useExtraTests",
+            "type" : "bool"
+        },
+        {
+            "name" : "extraSources",
+            "type" : "string"
+        },
+        {
+            "name" : "csvFile",
+            "type" : "bool"
+        },
+        {
+            "name" : "useSeed",
+            "type" : "bool"
+        },
+        {
+            "name" : "seed",
+            "type" : "int"
+        },
+        {
+            "name" : "poc_heartbleed_real_payload_len",
+            "type" : "int",
+            "min" : 0,
+            "max" : 65535
+        },
+        {
+            "name" : "poc_heartbleed_nominal_payload_len",
+            "type" : "int",
+            "min" : 0,
+            "max" : 65535
+        }
+    ],
+
+    "PPAC": [
+        {
+            "name" : "randomizeParameters",
+            "type" : "bool"
+        },
+        {
+            "name" : "test_nAllowedAuthAttempts",
+            "type" : "int",
+            "min" : 1,
+            "max" : 10
+        },
+        {
+            "name" : "useSeedForWolfSSL",
+            "type" : "bool"
+        },
+        {
+            "name" : "seedForWolfSSL",
+            "type" : "int",
+            "min" : 0,
+            "max" : 255
+        },
+        {
+            "name" : "test_nAllowedInteractions",
+            "type" : "int",
+            "min" : 1,
+            "max" : 9
+        },
+        {
+            "name" : "poc_dictionaryAttack_rootPassword",
+            "type" : "string"
+        },
+        {
+            "name" : "poc_dictionaryAttack_usePamTally",
+            "type" : "bool"
+        }
+    ],
+
+    "resourceManagement": [
+        {
+            "name" : "randomizeParameters",
+            "type" : "bool"
+        },
+        {
+            "name" : "test_nResourceLimit",
+            "type" : "int",
+            "min" : 5,
+            "max" : 100
+        }
+    ],
+
+    "codeInjection": [
+    ],
+
+    "informationLeakage": [
+        {
+            "name" : "poc_paddingLeakage_secret",
+            "type" : "hex",
+            "size" : 8,
+            "min" : 0
+        }
+    ],
+
+    "cryptoErrors": [
+    ],
+    
+    "numericErrors": [
     ]
 }

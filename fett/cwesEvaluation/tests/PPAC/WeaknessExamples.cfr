@@ -1,0 +1,28 @@
+// Our first example is simply to witness that the feature model is sound.
+// If the model contained a contradiction, then typechecking the model
+// would succeed, but attempting to generate a random configured instance
+// of the model would fail.
+
+ppac_weakness_witness: PPAC_Weakness
+
+// Here are three examples of partially configured models that represent
+// example specifications for potential CWE tests, either hand-written or
+// generated.
+
+ppac_weakness_example_1: PPAC_Weakness
+  [ access_control ]
+
+ppac_weakness_example_2: PPAC_Weakness
+  [ authorization ]
+
+ppac_weakness_example_3: PPAC_Weakness
+  [ authentication
+    auth_bypass ]
+
+// The following configuration is inconsistent, thus the instance
+// generator will fail to find any instance of this partially
+// configured model.
+
+ppac_weakness_example_4: PPAC_Weakness
+  [ authentication
+    !auth_bypass ]

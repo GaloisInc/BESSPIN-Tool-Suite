@@ -7,6 +7,8 @@ json details are in: ./utils/configData.json
 import configparser, json, os, re
 import base64
 from fett.base.utils.misc import *
+from importlib.machinery import SourceFileLoader
+from fett.cwesEvaluation.scoreTests import SCORES
 
 CONFIG_SECTIONS = ['backend', 'applications', 'build']
 
@@ -45,6 +47,10 @@ def loadConfiguration(configFile):
     # Here we should read the options and such
     for xSection in CONFIG_SECTIONS:
         loadConfigSection (xConfig,configData,xSection)
+
+    # Load evaluateSecurityTests related sections
+    if isEqSetting("mode", "evaluateSecurityTests"):
+        loadSecurityEvaluationConfiguration(xConfig,configData)
 
     # Get the XLEN and processor flavor
     if (getSetting('processor') in ['chisel_p1']):
@@ -87,7 +93,8 @@ def loadConfiguration(configFile):
     return
 
 @decorate.debugWrap
-def loadConfigSection (xConfig, jsonData,xSection,setup=False):
+def loadConfigSection (xConfig, jsonData,xSection,setup=False,
+                        addSectionToConfigDict=None,setSettingsToSectDict=False):
     if (setup):
         fileName = "SetupEnv file"
     else:
@@ -104,6 +111,12 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
         jsonPars = jsonData[xSection]
     except Exception as exc:
         logAndExit(f"Section <{xSection}> not found in json configuration info file.",exc=exc,exitCode=EXIT.Configuration)
+
+    if (addSectionToConfigDict):
+        try:
+            jsonPars += jsonData[addSectionToConfigDict]
+        except Exception as exc:
+            logAndExit(f"Section <{addSectionToConfigDict}> not found in json configuration info file.",exc=exc,exitCode=EXIT.Dev_Bug)
 
     for iPar in jsonPars:
         if (('name' not in iPar) or ('type' not in iPar)):
@@ -135,7 +148,8 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                     val = xConfig.getboolean(xSection,iPar['name'])
             except Exception as exc:
                 logAndExit(f"{fileName}: <{iPar['name']}> has to be boolean in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
-        elif ( iPar['type'] in ['str', 'string', 'filePath', 'dirPath', 'ipAddress', 'dict', 'macAddress']): 
+        elif ( iPar['type'] in ['str', 'string', 'stringsList', 'filePath', 'dirPath', 'ipAddress', 
+                                'dict', 'macAddress', 'hex', 'hexList', 'hexPairsList']): 
             if (setup):
                 val = iPar['val']
             else:
@@ -171,16 +185,67 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 macAddressMatch = re.match(r"([0-9a-fA-F]{2}\:){5}[0-9a-fA-F]{2}$",val)
                 if (macAddressMatch is None):
                     logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid MAC address in section [{xSection}].",exitCode=EXIT.Configuration)
-
+            elif (iPar['type'] == 'hex'):
+                try:
+                    val = int(val,16)
+                except Exception as exc:
+                    logAndExit(f"ValueError in reading configuration file. <{iPar['name']}> has to be hex in"
+                            f" section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
+            elif ('List' in iPar['type']):
+                if ((val[0] != '[') or (val[-1] != ']')):
+                    logAndExit("ValueError in reading configuration file. <{iPar['name']}> has to be of type "
+                               f"{iPar['type']} in section [{xSection}]. A {iPar['type']} has to have contents between brackets.",
+                               exitCode = EXIT.Configuration)
+                if (len(val[1:-1]) == 0):
+                    vals = []
+                else:
+                    # transform val into a python list of strings
+                    vals = [x.strip() for x in val[1:-1].split(',')]
+                if (iPar['type'] == 'hexPairsList'): #check that they are hex
+                    for val in vals:
+                        items = val.split(':')
+                        if (len(items)!=2):
+                            logAndExit(f"ValueError in reading configuration file. <{iPar['name']}> has to be a colon-separated hex-pair"
+                                    f" in section [{xSection}].",exitCode=EXIT.Configuration)
+                        for item in items:
+                            try:
+                                xHex = int(item,16)
+                            except Exception as exc:
+                                logAndExit(f"ValueError in reading configuration file. The value <{item}> in the pair <{val}> of the"
+                                        f" parameter <{iPar['name']}> is not hex in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
+                elif (iPar['type'] == 'hexList'): #check that they are hex
+                    if (('wildValue' in iPar) and (iPar['wildValue'] in vals)):
+                        vals = ['ALL']
+                    else:
+                        exceptionValue = None
+                        if ("exception" in iPar): #the value in this option is not allowed
+                            if (xConfig.has_option(xSection,iPar['exception'])):
+                                try:
+                                    exceptionValue = int(xConfig.get(xSection,iPar['exception']),16)
+                                except Exception as exc:
+                                    logAndExit(f"ValueError in reading configuration file. <{iPar['exception']}> has to be hex in "
+                                            f"section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
+                        for iVal in range(len(vals)):
+                            try:
+                                vals[iVal] = int(vals[iVal],16)
+                            except Exception as exc:
+                                logAndExit(f"ValueError in reading configuration file. The value <{vals[iVal]}> in <{iPar['name']}> is"
+                                            f" not hex in section [{xSection}].",exc=exc,exitCode=EXIT.Configuration)
+                            if ((exceptionValue is not None) and (vals[iVal] == exceptionValue)):
+                                logAndExit(f"ValueError in reading configuration file. The value <{vals[iVal]}> in <{iPar['name']}> cannot "
+                                            f"equal the exception value <{iPar['exception']}> in section [{xSection}].",exitCode=EXIT.Configuration)
         else:
-            logAndExit("Json info file: Unknown type <%s> for <%s> in section [%s]." %(iPar['type'],iPar['name'],xSection),exitCode=EXIT.Configuration)
+            logAndExit(f"Json info file: Unknown type <{iPar['type']}> for <{iPar['name']}> in section [{xSection}].",exitCode=EXIT.Configuration)
 
         #checking the values choices + limits
         isChoices= False
         isMin = False
         isMax = False
+        isSize = False
         if ('choices' in iPar):
-            if ( (iPar['type'] not in 'string') and (iPar['type'] not in 'integer') ):
+            if ( (iPar['type'] not in 'string') and
+                 (iPar['type'] not in 'integer') and
+                 (iPar['type'] not in 'stringsList') ):
                 warnAndLog("Json configuration info file: For <%s> in section [%s]: Ignoring <choices> for type <%s>." %(iPar['name'],xSection,iPar['type']))
             else: #int, str, stringsList
                 isChoices = True
@@ -198,18 +263,54 @@ def loadConfigSection (xConfig, jsonData,xSection,setup=False):
                 warnAndLog("Json configuration info file: For <%s> in section [%s]: Ignoring <max> when used with <choices> for type <%s>." %(iPar['name'],xSection,iPar['type']))
             else: #float or (int && noChoice)
                 isMax = True
+        if ('size' in iPar):
+            if (iPar['type'] == 'hexPairsList'):
+                warnAndLog("Json configuration info file: For <%s> in section [%s]: Ignoring <size> for type <%s>. Not implemented." %(iPar['name'],xSection,iPar['type']))
+            elif ('hex' not in iPar['type']):
+                warnAndLog("Json configuration info file: For <%s> in section [%s]: Ignoring <size> for type <%s>." %(iPar['name'],xSection,iPar['type']))
+            else:
+                isSize = True
  
         if (isChoices):
             if ((iPar['type'] in 'integer') or (iPar['type'] in 'string')):
                 if (val not in iPar['choices']):
                     logAndExit("Configuration file: Illegal value for <%s> in section [%s]. Value has to be in [%s]." %(iPar['name'],xSection,','.join([str(x) for x in iPar['choices']])))     
+            elif (iPar['type'] == 'stringsList'):
+                for val in vals:
+                    if (val not in iPar['choices']):
+                        # Leaving the "str(x) for x in case we need to
+                        # implement a list of integers"
+                        logAndExit("ValueError in reading configuration file. "
+                                   "Illegal value for <%s> in section [%s]. "
+                                   "Value has to be in [%s]." %
+                                   (iPar['name'],
+                                    xSection,
+                                    ','.join([str(x) for x in iPar['choices']])),
+                                   exitCode = EXIT.Configuration)
         if (isMin):
-            if (val < iPar['min']):
-                logAndExit(f"Configuration file: The minimum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['min']))
+            if ('List' in iPar['type']):
+                if (vals != ['ALL']):
+                    for val in vals:
+                        if (val < iPar['min']):
+                            logAndExit("Configuration file: The minimum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['min']))
+            elif (val < iPar['min']):
+                logAndExit("Configuration file: The minimum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['min']))
         if (isMax and (val > iPar['max'])):
-            logAndExit(f"Configuration file: The maximum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['max']))
+            logAndExit("Configuration file: The maximum value of <%s> in section [%s] is %d." %(iPar['name'],xSection,iPar['max']))
+        if (isSize):
+            if ('List' in iPar['type']):
+                if (vals != ['ALL']):
+                    for val in vals:
+                        if (val > int('0x' + 'F'*iPar['size'] ,16)):
+                            logAndExit("Configuration file: The maximum size of the elements of <%s> in section [%s] is %d nibbles." %(iPar['name'],xSection,iPar['size']))
+            elif (val > int('0x' + 'F'*iPar['size'] ,16)):
+                logAndExit("Configuration file: The maximum size of <%s> in section [%s] is %d nibbles." %(iPar['name'],xSection,iPar['size']))
 
-        setSetting(iPar['name'],val)
+        settingVal = vals if ('List' in iPar['type']) else val
+        if (setSettingsToSectDict):
+            setSettingDict(xSection,iPar['name'],settingVal)
+        else:
+            setSetting(iPar['name'],settingVal)
 
     if (not setup):
         for option,isItLegal in optionsInConfig.items():
@@ -269,3 +370,97 @@ def genProdConfig(configFileSerialized, configFile):
     except Exception as exc:
         logAndExit(f"Failed to write configuration file <{configFile}>.",exc=exc,exitCode=Files_and_paths)
     
+@decorate.debugWrap
+def loadSecurityEvaluationConfiguration (xConfig,configData):
+    #load main global configs
+    loadConfigSection(xConfig, configData, "evaluateSecurityTests")
+
+    # load vulClass configs
+    for vulClass in getSetting('vulClasses'): #load settings per vulClass
+        vulClassDict = dict()
+        setSetting(vulClass,vulClassDict)
+        loadConfigSection(xConfig, configData, vulClass, 
+                addSectionToConfigDict='commonVulClassesParameters', setSettingsToSectDict=True)
+
+        if (vulClass in ['bufferErrors']):
+            setSettingDict(vulClass,'runAllTests',True)
+            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
+
+        # Load selected tests
+        sectionName = 'configCWEs'
+        if (not getSettingDict(vulClass,'runAllTests')):
+            configCWEsPath = os.path.join(getSetting('repoDir'),'configSecurityTests',f'{vulClass}.ini')
+            configCWEs = loadIniFile(configCWEsPath)
+            try:
+                assert configCWEs.has_section(sectionName)
+            except Exception as exc:
+                logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+
+            dictConfigCWEs = dict() 
+            for xTest in configCWEs.options(sectionName):
+                try:
+                    dictConfigCWEs[xTest] = configCWEs.getboolean(sectionName,xTest)
+                except Exception as exc:
+                    logAndExit(f"The value of <{xTest}> should be boolean in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+
+            setSettingDict(vulClass,'configCWEs',dictConfigCWEs)
+
+        # Load custom dev options (setupEnv.json)
+        setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',vulClass,'setupEnv.json'))
+        loadConfigSection(None,setupEnvData,vulClass,setup=True,setSettingsToSectDict=True)
+
+    # Load custom scoring options if enabled
+    if (isEnabled('useCustomScoring')):
+        customizedScoringDict = dict()
+        setSetting('customizedScoring',customizedScoringDict)
+        loadConfigSection(xConfig, configData, 'customizedScoring', 
+                setSettingsToSectDict=True)
+
+        # Check that the custom function is legit
+        if (isEnabledDict('customizedScoring','useCustomFunction')):
+            if (not checkCustomScorerFunction()):
+                logAndExit(f"loadSecurityEvaluationConfiguration: <{getSettingDict('customizedScoring','pathToCustomFunction')}> has to be a valid scoring script.",exitCode=EXIT.Configuration)
+
+    # Load custom compiling options if enabled
+    if (isEnabled('useCustomCompiling')):
+        customizedCompilingDict = dict()
+        setSetting('customizedCompiling',customizedCompilingDict)
+        loadConfigSection(xConfig, configData, 'customizedCompiling', 
+                setSettingsToSectDict=True)
+
+@decorate.debugWrap
+def checkCustomScorerFunction():
+    """
+    if both of useCustomScoring and useCustomFunction are enabled, check that the function is working
+    """
+    customCheckOut = os.path.join(getSetting('workDir'),'customScorerFunctionCheck.out')
+    customFuncPath = getSettingDict('customizedScoring','pathToCustomFunction')
+    try:
+        with redirectPrintToFile(customCheckOut): #disable print
+            moduleUnderTest = SourceFileLoader("customScorer", customFuncPath).load_module()
+    except Exception as exc:
+        errorAndLog(f"Failed to load {customFuncPath} using SourceFileLoader.",exc=exc)
+        return False  
+
+    testLines = []
+    testLines.append(["One line no end of line"])
+    testLines.append([]) #empty list
+    testLines.append ([f"Line #{i}" for i in range(25)])
+    testLines.append ([f"Line #{i}\r" for i in range(25)])
+    for test in testLines:
+        try:
+            with redirectPrintToFile(customCheckOut): #disable print
+                ret = moduleUnderTest.main(test,SCORES)
+        except Exception as exc:
+            errorAndLog (f"Failed to test main in <{customFuncPath}>.",exc=exc)
+            return False
+        if (('__class__' not in dir(ret)) or (ret.__class__ != SCORES)):
+            errorAndLog(f"Wrong return type in main in <{customFuncPath}>.")
+            return False
+    return True
+
+
+
+
+
+
