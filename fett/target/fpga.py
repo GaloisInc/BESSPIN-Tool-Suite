@@ -267,8 +267,8 @@ class fpgaTarget (commonTarget):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programBitfile ():
-    printAndLog("Preparing the FPGA environment...")
+def programBitfile (doPrint=True):
+    printAndLog("Preparing the FPGA environment...",doPrint=False)
     clearProcesses()
     gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
     printAndLog("Clearing the flash...",doPrint=False)
@@ -295,14 +295,14 @@ def programBitfile ():
     except Exception as exc:
         logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
 
-    printAndLog("Programming the bitfile...")
+    printAndLog("Programming the bitfile...",doPrint=False)
     nAttempts = 2
     for iAttempt in range(nAttempts):
         gfeOut.write("\n\ngfe-program-fpga\n")
         clearProcesses()
         try:
             subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitAndProbefiles[0], '--probe-file', bitAndProbefiles[1]],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
-            printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})")
+            printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})",doPrint=False)
             break
         except Exception as exc:
             if (iAttempt < nAttempts-1):
@@ -311,7 +311,7 @@ def programBitfile ():
                 logAndExit(f"Failed to program the FPGA.",exc=exc,exitCode=EXIT.Run)
 
     gfeOut.close()
-    printAndLog("FPGA was programmed successfully!")
+    printAndLog("FPGA was programmed successfully!",doPrint=False)
 
 @decorate.debugWrap
 def selectBitAndProbeFiles ():

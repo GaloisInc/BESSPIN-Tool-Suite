@@ -3,7 +3,7 @@ import os
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.common import score
-from fett.target import aws
+from fett.target import aws, fpga
 import fett.target.launch
 
 @decorate.debugWrap
@@ -46,14 +46,15 @@ def runFreeRTOSCwesEvaluation():
 
                 if isEqSetting('target', 'aws'):
                     if isEqSetting('pvAWS', 'firesim'):
-                        # TODO: Is there a way to avoid reflashing the
-                        # FPGA?
                         aws.programAFI(doPrint=False)
                     else:
                         logAndExit("<runFreeRTOSCwesEvaluation> is not "
                                    "implemented for "
                                    f"<AWS:{getSetting('pvAWS')}>.",
                                    exitCode=EXIT.Implementation)
+                elif (isEqSetting('target','fpga')):
+                    fpga.programBitfile(doPrint=False)
+                    fpga.resetEthAdaptor()
                 else:
                     logAndExit("<runFreeRTOSCwesEvaluation> is not "
                                f"implemented for <{getSetting('target')}>",

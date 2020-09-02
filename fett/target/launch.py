@@ -114,8 +114,10 @@ def prepareEnv ():
         prepareOsImage ()
 
     if (isEqSetting('target','fpga')):
-        fpga.programBitfile()
-        fpga.resetEthAdaptor()
+        if not (isEqSetting('mode', 'evaluateSecurityTests') and
+                    isEqSetting('osImage', 'FreeRTOS')):
+            fpga.programBitfile()
+            fpga.resetEthAdaptor()
     elif (isEqSetting('target','aws')):
         if (isEqSetting('pvAWS','firesim')):
             aws.prepareFiresim()
