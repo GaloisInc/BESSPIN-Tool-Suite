@@ -18,16 +18,16 @@ contact Galois through documented support channels.
 
 All the needed configuration is done using the main `fett` configuration. When the tool is configured
 to run in the `evaluateSecurityTests` mode, the `evaluateSecurityTests` section in the configuration file is loaded. The parameters in this section are:
-    - `vulClasses`: A list of the vunerability classes to be executed, contained by square brackets and comma
+  - `vulClasses`: A list of the vunerability classes to be executed, contained by square brackets and comma
     separated. Choose among the NIST list: *bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors*. The names follow [attachment 3 of the
     SSITH BAA](https://www.ntsc.org/assets/uploads/HR001117S0023.pdf). When a `$vulClass` is included, its configuration section is loaded as well. Please note that the classes *codeInjection* and *cryptoErrors* are yet to be implemented.
-    - `useCustomScoring`: Configure the scoring methods as instructed in
+  - `useCustomScoring`: Configure the scoring methods as instructed in
     the parameters in the `[customizedScoring]` section.  More
     details are in the scoring section in this document.
-    - `useCustomCompiling`: Configure the compilation flow as instructed
+  - `useCustomCompiling`: Configure the compilation flow as instructed
     in the parameters in the `[customizedCompiling]` section.  More
     details are in the compiling section in this document.
-    - `FreeRTOStimeout`: How long to wait for a FreeRTOS non-interactive test to terminate.
+  - `FreeRTOStimeout`: How long to wait for a FreeRTOS non-interactive test to terminate.
 
 
 Regarding each vulnerability class section, it is worth mentioning that:
