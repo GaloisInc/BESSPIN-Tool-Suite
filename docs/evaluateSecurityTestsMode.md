@@ -4,7 +4,7 @@ This is the documentation for running `fett.py` in the `evaluateSecurityTests` m
 
 A list of the
 classes in addition to the NIST CWEs mapped to each class can be found
-[here](https://gitlab-ext.galois.com/ssith/vulnerabilities/blob/master/CWEs-for-SSITH.md).
+[here](https://gitlab-ext.galois.com/ssith/vulnerabilities/blob/master/CWEs-for-SSITH.md) (please contact Galois if access is required).
 A class-specific description is provided in each vulnerability class
 directory.
 
