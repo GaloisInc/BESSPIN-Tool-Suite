@@ -180,17 +180,21 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
         envVars.append(f"INC_FETT_APPS={dockerBuildMount}")
         dockerExtraMounts = {getSetting('buildDir') : dockerBuildMount}
 
-        # Common directory must be mounted in the parent of the working
-        # directory
-        hostCommon = os.path.join(getSetting("FreeRTOSprojDir"), "..", "Common")
+        # The `make` function will mount
+        # FreeRTOS-10.0.1/FreeRTOS/Demo/RISC-V_Galois_P1 as /root/makeDir on
+        # the docker image.  However, the FreeRTOS Makefile references
+        # ../Common and ../../Source.  Therefore, FETT must also mount
+        # FreeRTOS-10.0.1/FreeRTOS/Demo/Common as /root/Common and
+        # FreeRTOS-10.0.1/FreeRTOS/Source as /Source to preserve these relative
+        # paths.
+        hostCommon = os.path.abspath(os.path.join(getSetting("FreeRTOSprojDir"),
+                                                  os.pardir,
+                                                  "Common"))
         dockerExtraMounts[hostCommon] = "/root/Common"
-
-        # Source directory must be moutned in the grandparent of the working
-        # directory
-        hostSource = os.path.join(getSetting("FreeRTOSprojDir"),
-                                  "..",
-                                  "..",
-                                  "Source")
+        hostSource = os.path.abspath(os.path.join(getSetting("FreeRTOSprojDir"),
+                                                  os.pardir,
+                                                  os.pardir,
+                                                  "Source"))
         dockerExtraMounts[hostSource] = "/Source"
 
         # Do not set SYSROOT_DIR in the Michigan case, despite being built
