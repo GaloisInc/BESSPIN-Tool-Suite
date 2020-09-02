@@ -148,8 +148,8 @@ def main (xArgs):
             instruction = aws.pollPortalIndefinitely (getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), xTarget.process, logAndExit)
             if (instruction == 'deadProcess'):
                 warnAndLog ("The main process is dead. Will exit without a notice from Portal.")
-            else:
-                printAndLog(f"Received {instruction} notice from Portal.")            
+                break
+            printAndLog(f"Received {instruction} notice from Portal.")            
 
             if (instruction == 'reset'):
                 # execute reset flow 
