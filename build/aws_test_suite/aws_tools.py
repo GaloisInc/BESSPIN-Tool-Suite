@@ -44,10 +44,13 @@ def get_ami_id_from_name(ami_name):
 
     client = boto3.client("ec2")
     response = client.describe_images(Filters=[{"Name": "name", "Values": [ami_name]}])
+
+    images = safe_traverse(response, ["Images"])
+
     assert (
-        len(response["Images"]) == 1
-    ), f"No unique images found '{response['Images']}' for ami name {ami_name}"
-    return response["Images"][0]["ImageId"]
+        len(images) == 1
+    ), f"No unique images found '{images}' for ami name {ami_name}"
+    return safe_traverse(images[0], ["ImageId"])
 
 
 def terminate_instance(instance_id, dry_run=True, wait_for_termination=False):
@@ -137,9 +140,13 @@ def launch_instance(
     vpc = list(ec2.vpcs.filter(Filters=vpcfilter))
 
     # get security group from ec2
-    security_group = client.describe_security_groups(
+    response = client.describe_security_groups(
         Filters=[{"Name": "group-name", "Values": [security_group_name]}]
-    )["SecurityGroups"][0]["GroupId"]
+    )
+
+    security_group = safe_traverse(
+        safe_traverse(response, ["SecurityGroups"])[0], ["GroupId"]
+    )
 
     # get subnets and choose a public one
     subnets = list(
