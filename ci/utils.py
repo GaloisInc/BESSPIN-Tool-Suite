@@ -34,7 +34,7 @@ def errorAndLog(message, doPrint=True, exc=None):
         print("(Error)~  " + message)
     logging.error(message)
     if exc:
-        logging.error(traceback.format_exc())
+        logging.error(formatExc(exc))
 
 
 def exitFettCi(exitCode=-1, exc=None, message=None):

@@ -109,18 +109,15 @@ class Logger:
                 f"[ { datetime.now().strftime('%Y/%m/%d @ %H:%M:%S:%f') } ] : ({level})~ {message}\n"
             )
 
-        # Error hard, and quit if we have an error
-        if level.lower() == "error":
-            cprint("(Error)~ Exiting.", "red")
-
     def debug(self, message):
         self.log_out(message, "Debug")
 
     def error(self, message, exc=None):
         self.log_out(message, "Error")
         if exc:
-            log_out(format_exc(exc))
-        exit(0)
+            self.log_out(format_exc(exc), "Error")
+        self.log_out("Exiting.", "Error")
+        exit(-1)
 
     def info(self, message):
         self.log_out(message, "Info")
@@ -128,7 +125,7 @@ class Logger:
     def warning(self, message, exc=None):
         self.log_out(message, "Warning")
         if exc:
-            log_out(format_exc(exc))
+            self.log_out(format_exc(exc), "Warning")
 
     def results(self, message):
         self.log_out(message, "Results")
