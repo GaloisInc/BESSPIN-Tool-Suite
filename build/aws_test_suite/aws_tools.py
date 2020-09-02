@@ -21,7 +21,9 @@ def safe_traverse(in_dictionary, hierarchy):
         if item in in_dictionary:
             return safe_traverse(in_dictionary[item], hierarchy)
         else:
-            log.error(f"{ item } not present in { in_dictionary }. Quitting.")
+            log.error(
+                f"safe_traverse: { item } not present in { in_dictionary }. Quitting."
+            )
     return in_dictionary
 
 
@@ -189,8 +191,8 @@ def launch_instance(
             KeyName=keyname,
             **optional_kwargs,
         )
-    except client.exceptions.ClientError as e:
-        log.error(f"boto3.create_instances failed with error '{e}'")
+    except Exception as e:
+        log.error(f"boto3.create_instances failed.", exc=exc)
         instance = None
 
     return instance[0].id
@@ -228,16 +230,18 @@ def poll_s3(config, instance_ids):
     # Start Boto3 Client
     try:
         s3 = boto3.client("s3")
-    except:
-        log.error(f"Failed to create the S3 client.")
+    except Exception as exc:
+        log.error(f"Failed to create the S3 client.", exc=exc)
 
     # Define a way to delete a message
     def delete_object(bucket_name, file_name):
         try:
             s3.delete_object(Bucket=bucket_name, Key=file_name)
             log.info(f"Succeeded in removing object { file_name } from { bucket_name }")
-        except:
-            log.warning(f"Failed to remove object { file_name } from { bucket_name }")
+        except Exception as exc:
+            log.warning(
+                f"Failed to remove object { file_name } from { bucket_name }", exc=exc
+            )
 
     log.debug("poll_s3 Polling S3")
 
@@ -247,9 +251,10 @@ def poll_s3(config, instance_ids):
         )
         log.debug(f"Polling S3 got response: { response }")
 
-    except:
+    except Exception as exc:
         log.error(
-            f"Failed to recieve the contents of bucket { configs.ciAWSbucketTesting }."
+            f"Failed to recieve the contents of bucket { configs.ciAWSbucketTesting }.",
+            exc=exc,
         )
 
     if "Contents" in response:
@@ -280,7 +285,7 @@ def poll_s3(config, instance_ids):
                 log.debug(f"Deleted result for instance { instance_id } from S3")
 
             except Exception as exc:
-                log.error(f"Failed to get file { instance_id } from AWS S3, { exc }")
+                log.error(f"Failed to get file { instance_id } from AWS S3.", exc=exc)
 
         return completed_ids
 

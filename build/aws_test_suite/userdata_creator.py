@@ -91,9 +91,8 @@ class UserdataCreator:
                 with open(os.path.expanduser(key_path), "r") as f:
                     key = f.readlines()
                     key = [x.strip() for x in key]
-            except BaseException as e:
-                log.error("UserdataCreator: Invalid Key Path")
-                log.error(f"UserdataCreator: {e}")
+            except Exception as exc:
+                log.error("UserdataCreator: Invalid Key Path", exc=exc)
 
             userdata_ssh = [
                 "runuser -l centos -c 'touch /home/centos/.ssh/id_rsa'",

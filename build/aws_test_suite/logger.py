@@ -23,6 +23,14 @@ def log_assertion_fails(func):
     return wrappedFn
 
 
+def format_exc(exc):
+    """ format the exception for printing """
+    try:
+        return f"<{exc.__class__.__name__}>: {exc}"
+    except:
+        return "<Non-recognized Exception>"
+
+
 class Logger:
     def __init__(self, log_fname="aws-test-suite.log", results_fname="results.txt"):
         """
@@ -104,19 +112,23 @@ class Logger:
         # Error hard, and quit if we have an error
         if level.lower() == "error":
             cprint("(Error)~ Exiting.", "red")
-            exit(0)
 
     def debug(self, message):
         self.log_out(message, "Debug")
 
-    def error(self, message):
+    def error(self, message, exc=None):
         self.log_out(message, "Error")
+        if exc:
+            log_out(format_exc(exc))
+        exit(0)
 
     def info(self, message):
         self.log_out(message, "Info")
 
-    def warning(self, message):
+    def warning(self, message, exc=None):
         self.log_out(message, "Warning")
+        if exc:
+            log_out(format_exc(exc))
 
     def results(self, message):
         self.log_out(message, "Results")

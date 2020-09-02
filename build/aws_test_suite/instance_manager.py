@@ -45,8 +45,8 @@ class InstanceManager:
             # Read the log file in /tmp to get exit status
             with open(results_file_path, "r") as f:
                 status = f.read().splitlines()[0]
-        except:
-            log.error(f"Failed to open file { results_file_path }")
+        except Exception as exc:
+            log.error(f"Failed to open file { results_file_path }", exc=exc)
 
         log.results(
             f"FINISHED: {instance_name} ({instance_id}), exited with status {status}."
