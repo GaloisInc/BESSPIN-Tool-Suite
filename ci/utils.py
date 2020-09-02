@@ -222,7 +222,7 @@ def prepareArtifact(
         cweLogsPath = os.path.join(workDir,"cwesEvaluationLogs")
         if (os.path.isdir(cweLogsPath)):
             try:
-                shutil.copytree(cweLogsPath, artifactsPath)
+                shutil.copytree(cweLogsPath, os.path.join(artifactsPath,"cwesEvaluationLogs"))
             except Exception as exc:
                 exitFettCi(
                     message=f"Failed to copy <{cweLogsPath}> to <{artifactsPath}>.",
