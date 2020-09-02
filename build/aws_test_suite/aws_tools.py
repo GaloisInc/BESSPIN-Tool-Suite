@@ -70,7 +70,7 @@ def terminate_instance(instance_id, dry_run=True, wait_for_termination=False):
 
     client = boto3.client("ec2")
     resp = client.terminate_instances(InstanceIds=[instance_id], DryRun=dry_run)
-
+    log.info(f"Terminating instance: { instance_id }")
     log.debug(f"terminate_instances got response from terminate_instances() {resp}")
 
     # If wait_for_termination is passed, use boto3 waiter to wait for instance
@@ -84,7 +84,7 @@ def terminate_instance(instance_id, dry_run=True, wait_for_termination=False):
         waiter = client.get_waiter("instance_terminated")
         waiter.wait(InstanceIds=[instance_id])
 
-        log.debug(f"terminate_instances instance_terminated completed.")
+        log.info(f"Instance { instance_id } Terminated.")
 
 
 def launch_instance(
