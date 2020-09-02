@@ -90,27 +90,35 @@ class InstanceManager:
 
             # Check for finished ID
             if s3 != []:
-                # Not an empty message - we have an ID
-                for i in running_instances:
-                    if i.id in s3:
-                        self.log_results(i.id, i.name)
-                        i.terminate()
-                        log.info(f"Terminated instance { i.id }")
+                # We have found some instances that are done in S3
+                # Generate a list that is a subset of running_instances containing only
+                #   S3 terminated instances.
+                finished_instances = [x for x in running_instances if x.id in s3]
 
-                        # If we have no more instances, remove from list, and do not replace
-                        if len(self._instances) == 0:
-                            running_instances.remove(i)
-                            log.debug(f"Removed instance { i.id } _instances.")
-                        # Else we replace it with the next item from _instances
-                        else:
-                            replace_index = running_instances.index(i)
-                            running_instances[replace_index] = self._instances.pop()
+                for i in finished_instances:
+                    # Log results
+                    self.log_results(i.id, i.name)
 
-                            # Run new Instance
-                            running_instances[replace_index].start()
-                            log.info(
-                                f"Replaced instance { i.id } with { running_instances[replace_index].id }"
-                            )
+                    # If we have no more instances, remove from list, and do not replace
+                    if len(self._instances) == 0:
+                        terminate_instance(
+                            i.id, dry_run=False, wait_for_termination=False
+                        )
+                        running_instances.remove(i)
+                        log.debug(f"Removed instance { i.id } from _instances.")
+                    # Else we replace it with the next item from _instances
+                    else:
+                        terminate_instance(
+                            i.id, dry_run=False, wait_for_termination=True
+                        )
+                        replace_index = running_instances.index(i)
+                        running_instances[replace_index] = self._instances.pop()
+
+                        # Run new Instance
+                        running_instances[replace_index].start()
+                        log.info(
+                            f"Replaced instance { i.id } with { running_instances[replace_index].id }"
+                        )
             time.sleep(2)
 
     @property
@@ -170,12 +178,6 @@ class Instance:
             **ec2_kwargs,
         )
         log.debug(f"Start() finished with instance { self._id }")
-        return self
-
-    @log_assertion_fails
-    def terminate(self):
-        assert self._id is not None, "Cannot terminate instance has an empty ID"
-        terminate_instance(self._id, False, True)
         return self
 
     @property
