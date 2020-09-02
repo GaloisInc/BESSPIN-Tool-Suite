@@ -227,11 +227,15 @@ class commonTarget():
             os_image = data[getSetting('osImage')]
 
             if getSetting('target') not in os_image:
-                return False, 0, {
-                    'message': f'start: Timeout is not recorded for target=<{getSetting("target")}>.',
-                    'overwriteShutdown': True,
-                    'exitCode': EXIT.Implementation
-                }
+                if 'timeout' in os_image:
+                    # case -- targets not iterated under osImage (e.g. busybox)
+                    return True, os_image['timeout'], None
+                else:
+                    return False, 0, {
+                        'message': f'start: Timeout is not recorded for target=<{getSetting("target")}>.',
+                        'overwriteShutdown': True,
+                        'exitCode': EXIT.Implementation
+                    }
             target = os_image[getSetting('target')]
 
             return traverse_data(target)
@@ -264,7 +268,6 @@ class commonTarget():
             loginTimeout = 120 if (self.restartMode) else 60
             self.runCommand (self.rootPassword,timeout=loginTimeout)
         elif (isEqSetting('osImage','busybox')):
-            printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             self.boot(endsWith="Please press Enter to activate this console.",timeout=timeout)
             self.stopShowingTime.set()
