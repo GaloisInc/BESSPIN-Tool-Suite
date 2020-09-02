@@ -27,7 +27,7 @@ class commonTarget():
         self.sshProcess = None
         self.fSshOut = None
         self.restartMode = False
-        self.isSshRootEnabled = not isEqSetting('target','aws')
+        self.isSshRootEnabled = False
 
         # all OSs settings
         self.portTarget = None
