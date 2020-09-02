@@ -125,8 +125,6 @@ Some useful configuration options:
 
 Note that the AWS platform variant is determined based on the `binarySource`-`processor`-`osImage` choice. More information about these decisions can be found in [the cloudGFE TA-1 and GFE tracker spreadsheet](https://docs.google.com/spreadsheets/d/1J8MSDQS1X0V-wPHiNdCTgu7Pwf8GcgTy91kcn8u9mt0/edit#gid=0).
 
-Also note that the details about running the tool in CWEs evaluation mode can be found in [docs/evaluateSecurityTestsMode.md](docs/evaluateSecurityTestsMode.md).
-
 
 ## Developer Manual ##
 
@@ -157,3 +155,8 @@ Also note that the details about running the tool in CWEs evaluation mode can be
 
 - To add a configuration option, you have to update the json dictionary in `fett/base/utils/configData.json`.
 - To add/change a system setting, you have to update the json dictionary in `fett/base/utils/setupEnv.json`.
+
+
+## CWE Evaluation Mode (Testgen) ##
+
+Instructions for running the FETT tool in CWE evaluation mode can be found here: [docs/evaluateSecurityTestsMode.md](docs/evaluateSecurityTestsMode.md).
