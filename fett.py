@@ -129,6 +129,7 @@ def main (xArgs):
 
     #launch the tool
     xTarget = startFett()
+    instruction = 'notARealInstruction'
     if (isEqSetting('mode','production')):
         def sendSuccessMsgToPortal (nodeSuffix, reasonSuffix):
             aws.sendSQS(getSetting(f'{getSetting("fettEntrypoint")}SqsQueueTX'), logAndExit, 'success', 
@@ -143,7 +144,6 @@ def main (xArgs):
         sendSuccessMsgToPortal('DEPLOY','deployment')
 
         # Wait for portal to instruct us to do something
-        instruction = 'notARealInstruction'
         while (instruction != 'termination'):
             instruction = aws.pollPortalIndefinitely (getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), xTarget.process, logAndExit)
             if (instruction == 'deadProcess'):
@@ -157,7 +157,7 @@ def main (xArgs):
                 # Notify portal that we have reset successfully
                 sendSuccessMsgToPortal('RESET','reset')
         
-    endFett(xTarget)
+    endFett(xTarget,instruction)
     exitFett(EXIT.Success)
 
 if __name__ == '__main__':

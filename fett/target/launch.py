@@ -176,18 +176,19 @@ def launchFett ():
 
 """ This is the teardown function """
 @decorate.debugWrap
-def endFett (xTarget):
+def endFett (xTarget,instruction):
     if (isEqSetting('mode','production')):
         aws.endUartPiping(xTarget)
 
     if (not isEqSetting('mode', 'evaluateSecurityTests')):
-        if (isEnabled('runApp')):
+        if (isEnabled('runApp') and (instruction!='deadProcess')): #Cannot collect local logs if deadProcess
             xTarget.collectLogs()
 
         if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
             collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
-    if not (isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')):
+    if not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
+                or (instruction=='deadProcess')):
         xTarget.shutdown()
     
     if (isEqSetting('mode','production')):
