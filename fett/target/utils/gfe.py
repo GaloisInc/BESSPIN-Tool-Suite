@@ -92,6 +92,9 @@ class Gfe:
 
         # Validate input
         if size not in size_options:
+            #raise Exception(
+            #    "Write size {} must be one of {}".format(
+            #        size, list(size_options.keys())))
             errorAndLog(f"GFE Util: riscvWrite write size {size} must be one of {list(size_options.keys())}")
 
         if not self.gdb_session:
@@ -105,13 +108,13 @@ class Gfe:
         # Check for an error message from gdb
         m = re.search("Cannot access memory", output)
         if m:
+            #raise CannotAccess(address)
             errorAndLog(f"GFE Util: RISC-V write cannot access at address {address}")
 
     def riscvWrite32(self, address, value, verbose=False, dbg_txt=""):
         self.riscvWrite(address, value, 32, verbose=verbose, dbg_txt=dbg_txt)
 
     def softReset(self):
-        printAndLog("GFE Util: performing a soft reset of the GFE...")
         self.riscvWrite32(int(getSettingDict("gfeInfo", "resetBase"), base=16),
                           int(getSettingDict("gfeInfo", "resetVal"), base=16))
         self.endGdb()
@@ -143,14 +146,14 @@ class Gfe:
                     extraMsg += f"and is reset properly (use 'stty -F {port.device} min 0 time 0' to reset it)."
                     try:
                         #Check if no one else is using the serial port. Especially Minicom.
-                        sttyOut = str(subprocess.check_output (f"stty -F {port.device} | grep min",stderr=subprocess.STDOUT,shell=True),'utf-8')
+                        #sttyOut = str(subprocess.check_output (f"stty -F {port.device} | grep min",stderr=subprocess.STDOUT,shell=True),'utf-8')
+                        sttyOut = shellCommand(f"stty -F {port.device} | grep min")
                         sttyMatch = re.match(r"^.*min = (?P<vMin>\d+); time = (?P<vTime>\d+);$", sttyOut)
                         if ( (int(sttyMatch.group('vMin')) != 0) or (int(sttyMatch.group('vTime')) != 0)):
                             warnAndLog (f"GFE Util: the UART {port.device} status is not as expected. {extraMsg}")
                     except:
                         warnAndLog (f"GFE Util: failed to get the status of {port.device}. {extraMsg}")
                     return port.device
-
         errorAndLog(f"GFE Util: findUartPort could not find a UART port with expected VID:PID = {search_vid:X}:{search_pid:X}")
 
     def setupUart(
@@ -196,31 +199,32 @@ class Gfe:
         else:
             errorAndLog(f"GFE Util: setupUart bytesize {bytesize} must be 5,6,7 or 8")
 
-        # configure the serial connections 
-        self.uart_session = serial.Serial(
-            port=port,
-            baudrate=baud,
-            parity=parity,
-            stopbits=stopbits,
-            timeout=timeout,
-            bytesize=bytesize
-        )
+        # configure the serial connections
+        try:
+            self.uart_session = serial.Serial(
+                port=port,
+                baudrate=baud,
+                parity=parity,
+                stopbits=stopbits,
+                timeout=timeout,
+                bytesize=bytesize
+            )
 
-        if not self.uart_session.is_open:
-            self.uart_session.open()
+            if not self.uart_session.is_open:
+                self.uart_session.open()
+        except Exception as exc:
+            errorAndLog(f"GFE Util: unable to open serial session", exc=exc)
 
 
 class Openocd(object):
-    logfile = tempfile.NamedTemporaryFile(prefix='openocd', suffix='.log')
-    logname = logfile.name
-
     def __init__(self, server_cmd=None, config=None, debug=False, timeout=60):
+        self.logname = os.path.join(getSetting('workDir'),'openocd.out')
         self.timeout = timeout
 
         if server_cmd:
             cmd = shlex.split(server_cmd)
         else:
-            openocd = os.path.expandvars("$RISCV/bin/openocd")
+            openocd = "openocd"
             cmd = [openocd]
             if debug:
                 cmd.append("-d")
@@ -244,14 +248,14 @@ class Openocd(object):
             try:
                 assert os.path.exists(config)
                 config_filepath = config
+                cmd += ["-f", config_filepath]
             except AssertionError as exc:
                 errorAndLog(f"gfe util: unable to find config file {config}", exc=exc)
 
-            cmd += ["-f", config_filepath]
         if debug:
             cmd.append("-d")
 
-        logfile = open(Openocd.logname, "w")
+        logfile = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'), 'w+')
         env_entries = ("REMOTE_BITBANG_HOST", "REMOTE_BITBANG_PORT")
         env_entries = [key for key in env_entries if key in os.environ]
         logfile.write("+ %s%s\n" % (
@@ -273,11 +277,12 @@ class Openocd(object):
             # attempt too early.
             start = time.time()
             messaged = False
-            fd = open(Openocd.logname, "r")
+            fd = open(self.logname, "r")
             while True:
                 line = fd.readline()
                 if not line:
                     if not process.poll() is None:
+                        #raise Exception("OpenOCD exited early.")
                         errorAndLog(f"GFE Util: start OpenOCD exited early")
                     time.sleep(0.1)
                     continue
@@ -292,9 +297,10 @@ class Openocd(object):
 
                 if not messaged and time.time() - start > 1:
                     messaged = True
-                    printAndLog(f"GFE Util: waiting for openOCD to start...")
+                    #printAndLog(f"GFE Util: waiting for openOCD to start...")
                 if (time.time() - start) > self.timeout:
-                    errorAndLog(f"GFE Util: start timed out waiting for OpenOCD to listen for gdb")
+                    errorAndLog("GFE Util: Timed out waiting for OpenOCD to listen for gdb")
+
         except Exception as exc:
             errorAndLog(f"GFE Util: start failed", exc=exc)
 
@@ -323,7 +329,7 @@ class Gdb(object):
     # pylint: disable=too-many-instance-attributes
 
     def __init__(self, ports,
-                 cmd=os.path.expandvars("$RISCV/bin/riscv64-unknown-elf-gdb"),
+                 cmd="riscv64-unknown-elf-gdb",
                  timeout=60, binary=None, xlen=32):
         assert ports
 
@@ -339,18 +345,19 @@ class Gdb(object):
         self.logfiles = []
         self.children = []
         for port in ports:
-            logfile = tempfile.NamedTemporaryFile(prefix="gdb@%d-" % port,
-                                                  suffix=".log", mode='w+', encoding='utf-8')
+            logfile = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb-{port}.out'), 'w+')
             self.logfiles.append(logfile)
-            child = pexpect.spawn(cmd, encoding='utf-8')
-            child.logfile = logfile
-            child.logfile.write("+ %s\n" % cmd)
-            self.children.append(child)
+            try:
+                child = pexpect.spawn(cmd, encoding='utf-8')
+                child.logfile = logfile
+                child.logfile.write("+ %s\n" % cmd)
+                self.children.append(child)
+            except Exception as exc:
+                errorAndLog(f"GFE Util: failed to spawn GDB child", exc=exc)
         self.active_child = self.children[0]
 
     def connect(self):
         for port, child in zip(self.ports, self.children):
-            printAndLog(f"GFE Util: Connecting on {port}")
             self.select_child(child)
             self.wait()
             self.command("set confirm off")
@@ -486,13 +493,6 @@ class Gdb(object):
         value = int(output.split(':')[1].strip(), 0)
         return value
 
-    def p_raw(self, obj):
-        output = self.command("p %s" % obj)
-        m = re.search("Cannot access memory at address (0x[0-9a-f]+)", output)
-        if m:
-            errorAndLog(f"GFE util: cannot access memory at address {int(m.group(1), 0)}")
-        return output.split('=')[-1].strip()
-
     def parse_string(self, text):
         text = text.strip()
         if text.startswith("{") and text.endswith("}"):
@@ -502,22 +502,6 @@ class Gdb(object):
             return text[1:-1]
         else:
             return int(text, 0)
-
-    def p(self, obj, fmt="/x"):
-        output = self.command("p%s %s" % (fmt, obj))
-        m = re.search("Cannot access memory at address (0x[0-9a-f]+)", output)
-        if m:
-            errorAndLog(f"GFE Util: cannot access {int(m.group(1), 0)}")
-        m = re.search(r"Could not fetch register \"(\w+)\"; (.*)$", output)
-        if m:
-            errorAndLog(f"GFE Util: could not fetch register ({m.group(1)},{m.group(2)})")
-        rhs = output.split('=')[-1]
-        return self.parse_string(rhs)
-
-    def p_string(self, obj):
-        output = self.command("p %s" % obj)
-        value = shlex.split(output.split('=')[-1].strip())[1]
-        return value
 
     def info_registers(self, group):
         output = self.command("info registers %s" % group)
@@ -583,4 +567,17 @@ class PrivateState(object):
 
     def __exit__(self, _type, _value, _traceback):
         self.gdb.pop_state()
+
+
+class CannotAccess(Exception):
+    def __init__(self, address):
+        Exception.__init__(self)
+        self.address = address
+
+
+class CouldNotFetch(Exception):
+    def __init__(self, regname, explanation):
+        Exception.__init__(self)
+        self.regname = regname
+        self.explanation = explanation
 

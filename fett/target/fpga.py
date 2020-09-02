@@ -13,6 +13,9 @@ import pexpect
 from pexpect import fdpexpect
 
 
+ELEW_DEVELOP = False
+
+
 class fpgaTarget (commonTarget):
     def __init__ (self):
 
@@ -36,7 +39,7 @@ class fpgaTarget (commonTarget):
         return
 
     def setupGfe(self):
-        self.gfe = Gfe(gdb_path="riscv64-unknown-elf-gdb", xlen=int(getSetting('xlen')))
+        self.gfe = Gfe(gdb_path="riscv64-unknown-elf-gdb", xlen=getSetting('xlen'))
         self.gfe.startGdb()
         self.gfe.softReset()
 
@@ -100,24 +103,8 @@ class fpgaTarget (commonTarget):
             if (isException):
                 self.shutdownAndExit("boot: Failed to load the binary on FPGA.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
-        isException = False
-        nAttempts = 2
-        for iAttempt in range(nAttempts):
-            exc = None
-            with redirectPrintToFile(self.gfeOutPath):
-                try:
-                    self.setupGfe()
-                except Exception as tempExc:
-                    exc = tempExc
-                    isException = True
-            if (not isException): #The exception is caught in this weird way in order to print on the screen (because under redirectPrint)
-                break #success
-            elif (iAttempt < nAttempts-1): #that was the first try
-                errorAndLog(f"boot: Failed to <setUp> FPGA for booting. Trying again...",exc=exc)
-                programBitfile()
-                isException = False #go and try again
-        if (isException): 
-            self.shutdownAndExit (f"boot: Failed to <setUp> FPGA for booting.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+        self.setupGfe()
+
         if (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
             if (isEqSetting('elfLoader','JTAG')):
                 loadJTAG(getSetting('osImageElf'))
@@ -302,45 +289,46 @@ def programBitfile ():
     gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
     printAndLog("Clearing the flash...",doPrint=False)
     gfeOut.write("\n\ngfe-clear-flash\n")
-    try:
-        subprocess.check_call(['gfe-clear-flash'],stdout=gfeOut,stderr=gfeOut,timeout=90)
-    except Exception as exc:
-        errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
-
-    bitAndProbefiles = selectBitAndProbeFiles()
-    for xFile in bitAndProbefiles:
-        if not os.path.isfile(xFile):
-            logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
-
-    try:
-        bitfile = ftOpenFile(bitAndProbefiles[0], "rb")
-        md5 = hashlib.md5()
-        while True:
-            chunk = bitfile.read(65536)
-            if not chunk:
-                break
-            md5.update(chunk)
-        bitfile.close()
-    except Exception as exc:
-        logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
-
-    printAndLog("Programming the bitfile...")
-    nAttempts = 2
-    for iAttempt in range(nAttempts):
-        gfeOut.write("\n\ngfe-program-fpga\n")
-        clearProcesses()
+    if not ELEW_DEVELOP: # skip because time consuming
         try:
-            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitAndProbefiles[0], '--probe-file', bitAndProbefiles[1]],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
-            printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})")
-            break
+            subprocess.check_call(['gfe-clear-flash'],stdout=gfeOut,stderr=gfeOut,timeout=90)
         except Exception as exc:
-            if (iAttempt < nAttempts-1):
-                errorAndLog(f"Failed to program the FPGA. Trying again...",doPrint=True,exc=exc)
-            else:
-                logAndExit(f"Failed to program the FPGA.",exc=exc,exitCode=EXIT.Run)
+            errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
 
-    gfeOut.close()
-    printAndLog("FPGA was programmed successfully!")
+        bitAndProbefiles = selectBitAndProbeFiles()
+        for xFile in bitAndProbefiles:
+            if not os.path.isfile(xFile):
+                logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
+
+        try:
+            bitfile = ftOpenFile(bitAndProbefiles[0], "rb")
+            md5 = hashlib.md5()
+            while True:
+                chunk = bitfile.read(65536)
+                if not chunk:
+                    break
+                md5.update(chunk)
+            bitfile.close()
+        except Exception as exc:
+            logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
+
+        printAndLog("Programming the bitfile...")
+        nAttempts = 2
+        for iAttempt in range(nAttempts):
+            gfeOut.write("\n\ngfe-program-fpga\n")
+            clearProcesses()
+            try:
+                subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitAndProbefiles[0], '--probe-file', bitAndProbefiles[1]],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
+                printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})")
+                break
+            except Exception as exc:
+                if (iAttempt < nAttempts-1):
+                    errorAndLog(f"Failed to program the FPGA. Trying again...",doPrint=True,exc=exc)
+                else:
+                    logAndExit(f"Failed to program the FPGA.",exc=exc,exitCode=EXIT.Run)
+
+        gfeOut.close()
+        printAndLog("FPGA was programmed successfully!")
 
 @decorate.debugWrap
 def selectBitAndProbeFiles ():
