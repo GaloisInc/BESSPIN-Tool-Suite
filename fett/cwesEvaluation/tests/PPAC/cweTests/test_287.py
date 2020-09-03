@@ -18,7 +18,7 @@ def test_287 (target,binTest):
             def suRoot287 ():
                 retLog = ''
                 shellRoot = "{0}#".format(target.userName)
-                shellUser = '[00m:[01;34m~[00m\$'
+                shellUser = ":~\$"
                 isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",endsWith=['Password:', shellRoot, shellUser],shutdownOnError=False,expectExact=True)
                 retLog += textBack
                 if (idxEndsWith == 0): #still asks for password
@@ -279,7 +279,7 @@ def test_287 (target,binTest):
     elif (target.osImage == 'FreeBSD'):
         def suRoot287 ():
             isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",
-                        endsWith=["testgenPrompt>",f"{target.userName} #", ":~ \$",":~ $"],
+                        endsWith=["fettPrompt>",f"{target.userName} #", ":~ \$"],
                         shutdownOnError=False)
             if (idxEndsWith in [0,1]):
                 retLog = "<GRANTED> su root access!\n"
