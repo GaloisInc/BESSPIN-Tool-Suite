@@ -5,15 +5,16 @@ Main fpga class + misc fpga functions
 
 from fett.base.utils.misc import *
 from fett.target.common import *
-from fett.target.utils.gfe import Gfe
+from fett.target.utils.gfe import Openocd
 
 import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
 import pexpect
 from pexpect import fdpexpect
 
+import serial
+import serial.tools.list_ports
 
-ELEW_DEVELOP = False
 
 
 class fpgaTarget (commonTarget):
@@ -35,32 +36,19 @@ class fpgaTarget (commonTarget):
         self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
         self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')
 
-        self.gfe = None
+        self.gdb_session = None
+        self.gdb_logfile = None
+        self.uart_session = None
         return
 
-    def setupGfe(self):
-        self.gfe = Gfe(gdb_path="riscv64-unknown-elf-gdb", xlen=getSetting('xlen'))
-        self.gfe.startGdb()
-        self.gfe.softReset()
-
-    def setupUart(self, timeout=1, baud=115200, parity="NONE",
-        stopbits=2, bytesize=8):
-        self.gfe.setupUart(
-            timeout=timeout,
-            baud=baud,
-            parity=parity,
-            stopbits=stopbits,
-            bytesize=bytesize)
-
     def terminateGfe(self):
-        if not self.gfe.gdb_session:
+        if not self.gdb_session:
             return
-        self.gfe.gdb_session.interrupt()
-        self.gfe.gdb_session.command("disassemble", ops=20)
-        self.gfe.gdb_session.command("info registers all", ops=100)
-        self.gfe.gdb_session.command("flush regs")
-        self.gfe.gdb_session.command("info threads", ops=100)
-        del self.gfe
+        self.interruptGdb()
+        self.runCommandGdb("disassemble", ops=20)
+        self.runCommandGdb("info registers all", ops=100)
+        self.runCommandGdb("flush regs")
+        self.runCommandGdb("info threads", ops=100)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -70,40 +58,35 @@ class fpgaTarget (commonTarget):
         def loadJTAG(binary): 
             if (getSetting('osImage') not in ['debian', 'FreeBSD', 'busybox', 'FreeRTOS']):
                 self.shutdownAndExit(f"<loadJTAG> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Dev_Bug)
-            isException = False
-            exc = None
-            with redirectPrintToFile(self.gfeOutPath):
-                try:
-                    if (isEqSetting('osImage','FreeRTOS')):
-                        if (isEqSetting('procFlavor','bluespec')):
-                            print(self.gfe.softReset())
-                        print(self.gfe.gdb_session.interrupt())
-                    elif (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
-                        #The following values are hardcoded as copied from GFE. When GFE updates the testing platform, we'll change this accordingly
-                        #This soft resets the processor
-                        print(self.gfe.gdb_session.command("set $a0 = 0"))
-                        print(self.gfe.gdb_session.command("set $a1 = 0x70000020"))
-                    self.setupUart()
-                    self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
-                    self.ttyProcess = fdpexpect.fdspawn(self.gfe.uart_session.fileno(),logfile=self.fTtyOut,timeout=30)
-                    self.process = self.ttyProcess
-                    print(self.gfe.gdb_session.command(f"file {binary}"))
-                    self.gfe.gdb_session.load(False) #has some asserts. False not to verify compare-sections and MIS.
-                    if (isEqSetting('osImage','FreeRTOS')):
-                        print (self.gfe.gdb_session.command("dprintf vApplicationIdleHook,\"idle-breakpoint\\n\""))
-                    #setupGdbLogging
-                    print(self.gfe.gdb_session.command(f"set logging file {self.gdbOutPath}"))
-                    print(self.gfe.gdb_session.command("set logging on"))
-                    self.gfe.gdb_session.c(wait=False)
-                except Exception as tempExc:
-                    isException = True
-                    exc = tempExc
-                    if ('minicom' in repr(exc)):
-                        warnAndLog ("If minicom is not open, please ensure the tty is reset properly using 'stty -F <pathToTTY> min 0 time 0'.",doPrint=False)
-            if (isException):
-                self.shutdownAndExit("boot: Failed to load the binary on FPGA.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            if (isEqSetting('osImage','FreeRTOS')):
+                if (isEqSetting('procFlavor','bluespec')):
+                    print(self.softReset())
+                print(self.interruptGdb())
+            elif (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
+                #The following values are hardcoded as copied from GFE. When GFE updates the testing platform, we'll change this accordingly
+                #This soft resets the processor
+                self.runCommandGdb("set $a0 = 0")
+                self.runCommandGdb("set $a1 = 0x70000020")
+            self.setupUart()
+            # setup process over uart_session object
+            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+            self.ttyProcess = fdpexpect.fdspawn(self.uart_session.fileno(),logfile=self.fTtyOut,timeout=30)
+            self.process = self.ttyProcess
+            self.runCommandGdb(f"file {binary}")
+            self.loadGdb(False) #has some asserts. False not to verify compare-sections and MIS.
+            if (isEqSetting('osImage','FreeRTOS')):
+                self.runCommandGdb("dprintf vApplicationIdleHook,\"idle-breakpoint\\n\"")
 
-        self.setupGfe()
+            #setupGdbLogging
+            self.runCommandGdb(f"set logging file {self.gdbOutPath}")
+            self.runCommandGdb("set logging on")
+            self.continueGdb(wait=False)
+
+        # start GDB process(es)
+        self.startGdb()
+
+        # reset the board
+        self.softReset()
 
         if (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
             if (isEqSetting('elfLoader','JTAG')):
@@ -196,8 +179,17 @@ class fpgaTarget (commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
+        def kill_process(proc):
+            if (self.process.isalive()):
+                try:
+                    subprocess.check_call(['sudo', 'kill', '-9', f"{proc.pid}"],
+                                          stdout=self.fTtyOut, stderr=self.fTtyOut)
+                except Exception as exc:
+                    warnAndLog("targetTearDown: Failed to kill process.",doPrint=False,exc=exc)
         try:
             self.terminateGfe()
+            kill_process(self.gdb_session)
+            kill_process(self.uart_session)
             return True
         except Exception as exc:
             warnAndLog ("targetTearDown: Failed to tearDown peacefully.",doPrint=False,exc=exc)
@@ -279,6 +271,180 @@ class fpgaTarget (commonTarget):
         time.sleep(5)
         return
 
+    # ------ Gdb Methods -----
+    def runCommandGdb(self, command, ops=1):
+        """convenience runCommand for GDB"""
+        return self.runCommand(command, endsWith=[r"\r\n\(gdb\)"],
+                                sendToNonUnix=True,
+                                timeout=ops*60,
+                                process=self.gdb_session)[1]
+
+    @decorate.debugWrap
+    def continueGdb(self, wait=True, asynch=False):
+        """implement wait/no-wait, synch/asynch GDB continue"""
+        asynch = "&" if asynch else ""
+        ops = 10
+        if wait:
+            text = self.runCommandGdb('c' + asynch, ops=ops)
+            if "Continuing" not in text:
+                self.shutdownAndExit(f"fpgaTarget: GDB continue output is not valid")
+            return text
+        else:
+            return self.runCommand('c' + asynch,
+                                   timeout=ops * 60,
+                                   endsWith=["Continuing"],
+                                   sendToNonUnix=True,
+                                   process=self.gdb_session)[1]
+
+    @decorate.debugWrap
+    def loadGdb(self, verify=True):
+        """implement GDB load command"""
+        output = self.runCommandGdb("load", ops=1000)
+        if "failed" in output or "Transfer rate" not in output:
+            self.shutdownAndExit(f"fpgaTarget: GDB load output is invalid")
+        if verify:
+            output = self.runCommandGdb("compare-sections", ops=1000)
+            if "MIS" not in output:
+                self.shutdownAndExit(f"fpgaTarget: GDB load output is invalid")
+
+    @decorate.debugWrap
+    def interruptGdb(self):
+        """implement keyboardInterrupt for GDB"""
+        self.gdb_session.send("\003")
+        self.gdb_session.expect("(gdb)", timeout=6000)
+        return self.gdb_session.before.strip()
+
+    @decorate.debugWrap
+    def startGdb(self, binary=None):
+        server_cmd = getSettingDict("gfeInfo", "openocdCommand")
+        config = getSettingDict("gfeInfo", "openocdCfgPath")
+        riscv_gdb_cmd = getSettingDict("gfeInfo", "gdbPath")
+        self.openocd_session = Openocd(
+            server_cmd=server_cmd,
+            config=config,
+            debug=False)
+        port = self.openocd_session.gdb_ports[0]
+        self.gdb_logfile = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb.out'), 'ab')
+        self.gdb_session = pexpect.spawn(riscv_gdb_cmd, logfile=self.gdb_logfile, timeout=30)
+        self.gdb_session.expect(r"\r\n\(gdb\)")
+        self.runCommandGdb("set confirm off")
+        self.runCommandGdb("set width 0")
+        self.runCommandGdb("set height 0")
+        self.runCommandGdb("set print entry-values no")
+        self.runCommandGdb(f"set remotetimeout %d" % 60)
+        self.runCommandGdb("set architecture riscv:rv%d" % getSetting('xlen'))
+        self.runCommandGdb("target extended-remote localhost:%d" % port)
+        if binary:
+            self.runCommandGdb("file %s" % binary)
+
+    def endGdb(self):
+        self.openocd_session.tearDown()
+
+    def riscvWrite(self, address, value, size):
+        size_options = {8: "char", 32: "int"}
+
+        # Validate input
+        if size not in size_options:
+            errorAndLog(f"fpgaTarget: riscvWrite write size {size} must be one of {list(size_options.keys())}")
+
+        if not self.gdb_session:
+            self.startGdb()
+
+        # Perform the write command using the gdb set command
+        output = self.runCommandGdb(
+            "set *(({} *) 0x{:x}) = 0x{:x}".format(
+                size_options[size], address, value))
+
+        # Check for an error message from gdb
+        m = re.search("Cannot access memory", output)
+        if m:
+            errorAndLog(f"fpgaTarget: RISC-V write cannot access at address {address}")
+
+    @decorate.debugWrap
+    def softReset(self):
+        self.riscvWrite(int(getSettingDict("gfeInfo", "resetBase"), base=16),
+                        int(getSettingDict("gfeInfo", "resetVal"), base=16),
+                        32)
+        self.endGdb()
+        self.startGdb()
+        # Note: There is a bug that prevents loading an elf later in the test script
+        # without first continuing and interrupting. This is fine for now, but may
+        # not be compatible with future tests that require a completely clean start point
+        self.continueGdb(wait=False)
+        self.interruptGdb()
+
+    # ------ Uart Methods -----
+    @staticmethod
+    def findUartPort(search_vid=0x10C4,search_pid=0xEA70):
+        # Get a list of all serial ports with the desired VID/PID
+        ports = [port for port in serial.tools.list_ports.comports() if port.vid == search_vid and port.pid == search_pid]
+
+        for port in ports:
+            # Silabs chip on VCU118 has two ports. Locate port 1 from the hardware description
+            m = re.search('LOCATION=.*:1.(\d)', port.hwid)
+            if m:
+                if m.group(1) == '1':
+                    printAndLog(f"fpgaTarget: located UART device ats {port.device} "
+                                f"with serial number {port.serial_number}", doPrint=False)
+                    extraMsg = "In case there is no output shown from the target's UART, "
+                    extraMsg += "please make sure the tty is not used by any other tool (e.g. minicom), "
+                    extraMsg += f"and is reset properly (use 'stty -F {port.device} min 0 time 0' to reset it)."
+                    try:
+                        #Check if no one else is using the serial port. Especially Minicom.
+                        sttyOut = str(subprocess.check_output (f"stty -F {port.device} | grep min",stderr=subprocess.STDOUT,shell=True),'utf-8')
+                        #sttyOut = shellCommand(['stty', '-F', f'{port.device}', '|', 'grep', 'min'])
+                        sttyMatch = re.match(r"^.*min = (?P<vMin>\d+); time = (?P<vTime>\d+);$", sttyOut)
+                        if ( (int(sttyMatch.group('vMin')) != 0) or (int(sttyMatch.group('vTime')) != 0)):
+                            warnAndLog (f"fpgaTarget: the UART {port.device} status is not as expected. {extraMsg}")
+                    except:
+                        warnAndLog (f"fpgaTarget: failed to get the status of {port.device}. {extraMsg}")
+                    return port.device
+        errorAndLog(f"fpgaTarget: findUartPort could not find a UART port with expected VID:PID = {search_vid:X}:{search_pid:X}")
+
+    @decorate.debugWrap
+    def setupUart(self, timeout=1, baud=115200, parity="NONE",
+        stopbits=2, bytesize=8):
+
+        port = getSettingDict("gfeInfo", "uartSerialDev")
+
+        # Get the UART port
+        if port == "auto":
+            port = self.findUartPort()
+
+        # Translate inputs into serial settings
+        if hasattr(serial, f"PARITY_{parity.upper()}"):
+            parity = getattr(serial, f"PARITY_{parity.upper()}")
+        else:
+            errorAndLog(f"fpgaTarget: setupUart parity {parity} must be even or odd")
+
+        sbit_mapping = {1: serial.STOPBITS_ONE, 2: serial.STOPBITS_TWO}
+        if stopbits in sbit_mapping:
+            stopbits = sbit_mapping[stopbits]
+        else:
+            errorAndLog(f"fpgaTarget: setupUart stop bits {stopbits} must be 1 or 2")
+
+        byte_mapping = {5: serial.FIVEBITS, 6: serial.SIXBITS, 7: serial.SEVENBITS, 8: serial.EIGHTBITS}
+        if bytesize in byte_mapping:
+            bytesize = byte_mapping[bytesize]
+        else:
+            errorAndLog(f"fpgaTarget: setupUart bytesize {bytesize} must be 5,6,7 or 8")
+
+        # configure the serial connections
+        try:
+            self.uart_session = serial.Serial(
+                port=port,
+                baudrate=baud,
+                parity=parity,
+                stopbits=stopbits,
+                timeout=timeout,
+                bytesize=bytesize
+            )
+
+            if not self.uart_session.is_open:
+                self.uart_session.open()
+        except Exception as exc:
+            errorAndLog(f"fpgaTarget: unable to open serial session", exc=exc)
+
 #--- END OF CLASS fpgaTarget------------------------------
 
 @decorate.debugWrap
@@ -289,46 +455,45 @@ def programBitfile ():
     gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
     printAndLog("Clearing the flash...",doPrint=False)
     gfeOut.write("\n\ngfe-clear-flash\n")
-    if not ELEW_DEVELOP: # skip because time consuming
-        try:
-            subprocess.check_call(['gfe-clear-flash'],stdout=gfeOut,stderr=gfeOut,timeout=90)
-        except Exception as exc:
-            errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
+    try:
+        subprocess.check_call(['gfe-clear-flash'],stdout=gfeOut,stderr=gfeOut,timeout=90)
+    except Exception as exc:
+        errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
 
-        bitAndProbefiles = selectBitAndProbeFiles()
-        for xFile in bitAndProbefiles:
-            if not os.path.isfile(xFile):
-                logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
+    bitAndProbefiles = selectBitAndProbeFiles()
+    for xFile in bitAndProbefiles:
+        if not os.path.isfile(xFile):
+            logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
 
-        try:
-            bitfile = ftOpenFile(bitAndProbefiles[0], "rb")
-            md5 = hashlib.md5()
-            while True:
-                chunk = bitfile.read(65536)
-                if not chunk:
-                    break
-                md5.update(chunk)
-            bitfile.close()
-        except Exception as exc:
-            logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
-
-        printAndLog("Programming the bitfile...")
-        nAttempts = 2
-        for iAttempt in range(nAttempts):
-            gfeOut.write("\n\ngfe-program-fpga\n")
-            clearProcesses()
-            try:
-                subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitAndProbefiles[0], '--probe-file', bitAndProbefiles[1]],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
-                printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})")
+    try:
+        bitfile = ftOpenFile(bitAndProbefiles[0], "rb")
+        md5 = hashlib.md5()
+        while True:
+            chunk = bitfile.read(65536)
+            if not chunk:
                 break
-            except Exception as exc:
-                if (iAttempt < nAttempts-1):
-                    errorAndLog(f"Failed to program the FPGA. Trying again...",doPrint=True,exc=exc)
-                else:
-                    logAndExit(f"Failed to program the FPGA.",exc=exc,exitCode=EXIT.Run)
+            md5.update(chunk)
+        bitfile.close()
+    except Exception as exc:
+        logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
 
-        gfeOut.close()
-        printAndLog("FPGA was programmed successfully!")
+    printAndLog("Programming the bitfile...")
+    nAttempts = 2
+    for iAttempt in range(nAttempts):
+        gfeOut.write("\n\ngfe-program-fpga\n")
+        clearProcesses()
+        try:
+            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitAndProbefiles[0], '--probe-file', bitAndProbefiles[1]],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
+            printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})")
+            break
+        except Exception as exc:
+            if (iAttempt < nAttempts-1):
+                errorAndLog(f"Failed to program the FPGA. Trying again...",doPrint=True,exc=exc)
+            else:
+                logAndExit(f"Failed to program the FPGA.",exc=exc,exitCode=EXIT.Run)
+
+    gfeOut.close()
+    printAndLog("FPGA was programmed successfully!")
 
 @decorate.debugWrap
 def selectBitAndProbeFiles ():
