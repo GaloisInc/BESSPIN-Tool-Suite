@@ -52,6 +52,7 @@ class Logger:
             "Info": None,
             "Warning": "yellow",
             "Results": "cyan",
+            "Status": "green",
         }
 
         # Empty out log files
@@ -129,6 +130,9 @@ class Logger:
 
     def results(self, message):
         self.log_out(message, "Results")
+
+    def status(self, message):
+        self.log_out(message, "Status")
 
 
 ## Global Package Logger

@@ -270,6 +270,11 @@ def poll_s3(config, instance_ids):
             f"Intersection of s3: { s3_finished_ids } and running: { instance_ids } is { completed_ids }"
         )
 
+        if completed_ids:
+            log.debug(
+                f"Found S3 communications about running instances { completed_ids }"
+            )
+
         # Download each result to /tmp, to be read later
         for instance_id in completed_ids:
             try:

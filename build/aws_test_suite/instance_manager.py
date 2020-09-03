@@ -25,6 +25,7 @@ class InstanceManager:
         self._instances = instances
         self._running = []
         self._terminated = []
+        self._results = []
 
         self._i = cap
 
@@ -38,9 +39,9 @@ class InstanceManager:
         self._instances.append(instance)
         return self
 
-    def log_results(self, instance_id, instance_name):
+    def log_results(self, i):
 
-        results_file_path = os.path.join("/tmp", instance_id)
+        results_file_path = os.path.join("/tmp", i.id)
         try:
             # Read the log file in /tmp to get exit status
             with open(results_file_path, "r") as f:
@@ -48,9 +49,9 @@ class InstanceManager:
         except Exception as exc:
             log.error(f"Failed to open file { results_file_path }", exc=exc)
 
-        log.results(
-            f"FINISHED: {instance_name} ({instance_id}), exited with status {status}."
-        )
+        self._results.append([status, i.id, i.name])
+
+        log.results(f"FINISHED: {i.name} ({i.id}), exited with status {status}.")
 
     @log_assertion_fails
     def run_all_instances(self, config=None):
@@ -62,6 +63,10 @@ class InstanceManager:
         )
 
         assert (len(self._instances)) > 0, "No instances were found."
+
+        # Store the number of instanes to run for later use as
+        #   self._instances is subject to change
+        num_instances_total = len(self._instances)
 
         # Populate running_instances with $cap instances
         #   This uses the min of $cap and $(len(self._instances))
@@ -97,7 +102,7 @@ class InstanceManager:
 
                 for i in finished_instances:
                     # Log results
-                    self.log_results(i.id, i.name)
+                    self.log_results(i)
 
                     # If we have no more instances, remove from list, and do not replace
                     if len(self._instances) == 0:
@@ -106,6 +111,7 @@ class InstanceManager:
                         )
                         running_instances.remove(i)
                         log.debug(f"Removed instance { i.id } from _instances.")
+
                     # Else we replace it with the next item from _instances
                     else:
                         terminate_instance(
@@ -119,7 +125,31 @@ class InstanceManager:
                         log.info(
                             f"Replaced instance { i.id } with { running_instances[replace_index].id }"
                         )
+
+                    # Print status to screen
+                    to_run = len(self._instances)
+                    running = len(running_instances)
+                    finished = num_instances_total - (to_run + running)
+                    percent_complete = int((finished / num_instances_total) * 100)
+                    log.status(
+                        f"Status: [ { to_run } / { running } / { finished } ] = { percent_complete }% ( To Run / Running / Finished )"
+                    )
+
             time.sleep(2)
+
+        # Print out the results from this run.
+        log.status("Run Results:")
+        failures = 0
+
+        for result in self._results:
+            if result[0] == "failure":
+                log.info(f"Failure: Instance { result[2] } ({ result [1] })")
+                failures += 1
+
+        success_percentage = int(
+            ((len(self._results) - failures) / len(self._results)) * 100
+        )
+        log.status(f"Overall: { success_percentage }% Success.")
 
     @property
     def instances(self):
