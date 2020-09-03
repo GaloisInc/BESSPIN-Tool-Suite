@@ -29,7 +29,7 @@ class commonTarget():
         self.sshProcess = None
         self.fSshOut = None
         self.restartMode = False
-        self.isSshRootEnabled = False
+        self.isSshRootEnabled = isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
 
         # all OSs settings
         self.portTarget = None
