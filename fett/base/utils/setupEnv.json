@@ -306,6 +306,19 @@
             "min" : 1024,
             "max" : 10000,
             "val" : 3333
+	},
+	{
+            "name" : "gfeInfo",
+            "type" : "dict",
+            "val" : {
+                "gdbPort" : 3333,
+                "gdbPath" : "riscv64-unknown-elf-gdb",
+                "openocdCfgPath" : "fett/target/utils/openocd_vcu118.cfg",
+                "openocdCommand" : "openocd",
+                "uartSerialDev" : "auto",
+                "resetBase" : "0x6FFF0000",
+                "resetVal" : "0x1"
+            }
         }
     ] 
 }

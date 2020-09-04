@@ -253,27 +253,12 @@ def getClassType():
     def errorAndRaise(message,exc=None):
         errorAndLog(message,exc=exc)
         raise
-
     if (isEqSetting('target','aws')):
         return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
         return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):
-        gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
-        if (gfeTestingScripts not in os.environ):
-            errorAndRaise (f"<${gfeTestingScripts}> not found in the nix path.")
-        try:
-            sys.path.append(os.environ[gfeTestingScripts])
-            from test_gfe_unittest import TestLinux, TestFreeRTOS
-        except Exception as exc:
-            errorAndRaise (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc)
-        if (isEqSetting('xlen',32)):
-            return type('classFpgaTarget',(fpga.fpgaTarget,TestFreeRTOS),dict())
-        elif(isEqSetting('xlen',64)):
-            return type('classFpgaTarget',(fpga.fpgaTarget,TestLinux),dict())
-        else:
-            errorAndRaise (f"Invalid <xlen={getSetting('xlen')}> value.")
-
+        return fpga.fpgaTarget
     else:
         errorAndRaise (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.")
 
