@@ -74,9 +74,6 @@ class fpgaTarget (commonTarget):
             self.process = self.ttyProcess
             self.runCommandGdb(f"file {binary}")
             self.loadGdb(False) #has some asserts. False not to verify compare-sections and MIS.
-            if (isEqSetting('osImage','FreeRTOS')):
-                self.runCommandGdb("dprintf vApplicationIdleHook,\"idle-breakpoint\\n\"")
-
             self.continueGdb(wait=False)
 
         # start GDB process(es)
