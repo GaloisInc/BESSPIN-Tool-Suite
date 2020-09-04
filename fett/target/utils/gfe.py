@@ -58,36 +58,23 @@ class Openocd(object):
 
     def start(self, cmd, logfile):
         process = pexpect.spawn(" ".join(cmd), encoding='utf-8', logfile=logfile)
+        message = ''
         try:
-            # Wait for OpenOCD to have made it through riscv_examine(). When
-            # using OpenOCD to communicate with a simulator this may take a
-            # long time, and gdb will time out when trying to connect if we
-            # attempt too early.
-            start = time.time()
-            messaged = False
-            while True:
-                line = process.readline()[:-1]
-                if not line:
-                    time.sleep(0.1)
-                    continue
-
-                m = re.search(r"Listening on port (\d+) for gdb connections",
-                              line)
-                if m:
-                    printAndLog(f"OpenOCD found port {int(m.group(1))}", doPrint=False)
-                    self.gdb_ports.append(int(m.group(1)))
-
-                if "telnet server disabled" in line:
-                    return process
-
-                if not messaged and time.time() - start > 1:
-                    messaged = True
-                    printAndLog(f"GFE Util: waiting for openOCD to start...", doPrint=False)
-                if (time.time() - start) > self.timeout:
-                    errorAndLog("GFE Util: Timed out waiting for OpenOCD to listen for gdb")
-
+            process.expect("telnet server disabled", timeout=90)
+            message = process.before
+        except pexpect.TIMEOUT as exc:
+            errorAndLog("GFE Util: Timed out waiting for OpenOCD to listen for gdb", exc=exc)
         except Exception as exc:
-            logAndExit(f"GFE Util: start failed", exc=exc)
+            errorAndLog("GFE Util: Error occured while trying to listen for gdb", exc=exc)
+
+        for line in message.split('\n'):
+            m = re.search(r"Listening on port (\d+) for gdb connections",
+                          line)
+            if m:
+                printAndLog(f"OpenOCD found port {int(m.group(1))}", doPrint=False)
+                self.gdb_ports.append(int(m.group(1)))
+
+        return process
 
     def tearDown(self):
         def kill_process(proc):

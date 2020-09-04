@@ -382,8 +382,8 @@ class fpgaTarget (commonTarget):
                     extraMsg += f"and is reset properly (use 'stty -F {port.device} min 0 time 0' to reset it)."
                     try:
                         #Check if no one else is using the serial port. Especially Minicom.
-                        sttyOut = str(subprocess.check_output (f"stty -F {port.device} | grep min",stderr=subprocess.STDOUT,shell=True),'utf-8')
-                        #sttyOut = shellCommand(['stty', '-F', f'{port.device}', '|', 'grep', 'min'])
+                        sttyOut = str(subprocess.check_output (f"stty -F {port.device} | grep min",
+                                                               stderr=subprocess.STDOUT,shell=True),'utf-8')
                         sttyMatch = re.match(r"^.*min = (?P<vMin>\d+); time = (?P<vTime>\d+);$", sttyOut)
                         if ( (int(sttyMatch.group('vMin')) != 0) or (int(sttyMatch.group('vTime')) != 0)):
                             warnAndLog (f"fpgaTarget: the UART {port.device} status is not as expected. {extraMsg}")
