@@ -129,7 +129,7 @@ def main (xArgs):
 
     #launch the tool
     xTarget = startFett()
-    instruction = 'notARealInstruction'
+    instruction = None
     if (isEqSetting('mode','production')):
         def sendSuccessMsgToPortal (nodeSuffix, reasonSuffix):
             aws.sendSQS(getSetting(f'{getSetting("fettEntrypoint")}SqsQueueTX'), logAndExit, 'success', 
@@ -157,7 +157,7 @@ def main (xArgs):
                 # Notify portal that we have reset successfully
                 sendSuccessMsgToPortal('RESET','reset')
         
-    endFett(xTarget,instruction)
+    endFett(xTarget,(instruction=='deadProcess'))
     exitFett(EXIT.Success)
 
 if __name__ == '__main__':
