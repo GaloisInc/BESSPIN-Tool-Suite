@@ -339,14 +339,9 @@ class fpgaTarget (commonTarget):
             self.startGdb()
 
         # Perform the write command using the gdb set command
-        output = self.runCommandGdb(
+        self.runCommandGdb(
             "set *(({} *) 0x{:x}) = 0x{:x}".format(
-                size_options[size], address, value))
-
-        # Check for an error message from gdb
-        m = re.search("Cannot access memory", output)
-        if m:
-            logAndExit(f"fpgaTarget: RISC-V write cannot access at address {address}")
+                size_options[size], address, value), erroneousContents="Cannot access memory")
 
     @decorate.debugWrap
     def softReset(self):

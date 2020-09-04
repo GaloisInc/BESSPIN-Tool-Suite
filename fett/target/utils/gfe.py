@@ -63,9 +63,9 @@ class Openocd(object):
             process.expect("telnet server disabled", timeout=90)
             message = process.before
         except pexpect.TIMEOUT as exc:
-            errorAndLog("GFE Util: Timed out waiting for OpenOCD to listen for gdb", exc=exc)
+            logAndExit("GFE Util: Timed out waiting for OpenOCD to listen for gdb", exc=exc)
         except Exception as exc:
-            errorAndLog("GFE Util: Error occured while trying to listen for gdb", exc=exc)
+            logAndExit("GFE Util: Error occured while trying to listen for gdb", exc=exc)
 
         for line in message.split('\n'):
             m = re.search(r"Listening on port (\d+) for gdb connections",
