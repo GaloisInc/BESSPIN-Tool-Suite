@@ -53,10 +53,11 @@ def loadConfiguration(configFile):
         loadSecurityEvaluationConfiguration(xConfig,configData)
 
     # Get the XLEN and processor flavor
-    procMatch = re.match(r"^(?P<procFlavor>chisel|bluespec)_p(?P<pType>[1-3])$",getSetting('processor'))
+    procMatch = re.match(r"^(?P<procFlavor>chisel|bluespec)_p(?P<procLevel>[1-3])$",getSetting('processor'))
     if (procMatch):
         setSetting('procFlavor', procMatch.group('procFlavor'))
-        if (procMatch.group('pType') == '1'):
+        setSetting('procLevel', f"p{procMatch.group('procLevel')}")
+        if (procMatch.group('procLevel') == '1'):
             setSetting('xlen',32)
         else: # 2-3
             setSetting('xlen',64)
