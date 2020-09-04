@@ -177,6 +177,14 @@
                         "debian" : "notOnAWS",
                         "FreeBSD" : "connectal",
                         "busybox" : "notOnAWS"
+                    },
+                    "chisel_p3" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "notOnAWS"
+                    },
+                    "bluespec_p3" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "notOnAWS"
                     }
                 },
                 "LMCO" : {
