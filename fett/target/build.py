@@ -311,8 +311,11 @@ def importImage():
     imagePaths = selectImagePaths()
     for ip in imagePaths:
         cp (ip, getSetting('osImagesDir'))
-    if not (isEqSetting('target', 'awsf1')):
+    if (isEqSetting('target', 'vcu118')):
         if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
+            if (isEqSetting('procLevel','p3')):
+                warnAndLog(f"<importImage>: Netboot is currently not supported on P3. Falling back to JTAG.")
+                setSetting('elfLoader','JTAG')
             netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
             setSetting('netbootElf',netbootElf)
             netbootImage = getSettingDict('nixEnv','netboot')
