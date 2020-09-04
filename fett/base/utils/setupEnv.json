@@ -180,11 +180,13 @@
                     },
                     "chisel_p3" : {
                         "debian" : "notOnAWS",
-                        "FreeBSD" : "notOnAWS"
+                        "FreeBSD" : "notOnAWS",
+                        "busybox" : "notOnAWS"
                     },
                     "bluespec_p3" : {
                         "debian" : "notOnAWS",
-                        "FreeBSD" : "notOnAWS"
+                        "FreeBSD" : "notOnAWS",
+                        "busybox" : "notOnAWS"
                     }
                 },
                 "LMCO" : {
