@@ -24,14 +24,14 @@ class Openocd(object):
         cmd += [
             # Tell OpenOCD to bind gdb to an unused, ephemeral port.
             "--command",
-            "gdb_port 0",
+            "'gdb_port 0'",
             # Disable tcl and telnet servers, since they are unused and because
             # the port numbers will conflict if multiple OpenOCD processes are
             # running on the same server.
             "--command",
-            "tcl_port disabled",
+            "'tcl_port disabled'",
             "--command",
-            "telnet_port disabled",
+            "'telnet_port disabled'",
         ]
 
         if config:
@@ -40,7 +40,7 @@ class Openocd(object):
                 config_filepath = config
                 cmd += ["-f", config_filepath]
             except AssertionError as exc:
-                errorAndLog(f"gfe util: unable to find config file {config}", exc=exc)
+                logAndExit(f"gfe util: unable to find config file {config}", exc=exc)
 
         if debug:
             cmd.append("-d")
@@ -57,8 +57,7 @@ class Openocd(object):
         self.process = self.start(cmd, logfile)
 
     def start(self, cmd, logfile):
-        cmd_q = [cmd[0]] + [f"'{c}'" if cmd[idx] == '--command' else c for idx, c in enumerate(cmd[1:]) ]
-        process = pexpect.spawn(" ".join(cmd_q), encoding='utf-8', logfile=logfile)
+        process = pexpect.spawn(" ".join(cmd), encoding='utf-8', logfile=logfile)
         try:
             # Wait for OpenOCD to have made it through riscv_examine(). When
             # using OpenOCD to communicate with a simulator this may take a
@@ -88,7 +87,7 @@ class Openocd(object):
                     errorAndLog("GFE Util: Timed out waiting for OpenOCD to listen for gdb")
 
         except Exception as exc:
-            errorAndLog(f"GFE Util: start failed", exc=exc)
+            logAndExit(f"GFE Util: start failed", exc=exc)
 
     def tearDown(self):
         def kill_process(proc):

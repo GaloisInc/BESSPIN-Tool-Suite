@@ -77,9 +77,6 @@ class fpgaTarget (commonTarget):
             if (isEqSetting('osImage','FreeRTOS')):
                 self.runCommandGdb("dprintf vApplicationIdleHook,\"idle-breakpoint\\n\"")
 
-            #setupGdbLogging
-            self.runCommandGdb(f"set logging file {self.gdbOutPath}")
-            self.runCommandGdb("set logging on")
             self.continueGdb(wait=False)
 
         # start GDB process(es)
@@ -272,12 +269,12 @@ class fpgaTarget (commonTarget):
         return
 
     # ------ Gdb Methods -----
-    def runCommandGdb(self, command, ops=1):
+    def runCommandGdb(self, command, ops=1, **kwargs):
         """convenience runCommand for GDB"""
         return self.runCommand(command, endsWith=[r"\r\n\(gdb\)"],
                                 sendToNonUnix=True,
                                 timeout=ops*60,
-                                process=self.gdb_session)[1]
+                                process=self.gdb_session, **kwargs)[1]
 
     @decorate.debugWrap
     def continueGdb(self, wait=True, asynch=False):
@@ -285,10 +282,7 @@ class fpgaTarget (commonTarget):
         asynch = "&" if asynch else ""
         ops = 10
         if wait:
-            text = self.runCommandGdb('c' + asynch, ops=ops)
-            if "Continuing" not in text:
-                self.shutdownAndExit(f"fpgaTarget: GDB continue output is not valid")
-            return text
+            return self.runCommandGdb('c' + asynch, expectedContents='Continuing', ops=ops)
         else:
             return self.runCommand('c' + asynch,
                                    timeout=ops * 60,
@@ -299,13 +293,10 @@ class fpgaTarget (commonTarget):
     @decorate.debugWrap
     def loadGdb(self, verify=True):
         """implement GDB load command"""
-        output = self.runCommandGdb("load", ops=1000)
-        if "failed" in output or "Transfer rate" not in output:
-            self.shutdownAndExit(f"fpgaTarget: GDB load output is invalid")
+        output = self.runCommandGdb("load", ops=1000, erroneousContents="failed", expectedContents="Transfer rate")
         if verify:
-            output = self.runCommandGdb("compare-sections", ops=1000)
-            if "MIS" not in output:
-                self.shutdownAndExit(f"fpgaTarget: GDB load output is invalid")
+            output = self.runCommandGdb("compare-sections", ops=1000, expectedContent="MIS")
+        return output
 
     @decorate.debugWrap
     def interruptGdb(self):
@@ -345,7 +336,7 @@ class fpgaTarget (commonTarget):
 
         # Validate input
         if size not in size_options:
-            errorAndLog(f"fpgaTarget: riscvWrite write size {size} must be one of {list(size_options.keys())}")
+            logAndExit(f"fpgaTarget: riscvWrite write size {size} must be one of {list(size_options.keys())}")
 
         if not self.gdb_session:
             self.startGdb()
@@ -358,7 +349,7 @@ class fpgaTarget (commonTarget):
         # Check for an error message from gdb
         m = re.search("Cannot access memory", output)
         if m:
-            errorAndLog(f"fpgaTarget: RISC-V write cannot access at address {address}")
+            logAndExit(f"fpgaTarget: RISC-V write cannot access at address {address}")
 
     @decorate.debugWrap
     def softReset(self):
@@ -399,7 +390,7 @@ class fpgaTarget (commonTarget):
                     except:
                         warnAndLog (f"fpgaTarget: failed to get the status of {port.device}. {extraMsg}")
                     return port.device
-        errorAndLog(f"fpgaTarget: findUartPort could not find a UART port with expected VID:PID = {search_vid:X}:{search_pid:X}")
+        logAndExit(f"fpgaTarget: findUartPort could not find a UART port with expected VID:PID = {search_vid:X}:{search_pid:X}")
 
     @decorate.debugWrap
     def setupUart(self, timeout=1, baud=115200, parity="NONE",
@@ -415,19 +406,19 @@ class fpgaTarget (commonTarget):
         if hasattr(serial, f"PARITY_{parity.upper()}"):
             parity = getattr(serial, f"PARITY_{parity.upper()}")
         else:
-            errorAndLog(f"fpgaTarget: setupUart parity {parity} must be even or odd")
+            logAndExit(f"fpgaTarget: setupUart parity {parity} must be even or odd")
 
         sbit_mapping = {1: serial.STOPBITS_ONE, 2: serial.STOPBITS_TWO}
         if stopbits in sbit_mapping:
             stopbits = sbit_mapping[stopbits]
         else:
-            errorAndLog(f"fpgaTarget: setupUart stop bits {stopbits} must be 1 or 2")
+            logAndExit(f"fpgaTarget: setupUart stop bits {stopbits} must be 1 or 2")
 
         byte_mapping = {5: serial.FIVEBITS, 6: serial.SIXBITS, 7: serial.SEVENBITS, 8: serial.EIGHTBITS}
         if bytesize in byte_mapping:
             bytesize = byte_mapping[bytesize]
         else:
-            errorAndLog(f"fpgaTarget: setupUart bytesize {bytesize} must be 5,6,7 or 8")
+            logAndExit(f"fpgaTarget: setupUart bytesize {bytesize} must be 5,6,7 or 8")
 
         # configure the serial connections
         try:
@@ -443,7 +434,7 @@ class fpgaTarget (commonTarget):
             if not self.uart_session.is_open:
                 self.uart_session.open()
         except Exception as exc:
-            errorAndLog(f"fpgaTarget: unable to open serial session", exc=exc)
+            logAndExit(f"fpgaTarget: unable to open serial session", exc=exc)
 
 #--- END OF CLASS fpgaTarget------------------------------
 
