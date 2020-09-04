@@ -39,6 +39,7 @@ class UserdataCreator:
         branch=None,
         binaries_branch=None,
         key_path="~/.ssh/id_rsa",
+        runMode="fett"
     ):
         """
         Add userdata to start with FETT Target at specific branch and binaries branch
@@ -137,7 +138,7 @@ class UserdataCreator:
 
         userdata_specific.append(
             f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target; 
-                nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)}"' """
+                nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)} -m {runMode}"' """
         )
 
         userdata += userdata_specific

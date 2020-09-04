@@ -7,19 +7,31 @@
     Each "values" should be a tuple. Please note that a 1-element tuple should be: ('element',)
 """
 
-fettTargetAMI = 'ami-0ce567dfc18da2d2d' #fett-target-centos-080320-eb048a4 - ami-0ce567dfc18da2d2d / FETT AMI eb048a49a41540da619eafab3aa9d9b38defd899
-
 ciAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
 ciAWSbucket = 'ssith-fett-target-ci-develop'
 ciAWSqueueTesting = 'https://sqs.us-west-2.amazonaws.com/363527286999/aws-test-suite-queue.fifo'
 ciAWSbucketTesting = 'aws-test-suite-bucket'
 
 commonDefaults = {
-    ('mode',('test',)),
     ('openConsole',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',)),
     ('productionTargetIp',('172.31.30.56',))
+}
+
+commonDefaultsFETT = {
+    ('mode',('test',))
+}
+
+commonDefaultsCWEs = {
+    ('mode',('evaluateSecurityTests',)),
+    ('vulClasses', ('[bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors]',)),
+    ('useCustomScoring',('No',)),
+    ('useCustomCompiling',('No',)),
+    ('FreeRTOStimeout',(10,)),
+    ('runAllTests',('Yes',)),
+    ('randomizeParameters',('No',)),
+    ('nTests',(100,))
 }
 
 unixDefaults = commonDefaults.union({
@@ -120,7 +132,7 @@ gfe_freertosDevPR_aws = freertosDefaults.union({
     ('target',('aws',)),
     ('cross-compiler',('GCC','Clang',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
-    ('buildApps',('no',))
+    ('buildApps',('yes',))
 })
 
 lmco_freertosDevPR_aws = freertosDefaults.union({
@@ -129,7 +141,7 @@ lmco_freertosDevPR_aws = freertosDefaults.union({
     ('target',('aws',)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
-    ('buildApps',('no',))
+    ('buildApps',('yes',))
 })
 
 michigan_freertosDevPR_aws = freertosDefaults.union({
@@ -141,20 +153,41 @@ michigan_freertosDevPR_aws = freertosDefaults.union({
 
 appSets = {
     'runPeriodic' : {
-        'freertos' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem },
-        'unix' : { 'gfe_unix' : gfe_unixAllTargets_onprem }
+        'freertos' : {
+            'fett' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsFETT) },
+            'cwe' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsCWEs) }
+        },
+        'unix' : {
+            'fett' : { 'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsFETT) },
+            'cwe' : { 'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsCWEs) }
+        }
     },
     'runDevPR' : {
-        'freertos' : { 'gfe_freertos' : gfe_freertosDevPR_onprem },
-        'unix' : { 'gfe_unix' : gfe_unixDevPR_onprem },
-        'aws' : { 'gfe_debian' : gfe_debianDevPR_aws, 
-                'gfe_freebsd' : gfe_freebsdDevPR_aws, 
-                'gfe_freertos' : gfe_freertosDevPR_aws,
-                'lmco_freertos' : lmco_freertosDevPR_aws,
-                'michigan_freertos' : michigan_freertosDevPR_aws,
-                'mit_unix' : mit_unixDevPR_aws,
-                'lmco_unix' : lmco_unixDevPR_aws,
-                'sri-cambridge_unix' : sri_cambridge_unixDevPR_aws}
+        'freertos' : {
+            'fett' : { 'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsFETT) },
+            'cwe' : { 'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsCWEs) }
+        },
+        'unix' : {
+            'fett' : { 'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsFETT) },
+            'cwe' : { 'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsCWEs) }
+        },
+        'aws' : {
+            'fett' : { 
+                'gfe_debian' : gfe_debianDevPR_aws.union(commonDefaultsFETT), 
+                'gfe_freebsd' : gfe_freebsdDevPR_aws.union(commonDefaultsFETT), 
+                'gfe_freertos' : gfe_freertosDevPR_aws.union(commonDefaultsFETT),
+                'lmco_freertos' : lmco_freertosDevPR_aws.union(commonDefaultsFETT),
+                'michigan_freertos' : michigan_freertosDevPR_aws.union(commonDefaultsFETT),
+                'mit_unix' : mit_unixDevPR_aws.union(commonDefaultsFETT),
+                'lmco_unix' : lmco_unixDevPR_aws.union(commonDefaultsFETT),
+                'sri-cambridge_unix' : sri_cambridge_unixDevPR_aws.union(commonDefaultsFETT)
+            },
+            'cwe' : { 
+                'gfe_debian' : gfe_debianDevPR_aws.union(commonDefaultsCWEs), 
+                'gfe_freebsd' : gfe_freebsdDevPR_aws.union(commonDefaultsCWEs), 
+                'gfe_freertos' : gfe_freertosDevPR_aws.union(commonDefaultsCWEs)
+            }
+        }
     }
 }
 appSets['runRelease'] = appSets['runPeriodic']
