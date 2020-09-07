@@ -222,7 +222,7 @@ def main(xArgs):
             binariesRepo = Repository(os.path.join(repoDir, "SSITH-FETT-Binaries"))
             binariesBranch = binariesRepo.head.shorthand
             printAndLog(
-                f"Status of Binaries on branch { binariesBranch } : {binariesBranch.status()}"
+                f"Status of Binaries on branch { binariesBranch } : {binariesRepo.status()}"
             )
 
             # Log

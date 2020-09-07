@@ -143,7 +143,7 @@ class InstanceManager:
 
         for result in self._results:
             if result[0] == "failure":
-                log.info(f"Failure: Instance { result[2] } ({ result [1] })")
+                log.warning(f"Failure: Instance { result[2] } ({ result [1] })")
                 failures += 1
 
         success_percentage = int(
