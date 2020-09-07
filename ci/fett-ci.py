@@ -213,10 +213,17 @@ def main(xArgs):
             exitFettCi(message="Error when trying to read branches from file.", exc=exc)
 
         try:
-            targetBranch = Repository(repoDir).head.shorthand
-            binariesBranch = Repository(
-                os.path.join(repoDir, "SSITH-FETT-Binaries")
-            ).head.shorthand
+            targetRepo = Repository(repoDir)
+            targetBranch = targetRepo.head.shorthand
+            printAndLog(
+                f"Status of Target on branch { targetBranch } : {targetRepo.status()}"
+            )
+
+            binariesRepo = Repository(os.path.join(repoDir, "SSITH-FETT-Binaries"))
+            binariesBranch = binariesRepo.head.shorthand
+            printAndLog(
+                f"Status of Binaries on branch { binariesBranch } : {binariesBranch.status()}"
+            )
 
             # Log
             printAndLog(
