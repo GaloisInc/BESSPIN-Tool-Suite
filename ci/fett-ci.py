@@ -215,15 +215,9 @@ def main(xArgs):
         try:
             targetRepo = Repository(repoDir)
             targetBranch = targetRepo.head.shorthand
-            printAndLog(
-                f"Status of Target on branch { targetBranch } : {targetRepo.status()}"
-            )
 
             binariesRepo = Repository(os.path.join(repoDir, "SSITH-FETT-Binaries"))
             binariesBranch = binariesRepo.head.shorthand
-            printAndLog(
-                f"Status of Binaries on branch { binariesBranch } : {binariesRepo.status()}"
-            )
 
             # Log
             printAndLog(
@@ -238,6 +232,9 @@ def main(xArgs):
                 assert targetBranch == branches[0], "Failed branch check for Target."
             if not branches[1] == "None":
                 assert binariesBranch == branches[1], "Failed branch check for Binaries"
+                assert (
+                    binariesRepo.status() == {}
+                ), "Binaries Branch was not pulled successfully."
 
         except Exception as exc:
             # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
