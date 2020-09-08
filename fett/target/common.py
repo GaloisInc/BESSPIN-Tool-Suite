@@ -18,6 +18,8 @@ from fett.apps.unix import voting
 from fett.apps.freertos import freertos
 from fett.apps.unix import ssh
 
+
+
 class commonTarget():
     def __init__(self):
 
@@ -227,11 +229,15 @@ class commonTarget():
             os_image = data[getSetting('osImage')]
 
             if getSetting('target') not in os_image:
-                return False, 0, {
-                    'message': f'start: Timeout is not recorded for target=<{getSetting("target")}>.',
-                    'overwriteShutdown': True,
-                    'exitCode': EXIT.Implementation
-                }
+                if 'timeout' in os_image:
+                    # case -- targets not iterated under osImage (e.g. busybox)
+                    return True, os_image['timeout'], None
+                else:
+                    return False, 0, {
+                        'message': f'start: Timeout is not recorded for target=<{getSetting("target")}>.',
+                        'overwriteShutdown': True,
+                        'exitCode': EXIT.Implementation
+                    }
             target = os_image[getSetting('target')]
 
             return traverse_data(target)
@@ -264,7 +270,6 @@ class commonTarget():
             loginTimeout = 120 if (self.restartMode) else 60
             self.runCommand (self.rootPassword,timeout=loginTimeout)
         elif (isEqSetting('osImage','busybox')):
-            printAndLog (f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
             self.boot(endsWith="Please press Enter to activate this console.",timeout=timeout)
             self.stopShowingTime.set()
@@ -556,7 +561,7 @@ class commonTarget():
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
                     erroneousContents=None,shutdownOnError=True,timeout=60,
-                    suppressErrors=False,tee=None,sendToNonUnix=False,issueInterrupt=True):
+                    suppressErrors=False,tee=None,sendToNonUnix=False,issueInterrupt=True,process=None):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
         "   ARGUMENTS:
@@ -571,6 +576,7 @@ class commonTarget():
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
         "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
         "   issueInterrupt: use keyboardInterrupt to resolve timeout recovery
+        "   process: runCommand with a different process than self.process
         "   RETURNS:
         "   --------
         "   A list: [isSuccess  : "Boolean. True on no-errors.",
@@ -578,11 +584,15 @@ class commonTarget():
         "            wasTimeout : "Boolean. True if timed-out waiting for endsWith.",
         "            idxEndsWith: The index of the endsWith received. If endsWith was a string, this would be 0. -1 on time-out.
         """
+        process = self.process if process is None else process
+
         if (isEnabled('isUnix') or sendToNonUnix):
-            self.sendToTarget (command,shutdownOnError=shutdownOnError)
+            self.sendToTarget (command,shutdownOnError=shutdownOnError,process=process)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
-        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,issueInterrupt=issueInterrupt)
+        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,
+                                                                   timeout=timeout,issueInterrupt=issueInterrupt,
+                                                                   process=process)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
         logging.debug(f"textBack:\n{textBack}")
@@ -894,7 +904,8 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None):
+        process = self.process if process is None else process
         if (self.terminateTargetStarted):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
@@ -908,19 +919,19 @@ class commonTarget():
         while doTimeout and retryIdx < retryCount:
             if retryIdx > 0:
                 warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
-            retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout,issueInterrupt=False)
+            retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout,issueInterrupt=False,process=process)
             textBack = retCommand[1]
             doTimeout = retCommand[2]
             retryIdx += 1
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout)[1]
+            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout,process=process)[1]
         #See if the order is correct
-        if (self.process):
+        if (process):
             for i in range(retryIdx + 1):
-                readAfter = self.readFromTarget(readAfter=True)
+                readAfter = self.readFromTarget(readAfter=True,process=process)
                 if (self.getDefaultEndWith() in readAfter):
                     try:
-                        self.process.expect(self.getDefaultEndWith(),timeout=timeout)
+                        process.expect(self.getDefaultEndWith(),timeout=timeout)
                     except Exception as exc:
                         warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
                     textBack += readAfter
@@ -950,7 +961,11 @@ class commonTarget():
             self.shutdownAndExit(f"ensureCrngIsUp: CRNG was not initialized.",exitCode=EXIT.Run)
 
     @decorate.debugWrap
-    def checkFallToTty (self,fnName):
+    def checkFallToTty (self,fnName,process=None):
+        process = self.process if process is None else process
+        if self.process is None or process.fileno() != self.process.fileno():
+            logging.debug(f"checkFallToTty: returning due to custom process")
+            return
         if ((not self.process) and self.isSshConn):
             warnAndLog(f"{fnName}: called with sshConnection, but connection is unreachable. Falling back to main tty.",doPrint=False)
             self.killSshConn()
@@ -960,13 +975,14 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def readFromTarget (self,endsWith=None,readAfter=False):
-        self.checkFallToTty ("readFromTarget")
+    def readFromTarget (self,endsWith=None,readAfter=False,process=None):
+        process = self.process if process is None else process
+        self.checkFallToTty ("readFromTarget", process=process)
         try:
             if (readAfter):
-                fetchedBytes = self.process.after
+                fetchedBytes = process.after
             else: #default
-                fetchedBytes = self.process.before
+                fetchedBytes = process.before
             try:
                 if (fetchedBytes == pexpect.TIMEOUT):
                     textBack = '\n<TIMEOUT>\n'
@@ -985,10 +1001,11 @@ class commonTarget():
         return textBack
 
     @decorate.debugWrap
-    def sendToTarget (self,command,shutdownOnError=True):
-        self.checkFallToTty ("sendToTarget")
+    def sendToTarget (self,command,shutdownOnError=True,process=None):
+        process = self.process if process is None else process
+        self.checkFallToTty ("sendToTarget", process=process)
         try:
-            self.process.sendline(command)
+            process.sendline(command)
         except Exception as exc:
             if (shutdownOnError):
                 self.shutdownAndExit(f"sendToTarget: Failed to send <{command}> to {getSetting('target')}.",exc=exc,exitCode=EXIT.Run)
@@ -998,7 +1015,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True,process=None):
         def warningThread(msg, waitingTime, stopEvent):
             """thread will wait on an event, and display warning if not set by waiting time"""
             dt = 0.1
@@ -1011,6 +1028,7 @@ class commonTarget():
                 ct += dt
             warnAndLog(msg)
 
+        process = self.process if process is None else process
         # prepare thread to give warning message if the expect is near timing out
         stopEvent = threading.Event()
         warningTime = 0.8 * timeout
@@ -1018,21 +1036,21 @@ class commonTarget():
         warningMsg.daemon = True
         getSetting('trash').throwThread(warningMsg, "warning message for expectFromTarget")
         warningMsg.start()
-        self.checkFallToTty ("expectFromTarget")
+        self.checkFallToTty ("expectFromTarget",process=process)
         logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
         try:
-            retExpect = self.process.expect(endsWith,timeout=timeout)
-            if ( (endsWith == pexpect.EOF) or isinstance(endsWith,str)): #only one string or EOF
-                textBack += self.readFromTarget(endsWith=endsWith)
+            retExpect = process.expect(endsWith,timeout=timeout)
+            if ((endsWith == pexpect.EOF) or isinstance(endsWith,str)): #only one string or EOF
+                textBack += self.readFromTarget(endsWith=endsWith,process=process)
             else: #It is a list
-                textBack += self.readFromTarget(endsWith=endsWith[retExpect])
+                textBack += self.readFromTarget(endsWith=endsWith[retExpect],process=process)
         except pexpect.TIMEOUT:
             if (shutdownOnError):
                 self.shutdownAndExit(f"expectFromTarget: {getSetting('target').capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
             elif (not isEqSetting('osImage','FreeRTOS')):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
-                textBack += self.keyboardInterrupt (shutdownOnError=True) if issueInterrupt else ""
+                textBack += self.keyboardInterrupt (shutdownOnError=True, process=process) if issueInterrupt else ""
             return [textBack, True, -1]
         except Exception as exc:
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)

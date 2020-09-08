@@ -178,18 +178,19 @@ def launchFett ():
 
 """ This is the teardown function """
 @decorate.debugWrap
-def endFett (xTarget):
+def endFett (xTarget,isDeadProcess=False):
     if (isEqSetting('mode','production')):
         aws.endUartPiping(xTarget)
 
     if (not isEqSetting('mode', 'evaluateSecurityTests')):
-        if (isEnabled('runApp')):
+        if (isEnabled('runApp') and (not isDeadProcess)): #Cannot collect local logs if deadProcess
             xTarget.collectLogs()
 
         if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
             collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
-    if not (isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')):
+    if not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
+            or (isDeadProcess)):
         xTarget.shutdown()
     
     if (isEqSetting('mode','production')):
@@ -254,27 +255,12 @@ def getClassType():
     def errorAndRaise(message,exc=None):
         errorAndLog(message,exc=exc)
         raise
-
     if (isEqSetting('target','aws')):
         return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
         return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):
-        gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
-        if (gfeTestingScripts not in os.environ):
-            errorAndRaise (f"<${gfeTestingScripts}> not found in the nix path.")
-        try:
-            sys.path.append(os.environ[gfeTestingScripts])
-            from test_gfe_unittest import TestLinux, TestFreeRTOS
-        except Exception as exc:
-            errorAndRaise (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc)
-        if (isEqSetting('xlen',32)):
-            return type('classFpgaTarget',(fpga.fpgaTarget,TestFreeRTOS),dict())
-        elif(isEqSetting('xlen',64)):
-            return type('classFpgaTarget',(fpga.fpgaTarget,TestLinux),dict())
-        else:
-            errorAndRaise (f"Invalid <xlen={getSetting('xlen')}> value.")
-
+        return fpga.fpgaTarget
     else:
         errorAndRaise (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.")
 

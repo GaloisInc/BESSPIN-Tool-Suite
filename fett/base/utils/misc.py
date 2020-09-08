@@ -342,16 +342,20 @@ def safeLoadJsonFile (jsonFile):
     return jsonData
 
 @decorate.debugWrap
-def make (argsList,dirPath,dockerToolchainImage=None):
+def make (argsList,dirPath,dockerToolchainImage=None,dockerExtraMounts={}):
     if ((not dirPath) or (argsList is None)):
         logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
     # open a file for stdout/stderr
     outMake = ftOpenFile(os.path.join(getSetting('buildDir'),'make.out'),'a')
 
     if (dockerToolchainImage):
-        argsList = ['sudo', 'docker', 'run', '-it', '--privileged=true',
-                    '-v', f'{dirPath}:/root/makeDir', dockerToolchainImage,
-                    'bash', '-c', f'cd /root/makeDir; make {" ".join(argsList)}']
+        dockerArgsList = ['sudo', 'docker', 'run', '-it', '--privileged=true',
+                          '-v', f'{dirPath}:/root/makeDir']
+        for hostPath, dockerPath in dockerExtraMounts.items():
+            dockerArgsList += ['-v', f'{hostPath}:{dockerPath}']
+        dockerArgsList += [dockerToolchainImage,
+                           'bash', '-c', f'cd /root/makeDir; make {" ".join(argsList)}']
+        argsList = dockerArgsList
     else:
         argsList = ['make','-C',dirPath] + argsList
         
