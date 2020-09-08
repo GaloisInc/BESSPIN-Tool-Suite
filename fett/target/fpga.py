@@ -57,8 +57,8 @@ class fpgaTarget (commonTarget):
                 self.shutdownAndExit(f"<loadJTAG> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Dev_Bug)
             if (isEqSetting('osImage','FreeRTOS')):
                 if (isEqSetting('procFlavor','bluespec')):
-                    print(self.softReset())
-                print(self.interruptGdb())
+                    self.softReset()
+                self.interruptGdb()
             elif (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
                 #The following values are hardcoded as copied from GFE. When GFE updates the testing platform, we'll change this accordingly
                 #This soft resets the processor
@@ -295,9 +295,7 @@ class fpgaTarget (commonTarget):
     @decorate.debugWrap
     def interruptGdb(self):
         """implement keyboardInterrupt for GDB"""
-        self.gdb_session.send("\003")
-        self.gdb_session.expect("(gdb)", timeout=6000)
-        return self.gdb_session.before.strip()
+        self.runCommandGdb("\x03")
 
     @decorate.debugWrap
     def startGdb(self, binary=None):
