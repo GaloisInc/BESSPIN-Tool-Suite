@@ -33,9 +33,6 @@ class fpgaTarget (commonTarget):
         self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
-        self.gfeOutPath = os.path.join(getSetting('workDir'),'gfe.out')
-        self.gdbOutPath = os.path.join(getSetting('workDir'),'gdb.out')
-
         self.gdb_session = None
         self.gdb_logfile = None
         self.uart_session = None
