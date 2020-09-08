@@ -11,6 +11,10 @@ from fett.target import qemu
 from fett.target import aws
 from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
+from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
+from fett.cwesEvaluation.common import runTests
+from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
+from fett.cwesEvaluation.checkValidScores import checkValidScores
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -39,6 +43,14 @@ def startFett ():
         elif (pvAWS in ['awsteria']):
             logAndExit(f"<{pvAWS}> PV is not yet implemented.",exitCode=EXIT.Implementation)
         setSetting('pvAWS',pvAWS)
+        # Some not implemented scoring features
+        if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
+            if (pvAWS != 'firesim'):
+                for listOption in ['gdbKeywords','funcCheckpoints']:
+                    if (len(getSettingDict('customizedScoring',listOption))>0):
+                        warnAndLog(f"customizedScoring: <{listOption}> is not implemented for <{pvAWS}> targets.")
+                if (getSettingDict('customizedScoring','memAddress')>=0):
+                    warnAndLog(f"customizedScoring: <memAddress> is not implemented for <{pvAWS}> targets.")
     # check the source variant
     if (not isEqSetting('sourceVariant','default')): # check the variants compatibility
         if ( (isEqSetting('sourceVariant','purecap') or isEqSetting('sourceVariant','temporal')) and 
@@ -52,14 +64,20 @@ def startFett ():
     # prepare the environment
     prepareEnv()
 
+    if (isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')):
+        # Run the tool in a loop when evaluating security tests on FreeRTOS
+        runFreeRTOSCwesEvaluation()
+        return None
+
     # launch fett
     xTarget = launchFett()
 
-    mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
-    
-    # Start on-line logging
-    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
-        aws.startRemoteLogging (xTarget)
+    if (not isEqSetting('mode', 'evaluateSecurityTests')):
+        mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
+        
+        # Start on-line logging
+        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+            aws.startRemoteLogging (xTarget)
 
     # Pipe UART to the network
     if (isEqSetting('mode','production')):
@@ -80,14 +98,20 @@ def prepareEnv ():
     # config sanity checks for building apps
     if (getSetting('osImage') in ['FreeRTOS', 'debian', 'FreeBSD']):
         setSetting('runApp',True)
-        buildApps ()
+
+        if isEqSetting("mode", "evaluateSecurityTests"):
+            buildCwesEvaluation()
+        else:
+            buildApps ()
     elif (isEqSetting('osImage','busybox')):
         printAndLog(f"<busybox> is only used for smoke testing the target/network. No applications are supported.")
         setSetting('runApp',False)
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
 
-    prepareOsImage ()
+    if not (isEqSetting('mode', 'evaluateSecurityTests') and
+            isEqSetting('osImage', 'FreeRTOS')):
+        prepareOsImage ()
 
     if (isEqSetting('target','fpga')):
         fpga.programBitfile()
@@ -98,7 +122,9 @@ def prepareEnv ():
             aws.removeKernelModules()
             aws.installKernelModules()
             aws.configTapAdaptor()
-            aws.programAFI()
+            if not (isEqSetting('mode', 'evaluateSecurityTests') and
+                    isEqSetting('osImage', 'FreeRTOS')):
+                aws.programAFI()
         elif (isEqSetting('pvAWS', 'connectal')):
             aws.prepareConnectal()
             aws.configTapAdaptor()
@@ -116,44 +142,62 @@ def prepareEnv ():
 @decorate.debugWrap
 @decorate.timeWrap
 def launchFett ():
-    printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
     try:
         xTarget = getClassType()()
     except Exception as exc:
         logAndExit (f"launchFett: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
+    if (isEqSetting('mode', 'evaluateSecurityTests') and
+        isEqSetting('osImage', 'FreeRTOS')):
+        # Build the image for the upcoming test
+        buildFreeRTOSTest(*getSetting("currentTest"))
+    else:
+        printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
     xTarget.start()
     if (isEnabled('isUnix')):
         if (getSetting('osImage') in ['debian','FreeBSD']):
             xTarget.changeRootPassword()
         xTarget.createUser()
     if (isEnabled('runApp')):
-        xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
-    if (isEnabled('isUnix') and isEnabled("useCustomCredentials")):
-        xTarget.changeUserPassword()
-    if isEnabled('isUnix') and isEnabled("rootUserAccess"):
-        xTarget.enableRootUserAccess()
+        if isEqSetting('mode', 'evaluateSecurityTests'):
+            sendTimeout = 20*len(getSetting('vulClasses'))
+            if (('bufferErrors' in getSetting('vulClasses')) and (getSettingDict('bufferErrors','nTests')>100)):
+                sendTimeout += 20*int(getSettingDict('bufferErrors','nTests')/100) #add 20 sec for each extra 100 (ceiled)
+            runTests(xTarget, sendFiles=isEnabled('sendTarballToTarget'), 
+                timeout=sendTimeout)
+        else:
+            xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget'))
+    if (not isEqSetting('mode','evaluateSecurityTests')):
+        if (isEnabled('isUnix') and isEnabled("useCustomCredentials")):
+            xTarget.changeUserPassword()
+        if isEnabled('isUnix') and isEnabled("rootUserAccess"):
+            xTarget.enableRootUserAccess()
 
     return xTarget
 
 """ This is the teardown function """
 @decorate.debugWrap
-def endFett (xTarget):
+def endFett (xTarget,isDeadProcess=False):
     if (isEqSetting('mode','production')):
         aws.endUartPiping(xTarget)
 
-    if (isEnabled('runApp')):
-        xTarget.collectLogs()
+    if (not isEqSetting('mode', 'evaluateSecurityTests')):
+        if (isEnabled('runApp') and (not isDeadProcess)): #Cannot collect local logs if deadProcess
+            xTarget.collectLogs()
 
-    if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
-        collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
+        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+            collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
-    xTarget.shutdown()
+    if not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
+            or (isDeadProcess)):
+        xTarget.shutdown()
     
     if (isEqSetting('mode','production')):
         tarballPath = tarArtifacts (logAndExit,getSetting)
         uploadToS3(getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), logAndExit, 
                         tarballPath, 'fett-target/production/artifacts/')
         printAndLog(f"Artifacts tarball uploaded to S3.")
+    elif (isEqSetting('mode', 'evaluateSecurityTests')):
+        checkValidScores()
 
 """ This resets the target without changing the .img + without deployment tests """
 @decorate.debugWrap
@@ -209,27 +253,12 @@ def getClassType():
     def errorAndRaise(message,exc=None):
         errorAndLog(message,exc=exc)
         raise
-
     if (isEqSetting('target','aws')):
         return getattr(aws,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
         return qemu.qemuTarget
     elif (isEqSetting('target','fpga')):
-        gfeTestingScripts = getSettingDict('nixEnv',['gfeTestingScripts'])
-        if (gfeTestingScripts not in os.environ):
-            errorAndRaise (f"<${gfeTestingScripts}> not found in the nix path.")
-        try:
-            sys.path.append(os.environ[gfeTestingScripts])
-            from test_gfe_unittest import TestLinux, TestFreeRTOS
-        except Exception as exc:
-            errorAndRaise (f"Failed to load <test_gfe_unittest> from <${gfeTestingScripts}>.",exc=exc)
-        if (isEqSetting('xlen',32)):
-            return type('classFpgaTarget',(fpga.fpgaTarget,TestFreeRTOS),dict())
-        elif(isEqSetting('xlen',64)):
-            return type('classFpgaTarget',(fpga.fpgaTarget,TestLinux),dict())
-        else:
-            errorAndRaise (f"Invalid <xlen={getSetting('xlen')}> value.")
-
+        return fpga.fpgaTarget
     else:
         errorAndRaise (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.")
 

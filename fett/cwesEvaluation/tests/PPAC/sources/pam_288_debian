@@ -1,0 +1,8 @@
+auth	optional	pam_warn.so
+auth	sufficient	pam_unix.so	audit
+auth	required	pam_deny.so
+account	required	pam_unix.so
+session	required	pam_unix.so
+session requisite	pam_loginuid.so
+session	optional	pam_keyinit.so	force	debug
+session	required	pam_permit.so	

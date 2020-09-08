@@ -7,6 +7,7 @@
 from configs import *
 import configparser, os, copy, time, glob
 import traceback, shutil, subprocess, logging
+from pygit2 import Repository
 
 
 def formatExc(exc):
@@ -60,7 +61,7 @@ def exitOnInterrupt(xSig, xFrame):
     exitFettCi(message=f"Received <{sigName}>!")
 
 
-def generateAllConfigs(baseRunType, flavor):
+def generateAllConfigs(baseRunType, flavor, runModes):
     # create a list of unique dictionaries. Each dictionary can become a .ini instance
     def createConfig(inputSet, inputDict):
         if not inputSet:  # we're done
@@ -86,11 +87,14 @@ def generateAllConfigs(baseRunType, flavor):
         createConfig(inputSet, inputDict)
 
     allConfigs = []
-    for xApp, xSet in appSets[baseRunType][flavor].items():
-        inputSet = copy.deepcopy(xSet)
-        inputDict = {"name": [xApp]}
-        allConfigs.append(inputDict)
-        createConfig(inputSet, inputDict)
+    for runMode in runModes:
+        for xApp, xSet in appSets[baseRunType][flavor][runMode].items():
+            inputSet = copy.deepcopy(xSet)
+            inputDict = {"name": [xApp]}
+            if (len(runModes)>1):
+                inputDict["name"].append(runMode)
+            allConfigs.append(inputDict)
+            createConfig(inputSet, inputDict)
 
     # Produce a consistent naming order:
     for xConfig in allConfigs:
@@ -129,7 +133,8 @@ def generateConfigFile(repoDir, outDir, dictConfig, testMode):
             if xSetting in xConfig[xSection]:
                 xConfig.set(xSection, xSetting, str(xValue))
                 wasSet = True
-                break
+                if (xSetting not in ['runAllTests', 'randomizeParameters']): #repeated settings
+                    break
         if not wasSet:
             exitFettCi(
                 message=f"Failed to find the setting <{xSetting}> in <{templateConfigPath}>."
@@ -191,6 +196,11 @@ def prepareArtifact(
 
         listEssentialArtifacts = [configFile, targetLogFile] + outFiles
 
+        # optional file
+        makeOutPath = os.path.join(workDir, "build", "make.out")
+        if (os.path.isfile(makeOutPath)):
+            listEssentialArtifacts.append(makeOutPath)
+
     # List all artifacts that are fine to ignore if they do not exist.
     logFile = os.path.join(repoDir, "fett-ci.log")
     userDatatargetLogFile = os.path.join("/var", "log", "user-data.log")
@@ -206,6 +216,16 @@ def prepareArtifact(
             except Exception as exc:
                 exitFettCi(
                     message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",
+                    exc=exc,
+                )
+        #optional directories
+        cweLogsPath = os.path.join(workDir,"cwesEvaluationLogs")
+        if (os.path.isdir(cweLogsPath)):
+            try:
+                shutil.copytree(cweLogsPath, os.path.join(artifactsPath,"cwesEvaluationLogs"))
+            except Exception as exc:
+                exitFettCi(
+                    message=f"Failed to copy <{cweLogsPath}> to <{artifactsPath}>.",
                     exc=exc,
                 )
 
@@ -284,3 +304,23 @@ def prepareArtifact(
                 reason="aws-testing-fett-target-ci-termination",
             )
         print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
+
+def getFettTargetAMI (repoDir):
+    try:
+        repo = Repository(repoDir)
+        maxVersion = (0, None)
+        for ref in repo.listall_references():
+            if (not ref.startswith('refs/tags/v')):
+                continue
+            xRef = ref.split('refs/tags/v')[1] #throw away the first part
+            xItems = xRef.split('-')
+            xVersion = xItems[0].split('.')
+            valVersion = 1000*int(xVersion[0]) + int(xVersion[1]) # so "3.10" --> 3,010
+            if (valVersion > maxVersion[0]):
+                maxVersion = (valVersion, xItems)
+        if (maxVersion[0]==0):
+            raise Exception("getFettTargetAMI: Failed to find the newest version.")
+        return '-'.join(maxVersion[1][1:])
+
+    except Exception as exc:
+        exitFettCi(message=f"Failed to get the AMI from the tags.", exc=exc)

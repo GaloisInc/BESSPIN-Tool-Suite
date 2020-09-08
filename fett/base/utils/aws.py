@@ -109,7 +109,7 @@ def uploadToS3 (s3Bucket, exitFunc, tarball, pathInBucket):
         exitFunc(message=f"Failed to upload the tarball to the bucket.",exc=exc)
 
 @debugWrap
-def pollPortalIndefinitely (s3Bucket, exitFunc):
+def pollPortalIndefinitely (s3Bucket, mainProcess, exitFunc):
     try:
         import boto3, time, botocore, os
     except Exception as exc:
@@ -148,6 +148,10 @@ def pollPortalIndefinitely (s3Bucket, exitFunc):
                 continue #File not there yet
             except Exception as exc:
                 exitFunc(message=f"pollPortalIndefinitely: Failed to check the S3 bucket for <{instructionKey}>.",exc=exc)
+
+        # Check the main process heartbeat
+        if (not mainProcess.isalive()):
+            return "deadProcess" # Terminate
 
     # Delete the file and return
     logging.debug(f"pollPortalIndefinitely: {receivedInstruction} file found! Deleting it...")

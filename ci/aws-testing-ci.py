@@ -17,7 +17,7 @@ from datetime import datetime
 h = "[AWS Testing CI] : "
 
 
-def collect_run_names():
+def collect_run_names(runMode):
     """
     Run fett-ci.py as a dryrun to generate a list of targets in their corresponding indexes to be run remotely
 
@@ -34,7 +34,7 @@ def collect_run_names():
             subprocess.check_output(
                 shlex.split(
                     str(os.path.join(repoDir, "ci", "fett-ci.py"))
-                    + " -X -ep AWS runDevPR -job 420"
+                    + f" -X -ep AWS runDevPR -job 420 -m {runMode}"
                 )
             )
         )
@@ -65,7 +65,7 @@ def main(args):
 
     # Get list of all targets for fett-ci.py
     log.info(f"{h}Gathering run targets.")
-    r = collect_run_names()
+    r = collect_run_names(args.runMode)
 
     # Start an instance manager
     i = InstanceManager(args.cap)
@@ -102,7 +102,7 @@ def main(args):
 
             # Compose userdata based on args
             u = UserdataCreator.default(
-                a, n, k, args.branch, args.binaries_branch, args.key_path,
+                a, n, k, args.branch, args.binaries_branch, args.key_path, args.runMode
             )
 
             # Add this instance to InstanceManager
@@ -180,6 +180,13 @@ if __name__ == "__main__":
         type=int,
         help="How many complete runs of all targets to make. Default 1.",
         default=1,
+    )
+    parser.add_argument(
+        "-m",
+        "--runMode",
+        choices=["fett", "cwe", "all"],
+        default="fett",
+        help="Run Mode: fett | cwe | all",
     )
 
     main(parser.parse_args())

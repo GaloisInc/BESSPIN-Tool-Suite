@@ -168,6 +168,12 @@ def getSettingDict (setting,hierarchy):
             logAndExit (f"getSetting: Failed to obtain the value of <{setting}{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
     return xSetting
 
+def setSettingDict (key, setting, val):
+    try:
+        _settings[key][setting] = val
+    except Exception as exc:
+        logAndExit (f"Failed to set setting <{setting}> in dict <{key}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+
 def isEnabled(setting):
     val = getSetting(setting)
     if (isinstance(val,bool)):
@@ -175,19 +181,42 @@ def isEnabled(setting):
     else:
         logAndExit (f"isEnabled: The value of <{setting}> is not boolean: <{val}>.",exitCode=EXIT.Dev_Bug)
 
+def isEnabledDict(setting, hierarchy):
+    val = getSettingDict(setting, hierarchy)
+    if isinstance(val, bool):
+        return val
+    else:
+        logAndExit(f"isEnabledDict: The value of <{setting}[{hierarchy}]> is "
+                   f"not boolean: <{val}>",
+                   exitCode=EXIT.Dev_Bug)
+
 def isEqSetting (setting,val):
     return (getSetting(setting) == val)
 
 def doesSettingExist (setting):
     return (setting in _settings)
 
+def doesSettingExistDict(setting, hierarchy):
+    xSetting = getSetting(setting)
+    if isinstance(hierarchy, str):
+        hierarchy = [hierarchy]
+    for item in hierarchy:
+        if item in xSetting:
+            return True
+    return False
+
 def dumpSettings ():
     logging.debug(f"settings = {_settings}")
 
-def mkdir(dirPath, addToSettings=None):
+def mkdir(dirPath, addToSettings=None, exitIfExists=True):
     try:
         os.mkdir(dirPath)
         logging.debug(f"Created directory <{dirPath}>.")
+    except FileExistsError as exc:
+        if exitIfExists:
+            logAndExit(f"<{dirPath}> already exists.",
+                       exitCode=EXIT.Files_and_paths,
+                       exc=exc)
     except Exception as exc:
         logAndExit (f"Failed to create <{dirPath}>.",exitCode=EXIT.Files_and_paths,exc=exc)
     if (addToSettings):
@@ -286,8 +315,10 @@ def copyDir(src,dest,renameDest=False,copyContents=False):
         for xDir in listDirs:
             copyDir(os.path.join(src,xDir),dest)
     else:
+        if (not renameDest):
+            dest = os.path.join(dest,os.path.basename(os.path.normpath(src)))
         try:
-            shutil.copytree(src, os.path.join(dest,os.path.basename(os.path.normpath(src))))
+            shutil.copytree(src, dest)
         except Exception as exc:
             logAndExit (f"Failed to copy directory <{src}> to <{dest}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
@@ -311,14 +342,26 @@ def safeLoadJsonFile (jsonFile):
     return jsonData
 
 @decorate.debugWrap
-def make (argsList,dirPath):
+def make (argsList,dirPath,dockerToolchainImage=None,dockerExtraMounts={}):
     if ((not dirPath) or (argsList is None)):
         logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
     # open a file for stdout/stderr
     outMake = ftOpenFile(os.path.join(getSetting('buildDir'),'make.out'),'a')
 
-    argsList = ['make','-C',dirPath] + argsList
+    if (dockerToolchainImage):
+        dockerArgsList = ['sudo', 'docker', 'run', '-it', '--privileged=true',
+                          '-v', f'{dirPath}:/root/makeDir']
+        for hostPath, dockerPath in dockerExtraMounts.items():
+            dockerArgsList += ['-v', f'{hostPath}:{dockerPath}']
+        dockerArgsList += [dockerToolchainImage,
+                           'bash', '-c', f'cd /root/makeDir; make {" ".join(argsList)}']
+        argsList = dockerArgsList
+    else:
+        argsList = ['make','-C',dirPath] + argsList
+        
     logging.info(f"Executing <{' '.join(argsList)}>. Command output is appended to <{outMake.name}>.")
+    outMake.write(f"{' '.join(argsList)}\n\n")
+    outMake.flush()
     try:
         subprocess.check_call(argsList, stdout=outMake, stderr=outMake)
     except Exception as exc:
@@ -407,14 +450,14 @@ def ftReadLines (filePath,exitOnFileError=True):
         logAndExit (f"Failed to read lines from <{filePath}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap    
-def matchExprInLines (expr,lines):
+def matchExprInLines (expr,lines,returnIndex=False):
     if (not lines):
-        return None
-    for line in lines:
+        return (None, False) if returnIndex else None
+    for index, line in enumerate(lines):
         xMatch = re.match(expr,line)
         if (xMatch is not None):
-            return xMatch
-    return None
+            return (xMatch, index) if returnIndex else xMatch
+    return (None, False) if returnIndex else None
 
 @decorate.debugWrap    
 def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False, timeout=60):
