@@ -1,33 +1,39 @@
 #! /usr/bin/env python3
 
 # Import modules
-import sys
-import os
+import sys, os
 
 sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 from build.aws_test_suite import *
 
-import argparse
-import subprocess
-import shlex
+import argparse, subprocess, shlex, json
 from datetime import datetime
 
 
 h = "[AWS Testing CI] : "
 
 
-def collect_run_names(runMode):
+def get_ami_from_ci_json():
+    """
+    Get the ami from /tmp/awsCiInfo.json
+    """
+
+    try:
+        with open("/tmp/awsCiInfo.json", "r") as f:
+            aws_ci_info = json.load(f)
+        return aws_ci_info["fettTargetAMI"]
+    except:
+        log.error("Failed to get Fett AMI from /tmp/awsCiInfo.json.", exc=exc)
+
+
+def collect_run_names(repoDir, runMode):
     """
     Run fett-ci.py as a dryrun to generate a list of targets in their corresponding indexes to be run remotely
 
     :return: List of ini files to run
     :rtype: list
     """
-
-    # Get path to the repoDir
-    ciDir = os.path.abspath(os.path.dirname(__file__))
-    repoDir = os.path.abspath(os.path.join(ciDir, os.pardir))
 
     log.debug(
         str(
@@ -50,6 +56,12 @@ def collect_run_names(runMode):
 
 
 def main(args):
+
+    # Find repo dir
+    # Get path to the repoDir
+    ciDir = os.path.abspath(os.path.dirname(__file__))
+    repoDir = os.path.abspath(os.path.join(ciDir, os.pardir))
+
     log.info(f"{h}Welcome to the AWS testing app!")
 
     # log arguments to main()
@@ -65,7 +77,7 @@ def main(args):
 
     # Get list of all targets for fett-ci.py
     log.info(f"{h}Gathering run targets.")
-    r = collect_run_names(args.runMode)
+    r = collect_run_names(repoDir, args.runMode)
 
     # Check the pem_key_name argument to make sure the user did
     #   not input the .pem extension
@@ -84,6 +96,15 @@ def main(args):
         indices_to_run = args.instance_indices
     else:
         indices_to_run = list(range(len(r)))
+
+    # Get the AMI, either from args, or by using getFettTargetAMI()
+    if args.ami:
+        ami = args.ami
+    else:
+        ami = get_ami_from_ci_json()
+        log.debug(
+            f"AMI Parameter was not specified, got { ami } from /tmp/awsCiInfo.json/"
+        )
 
     log.debug(f"Indices to run { indices_to_run }")
 
@@ -114,7 +135,7 @@ def main(args):
 
             # Add this instance to InstanceManager
             i.add_instance(
-                Instance(args.ami, f"{n}", userdata=u.userdata, key_name=pem_key_name)
+                Instance(ami, f"{n}", userdata=u.userdata, key_name=pem_key_name)
             )
             log.debug(f"{h}Queueing {r[k]}, with name {n}.")
 
@@ -137,7 +158,6 @@ if __name__ == "__main__":
         "-a",
         "--ami",
         type=str,
-        required=True,
         help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'",
     )
     parser.add_argument(
