@@ -1,0 +1,69 @@
+// Our first example is simply to witness that this feature
+// model is sound.
+
+// PPAC_test_witness : PPAC_Abs_Test
+
+// In order to select a corpus for PPAC security testing, a designer
+// must specify the threat model that their secure CPU purportedly
+// mitigates.  To do so they can either: (a) simply enumerate the
+// CWEs relevant to their CPU, or (b) specify the PPAC feature model
+// properties relevant to their CPU, or (c) both.  The examples
+// below demonstrate all three of these options.
+
+// Here are two examples of case (a).
+
+PPAC_test_example_1 : PPAC_Abs_Test
+  [ ! PPAC_test_257
+    ! PPAC_test_259
+    ! PPAC_test_260
+    ! PPAC_test_263
+    ! PPAC_test_284
+    ! PPAC_test_287
+    ! PPAC_test_288
+    ! PPAC_test_289
+    ! PPAC_test_290
+    ! PPAC_test_294
+    ! PPAC_test_301
+    ! PPAC_test_307
+    PPAC_test_799
+  ]
+
+PPAC_test_set_test_enumeration : PPAC_Abs_Test
+   [  PPAC_test_257
+    ! PPAC_test_259
+      PPAC_test_260
+    ! PPAC_test_263
+    ! PPAC_test_284
+      PPAC_test_287
+    ! PPAC_test_288
+    ! PPAC_test_289
+    ! PPAC_test_290
+    ! PPAC_test_294
+    ! PPAC_test_301
+    ! PPAC_test_307
+      PPAC_test_799 ]
+
+// Here is an example of case (b).
+
+PPAC_claims_example_1 : PPAC_Abs_Test
+  [ passwords_hardcoded
+    auth_missing_step ]
+
+// Here is an example of case (c).
+
+PPAC_tests_and_claims_1 : PPAC_Abs_Test
+   [  PPAC_test_257
+    ! PPAC_test_259
+      PPAC_test_260
+    ! PPAC_test_263
+    ! PPAC_test_284
+      PPAC_test_287
+    ! PPAC_test_288
+    ! PPAC_test_289
+    ! PPAC_test_290
+    ! PPAC_test_294
+    ! PPAC_test_301
+    ! PPAC_test_307
+      PPAC_test_799
+      passwords_hardcoded
+      auth_missing_step ]

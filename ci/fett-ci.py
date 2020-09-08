@@ -3,6 +3,7 @@
 --- fett-ci.py is the CI entry to the FETT-Target program. 
 --- usage: fett-ci.py [-h] (-art ARTIFACTSUFFIX | -job JOBID) [-i NODEINDEX]
                   [-N NNODES] [-t JOBTIMEOUT] [-X] -ep {OnPrem,AWS,AWSTesting}
+                  [-m {fett,cwe,all}]
                   runType
 
 FETT-CI (CI Entry to FETT-Target)
@@ -28,23 +29,15 @@ optional arguments:
                         meta data. Does not run anything.
   -ep {OnPrem,AWS,AWSTesting}, --entrypoint {OnPrem,AWS,AWSTesting}
                         Entrypoint: OnPrem | AWS | AWSTesting
+  -m {fett,cwe,all}, --runMode {fett,cwe,all}
+                        Run Mode: fett | cwe | all
 """
 
 try:
     import sys, os, glob, shutil, time, itertools
     import json, configparser, socket, re, logging
     import subprocess, argparse, signal, copy
-    from utils import (
-        printAndLog,
-        warnAndLog,
-        errorAndLog,
-        exitFettCi,
-        exitOnInterrupt,
-        generateAllConfigs,
-        generateConfigFile,
-        prepareArtifact,
-    )
-    from configs import fettTargetAMI
+    from utils import *
     from pygit2 import Repository
 except Exception as exc:
     exitFettCi(exitCode=-1, exc=exc)
@@ -69,6 +62,7 @@ def main(xArgs):
     )
     printAndLog(f"Fett CI Started")
 
+    outDir = "/tmp"
     # Check runType
     baseRunTypes = ["runOnPush", "runDevPR", "runPeriodic", "runRelease"]
     if xArgs.entrypoint in ["AWS", "AWSTesting"]:
@@ -78,7 +72,6 @@ def main(xArgs):
             )
         baseRunType = xArgs.runType
         flavor = "aws"
-        outDir = "/tmp"
     elif xArgs.entrypoint == "OnPrem":
         flavors = ["unix", "freertos"]
         listRunTypes = [
@@ -89,13 +82,12 @@ def main(xArgs):
                 message=f"Invalid runType argument. For OnPrem, runType has to be in {listRunTypes}."
             )
         baseRunType, flavor = xArgs.runType.split("-")
-        outDir = repoDir
 
     if xArgs.testOnly:
         printAndLog("FETT-CI: TestMode: Dumping some useful info...", doPrint=False)
 
     # nodes control
-    if not xArgs.nodeIndex:
+    if (not xArgs.nodeIndex):
         nodeIndex = 0
     elif xArgs.entrypoint == "OnPrem":
         nodeIndex = xArgs.nodeIndex - 1  # $CI_NODE_INDEX starts from 1
@@ -127,17 +119,19 @@ def main(xArgs):
 
     # Else, generate the config file
     else:
-        allConfigs = generateAllConfigs(baseRunType, flavor)
+        if (xArgs.runMode == 'all'):
+            runModes = ['fett', 'cwe']
+        else:
+            runModes = [xArgs.runMode]
+        allConfigs = generateAllConfigs(baseRunType, flavor, runModes)
         actualNumConfigs = len(allConfigs)
         if xArgs.testOnly:
             printAndLog(
-                f"FETT-CI: <{xArgs.runType}> has <{actualNumConfigs}> configurations in total.",
-                doPrint=False,
+                f"FETT-CI: <{xArgs.runType}> has <{actualNumConfigs}> configurations in total."
             )
             dumpDir = os.path.join(outDir, "dumpIni")
             printAndLog(
-                f"FETT-CI: The configurations will be listed here and dumped in <{dumpDir}>:",
-                doPrint=False,
+                f"FETT-CI: The configurations will be listed here and dumped in <{dumpDir}>:"
             )
 
             # If the dumpdir already exists, delete it
@@ -158,7 +152,7 @@ def main(xArgs):
                 generateConfigFile(repoDir, outDir, dictConfig, xArgs.testOnly)
 
             if xArgs.entrypoint in ["AWS", "AWSTesting"]:  # generate the info file
-                infoDict = {"nNodes": actualNumConfigs, "fettTargetAMI": fettTargetAMI}
+                infoDict = {"nNodes": actualNumConfigs, "fettTargetAMI": getFettTargetAMI(repoDir)}
                 infoFilePath = os.path.join(outDir, "awsCiInfo.json")
                 try:
                     infoFile = open(infoFilePath, "w")
@@ -355,6 +349,13 @@ if __name__ == "__main__":
         required=True,
         choices=["OnPrem", "AWS", "AWSTesting"],
         help="Entrypoint: OnPrem | AWS | AWSTesting",
+    )
+    xArgParser.add_argument(
+        "-m",
+        "--runMode",
+        choices=["fett", "cwe", "all"],
+        default="fett",
+        help="Run Mode: fett | cwe | all",
     )
     xArgs = xArgParser.parse_args()
 

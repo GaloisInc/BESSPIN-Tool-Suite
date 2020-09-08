@@ -1,0 +1,4 @@
+account required	pam_unix.so	audit
+session	required	pam_unix.so	audit
+session required	pam_limits.so conf=/etc/security/limits_799.conf
+session required	pam_listfile.so item=user	sense=deny	onerr=fail	file=/etc/test799users

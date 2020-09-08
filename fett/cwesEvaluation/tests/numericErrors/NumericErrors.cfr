@@ -1,0 +1,172 @@
+// Attributes common to all numeric CWEs
+abstract Numeric_Weakness
+  xor Result_Fault
+    Overflow
+    Underflow
+    Underflow_negative
+    Underflow_to_zero
+    Undefined_behavior
+    Unspecified_behavior
+    Loss_of_precision
+    Truncation
+    Distortion
+    Wraparound
+
+  xor Related_type
+    Signed_integer
+    Unsigned_integer
+    Floating_point
+    Pointer
+    Boolean
+    xor Composite
+      Array
+      Struct
+      Union
+
+  [ Underflow => Underflow_negative || Underflow_to_zero ]
+  [ Wraparound => Overflow || Underflow ]
+
+  // INI group attributes - based on CWE descriptions
+  INI_Weakness ?
+    xor Initialization_Defect
+      Initialization_missing
+      Initialization_partial
+      Initialization_present_but_wrong
+
+    or INI_CWE
+      CWE_456
+      CWE_457
+      CWE_665
+      CWE_824
+
+    [ CWE_456 <=> ( Undefined_behavior && Initialization_missing && Signed_integer ) ]
+    [ CWE_457 <=> ( Undefined_behavior && Initialization_missing && Signed_integer ) ]
+    [ CWE_665 <=> ( Undefined_behavior && Initialization_present_but_wrong && Array ) ]
+    [ CWE_824 <=> ( Undefined_behavior && Initialization_missing && Pointer ) ]
+
+
+  // ARG group attribues - based on CWE descriptions
+  ARG_Weakness ?
+    xor Argument_error
+      Argument_missing
+      Argument_wrong_type
+      Argument_fails_callee_precondition
+      Argument_wrong_order
+
+    or ARG_CWE
+      CWE_234
+      CWE_475
+      CWE_686
+      CWE_687
+
+    [ CWE_234 <=> ( Undefined_behavior && Argument_missing ) ]
+    [ CWE_475 <=> ( Undefined_behavior && Argument_fails_callee_precondition ) ]
+    [ CWE_686 <=> ( Undefined_behavior && Argument_wrong_type ) ]
+    [ CWE_687 <=> ( Undefined_behavior && Argument_fails_callee_precondition ) ]
+
+
+  // FRS attributes - from the Bugs Framework FRS page
+  FRS_Weakness ?
+
+    xor Operation
+      xor Arithmetic
+        xor Binary
+          Addition
+          Subtraction
+          Multiplication
+          Division
+          Modulus
+        xor Unary
+          Negation
+      xor Bitwise_shift
+        Shift_right
+        Shift_left
+      xor Assignment
+        Basic_assignment
+        Plus_equals
+        Minus_equals
+        Divides_equals
+        Multiply_equals
+        Modulus_equals
+      Value_conversion
+      Argument_passing
+
+    xor Operand_error
+      xor Value_exceeds_type
+        Value_too_big
+        Type_too_small
+      Inadequate_type
+      Domain_error
+
+    xor Magnitude
+      Magnitude_Small
+      Magnitude_Moderate
+      Magnitude_Large
+
+    xor Excursion
+      Excursion_Continuous
+      Excursion_Discrete
+
+    or FRS_CWE
+      CWE_128
+      CWE_190
+      CWE_191
+      CWE_192
+      CWE_194
+      CWE_195
+      CWE_196
+      CWE_197
+      CWE_369
+      CWE_704
+
+NumericErrors_Test : Numeric_Weakness ?
+  xor Test
+    TEST_128
+    TEST_190
+    TEST_191
+    TEST_192
+    TEST_194
+    TEST_195
+    TEST_196
+    TEST_197
+    TEST_234
+    TEST_369
+    TEST_456
+    TEST_457
+    TEST_475
+    TEST_665
+    TEST_686
+    TEST_687
+    TEST_704
+    TEST_824
+
+  [ CWE_128 <=> ( Overflow && Multiplication && Value_exceeds_type && Unsigned_integer && Magnitude_Small && Excursion_Discrete ) ]
+  [ CWE_190 <=> ( Undefined_behavior && Addition && Value_exceeds_type && Signed_integer && Magnitude_Large && Excursion_Discrete ) ]
+  [ CWE_191 <=> ( Underflow_negative && Subtraction && Value_exceeds_type && Unsigned_integer && Magnitude_Small && Excursion_Discrete ) ]
+  [ CWE_192 <=> ( Truncation && Basic_assignment && Signed_integer && Value_conversion && Magnitude_Large && Excursion_Discrete ) ]
+  [ CWE_194 <=> ( Distortion && Shift_left && Signed_integer && Value_conversion && Magnitude_Large && Excursion_Discrete ) ]
+  [ CWE_195 <=> ( Distortion && Basic_assignment && Signed_integer && Value_conversion && Magnitude_Large && Excursion_Discrete ) ]
+  [ CWE_196 <=> ( Undefined_behavior && Unsigned_integer && Value_conversion && Magnitude_Large && Excursion_Discrete ) ]
+  [ CWE_197 <=> ( Truncation && Basic_assignment && Signed_integer && Value_conversion && Magnitude_Large && Excursion_Discrete ) ]
+  [ CWE_369 <=> ( Distortion && Signed_integer && Division && Domain_error && Magnitude_Large && Excursion_Discrete ) ]
+  [ CWE_704 <=> ( Undefined_behavior && Pointer && Value_conversion && Domain_error && Magnitude_Large && Excursion_Discrete ) ]
+
+
+[ TEST_128 => CWE_128 ]
+[ TEST_190 => CWE_190 ]
+[ TEST_191 => CWE_191 ]
+[ TEST_192 => CWE_192 ]
+[ TEST_194 => CWE_194 ]
+[ TEST_195 => CWE_195 ]
+[ TEST_196 => CWE_196 ]
+[ TEST_197 => CWE_197 ]
+[ TEST_234 => CWE_234 ]
+[ TEST_369 => CWE_369 ]
+[ TEST_456 => CWE_456 ]
+[ TEST_457 => CWE_457 ]
+[ TEST_475 => CWE_475 ]
+[ TEST_665 => CWE_665 ]
+[ TEST_686 => CWE_686 ]
+[ TEST_687 => CWE_687 ]
+[ TEST_704 => CWE_704 ]
+[ TEST_824 => CWE_824 ]

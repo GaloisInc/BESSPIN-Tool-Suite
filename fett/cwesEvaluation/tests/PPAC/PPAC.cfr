@@ -1,0 +1,298 @@
+// The BESSPIN feture model of PPAC vulnerabilities and concrete PPAC CWE tests.
+//
+// @author Ramy Tadros
+// @revised Joe Kiniry
+// @review Alexander Bakst
+
+// PPAC_Weakness is a feature model concisely describing the features
+// expressed in NIST CWE descriptions in the Permissions, Privileges,
+// and Access Control (PPAC) SSITH vulnerability class.  Every kind of
+// weakness, vulnerability, or exploit that relates to PPAC can be
+// described by a configuration of the PPAC_Weakness feature model.
+
+abstract PPAC_Weakness
+  or specific_weakness
+    auth_bypass_alternate_path
+    auth_bypass_alternate_name
+    auth_by_IP
+    auth_bypass_spoofing
+    auth_bypass_capture_replay
+    passwords_recoverable_format
+    passwords_hardcoded
+    passwords_config_files
+    passwords_weak_crypto
+    auth_reflection_attack
+    auth_bypass_immutable_data
+    auth_algorithm_implementation
+    auth_missing_step
+    auth_bypass_primary_weakness
+    auth_critical_function
+    data_authenticity
+    origin_validation
+    auth_bypass_session_fixation
+    password_weak_requirements
+    insufficient_credential_protection
+
+  [ auth_bypass_spoofing => ( auth_by_IP ) ]
+  [ passwords_recoverable_format => ( passwords_hardcoded ) ]
+  [ passwords_weak_crypto => ( passwords_recoverable_format &&
+                                insufficient_credential_protection ) ]
+  [ auth_missing_step => ( auth_algorithm_implementation ) ]
+  [ auth_bypass_immutable_data => ( auth_bypass_alternate_name
+                                 && auth_bypass_spoofing
+                                 && auth_reflection_attack 
+                                 && data_authenticity
+                                 && origin_validation 
+                                 && auth_bypass_session_fixation ) ]
+
+  or attribute
+    access_control
+    accountability
+    auth_bypass
+    handling_passwords
+    auth_incorrect
+
+    [ auth_bypass => ( auth_bypass_alternate_path
+                    && auth_bypass_capture_replay
+                    && auth_bypass_immutable_data
+                    && auth_bypass_primary_weakness ) ]
+    [ handling_passwords => ( passwords_config_files
+                           && passwords_weak_crypto
+                           && password_weak_requirements ) ]
+    [ auth_incorrect => ( auth_by_IP
+                       && auth_reflection_attack
+                       && auth_algorithm_implementation
+                       && auth_critical_function ) ]
+
+  or type
+    interaction_frequency
+    authentication
+    authorization
+
+    [ access_control => ( authentication
+                       && authorization
+                       && accountability
+                       && interaction_frequency ) ]
+    [ authentication => ( auth_bypass
+                       && handling_passwords
+                       && auth_incorrect ) ]
+    [ authorization => authentication ]
+
+// Because the PPAC_Weakness feature model contains three disjunctive
+// submodels (specific_weakness, attribute, and type), there is a very
+// large number of potential models that can be generated.
+
+// The PPAC_Tests feature model (1) enumerates the specific CWEs
+// relevant to the SSITH PPAC vulnerability class, (2) describes each
+// of those CWEs with the above PPAC_Weakness feature model, and (3)
+// enumerates and describes every CWE test that is part of the PPAC
+// security corpus including in the BESSPIN Tool Suite.
+
+abstract PPAC_Abs_Test : PPAC_Weakness
+  or PPAC_CWE
+    CWE_257
+    CWE_259
+    CWE_260
+    CWE_261
+    CWE_284
+    CWE_285
+    CWE_287
+    CWE_288
+    CWE_289
+    CWE_290
+    CWE_291
+    CWE_294
+    CWE_301
+    CWE_302
+    CWE_303
+    CWE_304
+    CWE_305
+    CWE_306
+    CWE_307
+    CWE_345
+    CWE_346
+    CWE_384
+    CWE_521
+    CWE_522
+    CWE_592
+    CWE_613
+    CWE_732
+    CWE_798
+    CWE_799
+    CWE_837
+    CWE_862
+    CWE_863
+
+  [ CWE_257 <=> interaction_frequency ]
+  [ ( CWE_307 || CWE_799 || CWE_837 ) <=> interaction_frequency ]
+  [ ( CWE_307 || CWE_287 || CWE_592 ) <=> authentication ]
+  [ CWE_284 <=> access_control ]
+  [ ( CWE_284 ) <=> accountability ]
+  [ ( CWE_285 || CWE_732 || CWE_862 || CWE_863 ) <=> authorization ]
+  [ ( CWE_288 ) <=> auth_bypass_alternate_path ]
+  [ ( CWE_289 ) <=> auth_bypass_alternate_name ]
+  [ ( CWE_290 ) <=> auth_bypass_spoofing ]
+  [ ( CWE_291 ) <=> auth_by_IP ]
+  [ ( CWE_294 ) <=> auth_bypass_capture_replay ]
+  [ ( CWE_257 ) <=> passwords_recoverable_format ]
+  [ ( CWE_259 || CWE_798 ) <=> passwords_hardcoded ]
+  [ ( CWE_260 ) <=> passwords_config_files ]
+  [ ( CWE_261 ) <=> passwords_weak_crypto ]
+  [ ( CWE_301 ) <=> auth_reflection_attack ]
+  [ ( CWE_302 ) <=> auth_bypass_immutable_data ]
+  [ ( CWE_303 ) <=> auth_algorithm_implementation ]
+  [ ( CWE_304 ) <=> auth_missing_step ]
+  [ ( CWE_305 ) <=> auth_bypass_primary_weakness ]
+  [ ( CWE_306 ) <=> auth_critical_function ]
+  [ ( CWE_345 ) <=> data_authenticity ]
+  [ ( CWE_346 ) <=> origin_validation ]
+  [ ( CWE_384 || CWE_613 ) <=> auth_bypass_session_fixation ]
+  [ ( CWE_521 ) <=> password_weak_requirements ]
+  [ ( CWE_522 ) <=> insufficient_credential_protection ]
+
+  xor PPAC_test
+    PPAC_test_257
+    PPAC_test_259
+    PPAC_test_284
+    PPAC_test_287
+    PPAC_test_288
+    PPAC_test_289
+    PPAC_test_290
+    PPAC_test_294
+    PPAC_test_301
+    PPAC_test_307
+    PPAC_test_384
+    PPAC_test_521
+    PPAC_test_799
+
+  [ PPAC_test_257 => ( CWE_257
+                    || CWE_260
+                    || CWE_261
+                    || CWE_284
+                    || CWE_287
+                    || CWE_303
+                    || CWE_304
+                    || CWE_305
+                    || CWE_592
+                    || CWE_798 ) ]
+
+  [ PPAC_test_259 => CWE_257
+                  || CWE_259
+                  || CWE_260
+                  || CWE_261
+                  || CWE_284
+                  || CWE_287
+                  || CWE_303
+                  || CWE_304
+                  || CWE_305
+                  || CWE_592
+                  || CWE_798 ]
+
+  [ PPAC_test_284 => CWE_284
+                  || CWE_285
+                  || CWE_732
+                  || CWE_863 ]
+
+  [ PPAC_test_287 => CWE_284
+                  || CWE_285
+                  || CWE_287
+                  || CWE_302
+                  || CWE_303
+                  || CWE_304
+                  || CWE_305
+                  || CWE_306
+                  || CWE_592
+                  || CWE_732
+                  || CWE_862
+                  || CWE_863 ]
+
+  [ PPAC_test_288 => CWE_284
+                  || CWE_285
+                  || CWE_287
+                  || CWE_288
+                  || CWE_302
+                  || CWE_303
+                  || CWE_304
+                  || CWE_305
+                  || CWE_592
+                  || CWE_613
+                  || CWE_863 ]
+
+  [ PPAC_test_289 => CWE_284
+                  || CWE_285
+                  || CWE_287
+                  || CWE_289
+                  || CWE_302
+                  || CWE_303
+                  || CWE_304
+                  || CWE_305
+                  || CWE_592
+                  || CWE_732
+                  || CWE_863 ]
+
+  [ PPAC_test_290 => CWE_284
+                  || CWE_285
+                  || CWE_287
+                  || CWE_290
+                  || CWE_291
+                  || CWE_302
+                  || CWE_303
+                  || CWE_304
+                  || CWE_305
+                  || CWE_592 ]
+
+  [ PPAC_test_294 => CWE_284
+                  || CWE_285
+                  || CWE_287
+                  || CWE_290
+                  || CWE_291
+                  || CWE_294
+                  || CWE_302
+                  || CWE_303
+                  || CWE_304
+                  || CWE_305
+                  || CWE_592
+                  || CWE_863 ]
+             
+  [ PPAC_test_301 => ( CWE_284
+                  || CWE_285
+                  || CWE_287
+                  || CWE_301
+                  || CWE_302
+                  || CWE_303
+                  || CWE_304
+                  || CWE_305
+                  || CWE_592 ) ]
+
+  [ PPAC_test_307 => CWE_284
+                  || CWE_285
+                  || CWE_287
+                  || CWE_303
+                  || CWE_304
+                  || CWE_305
+                  || CWE_307
+                  || CWE_592
+                  || CWE_799
+                  || CWE_837 ]
+
+  [ PPAC_test_384 => CWE_284
+                  || CWE_285
+                  || CWE_287
+                  || CWE_288
+                  || CWE_302
+                  || CWE_305
+                  || CWE_346
+                  || CWE_592
+                  || CWE_613
+                  || CWE_732
+                  || CWE_863 ]
+
+  [ PPAC_test_521 => CWE_284
+                  || CWE_287 ]
+
+  [ PPAC_test_799 => CWE_284
+                  || CWE_285
+                  || CWE_799
+                  || CWE_837 ]
+
+PPAC_Test : PPAC_Abs_Test ?

@@ -232,6 +232,9 @@ def deploymentTest(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def terminateAppStack (target):
+    if isEqSetting('mode', 'evaluateSecurityTests'):
+        # Nothing to do
+        return True
     if (isEqSetting('binarySource','Michigan')):
         return michigan.terminateAppStack(target)
     ###################################

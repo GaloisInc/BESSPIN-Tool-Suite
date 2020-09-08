@@ -1,0 +1,3 @@
+auth	sufficient	pam_succeed_if.so	user != &USERNAME&
+auth	sufficient	pam_succeed_if.so	shell notin /bin/bash:/bin/sh
+auth	required	pam_deny.so

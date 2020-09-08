@@ -1,0 +1,249 @@
+// Model of InformationLeakage vulnerabilities
+// and concrete tests
+abstract exposed_data
+  // Attributes about the particular
+  // exposed data
+  or type
+    credentials
+    cryptography
+    system
+    stat
+    personally_identifiable
+    documents
+    business
+
+  // Sensitivity of the information.
+  // e.g., non-sensitivity would not result in harm
+  // if exposed (e.g. public records)
+  or sensitivity
+    high
+    low
+
+  or state
+    stored      // In files
+    used        // In source/comments, threads, registries, cookies
+    transferred // E.G. between processes or over a network
+
+  or size
+    small
+    medium
+    large
+
+  or architectural_layer
+    software_layer
+    firmware_layer
+    or hardware_layer
+      register
+      wire
+
+abstract iex_weakness
+  data : exposed_data
+
+  // To what degree does the weakness allow an attacker
+  // to control which data is exposed
+  or exposure
+    selective
+    random
+
+  // How often can the exposure occur
+  or frequency
+    on_demand
+    once
+    on_timing //e.g. race conditions
+
+  //How useful is the information on its own?
+  or use
+    direct
+    indirect
+
+  or channel
+    legitimate
+      diagnostic ?
+    side
+      covert ?
+
+  or cause
+    // Information passing from a protected
+    // domain to general pool
+    unclear_before_release
+    // As above but between domains
+    cross_boundary
+    // Improper protection/preparation of data
+    unprotected_sensitive_data
+    // Implementation/Aglorithm errors in SW and HW
+    sw_behavior
+    hw_behavior
+    // E.g. generating messages with too much information
+    // (filenames, passwords, etc)
+    improper_details
+    // Failure to encrypt properly
+    enc
+    // Authentication/Authorization error
+    atn_aut
+    // Code injection
+    inj
+    // Interaction frequency
+    // (e.g. this would allow brute force attacks)
+    cif
+
+InformationLeakage_Test : iex_weakness ?
+  xor Store
+    Store_flatstore
+    Store_cached
+    Store_fragmented
+    Store_separate
+
+  xor Interpreter
+    Interpreter_binterpreter
+    Interpreter_simpleatoi
+
+  xor Test
+    Test_atoi
+    Test_cache
+    Test_classifydeclassify
+    Test_directsys
+    Test_error
+    Test_indexing
+    Test_indexing2
+    Test_loginmsg
+    Test_markprivate
+    Test_setenv
+    Test_systemconfig
+  [ Test_cache => Store_cached ]
+
+  or CWE
+    CWE_201
+    CWE_202
+    CWE_203
+    CWE_209
+    CWE_212
+    CWE_214
+    CWE_226
+    CWE_321
+    CWE_524
+    CWE_526
+    CWE_612
+    CWE_707
+
+  ///////////////////////////////////////////
+  // Bugs Framework association with CWEs  //
+  ///////////////////////////////////////////
+  [ transferred
+  /*--------------------*/
+    <=> CWE_201
+  ]
+
+  [ (unclear_before_release || cross_boundary)
+  /*--------------------*/
+    <=> CWE_202
+  ]
+
+  [ (covert || side)
+    && sw_behavior
+  /*--------------------*/
+    <=> CWE_203
+  ]
+
+  [ legitimate && diagnostic
+    && improper_details
+    && sw_behavior
+    && once
+  /*--------------------*/
+    <=> CWE_209
+  ]
+
+  [ high
+    && (unclear_before_release || cross_boundary)
+  /*--------------------*/
+    <=> CWE_212
+  ]
+
+  [ random
+    && side
+    && cross_boundary
+    && sw_behavior
+  /*--------------------*/
+    <=> CWE_214
+  ]
+
+  [ (legitimate || diagnostic)
+    && (unclear_before_release || cross_boundary)
+    && sw_behavior
+  /*--------------------*/
+    <=> CWE_226
+  ]
+
+  [ (legitimate || diagnostic)
+    && (unclear_before_release || cross_boundary)
+    && on_timing
+  /*--------------------*/
+    <=> CWE_524
+  ]
+
+  [ random
+    && side
+    && cross_boundary
+    && sw_behavior
+  /*--------------------*/
+    <=> CWE_526
+  ]
+
+  [ side
+    && cross_boundary
+    && sw_behavior
+       && (unclear_before_release
+           || cross_boundary
+           || atn_aut)
+    && (on_demand || once)
+  /*--------------------*/
+    <=> CWE_612
+  ]
+
+  [ sw_behavior
+    && (inj || unprotected_sensitive_data)
+  /*--------------------*/
+    <=> CWE_707
+  ]
+
+  [ high
+  /*--------------------*/
+    <=> CWE_321
+  ]
+
+  [ Test_directsys          => CWE_201 ]
+  [ Test_indexing           => CWE_202 ]
+  [ Test_indexing2          => CWE_202 ]
+  [ Test_loginmsg           => CWE_203 ]
+  [ Test_error              => CWE_209 ]
+  [ Test_markprivate        => CWE_212 ]
+  [ Test_setenv             => CWE_214 ]
+  [ Test_classifydeclassify => CWE_226 ]
+  [ Test_cache              => CWE_524 ]
+  [ Test_setenv             => CWE_526 ]
+  [ Test_indexing           => CWE_612 ]
+  [ Test_indexing2          => CWE_612 ]
+  [ Test_atoi               => CWE_707 ]
+  [ Test_systemconfig       => CWE_707 ]
+
+  ///////////////////////////////////////////////////////////////////////
+  // The following constraints describe the concrete tests as realized //
+  // in testgen, and are likely not fundamental                        //
+  ///////////////////////////////////////////////////////////////////////
+  [ high && low ]
+  [ credentials ]
+  [ cryptography ]
+  [ system ]
+  [ stat ]
+  [ personally_identifiable ]
+  [ direct && indirect ]
+  // [ documents ] A 'file' store would justify turning this on
+  [ business ]
+
+  [ small && !medium && !large ]
+  [ direct && indirect ]
+  [ enc ]
+  [ !covert ]
+
+  // These causes are not under test in the concrete test set
+  [ !cif && !hw_behavior ]
+// End of InformationLeakage
