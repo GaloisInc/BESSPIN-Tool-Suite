@@ -99,7 +99,7 @@ class Logger:
             with open(self.results_fname, "a") as f:
                 f.write(f"[ { datetime.now().strftime('%Y/%m/%d') } ] : { message }\n")
 
-            if "fail" in message:
+            if "fail" in message.lower():
                 cprint(f"({level})~ {message}", self.levels["Warning"])
             else:
                 cprint(f"({level})~ {message}", self.levels[level])

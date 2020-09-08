@@ -132,22 +132,25 @@ class InstanceManager:
                     finished = num_instances_total - (to_run + running)
                     percent_complete = int((finished / num_instances_total) * 100)
                     log.status(
-                        f"Status: [ { to_run } / { running } / { finished } ] = { percent_complete }% ( To Run / Running / Finished )"
+                        f"Run Progress: [ { to_run } / { running } / { finished } ] = { percent_complete }% Somplete ( To Run / Running / Finished )"
                     )
 
             time.sleep(2)
 
         # Print out the results from this run.
-        log.status("Run Results:")
-        failures = 0
+        failures = len([x for x in self._results if x[0] == "failure"])
+        log.status(f"Run Results: { failures } failures:")
 
-        for result in self._results:
-            if result[0] == "failure":
-                log.status(f"Failure: Instance { result[2] } ({ result [1] })")
-                failures += 1
+        if failures:
+            for result in self._results:
+                if result[0] == "failure":
+                    log.results(f"Failure: Instance { result[2] } ({ result [1] })")
 
-        success_percentage = int(
-            ((len(self._results) - failures) / len(self._results)) * 100
+        successful_instances = len(self._results) - failures
+        total_instances = len(self._results)
+        success_percentage = int((successful_instances / total_instances) * 100)
+        log.status(
+            f"Results: [ { successful_instances } / { failures } / { total_instances }] ( Success / Failures / Total )"
         )
         log.status(f"Overall: { success_percentage }% Success.")
 
