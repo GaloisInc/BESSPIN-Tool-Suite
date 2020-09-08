@@ -8,7 +8,6 @@ from fett.base.utils.misc import *
 
 class Openocd(object):
     def __init__(self, server_cmd=None, config=None, debug=False, timeout=60):
-        self.logname = os.path.join(getSetting('workDir'),'openocd.out')
         self.timeout = timeout
 
         if server_cmd:
@@ -45,19 +44,19 @@ class Openocd(object):
         if debug:
             cmd.append("-d")
 
-        logfile = ftOpenFile(self.logname, 'a')
+        self.logfile = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'), 'a')
         env_entries = ("REMOTE_BITBANG_HOST", "REMOTE_BITBANG_PORT")
         env_entries = [key for key in env_entries if key in os.environ]
-        logfile.write("+ %s%s\n" % (
+        self.logfile.write("+ %s%s\n" % (
             "".join("%s=%s " % (key, os.environ[key]) for key in env_entries),
             " ".join(map(pipes.quote, cmd))))
-        logfile.flush()
+        self.logfile.flush()
 
         self.gdb_ports = []
-        self.process = self.start(cmd, logfile)
+        self.process = self.start(cmd)
 
-    def start(self, cmd, logfile):
-        process = pexpect.spawn(" ".join(cmd), encoding='utf-8', logfile=logfile)
+    def start(self, cmd):
+        process = pexpect.spawn(" ".join(cmd), encoding='utf-8', logfile=self.logfile)
         message = ''
         try:
             process.expect("telnet server disabled", timeout=90)
@@ -77,14 +76,13 @@ class Openocd(object):
         return process
 
     def tearDown(self):
-        def kill_process(proc):
-            if (self.process.isalive()):
-                try:
-                    sudoShellCommand(['kill', '-9', f"{proc.pid}"])
-                except Exception as exc:
-                    warnAndLog("targetTearDown: Failed to kill process.",doPrint=False,exc=exc)
         try:
             self.process.terminate()
-            kill_process(self.process)
-        except (OSError, AttributeError):
-            pass
+            sudoShellCommand(['kill', '-9', f"{proc.pid}"],check=False)
+        except Exception as exc:
+            warnAndLog("OpenOcdtearDown: Failed to terminate <openocd> process.",doPrint=False,exc=exc)
+
+        try:
+            self.logfile.close()
+        except Exception as exc:
+            warnAndLog(f"OpenOcdtearDown: Failed to close <{self.logfile.name}>.",doPrint=False,exc=exc)

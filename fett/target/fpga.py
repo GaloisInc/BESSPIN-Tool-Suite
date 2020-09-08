@@ -170,21 +170,21 @@ class fpgaTarget (commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
-        def kill_process(proc):
-            if (self.process.isalive()):
-                try:
-                    subprocess.check_call(['sudo', 'kill', '-9', f"{proc.pid}"],
-                                          stdout=self.fTtyOut, stderr=self.fTtyOut)
-                except Exception as exc:
-                    warnAndLog("targetTearDown: Failed to kill process.",doPrint=False,exc=exc)
         try:
             self.terminateGfe()
-            kill_process(self.gdb_session)
-            kill_process(self.uart_session)
-            return True
+            sudoShellCommand(['kill', '-9', f"{self.gdb_session.pid}"],check=False)
+            sudoShellCommand(['kill', '-9', f"{self.uart_session.pid}"],check=False)
         except Exception as exc:
             warnAndLog ("targetTearDown: Failed to tearDown peacefully.",doPrint=False,exc=exc)
-            return False
+        
+        filesToClose = [self.fTtyOut, self.fGdbOut]
+        for xFile in filesToClose:
+            try:
+                xFile.close()
+            except Exception as exc:
+                warnAndLog(f"targetTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
+
+        return True
 
     @decorate.debugWrap
     def interact (self):
