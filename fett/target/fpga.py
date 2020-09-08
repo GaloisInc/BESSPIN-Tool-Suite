@@ -34,7 +34,7 @@ class fpgaTarget (commonTarget):
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
         self.gdb_session = None
-        self.gdb_logfile = None
+        self.fGdbOut = None
         self.uart_session = None
         return
 
@@ -309,8 +309,8 @@ class fpgaTarget (commonTarget):
             config=config,
             debug=False)
         port = self.openocd_session.gdb_ports[0]
-        self.gdb_logfile = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb.out'), 'ab')
-        self.gdb_session = pexpect.spawn(riscv_gdb_cmd, logfile=self.gdb_logfile, timeout=30)
+        self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb.out'), 'wb')
+        self.gdb_session = pexpect.spawn(riscv_gdb_cmd, logfile=self.fGdbOut, timeout=30)
         self.gdb_session.expect(r"\r\n\(gdb\)")
         self.runCommandGdb("set confirm off")
         self.runCommandGdb("set width 0")

@@ -141,7 +141,7 @@ class firesimTarget(commonTarget):
                                         errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb set/watch command.")
             
             self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
-            self.fOpenOcdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'),'wb')
+            self.fOpenOcdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'),'ab')
             self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'),'gdb.out'),'wb')
             openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils','openocd.cfg')
 

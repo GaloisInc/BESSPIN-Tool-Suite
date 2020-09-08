@@ -45,7 +45,7 @@ class Openocd(object):
         if debug:
             cmd.append("-d")
 
-        logfile = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'), 'w+')
+        logfile = ftOpenFile(self.logname, 'a')
         env_entries = ("REMOTE_BITBANG_HOST", "REMOTE_BITBANG_PORT")
         env_entries = [key for key in env_entries if key in os.environ]
         logfile.write("+ %s%s\n" % (
