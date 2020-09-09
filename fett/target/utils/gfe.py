@@ -1,7 +1,3 @@
-import shlex
-import collections
-import pipes
-
 import pexpect
 from pexpect import fdpexpect
 import serial, subprocess
