@@ -904,8 +904,9 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None,endsWith=None):
         process = self.process if process is None else process
+        endsWith = self.getDefaultEndWith() if endsWith is None else endsWith
         if (self.terminateTargetStarted):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
@@ -929,9 +930,9 @@ class commonTarget():
         if (process):
             for i in range(retryIdx + 1):
                 readAfter = self.readFromTarget(readAfter=True,process=process)
-                if (self.getDefaultEndWith() in readAfter):
+                if (endsWith in readAfter):
                     try:
-                        process.expect(self.getDefaultEndWith(),timeout=timeout)
+                        process.expect(endsWith,timeout=timeout)
                     except Exception as exc:
                         warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
                     textBack += readAfter
