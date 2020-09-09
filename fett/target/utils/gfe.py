@@ -44,7 +44,7 @@ class Gfe(object):
             self.gdbProcess = pexpect.spawn(
                 f"riscv64-unknown-elf-gdb {elfPath}",
                     logfile=self.fGdbOut, timeout=elfLoadTimeout, echo=False)
-            self.gdbProcess.expect(r"\(gdb\)", timeout=elfLoadTimeout)
+            self.gdbProcess.expect(self.getGdbEndsWith(), timeout=elfLoadTimeout)
         except Exception as exc:
             self.shutdownAndExit(f"gfeStart: Failed to spawn the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
@@ -68,6 +68,7 @@ class Gfe(object):
 
         # gdbContinue
         self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
+        self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
         self.runCommandGdb('c', endsWith='Continuing')
 
         return
@@ -99,7 +100,6 @@ class Gfe(object):
         if ((not isRepeated) and isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('procFlavor','bluespec')):
                 self.softReset(isRepeated=True)
-            self.interruptGdb()
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -121,7 +121,9 @@ class Gfe(object):
         return self.expectFromTarget (endsWith,command=f"openocd:{command}",
                 overwriteShutdown=True,process=self.openocdProcess,**kwargs)
 
-    def runCommandGdb(self, command, endsWith=[r"\(gdb\)"], timeout=60, **kwargs):
+    @decorate.debugWrap
+    def runCommandGdb(self, command, endsWith=None, timeout=60, **kwargs):
+        endsWith = self.getGdbEndsWith() if endsWith is None else endsWith
         """convenience runCommand for GDB"""
         return self.runCommand(command,
                                 endsWith=endsWith,
@@ -130,9 +132,13 @@ class Gfe(object):
                                 process=self.gdbProcess, **kwargs)[1]
 
     @decorate.debugWrap
+    def getGdbEndsWith (self):
+        return r"\(gdb\)"
+
+    @decorate.debugWrap
     def interruptGdb(self):
         """implement keyboardInterrupt for GDB"""
-        self.runCommandGdb("\x03")
+        self.keyboardInterrupt(shutdownOnError=False,process=self.gdbProcess,endsWith=self.getGdbEndsWith())
 
     @staticmethod
     def findUartPort(search_vid=0x10C4,search_pid=0xEA70):
