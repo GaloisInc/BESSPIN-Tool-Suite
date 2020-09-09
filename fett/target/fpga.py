@@ -5,7 +5,7 @@ Main fpga class + misc fpga functions
 
 from fett.base.utils.misc import *
 from fett.target.common import *
-from fett.target.utils.gfe import Gfe
+from fett.target.gfe import Gfe
 
 import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
@@ -125,37 +125,7 @@ class fpgaTarget (commonTarget, Gfe):
 
     @decorate.debugWrap
     def targetTearDown(self):
-        if (isEqSetting('mode','evaluateSecurityTests')):
-            self.interruptGdb ()
-            
-            # Analyze gdb output for FreeRTOS
-            if (isEqSetting('osImage','FreeRTOS')):
-                self.gdbOutLines = ftReadLines(self.fGdbOut.name)
-                relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
-                testLogFile = getSetting("currentTest")[3]
-                sigFound = None
-                for xSig in relvSigs:
-                    if (matchExprInLines(rf"^.*{xSig}.*$",self.gdbOutLines)):
-                        sigFound = xSig
-                        break
-                # Fetch relevant registers values
-                if (sigFound):
-                    relvRegs = {'mcause':'Unknown', 'mepc':'Unknown'}
-                    for relvReg in relvRegs:
-                        try:
-                            self.gdbProcess.sendline(f"p/x ${relvReg}")
-                            self.gdbProcess.expect(r"\$\d+\s*=\s*0x[\dabcdef]+", timeout=5)
-                            regpxStr = str(self.gdbProcess.after,'utf-8')
-                            regpxVal = regpxStr.split('=')[-1].strip()
-                            relvRegs[relvReg] = regpxVal
-                        except Exception as exc:
-                            warnAndLog (f"targetTearDown: Failed to fetch the value of ${relvReg}.",exc=exc,doPrint=False) 
-                            break
-                    regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
-                    testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
-
         self.gfeTearDown()
-        
         return True
 
     @decorate.debugWrap
