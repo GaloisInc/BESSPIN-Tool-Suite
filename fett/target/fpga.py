@@ -11,7 +11,7 @@ import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
 import pexpect
 
-class fpgaTarget (commonTarget, Gfe):
+class fpgaTarget (Gfe, commonTarget):
     def __init__ (self):
 
         commonTarget.__init__(self)

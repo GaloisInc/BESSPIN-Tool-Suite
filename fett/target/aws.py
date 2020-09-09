@@ -3,7 +3,7 @@ from fett.target.common import *
 from fett.target import fpga
 from fett.target.gfe import Gfe
 
-class firesimTarget(commonTarget, Gfe):
+class firesimTarget(Gfe, commonTarget):
     def __init__(self):
 
         commonTarget.__init__(self)
