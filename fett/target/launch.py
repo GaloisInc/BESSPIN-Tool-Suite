@@ -147,7 +147,7 @@ def launchFett ():
     try:
         xTarget = getClassType()()
     except Exception as exc:
-        logAndExit (f"launchFett: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
+        logAndExit (f"launchFett: Failed to instantiate the target class.",exc=exc,exitCode=EXIT.Dev_Bug)
     if (isEqSetting('mode', 'evaluateSecurityTests') and
         isEqSetting('osImage', 'FreeRTOS')):
         # Build the image for the upcoming test
