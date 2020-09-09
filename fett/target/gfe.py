@@ -72,7 +72,10 @@ class Gfe(object):
 
             # gdbContinue
             self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
-            self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
+            if (isEqSetting('procFlavor','chisel')):
+                self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
+            else:
+                time.sleep(1)
 
         if (isEqSetting('evaluateSecurityTests') and isEnabled('useCustomScoring')):
             self.setupGdbCustomScoring()
