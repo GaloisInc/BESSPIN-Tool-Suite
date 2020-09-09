@@ -164,6 +164,8 @@ def prepareEnv ():
             aws.installKernelModules()
         else:
             logAndExit (f"<launch.prepareEnv> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
+    elif (isEqSetting('target','qemu')):
+        qemu.configTapAdaptor()
     printAndLog (f"Environment is ready.")
 
 """ This is the loading/booting function """
