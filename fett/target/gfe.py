@@ -93,11 +93,7 @@ class Gfe(object):
         if (not isEqSetting('target','fpga')):
             self.shutdownAndExit(f"<softReset> is not implemented for target {getSetting('target')}.")
         # reset hart
-        if (isEqSetting('xlen',32)):
-            self.riscvWrite(int("0x6FFF0000", base=16),1,32) # set *(0x6fff0000)=1
-        elif (isEqSetting('xlen',64)):
-            self.runCommandGdb("set $a0 = 0")
-            self.runCommandGdb("set $a1 = 0x70000020")
+        self.riscvWrite(int("0x6FFF0000", base=16),1,32) # set *(0x6fff0000)=1
         self.expectOnOpenocd ("unexpectedly reset!","softReset")
 
         # disconnect from gdb
@@ -107,7 +103,11 @@ class Gfe(object):
         # Re-connect
         self.gdbConnect()
 
-        if ((not isRepeated) and isEqSetting('osImage','FreeRTOS')):
+        if (isEqSetting('xlen',64)):
+            # properly set the registers for boot (RT: might be just historic)
+            self.runCommandGdb("set $a0 = 0")
+            self.runCommandGdb("set $a1 = 0x70000020")
+        elif ((not isRepeated) and isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('procFlavor','bluespec')):
                 self.softReset(isRepeated=True)
 
