@@ -24,8 +24,7 @@ def test_799 (target,binTest):
         retLog = "\n" + "x"*10 + " Dumping root nohup.out " + "x"*10 + "\n"
         target.executeOnRoot (killRootNohup + getNoHupOut)
         retLog += target.runCommand ("cat nohup.out",shutdownOnError=False)[1]
-        retLog += target.runCommand ("rm nohup.out",endsWith=["nohup.out?","\'nohup.out\'?"],shutdownOnError=False)[1]  
-        retLog += target.runCommand (" ",shutdownOnError=False)[1]      
+        retLog += target.runCommand ("rm -f nohup.out",shutdownOnError=False)[1]       
         return retLog
 
     if (target.osImage == 'debian'):
