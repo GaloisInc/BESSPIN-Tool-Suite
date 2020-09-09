@@ -94,7 +94,10 @@ class Gfe(object):
             self.shutdownAndExit(f"<softReset> is not implemented for target {getSetting('target')}.")
         # reset hart
         self.riscvWrite(int("0x6FFF0000", base=16),1,32) # set *(0x6fff0000)=1
-        self.expectOnOpenocd ("unexpectedly reset!","softReset")
+        if (isEqSetting('procFlavor','chisel')):
+            self.expectOnOpenocd ("unexpectedly reset!","softReset")
+        else:
+            time.sleep(1)
 
         # disconnect from gdb
         self.runCommandGdb("disconnect")
