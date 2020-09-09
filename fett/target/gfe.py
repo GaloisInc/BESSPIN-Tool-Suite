@@ -74,7 +74,7 @@ class Gfe(object):
             self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
             self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
 
-        if (isEnabled('useCustomScoring')):
+        if (isEqSetting('evaluateSecurityTests') and isEnabled('useCustomScoring')):
             self.setupGdbCustomScoring()
 
         self.runCommandGdb('c', endsWith='Continuing')
