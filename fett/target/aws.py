@@ -234,7 +234,8 @@ class firesimTarget(commonTarget):
                             regpxVal = regpxStr.split('=')[-1].strip()
                             relvRegs[relvReg] = regpxVal
                         except Exception as exc:
-                            warnAndLog (f"targetTearDown: Failed to fetch the value of ${relvReg}.",exc=exc,doPrint=False) 
+                            warnAndLog (f"targetTearDown: Failed to fetch the value of ${relvReg}.",exc=exc,doPrint=False)
+                            break 
                     regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
                     testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
 
