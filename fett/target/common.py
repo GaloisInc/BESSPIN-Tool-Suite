@@ -1007,6 +1007,7 @@ class commonTarget():
     def sendToTarget (self,command,shutdownOnError=True,process=None):
         process = self.process if process is None else process
         self.checkFallToTty ("sendToTarget", process=process)
+        logging.debug(f"sendToTarget: sending <{command}>")
         try:
             process.sendline(command)
         except Exception as exc:
