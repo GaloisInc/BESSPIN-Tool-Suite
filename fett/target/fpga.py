@@ -36,9 +36,11 @@ class fpgaTarget (Gfe, commonTarget):
 
         if (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
             if (isEqSetting('elfLoader','JTAG')):
-                self.gfeStart(getSetting('osImageElf'),elfLoadTimeout=timeout)
+                elfLoadTimeout = int(timeout*2.5/3.5)+10
+                timeout = int(timeout*1/3.5)+10 #emperical distribution of timeout
+                self.gfeStart(getSetting('osImageElf'),elfLoadTimeout=elfLoadTimeout)
             elif (isEqSetting('elfLoader','netboot')):
-                self.gfeStart(getSetting('netbootElf'),elfLoadTimeout=60)
+                self.gfeStart(getSetting('netbootElf'),elfLoadTimeout=30)
             else:
                 self.shutdownAndExit (f"boot: ELF loader <{getSetting('elfLoader')}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
 
