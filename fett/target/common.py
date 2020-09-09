@@ -904,7 +904,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None,endsWith=None):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None,endsWith=None, sendToNonUnix=False):
         process = self.process if process is None else process
         endsWith = self.getDefaultEndWith() if endsWith is None else endsWith
         if (self.terminateTargetStarted and (process == self.process)):
@@ -920,12 +920,14 @@ class commonTarget():
         while doTimeout and retryIdx < retryCount:
             if retryIdx > 0:
                 warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
-            retCommand = self.runCommand("\x03",endsWith=endsWith,shutdownOnError=False,timeout=timeout,issueInterrupt=False,process=process)
+            retCommand = self.runCommand("\x03",endsWith=endsWith,shutdownOnError=False,timeout=timeout,
+                            issueInterrupt=False,process=process,sendToNonUnix=sendToNonUnix)
             textBack = retCommand[1]
             doTimeout = retCommand[2]
             retryIdx += 1
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",endsWith=endsWith,shutdownOnError=shutdownOnError,timeout=timeout,process=process)[1]
+            textBack += self.runCommand(" ",endsWith=endsWith,shutdownOnError=shutdownOnError,timeout=timeout,
+                            process=process,sendToNonUnix=sendToNonUnix)[1]
         #See if the order is correct
         if (process):
             for i in range(retryIdx + 1):

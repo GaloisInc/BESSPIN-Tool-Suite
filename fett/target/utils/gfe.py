@@ -138,7 +138,8 @@ class Gfe(object):
     @decorate.debugWrap
     def interruptGdb(self):
         """implement keyboardInterrupt for GDB"""
-        self.keyboardInterrupt(shutdownOnError=False,retryCount=1,process=self.gdbProcess,endsWith=self.getGdbEndsWith())
+        self.keyboardInterrupt(shutdownOnError=False,retryCount=1,process=self.gdbProcess,
+            endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15)
 
     @staticmethod
     def findUartPort(search_vid=0x10C4,search_pid=0xEA70):
