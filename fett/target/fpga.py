@@ -5,7 +5,7 @@ Main fpga class + misc fpga functions
 
 from fett.base.utils.misc import *
 from fett.target.common import *
-from fett.target.utils.gfe import Gfe
+from fett.target.gfe import Gfe
 
 import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
