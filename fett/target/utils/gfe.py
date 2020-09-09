@@ -122,7 +122,7 @@ class Gfe(object):
                 overwriteShutdown=True,process=self.openocdProcess,**kwargs)
 
     @decorate.debugWrap
-    def runCommandGdb(self, command, endsWith=None, timeout=60, **kwargs):
+    def runCommandGdb(self, command, endsWith=None, timeout=15, **kwargs):
         endsWith = self.getGdbEndsWith() if endsWith is None else endsWith
         """convenience runCommand for GDB"""
         return self.runCommand(command,
@@ -138,7 +138,7 @@ class Gfe(object):
     @decorate.debugWrap
     def interruptGdb(self):
         """implement keyboardInterrupt for GDB"""
-        self.keyboardInterrupt(shutdownOnError=False,process=self.gdbProcess,endsWith=self.getGdbEndsWith())
+        self.keyboardInterrupt(shutdownOnError=False,retryCount=1,process=self.gdbProcess,endsWith=self.getGdbEndsWith())
 
     @staticmethod
     def findUartPort(search_vid=0x10C4,search_pid=0xEA70):

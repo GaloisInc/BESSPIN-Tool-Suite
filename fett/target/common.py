@@ -907,25 +907,25 @@ class commonTarget():
     def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None,endsWith=None):
         process = self.process if process is None else process
         endsWith = self.getDefaultEndWith() if endsWith is None else endsWith
-        if (self.terminateTargetStarted):
+        if (self.terminateTargetStarted and (process == self.process)):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
             self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overwriteShutdown=True,overwriteConsole=True,exitCode=EXIT.Run)
         else:
             self.keyboardInterruptTriggered = True
-        if (not isEnabled('isUnix')):
+        if ((not isEnabled('isUnix')) and (process == self.process)):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
         doTimeout = True
         retryIdx = 0
         while doTimeout and retryIdx < retryCount:
             if retryIdx > 0:
                 warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
-            retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout,issueInterrupt=False,process=process)
+            retCommand = self.runCommand("\x03",endsWith=endsWith,shutdownOnError=False,timeout=timeout,issueInterrupt=False,process=process)
             textBack = retCommand[1]
             doTimeout = retCommand[2]
             retryIdx += 1
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout,process=process)[1]
+            textBack += self.runCommand(" ",endsWith=endsWith,shutdownOnError=shutdownOnError,timeout=timeout,process=process)[1]
         #See if the order is correct
         if (process):
             for i in range(retryIdx + 1):
