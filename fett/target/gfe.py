@@ -224,7 +224,7 @@ class Gfe(object):
     def setupGdbCustomScoring (self):
         for funcCheckpoint in getSettingDict('customizedScoring','funcCheckpoints'):
             retCommand = self.runCommandGdb (f"dprintf {funcCheckpoint},\"<GDB-CHECKPOINT>:{funcCheckpoint}\\n\"",
-                expectedContents="not defined", shutdownOnError=False)
+                erroneousContents="not defined", shutdownOnError=False)
             if (not retCommand[0]):
                 warnAndLog (f"setupGdbCustomScoring: Failed to insert a checkpoint at {funcCheckpoint}."
                             f"See <{self.fGdbOut.name}> for more details.")
