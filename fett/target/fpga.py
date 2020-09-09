@@ -439,7 +439,10 @@ def programFpga(bitStream, probeFile, attempts=2):
     # top level params
     vivado = 'vivado_lab'
     sourceCwd = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils')
-    cwd = os.path.join(getSetting('workDir'), 'tmp')
+    cwd = os.path.join(getSetting('workDir'), 'gfe')
+    if not os.path.exists(cwd):
+        tempPath = os.path.join(getSetting('workDir'),'gfe')
+        mkdir (tempPath)
 
     # copy files over to workDir
     cp(os.path.join(sourceCwd, 'tcl', 'prog_bit.tcl'), cwd)
@@ -468,7 +471,10 @@ def clearFlash():
     matches the functionality of gfe-clear-flash
     """
     sourceCwd = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'tcl')
-    cwd = os.path.join(getSetting('workDir'), 'tmp')
+    cwd = os.path.join(getSetting('workDir'), 'gfe')
+    if not os.path.exists(cwd):
+        tempPath = os.path.join(getSetting('workDir'),'gfe')
+        mkdir (tempPath)
 
     # copy files over to workDir
     cp(os.path.join(sourceCwd, 'program_flash'), cwd)
