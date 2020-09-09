@@ -43,8 +43,8 @@ class Gfe(object):
         try:
             self.gdbProcess = pexpect.spawn(
                 f"riscv64-unknown-elf-gdb {elfPath}",
-                    logfile=self.fGdbOut, timeout=elfLoadTimeout, echo=False)
-            self.gdbProcess.expect(self.getGdbEndsWith(), timeout=elfLoadTimeout)
+                    logfile=self.fGdbOut, timeout=15, echo=False)
+            self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
         except Exception as exc:
             self.shutdownAndExit(f"gfeStart: Failed to spawn the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
@@ -103,11 +103,7 @@ class Gfe(object):
         # Re-connect
         self.gdbConnect()
 
-        if (isEqSetting('xlen',64)):
-            # properly set the registers for boot (RT: might be just historic)
-            self.runCommandGdb("set $a0 = 0")
-            self.runCommandGdb("set $a1 = 0x70000020")
-        elif ((not isRepeated) and isEqSetting('osImage','FreeRTOS')):
+        if ((not isRepeated) and isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('procFlavor','bluespec')):
                 self.softReset(isRepeated=True)
 

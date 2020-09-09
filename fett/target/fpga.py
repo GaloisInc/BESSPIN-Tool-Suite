@@ -36,9 +36,9 @@ class fpgaTarget (Gfe, commonTarget):
 
         if (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
             if (isEqSetting('elfLoader','JTAG')):
-                self.gfeStart(getSetting('osImageElf'))
+                self.gfeStart(getSetting('osImageElf'),elfLoadTimeout=timeout)
             elif (isEqSetting('elfLoader','netboot')):
-                self.gfeStart(getSetting('netbootElf'))
+                self.gfeStart(getSetting('netbootElf'),elfLoadTimeout=60)
             else:
                 self.shutdownAndExit (f"boot: ELF loader <{getSetting('elfLoader')}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
 
@@ -88,7 +88,7 @@ class fpgaTarget (Gfe, commonTarget):
                     self.shutdownAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
         elif (isEqSetting('osImage','FreeRTOS')):
-            self.gfeStart(getSetting('osImageElf')) 
+            self.gfeStart(getSetting('osImageElf'),elfLoadTimeout=timeout) 
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout)
         else:
