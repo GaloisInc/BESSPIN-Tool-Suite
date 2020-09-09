@@ -77,7 +77,7 @@ class Gfe(object):
             else:
                 time.sleep(1)
 
-        if (isEqSetting('evaluateSecurityTests') and isEnabled('useCustomScoring')):
+        if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
             self.setupGdbCustomScoring()
 
         self.runCommandGdb('c', endsWith='Continuing')
