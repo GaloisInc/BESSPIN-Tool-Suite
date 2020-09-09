@@ -25,8 +25,9 @@ class Gfe(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def gfeStart (self, elfPath, elfLoadTimeout=15):
-        # setup UART
-        self.setupUart()
+        if (isEqSetting('target','fpga')):
+            # setup UART
+            self.setupUart()
 
         # start the openocd process
         cfgSuffix = getSetting('target') if (not isEqSetting('target','aws')) else getSetting('pvAWS')
@@ -62,17 +63,24 @@ class Gfe(object):
 
         self.gdbConnect()
 
-        # reset the board
-        self.softReset()
+        if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
+            self.runCommandGdb ('set $pc=0xC0000000')
+        elif (isEqSetting('target','fpga')):
+            # reset the board
+            self.softReset()
 
-        # start the tty process
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
-        self.ttyProcess = fdpexpect.fdspawn(self.uart_session.fileno(),logfile=self.fTtyOut,timeout=30)
-        self.process = self.ttyProcess
+            # start the tty process
+            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+            self.ttyProcess = fdpexpect.fdspawn(self.uart_session.fileno(),logfile=self.fTtyOut,timeout=30)
+            self.process = self.ttyProcess
 
-        # gdbContinue
-        self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
-        self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
+            # gdbContinue
+            self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
+            self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
+
+        if (isEnabled('useCustomScoring')):
+            self.setupGdbCustomScoring()
+
         self.runCommandGdb('c', endsWith='Continuing')
 
         return
@@ -80,12 +88,14 @@ class Gfe(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def gdbConnect (self):
-        self.runCommandGdb(f"target remote localhost:{self.gdbPort}")
+        self.runCommandGdb(f"target remote localhost:{self.gdbPort}",erroneousContents="Failed")
         self.expectOnOpenocd (f"accepting 'gdb' connection on tcp/{self.gdbPort}","connect")
 
     @decorate.debugWrap
     @decorate.timeWrap
     def softReset (self, isRepeated=False):
+        if (not isEqSetting('target','fpga')):
+            self.shutdownAndExit(f"<softReset> is not implemented for target {getSetting('target')}.")
         # reset hart
         if (isEqSetting('xlen',32)):
             self.riscvWrite(int("0x6FFF0000", base=16),1,32) # set *(0x6fff0000)=1
@@ -215,8 +225,76 @@ class Gfe(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
+    def setupGdbCustomScoring (self):
+        for funcCheckpoint in getSettingDict('customizedScoring','funcCheckpoints'):
+            retCommand = self.runCommandGdb (f"dprintf {funcCheckpoint},\"<GDB-CHECKPOINT>:{funcCheckpoint}\\n\"",
+                expectedContents="not defined", shutdownOnError=False)
+            if (not retCommand[0]):
+                warnAndLog (f"setupGdbCustomScoring: Failed to insert a checkpoint at {funcCheckpoint}."
+                            f"See <{self.fGdbOut.name}> for more details.")
+        if (getSettingDict('customizedScoring','memAddress') != -1):
+            memAddress = getSettingDict('customizedScoring','memAddress')
+            retCommand = self.runCommandGdb (f"display/x * (int *) 0x{memAddress:08x}",
+                erroneousContents=['No symbol', 'warning'], shutdownOnError=False)
+            if (not retCommand[0]):
+                warnAndLog (f"setupGdbCustomScoring: Unexpecte output while reading 0x{memAddress:08x}."
+                            f"See <{self.fGdbOut.name}> for more details.")
+            else:
+                self.runCommandGdb (f"watch * (int *) 0x{memAddress:08x}", shutdownOnError=False)
+                setCmd = f"set * (int *) 0x{memAddress:08x} = {getSettingDict('customizedScoring','memResetValue')}"
+                self.runCommandGdb (f"commands\n{setCmd}\nc\nend", shutdownOnError=False)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def getGdbOutput(self):
+        gdbOut = "\n~~~GDB LOGGING~~~\n"
+        try:
+            gdbLines = '\n'.join(ftReadLines(self.fGdbOut.name, "r"))
+            if (self.readGdbOutputUnix == 0): #We don't want the GDB out before the string "Continuing."
+                gdbOut += gdbLines[gdbLines.find("Continuing."):]
+            elif (self.readGdbOutputUnix < len(gdbLines)): #Only the new lines
+                gdbOut += gdbLines[self.readGdbOutputUnix:]
+            self.readGdbOutputUnix = len(gdbLines) #move the cursor
+        except Exception as exc:
+            gdbOut += "<Warning-No-Logs>"
+            warnAndLog("<getGdbOutput> failed to obtain the GDB output.",
+                        exc=exc)
+        gdbOut += "\n~~~~~~~~~~~~~~~~~\n"
+        return gdbOut
+
+    @decorate.debugWrap
+    @decorate.timeWrap
     def gfeTearDown (self):
-        if (self.uart_session.is_open):
+        if (isEqSetting('mode','evaluateSecurityTests')):
+            self.interruptGdb ()
+            
+            # Analyze gdb output for FreeRTOS
+            if (isEqSetting('osImage','FreeRTOS')):
+                self.gdbOutLines = ftReadLines(self.fGdbOut.name)
+                relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
+                testLogFile = getSetting("currentTest")[3]
+                sigFound = None
+                for xSig in relvSigs:
+                    if (matchExprInLines(rf"^.*{xSig}.*$",self.gdbOutLines)):
+                        sigFound = xSig
+                        break
+                # Fetch relevant registers values
+                if (sigFound):
+                    relvRegs = {'mcause':'Unknown', 'mepc':'Unknown'}
+                    for relvReg in relvRegs:
+                        try:
+                            self.gdbProcess.sendline(f"p/x ${relvReg}")
+                            self.gdbProcess.expect(r"\$\d+\s*=\s*0x[\dabcdef]+", timeout=5)
+                            regpxStr = str(self.gdbProcess.after,'utf-8')
+                            regpxVal = regpxStr.split('=')[-1].strip()
+                            relvRegs[relvReg] = regpxVal
+                        except Exception as exc:
+                            warnAndLog (f"targetTearDown: Failed to fetch the value of ${relvReg}.",exc=exc,doPrint=False) 
+                            break
+                    regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
+                    testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
+
+        if (isEqSetting('target','fpga') and self.uart_session.is_open):
             try:
                 self.uart_session.close()
             except Exception as exc:
@@ -232,15 +310,17 @@ class Gfe(object):
 
         self.runCommandGdb("quit",endsWith=pexpect.EOF)
 
-        processes = ['riscv64-unknown-elf-gdb', 'openocd']
-        for proc in processes:
-            sudoShellCommand(['pkill', '-9', f"{proc}"],check=False)
+        filesToClose = [self.fGdbOut, self.fOpenocdOut]
+        if (isEqSetting('target','fpga')):
+            processes = ['riscv64-unknown-elf-gdb', 'openocd']
+            for proc in processes:
+                sudoShellCommand(['pkill', '-9', f"{proc}"],check=False)
+            filesToClose.append(self.fTtyOut)
 
-        filesToClose = [self.fTtyOut, self.fGdbOut, self.fOpenocdOut]
         for xFile in filesToClose:
             if (xFile is None):
                 continue
             try:
                 xFile.close()
             except Exception as exc:
-                warnAndLog(f"targetTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
+                warnAndLog(f"gfeTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)

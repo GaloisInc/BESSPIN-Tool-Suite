@@ -1,11 +1,13 @@
 import psutil, getpass
 from fett.target.common import *
 from fett.target import fpga
+from fett.target.gfe import Gfe
 
-class firesimTarget(commonTarget):
+class firesimTarget(commonTarget, Gfe):
     def __init__(self):
 
-        super().__init__()
+        commonTarget.__init__(self)
+        Gfe.__init__(self)
 
         self.ipTarget = getSetting('awsIpTarget')
         self.ipHost = getSetting('awsIpHost')  
@@ -21,8 +23,6 @@ class firesimTarget(commonTarget):
         self.httpsPortTarget = getSetting('HTTPSPortTarget')
         self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
-
-        self.readGdbOutputUnix = 0 #beginning of file
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -117,54 +117,8 @@ class firesimTarget(commonTarget):
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         if (isEqSetting('mode','evaluateSecurityTests')):
-            def setupGdbCustomScoring ():
-                for funcCheckpoint in getSettingDict('customizedScoring','funcCheckpoints'):
-                    cmdOut = self.runCommandGdb (f"dprintf {funcCheckpoint},\"<GDB-CHECKPOINT>:{funcCheckpoint}\\n\"",
-                                            errorMessage=f"setupGdbCustomScoring: Failed to insert GDB checkpoint at <{funcCheckpoint}> commands.",
-                                            readCmdOut=True)
-                    if ("not defined" in cmdOut):
-                        warnAndLog (f"setupGdbCustomScoring: Encountered <not defined> while inserting a checkpoint at {funcCheckpoint}."
-                                    f"See <{self.fGdbOut.name}> for more details.")
-                if (getSettingDict('customizedScoring','memAddress') != -1):
-                    memAddress = getSettingDict('customizedScoring','memAddress')
-                    cmdOut = self.runCommandGdb (f"display/x * (int *) 0x{memAddress:08x}",
-                                            errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb memory display command.",
-                                            readCmdOut=True)
-                    if (('No symbol' in cmdOut) or ('warning' in cmdOut)):
-                        warnAndLog (f"setupGdbCustomScoring: Encountered <No symbol> or <warning> while reading 0x{memAddress:08x}."
-                                    f"See <{self.fGdbOut.name}> for more details.")
-                    else:
-                        self.runCommandGdb (f"watch * (int *) 0x{memAddress:08x}",
-                                        errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb watch command.")
-                        setCmd = f"set * (int *) 0x{memAddress:08x} = {getSettingDict('customizedScoring','memResetValue')}"
-                        self.runCommandGdb (f"commands\n{setCmd}\nc\nend",
-                                        errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb set/watch command.")
-            
             self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
-            self.fOpenOcdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'),'ab')
-            self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'),'gdb.out'),'wb')
-            openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils','openocd.cfg')
-
-            try:
-                self.openocdProcess = subprocess.Popen(['openocd', '--file', openocdCfg],stdout=self.fOpenOcdOut,stderr=self.fOpenOcdOut)
-            except Exception as exc:
-                self.shutdownAndExit(f"boot: Failed to start the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
-
-            try:
-                self.gdbProcess = pexpect.spawn(f'riscv64-unknown-elf-gdb {getSetting("osImageElf")}',
-                                                logfile=self.fGdbOut,timeout=30,echo=False)
-            except Exception as exc:
-                self.shutdownAndExit(f"boot: Failed to spawn the gdb process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
-
-            self.runCommandGdb (f"target remote localhost:{getSetting('gdbRemotePort')}",
-                            errorMessage=f"boot: Failed to connect the gdb to openocd.")
-            self.runCommandGdb ('set $pc=0xC0000000')
-            if (isEnabled('useCustomScoring')):
-                setupGdbCustomScoring()
-            try:
-                self.gdbProcess.sendline('continue')
-            except Exception as exc:
-                self.shutdownAndExit(f"boot: Failed to send <continue> to GDB.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.gfeStart(getSetting('osImageElf'))
         
         self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
 
@@ -209,56 +163,7 @@ class firesimTarget(commonTarget):
     @decorate.debugWrap
     def targetTearDown(self):
         if (isEqSetting('mode','evaluateSecurityTests')):
-            self.runCommandGdb ('\x03', 
-                                exitOnError=False,
-                                errorMessage="targetTearDown: Failed to interrupt the gdb process.")
-            
-            # Analyze gdb output for FreeRTOS
-            if (isEqSetting('osImage','FreeRTOS')):
-                self.gdbOutLines = ftReadLines(self.fGdbOut.name)
-                relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
-                testLogFile = getSetting("currentTest")[3]
-                sigFound = None
-                for xSig in relvSigs:
-                    if (matchExprInLines(rf"^.*{xSig}.*$",self.gdbOutLines)):
-                        sigFound = xSig
-                        break
-                # Fetch relevant registers values
-                if (sigFound):
-                    relvRegs = {'mcause':'Unknown', 'mepc':'Unknown'}
-                    for relvReg in relvRegs:
-                        try:
-                            self.gdbProcess.sendline(f"p/x ${relvReg}")
-                            self.gdbProcess.expect(r"\$\d+\s*=\s*0x[\dabcdef]+", timeout=5)
-                            regpxStr = str(self.gdbProcess.after,'utf-8')
-                            regpxVal = regpxStr.split('=')[-1].strip()
-                            relvRegs[relvReg] = regpxVal
-                        except Exception as exc:
-                            warnAndLog (f"targetTearDown: Failed to fetch the value of ${relvReg}.",exc=exc,doPrint=False)
-                            break 
-                    regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
-                    testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
-
-            # exit gdb and openocd
-            self.runCommandGdb ('detach', 
-                                exitOnError=False,
-                                errorMessage="targetTearDown: Failed to detach the target in gdb.")
-
-            try:
-                self.openocdProcess.kill() # No need for fancier ways as we use Popen with shell=False
-            except Exception as exc:
-                warnAndLog("targetTearDown: Failed to kill the openocd process.",doPrint=False,exc=exc)
-
-            self.runCommandGdb ('quit', endsWith=pexpect.EOF,
-                                exitOnError=False,
-                                errorMessage="targetTearDown: Failed to exit the gdb process.")
-
-            if (self.gdbProcess.isalive()):
-                try:
-                    subprocess.check_call(['sudo', 'kill', '-9', f"{os.getpgid(self.gdbProcess.pid)}"],
-                                        stdout=self.fGdbOut, stderr=self.fGdbOut)
-                except Exception as exc:
-                    warnAndLog("targetTearDown: Failed to kill the gdb process.",doPrint=False,exc=exc)
+            self.gfeTearDown()
 
         if (self.process.isalive()):
             # When executing the firesim command, we run it with `stty intr ^]` which changes
@@ -275,54 +180,12 @@ class firesimTarget(commonTarget):
         self.noNonsenseFiresim()
 
         filesToClose = [self.fswitchOut, self.fTtyOut]
-        if (isEqSetting('mode','evaluateSecurityTests')):
-            filesToClose += [self.fOpenOcdOut, self.fGdbOut]
         for xFile in filesToClose:
             try:
                 xFile.close()
             except Exception as exc:
                 warnAndLog(f"targetTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
         return True
-
-    @decorate.debugWrap
-    @decorate.timeWrap
-    def runCommandGdb (self,command,endsWith=r"\(gdb\)",exitOnError=True,errorMessage=None,readCmdOut=False,timeout=5):
-        if (not errorMessage):
-            errorMessage = f"runCommandGdb: Failed to run <{command}>."
-
-        try:
-            self.gdbProcess.sendline(command)
-            self.gdbProcess.expect(endsWith,timeout=timeout)
-        except Exception as exc:
-            if (exitOnError):
-                self.shutdownAndExit(errorMessage,overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
-            else:
-                warnAndLog(errorMessage,doPrint=False,exc=exc)
-
-        if (readCmdOut):
-            try:
-                return str(self.gdbProcess.before,'utf-8')
-            except Exception as exc:
-                warnAndLog(f"runCommandGdb: Failed to read the cmdOut of <{command}>.",doPrint=False,exc=exc)
-                return ''
-
-    @decorate.debugWrap
-    @decorate.timeWrap
-    def getGdbOutput(self):
-        gdbOut = "\n~~~GDB LOGGING~~~\n"
-        try:
-            gdbLines = '\n'.join(ftReadLines(self.fGdbOut.name, "r"))
-            if (self.readGdbOutputUnix == 0): #We don't want the GDB out before the string "Continuing."
-                gdbOut += gdbLines[gdbLines.find("Continuing."):]
-            elif (self.readGdbOutputUnix < len(gdbLines)): #Only the new lines
-                gdbOut += gdbLines[self.readGdbOutputUnix:]
-            self.readGdbOutputUnix = len(gdbLines) #move the cursor
-        except Exception as exc:
-            gdbOut += "<Warning-No-Logs>"
-            warnAndLog("<getGdbOutput> failed to obtain the GDB output.",
-                        exc=exc)
-        gdbOut += "\n~~~~~~~~~~~~~~~~~\n"
-        return gdbOut
 
     @decorate.debugWrap
     @decorate.timeWrap
