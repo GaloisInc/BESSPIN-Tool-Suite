@@ -20,6 +20,8 @@ class Gfe(object):
 
         self.gdbPort = getSetting('gdbRemotePort')
 
+        self.readGdbOutputUnix = 0 #beginning of file
+
     @decorate.debugWrap
     @decorate.timeWrap
     def gfeStart (self, elfPath, elfLoadTimeout=15):
@@ -27,7 +29,8 @@ class Gfe(object):
         self.setupUart()
 
         # start the openocd process
-        openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils','openocd_vcu118.cfg')
+        cfgSuffix = getSetting('target') if (not isEqSetting('target','aws')) else getSetting('pvAWS')
+        openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
         self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'), 'ab')
 
         try:
