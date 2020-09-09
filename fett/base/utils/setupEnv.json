@@ -102,6 +102,20 @@
             "val" : "00:12:6D:00:00:02"
         },
         {
+            "name" : "qemuPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "qemuPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
             "name" : "HTTPPortTarget",
             "type" : "int",
             "min" : 80,
@@ -142,11 +156,6 @@
             "min" : 65536,
             "max" : 65536,
             "val" : 65536
-        },
-        {
-            "name" : "qemuIpTarget",
-            "type" : "ipAddress",
-            "val" : "127.0.0.1"
         },
         {
             "name" : "fettMatrix",
