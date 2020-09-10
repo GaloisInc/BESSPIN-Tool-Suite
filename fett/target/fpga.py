@@ -211,7 +211,7 @@ class fpgaTarget (Gfe, commonTarget):
 @decorate.debugWrap
 @decorate.timeWrap
 def programBitfile (doPrint=True):
-    printAndLog("Preparing the FPGA environment...",doPrint=False)
+    printAndLog("Preparing the FPGA environment...",doPrint=doPrint)
     clearProcesses()
     gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
     printAndLog("Clearing the flash...",doPrint=False)
@@ -245,7 +245,7 @@ def programBitfile (doPrint=True):
         clearProcesses()
         try:
             subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitAndProbefiles[0], '--probe-file', bitAndProbefiles[1]],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
-            printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})",doPrint=False)
+            printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})",doPrint=doPrint)
             break
         except Exception as exc:
             if (iAttempt < nAttempts-1):
@@ -254,7 +254,7 @@ def programBitfile (doPrint=True):
                 logAndExit(f"Failed to program the FPGA.",exc=exc,exitCode=EXIT.Run)
 
     gfeOut.close()
-    printAndLog("FPGA was programmed successfully!",doPrint=False)
+    printAndLog("FPGA was programmed successfully!",doPrint=doPrint)
 
 @decorate.debugWrap
 def selectBitAndProbeFiles ():
