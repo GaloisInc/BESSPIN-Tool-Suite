@@ -53,7 +53,8 @@ def buildCwesEvaluation():
 
         if (isEqSetting("target", "qemu") and
             "PPAC" in getSetting("vulClasses")):
-            warnAndLog(f"vulClass <PPAC> not supported on target "
+            warnAndLog("vulClass <PPAC> not supported for "
+                       f"<{getSetting('osImage')}> on "
                        f"<{getSetting('target')}>.  PPAC tests will be skipped.")
             getSetting("vulClasses").remove("PPAC")
 

@@ -97,17 +97,19 @@ class qemuTarget (commonTarget):
         elif (isEqSetting('osImage', 'FreeRTOS')):
             qemuCommand = "qemu-system-riscv32 -nographic -machine sifive_e -kernel " + getSetting('osImageElf')
             try:
-                self.process = pexpect.spawn(qemuCommand,timeout=timeout)
+                self.process = pexpect.spawn(qemuCommand,timeout=timeout,logfile=self.fTtyOut)
             except:
                 self.shutdownAndExit("Error in {0}: Failed to spawn the qemu process.".format(self.filename),overwriteShutdown=True)
             time.sleep(1)
             textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,shutdownOnError=False)
             if (idxReturn==1): #No "">>> End Of Testgen <<<", but qemu aborted without a timeout
                 self.fTtyOut.write (b"\n<QEMU ABORTED>\n")
+                self.fTtyOut.flush()
             else:
                 self.fTtyOut.write (b"\n") #because the last expect does not include an end of line
+                self.fTtyOut.flush()
             #Will terminate here as well because it is easier, and there is currently no other options -- might change
-            self.sendToTarget ("\x01 x")
+            self.sendToTarget ("\x01x")
         else:
             self.shutdownAndExit(f"boot: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
         return

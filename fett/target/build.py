@@ -53,12 +53,11 @@ def freeRTOSBuildChecks():
         logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}> is empty. Please use <git submodule update>.",exitCode=EXIT.Environment)
 
     if isEqSetting('target', 'qemu'):
-        # Switch FreeRTOS fork when target is qemu
-        freeRtosParentDir = os.path.split(getSetting('FreeRTOSprojName'))[0]
-        setSetting('FreeRTOSprojName',
-                   os.path.join(freeRtosParentDir,
-                                "RISC-V-Qemu-sifive_e-FreedomStudio_Galois"))
-    projDir = os.path.join(getSetting('FreeRTOSforkDir'),getSetting('FreeRTOSprojName'))
+        projDir = os.path.join(getSetting('FreeRTOSforkDir'),
+                               getSetting('FreeRTOSprojNameQemu'))
+    else:
+        projDir = os.path.join(getSetting('FreeRTOSforkDir'),
+                               getSetting('FreeRTOSprojNameNonQemu'))
     setSetting('FreeRTOSprojDir',projDir)
     if (not os.path.isdir(getSetting('FreeRTOSprojDir'))):
         logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
