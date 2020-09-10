@@ -93,6 +93,34 @@ class qemuTarget (commonTarget):
 @decorate.debugWrap
 @decorate.timeWrap
 def configTapAdaptor():
+    #Check the ipv4 forwarding
+    try:
+        ipForward = int(subprocess.getoutput('sysctl net.ipv4.ip_forward').split()[-1])
+    except Exception as exc:
+        logAndExit ("Failed to find the values of 'net.ipv4.ip_forward'.",exc=exc,exitCode=EXIT.Run)
+    if (ipForward != 1):
+        sudoShellCommand(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
+
+    #blindly find an adaptor connected to internet (hopefully -- maybe needs to be more sophisticated if needed)
+    gotMainAdaptorInfo = False
+    for xAdaptor in psutil.net_if_addrs():
+        if ((xAdaptor != 'lo') and (not xAdaptor.startswith('docker')) and (not xAdaptor.startswith('tap'))):
+            setSetting('mainAdaptorName',xAdaptor)
+            gotMainAdaptorInfo = True
+            break
+    if (not gotMainAdaptorInfo):
+        logAndExit(f"configTapAdaptor: Failed to blindly find an adaptor connected to internet.",exitCode=EXIT.Network)
+
+    #Check the postrouting nat rule
+    try:
+        natTables = subprocess.getoutput('sudo iptables -t nat -S').splitlines()
+        isNatRule = (f"-A POSTROUTING -o {getSetting('mainAdaptorName')} -j MASQUERADE" in natTables)
+    except Exception as exc:
+        logAndExit ("Failed to find out whether the main adaptor nat was set up.",exc=exc,exitCode=EXIT.Run)
+    if (not isNatRule):
+        sudoShellCommand(['iptables','-t', 'nat','-A','POSTROUTING',
+            '-o',getSetting('mainAdaptorName'),'-j','MASQUERADE'])
+
     #Choose a unique tapAdaptorName -- no need to search for leftovers, when the machine is reset, all of them get deleted
     tapAdaptor = f"tap{str(time.time()).replace('.','')[3:15]}" #Has to be less than 16 characters for Debian
     setSetting('tapAdaptor',tapAdaptor)
@@ -116,10 +144,16 @@ def configTapAdaptor():
     chosenIpItems[3] = '2'
     setSetting('qemuIpTarget','.'.join(chosenIpItems))
 
+    printAndLog(f"configTapAdaptor: The adaptor is <{tapAdaptor}>, and the target IP is <{getSetting('qemuIpTarget')}>.")
+
     commands = [
         ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()],
         ['ip', 'addr', 'add', f"{getSetting('qemuIpHost')}/24", 'dev', tapAdaptor],
-        ['ip','link','set', tapAdaptor, 'up']
+        ['ip','link','set', tapAdaptor, 'up'],
+        ['iptables', '-A', 'FORWARD', '-i', getSetting('mainAdaptorName'),'-o', tapAdaptor,
+                    '-m', 'state', '--state', 'RELATED,ESTABLISHED', '-j', 'ACCEPT'],
+        ['iptables', '-A', 'FORWARD', '-i', tapAdaptor,'-o', getSetting('mainAdaptorName'),
+                    '-j', 'ACCEPT']
     ]
     for command in commands:
         sudoShellCommand(command)
