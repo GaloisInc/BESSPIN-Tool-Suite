@@ -158,7 +158,7 @@ if __name__ == "__main__":
         "-a",
         "--ami",
         type=str,
-        help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'",
+        help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'. If left empty, defaults to the most recent tagged AMI in SSITH-FETT-Target.",
     )
     parser.add_argument(
         "-b",
@@ -187,7 +187,7 @@ if __name__ == "__main__":
         type=int,
         nargs="*",
         help="Specify a list of indices of target(s) to run - if entered, this program will run $RUNS worth of this set "
-        "of instance indices only.",
+        "of instance indices only. Enter separated by spaces.",
     )
     parser.add_argument(
         "-k",
