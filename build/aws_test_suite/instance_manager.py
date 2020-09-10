@@ -29,6 +29,7 @@ class InstanceManager:
 
         self._i = cap
 
+    @debug_wrap
     @log_assertion_fails
     def add_instance(self, instance):
         """append ec2 instance to instance manager"""
@@ -39,6 +40,7 @@ class InstanceManager:
         self._instances.append(instance)
         return self
 
+    @debug_wrap
     def log_results(self, i):
 
         results_file_path = os.path.join("/tmp", i.id)
@@ -53,6 +55,7 @@ class InstanceManager:
 
         log.results(f"FINISHED: {i.name} ({i.id}), exited with status {status}.")
 
+    @debug_wrap
     @log_assertion_fails
     def run_all_instances(self, config=None):
         """run all jobs at the same time
@@ -197,6 +200,7 @@ class Instance:
             f"Tags after name assignment in instance_manager.py is { self._tags } while name is { self._name }"
         )
 
+    @debug_wrap
     def start(self, **ec2_kwargs):
         """create boto3 ec2 instance"""
         log.debug(f"Start() called on instance { self._tags }")

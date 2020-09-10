@@ -54,3 +54,7 @@ AWS Testing CI uses the bucket described in [configs.py](configs.py) for both co
 ### Results
 
 Results will be printed to screen, and put into the file `results.txt`.
+
+### Logs 
+
+Logs will be writted to the file `aws-test-suite.log`, and contain very detailed information about the execution of `aws-testing-ci.py` 

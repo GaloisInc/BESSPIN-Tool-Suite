@@ -31,6 +31,7 @@ class UserdataCreator:
 
     @classmethod
     @log_assertion_fails
+    @debug_wrap
     def default(
         cls,
         credentials,
@@ -39,7 +40,7 @@ class UserdataCreator:
         branch=None,
         binaries_branch=None,
         key_path="~/.ssh/id_rsa",
-        runMode="fett"
+        runMode="fett",
     ):
         """
         Add userdata to start with FETT Target at specific branch and binaries branch
@@ -147,6 +148,7 @@ class UserdataCreator:
 
         return cls(userdata)
 
+    @debug_wrap
     def append(self, ul=""):
         """
         Convenience to append to self._userdata
@@ -160,6 +162,7 @@ class UserdataCreator:
         else:
             self._userdata.append(ul)
 
+    @debug_wrap
     @log_assertion_fails
     def append_file(self, dest, path):
         """
@@ -178,6 +181,7 @@ class UserdataCreator:
             self.append([line.strip() for line in f.readlines()])
         self.append("EOL")
 
+    @debug_wrap
     def to_file(self, fname):
         """
         Write userdata to a userdata file
@@ -191,6 +195,7 @@ class UserdataCreator:
         log.info(f"UserdataCreator: Wrote userdata to '{fname}'")
 
     @staticmethod
+    @debug_wrap
     def indicator_filepath():
         return "/home/centos/fett_userdata_complete"
 

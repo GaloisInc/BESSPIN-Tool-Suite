@@ -15,6 +15,7 @@ from .logger import *
 # +-----------------+
 
 
+@debug_wrap
 def safe_traverse(in_dictionary, hierarchy):
     while hierarchy:
         item = hierarchy.pop(0)
@@ -30,6 +31,7 @@ def safe_traverse(in_dictionary, hierarchy):
 # +-----------------------------+
 # |  AWS Instance Manipulation  |
 # +-----------------------------+
+@debug_wrap
 @log_assertion_fails
 def get_ami_id_from_name(ami_name):
     """
@@ -55,6 +57,7 @@ def get_ami_id_from_name(ami_name):
     return safe_traverse(images[0], ["ImageId"])
 
 
+@debug_wrap
 def terminate_instance(instance_id, dry_run=True, wait_for_termination=False):
     """
     Terminate an instance by its instance id
@@ -92,6 +95,7 @@ def terminate_instance(instance_id, dry_run=True, wait_for_termination=False):
         log.info(f"Instance { instance_id } Terminated.")
 
 
+@debug_wrap
 def launch_instance(
     image_id,
     vpc_name="aws-controltower-VPC",
@@ -198,6 +202,7 @@ def launch_instance(
     return instance[0].id
 
 
+@debug_wrap
 def poll_s3(config, instance_ids):
     """
     Poll AWS S3 for a file whose name is the instance id of any instance we are running.
@@ -207,8 +212,6 @@ def poll_s3(config, instance_ids):
     :return: instance id or None
     :rtype: str
     """
-
-    log.debug(f"Beginning poll_s3()")
 
     if config is not None:
         moduleSpec = importlib.util.spec_from_file_location("configs", config)

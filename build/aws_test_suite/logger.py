@@ -4,7 +4,8 @@ from datetime import datetime
 
 
 def log_assertion_fails(func):
-    """decorator to log assertion errors and other errors
+    """
+    decorator to log assertion errors and other errors
     catch an assertion exception from a function, log it, and the raise it
     """
 
@@ -18,6 +19,26 @@ def log_assertion_fails(func):
         except Exception as exc:
             log.error(f"{func.__name__} failed with non-assertion <{exc}>")
             raise exc
+        return ret
+
+    return wrappedFn
+
+
+def debug_wrap(func):
+    """
+    decorator to write to log when functions are entered and exited
+    """
+
+    @functools.wraps(func)
+    def wrappedFn(*args, **kwargs):
+        try:
+            caller = sys._getframe(1).f_code.co_name
+        except:
+            caller = "unknown-caller"
+        log.debug(f"Entering <{func.__name__}>. [called from <{caller}>]")
+        # logging.debug(f">>>> args={args}, kwargs={kwargs}") #super-duper debug
+        ret = func(*args, **kwargs)
+        log.debug(f"Exitting <{func.__name__}>.")
         return ret
 
     return wrappedFn
