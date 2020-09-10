@@ -22,29 +22,7 @@ class AWSCredentials:
         :rtype: AWSCredentials
         """
 
-        self._check_credentials(credentials)
-        self._credentials = credentials
-        log.info("AWSCredentials: successfully obtained credentials")
-
-    @classmethod
-    @log_assertion_fails
-    def from_env_vars(cls):
-        """
-        Get AWS credentials from environment variables
-        
-        :raises AssertionError: Credentials not found in environment variables
-
-        :return: A new AWSCredentials instance
-        :rtype: AWSCredentials
-        """
-
-        variables = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"]
-        assert cls.has_env_vars(), (
-            "AWSCredentials: Could not find your environment variables with AWS access keys.",
-            "Please copy and paste option 1 from 'Command Line or Programatic Access' ",
-            "in the AWS account dashboard into this terminal and try again.",
-        )
-        return cls([os.environ[v] for v in variables])
+        log.debug("AWSCredentials Instantiated.")
 
     @classmethod
     @log_assertion_fails
@@ -61,11 +39,7 @@ class AWSCredentials:
         :rtype: AWSCredentials
         """
 
-        assert cls.has_credential_file(filepath), (
-            "Credentials file doesn't exist: use 'aws configure', set "
-            "your credentials in ~/.aws/credentials, or create a "
-            "credentials file somewhere else "
-        )
+        assert cls.has_credential_file(filepath), "Credentials file doesn't exist"
 
         keys = {"id": "", "secret": "", "session": ""}
         with open(filepath, "r") as f:
@@ -126,27 +100,6 @@ class AWSCredentials:
         """
 
         return os.path.exists(filename)
-
-    @staticmethod
-    @log_assertion_fails
-    def _check_credentials(cred):
-        """
-        Ensure that the credentials are valid. 
-
-        :param cred: List of credentials
-        :type cred: list
-
-        :raises AssertionError (1): Must have 3 credentials in the list
-        :raises AssertionError (2): All must be strings
-        """
-
-        # credentials must be an array of length 3
-        assert len(cred) == 3, f"Credentials '{cred}' must be of length 3"
-        # credentials must assume the string type
-        for c in cred:
-            assert isinstance(
-                c, str
-            ), f"Element of credentials '{c}' must be a string instance"
 
     @log_assertion_fails
     def __getitem__(self, index):
@@ -226,8 +179,10 @@ class AWSConfig:
 
     @staticmethod
     def has_config_file():
-        """that AWS directory and config is present on the filesystem"""
-        return os.path.exists(AWSConfig.aws_dir) and os.path.exists(AWSConfig.aws_config_filepath)
+        """Checks that AWS directory and config is present on the filesystem"""
+        return os.path.exists(AWSConfig.aws_dir) and os.path.exists(
+            AWSConfig.aws_config_filepath
+        )
 
     @staticmethod
     def check_write_aws_config(region="us-west-2", output="json"):
@@ -237,8 +192,13 @@ class AWSConfig:
             os.mkdir(AWSConfig.aws_dir)
 
         # if file exists and has contents, warn user
-        if os.path.exists(AWSConfig.aws_config_filepath) and os.path.getsize(AWSConfig.aws_config_filepath) > 0:
-            log.warning(f"AWSConfig writing over non-empty file {AWSConfig.aws_config_filepath}")
+        if (
+            os.path.exists(AWSConfig.aws_config_filepath)
+            and os.path.getsize(AWSConfig.aws_config_filepath) > 0
+        ):
+            log.warning(
+                f"AWSConfig writing over non-empty file {AWSConfig.aws_config_filepath}"
+            )
 
         # write region and output to file
         with open(AWSConfig.aws_config_filepath, "w") as f:
