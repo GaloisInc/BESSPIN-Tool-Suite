@@ -649,7 +649,8 @@ class commonTarget():
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
         def returnFalse (message='',noRetries=False,exc=None,fileToClose=None):
-            self.keyboardInterrupt ()
+            if not (getSetting('osImage') in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)):
+                self.keyboardInterrupt ()
             if (exc):
                 logging.error(traceback.format_exc())
             if ((not noRetries) and (self.resendAttempts < self.limitResendAttempts-1)):
@@ -1176,7 +1177,7 @@ class commonTarget():
             if specialTest:
                 return 'BLOCKED_IP'
             else:
-                return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
+                return returnFail(f"openSshConn: Unexpected response when spawning the ssh process.")
         retPassword = self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,
                         shutdownOnError=False,issueInterrupt=False)
         if (not retPassword[0]):
