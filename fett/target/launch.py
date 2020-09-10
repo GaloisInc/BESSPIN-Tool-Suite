@@ -188,7 +188,7 @@ def endFett (xTarget,isDeadProcess=False):
             collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
     if not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
-                or (not isDeadProcess)):
+            or (isDeadProcess)):
         xTarget.shutdown()
     
     if (isEqSetting('mode','production')):
