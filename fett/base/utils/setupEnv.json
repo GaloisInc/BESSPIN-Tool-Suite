@@ -242,9 +242,14 @@
             "val" : "FreeRTOS-10.0.1"
         },
         {
-            "name" : "FreeRTOSprojName",
+            "name" : "FreeRTOSprojNameNonQemu",
             "type" : "string",
             "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
+        },
+        {
+            "name" : "FreeRTOSprojNameQemu",
+            "type" : "string",
+            "val" : "FreeRTOS/Demo/RISC-V-Qemu-sifive_e-FreedomStudio_Galois"
         },
         {
             "name" : "binaryRepoDir",
