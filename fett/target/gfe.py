@@ -124,8 +124,7 @@ class Gfe(object):
 
         # Perform the write command using the gdb set command
         self.runCommandGdb(
-            "set *(({} *) 0x{:x}) = 0x{:x}".format(
-                size_options[size], address, value), erroneousContents="Cannot access memory")
+            f"set *(({size_options[size]} *) 0x{address:x}) = 0x{value:x}", erroneousContents="Cannot access memory")
 
     @decorate.debugWrap
     @decorate.timeWrap
