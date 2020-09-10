@@ -9,7 +9,7 @@ class Gfe(object):
     def __init__(self):
         self.gdbProcess = None 
         self.openocdProcess = None
-        self.uart_session = None
+        self.uartSession = None
 
         self.fGdbOut = None
         self.fOpenocdOut = None
@@ -67,7 +67,7 @@ class Gfe(object):
 
             # start the tty process
             self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
-            self.ttyProcess = fdpexpect.fdspawn(self.uart_session.fileno(),logfile=self.fTtyOut,timeout=30)
+            self.ttyProcess = fdpexpect.fdspawn(self.uartSession.fileno(),logfile=self.fTtyOut,timeout=30)
             self.process = self.ttyProcess
 
             # gdbContinue
@@ -207,7 +207,7 @@ class Gfe(object):
 
         # configure the serial connections
         try:
-            self.uart_session = serial.Serial(
+            self.uartSession = serial.Serial(
                 port=port,
                 baudrate=baud,
                 parity=parity,
@@ -216,8 +216,8 @@ class Gfe(object):
                 bytesize=bytesize
             )
 
-            if not self.uart_session.is_open:
-                self.uart_session.open()
+            if not self.uartSession.is_open:
+                self.uartSession.open()
         except Exception as exc:
             logAndExit(f"setupUart: unable to open serial session", exc=exc, exitCode=EXIT.Run)
 
@@ -292,9 +292,9 @@ class Gfe(object):
                     regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
                     testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
 
-        if (isEqSetting('target','fpga') and self.uart_session.is_open):
+        if (isEqSetting('target','fpga') and self.uartSession.is_open):
             try:
-                self.uart_session.close()
+                self.uartSession.close()
             except Exception as exc:
                 warnAndLog(f"gfeTearDown: unable to close the serial session", exc=exc,doPrint=False)
 
