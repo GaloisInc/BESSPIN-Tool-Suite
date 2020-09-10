@@ -60,6 +60,7 @@ class qemuTarget (commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def boot (self,endsWith="login:",timeout=90): #no need to use targetObj as we'll never boot in non-reboot mode
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
             self.assignNtkPorts()
             ports = [("target", self.portTarget),
@@ -87,13 +88,27 @@ class qemuTarget (commonTarget):
             qemuCommand += f" -device virtio-net-device,netdev=usernet"
             qemuCommand += f" -netdev user,id=usernet,{hostFwdString}"
 
-            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
             try:
                 self.ttyProcess = pexpect.spawn(qemuCommand,logfile=self.fTtyOut,timeout=timeout)
                 self.process = self.ttyProcess
                 self.expectFromTarget(endsWith,"Booting",timeout=timeout)
             except Exception as exc:
                 self.shutdownAndExit(f"boot: Failed to spwan the qemy process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+        elif (isEqSetting('osImage', 'FreeRTOS')):
+            qemuCommand = "qemu-system-riscv32 -nographic -machine sifive_e -kernel " + getSetting('osImageElf')
+            try:
+                self.process = pexpect.spawn(qemuCommand,timeout=timeout,logfile=self.fTtyOut)
+            except:
+                self.shutdownAndExit("Error in {0}: Failed to spawn the qemu process.".format(self.filename),overwriteShutdown=True)
+            time.sleep(1)
+            textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,shutdownOnError=False)
+            if (idxReturn==1): #No "">>> End Of Testgen <<<", but qemu aborted without a timeout
+                self.fTtyOut.write (b"\n<QEMU ABORTED>\n")
+            else:
+                self.fTtyOut.write (b"\n") #because the last expect does not include an end of line
+            self.fTtyOut.flush()
+            #Will terminate here as well because it is easier, and there is currently no other options -- might change
+            self.sendToTarget ("\x01x")
         else:
             self.shutdownAndExit(f"boot: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
         return

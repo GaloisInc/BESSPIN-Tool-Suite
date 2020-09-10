@@ -55,7 +55,7 @@ def runFreeRTOSCwesEvaluation():
                 elif (isEqSetting('target','fpga')):
                     fpga.programBitfile(doPrint=False)
                     fpga.resetEthAdaptor()
-                else:
+                elif not isEqSetting('target', 'qemu'):
                     logAndExit("<runFreeRTOSCwesEvaluation> is not "
                                f"implemented for <{getSetting('target')}>",
                                exitCode=EXIT.Implementation)
@@ -70,9 +70,10 @@ def runFreeRTOSCwesEvaluation():
                     logFile.write(gdbLines[gdbLines.find("Continuing."):]) # only the useful output
                     logFile.write("\n~~~~~~~~~~~~~~~~~\n")
 
-                logging.debug(f"\n~~~GDB LOGGING -- {testName}~~~\n")
-                logging.debug('\n'.join(ftReadLines(target.fGdbOut.name))) # The whole thing for debug
-                logging.debug("\n~~~~~~~~~~~~~~~~~")
+                if not isEqSetting('target', 'qemu'):
+                    logging.debug(f"\n~~~GDB LOGGING -- {testName}~~~\n")
+                    logging.debug('\n'.join(ftReadLines(target.fGdbOut.name))) # The whole thing for debug
+                    logging.debug("\n~~~~~~~~~~~~~~~~~")
 
             logFile.close()
         # Score the tests
