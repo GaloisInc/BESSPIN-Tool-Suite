@@ -725,8 +725,9 @@ class commonTarget():
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=15)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
-            if not self.hasHardwareRNG():
-                self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
+
+            self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
+
             try:
                 retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=30)
             except Exception as exc:
@@ -1152,7 +1153,7 @@ class commonTarget():
         except Exception as exc:
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
 
-        if (not self.onlySsh and not self.hasHardwareRNG()):
+        if (not self.onlySsh):
             self.genStdinEntropy(endsWith=self.getAllEndsWith())
 
         self.isSshConn = True
@@ -1231,10 +1232,11 @@ class commonTarget():
 
     @decorate.debugWrap
     def genStdinEntropy (self,endsWith=None):
-        lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
-        alphabet = string.ascii_letters + string.digits + ' '
-        randText = ''.join(random.choice(alphabet) for i in range(lenText))
-        self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=60,shutdownOnError=False)
+        if not self.hasHardwareRNG():
+            lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
+            alphabet = string.ascii_letters + string.digits + ' '
+            randText = ''.join(random.choice(alphabet) for i in range(lenText))
+            self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=60,shutdownOnError=False)
 
     def hasHardwareRNG (self):
         return isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])
