@@ -472,11 +472,13 @@ def curlRequest(url, extra=[], http2=False, method="GET", rawOutput=False, timeo
     ] + extra
     if not rawOutput:
         options.append("-I")
+    logging.debug(f"curlRequest: command: <curl {' '.join(options)} {url}>")
     try:
         p = subprocess.run (['curl'] + options + [url], capture_output=True, check=True)
         out = p.stdout.decode('utf-8')
+        logging.debug(f"curlRequest: output: <<<{out}>>>.")
     except Exception as exc:
-        errorAndLog (f"Failed to run <curl {' '.join(options)} {url}>\n", exc=exc, doPrint=False)
+        errorAndLog (f"Failed to run <curl {' '.join(options)} {url}>.", exc=exc, doPrint=False)
         out = None
     return out
 
