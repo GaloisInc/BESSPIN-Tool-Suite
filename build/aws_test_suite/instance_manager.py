@@ -132,7 +132,7 @@ class InstanceManager:
                     finished = num_instances_total - (to_run + running)
                     percent_complete = int((finished / num_instances_total) * 100)
                     log.status(
-                        f"Run Progress: [ { to_run } / { running } / { finished } ] = { percent_complete }% Somplete ( To Run / Running / Finished )"
+                        f"Run Progress: [ { to_run } / { running } / { finished } ] = { percent_complete }% Complete ( To Run / Running / Finished )"
                     )
 
             time.sleep(2)
