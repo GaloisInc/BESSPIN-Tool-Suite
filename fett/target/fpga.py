@@ -32,12 +32,11 @@ class fpgaTarget (Gfe, commonTarget):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def boot(self,endsWith="login:",timeout=90):
-
+    def boot(self,endsWith="login:",timeoutDict={"elfLoad":90, "boot":90}):
+        timeout = self.parseBootTimeoutDict(timeoutDict)
         if (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
             if (isEqSetting('elfLoader','JTAG')):
-                elfLoadTimeout = int(timeout*2.5/3.5)+10
-                timeout = int(timeout*1/3.5)+10 #emperical distribution of timeout
+                elfLoadTimeout = self.parseBootTimeoutDict(timeoutDict,key="elfLoad")
                 self.gfeStart(getSetting('osImageElf'),elfLoadTimeout=elfLoadTimeout)
             elif (isEqSetting('elfLoader','netboot')):
                 self.gfeStart(getSetting('netbootElf'),elfLoadTimeout=30)
@@ -90,7 +89,7 @@ class fpgaTarget (Gfe, commonTarget):
                     self.shutdownAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
         elif (isEqSetting('osImage','FreeRTOS')):
-            self.gfeStart(getSetting('osImageElf'),elfLoadTimeout=timeout) 
+            self.gfeStart(getSetting('osImageElf'),elfLoadTimeout=30) 
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout)
         else:

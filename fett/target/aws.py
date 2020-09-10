@@ -26,11 +26,12 @@ class firesimTarget(Gfe, commonTarget):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def boot(self,endsWith="login:",timeout=90):
+    def boot(self,endsWith="login:",timeoutDict={"boot":90}):
         if (getSetting('osImage') not in ['debian','FreeRTOS']):
             logAndExit (f"<firesimTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
         awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
+        timeout = self.parseBootTimeoutDict (timeoutDict)
 
         # 0. Ensure the env is clear
         self.noNonsenseFiresim()
@@ -240,11 +241,12 @@ class connectalTarget(commonTarget):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def boot(self,endsWith="login:",timeout=90):
+    def boot(self,endsWith="login:",timeoutDict={"boot":90}):
         if getSetting('osImage') not in ['debian', 'FreeBSD']:
             logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
         awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'sim')
+        timeout = self.parseBootTimeoutDict (timeoutDict)
 
         extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
         tapName = getSetting('awsTapAdaptorName')

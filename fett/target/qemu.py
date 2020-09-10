@@ -59,8 +59,9 @@ class qemuTarget (commonTarget):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def boot (self,endsWith="login:",timeout=90): #no need to use targetObj as we'll never boot in non-reboot mode
+    def boot (self,endsWith="login:",timeoutDict={"boot":90}): #no need to use targetObj as we'll never boot in non-reboot mode
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
+        timeout = self.parseBootTimeoutDict (timeoutDict)
         if (getSetting('osImage') in ['debian', 'FreeBSD']):
             self.assignNtkPorts()
             ports = [("target", self.portTarget),
