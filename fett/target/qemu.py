@@ -94,7 +94,7 @@ class qemuTarget (commonTarget):
 @decorate.timeWrap
 def configTapAdaptor():
     #Choose a unique tapAdaptorName -- no need to search for leftovers, when the machine is reset, all of them get deleted
-    tapAdaptor = f"tapFett_{str(time.time()).replace('.','')}"
+    tapAdaptor = f"tap{str(time.time()).replace('.','')[3:15]}" #Has to be less than 16 characters for Debian
     setSetting('tapAdaptor',tapAdaptor)
 
     #Find a non-used IP in the range "172.16"
