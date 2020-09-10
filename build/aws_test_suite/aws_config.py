@@ -227,7 +227,9 @@ class AWSConfig:
     @staticmethod
     def has_config_file():
         """that AWS directory and config is present on the filesystem"""
-        return os.path.exists(AWSConfig.aws_dir) and os.path.exists(AWSConfig.aws_config_filepath)
+        return os.path.exists(AWSConfig.aws_dir) and os.path.exists(
+            AWSConfig.aws_config_filepath
+        )
 
     @staticmethod
     def check_write_aws_config(region="us-west-2", output="json"):
@@ -237,8 +239,13 @@ class AWSConfig:
             os.mkdir(AWSConfig.aws_dir)
 
         # if file exists and has contents, warn user
-        if os.path.exists(AWSConfig.aws_config_filepath) and os.path.getsize(AWSConfig.aws_config_filepath) > 0:
-            log.warning(f"AWSConfig writing over non-empty file {AWSConfig.aws_config_filepath}")
+        if (
+            os.path.exists(AWSConfig.aws_config_filepath)
+            and os.path.getsize(AWSConfig.aws_config_filepath) > 0
+        ):
+            log.warning(
+                f"AWSConfig writing over non-empty file {AWSConfig.aws_config_filepath}"
+            )
 
         # write region and output to file
         with open(AWSConfig.aws_config_filepath, "w") as f:
