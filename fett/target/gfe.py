@@ -141,7 +141,7 @@ class Gfe(object):
                                 endsWith=endsWith,
                                 sendToNonUnix=True,
                                 timeout=timeout,
-                                process=self.gdbProcess, **kwargs)[1]
+                                process=self.gdbProcess, **kwargs)
 
     @decorate.debugWrap
     def getGdbEndsWith (self):
