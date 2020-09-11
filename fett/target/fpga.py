@@ -5,7 +5,7 @@ import serial.tools.list_ports
 
 from fett.base.utils.misc import *
 
-class Gfe(object):
+class fpgaTarget(object):
     def __init__(self):
         self.gdbProcess = None 
         self.openocdProcess = None
@@ -20,13 +20,13 @@ class Gfe(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def gfeStart (self, elfPath, elfLoadTimeout=15):
-        if (isEqSetting('target','fpga')):
+    def fpgaStart (self, elfPath, elfLoadTimeout=15):
+        if (isEqSetting('target','vcu118')):
             # setup UART
             self.setupUart()
 
         # start the openocd process
-        cfgSuffix = getSetting('target') if (not isEqSetting('target','aws')) else getSetting('pvAWS')
+        cfgSuffix = getSetting('target') if (not isEqSetting('target','awsf1')) else getSetting('pvAWS')
         openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
         self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'), 'ab')
 
@@ -36,7 +36,7 @@ class Gfe(object):
                     logfile=self.fOpenocdOut, timeout=15, echo=False)
             self.openocdProcess.expect("telnet server disabled", timeout=15)
         except Exception as exc:
-            self.shutdownAndExit(f"gfeStart: Failed to spawn the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"fpgaStart: Failed to spawn the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # start the gdb process
         self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb.out'), 'wb')
@@ -46,7 +46,7 @@ class Gfe(object):
                     logfile=self.fGdbOut, timeout=15, echo=False)
             self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
         except Exception as exc:
-            self.shutdownAndExit(f"gfeStart: Failed to spawn the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"fpgaStart: Failed to spawn the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # configure gdb
         self.runCommandGdb("set confirm off")
@@ -59,9 +59,9 @@ class Gfe(object):
 
         self.gdbConnect()
 
-        if (isEqSetting('target','aws') and isEqSetting('pvAWS','firesim')):
+        if (isEqSetting('target','awsf1') and isEqSetting('pvAWS','firesim')):
             self.runCommandGdb ('set $pc=0xC0000000')
-        elif (isEqSetting('target','fpga')):
+        elif (isEqSetting('target','vcu118')):
             # reset the board
             self.softReset()
 
@@ -93,7 +93,7 @@ class Gfe(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def softReset (self, isRepeated=False):
-        if (not isEqSetting('target','fpga')):
+        if (not isEqSetting('target','vcu118')):
             self.shutdownAndExit(f"<softReset> is not implemented for target {getSetting('target')}.")
         # reset hart
         self.riscvWrite(int("0x6FFF0000", base=16),1,32) # set *(0x6fff0000)=1
@@ -162,7 +162,7 @@ class Gfe(object):
             m = re.search('LOCATION=.*:1.(\d)', port.hwid)
             if m:
                 if m.group(1) == '1':
-                    printAndLog(f"fpgaTarget: located UART device ats {port.device} "
+                    printAndLog(f"fpgaTarget: located UART device at {port.device} "
                                 f"with serial number {port.serial_number}", doPrint=False)
                     extraMsg = "In case there is no output shown from the target's UART, "
                     extraMsg += "please make sure the tty is not used by any other tool (e.g. minicom), "
@@ -261,7 +261,7 @@ class Gfe(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def gfeTearDown (self):
+    def fpgaTearDown (self):
         if (isEqSetting('mode','evaluateSecurityTests')):
             self.interruptGdb ()
             
@@ -291,11 +291,11 @@ class Gfe(object):
                     regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
                     testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
 
-        if (isEqSetting('target','fpga') and self.uartSession.is_open):
+        if (isEqSetting('target','vcu118') and self.uartSession.is_open):
             try:
                 self.uartSession.close()
             except Exception as exc:
-                warnAndLog(f"gfeTearDown: unable to close the serial session", exc=exc,doPrint=False)
+                warnAndLog(f"fpgaTearDown: unable to close the serial session", exc=exc,doPrint=False)
 
         self.interruptGdb()
         self.runCommandGdb("detach")
@@ -303,12 +303,12 @@ class Gfe(object):
         try:
             self.openocdProcess.terminate() 
         except Exception as exc:
-            warnAndLog("gfeTearDown: Failed to kill the openocd process.",doPrint=False,exc=exc)
+            warnAndLog("fpgaTearDown: Failed to kill the openocd process.",doPrint=False,exc=exc)
 
         self.runCommandGdb("quit",endsWith=pexpect.EOF)
 
         filesToClose = [self.fGdbOut, self.fOpenocdOut]
-        if (isEqSetting('target','fpga')):
+        if (isEqSetting('target','vcu118')):
             processes = ['riscv64-unknown-elf-gdb', 'openocd']
             for proc in processes:
                 sudoShellCommand(['pkill', '-9', f"{proc}"],check=False)
@@ -320,4 +320,4 @@ class Gfe(object):
             try:
                 xFile.close()
             except Exception as exc:
-                warnAndLog(f"gfeTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
+                warnAndLog(f"fpgaTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
