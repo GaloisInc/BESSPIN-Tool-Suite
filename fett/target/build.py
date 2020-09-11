@@ -79,8 +79,8 @@ def freeRTOSBuildChecks():
         setSetting('linker','LLD')
 
     # C++ SD Arduino library causing issues with Clang
-    if (isEqSetting('cross-compiler','Clang') and (isEqSetting('target','fpga'))):
-        logAndExit(f"Building FreeRTOS using Clang/LLD is not yet implemented for target <fpga>.",exitCode=EXIT.Implementation)
+    if (isEqSetting('cross-compiler','Clang') and (isEqSetting('target','vcu118'))):
+        logAndExit(f"Building FreeRTOS using Clang/LLD is not yet implemented for target <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -287,11 +287,7 @@ def selectImagePaths():
     if isEnabled('useCustomOsImage'):
         return [getSetting('pathToCustomOsImage')]
     else:
-        # inconsistency
-        if isEqSetting('binarySource', 'SRI-Cambridge'):
-            imageType = getSetting('target') if getSetting('target') != 'aws' else 'aws'
-        else:
-            imageType = getSetting('target') if getSetting('target') != 'aws' else getSetting('pvAWS')
+        imageType = getSetting('target') if getSetting('target') != 'awsf1' else getSetting('pvAWS')
         if getSetting('binarySource') == 'GFE':
             nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
             if (nixImage in os.environ):
@@ -315,7 +311,7 @@ def importImage():
     imagePaths = selectImagePaths()
     for ip in imagePaths:
         cp (ip, getSetting('osImagesDir'))
-    if not (isEqSetting('target', 'aws')):
+    if not (isEqSetting('target', 'awsf1')):
         if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
             netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
             setSetting('netbootElf',netbootElf)
@@ -325,7 +321,7 @@ def importImage():
             else:
                 logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
     else:
-        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is aws", doPrint=False)
+        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is <{getSetting('target')}>", doPrint=False)
     logging.info(f"{getSetting('osImage')} image imported successfully.")
 
 @decorate.debugWrap
