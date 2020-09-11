@@ -156,6 +156,9 @@
                     "chisel_p1" : {
                         "FreeRTOS" : "firesim"
                     },
+                    "bluespec_p1" : {
+                        "FreeRTOS" : "notOnAWS"
+                    },
                     "chisel_p2" : {
                         "debian" : "firesim",
                         "FreeBSD" : "notOnAWS",
