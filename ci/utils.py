@@ -336,3 +336,4 @@ def getFettTargetAMI (repoDir):
 
     except Exception as exc:
         exitFettCi(message=f"Failed to get the AMI from the tags.", exc=exc)
+        
