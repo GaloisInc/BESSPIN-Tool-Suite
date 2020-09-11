@@ -23,7 +23,7 @@ def get_ami_from_ci_json():
         with open("/tmp/awsCiInfo.json", "r") as f:
             aws_ci_info = json.load(f)
         return aws_ci_info["fettTargetAMI"]
-    except:
+    except Exception as exc:
         log.error("Failed to get Fett AMI from /tmp/awsCiInfo.json.", exc=exc)
 
 
@@ -83,8 +83,8 @@ def main(args):
     #   not input the .pem extension
     pem_key_name = args.pem_key_name
 
-    if len(pem_key_name) > 4 and pem_key_name[-4:] == ".pem":
-        pem_key_name = pem_key_name[:-4]
+    if pem_key_name.endswith(".pem"):
+        pem_key_name = pem_key_name.split(".pem")[0]
 
     # Start an instance manager
     i = InstanceManager(args.cap)
@@ -193,8 +193,8 @@ if __name__ == "__main__":
         "-k",
         "--key-path",
         type=str,
-        help='Path to the SSH key to be used with -b || -bb flags. Default: ["~/.ssh/aws-ci-gh"]',
-        default="~/.ssh/aws-ci-gh",
+        help='Path to the SSH key to be used with -b || -bb flags. Default: ["~/.ssh/id_rsa"]',
+        default="~/.ssh/id_rsa",
     )
     parser.add_argument(
         "-p",
