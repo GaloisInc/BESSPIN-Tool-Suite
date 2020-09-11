@@ -160,10 +160,10 @@ class commonTarget():
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
             timeout = 60
-        elif (getSetting('osImage') in ['debian','busybox']):
-            timeout = 45
         elif (isEqSetting('target', 'fpga')):
             timeout = 90
+        elif (getSetting('osImage') in ['debian','busybox']):
+            timeout = 45
         elif (isEqSetting('osImage','FreeBSD') and isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')):
             timeout = 150
         else:
