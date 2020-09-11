@@ -47,9 +47,7 @@ gfe_unixOnPremDefaults = unixDefaults.union({
     ('elfLoader',('netboot',)),
     ('sourceVariant',('default',)),
     ('netbootPortRangeStart',(5000,)),
-    ('netbootPortRangeEnd',(6000,)),
-    ('qemuNtkPortRangeStart',(5000,)),
-    ('qemuNtkPortRangeEnd',(6000,))
+    ('netbootPortRangeEnd',(6000,))
 })
 
 gfe_unixAwsDefaults = unixDefaults.union({
@@ -119,7 +117,7 @@ gfe_freertosAllTargets_onprem = freertosDefaults.union({
     ('binarySource',('GFE',)),
     ('processor',('chisel_p1',)),
     ('target',('vcu118',)),
-    ('cross-compiler',('GCC',)),
+    ('cross-compiler',('GCC','Clang',)),
     ('linker',('GCC',)),
     ('buildApps',('yes',))
 })
