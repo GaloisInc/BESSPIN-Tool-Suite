@@ -140,8 +140,10 @@ def prepareEnv ():
         prepareOsImage ()
 
     if (isEqSetting('target','fpga')):
-        fpga.programBitfile()
-        fpga.resetEthAdaptor()
+        if not (isEqSetting('mode', 'evaluateSecurityTests') and
+                    isEqSetting('osImage', 'FreeRTOS')):
+            fpga.programBitfile()
+            fpga.resetEthAdaptor()
     elif (isEqSetting('target','aws')):
         if (isEqSetting('pvAWS','firesim')):
             aws.prepareFiresim()
@@ -171,7 +173,7 @@ def launchFett ():
     try:
         xTarget = getClassType()()
     except Exception as exc:
-        logAndExit (f"launchFett: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
+        logAndExit (f"launchFett: Failed to instantiate the target class.",exc=exc,exitCode=EXIT.Dev_Bug)
     if (isEqSetting('mode', 'evaluateSecurityTests') and
         isEqSetting('osImage', 'FreeRTOS')):
         # Build the image for the upcoming test

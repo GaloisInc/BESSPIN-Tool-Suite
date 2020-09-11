@@ -160,10 +160,10 @@ class commonTarget():
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
             timeout = 60
-        elif (getSetting('osImage') in ['debian','busybox']):
-            timeout = 45
         elif (isEqSetting('target', 'fpga')):
             timeout = 90
+        elif (getSetting('osImage') in ['debian','busybox']):
+            timeout = 45
         elif (isEqSetting('osImage','FreeBSD') and isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')):
             timeout = 150
         else:
@@ -190,6 +190,13 @@ class commonTarget():
                             isEqSetting('osImage', 'FreeRTOS')) 
                     )
         return
+
+    @decorate.debugWrap
+    def parseBootTimeoutDict (self,bootTimeoutDict,key="boot"):
+        try:
+            return bootTimeoutDict[key]
+        except Exception as exc:
+            logAndExit (f"Failed to extract the timeout value for <{key}> from the timeout dict.",exc=exc,exitCode=EXIT.Dev_Bug)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -243,25 +250,26 @@ class commonTarget():
             return traverse_data(target)
 
         if (getSetting('osImage') in ['FreeRTOS']):
-            pass #no timeout shenanigans
+            timeoutDict = { "boot" : 30 }
         elif getSetting('osImage') in ['debian', 'busybox', 'FreeBSD']:
-            success, timeout, message = get_timeout_from_settings_dict()
+            success, timeoutDict, message = get_timeout_from_settings_dict()
 
             if not success:
                 self.shutdownAndExit(**message)
 
             if (self.restartMode):
-                timeout += 120 #takes longer to restart
+                for timeout in timeoutDict.keys():
+                    timeoutDict[timeout] += 120 #takes longer to restart
 
             printAndLog(
                 f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
         else:
             self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
                                  overwriteShutdown=True, exitCode=EXIT.Implementation)
-
+        sumTimeout = sum(timeoutDict.values())
         if (isEqSetting('osImage','debian')):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
-            self.boot(endsWith="login:",timeout=timeout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            self.boot(endsWith="login:",timeoutDict=timeoutDict)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             #logging in
@@ -270,8 +278,8 @@ class commonTarget():
             loginTimeout = 120 if (self.restartMode) else 60
             self.runCommand (self.rootPassword,timeout=loginTimeout)
         elif (isEqSetting('osImage','busybox')):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
-            self.boot(endsWith="Please press Enter to activate this console.",timeout=timeout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            self.boot(endsWith="Please press Enter to activate this console.",timeoutDict=timeoutDict)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             self.runCommand (" ",endsWith="/ #",timeout=10) #This is necessary
@@ -282,11 +290,11 @@ class commonTarget():
                 startMsg = 'INFO: Open database successfully'
             else:
                 startMsg = '>>>Beginning of Fett<<<'
-            self.boot (endsWith=startMsg,timeout=30)
+            self.boot (endsWith=startMsg,timeoutDict=timeoutDict)
         elif (isEqSetting('osImage','FreeBSD')):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
             bootEndsWith = "login:"
-            self.boot(endsWith=bootEndsWith, timeout=timeout)
+            self.boot(endsWith=bootEndsWith, timeoutDict=timeoutDict)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             # set the temporary prompt
@@ -904,34 +912,37 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None,endsWith=None, sendToNonUnix=False):
         process = self.process if process is None else process
-        if (self.terminateTargetStarted):
+        endsWith = self.getDefaultEndWith() if endsWith is None else endsWith
+        if (self.terminateTargetStarted and (process == self.process)):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
             self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overwriteShutdown=True,overwriteConsole=True,exitCode=EXIT.Run)
         else:
             self.keyboardInterruptTriggered = True
-        if (not isEnabled('isUnix')):
+        if ((not isEnabled('isUnix')) and (process == self.process)):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
         doTimeout = True
         retryIdx = 0
         while doTimeout and retryIdx < retryCount:
             if retryIdx > 0:
                 warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
-            retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout,issueInterrupt=False,process=process)
+            retCommand = self.runCommand("\x03",endsWith=endsWith,shutdownOnError=False,timeout=timeout,
+                            issueInterrupt=False,process=process,sendToNonUnix=sendToNonUnix)
             textBack = retCommand[1]
             doTimeout = retCommand[2]
             retryIdx += 1
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout,process=process)[1]
+            textBack += self.runCommand(" ",endsWith=endsWith,shutdownOnError=shutdownOnError,timeout=timeout,
+                            process=process,sendToNonUnix=sendToNonUnix)[1]
         #See if the order is correct
         if (process):
             for i in range(retryIdx + 1):
                 readAfter = self.readFromTarget(readAfter=True,process=process)
-                if (self.getDefaultEndWith() in readAfter):
+                if (endsWith in readAfter):
                     try:
-                        process.expect(self.getDefaultEndWith(),timeout=timeout)
+                        process.expect(endsWith,timeout=timeout)
                     except Exception as exc:
                         warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
                     textBack += readAfter
@@ -1004,6 +1015,7 @@ class commonTarget():
     def sendToTarget (self,command,shutdownOnError=True,process=None):
         process = self.process if process is None else process
         self.checkFallToTty ("sendToTarget", process=process)
+        logging.debug(f"sendToTarget: sending <{command}>")
         try:
             process.sendline(command)
         except Exception as exc:
