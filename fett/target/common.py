@@ -1213,7 +1213,10 @@ class commonTarget():
             self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=60,shutdownOnError=False)
 
     def hasHardwareRNG (self):
-        return isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])
+        return (
+            (isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])) or
+            (isEqSetting('target','qemu') and isEqSetting('osImage','debian'))
+            )
 
     @decorate.debugWrap
     @decorate.timeWrap

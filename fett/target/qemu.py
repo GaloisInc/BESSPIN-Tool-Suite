@@ -33,6 +33,7 @@ class qemuTarget (commonTarget):
             qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\""
             qemuCommand += f" -device virtio-net-device,netdev=usernet"
             qemuCommand += f" -netdev tap,id=usernet,ifname={getSetting('tapAdaptor')}"
+            qemuCommand += " -device virtio-rng-device"
 
             self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
             try:
