@@ -6,9 +6,9 @@ The main file to start launching fett
 from fett.base.utils.misc import *
 from fett.target.build import prepareOsImage
 from fett.target import common
-from fett.target import fpga
+from fett.target import vcu118
 from fett.target import qemu
-from fett.target import aws
+from fett.target import awsf1
 from fett.base.utils.aws import uploadToS3
 from fett.apps.build import buildApps
 from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
@@ -34,10 +34,10 @@ def startFett ():
     if (getSetting('osImage') not in getSettingDict('fettMatrix',[getSetting('binarySource'),getSetting('processor')])):
         logAndExit(f"{getSetting('osImage')} is not compatible with <{getSetting('binarySource')}-{getSetting('processor')}>.",exitCode=EXIT.Configuration)
     # check the AWS variant
-    if (isEqSetting('target','aws')):
+    if (isEqSetting('target','awsf1')):
         pvAWS = getSettingDict('fettMatrix',[getSetting('binarySource'),getSetting('processor'),getSetting('osImage')]) 
         if (pvAWS == 'notOnAWS'):
-            logAndExit(f"<aws> target is not compatible with <{getSetting('binarySource')}-{getSetting('processor')}-{getSetting('osImage')}>.",exitCode=EXIT.Configuration)
+            logAndExit(f"<awsf1> target is not compatible with <{getSetting('binarySource')}-{getSetting('processor')}-{getSetting('osImage')}>.",exitCode=EXIT.Configuration)
         elif (pvAWS not in ['firesim', 'connectal', 'awsteria']):
             logAndExit(f"<{pvAWS}> is not a valid AWS PV.",exitCode=EXIT.Dev_Bug)
         elif (pvAWS in ['awsteria']):
@@ -102,12 +102,12 @@ def startFett ():
         mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
         
         # Start on-line logging
-        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
-            aws.startRemoteLogging (xTarget)
+        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','awsf1'))): 
+            awsf1.startRemoteLogging (xTarget)
 
     # Pipe UART to the network
     if (isEqSetting('mode','production')):
-        aws.startUartPiping(xTarget) # Shoud not execute any command after piping start
+        awsf1.startUartPiping(xTarget) # Shoud not execute any command after piping start
 
     return xTarget
 
@@ -116,8 +116,8 @@ def startFett ():
 @decorate.debugWrap
 def prepareEnv ():
     printAndLog (f"Preparing the environment...")
-    # cannot buildApps on aws
-    if (isEnabled('buildApps') and isEqSetting('target','aws') and isEqSetting('mode','production')):
+    # cannot buildApps on awsf1
+    if (isEnabled('buildApps') and isEqSetting('target','awsf1') and isEqSetting('mode','production')):
         warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <production> mode. This will be switched off.")
         setSetting('buildApps',False)
 
@@ -139,29 +139,29 @@ def prepareEnv ():
             isEqSetting('osImage', 'FreeRTOS')):
         prepareOsImage ()
 
-    if (isEqSetting('target','fpga')):
+    if (isEqSetting('target','vcu118')):
         if not (isEqSetting('mode', 'evaluateSecurityTests') and
                     isEqSetting('osImage', 'FreeRTOS')):
-            fpga.programBitfile()
-            fpga.resetEthAdaptor()
-    elif (isEqSetting('target','aws')):
+            vcu118.programBitfile()
+            vcu118.resetEthAdaptor()
+    elif (isEqSetting('target','awsf1')):
         if (isEqSetting('pvAWS','firesim')):
-            aws.prepareFiresim()
-            aws.removeKernelModules()
-            aws.installKernelModules()
-            aws.configTapAdaptor()
+            awsf1.prepareFiresim()
+            awsf1.removeKernelModules()
+            awsf1.installKernelModules()
+            awsf1.configTapAdaptor()
             if not (isEqSetting('mode', 'evaluateSecurityTests') and
                     isEqSetting('osImage', 'FreeRTOS')):
-                aws.programAFI()
+                awsf1.programAFI()
         elif (isEqSetting('pvAWS', 'connectal')):
-            aws.prepareConnectal()
-            aws.configTapAdaptor()
+            awsf1.prepareConnectal()
+            awsf1.configTapAdaptor()
             ## remove modules because sometimes kernel panics if the modules are loaded while programming the FPGA
-            aws.removeKernelModules()
-            aws.programAFI()
+            awsf1.removeKernelModules()
+            awsf1.programAFI()
             ## remove the modules again because the AMI has xocl in /lib/modules and it is getting auto loaded
-            aws.removeKernelModules()
-            aws.installKernelModules()
+            awsf1.removeKernelModules()
+            awsf1.installKernelModules()
         else:
             logAndExit (f"<launch.prepareEnv> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
     elif (isEqSetting('target','qemu')):
@@ -208,13 +208,13 @@ def launchFett ():
 @decorate.debugWrap
 def endFett (xTarget,isDeadProcess=False):
     if (isEqSetting('mode','production')):
-        aws.endUartPiping(xTarget)
+        awsf1.endUartPiping(xTarget)
 
     if (not isEqSetting('mode', 'evaluateSecurityTests')):
         if (isEnabled('runApp') and (not isDeadProcess)): #Cannot collect local logs if deadProcess
             xTarget.collectLogs()
 
-        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','aws'))): 
+        if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','awsf1'))): 
             collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
     if not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
@@ -233,7 +233,7 @@ def endFett (xTarget,isDeadProcess=False):
 @decorate.debugWrap
 @decorate.timeWrap
 def resetTarget (curTarget):
-    if ((not isEqSetting('target','aws')) or (not isEqSetting('mode','production'))):
+    if ((not isEqSetting('target','awsf1')) or (not isEqSetting('mode','production'))):
         logAndExit(f"<resetTarget> is not compatible with <{getSetting('target')}> target in <{getSetting('mode')}> mode.")
     """
     A big decision here is whether to collectLogs and shutdown or just tear it down.
@@ -241,7 +241,7 @@ def resetTarget (curTarget):
     collectLogs can err in any step, no need for crazy error handling, especially that we rsyslog them anyway.
     """
     printAndLog("resetTarget: tearing down the current target...")
-    aws.endUartPiping(curTarget)
+    awsf1.endUartPiping(curTarget)
     curTarget.targetTearDown() 
     rootPassword = curTarget.rootPassword
     del curTarget
@@ -249,14 +249,14 @@ def resetTarget (curTarget):
     printAndLog("resetTarget: Re-preparing the environment...")
     # Reload the FPGA
     if (isEqSetting('pvAWS','firesim')):
-        aws.removeKernelModules()
-        aws.installKernelModules()
-        aws.programAFI()
+        awsf1.removeKernelModules()
+        awsf1.installKernelModules()
+        awsf1.programAFI()
     elif (isEqSetting('pvAWS', 'connectal')):
-        aws.removeKernelModules()
-        aws.programAFI()
-        aws.removeKernelModules()
-        aws.installKernelModules()
+        awsf1.removeKernelModules()
+        awsf1.programAFI()
+        awsf1.removeKernelModules()
+        awsf1.installKernelModules()
     else:
         logAndExit (f"<resetTarget> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
     
@@ -272,7 +272,7 @@ def resetTarget (curTarget):
     newTarget.userCreated = True
 
     newTarget.start()
-    aws.startUartPiping(newTarget)
+    awsf1.startUartPiping(newTarget)
 
     return newTarget
 
@@ -283,12 +283,12 @@ def getClassType():
     def errorAndRaise(message,exc=None):
         errorAndLog(message,exc=exc)
         raise
-    if (isEqSetting('target','aws')):
-        return getattr(aws,f"{getSetting('pvAWS')}Target")
+    if (isEqSetting('target','awsf1')):
+        return getattr(awsf1,f"{getSetting('pvAWS')}Target")
     elif (isEqSetting('target','qemu')):
         return qemu.qemuTarget
-    elif (isEqSetting('target','fpga')):
-        return fpga.fpgaTarget
+    elif (isEqSetting('target','vcu118')):
+        return vcu118.vcu118Target
     else:
         errorAndRaise (f"<launch.getClassType> is not implemented for <{getSetting('target')}>.")
 

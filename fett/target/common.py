@@ -29,7 +29,7 @@ class commonTarget():
         self.sshProcess = None
         self.fSshOut = None
         self.restartMode = False
-        self.isSshRootEnabled = isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
+        self.isSshRootEnabled = isEqSetting('osImage','FreeBSD') and isEqSetting('target','vcu118')
 
         # all OSs settings
         self.portTarget = None
@@ -50,7 +50,7 @@ class commonTarget():
         self.sshLimitRetries = 3
         self.sshECDSAkeyWasUpdated = False
 
-        self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
+        self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','vcu118')
 
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
         self.rootPassword = 'ssithdefault' if (isEqSetting('osImage','FreeBSD')) else 'riscv'
@@ -160,11 +160,11 @@ class commonTarget():
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
             timeout = 60
-        elif (isEqSetting('target', 'fpga')):
+        elif (isEqSetting('target', 'vcu118')):
             timeout = 90
         elif (getSetting('osImage') in ['debian','busybox']):
             timeout = 45
-        elif (isEqSetting('osImage','FreeBSD') and isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')):
+        elif (isEqSetting('osImage','FreeBSD') and isEqSetting('target', 'awsf1') and isEqSetting('pvAWS', 'connectal')):
             timeout = 150
         else:
             timeout = 45
@@ -298,11 +298,11 @@ class commonTarget():
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             # set the temporary prompt
-            if isEqSetting("binarySource", "SRI-Cambridge") or (isEqSetting("binarySource", "GFE") and isEqSetting('target', 'aws') and isEqSetting("pvAWS", "connectal")):
+            if isEqSetting("binarySource", "SRI-Cambridge") or (isEqSetting("binarySource", "GFE") and isEqSetting('target', 'awsf1') and isEqSetting("pvAWS", "connectal")):
                 tempPrompt = "~ #"
             else:
                 tempPrompt = "\r\n#"
-            # fpga freebsd would be already logged in if onlySsh
+            # vcu118 freebsd would be already logged in if onlySsh
             if (isEqSetting('target','qemu')):
                 self.runCommand("root",endsWith="\r\n#")
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
@@ -313,7 +313,7 @@ class commonTarget():
                 else:
                     self.runCommand ("root",endsWith=tempPrompt)
 
-            if not isEqSetting('target', 'aws'):
+            if not isEqSetting('target', 'awsf1'):
                 self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
                 self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempPrompt)
                 self.runCommand("set prompt = \"`cat promptText.txt`\"")
@@ -340,7 +340,7 @@ class commonTarget():
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         awsNtpServer = "169.254.169.123"
         if (isEqSetting('osImage','debian')):
-            if isEqSetting('target', 'aws'):
+            if isEqSetting('target', 'awsf1'):
                 # Use AWS NTP server
                 self.runCommand(f"echo 'NTP={awsNtpServer}' >> "
                                 "/etc/systemd/timesyncd.conf")
@@ -355,7 +355,7 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
         elif (isEqSetting('osImage','FreeBSD')):
-            if isEqSetting('target', 'aws'):
+            if isEqSetting('target', 'awsf1'):
                 # Delete default NTP pool
                 self.runCommand('sed -i "" "/^pool/d" /etc/ntp.conf')
                 # Add AWS NTP server
@@ -370,7 +370,7 @@ class commonTarget():
             self.runCommand("service ntpd start")
 
         # Instruct the kernel debugger to restart instead of debugging mode when the kernel panics
-        if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','aws')):
+        if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','awsf1')):
             self.runCommand("sysctl debug.debugger_on_panic=0")
             self.runCommand('echo "debug.debugger_on_panic=0" >> /etc/sysctl.conf')
         
@@ -537,7 +537,7 @@ class commonTarget():
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
             if (self.isCurrentUserRoot):
-                if isEqSetting('target', 'aws'):
+                if isEqSetting('target', 'awsf1'):
                     return ":~ #"
                 else:
                     return "fettPrompt>"
@@ -556,7 +556,7 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             return [":~#", ":~\$"]
         elif (isEqSetting('osImage','FreeBSD')):
-            if isEqSetting('target', 'aws'):
+            if isEqSetting('target', 'awsf1'):
                 return [":~ #", ":~ \$"]
             else:
                 return ["fettPrompt>", ":~ \$"]
@@ -1241,14 +1241,14 @@ class commonTarget():
 
     def hasHardwareRNG (self):
         return (
-            (isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])) or
+            (isEqSetting('target','awsf1') and (getSetting('pvAWS') in ['firesim', 'connectal'])) or
             (isEqSetting('target','qemu') and isEqSetting('osImage','debian'))
             )
 
     @decorate.debugWrap
     @decorate.timeWrap
     def getGdbOutput(self):
-        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'aws')
+        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'awsf1')
                                                else getSetting('target'))
         message = f"getGdbOutput is not implemented for <{target}>"
         warnAndLog(message,doPrint=False)
@@ -1279,7 +1279,7 @@ class commonTarget():
         if (isEqSetting('osImage','FreeBSD')):
             if (isEqSetting('binarySource','SRI-Cambridge')):
                 self.runCommand("service fett_sshd restart")
-            elif (isEqSetting('target','aws')):
+            elif (isEqSetting('target','awsf1')):
                 self.runCommand("pkill -f /usr/sbin/sshd")
                 self.runCommand("/usr/sbin/sshd")
             else:
