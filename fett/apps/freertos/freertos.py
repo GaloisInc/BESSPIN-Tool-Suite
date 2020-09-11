@@ -136,7 +136,7 @@ def deploymentTest(target):
     # target is a fett target object
     targetIP = target.ipTarget
     TFTPPort = getSetting('TFTPPortTarget')
-    hostIP = getSetting('awsIpHost')
+    hostIP = getSetting('awsf1IpHost')
 
     # Wait till TFTP server is up
     rtosRunCommand(target,"tftpServerReady",endsWith='<TFTP-SERVER-READY>',timeout=60)
