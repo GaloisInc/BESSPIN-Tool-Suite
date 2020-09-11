@@ -57,9 +57,35 @@ def startFett ():
                 (not isEqSetting('binarySource','SRI-Cambridge')) ):
             logAndExit(f"<{getSetting('sourceVariant')}> variant is not compatible with <{getSetting('binarySource')}>.",exitCode=EXIT.Configuration)
 
-    #qemu on FreeRTOS and Busybox
-    if ((getSetting('osImage') in ['FreeRTOS','busybox']) and isEqSetting('target','qemu')):
+    #qemu on Busybox
+    if (isEqSetting('osImage', 'busybox') and isEqSetting('target','qemu')):
         logAndExit (f"Qemu is not implemented for {getSetting('osImage')}.",exitCode=EXIT.Implementation)
+
+    # qemu on FreeRTOS
+    if (isEqSetting('osImage', 'FreeRTOS') and
+        isEqSetting('target', 'qemu') and
+        not isEqSetting('mode', 'evaluateSecurityTests')):
+        logAndExit(f"Qemu is not implemented for <{getSetting('mode')}> "
+                   f"mode on <{getSetting('osImage')}>",
+                   exitCode=EXIT.Implementation)
+
+    # Check settings for evaluateSecurityTests on qemu
+    if (isEqSetting('mode', 'evaluateSecurityTests') and
+        isEqSetting('target', 'qemu')):
+        if isEnabled('useCustomScoring'):
+            warnAndLog("Cannot use <useCustomScoring> with "
+                       f"<{getSetting('target')}>.  Ignoring setting.")
+            setSetting('useCustomScoring', False)
+        if (isEqSetting('osImage', 'FreeRTOS') and
+            not isEqSetting('cross-compiler', 'GCC')):
+            warnAndLog("<cross-compiler> setting "
+                       f"<{getSetting('cross-compiler')}> is unsupported for "
+                       f"<{getSetting('mode')}> mode on target "
+                       f"<{getSetting('target')}> with osImage "
+                       f"<{getSetting('osImage')}>.  Setting <cross-compiler> "
+                       "and <linker> to <GCC>.")
+            setSetting("cross-compiler", "GCC")
+            setSetting("linker", "GCC")
 
     # prepare the environment
     prepareEnv()
@@ -114,8 +140,10 @@ def prepareEnv ():
         prepareOsImage ()
 
     if (isEqSetting('target','fpga')):
-        fpga.programBitfile()
-        fpga.resetEthAdaptor()
+        if not (isEqSetting('mode', 'evaluateSecurityTests') and
+                    isEqSetting('osImage', 'FreeRTOS')):
+            fpga.programBitfile()
+            fpga.resetEthAdaptor()
     elif (isEqSetting('target','aws')):
         if (isEqSetting('pvAWS','firesim')):
             aws.prepareFiresim()
@@ -145,7 +173,7 @@ def launchFett ():
     try:
         xTarget = getClassType()()
     except Exception as exc:
-        logAndExit (f"launchFett: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
+        logAndExit (f"launchFett: Failed to instantiate the target class.",exc=exc,exitCode=EXIT.Dev_Bug)
     if (isEqSetting('mode', 'evaluateSecurityTests') and
         isEqSetting('osImage', 'FreeRTOS')):
         # Build the image for the upcoming test

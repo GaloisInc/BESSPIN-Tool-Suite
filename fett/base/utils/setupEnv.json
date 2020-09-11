@@ -156,6 +156,9 @@
                     "chisel_p1" : {
                         "FreeRTOS" : "firesim"
                     },
+                    "bluespec_p1" : {
+                        "FreeRTOS" : "notOnAWS"
+                    },
                     "chisel_p2" : {
                         "debian" : "firesim",
                         "FreeBSD" : "notOnAWS",
@@ -242,9 +245,14 @@
             "val" : "FreeRTOS-10.0.1"
         },
         {
-            "name" : "FreeRTOSprojName",
+            "name" : "FreeRTOSprojNameNonQemu",
             "type" : "string",
             "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
+        },
+        {
+            "name" : "FreeRTOSprojNameQemu",
+            "type" : "string",
+            "val" : "FreeRTOS/Demo/RISC-V-Qemu-sifive_e-FreedomStudio_Galois"
         },
         {
             "name" : "binaryRepoDir",
@@ -306,19 +314,6 @@
             "min" : 1024,
             "max" : 10000,
             "val" : 3333
-	},
-	{
-            "name" : "gfeInfo",
-            "type" : "dict",
-            "val" : {
-                "gdbPort" : 3333,
-                "gdbPath" : "riscv64-unknown-elf-gdb",
-                "openocdCfgPath" : "fett/target/utils/openocd_vcu118.cfg",
-                "openocdCommand" : "openocd",
-                "uartSerialDev" : "auto",
-                "resetBase" : "0x6FFF0000",
-                "resetVal" : "0x1"
-            }
         }
-    ] 
+    ]
 }

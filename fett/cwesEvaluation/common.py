@@ -1,3 +1,5 @@
+import pexpect
+
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import scoreTests
 
@@ -69,17 +71,29 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             outLog = cweTests[vulClass](target).executeTest(test.replace('.c','.riscv'))
         else:
             # Exctract test output
-            output = target.expectFromTarget(">>>End of Fett<<<",
-                                             None,
-                                             shutdownOnError=False,
-                                             timeout=getSetting('FreeRTOStimeout'))
+            textBack, wasTimeout, idxReturn = target.expectFromTarget(
+                    [">>>End of Fett<<<", pexpect.EOF],
+                    None,
+                    shutdownOnError=False,
+                    timeout=getSetting('FreeRTOStimeout'))
 
-            if output[1]:
+            if idxReturn == 1:
+                if isEqSetting('target', 'qemu'):
+                    # No ">>> End Of Testgen <<<", but qemu aborted without a
+                    # timeout
+                    logFile.write(target.readFromTarget())
+                    logFile.write("\n<QEMU ABORTED>\n")
+                    return
+                else:
+                    target.shutdownAndExit("<runTests> Unexpected EOF during "
+                                           "test run.",
+                                           exitCode=EXIT.Dev_Bug)
+            if wasTimeout:
                 logFile.write(target.readFromTarget())
                 logFile.write("\n<TIMEOUT>\n")
                 warnAndLog(f"{test} timed out.  Skipping.",doPrint=False)
                 return
-            outLog = output[0]
+            outLog = textBack
         
         logFile.write(outLog)
 

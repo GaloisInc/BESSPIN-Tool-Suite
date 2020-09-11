@@ -51,6 +51,12 @@ def buildCwesEvaluation():
             cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
                 os.path.join(getSetting('buildDir'), 'Makefile'))
 
+        if (isEqSetting("target", "qemu") and
+            "PPAC" in getSetting("vulClasses")):
+            warnAndLog("vulClass <PPAC> not supported for "
+                       f"<{getSetting('osImage')}> on "
+                       f"<{getSetting('target')}>.  PPAC tests will be skipped.")
+            getSetting("vulClasses").remove("PPAC")
 
     # Copy apps over
     additionalFiles = []
