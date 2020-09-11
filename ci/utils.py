@@ -309,6 +309,7 @@ def getFettTargetAMI (repoDir):
     def getAMIfromRefs (listRefs, source):
         maxVersion = (0, None)
         for ref in listRefs:
+            print(f"In listRefs loop: ref = <{ref}>")
             if (source == "pygit2"):
                 if (not ref.startswith('refs/tags/v')):
                     continue
@@ -334,6 +335,7 @@ def getFettTargetAMI (repoDir):
     #Fall back to parsing "git tag"
     try:
         allRefs = subprocess.getoutput(f"cd {repoDir} && git tag").splitlines()
+        print(allRefs)
         return getAMIfromRefs (allRefs, "shell")
     except Exception as exc:
         exitFettCi(message=f"Failed to get the AMI using <git tag> in shell.", exc=exc)
