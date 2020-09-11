@@ -20,7 +20,7 @@
         {
             "name" : "target",
             "type" : "string",
-            "choices" : [ "qemu", "aws", "fpga" ]
+            "choices" : [ "qemu", "awsf1", "vcu118" ]
         },
         {
             "name" : "FreeRTOSUseRAMDisk",
