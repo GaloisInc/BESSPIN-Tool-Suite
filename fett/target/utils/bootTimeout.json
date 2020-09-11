@@ -31,7 +31,7 @@
       },
       "chisel": {
         "name": "elfLoader",
-        "JTAG": { "timeout" : { "elfLoad" : 700, "boot" : 300 } },
+        "JTAG": { "timeout" : { "elfLoad" : 1000, "boot" : 300 } },
         "else": { "timeout" : { "boot" : 540 } }
       }
     },
