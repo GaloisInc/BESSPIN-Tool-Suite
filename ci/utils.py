@@ -309,7 +309,7 @@ def getFettTargetAMI (repoDir):
     def getAMIfromRefs (listRefs, source):
         maxVersion = (0, None)
         for ref in listRefs:
-            print(f"In listRefs loop: ref = <{ref}>")
+            print(f"DEBUG: In listRefs loop: ref = <{ref}>")
             if (source == "pygit2"):
                 if (not ref.startswith('refs/tags/v')):
                     continue
@@ -321,8 +321,10 @@ def getFettTargetAMI (repoDir):
             valVersion = 1000*int(xVersion[0]) + int(xVersion[1]) # so "3.10" --> 3,010
             if (valVersion > maxVersion[0]):
                 maxVersion = (valVersion, xItems)
+        print("DEBUG: After loop: maxVersion is", maxVersion)
         if (maxVersion[0]==0):
             raise Exception("getFettTargetAMI: Failed to find the newest version.")
+        print("DEBUG: After the if condition. Now returning")
         return '-'.join(maxVersion[1][1:])
 
     try:
@@ -333,9 +335,12 @@ def getFettTargetAMI (repoDir):
         warnAndLog (message="Failed to get the AMI using <pygit2>. Falling back to shell git.",exc=exc)
 
     #Fall back to parsing "git tag"
+    print("DEBUG: Now going to do git tag")
     try:
         allRefs = subprocess.getoutput(f"cd {repoDir} && git tag").splitlines()
+        print("DEBUG: After executing git tag.")
         print(allRefs)
+        print("DEBUG: Now calling getAMIfromRefs")
         return getAMIfromRefs (allRefs, "shell")
     except Exception as exc:
         exitFettCi(message=f"Failed to get the AMI using <git tag> in shell.", exc=exc)
