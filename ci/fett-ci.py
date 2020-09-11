@@ -44,7 +44,6 @@ try:
     import sys, os, glob, shutil, time, itertools
     import json, configparser, socket, re, logging
     import subprocess, argparse, signal, copy
-    from pygit2 import Repository
 except Exception as exc:
     exitFettCi(exitCode=-1, exc=exc)
 
@@ -213,6 +212,7 @@ def main(xArgs):
             exitFettCi(message="Error when trying to read branches from file.", exc=exc)
 
         try:
+            from pygit2 import Repository
             targetBranch = Repository(repoDir).head.shorthand
             binariesBranch = Repository(
                 os.path.join(repoDir, "SSITH-FETT-Binaries")
