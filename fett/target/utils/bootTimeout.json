@@ -1,6 +1,6 @@
 {
   "debian": {
-    "fpga": {
+    "vcu118": {
       "name": "procFlavor",
       "bluespec": {
         "name": "elfLoader",
@@ -14,7 +14,7 @@
       }
     },
     "qemu": { "timeout" : { "boot" : 120 } },
-    "aws": {
+    "awsf1": {
       "name": "pvAWS",
       "firesim": { "timeout" : { "boot" : 240 } },
       "connectal": { "timeout" : { "boot" : 360 } }
@@ -22,7 +22,7 @@
   },
   "busybox": { "timeout" : { "boot" : 80 } },
   "FreeBSD": {
-    "fpga": {
+    "vcu118": {
       "name": "procFlavor",
       "bluespec": {
         "name": "elfLoader",
@@ -36,7 +36,7 @@
       }
     },
     "qemu": { "timeout" : { "boot" : 120 } },
-    "aws": {
+    "awsf1": {
       "name": "sourceVariant",
       "temporal": { "timeout" : { "boot" : 1000 } },
       "else": { "timeout" : { "boot" : 540 } }
