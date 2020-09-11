@@ -250,7 +250,7 @@ class commonTarget():
             return traverse_data(target)
 
         if (getSetting('osImage') in ['FreeRTOS']):
-            pass #no timeout shenanigans
+            timeoutDict = { "boot" : 30 }
         elif getSetting('osImage') in ['debian', 'busybox', 'FreeBSD']:
             success, timeoutDict, message = get_timeout_from_settings_dict()
 
@@ -290,7 +290,7 @@ class commonTarget():
                 startMsg = 'INFO: Open database successfully'
             else:
                 startMsg = '>>>Beginning of Fett<<<'
-            self.boot (endsWith=startMsg,timeoutDict={"boot":30})
+            self.boot (endsWith=startMsg,timeoutDict=timeoutDict)
         elif (isEqSetting('osImage','FreeBSD')):
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
             bootEndsWith = "login:"
