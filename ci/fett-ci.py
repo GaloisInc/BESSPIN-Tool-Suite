@@ -34,10 +34,16 @@ optional arguments:
 """
 
 try:
+    from utils import *
+except Exception as exc:
+    print("(Error)~ Failed to import <utils>.")
+    print(f"(Error)~  <{exc.__class__.__name__}>: {exc}")
+    exit(1)
+
+try:
     import sys, os, glob, shutil, time, itertools
     import json, configparser, socket, re, logging
     import subprocess, argparse, signal, copy
-    from utils import *
     from pygit2 import Repository
 except Exception as exc:
     exitFettCi(exitCode=-1, exc=exc)
