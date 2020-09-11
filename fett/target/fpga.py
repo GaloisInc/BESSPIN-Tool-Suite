@@ -438,14 +438,11 @@ def programFpga(bitStream, probeFile, attempts=2):
     """
     # top level params
     vivado = 'vivado_lab'
-    sourceCwd = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils')
+    sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils')
     cwd = os.path.join(getSetting('workDir'), 'gfe')
-    if not os.path.exists(cwd):
-        tempPath = os.path.join(getSetting('workDir'),'gfe')
-        mkdir (tempPath)
 
     # copy files over to workDir
-    cp(os.path.join(sourceCwd, 'tcl', 'prog_bit.tcl'), cwd)
+    cp(os.path.join(sourceDir, 'tcl', 'prog_bit.tcl'), cwd)
 
     # check that the input files exist
     if not os.path.exists(bitStream):
@@ -454,34 +451,35 @@ def programFpga(bitStream, probeFile, attempts=2):
         logAndExit(f"programFpga: probe file {probeFile} does not exist")
 
     # run tcl files to program the bitstreams, and clean up output
-    try:
-        shellCommand([vivado,'-nojournal','-notrace','-nolog','-source','./prog_bit.tcl',
-                '-mode','batch','-tclargs',bitStream, probeFile],timeout=90,cwd=cwd)
-    except Exception as exc:
+    retProc = shellCommand([vivado,'-nojournal','-notrace','-nolog','-source','./prog_bit.tcl',
+            '-mode','batch','-tclargs',bitStream, probeFile],timeout=90,cwd=cwd,check=False)
+    if retProc.returncode != 0:
         if attempts > 0:
-            errorAndLog(f"programFpga: failed to program the FPGA. Trying again...",doPrint=True,exc=exc)
+            errorAndLog(f"programFpga: failed to program the FPGA. Trying again...",doPrint=True)
             programFpga(bitStream, probeFile, attempts=attempts-1)
         else:
-            logAndExit(f"programFpga: failed to program the FPGA.",exc=exc,exitCode=EXIT.Run)
+            logAndExit(f"programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
 
 
-def clearFlash():
+def clearFlash(attempts=2):
     """ clear flash memory on Fpga
     matches the functionality of gfe-clear-flash
     """
-    sourceCwd = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'tcl')
+    sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'tcl')
     cwd = os.path.join(getSetting('workDir'), 'gfe')
-    if not os.path.exists(cwd):
-        tempPath = os.path.join(getSetting('workDir'),'gfe')
-        mkdir (tempPath)
 
     # copy files over to workDir
-    cp(os.path.join(sourceCwd, 'program_flash'), cwd)
-    cp(os.path.join(sourceCwd, 'small.bin'), cwd)
+    cp(os.path.join(sourceDir, 'program_flash'), cwd)
+    cp(os.path.join(sourceDir, 'small.bin'), cwd)
 
     # "normal" operation exits code 1, so check=False
-    shellCommand(['./program_flash', 'datafile', './small.bin'],timeout=90,check=False,cwd=cwd)
-
+    retProc = shellCommand(['./program_flash', 'datafile', './small.bin'],timeout=90,check=False,cwd=cwd)
+    if retProc.returncode != 1:
+        if attempts > 0:
+            errorAndLog(f"clearFlash: failed to clear flash. Trying again...",doPrint=True)
+            clearFlash(attempts=attempts-1)
+        else:
+            logAndExit(f"programFpga: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -489,6 +487,10 @@ def programBitfile ():
     printAndLog("Preparing the FPGA environment...")
     clearProcesses()
     gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
+    gfeDir = os.path.join(getSetting('workDir'), 'gfe')
+    if not os.path.exists(gfeDir):
+        mkdir (gfeDir)
+
     printAndLog("Clearing the flash...",doPrint=False)
     gfeOut.write("\n\ngfe-clear-flash\n")
     clearFlash()

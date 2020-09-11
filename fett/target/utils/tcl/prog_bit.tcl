@@ -1,3 +1,6 @@
+# Taken from the GFE repository
+# url: git@gitlab-ext.galois.com:ssith/gfe.git
+# revision: e1b3a1463e1ffe2ef2c020c8982f72ab80e2392c
 # Setup some variables
 #
 
