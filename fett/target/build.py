@@ -176,7 +176,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
         envVars.append(f"PROJ_NAME=main_fett")
     else:
         envVars.append(f"PROG=main_fett")
-    envVars.append(f"BSP={getSetting('target')}")
+    envVars.append(f"BSP={getSetting('target') if (not isEqSetting('target','awsf1')) else 'aws'}")
     if getSetting('FreeRTOSUseRAMDisk'):
         envVars.append(f"FREERTOS_USE_RAMDISK=1")
     envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")

@@ -92,9 +92,9 @@ def test_294(target, binTest):
         target.activateEthernet ()
         outLog += "\n[host]: Pinging target successful!\n"
 
-        if (isEqSetting('target','aws')):
+        if (isEqSetting('target','awsf1')):
             ethAdaptorName = getSetting('awsf1TapAdaptorName')
-        elif (isEqSetting('target','fpga')):
+        elif (isEqSetting('target','vcu118')):
             ethAdaptorName = getSetting('vcu118EthAdaptorName')
         else:
             errorAndLog(f"<ethAdaptorName> is not defined in <test_290> for <{getSetting('target')}>.")
