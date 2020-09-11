@@ -14,46 +14,46 @@
             "val" : "fett/base/utils/configData.json"
         },
         {
-            "name" : "fpgaIpTarget",
+            "name" : "vcu118IpTarget",
             "type" : "ipAddress",
             "val" : "10.88.88.2"
         },
         {
-            "name" : "fpgaIpHost",
+            "name" : "vcu118IpHost",
             "type" : "ipAddress",
             "val" : "10.88.88.1"
         },
         {
-            "name" : "fpgaPortHost",
+            "name" : "vcu118PortHost",
             "type" : "int",
             "min" : 1024,
             "max" : 65535,
             "val" : 1234
         },
         {
-            "name" : "fpgaPortTarget",
+            "name" : "vcu118PortTarget",
             "type" : "int",
             "min" : 1024,
             "max" : 65535,
             "val" : 1234
         },
         {
-            "name" : "fpgaNetMaskTarget",
+            "name" : "vcu118NetMaskTarget",
             "type" : "ipAddress",
             "val" : "255.255.255.0"
         },
         {
-            "name" : "fpgaMacAddrTarget",
+            "name" : "vcu118MacAddrTarget",
             "type" : "macAddress", 
             "val" : "00:0a:35:04:db:77"
         },
         {
-            "name" : "fpgaEthAdaptorName",
+            "name" : "vcu118EthAdaptorName",
             "type" : "string",
             "val" : "eth0fpga"
         },
         {
-            "name" : "fpgaEthAdaptorMacAddress",
+            "name" : "vcu118EthAdaptorMacAddress",
             "type" : "macAddress",
             "val" : "88:53:48:41:56:45"
         },
@@ -211,7 +211,7 @@
             "val" : {
                 "netboot" : "FETT_NETBOOT",
                 "debian" : {
-                    "fpga" : "FETT_GFE_DEBIAN_FPGA",
+                    "vcu118" : "FETT_GFE_DEBIAN_VCU118",
                     "qemu" : "FETT_GFE_DEBIAN_QEMU",
                     "firesim" :  "FETT_GFE_DEBIAN_FIRESIM"
                 },
@@ -220,18 +220,18 @@
                     "firesim" : "FETT_GFE_DEBIAN_ROOTFS_FIRESIM"
                 },
                 "FreeBSD" : {
-                    "fpga" : "FETT_GFE_FREEBSD_FPGA",
+                    "vcu118" : "FETT_GFE_FREEBSD_VCU118",
                     "qemu" : "FETT_GFE_FREEBSD_QEMU",
                     "firesim" :  "FETT_GFE_FREEBSD_FIRESIM",
                     "connectal" : "FETT_GFE_FREEBSD_CONNECTAL"
                 },
                 "busybox" : {
-                    "fpga" : "FETT_GFE_BUSYBOX_FPGA",
+                    "vcu118" : "FETT_GFE_BUSYBOX_VCU118",
                     "firesim" :  "FETT_GFE_BUSYBOX_FIRESIM"
                 },
                 "FreeRTOS" : {
                     "clang-sysroot" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
-                    "fpga" : "FETT_GFE_FREERTOS_FPGA",
+                    "vcu118" : "FETT_GFE_FREERTOS_VCU118",
                     "firesim" :  "FETT_GFE_FREERTOS_FIRESIM"
                 },
                 "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR",

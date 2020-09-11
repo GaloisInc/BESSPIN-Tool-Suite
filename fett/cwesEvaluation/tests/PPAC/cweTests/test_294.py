@@ -95,7 +95,7 @@ def test_294(target, binTest):
         if (isEqSetting('target','aws')):
             ethAdaptorName = getSetting('awsTapAdaptorName')
         elif (isEqSetting('target','fpga')):
-            ethAdaptorName = getSetting('fpgaEthAdaptorName')
+            ethAdaptorName = getSetting('vcu118EthAdaptorName')
         else:
             errorAndLog(f"<ethAdaptorName> is not defined in <test_290> for <{getSetting('target')}>.")
             outLog += f"\n<INVALID> <ethAdaptorName> is not defined for <{getSetting('target')}>."
