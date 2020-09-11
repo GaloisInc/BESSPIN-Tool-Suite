@@ -1,26 +1,26 @@
 #! /usr/bin/env python3
 """ 
-Main fpga class + misc fpga functions
+Main vcu118 class + misc vcu118 functions
 """
 
 from fett.base.utils.misc import *
 from fett.target.common import *
-from fett.target.gfe import Gfe
+from fett.target.fpga import fpgaTarget
 
 import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
 import pexpect
 
-class fpgaTarget (Gfe, commonTarget):
+class vcu118Target (fpgaTarget, commonTarget):
     def __init__ (self):
 
         commonTarget.__init__(self)
-        Gfe.__init__(self)
+        fpgaTarget.__init__(self)
 
-        self.ipTarget = getSetting('fpgaIpTarget')
-        self.ipHost = getSetting('fpgaIpHost')  
-        self.portTarget = getSetting('fpgaPortTarget')
-        self.portHost = getSetting('fpgaPortHost')
+        self.ipTarget = getSetting('vcu118IpTarget')
+        self.ipHost = getSetting('vcu118IpHost')  
+        self.portTarget = getSetting('vcu118PortTarget')
+        self.portHost = getSetting('vcu118PortHost')
 
         # Important for the Web Server
         self.httpPortTarget  = getSetting('HTTPPortTarget')
@@ -37,9 +37,9 @@ class fpgaTarget (Gfe, commonTarget):
         if (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
             if (isEqSetting('elfLoader','JTAG')):
                 elfLoadTimeout = self.parseBootTimeoutDict(timeoutDict,key="elfLoad")
-                self.gfeStart(getSetting('osImageElf'),elfLoadTimeout=elfLoadTimeout)
+                self.fpgaStart(getSetting('osImageElf'),elfLoadTimeout=elfLoadTimeout)
             elif (isEqSetting('elfLoader','netboot')):
-                self.gfeStart(getSetting('netbootElf'),elfLoadTimeout=30)
+                self.fpgaStart(getSetting('netbootElf'),elfLoadTimeout=30)
             else:
                 self.shutdownAndExit (f"boot: ELF loader <{getSetting('elfLoader')}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
 
@@ -89,7 +89,7 @@ class fpgaTarget (Gfe, commonTarget):
                     self.shutdownAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
         elif (isEqSetting('osImage','FreeRTOS')):
-            self.gfeStart(getSetting('osImageElf'),elfLoadTimeout=30) 
+            self.fpgaStart(getSetting('osImageElf'),elfLoadTimeout=30) 
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout)
         else:
@@ -126,7 +126,7 @@ class fpgaTarget (Gfe, commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
-        self.gfeTearDown()
+        self.fpgaTearDown()
         return True
 
     @decorate.debugWrap
@@ -205,11 +205,11 @@ class fpgaTarget (Gfe, commonTarget):
         time.sleep(5)
         return
 
-#--- END OF CLASS fpgaTarget------------------------------
+#--- END OF CLASS vcu118Target------------------------------
 
 def programFpga(bitStream, probeFile, attempts=2):
     """programs the fpga with a given bitstream and probe file
-    matches the functionality of gfe-program-fpga
+    matches the functionality of the old `gfe-program-fpga`
     :param bitStream: valid filepath
     :param probeFile: valid probe file
     """
@@ -263,13 +263,11 @@ def clearFlash(attempts=2):
 def programBitfile (doPrint=True):
     printAndLog("Preparing the FPGA environment...",doPrint=doPrint)
     clearProcesses()
-    gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
     gfeDir = os.path.join(getSetting('workDir'), 'gfe')
     if not os.path.exists(gfeDir):
         mkdir (gfeDir)
 
     printAndLog("Clearing the flash...",doPrint=False)
-    gfeOut.write("\n\ngfe-clear-flash\n")
     clearFlash()
 
     bitAndProbefiles = selectBitAndProbeFiles()
@@ -293,7 +291,6 @@ def programBitfile (doPrint=True):
     programFpga(*bitAndProbefiles)
     printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})")
 
-    gfeOut.close()
     printAndLog("FPGA was programmed successfully!",doPrint=doPrint)
 
 @decorate.debugWrap
@@ -314,7 +311,7 @@ def selectBitAndProbeFiles ():
             else:
                 printAndLog(f"Could not find bitfileDir for <{getSetting('processor')}> in nix environment. Falling back to binary repo.", doPrint=False)
         if (not useNix): #use binaries repo
-            bitfileDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'fpga')
+            bitfileDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'vcu118')
     
     return (os.path.join(bitfileDir, bitfileName),os.path.join(bitfileDir, probfileName))
 
@@ -323,42 +320,15 @@ def checkEthAdaptorIsUp ():
     try:
         return psutil.net_if_stats()[getSetting('ethAdaptor')].isup
     except Exception as exc:
-        logAndExit (f"fpga.checkEthAdaptorIsUp: Failed to check that <{getSetting('ethAdaptor')}> is up.",exc=exc,exitCode=EXIT.Network)
-
-@decorate.debugWrap
-def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
-    
-    def noAddrFound(errMessage):
-        if (exitIfNoAddr):
-            logAndExit(f"fpga.getAddrOfAdaptor: Failed to {errMessage}. Please check the network configuration.",exitCode=EXIT.Network)
-        else:
-            printAndLog(f"fpga.getAddrOfAdaptor: Failed to {errMessage}.",doPrint=False)
-            return 'NotAnAddress'
-
-    if (addrType == 'MAC'):
-        family = psutil.AF_LINK
-    elif (addrType == 'IP'):
-        family = socket.AF_INET
-    else:
-        logAndExit (f"fpga.getAddrOfAdaptor: Unrecognized address type <{addrType}> is up.",exitCode=EXIT.Dev_Bug)
-    
-    if (ethAdaptor not in psutil.net_if_addrs()):
-        return noAddrFound(f"find the adaptor <{ethAdaptor}>")
-    
-    for addr in psutil.net_if_addrs()[ethAdaptor]:
-        if (addr.family == family):
-            printAndLog(f"fpga.getAddrOfAdaptor: <{addrType} address> of <{ethAdaptor}> = <{addr.address}>",doPrint=False)
-            return addr.address
-
-    return noAddrFound(f"get the <{addrType} address> of <{ethAdaptor}>")
+        logAndExit (f"vcu118.checkEthAdaptorIsUp: Failed to check that <{getSetting('ethAdaptor')}> is up.",exc=exc,exitCode=EXIT.Network)
 
 @decorate.debugWrap
 def resetEthAdaptor ():
     #get the name and check configuration if this is the first time called
     if (not doesSettingExist('ethAdaptor')):
-        ethAdaptor= getSetting('fpgaEthAdaptorName')
-        if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('fpgaEthAdaptorMacAddress')):
-            logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('fpgaEthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
+        ethAdaptor= getSetting('vcu118EthAdaptorName')
+        if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('vcu118EthAdaptorMacAddress')):
+            logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('vcu118EthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
         #Set the adaptor's name
         setSetting('ethAdaptor',ethAdaptor)
         printAndLog (f"<{getSetting('ethAdaptor')}> exists and its MAC address is properly configured.",doPrint=False)
@@ -380,24 +350,24 @@ def resetEthAdaptor ():
         isReset = checkEthAdaptorIsUp ()
         if (isReset):
             #check that the IP address is properly set
-            if (getAddrOfAdaptor(getSetting('ethAdaptor'),'IP',exitIfNoAddr=False) == getSetting('fpgaIpHost')):
+            if (getAddrOfAdaptor(getSetting('ethAdaptor'),'IP',exitIfNoAddr=False) == getSetting('vcu118IpHost')):
                 break
             else:
-                printAndLog (f"fpga.resetEthAdaptor: <{getSetting('ethAdaptor')}> is up, but it does not have the right IP. Will try to assign it.",doPrint=False)
-                sudoShellCommand(['ip','addr','add',f"{getSetting('fpgaIpHost')}/24",'dev',getSetting('ethAdaptor')],sudoPromptPrefix)
+                printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is up, but it does not have the right IP. Will try to assign it.",doPrint=False)
+                sudoShellCommand(['ip','addr','add',f"{getSetting('vcu118IpHost')}/24",'dev',getSetting('ethAdaptor')],sudoPromptPrefix)
                 time.sleep(3)
                 isReset = checkEthAdaptorIsUp ()
                 if (isReset):
                     break
 
         if ((not isReset) and (iAttempt < nAttempts - 1)):
-            printAndLog (f"fpga.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>. Trying again...",doPrint=False)
+            printAndLog (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>. Trying again...",doPrint=False)
             time.sleep(3)
 
     if (not isReset):
-        logAndExit (f"fpga.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>.",exitCode=EXIT.Network)
+        logAndExit (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>.",exitCode=EXIT.Network)
 
-    printAndLog (f"fpga.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)
+    printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)
 
 @decorate.debugWrap
 def clearProcesses ():

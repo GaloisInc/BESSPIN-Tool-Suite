@@ -9,7 +9,7 @@ import os, sys, glob
 import pexpect, subprocess, threading
 import time, random, secrets, crypt
 import string, re
-import socket, errno, pty, termios
+import socket, errno, pty, termios, psutil
 from collections import Iterable
 
 from fett.apps.unix import database
@@ -1287,6 +1287,7 @@ class commonTarget():
 
 # END OF CLASS commonTarget
 
+@decorate.debugWrap
 def checkPort (portNum, host=''):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as iSock:
         try:
@@ -1300,6 +1301,7 @@ def checkPort (portNum, host=''):
             logging.error (f"checkPort: Encountered a non recognized error while checking port #{portNum}.")
     return True
 
+@decorate.debugWrap
 def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
 
     def showTime(stopThread):
@@ -1331,6 +1333,7 @@ def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
     runTimeTrack.start()
     return stopTimeTrack
 
+@decorate.debugWrap
 def charByCharEncoding (inBytes):
     if (not isinstance(inBytes, Iterable)):
         return ''
@@ -1342,3 +1345,30 @@ def charByCharEncoding (inBytes):
             xChar = '<!>'
         textBack += xChar
     return textBack
+
+@decorate.debugWrap
+def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
+    
+    def noAddrFound(errMessage):
+        if (exitIfNoAddr):
+            logAndExit(f"getAddrOfAdaptor: Failed to {errMessage}. Please check the network configuration.",exitCode=EXIT.Network)
+        else:
+            printAndLog(f"getAddrOfAdaptor: Failed to {errMessage}.",doPrint=False)
+            return 'NotAnAddress'
+
+    if (addrType == 'MAC'):
+        family = psutil.AF_LINK
+    elif (addrType == 'IP'):
+        family = socket.AF_INET
+    else:
+        logAndExit (f"getAddrOfAdaptor: Unrecognized address type <{addrType}> is up.",exitCode=EXIT.Dev_Bug)
+    
+    if (ethAdaptor not in psutil.net_if_addrs()):
+        return noAddrFound(f"find the adaptor <{ethAdaptor}>")
+    
+    for addr in psutil.net_if_addrs()[ethAdaptor]:
+        if (addr.family == family):
+            printAndLog(f"getAddrOfAdaptor: <{addrType} address> of <{ethAdaptor}> = <{addr.address}>",doPrint=False)
+            return addr.address
+
+    return noAddrFound(f"get the <{addrType} address> of <{ethAdaptor}>")
