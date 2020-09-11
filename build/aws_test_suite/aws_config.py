@@ -28,6 +28,7 @@ class AWSCredentials:
 
     @classmethod
     @log_assertion_fails
+    @debug_wrap
     def from_env_vars(cls):
         """
         Get AWS credentials from environment variables
@@ -48,6 +49,7 @@ class AWSCredentials:
 
     @classmethod
     @log_assertion_fails
+    @debug_wrap
     def from_credentials_file(cls, filepath="~/.aws/credentials"):
         """
         Get AWS credentials from file
@@ -80,6 +82,7 @@ class AWSCredentials:
         return cls([keys["id"], keys["secret"], keys["session"]])
 
     @classmethod
+    @debug_wrap
     def from_interactive(cls):
         """
         Get AWS credentials from interactive session
@@ -102,6 +105,7 @@ class AWSCredentials:
         return cls([key_id, secret, session])
 
     @staticmethod
+    @debug_wrap
     def has_env_vars():
         """
         Checks if necessary environment variables exist for from_env_vars class method
@@ -117,6 +121,7 @@ class AWSCredentials:
         return True
 
     @staticmethod
+    @debug_wrap
     def has_credential_file(filename):
         """
         Checks if suitable file exists for from_credentials_file class method
@@ -128,6 +133,7 @@ class AWSCredentials:
         return os.path.exists(filename)
 
     @staticmethod
+    @debug_wrap
     @log_assertion_fails
     def _check_credentials(cred):
         """
@@ -148,6 +154,7 @@ class AWSCredentials:
                 c, str
             ), f"Element of credentials '{c}' must be a string instance"
 
+    @debug_wrap
     @log_assertion_fails
     def __getitem__(self, index):
         """
@@ -176,6 +183,7 @@ class AWSCredentials:
         return self._credentials
 
     @credentials.setter
+    @debug_wrap
     def credentials(self, cred):
         """
         Setter for the 'credentials' property.
@@ -221,15 +229,18 @@ class AWSConfig:
     """statics for checking and writing an AWS configuration"""
 
     aws_dir = os.path.expanduser("~/.aws")
-
     aws_config_filepath = os.path.join(aws_dir, "config")
 
     @staticmethod
+    @debug_wrap
     def has_config_file():
         """that AWS directory and config is present on the filesystem"""
-        return os.path.exists(AWSConfig.aws_dir) and os.path.exists(AWSConfig.aws_config_filepath)
+        return os.path.exists(AWSConfig.aws_dir) and os.path.exists(
+            AWSConfig.aws_config_filepath
+        )
 
     @staticmethod
+    @debug_wrap
     def check_write_aws_config(region="us-west-2", output="json"):
         """produce a valid configuration in ~/.aws/config, specifying region and output only"""
         # make the directory if not present
@@ -237,8 +248,13 @@ class AWSConfig:
             os.mkdir(AWSConfig.aws_dir)
 
         # if file exists and has contents, warn user
-        if os.path.exists(AWSConfig.aws_config_filepath) and os.path.getsize(AWSConfig.aws_config_filepath) > 0:
-            log.warning(f"AWSConfig writing over non-empty file {AWSConfig.aws_config_filepath}")
+        if (
+            os.path.exists(AWSConfig.aws_config_filepath)
+            and os.path.getsize(AWSConfig.aws_config_filepath) > 0
+        ):
+            log.warning(
+                f"AWSConfig writing over non-empty file {AWSConfig.aws_config_filepath}"
+            )
 
         # write region and output to file
         with open(AWSConfig.aws_config_filepath, "w") as f:
