@@ -439,7 +439,10 @@ def programFpga(bitStream, probeFile, attempts=2):
     # top level params
     vivado = 'vivado_lab'
     sourceCwd = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils')
-    cwd = os.path.join(getSetting('workDir'), 'tmp')
+    cwd = os.path.join(getSetting('workDir'), 'gfe')
+    if not os.path.exists(cwd):
+        tempPath = os.path.join(getSetting('workDir'),'gfe')
+        mkdir (tempPath)
 
     # copy files over to workDir
     cp(os.path.join(sourceCwd, 'tcl', 'prog_bit.tcl'), cwd)
@@ -452,9 +455,8 @@ def programFpga(bitStream, probeFile, attempts=2):
 
     # run tcl files to program the bitstreams, and clean up output
     try:
-        subprocess.check_call([vivado,'-nojournal','-notrace','-nolog','-source','./prog_bit.tcl',
-                '-mode','batch','-tclargs',bitStream, probeFile],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=90,cwd=cwd)
+        shellCommand([vivado,'-nojournal','-notrace','-nolog','-source','./prog_bit.tcl',
+                '-mode','batch','-tclargs',bitStream, probeFile],timeout=90,cwd=cwd)
     except Exception as exc:
         if attempts > 0:
             errorAndLog(f"programFpga: failed to program the FPGA. Trying again...",doPrint=True,exc=exc)
@@ -468,16 +470,17 @@ def clearFlash():
     matches the functionality of gfe-clear-flash
     """
     sourceCwd = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'tcl')
-    cwd = os.path.join(getSetting('workDir'), 'tmp')
+    cwd = os.path.join(getSetting('workDir'), 'gfe')
+    if not os.path.exists(cwd):
+        tempPath = os.path.join(getSetting('workDir'),'gfe')
+        mkdir (tempPath)
 
     # copy files over to workDir
     cp(os.path.join(sourceCwd, 'program_flash'), cwd)
     cp(os.path.join(sourceCwd, 'small.bin'), cwd)
 
-    try:
-        subprocess.check_output(['./program_flash', 'datafile', './small.bin'],stderr=subprocess.PIPE,timeout=90,cwd=cwd)
-    except Exception as exc:
-        errorAndLog(f"clearFlash: failed to clear flash",exc=exc)
+    # "normal" operation exits code 1, so check=False
+    shellCommand(['./program_flash', 'datafile', './small.bin'],timeout=90,check=False,cwd=cwd)
 
 
 @decorate.debugWrap
