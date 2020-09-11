@@ -50,6 +50,6 @@ def terminateAppStack (target):
     if (not isEqSetting('target','aws')):
         target.shutdownAndExit (f"<terminateAppStack> is not implemented for Michigan on <{getSetting('target')}>",exitCode=EXIT.Implementation)
 
-    setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'down') #This will ensure that the researcher don't have access anymore
+    setAdaptorUpDown(getSetting('awsf1TapAdaptorName'), 'down') #This will ensure that the researcher don't have access anymore
     
     return True

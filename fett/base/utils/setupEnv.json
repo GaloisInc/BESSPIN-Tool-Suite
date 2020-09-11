@@ -58,46 +58,46 @@
             "val" : "88:53:48:41:56:45"
         },
         {
-            "name" : "awsIpTarget",
+            "name" : "awsf1IpTarget",
             "type" : "ipAddress",
             "val" : "172.16.0.2"
         },
         {
-            "name" : "awsIpHost",
+            "name" : "awsf1IpHost",
             "type" : "ipAddress",
             "val" : "172.16.0.1"
         },
         {
-            "name" : "awsPortHost",
+            "name" : "awsf1PortHost",
             "type" : "int",
             "min" : 1024,
             "max" : 65535,
             "val" : 1234
         },
         {
-            "name" : "awsPortTarget",
+            "name" : "awsf1PortTarget",
             "type" : "int",
             "min" : 1024,
             "max" : 65535,
             "val" : 1234
         },
         {
-            "name" : "awsTapAdaptorName",
+            "name" : "awsf1TapAdaptorName",
             "type" : "string",
             "val" : "tap0"
         },
         {
-            "name" : "awsTapAdaptorMacAddress",
+            "name" : "awsf1TapAdaptorMacAddress",
             "type" : "macAddress",
             "val" : "8e:6b:35:04:00:00"
         },
         {
-            "name" : "awsNetMaskTarget",
+            "name" : "awsf1NetMaskTarget",
             "type" : "ipAddress",
             "val" : "255.255.255.0"
         },
         {
-            "name" : "awsMacAddrTarget",
+            "name" : "awsf1MacAddrTarget",
             "type" : "macAddress",
             "val" : "00:12:6D:00:00:02"
         },

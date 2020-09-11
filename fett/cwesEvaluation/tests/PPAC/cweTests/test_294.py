@@ -93,7 +93,7 @@ def test_294(target, binTest):
         outLog += "\n[host]: Pinging target successful!\n"
 
         if (isEqSetting('target','aws')):
-            ethAdaptorName = getSetting('awsTapAdaptorName')
+            ethAdaptorName = getSetting('awsf1TapAdaptorName')
         elif (isEqSetting('target','fpga')):
             ethAdaptorName = getSetting('vcu118EthAdaptorName')
         else:
