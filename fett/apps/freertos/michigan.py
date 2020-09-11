@@ -9,7 +9,7 @@ import time, subprocess
 @decorate.debugWrap
 @decorate.timeWrap
 def deploymentTest(target):
-    if (not isEqSetting('target','aws')):
+    if (not isEqSetting('target','awsf1')):
         target.shutdownAndExit (f"<deploymentTest> is not implemented for Michigan on <{getSetting('target')}>",exitCode=EXIT.Implementation)
 
     serverUrl = f"{target.ipTarget}:{getSettingDict('michiganInfo',['httpPort'])}"
@@ -47,7 +47,7 @@ def deploymentTest(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def terminateAppStack (target):
-    if (not isEqSetting('target','aws')):
+    if (not isEqSetting('target','awsf1')):
         target.shutdownAndExit (f"<terminateAppStack> is not implemented for Michigan on <{getSetting('target')}>",exitCode=EXIT.Implementation)
 
     setAdaptorUpDown(getSetting('awsf1TapAdaptorName'), 'down') #This will ensure that the researcher don't have access anymore

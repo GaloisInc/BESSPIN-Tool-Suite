@@ -56,18 +56,18 @@ gfe_unixAwsDefaults = unixDefaults.union({
     ('binarySource',('GFE',)),
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default',)),
-    ('target',('aws',))
+    ('target',('awsf1',))
 })
 
 gfe_unixAllTargets_onprem = gfe_unixOnPremDefaults.union({
     ('processor',('chisel_p2', 'bluespec_p2',)),
-    ('target',('qemu', 'fpga',)),
+    ('target',('qemu', 'vcu118',)),
     ('osImage',('FreeBSD', 'debian',))
 })
 
 gfe_unixDevPR_onprem = gfe_unixOnPremDefaults.union({
     ('processor',('chisel_p2',)),
-    ('target',('fpga',)),
+    ('target',('vcu118',)),
     ('osImage',('FreeBSD', 'debian',))
 })
 
@@ -86,7 +86,7 @@ mit_unixDevPR_aws = unixDefaults.union({
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default',)),
     ('processor',('bluespec_p2',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('osImage',('debian',))
 })
 
@@ -95,7 +95,7 @@ lmco_unixDevPR_aws = unixDefaults.union({
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default',)),
     ('processor',('chisel_p2',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('osImage',('debian',))
 })
 
@@ -104,7 +104,7 @@ sri_cambridge_unixDevPR_aws = unixDefaults.union({
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default','purecap','temporal',)),
     ('processor',('bluespec_p2',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('osImage',('FreeBSD',))
 })
 
@@ -118,7 +118,7 @@ freertosDefaults = commonDefaults.union({
 gfe_freertosAllTargets_onprem = freertosDefaults.union({
     ('binarySource',('GFE',)),
     ('processor',('chisel_p1',)),
-    ('target',('fpga',)),
+    ('target',('vcu118',)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',)),
     ('buildApps',('yes',))
@@ -129,7 +129,7 @@ gfe_freertosDevPR_onprem = gfe_freertosAllTargets_onprem
 gfe_freertosDevPR_aws = freertosDefaults.union({
     ('binarySource',('GFE',)),
     ('processor',('chisel_p1',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('cross-compiler',('GCC','Clang',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
     ('buildApps',('yes',))
@@ -138,7 +138,7 @@ gfe_freertosDevPR_aws = freertosDefaults.union({
 lmco_freertosDevPR_aws = freertosDefaults.union({
     ('binarySource',('LMCO',)),
     ('processor',('chisel_p1',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
     ('buildApps',('yes',))
@@ -147,7 +147,7 @@ lmco_freertosDevPR_aws = freertosDefaults.union({
 michigan_freertosDevPR_aws = freertosDefaults.union({
     ('binarySource',('Michigan',)),
     ('processor',('chisel_p1',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('buildApps',('no',))
 })
 
