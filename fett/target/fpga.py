@@ -207,18 +207,70 @@ class fpgaTarget (Gfe, commonTarget):
 
 #--- END OF CLASS fpgaTarget------------------------------
 
+def programFpga(bitStream, probeFile, attempts=2):
+    """programs the fpga with a given bitstream and probe file
+    matches the functionality of gfe-program-fpga
+    :param bitStream: valid filepath
+    :param probeFile: valid probe file
+    """
+    # top level params
+    vivado = 'vivado_lab'
+    sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils')
+    cwd = os.path.join(getSetting('workDir'), 'gfe')
+
+    # copy files over to workDir
+    cp(os.path.join(sourceDir, 'tcl', 'prog_bit.tcl'), cwd)
+
+    # check that the input files exist
+    if not os.path.exists(bitStream):
+        logAndExit(f"programFpga: bitstream file {bitStream} does not exist")
+    if not os.path.exists(probeFile):
+        logAndExit(f"programFpga: probe file {probeFile} does not exist")
+
+    # run tcl files to program the bitstreams, and clean up output
+    retProc = shellCommand([vivado,'-nojournal','-notrace','-nolog','-source','./prog_bit.tcl',
+            '-mode','batch','-tclargs',bitStream, probeFile],timeout=90,cwd=cwd,check=False)
+    if retProc.returncode != 0:
+        if attempts > 0:
+            errorAndLog(f"programFpga: failed to program the FPGA. Trying again...",doPrint=True)
+            programFpga(bitStream, probeFile, attempts=attempts-1)
+        else:
+            logAndExit(f"programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
+
+
+def clearFlash(attempts=2):
+    """ clear flash memory on Fpga
+    matches the functionality of gfe-clear-flash
+    """
+    sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'tcl')
+    cwd = os.path.join(getSetting('workDir'), 'gfe')
+
+    # copy files over to workDir
+    cp(os.path.join(sourceDir, 'program_flash'), cwd)
+    cp(os.path.join(sourceDir, 'small.bin'), cwd)
+
+    # "normal" operation exits code 1, so check=False
+    retProc = shellCommand(['./program_flash', 'datafile', './small.bin'],timeout=90,check=False,cwd=cwd)
+    if retProc.returncode != 1:
+        if attempts > 0:
+            errorAndLog(f"clearFlash: failed to clear flash. Trying again...",doPrint=True)
+            clearFlash(attempts=attempts-1)
+        else:
+            logAndExit(f"programFpga: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
+
 @decorate.debugWrap
 @decorate.timeWrap
 def programBitfile (doPrint=True):
     printAndLog("Preparing the FPGA environment...",doPrint=doPrint)
     clearProcesses()
     gfeOut = ftOpenFile(os.path.join(getSetting('workDir'),'gfe.out'),'a')
+    gfeDir = os.path.join(getSetting('workDir'), 'gfe')
+    if not os.path.exists(gfeDir):
+        mkdir (gfeDir)
+
     printAndLog("Clearing the flash...",doPrint=False)
     gfeOut.write("\n\ngfe-clear-flash\n")
-    try:
-        subprocess.check_call(['gfe-clear-flash'],stdout=gfeOut,stderr=gfeOut,timeout=90)
-    except Exception as exc:
-        errorAndLog(f"<gfe-clear-flash> has failed. Will continue anyway.",doPrint=False,exc=exc)
+    clearFlash()
 
     bitAndProbefiles = selectBitAndProbeFiles()
     for xFile in bitAndProbefiles:
@@ -237,20 +289,9 @@ def programBitfile (doPrint=True):
     except Exception as exc:
         logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
 
-    printAndLog("Programming the bitfile...",doPrint=False)
-    nAttempts = 2
-    for iAttempt in range(nAttempts):
-        gfeOut.write("\n\ngfe-program-fpga\n")
-        clearProcesses()
-        try:
-            subprocess.check_call(['gfe-program-fpga', getSetting('processor'), '--bitstream', bitAndProbefiles[0], '--probe-file', bitAndProbefiles[1]],stdout=gfeOut,stderr=subprocess.STDOUT,timeout=90)
-            printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})",doPrint=doPrint)
-            break
-        except Exception as exc:
-            if (iAttempt < nAttempts-1):
-                errorAndLog(f"Failed to program the FPGA. Trying again...",doPrint=True,exc=exc)
-            else:
-                logAndExit(f"Failed to program the FPGA.",exc=exc,exitCode=EXIT.Run)
+    printAndLog("Programming the bitfile...")
+    programFpga(*bitAndProbefiles)
+    printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})")
 
     gfeOut.close()
     printAndLog("FPGA was programmed successfully!",doPrint=doPrint)
