@@ -65,7 +65,7 @@ def main(xArgs):
         datefmt="%I:%M:%S %p",
         level=logLevel,
     )
-    printAndLog(f"Fett CI Started")
+    printAndLog(f"Fett CI DEBUG Started")
 
     outDir = "/tmp"
     # Check runType
