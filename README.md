@@ -15,40 +15,25 @@ nix-shell
 
 * For `nix-shell` issues, please check the instructions in [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment).   
 
-* Regarding the local `fpga` target:   
+* Regarding local `fpga` target:   
     1. A GFE SoC on a Xilinx VCU118 FPGA should be accessible, in
   addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
-    2. The ethernet adaptor connected to the FPGA needs to be reset before each run. This requires `sudo` privileges. Thus, the user has two   options: either entering the sudo password when requested by the
-  tool (the request explicitly mentions that it is for adaptor reset),
-  or by removing the password requirement from resetting that
-  particular adaptor.  This can be done by adding the following lines
-  in the sudoers file (accessed by `sudo visudo`):
-    ```bash
-        Cmnd_Alias IP_FLUSH = <path-to-ip>/ip addr flush dev <ethernet-adaptor-name>
-        Cmnd_Alias IP_UP = <path-to-ip>/ip link set <ethernet-adaptor-name> up
-        Cmnd_Alias IP_DOWN = <path-to-ip>/ip link set <ethernet-adaptor-name> down
-        Cmnd_Alias IP_ADD_ADDR = <path-to-ip>/ip addr add <IP_ADDR/24> dev <ethernet-adaptor-name>
-        ALL ALL=NOPASSWD: IP_FLUSH, IP_UP, IP_DOWN, IP_ADD_ADDR
-    ```
-
-    - In order to simplify this for sudoers, you may just allow any sudo member to execute the `ip` command
-      without password by adding the following:
-    ```bash
-        %sudo ALL=NOPASSWD: <path-to-ip>/ip
-    ```
-  
-  - Note that the `<ethernet-adaptor-name>` changes from a system to
+    2. Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to
       another. Please review the [FPGA host network configuration setup
       instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md)
-      for more details about the adaptors and IP settings.  In case you
+      for more details about the adaptors and IP settings. In case you
       intend to use a different setup, please change
-      [setupEnvGlobal.sh](scripts/setupEnvGlobal.sh) accordingly.
+      [setupEnv.json](fett/base/utils/setupEnv.json) accordingly.
+
+* Sudo privileges:
+  - Note that some parts of the tool might need sudo privileges, especially for network setup. If you do not wish to be attentive to the tool, you may just allow any sudo member to execute a group of commands without password by adding the following to the sudoers file:
+  ```bash
+    %sudo ALL=NOPASSWD: <path>/ip, <path>/sysctl, <path>/iptables, <path>/pkill, <path>/kill
+  ```
 
 ### AWS Setup
 
-To utilize its FireSim and Connectal integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of the FireSim, Connectal, and FETT projects. The AMI is referenced with:
-
-**AMI ID: `ami-06eb7aca685175332`**
+To utilize its FireSim and Connectal integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of the FireSim, Connectal, and FETT projects. The most recent AMI is referenced ID is in the newest release tag.
 
 #### Contents
 
