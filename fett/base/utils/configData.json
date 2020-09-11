@@ -74,18 +74,6 @@
             "choices" : [ "default", "purecap", "temporal" ]
         },
         {
-            "name" : "qemuNtkPortRangeStart",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
-            "name" : "qemuNtkPortRangeEnd",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
             "name" : "netbootPortRangeStart",
             "type" : "int",
             "min" : 1024,
