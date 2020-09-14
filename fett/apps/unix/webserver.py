@@ -45,8 +45,8 @@ def install (target):
     elif isEqSetting('osImage','FreeBSD'):
         target.runCommand("install -d /usr/local/etc/rc.d",tee=appLog)
         target.runCommand("install nginx.sh /usr/local/etc/rc.d/nginx", erroneousContents="install:",tee=appLog)
-        # connectal FreeBSD is slow with these commands
-        nginxTimeout = 60 if not (isEqSetting('target', 'awsf1') and isEqSetting('pvAWS', 'connectal')) else 120
+        # connectal and vcu118 FreeBSD are slow with these commands. Easier to just bump it up for all
+        nginxTimeout = 120
         target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog, timeout=nginxTimeout)
         target.runCommand("service nginx start", erroneousContents=["failed"], tee=appLog, timeout=nginxTimeout)
     else:
