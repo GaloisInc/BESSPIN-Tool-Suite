@@ -5,7 +5,7 @@
       "bluespec": {
         "name": "elfLoader",
         "JTAG": { "timeout" : { "elfLoad" : 650, "boot" : 600 } },
-        "else": { "timeout" : { "boot" : 400 } }
+        "else": { "timeout" : { "boot" : 600 } }
       },
       "chisel": {
         "name": "elfLoader",
@@ -27,7 +27,7 @@
       "bluespec": {
         "name": "elfLoader",
         "JTAG": { "timeout" : { "elfLoad" : 1200, "boot" : 500 } },
-        "else": { "timeout" : { "boot" : 700 } }
+        "else": { "timeout" : { "boot" : 800 } }
       },
       "chisel": {
         "name": "elfLoader",
