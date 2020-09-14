@@ -192,6 +192,8 @@ def launchFett ():
             sendTimeout = 20*len(getSetting('vulClasses'))
             if (('bufferErrors' in getSetting('vulClasses')) and (getSettingDict('bufferErrors','nTests')>100)):
                 sendTimeout += 20*int(getSettingDict('bufferErrors','nTests')/100) #add 20 sec for each extra 100 (ceiled)
+            if (isEqSetting('target','vcu118') and isEqSetting('procFlavor','bluespec')):
+                sendTimeout *= 2
             runTests(xTarget, sendFiles=isEnabled('sendTarballToTarget'), 
                 timeout=sendTimeout)
         else:

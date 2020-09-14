@@ -86,7 +86,7 @@ def install (target):
         target.runCommand("systemctl enable bvrs.service", timeout=120, tee=appLog)
         target.runCommand("systemctl start bvrs.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
     elif isEqSetting('osImage', 'FreeBSD'):
-        serviceTimeout = 60 if not (isEqSetting('target', 'awsf1') and isEqSetting('pvAWS', 'connectal')) else 120
+        serviceTimeout = 120
         target.runCommand("install bvrs.sh /usr/local/etc/rc.d/bvrs", erroneousContents="install:",tee=appLog)
         target.runCommand("service bvrs enable", erroneousContents="bvrs does not exist",tee=appLog,timeout=serviceTimeout)
         target.runCommand("service bvrs start", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
