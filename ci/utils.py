@@ -306,6 +306,20 @@ def prepareArtifact(
         print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
 
 def getFettTargetAMI (repoDir):
+    """
+    This functions tries to get the AMI using 4 different methods:
+    1. (Recommended): Using boto3
+    2. Using pygit2 since the tags contain an AMI ID
+    3. Using `git tag` as a shell command
+    4. Using the hardcoded value in `$repo/ci/configs.py`
+    """
+
+    # Main method
+    try:
+        raise NotImplemented
+    except Exception as exc:
+        warnAndLog (message="Failed to obtain the most recent AMI from AWS. Falling back to <pygit2>.",exc=exc)
+
     def getAMIfromRefs (listRefs, source):
         maxVersion = (0, None)
         for ref in listRefs:
@@ -324,6 +338,7 @@ def getFettTargetAMI (repoDir):
             raise Exception("getFettTargetAMI: Failed to find the newest version.")
         return '-'.join(maxVersion[1][1:])
 
+    #Fall back to using "pygit2"
     try:
         from pygit2 import Repository
         repo = Repository(repoDir)
@@ -336,4 +351,10 @@ def getFettTargetAMI (repoDir):
         allRefs = subprocess.getoutput(f"cd {repoDir} && git tag").splitlines()
         return getAMIfromRefs (allRefs, "shell")
     except Exception as exc:
-        exitFettCi(message=f"Failed to get the AMI using <git tag> in shell.", exc=exc)
+        warnAndLog(message=f"Failed to get the AMI using <git tag> in shell. Falling back to the hardcoded backup value.", exc=exc)
+
+    #Last resort: the hardcoded value
+    try:
+        return backupFettAMI
+    except Exception as exc:
+        exitFettCi(message=f"Failed to get the hardcoded AMI ID.", exc=exc)
