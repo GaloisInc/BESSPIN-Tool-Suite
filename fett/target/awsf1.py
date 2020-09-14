@@ -118,7 +118,7 @@ class firesimTarget(fpgaTarget, commonTarget):
 
         if (isEqSetting('mode','evaluateSecurityTests')):
             self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
-            self.gfeStart(getSetting('osImageElf'))
+            self.fpgaStart(getSetting('osImageElf'))
         
         self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
 
@@ -163,7 +163,7 @@ class firesimTarget(fpgaTarget, commonTarget):
     @decorate.debugWrap
     def targetTearDown(self):
         if (isEqSetting('mode','evaluateSecurityTests')):
-            self.gfeTearDown()
+            self.fpgaTearDown()
 
         if (self.process.isalive()):
             # When executing the firesim command, we run it with `stty intr ^]` which changes
