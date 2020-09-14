@@ -12,7 +12,8 @@ ifeq ($(TARGET),VCU118)
 else
 ifeq ($(TARGET),AWSF1)
 	FETT_DEFS += -DtestgenAWS -DfettOnAWS #for backward compatibility
-endif 
+endif
+endif
 
 CFLAGS := $(ARCH_ABI) -Wall -O0 $(FETT_DEFS)
 
