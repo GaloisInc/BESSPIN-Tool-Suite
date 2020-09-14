@@ -287,9 +287,9 @@ def programBitfile (doPrint=True):
     except Exception as exc:
         logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
 
-    printAndLog("Programming the bitfile...")
+    printAndLog("Programming the bitfile...",doPrint=doPrint)
     programFpga(*bitAndProbefiles)
-    printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})")
+    printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})",doPrint=doPrint)
 
     printAndLog("FPGA was programmed successfully!",doPrint=doPrint)
 
