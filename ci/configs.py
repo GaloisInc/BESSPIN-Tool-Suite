@@ -6,7 +6,10 @@
     Each tuple represents one setting and its possible values.
     Each "values" should be a tuple. Please note that a 1-element tuple should be: ('element',)
 """
-backupFettAMI = 'ami-07fc3f8f4525f1c94' # Please update occasionally. Used by ./utils.getFettTargetAMI() instead of erring.
+backupFettAMI = { 'ImageId' : 'ami-07fc3f8f4525f1c94', 
+                'CreationDate' : '2020-09-08T16:28:43.000Z',
+                'OwnerId' : '363527286999'} 
+# Please update occasionally. Used by ./utils.getFettTargetAMI() instead of erring.
 
 ciAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
 ciAWSbucket = 'ssith-fett-target-ci-develop'

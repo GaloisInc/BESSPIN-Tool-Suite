@@ -316,7 +316,14 @@ def getFettTargetAMI (repoDir):
 
     # Main method
     try:
-        raise NotImplemented
+        import boto3
+        ec2Client = boto3.client('ec2', region_name='us-west-2')
+        allOwnerImages = ec2Client.describe_images(Owners=[backupFettAMI['OwnerId']])
+        mostRecentAMI = backupFettAMI #Let's find newer AMIs
+        for image in allOwnerImages['Images']:
+            if (image['CreationDate'] > mostRecentAMI['CreationDate']):
+                mostRecentAMI = image
+        return mostRecentAMI['ImageId']
     except Exception as exc:
         warnAndLog (message="Failed to obtain the most recent AMI from AWS. Falling back to <pygit2>.",exc=exc)
 
@@ -355,6 +362,6 @@ def getFettTargetAMI (repoDir):
 
     #Last resort: the hardcoded value
     try:
-        return backupFettAMI
+        return backupFettAMI['ImageId']
     except Exception as exc:
         exitFettCi(message=f"Failed to get the hardcoded AMI ID.", exc=exc)
