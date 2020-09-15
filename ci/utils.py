@@ -173,9 +173,10 @@ def prepareArtifact(
     targetLogs=True,
 ):
     # decide on the folder's name
-    artifactsPath = (
-        f"{os.path.splitext(os.path.basename(configFile))[0]}-{artifactSuffix}"
-    )
+    artifactsPath = os.path.splitext(os.path.basename(configFile))[0]
+    if (entrypoint == 'OnPrem'): 
+        artifactsPath += f"-{artifactSuffix}"
+
     if os.path.isdir(artifactsPath):  # already exists, add the date
         artifactsPath += f"-{int(time.time())}"
 
@@ -272,11 +273,11 @@ def prepareArtifact(
         # Upload the folder to S3
         if entrypoint == "AWS":
             awsModule.uploadToS3(
-                ciAWSbucket, exitFettCi, tarFileName, f"fett-target/ci/artifacts/",
+                ciAWSbucket, exitFettCi, tarFileName, os.path.join('fett-target','ci','artifacts',jobID),
             )
         else:  # AWS Testing
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, tarFileName, f"artifacts/",
+                ciAWSbucketTesting, exitFettCi, tarFileName, os.path.join('artifacts',jobID),
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
