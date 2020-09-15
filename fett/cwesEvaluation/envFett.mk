@@ -18,6 +18,6 @@ else
 	INCLUDES += -I$(INC_FETT_APPS)
 endif
 
-ifeq ($(BSP),aws)
+ifeq ($(BSP),awsf1)
 	CFLAGS += -DFETT_AWS
 endif

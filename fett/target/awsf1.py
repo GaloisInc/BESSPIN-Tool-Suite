@@ -1,16 +1,17 @@
 import psutil, getpass
 from fett.target.common import *
-from fett.target import fpga
+from fett.target.fpga import fpgaTarget
 
-class firesimTarget(commonTarget):
+class firesimTarget(fpgaTarget, commonTarget):
     def __init__(self):
 
-        super().__init__()
+        commonTarget.__init__(self)
+        fpgaTarget.__init__(self)
 
-        self.ipTarget = getSetting('awsIpTarget')
-        self.ipHost = getSetting('awsIpHost')  
-        self.portTarget = getSetting('awsPortTarget')
-        self.portHost = getSetting('awsPortHost')
+        self.ipTarget = getSetting('awsf1IpTarget')
+        self.ipHost = getSetting('awsf1IpHost')  
+        self.portTarget = getSetting('awsf1PortTarget')
+        self.portHost = getSetting('awsf1PortHost')
 
         self.switch0Proc = None
         self.fswitchOut = None
@@ -22,15 +23,14 @@ class firesimTarget(commonTarget):
         self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
-        self.readGdbOutputUnix = 0 #beginning of file
-
     @decorate.debugWrap
     @decorate.timeWrap
-    def boot(self,endsWith="login:",timeout=90):
+    def boot(self,endsWith="login:",timeoutDict={"boot":90}):
         if (getSetting('osImage') not in ['debian','FreeRTOS']):
             logAndExit (f"<firesimTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
         awsFiresimSimPath = os.path.join(getSetting('firesimPath'), 'sim')
+        timeout = self.parseBootTimeoutDict (timeoutDict)
 
         # 0. Ensure the env is clear
         self.noNonsenseFiresim()
@@ -87,7 +87,7 @@ class firesimTarget(commonTarget):
             '+debug_enable' if (isEqSetting('mode','evaluateSecurityTests')) else '\b',
             '+slotid=0',
             '+profile-interval=-1',
-            f"+macaddr0={getSetting('awsMacAddrTarget')}",
+            f"+macaddr0={getSetting('awsf1MacAddrTarget')}",
             f"+blkdev0={getSetting('osImageImg')}",
             f"+niclog0={os.path.join(getSetting('workDir'),'niclog0.out')}",
             f"+blkdev-log0={os.path.join(getSetting('workDir'),'blkdev-log0.out')}",
@@ -117,61 +117,15 @@ class firesimTarget(commonTarget):
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         if (isEqSetting('mode','evaluateSecurityTests')):
-            def setupGdbCustomScoring ():
-                for funcCheckpoint in getSettingDict('customizedScoring','funcCheckpoints'):
-                    cmdOut = self.runGDBcommand (f"dprintf {funcCheckpoint},\"<GDB-CHECKPOINT>:{funcCheckpoint}\\n\"",
-                                            errorMessage=f"setupGdbCustomScoring: Failed to insert GDB checkpoint at <{funcCheckpoint}> commands.",
-                                            readCmdOut=True)
-                    if ("not defined" in cmdOut):
-                        warnAndLog (f"setupGdbCustomScoring: Encountered <not defined> while inserting a checkpoint at {funcCheckpoint}."
-                                    f"See <{self.fGdbOut.name}> for more details.")
-                if (getSettingDict('customizedScoring','memAddress') != -1):
-                    memAddress = getSettingDict('customizedScoring','memAddress')
-                    cmdOut = self.runGDBcommand (f"display/x * (int *) 0x{memAddress:08x}",
-                                            errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb memory display command.",
-                                            readCmdOut=True)
-                    if (('No symbol' in cmdOut) or ('warning' in cmdOut)):
-                        warnAndLog (f"setupGdbCustomScoring: Encountered <No symbol> or <warning> while reading 0x{memAddress:08x}."
-                                    f"See <{self.fGdbOut.name}> for more details.")
-                    else:
-                        self.runGDBcommand (f"watch * (int *) 0x{memAddress:08x}",
-                                        errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb watch command.")
-                        setCmd = f"set * (int *) 0x{memAddress:08x} = {getSettingDict('customizedScoring','memResetValue')}"
-                        self.runGDBcommand (f"commands\n{setCmd}\nc\nend",
-                                        errorMessage=f"setupGdbCustomScoring: Failed to execute the gdb set/watch command.")
-            
             self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
-            self.fOpenOcdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'),'wb')
-            self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'),'gdb.out'),'wb')
-            openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils','openocd.cfg')
-
-            try:
-                self.openocdProcess = subprocess.Popen(['openocd', '--file', openocdCfg],stdout=self.fOpenOcdOut,stderr=self.fOpenOcdOut)
-            except Exception as exc:
-                self.shutdownAndExit(f"boot: Failed to start the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
-
-            try:
-                self.gdbProcess = pexpect.spawn(f'riscv64-unknown-elf-gdb {getSetting("osImageElf")}',
-                                                logfile=self.fGdbOut,timeout=30,echo=False)
-            except Exception as exc:
-                self.shutdownAndExit(f"boot: Failed to spawn the gdb process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
-
-            self.runGDBcommand (f"target remote localhost:{getSetting('gdbRemotePort')}",
-                            errorMessage=f"boot: Failed to connect the gdb to openocd.")
-            self.runGDBcommand ('set $pc=0xC0000000')
-            if (isEnabled('useCustomScoring')):
-                setupGdbCustomScoring()
-            try:
-                self.gdbProcess.sendline('continue')
-            except Exception as exc:
-                self.shutdownAndExit(f"boot: Failed to send <continue> to GDB.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.fpgaStart(getSetting('osImageElf'))
         
         self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
 
         # The tap needs to be turned up AFTER booting
         if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
             time.sleep(20)
-        setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
+        setAdaptorUpDown(getSetting('awsf1TapAdaptorName'), 'up')
 
     @decorate.debugWrap
     def interact(self):
@@ -209,55 +163,7 @@ class firesimTarget(commonTarget):
     @decorate.debugWrap
     def targetTearDown(self):
         if (isEqSetting('mode','evaluateSecurityTests')):
-            self.runGDBcommand ('\x03', 
-                                exitOnError=False,
-                                errorMessage="targetTearDown: Failed to interrupt the gdb process.")
-            
-            # Analyze gdb output for FreeRTOS
-            if (isEqSetting('osImage','FreeRTOS')):
-                self.gdbOutLines = ftReadLines(self.fGdbOut.name)
-                relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
-                testLogFile = getSetting("currentTest")[3]
-                sigFound = None
-                for xSig in relvSigs:
-                    if (matchExprInLines(rf"^.*{xSig}.*$",self.gdbOutLines)):
-                        sigFound = xSig
-                        break
-                # Fetch relevant registers values
-                if (sigFound):
-                    relvRegs = {'mcause':'Unknown', 'mepc':'Unknown'}
-                    for relvReg in relvRegs:
-                        try:
-                            self.gdbProcess.sendline(f"p/x ${relvReg}")
-                            self.gdbProcess.expect(r"\$\d+\s*=\s*0x[\dabcdef]+", timeout=5)
-                            regpxStr = str(self.gdbProcess.after,'utf-8')
-                            regpxVal = regpxStr.split('=')[-1].strip()
-                            relvRegs[relvReg] = regpxVal
-                        except Exception as exc:
-                            warnAndLog (f"targetTearDown: Failed to fetch the value of ${relvReg}.",exc=exc,doPrint=False) 
-                    regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
-                    testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
-
-            # exit gdb and openocd
-            self.runGDBcommand ('detach', 
-                                exitOnError=False,
-                                errorMessage="targetTearDown: Failed to detach the target in gdb.")
-
-            try:
-                self.openocdProcess.kill() # No need for fancier ways as we use Popen with shell=False
-            except Exception as exc:
-                warnAndLog("targetTearDown: Failed to kill the openocd process.",doPrint=False,exc=exc)
-
-            self.runGDBcommand ('quit', endsWith=pexpect.EOF,
-                                exitOnError=False,
-                                errorMessage="targetTearDown: Failed to exit the gdb process.")
-
-            if (self.gdbProcess.isalive()):
-                try:
-                    subprocess.check_call(['sudo', 'kill', '-9', f"{os.getpgid(self.gdbProcess.pid)}"],
-                                        stdout=self.fGdbOut, stderr=self.fGdbOut)
-                except Exception as exc:
-                    warnAndLog("targetTearDown: Failed to kill the gdb process.",doPrint=False,exc=exc)
+            self.fpgaTearDown()
 
         if (self.process.isalive()):
             # When executing the firesim command, we run it with `stty intr ^]` which changes
@@ -274,54 +180,12 @@ class firesimTarget(commonTarget):
         self.noNonsenseFiresim()
 
         filesToClose = [self.fswitchOut, self.fTtyOut]
-        if (isEqSetting('mode','evaluateSecurityTests')):
-            filesToClose += [self.fOpenOcdOut, self.fGdbOut]
         for xFile in filesToClose:
             try:
                 xFile.close()
             except Exception as exc:
                 warnAndLog(f"targetTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
         return True
-
-    @decorate.debugWrap
-    @decorate.timeWrap
-    def runGDBcommand (self,command,endsWith=r"\(gdb\)",exitOnError=True,errorMessage=None,readCmdOut=False,timeout=5):
-        if (not errorMessage):
-            errorMessage = f"runGDBcommand: Failed to run <{command}>."
-
-        try:
-            self.gdbProcess.sendline(command)
-            self.gdbProcess.expect(endsWith,timeout=timeout)
-        except Exception as exc:
-            if (exitOnError):
-                self.shutdownAndExit(errorMessage,overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
-            else:
-                warnAndLog(errorMessage,doPrint=False,exc=exc)
-
-        if (readCmdOut):
-            try:
-                return str(self.gdbProcess.before,'utf-8')
-            except Exception as exc:
-                warnAndLog(f"runGDBcommand: Failed to read the cmdOut of <{command}>.",doPrint=False,exc=exc)
-                return ''
-
-    @decorate.debugWrap
-    @decorate.timeWrap
-    def getGdbOutput(self):
-        gdbOut = "\n~~~GDB LOGGING~~~\n"
-        try:
-            gdbLines = '\n'.join(ftReadLines(self.fGdbOut.name, "r"))
-            if (self.readGdbOutputUnix == 0): #We don't want the GDB out before the string "Continuing."
-                gdbOut += gdbLines[gdbLines.find("Continuing."):]
-            elif (self.readGdbOutputUnix < len(gdbLines)): #Only the new lines
-                gdbOut += gdbLines[self.readGdbOutputUnix:]
-            self.readGdbOutputUnix = len(gdbLines) #move the cursor
-        except Exception as exc:
-            gdbOut += "<Warning-No-Logs>"
-            warnAndLog("<getGdbOutput> failed to obtain the GDB output.",
-                        exc=exc)
-        gdbOut += "\n~~~~~~~~~~~~~~~~~\n"
-        return gdbOut
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -358,10 +222,10 @@ class firesimTarget(commonTarget):
 class connectalTarget(commonTarget):
     def __init__(self):
         super().__init__()
-        self.ipTarget = getSetting('awsIpTarget')
-        self.ipHost = getSetting('awsIpHost')
-        self.portTarget = getSetting('awsPortTarget')
-        self.portHost = getSetting('awsPortHost')
+        self.ipTarget = getSetting('awsf1IpTarget')
+        self.ipHost = getSetting('awsf1IpHost')
+        self.portTarget = getSetting('awsf1PortTarget')
+        self.portHost = getSetting('awsf1PortHost')
         # Important for the Web Server
         self.httpPortTarget  = getSetting('HTTPPortTarget')
         self.httpsPortTarget = getSetting('HTTPSPortTarget')
@@ -376,14 +240,15 @@ class connectalTarget(commonTarget):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def boot(self,endsWith="login:",timeout=90):
+    def boot(self,endsWith="login:",timeoutDict={"boot":90}):
         if getSetting('osImage') not in ['debian', 'FreeBSD']:
             logAndExit (f"<connectalTarget.boot> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
 
         awsConnectalHostPath = os.path.join(getSetting('connectalPath'), 'sim')
+        timeout = self.parseBootTimeoutDict (timeoutDict)
 
         extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
-        tapName = getSetting('awsTapAdaptorName')
+        tapName = getSetting('awsf1TapAdaptorName')
         connectalCommand = ' '.join([
             os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
             f"--dtb={getSetting('osImageDtb')}",
@@ -392,7 +257,7 @@ class connectalTarget(commonTarget):
             f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else []) + [
             f"--tun={tapName}"] + extraArgs)
 
-        printAndLog(f"<aws.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
+        printAndLog(f"<awsf1.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
 
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
 
@@ -406,7 +271,7 @@ class connectalTarget(commonTarget):
             self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
          # The tap needs to be turned up AFTER booting
-        setAdaptorUpDown(getSetting('awsTapAdaptorName'), 'up')
+        setAdaptorUpDown(getSetting('awsf1TapAdaptorName'), 'up')
 
     def interact(self):
         printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
@@ -426,11 +291,11 @@ class connectalTarget(commonTarget):
             if (not self.restartMode): #Was already done in the first start
                 self.runCommand ("ifconfig vtnet0 up")
                 self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24")
-                self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsMacAddrTarget')}")
+                self.runCommand (f"ifconfig vtnet0 ether {getSetting('awsf1MacAddrTarget')}")
                 self.runCommand(f"route add default {self.ipHost}")
             
                 # For future restart
-                self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsMacAddrTarget')}\"' >> /etc/rc.conf")
+                self.runCommand (f"echo 'ifconfig_vtnet0=\"ether {getSetting('awsf1MacAddrTarget')}\"' >> /etc/rc.conf")
                 self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
                 self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
         else:
@@ -457,14 +322,14 @@ class connectalTarget(commonTarget):
 
 @decorate.debugWrap
 def configTapAdaptor():
-    tapAdaptor = getSetting('awsTapAdaptorName')
+    tapAdaptor = getSetting('awsf1TapAdaptorName')
 
     #get main adaptor and its main IP
     gotMainAdaptorInfo = False
     for xAdaptor in psutil.net_if_addrs():
         if (xAdaptor not in ['lo', tapAdaptor]):
-            setSetting('awsMainAdaptorName',xAdaptor)
-            setSetting('awsMainAdaptorIP',fpga.getAddrOfAdaptor(xAdaptor,'IP'))
+            setSetting('awsf1MainAdaptorName',xAdaptor)
+            setSetting('awsf1MainAdaptorIP',getAddrOfAdaptor(xAdaptor,'IP'))
             gotMainAdaptorInfo = True
             break
     if (not gotMainAdaptorInfo):
@@ -482,42 +347,42 @@ def configTapAdaptor():
             ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
             # Add productionTargetIp to main adaptor
             ['ip', 'addr', 'add', getSetting('productionTargetIp'), 'dev',
-             getSetting('awsMainAdaptorName')],
+             getSetting('awsf1MainAdaptorName')],
             # Reject mainIP:uartFwdPort if coming from FPGA
             ['iptables',
              '-A', 'INPUT',
              '-i', tapAdaptor,
              '-p', 'tcp',
              '--dport', str(getSetting('uartFwdPort')),
-             '-d', getSetting('awsMainAdaptorIP'),
-             '-s', getSetting('awsIpTarget'),
+             '-d', getSetting('awsf1MainAdaptorIP'),
+             '-s', getSetting('awsf1IpTarget'),
              '-j', 'REJECT'],
             # Route incoming to productionTargetIp:uartFwdPort to mainIP
             ['iptables',
              '-t', 'nat',
              '-A', 'PREROUTING',
-             '-i', getSetting('awsMainAdaptorName'),
+             '-i', getSetting('awsf1MainAdaptorName'),
              '-p', 'tcp',
              '--dport', str(getSetting('uartFwdPort')),
              '-d', getSetting('productionTargetIp'),
              '-j', 'DNAT',
-             '--to-destination', getSetting('awsMainAdaptorIP')],
+             '--to-destination', getSetting('awsf1MainAdaptorIP')],
             # Route packets from FPGA to productionTargetIp
             ['iptables',
              '-t', 'nat',
              '-A', 'POSTROUTING',
-             '-o', getSetting('awsMainAdaptorName'),
-             '-s', getSetting('awsIpTarget'),
+             '-o', getSetting('awsf1MainAdaptorName'),
+             '-s', getSetting('awsf1IpTarget'),
              '-j', 'SNAT',
              '--to-source', getSetting('productionTargetIp')],
             # Route packets from productionTargetIp to FPGA
             ['iptables',
              '-t', 'nat',
              '-A', 'PREROUTING',
-             '-i', getSetting('awsMainAdaptorName'),
+             '-i', getSetting('awsf1MainAdaptorName'),
              '-d', getSetting('productionTargetIp'),
              '-j', 'DNAT',
-             '--to-destination', getSetting('awsIpTarget')],
+             '--to-destination', getSetting('awsf1IpTarget')],
             # Allow forwarding from productionTargetIp
             ['iptables',
              '-A', 'FORWARD',
@@ -526,15 +391,15 @@ def configTapAdaptor():
             # Allow forwarding to FPGA
             ['iptables',
              '-A', 'FORWARD',
-             '-d', getSetting('awsIpTarget'),
+             '-d', getSetting('awsf1IpTarget'),
              '-j', 'ACCEPT']
         ],
         'refresh' : [
             ['ip', 'addr', 'flush', 'dev', tapAdaptor]
         ],
         'config' : [
-            ['ip','addr','add',f"{getSetting('awsIpHost')}/24",'dev',tapAdaptor],
-            ['ifconfig', tapAdaptor, 'hw', 'ether', getSetting('awsTapAdaptorMacAddress')],
+            ['ip','addr','add',f"{getSetting('awsf1IpHost')}/24",'dev',tapAdaptor],
+            ['ifconfig', tapAdaptor, 'hw', 'ether', getSetting('awsf1TapAdaptorMacAddress')],
         ],
         'down' : [
             ['ip','link','set', tapAdaptor, 'down'],
@@ -548,7 +413,7 @@ def configTapAdaptor():
                 time.sleep(1)
 
     # Check if the adaptor exists
-    if (fpga.getAddrOfAdaptor(tapAdaptor,'MAC',exitIfNoAddr=False) == 'NotAnAddress'):
+    if (getAddrOfAdaptor(tapAdaptor,'MAC',exitIfNoAddr=False) == 'NotAnAddress'):
         printAndLog (f"configTapAdaptor: <{tapAdaptor}> was never configured. Configuring...",doPrint=False)
         configCommands = ['create','config','natSetup']
         if (isEqSetting('pvAWS','firesim')):
@@ -559,16 +424,16 @@ def configTapAdaptor():
         execSudoCommands(['refresh','config'])
 
     # Check configuration
-    if (fpga.getAddrOfAdaptor(tapAdaptor,'IP') != getSetting('awsIpHost')):
-        logAndExit(f"configTapAdaptor: The <{tapAdaptor}> IP does not match <{getSetting('awsIpHost')}>",exitCode=EXIT.Network)
-    if (fpga.getAddrOfAdaptor(tapAdaptor,'MAC') != getSetting('awsTapAdaptorMacAddress')):
-        logAndExit(f"configTapAdaptor: The <{tapAdaptor}> MAC address does not match <{getSetting('awsTapAdaptorMacAddress')}>",exitCode=EXIT.Network)
+    if (getAddrOfAdaptor(tapAdaptor,'IP') != getSetting('awsf1IpHost')):
+        logAndExit(f"configTapAdaptor: The <{tapAdaptor}> IP does not match <{getSetting('awsf1IpHost')}>",exitCode=EXIT.Network)
+    if (getAddrOfAdaptor(tapAdaptor,'MAC') != getSetting('awsf1TapAdaptorMacAddress')):
+        logAndExit(f"configTapAdaptor: The <{tapAdaptor}> MAC address does not match <{getSetting('awsf1TapAdaptorMacAddress')}>",exitCode=EXIT.Network)
 
     if (isEqSetting('pvAWS','firesim')):
         # The adaptor needs to be DOWN for firesim
         execSudoCommands(['down'])
 
-    printAndLog (f"aws.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=False)
+    printAndLog (f"awsf1.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=False)
 
 @decorate.debugWrap
 def programAFI(doPrint=True):
@@ -593,7 +458,7 @@ def _poll_command(command, trigger, maxTimeout=10):
             time.sleep(1)
         else:
             return
-    logAndExit(f"<aws._poll_command>: command <{command}> timed out <{maxTimeout} attempts> on trigger <{trigger}>")
+    logAndExit(f"<awsf1._poll_command>: command <{command}> timed out <{maxTimeout} attempts> on trigger <{trigger}>")
 
 @decorate.debugWrap
 def clearFpga(slotno):
@@ -614,14 +479,14 @@ def getNumFpgas():
         out = subprocess.check_output("fpga-describe-local-image-slots".split())
         out = out.decode('utf-8')
     except Exception as exc:
-        logAndExit(f'<aws.getNumFpgas>: error getting fpga local slot description', exc=exc)
+        logAndExit(f'<awsf1.getNumFpgas>: error getting fpga local slot description', exc=exc)
     lines = out.split('\n')[:-1]
 
     #check that the output is an AFIDEVICE
     regexPattern = r'(AFIDEVICE\s+\w\s+\w+\s+\w+\s+.*)'
     for l in lines:
         if not bool(re.match(regexPattern, l)):
-            logAndExit(f'<aws.getNumFpgas>: unknown output for fpga-describe-local-image-slots <{l}>')
+            logAndExit(f'<awsf1.getNumFpgas>: unknown output for fpga-describe-local-image-slots <{l}>')
     numLines = len(lines)
     return numLines
 
@@ -629,7 +494,7 @@ def getNumFpgas():
 def clearFpgas(doPrint=True):
     """ clear ALL FPGAs """
     numFpgas = getNumFpgas()
-    printAndLog(f"<aws.clearFpgas>: Found {numFpgas} FPGA(s) to clear",doPrint=doPrint)
+    printAndLog(f"<awsf1.clearFpgas>: Found {numFpgas} FPGA(s) to clear",doPrint=doPrint)
     for sn in range(numFpgas):
         clearFpga(sn)
 
@@ -650,9 +515,9 @@ def flashFpgas(agfi,doPrint=True):
     in a cleared state can cause XDMA to hang. Accordingly, it is advised to flash all the FPGAs in a slot with
     something. This method might need to be extended to flash all available slots with our AGFI
     """
-    printAndLog(f"<aws.flashFpgas>: Flashing FPGAs with agfi: {agfi}.",doPrint=doPrint)
+    printAndLog(f"<awsf1.flashFpgas>: Flashing FPGAs with agfi: {agfi}.",doPrint=doPrint)
     numFpgas = getNumFpgas()
-    printAndLog(f"<aws.flashFpgas>: Found {numFpgas} FPGA(s) to flash",doPrint=doPrint)
+    printAndLog(f"<awsf1.flashFpgas>: Found {numFpgas} FPGA(s) to flash",doPrint=doPrint)
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
@@ -660,7 +525,7 @@ def getAgfiId(jsonFile):
     keyName = 'agfi_id'
     contents = safeLoadJsonFile(jsonFile)
     if keyName not in contents:
-        logAndExit(f"<aws.getAgfiJson>: unable to find key <agfi_id> in {jsonFile}")
+        logAndExit(f"<awsf1.getAgfiJson>: unable to find key <agfi_id> in {jsonFile}")
     return contents[keyName]
 
 def getAgfiSettings(jsonFile):
@@ -671,7 +536,7 @@ def copyAWSSources():
     pvAWS = getSetting('pvAWS')
 
     if pvAWS not in ['firesim', 'connectal']:
-        logAndExit(f"<aws.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
+        logAndExit(f"<awsf1.copyAWSSources>: called with incompatible AWS PV \"{pvAWS}\"")
 
     if (isEnabled('useCustomProcessor')):
         awsSourcePath = getSetting('pathToCustomProcessorSource')
@@ -689,7 +554,7 @@ def copyAWSSources():
             for awsDirPath in subdirectories:
                 copyDir(os.path.join(awsSourcePath, awsDirPath), awsWorkPath)
     except Exception as exc:
-        logAndExit(f"<aws.copyAWSSources>: error populating subdirectories of AWS PV {pvAWS}", exc=exc, exitCode=EXIT.Files_and_paths)
+        logAndExit(f"<awsf1.copyAWSSources>: error populating subdirectories of AWS PV {pvAWS}", exc=exc, exitCode=EXIT.Files_and_paths)
 
     # aws resources need an image file:
     imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
@@ -718,7 +583,7 @@ def removeKernelModules():
     kmodsToClean = ['xocl', 'xdma', 'edma', 'nbd', 'pcieportal', 'portalmem']
     for kmod in kmodsToClean:
         sudoShellCommand(['rmmod', kmod],check=False)
-        _sendKmsg (f"<aws.removeKernelModules>: Removing {kmod} if it exists.")
+        _sendKmsg (f"<awsf1.removeKernelModules>: Removing {kmod} if it exists.")
 
 @decorate.debugWrap
 def installKernelModules():
@@ -740,7 +605,7 @@ def installKernelModules():
         ## make the connectal device nodes accessible to non-root users
         sudoShellCommand(['bash', '-c', 'chmod agu+rw /dev/portal* /dev/connectal'])
     else:
-        logAndExit(f"<aws.installKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
+        logAndExit(f"<awsf1.installKernelModules> not implemented for <{getSetting('pvAWS')}> PV.",exitCode=EXIT.Implementation)
 
 # ------------------ FireSim Functions ----------------------------------------
 

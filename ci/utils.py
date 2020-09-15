@@ -35,7 +35,7 @@ def errorAndLog(message, doPrint=True, exc=None):
         print("(Error)~  " + message)
     logging.error(message)
     if exc:
-        logging.error(traceback.format_exc())
+        logging.error(formatExc(exc))
 
 
 def exitFettCi(exitCode=-1, exc=None, message=None):
@@ -272,14 +272,11 @@ def prepareArtifact(
         # Upload the folder to S3
         if entrypoint == "AWS":
             awsModule.uploadToS3(
-                ciAWSbucket,
-                exitFettCi,
-                tarFileName,
-                f"fett-target/ci/artifacts/",
+                ciAWSbucket, exitFettCi, tarFileName, f"fett-target/ci/artifacts/",
             )
         else:  # AWS Testing
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, tarFileName, f"aws-testing/",
+                ciAWSbucketTesting, exitFettCi, tarFileName, f"artifacts/",
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
@@ -294,16 +291,31 @@ def prepareArtifact(
                 nodeIndex,
                 reason="fett-target-ci-termination",
             )
+            print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
         else:  # AWS Testing
-            awsModule.sendSQS(
-                ciAWSqueueTesting,
-                exitFettCi,
-                jobStatus,
-                jobID,
-                nodeIndex,
-                reason="aws-testing-fett-target-ci-termination",
+
+            # Create a file containing results, named with the instance id
+            try:
+                proc = subprocess.run(
+                    ["curl", "http://169.254.169.254/latest/meta-data/instance-id"],
+                    capture_output=True,
+                )
+
+                instance_id = proc.stdout.decode("utf-8")
+                printAndLog(f"Got instance ID: { instance_id }")
+            except Exception as exc:
+                errorAndLog("Failed to get instance id", exc=exc)
+
+            resultFileName = os.path.join(repoDir, instance_id)
+            with open(resultFileName, "w") as f:
+                f.write(jobStatus)
+                f.close()
+
+            awsModule.uploadToS3(
+                ciAWSbucketTesting, exitFettCi, resultFileName, f"communication/",
             )
-        print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
+            print(f"(Info)~  FETT-CI: Results uploaded to S3.")
+
 
 def getFettTargetAMI (repoDir):
     """
@@ -364,4 +376,6 @@ def getFettTargetAMI (repoDir):
     try:
         return backupFettAMI['ImageId']
     except Exception as exc:
-        exitFettCi(message=f"Failed to get the hardcoded AMI ID.", exc=exc)
+        warnAndLog(message=f"Failed to get the hardcoded AMI ID.", exc=exc)
+        exitFettCi(message=f"Failed to find the AMI ID.")
+

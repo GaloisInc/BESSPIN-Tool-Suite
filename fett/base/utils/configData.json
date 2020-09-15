@@ -20,7 +20,7 @@
         {
             "name" : "target",
             "type" : "string",
-            "choices" : [ "qemu", "aws", "fpga" ]
+            "choices" : [ "qemu", "awsf1", "vcu118" ]
         },
         {
             "name" : "FreeRTOSUseRAMDisk",
@@ -29,7 +29,7 @@
         {
             "name" : "processor",
             "type" : "string",
-            "choices" : [ "chisel_p1", "bluespec_p2", "chisel_p2" ]
+            "choices" : [ "bluespec_p1", "chisel_p1", "bluespec_p2", "chisel_p2" ]
         },
         {
             "name" : "osImage",
@@ -72,18 +72,6 @@
             "name" : "sourceVariant",
             "type" : "string",
             "choices" : [ "default", "purecap", "temporal" ]
-        },
-        {
-            "name" : "qemuNtkPortRangeStart",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
-            "name" : "qemuNtkPortRangeEnd",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
         },
         {
             "name" : "netbootPortRangeStart",

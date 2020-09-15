@@ -213,10 +213,10 @@ def main(xArgs):
 
         try:
             from pygit2 import Repository
-            targetBranch = Repository(repoDir).head.shorthand
-            binariesBranch = Repository(
-                os.path.join(repoDir, "SSITH-FETT-Binaries")
-            ).head.shorthand
+            targetRepo = Repository(repoDir)
+            targetBranch = targetRepo.head.shorthand
+            binariesRepo = Repository(os.path.join(repoDir, "SSITH-FETT-Binaries"))
+            binariesBranch = binariesRepo.head.shorthand
 
             # Log
             printAndLog(
@@ -231,6 +231,9 @@ def main(xArgs):
                 assert targetBranch == branches[0], "Failed branch check for Target."
             if not branches[1] == "None":
                 assert binariesBranch == branches[1], "Failed branch check for Binaries"
+                assert (
+                    binariesRepo.status() == {}
+                ), "Binaries Branch was not pulled successfully."
 
         except Exception as exc:
             # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.

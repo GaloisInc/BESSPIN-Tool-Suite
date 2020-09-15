@@ -7,6 +7,13 @@ else
 endif
 FETT_DEFS := -DfettOnLinux -DfettOn$(OS_IMAGE) -DfettOn$(TARGET) 
 FETT_DEFS += -DtestgenOnLinux -DtestgenOn$(OS_IMAGE) -Dtestgen$(TARGET)
+ifeq ($(TARGET),VCU118)
+	FETT_DEFS += -DtestgenFPGA -DfettOnFPGA #for backward compatibility
+else
+ifeq ($(TARGET),AWSF1)
+	FETT_DEFS += -DtestgenAWS -DfettOnAWS #for backward compatibility
+endif
+endif
 
 CFLAGS := $(ARCH_ABI) -Wall -O0 $(FETT_DEFS)
 

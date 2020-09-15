@@ -13,7 +13,8 @@ jobs:
         cfg:
           - { os: unix, index: 1, total: 2, host: docker-fpga }
           - { os: unix, index: 2, total: 2, host: docker-fpga }
-          - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
+          - { os: freertos, index: 1, total: 2, host: docker-fpga-io }
+          - { os: freertos, index: 2, total: 2, host: docker-fpga-io }
 
     steps:
       - name: Remove lock file if it exists to prevent git fetch failures

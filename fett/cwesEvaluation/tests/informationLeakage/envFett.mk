@@ -44,6 +44,6 @@ $(info DEMO_SRC = $(DEMO_SRC))
 	CFLAGS := $(filter-out -Werror,$(CFLAGS))
 endif
 
-ifeq ($(BSP),aws)
+ifeq ($(BSP),awsf1)
 	CFLAGS += -DFETT_AWS
 endif

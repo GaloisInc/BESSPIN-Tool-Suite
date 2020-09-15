@@ -12,3 +12,5 @@ ci/userdata.txt
 ci/results.txt
 ci/aws-test-suite.log
 fett-ci.log
+aws-test-suite.log
+results.txt
