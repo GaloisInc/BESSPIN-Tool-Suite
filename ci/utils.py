@@ -294,19 +294,7 @@ def prepareArtifact(
             )
             print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
         else:  # AWS Testing
-
-            # Create a file containing results, named with the instance id
-            try:
-                proc = subprocess.run(
-                    ["curl", "http://169.254.169.254/latest/meta-data/instance-id"],
-                    capture_output=True,
-                )
-
-                instance_id = proc.stdout.decode("utf-8")
-                printAndLog(f"Got instance ID: { instance_id }")
-            except Exception as exc:
-                errorAndLog("Failed to get instance id", exc=exc)
-
+            instance_id = awsModule.getInstanceId(exitFettCi)
             resultFileName = os.path.join(repoDir, instance_id)
             with open(resultFileName, "w") as f:
                 f.write(jobStatus)
