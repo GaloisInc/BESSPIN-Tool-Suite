@@ -102,9 +102,9 @@ class fpgaTarget(object):
         else:
             time.sleep(1)
 
-        # disconnect from gdb
-        self.runCommandGdb("disconnect")
-        self.expectOnOpenocd ("dropped 'gdb' connection","disconnect")
+        # detach from gdb
+        self.runCommandGdb("detach")
+        self.expectOnOpenocd ("dropped 'gdb' connection","detach")
 
         # Re-connect
         self.gdbConnect()
