@@ -7,7 +7,6 @@
 from configs import *
 import configparser, os, copy, time, glob
 import traceback, shutil, subprocess, logging
-from pygit2 import Repository
 
 
 def formatExc(exc):
@@ -24,11 +23,12 @@ def printAndLog(message, doPrint=True):
     logging.info(message)
 
 
-def warnAndLog(message, doPrint=True):
+def warnAndLog(message, doPrint=True, exc=None):
     if doPrint:
         print("(Warning)~  " + message)
     logging.warning(message)
-
+    if (exc):
+        logging.warning(traceback.format_exc())
 
 def errorAndLog(message, doPrint=True, exc=None):
     if doPrint:
@@ -318,13 +318,36 @@ def prepareArtifact(
 
 
 def getFettTargetAMI (repoDir):
+    """
+    This functions tries to get the AMI using 4 different methods:
+    1. (Recommended): Using boto3
+    2. Using pygit2 since the tags contain an AMI ID
+    3. Using `git tag` as a shell command
+    4. Using the hardcoded value in `$repo/ci/configs.py`
+    """
+
+    # Main method
     try:
-        repo = Repository(repoDir)
+        import boto3
+        ec2Client = boto3.client('ec2', region_name='us-west-2')
+        allOwnerImages = ec2Client.describe_images(Owners=[backupFettAMI['OwnerId']])
+        mostRecentAMI = backupFettAMI #Let's find newer AMIs
+        for image in allOwnerImages['Images']:
+            if (image['CreationDate'] > mostRecentAMI['CreationDate']):
+                mostRecentAMI = image
+        return mostRecentAMI['ImageId']
+    except Exception as exc:
+        warnAndLog (message="Failed to obtain the most recent AMI from AWS. Falling back to <pygit2>.",exc=exc)
+
+    def getAMIfromRefs (listRefs, source):
         maxVersion = (0, None)
-        for ref in repo.listall_references():
-            if (not ref.startswith('refs/tags/v')):
-                continue
-            xRef = ref.split('refs/tags/v')[1] #throw away the first part
+        for ref in listRefs:
+            if (source == "pygit2"):
+                if (not ref.startswith('refs/tags/v')):
+                    continue
+                xRef = ref.split('refs/tags/v')[1] #throw away the first part
+            elif (source == "shell"):
+                xRef = ref.split('v')[1]
             xItems = xRef.split('-')
             xVersion = xItems[0].split('.')
             valVersion = 1000*int(xVersion[0]) + int(xVersion[1]) # so "3.10" --> 3,010
@@ -334,6 +357,25 @@ def getFettTargetAMI (repoDir):
             raise Exception("getFettTargetAMI: Failed to find the newest version.")
         return '-'.join(maxVersion[1][1:])
 
+    #Fall back to using "pygit2"
+    try:
+        from pygit2 import Repository
+        repo = Repository(repoDir)
+        return getAMIfromRefs (repo.listall_references(), "pygit2")
     except Exception as exc:
-        exitFettCi(message=f"Failed to get the AMI from the tags.", exc=exc)
-        
+        warnAndLog (message="Failed to get the AMI using <pygit2>. Falling back to shell git.",exc=exc)
+
+    #Fall back to parsing "git tag"
+    try:
+        allRefs = subprocess.getoutput(f"cd {repoDir} && git tag").splitlines()
+        return getAMIfromRefs (allRefs, "shell")
+    except Exception as exc:
+        warnAndLog(message=f"Failed to get the AMI using <git tag> in shell. Falling back to the hardcoded backup value.", exc=exc)
+
+    #Last resort: the hardcoded value
+    try:
+        return backupFettAMI['ImageId']
+    except Exception as exc:
+        warnAndLog(message=f"Failed to get the hardcoded AMI ID.", exc=exc)
+        exitFettCi(message=f"Failed to find the AMI ID.")
+
