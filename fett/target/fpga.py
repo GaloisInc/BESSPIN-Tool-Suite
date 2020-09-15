@@ -312,7 +312,6 @@ class fpgaTarget(object):
             processes = ['riscv64-unknown-elf-gdb', 'openocd']
             for proc in processes:
                 sudoShellCommand(['pkill', '-9', f"{proc}"],check=False)
-            filesToClose.append(self.fTtyOut)
 
         for xFile in filesToClose:
             if (xFile is None):
