@@ -5,7 +5,7 @@
 """
 
 from configs import *
-import configparser, os, copy, time, glob
+import configparser, os, copy, time, glob, re
 import traceback, shutil, subprocess, logging
 
 
@@ -277,8 +277,15 @@ def prepareArtifact(
             )
         else:  # AWS Testing
             nonConfigJobId = jobID.split(f"-{artifactsPath}")[0]
+            #Get the runIndex
+            rIndexMatch = re.match(r"^.*-r(?P<rIndex>\d+)-i.*$",nonConfigJobId)
+            if (rIndexMatch):
+                rIndex = rIndexMatch.group('rIndex')
+            else:
+                warnAndLog(message="Failed to get the rIndex from the jobID. Using the timestamp instead.")
+                rIndex = time.time()
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, tarFileName, os.path.join('artifacts',nonConfigJobId),
+                ciAWSbucketTesting, exitFettCi, tarFileName, os.path.join('artifacts',f"{nonConfigJobId}-r{rIndex}"),
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
