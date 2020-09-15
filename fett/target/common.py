@@ -347,9 +347,11 @@ class commonTarget():
             else:
                 self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
             self.runCommand("systemctl start systemd-timesyncd.service")
-
+            
             if not self.hasHardwareRNG():
                 #get the ssh up and running
+                if (isEqSetting('procLevel','p3')):
+                    time.sleep(5) #need some time to recover before being able to sendFile
                 self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
                 self.runCommand("chmod +x addEntropyDebian.riscv")
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
