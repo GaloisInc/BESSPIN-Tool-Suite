@@ -134,7 +134,7 @@ def main(args):
 
             # Compose userdata based on args
             u = UserdataCreator.default(
-                a, jobID, k, args.branch, args.binaries_branch, args.key_path, args.runMode
+                a, n, k, args.branch, args.binaries_branch, args.key_path, args.runMode
             )
 
             # Add this instance to InstanceManager

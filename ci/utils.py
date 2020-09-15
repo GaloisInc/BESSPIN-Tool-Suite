@@ -176,6 +176,15 @@ def prepareArtifact(
     artifactsPath = os.path.splitext(os.path.basename(configFile))[0]
     if (entrypoint == 'OnPrem'): 
         artifactsPath += f"-{artifactSuffix}"
+    elif (entrypoint == 'AWSTesting'):
+        jobIdMatch = re.match(rf"^(?P<jobName>.+)-r(?P<rIndex>\d+)-i{nodeIndex}-{artifactsPath}-(?P<jobHash>[a-f0-9]{{32}})$",jobID)
+        if (jobIdMatch):
+            artifactsPath += f"-{jobIdMatch.group('rIndex')}"
+            jobName = f"{jobIdMatch.group('jobName')}-{jobIdMatch.group('jobHash')}"
+        else:
+            warnAndLog(message="Failed to parse the job ID. Using the timestamp instead.")
+            artifactsPath += f"-{time.time()}"
+            jobName = jobID
 
     if os.path.isdir(artifactsPath):  # already exists, add the date
         artifactsPath += f"-{int(time.time())}"
@@ -276,16 +285,8 @@ def prepareArtifact(
                 ciAWSbucket, exitFettCi, tarFileName, os.path.join('fett-target','ci','artifacts',jobID),
             )
         else:  # AWS Testing
-            nonConfigJobId = jobID.split(f"-{artifactsPath}")[0]
-            #Get the runIndex
-            rIndexMatch = re.match(r"^.*-r(?P<rIndex>\d+)-i.*$",nonConfigJobId)
-            if (rIndexMatch):
-                rIndex = rIndexMatch.group('rIndex')
-            else:
-                warnAndLog(message="Failed to get the rIndex from the jobID. Using the timestamp instead.")
-                rIndex = time.time()
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, tarFileName, os.path.join('artifacts',f"{nonConfigJobId}-r{rIndex}"),
+                ciAWSbucketTesting, exitFettCi, tarFileName, os.path.join('artifacts',jobName),
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
