@@ -276,8 +276,9 @@ def prepareArtifact(
                 ciAWSbucket, exitFettCi, tarFileName, os.path.join('fett-target','ci','artifacts',jobID),
             )
         else:  # AWS Testing
+            nonConfigJobId = jobID.split(f"-{artifactsPath}")[0]
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, tarFileName, os.path.join('artifacts',jobID),
+                ciAWSbucketTesting, exitFettCi, tarFileName, os.path.join('artifacts',nonConfigJobId),
             )
         print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
 
