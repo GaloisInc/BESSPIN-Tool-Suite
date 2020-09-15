@@ -1,13 +1,13 @@
 #! /usr/bin/env python3
 
 # Import modules
-import sys, os
+import sys, os, time
 
 sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 from build.aws_test_suite import *
 
-import argparse, subprocess, shlex, json
+import argparse, subprocess, shlex, json, hashlib
 from datetime import datetime
 
 
@@ -112,25 +112,29 @@ def main(args):
         f"Queueing { len(indices_to_run)*args.runs } instances ({ args.runs } runs)..."
     )
 
+    # Determine branches for the job and instance name string
+    b = f"-{args.branch}" if args.branch else ""
+    bb = f"-{args.binaries_branch}" if args.binaries_branch else ""
+    try:
+        jobID = hashlib.md5(bytes(f'{args.name}{b}{bb}-{time.time()}','utf-8')).hexdigest()
+        log.info(f"The run's ID is <{jobID}>.")
+    except Exception as exc:
+        log.error("Failed to get the hash of the run.", exc=exc)
+
     # Repeat number of runs
     for j in range(args.runs):
 
         # Repeat for targets
         for k in indices_to_run:
-
-            # Determine branches for the job and instance name string
-            b = f"-{args.branch}" if args.branch else ""
-            bb = f"-{args.binaries_branch}" if args.binaries_branch else ""
-
             # Build instance name string
             #   Need to replace '/' with '_' so that when S3 files are created, it does not
             #   Think it needs a new directory.
-            n = f"{args.name}-r{j}-i{k}{b}{bb}-{r[k]}".replace("/", "_")
+            n = f"{args.name}-r{j}-i{k}-{r[k]}-{jobID}".replace("/", "_")
             log.debug(f"Name String: { n }")
 
             # Compose userdata based on args
             u = UserdataCreator.default(
-                a, n, k, args.branch, args.binaries_branch, args.key_path, args.runMode
+                a, jobID, k, args.branch, args.binaries_branch, args.key_path, args.runMode
             )
 
             # Add this instance to InstanceManager
