@@ -29,7 +29,7 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
         #Reloading till the network is up
-        self.freertosNtkRetriesMax = 5
+        self.freertosNtkRetriesMax = 5 if (isEqSetting('procFlavor','chisel')) else 2
         self.freertosNtkRetriesIdx = 0
 
         return
