@@ -35,7 +35,11 @@
       },
       "chisel": {
         "name": "elfLoader",
-        "JTAG": { "timeout" : { "elfLoad" : 1000, "boot" : 300 } },
+        "JTAG": { 
+          "name" : "procLevel",
+          "p2" : { "timeout" : { "elfLoad" : 1000, "boot" : 300 } },
+          "p3" : { "timeout" : { "elfLoad" : 1100, "boot" : 1700 } }
+        },
         "else": { "timeout" : { "boot" : 540 } }
       }
     },
