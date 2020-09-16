@@ -123,8 +123,10 @@ class vcu118Target (fpgaTarget, commonTarget):
                     shutdownOnError=False,suppressErrors=True
                     )
                 isSuccess, _, wasTimeout, _ = outCmd
+                if (isSuccess):
+                    isSuccess = self.pingTarget(exitOnError=False)
                 if (not isSuccess):
-                    if (wasTimeout and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
+                    if (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax):
                         warnAndLog(f"Network is not up on target. Trying again ({self.freertosNtkRetriesIdx+1}/{self.freertosNtkRetriesMax})...")
                         self.fpgaReload(getSetting('osImageElf'),elfLoadTimeout=30)
                     else:
@@ -135,7 +137,8 @@ class vcu118Target (fpgaTarget, commonTarget):
         else:
             self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
 
-        self.pingTarget()
+        if (not isEqSetting('osImage','FreeRTOS')):
+            self.pingTarget()
 
         if (isEqSetting('osImage','FreeBSD')): #use ssh instead of JTAG
             self.openSshConn()
