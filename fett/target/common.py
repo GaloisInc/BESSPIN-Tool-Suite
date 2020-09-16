@@ -369,7 +369,7 @@ class commonTarget():
             # Add ntpd to rc.conf and start it
             self.runCommand("echo 'ntpd_enable=\"YES\"' >> /etc/rc.conf")
             self.runCommand("echo 'ntpd_sync_on_start=\"YES\"' >> /etc/rc.conf")
-            self.runCommand("service ntpd start")
+            self.runCommand("service ntpd start",timeout=120 if (isEqSetting('procLevel','p3')) else 60)
 
         # Instruct the kernel debugger to restart instead of debugging mode when the kernel panics
         if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','awsf1')):
@@ -1285,7 +1285,7 @@ class commonTarget():
                 self.runCommand("pkill -f /usr/sbin/sshd")
                 self.runCommand("/usr/sbin/sshd")
             else:
-                self.runCommand("/etc/rc.d/sshd restart")
+                self.runCommand("/etc/rc.d/sshd restart",timeout=120 if (isEqSetting('procLevel','p3')) else 60)
 
 # END OF CLASS commonTarget
 
