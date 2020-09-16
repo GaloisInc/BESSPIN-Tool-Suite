@@ -341,7 +341,7 @@ def cleanDirectory (xDir,endsWith='.o'):
                 try:
                     os.remove(os.path.join(xDirName,xFile))
                 except Exception as exc:
-                    logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.", exitCode=EXIT.Files_and_paths)
+                    logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap
 def cleanQemuMakeDependencyFiles():

@@ -181,7 +181,7 @@ def main(xArgs):
                 xTar.close()
                 os.remove(tarball)
             except Exception as exc:
-                errorExit(f"Failed to extract <{tarball}> to <{os.path.join(outDir,tarName)}>.") 
+                errorExit(f"Failed to extract <{tarball}> to <{os.path.join(outDir,tarName)}>.",exc=exc) 
 
     
     print(f"\n{nFilesTot} available files.")

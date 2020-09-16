@@ -174,8 +174,8 @@ class fpgaTarget(object):
                         sttyMatch = re.match(r"^.*min = (?P<vMin>\d+); time = (?P<vTime>\d+);$", sttyOut)
                         if ( (int(sttyMatch.group('vMin')) != 0) or (int(sttyMatch.group('vTime')) != 0)):
                             warnAndLog (f"fpgaTarget: the UART {port.device} status is not as expected. {extraMsg}")
-                    except:
-                        warnAndLog (f"fpgaTarget: failed to get the status of {port.device}. {extraMsg}")
+                    except Exception as exc:
+                        warnAndLog (f"fpgaTarget: Failed to get the status of {port.device}. {extraMsg}",exc=exc)
                     return port.device
 
         logAndExit(f"findUartPort: Failed to find a UART port with expected VID:PID = {search_vid:X}:{search_pid:X}")

@@ -1121,7 +1121,7 @@ class commonTarget():
         try:
             subprocess.check_call (['ssh-keygen', '-R', ipUpdateECDSA],stdout=self.fSshOut,stderr=self.fSshOut)
         except Exception as exc:
-            warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",doPrint=False)
+            warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",exc=exc,doPrint=False)
         self.sshECDSAkeyWasUpdated = True
         self.fSshOut.close()
 
@@ -1193,8 +1193,8 @@ class commonTarget():
             try:
                 self.sshProcess.terminate(force=True)
                 self.sshProcess = None
-            except:
-                warnAndLog(f"killSshConn: Failed to terminate the sshProcess.\n",doPrint=False)
+            except Exception as exc:
+                warnAndLog(f"killSshConn: Failed to terminate the sshProcess.\n",exc=exc,doPrint=False)
         self.isSshConn = False
         self.process = self.ttyProcess
 
@@ -1294,14 +1294,15 @@ def checkPort (portNum, host=''):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as iSock:
         try:
             iSock.bind((host, portNum))
+            return True
         except OSError as error:
             if (error.errno is not errno.EADDRINUSE):
                 logging.error (f"checkPort: Encountered OS Error #{error} while checking port #{portNum}.")
-            else:
-                return False
-        except:
-            logging.error (f"checkPort: Encountered a non recognized error while checking port #{portNum}.")
-    return True
+            else: #for readability
+                pass #used port
+        except Exception as exc:
+            logging.error (f"checkPort: Encountered a non recognized error while checking port #{portNum}.",exc=exc)
+    return False
 
 @decorate.debugWrap
 def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):

@@ -479,7 +479,7 @@ def getNumFpgas():
         out = subprocess.check_output("fpga-describe-local-image-slots".split())
         out = out.decode('utf-8')
     except Exception as exc:
-        logAndExit(f'<awsf1.getNumFpgas>: error getting fpga local slot description', exc=exc)
+        logAndExit(f'<awsf1.getNumFpgas>: error getting fpga local slot description', exc=exc, exitCode=EXIT.Run)
     lines = out.split('\n')[:-1]
 
     #check that the output is an AFIDEVICE
@@ -624,7 +624,7 @@ def prepareFiresim():
         try:
             os.chmod(imageFile, 0o664) # If the image was copied from the Nix store, it was read-only
         except Exception as exc:
-            logAndExit(f"Could not change permissions on file {imageFile}", exitCode=EXIT.Files_and_paths)
+            logAndExit(f"Could not change permissions on file {imageFile}", exc=exc, exitCode=EXIT.Files_and_paths)
 
     dwarfFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.dwarf")
     setSetting("osImageDwarf",dwarfFile)

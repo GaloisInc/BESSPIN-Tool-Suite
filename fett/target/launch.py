@@ -266,7 +266,7 @@ def resetTarget (curTarget):
     try:
         newTarget = getClassType()()
     except Exception as exc:
-        logAndExit (f"resetTarget: Failed to instantiate the target class.",exitCode=EXIT.Dev_Bug)
+        logAndExit (f"resetTarget: Failed to instantiate the target class.",exc=exc,exitCode=EXIT.Dev_Bug)
 
     # Adjust the needed members for reset
     newTarget.restartMode = True
