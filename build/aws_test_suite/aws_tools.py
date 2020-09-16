@@ -195,7 +195,7 @@ def launch_instance(
             KeyName=keyname,
             **optional_kwargs,
         )
-    except Exception as e:
+    except Exception as exc:
         log.error(f"boto3.create_instances failed.", exc=exc)
         instance = None
 
@@ -256,7 +256,7 @@ def poll_s3(config, instance_ids):
 
     except Exception as exc:
         log.error(
-            f"Failed to recieve the contents of bucket { configs.ciAWSbucketTesting }.",
+            f"Failed to receive the contents of bucket { configs.ciAWSbucketTesting }.",
             exc=exc,
         )
 

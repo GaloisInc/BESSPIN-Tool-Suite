@@ -39,7 +39,7 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             testName = binTest.split('.')[0]
             testNum = int(testName.split('_')[1])
         except Exception as exc:
-            self.target.shutdownAndExit (f"executeTest: Failed to parse <{binTest}>.",exitCode=EXIT.Dev_Bug)
+            self.target.shutdownAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
         if (not isEnabled('isUnix')):
             self.target.shutdownAndExit (f"<executeTest> for FreeRTOS should never be called.",exitCode=EXIT.Dev_Bug)

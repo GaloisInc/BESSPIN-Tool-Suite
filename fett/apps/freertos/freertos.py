@@ -126,6 +126,7 @@ def OTATest(clientTftp, fileName, TCNum, TCDesc):
     except Exception as exc:
         # some test cases as supposed to fail and reach here, so we do not mark this as
         # an error
+        warnAndLog(f"clientTftp: Failed to upload <{filePath}> to the server. Anticipated error.",exc=exc,doPrint=False)
         printAndLog(f"clientTftp: Failed to upload <{filePath}> to the server.",doPrint=False,tee=getSetting('appLog'))
 
 @decorate.debugWrap

@@ -20,7 +20,7 @@ class cweException:
             try:
                 intVal = int(xVal)
             except Exception as exc:
-                logAndExit (f"Non-integer value <{xVal}> in cwesException file.",exitCode=EXIT.Dev_Bug)
+                logAndExit (f"Non-integer value <{xVal}> in cwesException file.",exitCode=EXIT.Dev_Bug,exc=exc)
             self.legitValues[xOS].append(intVal)
         else:
             logAndExit (f"Unrecognized OS <{xOS}> in cwesException file.",exitCode=EXIT.Dev_Bug)
@@ -67,7 +67,7 @@ def checkValidScores ():
             try:
                 scoreVal = int(items[2])
             except Exception as exc:
-                logAndExit (f"Non-integer value <{items[2]}> in <{csvScoresFile}>.",exitCode=EXIT.Dev_Bug)
+                logAndExit (f"Non-integer value <{items[2]}> in <{csvScoresFile}>.",exitCode=EXIT.Dev_Bug,exc=exc)
             if (scoreVal not in cwesExceptions[items[0]].getLegitValues(getSetting('osImage'))):
                 errorAndLog (f"checkValidScores: Unaccepted score in <{vulClass}>: (cwe-{items[0]}:{items[1]})")
                 errCount += 1
