@@ -29,7 +29,7 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
         #Reloading till the network is up
-        self.freertosNtkRetriesMax = 3
+        self.freertosNtkRetriesMax = 5
         self.freertosNtkRetriesIdx = 0
 
         return
@@ -119,13 +119,13 @@ class vcu118Target (fpgaTarget, commonTarget):
             while ((not isSuccess) and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
                 self.freertosNtkRetriesIdx += 1
                 outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",
-                    erroneousContents=["(Error)","INVALID"],timeout=30,
+                    erroneousContents=["(Error)","INVALID"],timeout=20,
                     shutdownOnError=False,suppressErrors=True
                     )
                 isSuccess, _, wasTimeout, _ = outCmd
                 if (not isSuccess):
                     if (wasTimeout and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
-                        warnAndLog("Network is not up on target. Trying again...")
+                        warnAndLog(f"Network is not up on target. Trying again ({self.freertosNtkRetriesIdx+1}/{self.freertosNtkRetriesMax})...")
                         self.fpgaReload(getSetting('osImageElf'),elfLoadTimeout=30)
                     else:
                         self.shutdownAndExit("Network is not up on target.",exitCode=EXIT.Network) 

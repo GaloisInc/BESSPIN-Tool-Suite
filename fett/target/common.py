@@ -602,7 +602,7 @@ class commonTarget():
             endsWith = self.getDefaultEndWith()
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,
                                                                    timeout=timeout,issueInterrupt=issueInterrupt,
-                                                                   process=process)
+                                                                   process=process,suppressWarnings=suppressErrors)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
         logging.debug(f"textBack:\n{textBack}")
@@ -1035,8 +1035,8 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True,process=None):
-        def warningThread(msg, waitingTime, stopEvent):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True,process=None,suppressWarnings=False):
+        def warningThread(msg, waitingTime, stopEvent, suppressWarnings):
             """thread will wait on an event, and display warning if not set by waiting time"""
             dt = 0.1
             dt = waitingTime / 10.0 if dt > waitingTime else dt
@@ -1046,13 +1046,13 @@ class commonTarget():
                 if stopEvent.is_set():
                     return
                 ct += dt
-            warnAndLog(msg)
+            warnAndLog(msg,doPrint=not suppressWarnings)
 
         process = self.process if process is None else process
         # prepare thread to give warning message if the expect is near timing out
         stopEvent = threading.Event()
         warningTime = 0.8 * timeout
-        warningMsg = threading.Thread(target=warningThread, args=(f"expectFromTarget: command <{command}> is near timeout ({timeout} s)", warningTime, stopEvent))
+        warningMsg = threading.Thread(target=warningThread, args=(f"expectFromTarget: command <{command}> is near timeout ({timeout} s)", warningTime, stopEvent,suppressWarnings))
         warningMsg.daemon = True
         getSetting('trash').throwThread(warningMsg, "warning message for expectFromTarget")
         warningMsg.start()
