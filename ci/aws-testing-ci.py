@@ -84,7 +84,7 @@ def main(args):
     pem_key_name = args.pem_key_name
 
     if pem_key_name.endswith(".pem"):
-        pem_key_name = pem_key_name.split(".pem")[0]
+        pem_key_name = os.path.basename(pem_key_name).split(".pem")[0]
 
     # Start an instance manager
     i = InstanceManager(args.cap)
