@@ -1214,7 +1214,7 @@ class commonTarget():
         return True
 
     @decorate.debugWrap
-    def pingTarget (self):
+    def pingTarget (self,exitOnError=True):
         #pinging the target to check everything is ok
         pingOut = ftOpenFile(os.path.join(getSetting('workDir'),'ping.out'),'a')
         pingAttempts = 3
@@ -1226,14 +1226,19 @@ class commonTarget():
                 break
             except Exception as exc:
                 if (iPing < pingAttempts - 1):
-                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
-                    time.sleep(15)
+                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again ({iPing+2}/{pingAttempts})...",doPrint=False,exc=exc)
+                    time.sleep(10)
                 else:
-                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+                    pingOut.close()
+                    if (exitOnError):
+                        self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+                    else:
+                        errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>.",doPrint=False,exc=exc)
+                        return False
         pingOut.close()
         printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!",
                     doPrint=not (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')))
-        return
+        return True
 
     @decorate.debugWrap
     def genStdinEntropy (self,endsWith=None):
