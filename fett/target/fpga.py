@@ -70,18 +70,31 @@ class fpgaTarget(object):
             self.ttyProcess = fdpexpect.fdspawn(self.uartSession.fileno(),logfile=self.fTtyOut,timeout=30)
             self.process = self.ttyProcess
 
-            # gdbContinue
-            self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
-            if (isEqSetting('procFlavor','chisel')):
-                self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
-            else:
-                time.sleep(1)
+            self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
 
         if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
             self.setupGdbCustomScoring()
 
         self.runCommandGdb('c', endsWith='Continuing')
 
+        return
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def gdbLoad (self,elfLoadTimeout=15):
+        self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
+        if (isEqSetting('procFlavor','chisel')):
+            self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
+        else:
+            time.sleep(1)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def fpgaReload (self, elfPath, elfLoadTimeout=15):
+        if (not isEqSetting('target','vcu118')):
+            self.shutdownAndExit(f"<fpgaReload> is not implemented for target {getSetting('target')}.")
+        self.fpgaTearDown(reload=True)
+        self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
         return
    
     @decorate.debugWrap
@@ -261,8 +274,8 @@ class fpgaTarget(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def fpgaTearDown (self):
-        if (isEqSetting('mode','evaluateSecurityTests')):
+    def fpgaTearDown (self,reload=False):
+        if (isEqSetting('mode','evaluateSecurityTests') and (not reload)):
             self.interruptGdb ()
             
             # Analyze gdb output for FreeRTOS
@@ -312,6 +325,8 @@ class fpgaTarget(object):
             processes = ['riscv64-unknown-elf-gdb', 'openocd']
             for proc in processes:
                 sudoShellCommand(['pkill', '-9', f"{proc}"],check=False)
+            if (reload):
+                filesToClose.append(self.fTtyOut)
 
         for xFile in filesToClose:
             if (xFile is None):

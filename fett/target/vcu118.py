@@ -28,6 +28,10 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
+        #Reloading till the network is up
+        self.freertosNtkRetriesMax = 3
+        self.freertosNtkRetriesIdx = 0
+
         return
 
     @decorate.debugWrap
@@ -111,7 +115,20 @@ class vcu118Target (fpgaTarget, commonTarget):
             self.runCommand ("ifconfig eth0 up",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
             outCmd = self.runCommand (f"ip addr add {self.ipTarget}/24 dev eth0",timeout=20)
         elif (isEqSetting('osImage','FreeRTOS')):
-            outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",erroneousContents="(Error)",timeout=30)
+            isSuccess = False
+            while ((not isSuccess) and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
+                self.freertosNtkRetriesIdx += 1
+                outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",
+                    erroneousContents=["(Error)","INVALID"],timeout=30,
+                    shutdownOnError=False,suppressErrors=True
+                    )
+                isSuccess, _, wasTimeout, _ = outCmd
+                if (not isSuccess):
+                    if (wasTimeout and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
+                        warnAndLog("Network is not up on target. Trying again...")
+                        self.fpgaReload(getSetting('osImageElf'),elfLoadTimeout=30)
+                    else:
+                        self.shutdownAndExit("Network is not up on target.",exitCode=EXIT.Network) 
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand(f"route add default {self.ipHost}")
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
