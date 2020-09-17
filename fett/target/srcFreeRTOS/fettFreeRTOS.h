@@ -86,7 +86,7 @@ fett header for includes, externs, and global variables
 #define FreeRTOS_printf(X)  fettPrintf X
 
 // --------- fettNtk.c ---------------------------------------------------------------------------------
-extern void vStartNetwork (void *pvParameters);
+extern void startNetwork (void);
 
 // --------- fettMisc.c ---------------------------------------------------------------------------------
 
