@@ -29,8 +29,11 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
         #Reloading till the network is up
-        self.freertosNtkRetriesMax = 5 if (isEqSetting('procFlavor','chisel')) else 2
+        self.freertosNtkRetriesMax = 3
         self.freertosNtkRetriesIdx = 0
+        #Reloading till the fpga starts
+        self.fpgaStartRetriesMax = 3
+        self.fpgaStartRetriesIdx = 0
 
         return
 
@@ -280,36 +283,40 @@ def clearFlash(attempts=2):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programBitfile (doPrint=True):
+def programBitfile (doPrint=True,isReload=False):
     printAndLog("Preparing the FPGA environment...",doPrint=doPrint)
     clearProcesses()
-    gfeDir = os.path.join(getSetting('workDir'), 'gfe')
-    if not os.path.exists(gfeDir):
-        mkdir (gfeDir)
+    if (not isReload):
+        gfeDir = os.path.join(getSetting('workDir'), 'gfe')
+        if not os.path.exists(gfeDir):
+            mkdir (gfeDir)
 
     printAndLog("Clearing the flash...",doPrint=False)
     clearFlash()
 
-    bitAndProbefiles = selectBitAndProbeFiles()
-    for xFile in bitAndProbefiles:
-        if not os.path.isfile(xFile):
-            logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
+    if (not doesSettingExist('bitAndProbefiles')):
+        bitAndProbefiles = selectBitAndProbeFiles()
+        setSetting('bitAndProbefiles',bitAndProbefiles)
+        for xFile in bitAndProbefiles:
+            if not os.path.isfile(xFile):
+                logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
 
-    try:
-        bitfile = ftOpenFile(bitAndProbefiles[0], "rb")
-        md5 = hashlib.md5()
-        while True:
-            chunk = bitfile.read(65536)
-            if not chunk:
-                break
-            md5.update(chunk)
-        bitfile.close()
-    except Exception as exc:
-        logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
+        try:
+            bitfile = ftOpenFile(bitAndProbefiles[0], "rb")
+            md5 = hashlib.md5()
+            while True:
+                chunk = bitfile.read(65536)
+                if not chunk:
+                    break
+                md5.update(chunk)
+            bitfile.close()
+            setSetting('md5bifile',md5.hexdigest())
+        except Exception as exc:
+            logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Programming the bitfile...",doPrint=doPrint)
-    programFpga(*bitAndProbefiles)
-    printAndLog(f"Programmed bitfile {bitAndProbefiles[0]} (md5: {md5.hexdigest()})",doPrint=doPrint)
+    programFpga(*getSetting('bitAndProbefiles'))
+    printAndLog(f"Programmed bitfile {getSetting('bitAndProbefiles')[0]} (md5: {getSetting('md5bifile')})",doPrint=doPrint)
 
     printAndLog("FPGA was programmed successfully!",doPrint=doPrint)
 

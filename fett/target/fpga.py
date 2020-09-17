@@ -1,9 +1,26 @@
-import pexpect
+import pexpect, signal
 from pexpect import fdpexpect
-import serial, subprocess
+import serial, subprocess, enum
 import serial.tools.list_ports
 
 from fett.base.utils.misc import *
+from fett.target import vcu118
+
+class failStage (enum.Enum):
+    openocd = enum.auto()
+    gdb = enum.auto()
+    network = enum.auto()
+    unknown = enum.auto()
+
+    def __gt__(self, other):
+        if (str(self.__class__) == str(other.__class__)):
+            return self.value > other.value
+        logAndExit (f"failStage: __gt__ not implemented for inputs of type {type(self)} and {type(other)}.",exitCode=EXIT.Dev_Bug)
+
+    def __lt__(self, other):
+        if (str(self.__class__) == str(other.__class__)):
+            return self.value < other.value
+        logAndExit (f"failStage: __lt__ not implemented for inputs of type {type(self)} and {type(other)}.",exitCode=EXIT.Dev_Bug)
 
 class fpgaTarget(object):
     def __init__(self):
@@ -15,6 +32,7 @@ class fpgaTarget(object):
         self.fOpenocdOut = None
 
         self.gdbPort = getSetting('gdbRemotePort')
+        self.openocdPort = getSetting('openocdTelnetPort')
 
         self.readGdbOutputUnix = 0 #beginning of file
 
@@ -32,10 +50,14 @@ class fpgaTarget(object):
 
         try:
             self.openocdProcess = pexpect.spawn(
-                f"openocd --command 'gdb_port {self.gdbPort}' -f {openocdCfg}",
+                f"openocd --command 'gdb_port {self.gdbPort}; telnet_port {self.openocdPort}' -f {openocdCfg}",
                     logfile=self.fOpenocdOut, timeout=15, echo=False)
-            self.openocdProcess.expect("telnet server disabled", timeout=15)
+            self.openocdProcess.expect(f"Listening on port {self.openocdPort} for telnet", timeout=15)
         except Exception as exc:
+            if (isEqSetting('target','vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
+                self.fpgaStartRetriesIdx += 1
+                errorAndLog (f"fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
+                return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
             self.shutdownAndExit(f"fpgaStart: Failed to spawn the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # start the gdb process
@@ -46,7 +68,11 @@ class fpgaTarget(object):
                     logfile=self.fGdbOut, timeout=15, echo=False)
             self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
         except Exception as exc:
-            self.shutdownAndExit(f"fpgaStart: Failed to spawn the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            if (isEqSetting('target','vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax)):
+                self.fpgaStartRetriesIdx += 1
+                errorAndLog (f"fpgaStart: Failed to spawn the gdb process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
+                return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.gdb)
+            self.shutdownAndExit(f"fpgaStart: Failed to spawn the gdb process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # configure gdb
         self.runCommandGdb("set confirm off")
@@ -90,10 +116,18 @@ class fpgaTarget(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def fpgaReload (self, elfPath, elfLoadTimeout=15):
+    def gdbDetach (self):
+        self.runCommandGdb("detach")
+        self.expectOnOpenocd ("dropped 'gdb' connection","detach")
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def fpgaReload (self, elfPath, elfLoadTimeout=15, stage=failStage.unknown):
         if (not isEqSetting('target','vcu118')):
             self.shutdownAndExit(f"<fpgaReload> is not implemented for target {getSetting('target')}.")
-        self.fpgaTearDown(reload=True)
+        self.fpgaTearDown(isReload=True,stage=stage)
+        vcu118.programBitfile(doPrint=False, isReload=True)
+        time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
         self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
         return
    
@@ -116,8 +150,7 @@ class fpgaTarget(object):
             time.sleep(1)
 
         # detach from gdb
-        self.runCommandGdb("detach")
-        self.expectOnOpenocd ("dropped 'gdb' connection","detach")
+        self.gdbDetach()
 
         # Re-connect
         self.gdbConnect()
@@ -274,8 +307,8 @@ class fpgaTarget(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def fpgaTearDown (self,reload=False):
-        if (isEqSetting('mode','evaluateSecurityTests') and (not reload)):
+    def fpgaTearDown (self,isReload=False,stage=failStage.unknown):
+        if (isEqSetting('mode','evaluateSecurityTests') and (not isReload) and (stage > failStage.gdb)):
             self.interruptGdb ()
             
             # Analyze gdb output for FreeRTOS
@@ -306,26 +339,38 @@ class fpgaTarget(object):
 
         if (isEqSetting('target','vcu118') and self.uartSession.is_open):
             try:
+                logging.debug("Closing uart_session.")
                 self.uartSession.close()
             except Exception as exc:
                 warnAndLog(f"fpgaTearDown: unable to close the serial session", exc=exc,doPrint=False)
 
-        self.interruptGdb()
-        self.runCommandGdb("detach")
+        if (stage > failStage.gdb):
+            self.interruptGdb()
+            self.gdbDetach()
 
+        # quit openocd
+        shellCommand(f"echo 'shutdown' | nc localhost {self.openocdPort}",check=False,shell=True)
         try:
-            self.openocdProcess.terminate() 
+            self.openocdProcess.expect(pexpect.EOF,timeout=10)
         except Exception as exc:
-            warnAndLog("fpgaTearDown: Failed to kill the openocd process.",doPrint=False,exc=exc)
+            warnAndLog("fpgaTearDown: Failed to shutdown the openocd process.",doPrint=False,exc=exc)
 
-        self.runCommandGdb("quit",endsWith=pexpect.EOF)
+        # quit gdb
+        if (stage > failStage.gdb):
+            self.runCommandGdb("quit",endsWith=pexpect.EOF,shutdownOnError=False)
 
         filesToClose = [self.fGdbOut, self.fOpenocdOut]
         if (isEqSetting('target','vcu118')):
-            processes = ['riscv64-unknown-elf-gdb', 'openocd']
-            for proc in processes:
-                sudoShellCommand(['pkill', '-9', f"{proc}"],check=False)
-            if (reload):
+            processes = [('riscv64-unknown-elf-gdb',self.gdbProcess), ('openocd',self.openocdProcess)]
+            for pName, proc in processes:
+                try:
+                    pID = os.getpgid(proc.pid)
+                except Exception as exc:
+                    warnAndLog(f"Can't get pgid. Process <{pName}> was already killed.",exc=exc,doPrint=False)
+                    continue #process was already killed
+                sudoShellCommand(['kill', '-9', f"{pID}"],check=False)
+                sudoShellCommand(['pkill', '-9', f"{pName}"],check=False)
+            if (isReload):
                 filesToClose.append(self.fTtyOut)
 
         for xFile in filesToClose:

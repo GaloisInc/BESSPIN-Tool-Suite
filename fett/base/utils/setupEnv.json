@@ -332,7 +332,14 @@
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 3333
+            "val" : 3334
+        },
+        {
+            "name" : "openocdTelnetPort",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 10000,
+            "val" : 4445
         }
     ]
 }
