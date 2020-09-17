@@ -5,7 +5,7 @@ Functions used for Network implementation on FreeRTOS
 #include "testgenFreeRTOS.h"
 
 // Declarations
-void vStartNetwork (void *pvParameters);
+void startNetwork (void);
 void vServerSocketTCP (void *pvParameters);
 static void vCommunicateTCP (void *pvParameters);
 void vClientSocketTCP (void *pvParameters);
