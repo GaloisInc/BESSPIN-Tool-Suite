@@ -13,6 +13,8 @@ void main_fett () {
 
     fettPrintf ("\n>>>Beginning of Fett<<<\n");
 
+    startNetwork();
+
     BaseType_t funcReturn = xTaskCreate(vMain,
                                         "main:vMain",
                                         configMINIMAL_STACK_SIZE * STACKSIZEMUL,
@@ -43,11 +45,6 @@ void vMain (void *pvParameters) {
     fettPrintf("(Info)~  vMain: Main task initial SHWM is %u\n",
                (uint32_t) uxTaskGetStackHighWaterMark(NULL));
 
-    // Start the network task to configure the network before the hook -- has to be the first thing
-    funcReturn = xTaskCreate(vStartNetwork, "vMain:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
-    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS),
-                          "vMain: Creating vStartNetwork task.");
-
     recvNotification = 0;
     funcReturn = xTaskNotifyWait(0xffffffffUL, 0xffffffffUL, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
     fettPrintf ("(Info)~  vMain: FIRST notification value is %08x\n", recvNotification);
@@ -55,6 +52,9 @@ void vMain (void *pvParameters) {
                           "vMain: Receive notification from vStartNetwork.");
     ASSERT_OR_DELETE_TASK((recvNotification == NOTIFY_SUCCESS_NTK),
                           "vMain: Expected notification value from vStartNetwork.");
+
+    fettPrintf ("\r\n<NTK-READY>\r\n");
+    vTaskDelay(pdMS_TO_TICKS(3000)); //give time to the host to ping
 
     // Initialize WolfSLL - this needs to be done before any other call to
     // any other WolfSSL or Wolfcrypt API
