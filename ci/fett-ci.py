@@ -71,22 +71,18 @@ def main(xArgs):
     # Check runType
     baseRunTypes = ["runOnPush", "runDevPR", "runPeriodic", "runRelease"]
     if xArgs.entrypoint in ["AWS", "AWSTesting"]:
+        flavor = "aws"
         if xArgs.runType not in baseRunTypes[1:2]:  # Only allow runDevPR on AWS for now
             exitFettCi(
                 message=f"Invalid runType argument. For AWS, runType has to be in {baseRunTypes[1:2]}."
             )
-        baseRunType = xArgs.runType
-        flavor = "aws"
+        
     elif xArgs.entrypoint == "OnPrem":
-        flavors = ["unix", "freertos"]
-        listRunTypes = [
-            "-".join(pair) for pair in itertools.product(baseRunTypes, flavors)
-        ]
-        if xArgs.runType not in listRunTypes:
+        flavor = xArgs.entrypoint
+        if xArgs.runType not in baseRunTypes:
             exitFettCi(
-                message=f"Invalid runType argument. For OnPrem, runType has to be in {listRunTypes}."
+                message=f"Invalid runType argument. For OnPrem, runType has to be in {baseRunTypes}."
             )
-        baseRunType, flavor = xArgs.runType.split("-")
 
     if xArgs.testOnly:
         printAndLog("FETT-CI: TestMode: Dumping some useful info...", doPrint=False)
@@ -113,7 +109,7 @@ def main(xArgs):
         artifactSuffix = xArgs.jobID
 
     # Check number of configs + get the right config file
-    if baseRunType == "runOnPush":  # Execute the files in ci/runOnPush-flavor
+    if xArgs.runType == "runOnPush":  # Execute the files in ci/runOnPush
         dirConfigs = os.path.join(ciDir, xArgs.runType)
         if not os.path.isdir(dirConfigs):
             exitFettCi(message=f"Directory <{dirConfigs}> cannot be accessed.")
@@ -128,7 +124,7 @@ def main(xArgs):
             runModes = ['fett', 'cwe']
         else:
             runModes = [xArgs.runMode]
-        allConfigs = generateAllConfigs(baseRunType, flavor, runModes)
+        allConfigs = generateAllConfigs(xArgs.runType, flavor, runModes)
         actualNumConfigs = len(allConfigs)
         if xArgs.testOnly:
             printAndLog(
@@ -322,7 +318,7 @@ if __name__ == "__main__":
     )
     xArgParser.add_argument(
         "runType",
-        help="The CI run type. [OnPrem: {runDevPR,runRelease,runOnPush,runPeriodic}-{unix,freertos}, AWS: runDevPR]",
+        help="The CI run type. [OnPrem: [runDevPR,runRelease,runOnPush,runPeriodic], AWS: runDevPR]",
     )
     xGroupArtifacts = xArgParser.add_mutually_exclusive_group(required=True)
     xGroupArtifacts.add_argument(
