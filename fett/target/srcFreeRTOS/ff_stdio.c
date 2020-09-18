@@ -7,7 +7,7 @@
 // be directly accessed outside of this file.
 static SemaphoreHandle_t ff_mutex;
 
-#ifdef FETT_AWS
+#if defined(FATFS_DOSBLK) || defined(FATFS_RAMDISK)
     FATFS FatFs; /* FatFs work area needed for each volume */
 #endif
 
@@ -42,24 +42,20 @@ int ff_init( void )
     // Make sure ff_mutex is in the "given" state at startup
     (void) xSemaphoreGive (ff_mutex);
 
-    #ifdef FETT_AWS
+    #ifdef FATFS_RAMDISK
+        FRESULT res;
+        BYTE work[FF_MAX_SS];
 
-        #ifdef FREERTOS_USE_RAMDISK
-        {
-          FRESULT res;
-	  BYTE work[FF_MAX_SS];
-
-	  // For RAMDisk, we need to format the disk.  FM_ANY means that a choice
-	  // of FAT variant (16, 32 etc) will be automatically made based on the
-	  // number of sectors and the sector size supplied by the diskio_ram.c
-	  // module.
-          res = f_mkfs("0:", FM_ANY, 0, work, sizeof(work));
-          fettPrintf ("(Info)~ ff_init: mkfs returns %d\n", (int) res);
-          res = f_mount(&FatFs, "", 0); 
-          fettPrintf ("(Info)~ ff_init: mount returns %d\n", (int) res);
-	  return res;
-	}
-        #else
+        // For RAMDisk, we need to format the disk.  FM_ANY means that a choice
+        // of FAT variant (16, 32 etc) will be automatically made based on the
+        // number of sectors and the sector size supplied by the diskio_ram.c
+        // module.
+        res = f_mkfs("0:", FM_ANY, 0, work, sizeof(work));
+        fettPrintf ("(Info)~ ff_init: mkfs returns %d\n", (int) res);
+        res = f_mount(&FatFs, "", 0); 
+        fettPrintf ("(Info)~ ff_init: mount returns %d\n", (int) res);
+        return res;
+    #elif defined(FATFS_DOSBLK)
         // IceBlk is already initialized upon boot,
         // check if the disk is present instead
         if (IceblkDevInstance.disk_present) {
@@ -69,9 +65,7 @@ int ff_init( void )
             fettPrintf ("(Error)~ iceclk disk is not present\r\n");
             return 1;
         }
-        #endif
-
-    #else
+    #elif defined(FATFS_SDCARD)
         return sdlib_initialize();
     #endif
 }
@@ -98,7 +92,7 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
         return NULL;
     }
 
-    #ifdef FETT_AWS
+    #if defined(FATFS_DOSBLK) || defined(FATFS_RAMDISK)
         uint8_t mode;
         if ((strcmp(pcMode,"r") == 0) || (strcmp(pcMode,"rb") == 0)) {
             mode = FA_READ;
@@ -116,7 +110,7 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 
         // Store the file size
         file->ulFileSize = f_size(&(file->fatfsFile));
-    #else
+    #elif defined(FATFS_SDCARD)
         if (!sdlib_open(pcFile,pcMode)) {
             fettPrintf ("ff_fopen: Failed to open <%s>.\r\n",pcFile);
             return NULL;
@@ -137,9 +131,9 @@ FF_FILE *ff_fopen( const char *pcFile, const char *pcMode )
 int ff_fclose( FF_FILE *pxStream )
 {
     int ret;
-    #ifdef FETT_AWS
+    #if defined(FATFS_DOSBLK) || defined(FATFS_RAMDISK)
         ret = f_close(&(pxStream->fatfsFile)); /* Close the file */
-    #else
+    #elif defined(FATFS_SDCARD)
         ret = 0;
         sdlib_close(pxStream->filename);
     #endif
@@ -155,13 +149,13 @@ size_t ff_fread( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStream
 
     bytes = xSize * xItems;
 
-    #ifdef FETT_AWS
+    #if defined(FATFS_DOSBLK) || defined(FATFS_RAMDISK)
         int res = f_read(&(pxStream->fatfsFile), (uint8_t *)pvBuffer, bytes, &bytes_read);
         if (res != FR_OK) {
             fettPrintf ("(Error)~ ff_fread: failed to read from file. [ret =%d]\r\n",res);
             return 0; // 0 items read [TODO: do we check here on any error values?]
         }
-    #else
+    #elif defined(FATFS_SDCARD)
         bytes_read = sdlib_read_from_file(pxStream->filename,pvBuffer,bytes);
     #endif
 
@@ -178,13 +172,13 @@ size_t ff_fwrite( void *pvBuffer, size_t xSize, size_t xItems, FF_FILE * pxStrea
     size_t items_written;
 
     bytes = xSize * xItems;
-    #ifdef FETT_AWS
+    #if defined(FATFS_DOSBLK) || defined(FATFS_RAMDISK)
         int res = f_write(&(pxStream->fatfsFile), (uint8_t *)pvBuffer, bytes, &bytes_written); /* Write data to the file */
         if (res != FR_OK) {
             fettPrintf ("(Error)~ ff_fwrite: failed to write to file. [ret=%d]\r\n",res);
             return 0; // 0 items written
         }
-    #else
+    #elif defined(FATFS_SDCARD)
         bytes_written = sdlib_write_to_file(pxStream->filename,pvBuffer,bytes);
     #endif
 
