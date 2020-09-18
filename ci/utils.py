@@ -212,10 +212,9 @@ def prepareArtifact(
             listEssentialArtifacts.append(makeOutPath)
 
     # List all artifacts that are fine to ignore if they do not exist.
-    logFile = os.path.join(repoDir, "fett-ci.log")
-    userDatatargetLogFile = os.path.join("/var", "log", "user-data.log")
-
-    listArtifacts = [userDatatargetLogFile, logFile]
+    listArtifacts = [os.path.join(repoDir, "fett-ci.log")] #add fett-ci log file
+    if entrypoint in ["AWS", "AWSTesting"]:
+        listArtifacts.append(os.path.join("/var", "log", "user-data.log"))
 
     # Collect the essential artifacts, exit fett-ci if it cannot be gotten.
     #   Only run this if we are collecting targetLogs
@@ -248,11 +247,11 @@ def prepareArtifact(
                     "sudo",
                     "chown",
                     os.getlogin() + ":" + os.getlogin(),
-                    os.join(artifactsPath, xArtifact),
+                    os.path.join(artifactsPath, xArtifact),
                 ]
             )
-        except:
-            print(f"(Warning)~  Unable to collect non-essential log file { xArtifact }")
+        except Exception as exc:
+            warnAndLog(message=f"Unable to collect non-essential log file { xArtifact }",exc=exc)
 
     # Determine what to do with the dir of logs
     if entrypoint in ["AWS", "AWSTesting"]:
