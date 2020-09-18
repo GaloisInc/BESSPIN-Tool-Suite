@@ -47,6 +47,10 @@
             "type" : "bool"
         },
         {
+            "name" : "gdbDebug",
+            "type" : "bool"
+        },
+        {
             "name" : "useCustomOsImage",
             "type" : "boolean"
         },

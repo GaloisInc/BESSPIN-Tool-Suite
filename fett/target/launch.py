@@ -87,6 +87,11 @@ def startFett ():
             setSetting("cross-compiler", "GCC")
             setSetting("linker", "GCC")
 
+    # Check gdbDebug and openConsole
+    if (isEnabled('gdbDebug') and (not isEnabled('openConsole'))):
+        warnAndLog("<gdbDebug> is enabled, but <openConsole> is not. <gdbDebug> will be ignored.")
+        setSetting('gdbDebug',False)
+
     # prepare the environment
     prepareEnv()
 
