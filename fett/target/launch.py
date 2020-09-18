@@ -87,10 +87,15 @@ def startFett ():
             setSetting("cross-compiler", "GCC")
             setSetting("linker", "GCC")
 
-    # Check gdbDebug and openConsole
+    # Check gdbDebug sanity
     if (isEnabled('gdbDebug') and (not isEnabled('openConsole'))):
         warnAndLog("<gdbDebug> is enabled, but <openConsole> is not. <gdbDebug> will be ignored.")
         setSetting('gdbDebug',False)
+    if (isEnabled('gdbDebug') and ( (isEqSetting('target', 'qemu')) or
+                                    (isEqSetting('target', 'awsf1') and (not isEqSetting('pvAWS','firesim')))
+                                )):
+        targetName = getSetting('target') if (not isEqSetting('target','awsf1')) else getSetting('pvAWS')
+        logAndExit(f"<gdbDebug> is not implemented on <{targetName}> .",exitCode=EXIT.Implementation)
 
     # prepare the environment
     prepareEnv()
