@@ -23,10 +23,6 @@
             "choices" : [ "qemu", "awsf1", "vcu118" ]
         },
         {
-            "name" : "FreeRTOSUseRAMDisk",
-            "type" : "bool"
-        },
-        {
             "name" : "processor",
             "type" : "string",
             "choices" : [ "bluespec_p1", "chisel_p1", "bluespec_p2", "chisel_p2", "bluespec_p3", "chisel_p3" ]
@@ -35,6 +31,11 @@
             "name" : "osImage",
             "type" : "string",
             "choices" : [ "debian", "FreeRTOS", "FreeBSD", "busybox" ]
+        },
+        {
+            "name" : "freertosFatFs",
+            "type" : "string",
+            "choices" : [ "default", "ramdisk", "dosblk", "sdcard" ]
         },
         {
             "name" : "elfLoader",

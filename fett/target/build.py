@@ -78,10 +78,23 @@ def freeRTOSBuildChecks():
         warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <Clang> is not supported. Linking using <LLD> instead.")
         setSetting('linker','LLD')
 
-    # C++ SD Arduino library causing issues with Clang
-    if (isEqSetting('cross-compiler','Clang') and (isEqSetting('target','vcu118'))):
-        logAndExit(f"Building FreeRTOS using Clang/LLD is not yet implemented for target <{getSetting('target')}>.",exitCode=EXIT.Implementation)
-
+    # FatFs
+    if (isEqSetting('mode','test')):
+        if (isEqSetting('freertosFatFs','default')):
+            if (isEqSetting('target','awsf1')):
+                setSetting('freertosFatFs','dosblk')
+            elif (isEqSetting('target','vcu118')):
+                setSetting('freertosFatFs','ramdisk')
+        elif (isEqSetting('freertosFatFs','dosblk') and (not isEqSetting('target','awsf1'))):
+            logAndExit(f"FatFs using <dosblk> is only available on <awsf1> target.",exitCode=EXIT.configuration)
+        elif (isEqSetting('freertosFatFs','sdcard') and (not isEqSetting('target','vcu118'))):
+            logAndExit(f"FatFs using <sdcard> is only available on <vcu118> target.",exitCode=EXIT.configuration)
+        if isEqSetting('freertosFatFs','sdcard'):
+            # C++ SD Arduino library causing issues with Clang
+            if isEqSetting('cross-compiler','Clang'):
+                logAndExit(f"Compiling the SDcard library using Clang/LLD is not yet implemented.",exitCode=EXIT.Implementation)
+            warnAndLog("FatFs is configured to use <sdcard>. This run will only succeed if an SD card is available to the board.")
+            
 @decorate.debugWrap
 @decorate.timeWrap
 def prepareFreeRTOSNetworkParameters():
@@ -177,9 +190,10 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
     else:
         envVars.append(f"PROG=main_fett")
     envVars.append(f"BSP={getSetting('target')}")
-    if getSetting('FreeRTOSUseRAMDisk'):
-        envVars.append(f"FREERTOS_USE_RAMDISK=1")
-    envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
+    if (isEqSetting('mode','test')):
+        envVars.append(f"FATFS={getSetting('freertosFatFs').upper()}")
+        if isEqSetting('freertosFatFs','ramdisk'):
+            envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
 
     if isEqSetting('binarySource', 'Michigan'):
         dockerToolchainImage = 'michigan-image:1.0'
