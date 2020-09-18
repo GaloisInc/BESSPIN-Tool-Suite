@@ -172,7 +172,11 @@ class commonTarget():
             self.shutdownAndExit(f"shutdown: Unable to shutdown the {getSetting('target')} properly.",overwriteShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
         if (isEnabled('openConsole') and (not overwriteConsole)):
+            if (isEnabled('gdbDebug')):
+                self.startGdbDebug()
             self.interact()
+            if (isEnabled('gdbDebug')):
+                self.endGdbDebug()
             if (self.userCreated):
                 retCommand = self.terminateTarget(timeout=timeout,shutdownOnError=False)
                 if ((not retCommand[0]) or retCommand[2]): #bad -- probably logged in as non-root user
@@ -1264,6 +1268,20 @@ class commonTarget():
         message = f"getGdbOutput is not implemented for <{target}>"
         warnAndLog(message,doPrint=False)
         return message
+
+    @decorate.debugWrap
+    def startGdbDebug(self):
+        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'awsf1')
+                                               else getSetting('target'))
+        warnAndLog(f"<gdbDebug> is not implemented for <{target}> method!")
+        return
+
+    @decorate.debugWrap
+    def endGdbDebug(self):
+        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'awsf1')
+                                               else getSetting('target'))
+        warnAndLog(f"<gdbDebug> is not implemented for <{target}> method!")
+        return
 
     @decorate.debugWrap
     @decorate.timeWrap
