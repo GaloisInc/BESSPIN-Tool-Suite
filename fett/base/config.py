@@ -10,7 +10,7 @@ from fett.base.utils.misc import *
 from importlib.machinery import SourceFileLoader
 from fett.cwesEvaluation.scoreTests import SCORES
 
-CONFIG_SECTIONS = ['backend', 'applications', 'build']
+CONFIG_SECTIONS = ['functionality', 'target', 'common-minor', 'applications', 'build']
 
 def loadJsonFile (jsonFile):
     try:

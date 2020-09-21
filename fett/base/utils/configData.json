@@ -11,12 +11,15 @@
     "_wildValue" : "only for hexList. If present, this value means something special.",
     "_exception" : "only for hexList. If present, this option's value is not legal",
 
-    "backend" : [
+    "functionality" : [
         {
             "name" : "mode",
             "type" : "string",
             "choices" : [ "test", "production", "evaluateSecurityTests" ]
-        },
+        }
+    ],
+
+    "target" : [
         {
             "name" : "target",
             "type" : "string",
@@ -73,7 +76,10 @@
             "name" : "sourceVariant",
             "type" : "string",
             "choices" : [ "default", "purecap", "temporal" ]
-        },
+        }
+    ],
+
+    "common-minor" : [
         {
             "name" : "netbootPortRangeStart",
             "type" : "int",
