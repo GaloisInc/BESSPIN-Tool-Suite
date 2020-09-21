@@ -58,6 +58,10 @@ def buildCwesEvaluation():
                        f"<{getSetting('target')}>.  PPAC tests will be skipped.")
             getSetting("vulClasses").remove("PPAC")
 
+    if (isEqSetting('binarySource','LMCO') and isEqSetting('osImage','debian') and ("PPAC" in getSetting("vulClasses"))):
+        warnAndLog("vulClass <PPAC> is not supported for <LMCO> on <debian>.")
+        getSetting("vulClasses").remove("PPAC")
+
     # Copy apps over
     additionalFiles = []
     for vulClass in getSetting('vulClasses'):
