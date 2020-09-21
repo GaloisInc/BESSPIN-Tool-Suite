@@ -154,7 +154,7 @@ This is chosen by switching
 
 ## Compiling for non-GFE CPUs
 
-SRI-Cambridge, LMCO P2, and Michigan targets require the use of a non-default toolchain. The use of these toolchains is integrated in the tool, and they use docker images for that. Currently, the tool assumes that you have the docker service running and the needed images available. We hereby mention the steps of ensuring that on a CentOS machine:
+SRI-Cambridge, LMCO P2, and Michigan targets require the use of non-default toolchains. The use of these toolchains, via Docker images, is integrated in the tool. Currently, the tool assumes that you have the Docker service running and the needed images available. To ensure that on a CentOS machine, do the following:
   - Install docker ([instructions source](https://docs.docker.com/engine/install/centos/#install-using-the-repository)):
     ```
     sudo yum install -y yum-utils
