@@ -182,4 +182,4 @@ SRI-Cambridge, LMCO P2, and Michigan targets require the use of non-default tool
     sudo docker load -i michigan-toolchain.tar.gz
     ```
 
-- Note that for LMCO P2, the docker image (`galoisinc/besspin:gfe-gcc83`) is public on Dockerhub, so there is no need to load it. However, during the first time to use it, it will take more time due to downloading and unpacking.
+- Note that for LMCO P2, the Docker image (`galoisinc/besspin:gfe-gcc83`) is public on DockerHub, so there is no need to load it. However, the first run that uses it will take considerable extra time due to downloading and unpacking.
