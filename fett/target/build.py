@@ -416,6 +416,8 @@ def crossCompileUnix(directory,extraString=''):
     logging.debug(f"going to make using {envLinux}")
     if (isEqSetting('binarySource','SRI-Cambridge')):
         dockerToolchainImage = 'cambridge-toolchain'
+    elif (isEqSetting('binarySource','LMCO')):
+        dockerToolchainImage = 'galoisinc/besspin:gfe-gcc83'
     else:
         dockerToolchainImage = None
     make (envLinux, directory,dockerToolchainImage=dockerToolchainImage)

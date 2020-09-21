@@ -22,7 +22,12 @@ ifeq ($(BIN_SOURCE),SRI_Cambridge)
 else
 	PREFIX_FreeBSD := riscv64-unknown-freebsd12.1
 endif
-PREFIX_Debian := riscv64-unknown-linux-gnu
+ifeq ($(BIN_SOURCE),LMCO)
+	#In the docker image, this is v8.3.0
+	PREFIX_Debian := riscv64-unknown-elf
+else
+	PREFIX_Debian := riscv64-unknown-linux-gnu
+endif
 CFLAGS_FreeBSD_CLANG := -Wno-error=sign-compare -mno-relax
 CFLAGS += ${CFLAGS_$(OS_IMAGE)_$(COMPILER)} -DBIN_SOURCE_$(BIN_SOURCE)
 
