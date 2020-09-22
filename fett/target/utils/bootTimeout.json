@@ -4,7 +4,11 @@
       "name": "procFlavor",
       "bluespec": {
         "name": "elfLoader",
-        "JTAG": { "timeout" : { "elfLoad" : 650, "boot" : 600 } },
+        "JTAG": { 
+          "name" : "procLevel",
+          "p2" : { "timeout" : { "elfLoad" : 650, "boot" : 600 } },
+          "p3" : { "timeout" : { "elfLoad" : 700, "boot" : 600 } }
+        },
         "else": { "timeout" : { "boot" : 600 } }
       },
       "chisel": {

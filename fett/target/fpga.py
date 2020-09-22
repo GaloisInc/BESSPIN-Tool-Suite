@@ -39,6 +39,9 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def fpgaStart (self, elfPath, elfLoadTimeout=15):
+        if (isEqSetting('processor','bluespec_p3')):
+            time.sleep(3) #need time after programming the fpga
+
         if (isEqSetting('target','vcu118')):
             # setup UART
             self.setupUart()
@@ -98,6 +101,8 @@ class fpgaTarget(object):
 
             self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
 
+            if (isEqSetting('processor','bluespec_p3')):
+                time.sleep(3) # Bluespec_p3 needs time here before being able to properly continue.
         if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
             self.setupGdbCustomScoring()
 
@@ -149,15 +154,30 @@ class fpgaTarget(object):
         else:
             time.sleep(1)
 
+        if (isEqSetting('processor','bluespec_p3')):
+            self.setUnixBluespecP3()
+
         # detach from gdb
         self.gdbDetach()
 
         # Re-connect
         self.gdbConnect()
 
+        if (isEqSetting('processor','bluespec_p3')):
+            self.setUnixBluespecP3()
+
         if ((not isRepeated) and isEqSetting('osImage','FreeRTOS')):
             if (isEqSetting('procFlavor','bluespec')):
                 self.softReset(isRepeated=True)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def setUnixBluespecP3 (self):
+        # required to boot unix on bluespec_p3
+        self.runCommandGdb("set $a0 = 0")
+        time.sleep(1)
+        self.runCommandGdb("set $a1 = 0x70000020")
+        time.sleep(3)
 
     @decorate.debugWrap
     @decorate.timeWrap
