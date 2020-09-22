@@ -22,6 +22,20 @@ from fett.apps.unix import ssh
 
 class commonTarget():
     def __init__(self, targetId=None):
+        # target settings
+        self.targetId = targetId
+        self.target = getSetting('target',targetId=self.targetId)
+        if (self.target=='awsf1'):
+            self.pvAWS = getSetting('pvAWS',targetId=self.targetId)
+        self.osImage = getSetting('osImage',targetId=self.targetId)
+        self.processor = getSetting('processor',targetId=self.targetId)
+        self.binarySource = getSetting('binarySource',targetId=self.targetId)
+        self.sourceVariant = getSetting('sourceVariant',targetId=self.targetId)
+        self.elfLoader = getSetting('elfLoader',targetId=self.targetId)
+        self.procLevel = getSetting('procLevel',targetId=self.targetId)
+        self.procFlavor = getSetting('procFlavor',targetId=self.targetId)
+        self.xlen = getSetting('xlen',targetId=self.targetId)
+        self.tarballName = getSetting('tarballName',targetId=self.targetId)
 
         self.process = None
         self.ttyProcess = None
@@ -29,7 +43,7 @@ class commonTarget():
         self.sshProcess = None
         self.fSshOut = None
         self.restartMode = False
-        self.isSshRootEnabled = isEqSetting('osImage','FreeBSD') and isEqSetting('target','vcu118')
+        self.isSshRootEnabled = ((self.osImage=='FreeBSD') and (self.target=='vcu118'))
 
         # all OSs settings
         self.portTarget = None
@@ -41,7 +55,7 @@ class commonTarget():
         self.inInteractMode = False
         self.stopShowingTime = None
         self.resendAttempts = 0
-        self.limitResendAttempts = 5 if (isEqSetting('osImage','FreeBSD') and isEqSetting('target','qemu')) else 3
+        self.limitResendAttempts = 5 if ((self.osImage=='FreeBSD') and (self.target=='qemu')) else 3
 
         # For ssh
         self.sshHostPort = None
@@ -50,11 +64,11 @@ class commonTarget():
         self.sshLimitRetries = 3
         self.sshECDSAkeyWasUpdated = False
 
-        self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','vcu118')
+        self.onlySsh = ((self.osImage=='FreeBSD') and (self.target=='vcu118'))
 
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
-        self.rootPassword = 'ssithdefault' if (isEqSetting('osImage','FreeBSD')) else 'riscv'
-        self.rootGroup = 'wheel' if (isEqSetting('osImage','FreeBSD')) else 'root'
+        self.rootPassword = 'ssithdefault' if (self.osImage=='FreeBSD') else 'riscv'
+        self.rootGroup = 'wheel' if (self.osImage=='FreeBSD') else 'root'
         self.userPassword = "fett_2020"
         self.userName = (getSetting('userName') if
                          isEnabled("useCustomCredentials") else
@@ -87,7 +101,7 @@ class commonTarget():
         if (not self.userCreated):
             self.shutdownAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
 
-        if (getSetting('osImage') in ['debian', 'FreeBSD']):
+        if (self.osImage in ['debian', 'FreeBSD']):
             if (not self.isSshConn):
                 isPrevUserRoot = self.isCurrentUserRoot
                 self.isCurrentUserRoot = not self.isCurrentUserRoot
@@ -101,7 +115,7 @@ class commonTarget():
                     loginPassword = self.rootPassword
 
                 self.runCommand (loginName,endsWith="Password:")
-                if (isEqSetting('osImage','FreeBSD')): #Work around the occasional login failures
+                if (self.osImage=='FreeBSD'): #Work around the occasional login failures
                     maxLoginAttempts = 3
                     iAttempt = 0
                     loginSuccess = False
@@ -144,7 +158,7 @@ class commonTarget():
                     sshSuccess =  self.openSshConn(userName='root')
                 if (not sshSuccess):
                     self.shutdownAndExit(f"switchUser: Failed to switch user.")
-        elif (isEqSetting('osImage','buysbox')):
+        elif (self.osImage=='busybox'):
             if (self.isCurrentUserRoot): #switch to the other user
                 self.runCommand ("su {0}".format(self.userName),endsWith="\$")
                 self.runCommand ("cd ~",endsWith="\$")
@@ -152,24 +166,25 @@ class commonTarget():
                 self.runCommand ("exit",endsWith="~ #")
             self.isCurrentUserRoot = not self.isCurrentUserRoot #<This needs to be figured out for busybox in case the login itself fails
         else:
-            self.shutdownAndExit(f"<switchUser> is not implemented on <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
+            self.shutdownAndExit(f"<switchUser> is not implemented on <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
         return
 
     @decorate.debugWrap
     @decorate.timeWrap
     def shutdown (self,overwriteConsole=False,isError=False):
-        if (isEqSetting('osImage','FreeRTOS')):
+        if (self.osImage=='FreeRTOS'):
             timeout = 60
-        elif (isEqSetting('target', 'vcu118')):
+        elif (self.target=='vcu118'):
             timeout = 90
-        elif (getSetting('osImage') in ['debian','busybox']):
+        elif (self.osImage in ['debian','busybox']):
             timeout = 45
-        elif (isEqSetting('osImage','FreeBSD') and isEqSetting('target', 'awsf1') and isEqSetting('pvAWS', 'connectal')):
+        elif ((self.osImage=='FreeBSD') and (self.target=='awsf1') and (self.pvAWS=='connectal')):
             timeout = 150
         else:
             timeout = 45
         if (self.AttemptShutdownFailed):
-            self.shutdownAndExit(f"shutdown: Unable to shutdown the {getSetting('target')} properly.",overwriteShutdown=True,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"shutdown: Unable to shutdown the {self.target} properly.",
+                overwriteShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
         if (isEnabled('openConsole') and (not overwriteConsole)):
             self.interact()
@@ -185,10 +200,8 @@ class commonTarget():
             if (not self.isCurrentUserRoot):
                 self.switchUser()
             self.terminateTarget(timeout=timeout,shutdownOnError=True)
-        printAndLog (f"{getSetting('target')} shut down successfully!",
-            doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and
-                            isEqSetting('osImage', 'FreeRTOS')) 
-                    )
+        printAndLog (f"{self.target} shut down successfully!",
+            doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
         return
 
     @decorate.debugWrap
@@ -207,7 +220,7 @@ class commonTarget():
                     return True, layer['timeout'], None
                 elif 'name' in layer:
                     name = layer['name']
-                    setting = getSetting(name)
+                    setting = getSetting(name,targetId=self.targetId)
                     if setting in layer:
                         return traverse_data(layer[setting])
                     elif 'else' in layer:
@@ -227,31 +240,31 @@ class commonTarget():
 
             data = safeLoadJsonFile(os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'bootTimeout.json'))
 
-            if (getSetting('osImage') not in data):
+            if (self.osImage not in data):
                 return False, 0, {
-                    'message': f'start: Timeout is not recorded for osImage=<{getSetting("osImage")}>.',
+                    'message': f'start: Timeout is not recorded for osImage=<{self.osImage}>.',
                     'overwriteShutdown': True,
                     'exitCode': EXIT.Implementation
                 }
-            os_image = data[getSetting('osImage')]
+            os_image = data[self.osImage]
 
-            if getSetting('target') not in os_image:
+            if self.target not in os_image:
                 if 'timeout' in os_image:
                     # case -- targets not iterated under osImage (e.g. busybox)
                     return True, os_image['timeout'], None
                 else:
                     return False, 0, {
-                        'message': f'start: Timeout is not recorded for target=<{getSetting("target")}>.',
+                        'message': f'start: Timeout is not recorded for target=<{self.target}>.',
                         'overwriteShutdown': True,
                         'exitCode': EXIT.Implementation
                     }
-            target = os_image[getSetting('target')]
+            target = os_image[self.target]
 
             return traverse_data(target)
 
-        if (getSetting('osImage') in ['FreeRTOS']):
+        if (self.osImage in ['FreeRTOS']):
             timeoutDict = { "boot" : 30 }
-        elif getSetting('osImage') in ['debian', 'busybox', 'FreeBSD']:
+        elif self.osImage in ['debian', 'busybox', 'FreeBSD']:
             success, timeoutDict, message = get_timeout_from_settings_dict()
 
             if not success:
@@ -261,13 +274,13 @@ class commonTarget():
                 for timeout in timeoutDict.keys():
                     timeoutDict[timeout] += 120 #takes longer to restart
 
-            printAndLog(
-                f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
+            printAndLog(f"start: Booting <{self.osImage}> on "
+                        f"<{self.target}>. This might take a while...")
         else:
-            self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
-                                 overwriteShutdown=True, exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"start: <{self.osImage}> is not implemented on "
+                f"<{self.target}>.",overwriteShutdown=True, exitCode=EXIT.Implementation)
         sumTimeout = sum(timeoutDict.values())
-        if (isEqSetting('osImage','debian')):
+        if (self.osImage=='debian'):
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
             self.boot(endsWith="login:",timeoutDict=timeoutDict)
             self.stopShowingTime.set()
@@ -277,7 +290,7 @@ class commonTarget():
             self.runCommand ("root",endsWith="Password:")
             loginTimeout = 120 if (self.restartMode) else 60
             self.runCommand (self.rootPassword,timeout=loginTimeout)
-        elif (isEqSetting('osImage','busybox')):
+        elif (self.osImage=='busybox'):
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
             self.boot(endsWith="Please press Enter to activate this console.",timeoutDict=timeoutDict)
             self.stopShowingTime.set()
@@ -285,35 +298,36 @@ class commonTarget():
             self.runCommand (" ",endsWith="/ #",timeout=10) #This is necessary
             self.runCommand("cd root",timeout=10)
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
-        elif (isEqSetting('osImage','FreeRTOS')):
-            if (isEqSetting('binarySource','Michigan')):
+        elif (self.osImage=='FreeRTOS'):
+            if (isEqSetting('binarySource','Michigan',targetId=self.targetId)):
                 startMsg = 'INFO: Open database successfully'
             else:
                 startMsg = '>>>Beginning of Fett<<<'
             self.boot (endsWith=startMsg,timeoutDict=timeoutDict)
-        elif (isEqSetting('osImage','FreeBSD')):
+        elif (self.osImage=='FreeBSD'):
             self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
             bootEndsWith = "login:"
             self.boot(endsWith=bootEndsWith, timeoutDict=timeoutDict)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             # set the temporary prompt
-            if isEqSetting("binarySource", "SRI-Cambridge") or (isEqSetting("binarySource", "GFE") and isEqSetting('target', 'awsf1') and isEqSetting("pvAWS", "connectal")):
+            if ((self.binarySource=="SRI-Cambridge") 
+                    or ((self.binarySource=="GFE") and (self.target=='awsf1') and (self.pvAWS=="connectal"))):
                 tempPrompt = "~ #"
             else:
                 tempPrompt = "\r\n#"
             # vcu118 freebsd would be already logged in if onlySsh
-            if (isEqSetting('target','qemu')):
+            if (self.target=='qemu'):
                 self.runCommand("root",endsWith="\r\n#")
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
             elif (not self.onlySsh):
-                if ((not isEqSetting("binarySource", "SRI-Cambridge")) or self.restartMode):
+                if ((self.binarySource!="SRI-Cambridge") or self.restartMode):
                     self.runCommand ("root",endsWith='Password:')
                     self.runCommand (self.rootPassword,endsWith=tempPrompt)
                 else:
                     self.runCommand ("root",endsWith=tempPrompt)
 
-            if not isEqSetting('target', 'awsf1'):
+            if not (self.target=='awsf1'):
                 self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
                 self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempPrompt)
                 self.runCommand("set prompt = \"`cat promptText.txt`\"")
@@ -321,9 +335,8 @@ class commonTarget():
 
             printAndLog (f"start: Activating ethernet and setting system time...")
 
-        if (isEqSetting('mode', 'evaluateSecurityTests') and
-            isEqSetting('osImage', 'FreeRTOS')):
-            printAndLog(f"start: {getSetting('osImage')} booted successfully!",
+        if (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')):
+            printAndLog(f"start: {self.osImage} booted successfully!",
                         doPrint=False)
             # Return early to save time by avoiding unnecessary setup
             return
@@ -332,15 +345,15 @@ class commonTarget():
         self.activateEthernet()
         
         if (self.restartMode): #this only in aws/production mode -- skip the reset of start()
-            if (isEqSetting('osImage','debian')): # timesync is not in the boot sequence of neither GFE nor MIT images
-                ntpTimeout = 150 if isEqSetting('binarySource','MIT') else 60 # MIT needs some more time to be responsive
+            if (self.osImage=='debian'): # timesync is not in the boot sequence of neither GFE nor MIT images
+                ntpTimeout = 150 if (self.binarySource=='MIT') else 60 # MIT needs some more time to be responsive
                 self.runCommand("systemctl start systemd-timesyncd.service",timeout=ntpTimeout)
-            printAndLog (f"start: {getSetting('osImage')} booted _again_ successfully!")
+            printAndLog (f"start: {self.osImage} booted _again_ successfully!")
             return
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         awsNtpServer = "169.254.169.123"
-        if (isEqSetting('osImage','debian')):
-            if isEqSetting('target', 'awsf1'):
+        if (self.osImage=='debian'):
+            if (self.target=='awsf1'):
                 # Use AWS NTP server
                 self.runCommand(f"echo 'NTP={awsNtpServer}' >> "
                                 "/etc/systemd/timesyncd.conf")
@@ -350,14 +363,14 @@ class commonTarget():
             
             if not self.hasHardwareRNG():
                 #get the ssh up and running
-                if (isEqSetting('procLevel','p3')):
+                if (self.procLevel=='p3'):
                     time.sleep(5) #need some time to recover before being able to sendFile
                 self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
                 self.runCommand("chmod +x addEntropyDebian.riscv")
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
-        elif (isEqSetting('osImage','FreeBSD')):
-            if isEqSetting('target', 'awsf1'):
+        elif (self.osImage=='FreeBSD'):
+            if (self.target=='awsf1'):
                 # Delete default NTP pool
                 self.runCommand('sed -i "" "/^pool/d" /etc/ntp.conf')
                 # Add AWS NTP server
@@ -369,26 +382,26 @@ class commonTarget():
             # Add ntpd to rc.conf and start it
             self.runCommand("echo 'ntpd_enable=\"YES\"' >> /etc/rc.conf")
             self.runCommand("echo 'ntpd_sync_on_start=\"YES\"' >> /etc/rc.conf")
-            self.runCommand("service ntpd start",timeout=120 if (isEqSetting('procLevel','p3')) else 60)
+            self.runCommand("service ntpd start",timeout=120 if (self.procLevel=='p3') else 60)
 
         # Instruct the kernel debugger to restart instead of debugging mode when the kernel panics
-        if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','awsf1')):
+        if ((self.binarySource=="SRI-Cambridge") and (self.osImage=='FreeBSD') and (self.target=='awsf1')):
             self.runCommand("sysctl debug.debugger_on_panic=0")
             self.runCommand('echo "debug.debugger_on_panic=0" >> /etc/sysctl.conf')
         
         # disable core dump for FreeBSD targets
-        if (isEqSetting('osImage','FreeBSD') and isEqSetting('mode','evaluateSecurityTests')):
+        if ((self.osImage=='FreeBSD') and isEqSetting('mode','evaluateSecurityTests')):
             self.runCommand("sysctl kern.coredump=0")
 
-        if getSetting('osImage') in ['debian', 'FreeBSD'] and not isEqSetting('binarySource', 'SRI-Cambridge'):
+        if self.osImage in ['debian', 'FreeBSD'] and ((self.binarySource!="SRI-Cambridge")):
             printAndLog("start: setting motd...")
-            motdPath = '/etc/motd.template' if isEqSetting('osImage', 'FreeBSD') else '/etc/motd'
-            instanceType = f"{getSetting('binarySource')} / {getSetting('osImage')} / {getSetting('processor')}"
+            motdPath = '/etc/motd.template' if (self.osImage=='FreeBSD') else '/etc/motd'
+            instanceType = f"{self.binarySource} / {self.osImage} / {self.processor}"
             self.runCommand(f"printf '\\nInstance type: {instanceType}\\n\\n' > {motdPath}")
-            if isEqSetting('osImage', 'FreeBSD'):
+            if (self.osImage=='FreeBSD'):
                 self.runCommand("service motd restart")
 
-        printAndLog (f"start: {getSetting('osImage')} booted successfully!")
+        printAndLog (f"start: {self.osImage} booted successfully!")
         return
 
     @decorate.debugWrap
@@ -429,18 +442,18 @@ class commonTarget():
         printAndLog(f"Changing the root password...", doPrint=False)
         alphabet = string.ascii_letters + string.digits + "!@#$%^&*(-_=+)"
         self.rootPassword = ''.join(secrets.choice(alphabet) for i in range(14))
-        if isEqSetting('osImage', 'debian'):
+        if (self.osImage=='debian'):
             self.runCommand(f"passwd root", endsWith="New password:")
             self.runCommand(self.rootPassword, endsWith="Retype new password:")
             self.runCommand(self.rootPassword, expectedContents='password updated successfully')
-        elif isEqSetting('osImage', 'FreeBSD'):
+        elif (self.osImage=='FreeBSD'):
             userPasswordHash = sha512_crypt(self.rootPassword)
             command = (f"echo \'{userPasswordHash}\' | "
                        f"pw usermod root -H 0")
             self.runCommand(command, erroneousContents="pw:")
         else:
             self.shutdownAndExit(
-                f"<update root password> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",
+                f"<update root password> is not implemented for <{self.osImage}> on <{self.target}>.",
                 exitCode=EXIT.Implementation)
         printAndLog(f"root password has been changed successfully!",doPrint=False)
 
@@ -452,19 +465,19 @@ class commonTarget():
         user to `wheel`.
         """
         printAndLog("Enabling root user access...")
-        if isEqSetting('osImage', 'debian'):
+        if (self.osImage=='debian'):
             self.runCommand('sed -i "s/# auth       sufficient pam_wheel.so trust/auth sufficient pam_wheel.so trust/" '
                             '/etc/pam.d/su')
             self.runCommand("groupadd wheel")
             self.runCommand(f"usermod -aG wheel {self.userName}")
-        elif isEqSetting('osImage', 'FreeBSD'):
+        elif (self.osImage=='FreeBSD'):
             self.runCommand('sed -i "" "s/auth\\t\\trequisite\\tpam_group.so/'
                             'auth\\t\\tsufficient\\tpam_group.so/" '
                             '/etc/pam.d/su')
             self.runCommand(f"pw group mod wheel -m {self.userName}")
         else:
             self.shutdownAndExit("<enableRootUserAccess> is not implemented "
-                                 f"for <{getSetting('osImage')}>.",
+                                 f"for <{self.osImage}>.",
                                  overwriteConsole=True,
                                  exitCode=EXIT.Implementation)
 
@@ -472,22 +485,22 @@ class commonTarget():
     @decorate.timeWrap
     def createUser (self):
         printAndLog (f"Creating a user...")
-        if (isEqSetting('osImage','debian')):
+        if (self.osImage=='debian'):
             self.runCommand (f"useradd -m {self.userName}")
             self.runCommand (f"passwd {self.userName}",endsWith="New password:")
             self.runCommand (self.userPassword,endsWith="Retype new password:")
             self.runCommand (self.userPassword,expectedContents='password updated successfully')
             self.runCommand (f"usermod --shell /bin/bash {self.userName}")
             self.runCommand(f"echo \"PS1=\'\${{debian_chroot:+(\$debian_chroot)}}\\u@\\h:\\w\$ \'\" >> /home/{self.userName}/.bashrc")
-        elif (isEqSetting('osImage','FreeBSD')):
+        elif (self.osImage=='FreeBSD'):
             self.runCommand (f"echo \"{self.userName}::::::{self.userName}::sh:{self.userPassword}\" | adduser -f -",expectedContents=f"Successfully added ({self.userName}) to the user database.",timeout=90)
-        elif (isEqSetting('osImage','busybox')):
+        elif (self.osImage=='busybox'):
             self.runCommand ("mkdir -p /home/{0}".format(self.userName))
             self.runCommand ("adduser {0}".format(self.userName),endsWith="New password:",expectedContents='Changing password')
             self.runCommand (self.userPassword,endsWith="Retype password:")
             self.runCommand (self.userPassword,expectedContents='changed by root')
         else:
-            self.shutdownAndExit(f"<createUser> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",overwriteConsole=True,exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"<createUser> is not implemented for <{self.osImage}> on <{self.target}>.",overwriteConsole=True,exitCode=EXIT.Implementation)
         self.userCreated = True
 
     @decorate.debugWrap
@@ -515,29 +528,29 @@ class commonTarget():
 
         printAndLog(f"Changing user {self.userName}'s password")
         userPasswordHash = getSetting("userPasswordHash")
-        if isEqSetting('osImage', 'debian'):
+        if (self.osImage=='debian'):
             command = f"usermod -p \'{userPasswordHash}\' {self.userName}"
             res = self.runCommand(command)
-        elif isEqSetting('osImage', 'FreeBSD'):
+        elif (self.osImage=='FreeBSD'):
             command = (f"echo \'{userPasswordHash}\' | "
                        f"pw usermod {self.userName} -H 0")
             self.runCommand(command, erroneousContents="pw:")
         else:
             self.shutdownAndExit("<createUser> is not implemented for "
-                                 f"<{getSetting('osImage')}> on "
-                                 f"<{getSetting('target')}>.",
+                                 f"<{self.osImage}> on "
+                                 f"<{self.target}>.",
                                  overwriteConsole=True,
                                  exitCode=EXIT.Implementation)
 
 
     @decorate.debugWrap
     def getDefaultEndWith (self):
-        if (isEqSetting('osImage','debian')):
+        if (self.osImage=='debian'):
             if (self.isCurrentUserRoot):
                 return ":~#"
             else:
                 return ":~\$"
-        elif (isEqSetting('osImage','FreeBSD')):
+        elif (self.osImage=='FreeBSD'):
             if (self.isCurrentUserRoot):
                 if isEqSetting('target', 'awsf1'):
                     return ":~ #"
@@ -545,27 +558,27 @@ class commonTarget():
                     return "fettPrompt>"
             else:
                 return ":~ \$"
-        elif (isEqSetting('osImage','busybox')):
+        elif (self.osImage=='busybox'):
             if (self.isCurrentUserRoot):
                 return "~ #"
             else:
                 return "\$"
         else:
-            self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
     def getAllEndsWith (self):
-        if (isEqSetting('osImage','debian')):
+        if (self.osImage=='debian'):
             return [":~#", ":~\$"]
-        elif (isEqSetting('osImage','FreeBSD')):
+        elif (self.osImage=='FreeBSD'):
             if isEqSetting('target', 'awsf1'):
                 return [":~ #", ":~ \$"]
             else:
                 return ["fettPrompt>", ":~ \$"]
-        elif (isEqSetting('osImage','busybox')):
+        elif (self.osImage=='busybox'):
             return ["~ #", "\$"]
         else:
-            self.shutdownAndExit(f"<getAllEndsWith> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"<getAllEndsWith> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -596,7 +609,7 @@ class commonTarget():
         """
         process = self.process if process is None else process
 
-        if (isEnabled('isUnix') or sendToNonUnix):
+        if (isEnabled('isUnix',targetId=self.targetId) or sendToNonUnix):
             self.sendToTarget (command,shutdownOnError=shutdownOnError,process=process)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
@@ -647,11 +660,11 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,forceScp=False,timeout=30,shutdownOnError=True): #send File to target
-        if (not isEnabled('isUnix')):
-            self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
+        if (not isEnabled('isUnix',targetId=self.targetId)):
+            self.shutdownAndExit(f"<sendFile> is not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
 
         def returnFalse (message='',noRetries=False,exc=None,fileToClose=None):
-            if not (getSetting('osImage') in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)):
+            if not (self.osImage in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)):
                 self.keyboardInterrupt ()
             if (exc):
                 logging.error(traceback.format_exc())
@@ -678,16 +691,16 @@ class commonTarget():
 
         def checksumTarget(f):
             shaSumRX = None
-            if (isEqSetting('osImage','debian')):
+            if (self.osImage=='debian'):
                 retShaRX = self.runCommand(f"sha256sum {f}",timeout=120)[1]
-            elif (isEqSetting('osImage','FreeBSD')):
+            elif (self.osImage=='FreeBSD'):
                 retShaRX = self.runCommand(f"sha256 {f}",timeout=120)[1]
                 retShaRX += self.runCommand(" ")[1]
             logging.debug(f"retShaRX:\n{retShaRX}")
             for line in retShaRX.splitlines():
-                if (isEqSetting('osImage','debian')):
+                if (self.osImage=='debian'):
                     shaMatch = re.match(rf"^(?P<shaSum>[0-9a-f]+)\s+ {f}\s*$",line)
-                elif (isEqSetting('osImage','FreeBSD')):
+                elif (self.osImage=='FreeBSD'):
                     shaMatch = re.match(rf"^SHA256 \({f}\) = (?P<shaSum>[0-9a-f]+)$",line)
                 if (shaMatch is not None):
                     shaSumRX = shaMatch.group('shaSum')
@@ -711,7 +724,7 @@ class commonTarget():
             return returnFalse (f"Failed to obtain the checksum of <{f}>.",noRetries=True,exc=exc)
 
 
-        if (getSetting('osImage') in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)): #send through SSH
+        if (self.osImage in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)): #send through SSH
             portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
 
             # if sending TO target, then "scp host target" otherwise flipped
@@ -759,9 +772,9 @@ class commonTarget():
                 return returnFalse("sendFile: sending a file FROM the target requires an SSH connection",
                                    noRetries=True)
 
-            if (isEqSetting('osImage','debian')):
+            if (self.osImage=='debian'):
                 listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {targetPath}",timeout=timeout,shutdownOnError=False))
-            elif (isEqSetting('osImage','FreeBSD')):
+            elif (self.osImage=='FreeBSD'):
                 listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {targetPath}",timeout=timeout,shutdownOnError=False))
             listenOnTarget.daemon = True
             getSetting('trash').throwThread(listenOnTarget,f"nc listening for <{xFile}> on Target")
@@ -798,19 +811,19 @@ class commonTarget():
     def sendTar(self,timeout=30): #send tarball to target
         printAndLog ("sendTar: Sending files...")
         #---send the archive
-        if (getSetting('binarySource') in ['GFE', 'SRI-Cambridge']) and isEqSetting('osImage', 'FreeBSD'):
+        if ((self.binarySource in ['GFE', 'SRI-Cambridge']) and (self.osImage=='FreeBSD')):
             self.switchUser() #this is assuming it was on root
-            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout,forceScp=True)
+            self.sendFile (getSetting('buildDir'),self.tarballName,timeout=timeout,forceScp=True)
             self.switchUser()
-            self.runCommand(f"mv /home/{self.userName}/{getSetting('tarballName')} /root/")
+            self.runCommand(f"mv /home/{self.userName}/{self.tarballName} /root/")
         else:
-            self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
+            self.sendFile (getSetting('buildDir'),self.tarballName,timeout=timeout)
         #---untar
-        if (isEqSetting('osImage','debian')):
-            self.runCommand(f"tar xvf {getSetting('tarballName')} --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
-        elif (isEqSetting('osImage','FreeBSD')):
-            self.runCommand(f"tar xvf {getSetting('tarballName')} -m",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
-        self.runCommand(f"rm {getSetting('tarballName')}",timeout=timeout) #to save space
+        if (self.osImage=='debian'):
+            self.runCommand(f"tar xvf {self.tarballName} --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
+        elif (self.osImage=='FreeBSD'):
+            self.runCommand(f"tar xvf {self.tarballName} -m",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
+        self.runCommand(f"rm {self.tarballName}",timeout=timeout) #to save space
         printAndLog ("sendTar: Sending successful!")
 
     @decorate.debugWrap
@@ -822,15 +835,15 @@ class commonTarget():
             self.sendTar(timeout=timeout)
 
         # assign modules
-        if (isEqSetting('osImage','FreeRTOS')):
+        if (self.osImage=='FreeRTOS'):
             self.appModules = [freertos]
-        elif (getSetting('osImage') in ['debian', 'FreeBSD']):
+        elif (self.osImage in ['debian', 'FreeBSD']):
             self.appModules = [ssh, webserver, database, voting]
-            if (isEqSetting('binarySource','MIT')): #Disable nginx
+            if (self.binarySource=='MIT'): #Disable nginx
                 self.appModules.remove(webserver)
                 self.appModules.remove(voting) #hosted by the webserver
         else:
-            self.shutdownAndExit(f"<runApp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"<runApp> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
         # The appLog will be the file object flying around for logging into app.out
         appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
@@ -859,8 +872,8 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def collectLogs (self):
-        if (getSetting('osImage') not in ['debian', 'FreeBSD']):
-            printAndLog(f"No logs to be collected from <{getSetting('osImage')}>.",doPrint=False)
+        if (self.osImage not in ['debian', 'FreeBSD']):
+            printAndLog(f"No logs to be collected from <{self.osImage}>.",doPrint=False)
             return
         
         # Collect all logs into one directory
@@ -891,9 +904,9 @@ class commonTarget():
         self.userPassword = 'newPassword'
         salt     = crypt.mksalt()
         newHash = crypt.crypt(self.userPassword, salt)
-        if isEqSetting('osImage', 'debian'):
+        if (self.osImage=='debian'):
             self.runCommand(f"usermod -p \'{newHash}\' {self.userName}")
-        elif isEqSetting('osImage', 'FreeBSD'):
+        elif (self.osImage=='FreeBSD'):
             self.runCommand (f"echo \'{newHash}\' | pw usermod {self.userName} -H 0",erroneousContents="pw:")
 
         # send the tarball to the artifacts directory using non-root SCP
@@ -928,8 +941,8 @@ class commonTarget():
             self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overwriteShutdown=True,overwriteConsole=True,exitCode=EXIT.Run)
         else:
             self.keyboardInterruptTriggered = True
-        if ((not isEnabled('isUnix')) and (process == self.process)):
-            self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
+        if ((not isEnabled('isUnix',targetId=self.targetId)) and (process == self.process)):
+            self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
         doTimeout = True
         retryIdx = 0
         while doTimeout and retryIdx < retryCount:
@@ -960,7 +973,7 @@ class commonTarget():
     @decorate.debugWrap
     def ensureCrngIsUp (self):
         if (not isEqSetting('osImage','debian')):
-            self.shutdownAndExit(f"<ensureCrngIsUp> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"<ensureCrngIsUp> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
         isCrngUp = False
         for iAttempt in range(5):
@@ -1028,9 +1041,9 @@ class commonTarget():
             process.sendline(command)
         except Exception as exc:
             if (shutdownOnError):
-                self.shutdownAndExit(f"sendToTarget: Failed to send <{command}> to {getSetting('target')}.",exc=exc,exitCode=EXIT.Run)
+                self.shutdownAndExit(f"sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,exitCode=EXIT.Run)
             else:
-                warnAndLog (f"sendToTarget: Failed to send <{command}> to {getSetting('target')}.",exc=exc,doPrint=False)
+                warnAndLog (f"sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,doPrint=False)
         return
 
     @decorate.debugWrap
@@ -1067,7 +1080,7 @@ class commonTarget():
                 textBack += self.readFromTarget(endsWith=endsWith[retExpect],process=process)
         except pexpect.TIMEOUT:
             if (shutdownOnError):
-                self.shutdownAndExit(f"expectFromTarget: {getSetting('target').capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
+                self.shutdownAndExit(f"expectFromTarget: {self.target.capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
             elif (not isEqSetting('osImage','FreeRTOS')):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
                 textBack += self.keyboardInterrupt (shutdownOnError=True, process=process) if issueInterrupt else ""
@@ -1086,30 +1099,30 @@ class commonTarget():
     @decorate.timeWrap
     def terminateTarget (self,timeout=15,shutdownOnError=True):
         self.terminateTargetStarted = True
-        if (isEqSetting('osImage','debian')):
+        if (self.osImage=='debian'):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
             shutdownString = "Power down" if (isEqSetting('binarySource','MIT')) else "Power off"
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=[shutdownString,pexpect.EOF],suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
-        elif (isEqSetting('osImage','busybox')):
+        elif (self.osImage=='busybox'):
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
-        elif (isEqSetting('osImage','FreeBSD') and (self.onlySsh)):
+        elif ((self.osImage=='FreeBSD') and (self.onlySsh)):
             dumpSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=[self.getDefaultEndWith(),pexpect.EOF],timeout=60,suppressErrors=True,shutdownOnError=False)
             isSuccess = self.closeSshConn()
-        elif (isEqSetting('osImage','FreeBSD')):
+        elif (self.osImage=='FreeBSD'):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
-            if (isEqSetting('binarySource','SRI-Cambridge')):
+            if (self.binarySource=='SRI-Cambridge'):
                 isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='System shutdown time has arrived',timeout=timeout,shutdownOnError=shutdownOnError)
             else:
                 isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
                 if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
                     isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
                     textBack = textBack + textBack_2
-        elif (isEqSetting('osImage','FreeRTOS')):
+        elif (self.osImage=='FreeRTOS'):
             isSuccess, textBack, isTimeout, dumpIdx = [freertos.terminateAppStack(self), '', False, 0] #send STOP to OTA
-        elif (not isEqSetting('osImage','FreeRTOS')):
-            self.shutdownAndExit(f"terminateTarget: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
+        elif (self.osImage=='FreeRTOS'):
+            self.shutdownAndExit(f"terminateTarget: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
         if ((isSuccess and (not isTimeout)) or shutdownOnError):
             isSuccess &= self.targetTearDown() #should be called before closing ttyOut because it is used in firesim
         try:
@@ -1140,8 +1153,8 @@ class commonTarget():
             self.sshRetries += 1
             return self.openSshConn (userName=userName, timeout=timeout)
 
-        if (getSetting('osImage') not in ['FreeBSD','debian']):
-            self.shutdownAndExit(f"<openSshConn> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
+        if (self.osImage not in ['FreeBSD','debian']):
+            self.shutdownAndExit(f"<openSshConn> is not implemented for <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
 
         if (self.sshRetries >= self.sshLimitRetries): #to protect it from excessive attempts
             return False
@@ -1204,8 +1217,8 @@ class commonTarget():
 
     @decorate.debugWrap
     def closeSshConn (self, timeout=60):
-        if (getSetting('osImage') not in ['FreeBSD','debian']):
-            self.shutdownAndExit(f"<closeSshConn> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
+        if (self.osImage not in ['FreeBSD','debian']):
+            self.shutdownAndExit(f"<closeSshConn> is not implemented for <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
         if (self.isSshConn and (self.sshProcess is not None)):
             self.runCommand("exit",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,shutdownOnError=False)
         try:
@@ -1252,15 +1265,14 @@ class commonTarget():
 
     def hasHardwareRNG (self):
         return (
-            (isEqSetting('target','awsf1') and (getSetting('pvAWS') in ['firesim', 'connectal'])) or
-            (isEqSetting('target','qemu') and isEqSetting('osImage','debian'))
+            ((self.target=='awsf1') and (self.pvAWS in ['firesim', 'connectal'])) or
+            ((self.target=='qemu') and (self.osImage=='debian'))
             )
 
     @decorate.debugWrap
     @decorate.timeWrap
     def getGdbOutput(self):
-        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'awsf1')
-                                               else getSetting('target'))
+        target = (f"aws:{self.pvAWS}" if (self.target=='awsf1') else self.target)
         message = f"getGdbOutput is not implemented for <{target}>"
         warnAndLog(message,doPrint=False)
         return message
@@ -1285,16 +1297,16 @@ class commonTarget():
         if (not self.isCurrentUserRoot):
             self.switchUser() #has to be executed on root
 
-        if (isEqSetting('osImage','debian')):
+        if (self.osImage=='debian'):
             self.runCommand ("service ssh restart")
-        if (isEqSetting('osImage','FreeBSD')):
-            if (isEqSetting('binarySource','SRI-Cambridge')):
+        if (self.osImage=='FreeBSD'):
+            if (self.binarySource=='SRI-Cambridge'):
                 self.runCommand("service fett_sshd restart")
-            elif (isEqSetting('target','awsf1')):
+            elif (self.target=='awsf1'):
                 self.runCommand("pkill -f /usr/sbin/sshd")
                 self.runCommand("/usr/sbin/sshd")
             else:
-                self.runCommand("/etc/rc.d/sshd restart",timeout=120 if (isEqSetting('procLevel','p3')) else 60)
+                self.runCommand("/etc/rc.d/sshd restart",timeout=120 if (self.procLevel=='p3') else 60)
 
 # END OF CLASS commonTarget
 
