@@ -327,7 +327,7 @@ class commonTarget():
                 else:
                     self.runCommand ("root",endsWith=tempPrompt)
 
-            if not (self.target=='awsf1'):
+            if (self.target!='awsf1'):
                 self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
                 self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempPrompt)
                 self.runCommand("set prompt = \"`cat promptText.txt`\"")

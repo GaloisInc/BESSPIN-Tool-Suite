@@ -12,8 +12,8 @@ class qemuTarget (commonTarget):
         
         super().__init__(targetId=targetId)
         
-        self.ipTarget = getSetting('qemuIpTarget')
-        self.ipHost = getSetting('qemuIpHost')
+        self.ipTarget = getSetting('qemuIpTarget',targetId=self.targetId)
+        self.ipHost = getSetting('qemuIpHost',targetId=self.targetId)
         self.portTarget = getSetting('qemuPortTarget')
         self.portHost = getSetting('qemuPortHost')
 
@@ -30,11 +30,11 @@ class qemuTarget (commonTarget):
     def boot (self,endsWith="login:",timeoutDict={"boot":90}): #no need to use targetObj as we'll never boot in non-reboot mode
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
         timeout = self.parseBootTimeoutDict (timeoutDict)
-        if (getSetting('osImage') in ['debian', 'FreeBSD']):
+        if (self.osImage in ['debian', 'FreeBSD']):
 
-            qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf')} -append \"console=ttyS0\""
+            qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)} -append \"console=ttyS0\""
             qemuCommand += f" -device virtio-net-device,netdev=usernet"
-            qemuCommand += f" -netdev tap,id=usernet,ifname={getSetting('tapAdaptor')}"
+            qemuCommand += f" -netdev tap,id=usernet,ifname={getSetting('tapAdaptor',targetId=self.targetId)}"
             qemuCommand += " -device virtio-rng-device"
 
             try:
@@ -43,8 +43,8 @@ class qemuTarget (commonTarget):
                 self.expectFromTarget(endsWith,"Booting",timeout=timeout)
             except Exception as exc:
                 self.shutdownAndExit(f"boot: Failed to spwan the qemu process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
-        elif (isEqSetting('osImage', 'FreeRTOS')):
-            qemuCommand = "qemu-system-riscv32 -nographic -machine sifive_e -kernel " + getSetting('osImageElf')
+        elif (self.osImage=='FreeRTOS'):
+            qemuCommand = "qemu-system-riscv32 -nographic -machine sifive_e -kernel " + getSetting('osImageElf',targetId=self.targetId)
             try:
                 self.process = pexpect.spawn(qemuCommand,timeout=timeout,logfile=self.fTtyOut)
             except Exception as exc:
@@ -60,24 +60,24 @@ class qemuTarget (commonTarget):
             #Will terminate here as well because it is easier, and there is currently no other options -- might change
             self.sendToTarget ("\x01x")
         else:
-            self.shutdownAndExit(f"boot: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"boot: <{self.osImage}> is not implemented on <{self.target}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
         return
 
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet (self): #no need to use targetObj as we'll never activate ethernet in non-reboot mode
-        if (isEqSetting('osImage','debian')):
+        if (self.osImage=='debian'):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"post-up ip route add default via {self.ipHost}\" >> /etc/network/interfaces")
             self.runCommand ("ifup eth0")
-        elif (isEqSetting('osImage','FreeBSD')):
+        elif (self.osImage=='FreeBSD'):
             self.runCommand ("ifconfig vtnet0 up",erroneousContents="ifconfig:")
             self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24",erroneousContents="ifconfig:")
             self.runCommand(f"route add default {self.ipHost}")
         else:
-            self.shutdownAndExit(f"activateEthernet: not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"activateEthernet: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
         return
 
     def targetTearDown(self):
@@ -94,7 +94,21 @@ class qemuTarget (commonTarget):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def configTapAdaptor():
+def findMainAdaptorInfo ():
+    if doesSettingExist('mainAdaptorName'):
+        return getSetting('mainAdaptorName')
+    #blindly find an adaptor connected to internet (hopefully -- maybe needs to be more sophisticated if needed)
+    for xAdaptor in psutil.net_if_addrs():
+        if ((xAdaptor != 'lo') and (not xAdaptor.startswith('docker')) and (not xAdaptor.startswith('tap'))):
+            setSetting('mainAdaptorName',xAdaptor)
+            return xAdaptor
+    
+    logAndExit(f"findMainAdaptorInfo: Failed to blindly find an adaptor connected to internet.",exitCode=EXIT.Network)
+
+
+@decorate.debugWrap
+@decorate.timeWrap
+def configTapAdaptor(targetId=None):
     #Check the ipv4 forwarding
     try:
         ipForward = int(subprocess.getoutput('sudo sysctl net.ipv4.ip_forward').split()[-1])
@@ -103,29 +117,25 @@ def configTapAdaptor():
     if (ipForward != 1):
         sudoShellCommand(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
-    #blindly find an adaptor connected to internet (hopefully -- maybe needs to be more sophisticated if needed)
-    gotMainAdaptorInfo = False
-    for xAdaptor in psutil.net_if_addrs():
-        if ((xAdaptor != 'lo') and (not xAdaptor.startswith('docker')) and (not xAdaptor.startswith('tap'))):
-            setSetting('mainAdaptorName',xAdaptor)
-            gotMainAdaptorInfo = True
-            break
-    if (not gotMainAdaptorInfo):
-        logAndExit(f"configTapAdaptor: Failed to blindly find an adaptor connected to internet.",exitCode=EXIT.Network)
+    mainAdaptorName = findMainAdaptorInfo()
 
     #Check the postrouting nat rule
     try:
         natTables = subprocess.getoutput('sudo iptables -t nat -S').splitlines()
-        isNatRule = (f"-A POSTROUTING -o {getSetting('mainAdaptorName')} -j MASQUERADE" in natTables)
+        isNatRule = (f"-A POSTROUTING -o {mainAdaptorName} -j MASQUERADE" in natTables)
     except Exception as exc:
         logAndExit ("Failed to find out whether the main adaptor nat was set up.",exc=exc,exitCode=EXIT.Run)
     if (not isNatRule):
         sudoShellCommand(['iptables','-t', 'nat','-A','POSTROUTING',
-            '-o',getSetting('mainAdaptorName'),'-j','MASQUERADE'])
+            '-o',mainAdaptorName,'-j','MASQUERADE'])
 
     #Choose a unique tapAdaptorName -- no need to search for leftovers, when the machine is reset, all of them get deleted
     tapAdaptor = f"tap{str(time.time()).replace('.','')[3:15]}" #Has to be less than 16 characters for Debian
-    setSetting('tapAdaptor',tapAdaptor)
+    if (targetId is not None):
+        if (targetId > 99): # Someone is hopeful
+            logAndExit("configTapAdaptor: Tap adaptor name should be <16 chars on Debian. target ID > 99!.",exitCode=EXIT.Dev_Bug)
+        tapAdaptor.replace('tap',f't{targetId:02}') #To guarantee uniqueness in case we were extermely unlucky
+    setSetting('tapAdaptor',tapAdaptor,targetId=targetId)
 
     #Find a non-used IP in the range "172.16"
     chosenIpItems = "172.16.x.1".split('.')
@@ -142,19 +152,19 @@ def configTapAdaptor():
         logAndExit ("Failed to find a valid IP. Please consider deleting some lefotvers tap adaptors.",exc=exc,exitCode=EXIT.Network)
 
     chosenIpItems[2] = str(minValidDigit)
-    setSetting('qemuIpHost','.'.join(chosenIpItems))
+    setSetting('qemuIpHost','.'.join(chosenIpItems),targetId=targetId)
     chosenIpItems[3] = '2'
-    setSetting('qemuIpTarget','.'.join(chosenIpItems))
+    setSetting('qemuIpTarget','.'.join(chosenIpItems),targetId=targetId)
 
-    printAndLog(f"configTapAdaptor: The adaptor is <{tapAdaptor}>, and the target IP is <{getSetting('qemuIpTarget')}>.")
+    printAndLog(f"configTapAdaptor: The adaptor is <{tapAdaptor}>, and the target IP is <{getSetting('qemuIpTarget',targetId=targetId)}>.")
 
     commands = [
         ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()],
-        ['ip', 'addr', 'add', f"{getSetting('qemuIpHost')}/24", 'dev', tapAdaptor],
+        ['ip', 'addr', 'add', f"{getSetting('qemuIpHost',targetId=targetId)}/24", 'dev', tapAdaptor],
         ['ip','link','set', tapAdaptor, 'up'],
-        ['iptables', '-A', 'FORWARD', '-i', getSetting('mainAdaptorName'),'-o', tapAdaptor,
+        ['iptables', '-A', 'FORWARD', '-i', mainAdaptorName,'-o', tapAdaptor,
                     '-m', 'state', '--state', 'RELATED,ESTABLISHED', '-j', 'ACCEPT'],
-        ['iptables', '-A', 'FORWARD', '-i', tapAdaptor,'-o', getSetting('mainAdaptorName'),
+        ['iptables', '-A', 'FORWARD', '-i', tapAdaptor,'-o', mainAdaptorName,
                     '-j', 'ACCEPT']
     ]
     for command in commands:
@@ -165,8 +175,8 @@ def configTapAdaptor():
 
 @decorate.debugWrap
 @decorate.timeWrap
-def clearTapAdaptor ():
-    sudoShellCommand(['ip', 'tuntap', 'del', 'mode', 'tap', 'dev', getSetting('tapAdaptor')])
+def clearTapAdaptor (targetId=None):
+    sudoShellCommand(['ip', 'tuntap', 'del', 'mode', 'tap', 'dev', getSetting('tapAdaptor',targetId=targetId)])
 
 
     
