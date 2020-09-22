@@ -62,7 +62,7 @@ def loadConfiguration(configFile):
     """
     if isEqSetting('mode','cyberPhys'):
         loadConfigSection(xConfig,CYBERPHYS_SECTION,configData,CYBERPHYS_SECTION)
-        loadCyberPhysConfiguration(xConfig,configData)
+        loadCyberPhysConfiguration(configData)
     else: #load the one-target
         loadConfigSection(xConfig,TARGET_SECTION,configData,TARGET_SECTION)
         setExtraTargetSettings()
@@ -329,7 +329,7 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
 
         settingVal = vals if ('List' in iPar['type']) else val
         if (setSettingsToSectDict):
-            setSettingDict(configSection,iPar['name'],settingVal)
+            setSettingDict(setSettingsToSectDict,iPar['name'],settingVal)
         else:
             setSetting(iPar['name'],settingVal)
 
@@ -401,7 +401,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         vulClassDict = dict()
         setSetting(vulClass,vulClassDict)
         loadConfigSection(xConfig, vulClass, configData, vulClass, 
-                addSectionToConfigDict='commonVulClassesParameters', setSettingsToSectDict=True)
+                addSectionToConfigDict='commonVulClassesParameters', setSettingsToSectDict=vulClass)
 
         if (vulClass in ['bufferErrors']):
             setSettingDict(vulClass,'runAllTests',True)
@@ -428,14 +428,14 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
 
         # Load custom dev options (setupEnv.json)
         setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',vulClass,'setupEnv.json'))
-        loadConfigSection(None,vulClass,setupEnvData,vulClass,setup=True,setSettingsToSectDict=True)
+        loadConfigSection(None,None,setupEnvData,vulClass,setup=True,setSettingsToSectDict=vulClass)
 
     # Load custom scoring options if enabled
     if (isEnabled('useCustomScoring')):
         customizedScoringDict = dict()
         setSetting('customizedScoring',customizedScoringDict)
         loadConfigSection(xConfig, 'customizedScoring', configData, 'customizedScoring', 
-                setSettingsToSectDict=True)
+                setSettingsToSectDict='customizedScoring')
 
         # Check that the custom function is legit
         if (isEnabledDict('customizedScoring','useCustomFunction')):
@@ -447,7 +447,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         customizedCompilingDict = dict()
         setSetting('customizedCompiling',customizedCompilingDict)
         loadConfigSection(xConfig, 'customizedCompiling', configData, 'customizedCompiling', 
-                setSettingsToSectDict=True)
+                setSettingsToSectDict='customizedCompiling')
 
 @decorate.debugWrap
 def checkCustomScorerFunction():
@@ -481,6 +481,18 @@ def checkCustomScorerFunction():
     return True
 
 @decorate.debugWrap
-def loadSecurityEvaluationConfiguration (xConfig,configData):
-    pass
+def loadCyberPhysConfiguration (configData):
+    #load the cyberPhys Config file
+    if (isEnabled('useCustomCyberPhysConfig')):
+        cyberPhysConfigFile = getSetting('pathToCustomCyberPhysConfig')
+    else:
+        cyberPhysConfigFile = getSetting('cyberPhysDefaultConfigFile')
+    xConfig = loadIniFile(cyberPhysConfigFile)
+
+    for iTarget in range(1,getSetting('nTargets')+1):
+        iTargetDict = dict()
+        setSetting(iTarget,iTargetDict)
+        loadConfigSection(xConfig, f"target{iTarget}", configData, TARGET_SECTION, 
+                setSettingsToSectDict=iTarget)
+        setExtraTargetSettings(targetId=iTarget)
 

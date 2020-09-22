@@ -14,6 +14,11 @@
             "val" : "fett/base/utils/configData.json"
         },
         {
+            "name" : "cyberPhysDefaultConfigFile",
+            "type" : "filePath",
+            "val" : "cyberPhys.ini"
+        },
+        {
             "name" : "vcu118IpHost",
             "type" : "ipAddress",
             "val" : "10.88.88.1"
