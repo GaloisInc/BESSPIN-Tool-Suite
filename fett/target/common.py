@@ -356,6 +356,12 @@ class commonTarget():
                 self.runCommand("chmod +x addEntropyDebian.riscv")
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
+            if (isEqSetting('processor','bluespec_p3') and isEqSetting('mode','evaluateSecurityTests')):
+                # execute tests through SSH
+                self.enableSshOnRoot()
+                time.sleep(15)
+                self.openSshConn()
+
         elif (isEqSetting('osImage','FreeBSD')):
             if isEqSetting('target', 'awsf1'):
                 # Delete default NTP pool
@@ -595,6 +601,8 @@ class commonTarget():
         "            idxEndsWith: The index of the endsWith received. If endsWith was a string, this would be 0. -1 on time-out.
         """
         process = self.process if process is None else process
+        if (isEqSetting('processor','bluespec_p3')):
+            timeout += 60
 
         if (isEnabled('isUnix') or sendToNonUnix):
             self.sendToTarget (command,shutdownOnError=shutdownOnError,process=process)
