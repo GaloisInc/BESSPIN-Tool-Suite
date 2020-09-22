@@ -23,7 +23,7 @@ class failStage (enum.Enum):
         logAndExit (f"failStage: __lt__ not implemented for inputs of type {type(self)} and {type(other)}.",exitCode=EXIT.Dev_Bug)
 
 class fpgaTarget(object):
-    def __init__(self):
+    def __init__(self, targetId=None):
         self.gdbProcess = None 
         self.openocdProcess = None
         self.uartSession = None

@@ -3,10 +3,10 @@ from fett.target.common import *
 from fett.target.fpga import fpgaTarget
 
 class firesimTarget(fpgaTarget, commonTarget):
-    def __init__(self):
+    def __init__(self, targetId=None):
 
-        commonTarget.__init__(self)
-        fpgaTarget.__init__(self)
+        commonTarget.__init__(self, targetId=targetId)
+        fpgaTarget.__init__(self, targetId=targetId)
 
         self.ipTarget = getSetting('awsf1IpTarget')
         self.ipHost = getSetting('awsf1IpHost')  
@@ -220,8 +220,8 @@ class firesimTarget(fpgaTarget, commonTarget):
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
 class connectalTarget(commonTarget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, targetId=None):
+        super().__init__(targetId=targetId)
         self.ipTarget = getSetting('awsf1IpTarget')
         self.ipHost = getSetting('awsf1IpHost')
         self.portTarget = getSetting('awsf1PortTarget')

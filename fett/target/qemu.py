@@ -8,9 +8,9 @@ from fett.target.common import *
 import psutil, socket
 
 class qemuTarget (commonTarget):
-    def __init__ (self):
+    def __init__ (self, targetId=None):
         
-        super().__init__()
+        super().__init__(targetId=targetId)
         
         self.ipTarget = getSetting('qemuIpTarget')
         self.ipHost = getSetting('qemuIpHost')

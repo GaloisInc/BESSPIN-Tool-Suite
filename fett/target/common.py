@@ -21,7 +21,7 @@ from fett.apps.unix import ssh
 
 
 class commonTarget():
-    def __init__(self):
+    def __init__(self, targetId=None):
 
         self.process = None
         self.ttyProcess = None

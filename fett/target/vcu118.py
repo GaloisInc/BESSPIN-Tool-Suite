@@ -12,10 +12,10 @@ import sys, signal, os, socket, time, hashlib
 import pexpect
 
 class vcu118Target (fpgaTarget, commonTarget):
-    def __init__ (self):
+    def __init__ (self, targetId=None):
 
-        commonTarget.__init__(self)
-        fpgaTarget.__init__(self)
+        commonTarget.__init__(self, targetId=targetId)
+        fpgaTarget.__init__(self, targetId=targetId)
 
         self.ipTarget = getSetting('vcu118IpTarget')
         self.ipHost = getSetting('vcu118IpHost')  
