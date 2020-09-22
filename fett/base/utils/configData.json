@@ -46,10 +46,6 @@
             "choices" : [ "JTAG", "netboot" ]
         },
         {
-            "name" : "openConsole",
-            "type" : "bool"
-        },
-        {
             "name" : "useCustomOsImage",
             "type" : "boolean"
         },
@@ -80,6 +76,10 @@
     ],
 
     "common-minor" : [
+        {
+            "name" : "openConsole",
+            "type" : "bool"
+        },
         {
             "name" : "netbootPortRangeStart",
             "type" : "int",
