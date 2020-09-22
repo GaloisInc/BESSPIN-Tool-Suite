@@ -31,8 +31,9 @@ class fpgaTarget(object):
         self.fGdbOut = None
         self.fOpenocdOut = None
 
-        self.gdbPort = getSetting('gdbRemotePort')
-        self.openocdPort = getSetting('openocdTelnetPort')
+        portsInc = 1 if (targetId is None) else targetId
+        self.gdbPort = getSetting('gdbRemotePortBase') + portsInc
+        self.openocdPort = getSetting('openocdTelnetPortBase') + portsInc
 
         self.readGdbOutputUnix = 0 #beginning of file
 

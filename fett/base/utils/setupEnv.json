@@ -323,18 +323,18 @@
             "val" : 8278
         },
         {
-            "name" : "gdbRemotePort",
+            "name" : "gdbRemotePortBase",
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 3334
+            "val" : 3333
         },
         {
-            "name" : "openocdTelnetPort",
+            "name" : "openocdTelnetPortBase",
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 4445
+            "val" : 4444
         }
     ]
 }
