@@ -10,7 +10,10 @@ from fett.base.utils.misc import *
 from importlib.machinery import SourceFileLoader
 from fett.cwesEvaluation.scoreTests import SCORES
 
-CONFIG_SECTIONS = ['functionality', 'target', 'common-minor', 'applications', 'build']
+COMMON_SECTIONS = ['functionality', 'common-minor', 'applications', 'build']
+TARGET_SECTION = 'target'
+CWES_SECTION = 'evaluateSecurityTests'
+CYBERPHYS_SECTION = 'cyberPhys'
 
 def loadJsonFile (jsonFile):
     try:
@@ -45,27 +48,28 @@ def loadConfiguration(configFile):
     configData = loadJsonFile(configDataFile)
 
     # Here we should read the options and such
-    for xSection in CONFIG_SECTIONS:
+    for xSection in COMMON_SECTIONS:
         loadConfigSection (xConfig,configData,xSection)
+
+    """
+    *** How to handle going from a single target to many targets for cyberPhys? ***
+    - In settings, the target settings are either loaded, or they are loaded inside [target${i}].
+      It is done this way to protect both the one-target functionality and the many-targets
+      functionality.
+    - If the developer uses a method that was not adapted to use many-targets, it will give an 
+      error in fetching the settings. This is better than just going ahead with the wrong setting 
+      and let you chase why the tool is not doing what you are trying to instruct it to do.
+    """
+    if isEqSetting('mode','cyberPhys'):
+        loadConfigSection(xConfig,configData,CYBERPHYS_SECTION)
+        loadCyberPhysConfiguration(xConfig,configData)
+    else: #load the one-target
+        loadConfigSection(xConfig,configData,TARGET_SECTION)
+        setExtraTargetSettings()
 
     # Load evaluateSecurityTests related sections
     if isEqSetting("mode", "evaluateSecurityTests"):
         loadSecurityEvaluationConfiguration(xConfig,configData)
-
-    # Get the XLEN and processor flavor
-    procMatch = re.match(r"^(?P<procFlavor>chisel|bluespec)_p(?P<procLevel>[1-3])$",getSetting('processor'))
-    if (procMatch):
-        setSetting('procFlavor', procMatch.group('procFlavor'))
-        setSetting('procLevel', f"p{procMatch.group('procLevel')}")
-        if (procMatch.group('procLevel') == '1'):
-            setSetting('xlen',32)
-        else: # 2-3
-            setSetting('xlen',64)
-    else:
-        logAndExit(f"Failed to determine the processor flavor and xlen for <{getSetting('processor')}>.",exitCode=EXIT.Dev_Bug)
-
-    # Create an isUnix setting
-    setSetting('isUnix',getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])
 
     if isEnabled('useCustomCredentials'):
         # Check username is legal
@@ -90,6 +94,24 @@ def loadConfiguration(configFile):
     printAndLog('Configuration loaded successfully.')
     dumpSettings()
     return
+
+@decorate.debugWrap
+def setExtraTargetSettings(targetId=None):
+    # Get the XLEN and processor flavor
+    procMatch = re.match(r"^(?P<procFlavor>chisel|bluespec)_p(?P<procLevel>[1-3])$",getSetting('processor', targetId=targetId))
+    if (procMatch):
+        setSetting('procFlavor', procMatch.group('procFlavor'), targetId=targetId)
+        setSetting('procLevel', f"p{procMatch.group('procLevel')}", targetId=targetId)
+        if (procMatch.group('procLevel') == '1'):
+            setSetting('xlen', 32, targetId=targetId)
+        else: # 2-3
+            setSetting('xlen', 64, targetId=targetId)
+    else:
+        logAndExit(f"Failed to determine the processor flavor and xlen for <{getSetting('processor',targetId=targetId)}>.",exitCode=EXIT.Dev_Bug)
+
+    # Create an isUnix setting
+    setSetting('isUnix',getSetting('osImage',targetId=targetId) in ['debian', 'FreeBSD', 'busybox'])
+
 
 @decorate.debugWrap
 def loadConfigSection (xConfig, jsonData,xSection,setup=False,
@@ -372,7 +394,7 @@ def genProdConfig(configFileSerialized, configFile):
 @decorate.debugWrap
 def loadSecurityEvaluationConfiguration (xConfig,configData):
     #load main global configs
-    loadConfigSection(xConfig, configData, "evaluateSecurityTests")
+    loadConfigSection(xConfig, configData, CWES_SECTION)
 
     # load vulClass configs
     for vulClass in getSetting('vulClasses'): #load settings per vulClass
@@ -458,8 +480,7 @@ def checkCustomScorerFunction():
             return False
     return True
 
-
-
-
-
+@decorate.debugWrap
+def loadSecurityEvaluationConfiguration (xConfig,configData):
+    pass
 
