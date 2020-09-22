@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 from fett.target.common import *
 from fett.target.fpga import fpgaTarget
 
-import subprocess, psutil, tftpy
+import subprocess, psutil, tftpy, ipaddress
 import sys, signal, os, socket, time, hashlib
 import pexpect
 
@@ -17,8 +17,10 @@ class vcu118Target (fpgaTarget, commonTarget):
         commonTarget.__init__(self, targetId=targetId)
         fpgaTarget.__init__(self, targetId=targetId)
 
-        self.ipTarget = getSetting('vcu118IpTarget')
-        self.ipHost = getSetting('vcu118IpHost')  
+        self.ipHost = getSetting('vcu118IpHost')
+        ipInc = 1 if (targetId is None) else targetId
+        self.ipTarget = str(ipaddress.ip_address(self.ipHost)+ipInc)
+          
         self.portTarget = getSetting('vcu118PortTarget')
         self.portHost = getSetting('vcu118PortHost')
 

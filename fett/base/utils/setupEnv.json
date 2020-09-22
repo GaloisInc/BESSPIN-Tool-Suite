@@ -14,11 +14,6 @@
             "val" : "fett/base/utils/configData.json"
         },
         {
-            "name" : "vcu118IpTarget",
-            "type" : "ipAddress",
-            "val" : "10.88.88.2"
-        },
-        {
             "name" : "vcu118IpHost",
             "type" : "ipAddress",
             "val" : "10.88.88.1"
