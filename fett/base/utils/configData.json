@@ -19,6 +19,24 @@
         }
     ],
 
+    "cyberPhys" : [
+        {
+            "name" : "nTargets",
+            "type" : "int",
+            "min" : 1,
+            "max" : 10
+        },
+        {
+            "name" : "useCustomCyberPhysConfig",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomCyberPhysConfig",
+            "type" : "filePath",
+            "condition" : "useCustomCyberPhysConfig"
+        }
+    ],
+
     "target" : [
         {
             "name" : "target",
