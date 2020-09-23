@@ -24,6 +24,7 @@ class commonTarget():
     def __init__(self, targetId=None):
         # target settings
         self.targetId = targetId
+        self.targetIdInfo = f' <target{targetId}>' if (targetId) else ''
         self.target = getSetting('target',targetId=self.targetId)
         if (self.target=='awsf1'):
             self.pvAWS = getSetting('pvAWS',targetId=self.targetId)
@@ -128,7 +129,7 @@ class commonTarget():
                                                      shutdownOnError=False,
                                                      issueInterrupt=False)
                         if retCommand[2]:
-                            printAndLog("switchUser: Failed to login and received timeout. Trying again...",doPrint=False)
+                            printAndLog(f"switchUser: Failed to login and received timeout. Trying again...{self.targetIdInfo}",doPrint=False)
                             #  for some reason, needs to accept input to see the login failed string
                             self.runCommand(" ",endsWith=["Login incorrect"],timeout=20)
                             self.runCommand (loginName,endsWith="Password:")
@@ -138,14 +139,14 @@ class commonTarget():
                         if (retCommand[3] == 0):
                             loginSuccess = True
                         elif (retCommand[3] == 1): # try again
-                            printAndLog("switchUser: Failed to login. Trying again...",doPrint=False)
+                            printAndLog(f"switchUser: Failed to login. Trying again...{self.targetIdInfo}",doPrint=False)
                             self.runCommand (loginName,endsWith="Password:")
                             time.sleep(3) #wait for the OS to be ready for the password (maybe this works)
                             iAttempt += 1
                         else:
-                            printAndLog(f"switchUser: Failed to login <iAttempt={iAttempt}>, and this part should never be executed!",doPrint=False)
+                            printAndLog(f"switchUser: Failed to login <iAttempt={iAttempt}>, and this part should never be executed!{self.targetIdInfo}",doPrint=False)
                     if (not loginSuccess):
-                        self.shutdownAndExit(f"switchUser: Failed to login ({maxLoginAttempts} times).",exitCode=EXIT.Run)
+                        self.shutdownAndExit(f"switchUser: Failed to login ({maxLoginAttempts} times).{self.targetIdInfo}",exitCode=EXIT.Run)
                 else:
                     self.runCommand (loginPassword)
 
@@ -200,7 +201,7 @@ class commonTarget():
             if (not self.isCurrentUserRoot):
                 self.switchUser()
             self.terminateTarget(timeout=timeout,shutdownOnError=True)
-        printAndLog (f"{self.target} shut down successfully!",
+        printAndLog (f"{self.target} shut down successfully!{self.targetIdInfo}",
             doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
         return
 
@@ -275,7 +276,7 @@ class commonTarget():
                     timeoutDict[timeout] += 120 #takes longer to restart
 
             printAndLog(f"start: Booting <{self.osImage}> on "
-                        f"<{self.target}>. This might take a while...",doPrint=(not isEqSetting('mode','cyberPhys')))
+                        f"<{self.target}>. This might take a while...{self.targetIdInfo}",doPrint=(not self.targetId))
         else:
             self.shutdownAndExit(f"start: <{self.osImage}> is not implemented on "
                 f"<{self.target}>.",overwriteShutdown=True, exitCode=EXIT.Implementation)
@@ -288,7 +289,7 @@ class commonTarget():
                 self.stopShowingTime.set()
                 time.sleep (0.3) #to make it beautiful
             #logging in
-            printAndLog (f"start: Logging in, activating ethernet, and setting system time...",doPrint=(not isEqSetting('mode','cyberPhys')))
+            printAndLog (f"start: Logging in, activating ethernet, and setting system time...{self.targetIdInfo}",doPrint=(not self.targetId))
             self.runCommand ("root",endsWith="Password:")
             loginTimeout = 120 if (self.restartMode) else 60
             self.runCommand (self.rootPassword,timeout=loginTimeout)
@@ -301,7 +302,7 @@ class commonTarget():
                 time.sleep (0.3) #to make it beautiful
             self.runCommand (" ",endsWith="/ #",timeout=10) #This is necessary
             self.runCommand("cd root",timeout=10)
-            printAndLog (f"start: Logging in, activating ethernet, and setting system time...",doPrint=(not isEqSetting('mode','cyberPhys')))
+            printAndLog (f"start: Logging in, activating ethernet, and setting system time...{self.targetIdInfo}",doPrint=(not self.targetId))
         elif (self.osImage=='FreeRTOS'):
             if (isEqSetting('binarySource','Michigan',targetId=self.targetId)):
                 startMsg = 'INFO: Open database successfully'
@@ -339,10 +340,10 @@ class commonTarget():
                 self.runCommand("set prompt = \"`cat promptText.txt`\"")
                 self.runCommand("rm promptText.txt")
 
-            printAndLog (f"start: Activating ethernet and setting system time...",doPrint=(not isEqSetting('mode','cyberPhys')))
+            printAndLog (f"start: Activating ethernet and setting system time...{self.targetIdInfo}",doPrint=(not self.targetId))
 
         if (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')):
-            printAndLog(f"start: {self.osImage} booted successfully!",
+            printAndLog(f"start: {self.osImage} booted successfully!{self.targetIdInfo}",
                         doPrint=False)
             # Return early to save time by avoiding unnecessary setup
             return
@@ -354,7 +355,7 @@ class commonTarget():
             if (self.osImage=='debian'): # timesync is not in the boot sequence of neither GFE nor MIT images
                 ntpTimeout = 150 if (self.binarySource=='MIT') else 60 # MIT needs some more time to be responsive
                 self.runCommand("systemctl start systemd-timesyncd.service",timeout=ntpTimeout)
-            printAndLog (f"start: {self.osImage} booted _again_ successfully!")
+            printAndLog (f"start: {self.osImage} booted _again_ successfully!{self.targetIdInfo}")
             return
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         awsNtpServer = "169.254.169.123"
@@ -400,14 +401,14 @@ class commonTarget():
             self.runCommand("sysctl kern.coredump=0")
 
         if self.osImage in ['debian', 'FreeBSD'] and ((self.binarySource!="SRI-Cambridge")):
-            printAndLog("start: setting motd...")
+            printAndLog(f"start: setting motd...{self.targetIdInfo}",doPrint=(not self.targetId))
             motdPath = '/etc/motd.template' if (self.osImage=='FreeBSD') else '/etc/motd'
             instanceType = f"{self.binarySource} / {self.osImage} / {self.processor}"
             self.runCommand(f"printf '\\nInstance type: {instanceType}\\n\\n' > {motdPath}")
             if (self.osImage=='FreeBSD'):
                 self.runCommand("service motd restart")
 
-        printAndLog (f"start: {self.osImage} booted successfully!")
+        printAndLog (f"start: {self.osImage} booted successfully!{self.targetIdInfo}",doPrint=(not self.targetId))
         return
 
     @decorate.debugWrap
@@ -445,7 +446,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def changeRootPassword(self):
-        printAndLog(f"Changing the root password...", doPrint=False)
+        printAndLog(f"Changing the root password...{self.targetIdInfo}", doPrint=False)
         alphabet = string.ascii_letters + string.digits + "!@#$%^&*(-_=+)"
         self.rootPassword = ''.join(secrets.choice(alphabet) for i in range(14))
         if (self.osImage=='debian'):
@@ -461,7 +462,7 @@ class commonTarget():
             self.shutdownAndExit(
                 f"<update root password> is not implemented for <{self.osImage}> on <{self.target}>.",
                 exitCode=EXIT.Implementation)
-        printAndLog(f"root password has been changed successfully!",doPrint=False)
+        printAndLog(f"root password has been changed successfully!{self.targetIdInfo}",doPrint=False)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -470,7 +471,7 @@ class commonTarget():
         Enable passwordless `su` for users in the `wheel` group and add the
         user to `wheel`.
         """
-        printAndLog("Enabling root user access...")
+        printAndLog(f"Enabling root user access...{self.targetIdInfo}",doPrint=(not self.targetId))
         if (self.osImage=='debian'):
             self.runCommand('sed -i "s/# auth       sufficient pam_wheel.so trust/auth sufficient pam_wheel.so trust/" '
                             '/etc/pam.d/su')
@@ -490,7 +491,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def createUser (self):
-        printAndLog (f"Creating a user...")
+        printAndLog (f"Creating a user...{self.targetIdInfo}",doPrint=(not self.targetId))
         if (self.osImage=='debian'):
             self.runCommand (f"useradd -m {self.userName}")
             self.runCommand (f"passwd {self.userName}",endsWith="New password:")
@@ -532,7 +533,7 @@ class commonTarget():
         if not self.isCurrentUserRoot:
             self.switchUser()
 
-        printAndLog(f"Changing user {self.userName}'s password")
+        printAndLog(f"Changing user {self.userName}'s password{self.targetIdInfo}",doPrint=(not self.targetId))
         userPasswordHash = getSetting("userPasswordHash")
         if (self.osImage=='debian'):
             command = f"usermod -p \'{userPasswordHash}\' {self.userName}"
@@ -815,7 +816,7 @@ class commonTarget():
 
     @decorate.debugWrap
     def sendTar(self,timeout=30): #send tarball to target
-        printAndLog ("sendTar: Sending files...")
+        printAndLog (f"sendTar: Sending files...{self.targetIdInfo}",doPrint=(not self.targetId))
         #---send the archive
         if ((self.binarySource in ['GFE', 'SRI-Cambridge']) and (self.osImage=='FreeBSD')):
             self.switchUser() #this is assuming it was on root
@@ -830,7 +831,7 @@ class commonTarget():
         elif (self.osImage=='FreeBSD'):
             self.runCommand(f"tar xvf {self.tarballName} -m",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
         self.runCommand(f"rm {self.tarballName}",timeout=timeout) #to save space
-        printAndLog ("sendTar: Sending successful!")
+        printAndLog (f"sendTar: Sending successful!{self.targetIdInfo}",doPrint=(not self.targetId))
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -1257,7 +1258,7 @@ class commonTarget():
                         errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>.",doPrint=False,exc=exc)
                         return False
         pingOut.close()
-        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!",
+        printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!{self.targetIdInfo}",
                     doPrint=not (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')))
         return True
 
