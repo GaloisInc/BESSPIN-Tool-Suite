@@ -356,6 +356,15 @@ def checkEthAdaptorIsUp ():
 
 @decorate.debugWrap
 def resetEthAdaptor ():
+    #In cyberPhys, this can be called many times, so have to be careful
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('networkLock').acquire()
+        if doesSettingExist('vcu118EthAdaptorReset') and isEnabled('vcu118EthAdaptorReset'): #for future compatibility if needed to re-reset
+            getSetting('networkLock').release()
+            return #already reset
+        else:
+            setSetting('vcu118EthAdaptorReset',True)
+
     #get the name and check configuration if this is the first time called
     if (not doesSettingExist('ethAdaptor')):
         ethAdaptor= getSetting('vcu118EthAdaptorName')
@@ -400,6 +409,9 @@ def resetEthAdaptor ():
         logAndExit (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>.",exitCode=EXIT.Network)
 
     printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)
+
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('networkLock').release()
 
 @decorate.debugWrap
 def clearProcesses ():

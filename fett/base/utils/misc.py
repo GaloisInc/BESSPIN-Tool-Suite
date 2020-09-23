@@ -89,10 +89,11 @@ def exitFett (exitCode):
                     hostIp=aws.getInstanceIp(inExit_logAndExit),
                     fpgaIp=inExit_GetSetting('productionTargetIp')
                     )
-        printAndLog("Sent termination message to the SQS queue.")       
+        printAndLog("Sent termination message to the SQS queue.")
 
+    exitPeacefully(getSetting('trash'))
     printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
-    exit(exitCode.value)
+    os._exit(exitCode.value)
 
 def exitOnInterrupt (xSig,xFrame):
     exitFett(EXIT.Interrupted)

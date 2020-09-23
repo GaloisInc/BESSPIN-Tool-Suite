@@ -109,6 +109,9 @@ def findMainAdaptorInfo ():
 @decorate.debugWrap
 @decorate.timeWrap
 def configTapAdaptor(targetId=None):
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('networkLock').acquire()
+
     #Check the ipv4 forwarding
     try:
         ipForward = int(subprocess.getoutput('sudo sysctl net.ipv4.ip_forward').split()[-1])
@@ -173,10 +176,19 @@ def configTapAdaptor(targetId=None):
 
     printAndLog (f"qemu.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=False)
 
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('networkLock').release()
+
 @decorate.debugWrap
 @decorate.timeWrap
 def clearTapAdaptor (targetId=None):
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('networkLock').acquire()
+
     sudoShellCommand(['ip', 'tuntap', 'del', 'mode', 'tap', 'dev', getSetting('tapAdaptor',targetId=targetId)])
+
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('networkLock').release()
 
 
     
