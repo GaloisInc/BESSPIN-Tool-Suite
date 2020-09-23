@@ -137,7 +137,7 @@ def configTapAdaptor(targetId=None):
     if (targetId is not None):
         if (targetId > 99): # Someone is hopeful
             logAndExit("configTapAdaptor: Tap adaptor name should be <16 chars on Debian. target ID > 99!.",exitCode=EXIT.Dev_Bug)
-        tapAdaptor.replace('tap',f't{targetId:02}') #To guarantee uniqueness in case we were extermely unlucky
+        tapAdaptor = tapAdaptor.replace('tap',f't{targetId:02}') #To guarantee uniqueness in case we were extermely unlucky
     setSetting('tapAdaptor',tapAdaptor,targetId=targetId)
 
     #Find a non-used IP in the range "172.16"
@@ -158,8 +158,8 @@ def configTapAdaptor(targetId=None):
     setSetting('qemuIpHost','.'.join(chosenIpItems),targetId=targetId)
     chosenIpItems[3] = '2'
     setSetting('qemuIpTarget','.'.join(chosenIpItems),targetId=targetId)
-
-    printAndLog(f"configTapAdaptor: The adaptor is <{tapAdaptor}>, and the target IP is <{getSetting('qemuIpTarget',targetId=targetId)}>.")
+    targetInfo = f"<target{targetId}>" if (targetId) else ''
+    printAndLog(f"configTapAdaptor{targetInfo}: The adaptor is <{tapAdaptor}>, and the target IP is <{getSetting('qemuIpTarget',targetId=targetId)}>.")
 
     commands = [
         ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()],
@@ -174,7 +174,7 @@ def configTapAdaptor(targetId=None):
         sudoShellCommand(command)
         time.sleep(1)
 
-    printAndLog (f"qemu.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=False)
+    printAndLog (f"qemu.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=(targetId is None))
 
     if (isEqSetting('mode','cyberPhys')):
         getSetting('networkLock').release()
