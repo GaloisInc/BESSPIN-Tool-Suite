@@ -35,7 +35,7 @@ class commonTarget():
         self.procLevel = getSetting('procLevel',targetId=self.targetId)
         self.procFlavor = getSetting('procFlavor',targetId=self.targetId)
         self.xlen = getSetting('xlen',targetId=self.targetId)
-        self.tarballName = getSetting('tarballName',targetId=self.targetId)
+        self.tarballName = getSetting('tarballName')
 
         self.process = None
         self.ttyProcess = None
@@ -365,7 +365,7 @@ class commonTarget():
                 #get the ssh up and running
                 if (self.procLevel=='p3'):
                     time.sleep(5) #need some time to recover before being able to sendFile
-                self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
+                self.sendFile(getSetting('buildDir',targetId=self.targetId),'addEntropyDebian.riscv')
                 self.runCommand("chmod +x addEntropyDebian.riscv")
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
@@ -813,11 +813,11 @@ class commonTarget():
         #---send the archive
         if ((self.binarySource in ['GFE', 'SRI-Cambridge']) and (self.osImage=='FreeBSD')):
             self.switchUser() #this is assuming it was on root
-            self.sendFile (getSetting('buildDir'),self.tarballName,timeout=timeout,forceScp=True)
+            self.sendFile (getSetting('buildDir',targetId=self.targetId),self.tarballName,timeout=timeout,forceScp=True)
             self.switchUser()
             self.runCommand(f"mv /home/{self.userName}/{self.tarballName} /root/")
         else:
-            self.sendFile (getSetting('buildDir'),self.tarballName,timeout=timeout)
+            self.sendFile (getSetting('buildDir',targetId=self.targetId),self.tarballName,timeout=timeout)
         #---untar
         if (self.osImage=='debian'):
             self.runCommand(f"tar xvf {self.tarballName} --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
