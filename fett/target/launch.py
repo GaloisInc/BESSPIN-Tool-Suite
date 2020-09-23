@@ -16,6 +16,7 @@ from fett.cwesEvaluation.common import runTests
 from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
 from fett.cwesEvaluation.checkValidScores import checkValidScores
 from fett.cyberPhys.build import buildCyberPhys
+from fett.cyberPhys.run import runCyberPhys
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -220,8 +221,10 @@ def launchFett (targetId=None):
                 sendTimeout *= 2
             runTests(xTarget, sendFiles=isEnabled('sendTarballToTarget'), 
                 timeout=sendTimeout)
-        else:
+        elif (getSetting('mode') in ['test', 'production']):
             xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget',targetId=targetId))
+        else:
+            runCyberPhys(xTarget)
     if (not isEqSetting('mode','evaluateSecurityTests')):
         if (isEnabled('isUnix',targetId=targetId) and isEnabled("useCustomCredentials")):
             xTarget.changeUserPassword()
