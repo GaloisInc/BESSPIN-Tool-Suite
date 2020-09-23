@@ -188,7 +188,13 @@ class commonTarget():
                 overwriteShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
         if (isEnabled('openConsole') and (not overwriteConsole)):
+            if (self.isSshConn): #only interact on the JTAG
+                self.closeSshConn()
+            if (isEnabled('gdbDebug')):
+                self.startGdbDebug()
             self.interact()
+            if (isEnabled('gdbDebug')):
+                self.endGdbDebug()
             if (self.userCreated):
                 retCommand = self.terminateTarget(timeout=timeout,shutdownOnError=False)
                 if ((not retCommand[0]) or retCommand[2]): #bad -- probably logged in as non-root user
@@ -417,22 +423,19 @@ class commonTarget():
         if (self.inInteractMode):
             return #avoid recursive interact mode
         self.inInteractMode = True
-        if (self.isSshConn): #only interact on the JTAG
-            self.closeSshConn()
         if (self.userCreated):
             if isEnabled("useCustomCredentials"):
-                # Log out to prompt user to log in using their credentials.
-                # We can't log in for them because we only have the hash of
-                # their password
-                output = self.runCommand("exit", endsWith="login:")[1]
-                printAndLog("Note that there is another user.  User name: "
-                            f"\'{self.userName}\'")
-                printAndLog("Please log in using the credentials you supplied")
-
-                # Print login prompt from OS.  Drop the first 2 lines because
-                # those contain the exit / logout messages from running the
-                # `exit` command
-                print("\n".join(output.split("\n")[2:]), end="")
+                printAndLog(f"Note that there is another user. User name: \'{self.userName}\'.")
+                if (not isEnabled('gdbDebug')):
+                    # Log out to prompt user to log in using their credentials.
+                    # We can't log in for them because we only have the hash of
+                    # their password
+                    output = self.runCommand("exit", endsWith="login:")[1]
+                    printAndLog("Please log in using the credentials you supplied")
+                    # Print login prompt from OS.  Drop the first 2 lines because
+                    # those contain the exit / logout messages from running the
+                    # `exit` command
+                    print("\n".join(output.split("\n")[2:]), end="")
             else:
                 printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
                 printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
@@ -1283,6 +1286,18 @@ class commonTarget():
         message = f"getGdbOutput is not implemented for <{target}>"
         warnAndLog(message,doPrint=False)
         return message
+
+    @decorate.debugWrap
+    def startGdbDebug(self):
+        target = (f"aws:{self.pvAWS}" if (self.target=='awsf1') else self.target)
+        warnAndLog(f"<gdbDebug> is not implemented for <{target}> method!")
+        return
+
+    @decorate.debugWrap
+    def endGdbDebug(self):
+        target = (f"aws:{self.pvAWS}" if (self.target=='awsf1') else self.target)
+        warnAndLog(f"<gdbDebug> is not implemented for <{target}> method!")
+        return
 
     @decorate.debugWrap
     @decorate.timeWrap

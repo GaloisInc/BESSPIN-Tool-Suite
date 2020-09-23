@@ -132,6 +132,32 @@ class fpgaTarget(object):
         time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
         self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
         return
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def startGdbDebug (self):
+        self.interruptGdb()
+        self.gdbDetach()
+        self.runCommandGdb("quit",endsWith=pexpect.EOF,shutdownOnError=False)
+        printAndLog('*'*15 + " <gdbDebug> mode " + '*'*15)
+        printAndLog(f"GDB Launch: On a separate window, run <riscv64-unknown-elf-gdb {getSetting('osImageElf',targetId=self.targetId)}>.")
+        printAndLog(f"GDB Connect: In the GDB console, run <target remote localhost:{self.gdbPort}>.")
+        printAndLog("Continue: To resume the run, you have to continue <c>.")
+        printAndLog("Exit: Please <detach> then <quit> before exitting FETT.")
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def endGdbDebug (self):
+        try:
+            self.gdbProcess = pexpect.spawn(
+                f"riscv64-unknown-elf-gdb {getSetting('osImageElf',targetId=self.targetId)}",
+                    logfile=self.fGdbOut, timeout=15, echo=False)
+            self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
+        except Exception as exc:
+            self.shutdownAndExit(f"fpgaStart: Failed to spawn the gdb process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+        self.runCommandGdb("define hook-continue\ndont-repeat\nend")
+        self.gdbConnect()
+        self.runCommandGdb('c', endsWith='Continuing')
    
     @decorate.debugWrap
     @decorate.timeWrap

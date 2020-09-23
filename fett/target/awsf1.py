@@ -84,7 +84,7 @@ class firesimTarget(fpgaTarget, commonTarget):
             '+mm_llc_setBits=12',
             '+mm_llc_blockBits=7',
             '+mm_llc_activeMSHRs=8',
-            '+debug_enable' if (isEqSetting('mode','evaluateSecurityTests')) else '\b',
+            '+debug_enable' if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')) else '\b',
             '+slotid=0',
             '+profile-interval=-1',
             f"+macaddr0={getSetting('awsf1MacAddrTarget')}",
@@ -117,7 +117,7 @@ class firesimTarget(fpgaTarget, commonTarget):
         except Exception as exc:
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
-        if (isEqSetting('mode','evaluateSecurityTests')):
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
             self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
             self.fpgaStart(getSetting('osImageElf'))
         

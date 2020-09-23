@@ -99,6 +99,10 @@
             "type" : "bool"
         },
         {
+            "name" : "gdbDebug",
+            "type" : "bool"
+        },
+        {
             "name" : "netbootPortRangeStart",
             "type" : "int",
             "min" : 1024,
