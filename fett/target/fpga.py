@@ -93,7 +93,8 @@ class fpgaTarget(object):
             self.softReset()
 
             # start the tty process
-            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+            targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
+            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab')
             self.ttyProcess = fdpexpect.fdspawn(self.uartSession.fileno(),logfile=self.fTtyOut,timeout=30)
             self.process = self.ttyProcess
 

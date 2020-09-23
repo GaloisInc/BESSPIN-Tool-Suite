@@ -1135,7 +1135,7 @@ class commonTarget():
         try:
             self.fTtyOut.close()
         except Exception as exc:
-            warnAndLog("terminateTarget: Failed to close the tty.out file.",doPrint=False,exc=exc)
+            warnAndLog("terminateTarget: Failed to close the <tty> out file.",doPrint=False,exc=exc)
         return [isSuccess, textBack, isTimeout, dumpIdx]
 
     @decorate.debugWrap
