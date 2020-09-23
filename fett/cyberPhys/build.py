@@ -16,6 +16,9 @@ def buildCyberPhys (targetId=None):
     mkdir(buildDir)
     setSetting('buildDir',buildDir,targetId=targetId)
 
+    # Nothing to send so far
+    setSetting('sendTarballToTarget',False,targetId=targetId)
+
 @decorate.debugWrap
 @decorate.timeWrap
 def prepareFreeRTOS(targetId=None):
