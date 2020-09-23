@@ -6,6 +6,7 @@ Building apps
 from fett.base.utils.misc import *
 from fett.base.utils.ssl import gen_cert
 from fett.apps.freertos import freertos
+import fett.target.build
 import os
 
 """ The entry function
@@ -58,7 +59,61 @@ def buildFreeRTOSapps():
         mkdir (appLibPath,addToSettings='appLibDir')
         cp (getSourceDir('freertos'),appLibPath,pattern='*.c')
         cp (getSourceDir('freertos'),appLibPath,pattern='*.h')
-        freertos.prepareAssets()        
+        freertos.prepareAssets()
+
+@decorate.debugWrap
+@decorate.timeWrap
+def prepareFreeRTOS():
+    """
+    We have three different sources of FreeRTOS here:
+    1. If 'buildApps' is enabled --> Compile it.
+    2. If 'buildApps' is disabled && useCustomImage is disabled --> Nix
+    3. If 'buildApps' is disabled && useCustomImage is enabled --> customImage
+    """
+
+    #Netboot on FreeRTOS?
+    if (isEqSetting('osImage','FreeRTOS') and isEqSetting('elfLoader','netboot')):
+        warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
+        setSetting('elfLoader','JTAG')
+
+    # define some paths
+    osImageAsm = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.asm")
+    setSetting('osImageAsm',osImageAsm)
+
+    if (not isEnabled('buildApps')): #just fetch the image
+        importImage()
+    else: #build it
+        fett.target.build.freeRTOSBuildChecks()
+
+        #copy the C files, .mk files, and any directory
+        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
+
+        #Include the relevant user configuration parameters
+        #This is a list of tuples: (settingName,macroName)
+        listConfigParams = [('HTTPPortTarget','HTTP_PORT'),
+                            ('TFTPPortTarget','TFTP_PORT'),
+                            ('debugMode','FETT_DEBUG'),
+                            ('OTAMaxSignedPayloadSize','OTA_MAX_SIGNED_PAYLOAD_SIZE')]
+
+        configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
+        for xSetting,xMacro in listConfigParams:
+            try:
+                intVal = int(getSetting(xSetting))
+            except Exception as exc:
+                logAndExit(f"Invalid type in populating <fettUserConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+            configHfile.write(f"#define {xMacro} {intVal}\n")
+        #Write the ota filename too (not list as it is unique)
+        configHfile.write(f"#define OTA_FILENAME \"{getSettingDict('freertosAssets',['otaHtml'])}\"\n")
+        #Write the bianry source for team specific codes
+        configHfile.write(f"#define BIN_SOURCE_{getSetting('binarySource').replace('-','_')}\n")
+        #Translate the mode to one char: T or D
+        configHfile.write(f"#define FETT_MODE \'{getSetting('mode')[0].upper()}\'\n")
+        configHfile.close()
+
+        fett.target.build.prepareFreeRTOSNetworkParameters()
+        fett.target.build.buildFreeRTOS()
+    return
+
 
 """ Special building for 'webserver' """
 @decorate.debugWrap

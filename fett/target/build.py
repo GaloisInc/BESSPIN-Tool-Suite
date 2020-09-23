@@ -5,37 +5,45 @@ Building OS images any other needed files
 
 import os, re, glob
 from fett.base.utils.misc import *
+import fett.apps.build
+import fett.cyberPhys.build
 
 @decorate.debugWrap
-def prepareOsImage ():
+def prepareOsImage (targetId=None):
+    targetSuffix = f'_{targetId}' if (targetId) else ''
     # create the osImages directory
-    osImagesDir = os.path.join(getSetting('workDir'),'osImages')
-    mkdir(osImagesDir,addToSettings='osImagesDir')
+    osImagesDir = os.path.join(getSetting('workDir'),f'osImages{targetSuffix}')
+    mkdir(osImagesDir)
+    setSetting('osImagesDir',osImagesDir,targetId=targetId)
 
     # setup os image and extra images
-    if isEqSetting('binarySource', 'SRI-Cambridge'):
-        osImageElf = os.path.join(getSetting('osImagesDir'),f"bbl-cheri.elf")
-        setSetting('osImageElf',osImageElf)
-        imageVariantSuffix = '' if (isEqSetting('sourceVariant','default')) else f"-{getSetting('sourceVariant')}"
-        setSetting('SRI-Cambridge-imageVariantSuffix',imageVariantSuffix)
-        osImageExtraElf = os.path.join(getSetting('osImagesDir'),f"kernel-cheri{imageVariantSuffix}.elf")
-        setSetting('osImageExtraElf', osImageExtraElf)
+    if isEqSetting('binarySource', 'SRI-Cambridge',targetId=targetId):
+        osImageElf = os.path.join(osImagesDir,f"bbl-cheri.elf")
+        setSetting('osImageElf',osImageElf,targetId=targetId)
+        imageVariantSuffix = '' if (isEqSetting('sourceVariant','default',targetId=targetId)) else f"-{getSetting('sourceVariant',targetId=targetId)}"
+        setSetting('SRI-Cambridge-imageVariantSuffix',imageVariantSuffix,targetId=targetId)
+        osImageExtraElf = os.path.join(osImagesDir,f"kernel-cheri{imageVariantSuffix}.elf")
+        setSetting('osImageExtraElf', osImageExtraElf, targetId=targetId)
     else:
-        osImageElf = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.elf")
-        setSetting('osImageElf',osImageElf)
-        setSetting('osImageExtraElf', None)
+        osImageElf = os.path.join(osImagesDir,f"{getSetting('osImage',targetId=targetId)}.elf")
+        setSetting('osImageElf',osImageElf,targetId=targetId)
+        setSetting('osImageExtraElf', None,targetId=targetId)
 
 
-    if(isEqSetting('osImage','FreeRTOS')):
-        prepareFreeRTOS ()
-    elif(isEqSetting('osImage','debian')):
-        prepareDebian ()
-    elif(isEqSetting('osImage','FreeBSD')):
-        prepareFreeBSD ()
-    elif(isEqSetting('osImage','busybox')):
-        prepareBusybox ()
+    if(isEqSetting('osImage','FreeRTOS',targetId=targetId)):
+        if (getSetting('mode') in ['test', 'production']):
+            fett.apps.build.prepareFreeRTOS()
+        elif (isEqSetting('mode','cyberPhys')):
+            fett.cyberPhys.build.prepareFreeRTOS(targetId=targetId)
+    elif(isEqSetting('osImage','debian',targetId=targetId)):
+        prepareDebian(targetId=targetId)
+    elif(isEqSetting('osImage','FreeBSD',targetId=targetId)):
+        prepareFreeBSD(targetId=targetId)
+    elif(isEqSetting('osImage','busybox',targetId=targetId)):
+        prepareBusybox(targetId=targetId)
     else:
-        logAndExit (f"<target.prepareOsImage> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Dev_Bug)
+        logAndExit (f"<target.prepareOsImage> is not implemented for <{getSetting('osImage',targetId=targetId)}> "
+            f"in <{getSetting('mode')}> mode.",exitCode=EXIT.Dev_Bug)
 
 
 @decorate.debugWrap
@@ -121,58 +129,6 @@ def prepareFreeRTOSNetworkParameters():
 
 @decorate.debugWrap
 @decorate.timeWrap
-def prepareFreeRTOS():
-    """
-    We have three different sources of FreeRTOS here:
-    1. If 'buildApps' is enabled --> Compile it.
-    2. If 'buildApps' is disabled && useCustomImage is disabled --> Nix
-    3. If 'buildApps' is disabled && useCustomImage is enabled --> customImage
-    """
-
-    #Netboot on FreeRTOS?
-    if (isEqSetting('osImage','FreeRTOS') and isEqSetting('elfLoader','netboot')):
-        warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
-        setSetting('elfLoader','JTAG')
-
-    # define some paths
-    osImageAsm = os.path.join(getSetting('osImagesDir'),f"{getSetting('osImage')}.asm")
-    setSetting('osImageAsm',osImageAsm)
-
-    if (not isEnabled('buildApps')): #just fetch the image
-        importImage()
-    else: #build it
-        freeRTOSBuildChecks()
-
-        #copy the C files, .mk files, and any directory
-        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
-
-        #Include the relevant user configuration parameters
-        #This is a list of tuples: (settingName,macroName)
-        listConfigParams = [('HTTPPortTarget','HTTP_PORT'),
-                            ('TFTPPortTarget','TFTP_PORT'),
-                            ('debugMode','FETT_DEBUG'),
-                            ('OTAMaxSignedPayloadSize','OTA_MAX_SIGNED_PAYLOAD_SIZE')]
-
-        configHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettUserConfig.h'),'a')
-        for xSetting,xMacro in listConfigParams:
-            try:
-                intVal = int(getSetting(xSetting))
-            except Exception as exc:
-                logAndExit(f"Invalid type in populating <fettUserConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
-            configHfile.write(f"#define {xMacro} {intVal}\n")
-        #Write the ota filename too (not list as it is unique)
-        configHfile.write(f"#define OTA_FILENAME \"{getSettingDict('freertosAssets',['otaHtml'])}\"\n")
-        #Write the bianry source for team specific codes
-        configHfile.write(f"#define BIN_SOURCE_{getSetting('binarySource').replace('-','_')}\n")
-        #Translate the mode to one char: T or D
-        configHfile.write(f"#define FETT_MODE \'{getSetting('mode')[0].upper()}\'\n")
-        configHfile.close()
-
-        prepareFreeRTOSNetworkParameters()
-        buildFreeRTOS()
-    return
-
-
 def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
     #Cleaning all ".o" and ".elf" files in site
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
@@ -281,65 +237,65 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def prepareDebian():
+def prepareDebian(targetId=None):
     # copy the crngOnDebian.riscv
-    cp (getSetting('addEntropyDebianPath'),getSetting('buildDir'))
-    importImage()
+    cp (getSetting('addEntropyDebianPath'),getSetting('buildDir',targetId=targetId))
+    importImage(targetId=targetId)
 
 @decorate.debugWrap
 @decorate.timeWrap
-def prepareFreeBSD():
-    importImage()
+def prepareFreeBSD(targetId=None):
+    importImage(targetId=targetId)
 
 @decorate.debugWrap
 @decorate.timeWrap
-def prepareBusybox():
-    importImage()
+def prepareBusybox(targetId=None):
+    importImage(targetId=targetId)
 
 @decorate.debugWrap
-def selectImagePaths():
-    if isEnabled('useCustomOsImage'):
-        return [getSetting('pathToCustomOsImage')]
+def selectImagePaths(targetId=None):
+    if isEnabled('useCustomOsImage',targetId=targetId):
+        return [getSetting('pathToCustomOsImage',targetId=targetId)]
     else:
-        imageType = getSetting('target') if getSetting('target') != 'awsf1' else getSetting('pvAWS')
-        if getSetting('binarySource') == 'GFE':
-            nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
+        imageType = getSetting('target',targetId=targetId) if (getSetting('target',targetId=targetId)!='awsf1') else getSetting('pvAWS',targetId=targetId)
+        if isEqSetting('binarySource','GFE',targetId=targetId):
+            nixImage = getSettingDict('nixEnv',[getSetting('osImage',targetId=targetId),imageType])
             if (nixImage in os.environ):
-                tempPath = os.path.join(getSetting('workDir'),'tmp')
+                tempPath = os.path.join(getSetting('workDir'),f'tmp{targetId}')
                 mkdir (tempPath)
-                tempImagePath = os.path.join(tempPath,os.path.basename(getSetting('osImageElf')))
+                tempImagePath = os.path.join(tempPath,os.path.basename(getSetting('osImageElf',targetId=targetId)))
                 cp (os.environ[nixImage], tempImagePath) #to ensure it has the standard tool name
                 return [tempImagePath]
             else:
-                printAndLog(f"Could not find image for <{getSetting('osImage')}> in nix environment. Falling back to binary repo.", doPrint=False)
-        baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', imageType)
-        if isEqSetting('binarySource', 'SRI-Cambridge'):
+                printAndLog(f"Could not find image for <{getSetting('osImage',targetId=targetId)}> in nix environment. Falling back to binary repo.", doPrint=False)
+        baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource',targetId=targetId), 'osImages', imageType)
+        if isEqSetting('binarySource', 'SRI-Cambridge',targetId=targetId):
             imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), 
-                os.path.join(baseDir, f"kernel-cheri{getSetting('SRI-Cambridge-imageVariantSuffix')}.elf")]
+                os.path.join(baseDir, f"kernel-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=targetId)}.elf")]
         else:
-            imagePaths = [os.path.join(baseDir, f"{getSetting('osImage')}.elf")]
+            imagePaths = [os.path.join(baseDir, f"{getSetting('osImage',targetId=targetId)}.elf")]
         return imagePaths
 
 @decorate.debugWrap
-def importImage():
-    imagePaths = selectImagePaths()
+def importImage(targetId=None):
+    imagePaths = selectImagePaths(targetId=targetId)
     for ip in imagePaths:
-        cp (ip, getSetting('osImagesDir'))
-    if (isEqSetting('target', 'vcu118')):
-        if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
-            if (isEqSetting('procLevel','p3')):
+        cp (ip, getSetting('osImagesDir',targetId=targetId))
+    if (isEqSetting('target', 'vcu118', targetId=targetId)):
+        if (isEqSetting('elfLoader','netboot',targetId=targetId) and (getSetting('osImage',targetId=targetId) in ['debian', 'FreeBSD', 'busybox'])):
+            if (isEqSetting('procLevel','p3',targetId=targetId)):
                 warnAndLog(f"<importImage>: Netboot is currently not supported on P3. Falling back to JTAG.")
-                setSetting('elfLoader','JTAG')
-            netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
-            setSetting('netbootElf',netbootElf)
+                setSetting('elfLoader','JTAG',targetId=targetId)
+            netbootElf = os.path.join(getSetting('osImagesDir',targetId=targetId),f"netboot.elf")
+            setSetting('netbootElf',netbootElf,targetId=targetId)
             netbootImage = getSettingDict('nixEnv','netboot')
             if (netbootImage in os.environ):
                 cp(os.environ[netbootImage],netbootElf)
             else:
                 logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
     else:
-        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is <{getSetting('target')}>", doPrint=False)
-    logging.info(f"{getSetting('osImage')} image imported successfully.")
+        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is <{getSetting('target',targetId=targetId)}>", doPrint=False)
+    logging.info(f"{getSetting('osImage',targetId=targetId)} image imported successfully.")
 
 @decorate.debugWrap
 def cleanDirectory (xDir,endsWith='.o'):

@@ -177,7 +177,7 @@ def getSettingDict (setting, hierarchy, default=None, targetId=None):
             if default is not None:
                 return default
             hierarchyPretty = ''.join([f"[{x}]" for x in hierarchy])
-            logAndExit (f"getSetting: Failed to obtain the value of <{setting}{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+            logAndExit (f"getSetting: Failed to obtain the value of <[{setting}]{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
     return xSetting
 
 def setSettingDict (key, setting, val, targetId=None):
