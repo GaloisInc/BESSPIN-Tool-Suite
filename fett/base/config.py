@@ -110,7 +110,7 @@ def setExtraTargetSettings(targetId=None):
         logAndExit(f"Failed to determine the processor flavor and xlen for <{getSetting('processor',targetId=targetId)}>.",exitCode=EXIT.Dev_Bug)
 
     # Create an isUnix setting
-    setSetting('isUnix',getSetting('osImage',targetId=targetId) in ['debian', 'FreeBSD', 'busybox'])
+    setSetting('isUnix',getSetting('osImage',targetId=targetId) in ['debian', 'FreeBSD', 'busybox'], targetId=targetId)
 
 
 @decorate.debugWrap
