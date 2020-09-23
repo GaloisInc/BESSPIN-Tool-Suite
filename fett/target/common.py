@@ -275,29 +275,33 @@ class commonTarget():
                     timeoutDict[timeout] += 120 #takes longer to restart
 
             printAndLog(f"start: Booting <{self.osImage}> on "
-                        f"<{self.target}>. This might take a while...")
+                        f"<{self.target}>. This might take a while...",doPrint=(not isEqSetting('mode','cyberPhys')))
         else:
             self.shutdownAndExit(f"start: <{self.osImage}> is not implemented on "
                 f"<{self.target}>.",overwriteShutdown=True, exitCode=EXIT.Implementation)
         sumTimeout = sum(timeoutDict.values())
         if (self.osImage=='debian'):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            if (not isEqSetting('mode','cyberPhys')):
+                self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
             self.boot(endsWith="login:",timeoutDict=timeoutDict)
-            self.stopShowingTime.set()
-            time.sleep (0.3) #to make it beautiful
+            if (not isEqSetting('mode','cyberPhys')):
+                self.stopShowingTime.set()
+                time.sleep (0.3) #to make it beautiful
             #logging in
-            printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
+            printAndLog (f"start: Logging in, activating ethernet, and setting system time...",doPrint=(not isEqSetting('mode','cyberPhys')))
             self.runCommand ("root",endsWith="Password:")
             loginTimeout = 120 if (self.restartMode) else 60
             self.runCommand (self.rootPassword,timeout=loginTimeout)
         elif (self.osImage=='busybox'):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            if (not isEqSetting('mode','cyberPhys')):
+                self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
             self.boot(endsWith="Please press Enter to activate this console.",timeoutDict=timeoutDict)
-            self.stopShowingTime.set()
-            time.sleep (0.3) #to make it beautiful
+            if (not isEqSetting('mode','cyberPhys')):
+                self.stopShowingTime.set()
+                time.sleep (0.3) #to make it beautiful
             self.runCommand (" ",endsWith="/ #",timeout=10) #This is necessary
             self.runCommand("cd root",timeout=10)
-            printAndLog (f"start: Logging in, activating ethernet, and setting system time...")
+            printAndLog (f"start: Logging in, activating ethernet, and setting system time...",doPrint=(not isEqSetting('mode','cyberPhys')))
         elif (self.osImage=='FreeRTOS'):
             if (isEqSetting('binarySource','Michigan',targetId=self.targetId)):
                 startMsg = 'INFO: Open database successfully'
@@ -305,11 +309,13 @@ class commonTarget():
                 startMsg = '>>>Beginning of Fett<<<'
             self.boot (endsWith=startMsg,timeoutDict=timeoutDict)
         elif (self.osImage=='FreeBSD'):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            if (not isEqSetting('mode','cyberPhys')):
+                self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
             bootEndsWith = "login:"
             self.boot(endsWith=bootEndsWith, timeoutDict=timeoutDict)
-            self.stopShowingTime.set()
-            time.sleep (0.3) #to make it beautiful
+            if (not isEqSetting('mode','cyberPhys')):
+                self.stopShowingTime.set()
+                time.sleep (0.3) #to make it beautiful
             # set the temporary prompt
             if ((self.binarySource=="SRI-Cambridge") 
                     or ((self.binarySource=="GFE") and (self.target=='awsf1') and (self.pvAWS=="connectal"))):
@@ -333,7 +339,7 @@ class commonTarget():
                 self.runCommand("set prompt = \"`cat promptText.txt`\"")
                 self.runCommand("rm promptText.txt")
 
-            printAndLog (f"start: Activating ethernet and setting system time...")
+            printAndLog (f"start: Activating ethernet and setting system time...",doPrint=(not isEqSetting('mode','cyberPhys')))
 
         if (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')):
             printAndLog(f"start: {self.osImage} booted successfully!",

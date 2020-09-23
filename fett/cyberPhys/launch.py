@@ -10,15 +10,17 @@ import threading
 @decorate.debugWrap
 @decorate.timeWrap
 def startCyberPhys():
-    # Create an exit lock so that the tool "actually" exits only once!
-    setSetting('exitLock',threading.Lock())
     # Create a network lock to protect all network operations while multithreading
     setSetting('networkLock',threading.Lock())
+
+    printAndLog (f"Launching FETT <cyberPhys mode>...")
 
     # start/prepareEnv/Launch
     launchThreads = startThreadPerTarget(launch.startFett)
     for launchThread in launchThreads:
         launchThread.join()
+
+    printAndLog (f"FETT <cyberPhys mode> is launched!")
 
 @decorate.debugWrap
 @decorate.timeWrap

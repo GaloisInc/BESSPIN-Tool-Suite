@@ -193,7 +193,7 @@ def launchFett (targetId=None):
         # Build the image for the upcoming test
         buildFreeRTOSTest(*getSetting("currentTest"))
     else:
-        printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
+        printAndLog (f"Launching FETT <{getSetting('mode')} mode>...",doPrint=(not isEqSetting('mode','cyberPhys')))
     xTarget.start()
     if (isEnabled('isUnix',targetId=targetId)):
         if (getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']):
