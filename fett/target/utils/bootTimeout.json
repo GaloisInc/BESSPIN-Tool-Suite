@@ -6,10 +6,10 @@
         "name": "elfLoader",
         "JTAG": { 
           "name" : "procLevel",
-          "p2" : { "timeout" : { "elfLoad" : 650, "boot" : 600 } },
-          "p3" : { "timeout" : { "elfLoad" : 700, "boot" : 600 } }
+          "p2" : { "timeout" : { "elfLoad" : 650, "boot" : 660 } },
+          "p3" : { "timeout" : { "elfLoad" : 700, "boot" : 500 } }
         },
-        "else": { "timeout" : { "boot" : 600 } }
+        "else": { "timeout" : { "boot" : 660 } }
       },
       "chisel": {
         "name": "elfLoader",
