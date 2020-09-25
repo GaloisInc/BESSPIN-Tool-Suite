@@ -85,7 +85,7 @@ class qemuTarget (commonTarget):
         if (self.process.isalive()):
             self.runCommand('\x01x',endsWith=pexpect.EOF)
             self.process.terminate()
-        clearTapAdaptor ()
+        clearTapAdaptor(targetId=self.targetId)
         return True
 
     def interact(self):
