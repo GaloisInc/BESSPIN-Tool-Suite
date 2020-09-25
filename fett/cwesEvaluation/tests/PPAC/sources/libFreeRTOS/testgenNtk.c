@@ -5,12 +5,11 @@ Functions used for Network implementation on FreeRTOS
 #include "testgenFreeRTOS.h"
 
 // Declarations
-void vStartNetwork (void *pvParameters);
+void startNetwork (void);
 void vServerSocketTCP (void *pvParameters);
 static void vCommunicateTCP (void *pvParameters);
 void vClientSocketTCP (void *pvParameters);
 static uint8_t isNetworkUp = uFALSE; //To know whether the network was up before
-static TaskHandle_t xTaskStartNtk = NULL;
 
 /* The default IP and MAC address used by the demo.  The address configuration defined here will be used if ipconfigUSE_DHCP is 0, or if ipconfigUSE_DHCP is
 1 but a DHCP server could not be contacted.  See the online documentation for more information. */
@@ -26,44 +25,17 @@ const uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADD
 #define configSOCKET_LISTEN_TCP_TX_WINDOW_SIZE 2
 #define configSOCKET_LISTEN_TCP_RX_WINDOW_SIZE 2
 
-//This task initializes the network and notify the mainTask
-void vStartNetwork (void *pvParameters) {
-    (void)pvParameters;
+void startNetwork () {
     BaseType_t funcReturn;
-    xTaskStartNtk = xTaskGetCurrentTaskHandle();
 
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
     if (funcReturn != pdPASS) {
         onPrintf ("<INVALID> [startNetwork]: Failed to initialize network. [ret=%d].\n",funcReturn);
-        vEXIT(1);
+        prEXIT(1);
     } else {
         onPrintf (">>> Network IP initialized successfully!.\n");
     }
-
-    //wait for NtkHook
-    uint32_t recvNotification = NOTIFY_FAIL;
-    funcReturn = xTaskNotifyWait(0xffffffff, 0, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
-    if ((funcReturn != pdPASS) || (recvNotification != NOTIFY_SUCCESS)) {
-        onPrintf ("<INVALID> [startNetwork]: Failed to start network. [ret=%d,notf=%lx]\n",funcReturn,recvNotification);
-        vEXIT(1);
-    }
-
-    onPrintf ("\n<NTK-READY>\n");
-    vTaskDelay(pdMS_TO_TICKS(3000)); //give time to the host to ping
-
-    //notify main
-    if (xMainTask == NULL) {
-        onPrintf ("<INVALID> [startNetwork]: Unable to get the handle of <main:task>.\n");
-        vEXIT(1);
-    }
-    funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS ,eSetValueWithOverwrite);
-    if (funcReturn != pdPASS) {
-        onPrintf ("<INVALID> [startNetwork]: Failed to notify <main:task>!\n");
-        vEXIT(1);
-    }
-
-    vTaskDelete (NULL);
-} //vStartNetwork
+}
 
 /* Called by FreeRTOS+TCP when the network connects or disconnects.  Disconnect
 events are only received if implemented in the MAC driver. */
@@ -91,18 +63,17 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent) {
         FreeRTOS_inet_ntoa(ulDNSServerAddress, cBuffer);
         onPrintf("\t\tDNS Server Address: %s\n\n", cBuffer);
 
-        //Notify start netowork
-        BaseType_t funcReturn;
-        if (xTaskStartNtk == NULL) {
-            onPrintf ("<INVALID> [NtkHook]: Unable to get the handle of <task:startNetwork>.");
+        //notify main
+        if (xMainTask == NULL) {
+            onPrintf ("<INVALID> [NtkHook]: Unable to get the handle of <main:task>.\n");
             exitTest (1);
-        } else {
-            funcReturn = xTaskNotify( xTaskStartNtk, NOTIFY_SUCCESS ,eSetValueWithOverwrite);
-            if (funcReturn != pdPASS) {
-                onPrintf ("<INVALID> [NtkHook]: Failed to notify <task:startNetwork>!\n");
-                exitTest (1);
-            }
         }
+        BaseType_t funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS ,eSetValueWithOverwrite);
+        if (funcReturn != pdPASS) {
+            onPrintf ("<INVALID> [NtkHook]: Failed to notify <main:task>!\n");
+            exitTest (1);
+        }
+
         isNetworkUp = uTRUE;
     } //network has just come up
 

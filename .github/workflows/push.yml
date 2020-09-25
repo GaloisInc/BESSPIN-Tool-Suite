@@ -3,13 +3,7 @@ on: [push]
 
 jobs:
   Push:
-    runs-on: ${{ matrix.cfg.host }}
-    strategy:
-      fail-fast: false
-      matrix:
-        cfg:
-          - { os: unix, host: docker-fpga }
-          - { os: freertos, host: docker-fpga-io }
+    runs-on: docker-fpga
     steps:
       - name: Remove lock file if it exists to prevent git fetch failures
         run: find .git -name index.lock -print -exec rm -f {} +
@@ -22,9 +16,9 @@ jobs:
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runOnPush-${{ matrix.cfg.os }} -ep OnPrem -art push-${{ matrix.cfg.os }}-${{ github.sha }}"
+          run: nix-shell --command "./ci/fett-ci.py runOnPush -ep OnPrem -art push-${{ github.sha }}"
       - if: always()
         uses: actions/upload-artifact@v2
         with:
           name: push-${{ github.sha }}
-          path: "*-push-${{ matrix.cfg.os }}-${{ github.sha }}"
+          path: "*-push-${{ github.sha }}"

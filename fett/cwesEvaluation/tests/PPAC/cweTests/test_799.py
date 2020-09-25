@@ -16,20 +16,20 @@ def test_799 (target,binTest):
     pathToMqueue = '/dev' if (target.osImage == 'debian') else '/mnt'
     extraNohup = '' if (target.osImage == 'debian') else '> nohup.out'
     killRootNohup = ["./{0} shutdown".format(binTest), "sleep 1"]
-    catNoHup = ["cat nohup.out > /home/{0}/nohup.out".format(target.userName), "rm nohup.out"]
+    getNoHupOut = ["mv nohup.out /home/{0}/nohup.out".format(target.userName),
+                "chown {0}:{0} /home/{0}/nohup.out".format(target.userName)]
     cpTestToRoot = [f"cp /home/{target.userName}/{binTest} ."]
 
     def dumpNoHup ():
         retLog = "\n" + "x"*10 + " Dumping root nohup.out " + "x"*10 + "\n"
-        target.executeOnRoot (killRootNohup + catNoHup)
+        target.executeOnRoot (killRootNohup + getNoHupOut)
         retLog += target.runCommand ("cat nohup.out",shutdownOnError=False)[1]
-        retLog += target.runCommand ("rm nohup.out",endsWith=["nohup.out?","\'nohup.out\'?"],shutdownOnError=False)[1]  
-        retLog += target.runCommand (" ",shutdownOnError=False)[1]      
+        retLog += target.runCommand ("rm -f nohup.out",shutdownOnError=False)[1]       
         return retLog
 
     if (target.osImage == 'debian'):
         #useful in many parts
-        nohupTestOnRoot = [f"nohup ./{binTest} {extraNohup}&", " ", f"chmod 666 {pathToMqueue}/mqueue/Qroot"] #nohup+& needs an extra enter
+        nohupTestOnRoot = [f"nohup ./{binTest} {extraNohup}&", " ", "sleep 3", f"chmod 666 {pathToMqueue}/mqueue/Qroot"] #nohup+& needs an extra enter
         nBytesMsgQueue = nInteractions * 2 * 49 #49 is emperical from Debian implementation. 2 is the token length (1 letter + null char)
         writeNlimits = "echo \"{0}  hard    msgqueue    {1}\" > /etc/security/limits_799.conf" #needs formatting
         exposeLimits = ["chown {0} /etc/security/limits_799.conf".format(target.userName)]

@@ -20,21 +20,22 @@
         {
             "name" : "target",
             "type" : "string",
-            "choices" : [ "qemu", "aws", "fpga" ]
-        },
-        {
-            "name" : "FreeRTOSUseRAMDisk",
-            "type" : "bool"
+            "choices" : [ "qemu", "awsf1", "vcu118" ]
         },
         {
             "name" : "processor",
             "type" : "string",
-            "choices" : [ "chisel_p1", "bluespec_p2", "chisel_p2" ]
+            "choices" : [ "bluespec_p1", "chisel_p1", "bluespec_p2", "chisel_p2", "bluespec_p3", "chisel_p3" ]
         },
         {
             "name" : "osImage",
             "type" : "string",
             "choices" : [ "debian", "FreeRTOS", "FreeBSD", "busybox" ]
+        },
+        {
+            "name" : "freertosFatFs",
+            "type" : "string",
+            "choices" : [ "default", "ramdisk", "dosblk", "sdcard" ]
         },
         {
             "name" : "elfLoader",
@@ -43,6 +44,10 @@
         },
         {
             "name" : "openConsole",
+            "type" : "bool"
+        },
+        {
+            "name" : "gdbDebug",
             "type" : "bool"
         },
         {
@@ -72,18 +77,6 @@
             "name" : "sourceVariant",
             "type" : "string",
             "choices" : [ "default", "purecap", "temporal" ]
-        },
-        {
-            "name" : "qemuNtkPortRangeStart",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
-            "name" : "qemuNtkPortRangeEnd",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
         },
         {
             "name" : "netbootPortRangeStart",

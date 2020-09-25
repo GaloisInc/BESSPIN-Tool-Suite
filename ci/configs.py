@@ -6,6 +6,10 @@
     Each tuple represents one setting and its possible values.
     Each "values" should be a tuple. Please note that a 1-element tuple should be: ('element',)
 """
+backupFettAMI = { 'ImageId' : 'ami-07fc3f8f4525f1c94', 
+                'CreationDate' : '2020-09-08T16:28:43.000Z',
+                'OwnerId' : '363527286999'} 
+# Please update occasionally. Used by ./utils.getFettTargetAMI() instead of erring.
 
 ciAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
 ciAWSbucket = 'ssith-fett-target-ci-develop'
@@ -47,27 +51,25 @@ gfe_unixOnPremDefaults = unixDefaults.union({
     ('elfLoader',('netboot',)),
     ('sourceVariant',('default',)),
     ('netbootPortRangeStart',(5000,)),
-    ('netbootPortRangeEnd',(6000,)),
-    ('qemuNtkPortRangeStart',(5000,)),
-    ('qemuNtkPortRangeEnd',(6000,))
+    ('netbootPortRangeEnd',(6000,))
 })
 
 gfe_unixAwsDefaults = unixDefaults.union({
     ('binarySource',('GFE',)),
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default',)),
-    ('target',('aws',))
+    ('target',('awsf1',))
 })
 
 gfe_unixAllTargets_onprem = gfe_unixOnPremDefaults.union({
     ('processor',('chisel_p2', 'bluespec_p2',)),
-    ('target',('qemu', 'fpga',)),
+    ('target',('qemu', 'vcu118',)),
     ('osImage',('FreeBSD', 'debian',))
 })
 
 gfe_unixDevPR_onprem = gfe_unixOnPremDefaults.union({
     ('processor',('chisel_p2',)),
-    ('target',('fpga',)),
+    ('target',('vcu118',)),
     ('osImage',('FreeBSD', 'debian',))
 })
 
@@ -86,7 +88,7 @@ mit_unixDevPR_aws = unixDefaults.union({
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default',)),
     ('processor',('bluespec_p2',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('osImage',('debian',))
 })
 
@@ -95,7 +97,7 @@ lmco_unixDevPR_aws = unixDefaults.union({
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default',)),
     ('processor',('chisel_p2',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('osImage',('debian',))
 })
 
@@ -104,7 +106,7 @@ sri_cambridge_unixDevPR_aws = unixDefaults.union({
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default','purecap','temporal',)),
     ('processor',('bluespec_p2',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('osImage',('FreeBSD',))
 })
 
@@ -112,14 +114,14 @@ freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default',)),
-    ('FreeRTOSUseRAMDisk',('no',))
+    ('freertosFatFs',('default',))
 })
 
 gfe_freertosAllTargets_onprem = freertosDefaults.union({
     ('binarySource',('GFE',)),
     ('processor',('chisel_p1',)),
-    ('target',('fpga',)),
-    ('cross-compiler',('GCC',)),
+    ('target',('vcu118',)),
+    ('cross-compiler',('GCC','Clang',)),
     ('linker',('GCC',)),
     ('buildApps',('yes',))
 })
@@ -129,7 +131,7 @@ gfe_freertosDevPR_onprem = gfe_freertosAllTargets_onprem
 gfe_freertosDevPR_aws = freertosDefaults.union({
     ('binarySource',('GFE',)),
     ('processor',('chisel_p1',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('cross-compiler',('GCC','Clang',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
     ('buildApps',('yes',))
@@ -138,7 +140,7 @@ gfe_freertosDevPR_aws = freertosDefaults.union({
 lmco_freertosDevPR_aws = freertosDefaults.union({
     ('binarySource',('LMCO',)),
     ('processor',('chisel_p1',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('cross-compiler',('GCC',)),
     ('linker',('GCC',)), # If cross-compiler is Clang, linker will be over-written to LLD
     ('buildApps',('yes',))
@@ -147,29 +149,33 @@ lmco_freertosDevPR_aws = freertosDefaults.union({
 michigan_freertosDevPR_aws = freertosDefaults.union({
     ('binarySource',('Michigan',)),
     ('processor',('chisel_p1',)),
-    ('target',('aws',)),
+    ('target',('awsf1',)),
     ('buildApps',('no',))
 })
 
 appSets = {
     'runPeriodic' : {
-        'freertos' : {
-            'fett' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsFETT) },
-            'cwe' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsCWEs) }
-        },
-        'unix' : {
-            'fett' : { 'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsFETT) },
-            'cwe' : { 'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsCWEs) }
+        'OnPrem' : {
+            'fett' : {
+                'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsFETT),
+                'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsFETT)
+            },
+            'cwe' : {
+                'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsCWEs),
+                'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsCWEs)
+            }
         }
     },
     'runDevPR' : {
-        'freertos' : {
-            'fett' : { 'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsFETT) },
-            'cwe' : { 'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsCWEs) }
-        },
-        'unix' : {
-            'fett' : { 'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsFETT) },
-            'cwe' : { 'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsCWEs) }
+        'OnPrem' : {
+            'fett' : {
+                'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsFETT),
+                'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsFETT)
+            },
+            'cwe' : {
+                'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsCWEs),
+                'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsCWEs)
+            }
         },
         'aws' : {
             'fett' : { 

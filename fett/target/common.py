@@ -9,7 +9,7 @@ import os, sys, glob
 import pexpect, subprocess, threading
 import time, random, secrets, crypt
 import string, re
-import socket, errno, pty, termios
+import socket, errno, pty, termios, psutil
 from collections import Iterable
 
 from fett.apps.unix import database
@@ -29,7 +29,7 @@ class commonTarget():
         self.sshProcess = None
         self.fSshOut = None
         self.restartMode = False
-        self.isSshRootEnabled = not isEqSetting('target','aws')
+        self.isSshRootEnabled = isEqSetting('osImage','FreeBSD') and isEqSetting('target','vcu118')
 
         # all OSs settings
         self.portTarget = None
@@ -50,7 +50,7 @@ class commonTarget():
         self.sshLimitRetries = 3
         self.sshECDSAkeyWasUpdated = False
 
-        self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','fpga')
+        self.onlySsh = isEqSetting('osImage','FreeBSD') and isEqSetting('target','vcu118')
 
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
         self.rootPassword = 'ssithdefault' if (isEqSetting('osImage','FreeBSD')) else 'riscv'
@@ -160,11 +160,11 @@ class commonTarget():
     def shutdown (self,overwriteConsole=False,isError=False):
         if (isEqSetting('osImage','FreeRTOS')):
             timeout = 60
+        elif (isEqSetting('target', 'vcu118')):
+            timeout = 90
         elif (getSetting('osImage') in ['debian','busybox']):
             timeout = 45
-        elif (isEqSetting('target', 'fpga')):
-            timeout = 90
-        elif (isEqSetting('osImage','FreeBSD') and isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')):
+        elif (isEqSetting('osImage','FreeBSD') and isEqSetting('target', 'awsf1') and isEqSetting('pvAWS', 'connectal')):
             timeout = 150
         else:
             timeout = 45
@@ -172,7 +172,13 @@ class commonTarget():
             self.shutdownAndExit(f"shutdown: Unable to shutdown the {getSetting('target')} properly.",overwriteShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
         if (isEnabled('openConsole') and (not overwriteConsole)):
+            if (self.isSshConn): #only interact on the JTAG
+                self.closeSshConn()
+            if (isEnabled('gdbDebug')):
+                self.startGdbDebug()
             self.interact()
+            if (isEnabled('gdbDebug')):
+                self.endGdbDebug()
             if (self.userCreated):
                 retCommand = self.terminateTarget(timeout=timeout,shutdownOnError=False)
                 if ((not retCommand[0]) or retCommand[2]): #bad -- probably logged in as non-root user
@@ -190,6 +196,13 @@ class commonTarget():
                             isEqSetting('osImage', 'FreeRTOS')) 
                     )
         return
+
+    @decorate.debugWrap
+    def parseBootTimeoutDict (self,bootTimeoutDict,key="boot"):
+        try:
+            return bootTimeoutDict[key]
+        except Exception as exc:
+            logAndExit (f"Failed to extract the timeout value for <{key}> from the timeout dict.",exc=exc,exitCode=EXIT.Dev_Bug)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -243,25 +256,26 @@ class commonTarget():
             return traverse_data(target)
 
         if (getSetting('osImage') in ['FreeRTOS']):
-            pass #no timeout shenanigans
+            timeoutDict = { "boot" : 30 }
         elif getSetting('osImage') in ['debian', 'busybox', 'FreeBSD']:
-            success, timeout, message = get_timeout_from_settings_dict()
+            success, timeoutDict, message = get_timeout_from_settings_dict()
 
             if not success:
                 self.shutdownAndExit(**message)
 
             if (self.restartMode):
-                timeout += 120 #takes longer to restart
+                for timeout in timeoutDict.keys():
+                    timeoutDict[timeout] += 120 #takes longer to restart
 
             printAndLog(
                 f"start: Booting <{getSetting('osImage')}> on <{getSetting('target')}>. This might take a while...")
         else:
             self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
                                  overwriteShutdown=True, exitCode=EXIT.Implementation)
-
+        sumTimeout = sum(timeoutDict.values())
         if (isEqSetting('osImage','debian')):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
-            self.boot(endsWith="login:",timeout=timeout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            self.boot(endsWith="login:",timeoutDict=timeoutDict)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             #logging in
@@ -270,8 +284,8 @@ class commonTarget():
             loginTimeout = 120 if (self.restartMode) else 60
             self.runCommand (self.rootPassword,timeout=loginTimeout)
         elif (isEqSetting('osImage','busybox')):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
-            self.boot(endsWith="Please press Enter to activate this console.",timeout=timeout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            self.boot(endsWith="Please press Enter to activate this console.",timeoutDict=timeoutDict)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             self.runCommand (" ",endsWith="/ #",timeout=10) #This is necessary
@@ -282,19 +296,19 @@ class commonTarget():
                 startMsg = 'INFO: Open database successfully'
             else:
                 startMsg = '>>>Beginning of Fett<<<'
-            self.boot (endsWith=startMsg,timeout=30)
+            self.boot (endsWith=startMsg,timeoutDict=timeoutDict)
         elif (isEqSetting('osImage','FreeBSD')):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=timeout,stdout=sys.stdout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
             bootEndsWith = "login:"
-            self.boot(endsWith=bootEndsWith, timeout=timeout)
+            self.boot(endsWith=bootEndsWith, timeoutDict=timeoutDict)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
             # set the temporary prompt
-            if isEqSetting("binarySource", "SRI-Cambridge") or (isEqSetting("binarySource", "GFE") and isEqSetting('target', 'aws') and isEqSetting("pvAWS", "connectal")):
+            if isEqSetting("binarySource", "SRI-Cambridge") or (isEqSetting("binarySource", "GFE") and isEqSetting('target', 'awsf1') and isEqSetting("pvAWS", "connectal")):
                 tempPrompt = "~ #"
             else:
                 tempPrompt = "\r\n#"
-            # fpga freebsd would be already logged in if onlySsh
+            # vcu118 freebsd would be already logged in if onlySsh
             if (isEqSetting('target','qemu')):
                 self.runCommand("root",endsWith="\r\n#")
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
@@ -305,7 +319,7 @@ class commonTarget():
                 else:
                     self.runCommand ("root",endsWith=tempPrompt)
 
-            if not isEqSetting('target', 'aws'):
+            if not isEqSetting('target', 'awsf1'):
                 self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
                 self.runCommand(f"echo \'set prompt = \"fettPrompt> \"\' > .cshrc",endsWith=tempPrompt)
                 self.runCommand("set prompt = \"`cat promptText.txt`\"")
@@ -332,22 +346,24 @@ class commonTarget():
         #fixing the time is important to avoid all time stamp warnings, and because it messes with Makefile.
         awsNtpServer = "169.254.169.123"
         if (isEqSetting('osImage','debian')):
-            if isEqSetting('target', 'aws'):
+            if isEqSetting('target', 'awsf1'):
                 # Use AWS NTP server
                 self.runCommand(f"echo 'NTP={awsNtpServer}' >> "
                                 "/etc/systemd/timesyncd.conf")
             else:
                 self.runCommand("echo \"nameserver 1.1.1.1\" > /etc/resolv.conf")
             self.runCommand("systemctl start systemd-timesyncd.service")
-
+            
             if not self.hasHardwareRNG():
                 #get the ssh up and running
+                if (isEqSetting('procLevel','p3')):
+                    time.sleep(5) #need some time to recover before being able to sendFile
                 self.sendFile(getSetting('buildDir'),'addEntropyDebian.riscv')
                 self.runCommand("chmod +x addEntropyDebian.riscv")
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
         elif (isEqSetting('osImage','FreeBSD')):
-            if isEqSetting('target', 'aws'):
+            if isEqSetting('target', 'awsf1'):
                 # Delete default NTP pool
                 self.runCommand('sed -i "" "/^pool/d" /etc/ntp.conf')
                 # Add AWS NTP server
@@ -359,10 +375,10 @@ class commonTarget():
             # Add ntpd to rc.conf and start it
             self.runCommand("echo 'ntpd_enable=\"YES\"' >> /etc/rc.conf")
             self.runCommand("echo 'ntpd_sync_on_start=\"YES\"' >> /etc/rc.conf")
-            self.runCommand("service ntpd start")
+            self.runCommand("service ntpd start",timeout=120 if (isEqSetting('procLevel','p3')) else 60)
 
         # Instruct the kernel debugger to restart instead of debugging mode when the kernel panics
-        if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','aws')):
+        if (isEqSetting("binarySource", "SRI-Cambridge") and isEqSetting('osImage','FreeBSD') and isEqSetting('target','awsf1')):
             self.runCommand("sysctl debug.debugger_on_panic=0")
             self.runCommand('echo "debug.debugger_on_panic=0" >> /etc/sysctl.conf')
         
@@ -387,22 +403,19 @@ class commonTarget():
         if (self.inInteractMode):
             return #avoid recursive interact mode
         self.inInteractMode = True
-        if (self.isSshConn): #only interact on the JTAG
-            self.closeSshConn()
         if (self.userCreated):
             if isEnabled("useCustomCredentials"):
-                # Log out to prompt user to log in using their credentials.
-                # We can't log in for them because we only have the hash of
-                # their password
-                output = self.runCommand("exit", endsWith="login:")[1]
-                printAndLog("Note that there is another user.  User name: "
-                            f"\'{self.userName}\'")
-                printAndLog("Please log in using the credentials you supplied")
-
-                # Print login prompt from OS.  Drop the first 2 lines because
-                # those contain the exit / logout messages from running the
-                # `exit` command
-                print("\n".join(output.split("\n")[2:]), end="")
+                printAndLog(f"Note that there is another user. User name: \'{self.userName}\'.")
+                if (not isEnabled('gdbDebug')):
+                    # Log out to prompt user to log in using their credentials.
+                    # We can't log in for them because we only have the hash of
+                    # their password
+                    output = self.runCommand("exit", endsWith="login:")[1]
+                    printAndLog("Please log in using the credentials you supplied")
+                    # Print login prompt from OS.  Drop the first 2 lines because
+                    # those contain the exit / logout messages from running the
+                    # `exit` command
+                    print("\n".join(output.split("\n")[2:]), end="")
             else:
                 printAndLog (f"Note that there is another user. User name: \'{self.userName}\'. Password: \'{self.userPassword}\'.")
                 printAndLog ("Now the shell is logged in as: \'{0}\'.".format('root' if self.isCurrentUserRoot else self.userName))
@@ -529,7 +542,7 @@ class commonTarget():
                 return ":~\$"
         elif (isEqSetting('osImage','FreeBSD')):
             if (self.isCurrentUserRoot):
-                if isEqSetting('target', 'aws'):
+                if isEqSetting('target', 'awsf1'):
                     return ":~ #"
                 else:
                     return "fettPrompt>"
@@ -548,7 +561,7 @@ class commonTarget():
         if (isEqSetting('osImage','debian')):
             return [":~#", ":~\$"]
         elif (isEqSetting('osImage','FreeBSD')):
-            if isEqSetting('target', 'aws'):
+            if isEqSetting('target', 'awsf1'):
                 return [":~ #", ":~ \$"]
             else:
                 return ["fettPrompt>", ":~ \$"]
@@ -592,7 +605,7 @@ class commonTarget():
             endsWith = self.getDefaultEndWith()
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,
                                                                    timeout=timeout,issueInterrupt=issueInterrupt,
-                                                                   process=process)
+                                                                   process=process,suppressWarnings=suppressErrors)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         logging.debug(f"wasTimeout={wasTimeout}, idxEndsWith={idxEndsWith}")
         logging.debug(f"textBack:\n{textBack}")
@@ -641,7 +654,8 @@ class commonTarget():
             self.shutdownAndExit(f"<sendFile> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.",exitCode=EXIT.Implementation)
 
         def returnFalse (message='',noRetries=False,exc=None,fileToClose=None):
-            self.keyboardInterrupt ()
+            if not (getSetting('osImage') in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)):
+                self.keyboardInterrupt ()
             if (exc):
                 logging.error(traceback.format_exc())
             if ((not noRetries) and (self.resendAttempts < self.limitResendAttempts-1)):
@@ -717,8 +731,9 @@ class commonTarget():
                 scpProcess = pexpect.spawn(scpCommand,encoding='utf-8',logfile=scpOutFile,timeout=15)
             except Exception as exc:
                 return returnFalse (f"Failed to spawn an scp process for sendFile.",exc=exc)
-            if not self.hasHardwareRNG():
-                self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
+
+            self.genStdinEntropy(endsWith=self.getAllEndsWith()) #get some entropy going on
+
             try:
                 retExpect = scpProcess.expect(passwordPrompt + ["\)\?"],timeout=30)
             except Exception as exc:
@@ -904,37 +919,44 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None):
+    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None,endsWith=None, sendToNonUnix=False):
         process = self.process if process is None else process
-        if (self.terminateTargetStarted):
+        if (endsWith is None):
+            endsWith = [self.getDefaultEndWith()]
+        elif (isinstance(endsWith,str)):
+            endsWith = [endsWith]
+        if (self.terminateTargetStarted and (process == self.process)):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
             self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overwriteShutdown=True,overwriteConsole=True,exitCode=EXIT.Run)
         else:
             self.keyboardInterruptTriggered = True
-        if (not isEnabled('isUnix')):
+        if ((not isEnabled('isUnix')) and (process == self.process)):
             self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{getSetting('osImage')}>.",exitCode=EXIT.Implementation)
         doTimeout = True
         retryIdx = 0
         while doTimeout and retryIdx < retryCount:
             if retryIdx > 0:
                 warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
-            retCommand = self.runCommand("\x03",shutdownOnError=False,timeout=timeout,issueInterrupt=False,process=process)
+            retCommand = self.runCommand("\x03",endsWith=endsWith,shutdownOnError=False,timeout=timeout,
+                            issueInterrupt=False,process=process,sendToNonUnix=sendToNonUnix)
             textBack = retCommand[1]
             doTimeout = retCommand[2]
             retryIdx += 1
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",shutdownOnError=shutdownOnError,timeout=timeout,process=process)[1]
+            textBack += self.runCommand(" ",endsWith=endsWith,shutdownOnError=shutdownOnError,timeout=timeout,
+                            process=process,sendToNonUnix=sendToNonUnix)[1]
         #See if the order is correct
         if (process):
             for i in range(retryIdx + 1):
                 readAfter = self.readFromTarget(readAfter=True,process=process)
-                if (self.getDefaultEndWith() in readAfter):
-                    try:
-                        process.expect(self.getDefaultEndWith(),timeout=timeout)
-                    except Exception as exc:
-                        warnAndLog(f"keyboardInterrupt: The <prompt> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
-                    textBack += readAfter
+                for xEndsWith in endsWith:
+                    if (xEndsWith in readAfter):
+                        try:
+                            process.expect(xEndsWith,timeout=timeout)
+                        except Exception as exc:
+                            warnAndLog(f"keyboardInterrupt: <{xEndsWith}> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
+                        textBack += readAfter
         self.keyboardInterruptTriggered = False #Safe to be called again
         return textBack
 
@@ -1004,6 +1026,7 @@ class commonTarget():
     def sendToTarget (self,command,shutdownOnError=True,process=None):
         process = self.process if process is None else process
         self.checkFallToTty ("sendToTarget", process=process)
+        logging.debug(f"sendToTarget: sending <{command}>")
         try:
             process.sendline(command)
         except Exception as exc:
@@ -1015,8 +1038,8 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True,process=None):
-        def warningThread(msg, waitingTime, stopEvent):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True,process=None,suppressWarnings=False):
+        def warningThread(msg, waitingTime, stopEvent, suppressWarnings):
             """thread will wait on an event, and display warning if not set by waiting time"""
             dt = 0.1
             dt = waitingTime / 10.0 if dt > waitingTime else dt
@@ -1026,13 +1049,13 @@ class commonTarget():
                 if stopEvent.is_set():
                     return
                 ct += dt
-            warnAndLog(msg)
+            warnAndLog(msg,doPrint=not suppressWarnings)
 
         process = self.process if process is None else process
         # prepare thread to give warning message if the expect is near timing out
         stopEvent = threading.Event()
         warningTime = 0.8 * timeout
-        warningMsg = threading.Thread(target=warningThread, args=(f"expectFromTarget: command <{command}> is near timeout ({timeout} s)", warningTime, stopEvent))
+        warningMsg = threading.Thread(target=warningThread, args=(f"expectFromTarget: command <{command}> is near timeout ({timeout} s)", warningTime, stopEvent,suppressWarnings))
         warningMsg.daemon = True
         getSetting('trash').throwThread(warningMsg, "warning message for expectFromTarget")
         warningMsg.start()
@@ -1105,7 +1128,7 @@ class commonTarget():
         try:
             subprocess.check_call (['ssh-keygen', '-R', ipUpdateECDSA],stdout=self.fSshOut,stderr=self.fSshOut)
         except Exception as exc:
-            warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",doPrint=False)
+            warnAndLog(f"openSshConn: Failed to clear the target's ECDSA key. Will continue anyway.",exc=exc,doPrint=False)
         self.sshECDSAkeyWasUpdated = True
         self.fSshOut.close()
 
@@ -1140,18 +1163,20 @@ class commonTarget():
         except Exception as exc:
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
 
-        if (not self.onlySsh and not self.hasHardwareRNG()):
+        if (not self.onlySsh):
             self.genStdinEntropy(endsWith=self.getAllEndsWith())
 
         self.isSshConn = True
         self.process = self.sshProcess
         passwordPrompt = [f"Password for {userName}@[\w\-\.]+\:", f"{userName}@[\w\-\.]+\'s password\:"]
         blockedIpResponse = ["Connection closed by remote host", "Connection reset by peer", "Permission denied (publickey,keyboard-interactive)."]
-        retExpect = self.expectFromTarget(passwordPrompt + blockedIpResponse + ['\)\?',pexpect.EOF],"openSshConn",timeout=timeout,shutdownOnError=False)
+        retExpect = self.expectFromTarget(passwordPrompt + blockedIpResponse + ['\)\?',pexpect.EOF],"openSshConn",
+                        timeout=timeout,shutdownOnError=False,issueInterrupt=False)
         if (retExpect[1]): #Failed
             return returnFail(f"openSshConn: Spawning the ssh process timed out.")
         elif (retExpect[2]==5): # asking for yes/no for new host
-            retYes = self.runCommand("yes",endsWith=passwordPrompt+blockedIpResponse+[pexpect.EOF],timeout=timeout,shutdownOnError=False)
+            retYes = self.runCommand("yes",endsWith=passwordPrompt+blockedIpResponse+[pexpect.EOF],
+                        timeout=timeout,shutdownOnError=False,issueInterrupt=False)
             if (retYes[3] not in [0,1]): #No password prompt
                 if (specialTest and (retYes[3] in [2,3,4,5])):
                     return 'BLOCKED_IP'
@@ -1161,8 +1186,11 @@ class commonTarget():
             if specialTest:
                 return 'BLOCKED_IP'
             else:
-                return returnFail(f"openSshConn: Unexpected <{blockedIpResponse}> when spawning the ssh process.")
-        self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,shutdownOnError=False)
+                return returnFail(f"openSshConn: Unexpected response when spawning the ssh process.")
+        retPassword = self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,
+                        shutdownOnError=False,issueInterrupt=False)
+        if (not retPassword[0]):
+            return returnFail(f"openSshConn: Failed to login to the SSH connection.")
         self.sshRetries = 0 #reset the retries
         return True
 
@@ -1172,8 +1200,8 @@ class commonTarget():
             try:
                 self.sshProcess.terminate(force=True)
                 self.sshProcess = None
-            except:
-                warnAndLog(f"killSshConn: Failed to terminate the sshProcess.\n",doPrint=False)
+            except Exception as exc:
+                warnAndLog(f"killSshConn: Failed to terminate the sshProcess.\n",exc=exc,doPrint=False)
         self.isSshConn = False
         self.process = self.ttyProcess
 
@@ -1191,7 +1219,7 @@ class commonTarget():
         return True
 
     @decorate.debugWrap
-    def pingTarget (self):
+    def pingTarget (self,exitOnError=True):
         #pinging the target to check everything is ok
         pingOut = ftOpenFile(os.path.join(getSetting('workDir'),'ping.out'),'a')
         pingAttempts = 3
@@ -1203,33 +1231,56 @@ class commonTarget():
                 break
             except Exception as exc:
                 if (iPing < pingAttempts - 1):
-                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again...",doPrint=False,exc=exc)
-                    time.sleep(15)
+                    errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>. Trying again ({iPing+2}/{pingAttempts})...",doPrint=False,exc=exc)
+                    time.sleep(10)
                 else:
-                    self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+                    pingOut.close()
+                    if (exitOnError):
+                        self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+                    else:
+                        errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>.",doPrint=False,exc=exc)
+                        return False
         pingOut.close()
         printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!",
                     doPrint=not (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')))
-        return
+        return True
 
     @decorate.debugWrap
     def genStdinEntropy (self,endsWith=None):
-        lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
-        alphabet = string.ascii_letters + string.digits + ' '
-        randText = ''.join(random.choice(alphabet) for i in range(lenText))
-        self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=60,shutdownOnError=False)
+        if not self.hasHardwareRNG():
+            lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
+            alphabet = string.ascii_letters + string.digits + ' '
+            randText = ''.join(random.choice(alphabet) for i in range(lenText))
+            self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=60,shutdownOnError=False)
 
     def hasHardwareRNG (self):
-        return isEqSetting('target','aws') and (getSetting('pvAWS') in ['firesim', 'connectal'])
+        return (
+            (isEqSetting('target','awsf1') and (getSetting('pvAWS') in ['firesim', 'connectal'])) or
+            (isEqSetting('target','qemu') and isEqSetting('osImage','debian'))
+            )
 
     @decorate.debugWrap
     @decorate.timeWrap
     def getGdbOutput(self):
-        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'aws')
+        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'awsf1')
                                                else getSetting('target'))
         message = f"getGdbOutput is not implemented for <{target}>"
         warnAndLog(message,doPrint=False)
         return message
+
+    @decorate.debugWrap
+    def startGdbDebug(self):
+        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'awsf1')
+                                               else getSetting('target'))
+        warnAndLog(f"<gdbDebug> is not implemented for <{target}> method!")
+        return
+
+    @decorate.debugWrap
+    def endGdbDebug(self):
+        target = (f"aws:{getSetting('pvAWS')}" if isEqSetting('target', 'awsf1')
+                                               else getSetting('target'))
+        warnAndLog(f"<gdbDebug> is not implemented for <{target}> method!")
+        return
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -1256,27 +1307,30 @@ class commonTarget():
         if (isEqSetting('osImage','FreeBSD')):
             if (isEqSetting('binarySource','SRI-Cambridge')):
                 self.runCommand("service fett_sshd restart")
-            elif (isEqSetting('target','aws')):
+            elif (isEqSetting('target','awsf1')):
                 self.runCommand("pkill -f /usr/sbin/sshd")
                 self.runCommand("/usr/sbin/sshd")
             else:
-                self.runCommand("/etc/rc.d/sshd restart")
+                self.runCommand("/etc/rc.d/sshd restart",timeout=120 if (isEqSetting('procLevel','p3')) else 60)
 
 # END OF CLASS commonTarget
 
+@decorate.debugWrap
 def checkPort (portNum, host=''):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as iSock:
         try:
             iSock.bind((host, portNum))
+            return True
         except OSError as error:
             if (error.errno is not errno.EADDRINUSE):
                 logging.error (f"checkPort: Encountered OS Error #{error} while checking port #{portNum}.")
-            else:
-                return False
-        except:
-            logging.error (f"checkPort: Encountered a non recognized error while checking port #{portNum}.")
-    return True
+            else: #for readability
+                pass #used port
+        except Exception as exc:
+            logging.error (f"checkPort: Encountered a non recognized error while checking port #{portNum}.",exc=exc)
+    return False
 
+@decorate.debugWrap
 def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
 
     def showTime(stopThread):
@@ -1308,6 +1362,7 @@ def showElapsedTime (trash,estimatedTime=60,stdout=sys.stdout):
     runTimeTrack.start()
     return stopTimeTrack
 
+@decorate.debugWrap
 def charByCharEncoding (inBytes):
     if (not isinstance(inBytes, Iterable)):
         return ''
@@ -1319,3 +1374,30 @@ def charByCharEncoding (inBytes):
             xChar = '<!>'
         textBack += xChar
     return textBack
+
+@decorate.debugWrap
+def getAddrOfAdaptor (ethAdaptor,addrType,exitIfNoAddr=True):
+    
+    def noAddrFound(errMessage):
+        if (exitIfNoAddr):
+            logAndExit(f"getAddrOfAdaptor: Failed to {errMessage}. Please check the network configuration.",exitCode=EXIT.Network)
+        else:
+            printAndLog(f"getAddrOfAdaptor: Failed to {errMessage}.",doPrint=False)
+            return 'NotAnAddress'
+
+    if (addrType == 'MAC'):
+        family = psutil.AF_LINK
+    elif (addrType == 'IP'):
+        family = socket.AF_INET
+    else:
+        logAndExit (f"getAddrOfAdaptor: Unrecognized address type <{addrType}> is up.",exitCode=EXIT.Dev_Bug)
+    
+    if (ethAdaptor not in psutil.net_if_addrs()):
+        return noAddrFound(f"find the adaptor <{ethAdaptor}>")
+    
+    for addr in psutil.net_if_addrs()[ethAdaptor]:
+        if (addr.family == family):
+            printAndLog(f"getAddrOfAdaptor: <{addrType} address> of <{ethAdaptor}> = <{addr.address}>",doPrint=False)
+            return addr.address
+
+    return noAddrFound(f"get the <{addrType} address> of <{ethAdaptor}>")

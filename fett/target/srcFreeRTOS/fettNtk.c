@@ -5,9 +5,8 @@ Functions used for Network implementation on FreeRTOS
 #include "fettFreeRTOS.h"
 
 // Declarations
-void vStartNetwork (void *pvParameters);
+void startNetwork (void);
 static uint8_t isNetworkUp = uFALSE; //To know whether the network was up before
-static TaskHandle_t xTaskStartNtk = NULL;
 
 /* The default IP and MAC address used by the demo.  The address configuration defined here will be used if ipconfigUSE_DHCP is 0, or if ipconfigUSE_DHCP is
 1 but a DHCP server could not be contacted.  See the online documentation for more information. */
@@ -23,41 +22,17 @@ const uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADD
 #define configSOCKET_LISTEN_TCP_TX_WINDOW_SIZE 2
 #define configSOCKET_LISTEN_TCP_RX_WINDOW_SIZE 2
 
-// This task initializes the network and notify the mainTask
-void vStartNetwork (void *pvParameters) {
-    (void)pvParameters;
+void startNetwork () {
     BaseType_t funcReturn;
-    xTaskStartNtk = xTaskGetCurrentTaskHandle();
-
-
-    fettPrintf("(Info)~  vStartNetwork: task initial SHWM is %u\n",
-               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
-
 
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
-    ASSERT_OR_DELETE_TASK ((funcReturn == pdPASS), "startNetwork: Initialize Network IP.");
-
-    // wait for NtkHook
-    uint32_t recvNotification;
-    funcReturn = xTaskNotifyWait(0xffffffff, 0xffffffff, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
-    ASSERT_OR_DELETE_TASK ((funcReturn == pdPASS),
-                           "startNetwork: Receive notification from hook.");
-    ASSERT_OR_DELETE_TASK ((recvNotification == NOTIFY_SUCCESS_NTK),
-                           "startNetwork: Expected notification value from hook.");
-
-    fettPrintf ("\r\n<NTK-READY>\r\n");
-    vTaskDelay(pdMS_TO_TICKS(3000)); //give time to the host to ping
-
-    // notify main
-    ASSERT_OR_DELETE_TASK((xMainTask != NULL), "startNetwork: Get handle of <main:task>.");
-    funcReturn = xTaskNotify(xMainTask, NOTIFY_SUCCESS_NTK ,eSetBits);
-    ASSERT_OR_DELETE_TASK((funcReturn == pdPASS), "startNetwork: Notify <main:task>.");
-
-    fettPrintf("(Info)~  vStartNetwork: task final SHWM is %u\n",
-               (uint32_t) uxTaskGetStackHighWaterMark(NULL));
-
-    vTaskDelete (NULL);
-} //vStartNetwork
+    if (funcReturn != pdPASS) {
+        fettPrintf ("(Error)~  startNetwork: Failed to initialize network. [ret=%d].\n",funcReturn);
+        exitFett(1);
+    } else {
+        fettPrintf ("(Info)~  startNetwork: Network IP initialized successfully!.\n");
+    }
+}
 
 /* Called by FreeRTOS+TCP when the network connects or disconnects.  Disconnect
 events are only received if implemented in the MAC driver. */
@@ -85,15 +60,24 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent) {
         FreeRTOS_inet_ntoa(ulDNSServerAddress, cBuffer);
         fettPrintf("\t\tDNS Server Address: %s\r\n\r\n", cBuffer);
 
-        // Notify start netowork
-        ASSERT_OR_DELETE_TASK ((xTaskStartNtk != NULL), "NtkHook: Get handle of <task:startNetwork>.");
-        BaseType_t funcReturn = xTaskNotify(xTaskStartNtk, NOTIFY_SUCCESS_NTK ,eSetBits);
-        ASSERT_OR_DELETE_TASK ((funcReturn == pdPASS), "NtkHook: Notify <task:startNetwork>.");
+        // notify main
+        if (xMainTask == NULL) {
+            fettPrintf ("(Error)~  NtkHook: Unable to get the handle of <main:task>.\n");
+            exitFett (1);
+        }
+        BaseType_t funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_NTK ,eSetBits);
+        if (funcReturn != pdPASS) {
+            fettPrintf ("(Error)~  NtkHook: Failed to notify <main:task>!\n");
+            exitFett (1);
+        }
 
         isNetworkUp = uTRUE;
     } //network has just come up
 
-    // HERE DETECTS IF THE NETWORK WENT DOWN
-    ASSERT_OR_DELETE_TASK ((eNetworkEvent != eNetworkDown), "NtkHook: Check if network is down.");
+    // HERE DETECTS IF THE NETWORK WENT DOWN 
+    if (eNetworkEvent == eNetworkDown) {
+        fettPrintf ("(Error)~ NtkHook: Network is Down!\n");
+        exitFett (1);
+    }
 
 } //vApplicationIPNetworkEventHook

@@ -81,12 +81,12 @@ def install (target):
 
     target.runCommand("echo \"Starting BVRS CGI Handler...\"",tee=appLog)
 
+    serviceTimeout = 240 if (isEqSetting('procLevel','p3')) else 120
     if isEqSetting('osImage', 'debian'):
         target.runCommand("install bvrs.service /lib/systemd/system/bvrs.service", erroneousContents="install:", tee=appLog)
-        target.runCommand("systemctl enable bvrs.service", timeout=120, tee=appLog)
+        target.runCommand("systemctl enable bvrs.service", timeout=serviceTimeout, tee=appLog)
         target.runCommand("systemctl start bvrs.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
     elif isEqSetting('osImage', 'FreeBSD'):
-        serviceTimeout = 60 if not (isEqSetting('target', 'aws') and isEqSetting('pvAWS', 'connectal')) else 120
         target.runCommand("install bvrs.sh /usr/local/etc/rc.d/bvrs", erroneousContents="install:",tee=appLog)
         target.runCommand("service bvrs enable", erroneousContents="bvrs does not exist",tee=appLog,timeout=serviceTimeout)
         target.runCommand("service bvrs start", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
@@ -100,8 +100,7 @@ def deploymentTest (target):
     printAndLog("Testing voting server...",tee=getSetting('appLog'))
     ip = target.ipTarget
 
-    if not target.hasHardwareRNG():
-        target.genStdinEntropy()
+    target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_register.json?"
     req += "voter-birthdate=1900-01-01&"
     req += "voter-lastname=l&"
@@ -120,8 +119,8 @@ def deploymentTest (target):
     out = curlRequest(req, rawOutput=True)
     if out != '{}':
         target.shutdownAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
-    if not target.hasHardwareRNG():
-        target.genStdinEntropy()
+
+    target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
     req += "voter-birthdate=1900-01-01&"
     req += "voter-lastname=l&"

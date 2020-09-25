@@ -14,92 +14,106 @@
             "val" : "fett/base/utils/configData.json"
         },
         {
-            "name" : "fpgaIpTarget",
+            "name" : "vcu118IpTarget",
             "type" : "ipAddress",
             "val" : "10.88.88.2"
         },
         {
-            "name" : "fpgaIpHost",
+            "name" : "vcu118IpHost",
             "type" : "ipAddress",
             "val" : "10.88.88.1"
         },
         {
-            "name" : "fpgaPortHost",
+            "name" : "vcu118PortHost",
             "type" : "int",
             "min" : 1024,
             "max" : 65535,
             "val" : 1234
         },
         {
-            "name" : "fpgaPortTarget",
+            "name" : "vcu118PortTarget",
             "type" : "int",
             "min" : 1024,
             "max" : 65535,
             "val" : 1234
         },
         {
-            "name" : "fpgaNetMaskTarget",
+            "name" : "vcu118NetMaskTarget",
             "type" : "ipAddress",
             "val" : "255.255.255.0"
         },
         {
-            "name" : "fpgaMacAddrTarget",
+            "name" : "vcu118MacAddrTarget",
             "type" : "macAddress", 
             "val" : "00:0a:35:04:db:77"
         },
         {
-            "name" : "fpgaEthAdaptorName",
+            "name" : "vcu118EthAdaptorName",
             "type" : "string",
             "val" : "eth0fpga"
         },
         {
-            "name" : "fpgaEthAdaptorMacAddress",
+            "name" : "vcu118EthAdaptorMacAddress",
             "type" : "macAddress",
             "val" : "88:53:48:41:56:45"
         },
         {
-            "name" : "awsIpTarget",
+            "name" : "awsf1IpTarget",
             "type" : "ipAddress",
             "val" : "172.16.0.2"
         },
         {
-            "name" : "awsIpHost",
+            "name" : "awsf1IpHost",
             "type" : "ipAddress",
             "val" : "172.16.0.1"
         },
         {
-            "name" : "awsPortHost",
+            "name" : "awsf1PortHost",
             "type" : "int",
             "min" : 1024,
             "max" : 65535,
             "val" : 1234
         },
         {
-            "name" : "awsPortTarget",
+            "name" : "awsf1PortTarget",
             "type" : "int",
             "min" : 1024,
             "max" : 65535,
             "val" : 1234
         },
         {
-            "name" : "awsTapAdaptorName",
+            "name" : "awsf1TapAdaptorName",
             "type" : "string",
             "val" : "tap0"
         },
         {
-            "name" : "awsTapAdaptorMacAddress",
+            "name" : "awsf1TapAdaptorMacAddress",
             "type" : "macAddress",
             "val" : "8e:6b:35:04:00:00"
         },
         {
-            "name" : "awsNetMaskTarget",
+            "name" : "awsf1NetMaskTarget",
             "type" : "ipAddress",
             "val" : "255.255.255.0"
         },
         {
-            "name" : "awsMacAddrTarget",
+            "name" : "awsf1MacAddrTarget",
             "type" : "macAddress",
             "val" : "00:12:6D:00:00:02"
+        },
+        {
+            "name" : "qemuPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "qemuPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
         },
         {
             "name" : "HTTPPortTarget",
@@ -144,17 +158,15 @@
             "val" : 65536
         },
         {
-            "name" : "qemuIpTarget",
-            "type" : "ipAddress",
-            "val" : "127.0.0.1"
-        },
-        {
             "name" : "fettMatrix",
             "type" : "dict",
             "val" : {
                 "GFE" : {
                     "chisel_p1" : {
                         "FreeRTOS" : "firesim"
+                    },
+                    "bluespec_p1" : {
+                        "FreeRTOS" : "notOnAWS"
                     },
                     "chisel_p2" : {
                         "debian" : "firesim",
@@ -164,6 +176,16 @@
                     "bluespec_p2" : {
                         "debian" : "notOnAWS",
                         "FreeBSD" : "connectal",
+                        "busybox" : "notOnAWS"
+                    },
+                    "chisel_p3" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "notOnAWS",
+                        "busybox" : "notOnAWS"
+                    },
+                    "bluespec_p3" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "notOnAWS",
                         "busybox" : "notOnAWS"
                     }
                 },
@@ -199,7 +221,7 @@
             "val" : {
                 "netboot" : "FETT_NETBOOT",
                 "debian" : {
-                    "fpga" : "FETT_GFE_DEBIAN_FPGA",
+                    "vcu118" : "FETT_GFE_DEBIAN_VCU118",
                     "qemu" : "FETT_GFE_DEBIAN_QEMU",
                     "firesim" :  "FETT_GFE_DEBIAN_FIRESIM"
                 },
@@ -208,18 +230,18 @@
                     "firesim" : "FETT_GFE_DEBIAN_ROOTFS_FIRESIM"
                 },
                 "FreeBSD" : {
-                    "fpga" : "FETT_GFE_FREEBSD_FPGA",
+                    "vcu118" : "FETT_GFE_FREEBSD_VCU118",
                     "qemu" : "FETT_GFE_FREEBSD_QEMU",
                     "firesim" :  "FETT_GFE_FREEBSD_FIRESIM",
                     "connectal" : "FETT_GFE_FREEBSD_CONNECTAL"
                 },
                 "busybox" : {
-                    "fpga" : "FETT_GFE_BUSYBOX_FPGA",
+                    "vcu118" : "FETT_GFE_BUSYBOX_VCU118",
                     "firesim" :  "FETT_GFE_BUSYBOX_FIRESIM"
                 },
                 "FreeRTOS" : {
                     "clang-sysroot" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
-                    "fpga" : "FETT_GFE_FREERTOS_FPGA",
+                    "vcu118" : "FETT_GFE_FREERTOS_VCU118",
                     "firesim" :  "FETT_GFE_FREERTOS_FIRESIM"
                 },
                 "gfeTestingScripts" : "FETT_GFE_SCRIPT_DIR",
@@ -242,9 +264,14 @@
             "val" : "FreeRTOS-10.0.1"
         },
         {
-            "name" : "FreeRTOSprojName",
+            "name" : "FreeRTOSprojNameNonQemu",
             "type" : "string",
             "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
+        },
+        {
+            "name" : "FreeRTOSprojNameQemu",
+            "type" : "string",
+            "val" : "FreeRTOS/Demo/RISC-V-Qemu-sifive_e-FreedomStudio_Galois"
         },
         {
             "name" : "binaryRepoDir",
@@ -305,20 +332,14 @@
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 3333
-	},
-	{
-            "name" : "gfeInfo",
-            "type" : "dict",
-            "val" : {
-                "gdbPort" : 3333,
-                "gdbPath" : "riscv64-unknown-elf-gdb",
-                "openocdCfgPath" : "fett/target/utils/openocd_vcu118.cfg",
-                "openocdCommand" : "openocd",
-                "uartSerialDev" : "auto",
-                "resetBase" : "0x6FFF0000",
-                "resetVal" : "0x1"
-            }
+            "val" : 3334
+        },
+        {
+            "name" : "openocdTelnetPort",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 10000,
+            "val" : 4445
         }
-    ] 
+    ]
 }

@@ -12,21 +12,11 @@ on:
 
 jobs:
   Periodic:
-    runs-on: ${{ matrix.cfg.host }}
+    runs-on: docker-fpga
     strategy:
       fail-fast: false
       matrix:
-        cfg:
-          - { os: unix, index: 1, total: 8, host: docker-fpga }
-          - { os: unix, index: 2, total: 8, host: docker-fpga }
-          - { os: unix, index: 3, total: 8, host: docker-fpga }
-          - { os: unix, index: 4, total: 8, host: docker-fpga }
-          - { os: unix, index: 5, total: 8, host: docker-fpga }
-          - { os: unix, index: 6, total: 8, host: docker-fpga }
-          - { os: unix, index: 7, total: 8, host: docker-fpga }
-          - { os: unix, index: 8, total: 8, host: docker-fpga }
-          - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
-          - { os: freertos, index: 2, total: 2, host: docker-fpga-io }
+        cfg: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     steps:
       - run: |
           if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
@@ -44,30 +34,20 @@ jobs:
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runPeriodic-${{ matrix.cfg.os }} -ep OnPrem -art periodic-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
+          run: nix-shell --command "./ci/fett-ci.py runPeriodic -ep OnPrem -art periodic-${{ github.sha }} -i ${{ matrix.cfg }}
       - if: always()
         uses: actions/upload-artifact@v2
         with:
           name: periodic-${{ github.sha }}
-          path: "*-periodic-${{ matrix.cfg.os}}-${{ github.sha }}"
+          path: "*-periodic-${{ github.sha }}"
 
   Release:
     if: "!always()"
-    runs-on: ${{ matrix.cfg.host }}
+    runs-on: docker-fpga
     strategy:
       fail-fast: false
       matrix:
-        cfg:
-          - { os: unix, index: 1, total: 8, host: docker-fpga }
-          - { os: unix, index: 2, total: 8, host: docker-fpga }
-          - { os: unix, index: 3, total: 8, host: docker-fpga }
-          - { os: unix, index: 4, total: 8, host: docker-fpga }
-          - { os: unix, index: 5, total: 8, host: docker-fpga }
-          - { os: unix, index: 6, total: 8, host: docker-fpga }
-          - { os: unix, index: 7, total: 8, host: docker-fpga }
-          - { os: unix, index: 8, total: 8, host: docker-fpga }
-          - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
-          - { os: freertos, index: 2, total: 2, host: docker-fpga-io }
+        cfg: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     steps:
       - run: |
           if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
@@ -85,9 +65,9 @@ jobs:
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runRelease-${{ matrix.cfg.os }} -ep OnPrem -art release-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
+          run: nix-shell --command "./ci/fett-ci.py runRelease -ep OnPrem -art release-${{ github.sha }} -i ${{ matrix.cfg }}
       - if: always()
         uses: actions/upload-artifact@v2
         with:
           name: release-${{ github.sha }}
-          path: "*-release-${{ matrix.cfg.os }}-${{ github.sha }}"
+          path: "*-release-${{ github.sha }}"

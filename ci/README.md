@@ -33,7 +33,7 @@ Flavors:
 ### Setup
 
 - Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-- Create an SSH key (named `~/.ssh/aws-ci-gh`) and associate it with your github and gitlab-ext accounts - this will facilitate checking out the branches specified with the `-b` and `-bb` flags.
+- If you will specify a SSITH-FETT-Target branch (`-b`) or a SSITH-FETT-Binaries branch (`-bb`), create an SSH key (default named `~/.ssh/id_rsa`) and grant it access to your github and gitlab-ext accounts.
 
 ### Usage
 
@@ -41,12 +41,20 @@ Flavors:
 
 2.
 ```bash
-usage: aws-testing-ci.py [-h] [-a AMI] [-b BRANCH] [-bb BINARIES_BRANCH]
-                         [-c CAP]
+usage: aws-testing-ci.py [-h] [-a AMI] [-b BRANCH] [-bb BINARIES_BRANCH] [-c CAP]
                          [-i [INSTANCE_INDICES [INSTANCE_INDICES ...]]]
-                         [-k KEY_PATH] [-n NAME] [-r RUNS]
+                         [-k KEY_PATH] [-p PEM_KEY_NAME] [-n NAME] [-r RUNS]
+                         [-m {fett,cwe,all}]
 ```
+
+### Functioning
+
+AWS Testing CI uses the bucket described in [configs.py](configs.py) for both communication between instances and `aws-testing-ci.py` (within the S3 bucket, these will be under the prefix `communications/`) and for posting artifacts (logs) under the prefix `artifacts/`.
 
 ### Results
 
-The results will be posted to the AWS S3 bucket described in [`configs.py`](configs.py), under the job name. Results will also be stored to `results.txt`, and logs will be written to `aws-test-suite.log`.
+Results will be printed to screen, and put into the file `results.txt`.
+
+### Logs 
+
+Logs will be writted to the file `aws-test-suite.log`, and contain very detailed information about the execution of `aws-testing-ci.py` 

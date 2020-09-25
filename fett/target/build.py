@@ -3,7 +3,7 @@
 Building OS images any other needed files
 """
 
-import os, re
+import os, re, glob
 from fett.base.utils.misc import *
 
 @decorate.debugWrap
@@ -52,7 +52,12 @@ def freeRTOSBuildChecks():
     if (len(os.listdir(getSetting('FreeRTOSforkDir'))) == 0):
         logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}> is empty. Please use <git submodule update>.",exitCode=EXIT.Environment)
 
-    projDir = os.path.join(getSetting('FreeRTOSforkDir'),getSetting('FreeRTOSprojName'))
+    if isEqSetting('target', 'qemu'):
+        projDir = os.path.join(getSetting('FreeRTOSforkDir'),
+                               getSetting('FreeRTOSprojNameQemu'))
+    else:
+        projDir = os.path.join(getSetting('FreeRTOSforkDir'),
+                               getSetting('FreeRTOSprojNameNonQemu'))
     setSetting('FreeRTOSprojDir',projDir)
     if (not os.path.isdir(getSetting('FreeRTOSprojDir'))):
         logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
@@ -73,10 +78,23 @@ def freeRTOSBuildChecks():
         warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <Clang> is not supported. Linking using <LLD> instead.")
         setSetting('linker','LLD')
 
-    # C++ SD Arduino library causing issues with Clang
-    if (isEqSetting('cross-compiler','Clang') and (isEqSetting('target','fpga'))):
-        logAndExit(f"Building FreeRTOS using Clang/LLD is not yet implemented for target <fpga>.",exitCode=EXIT.Implementation)
-
+    # FatFs
+    if (isEqSetting('mode','test')):
+        if (isEqSetting('freertosFatFs','default')):
+            if (isEqSetting('target','awsf1')):
+                setSetting('freertosFatFs','dosblk')
+            elif (isEqSetting('target','vcu118')):
+                setSetting('freertosFatFs','ramdisk')
+        elif (isEqSetting('freertosFatFs','dosblk') and (not isEqSetting('target','awsf1'))):
+            logAndExit(f"FatFs using <dosblk> is only available on <awsf1> target.",exitCode=EXIT.configuration)
+        elif (isEqSetting('freertosFatFs','sdcard') and (not isEqSetting('target','vcu118'))):
+            logAndExit(f"FatFs using <sdcard> is only available on <vcu118> target.",exitCode=EXIT.configuration)
+        if isEqSetting('freertosFatFs','sdcard'):
+            # C++ SD Arduino library causing issues with Clang
+            if isEqSetting('cross-compiler','Clang'):
+                logAndExit(f"Compiling the SDcard library using Clang/LLD is not yet implemented.",exitCode=EXIT.Implementation)
+            warnAndLog("FatFs is configured to use <sdcard>. This run will only succeed if an SD card is available to the board.")
+            
 @decorate.debugWrap
 @decorate.timeWrap
 def prepareFreeRTOSNetworkParameters():
@@ -159,17 +177,23 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
     #Cleaning all ".o" and ".elf" files in site
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
+    if isEqSetting("target", "qemu"):
+        cleanQemuMakeDependencyFiles()
 
     #Compile
     printAndLog (f"Cross-compiling...",doPrint=doPrint)
     envVars = extraEnvVars
     envVars.append(f"XLEN={getSetting('xlen')}")
     envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
-    envVars.append(f"PROG=main_fett")
+    if isEqSetting('target', 'qemu'):
+        envVars.append(f"PROJ_NAME=main_fett")
+    else:
+        envVars.append(f"PROG=main_fett")
     envVars.append(f"BSP={getSetting('target')}")
-    if getSetting('FreeRTOSUseRAMDisk'):
-        envVars.append(f"FREERTOS_USE_RAMDISK=1")
-    envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
+    if (isEqSetting('mode','test')):
+        envVars.append(f"FATFS={getSetting('freertosFatFs').upper()}")
+        if isEqSetting('freertosFatFs','ramdisk'):
+            envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
 
     if isEqSetting('binarySource', 'Michigan'):
         dockerToolchainImage = 'michigan-image:1.0'
@@ -225,14 +249,20 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
               dockerExtraMounts=dockerExtraMounts)
 
     #check if the elf file was created
-    builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
-    builtAsm = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.asm')
+    if isEqSetting('target', 'qemu'):
+        builtElf = os.path.join(getSetting('FreeRTOSprojDir'),
+                                'build',
+                                'FreeRTOS-main_fett.elf')
+    else:
+        builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
     if (not os.path.isfile(builtElf)):
         logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
     cp(builtElf,getSetting('osImageElf'))
-    if (not os.path.isfile(builtAsm)):
-        logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
-    cp(builtAsm,getSetting('osImageAsm'))
+    if not isEqSetting('target', 'qemu'):
+        builtAsm = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.asm')
+        if (not os.path.isfile(builtAsm)):
+            logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
+        cp(builtAsm,getSetting('osImageAsm'))
     printAndLog(f"Files cross-compiled successfully.",doPrint=doPrint)
 
     if isEqSetting('binarySource', 'Michigan'):
@@ -246,6 +276,8 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
     #Cleaning all ".o" files post run
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
+    if isEqSetting("target", "qemu"):
+        cleanQemuMakeDependencyFiles()
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -269,11 +301,7 @@ def selectImagePaths():
     if isEnabled('useCustomOsImage'):
         return [getSetting('pathToCustomOsImage')]
     else:
-        # inconsistency
-        if isEqSetting('binarySource', 'SRI-Cambridge'):
-            imageType = getSetting('target') if getSetting('target') != 'aws' else 'aws'
-        else:
-            imageType = getSetting('target') if getSetting('target') != 'aws' else getSetting('pvAWS')
+        imageType = getSetting('target') if getSetting('target') != 'awsf1' else getSetting('pvAWS')
         if getSetting('binarySource') == 'GFE':
             nixImage = getSettingDict('nixEnv',[getSetting('osImage'),imageType])
             if (nixImage in os.environ):
@@ -297,8 +325,11 @@ def importImage():
     imagePaths = selectImagePaths()
     for ip in imagePaths:
         cp (ip, getSetting('osImagesDir'))
-    if not (isEqSetting('target', 'aws')):
+    if (isEqSetting('target', 'vcu118')):
         if (isEqSetting('elfLoader','netboot') and (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox'])):
+            if (isEqSetting('procLevel','p3')):
+                warnAndLog(f"<importImage>: Netboot is currently not supported on P3. Falling back to JTAG.")
+                setSetting('elfLoader','JTAG')
             netbootElf = os.path.join(getSetting('osImagesDir'),f"netboot.elf")
             setSetting('netbootElf',netbootElf)
             netbootImage = getSettingDict('nixEnv','netboot')
@@ -307,7 +338,7 @@ def importImage():
             else:
                 logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
     else:
-        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is aws", doPrint=False)
+        warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is <{getSetting('target')}>", doPrint=False)
     logging.info(f"{getSetting('osImage')} image imported successfully.")
 
 @decorate.debugWrap
@@ -324,7 +355,36 @@ def cleanDirectory (xDir,endsWith='.o'):
                 try:
                     os.remove(os.path.join(xDirName,xFile))
                 except Exception as exc:
-                    logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.", exitCode=EXIT.Files_and_paths)
+                    logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+
+@decorate.debugWrap
+def cleanQemuMakeDependencyFiles():
+    """
+    Remove the .d files generated by the FreeRTOS build for the Qemu target
+    that are not already checked into the FreeRTOS fork repo
+    """
+    buildAppDir = os.path.join(getSetting('FreeRTOSprojDir'), 'build', 'app')
+    dependencyFiles = glob.glob(os.path.join(buildAppDir, '*test*.d'))
+
+    if getSetting('currentTest')[1] == 'informationLeakage':
+        extraCFiles = glob.glob(os.path.join(getSetting('buildDir'),
+                                             'informationLeakage',
+                                             '*',
+                                             '*.c'))
+        for extraCFile in extraCFiles:
+            dFile = os.path.join(buildAppDir,
+                                 os.path.basename(extraCFile)[:-1] + "d")
+            if os.path.exists(dFile):
+                dependencyFiles.append(os.path.join(buildAppDir, dFile))
+
+    for dependencyFile in dependencyFiles:
+        try:
+            os.remove(dependencyFile)
+        except Exception as exc:
+            logAndExit("cleanQemuMakeDependencyFiles: Failed to delete "
+                       f"<dependencyFile>.",
+                       exc=exc,
+                       exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -356,6 +416,8 @@ def crossCompileUnix(directory,extraString=''):
     logging.debug(f"going to make using {envLinux}")
     if (isEqSetting('binarySource','SRI-Cambridge')):
         dockerToolchainImage = 'cambridge-toolchain'
+    elif (isEqSetting('binarySource','LMCO')):
+        dockerToolchainImage = 'galoisinc/besspin:gfe-gcc83'
     else:
         dockerToolchainImage = None
     make (envLinux, directory,dockerToolchainImage=dockerToolchainImage)

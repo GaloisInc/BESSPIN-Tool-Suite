@@ -34,11 +34,16 @@ optional arguments:
 """
 
 try:
+    from utils import *
+except Exception as exc:
+    print("(Error)~ Failed to import <utils>.")
+    print(f"(Error)~  <{exc.__class__.__name__}>: {exc}")
+    exit(1)
+
+try:
     import sys, os, glob, shutil, time, itertools
     import json, configparser, socket, re, logging
     import subprocess, argparse, signal, copy
-    from utils import *
-    from pygit2 import Repository
 except Exception as exc:
     exitFettCi(exitCode=-1, exc=exc)
 
@@ -66,22 +71,18 @@ def main(xArgs):
     # Check runType
     baseRunTypes = ["runOnPush", "runDevPR", "runPeriodic", "runRelease"]
     if xArgs.entrypoint in ["AWS", "AWSTesting"]:
+        flavor = "aws"
         if xArgs.runType not in baseRunTypes[1:2]:  # Only allow runDevPR on AWS for now
             exitFettCi(
                 message=f"Invalid runType argument. For AWS, runType has to be in {baseRunTypes[1:2]}."
             )
-        baseRunType = xArgs.runType
-        flavor = "aws"
+        
     elif xArgs.entrypoint == "OnPrem":
-        flavors = ["unix", "freertos"]
-        listRunTypes = [
-            "-".join(pair) for pair in itertools.product(baseRunTypes, flavors)
-        ]
-        if xArgs.runType not in listRunTypes:
+        flavor = xArgs.entrypoint
+        if xArgs.runType not in baseRunTypes:
             exitFettCi(
-                message=f"Invalid runType argument. For OnPrem, runType has to be in {listRunTypes}."
+                message=f"Invalid runType argument. For OnPrem, runType has to be in {baseRunTypes}."
             )
-        baseRunType, flavor = xArgs.runType.split("-")
 
     if xArgs.testOnly:
         printAndLog("FETT-CI: TestMode: Dumping some useful info...", doPrint=False)
@@ -105,10 +106,10 @@ def main(xArgs):
     if xArgs.artifactSuffix:
         artifactSuffix = xArgs.artifactSuffix
     elif xArgs.jobID:
-        artifactSuffix = f"{xArgs.jobID}-{nodeIndex}"
+        artifactSuffix = xArgs.jobID
 
     # Check number of configs + get the right config file
-    if baseRunType == "runOnPush":  # Execute the files in ci/runOnPush-flavor
+    if xArgs.runType == "runOnPush":  # Execute the files in ci/runOnPush
         dirConfigs = os.path.join(ciDir, xArgs.runType)
         if not os.path.isdir(dirConfigs):
             exitFettCi(message=f"Directory <{dirConfigs}> cannot be accessed.")
@@ -123,7 +124,7 @@ def main(xArgs):
             runModes = ['fett', 'cwe']
         else:
             runModes = [xArgs.runMode]
-        allConfigs = generateAllConfigs(baseRunType, flavor, runModes)
+        allConfigs = generateAllConfigs(xArgs.runType, flavor, runModes)
         actualNumConfigs = len(allConfigs)
         if xArgs.testOnly:
             printAndLog(
@@ -207,10 +208,11 @@ def main(xArgs):
             exitFettCi(message="Error when trying to read branches from file.", exc=exc)
 
         try:
-            targetBranch = Repository(repoDir).head.shorthand
-            binariesBranch = Repository(
-                os.path.join(repoDir, "SSITH-FETT-Binaries")
-            ).head.shorthand
+            from pygit2 import Repository
+            targetRepo = Repository(repoDir)
+            targetBranch = targetRepo.head.shorthand
+            binariesRepo = Repository(os.path.join(repoDir, "SSITH-FETT-Binaries"))
+            binariesBranch = binariesRepo.head.shorthand
 
             # Log
             printAndLog(
@@ -225,6 +227,9 @@ def main(xArgs):
                 assert targetBranch == branches[0], "Failed branch check for Target."
             if not branches[1] == "None":
                 assert binariesBranch == branches[1], "Failed branch check for Binaries"
+                assert (
+                    binariesRepo.status() == {}
+                ), "Binaries Branch was not pulled successfully."
 
         except Exception as exc:
             # Prepare, upload to S3 and send SQS without TargetLogs, as nothing ran.
@@ -313,7 +318,7 @@ if __name__ == "__main__":
     )
     xArgParser.add_argument(
         "runType",
-        help="The CI run type. [OnPrem: {runDevPR,runRelease,runOnPush,runPeriodic}-{unix,freertos}, AWS: runDevPR]",
+        help="The CI run type. [OnPrem: [runDevPR,runRelease,runOnPush,runPeriodic], AWS: runDevPR]",
     )
     xGroupArtifacts = xArgParser.add_mutually_exclusive_group(required=True)
     xGroupArtifacts.add_argument(

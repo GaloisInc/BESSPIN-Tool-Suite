@@ -3,7 +3,7 @@ import os
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.common import score
-from fett.target import aws
+from fett.target import awsf1, vcu118
 import fett.target.launch
 
 @decorate.debugWrap
@@ -44,17 +44,18 @@ def runFreeRTOSCwesEvaluation():
                 printAndLog(f"Running {vulClass}/{test} part {part}")
                 setSetting("currentTest", (test, vulClass, part, logFile))
 
-                if isEqSetting('target', 'aws'):
+                if isEqSetting('target', 'awsf1'):
                     if isEqSetting('pvAWS', 'firesim'):
-                        # TODO: Is there a way to avoid reflashing the
-                        # FPGA?
-                        aws.programAFI(doPrint=False)
+                        awsf1.programAFI(doPrint=False)
                     else:
                         logAndExit("<runFreeRTOSCwesEvaluation> is not "
                                    "implemented for "
                                    f"<AWS:{getSetting('pvAWS')}>.",
                                    exitCode=EXIT.Implementation)
-                else:
+                elif (isEqSetting('target','vcu118')):
+                    vcu118.programBitfile(doPrint=False)
+                    vcu118.resetEthAdaptor()
+                elif not isEqSetting('target', 'qemu'):
                     logAndExit("<runFreeRTOSCwesEvaluation> is not "
                                f"implemented for <{getSetting('target')}>",
                                exitCode=EXIT.Implementation)
@@ -69,9 +70,10 @@ def runFreeRTOSCwesEvaluation():
                     logFile.write(gdbLines[gdbLines.find("Continuing."):]) # only the useful output
                     logFile.write("\n~~~~~~~~~~~~~~~~~\n")
 
-                logging.debug(f"\n~~~GDB LOGGING -- {testName}~~~\n")
-                logging.debug('\n'.join(ftReadLines(target.fGdbOut.name))) # The whole thing for debug
-                logging.debug("\n~~~~~~~~~~~~~~~~~")
+                if not isEqSetting('target', 'qemu'):
+                    logging.debug(f"\n~~~GDB LOGGING -- {testName}~~~\n")
+                    logging.debug('\n'.join(ftReadLines(target.fGdbOut.name))) # The whole thing for debug
+                    logging.debug("\n~~~~~~~~~~~~~~~~~")
 
             logFile.close()
         # Score the tests

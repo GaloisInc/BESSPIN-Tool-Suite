@@ -62,7 +62,7 @@ struct testgen_parentSocket {
 };
 
 // --------- testgenNtk.c ---------------------------------------------------------------------------------
-extern void vStartNetwork (void *pvParameters);
+extern void startNetwork (void);
 extern void vServerSocketTCP (void *pvParameters);
 extern void vClientSocketTCP (void *pvParameters);
 

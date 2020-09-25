@@ -7,11 +7,13 @@
 
 #define ffconfigMAX_FILENAME    13 // 8.3 format plus a final \0 terminator
 
-#ifdef FETT_AWS
+#ifdef FATFS_DOSBLK
     /* FatFS library and IceBlk driver for AWS */
     #include "ff.h" /* Declarations of FatFs API */
     #include "iceblk.h"
-#else
+#elif defined(FATFS_RAMDISK)
+    #include "ff.h" /* Declarations of FatFs API */
+#elif defined(FATFS_SDCARD)
     #include <SDLib.h>
 #endif
 
@@ -19,7 +21,7 @@ typedef struct _FF_FILE
 {
     char filename[ffconfigMAX_FILENAME];
     uint32_t ulFileSize;            /* File's Size. */
-    #ifdef FETT_AWS
+    #if defined(FATFS_DOSBLK) || defined(FATFS_RAMDISK)
         FIL fatfsFile; /* FatFS file struct */
     #endif
 } FF_FILE;

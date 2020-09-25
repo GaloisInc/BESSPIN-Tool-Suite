@@ -33,6 +33,9 @@ NONE
     
     void main (void) {
         BaseType_t funcReturn;
+
+        startNetwork();
+
         funcReturn = xTaskCreate(vTask284, "main:task284", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
         if (funcReturn != pdPASS) {
             onPrintf ("<INVALID> Failed to create <main:task284>. [ret=%d].\n",funcReturn);
@@ -41,7 +44,6 @@ NONE
             onPrintf (">>> [main:] Created <main:task284>.\n");
         }
 
-        vTaskStartScheduler(); //Hang the function
         return;
     }
 
@@ -52,14 +54,6 @@ NONE
         xMainTask = xTaskGetCurrentTaskHandle();
 
         // -------------------------------- START NETWORK ------------------------------------------
-        funcReturn = xTaskCreate(vStartNetwork, "taskTest:startNetwork", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
-        if (funcReturn != pdPASS) {
-            onPrintf ("<INVALID> [main:] Failed to create <taskTest:startNetwork>. [ret=%d].\n",funcReturn);
-            vEXIT(1);
-        } else {
-            onPrintf (">>> [main:] Created <taskTest:startNetwork>.\n");
-        }
-
         recvNotification = NOTIFY_FAIL;
         funcReturn = xTaskNotifyWait(0xffffffff, 0, &recvNotification, pdMS_TO_TICKS(20000)); //it usually takes 10-15 seconds
         if ((funcReturn != pdPASS) || (recvNotification != NOTIFY_SUCCESS)) {
@@ -68,6 +62,9 @@ NONE
         } else {
             onPrintf (">>> [main:] Network started successfully!\n");
         }
+
+        onPrintf ("\n<NTK-READY>\n");
+        vTaskDelay(pdMS_TO_TICKS(3000)); //give time to the host to ping
 
         #ifdef USE_TLS_OVER_TCP 
             // ------------------------------- START WOLFSSL -------------------------------------------

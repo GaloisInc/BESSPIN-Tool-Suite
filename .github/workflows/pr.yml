@@ -6,14 +6,11 @@ on:
 
 jobs:
   DevPR:
-    runs-on: ${{ matrix.cfg.host }}
+    runs-on: docker-fpga
     strategy:
       fail-fast: false
       matrix:
-        cfg:
-          - { os: unix, index: 1, total: 2, host: docker-fpga }
-          - { os: unix, index: 2, total: 2, host: docker-fpga }
-          - { os: freertos, index: 1, total: 1, host: docker-fpga-io }
+        cfg: [1, 2, 3, 4]
 
     steps:
       - name: Remove lock file if it exists to prevent git fetch failures
@@ -27,9 +24,9 @@ jobs:
       - uses: ./.github/action
         with:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runDevPR-${{ matrix.cfg.os }} -ep OnPrem -art devPR-${{ matrix.cfg.os }}-${{ github.sha }} -i ${{ matrix.cfg.index }} -N ${{ matrix.cfg.total }}"
+          run: nix-shell --command "./ci/fett-ci.py runDevPR -ep OnPrem -art devPR-${{ github.sha }} -i ${{ matrix.cfg }}"
       - if: always()
         uses: actions/upload-artifact@v2
         with:
           name: devPR-${{ github.sha }}
-          path: "*-devPR-${{ matrix.cfg.os }}-${{ github.sha }}"
+          path: "*-devPR-${{ github.sha }}"

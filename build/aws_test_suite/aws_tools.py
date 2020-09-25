@@ -10,10 +10,28 @@ import importlib.util
 
 from .logger import *
 
+# +-----------------+
+# |  General Tools  |
+# +-----------------+
+
+
+@debug_wrap
+def safe_traverse(in_dictionary, hierarchy):
+    while hierarchy:
+        item = hierarchy.pop(0)
+        if item in in_dictionary:
+            return safe_traverse(in_dictionary[item], hierarchy)
+        else:
+            log.error(
+                f"safe_traverse: { item } not present in { in_dictionary }. Quitting."
+            )
+    return in_dictionary
+
 
 # +-----------------------------+
 # |  AWS Instance Manipulation  |
 # +-----------------------------+
+@debug_wrap
 @log_assertion_fails
 def get_ami_id_from_name(ami_name):
     """
@@ -30,28 +48,54 @@ def get_ami_id_from_name(ami_name):
 
     client = boto3.client("ec2")
     response = client.describe_images(Filters=[{"Name": "name", "Values": [ami_name]}])
+
+    images = safe_traverse(response, ["Images"])
+
     assert (
-        len(response["Images"]) == 1
-    ), f"No unique images found '{response['Images']}' for ami name {ami_name}"
-    return response["Images"][0]["ImageId"]
+        len(images) == 1
+    ), f"No unique images found '{images}' for ami name {ami_name}"
+    return safe_traverse(images[0], ["ImageId"])
 
 
-def terminate_instance(instance_id, dry_run=True):
+@debug_wrap
+def terminate_instance(instance_id, dry_run=True, wait_for_termination=False):
     """
     Terminate an instance by its instance id
 
+    dry_run sends a dry_run request, for testing purposes
+
+    wait_for_termination will hold execution at this function until the instance
+        has terminated.
+
     :param dry_run: Set to true, for safety
     :type dry_run: bool, optional
+
+    :param wait_for_termination: Set to false
+    :type wait_for_termination: bool, optional
     """
 
     log.debug(f"terminate_instances called with {locals()}")
 
     client = boto3.client("ec2")
     resp = client.terminate_instances(InstanceIds=[instance_id], DryRun=dry_run)
-
+    log.info(f"Terminating instance: { instance_id }")
     log.debug(f"terminate_instances got response from terminate_instances() {resp}")
 
+    # If wait_for_termination is passed, use boto3 waiter to wait for instance
+    #   state to be terminated.
+    if wait_for_termination:
+        log.info(f"Waiting for instance { instance_id } to terminate.")
+        log.debug(
+            f"terminate_instances calling a waiter on termination status for { [instance_id] }"
+        )
 
+        waiter = client.get_waiter("instance_terminated")
+        waiter.wait(InstanceIds=[instance_id])
+
+        log.info(f"Instance { instance_id } Terminated.")
+
+
+@debug_wrap
 def launch_instance(
     image_id,
     vpc_name="aws-controltower-VPC",
@@ -102,9 +146,13 @@ def launch_instance(
     vpc = list(ec2.vpcs.filter(Filters=vpcfilter))
 
     # get security group from ec2
-    security_group = client.describe_security_groups(
+    response = client.describe_security_groups(
         Filters=[{"Name": "group-name", "Values": [security_group_name]}]
-    )["SecurityGroups"][0]["GroupId"]
+    )
+
+    security_group = safe_traverse(
+        safe_traverse(response, ["SecurityGroups"])[0], ["GroupId"]
+    )
 
     # get subnets and choose a public one
     subnets = list(
@@ -147,27 +195,23 @@ def launch_instance(
             KeyName=keyname,
             **optional_kwargs,
         )
-    except client.exceptions.ClientError as e:
-        log.error(f"boto3.create_instances failed with error '{e}'")
+    except Exception as exc:
+        log.error(f"boto3.create_instances failed.", exc=exc)
         instance = None
 
     return instance[0].id
 
 
-# +-----------+
-# |  AWS SQS  |
-# +-----------+
-
-
-def poll_sqs(config):
+@debug_wrap
+def poll_s3(config, instance_ids):
     """
-    Get any new SQS messages that are in queue. Returns instance_id for a message.
+    Poll AWS S3 for a file whose name is the instance id of any instance we are running.
+
+    If found, read the termination status, log results, and then delete it.
 
     :return: instance id or None
     :rtype: str
     """
-
-    log.debug(f"Beginning poll_sqs()")
 
     if config is not None:
         moduleSpec = importlib.util.spec_from_file_location("configs", config)
@@ -188,47 +232,70 @@ def poll_sqs(config):
 
     # Start Boto3 Client
     try:
-        sqs = boto3.client("sqs", region_name="us-west-2")
-    except:
-        log.error(f"Failed to create the SQS client.")
+        s3 = boto3.client("s3")
+    except Exception as exc:
+        log.error(f"Failed to create the S3 client.", exc=exc)
 
     # Define a way to delete a message
-    def delete_message(message):
+    def delete_object(bucket_name, file_name):
         try:
-            sqs.delete_message(
-                QueueUrl=configs.ciAWSqueueTesting,
-                ReceiptHandle=message["ReceiptHandle"],
+            s3.delete_object(Bucket=bucket_name, Key=file_name)
+            log.info(f"Succeeded in removing object { file_name } from { bucket_name }")
+        except Exception as exc:
+            log.warning(
+                f"Failed to remove object { file_name } from { bucket_name }", exc=exc
             )
-            log.info("Succeeded in removing message from SQS queue.")
-        except:
-            log.warning("Failed to delete the message from the SQS queue.")
 
-    log.debug("poll_sqs Polling SQS")
+    log.debug("poll_s3 Polling S3")
 
     try:
-        response = sqs.receive_message(
-            QueueUrl=configs.ciAWSqueueTesting,
-            VisibilityTimeout=5,  # 5 seconds are enough
-            WaitTimeSeconds=20,  # Long-polling for messages, reduce number of empty receives
+        response = s3.list_objects_v2(
+            Bucket=configs.ciAWSbucketTesting, Prefix="communication/"
         )
-    except:
-        log.error(f"Failed to receive a response from the SQS queue.")
+        log.debug(f"Polling S3 got response: { response }")
 
-    if "Messages" in response:
+    except Exception as exc:
+        log.error(
+            f"Failed to receive the contents of bucket { configs.ciAWSbucketTesting }.",
+            exc=exc,
+        )
 
-        # Log the contents of the reponse
-        log.debug(f"Got SQS Response {response}")
-        for message in response["Messages"]:
+    if "Contents" in response:
+        contents = safe_traverse(response, ["Contents"])
 
-            # Extract the body
-            body = json.loads(message["Body"])
-            instance_id = body["instance"]["id"]
-            log.results(
-                f'SQS Poll got SQS: FINISHED: {body["job"]["id"]}, exited with status {body["job"]["status"]}.'
+        s3_finished_ids = [
+            safe_traverse(obj, ["Key"]).split("communication/")[1] for obj in contents
+        ]
+        # Take the set intersection of the running ids and the completed ids in S3 to get
+        #   Ids pertinant to this program.
+        completed_ids = list(set(s3_finished_ids).intersection(set(instance_ids)))
+        log.debug(
+            f"Intersection of s3: { s3_finished_ids } and running: { instance_ids } is { completed_ids }"
+        )
+
+        if completed_ids:
+            log.debug(
+                f"Found S3 communications about running instances { completed_ids }"
             )
-            delete_message(message)
 
-            return instance_id
+        # Download each result to /tmp, to be read later
+        for instance_id in completed_ids:
+            try:
+                s3_file_name = "communication/" + instance_id
+                results_file_path = os.path.join("/tmp", instance_id)
+                s3.download_file(
+                    Bucket=configs.ciAWSbucketTesting,
+                    Key=s3_file_name,
+                    Filename=results_file_path,
+                )
+                log.debug(f"Downloaded result for instance { instance_id } from S3")
+                delete_object(configs.ciAWSbucketTesting, s3_file_name)
+                log.debug(f"Deleted result for instance { instance_id } from S3")
 
-    # Nothing got, return empty string.
-    return None
+            except Exception as exc:
+                log.error(f"Failed to get file { instance_id } from AWS S3.", exc=exc)
+
+        return completed_ids
+
+    else:
+        return []
