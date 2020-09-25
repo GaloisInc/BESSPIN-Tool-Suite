@@ -8,5 +8,5 @@ from fett.base.utils.misc import *
 @decorate.debugWrap
 @decorate.timeWrap
 def runCyberPhys(xTarget):
-    warnAndLog(f"runCyberPhys: Nothing is implemented here yet. {xTarget.targetIdInfo}")
+    # here anything that needs to be done on the targets before handing the user the prompt
     return
