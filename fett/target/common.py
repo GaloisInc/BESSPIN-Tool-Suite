@@ -310,7 +310,7 @@ class commonTarget():
             self.runCommand("cd root",timeout=10)
             printAndLog (f"start: Logging in, activating ethernet, and setting system time...{self.targetIdInfo}",doPrint=(not self.targetId))
         elif (self.osImage=='FreeRTOS'):
-            if (isEqSetting('binarySource','Michigan',targetId=self.targetId)):
+            if (self.binarySource=='Michigan'):
                 startMsg = 'INFO: Open database successfully'
             else:
                 startMsg = '>>>Beginning of Fett<<<'
@@ -355,7 +355,8 @@ class commonTarget():
             return
 
         #up the ethernet adaptor and get the ip address
-        self.activateEthernet()
+        if (not ((self.osImage=='FreeRTOS') and (self.target=='qemu'))): #network is not supported on FreeRTOS qemu
+            self.activateEthernet()
         
         if (self.restartMode): #this only in aws/production mode -- skip the reset of start()
             if (self.osImage=='debian'): # timesync is not in the boot sequence of neither GFE nor MIT images
@@ -562,7 +563,7 @@ class commonTarget():
                 return ":~\$"
         elif (self.osImage=='FreeBSD'):
             if (self.isCurrentUserRoot):
-                if isEqSetting('target', 'awsf1'):
+                if (self.target=='awsf1'):
                     return ":~ #"
                 else:
                     return "fettPrompt>"
@@ -581,7 +582,7 @@ class commonTarget():
         if (self.osImage=='debian'):
             return [":~#", ":~\$"]
         elif (self.osImage=='FreeBSD'):
-            if isEqSetting('target', 'awsf1'):
+            if (self.target=='awsf1'):
                 return [":~ #", ":~ \$"]
             else:
                 return ["fettPrompt>", ":~ \$"]
@@ -860,7 +861,7 @@ class commonTarget():
         appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
         setSetting("appLog",appLog)
 
-        if isEqSetting('binarySource', 'SRI-Cambridge'):
+        if (self.binarySource=='SRI-Cambridge'):
             setSetting('sqliteBin','/fett/bin/sqlite3')
         else:
             setSetting('sqliteBin','/usr/bin/sqlite')
@@ -982,7 +983,7 @@ class commonTarget():
 
     @decorate.debugWrap
     def ensureCrngIsUp (self):
-        if (not isEqSetting('osImage','debian')):
+        if (self.osImage!='debian'):
             self.shutdownAndExit(f"<ensureCrngIsUp> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
         isCrngUp = False
@@ -1091,7 +1092,7 @@ class commonTarget():
         except pexpect.TIMEOUT:
             if (shutdownOnError):
                 self.shutdownAndExit(f"expectFromTarget: {self.target.capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
-            elif (not isEqSetting('osImage','FreeRTOS')):
+            elif (self.osImage!='FreeRTOS'):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
                 textBack += self.keyboardInterrupt (shutdownOnError=True, process=process) if issueInterrupt else ""
             return [textBack, True, -1]
@@ -1112,7 +1113,7 @@ class commonTarget():
         if (self.osImage=='debian'):
             if (self.isSshConn): #only shutdown on tty
                 self.closeSshConn()
-            shutdownString = "Power down" if (isEqSetting('binarySource','MIT')) else "Power off"
+            shutdownString = "Power down" if (self.binarySource=='MIT') else "Power off"
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=[shutdownString,pexpect.EOF],suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
         elif (self.osImage=='busybox'):
             isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
@@ -1262,7 +1263,7 @@ class commonTarget():
                         return False
         pingOut.close()
         printAndLog (f"IP address is set to be <{self.ipTarget}>. Pinging successfull!{self.targetIdInfo}",
-                    doPrint=not (isEqSetting('mode','evaluateSecurityTests') and isEqSetting('osImage','FreeRTOS')))
+                    doPrint=not (isEqSetting('mode','evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
         return True
 
     @decorate.debugWrap
