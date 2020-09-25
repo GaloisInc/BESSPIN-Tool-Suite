@@ -25,14 +25,29 @@ def startCyberPhys():
 @decorate.debugWrap
 @decorate.timeWrap
 def endCyberPhys():
-    endThreads = startThreadPerTarget(launch.endFett,mapTargetSettingsToKwargs=[('xTarget','targetObj')])
+    endThreads = startThreadPerTarget(launch.endFett,
+                    mapTargetSettingsToKwargs=[('xTarget','targetObj')],
+                    addTargetIdToKwargs=False)
     for endThread in endThreads:
         endThread.join()
 
 @decorate.debugWrap
 @decorate.timeWrap
-def startThreadPerTarget(func, tArgs=(), tKwargs={}, addTargetIdToKwargs=True, mapTargetSettingsToKwargs=[]):
+def startThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True, mapTargetSettingsToKwargs=[]):
+    """
+    This function starts a thread for each target in cyberPhys mode
+    func: A handle to the function of the thread.
+    tArgs: The tuples of args with which the thread function is to be called
+    tKwargs: The dictionary of kwargs with which the thread function is to be called.
+            (Note that it has to be initialized to None because of how functions in 
+            python are defined as first class objects)
+    addTargetIdToKwargs: If enabled, kwargs will have "targetId=${iTarget}" for iTarget in [1,..,nTargets]
+    mapTargetSettingsToKwargs: A list of tuples (xKwargName, xSettingName), for each tuple, kwarfs will be
+                                augmented with "xKwargName=_settings[${iTarget}][xSettingName]"
+    """
     xThreads = []
+    if (tKwargs is None):
+        tKwargs = {}
     for iTarget in range(1,getSetting('nTargets')+1):
         if (addTargetIdToKwargs):
             tKwargs['targetId'] = iTarget
