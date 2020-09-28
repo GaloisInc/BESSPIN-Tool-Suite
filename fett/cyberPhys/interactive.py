@@ -26,9 +26,17 @@ class cyberPhysShell(cmd.Cmd):
             commands = [xCmd.split('do_')[-1] for xCmd in dir(self) if xCmd.startswith('do_')]
     """
 
+    @staticmethod
+    def getTargetMember (targetId,memberName):
+        xTarget = getSetting('targetObj',targetId=targetId)
+        if (hasattr(xTarget,memberName)):
+            return getattr(xTarget,memberName)
+        else:
+            return 'UNKNOWN' 
+
     def precmd(self, line):
         if (line != 'EOF'):
-            line = line.lower()
+            line = line.lower() #commands are case insensitive
         logging.debug(f"cyberPhys <interactive>: {line}")
         return line
     
@@ -54,12 +62,18 @@ class cyberPhysShell(cmd.Cmd):
         """ip
         Displays the IPs of the running targets"""
         for iTarget in range(1,getSetting('nTargets')+1):
-            xTarget = getSetting('targetObj',targetId=iTarget)
-            if (hasattr(xTarget,'ipTarget')):
-                xIp = xTarget.ipTarget
-            else:
-                xIp = 'UNKNOWN' 
-            printAndLog(f"<target{iTarget}>: {xIp}")
+            printAndLog(f"<target{iTarget}>: {self.getTargetMember(iTarget,'ipTarget')}")
         return
+
+    def do_info(self,inp):
+        """info
+        Displays info about the running targets"""
+        for iTarget in range(1,getSetting('nTargets')+1):
+            printAndLog(f"<target{iTarget}>:")
+            for xInfo in ['target', 'processor', 'osImage']:
+                printAndLog(f"\t{xInfo} = {self.getTargetMember(iTarget,xInfo)}")
+        return
+
+
 
     
