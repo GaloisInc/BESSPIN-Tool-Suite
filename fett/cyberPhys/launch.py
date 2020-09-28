@@ -23,8 +23,9 @@ def startCyberPhys():
 
     printAndLog (f"FETT <cyberPhys mode> is launched!")
 
-    # start the interactive shell
-    interact()
+    if (isEnabled('interactiveShell')):
+        # start the interactive shell
+        interact()
 
 @decorate.debugWrap
 @decorate.timeWrap

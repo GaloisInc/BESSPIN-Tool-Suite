@@ -27,6 +27,10 @@
             "max" : 10
         },
         {
+            "name" : "interactiveShell",
+            "type" : "bool"
+        },
+        {
             "name" : "useCustomCyberPhysConfig",
             "type" : "boolean"
         },
