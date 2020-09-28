@@ -5,6 +5,7 @@ The main file to start launching cyberPhys
 
 from fett.base.utils.misc import *
 from fett.target import launch
+from fett.cyberPhys.interactive import interact
 import threading
 
 @decorate.debugWrap
@@ -21,6 +22,9 @@ def startCyberPhys():
         launchThread.join()
 
     printAndLog (f"FETT <cyberPhys mode> is launched!")
+
+    # start the interactive shell
+    interact()
 
 @decorate.debugWrap
 @decorate.timeWrap
