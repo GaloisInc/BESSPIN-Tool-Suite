@@ -282,7 +282,7 @@ class commonTarget():
                     timeoutDict[timeout] += 120 #takes longer to restart
 
             printAndLog(f"start: Booting <{self.osImage}> on "
-                        f"<{self.target}>. This might take a while...{self.targetIdInfo}",doPrint=(not self.targetId))
+                        f"<{self.target}>. This might take a while...{self.targetIdInfo}")
         else:
             self.shutdownAndExit(f"start: <{self.osImage}> is not implemented on "
                 f"<{self.target}>.",overwriteShutdown=True, exitCode=EXIT.Implementation)
@@ -415,7 +415,7 @@ class commonTarget():
             if (self.osImage=='FreeBSD'):
                 self.runCommand("service motd restart")
 
-        printAndLog (f"start: {self.osImage} booted successfully!{self.targetIdInfo}",doPrint=(not self.targetId))
+        printAndLog (f"start: {self.osImage} booted successfully!{self.targetIdInfo}")
         return
 
     @decorate.debugWrap
