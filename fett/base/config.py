@@ -123,7 +123,7 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
 
     if (not setup):
         try:
-            assert xConfig.has_section(configSection)
+            assert xConfig.has_section(configSection), f"has_section('{configSection}')"
         except Exception as exc:
             logAndExit(f"Section <{configSection}> not found in configuration file.",exc=exc,exitCode=EXIT.Configuration)
         optionsInConfig = dict.fromkeys(xConfig.options(configSection),False) #to see if some unwanted parameters in config file
@@ -148,7 +148,7 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
                 logAndExit(f"While reading json setupEnv file. <{iPar['name']}> is missing <val>.",exitCode=EXIT.Configuration)
         else:
             try:
-                assert xConfig.has_option(configSection,iPar['name'])
+                assert xConfig.has_option(configSection,iPar['name']), f"has_option('{iPar['name']}')"
             except Exception as exc:
                 logAndExit(f"{fileName}: <{iPar['name']}> not found in section [{configSection}].",exc=exc,exitCode=EXIT.Configuration)
             optionsInConfig[iPar['name'].lower()] = True #Be careful! configparser options are always case insensitive and are all lowercase
@@ -413,7 +413,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             configCWEsPath = os.path.join(getSetting('repoDir'),'configSecurityTests',f'{vulClass}.ini')
             configCWEs = loadIniFile(configCWEsPath)
             try:
-                assert configCWEs.has_section(sectionName)
+                assert configCWEs.has_section(sectionName), f"has_section('{sectionName}')"
             except Exception as exc:
                 logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
 
