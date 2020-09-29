@@ -153,7 +153,7 @@ class fpgaTarget(object):
         self.gdbDetach()
         self.runCommandGdb("quit",endsWith=pexpect.EOF,shutdownOnError=False)
         printAndLog('*'*15 + " <gdbDebug> mode " + '*'*15)
-        printAndLog(f"GDB Launch: On a separate window, run <riscv64-unknown-elf-gdb {getSetting('osImageElf',targetId=self.targetId)}>.")
+        printAndLog(f"GDB Launch: In a separate window, run <riscv64-unknown-elf-gdb {getSetting('osImageElf',targetId=self.targetId)}>.")
         printAndLog(f"GDB Connect: In the GDB console, run <target remote localhost:{self.gdbPort}>.")
         printAndLog("Continue: To resume the run, you have to continue <c>.")
         printAndLog("Exit: Please <detach> then <quit> before exitting FETT.")
