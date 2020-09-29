@@ -63,7 +63,7 @@ def startFett (targetId=None):
                     warnAndLog(f"customizedScoring: <memAddress> is not implemented for <{pvAWS}> targets.")
     # check the source variant
     if (sourceVariant!='default'): # check the variants compatibility
-        if ((sourceVariant not in ['purecap','temporal']) and (binarySource!='SRI-Cambridge')):
+        if ((sourceVariant in ['purecap','temporal']) and (binarySource!='SRI-Cambridge')):
             logAndExit(f"<{sourceVariant}> variant is not compatible with <{binarySource}>.",exitCode=EXIT.Configuration)
 
     #qemu on Busybox
