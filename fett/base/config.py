@@ -10,7 +10,7 @@ from fett.base.utils.misc import *
 from importlib.machinery import SourceFileLoader
 from fett.cwesEvaluation.scoreTests import SCORES
 
-COMMON_SECTIONS = ['functionality', 'common-minor', 'applications', 'build']
+COMMON_SECTIONS = ['functionality', 'common', 'applications', 'build']
 TARGET_SECTION = 'target'
 CWES_SECTION = 'evaluateSecurityTests'
 CYBERPHYS_SECTION = 'cyberPhys'

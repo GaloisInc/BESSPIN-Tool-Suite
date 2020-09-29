@@ -97,7 +97,7 @@
         }
     ],
 
-    "common-minor" : [
+    "common" : [
         {
             "name" : "openConsole",
             "type" : "bool"
