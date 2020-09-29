@@ -63,7 +63,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                 if (rangeStart > rangeEnd):
                     self.shutdownAndExit(f"boot: The netboot port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.", overwriteShutdown=True,exitCode=EXIT.Configuration)
                 for i in range(rangeStart, rangeEnd+1):
-                    if (checkPort(i, self.ipHost)):
+                    if (checkPort(i)):
                         listenPort = i
                 if listenPort is None:
                     self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)

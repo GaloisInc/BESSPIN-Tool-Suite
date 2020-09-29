@@ -1341,11 +1341,11 @@ def checkPort (portNum, host=''):
             return True
         except OSError as error:
             if (error.errno is not errno.EADDRINUSE):
-                logging.error (f"checkPort: Encountered OS Error #{error} while checking port #{portNum}.")
+                errorAndLog (f"checkPort: Encountered OS Error #{error} while checking port #{portNum}.",doPrint=False)
             else: #for readability
                 pass #used port
         except Exception as exc:
-            logging.error (f"checkPort: Encountered a non recognized error while checking port #{portNum}.",exc=exc)
+            errorAndLog (f"checkPort: Encountered a non recognized error while checking port #{portNum}.",exc=exc,doPrint=False)
     return False
 
 @decorate.debugWrap
