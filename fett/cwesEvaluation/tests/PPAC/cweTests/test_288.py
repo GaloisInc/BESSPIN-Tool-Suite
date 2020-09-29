@@ -20,6 +20,9 @@ def test_288 (target,binTest):
                 pwUsed = target.userPassword if (useCorrectPassword) else 'x'
                 retLog += target.runCommand(pwUsed,shutdownOnError=False)[1]
             return retLog
+
+        if (isEqSetting('processor','bluespec_p3') and target.isSshConn): #this test does not run on bluespec_p3/SSH
+            target.killSshConn()
         
         #some useful commands
         createKeyring = ["keyctl newring keyring288 @u", "keyctl setperm \%:keyring288 0x3f01001b"]
@@ -71,6 +74,9 @@ def test_288 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
 
         time.sleep (1)
+
+        if (isEqSetting('processor','bluespec_p3') and target.isSshConn): #go back
+            target.openSshConn(userName=target.userName)
 
     elif (target.osImage == 'FreeBSD'):
         outLog += "-"*20 + "Part01: $CWD is home directory" + "-"*20 + "\n"
