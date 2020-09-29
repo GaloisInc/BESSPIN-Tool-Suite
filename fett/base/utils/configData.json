@@ -107,18 +107,6 @@
             "type" : "bool"
         },
         {
-            "name" : "netbootPortRangeStart",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
-            "name" : "netbootPortRangeEnd",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
             "name" : "userName",
             "type" : "string"
         },

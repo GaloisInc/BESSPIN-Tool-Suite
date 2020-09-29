@@ -328,18 +328,18 @@
             "val" : 8278
         },
         {
-            "name" : "gdbRemotePortBase",
+            "name" : "portsRangeStart",
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 3333
+            "val" : 3000
         },
         {
-            "name" : "openocdTelnetPortBase",
+            "name" : "portsRangeEnd",
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 4444
+            "val" : 6000
         }
     ]
 }
