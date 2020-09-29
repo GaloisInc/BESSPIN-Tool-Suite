@@ -44,7 +44,7 @@ class fpgaTarget(object):
 
         if (isEqSetting('target','vcu118')):
             # setup UART
-            self.setupUart()
+            self.setupUart(stopbits=1)
 
         # start the openocd process
         cfgSuffix = getSetting('target') if (not isEqSetting('target','awsf1')) else getSetting('pvAWS')
