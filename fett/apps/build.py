@@ -81,7 +81,7 @@ def prepareFreeRTOS():
     setSetting('osImageAsm',osImageAsm)
 
     if (not isEnabled('buildApps')): #just fetch the image
-        importImage()
+        fett.target.build.importImage()
     else: #build it
         fett.target.build.freeRTOSBuildChecks()
 
