@@ -4,6 +4,7 @@ import serial, subprocess, enum
 import serial.tools.list_ports
 
 from fett.base.utils.misc import *
+from fett.target.common import *
 from fett.target import vcu118
 
 class failStage (enum.Enum):
@@ -31,9 +32,21 @@ class fpgaTarget(object):
         self.fGdbOut = None
         self.fOpenocdOut = None
 
+        gdbPortBase = getSetting('gdbRemotePortBase')
+        telnetPortBase = getSetting('openocdTelnetPortBase')
+        nTargets = 1 if (targetId is None) else getSetting('nTargets')
+        if (gdbPortBase + nTargets > telnetPortBase): #If equal, it's ok, because the bases aren't used
+            logAndExit(f"{self.targetIdInfo}fpgaTarget: There have to be an adequate port range between"
+                        f"<gdbRemotePortBase={gdbPortBase}> and <openocdTelnetPortBase={telnetPortBase}>.",exitCode=EXIT.Dev_Bug)
         portsInc = 1 if (targetId is None) else targetId
-        self.gdbPort = getSetting('gdbRemotePortBase') + portsInc
-        self.openocdPort = getSetting('openocdTelnetPortBase') + portsInc
+        def findPort(pBegin, pEnd, nTargets, portsInc):
+            for iPort in range(pBegin+portsInc,pEnd+1,nTargets): #this seems wasteful, but it ensures thread-safe checks in an easy way
+                if (checkPort(iPort)):
+                    return iPort
+            logAndExit(f"{self.targetIdInfo}fpgaTarget: Failed to choose ports to GDB and Openocd.")
+        self.gdbPort = findPort(gdbPortBase,telnetPortBase,nTargets,portsInc)
+        self.openocdPort = findPort(telnetPortBase,telnetPortBase+1000,nTargets,portsInc) #1000 is chosen arbitrarily
+        printAndLog(f"{self.targetIdInfo}fpgaTarget: gdb port is <{self.gdbPort}>, and openocd telnet port is <{self.openocdPort}>.")
 
         self.readGdbOutputUnix = 0 #beginning of file
 
