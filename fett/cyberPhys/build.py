@@ -25,10 +25,10 @@ def prepareFreeRTOS(targetId=None):
     #Netboot on FreeRTOS?
     if (isEqSetting('elfLoader','netboot',targetId=targetId)):
         warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
-        setSetting('elfLoader','JTAG')
+        setSetting('elfLoader','JTAG',targetId=targetId)
 
     # define some paths
-    osImageAsm = os.path.join(getSetting('osImagesDir',targetId=targetId),f"{getSetting('osImage')}.asm")
+    osImageAsm = os.path.join(getSetting('osImagesDir',targetId=targetId),"FreeRTOS.asm")
     setSetting('osImageAsm',osImageAsm,targetId=targetId)
 
     logAndExit("<cyberPhys:prepareFreeRTOS> is not yet implemented.",exitCode=EXIT.Implementation)
