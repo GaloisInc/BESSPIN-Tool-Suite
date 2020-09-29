@@ -57,16 +57,8 @@ class vcu118Target (fpgaTarget, commonTarget):
             if (self.elfLoader=='netboot'):
                 self.expectFromTarget('>',"Starting netboot loader",timeout=60)
                 dirname, basename = os.path.split(os.path.abspath(self.osImageElf))
-                listenPort = None
-                rangeStart = getSetting('netbootPortRangeStart')
-                rangeEnd = getSetting('netbootPortRangeEnd')
-                if (rangeStart > rangeEnd):
-                    self.shutdownAndExit(f"boot: The netboot port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.", overwriteShutdown=True,exitCode=EXIT.Configuration)
-                for i in range(rangeStart, rangeEnd+1):
-                    if (checkPort(i)):
-                        listenPort = i
-                if listenPort is None:
-                    self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+                listenPort = self.findPort(self.openocdPort+self.portsStep,getSetting('portsRangeEnd'),self.portsStep,portUse='netboot')
+                printAndLog(f"{self.targetIdInfo}boot: netboot port is <{listenPort}>.")
                 try:
                     #Need to divert the tftpy logging. Otherwise, in case of debug (`-d`), our logging will get smothered.
                     logging.getLogger('tftpy').propagate = False

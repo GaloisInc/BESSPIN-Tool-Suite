@@ -32,23 +32,25 @@ class fpgaTarget(object):
         self.fGdbOut = None
         self.fOpenocdOut = None
 
-        gdbPortBase = getSetting('gdbRemotePortBase')
-        telnetPortBase = getSetting('openocdTelnetPortBase')
-        nTargets = 1 if (targetId is None) else getSetting('nTargets')
-        if (gdbPortBase + nTargets > telnetPortBase): #If equal, it's ok, because the bases aren't used
-            logAndExit(f"{self.targetIdInfo}fpgaTarget: There have to be an adequate port range between"
-                        f"<gdbRemotePortBase={gdbPortBase}> and <openocdTelnetPortBase={telnetPortBase}>.",exitCode=EXIT.Dev_Bug)
-        portsInc = 1 if (targetId is None) else targetId
-        def findPort(pBegin, pEnd, nTargets, portsInc):
-            for iPort in range(pBegin+portsInc,pEnd+1,nTargets): #this seems wasteful, but it ensures thread-safe checks in an easy way
-                if (checkPort(iPort)):
-                    return iPort
-            logAndExit(f"{self.targetIdInfo}fpgaTarget: Failed to choose ports to GDB and Openocd.")
-        self.gdbPort = findPort(gdbPortBase,telnetPortBase,nTargets,portsInc)
-        self.openocdPort = findPort(telnetPortBase,telnetPortBase+1000,nTargets,portsInc) #1000 is chosen arbitrarily
+        portsBegin = getSetting('portsRangeStart')
+        portsEnd = getSetting('portsRangeEnd')
+        self.portsStep = 1 if (targetId is None) else getSetting('nTargets')
+        self.portsShift = 0 if (targetId is None) else targetId-1
+        self.gdbPort = self.findPort(portsBegin+self.portsShift,portsEnd,self.portsStep,portUse='GDB')
+        self.openocdPort = self.findPort(self.gdbPort+self.portsStep,portsEnd,self.portsStep,portUse='openocd')
         printAndLog(f"{self.targetIdInfo}fpgaTarget: gdb port is <{self.gdbPort}>, and openocd telnet port is <{self.openocdPort}>.")
 
         self.readGdbOutputUnix = 0 #beginning of file
+
+    @staticmethod
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def findPort(pBegin, pEnd, step, portUse='unspecified'):
+        for iPort in range(pBegin,pEnd+1,step): #this seems wasteful, but it ensures thread-safe checks without using the networkLock
+            if (checkPort(iPort)):
+                return iPort
+        logAndExit(f"{self.targetIdInfo}findPort: Failed to find an unused port"
+                    f" in the range of <{pBegin}:{pEnd}> for <{portUse}>.", exitCode=EXIT.Network)
 
     @decorate.debugWrap
     @decorate.timeWrap
