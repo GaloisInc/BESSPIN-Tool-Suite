@@ -17,12 +17,6 @@ class qemuTarget (commonTarget):
         self.portTarget = getSetting('qemuPortTarget')
         self.portHost = getSetting('qemuPortHost')
 
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
-
         return
 
     @decorate.debugWrap

@@ -26,12 +26,6 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.portTarget = getSetting('vcu118PortTarget')
         self.portHost = getSetting('vcu118PortHost')
 
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
-
         #Reloading till the network is up
         self.freertosNtkRetriesMax = 3
         self.freertosNtkRetriesIdx = 0

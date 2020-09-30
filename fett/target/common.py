@@ -82,6 +82,12 @@ class commonTarget():
 
         self.appModules = []
 
+        if (getSetting('mode') in ['test', 'production']): #Bugbounty app stack
+            self.httpPortTarget  = getSetting('HTTPPortTarget')
+            self.httpsPortTarget = getSetting('HTTPSPortTarget')
+            self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
+            self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
+
         return
 
     @decorate.debugWrap
