@@ -37,9 +37,7 @@ class commonTarget():
         self.procFlavor = getSetting('procFlavor',targetId=self.targetId)
         self.xlen = getSetting('xlen',targetId=self.targetId)
         self.tarballName = getSetting('tarballName')
-        self.portTarget = getSetting('commPortTarget')
-        self.portHost = getSetting('commPortHost')
-
+        
         self.process = None
         self.ttyProcess = None
         self.fTtyOut = None
@@ -49,10 +47,10 @@ class commonTarget():
         self.isSshRootEnabled = ((self.osImage=='FreeBSD') and (self.target=='vcu118'))
 
         # all OSs settings
-        self.portTarget = None
-        self.portHost = None
         self.ipTarget = None
         self.ipHost = None
+        self.portTarget = getSetting('commPortTarget')
+        self.portHost = getSetting('commPortHost')
 
         # Unix settings
         self.inInteractMode = False
