@@ -599,7 +599,7 @@ def zstdDecompress(inputFilePath, outputFilePath):
 @decorate.debugWrap
 def collectRemoteLogging (logAndExitFunc,getSettingFunc,sudoShellCommandFunc):
     printAndLog ("Fetching remote logs if there are any.")
-    ipTarget = getSettingFunc(f"{getSettingFunc('target')}IpTarget")
+    ipTarget = getSettingFunc(f"awsf1IpTarget")
     # cp the directory for non-fresh instances
     rsyslogsPath = os.path.join(getSettingFunc('extraArtifactsPath'),f"rsyslogs_{ipTarget}")
     sudoShellCommandFunc(['cp','-r',f'/var/log/{ipTarget}',rsyslogsPath],check=False)
