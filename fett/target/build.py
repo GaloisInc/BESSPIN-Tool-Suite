@@ -123,8 +123,7 @@ def prepareFreeRTOSNetworkParameters(targetId=None):
         if (doesSettingExist(xSetting)):
             settingVal = getSetting(xSetting)
         elif (xMacro=='configIP_ADDR'): #special treatment to accommodate for many-targets
-            ipInc = 1 if (targetId is None) else targetId
-            settingVal = str(ipaddress.ip_address(getSetting(f"{thisTarget}IpHost"))+ipInc)
+            settingVal = getTargetIp(targetId=targetId)
         else:
             logAndExit(f"prepareFreeRTOSNetworkParameters: Cannot find setting <{xSetting}>",exitCode=EXIT.Dev_Bug)
             
@@ -134,6 +133,16 @@ def prepareFreeRTOSNetworkParameters(targetId=None):
             except Exception as exc:
                 logAndExit(f"Failed to populate <fettFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
     configIpHfile.close()
+
+@decorate.debugWrap
+@decorate.timeWrap
+def getTargetIp(targetId=None):
+    thisTarget = getSetting('target',targetId=targetId)
+    if (thisTarget=='vcu118'): #use hostIP + targetId
+        ipInc = 1 if (targetId is None) else targetId
+        return str(ipaddress.ip_address(getSetting(f"{thisTarget}IpHost"))+ipInc)
+    else:
+        logAndExit(f"<getTargetIp> is not implemented for <{thisTarget}>.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
 @decorate.timeWrap

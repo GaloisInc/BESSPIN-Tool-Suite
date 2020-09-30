@@ -6,8 +6,9 @@ Main vcu118 class + misc vcu118 functions
 from fett.base.utils.misc import *
 from fett.target.common import *
 from fett.target.fpga import fpgaTarget
+from fett.target.build import getTargetIp
 
-import subprocess, psutil, tftpy, ipaddress
+import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
 import pexpect
 
@@ -20,8 +21,7 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.osImageElf = getSetting('osImageElf',targetId=self.targetId)
 
         self.ipHost = getSetting('vcu118IpHost')
-        ipInc = 1 if (targetId is None) else targetId
-        self.ipTarget = str(ipaddress.ip_address(self.ipHost)+ipInc)
+        self.ipTarget = getTargetIp(targetId=targetId)
 
         #Reloading till the network is up
         self.freertosNtkRetriesMax = 3
