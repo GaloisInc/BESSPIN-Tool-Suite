@@ -38,7 +38,8 @@ class fpgaTarget(object):
         self.portsShift = 0 if (targetId is None) else targetId-1
         self.gdbPort = self.findPort(portsBegin+self.portsShift,portsEnd,self.portsStep,portUse='GDB')
         self.openocdPort = self.findPort(self.gdbPort+self.portsStep,portsEnd,self.portsStep,portUse='openocd')
-        printAndLog(f"{self.targetIdInfo}fpgaTarget: gdb port is <{self.gdbPort}>, and openocd telnet port is <{self.openocdPort}>.")
+        printAndLog(f"{self.targetIdInfo}fpgaTarget: gdb port is <{self.gdbPort}>, and openocd telnet port is <{self.openocdPort}>.",
+            doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
 
         self.readGdbOutputUnix = 0 #beginning of file
 
