@@ -22,9 +22,6 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.ipHost = getSetting('vcu118IpHost')
         ipInc = 1 if (targetId is None) else targetId
         self.ipTarget = str(ipaddress.ip_address(self.ipHost)+ipInc)
-          
-        self.portTarget = getSetting('vcu118PortTarget')
-        self.portHost = getSetting('vcu118PortHost')
 
         #Reloading till the network is up
         self.freertosNtkRetriesMax = 3

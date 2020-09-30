@@ -14,8 +14,6 @@ class qemuTarget (commonTarget):
         
         self.ipTarget = getSetting('qemuIpTarget',targetId=self.targetId)
         self.ipHost = getSetting('qemuIpHost',targetId=self.targetId)
-        self.portTarget = getSetting('qemuPortTarget')
-        self.portHost = getSetting('qemuPortHost')
 
         return
 

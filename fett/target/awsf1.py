@@ -10,8 +10,6 @@ class firesimTarget(fpgaTarget, commonTarget):
 
         self.ipTarget = getSetting('awsf1IpTarget')
         self.ipHost = getSetting('awsf1IpHost')  
-        self.portTarget = getSetting('awsf1PortTarget')
-        self.portHost = getSetting('awsf1PortHost')
 
         self.switch0Proc = None
         self.fswitchOut = None
@@ -219,19 +217,6 @@ class connectalTarget(commonTarget):
         super().__init__(targetId=targetId)
         self.ipTarget = getSetting('awsf1IpTarget')
         self.ipHost = getSetting('awsf1IpHost')
-        self.portTarget = getSetting('awsf1PortTarget')
-        self.portHost = getSetting('awsf1PortHost')
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
-
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
     @decorate.debugWrap
     @decorate.timeWrap

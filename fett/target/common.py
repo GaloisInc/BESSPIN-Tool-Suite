@@ -37,6 +37,8 @@ class commonTarget():
         self.procFlavor = getSetting('procFlavor',targetId=self.targetId)
         self.xlen = getSetting('xlen',targetId=self.targetId)
         self.tarballName = getSetting('tarballName')
+        self.portTarget = getSetting('commPortTarget')
+        self.portHost = getSetting('commPortHost')
 
         self.process = None
         self.ttyProcess = None
