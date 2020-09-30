@@ -140,7 +140,7 @@ def buildCwesEvaluation():
                 fHeader.write(f"#define {settingName} {xVal}\n")
         if vulClass == "PPAC":
             if isEqSetting('osImage', 'FreeRTOS'):
-                portTarget = getSetting(f"{getSetting('target')}PortTarget")
+                portTarget = getSetting(f"commPortTarget")
                 fHeader.write(
                     f'#define SPOOFING_IP "{getSettingDict("PPAC", "spoofingIP")}"\n'
                     f'#define TCP_PORT_NUMBER {portTarget}\n')
