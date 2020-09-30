@@ -3,7 +3,7 @@
 Building OS images any other needed files
 """
 
-import os, re, glob
+import os, re, glob, ipaddress
 from fett.base.utils.misc import *
 import fett.apps.build
 import fett.cyberPhys.build
@@ -105,10 +105,10 @@ def freeRTOSBuildChecks():
             
 @decorate.debugWrap
 @decorate.timeWrap
-def prepareFreeRTOSNetworkParameters():
+def prepareFreeRTOSNetworkParameters(targetId=None):
     #Include the network configuration parameters
     #This is a list of tuples: (settingName, macroNameBase, int/hex)
-    thisTarget = getSetting('target')
+    thisTarget = getSetting('target',targetId=targetId)
     listConfigIpParams = [(f"{thisTarget}MacAddrTarget",'configMAC_ADDR', hex), (f"{thisTarget}IpTarget",'configIP_ADDR', int),
                           (f"{thisTarget}IpHost",'configGATEWAY_ADDR', int), (f"{thisTarget}NetMaskTarget",'configNET_MASK', int)]
 
@@ -120,7 +120,15 @@ def prepareFreeRTOSNetworkParameters():
 
     configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettFreeRTOSIPConfig.h'),'a')
     for xSetting,xMacro,xType in listConfigIpParams:
-        for iPart,xPart in enumerate(re.split(r'[\.\:]',getSetting(xSetting))):
+        if (doesSettingExist(xSetting)):
+            settingVal = getSetting(xSetting)
+        elif (xMacro=='configIP_ADDR'): #special treatment to accommodate for many-targets
+            ipInc = 1 if (targetId is None) else targetId
+            settingVal = str(ipaddress.ip_address(getSetting(f"{thisTarget}IpHost"))+ipInc)
+        else:
+            logAndExit(f"prepareFreeRTOSNetworkParameters: Cannot find setting <{xSetting}>",exitCode=EXIT.Dev_Bug)
+            
+        for iPart,xPart in enumerate(re.split(r'[\.\:]',settingVal)):
             try:
                 configIpHfile.write(f"#define {xMacro}{iPart} {mapVal(xPart,xType)}\n")
             except Exception as exc:
