@@ -9,6 +9,7 @@ from fett.target import vcu118
 class failStage (enum.Enum):
     openocd = enum.auto()
     gdb = enum.auto()
+    uart = enum.auto()
     network = enum.auto()
     unknown = enum.auto()
 
@@ -35,6 +36,8 @@ class fpgaTarget(object):
         self.openocdPort = getSetting('openocdTelnetPort')
 
         self.readGdbOutputUnix = 0 #beginning of file
+        self.bluespec_p3BootAttemptsMax = 3
+        self.bluespec_p3BootAttemptsIdx = 0
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -107,6 +110,20 @@ class fpgaTarget(object):
             self.setupGdbCustomScoring()
 
         self.runCommandGdb('c', endsWith='Continuing')
+
+        if (isEqSetting('processor','bluespec_p3') and isEqSetting('target','vcu118')):
+            _,wasTimeout,_ = self.expectFromTarget("bbl loader", f"attempt to boot {getSetting('processor')}",
+                shutdownOnError=False, timeout=15, issueInterrupt=False,
+                suppressWarnings=True, sshRetry=False)
+            if (wasTimeout):
+                if ((self.bluespec_p3BootAttemptsIdx < self.bluespec_p3BootAttemptsMax - 1)):
+                    printAndLog(f"Failed to boot {getSetting('processor')}. "
+                        f"Trying again ({self.bluespec_p3BootAttemptsIdx+2}/{self.bluespec_p3BootAttemptsMax})...")
+                    self.fpgaTearDown(isReload=True,stage=failStage.uart)
+                    return self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
+                else:
+                    self.shutdownAndExit(f"Failed to boot {getSetting('processor')}.",overwriteShutdown=True,
+                        overwriteConsole=True,exitCode=EXIT.Run)
 
         return
 
