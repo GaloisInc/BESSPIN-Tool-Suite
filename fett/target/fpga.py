@@ -4,6 +4,7 @@ import serial, subprocess, enum
 import serial.tools.list_ports
 
 from fett.base.utils.misc import *
+from fett.target.common import *
 from fett.target import vcu118
 
 class failStage (enum.Enum):
@@ -23,7 +24,7 @@ class failStage (enum.Enum):
         logAndExit (f"failStage: __lt__ not implemented for inputs of type {type(self)} and {type(other)}.",exitCode=EXIT.Dev_Bug)
 
 class fpgaTarget(object):
-    def __init__(self):
+    def __init__(self, targetId=None):
         self.gdbProcess = None 
         self.openocdProcess = None
         self.uartSession = None
@@ -31,20 +32,36 @@ class fpgaTarget(object):
         self.fGdbOut = None
         self.fOpenocdOut = None
 
-        self.gdbPort = getSetting('gdbRemotePort')
-        self.openocdPort = getSetting('openocdTelnetPort')
+        portsBegin = getSetting('portsRangeStart')
+        portsEnd = getSetting('portsRangeEnd')
+        self.portsStep = 1 if (targetId is None) else getSetting('nTargets')
+        self.portsShift = 0 if (targetId is None) else targetId-1
+        self.gdbPort = self.findPort(portsBegin+self.portsShift,portsEnd,self.portsStep,portUse='GDB')
+        self.openocdPort = self.findPort(self.gdbPort+self.portsStep,portsEnd,self.portsStep,portUse='openocd')
+        printAndLog(f"{self.targetIdInfo}fpgaTarget: gdb port is <{self.gdbPort}>, and openocd telnet port is <{self.openocdPort}>.",
+            doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
 
         self.readGdbOutputUnix = 0 #beginning of file
+
+    @staticmethod
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def findPort(pBegin, pEnd, step, portUse='unspecified'):
+        for iPort in range(pBegin,pEnd+1,step): #this seems wasteful, but it ensures thread-safe checks without using the networkLock
+            if (checkPort(iPort)):
+                return iPort
+        logAndExit(f"{self.targetIdInfo}findPort: Failed to find an unused port"
+                    f" in the range of <{pBegin}:{pEnd}> for <{portUse}>.", exitCode=EXIT.Network)
 
     @decorate.debugWrap
     @decorate.timeWrap
     def fpgaStart (self, elfPath, elfLoadTimeout=15):
-        if (isEqSetting('target','vcu118')):
+        if (self.target=='vcu118'):
             # setup UART
             self.setupUart()
 
         # start the openocd process
-        cfgSuffix = getSetting('target') if (not isEqSetting('target','awsf1')) else getSetting('pvAWS')
+        cfgSuffix = self.target if (self.target!='awsf1') else self.pvAWS
         openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
         self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'), 'ab')
 
@@ -54,7 +71,7 @@ class fpgaTarget(object):
                     logfile=self.fOpenocdOut, timeout=15, echo=False)
             self.openocdProcess.expect(f"Listening on port {self.openocdPort} for telnet", timeout=15)
         except Exception as exc:
-            if (isEqSetting('target','vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
+            if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
                 self.fpgaStartRetriesIdx += 1
                 errorAndLog (f"fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
@@ -68,7 +85,7 @@ class fpgaTarget(object):
                     logfile=self.fGdbOut, timeout=15, echo=False)
             self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
         except Exception as exc:
-            if (isEqSetting('target','vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax)):
+            if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax)):
                 self.fpgaStartRetriesIdx += 1
                 errorAndLog (f"fpgaStart: Failed to spawn the gdb process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.gdb)
@@ -80,19 +97,20 @@ class fpgaTarget(object):
         self.runCommandGdb("set height 0")
         self.runCommandGdb("set print entry-values no")
         self.runCommandGdb("set remotetimeout 60")
-        self.runCommandGdb(f"set architecture riscv:rv{getSetting('xlen')}")
+        self.runCommandGdb(f"set architecture riscv:rv{self.xlen}")
         self.runCommandGdb("define hook-continue\ndont-repeat\nend") #we don't want to 'continue' on extra presses due to encoding and such
 
         self.gdbConnect()
 
-        if (isEqSetting('target','awsf1') and isEqSetting('pvAWS','firesim')):
+        if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
             self.runCommandGdb ('set $pc=0xC0000000')
-        elif (isEqSetting('target','vcu118')):
+        elif (self.target=='vcu118'):
             # reset the board
             self.softReset()
 
             # start the tty process
-            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+            targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
+            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab')
             self.ttyProcess = fdpexpect.fdspawn(self.uartSession.fileno(),logfile=self.fTtyOut,timeout=30)
             self.process = self.ttyProcess
 
@@ -109,7 +127,7 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def gdbLoad (self,elfLoadTimeout=15):
         self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
-        if (isEqSetting('procFlavor','chisel')):
+        if (self.procFlavor=='chisel'):
             self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
         else:
             time.sleep(1)
@@ -123,8 +141,8 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def fpgaReload (self, elfPath, elfLoadTimeout=15, stage=failStage.unknown):
-        if (not isEqSetting('target','vcu118')):
-            self.shutdownAndExit(f"<fpgaReload> is not implemented for target {getSetting('target')}.")
+        if (self.target!='vcu118'):
+            self.shutdownAndExit(f"<fpgaReload> is not implemented for target {self.target}.")
         self.fpgaTearDown(isReload=True,stage=stage)
         vcu118.programBitfile(doPrint=False, isReload=True)
         time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
@@ -138,7 +156,7 @@ class fpgaTarget(object):
         self.gdbDetach()
         self.runCommandGdb("quit",endsWith=pexpect.EOF,shutdownOnError=False)
         printAndLog('*'*15 + " <gdbDebug> mode " + '*'*15)
-        printAndLog(f"GDB Launch: On a separate window, run <riscv64-unknown-elf-gdb {getSetting('osImageElf')}>.")
+        printAndLog(f"GDB Launch: In a separate window, run <riscv64-unknown-elf-gdb {getSetting('osImageElf',targetId=self.targetId)}>.")
         printAndLog(f"GDB Connect: In the GDB console, run <target remote localhost:{self.gdbPort}>.")
         printAndLog("Continue: To resume the run, you have to continue <c>.")
         printAndLog("Exit: Please <detach> then <quit> before exitting FETT.")
@@ -148,7 +166,7 @@ class fpgaTarget(object):
     def endGdbDebug (self):
         try:
             self.gdbProcess = pexpect.spawn(
-                f"riscv64-unknown-elf-gdb {getSetting('osImageElf')}",
+                f"riscv64-unknown-elf-gdb {getSetting('osImageElf',targetId=self.targetId)}",
                     logfile=self.fGdbOut, timeout=15, echo=False)
             self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
         except Exception as exc:
@@ -166,11 +184,11 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def softReset (self, isRepeated=False):
-        if (not isEqSetting('target','vcu118')):
-            self.shutdownAndExit(f"<softReset> is not implemented for target {getSetting('target')}.")
+        if (self.target!='vcu118'):
+            self.shutdownAndExit(f"<softReset> is not implemented for target {self.target}.")
         # reset hart
         self.riscvWrite(int("0x6FFF0000", base=16),1,32) # set *(0x6fff0000)=1
-        if (isEqSetting('procFlavor','chisel')):
+        if (self.procFlavor=='chisel'):
             self.expectOnOpenocd ("unexpectedly reset!","softReset")
         else:
             time.sleep(1)
@@ -181,8 +199,8 @@ class fpgaTarget(object):
         # Re-connect
         self.gdbConnect()
 
-        if ((not isRepeated) and isEqSetting('osImage','FreeRTOS')):
-            if (isEqSetting('procFlavor','bluespec')):
+        if ((not isRepeated) and (self.osImage=='FreeRTOS')):
+            if (self.procFlavor=='bluespec'):
                 self.softReset(isRepeated=True)
 
     @decorate.debugWrap
@@ -338,7 +356,7 @@ class fpgaTarget(object):
             self.interruptGdb ()
             
             # Analyze gdb output for FreeRTOS
-            if (isEqSetting('osImage','FreeRTOS')):
+            if (self.osImage=='FreeRTOS'):
                 self.gdbOutLines = ftReadLines(self.fGdbOut.name)
                 relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
                 testLogFile = getSetting("currentTest")[3]
@@ -363,7 +381,7 @@ class fpgaTarget(object):
                     regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
                     testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
 
-        if (isEqSetting('target','vcu118') and self.uartSession.is_open):
+        if ((self.target=='vcu118') and self.uartSession.is_open):
             try:
                 logging.debug("Closing uart_session.")
                 self.uartSession.close()
@@ -386,7 +404,7 @@ class fpgaTarget(object):
             self.runCommandGdb("quit",endsWith=pexpect.EOF,shutdownOnError=False)
 
         filesToClose = [self.fGdbOut, self.fOpenocdOut]
-        if (isEqSetting('target','vcu118')):
+        if (self.target=='vcu118'):
             processes = [('riscv64-unknown-elf-gdb',self.gdbProcess), ('openocd',self.openocdProcess)]
             for pName, proc in processes:
                 try:

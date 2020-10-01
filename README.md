@@ -87,16 +87,16 @@ the meaning of every parameter.  Please note that:
   - Keep the comments on separate lines from values.  Order of
     parameters does not matter.
   - Section headers are required (Between square brackets).  The
-    `[backend]` is the top-level section to configure the main
-    options. 
+    `[functionality]` is the top-level section to configure the main
+    functionality. The `[target]` section is used in non-`cyberPhys` modes. 
   - Parameters names are case sensitive.
   - For boolean parameters, you can use 0/1, False/True, Yes/No [all
   case insensitive].
 
 Some useful configuration options:
-- `mode`: Choose either `test` for the testing flow, or `production` for leaving the apps switched on for researchers interactions, or `evaluateSecurityTests` for the BESSPIN CWEs evaluation tests.
+- `mode`: Choose either `test` for the testing flow, or `production` for leaving the apps switched on for researchers interactions, or `evaluateSecurityTests` for the BESSPIN CWEs evaluation tests, or `cyberPhys` for many-target mode.
 - `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
-- `target`: Choose either `aws` for the main FETT target, `fpga` for Xilinx VCU118 hardware
+- `target`: Choose either `awsf1` for the main FETT target, `vcu118` for Xilinx VCU118 hardware
     emulation, or `qemu` for [QEMU](https://www.qemu.org/) emulation.
 - `processor`: One of the GFE processors or the TA-1 teams processors.
 - `osImage`: The operating system on which the tests will run.  The
@@ -105,8 +105,9 @@ Some useful configuration options:
     or [Busybox](https://busybox.net/about.html).
 - `useCustomOsImage`: If disabled, Nix (if image is available) or FETT-Binaries images will be used.
 - `useCustomProcessor`: If disabled, Nix (if applicable) or FETT-Binaries bitfiles will be used. If enabled, a source directory has to be provided where the required files exist.
-- `openConsole`: returns an open console for Unix targets.
-- `buildApps`: Cross-compile as instructed in `fett/apps/build.py`.
+- `openConsole`: returns an open console for Unix targets. For FreeRTOS, it shows the UART output while running.
+- `gdbDebug`: halts the run and leaves a port for remote GDB debugging.
+- `buildApps`: Cross-compile the apps in `test` mode.
 
 Note that the AWS platform variant is determined based on the `binarySource`-`processor`-`osImage` choice. More information about these decisions can be found in [the cloudGFE TA-1 and GFE tracker spreadsheet](https://docs.google.com/spreadsheets/d/1J8MSDQS1X0V-wPHiNdCTgu7Pwf8GcgTy91kcn8u9mt0/edit#gid=0).
 

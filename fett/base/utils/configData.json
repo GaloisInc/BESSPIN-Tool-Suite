@@ -11,12 +11,37 @@
     "_wildValue" : "only for hexList. If present, this value means something special.",
     "_exception" : "only for hexList. If present, this option's value is not legal",
 
-    "backend" : [
+    "functionality" : [
         {
             "name" : "mode",
             "type" : "string",
-            "choices" : [ "test", "production", "evaluateSecurityTests" ]
+            "choices" : [ "test", "production", "evaluateSecurityTests", "cyberPhys" ]
+        }
+    ],
+
+    "cyberPhys" : [
+        {
+            "name" : "nTargets",
+            "type" : "int",
+            "min" : 1,
+            "max" : 10
         },
+        {
+            "name" : "interactiveShell",
+            "type" : "bool"
+        },
+        {
+            "name" : "useCustomCyberPhysConfig",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomCyberPhysConfig",
+            "type" : "filePath",
+            "condition" : "useCustomCyberPhysConfig"
+        }
+    ],
+
+    "target" : [
         {
             "name" : "target",
             "type" : "string",
@@ -41,14 +66,6 @@
             "name" : "elfLoader",
             "type" : "string",
             "choices" : [ "JTAG", "netboot" ]
-        },
-        {
-            "name" : "openConsole",
-            "type" : "bool"
-        },
-        {
-            "name" : "gdbDebug",
-            "type" : "bool"
         },
         {
             "name" : "useCustomOsImage",
@@ -77,18 +94,17 @@
             "name" : "sourceVariant",
             "type" : "string",
             "choices" : [ "default", "purecap", "temporal" ]
+        }
+    ],
+
+    "common" : [
+        {
+            "name" : "openConsole",
+            "type" : "bool"
         },
         {
-            "name" : "netbootPortRangeStart",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
-        },
-        {
-            "name" : "netbootPortRangeEnd",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
+            "name" : "gdbDebug",
+            "type" : "bool"
         },
         {
             "name" : "userName",

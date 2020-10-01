@@ -14,28 +14,28 @@
             "val" : "fett/base/utils/configData.json"
         },
         {
-            "name" : "vcu118IpTarget",
-            "type" : "ipAddress",
-            "val" : "10.88.88.2"
+            "name" : "cyberPhysDefaultConfigFile",
+            "type" : "filePath",
+            "val" : "cyberPhys.ini"
+        },
+        {
+            "name" : "commPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "commPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
         },
         {
             "name" : "vcu118IpHost",
             "type" : "ipAddress",
             "val" : "10.88.88.1"
-        },
-        {
-            "name" : "vcu118PortHost",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
-        },
-        {
-            "name" : "vcu118PortTarget",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
         },
         {
             "name" : "vcu118NetMaskTarget",
@@ -68,20 +68,6 @@
             "val" : "172.16.0.1"
         },
         {
-            "name" : "awsf1PortHost",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
-        },
-        {
-            "name" : "awsf1PortTarget",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
-        },
-        {
             "name" : "awsf1TapAdaptorName",
             "type" : "string",
             "val" : "tap0"
@@ -100,20 +86,6 @@
             "name" : "awsf1MacAddrTarget",
             "type" : "macAddress",
             "val" : "00:12:6D:00:00:02"
-        },
-        {
-            "name" : "qemuPortHost",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
-        },
-        {
-            "name" : "qemuPortTarget",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
         },
         {
             "name" : "HTTPPortTarget",
@@ -328,18 +300,18 @@
             "val" : 8278
         },
         {
-            "name" : "gdbRemotePort",
+            "name" : "portsRangeStart",
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 3334
+            "val" : 3000
         },
         {
-            "name" : "openocdTelnetPort",
+            "name" : "portsRangeEnd",
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 4445
+            "val" : 6000
         }
     ]
 }

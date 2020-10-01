@@ -18,6 +18,7 @@ ciAWSbucketTesting = 'aws-test-suite-bucket'
 
 commonDefaults = {
     ('openConsole',('No',)),
+    ('gdbDebug',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',)),
     ('productionTargetIp',('172.31.30.56',))
@@ -49,9 +50,7 @@ unixDefaults = commonDefaults.union({
 gfe_unixOnPremDefaults = unixDefaults.union({
     ('binarySource',('GFE',)),
     ('elfLoader',('netboot',)),
-    ('sourceVariant',('default',)),
-    ('netbootPortRangeStart',(5000,)),
-    ('netbootPortRangeEnd',(6000,))
+    ('sourceVariant',('default',))
 })
 
 gfe_unixAwsDefaults = unixDefaults.union({
