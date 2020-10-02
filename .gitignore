@@ -2,6 +2,7 @@ __pycache__/
 workDir/
 *.pyc
 myConfig.ini
+myCyberPhys.ini
 core
 *.mypy_cache/
 .DS_STORE

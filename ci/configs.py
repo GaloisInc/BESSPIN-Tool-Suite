@@ -18,6 +18,7 @@ ciAWSbucketTesting = 'aws-test-suite-bucket'
 
 commonDefaults = {
     ('openConsole',('No',)),
+    ('gdbDebug',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',)),
     ('productionTargetIp',('172.31.30.56',))
@@ -49,9 +50,7 @@ unixDefaults = commonDefaults.union({
 gfe_unixOnPremDefaults = unixDefaults.union({
     ('binarySource',('GFE',)),
     ('elfLoader',('netboot',)),
-    ('sourceVariant',('default',)),
-    ('netbootPortRangeStart',(5000,)),
-    ('netbootPortRangeEnd',(6000,))
+    ('sourceVariant',('default',))
 })
 
 gfe_unixAwsDefaults = unixDefaults.union({
@@ -114,7 +113,7 @@ freertosDefaults = commonDefaults.union({
     ('osImage',('FreeRTOS',)),
     ('elfLoader',('JTAG',)),
     ('sourceVariant',('default',)),
-    ('FreeRTOSUseRAMDisk',('no',))
+    ('freertosFatFs',('default',))
 })
 
 gfe_freertosAllTargets_onprem = freertosDefaults.union({
@@ -155,23 +154,27 @@ michigan_freertosDevPR_aws = freertosDefaults.union({
 
 appSets = {
     'runPeriodic' : {
-        'freertos' : {
-            'fett' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsFETT) },
-            'cwe' : { 'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsCWEs) }
-        },
-        'unix' : {
-            'fett' : { 'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsFETT) },
-            'cwe' : { 'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsCWEs) }
+        'OnPrem' : {
+            'fett' : {
+                'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsFETT),
+                'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsFETT)
+            },
+            'cwe' : {
+                'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsCWEs),
+                'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsCWEs)
+            }
         }
     },
     'runDevPR' : {
-        'freertos' : {
-            'fett' : { 'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsFETT) },
-            'cwe' : { 'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsCWEs) }
-        },
-        'unix' : {
-            'fett' : { 'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsFETT) },
-            'cwe' : { 'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsCWEs) }
+        'OnPrem' : {
+            'fett' : {
+                'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsFETT),
+                'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsFETT)
+            },
+            'cwe' : {
+                'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsCWEs),
+                'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsCWEs)
+            }
         },
         'aws' : {
             'fett' : { 

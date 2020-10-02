@@ -3,25 +3,17 @@ from fett.target.common import *
 from fett.target.fpga import fpgaTarget
 
 class firesimTarget(fpgaTarget, commonTarget):
-    def __init__(self):
+    def __init__(self, targetId=None):
 
-        commonTarget.__init__(self)
-        fpgaTarget.__init__(self)
+        commonTarget.__init__(self, targetId=targetId)
+        fpgaTarget.__init__(self, targetId=targetId)
 
         self.ipTarget = getSetting('awsf1IpTarget')
         self.ipHost = getSetting('awsf1IpHost')  
-        self.portTarget = getSetting('awsf1PortTarget')
-        self.portHost = getSetting('awsf1PortHost')
 
         self.switch0Proc = None
         self.fswitchOut = None
         self.switch0timing = ['6405', '10', '200'] # dictated by cloudGFE
-
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -84,7 +76,7 @@ class firesimTarget(fpgaTarget, commonTarget):
             '+mm_llc_setBits=12',
             '+mm_llc_blockBits=7',
             '+mm_llc_activeMSHRs=8',
-            '+debug_enable' if (isEqSetting('mode','evaluateSecurityTests')) else '\b',
+            '+debug_enable' if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')) else '\b',
             '+slotid=0',
             '+profile-interval=-1',
             f"+macaddr0={getSetting('awsf1MacAddrTarget')}",
@@ -106,7 +98,8 @@ class firesimTarget(fpgaTarget, commonTarget):
             "\'"
         ])
         logging.debug(f"boot: firesimCommand = {firesimCommand}")
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+        targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab')
 
         try:
             self.ttyProcess = pexpect.spawn(firesimCommand,logfile=self.fTtyOut,timeout=30,
@@ -116,7 +109,7 @@ class firesimTarget(fpgaTarget, commonTarget):
         except Exception as exc:
             self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
 
-        if (isEqSetting('mode','evaluateSecurityTests')):
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
             self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
             self.fpgaStart(getSetting('osImageElf'))
         
@@ -220,23 +213,10 @@ class firesimTarget(fpgaTarget, commonTarget):
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
 class connectalTarget(commonTarget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, targetId=None):
+        super().__init__(targetId=targetId)
         self.ipTarget = getSetting('awsf1IpTarget')
         self.ipHost = getSetting('awsf1IpHost')
-        self.portTarget = getSetting('awsf1PortTarget')
-        self.portHost = getSetting('awsf1PortHost')
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
-
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -258,8 +238,8 @@ class connectalTarget(commonTarget):
             f"--tun={tapName}"] + extraArgs)
 
         printAndLog(f"<awsf1.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
-
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+        targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab')
 
         try:
             self.ttyProcess = pexpect.spawn(connectalCommand,logfile=self.fTtyOut,timeout=90,

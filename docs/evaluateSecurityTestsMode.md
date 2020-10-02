@@ -154,7 +154,7 @@ This is chosen by switching
 
 ## Compiling for non-GFE CPUs
 
-Both of SRI-Cambridge and Michigan targets require the use of a special toolchain. The toolchains of both these targets are integrated in the tool (Michigan is coming soon), and they use a docker image for that. Currently, the tool assumes that you have the docker service running and the corresponding images available. We hereby mention the steps of ensuring that on a CentOS machine:
+SRI-Cambridge, LMCO P2, and Michigan targets require the use of non-default toolchains. The use of these toolchains, via Docker images, is integrated in the tool. Currently, the tool assumes that you have the Docker service running and the needed images available. To ensure that on a CentOS machine, do the following:
   - Install docker ([instructions source](https://docs.docker.com/engine/install/centos/#install-using-the-repository)):
     ```
     sudo yum install -y yum-utils
@@ -181,3 +181,5 @@ Both of SRI-Cambridge and Michigan targets require the use of a special toolchai
     sudo docker load -i cambridge-toolchain.tar.gz
     sudo docker load -i michigan-toolchain.tar.gz
     ```
+
+- Note that for LMCO P2, the Docker image (`galoisinc/besspin:gfe-gcc83`) is public on DockerHub, so there is no need to load it. However, the first run that uses it will take considerable extra time due to downloading and unpacking.

@@ -22,14 +22,21 @@ ifeq ($(BIN_SOURCE),SRI_Cambridge)
 else
 	PREFIX_FreeBSD := riscv64-unknown-freebsd12.1
 endif
-PREFIX_Debian := riscv64-unknown-linux-gnu
+ifeq ($(BIN_SOURCE),LMCO)
+	#In the docker image, this is v8.3.0
+	PREFIX_Debian := riscv64-unknown-elf
+else
+	PREFIX_Debian := riscv64-unknown-linux-gnu
+endif
 CFLAGS_FreeBSD_CLANG := -Wno-error=sign-compare -mno-relax
 CFLAGS += ${CFLAGS_$(OS_IMAGE)_$(COMPILER)} -DBIN_SOURCE_$(BIN_SOURCE)
 
 LD_FLAGS_FreeBSD := -L$(PREFIX_FreeBSD)-ld -lpam -lrt
-LD_FLAGS_Debian := -lpam -lpam_misc -lrt -lkeyutils 
-LD_FLAGS_Debian += -I$(BESSPIN_TESTGEN_PAM_DIR)/include  -L$(BESSPIN_TESTGEN_PAM_DIR)/lib
-LD_FLAGS_Debian += -I$(BESSPIN_TESTGEN_KEYUTILS_DIR)/include -L$(BESSPIN_TESTGEN_KEYUTILS_DIR)/lib
+ifneq ($(BIN_SOURCE),LMCO)
+	LD_FLAGS_Debian := -lpam -lpam_misc -lrt -lkeyutils 
+	LD_FLAGS_Debian += -I$(BESSPIN_TESTGEN_PAM_DIR)/include  -L$(BESSPIN_TESTGEN_PAM_DIR)/lib
+	LD_FLAGS_Debian += -I$(BESSPIN_TESTGEN_KEYUTILS_DIR)/include -L$(BESSPIN_TESTGEN_KEYUTILS_DIR)/lib
+endif
 LDFLAGS := $(ARCH_ABI) ${LD_FLAGS_$(OS_IMAGE)}
 
 CC_GCC := ${PREFIX_$(OS_IMAGE)}-gcc

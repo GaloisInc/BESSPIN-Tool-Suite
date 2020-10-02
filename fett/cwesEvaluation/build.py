@@ -58,6 +58,10 @@ def buildCwesEvaluation():
                        f"<{getSetting('target')}>.  PPAC tests will be skipped.")
             getSetting("vulClasses").remove("PPAC")
 
+    if (isEqSetting('binarySource','LMCO') and isEqSetting('osImage','debian') and ("PPAC" in getSetting("vulClasses"))):
+        warnAndLog("vulClass <PPAC> is not supported for <LMCO> on <debian>.")
+        getSetting("vulClasses").remove("PPAC")
+
     # Copy apps over
     additionalFiles = []
     for vulClass in getSetting('vulClasses'):
@@ -136,7 +140,7 @@ def buildCwesEvaluation():
                 fHeader.write(f"#define {settingName} {xVal}\n")
         if vulClass == "PPAC":
             if isEqSetting('osImage', 'FreeRTOS'):
-                portTarget = getSetting(f"{getSetting('target')}PortTarget")
+                portTarget = getSetting(f"commPortTarget")
                 fHeader.write(
                     f'#define SPOOFING_IP "{getSettingDict("PPAC", "spoofingIP")}"\n'
                     f'#define TCP_PORT_NUMBER {portTarget}\n')

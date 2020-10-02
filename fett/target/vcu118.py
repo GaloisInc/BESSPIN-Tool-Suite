@@ -6,27 +6,22 @@ Main vcu118 class + misc vcu118 functions
 from fett.base.utils.misc import *
 from fett.target.common import *
 from fett.target.fpga import fpgaTarget
+from fett.target.build import getTargetIp
 
 import subprocess, psutil, tftpy
 import sys, signal, os, socket, time, hashlib
 import pexpect
 
 class vcu118Target (fpgaTarget, commonTarget):
-    def __init__ (self):
+    def __init__ (self, targetId=None):
 
-        commonTarget.__init__(self)
-        fpgaTarget.__init__(self)
+        commonTarget.__init__(self, targetId=targetId)
+        fpgaTarget.__init__(self, targetId=targetId)
 
-        self.ipTarget = getSetting('vcu118IpTarget')
-        self.ipHost = getSetting('vcu118IpHost')  
-        self.portTarget = getSetting('vcu118PortTarget')
-        self.portHost = getSetting('vcu118PortHost')
+        self.osImageElf = getSetting('osImageElf',targetId=self.targetId)
 
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
+        self.ipHost = getSetting('vcu118IpHost')
+        self.ipTarget = getTargetIp(targetId=targetId)
 
         #Reloading till the network is up
         self.freertosNtkRetriesMax = 3
@@ -44,28 +39,20 @@ class vcu118Target (fpgaTarget, commonTarget):
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeoutDict={"elfLoad":90, "boot":90}):
         timeout = self.parseBootTimeoutDict(timeoutDict)
-        if (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
-            if (isEqSetting('elfLoader','JTAG')):
+        if (self.osImage in ['debian', 'FreeBSD', 'busybox']):
+            if (self.elfLoader=='JTAG'):
                 elfLoadTimeout = self.parseBootTimeoutDict(timeoutDict,key="elfLoad")
-                self.fpgaStart(getSetting('osImageElf'),elfLoadTimeout=elfLoadTimeout)
-            elif (isEqSetting('elfLoader','netboot')):
-                self.fpgaStart(getSetting('netbootElf'),elfLoadTimeout=30)
+                self.fpgaStart(self.osImageElf,elfLoadTimeout=elfLoadTimeout)
+            elif (self.elfLoader=='netboot'):
+                self.fpgaStart(getSetting('netbootElf',targetId=self.targetId),elfLoadTimeout=30)
             else:
-                self.shutdownAndExit (f"boot: ELF loader <{getSetting('elfLoader')}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
+                self.shutdownAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
 
-            if (isEqSetting('elfLoader','netboot')):
+            if (self.elfLoader=='netboot'):
                 self.expectFromTarget('>',"Starting netboot loader",timeout=60)
-                dirname, basename = os.path.split(os.path.abspath(getSetting('osImageElf')))
-                listenPort = None
-                rangeStart = getSetting('netbootPortRangeStart')
-                rangeEnd = getSetting('netbootPortRangeEnd')
-                if (rangeStart > rangeEnd):
-                    self.shutdownAndExit(f"boot: The netboot port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.", overwriteShutdown=True,exitCode=EXIT.Configuration)
-                for i in range(rangeStart, rangeEnd+1):
-                    if (checkPort(i, self.ipHost)):
-                        listenPort = i
-                if listenPort is None:
-                    self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+                dirname, basename = os.path.split(os.path.abspath(self.osImageElf))
+                listenPort = self.findPort(self.openocdPort+self.portsStep,getSetting('portsRangeEnd'),self.portsStep,portUse='netboot')
+                printAndLog(f"{self.targetIdInfo}boot: netboot port is <{listenPort}>.")
                 try:
                     #Need to divert the tftpy logging. Otherwise, in case of debug (`-d`), our logging will get smothered.
                     logging.getLogger('tftpy').propagate = False
@@ -85,7 +72,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout)
 
-            if (isEqSetting('elfLoader','netboot')):
+            if (self.elfLoader=='netboot'):
                 server.stop()
                 serverThread.join(timeout=30)
                 if (serverThread.is_alive()):
@@ -98,29 +85,29 @@ class vcu118Target (fpgaTarget, commonTarget):
                 if (not self.openSshConn(endsWith="\r\n#")):
                     self.shutdownAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
-        elif (isEqSetting('osImage','FreeRTOS')):
-            self.fpgaStart(getSetting('osImageElf'),elfLoadTimeout=30) 
+        elif (self.osImage=='FreeRTOS'):
+            self.fpgaStart(self.osImageElf,elfLoadTimeout=60) 
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout)
         else:
-            self.shutdownAndExit(f"<boot> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.")
+            self.shutdownAndExit(f"<boot> is not implemented for <{self.osImage}> on <{self.target}>.")
 
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet (self):
         if self.onlySsh:
             return ''
-        if (isEqSetting('osImage','debian')):
+        if (self.osImage=='debian'):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             self.runCommand(f"ip route add default via {self.ipHost}")
             outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
-        elif (isEqSetting('osImage','busybox')):
+        elif (self.osImage=='busybox'):
             time.sleep(1)
             self.runCommand ("ifconfig eth0 up",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
             outCmd = self.runCommand (f"ip addr add {self.ipTarget}/24 dev eth0",timeout=20)
-        elif (isEqSetting('osImage','FreeRTOS')):
+        elif (self.osImage=='FreeRTOS'):
             isSuccess = False
             while ((not isSuccess) and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
                 self.freertosNtkRetriesIdx += 1
@@ -134,19 +121,19 @@ class vcu118Target (fpgaTarget, commonTarget):
                 if (not isSuccess):
                     if (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax):
                         warnAndLog(f"Network is not up on target. Trying again ({self.freertosNtkRetriesIdx+1}/{self.freertosNtkRetriesMax})...")
-                        self.fpgaReload(getSetting('osImageElf'),elfLoadTimeout=30)
+                        self.fpgaReload(self.osImageElf,elfLoadTimeout=30)
                     else:
                         self.shutdownAndExit("Network is not up on target.",exitCode=EXIT.Network) 
-        elif (isEqSetting('osImage','FreeBSD')):
+        elif (self.osImage=='FreeBSD'):
             self.runCommand(f"route add default {self.ipHost}")
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
-            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
+            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{self.osImage}> on <{self.target}>.")
 
-        if (not isEqSetting('osImage','FreeRTOS')):
+        if (self.osImage!='FreeRTOS'):
             self.pingTarget()
 
-        if (isEqSetting('osImage','FreeBSD')): #use ssh instead of JTAG
+        if (self.osImage=='FreeBSD'): #use ssh instead of JTAG
             self.openSshConn()
         return outCmd
 
@@ -164,7 +151,7 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.inInteractMode = True
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
-        if (isEqSetting('osImage','FreeRTOS')):
+        if (self.osImage=='FreeRTOS'):
             printAndLog (f"FreeRTOS is left running on target. Enter \"--exit + Enter\" to exit.")
         else:
             printAndLog (f"Entering pseudo-interactive mode. Root password: \'{self.rootPassword}\'. Enter \"--exit + Enter\" to exit.")
@@ -233,7 +220,7 @@ class vcu118Target (fpgaTarget, commonTarget):
 
 #--- END OF CLASS vcu118Target------------------------------
 
-def programFpga(bitStream, probeFile, attempts=2):
+def programFpga(bitStream, probeFile, attempts=2, targetId=None):
     """programs the fpga with a given bitstream and probe file
     matches the functionality of the old `gfe-program-fpga`
     :param bitStream: valid filepath
@@ -259,12 +246,12 @@ def programFpga(bitStream, probeFile, attempts=2):
     if retProc.returncode != 0:
         if attempts > 0:
             errorAndLog(f"programFpga: failed to program the FPGA. Trying again...",doPrint=True)
-            programFpga(bitStream, probeFile, attempts=attempts-1)
+            programFpga(bitStream, probeFile, attempts=attempts-1, targetId=targetId)
         else:
             logAndExit(f"programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
 
 
-def clearFlash(attempts=2):
+def clearFlash(attempts=2, targetId=None):
     """ clear flash memory on Fpga
     matches the functionality of gfe-clear-flash
     """
@@ -280,13 +267,13 @@ def clearFlash(attempts=2):
     if retProc.returncode != 1:
         if attempts > 0:
             errorAndLog(f"clearFlash: failed to clear flash. Trying again...",doPrint=True)
-            clearFlash(attempts=attempts-1)
+            clearFlash(attempts=attempts-1, targetId=targetId)
         else:
             logAndExit(f"programFpga: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programBitfile (doPrint=True,isReload=False):
+def programBitfile (doPrint=True,isReload=False,targetId=None):
     printAndLog("Preparing the FPGA environment...",doPrint=doPrint)
     clearProcesses()
     if (not isReload):
@@ -295,11 +282,11 @@ def programBitfile (doPrint=True,isReload=False):
             mkdir (gfeDir)
 
     printAndLog("Clearing the flash...",doPrint=False)
-    clearFlash()
+    clearFlash(targetId=targetId)
 
-    if (not doesSettingExist('bitAndProbefiles')):
-        bitAndProbefiles = selectBitAndProbeFiles()
-        setSetting('bitAndProbefiles',bitAndProbefiles)
+    if (not doesSettingExist('bitAndProbefiles',targetId=targetId)):
+        bitAndProbefiles = selectBitAndProbeFiles(targetId=targetId)
+        setSetting('bitAndProbefiles',bitAndProbefiles,targetId=targetId)
         for xFile in bitAndProbefiles:
             if not os.path.isfile(xFile):
                 logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
@@ -313,35 +300,36 @@ def programBitfile (doPrint=True,isReload=False):
                     break
                 md5.update(chunk)
             bitfile.close()
-            setSetting('md5bifile',md5.hexdigest())
+            setSetting('md5bifile',md5.hexdigest(),targetId=targetId)
         except Exception as exc:
             logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Programming the bitfile...",doPrint=doPrint)
-    programFpga(*getSetting('bitAndProbefiles'))
-    printAndLog(f"Programmed bitfile {getSetting('bitAndProbefiles')[0]} (md5: {getSetting('md5bifile')})",doPrint=doPrint)
+    programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)
+    printAndLog(f"Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
+        f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
 
     printAndLog("FPGA was programmed successfully!",doPrint=doPrint)
 
 @decorate.debugWrap
-def selectBitAndProbeFiles ():
-    bitfileName = "soc_" + getSetting('processor') + ".bit"
-    probfileName = "soc_" + getSetting('processor') + ".ltx"
+def selectBitAndProbeFiles (targetId=None):
+    bitfileName = "soc_" + getSetting('processor',targetId=targetId) + ".bit"
+    probfileName = "soc_" + getSetting('processor',targetId=targetId) + ".ltx"
 
-    if getSetting('useCustomProcessor'):
-        bitfileDir = getSetting('pathToCustomProcessorSource')
+    if getSetting('useCustomProcessor',targetId=targetId):
+        bitfileDir = getSetting('pathToCustomProcessorSource',targetId=targetId)
     else:
         useNix = False
         # If source is GFE, we check the nix environment for latest bitfiles
-        if getSetting('binarySource') == 'GFE':
+        if getSetting('binarySource',targetId=targetId) == 'GFE':
             envBitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
             if envBitfileDir in os.environ:
                 bitfileDir = os.environ[envBitfileDir]
                 useNix = True
             else:
-                printAndLog(f"Could not find bitfileDir for <{getSetting('processor')}> in nix environment. Falling back to binary repo.", doPrint=False)
+                printAndLog(f"Could not find bitfileDir for <{getSetting('processor',targetId=targetId)}> in nix environment. Falling back to binary repo.", doPrint=False)
         if (not useNix): #use binaries repo
-            bitfileDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'vcu118')
+            bitfileDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource',targetId=targetId), 'bitfiles', 'vcu118')
     
     return (os.path.join(bitfileDir, bitfileName),os.path.join(bitfileDir, probfileName))
 
@@ -354,6 +342,15 @@ def checkEthAdaptorIsUp ():
 
 @decorate.debugWrap
 def resetEthAdaptor ():
+    #In cyberPhys, this can be called many times, so have to be careful
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('networkLock').acquire()
+        if doesSettingExist('vcu118EthAdaptorReset') and isEnabled('vcu118EthAdaptorReset'): #for future compatibility if needed to re-reset
+            getSetting('networkLock').release()
+            return #already reset
+        else:
+            setSetting('vcu118EthAdaptorReset',True)
+
     #get the name and check configuration if this is the first time called
     if (not doesSettingExist('ethAdaptor')):
         ethAdaptor= getSetting('vcu118EthAdaptorName')
@@ -398,6 +395,9 @@ def resetEthAdaptor ():
         logAndExit (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>.",exitCode=EXIT.Network)
 
     printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)
+
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('networkLock').release()
 
 @decorate.debugWrap
 def clearProcesses ():

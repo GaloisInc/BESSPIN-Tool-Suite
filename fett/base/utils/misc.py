@@ -89,10 +89,11 @@ def exitFett (exitCode):
                     hostIp=aws.getInstanceIp(inExit_logAndExit),
                     fpgaIp=inExit_GetSetting('productionTargetIp')
                     )
-        printAndLog("Sent termination message to the SQS queue.")       
+        printAndLog("Sent termination message to the SQS queue.")
 
+    exitPeacefully(getSetting('trash'))
     printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
-    exit(exitCode.value)
+    os._exit(exitCode.value)
 
 def exitOnInterrupt (xSig,xFrame):
     exitFett(EXIT.Interrupted)
@@ -142,13 +143,17 @@ def logAndExit (message,exc=None,exitCode=EXIT.Unspecified):
         errorAndLog(message,exc=exc)
     exitFett (exitCode)
 
-def setSetting (setting, val):
+def setSetting (setting, val, targetId=None):
+    if (targetId is not None):
+        return setSettingDict(targetId,setting,val)
     try:
         _settings[setting] = val
     except Exception as exc:
         logAndExit (f"Failed to set setting <{setting}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
-def getSetting (setting, default=None):
+def getSetting (setting, default=None, targetId=None):
+    if (targetId is not None):
+        return getSettingDict(targetId,setting,default=default)
     try:
         return _settings[setting]
     except Exception as exc:
@@ -156,7 +161,12 @@ def getSetting (setting, default=None):
             return default
         logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
-def getSettingDict (setting,hierarchy):
+def getSettingDict (setting, hierarchy, default=None, targetId=None):
+    if (targetId is not None):
+        if (isinstance(hierarchy,str)):
+            return getSettingDict(targetId,[setting,hierarchy],default=default)
+        else:
+            return getSettingDict(targetId,[setting]+hierarchy,default=default)
     xSetting = getSetting(setting)
     if (isinstance(hierarchy,str)):
         hierarchy = [hierarchy]
@@ -164,25 +174,30 @@ def getSettingDict (setting,hierarchy):
         try:
             xSetting = xSetting[item]
         except Exception as exc:
+            if default is not None:
+                return default
             hierarchyPretty = ''.join([f"[{x}]" for x in hierarchy])
-            logAndExit (f"getSetting: Failed to obtain the value of <{setting}{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+            logAndExit (f"getSetting: Failed to obtain the value of <[{setting}]{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
     return xSetting
 
-def setSettingDict (key, setting, val):
+def setSettingDict (key, setting, val, targetId=None):
     try:
-        _settings[key][setting] = val
+        if (targetId is not None):
+            _settings[targetId][key][setting] = val
+        else:
+            _settings[key][setting] = val
     except Exception as exc:
         logAndExit (f"Failed to set setting <{setting}> in dict <{key}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
-def isEnabled(setting):
-    val = getSetting(setting)
+def isEnabled(setting, targetId=None):
+    val = getSetting(setting, targetId=targetId)
     if (isinstance(val,bool)):
         return val
     else:
         logAndExit (f"isEnabled: The value of <{setting}> is not boolean: <{val}>.",exitCode=EXIT.Dev_Bug)
 
-def isEnabledDict(setting, hierarchy):
-    val = getSettingDict(setting, hierarchy)
+def isEnabledDict(setting, hierarchy, targetId=None):
+    val = getSettingDict(setting, hierarchy, targetId=targetId)
     if isinstance(val, bool):
         return val
     else:
@@ -190,20 +205,30 @@ def isEnabledDict(setting, hierarchy):
                    f"not boolean: <{val}>",
                    exitCode=EXIT.Dev_Bug)
 
-def isEqSetting (setting,val):
-    return (getSetting(setting) == val)
+def isEqSetting (setting, val, targetId=None):
+    return (getSetting(setting, targetId=targetId) == val)
 
-def doesSettingExist (setting):
-    return (setting in _settings)
+def doesSettingExist (setting, targetId=None):
+    if (targetId is not None):
+        return doesSettingExistDict(targetId, setting)
+    else:
+        return (setting in _settings)
 
-def doesSettingExistDict(setting, hierarchy):
+def doesSettingExistDict(setting, hierarchy, targetId=None):
+    if (targetId is not None):
+        if (isinstance(hierarchy,str)):
+            return doesSettingExistDict(targetId,[setting,hierarchy])
+        else:
+            return doesSettingExistDict(targetId,[setting]+hierarchy)
     xSetting = getSetting(setting)
     if isinstance(hierarchy, str):
         hierarchy = [hierarchy]
     for item in hierarchy:
         if item in xSetting:
-            return True
-    return False
+            xSetting = xSetting[item]
+        else:
+            return False
+    return True
 
 def dumpSettings ():
     logging.debug(f"settings = {_settings}")
@@ -574,7 +599,7 @@ def zstdDecompress(inputFilePath, outputFilePath):
 @decorate.debugWrap
 def collectRemoteLogging (logAndExitFunc,getSettingFunc,sudoShellCommandFunc):
     printAndLog ("Fetching remote logs if there are any.")
-    ipTarget = getSettingFunc(f"{getSettingFunc('target')}IpTarget")
+    ipTarget = getSettingFunc(f"awsf1IpTarget")
     # cp the directory for non-fresh instances
     rsyslogsPath = os.path.join(getSettingFunc('extraArtifactsPath'),f"rsyslogs_{ipTarget}")
     sudoShellCommandFunc(['cp','-r',f'/var/log/{ipTarget}',rsyslogsPath],check=False)
