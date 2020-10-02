@@ -23,6 +23,8 @@ def test_288 (target,binTest):
 
         if (isEqSetting('processor','bluespec_p3') and target.isSshConn): #this test does not run on bluespec_p3/SSH
             target.killSshConn()
+            target.isCurrentUserRoot = True
+            target.switchUser() #as user on UART
         
         #some useful commands
         createKeyring = ["keyctl newring keyring288 @u", "keyctl setperm \%:keyring288 0x3f01001b"]
@@ -76,7 +78,9 @@ def test_288 (target,binTest):
         time.sleep (1)
 
         if (isEqSetting('processor','bluespec_p3') and target.isSshConn): #go back
-            target.openSshConn(userName=target.userName)
+            target.switchUser() #back to root on UART
+            target.isCurrentUserRoot = False
+            target.openSshConn() #ssh as user
 
     elif (target.osImage == 'FreeBSD'):
         outLog += "-"*20 + "Part01: $CWD is home directory" + "-"*20 + "\n"
