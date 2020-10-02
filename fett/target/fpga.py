@@ -5,6 +5,7 @@ import serial.tools.list_ports
 
 from fett.base.utils.misc import *
 from fett.target import vcu118
+from fett.target import common
 
 class failStage (enum.Enum):
     openocd = enum.auto()
@@ -36,8 +37,6 @@ class fpgaTarget(object):
         self.openocdPort = getSetting('openocdTelnetPort')
 
         self.readGdbOutputUnix = 0 #beginning of file
-        self.bluespec_p3BootAttemptsMax = 3
-        self.bluespec_p3BootAttemptsIdx = 0
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -117,9 +116,12 @@ class fpgaTarget(object):
                 suppressWarnings=True, sshRetry=False)
             if (wasTimeout):
                 if ((self.bluespec_p3BootAttemptsIdx < self.bluespec_p3BootAttemptsMax - 1)):
+                    self.stopShowingTime.set()
+                    time.sleep(1) #wait for the function to print "Completed" on the screen
                     printAndLog(f"Failed to boot {getSetting('processor')}. "
                         f"Trying again ({self.bluespec_p3BootAttemptsIdx+2}/{self.bluespec_p3BootAttemptsMax})...")
                     self.fpgaTearDown(isReload=True,stage=failStage.uart)
+                    self.stopShowingTime = common.showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout)
                     return self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
                 else:
                     self.shutdownAndExit(f"Failed to boot {getSetting('processor')}.",overwriteShutdown=True,

@@ -266,9 +266,9 @@ class commonTarget():
         else:
             self.shutdownAndExit(f"start: <{getSetting('osImage')}> is not implemented on <{getSetting('target')}>.",
                                  overwriteShutdown=True, exitCode=EXIT.Implementation)
-        sumTimeout = sum(timeoutDict.values())
+        self.sumTimeout = sum(timeoutDict.values())
         if (isEqSetting('osImage','debian')):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout,stdout=sys.stdout)
             self.boot(endsWith="login:",timeoutDict=timeoutDict)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
@@ -278,7 +278,7 @@ class commonTarget():
             loginTimeout = 120 if (self.restartMode) else 60
             self.runCommand (self.rootPassword,timeout=loginTimeout)
         elif (isEqSetting('osImage','busybox')):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout,stdout=sys.stdout)
             self.boot(endsWith="Please press Enter to activate this console.",timeoutDict=timeoutDict)
             self.stopShowingTime.set()
             time.sleep (0.3) #to make it beautiful
@@ -292,7 +292,7 @@ class commonTarget():
                 startMsg = '>>>Beginning of Fett<<<'
             self.boot (endsWith=startMsg,timeoutDict=timeoutDict)
         elif (isEqSetting('osImage','FreeBSD')):
-            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=sumTimeout,stdout=sys.stdout)
+            self.stopShowingTime = showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout,stdout=sys.stdout)
             bootEndsWith = "login:"
             self.boot(endsWith=bootEndsWith, timeoutDict=timeoutDict)
             self.stopShowingTime.set()
@@ -687,7 +687,8 @@ class commonTarget():
         def checksumTarget(f):
             shaSumRX = None
             if (isEqSetting('osImage','debian')):
-                retShaRX = self.runCommand(f"sha256sum {f}",timeout=120)[1]
+                timeoutSha = 180 if (isEqSetting('processor','bluespec_p3')) else 120
+                retShaRX = self.runCommand(f"sha256sum {f}",timeout=timeoutSha)[1]
             elif (isEqSetting('osImage','FreeBSD')):
                 retShaRX = self.runCommand(f"sha256 {f}",timeout=120)[1]
                 retShaRX += self.runCommand(" ")[1]
@@ -815,7 +816,9 @@ class commonTarget():
             self.sendFile (getSetting('buildDir'),getSetting('tarballName'),timeout=timeout)
         #---untar
         if (isEqSetting('osImage','debian')):
-            self.runCommand(f"tar xvf {getSetting('tarballName')} --warning=no-timestamp",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
+            untarProcess = None if (not isEqSetting('processor','bluespec_p3')) else self.ttyProcess
+            self.runCommand(f"tar xvf {getSetting('tarballName')} --warning=no-timestamp",
+                erroneousContents=['gzip:','Error','tar:','Segmentation fault'],timeout=timeout, process=untarProcess)
         elif (isEqSetting('osImage','FreeBSD')):
             self.runCommand(f"tar xvf {getSetting('tarballName')} -m",erroneousContents=['gzip:','Error','tar:'],timeout=timeout)
         self.runCommand(f"rm {getSetting('tarballName')}",timeout=timeout) #to save space
@@ -1043,7 +1046,8 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,issueInterrupt=True,process=None,suppressWarnings=False):
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,
+                            issueInterrupt=True,process=None,suppressWarnings=False,sshRetry=True):
         def warningThread(msg, waitingTime, stopEvent, suppressWarnings):
             """thread will wait on an event, and display warning if not set by waiting time"""
             dt = 0.1
@@ -1081,6 +1085,14 @@ class commonTarget():
                 textBack += self.keyboardInterrupt (shutdownOnError=True, process=process) if issueInterrupt else ""
             return [textBack, True, -1]
         except Exception as exc:
+            if ((isEqSetting('processor','bluespec_p3')) and (exc.__class__ == pexpect.EOF) 
+                    and (sshRetry) and (self.isSshConn)):
+                warnAndLog("SSH connection was unexpectedly dropped. Trying to reconnect...")
+                self.openSshConn(userName='root' if self.isCurrentUserRoot else self.userName)
+                self.sendToTarget(" ")
+                return self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,
+                            overwriteShutdown=overwriteShutdown,issueInterrupt=issueInterrupt,process=None,
+                            suppressWarnings=suppressWarnings,sshRetry=False)
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
         # tell warning message thread that the expect is finished
         stopEvent.set()

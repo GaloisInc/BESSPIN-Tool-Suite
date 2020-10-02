@@ -34,6 +34,9 @@ class vcu118Target (fpgaTarget, commonTarget):
         #Reloading till the fpga starts
         self.fpgaStartRetriesMax = 3
         self.fpgaStartRetriesIdx = 0
+        #Retrying to boot bluespec_p3
+        self.bluespec_p3BootAttemptsMax = 3
+        self.bluespec_p3BootAttemptsIdx = 0
 
         return
 
