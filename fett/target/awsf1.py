@@ -178,7 +178,7 @@ class firesimTarget(fpgaTarget, commonTarget):
                 xFile.close()
             except Exception as exc:
                 warnAndLog(f"targetTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
-        return True
+        return
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -296,7 +296,7 @@ class connectalTarget(commonTarget):
                                         stdout=self.fTtyOut, stderr=self.fTtyOut)
                 except Exception as exc:
                     warnAndLog("targetTearDown: Failed to kill <connectal> process.",doPrint=False,exc=exc)
-        return True
+        return
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
 

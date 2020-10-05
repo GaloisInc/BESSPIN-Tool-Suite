@@ -73,12 +73,13 @@ class qemuTarget (commonTarget):
             self.shutdownAndExit(f"activateEthernet: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
         return
 
+    @decorate.debugWrap
     def targetTearDown(self):
         if (self.process.isalive()):
             self.runCommand('\x01x',endsWith=pexpect.EOF)
             self.process.terminate()
         clearTapAdaptor(targetId=self.targetId)
-        return True
+        return
 
     def interact(self):
         printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
