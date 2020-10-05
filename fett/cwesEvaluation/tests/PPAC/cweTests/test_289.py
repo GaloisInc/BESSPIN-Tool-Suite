@@ -66,10 +66,10 @@ def test_289 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
         time.sleep (5)
 
-        if (isEqSetting('processor','bluespec_p3') and target.isSshConn): #go back
+        if (isEqSetting('processor','bluespec_p3')): #go back
             target.switchUser() #back to root on UART
             target.isCurrentUserRoot = False
-            target.openSshConn() #ssh as user
+            target.openSshConn(userName=target.userName) #ssh as user
 
     elif (target.osImage == 'FreeBSD'):
         renameGroupToFrom = "pw groupmod -l {0} -n {1}" #To be customized
