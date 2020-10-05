@@ -1109,16 +1109,16 @@ class commonTarget():
     @decorate.timeWrap
     def terminateTarget (self):
         self.terminateTargetStarted = True
-        poweroffCommand = {
-            'debian' : { 'command' : 'poweroff -f', 'endsWith' : pexpect.EOF },
-            'FreeBSD' : { 'command' : 'halt -p', 'endsWith' : pexpect.EOF },
-            'busybox' : { 'command' : 'poweroff -f', 'endsWith' : 'Power off' }
-        }
+        poweroffCommand = {'debian' : 'poweroff -f', 'FreeBSD' : 'halt -p', 'busybox' : 'poweroff -f'}
         if (self.osImage in poweroffCommand):
             if (self.isSshConn and (not self.onlySsh)): #only shutdown on tty if possible
                 self.closeSshConn()
-            self.runCommand(poweroffCommand[self.osImage]['command'],
-                endsWith=poweroffCommand[self.osImage]['endsWith'],suppressErrors=True)
+            #On vcu118, the uart serial connection (through fdpexpect) won't be killed
+            if ((self.target == 'vcu118') and (not self.isSshConn)): 
+                endsWith = 'Power off'
+            else:
+                endsWith = pexpect.EOF
+            self.runCommand(poweroffCommand[self.osImage],endsWith=endsWith,suppressErrors=True)
             if (self.onlySsh):
                 self.closeSshConn()
         elif (self.osImage=='FreeRTOS'):
