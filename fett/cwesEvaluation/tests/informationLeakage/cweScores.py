@@ -87,7 +87,7 @@ def scoreTest(logTest, testsDir):
         score = SCORES.V_HIGH
     elif log.find('TEST ERROR') >= 0:
         score = SCORES.CALL_ERR
-    elif log.find('TEST PASSED') >= 0:
+    elif ((log.find('TEST PASSED') >= 0) or (log.find('Illegal instruction') >= 0)):
         score = SCORES.NONE
     else:
         score = SCORES.FAIL
