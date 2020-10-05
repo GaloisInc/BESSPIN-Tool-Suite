@@ -137,7 +137,7 @@ class vcu118Target (fpgaTarget, commonTarget):
     @decorate.debugWrap
     def targetTearDown(self):
         self.fpgaTearDown()
-        return True
+        return
 
     @decorate.debugWrap
     def interact (self):

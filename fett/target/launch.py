@@ -271,7 +271,7 @@ def resetTarget (curTarget):
     """
     printAndLog("resetTarget: tearing down the current target...")
     awsf1.endUartPiping(curTarget)
-    curTarget.targetTearDown() 
+    curTarget.tearDown() 
     rootPassword = curTarget.rootPassword
     del curTarget
 

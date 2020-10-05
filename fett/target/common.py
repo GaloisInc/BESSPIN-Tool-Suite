@@ -79,6 +79,7 @@ class commonTarget():
         self.AttemptShutdownFailed = False
         self.keyboardInterruptTriggered = False
         self.terminateTargetStarted = False
+        self.targetTearDownCalled = False
 
         self.appModules = []
 
@@ -100,6 +101,7 @@ class commonTarget():
         errorAndLog(message,exc=exc)
         if (not overwriteShutdown):
             self.shutdown(overwriteConsole=overwriteConsole,isError=True)
+        self.tearDown()
         logAndExit("",exitCode=exitCode)
 
     @decorate.debugWrap
@@ -1119,8 +1121,17 @@ class commonTarget():
         else:
             self.shutdownAndExit(f"terminateTarget: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
         
-        self.targetTearDown()
+        self.tearDown()
 
+        return
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def tearDown(self):
+        if (self.targetTearDownCalled): #Do not execute twice
+            return
+        self.targetTearDownCalled = True
+        self.targetTearDown()
         try:
             self.fTtyOut.close()
         except Exception as exc:
