@@ -1113,8 +1113,10 @@ class commonTarget():
         if (self.osImage in poweroffCommand):
             if (self.isSshConn and (not self.onlySsh)): #only shutdown on tty if possible
                 self.closeSshConn()
-            #On vcu118, the uart serial connection (through fdpexpect) won't be killed
-            if ((self.target == 'vcu118') and (not self.isSshConn)): 
+            if (self.binarySource=='MIT'):
+                endsWith = 'Power down'
+            elif ((self.target == 'vcu118') and (not self.isSshConn)):
+                #On vcu118, the uart serial connection (through fdpexpect) won't be killed 
                 endsWith = 'Power off'
             else:
                 endsWith = pexpect.EOF
