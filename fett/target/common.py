@@ -1109,11 +1109,16 @@ class commonTarget():
     @decorate.timeWrap
     def terminateTarget (self):
         self.terminateTargetStarted = True
-        poweroffCommand = {'debian' : 'poweroff -f', 'FreeBSD' : 'halt -p', 'busybox' : 'poweroff -f'}
+        poweroffCommand = {
+            'debian' : { 'command' : 'poweroff -f', 'endsWith' : pexpect.EOF },
+            'FreeBSD' : { 'command' : 'halt -p', 'endsWith' : pexpect.EOF },
+            'busybox' : { 'command' : 'poweroff -f', 'endsWith' : 'Power off' }
+        }
         if (self.osImage in poweroffCommand):
             if (self.isSshConn and (not self.onlySsh)): #only shutdown on tty if possible
                 self.closeSshConn()
-            self.runCommand(poweroffCommand[self.osImage],endsWith=pexpect.EOF,suppressErrors=True)
+            self.runCommand(poweroffCommand[self.osImage]['command'],
+                endsWith=poweroffCommand[self.osImage]['endsWith'],suppressErrors=True)
             if (self.onlySsh):
                 self.closeSshConn()
         elif (self.osImage=='FreeRTOS'):
