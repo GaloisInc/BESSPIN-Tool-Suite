@@ -179,16 +179,6 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def shutdown (self,overwriteConsole=False,isError=False):
-        if (self.osImage=='FreeRTOS'):
-            timeout = 60
-        elif (self.target=='vcu118'):
-            timeout = 90
-        elif (self.osImage in ['debian','busybox']):
-            timeout = 45
-        elif ((self.osImage=='FreeBSD') and (self.target=='awsf1') and (self.pvAWS=='connectal')):
-            timeout = 150
-        else:
-            timeout = 45
         if (self.AttemptShutdownFailed):
             self.shutdownAndExit(f"shutdown: Unable to shutdown the {self.target} properly.",
                 overwriteShutdown=True,exitCode=EXIT.Run)
@@ -201,18 +191,19 @@ class commonTarget():
             self.interact()
             if (isEnabled('gdbDebug')):
                 self.endGdbDebug()
-            if (self.userCreated):
-                retCommand = self.terminateTarget(timeout=timeout,shutdownOnError=False)
-                if ((not retCommand[0]) or retCommand[2]): #bad -- probably logged in as non-root user
-                    self.isCurrentUserRoot = False
-                    self.switchUser()
-                    self.terminateTarget(timeout=timeout,shutdownOnError=True)
-            else:
-                self.terminateTarget(timeout=timeout,shutdownOnError=True)
-        else:
-            if (not self.isCurrentUserRoot):
-                self.switchUser()
-            self.terminateTarget(timeout=timeout,shutdownOnError=True)
+            if (self.userCreated): #Ensure self.isCurrentUserRoot is properly set
+                #Check which user is logged in
+                _,_,_,idxRet = self.runCommand(" ",endsWith=self.getAllEndsWith())
+                if (idxRet>=0): #success
+                    if (self.getAllEndsWith()[idxRet] != self.getDefaultEndWith()): #isCurrentUserRoot is wrong!
+                        self.isCurrentUserRoot = not self.isCurrentUserRoot
+                else: #How would this happen? If an error happens, runCommand should call shutdownAndExit and exit from there
+                    logAndExit("shutdown: Failed to find out which user is logged in in openConsole mode."
+                        " <This Error should never happen>",exitCode=EXIT.Dev_Bug)
+
+        if (not self.isCurrentUserRoot):
+            self.switchUser()
+        self.terminateTarget()
         printAndLog (f"{self.targetIdInfo}{self.target} shut down successfully!",
             doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
         return
@@ -1114,39 +1105,27 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def terminateTarget (self,timeout=15,shutdownOnError=True):
+    def terminateTarget (self):
         self.terminateTargetStarted = True
-        if (self.osImage=='debian'):
-            if (self.isSshConn): #only shutdown on tty
+        poweroffCommand = {'debian' : 'poweroff -f', 'FreeBSD' : 'halt -p', 'busybox' : 'poweroff -f'}
+        if (self.osImage in poweroffCommand):
+            if (self.isSshConn and (not self.onlySsh)): #only shutdown on tty if possible
                 self.closeSshConn()
-            shutdownString = "Power down" if (self.binarySource=='MIT') else "Power off"
-            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=[shutdownString,pexpect.EOF],suppressErrors=True,timeout=timeout,shutdownOnError=shutdownOnError)
-        elif (self.osImage=='busybox'):
-            isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("poweroff",endsWith="Power off",timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
-        elif ((self.osImage=='FreeBSD') and (self.onlySsh)):
-            dumpSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith=[self.getDefaultEndWith(),pexpect.EOF],timeout=60,suppressErrors=True,shutdownOnError=False)
-            isSuccess = self.closeSshConn()
-        elif (self.osImage=='FreeBSD'):
-            if (self.isSshConn): #only shutdown on tty
+            self.runCommand(poweroffCommand[self.osImage],endsWith=pexpect.EOF,suppressErrors=True)
+            if (self.onlySsh):
                 self.closeSshConn()
-            if (self.binarySource=='SRI-Cambridge'):
-                isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='System shutdown time has arrived',timeout=timeout,shutdownOnError=shutdownOnError)
-            else:
-                isSuccess, textBack, isTimeout, dumpIdx = self.runCommand("shutdown -h now",endsWith='Please press any key to reboot.',timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
-                if (("Power off" not in textBack) and (isSuccess and (not isTimeout))):
-                    isSuccess, textBack_2, isTimeout, dumpIdx = self.runCommand(" ",endsWith=["Power off",pexpect.EOF],timeout=timeout,suppressErrors=True,shutdownOnError=shutdownOnError)
-                    textBack = textBack + textBack_2
         elif (self.osImage=='FreeRTOS'):
-            isSuccess, textBack, isTimeout, dumpIdx = [freertos.terminateAppStack(self), '', False, 0] #send STOP to OTA
-        elif (self.osImage=='FreeRTOS'):
+            freertos.terminateAppStack(self)
+        else:
             self.shutdownAndExit(f"terminateTarget: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
-        if ((isSuccess and (not isTimeout)) or shutdownOnError):
-            isSuccess &= self.targetTearDown() #should be called before closing ttyOut because it is used in firesim
+        
+        self.targetTearDown()
+
         try:
             self.fTtyOut.close()
         except Exception as exc:
             warnAndLog("terminateTarget: Failed to close the <tty> out file.",doPrint=False,exc=exc)
-        return [isSuccess, textBack, isTimeout, dumpIdx]
+        return
 
     @decorate.debugWrap
     def clearHostKey (self):
