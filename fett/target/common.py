@@ -1117,7 +1117,8 @@ class commonTarget():
             if (self.onlySsh):
                 self.closeSshConn()
         elif (self.osImage=='FreeRTOS'):
-            freertos.terminateAppStack(self)
+            if (getSetting('mode') in ['test', 'production']):
+                freertos.terminateAppStack(self)
         else:
             self.shutdownAndExit(f"terminateTarget: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
         
