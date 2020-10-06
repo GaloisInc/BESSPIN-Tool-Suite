@@ -89,6 +89,12 @@ class commonTarget():
             self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
             self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
+        #Needed for findPort
+        self.portsStep = 1 if (targetId is None) else getSetting('nTargets')
+        portsShift = 0 if (targetId is None) else targetId-1
+        self.portsBegin = getSetting('portsRangeStart') + portsShift
+        self.portsEnd = getSetting('portsRangeEnd')
+
         return
 
     @decorate.debugWrap
@@ -1356,6 +1362,17 @@ class commonTarget():
                 self.runCommand("/usr/sbin/sshd")
             else:
                 self.runCommand("/etc/rc.d/sshd restart",timeout=120 if (self.procLevel=='p3') else 60)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def findPort(self,portUse='unspecified'):
+        #this seems wasteful, but it ensures thread-safe checks without using the networkLock
+        for iPort in range(self.portsBegin,self.portsEnd+1,self.portsStep): 
+            if (checkPort(iPort)):
+                self.portsBegin += self.portsStep
+                return iPort
+        self.shutdownAndExit(f"{self.targetIdInfo}findPort: Failed to find an unused port"
+                    f" in the range of <{self.portsBegin}:{self.portsEnd}> for <{portUse}>.", exitCode=EXIT.Network)
 
 # END OF CLASS commonTarget
 
