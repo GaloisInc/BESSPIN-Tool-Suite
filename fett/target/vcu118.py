@@ -51,7 +51,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             if (self.elfLoader=='netboot'):
                 self.expectFromTarget('>',"Starting netboot loader",timeout=60)
                 dirname, basename = os.path.split(os.path.abspath(self.osImageElf))
-                listenPort = self.findPort(self.openocdPort+self.portsStep,getSetting('portsRangeEnd'),self.portsStep,portUse='netboot')
+                listenPort = self.findPort(portUse='netboot')
                 printAndLog(f"{self.targetIdInfo}boot: netboot port is <{listenPort}>.")
                 try:
                     #Need to divert the tftpy logging. Otherwise, in case of debug (`-d`), our logging will get smothered.
