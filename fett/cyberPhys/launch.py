@@ -11,16 +11,12 @@ import threading
 @decorate.debugWrap
 @decorate.timeWrap
 def startCyberPhys():
-    # Create a network lock to protect all network operations while multithreading
+    # Create a network lock to protect network operations while multithreading
     setSetting('networkLock',threading.Lock())
 
     printAndLog (f"Launching FETT <cyberPhys mode>...")
-
     # start/prepareEnv/Launch
-    launchThreads = startThreadPerTarget(launch.startFett)
-    for launchThread in launchThreads:
-        launchThread.join()
-
+    runThreadPerTarget(launch.startFett)
     printAndLog (f"FETT <cyberPhys mode> is launched!")
 
     if (isEnabled('interactiveShell')):
@@ -30,15 +26,13 @@ def startCyberPhys():
 @decorate.debugWrap
 @decorate.timeWrap
 def endCyberPhys():
-    endThreads = startThreadPerTarget(launch.endFett,
+    runThreadPerTarget(launch.endFett,
                     mapTargetSettingsToKwargs=[('xTarget','targetObj')],
                     addTargetIdToKwargs=False)
-    for endThread in endThreads:
-        endThread.join()
 
 @decorate.debugWrap
 @decorate.timeWrap
-def startThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True, mapTargetSettingsToKwargs=[]):
+def runThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True, mapTargetSettingsToKwargs=[], onlyStart=False):
     """
     This function starts a thread for each target in cyberPhys mode
     func: A handle to the function of the thread.
@@ -49,6 +43,7 @@ def startThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True,
     addTargetIdToKwargs: If enabled, kwargs will have "targetId=${iTarget}" for iTarget in [1,..,nTargets]
     mapTargetSettingsToKwargs: A list of tuples (xKwargName, xSettingName), for each tuple, kwarfs will be
                                 augmented with "xKwargName=_settings[${iTarget}][xSettingName]"
+    onlyStart: If enabled, it will just launch the threads without waiting for them to finish.
     """
     xThreads = []
     if (tKwargs is None):
@@ -63,5 +58,10 @@ def startThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True,
         getSetting('trash').throwThread(xThread,f"<{func.__name__}> for target{iTarget}")
         xThread.start()
         xThreads.append(xThread)
+
+    if (not onlyStart):
+        for xThread in xThreads:
+            xThread.join()
+
     return xThreads
     
