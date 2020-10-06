@@ -19,7 +19,7 @@ def test_287 (target,binTest):
                 retLog = ''
                 shellRoot = "{0}#".format(target.userName)
                 shellUser = ":~\$"
-                isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",endsWith=['Password:', shellRoot, shellUser],shutdownOnError=False,expectExact=True)
+                isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",endsWith=['Password:', shellRoot, shellUser],shutdownOnError=False)
                 retLog += textBack
                 if (idxEndsWith == 0): #still asks for password
                     retLog += target.runCommand (target.rootPassword,endsWith=shellRoot)[1]

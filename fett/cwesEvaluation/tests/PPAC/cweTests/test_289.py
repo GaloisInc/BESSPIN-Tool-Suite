@@ -12,6 +12,11 @@ def test_289 (target,binTest):
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)
 
     if (target.osImage == 'debian'):
+        if (isEqSetting('processor','bluespec_p3') and target.isSshConn): #this test does not run on bluespec_p3/SSH
+            target.killSshConn()
+            target.isCurrentUserRoot = True
+            target.switchUser() #as user on UART
+            
         outLog += "-"*20 + "Part01: Use a fake username. Attempt to authenticate" + "-"*20 + "\n"
         outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
         if (isEnabled('useCustomScoring')): #will need the gdb output here
@@ -25,6 +30,8 @@ def test_289 (target,binTest):
         target.runCommand (killAllUserProcesses.format(target.userName),shutdownOnError=False)
         target.runCommand ("sed -i \"s/&USERNAME&/{0}/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
         time.sleep (20) #Give time to close the process opened by the user
+        if (isEqSetting('processor','bluespec_p3')):
+            time.sleep(60) #more time is needed
         retCommand = target.runCommand (renameUserToFrom.format("ssithLord", target.userName),erroneousContents="usermod:",shutdownOnError=False)
         if ((not retCommand[0]) or (retCommand[2])): #Error
             outLog += "\n<INVALID>\nFailed to execute \"usermod --login\"!\n"
@@ -36,6 +43,8 @@ def test_289 (target,binTest):
         target.switchUser () #NOW ON ROOT
         target.runCommand (killAllUserProcesses.format("ssithLord"),shutdownOnError=False)
         time.sleep (20) #Give time to close the process opened by the user
+        if (isEqSetting('processor','bluespec_p3')):
+            time.sleep(60) #more time is needed
         target.runCommand (renameUserToFrom.format(target.userName,"ssithLord"),erroneousContents="usermod:",shutdownOnError=False) #reset userName
         target.switchUser () #Back on user
         if (isEnabled('useCustomScoring')): #will need the gdb output here
@@ -56,6 +65,11 @@ def test_289 (target,binTest):
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
         time.sleep (5)
+
+        if (isEqSetting('processor','bluespec_p3')): #go back
+            target.switchUser() #back to root on UART
+            target.isCurrentUserRoot = False
+            target.openSshConn(userName=target.userName) #ssh as user
 
     elif (target.osImage == 'FreeBSD'):
         renameGroupToFrom = "pw groupmod -l {0} -n {1}" #To be customized

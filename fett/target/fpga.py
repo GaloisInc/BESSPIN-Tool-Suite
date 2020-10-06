@@ -6,10 +6,12 @@ import serial.tools.list_ports
 from fett.base.utils.misc import *
 from fett.target.common import *
 from fett.target import vcu118
+from fett.target import common
 
 class failStage (enum.Enum):
     openocd = enum.auto()
     gdb = enum.auto()
+    uart = enum.auto()
     network = enum.auto()
     unknown = enum.auto()
 
@@ -56,9 +58,12 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def fpgaStart (self, elfPath, elfLoadTimeout=15):
+        if (self.processor=='bluespec_p3'):
+            time.sleep(3) #need time after programming the fpga
+
         if (self.target=='vcu118'):
             # setup UART
-            self.setupUart()
+            self.setupUart(stopbits=1)
 
         # start the openocd process
         cfgSuffix = self.target if (self.target!='awsf1') else self.pvAWS
@@ -116,10 +121,29 @@ class fpgaTarget(object):
 
             self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
 
+            if (self.processor=='bluespec_p3'):
+                time.sleep(3) # Bluespec_p3 needs time here before being able to properly continue.
         if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
             self.setupGdbCustomScoring()
 
         self.runCommandGdb('c', endsWith='Continuing')
+
+        if ((self.processor=='bluespec_p3') and (self.target=='vcu118')):
+            _,wasTimeout,_ = self.expectFromTarget("bbl loader", f"attempt to boot {self.processor}",
+                shutdownOnError=False, timeout=15, issueInterrupt=False,
+                suppressWarnings=True, sshRetry=False)
+            if (wasTimeout):
+                if ((self.bluespec_p3BootAttemptsIdx < self.bluespec_p3BootAttemptsMax - 1)):
+                    self.stopShowingTime.set()
+                    time.sleep(1) #wait for the function to print "Completed" on the screen
+                    printAndLog(f"Failed to boot {self.processor}. "
+                        f"Trying again ({self.bluespec_p3BootAttemptsIdx+2}/{self.bluespec_p3BootAttemptsMax})...")
+                    self.fpgaTearDown(isReload=True,stage=failStage.uart)
+                    self.stopShowingTime = common.showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout)
+                    return self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
+                else:
+                    self.shutdownAndExit(f"Failed to boot {self.processor}.",overwriteShutdown=True,
+                        overwriteConsole=True,exitCode=EXIT.Run)
 
         return
 
@@ -193,15 +217,30 @@ class fpgaTarget(object):
         else:
             time.sleep(1)
 
+        if (self.processor=='bluespec_p3'):
+            self.setUnixBluespecP3()
+
         # detach from gdb
         self.gdbDetach()
 
         # Re-connect
         self.gdbConnect()
 
+        if (self.processor=='bluespec_p3'):
+            self.setUnixBluespecP3()
+
         if ((not isRepeated) and (self.osImage=='FreeRTOS')):
             if (self.procFlavor=='bluespec'):
                 self.softReset(isRepeated=True)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def setUnixBluespecP3 (self):
+        # required to boot unix on bluespec_p3
+        self.runCommandGdb("set $a0 = 0")
+        time.sleep(1)
+        self.runCommandGdb("set $a1 = 0x70000020")
+        time.sleep(3)
 
     @decorate.debugWrap
     @decorate.timeWrap
