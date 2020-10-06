@@ -20,12 +20,18 @@ def startCyberPhys():
     printAndLog (f"FETT <cyberPhys mode> is launched!")
 
     if (isEnabled('interactiveShell')):
+        # Pipe the UART
+        runThreadPerTarget(startUartPiping)
+        printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
         # start the interactive shell
         interact()
 
 @decorate.debugWrap
 @decorate.timeWrap
 def endCyberPhys():
+    #End UART piping
+    runThreadPerTarget(endUartPiping)
+    #terminate the targets
     runThreadPerTarget(launch.endFett,
                     mapTargetSettingsToKwargs=[('xTarget','targetObj')],
                     addTargetIdToKwargs=False)
@@ -64,4 +70,27 @@ def runThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True, m
             xThread.join()
 
     return xThreads
+
+@decorate.debugWrap
+def startUartPiping(targetId):
+    xTarget = getSetting('targetObj',targetId=targetId)
+    uartPipePort = xTarget.findPort(portUse='uartFwdPort')
+    setSetting('uartPipePort',uartPipePort,targetId=targetId)
+    try:
+        xTarget.uartSocatProc = subprocess.Popen(
+            ['socat', 'STDIO,ignoreeof', f"TCP-LISTEN:{uartPipePort},reuseaddr,fork,max-children=1"],
+            stdout=xTarget.process.child_fd,stdin=xTarget.process.child_fd,stderr=xTarget.process.child_fd)
+    except Exception as exc:
+        xTarget.shutdownAndExit(f"{xTarget.targetIdInfo}startUartPiping: Failed to start the piping.",
+            exc=exc,exitCode=EXIT.Run)
+
+    printAndLog (f"{xTarget.targetIdInfo}UART is piped to port <{uartPipePort}>.")
+
+@decorate.debugWrap
+def endUartPiping(targetId):
+    xTarget = getSetting('targetObj',targetId=targetId)
+    try:
+        xTarget.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
+    except Exception as exc:
+        warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: Failed to kill the process.",exc=exc)
     
