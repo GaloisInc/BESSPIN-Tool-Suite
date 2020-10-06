@@ -34,26 +34,29 @@ class fpgaTarget(object):
         self.fGdbOut = None
         self.fOpenocdOut = None
 
-        portsBegin = getSetting('portsRangeStart')
-        portsEnd = getSetting('portsRangeEnd')
+        #Needed for findPort
         self.portsStep = 1 if (targetId is None) else getSetting('nTargets')
-        self.portsShift = 0 if (targetId is None) else targetId-1
-        self.gdbPort = self.findPort(portsBegin+self.portsShift,portsEnd,self.portsStep,portUse='GDB')
-        self.openocdPort = self.findPort(self.gdbPort+self.portsStep,portsEnd,self.portsStep,portUse='openocd')
+        portsShift = 0 if (targetId is None) else targetId-1
+        self.portsBegin = getSetting('portsRangeStart') + portsShift
+        self.portsEnd = getSetting('portsRangeEnd')
+
+        self.gdbPort = self.findPort(portUse='GDB')
+        self.openocdPort = self.findPort(portUse='openocd')
         printAndLog(f"{self.targetIdInfo}fpgaTarget: gdb port is <{self.gdbPort}>, and openocd telnet port is <{self.openocdPort}>.",
             doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
 
         self.readGdbOutputUnix = 0 #beginning of file
 
-    @staticmethod
     @decorate.debugWrap
     @decorate.timeWrap
-    def findPort(pBegin, pEnd, step, portUse='unspecified'):
-        for iPort in range(pBegin,pEnd+1,step): #this seems wasteful, but it ensures thread-safe checks without using the networkLock
+    def findPort(self,portUse='unspecified'):
+        #this seems wasteful, but it ensures thread-safe checks without using the networkLock
+        for iPort in range(self.portsBegin,self.portsEnd+1,self.portsStep): 
             if (checkPort(iPort)):
+                self.portsBegin += self.portsStep
                 return iPort
         logAndExit(f"{self.targetIdInfo}findPort: Failed to find an unused port"
-                    f" in the range of <{pBegin}:{pEnd}> for <{portUse}>.", exitCode=EXIT.Network)
+                    f" in the range of <{self.portsBegin}:{self.portsEnd}> for <{portUse}>.", exitCode=EXIT.Network)
 
     @decorate.debugWrap
     @decorate.timeWrap
