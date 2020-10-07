@@ -152,7 +152,7 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def fpgaReload (self, elfPath, elfLoadTimeout=15, stage=failStage.unknown):
         if (self.target!='vcu118'):
-            self.shutdownAndExit(f"<fpgaReload> is not implemented for target {self.target}.")
+            self.shutdownAndExit(f"<fpgaReload> is not implemented for target {self.target}.",overwriteShutdown=True)
         self.fpgaTearDown(isReload=True,stage=stage)
         vcu118.programBitfile(doPrint=False, isReload=True)
         time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
@@ -195,7 +195,7 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def softReset (self, isRepeated=False):
         if (self.target!='vcu118'):
-            self.shutdownAndExit(f"<softReset> is not implemented for target {self.target}.")
+            self.shutdownAndExit(f"<softReset> is not implemented for target {self.target}.",overwriteShutdown=True)
         # reset hart
         self.riscvWrite(int("0x6FFF0000", base=16),1,32) # set *(0x6fff0000)=1
         if (self.procFlavor=='chisel'):
@@ -255,7 +255,9 @@ class fpgaTarget(object):
                                 endsWith=endsWith,
                                 sendToNonUnix=True,
                                 timeout=timeout,
-                                process=self.gdbProcess, **kwargs)
+                                process=self.gdbProcess,
+                                overwriteShutdown=True,
+                                **kwargs)
 
     @decorate.debugWrap
     def getGdbEndsWith (self):

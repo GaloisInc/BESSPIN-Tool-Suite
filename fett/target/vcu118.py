@@ -49,7 +49,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                 self.shutdownAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
 
             if (self.elfLoader=='netboot'):
-                self.expectFromTarget('>',"Starting netboot loader",timeout=60)
+                self.expectFromTarget('>',"Starting netboot loader",timeout=60,overwriteShutdown=True)
                 dirname, basename = os.path.split(os.path.abspath(self.osImageElf))
                 listenPort = self.findPort(portUse='netboot')
                 printAndLog(f"{self.targetIdInfo}boot: netboot port is <{listenPort}>.")
@@ -70,7 +70,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                 self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
 
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
 
             if (self.elfLoader=='netboot'):
                 server.stop()
@@ -88,9 +88,9 @@ class vcu118Target (fpgaTarget, commonTarget):
         elif (self.osImage=='FreeRTOS'):
             self.fpgaStart(self.osImageElf,elfLoadTimeout=60) 
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
         else:
-            self.shutdownAndExit(f"<boot> is not implemented for <{self.osImage}> on <{self.target}>.")
+            self.shutdownAndExit(f"<boot> is not implemented for <{self.osImage}> on <{self.target}>.",overwriteShutdown=True)
 
     @decorate.debugWrap
     @decorate.timeWrap
