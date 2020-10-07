@@ -129,7 +129,7 @@ class fpgaTarget(object):
                     return self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
                 else:
                     self.shutdownAndExit(f"Failed to boot {self.processor}.",overrideShutdown=True,
-                        overwriteConsole=True,exitCode=EXIT.Run)
+                        overrideConsole=True,exitCode=EXIT.Run)
 
         return
 

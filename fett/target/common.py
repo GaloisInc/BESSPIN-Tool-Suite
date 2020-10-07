@@ -98,7 +98,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def shutdownAndExit (self,message,overrideShutdown=False,overwriteConsole=False,exitCode=None,exc=None):
+    def shutdownAndExit (self,message,overrideShutdown=False,overrideConsole=False,exitCode=None,exc=None):
         if (self.stopShowingTime is not None): #turn off any time display
             try:
                 self.stopShowingTime.set()
@@ -106,7 +106,7 @@ class commonTarget():
                 pass
         errorAndLog(message,exc=exc)
         if (not overrideShutdown):
-            self.shutdown(overwriteConsole=overwriteConsole,isError=True)
+            self.shutdown(overrideConsole=overrideConsole,isError=True)
         self.tearDown()
         logAndExit("",exitCode=exitCode)
 
@@ -186,12 +186,12 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def shutdown (self,overwriteConsole=False,isError=False):
+    def shutdown (self,overrideConsole=False,isError=False):
         if (self.AttemptShutdownFailed):
             self.shutdownAndExit(f"shutdown: Unable to shutdown the {self.target} properly.",
                 overrideShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
-        if (isEnabled('openConsole') and (not overwriteConsole)):
+        if (isEnabled('openConsole') and (not overrideConsole)):
             if (self.isSshConn): #only interact on the JTAG
                 self.closeSshConn()
             if (isEnabled('gdbDebug')):
@@ -502,7 +502,7 @@ class commonTarget():
         else:
             self.shutdownAndExit("<enableRootUserAccess> is not implemented "
                                  f"for <{self.osImage}>.",
-                                 overwriteConsole=True,
+                                 overrideConsole=True,
                                  exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
@@ -524,7 +524,7 @@ class commonTarget():
             self.runCommand (self.userPassword,endsWith="Retype password:")
             self.runCommand (self.userPassword,expectedContents='changed by root')
         else:
-            self.shutdownAndExit(f"<createUser> is not implemented for <{self.osImage}> on <{self.target}>.",overwriteConsole=True,exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"<createUser> is not implemented for <{self.osImage}> on <{self.target}>.",overrideConsole=True,exitCode=EXIT.Implementation)
         self.userCreated = True
 
     @decorate.debugWrap
@@ -563,7 +563,7 @@ class commonTarget():
             self.shutdownAndExit("<createUser> is not implemented for "
                                  f"<{self.osImage}> on "
                                  f"<{self.target}>.",
-                                 overwriteConsole=True,
+                                 overrideConsole=True,
                                  exitCode=EXIT.Implementation)
 
 
@@ -970,7 +970,7 @@ class commonTarget():
         if (self.terminateTargetStarted and (process == self.process)):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
-            self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overrideShutdown=True,overwriteConsole=True,exitCode=EXIT.Run)
+            self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Run)
         else:
             self.keyboardInterruptTriggered = True
         if ((not isEnabled('isUnix',targetId=self.targetId)) and (process == self.process)):
