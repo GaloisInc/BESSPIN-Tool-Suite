@@ -35,7 +35,7 @@ class firesimTarget(fpgaTarget, commonTarget):
                                         cwd=awsFiresimSimPath)
             self.switch0Proc.expect("Assuming tap0",timeout=10)
         except Exception as exc:
-            self.shutdownAndExit(f"boot: Failed to spawn the switch0 process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.terminateAndExit(f"boot: Failed to spawn the switch0 process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # 2. fsim
         firesimCommand = ' '.join([
@@ -107,7 +107,7 @@ class firesimTarget(fpgaTarget, commonTarget):
             self.process = self.ttyProcess
             time.sleep(1)
         except Exception as exc:
-            self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.terminateAndExit(f"boot: Failed to spawn the firesim process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
             self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overrideShutdown=True)
@@ -147,7 +147,7 @@ class firesimTarget(fpgaTarget, commonTarget):
                 timeout = 30
             self.runCommand("isNetworkUp",endsWith=ntkReadyString,erroneousContents="(Error)",timeout=timeout)
         else:
-            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+            self.terminateAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
         self.pingTarget()
 
@@ -248,7 +248,7 @@ class connectalTarget(commonTarget):
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
         except Exception as exc:
-            self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.terminateAndExit(f"boot: Failed to spawn the connectal process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
          # The tap needs to be turned up AFTER booting
         setAdaptorUpDown(getSetting('awsf1TapAdaptorName'), 'up')
@@ -279,7 +279,7 @@ class connectalTarget(commonTarget):
                 self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
                 self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
         else:
-            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+            self.terminateAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
         self.pingTarget()
         return 
@@ -728,7 +728,7 @@ def startUartPiping(target):
             ['socat', 'STDIO,ignoreeof', f"TCP-LISTEN:{getSetting('uartFwdPort')},reuseaddr,fork,max-children=1"],
             stdout=target.process.child_fd,stdin=target.process.child_fd,stderr=target.process.child_fd)
     except Exception as exc:
-        target.shutdownAndExit(f"startUartPiping: Failed to start the listening process.",exc=exc,exitCode=EXIT.Run)
+        target.terminateAndExit(f"startUartPiping: Failed to start the listening process.",exc=exc,exitCode=EXIT.Run)
 
 @decorate.debugWrap
 def endUartPiping(target):

@@ -46,7 +46,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             elif (self.elfLoader=='netboot'):
                 self.fpgaStart(getSetting('netbootElf',targetId=self.targetId),elfLoadTimeout=30)
             else:
-                self.shutdownAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overrideShutdown=True,exitCode=EXIT.Dev_Bug)
+                self.terminateAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overrideShutdown=True,exitCode=EXIT.Dev_Bug)
 
             if (self.elfLoader=='netboot'):
                 self.expectFromTarget('>',"Starting netboot loader",timeout=60,overrideShutdown=True)
@@ -59,7 +59,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.log'),'w'))
                     server = tftpy.TftpServer(dirname)
                 except Exception as exc:
-                    self.shutdownAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overrideShutdown=True,exitCode=EXIT.Run)
+                    self.terminateAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overrideShutdown=True,exitCode=EXIT.Run)
 
                 serverThread = threading.Thread(target=server.listen, kwargs={'listenip': self.ipHost, 'listenport': listenPort})
                 serverThread.daemon = True
@@ -83,14 +83,14 @@ class vcu118Target (fpgaTarget, commonTarget):
             # starting prompt is still '#'
             if (self.onlySsh):
                 if (not self.openSshConn(endsWith="\r\n#")):
-                    self.shutdownAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
+                    self.terminateAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
         elif (self.osImage=='FreeRTOS'):
             self.fpgaStart(self.osImageElf,elfLoadTimeout=60) 
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
         else:
-            self.shutdownAndExit(f"<boot> is not implemented for <{self.osImage}> on <{self.target}>.",overrideShutdown=True)
+            self.terminateAndExit(f"<boot> is not implemented for <{self.osImage}> on <{self.target}>.",overrideShutdown=True)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -123,12 +123,12 @@ class vcu118Target (fpgaTarget, commonTarget):
                         warnAndLog(f"Network is not up on target. Trying again ({self.freertosNtkRetriesIdx+1}/{self.freertosNtkRetriesMax})...")
                         self.fpgaReload(self.osImageElf,elfLoadTimeout=30)
                     else:
-                        self.shutdownAndExit("Network is not up on target.",exitCode=EXIT.Network) 
+                        self.terminateAndExit("Network is not up on target.",exitCode=EXIT.Network) 
         elif (self.osImage=='FreeBSD'):
             self.runCommand(f"route add default {self.ipHost}")
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
-            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{self.osImage}> on <{self.target}>.")
+            self.terminateAndExit(f"<activateEthernet> is not implemented for<{self.osImage}> on <{self.target}>.")
 
         if (self.osImage!='FreeRTOS'):
             self.pingTarget()

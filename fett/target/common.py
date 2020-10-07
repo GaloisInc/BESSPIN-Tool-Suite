@@ -92,7 +92,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def shutdownAndExit (self,message,overrideShutdown=False,overrideConsole=False,exitCode=None,exc=None):
+    def terminateAndExit (self,message,overrideShutdown=False,overrideConsole=False,exitCode=None,exc=None):
         if (self.stopShowingTime is not None): #turn off any time display
             try:
                 self.stopShowingTime.set()
@@ -108,7 +108,7 @@ class commonTarget():
     @decorate.timeWrap
     def switchUser (self):
         if (not self.userCreated):
-            self.shutdownAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
+            self.terminateAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
 
         if (self.osImage in ['debian', 'FreeBSD']):
             if (not self.isSshConn):
@@ -154,7 +154,7 @@ class commonTarget():
                         else:
                             printAndLog(f"{self.targetIdInfo}switchUser: Failed to login <iAttempt={iAttempt}>, and this part should never be executed!",doPrint=False)
                     if (not loginSuccess):
-                        self.shutdownAndExit(f"{self.targetIdInfo}switchUser: Failed to login ({maxLoginAttempts} times).",exitCode=EXIT.Run)
+                        self.terminateAndExit(f"{self.targetIdInfo}switchUser: Failed to login ({maxLoginAttempts} times).",exitCode=EXIT.Run)
                 else:
                     self.runCommand (loginPassword)
 
@@ -166,7 +166,7 @@ class commonTarget():
                 else: #switch to root
                     sshSuccess =  self.openSshConn(userName='root')
                 if (not sshSuccess):
-                    self.shutdownAndExit(f"switchUser: Failed to switch user.")
+                    self.terminateAndExit(f"switchUser: Failed to switch user.")
         elif (self.osImage=='busybox'):
             if (self.isCurrentUserRoot): #switch to the other user
                 self.runCommand ("su {0}".format(self.userName),endsWith="\$")
@@ -175,14 +175,14 @@ class commonTarget():
                 self.runCommand ("exit",endsWith="~ #")
             self.isCurrentUserRoot = not self.isCurrentUserRoot #<This needs to be figured out for busybox in case the login itself fails
         else:
-            self.shutdownAndExit(f"<switchUser> is not implemented on <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
+            self.terminateAndExit(f"<switchUser> is not implemented on <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
         return
 
     @decorate.debugWrap
     @decorate.timeWrap
     def shutdown (self,overrideConsole=False,isError=False):
         if (self.AttemptShutdownFailed):
-            self.shutdownAndExit(f"shutdown: Unable to shutdown the {self.target} properly.",
+            self.terminateAndExit(f"shutdown: Unable to shutdown the {self.target} properly.",
                 overrideShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
         if (isEnabled('openConsole') and (not overrideConsole)):
@@ -199,7 +199,7 @@ class commonTarget():
                 if (idxRet>=0): #success
                     if (self.getAllEndsWith()[idxRet] != self.getDefaultEndWith()): #isCurrentUserRoot is wrong!
                         self.isCurrentUserRoot = not self.isCurrentUserRoot
-                else: #How would this happen? If an error happens, runCommand should call shutdownAndExit and exit from there
+                else: #How would this happen? If an error happens, runCommand should call terminateAndExit and exit from there
                     logAndExit("shutdown: Failed to find out which user is logged in in openConsole mode."
                         " <This Error should never happen>",exitCode=EXIT.Dev_Bug)
 
@@ -274,7 +274,7 @@ class commonTarget():
             success, timeoutDict, message = get_timeout_from_settings_dict()
 
             if not success:
-                self.shutdownAndExit(**message)
+                self.terminateAndExit(**message)
 
             if (self.restartMode):
                 for timeout in timeoutDict.keys():
@@ -283,7 +283,7 @@ class commonTarget():
             printAndLog(f"{self.targetIdInfo}start: Booting <{self.osImage}> on "
                         f"<{self.target}>. This might take a while...")
         else:
-            self.shutdownAndExit(f"start: <{self.osImage}> is not implemented on "
+            self.terminateAndExit(f"start: <{self.osImage}> is not implemented on "
                 f"<{self.target}>.",overrideShutdown=True, exitCode=EXIT.Implementation)
         self.sumTimeout = sum(timeoutDict.values())
         if (self.osImage=='debian'):
@@ -470,7 +470,7 @@ class commonTarget():
                        f"pw usermod root -H 0")
             self.runCommand(command, erroneousContents="pw:")
         else:
-            self.shutdownAndExit(
+            self.terminateAndExit(
                 f"<update root password> is not implemented for <{self.osImage}> on <{self.target}>.",
                 exitCode=EXIT.Implementation)
         printAndLog(f"{self.targetIdInfo}root password has been changed successfully!",doPrint=False)
@@ -494,7 +494,7 @@ class commonTarget():
                             '/etc/pam.d/su')
             self.runCommand(f"pw group mod wheel -m {self.userName}")
         else:
-            self.shutdownAndExit("<enableRootUserAccess> is not implemented "
+            self.terminateAndExit("<enableRootUserAccess> is not implemented "
                                  f"for <{self.osImage}>.",
                                  overrideConsole=True,
                                  exitCode=EXIT.Implementation)
@@ -518,7 +518,7 @@ class commonTarget():
             self.runCommand (self.userPassword,endsWith="Retype password:")
             self.runCommand (self.userPassword,expectedContents='changed by root')
         else:
-            self.shutdownAndExit(f"<createUser> is not implemented for <{self.osImage}> on <{self.target}>.",overrideConsole=True,exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"<createUser> is not implemented for <{self.osImage}> on <{self.target}>.",overrideConsole=True,exitCode=EXIT.Implementation)
         self.userCreated = True
 
     @decorate.debugWrap
@@ -533,11 +533,11 @@ class commonTarget():
         Precondition:  User must have already been created
         """
         if not isEnabled("useCustomCredentials"):
-            self.shutdownAndExit("<changeUserPassword> cannot be called if "
+            self.terminateAndExit("<changeUserPassword> cannot be called if "
                                  "<useCustomCredentials> is False.",
                                  exitCode=EXIT.Dev_Bug)
         if not self.userCreated:
-            self.shutdownAndExit("<changeUserPassword> cannot be called if "
+            self.terminateAndExit("<changeUserPassword> cannot be called if "
                                  "user has not been created.",
                                  exitCode=EXIT.Dev_Bug)
 
@@ -554,7 +554,7 @@ class commonTarget():
                        f"pw usermod {self.userName} -H 0")
             self.runCommand(command, erroneousContents="pw:")
         else:
-            self.shutdownAndExit("<createUser> is not implemented for "
+            self.terminateAndExit("<createUser> is not implemented for "
                                  f"<{self.osImage}> on "
                                  f"<{self.target}>.",
                                  overrideConsole=True,
@@ -582,7 +582,7 @@ class commonTarget():
             else:
                 return "\$"
         else:
-            self.shutdownAndExit(f"<getDefaultEndWith> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"<getDefaultEndWith> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
     def getAllEndsWith (self):
@@ -596,7 +596,7 @@ class commonTarget():
         elif (self.osImage=='busybox'):
             return ["~ #", "\$"]
         else:
-            self.shutdownAndExit(f"<getAllEndsWith> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"<getAllEndsWith> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -611,7 +611,7 @@ class commonTarget():
         "   endsWith: String/regex or list of strings/regex. The function returns when either is received from target.
         "   expectedContents: string or list of strings. If either is not found in the target's response --> error
         "   erroneousContents: string or list of strings. If either is found in the target's response --> error
-        "   exitOnError: Boolean. Whether to return or shutdownAndExit in case of error (timeout or contents related error)
+        "   exitOnError: Boolean. Whether to return or terminateAndExit in case of error (timeout or contents related error)
         "   timeout: how long to wait for endsWith before timing out.
         "   overrideShutdown: Boolean. Whether to skip "shutdown" when terminating. (Should be used before the target is fully booted)
         "                      Note that disabling "exitOnError" renders this redundant.
@@ -670,7 +670,7 @@ class commonTarget():
                     fName = 'UNKNOWN_FILE'
                 errorAndLog (f"runCommand: Failed to tee the output to <{fName}> while executing <{command}>.",doPrint=not suppressErrors,exc=exc)
         if (exitOnError and not isSuccess):
-            self.shutdownAndExit(f"runCommand: fatal error.",exitCode=EXIT.Run)
+            self.terminateAndExit(f"runCommand: fatal error.",exitCode=EXIT.Run)
         return [isSuccess, textBack, wasTimeout, idxEndsWith] #the 3rd argument is "timed-out"
 
     # Send a between host and target.
@@ -684,7 +684,7 @@ class commonTarget():
     @decorate.timeWrap
     def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,forceScp=False,timeout=30,exitOnError=True): #send File to target
         if (not isEnabled('isUnix',targetId=self.targetId)):
-            self.shutdownAndExit(f"<sendFile> is not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"<sendFile> is not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
 
         def returnFalse (message='',noRetries=False,exc=None,fileToClose=None):
             if not (self.osImage in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)):
@@ -697,7 +697,7 @@ class commonTarget():
                 self.resendAttempts += 1
                 return self.sendFile (pathToFile,xFile,targetPathToFile=targetPathToFile,toTarget=toTarget,timeout=timeout,exitOnError=exitOnError,forceScp=forceScp)
             elif (exitOnError):
-                self.shutdownAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
+                self.terminateAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
             else:
                 logging.error(message)
                 errorAndLog (f"sendFile: Failed to send <{pathToFile}/{xFile}> to target.")
@@ -869,7 +869,7 @@ class commonTarget():
                 self.appModules.remove(webserver)
                 self.appModules.remove(voting) #hosted by the webserver
         else:
-            self.shutdownAndExit(f"<runApp> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"<runApp> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
         # The appLog will be the file object flying around for logging into app.out
         appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
@@ -964,11 +964,11 @@ class commonTarget():
         if (self.terminateTargetStarted and (process == self.process)):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
-            self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Run)
+            self.terminateAndExit("keyboardInterrupt: interrupting is not resolving properly",overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Run)
         else:
             self.keyboardInterruptTriggered = True
         if ((not isEnabled('isUnix',targetId=self.targetId)) and (process == self.process)):
-            self.shutdownAndExit(f"<keyboardInterrupt> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"<keyboardInterrupt> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
         doTimeout = True
         retryIdx = 0
         while doTimeout and retryIdx < retryCount:
@@ -999,7 +999,7 @@ class commonTarget():
     @decorate.debugWrap
     def ensureCrngIsUp (self):
         if (self.osImage!='debian'):
-            self.shutdownAndExit(f"<ensureCrngIsUp> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"<ensureCrngIsUp> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
         isCrngUp = False
         for iAttempt in range(5):
@@ -1016,7 +1016,7 @@ class commonTarget():
                 break
 
         if (not isCrngUp):
-            self.shutdownAndExit(f"ensureCrngIsUp: CRNG was not initialized.",exitCode=EXIT.Run)
+            self.terminateAndExit(f"ensureCrngIsUp: CRNG was not initialized.",exitCode=EXIT.Run)
 
     @decorate.debugWrap
     def checkFallToTty (self,fnName,process=None):
@@ -1028,7 +1028,7 @@ class commonTarget():
             warnAndLog(f"{fnName}: called with sshConnection, but connection is unreachable. Falling back to main tty.",doPrint=False)
             self.killSshConn()
         if (not self.process): #Note that this condition cannot be merged with the above one, because killSshConn updates self.process
-            self.shutdownAndExit(f"{fnName}: Failed to communicate with target.",overrideShutdown=True,exitCode=EXIT.Run)
+            self.terminateAndExit(f"{fnName}: Failed to communicate with target.",overrideShutdown=True,exitCode=EXIT.Run)
         logging.debug(f"{fnName}: isSshConn = {self.isSshConn}")
         return
 
@@ -1067,7 +1067,7 @@ class commonTarget():
             process.sendline(command)
         except Exception as exc:
             if (exitOnError):
-                self.shutdownAndExit(f"sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,exitCode=EXIT.Run)
+                self.terminateAndExit(f"sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,exitCode=EXIT.Run)
             else:
                 warnAndLog (f"sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,doPrint=False)
         return
@@ -1107,7 +1107,7 @@ class commonTarget():
                 textBack += self.readFromTarget(endsWith=endsWith[retExpect],process=process)
         except pexpect.TIMEOUT:
             if (exitOnError):
-                self.shutdownAndExit(f"expectFromTarget: {self.target.capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
+                self.terminateAndExit(f"expectFromTarget: {self.target.capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
             elif (self.osImage!='FreeRTOS'):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
                 textBack += self.keyboardInterrupt (exitOnError=True, process=process) if issueInterrupt else ""
@@ -1121,7 +1121,7 @@ class commonTarget():
                 return self.expectFromTarget (endsWith,command,exitOnError=exitOnError,timeout=timeout,
                             overrideShutdown=overrideShutdown,issueInterrupt=issueInterrupt,process=None,
                             suppressWarnings=suppressWarnings,sshRetry=False)
-            self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
+            self.terminateAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
         # tell warning message thread that the expect is finished
         stopEvent.set()
         if (isinstance(endsWith,str)): #only one string
@@ -1152,7 +1152,7 @@ class commonTarget():
             if (getSetting('mode') in ['test', 'production']):
                 freertos.terminateAppStack(self)
         else:
-            self.shutdownAndExit(f"terminateTarget: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"terminateTarget: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
         
         self.tearDown()
 
@@ -1194,7 +1194,7 @@ class commonTarget():
             return self.openSshConn (userName=userName, timeout=timeout)
 
         if (self.osImage not in ['FreeBSD','debian']):
-            self.shutdownAndExit(f"<openSshConn> is not implemented for <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
+            self.terminateAndExit(f"<openSshConn> is not implemented for <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
 
         if (self.sshRetries >= self.sshLimitRetries): #to protect it from excessive attempts
             return False
@@ -1258,7 +1258,7 @@ class commonTarget():
     @decorate.debugWrap
     def closeSshConn (self, timeout=60):
         if (self.osImage not in ['FreeBSD','debian']):
-            self.shutdownAndExit(f"<closeSshConn> is not implemented for <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
+            self.terminateAndExit(f"<closeSshConn> is not implemented for <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
         if (self.isSshConn and (self.sshProcess is not None)):
             self.runCommand("exit",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,exitOnError=False)
         try:
@@ -1286,7 +1286,7 @@ class commonTarget():
                 else:
                     pingOut.close()
                     if (exitOnError):
-                        self.shutdownAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
+                        self.terminateAndExit(f"Failed to ping the target at IP address <{self.ipTarget}>.",exc=exc,exitCode=EXIT.Network)
                     else:
                         errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>.",doPrint=False,exc=exc)
                         return False

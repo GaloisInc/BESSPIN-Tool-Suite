@@ -39,19 +39,19 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             testName = binTest.split('.')[0]
             testNum = int(testName.split('_')[1])
         except Exception as exc:
-            self.target.shutdownAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+            self.target.terminateAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
         if (not isEnabled('isUnix')):
-            self.target.shutdownAndExit (f"<executeTest> for FreeRTOS should never be called.",exitCode=EXIT.Dev_Bug)
+            self.target.terminateAndExit (f"<executeTest> for FreeRTOS should never be called.",exitCode=EXIT.Dev_Bug)
 
         if (testNum not in testsInfo):
-            self.target.shutdownAndExit(f"<{testNum}> is missing from <testsInfo>.",exitCode=EXIT.Dev_Bug)
+            self.target.terminateAndExit(f"<{testNum}> is missing from <testsInfo>.",exitCode=EXIT.Dev_Bug)
         
         if (testsInfo[testNum]['unix'] == 'method'):
             if (hasattr(cweTests,testName)):
                 outLog = getattr(getattr(cweTests,testName),testName)(self,binTest)
             else:
-                self.target.shutdownAndExit (f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
+                self.target.terminateAndExit (f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
         else:
             outLog = self.defaultUnixTest(testNum, binTest)
 

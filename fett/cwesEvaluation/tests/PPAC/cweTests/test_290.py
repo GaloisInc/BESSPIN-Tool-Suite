@@ -10,7 +10,7 @@ def test_290 (target,binTest):
     #This test is special -- is called using sudo
     testNum = 290
     if (binTest != "test_{0}.riscv".format(testNum)):
-        target.shutdownAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
 
     outLog = "\n" + '*'*30 + " TEST {0} ".format(testNum) + '*'*30 + "\n\n"
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)
@@ -69,5 +69,5 @@ def test_290 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
 
     else:
-        target.shutdownAndExit(f"<test_{testNum}> is not implemented for <{target.osImage}>.",exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit(f"<test_{testNum}> is not implemented for <{target.osImage}>.",exitCode=EXIT.Dev_Bug)
     return outLog

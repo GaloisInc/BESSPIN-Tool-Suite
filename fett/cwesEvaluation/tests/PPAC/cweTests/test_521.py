@@ -32,7 +32,7 @@ def runBinWithPass(target, binTest, old_password, new_password):
 def test_521 (target,binTest):
     testNum = 521
     if (binTest != "test_{0}.riscv".format(testNum)):
-        target.shutdownAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
 
     outLog = "\n" + '*'*30 + " TEST {0} ".format(testNum) + '*'*30 + "\n\n"
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)
