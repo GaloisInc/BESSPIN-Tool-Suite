@@ -601,7 +601,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
-                    erroneousContents=None,shutdownOnError=True,timeout=60,
+                    erroneousContents=None,shutdownOnError=True,timeout=60,overwriteShutdown=False,
                     suppressErrors=False,tee=None,sendToNonUnix=False,issueInterrupt=True,process=None):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
@@ -613,6 +613,7 @@ class commonTarget():
         "   erroneousContents: string or list of strings. If either is found in the target's response --> error
         "   shutdownOnError: Boolean. Whether to return or shutdown in case of error (timeout or contents related error)
         "   timeout: how long to wait for endsWith before timing out.
+        "   overwriteShutdown: Boolean. Whether to skip "shutdown" in case of error. (Should be used before the target is fully booted)
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
         "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
@@ -634,6 +635,7 @@ class commonTarget():
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,
+                                                                   overwriteShutdown=overwriteShutdown,
                                                                    timeout=timeout,issueInterrupt=issueInterrupt,
                                                                    process=process,suppressWarnings=suppressErrors)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
