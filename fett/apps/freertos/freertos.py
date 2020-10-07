@@ -260,7 +260,7 @@ def terminateAppStack (target):
     return True
 
 @decorate.debugWrap
-def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,endOfApp=False,tee=True):
+def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],exitOnError=True,timeout=60,suppressErrors=False,endOfApp=False,tee=True):
     if isinstance(endsWith,str):
         endsWith = [endsWith]
     elif (not isinstance(endsWith,list)):
@@ -273,7 +273,7 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 
     teeFile = getSetting('appLog') if (tee) else None
     retCommand = target.runCommand(command,endsWith=[">>>End of Fett<<<"] + endsWith,
-        expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],shutdownOnError=shutdownOnError,
+        expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],exitOnError=exitOnError,
         timeout=timeout,suppressErrors=suppressErrors,tee=teeFile)
 
     if ((retCommand[3] == 0) and (not endOfApp)): #FETT exited prematurely
@@ -284,7 +284,7 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 @decorate.debugWrap
 def rtosShutdownAndExit (target, message, exc=None, exitCode=None):
     # Run to completion
-    rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,shutdownOnError=False,timeout=30, tee=False)
+    rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,exitOnError=False,timeout=30, tee=False)
     target.shutdownAndExit(message, exc=exc, exitCode=exitCode)
 
 @decorate.debugWrap

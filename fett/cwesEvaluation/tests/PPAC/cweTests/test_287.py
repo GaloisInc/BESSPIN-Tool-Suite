@@ -19,7 +19,7 @@ def test_287 (target,binTest):
                 retLog = ''
                 shellRoot = "{0}#".format(target.userName)
                 shellUser = ":~\$"
-                isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",endsWith=['Password:', shellRoot, shellUser],shutdownOnError=False)
+                isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",endsWith=['Password:', shellRoot, shellUser],exitOnError=False)
                 retLog += textBack
                 if (idxEndsWith == 0): #still asks for password
                     retLog += target.runCommand (target.rootPassword,endsWith=shellRoot)[1]
@@ -27,7 +27,7 @@ def test_287 (target,binTest):
                     retLog += target.runCommand ("exit")[1]
                 elif (idxEndsWith == 1):
                     retLog += "\n<GRANTED> su root access!\n"
-                    retLog += target.runCommand("exit",shutdownOnError=False)[1]
+                    retLog += target.runCommand("exit",exitOnError=False)[1]
                 elif (idxEndsWith == 2): #rejected
                     retLog += "\n<DENIED> su access denied!\n"
                 else: #command failed for some reason
@@ -45,7 +45,7 @@ def test_287 (target,binTest):
             resetCommonAuth = ["rm /etc/pam.d/common-auth", "mv /root/common-auth.backup /etc/pam.d/common-auth"]
             exposeWithoutAuth = "sed -i \'{0}s:auth.*:auth    sufficient    pam_permit.so:\' {1}" #has to be customized
 
-            retGrep = target.runCommand ("grep -n pam_unix.so /etc/pam.d/common-auth",shutdownOnError=False)[1]
+            retGrep = target.runCommand ("grep -n pam_unix.so /etc/pam.d/common-auth",exitOnError=False)[1]
             outLog += retGrep
             nthLine = -1
             for line in retGrep.splitlines():
@@ -55,8 +55,8 @@ def test_287 (target,binTest):
             if (nthLine == -1):
                 outLog += "\n Error: Could not find the line number in common-auth.\n"
                 return outLog
-            outLog += target.runCommand (backupCommonAuth[0],shutdownOnError=False)[1]
-            outLog += target.runCommand (exposeWithoutAuth.format(nthLine,"/etc/pam.d/common-auth"),shutdownOnError=False)[1]
+            outLog += target.runCommand (backupCommonAuth[0],exitOnError=False)[1]
+            outLog += target.runCommand (exposeWithoutAuth.format(nthLine,"/etc/pam.d/common-auth"),exitOnError=False)[1]
 
             target.switchUser () #Back on USER
             outLog += suRoot287()
@@ -135,12 +135,12 @@ def test_287 (target,binTest):
         rmCommonAuthAtUser = "rm /home/{0}/common-auth.edit".format(target.userName)
 
         #>>> USER <<<<------------------------------------------------------------
-        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),exitOnError=False)[1]
 
         outLog += "-"*20 + "Part01a: Root user allows any local user access." + "-"*20 + "\n"
         target.switchUser () #go to root
         #>>> ROOT <<<<------------------------------------------------------------
-        retGrep = target.runCommand ("grep -n pam_unix.so /etc/pam.d/common-auth",shutdownOnError=False)[1]
+        retGrep = target.runCommand ("grep -n pam_unix.so /etc/pam.d/common-auth",exitOnError=False)[1]
         outLog += retGrep
         nthLine = -1
         for line in retGrep.splitlines():
@@ -150,8 +150,8 @@ def test_287 (target,binTest):
         if (nthLine == -1):
             outLog += "\n Error: Could not find the line number in common-auth.\n"
             return outLog
-        outLog += target.runCommand (backupCommonAuth[0],shutdownOnError=False)[1]
-        outLog += target.runCommand (exposeToLocalUsers.format(nthLine,"/etc/pam.d/common-auth"),shutdownOnError=False)[1]
+        outLog += target.runCommand (backupCommonAuth[0],exitOnError=False)[1]
+        outLog += target.runCommand (exposeToLocalUsers.format(nthLine,"/etc/pam.d/common-auth"),exitOnError=False)[1]
 
         outLog += switchUser287('login') #login to user
         #>>> USER <<<<------------------------------------------------------------
@@ -164,7 +164,7 @@ def test_287 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part01b: Root user removes all authentication requirements." + "-"*20 + "\n"
-        outLog += target.runCommand (exposeWithoutAuth.format(nthLine,"/etc/pam.d/common-auth"),shutdownOnError=False)[1]
+        outLog += target.runCommand (exposeWithoutAuth.format(nthLine,"/etc/pam.d/common-auth"),exitOnError=False)[1]
         outLog += switchUser287('login') #login to user
         #>>> USER <<<<------------------------------------------------------------
         outLog += switchUser287('su') #attempt to su root
@@ -175,8 +175,8 @@ def test_287 (target,binTest):
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
-        outLog += target.runCommand (resetCommonAuth[0],shutdownOnError=False)[1]
-        outLog += target.runCommand (resetCommonAuth[1],shutdownOnError=False)[1]
+        outLog += target.runCommand (resetCommonAuth[0],exitOnError=False)[1]
+        outLog += target.runCommand (resetCommonAuth[1],exitOnError=False)[1]
 
         outLog += "-"*20 + "Part02: common-auth owned by GID=1101" + "-"*20 + "\n"
         addGroup = ["groupadd -g 1101 group_287"]
@@ -185,16 +185,16 @@ def test_287 (target,binTest):
         target.executeOnRoot (addGroup + addUserToGroup + exposeAuthToGrp)
         target.switchUser ()
         #>>> USER <<<<------------------------------------------------------------
-        outLog += target.runCommand(checkCommonAuth,shutdownOnError=False)[1]
-        outLog += target.runCommand("groups",shutdownOnError=False)[1]
+        outLog += target.runCommand(checkCommonAuth,exitOnError=False)[1]
+        outLog += target.runCommand("groups",exitOnError=False)[1]
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part02a: A user from non-root group allow any local user access." + "-"*20 + "\n"
-        outLog += target.runCommand (cpCommonAuthToUser,shutdownOnError=False)[1]
-        outLog += target.runCommand (exposeToLocalUsers.format(nthLine,"/home/{0}/common-auth.edit".format(target.userName)),shutdownOnError=False)[1]
-        outLog += target.runCommand (cpCommonAuthToEtc,shutdownOnError=False)[1]
+        outLog += target.runCommand (cpCommonAuthToUser,exitOnError=False)[1]
+        outLog += target.runCommand (exposeToLocalUsers.format(nthLine,"/home/{0}/common-auth.edit".format(target.userName)),exitOnError=False)[1]
+        outLog += target.runCommand (cpCommonAuthToEtc,exitOnError=False)[1]
         outLog += switchUser287('su') #attempt to su root
         time.sleep(1) #necessary
         outLog += switchUser287('login') #login to root
@@ -207,8 +207,8 @@ def test_287 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part02b: A user from non-root group removes all authentication requirements." + "-"*20 + "\n"
-        outLog += target.runCommand (exposeWithoutAuth.format(nthLine,"/home/{0}/common-auth.edit".format(target.userName)),shutdownOnError=False)[1]
-        outLog += target.runCommand (cpCommonAuthToEtc,shutdownOnError=False)[1]
+        outLog += target.runCommand (exposeWithoutAuth.format(nthLine,"/home/{0}/common-auth.edit".format(target.userName)),exitOnError=False)[1]
+        outLog += target.runCommand (cpCommonAuthToEtc,exitOnError=False)[1]
         outLog += switchUser287('su') #attempt to su root
         time.sleep(1) #necessary
         outLog += switchUser287('login') #login to root
@@ -223,23 +223,23 @@ def test_287 (target,binTest):
         time.sleep(1) #necessary
         outLog += switchUser287('login') #login to root
         #>>> ROOT <<<<------------------------------------------------------------
-        outLog += target.runCommand (resetCommonAuth[0],shutdownOnError=False)[1]
-        outLog += target.runCommand (resetCommonAuth[1],shutdownOnError=False)[1]
+        outLog += target.runCommand (resetCommonAuth[0],exitOnError=False)[1]
+        outLog += target.runCommand (resetCommonAuth[1],exitOnError=False)[1]
 
         outLog += "-"*20 + "Part03: common-auth accessed by everyone" + "-"*20 + "\n"
-        outLog += target.runCommand ("chmod 666 /etc/pam.d/common-auth",shutdownOnError=False)[1]
+        outLog += target.runCommand ("chmod 666 /etc/pam.d/common-auth",exitOnError=False)[1]
         target.switchUser ()
         #>>> USER <<<<------------------------------------------------------------
-        outLog += target.runCommand(checkCommonAuth,shutdownOnError=False)[1]
+        outLog += target.runCommand(checkCommonAuth,exitOnError=False)[1]
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part03a: A non-root user allows any local user access." + "-"*20 + "\n"
-        outLog += target.runCommand ("rm /home/{0}/common-auth.edit".format(target.userName),shutdownOnError=False)[1]
-        outLog += target.runCommand (cpCommonAuthToUser,shutdownOnError=False)[1]
-        outLog += target.runCommand (exposeToLocalUsers.format(nthLine,"/home/{0}/common-auth.edit".format(target.userName)),shutdownOnError=False)[1]
-        outLog += target.runCommand (cpCommonAuthToEtc,shutdownOnError=False)[1]
+        outLog += target.runCommand ("rm /home/{0}/common-auth.edit".format(target.userName),exitOnError=False)[1]
+        outLog += target.runCommand (cpCommonAuthToUser,exitOnError=False)[1]
+        outLog += target.runCommand (exposeToLocalUsers.format(nthLine,"/home/{0}/common-auth.edit".format(target.userName)),exitOnError=False)[1]
+        outLog += target.runCommand (cpCommonAuthToEtc,exitOnError=False)[1]
         outLog += switchUser287('su') #attempt to su root
         time.sleep(1) #necessary
         outLog += switchUser287('login') #login to root
@@ -252,8 +252,8 @@ def test_287 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part03b: A non-root user removes all authentication requirements." + "-"*20 + "\n"
-        outLog += target.runCommand (exposeWithoutAuth.format(nthLine,"/home/{0}/common-auth.edit".format(target.userName)),shutdownOnError=False)[1]
-        outLog += target.runCommand (cpCommonAuthToEtc,shutdownOnError=False)[1]
+        outLog += target.runCommand (exposeWithoutAuth.format(nthLine,"/home/{0}/common-auth.edit".format(target.userName)),exitOnError=False)[1]
+        outLog += target.runCommand (cpCommonAuthToEtc,exitOnError=False)[1]
         outLog += switchUser287('su') #attempt to su root
         time.sleep(1) #necessary
         outLog += switchUser287('login') #login to root
@@ -265,12 +265,12 @@ def test_287 (target,binTest):
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
-        outLog += target.runCommand (rmCommonAuthAtUser,shutdownOnError=False)[1]
+        outLog += target.runCommand (rmCommonAuthAtUser,exitOnError=False)[1]
         outLog += switchUser287('login') #login to root
         #>>> ROOT <<<<------------------------------------------------------------
-        outLog += target.runCommand (resetCommonAuth[0],shutdownOnError=False)[1]
-        outLog += target.runCommand (resetCommonAuth[1],shutdownOnError=False)[1]
-        outLog += target.runCommand (rmBackupCommonAuth[0],shutdownOnError=False)[1]
+        outLog += target.runCommand (resetCommonAuth[0],exitOnError=False)[1]
+        outLog += target.runCommand (resetCommonAuth[1],exitOnError=False)[1]
+        outLog += target.runCommand (rmBackupCommonAuth[0],exitOnError=False)[1]
 
         target.switchUser() #has to be logged in as user
         #>>> USER <<<<------------------------------------------------------------
@@ -280,10 +280,10 @@ def test_287 (target,binTest):
         def suRoot287 ():
             isSuccess, textBack, wasTimeout, idxEndsWith = target.runCommand("su root",
                         endsWith=["fettPrompt>",f"{target.userName} #", ":~ \$"],
-                        shutdownOnError=False)
+                        exitOnError=False)
             if (idxEndsWith in [0,1]):
                 retLog = "<GRANTED> su root access!\n"
-                retLog += target.runCommand("exit",shutdownOnError=False)[1]
+                retLog += target.runCommand("exit",exitOnError=False)[1]
             elif (idxEndsWith > 1):
                 if ('su: Sorry' in textBack):
                     retLog = "<DENIED> su access denied!\n"
@@ -371,7 +371,7 @@ def test_287 (target,binTest):
             except:
                 outLog += "\n<INVALID> [host-client]: Failed to send message to target.\n"
                 break
-            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
             try:
                 # Look for the response
                 ready = select.select([clientSocket], [], [], 10) #10 seconds timeout
@@ -387,7 +387,7 @@ def test_287 (target,binTest):
             del TLS_CTX
         
         if (">>>End of Fett<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",exitOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"

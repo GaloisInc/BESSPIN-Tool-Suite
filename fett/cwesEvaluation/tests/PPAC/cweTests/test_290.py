@@ -33,7 +33,7 @@ def test_290 (target,binTest):
         outLog += "\n[host]: Pinging target successful!\n"
 
         for i in range(1): #easier construct to break -- loop executed only once
-            outLog += target.runCommand("waitForServer",endsWith="<UDP-READY>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+            outLog += target.runCommand("waitForServer",endsWith="<UDP-READY>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
             if (target.testPart == 1):
                 outLog += ">>> [host-client]: Sending a good UDP packet..."
                 try:
@@ -57,7 +57,7 @@ def test_290 (target,binTest):
                     outLog += f"\n<INVALID> [host]: Failed to run <sudo sudo_{testNum}>.\n"
 
         if (">>>End of Fett<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",exitOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"

@@ -26,5 +26,5 @@ class testgenTargetCompatibilityLayer:
             setattr(self.target, name, value)
 
     def typCommand(self, command): #Note that this returns the `textBack`
-        return self.target.runCommand(command,shutdownOnError=False)[1]
+        return self.target.runCommand(command,exitOnError=False)[1]
 

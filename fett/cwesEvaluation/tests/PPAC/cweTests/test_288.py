@@ -14,11 +14,11 @@ def test_288 (target,binTest):
     if (target.osImage == 'debian'):
         def runAuthTest (useCorrectPassword):
             retLog = ''
-            retCommand = target.runCommand("./{0}".format(binTest),endsWith=[":~\$",":~$","Password:"],shutdownOnError=False)
+            retCommand = target.runCommand("./{0}".format(binTest),endsWith=[":~\$",":~$","Password:"],exitOnError=False)
             retLog += retCommand[1]
             if (retCommand[3] == 2): #asked for password
                 pwUsed = target.userPassword if (useCorrectPassword) else 'x'
-                retLog += target.runCommand(pwUsed,shutdownOnError=False)[1]
+                retLog += target.runCommand(pwUsed,exitOnError=False)[1]
             return retLog
 
         if (isEqSetting('processor','bluespec_p3') and target.isSshConn): #this test does not run on bluespec_p3/SSH
@@ -35,7 +35,7 @@ def test_288 (target,binTest):
 
         outLog += "-"*20 + "Part01: Valid Keyring. No key. Wrong Password." + "-"*20 + "\n"
         target.executeOnRoot (createKeyring)
-        outLog += target.runCommand (linkKeyring,shutdownOnError=False)[1]
+        outLog += target.runCommand (linkKeyring,exitOnError=False)[1]
         outLog += runAuthTest (False)
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -51,7 +51,7 @@ def test_288 (target,binTest):
         outLog += "-"*20 + "Part03: Valid Keyring. Valid key. Wrong Password." + "-"*20 + "\n"
         #keyring already exists from p01 and p02
         target.executeOnRoot (createKey)
-        outLog += target.runCommand (linkKeyring,shutdownOnError=False)[1] #needs to be re-linked because of switchUser
+        outLog += target.runCommand (linkKeyring,exitOnError=False)[1] #needs to be re-linked because of switchUser
         outLog += runAuthTest (False)
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -59,8 +59,8 @@ def test_288 (target,binTest):
 
         outLog += "-"*20 + "Part04: Valid Keyring. Local key. Wrong Password." + "-"*20 + "\n"
         target.executeOnRoot (revokeKeyring + createKeyring)
-        outLog += target.runCommand (linkKeyring,shutdownOnError=False)[1]
-        outLog += target.runCommand (createKey[0],shutdownOnError=False)[1] #local key -- no need to edit permissions
+        outLog += target.runCommand (linkKeyring,exitOnError=False)[1]
+        outLog += target.runCommand (createKey[0],exitOnError=False)[1] #local key -- no need to edit permissions
         outLog += runAuthTest (False)
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -68,8 +68,8 @@ def test_288 (target,binTest):
 
         outLog += "-"*20 + "Part05: Local Keyring. Local key. Wrong Password." + "-"*20 + "\n"
         target.executeOnRoot (revokeKeyring)
-        outLog += target.runCommand (createKeyring[0],shutdownOnError=False)[1] #local keyring -- no need to edit permissions
-        outLog += target.runCommand (createKey[0],shutdownOnError=False)[1] #local key -- no need to edit permissions
+        outLog += target.runCommand (createKeyring[0],exitOnError=False)[1] #local keyring -- no need to edit permissions
+        outLog += target.runCommand (createKey[0],exitOnError=False)[1] #local key -- no need to edit permissions
         outLog += runAuthTest (False)
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -84,19 +84,19 @@ def test_288 (target,binTest):
 
     elif (target.osImage == 'FreeBSD'):
         outLog += "-"*20 + "Part01: $CWD is home directory" + "-"*20 + "\n"
-        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),exitOnError=False)[1]
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part02: $CWD is cgi-bin directory" + "-"*20 + "\n"
-        outLog += target.runCommand("mkdir -p /tmp/ssith/cgi-bin",shutdownOnError=True)[1]
-        outLog += target.runCommand("mv ./{0} /tmp/ssith/cgi-bin/".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("mkdir -p /tmp/ssith/cgi-bin",exitOnError=True)[1]
+        outLog += target.runCommand("mv ./{0} /tmp/ssith/cgi-bin/".format(binTest),exitOnError=False)[1]
         outLog += target.runCommand("cd /tmp/ssith/cgi-bin".format(binTest),
                         endsWith=[target.getDefaultEndWith(),"cgi-bin \$"],
-                        shutdownOnError=False)[1]
+                        exitOnError=False)[1]
         outLog += target.runCommand("./{0}".format(binTest),
                         endsWith=[target.getDefaultEndWith(),"cgi-bin \$"],
-                        shutdownOnError=False)[1]
-        outLog += target.runCommand("cd ~",shutdownOnError=True)[1]
+                        exitOnError=False)[1]
+        outLog += target.runCommand("cd ~",exitOnError=True)[1]
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
@@ -162,7 +162,7 @@ def test_288 (target,binTest):
                     breakAttemptsLoop = True
                     break
 
-                outLog += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV{recvSuffix}>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+                outLog += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV{recvSuffix}>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
                 try:
                     # Look for the response
                     ready = select.select([clientSocket], [], [], 10) #10 seconds timeout
@@ -189,7 +189,7 @@ def test_288 (target,binTest):
                 break
         
         if (">>>End of Fett<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",exitOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"

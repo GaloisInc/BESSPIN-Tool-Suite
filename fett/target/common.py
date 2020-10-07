@@ -140,7 +140,7 @@ class commonTarget():
                                                      endsWith=[self.getDefaultEndWith(),"\r\nlogin:"],
                                                      timeout=60,
                                                      suppressErrors=True,
-                                                     shutdownOnError=False,
+                                                     exitOnError=False,
                                                      issueInterrupt=False)
                         if retCommand[2]:
                             printAndLog(f"{self.targetIdInfo}switchUser: Failed to login and received timeout. Trying again...",doPrint=False)
@@ -607,7 +607,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
-                    erroneousContents=None,shutdownOnError=True,timeout=60,overrideShutdown=False,
+                    erroneousContents=None,exitOnError=True,timeout=60,overrideShutdown=False,
                     suppressErrors=False,tee=None,sendToNonUnix=False,issueInterrupt=True,process=None):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
@@ -617,10 +617,10 @@ class commonTarget():
         "   endsWith: String/regex or list of strings/regex. The function returns when either is received from target.
         "   expectedContents: string or list of strings. If either is not found in the target's response --> error
         "   erroneousContents: string or list of strings. If either is found in the target's response --> error
-        "   shutdownOnError: Boolean. Whether to return or shutdownAndExit in case of error (timeout or contents related error)
+        "   exitOnError: Boolean. Whether to return or shutdownAndExit in case of error (timeout or contents related error)
         "   timeout: how long to wait for endsWith before timing out.
         "   overrideShutdown: Boolean. Whether to skip "shutdown" when terminating. (Should be used before the target is fully booted)
-        "                      Note that disabling "shutdownOnError" renders this redundant.
+        "                      Note that disabling "exitOnError" renders this redundant.
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
         "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
@@ -638,10 +638,10 @@ class commonTarget():
             timeout += 60
 
         if (isEnabled('isUnix',targetId=self.targetId) or sendToNonUnix):
-            self.sendToTarget (command,shutdownOnError=shutdownOnError,process=process)
+            self.sendToTarget (command,exitOnError=exitOnError,process=process)
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
-        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,
+        textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,exitOnError=exitOnError,
                                                                    overrideShutdown=overrideShutdown,
                                                                    timeout=timeout,issueInterrupt=issueInterrupt,
                                                                    process=process,suppressWarnings=suppressErrors)
@@ -675,7 +675,7 @@ class commonTarget():
                 except:
                     fName = 'UNKNOWN_FILE'
                 errorAndLog (f"runCommand: Failed to tee the output to <{fName}> while executing <{command}>.",doPrint=not suppressErrors,exc=exc)
-        if (shutdownOnError and not isSuccess):
+        if (exitOnError and not isSuccess):
             self.shutdownAndExit(f"runCommand: fatal error.",exitCode=EXIT.Run)
         return [isSuccess, textBack, wasTimeout, idxEndsWith] #the 3rd argument is "timed-out"
 
@@ -688,7 +688,7 @@ class commonTarget():
     #                False         = send from target to host. Requires an SSH connection.
     @decorate.debugWrap
     @decorate.timeWrap
-    def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,forceScp=False,timeout=30,shutdownOnError=True): #send File to target
+    def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,forceScp=False,timeout=30,exitOnError=True): #send File to target
         if (not isEnabled('isUnix',targetId=self.targetId)):
             self.shutdownAndExit(f"<sendFile> is not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
 
@@ -701,8 +701,8 @@ class commonTarget():
                 logging.error(message)
                 errorAndLog (f"sendFile: Failed to send <{pathToFile}/{xFile}> to target. Trying again...")
                 self.resendAttempts += 1
-                return self.sendFile (pathToFile,xFile,targetPathToFile=targetPathToFile,toTarget=toTarget,timeout=timeout,shutdownOnError=shutdownOnError,forceScp=forceScp)
-            elif (shutdownOnError):
+                return self.sendFile (pathToFile,xFile,targetPathToFile=targetPathToFile,toTarget=toTarget,timeout=timeout,exitOnError=exitOnError,forceScp=forceScp)
+            elif (exitOnError):
                 self.shutdownAndExit (message + f"\nsendFile: Failed to send <{pathToFile}/{xFile}> to target.",exitCode=EXIT.Run)
             else:
                 logging.error(message)
@@ -795,7 +795,7 @@ class commonTarget():
                 return returnFalse (f"Unexpected error while using scp command [waiting for termination].",exc=exc)
             scpOutFile.close()
             time.sleep(5)
-            self.keyboardInterrupt (shutdownOnError=True)
+            self.keyboardInterrupt (exitOnError=True)
 
         else: #send the file through netcat
             if not toTarget:
@@ -803,9 +803,9 @@ class commonTarget():
                                    noRetries=True)
 
             if (self.osImage=='debian'):
-                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {targetPath}",timeout=timeout,shutdownOnError=False))
+                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -lp {self.portTarget} > {targetPath}",timeout=timeout,exitOnError=False))
             elif (self.osImage=='FreeBSD'):
-                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {targetPath}",timeout=timeout,shutdownOnError=False))
+                listenOnTarget = threading.Thread(target=self.runCommand, kwargs=dict(command=f"nc -I 1024 -l {self.portTarget} > {targetPath}",timeout=timeout,exitOnError=False))
             listenOnTarget.daemon = True
             getSetting('trash').throwThread(listenOnTarget,f"nc listening for <{xFile}> on Target")
             sendFromHost = threading.Thread(target=subprocess.call, kwargs=dict(args=f"nc -w 1 {self.ipTarget} {self.portHost} <{hostPath}",shell=True))
@@ -818,7 +818,7 @@ class commonTarget():
             #check sending
             if (sendFromHost.is_alive()):
                 logging.warning(f"sendFile: Netcat sending from host is still hanging while sending <{xFile}> to target.\n")
-            if (listenOnTarget.is_alive() or (not self.doesFileExist(xFile,timeout=timeout,shutdownOnError=False))):
+            if (listenOnTarget.is_alive() or (not self.doesFileExist(xFile,timeout=timeout,exitOnError=False))):
                 return returnFalse()
 
         #obtaining the checksum
@@ -834,8 +834,8 @@ class commonTarget():
         return True
 
     @decorate.debugWrap
-    def doesFileExist (self,xFile,pathToFile='.',timeout=15,shutdownOnError=True):
-        return self.runCommand(f"ls {pathToFile}/{xFile}",suppressErrors=True,expectedContents=xFile,erroneousContents=['ls:', 'cannot access', 'No such file or directory'],timeout=timeout,shutdownOnError=shutdownOnError)[0]
+    def doesFileExist (self,xFile,pathToFile='.',timeout=15,exitOnError=True):
+        return self.runCommand(f"ls {pathToFile}/{xFile}",suppressErrors=True,expectedContents=xFile,erroneousContents=['ls:', 'cannot access', 'No such file or directory'],timeout=timeout,exitOnError=exitOnError)[0]
 
     @decorate.debugWrap
     def sendTar(self,timeout=30): #send tarball to target
@@ -947,7 +947,7 @@ class commonTarget():
         if(self.sendFile(
             artifactPath, logsTarball,       
             targetPathToFile=f'/home/{self.userName}',
-            forceScp=True, toTarget=False, shutdownOnError=False
+            forceScp=True, toTarget=False, exitOnError=False
         )):
             printAndLog(f"collectLogs: Received logs from target.")
             # untar the tarball to be more friendly
@@ -961,7 +961,7 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,shutdownOnError=True,timeout=15,retryCount=3,process=None,endsWith=None, sendToNonUnix=False):
+    def keyboardInterrupt (self,exitOnError=True,timeout=15,retryCount=3,process=None,endsWith=None, sendToNonUnix=False):
         process = self.process if process is None else process
         if (endsWith is None):
             endsWith = [self.getDefaultEndWith()]
@@ -980,13 +980,13 @@ class commonTarget():
         while doTimeout and retryIdx < retryCount:
             if retryIdx > 0:
                 warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
-            retCommand = self.runCommand("\x03",endsWith=endsWith,shutdownOnError=False,timeout=timeout,
+            retCommand = self.runCommand("\x03",endsWith=endsWith,exitOnError=False,timeout=timeout,
                             issueInterrupt=False,process=process,sendToNonUnix=sendToNonUnix)
             textBack = retCommand[1]
             doTimeout = retCommand[2]
             retryIdx += 1
         if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",endsWith=endsWith,shutdownOnError=shutdownOnError,timeout=timeout,
+            textBack += self.runCommand(" ",endsWith=endsWith,exitOnError=exitOnError,timeout=timeout,
                             process=process,sendToNonUnix=sendToNonUnix)[1]
         #See if the order is correct
         if (process):
@@ -1009,7 +1009,7 @@ class commonTarget():
 
         isCrngUp = False
         for iAttempt in range(5):
-            retCommand = self.runCommand("dmesg | grep random",expectedContents="crng init done",suppressErrors=True,shutdownOnError=False,timeout=30)
+            retCommand = self.runCommand("dmesg | grep random",expectedContents="crng init done",suppressErrors=True,exitOnError=False,timeout=30)
             isCrngUp = retCommand[0]
             retText = retCommand[1]
             if (isCrngUp):
@@ -1065,14 +1065,14 @@ class commonTarget():
         return textBack
 
     @decorate.debugWrap
-    def sendToTarget (self,command,shutdownOnError=True,process=None):
+    def sendToTarget (self,command,exitOnError=True,process=None):
         process = self.process if process is None else process
         self.checkFallToTty ("sendToTarget", process=process)
         logging.debug(f"sendToTarget: sending <{command}>")
         try:
             process.sendline(command)
         except Exception as exc:
-            if (shutdownOnError):
+            if (exitOnError):
                 self.shutdownAndExit(f"sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,exitCode=EXIT.Run)
             else:
                 warnAndLog (f"sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,doPrint=False)
@@ -1080,7 +1080,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overrideShutdown=False,
+    def expectFromTarget (self,endsWith,command,exitOnError=True,timeout=15,overrideShutdown=False,
                             issueInterrupt=True,process=None,suppressWarnings=False,sshRetry=True):
         def warningThread(msg, waitingTime, stopEvent, suppressWarnings):
             """thread will wait on an event, and display warning if not set by waiting time"""
@@ -1112,11 +1112,11 @@ class commonTarget():
             else: #It is a list
                 textBack += self.readFromTarget(endsWith=endsWith[retExpect],process=process)
         except pexpect.TIMEOUT:
-            if (shutdownOnError):
+            if (exitOnError):
                 self.shutdownAndExit(f"expectFromTarget: {self.target.capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
             elif (self.osImage!='FreeRTOS'):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
-                textBack += self.keyboardInterrupt (shutdownOnError=True, process=process) if issueInterrupt else ""
+                textBack += self.keyboardInterrupt (exitOnError=True, process=process) if issueInterrupt else ""
             return [textBack, True, -1]
         except Exception as exc:
             if ((self.processor=='bluespec_p3') and (exc.__class__ == pexpect.EOF) 
@@ -1124,7 +1124,7 @@ class commonTarget():
                 warnAndLog("SSH connection was unexpectedly dropped. Trying to reconnect...")
                 self.openSshConn(userName='root' if self.isCurrentUserRoot else self.userName)
                 self.sendToTarget(" ")
-                return self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,
+                return self.expectFromTarget (endsWith,command,exitOnError=exitOnError,timeout=timeout,
                             overrideShutdown=overrideShutdown,issueInterrupt=issueInterrupt,process=None,
                             suppressWarnings=suppressWarnings,sshRetry=False)
             self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
@@ -1227,12 +1227,12 @@ class commonTarget():
         passwordPrompt = [f"Password for {userName}@[\w\-\.]+\:", f"{userName}@[\w\-\.]+\'s password\:"]
         blockedIpResponse = ["Connection closed by remote host", "Connection reset by peer", "Permission denied (publickey,keyboard-interactive)."]
         retExpect = self.expectFromTarget(passwordPrompt + blockedIpResponse + ['\)\?',pexpect.EOF],"openSshConn",
-                        timeout=timeout,shutdownOnError=False,issueInterrupt=False)
+                        timeout=timeout,exitOnError=False,issueInterrupt=False)
         if (retExpect[1]): #Failed
             return returnFail(f"openSshConn: Spawning the ssh process timed out.")
         elif (retExpect[2]==5): # asking for yes/no for new host
             retYes = self.runCommand("yes",endsWith=passwordPrompt+blockedIpResponse+[pexpect.EOF],
-                        timeout=timeout,shutdownOnError=False,issueInterrupt=False)
+                        timeout=timeout,exitOnError=False,issueInterrupt=False)
             if (retYes[3] not in [0,1]): #No password prompt
                 if (specialTest and (retYes[3] in [2,3,4,5])):
                     return 'BLOCKED_IP'
@@ -1244,7 +1244,7 @@ class commonTarget():
             else:
                 return returnFail(f"openSshConn: Unexpected response when spawning the ssh process.")
         retPassword = self.runCommand(sshPassword,endsWith=endsWith,timeout=timeout,
-                        shutdownOnError=False,issueInterrupt=False)
+                        exitOnError=False,issueInterrupt=False)
         if (not retPassword[0]):
             return returnFail(f"openSshConn: Failed to login to the SSH connection.")
         self.sshRetries = 0 #reset the retries
@@ -1266,7 +1266,7 @@ class commonTarget():
         if (self.osImage not in ['FreeBSD','debian']):
             self.shutdownAndExit(f"<closeSshConn> is not implemented for <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
         if (self.isSshConn and (self.sshProcess is not None)):
-            self.runCommand("exit",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,shutdownOnError=False)
+            self.runCommand("exit",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,exitOnError=False)
         try:
             self.fSshOut.close()
         except Exception as exc:
@@ -1307,7 +1307,7 @@ class commonTarget():
             lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
             alphabet = string.ascii_letters + string.digits + ' '
             randText = ''.join(random.choice(alphabet) for i in range(lenText))
-            self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=60,shutdownOnError=False)
+            self.runCommand(f"echo \"{randText}\"",endsWith=endsWith,timeout=60,exitOnError=False)
 
     def hasHardwareRNG (self):
         return (

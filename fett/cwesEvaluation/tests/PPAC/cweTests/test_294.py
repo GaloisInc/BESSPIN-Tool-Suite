@@ -39,14 +39,14 @@ def test_294(target, binTest):
             target.sshRetries = 0 #temporarily
 
         #deny all 
-        outLog += target.runCommand (f"echo \"PasswordAuthentication no\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+        outLog += target.runCommand (f"echo \"PasswordAuthentication no\" >> {getSetting('sshdConfigPath')}",exitOnError=False)[1]
 
         for iPart in range(2):
             outLog += "-" * 20 + f"Part0{iPart+1}: {partNames[iPart]}" + "-" * 20 + "\n"
 
             #only allow the part's IP
-            outLog += target.runCommand (f"echo \"Match Address {allowedIP[iPart]}\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
-            outLog += target.runCommand (f"echo \"    PasswordAuthentication yes\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"Match Address {allowedIP[iPart]}\" >> {getSetting('sshdConfigPath')}",exitOnError=False)[1]
+            outLog += target.runCommand (f"echo \"    PasswordAuthentication yes\" >> {getSetting('sshdConfigPath')}",exitOnError=False)[1]
             target.retartSshService ()
             time.sleep(10)
 
@@ -104,7 +104,7 @@ def test_294(target, binTest):
         sudoPrompt = f"\"Warning: You need sudo privileges to run test_{testNum}: [sudo] password for {getpass.getuser()}: \""
 
         outLog += target.runCommand("waitForServer", endsWith="<TCP-READY>", erroneousContents="<INVALID>",
-                                    timeout=20, shutdownOnError=False)[1]
+                                    timeout=20, exitOnError=False)[1]
         try:
             outLog += str(subprocess.check_output(
                 f"sudo -p {sudoPrompt} {sys.executable} {pathToSudoPart} {'+'.join(sys.path)} {target.ipTarget} {target.portTarget} {spoofingIP} {ethAdaptorName} {target.testPart}",
@@ -116,7 +116,7 @@ def test_294(target, binTest):
             outLog += f"\n<INVALID> [host]: Failed to run <sudo sudo_{testNum}>.\n"
 
         if (">>>End of Fett<<<" not in outLog):
-            retFinish = target.runCommand("allProgram", endsWith=">>>End of Fett<<<", shutdownOnError=False,
+            retFinish = target.runCommand("allProgram", endsWith=">>>End of Fett<<<", exitOnError=False,
                                           timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]):  # bad

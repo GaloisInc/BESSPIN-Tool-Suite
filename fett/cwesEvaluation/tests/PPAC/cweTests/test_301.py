@@ -69,7 +69,7 @@ def test_301 (target,binTest):
                     isFound = True
                     break
             if (not isFound):
-                logDict['target'] += target.runCommand("sendToTarget",endsWith=goldenString,erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+                logDict['target'] += target.runCommand("sendToTarget",endsWith=goldenString,erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
 
 
         def connectToTarget (iConn,retSockets,logDict,logLock):
@@ -207,7 +207,7 @@ def test_301 (target,binTest):
             except:
                 return
 
-            logDict[0] += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV-0-CHALLENGE>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+            logDict[0] += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV-0-CHALLENGE>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
 
             #read the resp-0 -- the challenge answer of req-0
             try:
@@ -228,7 +228,7 @@ def test_301 (target,binTest):
             except:
                 return
 
-            logDict[0] += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV-1-CHALLENGE>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+            logDict[0] += target.runCommand("sendToTarget",endsWith=f"<TARGET-RECV-1-CHALLENGE>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
 
             #read the resp-1 -- the challenge answer of req-1 (And should work as ans-0)
             try:
@@ -292,7 +292,7 @@ def test_301 (target,binTest):
             outLog += logDict['target']
         
         if (">>>End of Fett<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",exitOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"

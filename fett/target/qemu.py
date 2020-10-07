@@ -44,7 +44,7 @@ class qemuTarget (commonTarget):
                 self.shutdownAndExit("Error in {0}: Failed to spawn the qemu process.".format(self.filename),
                     overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
             time.sleep(1)
-            textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,shutdownOnError=False,overrideShutdown=True)
+            textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,exitOnError=False,overrideShutdown=True)
             if (idxReturn==1): #No "">>> End Of Testgen <<<", but qemu aborted without a timeout
                 self.fTtyOut.write (b"\n<QEMU ABORTED>\n")
             else:
