@@ -46,10 +46,10 @@ class vcu118Target (fpgaTarget, commonTarget):
             elif (self.elfLoader=='netboot'):
                 self.fpgaStart(getSetting('netbootElf',targetId=self.targetId),elfLoadTimeout=30)
             else:
-                self.shutdownAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
+                self.shutdownAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overrideShutdown=True,exitCode=EXIT.Dev_Bug)
 
             if (self.elfLoader=='netboot'):
-                self.expectFromTarget('>',"Starting netboot loader",timeout=60,overwriteShutdown=True)
+                self.expectFromTarget('>',"Starting netboot loader",timeout=60,overrideShutdown=True)
                 dirname, basename = os.path.split(os.path.abspath(self.osImageElf))
                 listenPort = self.findPort(portUse='netboot')
                 printAndLog(f"{self.targetIdInfo}boot: netboot port is <{listenPort}>.")
@@ -59,7 +59,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.log'),'w'))
                     server = tftpy.TftpServer(dirname)
                 except Exception as exc:
-                    self.shutdownAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overwriteShutdown=True,exitCode=EXIT.Run)
+                    self.shutdownAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overrideShutdown=True,exitCode=EXIT.Run)
 
                 serverThread = threading.Thread(target=server.listen, kwargs={'listenip': self.ipHost, 'listenport': listenPort})
                 serverThread.daemon = True
@@ -70,7 +70,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                 self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
 
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
 
             if (self.elfLoader=='netboot'):
                 server.stop()
@@ -88,9 +88,9 @@ class vcu118Target (fpgaTarget, commonTarget):
         elif (self.osImage=='FreeRTOS'):
             self.fpgaStart(self.osImageElf,elfLoadTimeout=60) 
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
         else:
-            self.shutdownAndExit(f"<boot> is not implemented for <{self.osImage}> on <{self.target}>.",overwriteShutdown=True)
+            self.shutdownAndExit(f"<boot> is not implemented for <{self.osImage}> on <{self.target}>.",overrideShutdown=True)
 
     @decorate.debugWrap
     @decorate.timeWrap

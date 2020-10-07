@@ -33,18 +33,18 @@ class qemuTarget (commonTarget):
             try:
                 self.ttyProcess = pexpect.spawn(qemuCommand,logfile=self.fTtyOut,timeout=timeout)
                 self.process = self.ttyProcess
-                self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+                self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
             except Exception as exc:
-                self.shutdownAndExit(f"boot: Failed to spwan the qemu process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+                self.shutdownAndExit(f"boot: Failed to spwan the qemu process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
         elif (self.osImage=='FreeRTOS'):
             qemuCommand = "qemu-system-riscv32 -nographic -machine sifive_e -kernel " + getSetting('osImageElf',targetId=self.targetId)
             try:
                 self.process = pexpect.spawn(qemuCommand,timeout=timeout,logfile=self.fTtyOut)
             except Exception as exc:
                 self.shutdownAndExit("Error in {0}: Failed to spawn the qemu process.".format(self.filename),
-                    overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+                    overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
             time.sleep(1)
-            textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,shutdownOnError=False,overwriteShutdown=True)
+            textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,shutdownOnError=False,overrideShutdown=True)
             if (idxReturn==1): #No "">>> End Of Testgen <<<", but qemu aborted without a timeout
                 self.fTtyOut.write (b"\n<QEMU ABORTED>\n")
             else:
@@ -53,7 +53,7 @@ class qemuTarget (commonTarget):
             #Will terminate here as well because it is easier, and there is currently no other options -- might change
             self.sendToTarget ("\x01x")
         else:
-            self.shutdownAndExit(f"boot: <{self.osImage}> is not implemented on <{self.target}>.",overwriteShutdown=True,exitCode=EXIT.Implementation)
+            self.shutdownAndExit(f"boot: <{self.osImage}> is not implemented on <{self.target}>.",overrideShutdown=True,exitCode=EXIT.Implementation)
         return
 
     @decorate.debugWrap
