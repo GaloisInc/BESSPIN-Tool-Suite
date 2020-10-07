@@ -42,7 +42,7 @@ def install (target):
         retCatPassword = target.runCommand("cat /root/bvrs-official-password")[1]
         passwordMatch = matchExprInLines (r"^(?P<b64Password>[A-Za-z0-9+/]{16})$",retCatPassword.splitlines())
         if (not passwordMatch):
-            target.shutdownAndExit("<sriCambdridgeSetup>: Failed to obtain the election official password.",exitCode=EXIT.Run)
+            target.terminateAndExit("<sriCambdridgeSetup>: Failed to obtain the election official password.",exitCode=EXIT.Run)
         printAndLog(f"The election official credentials are: username 'official' and password '{passwordMatch.group('b64Password')}'")
         return
     else:
@@ -91,7 +91,7 @@ def install (target):
         target.runCommand("service bvrs enable", erroneousContents="bvrs does not exist",tee=appLog,timeout=serviceTimeout)
         target.runCommand("service bvrs start", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
     else:
-        target.shutdownAndExit (f"Can't start bvrs service on <{getSetting('osImage')}>", exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit (f"Can't start bvrs service on <{getSetting('osImage')}>", exitCode=EXIT.Dev_Bug)
     return
 
 @decorate.debugWrap
@@ -118,7 +118,7 @@ def deploymentTest (target):
     req += "voter-confidential=0"
     out = curlRequest(req, rawOutput=True)
     if out != '{}':
-        target.shutdownAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
 
     target.genStdinEntropy()
     req  = f"http://{ip}:{target.votingHttpPortTarget}/bvrs/voter_check_status.json?"
@@ -127,15 +127,15 @@ def deploymentTest (target):
     req += "voter-givennames=g"
     out = curlRequest(req, rawOutput=True)
     if not out:
-        target.shutdownAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Register Voter]: Failed! [Fatal]", exitCode=EXIT.Run)
     try:
         res = json.loads(out)
         if "voter_q" not in res:
-            target.shutdownAndExit(f"Test[Check Voter]: Failed! [Unexpected Result Type]", exitCode=EXIT.Run)
+            target.terminateAndExit(f"Test[Check Voter]: Failed! [Unexpected Result Type]", exitCode=EXIT.Run)
         if len(res["voter_q"]) != 1:
-            target.shutdownAndExit(f"Test[Check Voter]: Failed! [Unexpected Contents]", exitCode=EXIT.Run)
+            target.terminateAndExit(f"Test[Check Voter]: Failed! [Unexpected Contents]", exitCode=EXIT.Run)
     except json.JSONDecodeError as exc:
-        target.shutdownAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[Check Voter]: Failed! [Malformed Result]", exc=exc, exitCode=EXIT.Run)
 
     printAndLog("Unregistering test voter")
     sqlite = getSetting('sqliteBin')

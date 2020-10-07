@@ -6,7 +6,7 @@ from fett.base.utils.misc import *
 def test_772 (target,binTest):
     testNum = 772
     if (binTest != "test_{0}.riscv".format(testNum)):
-        target.shutdownAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
     nResourceLimit = getSettingDict("resourceManagement", "test_nResourceLimit")
 
     outLog = "\n" + '*'*30 + " TEST {0} ".format(testNum) + '*'*30 + "\n\n"
@@ -61,5 +61,5 @@ def test_772 (target,binTest):
         time.sleep (1)
 
     else:
-        target.shutdownAndExit(f"<test_{testNum}> is not implemented for <{target.osImage}>.",exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit(f"<test_{testNum}> is not implemented for <{target.osImage}>.",exitCode=EXIT.Dev_Bug)
     return outLog

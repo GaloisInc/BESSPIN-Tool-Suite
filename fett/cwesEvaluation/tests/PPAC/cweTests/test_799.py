@@ -6,7 +6,7 @@ from fett.base.utils.misc import *
 def test_799 (target,binTest):
     testNum = 799
     if (binTest != "test_{0}.riscv".format(testNum)):
-        target.shutdownAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
     nInteractions = getSettingDict("PPAC", "test_nAllowedInteractions")
 
     outLog = "\n" + '*'*30 + " TEST {0} ".format(testNum) + '*'*30 + "\n\n"
@@ -218,5 +218,5 @@ def test_799 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
         
     else:
-        target.shutdownAndExit(f"<test_{testNum}> is not implemented for <{target.osImage}>.",exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit(f"<test_{testNum}> is not implemented for <{target.osImage}>.",exitCode=EXIT.Dev_Bug)
     return outLog

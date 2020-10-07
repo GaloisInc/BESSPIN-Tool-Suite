@@ -186,7 +186,7 @@ def deploymentTest(target):
         try:
             subprocess.run(['sudo',sys.executable,os.path.join(getSetting('repoDir'),'fett','apps','freertos','sudoScapy.py'),'+'.join(sys.path),hostIP,targetIP,str(TFTPPort)], stdout=getSetting('appLog'),stderr=getSetting('appLog'), timeout=10, check=True, shell=False)
         except Exception as exc:
-            target.shutdownAndExit(f"Failed to send the malicious packets using <sudoScapy.py>",exc=exc,exitCode=EXIT.Run)
+            target.terminateAndExit(f"Failed to send the malicious packets using <sudoScapy.py>",exc=exc,exitCode=EXIT.Run)
 
             printAndLog("Back from LMCO SCAPY Test",doPrint=True,tee=getSetting('appLog'))
 
@@ -277,7 +277,7 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
         timeout=timeout,suppressErrors=suppressErrors,tee=teeFile)
 
     if ((retCommand[3] == 0) and (not endOfApp)): #FETT exited prematurely
-        target.shutdownAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
+        target.terminateAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
 
     return
 
@@ -285,7 +285,7 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 def rtosShutdownAndExit (target, message, exc=None, exitCode=None):
     # Run to completion
     rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,exitOnError=False,timeout=30, tee=False)
-    target.shutdownAndExit(message, exc=exc, exitCode=exitCode)
+    target.terminateAndExit(message, exc=exc, exitCode=exitCode)
 
 @decorate.debugWrap
 def prepareAssets ():

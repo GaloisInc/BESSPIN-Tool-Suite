@@ -112,7 +112,7 @@ def deploymentTest(target):
             target.runCommand(f"rm -f {pathToFile}/{xDb}",tee=appLog)
             printAndLog(f"Test[drop_database]: Database {xDb} dropped successfully!", doPrint=False,tee=getSetting('appLog'))
         else:
-            target.shutdownAndExit(f"\nTest[drop_database]: Failed to find <{pathToFile}/{xDb}> on target.", exitCode=EXIT.Run)
+            target.terminateAndExit(f"\nTest[drop_database]: Failed to find <{pathToFile}/{xDb}> on target.", exitCode=EXIT.Run)
         return
 
     create_database_and_table()

@@ -85,7 +85,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                     logFile.write("\n<QEMU ABORTED>\n")
                     return
                 else:
-                    target.shutdownAndExit("<runTests> Unexpected EOF during "
+                    target.terminateAndExit("<runTests> Unexpected EOF during "
                                            "test run.",
                                            exitCode=EXIT.Dev_Bug)
             if wasTimeout:
@@ -103,7 +103,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         mkdir(baseLogDir, addToSettings="cwesEvaluationLogs")
 
         if not sendFiles:
-            target.shutdownAndExit("<runApp>: sendFiles must be True for CWEs "
+            target.terminateAndExit("<runApp>: sendFiles must be True for CWEs "
                                    "evaluation on unix hosts",
                                    exitCode = EXIT.Dev_Bug)
         target.sendTar(timeout=timeout)
@@ -139,7 +139,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         if target.isCurrentUserRoot != wasRoot:
             target.switchUser()
     else:
-        target.shutdownAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
+        target.terminateAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
                    exitCode=EXIT.Implementation)
 
 @decorate.debugWrap

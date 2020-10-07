@@ -10,7 +10,7 @@ import time, subprocess
 @decorate.timeWrap
 def deploymentTest(target):
     if (not isEqSetting('target','awsf1')):
-        target.shutdownAndExit (f"<deploymentTest> is not implemented for Michigan on <{getSetting('target')}>",exitCode=EXIT.Implementation)
+        target.terminateAndExit (f"<deploymentTest> is not implemented for Michigan on <{getSetting('target')}>",exitCode=EXIT.Implementation)
 
     serverUrl = f"{target.ipTarget}:{getSettingDict('michiganInfo',['httpPort'])}"
     curlTestPath = getSettingDict('michiganInfo',['curlTestPath'])
@@ -20,7 +20,7 @@ def deploymentTest(target):
         if (isSuccess):
             printAndLog(f"Test [{testName}] - OK!",doPrint=True,tee=getSetting('appLog'))
         else:
-            target.shutdownAndExit (f"Test [{testName}] - FAILED!",exitCode=EXIT.Run)
+            target.terminateAndExit (f"Test [{testName}] - FAILED!",exitCode=EXIT.Run)
 
     # Curl the help page -- note that it returns exit code 8. suprocess.getoutput ignores return code by default
     curlOut = subprocess.getoutput(f"curl -L -s -X GET -m 10 -I http://{serverUrl}/{curlTestPath}")
@@ -34,7 +34,7 @@ def deploymentTest(target):
             outLynx = str(subprocess.check_output(command, stderr=subprocess.STDOUT, timeout=30),'utf-8')
             printAndLog(outLynx,doPrint=False,tee=getSetting('appLog'))
         except Exception as exc:
-            target.shutdownAndExit (f"Test [query-{testNum}] - FAILED!",exc=exc,exitCode=EXIT.Run)
+            target.terminateAndExit (f"Test [query-{testNum}] - FAILED!",exc=exc,exitCode=EXIT.Run)
 
         reportTestResult (f"query-{testNum}",(('error' not in outLynx) and ('ERROR' not in outLynx)))
 
@@ -48,7 +48,7 @@ def deploymentTest(target):
 @decorate.timeWrap
 def terminateAppStack (target):
     if (not isEqSetting('target','awsf1')):
-        target.shutdownAndExit (f"<terminateAppStack> is not implemented for Michigan on <{getSetting('target')}>",exitCode=EXIT.Implementation)
+        target.terminateAndExit (f"<terminateAppStack> is not implemented for Michigan on <{getSetting('target')}>",exitCode=EXIT.Implementation)
 
     setAdaptorUpDown(getSetting('awsf1TapAdaptorName'), 'down') #This will ensure that the researcher don't have access anymore
     

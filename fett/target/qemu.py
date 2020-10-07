@@ -35,13 +35,13 @@ class qemuTarget (commonTarget):
                 self.process = self.ttyProcess
                 self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
             except Exception as exc:
-                self.shutdownAndExit(f"boot: Failed to spwan the qemu process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+                self.terminateAndExit(f"boot: Failed to spwan the qemu process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
         elif (self.osImage=='FreeRTOS'):
             qemuCommand = "qemu-system-riscv32 -nographic -machine sifive_e -kernel " + getSetting('osImageElf',targetId=self.targetId)
             try:
                 self.process = pexpect.spawn(qemuCommand,timeout=timeout,logfile=self.fTtyOut)
             except Exception as exc:
-                self.shutdownAndExit("Error in {0}: Failed to spawn the qemu process.".format(self.filename),
+                self.terminateAndExit("Error in {0}: Failed to spawn the qemu process.".format(self.filename),
                     overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
             time.sleep(1)
             textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,exitOnError=False,overrideShutdown=True)
@@ -53,7 +53,7 @@ class qemuTarget (commonTarget):
             #Will terminate here as well because it is easier, and there is currently no other options -- might change
             self.sendToTarget ("\x01x")
         else:
-            self.shutdownAndExit(f"boot: <{self.osImage}> is not implemented on <{self.target}>.",overrideShutdown=True,exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"boot: <{self.osImage}> is not implemented on <{self.target}>.",overrideShutdown=True,exitCode=EXIT.Implementation)
         return
 
     @decorate.debugWrap
@@ -70,7 +70,7 @@ class qemuTarget (commonTarget):
             self.runCommand (f"ifconfig vtnet0 {self.ipTarget}/24",erroneousContents="ifconfig:")
             self.runCommand(f"route add default {self.ipHost}")
         else:
-            self.shutdownAndExit(f"activateEthernet: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"activateEthernet: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
         return
 
     @decorate.debugWrap

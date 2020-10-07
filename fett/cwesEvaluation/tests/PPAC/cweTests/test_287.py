@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 def test_287 (target,binTest):
     testNum = 287
     if (binTest != "test_{0}.riscv".format(testNum)):
-        target.shutdownAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit(f"Calling <test_{testNum}> for binary <{binTest}>.",exitCode=EXIT.Dev_Bug)
 
     outLog = "\n" + '*'*30 + " TEST {0} ".format(testNum) + '*'*30 + "\n\n"
     outLog += "\n<OSIMAGE={0}>\n".format(target.osImage)
@@ -89,7 +89,7 @@ def test_287 (target,binTest):
                 retCommand = target.runCommand ("su root",endsWith=['Password:', shellRoot, shellUser])
             retLog += retCommand[1]
             if ((not retCommand[0]) or (retCommand[2]) or (retCommand[3] < 0)): #error happened
-                target.shutdownAndExit ("<In test_287>: Failed to log in again.",overrideShutdown=True,exitCode=EXIT.Run)
+                target.terminateAndExit ("<In test_287>: Failed to log in again.",overrideShutdown=True,exitCode=EXIT.Run)
                 return retLog #never should be executed
             elif (retCommand[3] == 0): #Password is requested
                 usePassword = target.userPassword if (target.isCurrentUserRoot) else target.rootPassword
@@ -102,7 +102,7 @@ def test_287 (target,binTest):
                 if (typeOfSwitch == 'login'):
                     if ( ((retCommand[3] == 1) and target.isCurrentUserRoot) or ((retCommand[3] == 2) and not target.isCurrentUserRoot) ):
                         #This would be a surprising state to come to
-                        target.shutdownAndExit ("<In test_287>: Interesting state: login with a user name opens the other user shell.",exitCode=EXIT.Run)
+                        target.terminateAndExit ("<In test_287>: Interesting state: login with a user name opens the other user shell.",exitCode=EXIT.Run)
                         return retLog #never should be executed
                     isGranted = True
                 else: #su
@@ -400,5 +400,5 @@ def test_287 (target,binTest):
         outLog += "-"*60 + "\n\n\n"
 
     else:
-        target.shutdownAndExit(f"<test_{testNum}> is not implemented for <{target.osImage}>.",exitCode=EXIT.Dev_Bug)
+        target.terminateAndExit(f"<test_{testNum}> is not implemented for <{target.osImage}>.",exitCode=EXIT.Dev_Bug)
     return outLog
