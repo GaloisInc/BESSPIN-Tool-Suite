@@ -65,6 +65,14 @@ class cyberPhysShell(cmd.Cmd):
             printAndLog(f"<target{iTarget}>: {self.getTargetMember(iTarget,'ipTarget')}")
         return
 
+    def do_uart(self,inp):
+        """uart
+        Displays the ports to which the UART/TTY is piped for the running targets"""
+        printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
+        for iTarget in range(1,getSetting('nTargets')+1):
+            printAndLog(f"<target{iTarget}>: {getSetting('uartPipePort',targetId=iTarget)}")
+        return
+
     def do_info(self,inp):
         """info
         Displays info about the running targets"""
