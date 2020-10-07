@@ -80,7 +80,7 @@ class fpgaTarget(object):
                 self.fpgaStartRetriesIdx += 1
                 errorAndLog (f"fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
-            self.shutdownAndExit(f"fpgaStart: Failed to spawn the openocd process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # start the gdb process
         self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb.out'), 'wb')
@@ -94,7 +94,7 @@ class fpgaTarget(object):
                 self.fpgaStartRetriesIdx += 1
                 errorAndLog (f"fpgaStart: Failed to spawn the gdb process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.gdb)
-            self.shutdownAndExit(f"fpgaStart: Failed to spawn the gdb process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"fpgaStart: Failed to spawn the gdb process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # configure gdb
         self.runCommandGdb("set confirm off")
@@ -142,7 +142,7 @@ class fpgaTarget(object):
                     self.stopShowingTime = common.showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout)
                     return self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
                 else:
-                    self.shutdownAndExit(f"Failed to boot {self.processor}.",overwriteShutdown=True,
+                    self.shutdownAndExit(f"Failed to boot {self.processor}.",overrideShutdown=True,
                         overwriteConsole=True,exitCode=EXIT.Run)
 
         return
@@ -166,7 +166,7 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def fpgaReload (self, elfPath, elfLoadTimeout=15, stage=failStage.unknown):
         if (self.target!='vcu118'):
-            self.shutdownAndExit(f"<fpgaReload> is not implemented for target {self.target}.",overwriteShutdown=True)
+            self.shutdownAndExit(f"<fpgaReload> is not implemented for target {self.target}.",overrideShutdown=True)
         self.fpgaTearDown(isReload=True,stage=stage)
         vcu118.programBitfile(doPrint=False, isReload=True)
         time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
@@ -194,7 +194,7 @@ class fpgaTarget(object):
                     logfile=self.fGdbOut, timeout=15, echo=False)
             self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
         except Exception as exc:
-            self.shutdownAndExit(f"fpgaStart: Failed to spawn the gdb process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"fpgaStart: Failed to spawn the gdb process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
         self.runCommandGdb("define hook-continue\ndont-repeat\nend")
         self.gdbConnect()
         self.runCommandGdb('c', endsWith='Continuing')
@@ -209,7 +209,7 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def softReset (self, isRepeated=False):
         if (self.target!='vcu118'):
-            self.shutdownAndExit(f"<softReset> is not implemented for target {self.target}.",overwriteShutdown=True)
+            self.shutdownAndExit(f"<softReset> is not implemented for target {self.target}.",overrideShutdown=True)
         # reset hart
         self.riscvWrite(int("0x6FFF0000", base=16),1,32) # set *(0x6fff0000)=1
         if (self.procFlavor=='chisel'):
@@ -259,7 +259,7 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def expectOnOpenocd (self,endsWith,command,**kwargs):
         return self.expectFromTarget (endsWith,command=f"openocd:{command}",
-                overwriteShutdown=True,process=self.openocdProcess,**kwargs)
+                overrideShutdown=True,process=self.openocdProcess,**kwargs)
 
     @decorate.debugWrap
     def runCommandGdb(self, command, endsWith=None, timeout=15, **kwargs):
@@ -270,7 +270,7 @@ class fpgaTarget(object):
                                 sendToNonUnix=True,
                                 timeout=timeout,
                                 process=self.gdbProcess,
-                                overwriteShutdown=True,
+                                overrideShutdown=True,
                                 **kwargs)
 
     @decorate.debugWrap

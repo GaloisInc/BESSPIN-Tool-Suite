@@ -92,14 +92,14 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def shutdownAndExit (self,message,overwriteShutdown=False,overwriteConsole=False,exitCode=None,exc=None):
+    def shutdownAndExit (self,message,overrideShutdown=False,overwriteConsole=False,exitCode=None,exc=None):
         if (self.stopShowingTime is not None): #turn off any time display
             try:
                 self.stopShowingTime.set()
             except:
                 pass
         errorAndLog(message,exc=exc)
-        if (not overwriteShutdown):
+        if (not overrideShutdown):
             self.shutdown(overwriteConsole=overwriteConsole,isError=True)
         self.tearDown()
         logAndExit("",exitCode=exitCode)
@@ -183,7 +183,7 @@ class commonTarget():
     def shutdown (self,overwriteConsole=False,isError=False):
         if (self.AttemptShutdownFailed):
             self.shutdownAndExit(f"shutdown: Unable to shutdown the {self.target} properly.",
-                overwriteShutdown=True,exitCode=EXIT.Run)
+                overrideShutdown=True,exitCode=EXIT.Run)
         self.AttemptShutdownFailed = True #to avoid being trapped if the switching user failed and target is not responding
         if (isEnabled('openConsole') and (not overwriteConsole)):
             if (self.isSshConn): #only interact on the JTAG
@@ -234,13 +234,13 @@ class commonTarget():
                     else:
                         return False, 0, {
                             'message': f'Unrecognized value <{setting}> for setting <{name}> in <bootTimeout.json>.',
-                            'overwriteShutdown': True,
+                            'overrideShutdown': True,
                             'exitCode': EXIT.Dev_Bug
                         }
                 else:
                     return False, 0, {
                         'message': f'Unrecognized layer <{layer}> in <bootTimeout.json>.',
-                        'overwriteShutdown': True,
+                        'overrideShutdown': True,
                         'exitCode': EXIT.Dev_Bug
                     }
 
@@ -249,7 +249,7 @@ class commonTarget():
             if (self.osImage not in data):
                 return False, 0, {
                     'message': f'start: Timeout is not recorded for osImage=<{self.osImage}>.',
-                    'overwriteShutdown': True,
+                    'overrideShutdown': True,
                     'exitCode': EXIT.Implementation
                 }
             os_image = data[self.osImage]
@@ -261,7 +261,7 @@ class commonTarget():
                 else:
                     return False, 0, {
                         'message': f'start: Timeout is not recorded for target=<{self.target}>.',
-                        'overwriteShutdown': True,
+                        'overrideShutdown': True,
                         'exitCode': EXIT.Implementation
                     }
             target = os_image[self.target]
@@ -284,7 +284,7 @@ class commonTarget():
                         f"<{self.target}>. This might take a while...")
         else:
             self.shutdownAndExit(f"start: <{self.osImage}> is not implemented on "
-                f"<{self.target}>.",overwriteShutdown=True, exitCode=EXIT.Implementation)
+                f"<{self.target}>.",overrideShutdown=True, exitCode=EXIT.Implementation)
         self.sumTimeout = sum(timeoutDict.values())
         if (self.osImage=='debian'):
             if (not isEqSetting('mode','cyberPhys')):
@@ -295,9 +295,9 @@ class commonTarget():
                 time.sleep (0.3) #to make it beautiful
             #logging in
             printAndLog (f"{self.targetIdInfo}start: Logging in, activating ethernet, and setting system time...",doPrint=(not self.targetId))
-            self.runCommand ("root",endsWith="Password:",overwriteShutdown=True)
+            self.runCommand ("root",endsWith="Password:",overrideShutdown=True)
             loginTimeout = 120 if (self.restartMode) else 60
-            self.runCommand (self.rootPassword,timeout=loginTimeout,overwriteShutdown=True)
+            self.runCommand (self.rootPassword,timeout=loginTimeout,overrideShutdown=True)
 
         elif (self.osImage=='busybox'):
             if (not isEqSetting('mode','cyberPhys')):
@@ -306,7 +306,7 @@ class commonTarget():
             if (not isEqSetting('mode','cyberPhys')):
                 self.stopShowingTime.set()
                 time.sleep (0.3) #to make it beautiful
-            self.runCommand (" ",endsWith="/ #",timeout=10,overwriteShutdown=True) #This is necessary
+            self.runCommand (" ",endsWith="/ #",timeout=10,overrideShutdown=True) #This is necessary
             self.runCommand("cd root",timeout=10)
             printAndLog (f"{self.targetIdInfo}start: Logging in, activating ethernet, and setting system time...",doPrint=(not self.targetId))
         elif (self.osImage=='FreeRTOS'):
@@ -332,14 +332,14 @@ class commonTarget():
                 tempPrompt = "\r\n#"
             # vcu118 freebsd would be already logged in if onlySsh
             if (self.target=='qemu'):
-                self.runCommand("root",endsWith="\r\n#",overwriteShutdown=True)
+                self.runCommand("root",endsWith="\r\n#",overrideShutdown=True)
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
             elif (not self.onlySsh):
                 if ((self.binarySource!="SRI-Cambridge") or self.restartMode):
-                    self.runCommand ("root",endsWith='Password:',overwriteShutdown=True)
-                    self.runCommand (self.rootPassword,endsWith=tempPrompt,overwriteShutdown=True)
+                    self.runCommand ("root",endsWith='Password:',overrideShutdown=True)
+                    self.runCommand (self.rootPassword,endsWith=tempPrompt,overrideShutdown=True)
                 else:
-                    self.runCommand ("root",endsWith=tempPrompt,overwriteShutdown=True)
+                    self.runCommand ("root",endsWith=tempPrompt,overrideShutdown=True)
 
             if (self.target!='awsf1'):
                 self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
@@ -601,7 +601,7 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def runCommand (self,command,endsWith=None,expectedContents=None,
-                    erroneousContents=None,shutdownOnError=True,timeout=60,overwriteShutdown=False,
+                    erroneousContents=None,shutdownOnError=True,timeout=60,overrideShutdown=False,
                     suppressErrors=False,tee=None,sendToNonUnix=False,issueInterrupt=True,process=None):
         """
         " runCommand: Sends `command` to the target, and wait for a reply.
@@ -613,7 +613,7 @@ class commonTarget():
         "   erroneousContents: string or list of strings. If either is found in the target's response --> error
         "   shutdownOnError: Boolean. Whether to return or shutdownAndExit in case of error (timeout or contents related error)
         "   timeout: how long to wait for endsWith before timing out.
-        "   overwriteShutdown: Boolean. Whether to skip "shutdown" when terminating. (Should be used before the target is fully booted)
+        "   overrideShutdown: Boolean. Whether to skip "shutdown" when terminating. (Should be used before the target is fully booted)
         "                      Note that disabling "shutdownOnError" renders this redundant.
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
@@ -636,7 +636,7 @@ class commonTarget():
         if (endsWith is None):
             endsWith = self.getDefaultEndWith()
         textBack, wasTimeout, idxEndsWith = self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,
-                                                                   overwriteShutdown=overwriteShutdown,
+                                                                   overrideShutdown=overrideShutdown,
                                                                    timeout=timeout,issueInterrupt=issueInterrupt,
                                                                    process=process,suppressWarnings=suppressErrors)
         logging.debug(f"runCommand: After expectFromTarget: <command={command}>, <endsWith={endsWith}>")
@@ -964,7 +964,7 @@ class commonTarget():
         if (self.terminateTargetStarted and (process == self.process)):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
-            self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overwriteShutdown=True,overwriteConsole=True,exitCode=EXIT.Run)
+            self.shutdownAndExit("keyboardInterrupt: interrupting is not resolving properly",overrideShutdown=True,overwriteConsole=True,exitCode=EXIT.Run)
         else:
             self.keyboardInterruptTriggered = True
         if ((not isEnabled('isUnix',targetId=self.targetId)) and (process == self.process)):
@@ -1028,7 +1028,7 @@ class commonTarget():
             warnAndLog(f"{fnName}: called with sshConnection, but connection is unreachable. Falling back to main tty.",doPrint=False)
             self.killSshConn()
         if (not self.process): #Note that this condition cannot be merged with the above one, because killSshConn updates self.process
-            self.shutdownAndExit(f"{fnName}: Failed to communicate with target.",overwriteShutdown=True,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"{fnName}: Failed to communicate with target.",overrideShutdown=True,exitCode=EXIT.Run)
         logging.debug(f"{fnName}: isSshConn = {self.isSshConn}")
         return
 
@@ -1074,7 +1074,7 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overwriteShutdown=False,
+    def expectFromTarget (self,endsWith,command,shutdownOnError=True,timeout=15,overrideShutdown=False,
                             issueInterrupt=True,process=None,suppressWarnings=False,sshRetry=True):
         def warningThread(msg, waitingTime, stopEvent, suppressWarnings):
             """thread will wait on an event, and display warning if not set by waiting time"""
@@ -1107,7 +1107,7 @@ class commonTarget():
                 textBack += self.readFromTarget(endsWith=endsWith[retExpect],process=process)
         except pexpect.TIMEOUT:
             if (shutdownOnError):
-                self.shutdownAndExit(f"expectFromTarget: {self.target.capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
+                self.shutdownAndExit(f"expectFromTarget: {self.target.capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
             elif (self.osImage!='FreeRTOS'):
                 warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
                 textBack += self.keyboardInterrupt (shutdownOnError=True, process=process) if issueInterrupt else ""
@@ -1119,9 +1119,9 @@ class commonTarget():
                 self.openSshConn(userName='root' if self.isCurrentUserRoot else self.userName)
                 self.sendToTarget(" ")
                 return self.expectFromTarget (endsWith,command,shutdownOnError=shutdownOnError,timeout=timeout,
-                            overwriteShutdown=overwriteShutdown,issueInterrupt=issueInterrupt,process=None,
+                            overrideShutdown=overrideShutdown,issueInterrupt=issueInterrupt,process=None,
                             suppressWarnings=suppressWarnings,sshRetry=False)
-            self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overwriteShutdown=overwriteShutdown)
+            self.shutdownAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
         # tell warning message thread that the expect is finished
         stopEvent.set()
         if (isinstance(endsWith,str)): #only one string

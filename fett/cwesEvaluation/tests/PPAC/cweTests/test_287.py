@@ -89,7 +89,7 @@ def test_287 (target,binTest):
                 retCommand = target.runCommand ("su root",endsWith=['Password:', shellRoot, shellUser])
             retLog += retCommand[1]
             if ((not retCommand[0]) or (retCommand[2]) or (retCommand[3] < 0)): #error happened
-                target.shutdownAndExit ("<In test_287>: Failed to log in again.",overwriteShutdown=True,exitCode=EXIT.Run)
+                target.shutdownAndExit ("<In test_287>: Failed to log in again.",overrideShutdown=True,exitCode=EXIT.Run)
                 return retLog #never should be executed
             elif (retCommand[3] == 0): #Password is requested
                 usePassword = target.userPassword if (target.isCurrentUserRoot) else target.rootPassword

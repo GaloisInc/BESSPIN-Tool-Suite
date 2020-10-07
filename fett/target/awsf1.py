@@ -35,7 +35,7 @@ class firesimTarget(fpgaTarget, commonTarget):
                                         cwd=awsFiresimSimPath)
             self.switch0Proc.expect("Assuming tap0",timeout=10)
         except Exception as exc:
-            self.shutdownAndExit(f"boot: Failed to spawn the switch0 process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"boot: Failed to spawn the switch0 process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # 2. fsim
         firesimCommand = ' '.join([
@@ -107,13 +107,13 @@ class firesimTarget(fpgaTarget, commonTarget):
             self.process = self.ttyProcess
             time.sleep(1)
         except Exception as exc:
-            self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
-            self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
+            self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overrideShutdown=True)
             self.fpgaStart(getSetting('osImageElf'))
         
-        self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+        self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
 
         # The tap needs to be turned up AFTER booting
         if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
@@ -246,9 +246,9 @@ class connectalTarget(commonTarget):
                                          cwd=awsConnectalHostPath)
             self.process = self.ttyProcess
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
         except Exception as exc:
-            self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
          # The tap needs to be turned up AFTER booting
         setAdaptorUpDown(getSetting('awsf1TapAdaptorName'), 'up')
