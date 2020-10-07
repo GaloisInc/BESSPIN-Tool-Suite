@@ -33,7 +33,7 @@ class qemuTarget (commonTarget):
             try:
                 self.ttyProcess = pexpect.spawn(qemuCommand,logfile=self.fTtyOut,timeout=timeout)
                 self.process = self.ttyProcess
-                self.expectFromTarget(endsWith,"Booting",timeout=timeout)
+                self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
             except Exception as exc:
                 self.shutdownAndExit(f"boot: Failed to spwan the qemu process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
         elif (self.osImage=='FreeRTOS'):
@@ -44,7 +44,7 @@ class qemuTarget (commonTarget):
                 self.shutdownAndExit("Error in {0}: Failed to spawn the qemu process.".format(self.filename),
                     overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
             time.sleep(1)
-            textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,shutdownOnError=False)
+            textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,shutdownOnError=False,overwriteShutdown=True)
             if (idxReturn==1): #No "">>> End Of Testgen <<<", but qemu aborted without a timeout
                 self.fTtyOut.write (b"\n<QEMU ABORTED>\n")
             else:

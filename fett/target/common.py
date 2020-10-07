@@ -295,9 +295,9 @@ class commonTarget():
                 time.sleep (0.3) #to make it beautiful
             #logging in
             printAndLog (f"{self.targetIdInfo}start: Logging in, activating ethernet, and setting system time...",doPrint=(not self.targetId))
-            self.runCommand ("root",endsWith="Password:")
+            self.runCommand ("root",endsWith="Password:",overwriteShutdown=True)
             loginTimeout = 120 if (self.restartMode) else 60
-            self.runCommand (self.rootPassword,timeout=loginTimeout)
+            self.runCommand (self.rootPassword,timeout=loginTimeout,overwriteShutdown=True)
 
         elif (self.osImage=='busybox'):
             if (not isEqSetting('mode','cyberPhys')):
@@ -306,7 +306,7 @@ class commonTarget():
             if (not isEqSetting('mode','cyberPhys')):
                 self.stopShowingTime.set()
                 time.sleep (0.3) #to make it beautiful
-            self.runCommand (" ",endsWith="/ #",timeout=10) #This is necessary
+            self.runCommand (" ",endsWith="/ #",timeout=10,overwriteShutdown=True) #This is necessary
             self.runCommand("cd root",timeout=10)
             printAndLog (f"{self.targetIdInfo}start: Logging in, activating ethernet, and setting system time...",doPrint=(not self.targetId))
         elif (self.osImage=='FreeRTOS'):
@@ -332,14 +332,14 @@ class commonTarget():
                 tempPrompt = "\r\n#"
             # vcu118 freebsd would be already logged in if onlySsh
             if (self.target=='qemu'):
-                self.runCommand("root",endsWith="\r\n#")
+                self.runCommand("root",endsWith="\r\n#",overwriteShutdown=True)
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
             elif (not self.onlySsh):
                 if ((self.binarySource!="SRI-Cambridge") or self.restartMode):
-                    self.runCommand ("root",endsWith='Password:')
-                    self.runCommand (self.rootPassword,endsWith=tempPrompt)
+                    self.runCommand ("root",endsWith='Password:',overwriteShutdown=True)
+                    self.runCommand (self.rootPassword,endsWith=tempPrompt,overwriteShutdown=True)
                 else:
-                    self.runCommand ("root",endsWith=tempPrompt)
+                    self.runCommand ("root",endsWith=tempPrompt,overwriteShutdown=True)
 
             if (self.target!='awsf1'):
                 self.runCommand("echo \"fettPrompt> \" > promptText.txt",endsWith=tempPrompt) #this is to avoid having the prompt in the set prompt command
