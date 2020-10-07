@@ -617,9 +617,10 @@ class commonTarget():
         "   endsWith: String/regex or list of strings/regex. The function returns when either is received from target.
         "   expectedContents: string or list of strings. If either is not found in the target's response --> error
         "   erroneousContents: string or list of strings. If either is found in the target's response --> error
-        "   shutdownOnError: Boolean. Whether to return or shutdown in case of error (timeout or contents related error)
+        "   shutdownOnError: Boolean. Whether to return or shutdownAndExit in case of error (timeout or contents related error)
         "   timeout: how long to wait for endsWith before timing out.
-        "   overwriteShutdown: Boolean. Whether to skip "shutdown" in case of error. (Should be used before the target is fully booted)
+        "   overwriteShutdown: Boolean. Whether to skip "shutdown" when terminating. (Should be used before the target is fully booted)
+        "                      Note that disabling "shutdownOnError" renders this redundant.
         "   suppressErrors: Boolean. Whether to print the errors on screen, or just report it silently.
         "   tee: A file object to write the text output to. Has to be a valid file object to write. 
         "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
