@@ -1369,7 +1369,7 @@ class commonTarget():
         #this seems wasteful, but it ensures thread-safe checks without using the networkLock
         for iPort in range(self.portsBegin,self.portsEnd+1,self.portsStep): 
             if (checkPort(iPort)):
-                self.portsBegin += self.portsStep
+                self.portsBegin = iPort + self.portsStep
                 return iPort
         self.shutdownAndExit(f"{self.targetIdInfo}findPort: Failed to find an unused port"
                     f" in the range of <{self.portsBegin}:{self.portsEnd}> for <{portUse}>.", exitCode=EXIT.Network)
