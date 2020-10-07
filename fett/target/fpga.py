@@ -130,7 +130,7 @@ class fpgaTarget(object):
 
         if ((self.processor=='bluespec_p3') and (self.target=='vcu118')):
             _,wasTimeout,_ = self.expectFromTarget("bbl loader", f"attempt to boot {self.processor}",
-                shutdownOnError=False, timeout=15, issueInterrupt=False,
+                exitOnError=False, timeout=15, issueInterrupt=False,
                 suppressWarnings=True, sshRetry=False)
             if (wasTimeout):
                 if ((self.bluespec_p3BootAttemptsIdx < self.bluespec_p3BootAttemptsMax - 1)):
@@ -178,7 +178,7 @@ class fpgaTarget(object):
     def startGdbDebug (self):
         self.interruptGdb()
         self.gdbDetach()
-        self.runCommandGdb("quit",endsWith=pexpect.EOF,shutdownOnError=False)
+        self.runCommandGdb("quit",endsWith=pexpect.EOF,exitOnError=False)
         printAndLog('*'*15 + " <gdbDebug> mode " + '*'*15)
         printAndLog(f"GDB Launch: In a separate window, run <riscv64-unknown-elf-gdb {getSetting('osImageElf',targetId=self.targetId)}>.")
         printAndLog(f"GDB Connect: In the GDB console, run <target remote localhost:{self.gdbPort}>.")
@@ -281,8 +281,8 @@ class fpgaTarget(object):
     def interruptGdb(self):
         """implement keyboardInterrupt for GDB"""
         if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
-            self.sendToTarget('\x03',shutdownOnError=False,process=self.gdbProcess) #send one extra \x03
-        self.keyboardInterrupt(shutdownOnError=False,retryCount=1,process=self.gdbProcess,
+            self.sendToTarget('\x03',exitOnError=False,process=self.gdbProcess) #send one extra \x03
+        self.keyboardInterrupt(exitOnError=False,retryCount=1,process=self.gdbProcess,
             endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15)
 
     @staticmethod
@@ -358,21 +358,21 @@ class fpgaTarget(object):
     def setupGdbCustomScoring (self):
         for funcCheckpoint in getSettingDict('customizedScoring','funcCheckpoints'):
             retCommand = self.runCommandGdb (f"dprintf {funcCheckpoint},\"<GDB-CHECKPOINT>:{funcCheckpoint}\\n\"",
-                erroneousContents="not defined", shutdownOnError=False)
+                erroneousContents="not defined", exitOnError=False)
             if (not retCommand[0]):
                 warnAndLog (f"setupGdbCustomScoring: Failed to insert a checkpoint at {funcCheckpoint}."
                             f"See <{self.fGdbOut.name}> for more details.")
         if (getSettingDict('customizedScoring','memAddress') != -1):
             memAddress = getSettingDict('customizedScoring','memAddress')
             retCommand = self.runCommandGdb (f"display/x * (int *) 0x{memAddress:08x}",
-                erroneousContents=['No symbol', 'warning'], shutdownOnError=False)
+                erroneousContents=['No symbol', 'warning'], exitOnError=False)
             if (not retCommand[0]):
                 warnAndLog (f"setupGdbCustomScoring: Unexpecte output while reading 0x{memAddress:08x}."
                             f"See <{self.fGdbOut.name}> for more details.")
             else:
-                self.runCommandGdb (f"watch * (int *) 0x{memAddress:08x}", shutdownOnError=False)
+                self.runCommandGdb (f"watch * (int *) 0x{memAddress:08x}", exitOnError=False)
                 setCmd = f"set * (int *) 0x{memAddress:08x} = {getSettingDict('customizedScoring','memResetValue')}"
-                self.runCommandGdb (f"commands\n{setCmd}\nc\nend", shutdownOnError=False)
+                self.runCommandGdb (f"commands\n{setCmd}\nc\nend", exitOnError=False)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -444,7 +444,7 @@ class fpgaTarget(object):
 
         # quit gdb
         if (stage > failStage.gdb):
-            self.runCommandGdb("quit",endsWith=pexpect.EOF,shutdownOnError=False)
+            self.runCommandGdb("quit",endsWith=pexpect.EOF,exitOnError=False)
 
         filesToClose = [self.fGdbOut, self.fOpenocdOut]
         if (self.target=='vcu118'):

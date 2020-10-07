@@ -113,7 +113,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                 self.freertosNtkRetriesIdx += 1
                 outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",
                     erroneousContents=["(Error)","INVALID"],timeout=20,
-                    shutdownOnError=False,suppressErrors=True
+                    exitOnError=False,suppressErrors=True
                     )
                 isSuccess, _, wasTimeout, _ = outCmd
                 if (isSuccess):
@@ -206,12 +206,12 @@ class vcu118Target (fpgaTarget, commonTarget):
             if (instruction == '--exit'): #exit
                 exitTerminal = True
             elif (instruction == '--ctrlc'):
-                self.sendToTarget(b'\x03\r\n',shutdownOnError=False)
+                self.sendToTarget(b'\x03\r\n',exitOnError=False)
             elif (('shutdown' in instruction) or ('poweroff' in instruction) or ('halt' in instruction)):
                 warnAndLog ("Please use \'--exit\' instead of direct shutting down command.")
-                self.sendToTarget(" ",shutdownOnError=False)
+                self.sendToTarget(" ",exitOnError=False)
             else:
-                self.sendToTarget(instruction,shutdownOnError=False)
+                self.sendToTarget(instruction,exitOnError=False)
                 time.sleep(1)
 
         stopReading.set()

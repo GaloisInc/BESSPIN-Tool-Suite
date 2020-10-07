@@ -18,7 +18,7 @@ def test_289 (target,binTest):
             target.switchUser() #as user on UART
             
         outLog += "-"*20 + "Part01: Use a fake username. Attempt to authenticate" + "-"*20 + "\n"
-        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),exitOnError=False)[1]
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
@@ -27,40 +27,40 @@ def test_289 (target,binTest):
         killAllUserProcesses = "for xPid in $(ps -u {0} -o pid=); do kill -9 $xPid; done" #To be customized -- This is important to be able to run usermod
         renameUserToFrom = "usermod --login {0} {1}" #To be customized 
         target.switchUser () #NOW ON ROOT
-        target.runCommand (killAllUserProcesses.format(target.userName),shutdownOnError=False)
-        target.runCommand ("sed -i \"s/&USERNAME&/{0}/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
+        target.runCommand (killAllUserProcesses.format(target.userName),exitOnError=False)
+        target.runCommand ("sed -i \"s/&USERNAME&/{0}/\" /etc/pam.d/pam_289".format(target.userName),exitOnError=False)
         time.sleep (20) #Give time to close the process opened by the user
         if (isEqSetting('processor','bluespec_p3')):
             time.sleep(60) #more time is needed
-        retCommand = target.runCommand (renameUserToFrom.format("ssithLord", target.userName),erroneousContents="usermod:",shutdownOnError=False)
+        retCommand = target.runCommand (renameUserToFrom.format("ssithLord", target.userName),erroneousContents="usermod:",exitOnError=False)
         if ((not retCommand[0]) or (retCommand[2])): #Error
             outLog += "\n<INVALID>\nFailed to execute \"usermod --login\"!\n"
         backupUserName = target.userName
         target.userName = "ssithLord" #To be able to login when using switchUser
         target.switchUser () #BACK ON USER: ssithLord
-        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),exitOnError=False)[1]
         target.userName = backupUserName
         target.switchUser () #NOW ON ROOT
-        target.runCommand (killAllUserProcesses.format("ssithLord"),shutdownOnError=False)
+        target.runCommand (killAllUserProcesses.format("ssithLord"),exitOnError=False)
         time.sleep (20) #Give time to close the process opened by the user
         if (isEqSetting('processor','bluespec_p3')):
             time.sleep(60) #more time is needed
-        target.runCommand (renameUserToFrom.format(target.userName,"ssithLord"),erroneousContents="usermod:",shutdownOnError=False) #reset userName
+        target.runCommand (renameUserToFrom.format(target.userName,"ssithLord"),erroneousContents="usermod:",exitOnError=False) #reset userName
         target.switchUser () #Back on user
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part03: Change the bash. Attempt to authenticate" + "-"*20 + "\n"
-        retCommand = target.runCommand("chsh -s /bin/rbash",endsWith="Password:",timeout=15,shutdownOnError=False)
+        retCommand = target.runCommand("chsh -s /bin/rbash",endsWith="Password:",timeout=15,exitOnError=False)
         outLog += retCommand[1]
         if ((not retCommand[0]) or (retCommand[2])): #Error
             outLog += "\n<INVALID>\nFailed to execute \"chsh\"!\n"
         else:
-            outLog += target.runCommand(target.userPassword,shutdownOnError=False)[1]
-            outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
-            outLog += target.runCommand("chsh -s /bin/bash",endsWith="Password:",timeout=15,shutdownOnError=False)[1]
-            outLog += target.runCommand(target.userPassword,shutdownOnError=False)[1]
+            outLog += target.runCommand(target.userPassword,exitOnError=False)[1]
+            outLog += target.runCommand("./{0}".format(binTest),exitOnError=False)[1]
+            outLog += target.runCommand("chsh -s /bin/bash",endsWith="Password:",timeout=15,exitOnError=False)[1]
+            outLog += target.runCommand(target.userPassword,exitOnError=False)[1]
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
@@ -77,18 +77,18 @@ def test_289 (target,binTest):
         outLog += "-"*20 + "Part01: Sanity check: block user's group. Attempt to authenticate" + "-"*20 + "\n"
 
         target.switchUser() #NOW ON ROOT
-        target.runCommand ("sed -i -e \"s/NOTAGROUP/{0}/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
+        target.runCommand ("sed -i -e \"s/NOTAGROUP/{0}/\" /etc/pam.d/pam_289".format(target.userName),exitOnError=False)
         target.switchUser() #NOW ON USER
-        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),exitOnError=False)[1]
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
 
         outLog += "-"*20 + "Part02: Use a fake group name. Attempt to authenticate" + "-"*20 + "\n"
         target.switchUser() #NOW ON ROOT
-        target.runCommand ("sed -i -e \"s/{0}/NOT_A_GROUP/\" /etc/pam.d/pam_289".format(target.userName),shutdownOnError=False)
+        target.runCommand ("sed -i -e \"s/{0}/NOT_A_GROUP/\" /etc/pam.d/pam_289".format(target.userName),exitOnError=False)
         target.switchUser() #NOW ON USER
-        outLog += target.runCommand("./{0}".format(binTest),shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),exitOnError=False)[1]
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
         outLog += "-"*60 + "\n\n\n"
@@ -98,17 +98,17 @@ def test_289 (target,binTest):
         # Add a group for the user
         userGroup = "bad_group"
         addGroup = f"pw groupadd {userGroup} -M {target.userName}"
-        target.runCommand (addGroup, shutdownOnError=False)
-        target.runCommand ("sed -i -e \"s/NOTAGROUP/{0}/\" /etc/pam.d/pam_289".format(userGroup),shutdownOnError=False)
-        retCommand = target.runCommand (renameGroupToFrom.format("ssithLord", userGroup),erroneousContents="usermod:",shutdownOnError=False)
+        target.runCommand (addGroup, exitOnError=False)
+        target.runCommand ("sed -i -e \"s/NOTAGROUP/{0}/\" /etc/pam.d/pam_289".format(userGroup),exitOnError=False)
+        retCommand = target.runCommand (renameGroupToFrom.format("ssithLord", userGroup),erroneousContents="usermod:",exitOnError=False)
         if ((not retCommand[0]) or (retCommand[2])): #Error
             outLog += "\n<INVALID>\nFailed to execute \"usermod --login\"!\n"
 
         target.switchUser () #BACK ON USER: ssithLord
-        outLog += target.runCommand("./{0}".format(binTest),endsWith="Password:",shutdownOnError=False)[1]
+        outLog += target.runCommand("./{0}".format(binTest),endsWith="Password:",exitOnError=False)[1]
         target.switchUser () #NOW ON ROOT
         time.sleep (1)
-        target.runCommand (renameGroupToFrom.format(userGroup,"ssithLord"),erroneousContents="usermod:",shutdownOnError=False) #reset userName
+        target.runCommand (renameGroupToFrom.format(userGroup,"ssithLord"),erroneousContents="usermod:",exitOnError=False) #reset userName
         target.switchUser () #Back on user
         if (isEnabled('useCustomScoring')): #will need the gdb output here
             outLog += target.getGdbOutput()
@@ -167,7 +167,7 @@ def test_289 (target,binTest):
             except:
                 outLog += "\n<INVALID> [host-client]: Failed to send message to target.\n"
                 break
-            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
             try:
                 # Look for the response
                 ready = select.select([clientSocket], [], [], 10) #10 seconds timeout
@@ -183,7 +183,7 @@ def test_289 (target,binTest):
             del TLS_CTX
         
         if (">>>End of Fett<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",exitOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"

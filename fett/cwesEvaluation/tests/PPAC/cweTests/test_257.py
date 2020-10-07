@@ -14,15 +14,15 @@ def test_257 (target,binTest):
     if (target.osImage in ['FreeBSD', 'debian']):
         outLog += "-"*20 + "Part01: Plaintext Stored." + "-"*20 + "\n"
 
-        outLog += target.runCommand("echo Me: $USER",shutdownOnError=False)[1]
+        outLog += target.runCommand("echo Me: $USER",exitOnError=False)[1]
         target.switchUser () # Now on Root
-        outLog += target.runCommand("echo Me: $USER",shutdownOnError=False)[1]
-        outLog += target.runCommand(f"cp /home/{target.userName}/{binTest} .",shutdownOnError=False)[1]
-        outLog += target.runCommand("./{0} {1} '{2}'".format(binTest,target.userName,target.userPassword),shutdownOnError=False)[1]
+        outLog += target.runCommand("echo Me: $USER",exitOnError=False)[1]
+        outLog += target.runCommand(f"cp /home/{target.userName}/{binTest} .",exitOnError=False)[1]
+        outLog += target.runCommand("./{0} {1} '{2}'".format(binTest,target.userName,target.userPassword),exitOnError=False)[1]
         target.userPassword = "NotMyOldPassword"
         target.switchUser () # Now on User
         outLog += "-"*20 + "User login" + "-"*20 + "\n"
-        outLog += target.runCommand("echo '<GRANTED> login with changed password'",shutdownOnError=False)[1]
+        outLog += target.runCommand("echo '<GRANTED> login with changed password'",exitOnError=False)[1]
         outLog += "-"*60 + "\n\n\n"
 
     elif (target.osImage == 'FreeRTOS'):
@@ -76,7 +76,7 @@ def test_257 (target,binTest):
             except:
                 outLog += f"\n<INVALID> [host-client-{iAttempt}]: Failed to send message to target.\n"
                 break
-            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+            outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
             try:
                 # Look for the response
                 ready = select.select([clientSocket], [], [], 10) #10 seconds timeout
@@ -92,7 +92,7 @@ def test_257 (target,binTest):
             del TLS_CTX
         
         if (">>>End of Fett<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",exitOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"

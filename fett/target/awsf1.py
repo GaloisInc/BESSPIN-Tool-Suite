@@ -168,7 +168,7 @@ class firesimTarget(fpgaTarget, commonTarget):
             # This also happens if a unix OS didn't exit properly. Towards the end of making each
             # run a standalone and independent of previous runs, we send this interrupt if the 
             # process is still alive.
-            self.runCommand('\x1d\x1d',endsWith=pexpect.EOF,shutdownOnError=False,timeout=5,sendToNonUnix=True)
+            self.runCommand('\x1d\x1d',endsWith=pexpect.EOF,exitOnError=False,timeout=5,sendToNonUnix=True)
 
         self.noNonsenseFiresim()
 
@@ -288,7 +288,7 @@ class connectalTarget(commonTarget):
     def targetTearDown(self):
         if (self.process.isalive()):
             # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
-            self.runCommand("\x01x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+            self.runCommand("\x01x",endsWith=pexpect.EOF,exitOnError=False,timeout=5)
 
             if (self.process.isalive()):
                 try:
@@ -694,12 +694,12 @@ def startRemoteLogging (target):
             # send the conf file
             target.sendFile(
                     getSetting('workDir'), syslogConfName,
-                    toTarget=True, shutdownOnError=False
+                    toTarget=True, exitOnError=False
                 )
-            target.runCommand(f"mv {syslogConfName} /etc/rsyslog.d/",shutdownOnError=False)
+            target.runCommand(f"mv {syslogConfName} /etc/rsyslog.d/",exitOnError=False)
 
         # restart rsyslog
-        target.runCommand("service rsyslog restart",shutdownOnError=False)
+        target.runCommand("service rsyslog restart",exitOnError=False)
 
     elif (isEqSetting('osImage','FreeBSD')):
         if (not target.restartMode):

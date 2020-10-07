@@ -71,7 +71,7 @@ def test_259 (target,binTest):
                 except:
                     outLog += f"\n<INVALID> [host-client-{iAttempt}]: Failed to send message to target.\n"
                     break
-                outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+                outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
                 try:
                     # Look for the response
                     ready = select.select([clientSocket], [], [], 10) #10 seconds timeout
@@ -110,7 +110,7 @@ def test_259 (target,binTest):
                     outLog += "\n[host-server]: INVALID: Failed to accept a connection. (Unknown error)\n"
                     break
 
-                retTLS = target.runCommand("waitForTLSReady",endsWith="<TLS-READY>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)
+                retTLS = target.runCommand("waitForTLSReady",endsWith="<TLS-READY>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)
                 outLog += retTLS[1]
                 if ((not retTLS[0]) or retTLS[2]): #bad
                     outLog += "\n[host-server]: INVALID: Failed to detect <TLS-READY>.\n"
@@ -143,7 +143,7 @@ def test_259 (target,binTest):
                 except:
                     outLog += "\n[host-server]: INVALID: Failed to send message to target.\n"
                     break
-                retSend = target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=10,shutdownOnError=False)
+                retSend = target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=10,exitOnError=False)
                 outLog += retSend[1]
                 if ((not retSend[0]) or retSend[2]): #bad
                     outLog += "<INVALID> [host-server]: Failed to send message to target.\n"
@@ -161,7 +161,7 @@ def test_259 (target,binTest):
 
         
         if (">>>End of Fett<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",exitOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"

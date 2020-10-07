@@ -19,26 +19,26 @@ def test_307 (target,binTest):
             retCommand = [True, retLog, False]
             iAttempt = 0
             while (retCommand[0]) and (not retCommand[2]) and (iAttempt < actualNAttempts):
-                retCommand = target.runCommand("./{0}".format(binTest),expectedContents='PAM started',endsWith="Password:",shutdownOnError=False,timeout=20)
+                retCommand = target.runCommand("./{0}".format(binTest),expectedContents='PAM started',endsWith="Password:",exitOnError=False,timeout=20)
                 retLog += retCommand[1]
                 if ( (not retCommand[0]) or (retCommand[2]) ): #Bad
                     return retLog
                 elif (iAttempt == actualNAttempts-1): #this is it, send correct password
-                    retCommand = target.runCommand(target.userPassword,shutdownOnError=False,timeout=20)
+                    retCommand = target.runCommand(target.userPassword,exitOnError=False,timeout=20)
                     if (retCommand[2] and isEqSetting('processor','bluespec_p3')): #timeout on bluespec_p3
-                        retCommand[1] += target.keyboardInterrupt (shutdownOnError=False)
+                        retCommand[1] += target.keyboardInterrupt (exitOnError=False)
                         retCommand[1] += "\n<DENIED> Failed to authenticate. (pam timed-out)\n"
                 else:
-                    retCommand = target.runCommand("x",expectedContents='Failed to authenticate',suppressErrors=True,shutdownOnError=False,timeout=20)
+                    retCommand = target.runCommand("x",expectedContents='Failed to authenticate',suppressErrors=True,exitOnError=False,timeout=20)
                     if (retCommand[2] and isEqSetting('processor','bluespec_p3')): #timeout on bluespec_p3
-                        retCommand[1] += target.keyboardInterrupt (shutdownOnError=False)
+                        retCommand[1] += target.keyboardInterrupt (exitOnError=False)
                         #reset the errors
                         retCommand[0] = True
                         retCommand[2] = False
                 retLog += retCommand[1]
                 iAttempt += 1
                 if (intraCommand is not None):
-                    retLog += target.runCommand (intraCommand,shutdownOnError=False)[1]
+                    retLog += target.runCommand (intraCommand,exitOnError=False)[1]
             return retLog
 
         #For each part, the result should be Granted, Granted, Denied
@@ -193,12 +193,12 @@ def test_307 (target,binTest):
         for iPart in range(2):
             outLog += "-" * 20 + f"Part0{iPart+1}: {partNames[iPart]}" + "-" * 20 + "\n"
             if (iPart == 0): #backup config
-                outLog += target.runCommand (f"cp {getSetting('sshdConfigPath')} /root/",shutdownOnError=False)[1]
+                outLog += target.runCommand (f"cp {getSetting('sshdConfigPath')} /root/",exitOnError=False)[1]
             else: #reset config
-                outLog += target.runCommand (f"cp /root/sshd_config {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+                outLog += target.runCommand (f"cp /root/sshd_config {getSetting('sshdConfigPath')}",exitOnError=False)[1]
             #apply ssh config
-            outLog += target.runCommand (f"echo \"PasswordAuthentication yes\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
-            outLog += target.runCommand (f"echo \"MaxAuthTries {maxAuthTries[iPart]}\" >> {getSetting('sshdConfigPath')}",shutdownOnError=False)[1]
+            outLog += target.runCommand (f"echo \"PasswordAuthentication yes\" >> {getSetting('sshdConfigPath')}",exitOnError=False)[1]
+            outLog += target.runCommand (f"echo \"MaxAuthTries {maxAuthTries[iPart]}\" >> {getSetting('sshdConfigPath')}",exitOnError=False)[1]
             target.retartSshService ()
             time.sleep(10)
             #try to authenticate
@@ -264,7 +264,7 @@ def test_307 (target,binTest):
             for iSubPart, nOfSubPart in enumerate([1, nAttempts, nAttempts+1]):
                 message = "TESTGEN-307-P01.{0}".format(iSubPart)
                 #to enhance the control flow
-                outLog += target.runCommand("waitForTCPReady",endsWith="<TCP-READY>",erroneousContents="<INVALID>",timeout=15,shutdownOnError=False)[1]
+                outLog += target.runCommand("waitForTCPReady",endsWith="<TCP-READY>",erroneousContents="<INVALID>",timeout=15,exitOnError=False)[1]
                 retAuthAttempts = clientAuthForNofAttempts (iSubPart, nOfSubPart)
                 outLog += retAuthAttempts[0]
                 if ((retAuthAttempts[1] == 'INVALID') or (retAuthAttempts[2] is None)):
@@ -277,7 +277,7 @@ def test_307 (target,binTest):
                     except:
                         outLog += "\n<INVALID> [host-client-{0}]: Failed to send message to target.\n".format(iSubPart)
                         break
-                    outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)[1]
+                    outLog += target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)[1]
                 else: #DENIED
                     outLog += "\n[host-client-{0}]: DENIED: Failed to connect!\n".format(iSubPart)
                     continue
@@ -315,7 +315,7 @@ def test_307 (target,binTest):
                         retLog += "\n[host-server-{0}.{1}]: INVALID: Failed to accept a connection. (Unknown error)\n".format(iSubPart,iAttempt)
                         return [retLog, 'INVALID']
 
-                    retTLS = target.runCommand("waitForTLSReady",endsWith="<TLS-READY>",erroneousContents="<INVALID>",timeout=20,shutdownOnError=False)
+                    retTLS = target.runCommand("waitForTLSReady",endsWith="<TLS-READY>",erroneousContents="<INVALID>",timeout=20,exitOnError=False)
                     retLog += retTLS[1]
                     if ((not retTLS[0]) or retTLS[2]): #bad
                         retLog += "\n[host-server-{0}.{1}]: INVALID: Failed to detect <TLS-READY>.\n".format(iSubPart,iAttempt)
@@ -348,7 +348,7 @@ def test_307 (target,binTest):
                         except:
                             retLog += "\n[host-server-{0}.{1}]: INVALID: Failed to send message to target.\n".format(iSubPart,iAttempt)
                             return [retLog, 'INVALID']
-                        retSend = target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=10,shutdownOnError=False)
+                        retSend = target.runCommand("sendToTarget",endsWith="<TARGET-RECV>",erroneousContents="<INVALID>",timeout=10,exitOnError=False)
                         retLog += retSend[1]
                         if ((not retSend[0]) or retSend[2]): #bad
                             retLog += "<INVALID> [host-server-{0}.{1}]: Failed to send message to target.\n".format(iSubPart,iAttempt)
@@ -379,7 +379,7 @@ def test_307 (target,binTest):
                 retAuthAttempts = serverAuthForNofAttempts (serverSocket, iSubPart)
                 outLog += retAuthAttempts[0]
                 if (retAuthAttempts[1] == 'INVALID'):
-                    outLog += target.runCommand("getTargetDump",endsWith=">>>End of Fett<<<",timeout=10,shutdownOnError=False)[1]
+                    outLog += target.runCommand("getTargetDump",endsWith=">>>End of Fett<<<",timeout=10,exitOnError=False)[1]
                     outLog += "\n<INVALID> [host-server-{0}]: Failed to establish connection with target.\n".format(iSubPart)
                     break
                 
@@ -390,7 +390,7 @@ def test_307 (target,binTest):
             return outLog
 
         if (">>>End of Fett<<<" not in outLog):
-            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",shutdownOnError=False,timeout=20)
+            retFinish = target.runCommand("allProgram",endsWith=">>>End of Fett<<<",exitOnError=False,timeout=20)
             outLog += retFinish[1]
             if ((not retFinish[0]) or retFinish[2]): #bad
                 outLog += "\n<WARNING> Execution did not end properly.\n"

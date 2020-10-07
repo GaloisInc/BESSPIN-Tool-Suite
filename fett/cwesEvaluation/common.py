@@ -74,7 +74,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             textBack, wasTimeout, idxReturn = target.expectFromTarget(
                     [">>>End of Fett<<<", pexpect.EOF],
                     None,
-                    shutdownOnError=False,
+                    exitOnError=False,
                     timeout=getSetting('FreeRTOStimeout'))
 
             if idxReturn == 1:

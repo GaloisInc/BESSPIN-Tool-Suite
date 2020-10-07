@@ -9,24 +9,24 @@ def runBinWithPass(target, binTest, old_password, new_password):
     outLog += target.runCommand(f"./{binTest} {target.userName}",
                                 endsWith="Password:",
                                 erroneousContents="<INVALID>",
-                                shutdownOnError=False)[1]
+                                exitOnError=False)[1]
     outLog += f">>> sending old password '{old_password}'\n"
     time.sleep(1)
     outLog += target.runCommand(f"{old_password}",
                                 endsWith="password:" if (isEqSetting('osImage','debian')) else 'new password:',
                                 erroneousContents="<INVALID>",
-                                shutdownOnError=False)[1]
+                                exitOnError=False)[1]
     outLog += f">>> sending password '{new_password}'\n"
     time.sleep(1)
     outLog += target.runCommand(f"{new_password}",
                                 endsWith="password:",
                                 erroneousContents="<INVALID>",
-                                shutdownOnError=False)[1]
+                                exitOnError=False)[1]
     outLog += f">>> confirming password '{new_password}'\n"
     time.sleep(1)
     outLog += target.runCommand(f"{new_password}",
                                 erroneousContents="<INVALID>",
-                                shutdownOnError=False)[1]
+                                exitOnError=False)[1]
     return outLog
 
 def test_521 (target,binTest):
@@ -39,7 +39,7 @@ def test_521 (target,binTest):
 
     if (target.osImage in ['debian', 'FreeBSD']):
         target.switchUser()
-        outLog += target.runCommand(f"cp /home/{target.userName}/{binTest} .",shutdownOnError=False)[1]
+        outLog += target.runCommand(f"cp /home/{target.userName}/{binTest} .",exitOnError=False)[1]
 
         passwords = { 0: (target.userPassword, ""),
                       1: ("shortreg", "Too Short"),
@@ -56,12 +56,12 @@ def test_521 (target,binTest):
         # Reset user password
         outLog += target.runCommand(f"passwd {target.userName}",
                                     endsWith="word:",
-                                    shutdownOnError=False)[1]
+                                    exitOnError=False)[1]
         outLog += target.runCommand(f"{passwords[0][0]}",
                                     endsWith="word:",
-                                    shutdownOnError=False)[1]
+                                    exitOnError=False)[1]
         outLog += target.runCommand(f"{passwords[0][0]}",
-                                    shutdownOnError=False)[1]
+                                    exitOnError=False)[1]
         target.switchUser()
     else:
         outLog += f"<NOT-IMPLEMENTED> test_{testNum} is not yet implemented on <{target.osImage}>."
