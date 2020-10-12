@@ -4,13 +4,41 @@ The main file for the cyberPhys interactive shell
 """
 
 from fett.base.utils.misc import *
-import cmd, os
+import fett.cyberPhys.launch
+import cmd, os, threading, io
+
+
+@decorate.debugWrap
+@decorate.timeWrap
+def endInteract(interactor):
+    terminator = fett.cyberPhys.launch.ftQueueUtils("interactiveShell:queue",
+        getSetting('interactorQueue'), 'get') #Wait for either the user or the main thread
+    print('\r'+ ' '*100,flush=True) #clean the prompt
+    if (terminator=='main'): #We have to exit cmdloop()
+        interactor.cmdqueue.append("exit\n")
+        printAndLog("Please press Enter to continue...")
 
 @decorate.debugWrap
 @decorate.timeWrap
 def interact():
     interactor = cyberPhysShell()
+
+    # Create a thread that checks endEvent
+    endThread = threading.Thread(target=endInteract, args=(interactor,))
+    endThread.daemon = True
+    getSetting('trash').throwThread(endThread,f"<endInteract> in cyberPhys")
+    endThread.start()
+
+    #Start the interactive shell
     interactor.cmdloop()
+
+    #EndInteract (in case the main thread didn't terminate it itself)
+    fett.cyberPhys.launch.ftQueueUtils("interactiveShell:queue", getSetting('interactorQueue'),
+        'put', itemToPut='interact')
+    endThread.join()
+
+    #Report that it is done
+    fett.cyberPhys.launch.ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
 
 class cyberPhysShell(cmd.Cmd):
     """cyberPhys interactive cmd shell"""
@@ -53,6 +81,7 @@ class cyberPhysShell(cmd.Cmd):
     def do_EOF(self,inp):
         """exit
         exits the cyberPhys interactive cmd shell and ends the program"""
+        print("\n\033[F",flush=True) #make it similar to quit/exit
         return True
 
     def emptyline(self): #to avoid repeating the last command on <enter>
