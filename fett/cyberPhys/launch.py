@@ -6,7 +6,7 @@ The main file to start launching cyberPhys
 from fett.base.utils.misc import *
 from fett.target import launch
 import fett.cyberPhys.interactive
-from fett.cyberPhys.run import watchdog
+import fett.cyberPhys.run
 import threading, queue
 
 @decorate.debugWrap
@@ -30,7 +30,7 @@ def startCyberPhys():
         setSetting('watchdogQueue',queue.Queue(maxsize=1),targetId=targetId)
 
     #Start the watchdogs
-    allThreads = runThreadPerTarget(watchdog,onlyStart=True)
+    allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
 
     if (isEnabled('interactiveShell')):
         # Pipe the UART
@@ -52,6 +52,10 @@ def startCyberPhys():
         ftQueueUtils(f"target{targetId}:watchdog:queue",getSetting('watchdogQueue',targetId=targetId),'put')
     if (isEnabled('interactiveShell')):
         ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
+
+    #Waiting for all threads to terminate
+    for xThread in allThreads:
+        xThread.join()
 
     return
 
