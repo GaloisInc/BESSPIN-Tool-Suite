@@ -1275,10 +1275,9 @@ class commonTarget():
         return True
 
     @decorate.debugWrap
-    def pingTarget (self,exitOnError=True):
+    def pingTarget (self,exitOnError=True,pingAttempts=3,printSuccess=True):
         #pinging the target to check everything is ok
         pingOut = ftOpenFile(os.path.join(getSetting('workDir'),'ping.out'),'a')
-        pingAttempts = 3
         wasPingSuccessful = False
         for iPing in range(pingAttempts):
             try:
@@ -1297,8 +1296,9 @@ class commonTarget():
                         errorAndLog (f"Failed to ping the target at IP address <{self.ipTarget}>.",doPrint=False,exc=exc)
                         return False
         pingOut.close()
+        doPrintSuccess = printSuccess and (not (isEqSetting('mode','evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
         printAndLog (f"{self.targetIdInfo}IP address is set to be <{self.ipTarget}>. Pinging successfull!",
-                    doPrint=not (isEqSetting('mode','evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
+                    doPrint=doPrintSuccess)
         return True
 
     @decorate.debugWrap
