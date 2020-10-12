@@ -107,7 +107,7 @@ def formatExc (exc):
 
 def printAndLog (message,doPrint=True,tee=None):
     if (doPrint):
-        print("(Info)~  " + message)
+        print("(Info)~  " + message, flush=True)
     if (tee):
         try:
             tee.write(message + '\n')
@@ -121,14 +121,14 @@ def printAndLog (message,doPrint=True,tee=None):
 
 def warnAndLog (message,doPrint=True,exc=None):
     if (doPrint):
-        print("(Warning)~  " + message)
+        print("(Warning)~  " + message, flush=True)
     logging.warning(message)
     if (exc):
         logging.warning(traceback.format_exc())
     
 def errorAndLog (message,doPrint=True,exc=None):
     if (doPrint):
-        print("(Error)~  " + message)
+        print("(Error)~  " + message, flush=True)
     logging.error(message)
     if (exc):
         logging.error(traceback.format_exc())
