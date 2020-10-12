@@ -5,8 +5,9 @@ The main file to start launching cyberPhys
 
 from fett.base.utils.misc import *
 from fett.target import launch
-from fett.cyberPhys.interactive import interact
-import threading
+import fett.cyberPhys.interactive
+from fett.cyberPhys.run import watchdog
+import threading, queue
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -19,18 +20,48 @@ def startCyberPhys():
     runThreadPerTarget(launch.startFett)
     printAndLog (f"FETT <cyberPhys mode> is launched!")
 
+    #   We need a way for communication between this (main thread) and the watchdog threads [and interacting thread].
+    #   We'll use queues. Each queue should be used in one-way communication. So there is a main queue that is watched here.
+    #   And we create a queue for each watchdog [and interacting thread] (Creating a threading.Event() is possible, but not
+    # for ineractive, so we'll keep it all as queues for consistency and more future compatibility)
+    exitQueue = queue.Queue(maxsize=getSetting('nTargets')+int(isEnabled('interactiveShell')))
+    setSetting('cyberPhysQueue',exitQueue)
+    for targetId in range(1,getSetting('nTargets')+1):
+        setSetting('watchdogQueue',queue.Queue(maxsize=1),targetId=targetId)
+
+    #Start the watchdogs
+    allThreads = runThreadPerTarget(watchdog,onlyStart=True)
+
     if (isEnabled('interactiveShell')):
         # Pipe the UART
         runThreadPerTarget(startUartPiping)
         printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
+        #Create an interactor queue
+        #Interactor can be terminated because of a watchdog reported error, or by the user
+        setSetting('interactorQueue',queue.Queue(maxsize=2))
+
         # start the interactive shell
-        interact()
+        allThreads += runThreadPerTarget(fett.cyberPhys.interactive.interact,
+                        addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
+
+    #Start the watch on the watchdogs [+ interactive shell]
+    ftQueueUtils("cyberPhysMain:queue",exitQueue,'get') #block until receiving an error or termination
+    
+    #Terminating all threads
+    for targetId in range(1,getSetting('nTargets')+1):
+        ftQueueUtils(f"target{targetId}:watchdog:queue",getSetting('watchdogQueue',targetId=targetId),'put')
+    if (isEnabled('interactiveShell')):
+        ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
+
+    return
 
 @decorate.debugWrap
 @decorate.timeWrap
 def endCyberPhys():
-    #End UART piping
-    runThreadPerTarget(endUartPiping)
+    printAndLog (f"Terminating FETT...")
+    if (isEnabled('interactiveShell')):
+        #End UART piping
+        runThreadPerTarget(endUartPiping)
     #terminate the targets
     runThreadPerTarget(launch.endFett,
                     mapTargetSettingsToKwargs=[('xTarget','targetObj')],
@@ -38,7 +69,8 @@ def endCyberPhys():
 
 @decorate.debugWrap
 @decorate.timeWrap
-def runThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True, mapTargetSettingsToKwargs=[], onlyStart=False):
+def runThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True, 
+        mapTargetSettingsToKwargs=[], onlyStart=False, singleThread=False):
     """
     This function starts a thread for each target in cyberPhys mode
     func: A handle to the function of the thread.
@@ -50,11 +82,16 @@ def runThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True, m
     mapTargetSettingsToKwargs: A list of tuples (xKwargName, xSettingName), for each tuple, kwarfs will be
                                 augmented with "xKwargName=_settings[${iTarget}][xSettingName]"
     onlyStart: If enabled, it will just launch the threads without waiting for them to finish.
+    singlThread: If enabled, instead of a thread per target, only a single thread is created
     """
     xThreads = []
     if (tKwargs is None):
         tKwargs = {}
-    for iTarget in range(1,getSetting('nTargets')+1):
+    if (singleThread):
+        allTargets = range(1)
+    else:
+        allTargets = range(1,getSetting('nTargets')+1)
+    for iTarget in allTargets:
         if (addTargetIdToKwargs):
             tKwargs['targetId'] = iTarget
         for kwargName,xSetting in mapTargetSettingsToKwargs:
@@ -70,6 +107,22 @@ def runThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True, m
             xThread.join()
 
     return xThreads
+
+@decorate.debugWrap
+@decorate.timeWrap
+def ftQueueUtils(queueName,xQueue,method,timeout=None,itemToPut=True,exitFunc=logAndExit):
+    if(method=='put'):
+        try:
+            return xQueue.put(itemToPut, block=True, timeout=timeout)
+        except Exception as exc:
+            exitFunc(f"Failed to put <{itemToPut}> to <{queueName}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+    elif(method=='get'):
+        try:
+            return xQueue.get(block=True, timeout=timeout)
+        except Exception as exc:
+            exitFunc(f"Failed to get from <{queueName}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+    else:
+        exitFunc(f"<ftQueueUtils> not implemented for method<{method}>.",exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
 def startUartPiping(targetId):
