@@ -341,7 +341,7 @@ class commonTarget():
                 self.runCommand("root",endsWith="\r\n#",overrideShutdown=True)
                 self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
             elif (not self.onlySsh):
-                if ((self.binarySource!="SRI-Cambridge") or self.restartMode):
+                if ((self.binarySource!="SRI-Cambridge") or (self.restartMode and (self.target=='awsf1'))):
                     self.runCommand ("root",endsWith='Password:',overrideShutdown=True)
                     self.runCommand (self.rootPassword,endsWith=tempPrompt,overrideShutdown=True)
                 else:
@@ -365,7 +365,7 @@ class commonTarget():
         if (not ((self.osImage=='FreeRTOS') and (self.target=='qemu'))): #network is not supported on FreeRTOS qemu
             self.activateEthernet()
         
-        if (self.restartMode and (self.target!='qemu')): #skip the reset of start()
+        if (self.restartMode and (self.target=='awsf1')): #skip the reset of start() in awsf1 mode
             if (self.osImage=='debian'): # timesync is not in the boot sequence of neither GFE nor MIT images
                 ntpTimeout = 150 if (self.binarySource=='MIT') else 60 # MIT needs some more time to be responsive
                 self.runCommand("systemctl start systemd-timesyncd.service",timeout=ntpTimeout)
