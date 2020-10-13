@@ -154,7 +154,7 @@ class fpgaTarget(object):
         if (self.target!='vcu118'):
             self.terminateAndExit(f"<fpgaReload> is not implemented for target {self.target}.",overrideShutdown=True)
         self.fpgaTearDown(isReload=True,stage=stage)
-        vcu118.programBitfile(doPrint=False, isReload=True)
+        vcu118.programBitfile(doPrint=False, isReload=True,targetId=self.targetId)
         time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
         self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
         return

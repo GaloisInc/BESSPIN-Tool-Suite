@@ -280,6 +280,7 @@ def resetTarget (curTarget):
         fett.cyberPhys.launch.endUartPiping(targetId)
     curTarget.tearDown() 
     rootPassword = curTarget.rootPassword
+    portsBegin = curTarget.portsBegin
     del curTarget
 
     printAndLog("resetTarget: Re-preparing the environment...",doPrint=(not isEqSetting('mode','cyberPhys')))
@@ -299,6 +300,9 @@ def resetTarget (curTarget):
     elif (isEqSetting('mode','cyberPhys')):
         if (isEqSetting('target','qemu',targetId=targetId)):
             qemu.configTapAdaptor(targetId=targetId)
+        elif (isEqSetting('target','vcu118',targetId=targetId)):
+            vcu118.programBitfile(targetId=targetId,isReload=True)
+            vcu118.resetEthAdaptor()
         else:
             logAndExit (f"<resetTarget> is not implemented for <{getSetting('target',targetId=targetId)}>."
                 f"in <cyberPhys> mode.",exitCode=EXIT.Implementation)
@@ -314,6 +318,7 @@ def resetTarget (curTarget):
     newTarget.restartMode = True
     if (isEqSetting('target','awsf1',targetId=targetId)):
         newTarget.rootPassword = rootPassword
+    newTarget.portsBegin = portsBegin
     newTarget.userCreated = True
 
     newTarget.start()
@@ -321,7 +326,19 @@ def resetTarget (curTarget):
         awsf1.startUartPiping(newTarget)
     elif (isEqSetting('mode','cyberPhys')):
         fett.cyberPhys.launch.startUartPiping(targetId)
-        #Do we need to createUser? ChangeRootPassword? for qemu
+
+    if ((getSetting('target',targetId=targetId) in ['vcu118', 'qemu']) #We currently do not use a separate .img file
+            and (isEnabled('isUnix',targetId=targetId))):
+        newTarget.createUser()
+        if (getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']):
+            newTarget.changeRootPassword()
+            if (isEnabled("useCustomCredentials")):
+                newTarget.changeUserPassword()
+            if (isEnabled("rootUserAccess")):
+                newTarget.enableRootUserAccess()
+
+    if (isEqSetting('mode','cyberPhys')):
+        runCyberPhys(newTarget)
 
     return newTarget
 
