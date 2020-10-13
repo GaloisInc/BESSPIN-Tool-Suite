@@ -17,6 +17,7 @@ from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
 from fett.cwesEvaluation.checkValidScores import checkValidScores
 from fett.cyberPhys.build import buildCyberPhys
 from fett.cyberPhys.run import runCyberPhys
+import fett.cyberPhys.launch
 import sys, os
 from importlib.machinery import SourceFileLoader
 
@@ -262,46 +263,65 @@ def endFett (xTarget,isDeadProcess=False):
 @decorate.debugWrap
 @decorate.timeWrap
 def resetTarget (curTarget):
-    if ((not isEqSetting('target','awsf1')) or (not isEqSetting('mode','production'))):
-        logAndExit(f"<resetTarget> is not compatible with <{getSetting('target')}> target in <{getSetting('mode')}> mode.")
+    targetId = curTarget.targetId
+    if ((isEqSetting('mode','production') and (not isEqSetting('target','awsf1')))
+            or (not isEqSetting('mode','cyberPhys'))):
+        logAndExit(f"<resetTarget> is not compatible with <{getSetting('target',targetId=targetId)}> target"
+            f" in <{getSetting('mode')}> mode.")
     """
     A big decision here is whether to collectLogs and shutdown or just tear it down.
     We'll assume smth is wrong with the target, so we'll just tear it down.
     collectLogs can err in any step, no need for crazy error handling, especially that we rsyslog them anyway.
     """
-    printAndLog("resetTarget: tearing down the current target...")
-    awsf1.endUartPiping(curTarget)
+    printAndLog("resetTarget: tearing down the current target...",doPrint=(not isEqSetting('mode','cyberPhys')))
+    if (isEqSetting('mode','production')):
+        awsf1.endUartPiping(curTarget)
+    elif (isEqSetting('mode','cyberPhys')):
+        fett.cyberPhys.launch.endUartPiping(targetId)
     curTarget.tearDown() 
     rootPassword = curTarget.rootPassword
     del curTarget
 
-    printAndLog("resetTarget: Re-preparing the environment...")
+    printAndLog("resetTarget: Re-preparing the environment...",doPrint=(not isEqSetting('mode','cyberPhys')))
     # Reload the FPGA
-    if (isEqSetting('pvAWS','firesim')):
-        awsf1.removeKernelModules()
-        awsf1.installKernelModules()
-        awsf1.programAFI()
-    elif (isEqSetting('pvAWS', 'connectal')):
-        awsf1.removeKernelModules()
-        awsf1.programAFI()
-        awsf1.removeKernelModules()
-        awsf1.installKernelModules()
-    else:
-        logAndExit (f"<resetTarget> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
-    
-    printAndLog("resetTarget: Re-launching...")
+    if (isEqSetting('mode','production')): #The AWS resetting need to be tested/adjusted if desired on cyberPhys
+        if (isEqSetting('pvAWS','firesim')):
+            awsf1.removeKernelModules()
+            awsf1.installKernelModules()
+            awsf1.programAFI()
+        elif (isEqSetting('pvAWS', 'connectal')):
+            awsf1.removeKernelModules()
+            awsf1.programAFI()
+            awsf1.removeKernelModules()
+            awsf1.installKernelModules()
+        else:
+            logAndExit (f"<resetTarget> is not implemented for <AWS:{getSetting('pvAWS')}>.",exitCode=EXIT.Implementation)
+    elif (isEqSetting('mode','cyberPhys')):
+        if (isEqSetting('target','qemu',targetId=targetId)):
+            qemu.configTapAdaptor(targetId=targetId)
+        else:
+            logAndExit (f"<resetTarget> is not implemented for <{getSetting('target',targetId=targetId)}>."
+                f"in <cyberPhys> mode.",exitCode=EXIT.Implementation)
+
+    printAndLog("resetTarget: Re-launching...",doPrint=(not isEqSetting('mode','cyberPhys')))
     try:
-        newTarget = getClassType()()
+        newTarget = getClassType(targetId=targetId)(targetId=targetId)
+        setSetting('targetObj',newTarget,targetId=targetId)
     except Exception as exc:
         logAndExit (f"resetTarget: Failed to instantiate the target class.",exc=exc,exitCode=EXIT.Dev_Bug)
 
     # Adjust the needed members for reset
     newTarget.restartMode = True
-    newTarget.rootPassword = rootPassword
+    if (isEqSetting('target','awsf1',targetId=targetId)):
+        newTarget.rootPassword = rootPassword
     newTarget.userCreated = True
 
     newTarget.start()
-    awsf1.startUartPiping(newTarget)
+    if (isEqSetting('mode','production')):
+        awsf1.startUartPiping(newTarget)
+    elif (isEqSetting('mode','cyberPhys')):
+        fett.cyberPhys.launch.startUartPiping(targetId)
+        #Do we need to createUser? ChangeRootPassword? for qemu
 
     return newTarget
 
