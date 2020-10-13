@@ -4,7 +4,7 @@ The main file to start launching cyberPhys
 """
 
 from fett.base.utils.misc import *
-from fett.target import launch
+import fett.target.launch
 import fett.cyberPhys.interactive
 import fett.cyberPhys.run
 import threading, queue
@@ -17,7 +17,7 @@ def startCyberPhys():
 
     printAndLog (f"Launching FETT <cyberPhys mode>...")
     # start/prepareEnv/Launch
-    runThreadPerTarget(launch.startFett)
+    runThreadPerTarget(fett.target.launch.startFett)
     printAndLog (f"FETT <cyberPhys mode> is launched!")
 
     #   We need a way for communication between this (main thread) and the watchdog threads [and interacting thread].
@@ -67,7 +67,7 @@ def endCyberPhys():
         #End UART piping
         runThreadPerTarget(endUartPiping)
     #terminate the targets
-    runThreadPerTarget(launch.endFett,
+    runThreadPerTarget(fett.target.launch.endFett,
                     mapTargetSettingsToKwargs=[('xTarget','targetObj')],
                     addTargetIdToKwargs=False)
 

@@ -282,7 +282,7 @@ class commonTarget():
             if not success:
                 self.terminateAndExit(**message)
 
-            if (self.restartMode):
+            if (self.restartMode and (self.target=='awsf1')):
                 for timeout in timeoutDict.keys():
                     timeoutDict[timeout] += 120 #takes longer to restart
 
@@ -302,7 +302,7 @@ class commonTarget():
             #logging in
             printAndLog (f"{self.targetIdInfo}start: Logging in, activating ethernet, and setting system time...",doPrint=(not self.targetId))
             self.runCommand ("root",endsWith="Password:",overrideShutdown=True)
-            loginTimeout = 120 if (self.restartMode) else 60
+            loginTimeout = 120 if (self.restartMode and (self.target=='awsf1')) else 60
             self.runCommand (self.rootPassword,timeout=loginTimeout,overrideShutdown=True)
 
         elif (self.osImage=='busybox'):
@@ -365,7 +365,7 @@ class commonTarget():
         if (not ((self.osImage=='FreeRTOS') and (self.target=='qemu'))): #network is not supported on FreeRTOS qemu
             self.activateEthernet()
         
-        if (self.restartMode): #this only in aws/production mode -- skip the reset of start()
+        if (self.restartMode and (self.target!='qemu')): #skip the reset of start()
             if (self.osImage=='debian'): # timesync is not in the boot sequence of neither GFE nor MIT images
                 ntpTimeout = 150 if (self.binarySource=='MIT') else 60 # MIT needs some more time to be responsive
                 self.runCommand("systemctl start systemd-timesyncd.service",timeout=ntpTimeout)

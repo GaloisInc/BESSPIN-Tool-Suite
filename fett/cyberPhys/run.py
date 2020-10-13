@@ -5,6 +5,7 @@ The main file for running cyberPhys
 
 from fett.base.utils.misc import *
 import fett.cyberPhys.launch
+import fett.target.launch
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -22,7 +23,6 @@ def watchdog(targetId):
     " 2. resets
     " 3. Is able to exit
     """
-    targetObj = getSetting('targetObj',targetId=targetId)
     listenQueue = getSetting('watchdogQueue',targetId=targetId)
     while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
         def handleError(errorString):
@@ -35,8 +35,9 @@ def watchdog(targetId):
             if (isEnabled('resetOnWatchdog')):
                 warnAndLog(f"<target{targetId}>: {errorString}! Resetting...")
                 # Here we should reset
-                errorAndLog(f"<target{targetId}>: Reset target on watchdog is not yet implemented.")
-                return True #Should be False after reset is implemented
+                fett.target.launch.resetTarget(getSetting('targetObj',targetId=targetId)) 
+                printAndLog("Please press Enter to return to the interactive shell...")
+                return False
             else:
                 errorAndLog(f"<target{targetId}>: {errorString}!")
                 return True
@@ -44,11 +45,13 @@ def watchdog(targetId):
         time.sleep(10)
 
         # Check process
-        if ((not targetObj.process.isalive()) and handleError("Target is down")):
+        if ((not getSetting('targetObj',targetId=targetId).process.isalive()) 
+            and handleError("Target is down")):
             break
 
         # Ping network
-        if ((not targetObj.pingTarget(exitOnError=False,pingAttempts=3,printSuccess=False))
+        if ((not getSetting('targetObj',targetId=targetId).pingTarget(
+                                    exitOnError=False,pingAttempts=3,printSuccess=False))
              and handleError("Failed to ping target")):
             break
 
