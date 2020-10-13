@@ -55,7 +55,7 @@ elif [ $target == 'qemu' ]; then
     for xTap in $(ip -br addr | grep "^t.*" | awk '{ print $1 }'); do
         ipAddr=$(ip -br addr show $xTap | awk '{ print $3 }')
         network=$(echo "$ipAddr" | cut -d '.' -f1,2)
-        if [ $network == '172.16' ]; then
+        if [ ! -z $network ] && [ $network == '172.16' ]; then
             echo "Deleting $xTap..."
             sudo ip tuntap del mode tap dev $xTap
         fi
