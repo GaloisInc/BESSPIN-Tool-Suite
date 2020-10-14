@@ -20,40 +20,40 @@ def startCyberPhys():
     runThreadPerTarget(fett.target.launch.startFett)
     printAndLog (f"FETT <cyberPhys mode> is launched!")
 
-    #   We need a way for communication between this (main thread) and the watchdog threads [and interacting thread].
-    #   We'll use queues. Each queue should be used in one-way communication. So there is a main queue that is watched here.
-    #   And we create a queue for each watchdog [and interacting thread] (Creating a threading.Event() is possible, but not
-    # for ineractive, so we'll keep it all as queues for consistency and more future compatibility)
+    # - We need a way for communication between this (main thread) and the watchdog threads [and interacting thread].
+    # - We'll use queues. Each queue should be used in one-way communication. So there is a main queue that is watched here.
+    # - And we create a queue for each watchdog [and interacting thread] (Creating a threading.Event() is possible, but not
+    #   for interactive, so we'll keep it all as queues for consistency and more future compatibility).
     exitQueue = queue.Queue(maxsize=getSetting('nTargets')+int(isEnabled('interactiveShell')))
     setSetting('cyberPhysQueue',exitQueue)
     for targetId in range(1,getSetting('nTargets')+1):
         setSetting('watchdogQueue',queue.Queue(maxsize=1),targetId=targetId)
 
-    #Start the watchdogs
+    # Start the watchdogs
     allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
 
     if (isEnabled('interactiveShell')):
         # Pipe the UART
         runThreadPerTarget(startUartPiping)
         printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
-        #Create an interactor queue
-        #Interactor can be terminated because of a watchdog reported error, or by the user
+        # Create an interactor queue
+        # Interactor can be terminated because of a watchdog reported error, or by the user
         setSetting('interactorQueue',queue.Queue(maxsize=2))
 
-        # start the interactive shell
+        # Start the interactive shell
         allThreads += runThreadPerTarget(fett.cyberPhys.interactive.interact,
                         addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
 
-    #Start the watch on the watchdogs [+ interactive shell]
+    # Start the watch on the watchdogs [+ interactive shell]
     ftQueueUtils("cyberPhysMain:queue",exitQueue,'get') #block until receiving an error or termination
     
-    #Terminating all threads
+    # Terminating all threads
     for targetId in range(1,getSetting('nTargets')+1):
         ftQueueUtils(f"target{targetId}:watchdog:queue",getSetting('watchdogQueue',targetId=targetId),'put')
     if (isEnabled('interactiveShell')):
         ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
 
-    #Waiting for all threads to terminate
+    # Waiting for all threads to terminate
     for xThread in allThreads:
         xThread.join()
 
@@ -64,9 +64,9 @@ def startCyberPhys():
 def endCyberPhys():
     printAndLog (f"Terminating FETT...")
     if (isEnabled('interactiveShell')):
-        #End UART piping
+        # End UART piping
         runThreadPerTarget(endUartPiping)
-    #terminate the targets
+    # Terminate the targets
     runThreadPerTarget(fett.target.launch.endFett,
                     mapTargetSettingsToKwargs=[('xTarget','targetObj')],
                     addTargetIdToKwargs=False)
@@ -86,7 +86,7 @@ def runThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True,
     mapTargetSettingsToKwargs: A list of tuples (xKwargName, xSettingName), for each tuple, kwarfs will be
                                 augmented with "xKwargName=_settings[${iTarget}][xSettingName]"
     onlyStart: If enabled, it will just launch the threads without waiting for them to finish.
-    singlThread: If enabled, instead of a thread per target, only a single thread is created
+    singleThread: If enabled, instead of a thread per target, only a single thread is created
     """
     xThreads = []
     if (tKwargs is None):
