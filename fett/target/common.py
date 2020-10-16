@@ -67,6 +67,7 @@ class commonTarget():
 
         self.onlySsh = ((self.osImage=='FreeBSD') and (self.target=='vcu118'))
 
+        self.osHasBooted = False
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
         self.rootPassword = 'ssithdefault' if (self.osImage=='FreeBSD') else 'riscv'
         self.rootGroup = 'wheel' if (self.osImage=='FreeBSD') else 'root'
@@ -354,6 +355,9 @@ class commonTarget():
                 self.runCommand("rm promptText.txt")
 
             printAndLog (f"{self.targetIdInfo}start: Activating ethernet and setting system time...",doPrint=(not self.targetId))
+
+        # Register that the OS has booted
+        self.osHasBooted = True
 
         if (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')):
             printAndLog(f"{self.targetIdInfo}start: {self.osImage} booted successfully!",

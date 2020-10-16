@@ -209,6 +209,9 @@ def launchFett (targetId=None):
     else:
         printAndLog (f"Launching FETT <{getSetting('mode')} mode>...",doPrint=(not isEqSetting('mode','cyberPhys')))
     xTarget.start()
+    if (not xTarget.osHasBooted):
+        #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
+        return xTarget
     if (isEnabled('isUnix',targetId=targetId)):
         if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) 
                 and (not isEqSetting('mode','evaluateSecurityTests'))): #no need to change pw in evaluation mode
@@ -248,7 +251,10 @@ def endFett (xTarget,isDeadProcess=False):
         if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','awsf1'))): 
             collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
 
-    if not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
+    if (not xTarget.osHasBooted):
+        #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
+        xTarget.tearDown()
+    elif not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
             or (isDeadProcess)):
         xTarget.shutdown()
     
