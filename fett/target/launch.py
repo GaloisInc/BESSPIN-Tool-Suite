@@ -210,7 +210,8 @@ def launchFett (targetId=None):
         printAndLog (f"Launching FETT <{getSetting('mode')} mode>...",doPrint=(not isEqSetting('mode','cyberPhys')))
     xTarget.start()
     if (isEnabled('isUnix',targetId=targetId)):
-        if (getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']):
+        if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) 
+                and (not isEqSetting('mode','evaluateSecurityTests'))): #no need to change pw in evaluation mode
             xTarget.changeRootPassword()
         xTarget.createUser()
     if (isEnabled('runApp',targetId=targetId)):
