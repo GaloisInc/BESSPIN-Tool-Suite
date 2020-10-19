@@ -156,7 +156,7 @@
         {
             "name" : "vulClasses",
             "type" : "stringsList",
-            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors" ]
+            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC" ]
         },
         {
             "name" : "useCustomScoring",
@@ -349,5 +349,8 @@
     ],
     
     "numericErrors": [
+    ],
+
+    "hardwareSoC": [
     ]
 }
