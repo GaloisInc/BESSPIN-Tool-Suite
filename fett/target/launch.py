@@ -152,7 +152,9 @@ def prepareEnv (targetId=None):
         setSetting('runApp',True,targetId=targetId)
 
         if isEqSetting("mode", "evaluateSecurityTests"):
-            buildCwesEvaluation()
+            isThereAnythingToRun = buildCwesEvaluation()
+            if (not isThereAnythingToRun):
+                logAndExit("Running in <evaluateSecurityTests> mode, but no tests are enabled.",exitCode=EXIT.Nothing_to_do)
         elif isEqSetting("mode", "cyberPhys"):
             buildCyberPhys(targetId=targetId)
         else:
@@ -250,13 +252,15 @@ def endFett (xTarget,isDeadProcess=False):
 
         if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','awsf1'))): 
             collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
-
-    if (not xTarget.osHasBooted):
-        #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
-        xTarget.tearDown()
-    elif not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
+    
+    if not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
             or (isDeadProcess)):
-        xTarget.shutdown()
+        if (xTarget.osHasBooted):
+            xTarget.shutdown()
+        else:
+            #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
+            xTarget.tearDown()
+        
     
     if (isEqSetting('mode','production')):
         tarballPath = tarArtifacts (logAndExit,getSetting)

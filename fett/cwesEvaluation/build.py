@@ -62,9 +62,12 @@ def buildCwesEvaluation():
         warnAndLog("vulClass <PPAC> is not supported for <LMCO> on <debian>.")
         getSetting("vulClasses").remove("PPAC")
 
-    # Copy apps over
+    # Copy tests over
+    isThereAnythingToRun = False
+    isThereAReasonToBoot = False
     additionalFiles = []
     for vulClass in getSetting('vulClasses'):
+        vIsThereAnythingToRun = False
         # Create class dir and build
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
@@ -72,6 +75,8 @@ def buildCwesEvaluation():
                                 vulClass, 'sources')
 
         if vulClass == 'bufferErrors':
+            vIsThereAnythingToRun = True
+            isThereAReasonToBoot = True
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
                                     vulClass,'envFett.mk'), vulClassDir)
             # Generate test sources
@@ -91,16 +96,25 @@ def buildCwesEvaluation():
                                     vulClass,'envFett.mk'), vulClassDir)
             # Copy over concrete tests
             copyDir(sourcesDir, vulClassDir, copyContents=True)
-            generateWrappers()
+            nWrappers = generateWrappers()
+            vIsThereAnythingToRun = (nWrappers > 0)
+            if (vIsThereAnythingToRun):
+                isThereAReasonToBoot = True
         else:
             cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
             for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
                 # Check if the test should be skipped:
                 cTestName = os.path.basename(test)
                 if (isTestEnabled(vulClass,cTestName)):
+                    vIsThereAnythingToRun = True
+                    isThereAReasonToBoot = True
                     cp (test, vulClassDir)
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
+
+        isThereAnythingToRun |= vIsThereAnythingToRun
+        if (not vIsThereAnythingToRun):
+            continue
 
         if (not isEqSetting('osImage', 'FreeRTOS')):
             # copy makefile over
@@ -176,6 +190,8 @@ def buildCwesEvaluation():
     if getSetting('osImage') in ['debian', 'FreeBSD']:
         buildTarball(additionalFiles)
 
+    setSetting('isThereAReasonToBoot',isThereAReasonToBoot)
+    return isThereAnythingToRun
 
 @decorate.debugWrap
 @decorate.timeWrap
