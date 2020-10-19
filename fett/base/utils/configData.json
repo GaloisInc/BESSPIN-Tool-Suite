@@ -339,9 +339,6 @@
         }
     ],
 
-    "codeInjection": [
-    ],
-
     "informationLeakage": [
         {
             "name" : "poc_paddingLeakage_secret",
@@ -349,9 +346,6 @@
             "size" : 8,
             "min" : 0
         }
-    ],
-
-    "cryptoErrors": [
     ],
     
     "numericErrors": [
