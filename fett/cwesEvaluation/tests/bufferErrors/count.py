@@ -137,5 +137,7 @@ def fixup(v, logSymbol):
         return f"\"[{vals}]\""
     elif type(v) == SCORES:
         return logSymbol
+    elif type(v) == bool:
+        return str(v)
     return v
 

@@ -26,6 +26,8 @@
 #define {location}
 // EXCURSION = (CONTINUOUS, DISCRETE)
 #define {excursion}
+// COMPUTE_SIZE = (SIZE_OVERFLOW, NO_COMPUTE_SIZE)
+#define {compute_size}
 
 // BUF2 = (BUF2_PRESENT, BUF2_ABSENT)
 #define {buf2}
@@ -79,13 +81,26 @@ void test(void);
 
 void test(void)
 {{
+#ifdef SIZE_OVERFLOW
+    // If the buffer were `max_index` long, there would be no overruns
+    // (remember, Int_Overflow_To_Buffer_Overflow implies Boundary_Above).
+    // This calculation uses `max_index` rather than adding 2 numbers together
+    // that sum to `N` because it's more realistic to have a size calculation
+    // that's partially correct, but later overflowed.
+    size_t {max_index} = {idx0} + {access_len} + 1;
+    // Arrive at N via overflow
+    size_t {buf_size} = {max_index} + ((~((size_t) 0)) - {max_index} + {N}) + 1;
+#else
+    size_t {buf_size} = {N};
+#endif
+
     //temp var
     {tmp_var_type} {tmp_var_name};
 
 #ifdef STACK
     // Cleared via memset so that we can do error checking
     // without wiping OS structures (ie if we overflowed into bss)
-    {buf_type} {buf_name}[SIZE({buf_type},{N},{memmax})];
+    {buf_type} {buf_name}[SIZE({buf_type},{buf_size},{memmax})];
 
 #if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
     if (&{buf_name}[0] <= (uintptr_t)&__bss_end) {{
@@ -94,13 +109,13 @@ void test(void)
             return;
     }}
 #endif //FreeRTOS
-    memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{N},{memmax}));
+    memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 
 #else //HEAP
 #ifdef testgenOnFreeRTOS
-    {buf_type}* {buf_name} = pvPortMalloc(sizeof({buf_type})*SIZE({buf_type},{N},{memmax}));
+    {buf_type}* {buf_name} = pvPortMalloc(sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 #else
-    {buf_type}* {buf_name} = malloc(sizeof({buf_type})*SIZE({buf_type},{N},{memmax}));
+    {buf_type}* {buf_name} = malloc(sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 #endif
     if ({buf_name} == NULL) {{
             printf("TEST INVALID. <malloc>\r\n");
@@ -125,7 +140,7 @@ void test(void)
             fflush(stdout);
             return;
     }}
-    memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{N},{memmax}));
+    memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 #endif//FREERTOS
 #endif//BUF2_PRESENT
 #endif//STACK

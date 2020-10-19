@@ -32,6 +32,9 @@ BufferErrors_Test : BufferErrors_Weakness ?
   Access_Read_After_Write ?
   [ !Access_Write => !Access_Read_After_Write ]
 
+  Int_Overflow_To_Buffer_Overflow ?
+  [ !Boundary_Above => !Int_Overflow_To_Buffer_Overflow ]
+
   xor BufferIndexScheme
     BufferIndexScheme_PointerArithmetic
     BufferIndexScheme_IndexArray
@@ -48,6 +51,7 @@ BufferErrors_Test : BufferErrors_Weakness ?
     CWE_126
     CWE_127
     CWE_129
+    CWE_680
     CWE_786
     CWE_787
     CWE_788
@@ -64,6 +68,7 @@ BufferErrors_Test : BufferErrors_Weakness ?
     [ CWE_126 <=> ( Boundary_Above && Access_Read ) ]
     [ CWE_127 <=> ( Boundary_Below && Access_Read ) ]
     [ CWE_129 <=> ( BufferIndexScheme_IndexArray ) ]
+    [ CWE_680 <=> ( Int_Overflow_To_Buffer_Overflow ) ]
     [ CWE_786 <=> ( Boundary_Below ) ]
     [ CWE_787 <=> ( Access_Write) ]
     [ CWE_788 <=> ( Boundary_Above ) ]
