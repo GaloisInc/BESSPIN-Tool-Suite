@@ -231,7 +231,7 @@ def programFpga(bitStream, probeFile, attempts=2, targetId=None):
     # top level params
     vivado = 'vivado_lab'
     sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils')
-    cwd = getSetting('gfeWorkDir')
+    cwd = getSetting('gfeWorkDir',targetId=targetId)
 
     # copy files over to workDir
     cp(os.path.join(sourceDir, 'tcl', 'prog_bit.tcl'), cwd)
@@ -259,7 +259,7 @@ def clearFlash(attempts=2, targetId=None):
     matches the functionality of gfe-clear-flash
     """
     sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'tcl')
-    cwd = getSetting('gfeWorkDir')
+    cwd = getSetting('gfeWorkDir',targetId=targetId)
 
     # copy files over to workDir
     cp(os.path.join(sourceDir, 'program_flash'), cwd)
@@ -276,25 +276,32 @@ def clearFlash(attempts=2, targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def prepareFpgaEnv():
+def prepareFpgaEnv(targetId=None):
     if (isEqSetting('mode','cyberPhys')):
         getSetting('vcu118Lock').acquire()
 
-    if doesSettingExist('vcu118PrepareFpgaEnv') and isEnabled('vcu118PrepareFpgaEnv'):
-        return
+    if (doesSettingExist('vcu118PrepareFpgaEnv') and isEnabled('vcu118PrepareFpgaEnv')):
+        firstTime = False
     else:
+        firstTime = True
         setSetting('vcu118PrepareFpgaEnv',True)
-       
-    # Clear processes
-    processesList = ['openocd', 'vivado', 'hw_server', 'loader', 'pyprogram_fpga']
-    for proc in processesList:
-        sudoShellCommand(['pkill', '-9', proc],check=False)
+    
+    if (firstTime or (not isEqSetting('mode','cyberPhys'))):
+        # Clear processes
+        processesList = ['openocd', 'vivado', 'hw_server', 'loader', 'pyprogram_fpga']
+        for proc in processesList:
+            sudoShellCommand(['pkill', '-9', proc],check=False)
 
     # Create workDir/gfe
-    mkdir(os.path.join(getSetting('workDir'), 'gfe'), addToSettings='gfeWorkDir')
+    targetSuffix = f'_{targetId}' if (targetId is not None) else ''
+    gfeWorkDir = os.path.join(getSetting('workDir'), f'gfe{targetSuffix}')
+    mkdir(gfeWorkDir,exitIfExists=False)
+    setSetting('gfeWorkDir',gfeWorkDir,targetId=targetId)
 
-    # Find the target(s) names
-    #--- TODO
+    if (firstTime):
+        # Find the target(s) names
+        #--- TODO
+        pass
 
     if (isEqSetting('mode','cyberPhys')):
         getSetting('vcu118Lock').release()
@@ -304,7 +311,7 @@ def prepareFpgaEnv():
 def programBitfile (doPrint=True,isReload=False,targetId=None):
     targetInfo = f"<target{targetId}>: " if (targetId) else ''
     printAndLog(f"{targetInfo}Preparing the VCU118 FPGA...",doPrint=doPrint)
-    prepareFpgaEnv()
+    prepareFpgaEnv(targetId=targetId)
 
     printAndLog(f"{targetInfo}Clearing the flash...",doPrint=False)
     clearFlash(targetId=targetId)
