@@ -228,6 +228,7 @@ def programFpga(bitStream, probeFile, attempts=2, targetId=None):
     :param bitStream: valid filepath
     :param probeFile: valid probe file
     """
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
     cwd = getSetting('gfeWorkDir',targetId=targetId)
 
     # copy files over to workDir
@@ -235,19 +236,20 @@ def programFpga(bitStream, probeFile, attempts=2, targetId=None):
 
     # check that the input files exist
     if not os.path.exists(bitStream):
-        logAndExit(f"programFpga: bitstream file {bitStream} does not exist")
+        logAndExit(f"{targetInfo}programFpga: bitstream file {bitStream} does not exist")
     if not os.path.exists(probeFile):
-        logAndExit(f"programFpga: probe file {probeFile} does not exist")
+        logAndExit(f"{targetInfo}programFpga: probe file {probeFile} does not exist")
 
-    # run tcl files to program the bitstreams, and clean up output
-    retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-notrace','-source','./prog_bit.tcl',
-            '-mode','batch','-tclargs',bitStream, probeFile],timeout=90,cwd=cwd,check=False)
+    retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_bit.tcl',
+                '-log', os.path.join(cwd,'prog_bit.log'),'-mode','batch',
+                '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),bitStream, probeFile],
+                timeout=90,cwd=cwd,check=False)
     if retProc.returncode != 0:
         if attempts > 0:
-            errorAndLog(f"programFpga: failed to program the FPGA. Trying again...",doPrint=True)
+            errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. Trying again...",doPrint=True)
             programFpga(bitStream, probeFile, attempts=attempts-1, targetId=targetId)
         else:
-            logAndExit(f"programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
+            logAndExit(f"{targetInfo}programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -255,20 +257,23 @@ def clearFlash(attempts=2, targetId=None):
     """ clear flash memory on Fpga
     matches the functionality of gfe-clear-flash
     """
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
     cwd = getSetting('gfeWorkDir',targetId=targetId)
 
     # copy files over to workDir
-    cp(os.path.join(getSetting('tclSourceDir'), 'program_flash'), cwd)
+    cp(os.path.join(getSetting('tclSourceDir'), 'prog_flash.tcl'), cwd)
     cp(os.path.join(getSetting('tclSourceDir'), 'small.bin'), cwd)
 
-    # "normal" operation exits code 1, so check=False
-    retProc = shellCommand(['./program_flash', 'datafile', './small.bin'],timeout=90,check=False,cwd=cwd)
-    if retProc.returncode != 1:
+    retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_flash.tcl',
+                '-log', os.path.join(cwd,'prog_flash.log'),'-mode','batch',
+                '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),'./small.bin'],
+                timeout=90,cwd=cwd,check=False)
+    if retProc.returncode != 0:
         if attempts > 0:
-            errorAndLog(f"clearFlash: failed to clear flash. Trying again...",doPrint=True)
+            errorAndLog(f"{targetInfo}clearFlash: failed to clear flash. Trying again...",doPrint=True)
             clearFlash(attempts=attempts-1, targetId=targetId)
         else:
-            logAndExit(f"programFpga: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
+            logAndExit(f"{targetInfo}clearFlash: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -297,7 +302,7 @@ def prepareFpgaEnv(targetId=None):
     if (firstTime):
         # Find the target(s) names
         cp(os.path.join(getSetting('tclSourceDir'), 'get_hw_targets.tcl'), gfeWorkDir)
-        getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-notrace','-source','./get_hw_targets.tcl',
+        getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-source','./get_hw_targets.tcl',
                         '-log', os.path.join(gfeWorkDir,'get_hw_targets.log'), '-mode','batch']
         try:
             retCmd = subprocess.run(getTargetsCmd,capture_output=True,timeout=90,check=True,cwd=gfeWorkDir)
