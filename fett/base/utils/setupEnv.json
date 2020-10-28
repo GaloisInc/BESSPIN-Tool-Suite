@@ -312,6 +312,16 @@
             "min" : 1024,
             "max" : 10000,
             "val" : 6000
+        },
+        {
+            "name" : "vivadoCmd",
+            "type" : "string",
+            "val" : "vivado_lab"
+        },
+        {
+            "name" : "tclSourceDir",
+            "type" : "dirPath",
+            "val" : "fett/target/utils/tcl"
         }
     ]
 }

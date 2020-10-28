@@ -228,13 +228,10 @@ def programFpga(bitStream, probeFile, attempts=2, targetId=None):
     :param bitStream: valid filepath
     :param probeFile: valid probe file
     """
-    # top level params
-    vivado = 'vivado_lab'
-    sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils')
     cwd = getSetting('gfeWorkDir',targetId=targetId)
 
     # copy files over to workDir
-    cp(os.path.join(sourceDir, 'tcl', 'prog_bit.tcl'), cwd)
+    cp(os.path.join(getSetting('tclSourceDir'), 'prog_bit.tcl'), cwd)
 
     # check that the input files exist
     if not os.path.exists(bitStream):
@@ -243,7 +240,7 @@ def programFpga(bitStream, probeFile, attempts=2, targetId=None):
         logAndExit(f"programFpga: probe file {probeFile} does not exist")
 
     # run tcl files to program the bitstreams, and clean up output
-    retProc = shellCommand([vivado,'-nojournal','-notrace','-nolog','-source','./prog_bit.tcl',
+    retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-notrace','-source','./prog_bit.tcl',
             '-mode','batch','-tclargs',bitStream, probeFile],timeout=90,cwd=cwd,check=False)
     if retProc.returncode != 0:
         if attempts > 0:
@@ -258,12 +255,11 @@ def clearFlash(attempts=2, targetId=None):
     """ clear flash memory on Fpga
     matches the functionality of gfe-clear-flash
     """
-    sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'tcl')
     cwd = getSetting('gfeWorkDir',targetId=targetId)
 
     # copy files over to workDir
-    cp(os.path.join(sourceDir, 'program_flash'), cwd)
-    cp(os.path.join(sourceDir, 'small.bin'), cwd)
+    cp(os.path.join(getSetting('tclSourceDir'), 'program_flash'), cwd)
+    cp(os.path.join(getSetting('tclSourceDir'), 'small.bin'), cwd)
 
     # "normal" operation exits code 1, so check=False
     retProc = shellCommand(['./program_flash', 'datafile', './small.bin'],timeout=90,check=False,cwd=cwd)
@@ -288,7 +284,7 @@ def prepareFpgaEnv(targetId=None):
     
     if (firstTime or (not isEqSetting('mode','cyberPhys'))):
         # Clear processes
-        processesList = ['openocd', 'vivado', 'hw_server', 'loader', 'pyprogram_fpga']
+        processesList = ['openocd', getSetting('vivadoCmd'), 'hw_server', 'loader', 'pyprogram_fpga']
         for proc in processesList:
             sudoShellCommand(['pkill', '-9', proc],check=False)
 
@@ -300,8 +296,32 @@ def prepareFpgaEnv(targetId=None):
 
     if (firstTime):
         # Find the target(s) names
-        #--- TODO
-        pass
+        cp(os.path.join(getSetting('tclSourceDir'), 'get_hw_targets.tcl'), gfeWorkDir)
+        getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-notrace','-source','./get_hw_targets.tcl',
+                        '-log', os.path.join(gfeWorkDir,'get_hw_targets.log'), '-mode','batch']
+        try:
+            retCmd = subprocess.run(getTargetsCmd,capture_output=True,timeout=90,check=True,cwd=gfeWorkDir)
+        except Exception as exc:
+            logAndExit (f"prepareFpgaEnv: Failed to <{getTargetsCmd}>. "
+                f"Check <{os.path.join(gfeWorkDir,'get_hw_targets.log')}> for more details.",exc=exc,exitCode=EXIT.Run)
+
+        try:
+            listTargetsMatch = matchExprInLines(r"listTargets=<(?P<listTargets>.*)>",retCmd.stdout.decode('utf-8').splitlines())
+            listTargets = listTargetsMatch.group('listTargets').split()
+        except Exception as exc:
+            logAndExit (f"prepareFpgaEnv: Failed to find HW targets list.",exc=exc,exitCode=EXIT.Run)
+        
+        setSetting('listVcu118HwTargets',listTargets)
+
+    if (not doesSettingExist('vcu118HwTarget',targetId=targetId)):
+        targetInfo = f"<target{targetId}>: " if (targetId) else ''
+        curList = getSetting('listVcu118HwTargets')
+        if (len(curList) == 0):
+            logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough HW targets found!",exc=exc,exitCode=EXIT.Configuration)
+        thisTarget = curList.pop(0)
+        printAndLog(f"{targetInfo}prepareFpgaEnv: Using HW target <{thisTarget}>.")
+        setSetting('vcu118HwTarget',thisTarget,targetId=targetId)
+        setSetting('listVcu118HwTargets',curList) #to update the list
 
     if (isEqSetting('mode','cyberPhys')):
         getSetting('vcu118Lock').release()
