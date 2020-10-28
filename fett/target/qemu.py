@@ -20,8 +20,7 @@ class qemuTarget (commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def boot (self,endsWith="login:",timeoutDict={"boot":90}): #no need to use targetObj as we'll never boot in non-reboot mode
-        targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
         timeout = self.parseBootTimeoutDict (timeoutDict)
         if (self.osImage in ['debian', 'FreeBSD']):
 

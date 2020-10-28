@@ -14,6 +14,8 @@ import threading, queue
 def startCyberPhys():
     # Create a network lock to protect network operations while multithreading
     setSetting('networkLock',threading.Lock())
+    # Create a vcu118 boards(s) lock 
+    setSetting('vcu118Lock',threading.Lock())
 
     printAndLog (f"Launching FETT <cyberPhys mode>...")
     # start/prepareEnv/Launch
