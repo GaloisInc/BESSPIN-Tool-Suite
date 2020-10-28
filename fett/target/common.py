@@ -25,6 +25,7 @@ class commonTarget():
         # target settings
         self.targetId = targetId
         self.targetIdInfo = f'<target{targetId}>: ' if (targetId) else ''
+        self.targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
         self.target = getSetting('target',targetId=self.targetId)
         if (self.target=='awsf1'):
             self.pvAWS = getSetting('pvAWS',targetId=self.targetId)
@@ -763,7 +764,7 @@ class commonTarget():
             scpCommand    = f"scp{portPart} {scpArgs}"
 
             passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
-            scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),'scp.out'),'a')
+            scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),f'scp{self.targetSuffix}.out'),'a')
 
             if (not self.sshECDSAkeyWasUpdated):
                 self.clearHostKey()
@@ -1180,7 +1181,7 @@ class commonTarget():
     @decorate.debugWrap
     def clearHostKey (self):
         ipUpdateECDSA = self.ipTarget if (not self.sshHostPort) else f"[{self.ipTarget}]:{self.sshHostPort}"
-        self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
+        self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),f'ssh{self.targetSuffix}.out'),'ab')
         try:
             subprocess.check_call (['ssh-keygen', '-R', ipUpdateECDSA],stdout=self.fSshOut,stderr=self.fSshOut)
         except Exception as exc:
@@ -1213,7 +1214,7 @@ class commonTarget():
             self.clearHostKey()
 
         self.killSshConn()
-        self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),'ssh.out'),'ab')
+        self.fSshOut = ftOpenFile(os.path.join(getSetting('workDir'),f'ssh{self.targetSuffix}.out'),'ab')
         try:
             self.sshProcess = pexpect.spawn(sshCommand,logfile=self.fSshOut,timeout=timeout)
         except Exception as exc:
@@ -1270,14 +1271,14 @@ class commonTarget():
         try:
             self.fSshOut.close()
         except Exception as exc:
-            warnAndLog("closeSshConn: Failed to close the ssh.out file.",doPrint=False)
+            warnAndLog(f"closeSshConn: Failed to close the ssh{self.targetSuffix}.out file.",doPrint=False)
         self.killSshConn()
         return True
 
     @decorate.debugWrap
     def pingTarget (self,exitOnError=True,pingAttempts=3,printSuccess=True):
         #pinging the target to check everything is ok
-        pingOut = ftOpenFile(os.path.join(getSetting('workDir'),'ping.out'),'a')
+        pingOut = ftOpenFile(os.path.join(getSetting('workDir'),f'ping{self.targetSuffix}.out'),'a')
         wasPingSuccessful = False
         for iPing in range(pingAttempts):
             try:

@@ -54,7 +54,7 @@ class fpgaTarget(object):
         # start the openocd process
         cfgSuffix = self.target if (self.target!='awsf1') else self.pvAWS
         openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
-        self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),'openocd.out'), 'ab')
+        self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),f'openocd{self.targetSuffix}.out'), 'ab')
 
         try:
             self.openocdProcess = pexpect.spawn(
@@ -69,7 +69,7 @@ class fpgaTarget(object):
             self.terminateAndExit(f"fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # start the gdb process
-        self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb.out'), 'wb')
+        self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb{self.targetSuffix}.out'), 'wb')
         try:
             self.gdbProcess = pexpect.spawn(
                 f"riscv64-unknown-elf-gdb {elfPath}",
@@ -122,7 +122,7 @@ class fpgaTarget(object):
                 if ((self.bluespec_p3BootAttemptsIdx < self.bluespec_p3BootAttemptsMax - 1)):
                     self.stopShowingTime.set()
                     time.sleep(1) #wait for the function to print "Completed" on the screen
-                    printAndLog(f"Failed to boot {self.processor}. "
+                    printAndLog(f"{self.targetIdInfo}Failed to boot {self.processor}. "
                         f"Trying again ({self.bluespec_p3BootAttemptsIdx+2}/{self.bluespec_p3BootAttemptsMax})...")
                     self.fpgaTearDown(isReload=True,stage=failStage.uart)
                     self.stopShowingTime = common.showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout)
@@ -281,7 +281,7 @@ class fpgaTarget(object):
             m = re.search('LOCATION=.*:1.(\d)', port.hwid)
             if m:
                 if m.group(1) == '1':
-                    printAndLog(f"fpgaTarget: located UART device at {port.device} "
+                    printAndLog(f"{self.targetIdInfo}fpgaTarget: located UART device at {port.device} "
                                 f"with serial number {port.serial_number}", doPrint=False)
                     extraMsg = "In case there is no output shown from the target's UART, "
                     extraMsg += "please make sure the tty is not used by any other tool (e.g. minicom), "
@@ -292,9 +292,9 @@ class fpgaTarget(object):
                                                                stderr=subprocess.STDOUT,shell=True),'utf-8')
                         sttyMatch = re.match(r"^.*min = (?P<vMin>\d+); time = (?P<vTime>\d+);$", sttyOut)
                         if ( (int(sttyMatch.group('vMin')) != 0) or (int(sttyMatch.group('vTime')) != 0)):
-                            warnAndLog (f"fpgaTarget: the UART {port.device} status is not as expected. {extraMsg}")
+                            warnAndLog (f"{self.targetIdInfo}fpgaTarget: the UART {port.device} status is not as expected. {extraMsg}")
                     except Exception as exc:
-                        warnAndLog (f"fpgaTarget: Failed to get the status of {port.device}. {extraMsg}",exc=exc)
+                        warnAndLog (f"{self.targetIdInfo}fpgaTarget: Failed to get the status of {port.device}. {extraMsg}",exc=exc)
                     return port.device
 
         logAndExit(f"findUartPort: Failed to find a UART port with expected VID:PID = {search_vid:X}:{search_pid:X}")
@@ -415,7 +415,7 @@ class fpgaTarget(object):
                 logging.debug("Closing uart_session.")
                 self.uartSession.close()
             except Exception as exc:
-                warnAndLog(f"fpgaTearDown: unable to close the serial session", exc=exc,doPrint=False)
+                warnAndLog(f"{self.targetIdInfo}fpgaTearDown: unable to close the serial session", exc=exc,doPrint=False)
 
         if (stage > failStage.gdb):
             self.interruptGdb()
@@ -426,7 +426,7 @@ class fpgaTarget(object):
         try:
             self.openocdProcess.expect(pexpect.EOF,timeout=10)
         except Exception as exc:
-            warnAndLog("fpgaTearDown: Failed to shutdown the openocd process.",doPrint=False,exc=exc)
+            warnAndLog(f"{self.targetIdInfo}fpgaTearDown: Failed to shutdown the openocd process.",doPrint=False,exc=exc)
 
         # quit gdb
         if (stage > failStage.gdb):
@@ -439,10 +439,11 @@ class fpgaTarget(object):
                 try:
                     pID = os.getpgid(proc.pid)
                 except Exception as exc:
-                    warnAndLog(f"Can't get pgid. Process <{pName}> was already killed.",exc=exc,doPrint=False)
+                    warnAndLog(f"{self.targetIdInfo}Can't get pgid. Process <{pName}> was already killed.",exc=exc,doPrint=False)
                     continue #process was already killed
                 sudoShellCommand(['kill', '-9', f"{pID}"],check=False)
-                sudoShellCommand(['pkill', '-9', f"{pName}"],check=False)
+                if (not isEqSetting('mode','cyberPhys')):
+                    sudoShellCommand(['pkill', '-9', f"{pName}"],check=False)
             if (isReload):
                 filesToClose.append(self.fTtyOut)
 
@@ -452,4 +453,4 @@ class fpgaTarget(object):
             try:
                 xFile.close()
             except Exception as exc:
-                warnAndLog(f"fpgaTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
+                warnAndLog(f"{self.targetIdInfo}fpgaTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)

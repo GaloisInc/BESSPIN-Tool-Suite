@@ -220,6 +220,8 @@ class vcu118Target (fpgaTarget, commonTarget):
 
 #--- END OF CLASS vcu118Target------------------------------
 
+@decorate.debugWrap
+@decorate.timeWrap
 def programFpga(bitStream, probeFile, attempts=2, targetId=None):
     """programs the fpga with a given bitstream and probe file
     matches the functionality of the old `gfe-program-fpga`
@@ -229,7 +231,7 @@ def programFpga(bitStream, probeFile, attempts=2, targetId=None):
     # top level params
     vivado = 'vivado_lab'
     sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils')
-    cwd = os.path.join(getSetting('workDir'), 'gfe')
+    cwd = getSetting('gfeWorkDir')
 
     # copy files over to workDir
     cp(os.path.join(sourceDir, 'tcl', 'prog_bit.tcl'), cwd)
@@ -250,13 +252,14 @@ def programFpga(bitStream, probeFile, attempts=2, targetId=None):
         else:
             logAndExit(f"programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
 
-
+@decorate.debugWrap
+@decorate.timeWrap
 def clearFlash(attempts=2, targetId=None):
     """ clear flash memory on Fpga
     matches the functionality of gfe-clear-flash
     """
     sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'tcl')
-    cwd = os.path.join(getSetting('workDir'), 'gfe')
+    cwd = getSetting('gfeWorkDir')
 
     # copy files over to workDir
     cp(os.path.join(sourceDir, 'program_flash'), cwd)
@@ -273,15 +276,37 @@ def clearFlash(attempts=2, targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programBitfile (doPrint=True,isReload=False,targetId=None):
-    printAndLog("Preparing the FPGA environment...",doPrint=doPrint)
-    clearProcesses()
-    if (not isReload):
-        gfeDir = os.path.join(getSetting('workDir'), 'gfe')
-        if not os.path.exists(gfeDir):
-            mkdir (gfeDir)
+def prepareFpgaEnv():
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('vcu118Lock').acquire()
 
-    printAndLog("Clearing the flash...",doPrint=False)
+    if doesSettingExist('vcu118PrepareFpgaEnv') and isEnabled('vcu118PrepareFpgaEnv'):
+        return
+    else:
+        setSetting('vcu118PrepareFpgaEnv',True)
+       
+    # Clear processes
+    processesList = ['openocd', 'vivado', 'hw_server', 'loader', 'pyprogram_fpga']
+    for proc in processesList:
+        sudoShellCommand(['pkill', '-9', proc],check=False)
+
+    # Create workDir/gfe
+    mkdir(os.path.join(getSetting('workDir'), 'gfe'), addToSettings='gfeWorkDir')
+
+    # Find the target(s) names
+    #--- TODO
+
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('vcu118Lock').release()
+
+@decorate.debugWrap
+@decorate.timeWrap
+def programBitfile (doPrint=True,isReload=False,targetId=None):
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
+    printAndLog(f"{targetInfo}Preparing the VCU118 FPGA...",doPrint=doPrint)
+    prepareFpgaEnv()
+
+    printAndLog(f"{targetInfo}Clearing the flash...",doPrint=False)
     clearFlash(targetId=targetId)
 
     if (not doesSettingExist('bitAndProbefiles',targetId=targetId)):
@@ -304,12 +329,12 @@ def programBitfile (doPrint=True,isReload=False,targetId=None):
         except Exception as exc:
             logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
 
-    printAndLog("Programming the bitfile...",doPrint=doPrint)
+    printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
     programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)
-    printAndLog(f"Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
+    printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
         f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
 
-    printAndLog("FPGA was programmed successfully!",doPrint=doPrint)
+    printAndLog(f"{targetInfo}FPGA was programmed successfully!",doPrint=doPrint)
 
 @decorate.debugWrap
 def selectBitAndProbeFiles (targetId=None):
@@ -334,6 +359,7 @@ def selectBitAndProbeFiles (targetId=None):
     return (os.path.join(bitfileDir, bitfileName),os.path.join(bitfileDir, probfileName))
 
 @decorate.debugWrap
+@decorate.timeWrap
 def checkEthAdaptorIsUp ():
     try:
         return psutil.net_if_stats()[getSetting('ethAdaptor')].isup
@@ -341,6 +367,7 @@ def checkEthAdaptorIsUp ():
         logAndExit (f"vcu118.checkEthAdaptorIsUp: Failed to check that <{getSetting('ethAdaptor')}> is up.",exc=exc,exitCode=EXIT.Network)
 
 @decorate.debugWrap
+@decorate.timeWrap
 def resetEthAdaptor ():
     #In cyberPhys, this can be called many times, so have to be careful
     if (isEqSetting('mode','cyberPhys')):
@@ -398,16 +425,3 @@ def resetEthAdaptor ():
 
     if (isEqSetting('mode','cyberPhys')):
         getSetting('networkLock').release()
-
-@decorate.debugWrap
-def clearProcesses ():
-    processesList = ['openocd', 'vivado_lab', 'hw_server', 'loader', 'pyprogram_fpga']
-    procs = {p.pid : p.info for p in psutil.process_iter(['name', 'username'])}
-    for pid, pinfo in procs.items():
-        if ((pinfo['username'] == getpass.getuser()) and (pinfo['name'] in processesList)):
-            if (psutil.pid_exists(pid)):
-                warnAndLog (f"Killing the hanging process <{pinfo['name']}:{pid}>",doPrint=False)
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except Exception as exc:
-                    errorAndLog(f"Failed to kill <{pinfo['name']}:{pid}>.",doPrint=False,exc=exc)
