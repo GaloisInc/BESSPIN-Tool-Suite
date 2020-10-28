@@ -6,6 +6,7 @@ from fett.base.utils.misc import *
 import fett.cwesEvaluation.featureModelUtil as featureModelUtil
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.bof_template import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.bof_instance import *
+from fett.cwesEvaluation.tests.bufferErrors.generateTests.instanceSelector import *
 
 def parseBytes(sz):
     try:
@@ -42,7 +43,8 @@ def generateTests(outdir):
     printAndLog("<generateTests> Enumerating instances...(this can take a while)")
     # Make sure that the buffer error test is actually enabled
     model = featureModelUtil.addConstraints(model, ["BufferErrors_Test"])
-    instances = featureModelUtil.enumerateFM(model)
+    instances = [BofInstance(model, x) for x in
+                 featureModelUtil.enumerateFM(model)]
     printAndLog("<generateTests> Done generating instances")
 
     settings = getSetting('bufferErrors')
@@ -52,9 +54,7 @@ def generateTests(outdir):
                              else random.randrange(sys.maxsize))
     printAndLog(f"<generateTests> Using seed {seed}")
 
-    tgs = [ BofTestGen(BofInstance(model, i),
-                       heapSize,
-                       stackSize) for i in instances ]
+    tgs = [ (i, BofTestGen(i, heapSize, stackSize)) for i in instances ]
     rnd = random.Random(seed)
 
     printAndLog(f"<generateTests> Generating {settings['nTests']} tests "
@@ -66,14 +66,14 @@ def generateTests(outdir):
             tg = rnd.choice(tgs)
             tg.genInstance(rnd, drop=True)
 
-    for i in range(settings["nTests"]):
+    selector = InstanceSelector(tgs, rnd)
+    for i in range(settings['nTests']):
         # Name tests test_buffer_error_<i>.c to avoid conflicting with the
         # test_<i>.c tests in the other vulnerability classes
         out   = os.path.join(outdir, f"test_buffer_errors_{i}.c")
         outfd = ftOpenFile(out, "w")
         sys.stdout.write("\033[K")
-        tg    = rnd.choice(tgs)
-        outfd.write(tg.genInstance(rnd, drop=False))
+        outfd.write(selector.chooseInstance().genInstance(rnd, drop=False))
         outfd.close()
     printAndLog("<generateTests> Done generating tests")
 
