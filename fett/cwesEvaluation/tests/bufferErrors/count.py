@@ -17,6 +17,11 @@ QEMU_FPGA_LOOKFOR  = [
             ('TIMED OUT', ['>>>']), #always return true
         ]
 
+CWE_680_INT_OVERFLOW_LOOKFOR = [
+            ('CORRECTED',    ['BUFFER SIZE CORRECTED']),
+            ('INSUFFICIENT', ['BUFFER SIZE INSUFFICIENT'])
+        ]
+
 def triage(filepath,lookfor):
     testRan = False
     if not filepath.is_file():
@@ -42,6 +47,15 @@ def triage(filepath,lookfor):
     else:
         return 'FAIL'
 
+def tryAdjustScore(logFile, thisScore, logSymbol):
+    try:
+        fLog = ftOpenFile(logFile,'r')
+        logLines = fLog.read().splitlines()
+        fLog.close()
+        return (adjustToCustomScore(logLines,thisScore),
+                logSymbol)
+    except:
+        return (SCORES.FAIL, logSymbol)
 
 def scoreLog(logFile, lookfor):
     #First, get the triage decision
@@ -56,15 +70,7 @@ def scoreLog(logFile, lookfor):
         thisScore = SCORES.NONE
     else:
         thisScore = SCORES.FAIL
-
-    try:
-        fLog = ftOpenFile(logFile,'r')
-        logLines = fLog.read().splitlines()
-        fLog.close()
-        return (adjustToCustomScore(logLines,thisScore),
-                logSymbol)
-    except:
-        return (SCORES.FAIL, logSymbol)
+    return tryAdjustScore(logFile, thisScore, logSymbol)
 
 def bfparams(filepath):
     # we might want template parameters too...
@@ -89,6 +95,30 @@ def test_ord(t):
     except:
         return -1
 
+def scoreCWE680(path, lookfor, cwes):
+    """
+    Special scoring function for CWE 680.  In addition to the usual inputs to
+    scoreLog, this function takes an additional parameter `cwes` of the list of
+    CWEs that the generated test stresses.  This function also returns an extra
+    tuple value of the actual CWEs that were tested, which may differ from
+    `cwes` if the processor detected the integer overflow portion of the test.
+    """
+    # Check whether size overflow was detected
+    int_overflow = triage(path, CWE_680_INT_OVERFLOW_LOOKFOR + lookfor)
+    if int_overflow in {'CORRECTED', 'TRAPPED'}:
+        # The size overflow was either corrected for, or the processor trapped
+        # on the overflow (we know it was from the overflow because if triage
+        # reports "TRAPPED" instead of "CORRECTED" or "INSUFFICIENT" than the
+        # printf statement in the test following the size parameter overflow
+        # was never executed).  Report NONE for CWE-680, but remove other CWEs
+        # from the test list as no overruns were tested in this run.
+        return tryAdjustScore(path, SCORES.NONE, int_overflow) + (['CWE_680'],)
+
+    # Size overflow was either not detected, or not properly corrected.  Score
+    # test as usual.
+    return scoreLog(path, lookfor) + (cwes,)
+
+
 def tabulate(dirpath,lookfor):
     dirpath = Path(dirpath)
     if not dirpath.is_dir():
@@ -102,11 +132,19 @@ def tabulate(dirpath,lookfor):
                                       f"{path.stem}.c"))
             if not cfile.is_file():
                 logAndExit(f"<bufferErrors.count.tabulate> C file {cfile} not found")
-            result, logSymbol = scoreLog (path, lookfor)
+            params = bfparams(cfile)
+            if "CWE_680" in params["CWE"]:
+                # CWE_680 has two parts and requires special scoring
+                result, logSymbol, cwes = scoreCWE680(path,
+                                                      lookfor,
+                                                      params["CWE"])
+                params["CWE"] = cwes
+            else:
+                result, logSymbol = scoreLog (path, lookfor)
             row = ({'TestNumber': path.stem,
                     'Result': result},
                    logSymbol)
-            row[0].update(bfparams(cfile))
+            row[0].update(params)
             # TODO: also record simulator and binary hashes?
             rows.append(row)
     rows.sort(key=test_ord)
