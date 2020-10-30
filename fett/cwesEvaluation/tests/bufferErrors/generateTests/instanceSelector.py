@@ -1,5 +1,4 @@
 import collections
-import math
 
 from fett.base.utils.misc import *
 
