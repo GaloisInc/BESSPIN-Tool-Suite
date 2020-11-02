@@ -8,7 +8,7 @@ from fett.target.common import *
 from fett.target.fpga import fpgaTarget
 from fett.target.build import getTargetIp
 
-import subprocess, psutil, tftpy
+import subprocess, psutil, tftpy, usb
 import sys, signal, os, socket, time, hashlib
 import pexpect
 
@@ -218,6 +218,32 @@ class vcu118Target (fpgaTarget, commonTarget):
         time.sleep(5)
         return
 
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def getOpenocdCustomCfg(self):
+        # For many targets, we need to choose on which USB port to start openocd
+        if (isEnabled('IsThereMoreThanOneVcu118Target')):
+            hwId = getSetting('vcu118HwTarget',targetId=self.targetId).split('/')[-1]
+            for bus in usb.busses():
+                for dev in bus.devices:
+                    try:
+                        #hasattr() returns true, but getattr gives an error, so we have to work around it
+                        serial_number = dev.dev.serial_number 
+                    except:
+                        continue
+                    if (serial_number == hwId): #Found the USB port connected to the JTAG of this hw target
+                        printAndLog(f"{self.targetIdInfo}getOpenocdCmd: USB device <{dev.dev.address}> is connected to "
+                            f"the JTAG of HW ID <{hwId}>.")
+                        # return: bus-port[.port...]
+                        return f"; adapter usb location {bus.location}-{'.'.join(dev.dev.port_numbers)}"
+            logAndExit(f"{self.targetIdInfo}getOpenocdCmd: Failed to find the USB port that is connected to "
+                f"the JTAG of HW ID <{hwId}>.",exitCode=EXIT.Configuration)
+        else:
+            # In case of a single board, the openocd configuration in `fett/target/utils/openocd_vcu118.cfg`
+            # uses `ftdi_vid_pid` to select the device with the correct vendor ID and product ID, so no need
+            # for further specification.
+            return ''
+
 #--- END OF CLASS vcu118Target------------------------------
 
 @decorate.debugWrap
@@ -317,12 +343,14 @@ def prepareFpgaEnv(targetId=None):
             logAndExit (f"prepareFpgaEnv: Failed to find HW targets list.",exc=exc,exitCode=EXIT.Run)
         
         setSetting('listVcu118HwTargets',listTargets)
+        printAndLog(f'prepareFpgaEnv: Found the following vcu118 targets:<{" ".join(listTargets)}>',doPrint=False)
+        setSetting('IsThereMoreThanOneVcu118Target', (len(listTargets)>1))
 
     if (not doesSettingExist('vcu118HwTarget',targetId=targetId)):
         targetInfo = f"<target{targetId}>: " if (targetId) else ''
         curList = getSetting('listVcu118HwTargets')
         if (len(curList) == 0):
-            logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough HW targets found!",exc=exc,exitCode=EXIT.Configuration)
+            logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough vcu118 HW targets found!",exc=exc,exitCode=EXIT.Configuration)
         thisTarget = curList.pop(0)
         printAndLog(f"{targetInfo}prepareFpgaEnv: Using HW target <{thisTarget}>.")
         setSetting('vcu118HwTarget',thisTarget,targetId=targetId)

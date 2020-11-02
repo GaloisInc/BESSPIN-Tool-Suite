@@ -56,9 +56,10 @@ class fpgaTarget(object):
         openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
         self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),f'openocd{self.targetSuffix}.out'), 'ab')
 
+        openocdExtraCmds = f"gdb_port {self.gdbPort}; telnet_port {self.openocdPort}{self.getOpenocdCustomCfg()}"
         try:
             self.openocdProcess = pexpect.spawn(
-                f"openocd --command 'gdb_port {self.gdbPort}; telnet_port {self.openocdPort}' -f {openocdCfg}",
+                f"openocd --command '{openocdExtraCmds}' -f {openocdCfg}",
                     logfile=self.fOpenocdOut, timeout=15, echo=False)
             self.openocdProcess.expect(f"Listening on port {self.openocdPort} for telnet", timeout=15)
         except Exception as exc:
@@ -271,7 +272,7 @@ class fpgaTarget(object):
         self.keyboardInterrupt(exitOnError=False,retryCount=1,process=self.gdbProcess,
             endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15)
 
-    @staticmethod
+    @decorate.debugWrap
     def findUartPort(search_vid=0x10C4,search_pid=0xEA70):
         # Get a list of all serial ports with the desired VID/PID
         ports = [port for port in serial.tools.list_ports.comports() if port.vid == search_vid and port.pid == search_pid]
@@ -338,6 +339,10 @@ class fpgaTarget(object):
                 self.uartSession.open()
         except Exception as exc:
             logAndExit(f"setupUart: unable to open serial session", exc=exc, exitCode=EXIT.Run)
+
+    @decorate.debugWrap     
+    def getOpenocdCustomCfg(self):
+        return '' #default implementation
 
     @decorate.debugWrap
     @decorate.timeWrap
