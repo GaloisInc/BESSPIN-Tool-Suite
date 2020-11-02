@@ -23,6 +23,15 @@ def parseBytes(sz):
                    exitCode=EXIT.Configuration)
 
 def generateTests(outdir):
+    settings = getSetting('bufferErrors')
+    # Check that nTests is large enough to avoid score instability
+    minNTests = 30 if isEqSetting('osImage', 'FreeRTOS') else 100
+    if settings['nTests'] < minNTests:
+        warnAndLog(f"<generateTests> <nTests> must be at least <{minNTests}> "
+                   f"for <{getSetting('osImage')}>.  Changing <nTests> to "
+                   f"<{minNTests}>.")
+        settings['nTests'] = minNTests
+
     # TODO: Configurable model
     modelPath = os.path.join(getSetting("repoDir"),
                              "fett",
@@ -47,7 +56,6 @@ def generateTests(outdir):
                  featureModelUtil.enumerateFM(model)]
     printAndLog("<generateTests> Done generating instances")
 
-    settings = getSetting('bufferErrors')
     heapSize = parseBytes(settings['heapSize'])
     stackSize = parseBytes(settings['stackSize'])
     seed = (settings['seed'] if settings['useSeed']
