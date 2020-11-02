@@ -42,6 +42,11 @@ set_property -dict [ list \
              PROGRAM.CHECKSUM 0 \
             ] [current_hw_cfgmem]
 
+if {![string equal [get_property PROGRAM.HW_CFGMEM_TYPE [current_hw_device]] [get_property MEM_TYPE [get_property CFGMEM_PART [current_hw_cfgmem]]] ]} {
+    create_hw_bitstream -hw_device [current_hw_device] [get_property PROGRAM.HW_CFGMEM_BITFILE [current_hw_device]]
+    program_hw_devices
+}
+
 program_hw_cfgmem
 
 close_hw_target
