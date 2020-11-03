@@ -322,6 +322,19 @@
             "name" : "tclSourceDir",
             "type" : "dirPath",
             "val" : "fett/target/utils/tcl"
+        },
+        {
+            "name" : "vcu118UartSettings",
+            "type" : "dict",
+            "val" : {
+                "timeout" : 1,
+                "baudrate" : 115200,
+                "parity" : "NONE",
+                "stopbits" : 2,
+                "bytesize" : 8,
+                "vid" : 4292,
+                "pid" : 60016
+            }
         }
     ]
 }
