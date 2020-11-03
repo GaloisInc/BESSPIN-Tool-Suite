@@ -48,10 +48,12 @@ def prepareOsImage (targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def freeRTOSBuildChecks():
+def freeRTOSBuildChecks(targetId=None):
     """
     Check FreeRTOS build parameters and set settings appropriately
     """
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('FreeRTOSDirLock').acquire()
     # Check if FreeRTOS mirror is checked out properly
     forkDir = os.path.join(getSetting('repoDir'),getSetting('FreeRTOSforkName'))
     setSetting('FreeRTOSforkDir',forkDir)
@@ -60,21 +62,21 @@ def freeRTOSBuildChecks():
     if (len(os.listdir(getSetting('FreeRTOSforkDir'))) == 0):
         logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}> is empty. Please use <git submodule update>.",exitCode=EXIT.Environment)
 
-    if isEqSetting('target', 'qemu'):
+    if isEqSetting('target', 'qemu', targetId=targetId):
         projDir = os.path.join(getSetting('FreeRTOSforkDir'),
                                getSetting('FreeRTOSprojNameQemu'))
     else:
         projDir = os.path.join(getSetting('FreeRTOSforkDir'),
                                getSetting('FreeRTOSprojNameNonQemu'))
-    setSetting('FreeRTOSprojDir',projDir)
-    if (not os.path.isdir(getSetting('FreeRTOSprojDir'))):
-        logAndExit (f"Failed to fine the FreeRTOS project at <{getSetting('FreeRTOSprojDir')}>.",exitCode=EXIT.Environment)
+    setSetting('FreeRTOSprojDir',projDir,targetId=targetId)
+    if (not os.path.isdir(getSetting('FreeRTOSprojDir',targetId=targetId))):
+        logAndExit (f"Failed to find the FreeRTOS project at <{getSetting('FreeRTOSprojDir',targetId=targetId)}>.",exitCode=EXIT.Environment)
 
     #cross-compiling sanity checks
-    if (isEqSetting('binarySource', 'Michigan') and
+    if (isEqSetting('binarySource','Michigan',targetId=targetId) and
         not isEqSetting('cross-compiler', 'Clang')):
         warnAndLog(f"Cross compiling with <{getSetting('cross-compiler')}> "
-                   f"while using binary source <{getSetting('binarySource')}> "
+                   f"while using binary source <{getSetting('binarySource',targetId=targetId)}> "
                    "is not supported.  Cross compiling with <Clang> and "
                    "linking with <LLD> instead.")
         setSetting('cross-compiler', 'Clang')
@@ -87,7 +89,7 @@ def freeRTOSBuildChecks():
         setSetting('linker','LLD')
 
     # FatFs
-    if (isEqSetting('mode','test')):
+    if (isEqSetting('mode','test')): #targeId is None for test mode (the only mode that uses SDCard+buildApps)
         if (isEqSetting('freertosFatFs','default')):
             if (isEqSetting('target','awsf1')):
                 setSetting('freertosFatFs','dosblk')
@@ -103,6 +105,9 @@ def freeRTOSBuildChecks():
                 logAndExit(f"Compiling the SDcard library using Clang/LLD is not yet implemented.",exitCode=EXIT.Implementation)
             warnAndLog("FatFs is configured to use <sdcard>. This run will only succeed if an SD card is available to the board.")
             
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('FreeRTOSDirLock').release()
+
 @decorate.debugWrap
 @decorate.timeWrap
 def prepareFreeRTOSNetworkParameters(targetId=None):
@@ -118,7 +123,7 @@ def prepareFreeRTOSNetworkParameters(targetId=None):
         elif (xType==hex):
             return "0x{:02X}".format(int(val,16))
 
-    configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir'),'fettFreeRTOSIPConfig.h'),'a')
+    configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir',targetId=targetId),'fettFreeRTOSIPConfig.h'),'a')
     for xSetting,xMacro,xType in listConfigIpParams:
         if (doesSettingExist(xSetting)):
             settingVal = getSetting(xSetting)
@@ -150,36 +155,41 @@ def getTargetIp(targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
+def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('FreeRTOSDirLock').acquire()
+
+    if (buildDir is None):
+        buildDir = getSetting('buildDir',targetId=targetId)
     #Cleaning all ".o" and ".elf" files in site
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
-    if isEqSetting("target", "qemu"):
-        cleanQemuMakeDependencyFiles()
+    if isEqSetting("target", "qemu",targetId=targetId):
+        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.d')
 
     #Compile
     printAndLog (f"Cross-compiling...",doPrint=doPrint)
     envVars = extraEnvVars
-    envVars.append(f"XLEN={getSetting('xlen')}")
+    envVars.append(f"XLEN={getSetting('xlen',targetId=targetId)}")
     envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
-    if isEqSetting('target', 'qemu'):
+    if isEqSetting('target','qemu',targetId=targetId):
         envVars.append(f"PROJ_NAME=main_fett")
     else:
         envVars.append(f"PROG=main_fett")
-    envVars.append(f"BSP={getSetting('target')}")
+    envVars.append(f"BSP={getSetting('target',targetId=targetId)}")
     if (isEqSetting('mode','test')):
-        envVars.append(f"FATFS={getSetting('freertosFatFs').upper()}")
-        if isEqSetting('freertosFatFs','ramdisk'):
+        envVars.append(f"FATFS={getSetting('freertosFatFs',targetId=targetId).upper()}")
+        if isEqSetting('freertosFatFs','ramdisk',targetId=targetId):
             envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
 
-    if isEqSetting('binarySource', 'Michigan'):
+    if isEqSetting('binarySource', 'Michigan',targetId=targetId):
         dockerToolchainImage = 'michigan-image:1.0'
         envVars.append("USE_MORPHEUS=yes")
 
         # Build directory must be mounted at INC_FETT_APPS
         dockerBuildMount = "/root/build"
         envVars.append(f"INC_FETT_APPS={dockerBuildMount}")
-        dockerExtraMounts = {getSetting('buildDir') : dockerBuildMount}
+        dockerExtraMounts = {buildDir : dockerBuildMount}
 
         # The `make` function will mount
         # FreeRTOS-10.0.1/FreeRTOS/Demo/RISC-V_Galois_P1 as /root/makeDir on
@@ -188,11 +198,11 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
         # FreeRTOS-10.0.1/FreeRTOS/Demo/Common as /root/Common and
         # FreeRTOS-10.0.1/FreeRTOS/Source as /Source to preserve these relative
         # paths.
-        hostCommon = os.path.abspath(os.path.join(getSetting("FreeRTOSprojDir"),
+        hostCommon = os.path.abspath(os.path.join(getSetting("FreeRTOSprojDir",targetId=targetId),
                                                   os.pardir,
                                                   "Common"))
         dockerExtraMounts[hostCommon] = "/root/Common"
-        hostSource = os.path.abspath(os.path.join(getSetting("FreeRTOSprojDir"),
+        hostSource = os.path.abspath(os.path.join(getSetting("FreeRTOSprojDir",targetId=targetId),
                                                   os.pardir,
                                                   os.pardir,
                                                   "Source"))
@@ -203,7 +213,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
     else:
         dockerToolchainImage = None
         dockerExtraMounts = {}
-        envVars.append(f"INC_FETT_APPS={getSetting('buildDir')}")
+        envVars.append(f"INC_FETT_APPS={buildDir}")
         if (isEqSetting('cross-compiler','Clang')):
             # check that the sysroot env variable exists:
             sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
@@ -216,36 +226,38 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
         isEnabled('useCustomCompiling') and 
         isEnabledDict('customizedCompiling','useCustomMakefile')
         ):
-        make (envVars,getSetting('buildDir'),
+        make (envVars,buildDir,
               dockerToolchainImage=dockerToolchainImage,
-              dockerExtraMounts=dockerExtraMounts)
+              dockerExtraMounts=dockerExtraMounts,
+              targetId=targetId, buildDir=buildDir)
     else: 
         # default environment
-        make (envVars,getSetting('FreeRTOSprojDir'),
+        make (envVars,getSetting('FreeRTOSprojDir',targetId=targetId),
               dockerToolchainImage=dockerToolchainImage,
-              dockerExtraMounts=dockerExtraMounts)
+              dockerExtraMounts=dockerExtraMounts,
+              targetId=targetId, buildDir=buildDir)
 
     #check if the elf file was created
     if isEqSetting('target', 'qemu'):
-        builtElf = os.path.join(getSetting('FreeRTOSprojDir'),
+        builtElf = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),
                                 'build',
                                 'FreeRTOS-main_fett.elf')
     else:
-        builtElf = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.elf')
+        builtElf = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),'main_fett.elf')
     if (not os.path.isfile(builtElf)):
         logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
-    cp(builtElf,getSetting('osImageElf'))
+    cp(builtElf,getSetting('osImageElf',targetId=targetId))
     if not isEqSetting('target', 'qemu'):
-        builtAsm = os.path.join(getSetting('FreeRTOSprojDir'),'main_fett.asm')
+        builtAsm = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),'main_fett.asm')
         if (not os.path.isfile(builtAsm)):
             logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
-        cp(builtAsm,getSetting('osImageAsm'))
+        cp(builtAsm,getSetting('osImageAsm',targetId=targetId))
     printAndLog(f"Files cross-compiled successfully.",doPrint=doPrint)
 
     if isEqSetting('binarySource', 'Michigan'):
         # Encrypt elf file
         argsList = ['docker', 'run', '-it', '--privileged=true',
-                    '-v', f'{getSetting("FreeRTOSprojDir")}:/root/makeDir',
+                    '-v', f'{getSetting("FreeRTOSprojDir",targetId=targetId)}:/root/makeDir',
                     dockerToolchainImage,
                     'bash', '-c', f'elf-parser -e /root/makeDir/main_fett.elf']
         sudoShellCommand(argsList)
@@ -254,7 +266,10 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[]):
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
     if isEqSetting("target", "qemu"):
-        cleanQemuMakeDependencyFiles()
+        cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.d')
+
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('FreeRTOSDirLock').release()
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -333,35 +348,6 @@ def cleanDirectory (xDir,endsWith='.o'):
                     os.remove(os.path.join(xDirName,xFile))
                 except Exception as exc:
                     logAndExit(f"cleanDirectory: Failed to delete <{xDirName}/{xFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
-
-@decorate.debugWrap
-def cleanQemuMakeDependencyFiles():
-    """
-    Remove the .d files generated by the FreeRTOS build for the Qemu target
-    that are not already checked into the FreeRTOS fork repo
-    """
-    buildAppDir = os.path.join(getSetting('FreeRTOSprojDir'), 'build', 'app')
-    dependencyFiles = glob.glob(os.path.join(buildAppDir, '*test*.d'))
-
-    if getSetting('currentTest')[1] == 'informationLeakage':
-        extraCFiles = glob.glob(os.path.join(getSetting('buildDir'),
-                                             'informationLeakage',
-                                             '*',
-                                             '*.c'))
-        for extraCFile in extraCFiles:
-            dFile = os.path.join(buildAppDir,
-                                 os.path.basename(extraCFile)[:-1] + "d")
-            if os.path.exists(dFile):
-                dependencyFiles.append(os.path.join(buildAppDir, dFile))
-
-    for dependencyFile in dependencyFiles:
-        try:
-            os.remove(dependencyFile)
-        except Exception as exc:
-            logAndExit("cleanQemuMakeDependencyFiles: Failed to delete "
-                       f"<dependencyFile>.",
-                       exc=exc,
-                       exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap
 @decorate.timeWrap
