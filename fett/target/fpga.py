@@ -1,12 +1,15 @@
-import pexpect, signal
-from pexpect import fdpexpect
-import serial, subprocess, enum
-import serial.tools.list_ports
+#! /usr/bin/env python3
+""" 
+fpgaTarget class
+"""
 
 from fett.base.utils.misc import *
 from fett.target.common import *
 from fett.target import vcu118
 from fett.target import common
+
+from pexpect import fdpexpect
+import pexpect, subprocess, enum
 
 class failStage (enum.Enum):
     openocd = enum.auto()
@@ -29,7 +32,6 @@ class fpgaTarget(object):
     def __init__(self, targetId=None):
         self.gdbProcess = None 
         self.openocdProcess = None
-        self.uartSession = None
 
         self.fGdbOut = None
         self.fOpenocdOut = None
@@ -46,10 +48,6 @@ class fpgaTarget(object):
     def fpgaStart (self, elfPath, elfLoadTimeout=15):
         if (self.processor=='bluespec_p3'):
             time.sleep(3) #need time after programming the fpga
-
-        if (self.target=='vcu118'):
-            # setup UART
-            self.setupUart(stopbits=1)
 
         # start the openocd process
         cfgSuffix = self.target if (self.target!='awsf1') else self.pvAWS
@@ -68,6 +66,9 @@ class fpgaTarget(object):
                 errorAndLog (f"fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
             self.terminateAndExit(f"fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+        # Setup UART if needed
+        self.setupUart()
 
         # start the gdb process
         self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb{self.targetSuffix}.out'), 'wb')
@@ -272,77 +273,13 @@ class fpgaTarget(object):
         self.keyboardInterrupt(exitOnError=False,retryCount=1,process=self.gdbProcess,
             endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15)
 
-    @decorate.debugWrap
-    def findUartPort(search_vid=0x10C4,search_pid=0xEA70):
-        # Get a list of all serial ports with the desired VID/PID
-        ports = [port for port in serial.tools.list_ports.comports() if port.vid == search_vid and port.pid == search_pid]
-
-        for port in ports:
-            # Silabs chip on VCU118 has two ports. Locate port 1 from the hardware description
-            m = re.search('LOCATION=.*:1.(\d)', port.hwid)
-            if m:
-                if m.group(1) == '1':
-                    printAndLog(f"{self.targetIdInfo}fpgaTarget: located UART device at {port.device} "
-                                f"with serial number {port.serial_number}", doPrint=False)
-                    extraMsg = "In case there is no output shown from the target's UART, "
-                    extraMsg += "please make sure the tty is not used by any other tool (e.g. minicom), "
-                    extraMsg += f"and is reset properly (use 'stty -F {port.device} min 0 time 0' to reset it)."
-                    try:
-                        #Check if no one else is using the serial port. Especially Minicom.
-                        sttyOut = str(subprocess.check_output (f"stty -F {port.device} | grep min",
-                                                               stderr=subprocess.STDOUT,shell=True),'utf-8')
-                        sttyMatch = re.match(r"^.*min = (?P<vMin>\d+); time = (?P<vTime>\d+);$", sttyOut)
-                        if ( (int(sttyMatch.group('vMin')) != 0) or (int(sttyMatch.group('vTime')) != 0)):
-                            warnAndLog (f"{self.targetIdInfo}fpgaTarget: the UART {port.device} status is not as expected. {extraMsg}")
-                    except Exception as exc:
-                        warnAndLog (f"{self.targetIdInfo}fpgaTarget: Failed to get the status of {port.device}. {extraMsg}",exc=exc)
-                    return port.device
-
-        logAndExit(f"findUartPort: Failed to find a UART port with expected VID:PID = {search_vid:X}:{search_pid:X}")
-
-    @decorate.debugWrap
-    def setupUart(self, timeout=1, baud=115200, parity="NONE",
-        stopbits=2, bytesize=8):
-
-        port = self.findUartPort()
-
-        # Translate inputs into serial settings
-        if hasattr(serial, f"PARITY_{parity.upper()}"):
-            parity = getattr(serial, f"PARITY_{parity.upper()}")
-        else:
-            logAndExit(f"setupUart: parity {parity} must be even or odd")
-
-        sbit_mapping = {1: serial.STOPBITS_ONE, 2: serial.STOPBITS_TWO}
-        if stopbits in sbit_mapping:
-            stopbits = sbit_mapping[stopbits]
-        else:
-            logAndExit(f"setupUart: stop bits {stopbits} must be 1 or 2")
-
-        byte_mapping = {5: serial.FIVEBITS, 6: serial.SIXBITS, 7: serial.SEVENBITS, 8: serial.EIGHTBITS}
-        if bytesize in byte_mapping:
-            bytesize = byte_mapping[bytesize]
-        else:
-            logAndExit(f"setupUart: bytesize {bytesize} must be 5,6,7 or 8")
-
-        # configure the serial connections
-        try:
-            self.uartSession = serial.Serial(
-                port=port,
-                baudrate=baud,
-                parity=parity,
-                stopbits=stopbits,
-                timeout=timeout,
-                bytesize=bytesize
-            )
-
-            if not self.uartSession.is_open:
-                self.uartSession.open()
-        except Exception as exc:
-            logAndExit(f"setupUart: unable to open serial session", exc=exc, exitCode=EXIT.Run)
-
     @decorate.debugWrap     
     def getOpenocdCustomCfg(self):
-        return '' #default implementation
+        return '' #virtual implementation
+
+    @decorate.debugWrap
+    def setupUart(self):
+        return #virtual implementation
 
     @decorate.debugWrap
     @decorate.timeWrap

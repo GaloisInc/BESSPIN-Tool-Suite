@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """ 
-Main vcu118 class + misc vcu118 functions
+vcu118 class + misc vcu118 functions
 """
 
 from fett.base.utils.misc import *
@@ -8,7 +8,8 @@ from fett.target.common import *
 from fett.target.fpga import fpgaTarget
 from fett.target.build import getTargetIp
 
-import subprocess, psutil, tftpy, usb
+import subprocess, psutil, tftpy
+import serial, serial.tools.list_ports, usb
 import sys, signal, os, socket, time, hashlib
 import pexpect
 
@@ -22,6 +23,9 @@ class vcu118Target (fpgaTarget, commonTarget):
 
         self.ipHost = getSetting('vcu118IpHost')
         self.ipTarget = getTargetIp(targetId=targetId)
+
+        self.uartSession = None
+        self.uartDevice = None
 
         #Reloading till the network is up
         self.freertosNtkRetriesMax = 3
@@ -235,7 +239,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                         printAndLog(f"{self.targetIdInfo}getOpenocdCmd: USB device <{dev.dev.address}> is connected to "
                             f"the JTAG of HW ID <{hwId}>.")
                         # return: bus-port[.port...]
-                        return f"; adapter usb location {bus.location}-{'.'.join(dev.dev.port_numbers)}"
+                        return f"; adapter usb location {bus.location}-{'.'.join([str(num) for num in dev.dev.port_numbers])}"
             logAndExit(f"{self.targetIdInfo}getOpenocdCmd: Failed to find the USB port that is connected to "
                 f"the JTAG of HW ID <{hwId}>.",exitCode=EXIT.Configuration)
         else:
@@ -243,6 +247,92 @@ class vcu118Target (fpgaTarget, commonTarget):
             # uses `ftdi_vid_pid` to select the device with the correct vendor ID and product ID, so no need
             # for further specification.
             return ''
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def setupUart(self):
+        if (self.uartDevice is None):
+            if (isEqSetting('mode','cyberPhys')):
+                getSetting('vcu118Lock').acquire()
+
+            if (not doesSettingExist('vcu118UartDevices')):
+                setSetting('vcu118UartDevices',self.findUartDevices())
+            uartDevices = getSetting('vcu118UartDevices')
+
+            if (len(uartDevices)==0):
+                logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exc=exc, exitCode=EXIT.Configuration)
+            elif(len(uartDevices)==1):
+                uartDevice = uartDevices.pop(0)
+                setSetting('vcu118UartDevices',uartDevices)
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in uart devices list.")
+            else:
+                # Brute Force search for the uart devices --- O(n!), where n=nTargets
+                logAndExit("setupUart: Brute Force device search is not yet implemented.",exitCode=EXIT.Implementation)
+
+            self.startUartSession(uartDevice)
+
+            if (isEqSetting('mode','cyberPhys')):
+                getSetting('vcu118Lock').release()
+        else:
+            # Not the first time to start the uart session
+            self.startUartSession(self.uartDevice)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def startUartSession(self,uartDevice):
+        # configure the serial connection
+        uartSettings = getSetting('vcu118UartSettings')
+        # Translate settings into serial settings
+        if hasattr(serial, f"PARITY_{uartSettings['parity'].upper()}"):
+            parity = getattr(serial, f"PARITY_{uartSettings['parity'].upper()}")
+        else:
+            logAndExit(f"startUartSession: parity {uartSettings['parity']} must be even, odd, or none.")
+
+        sbit_mapping = {1: serial.STOPBITS_ONE, 2: serial.STOPBITS_TWO}
+        if uartSettings['stopbits'] in sbit_mapping:
+            stopbits = sbit_mapping[uartSettings['stopbits']]
+        else:
+            logAndExit(f"startUartSession: stop bits {uartSettings['stopbits']} must be 1 or 2")
+
+        byte_mapping = {5: serial.FIVEBITS, 6: serial.SIXBITS, 7: serial.SEVENBITS, 8: serial.EIGHTBITS}
+        if uartSettings['bytesize'] in byte_mapping:
+            bytesize = byte_mapping[uartSettings['bytesize']]
+        else:
+            logAndExit(f"startUartSession: bytesize {uartSettings['bytesize']} must be 5,6,7 or 8")
+
+        try:
+            self.uartSession = serial.Serial(
+                port=uartDevice,
+                baudrate=uartSettings['baudrate'],
+                parity=parity,
+                stopbits=stopbits,
+                timeout=uartSettings['timeout'],
+                bytesize=bytesize
+            )
+
+            if not self.uartSession.is_open:
+                self.uartSession.open()
+        except Exception as exc:
+            logAndExit(f"{self.targetIdInfo}startUartSession: unable to open serial session on <{uartDevice}>.", exc=exc, exitCode=EXIT.Run)
+
+
+    @decorate.debugWrap
+    def findUartDevices(self):
+        # Get a list of all serial ports with the desired VID/PID
+        uartSettings = getSetting('vcu118UartSettings')
+        vid = uartSettings['vid']
+        pid = uartSettings['pid']
+        uartDevices = []
+        for port in serial.tools.list_ports.comports():
+            if ((port.vid != vid) or (port.pid != pid)):
+                continue #not the CP2105 chips we're looking for
+            if (port.location.endswith('1')): 
+            # Silabs chip on VCU118 has two ports. Locate port 1 from the hardware description
+                printAndLog(f"findUartDevices: located UART device at {port.device}"
+                    f"with serial number {port.serial_number}", doPrint=False)
+                uartDevices.append(port.device)
+
+        return uartDevices
 
 #--- END OF CLASS vcu118Target------------------------------
 
