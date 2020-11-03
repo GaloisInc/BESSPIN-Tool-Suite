@@ -86,7 +86,7 @@ def prepareFreeRTOS():
         fett.target.build.freeRTOSBuildChecks()
 
         #copy the C files, .mk files, and any directory
-        copyDir(os.path.join(getSetting('repoDir'),'fett','target','srcFreeRTOS'),getSetting('buildDir'),copyContents=True)
+        copyDir(os.path.join(getSetting('repoDir'),'fett','apps','freertos','srcMain'),getSetting('buildDir'),copyContents=True)
 
         #Include the relevant user configuration parameters
         #This is a list of tuples: (settingName,macroName)
