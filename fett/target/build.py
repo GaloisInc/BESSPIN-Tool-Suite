@@ -53,7 +53,7 @@ def freeRTOSBuildChecks(targetId=None):
     Check FreeRTOS build parameters and set settings appropriately
     """
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('FreeRTOSDirLock').acquire()
+        getSetting('FreeRTOSLock').acquire()
     # Check if FreeRTOS mirror is checked out properly
     forkDir = os.path.join(getSetting('repoDir'),getSetting('FreeRTOSforkName'))
     setSetting('FreeRTOSforkDir',forkDir)
@@ -106,7 +106,7 @@ def freeRTOSBuildChecks(targetId=None):
             warnAndLog("FatFs is configured to use <sdcard>. This run will only succeed if an SD card is available to the board.")
             
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('FreeRTOSDirLock').release()
+        getSetting('FreeRTOSLock').release()
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -157,7 +157,7 @@ def getTargetIp(targetId=None):
 @decorate.timeWrap
 def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('FreeRTOSDirLock').acquire()
+        getSetting('FreeRTOSLock').acquire()
 
     if (buildDir is None):
         buildDir = getSetting('buildDir',targetId=targetId)
@@ -269,7 +269,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.d')
 
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('FreeRTOSDirLock').release()
+        getSetting('FreeRTOSLock').release()
 
 @decorate.debugWrap
 @decorate.timeWrap
