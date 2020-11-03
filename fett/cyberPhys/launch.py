@@ -16,8 +16,8 @@ def startCyberPhys():
     setSetting('networkLock',threading.Lock())
     # Create a vcu118 boards(s) lock 
     setSetting('vcu118Lock',threading.Lock())
-    # Create a lock for using the FreeRTOS submodule directory
-    setSetting('FreeRTOSDirLock',threading.Lock())
+    # Create a lock for using the FreeRTOS submodule directory or FreeRTOS general settings
+    setSetting('FreeRTOSLock',threading.Lock())
 
     printAndLog (f"Launching FETT <cyberPhys mode>...")
     # start/prepareEnv/Launch
