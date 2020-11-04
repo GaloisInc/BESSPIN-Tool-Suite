@@ -6,7 +6,7 @@ vcu118 class + misc vcu118 functions
 from fett.base.utils.misc import *
 from fett.target.common import *
 from fett.target.fpga import fpgaTarget
-from fett.target.build import getTargetIp
+from fett.target.build import getTargetIp, freeRTOSBuildChecks, buildFreeRTOS
 
 import subprocess, psutil, tftpy
 import serial, serial.tools.list_ports, usb
@@ -262,14 +262,15 @@ class vcu118Target (fpgaTarget, commonTarget):
             if (len(uartDevices)==0):
                 logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exc=exc, exitCode=EXIT.Configuration)
             elif(len(uartDevices)==1):
-                uartDevice = uartDevices.pop(0)
+                self.uartDevice = uartDevices.pop(0)
                 setSetting('vcu118UartDevices',uartDevices)
-                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in uart devices list.")
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{self.uartDevice}>, the only device in uart devices list.")
             else:
-                # Brute Force search for the uart devices --- O(n!), where n=nTargets
-                logAndExit("setupUart: Brute Force device search is not yet implemented.",exitCode=EXIT.Implementation)
+                self.uartDevice = self.findTheRightUartDevice(uartDevices)
+                setSetting('vcu118UartDevices',uartDevices.remove(self.uartDevice))
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{self.uartDevice}>.")
 
-            self.startUartSession(uartDevice)
+            self.startUartSession(self.uartDevice)
 
             if (isEqSetting('mode','cyberPhys')):
                 getSetting('vcu118Lock').release()
@@ -279,7 +280,7 @@ class vcu118Target (fpgaTarget, commonTarget):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def startUartSession(self,uartDevice):
+    def startUartSession(self, uartDevice):
         # configure the serial connection
         uartSettings = getSetting('vcu118UartSettings')
         # Translate settings into serial settings
@@ -333,6 +334,72 @@ class vcu118Target (fpgaTarget, commonTarget):
                 uartDevices.append(port.device)
 
         return uartDevices
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def findTheRightUartDevice(self,uartDevices):
+        # Brute Force search for the uart devices
+        # In total: O(U!/(U-T)!) where T=nTargets (in config), and U=nUarts (available in system)
+
+        #Prepare the minimal ELF
+        hwId = getSetting('vcu118HwTarget',targetId=self.targetId).split('/')[-1]
+        smokeElf = self.buildSmokeElfForUartSearch(hwId)
+
+        #Try the ELF till you hit the jackpot
+        for uartDevice in uartDevices:
+            self.startUartSession(uartDevice)
+            self.gdbProgStart(smokeElf,10,mainProg=False)
+            _,wasTimeout,_ = self.expectFromTarget(hwId, f"Searching for the UART connected to {hwId}",
+                exitOnError=False, timeout=10, issueInterrupt=False,
+                suppressWarnings=True, sshRetry=False)
+
+            try:
+                logging.debug(f"{self.targetIdInfo}Closing uart_session.")
+                self.uartSession.close()
+            except Exception as exc:
+                warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: unable to close the serial session on {uartDevice}.", exc=exc,doPrint=False)
+            self.interruptGdb()
+            self.gdbDetach()
+            self.runCommandGdb("quit",endsWith=pexpect.EOF,exitOnError=False)
+            for xFile in [self.fGdbOut, self.fTtyOut]:
+                if (xFile is None):
+                    continue
+                try:
+                    xFile.close()
+                except Exception as exc:
+                    warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
+
+            if (not wasTimeout):
+                return uartDevice
+        
+        self.fpgaTearDown(stage=failStage.openocd)
+        logAndExit(f"{self.targetIdInfo}findTheRightUartDevice: Brute Force device search failed to find the uart "
+            f"device connected to {hwId}.",exitCode=EXIT.Configuration)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def buildSmokeElfForUartSearch(self,hwId):
+        freeRTOSBuildChecks(targetId=self.targetId)
+        buildDir = os.path.join(getSetting('buildDir',targetId=self.targetId),'buildSmokeElfForUart')
+        mkdir(buildDir)
+
+        #Copy the C files
+        copyDir(os.path.join(getSetting('repoDir'),'fett','target','utils','srcMinimalFreeRTOS'),buildDir,copyContents=True)
+
+        #The needed configs
+        fConfig = ftOpenFile(os.path.join(buildDir,'fettFreeRTOSConfig.h'),'a')
+        fConfig.write(f"#define\tFETT_HWID\t\"{hwId}\"\n")
+        fConfig.close()
+
+        configHfile = ftOpenFile (os.path.join(buildDir,'fettUserConfig.h'),'a')
+        configHfile.write(f"#define BIN_SOURCE_{getSetting('binarySource',targetId=self.targetId).replace('-','_')}\n")
+        configHfile.close()
+
+        #build the elf
+        buildFreeRTOS(doPrint=False, targetId=self.targetId, buildDir=buildDir)
+
+        return os.path.join(buildDir,'FreeRTOS.elf')
+
 
 #--- END OF CLASS vcu118Target------------------------------
 
