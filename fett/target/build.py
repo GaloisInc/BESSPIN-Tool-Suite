@@ -250,6 +250,14 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
     if (not os.path.isfile(builtElf)):
         logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
 
+    if isEqSetting('binarySource', 'Michigan'):
+        # Encrypt elf file
+        argsList = ['docker', 'run', '-it', '--privileged=true',
+                    '-v', f'{getSetting("FreeRTOSprojDir",targetId=targetId)}:/root/makeDir',
+                    dockerToolchainImage,
+                    'bash', '-c', f'elf-parser -e /root/makeDir/main_fett.elf']
+        sudoShellCommand(argsList)
+
     if (defaultBuildDir):
         cp(builtElf,getSetting('osImageElf',targetId=targetId))
     else:
@@ -265,13 +273,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
             cp(builtAsm,os.path.join(buildDir,'FreeRTOS.asm'))
     printAndLog(f"Files cross-compiled successfully.",doPrint=doPrint)
 
-    if isEqSetting('binarySource', 'Michigan'):
-        # Encrypt elf file
-        argsList = ['docker', 'run', '-it', '--privileged=true',
-                    '-v', f'{getSetting("FreeRTOSprojDir",targetId=targetId)}:/root/makeDir',
-                    dockerToolchainImage,
-                    'bash', '-c', f'elf-parser -e /root/makeDir/main_fett.elf']
-        sudoShellCommand(argsList)
+    
 
     #Cleaning all ".o" files post run
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
