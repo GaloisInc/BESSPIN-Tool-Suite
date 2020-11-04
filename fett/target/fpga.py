@@ -143,10 +143,6 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def gdbLoad (self,elfLoadTimeout=15):
         self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
-        #if (self.procFlavor=='chisel'):
-        #    self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
-        #else:
-        #    time.sleep(1)
 
     @decorate.debugWrap
     @decorate.timeWrap
