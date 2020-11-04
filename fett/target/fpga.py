@@ -67,55 +67,10 @@ class fpgaTarget(object):
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
             self.terminateAndExit(f"fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
-        # Setup UART if needed
         self.setupUart()
 
-        # start the gdb process
-        self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb{self.targetSuffix}.out'), 'wb')
-        try:
-            self.gdbProcess = pexpect.spawn(
-                f"riscv64-unknown-elf-gdb {elfPath}",
-                    logfile=self.fGdbOut, timeout=15, echo=False)
-            self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
-        except Exception as exc:
-            if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax)):
-                self.fpgaStartRetriesIdx += 1
-                errorAndLog (f"fpgaStart: Failed to spawn the gdb process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
-                return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.gdb)
-            self.terminateAndExit(f"fpgaStart: Failed to spawn the gdb process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
-
-        # configure gdb
-        self.runCommandGdb("set confirm off")
-        self.runCommandGdb("set width 0")
-        self.runCommandGdb("set height 0")
-        self.runCommandGdb("set print entry-values no")
-        self.runCommandGdb("set remotetimeout 60")
-        self.runCommandGdb(f"set architecture riscv:rv{self.xlen}")
-        self.runCommandGdb("define hook-continue\ndont-repeat\nend") #we don't want to 'continue' on extra presses due to encoding and such
-
-        self.gdbConnect()
-
-        if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
-            self.runCommandGdb ('set $pc=0xC0000000')
-        elif (self.target=='vcu118'):
-            # reset the board
-            self.softReset()
-
-            # start the tty process
-            targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
-            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab')
-            self.ttyProcess = fdpexpect.fdspawn(self.uartSession.fileno(),logfile=self.fTtyOut,timeout=30)
-            self.process = self.ttyProcess
-
-            self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
-
-            if (self.processor=='bluespec_p3'):
-                time.sleep(3) # Bluespec_p3 needs time here before being able to properly continue.
-        if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
-            self.setupGdbCustomScoring()
-
-        self.runCommandGdb('c', endsWith='Continuing')
-
+        self.gdbProgStart(elfPath,elfLoadTimeout)
+        
         if ((self.processor=='bluespec_p3') and (self.target=='vcu118')):
             _,wasTimeout,_ = self.expectFromTarget("bbl loader", f"attempt to boot {self.processor}",
                 exitOnError=False, timeout=15, issueInterrupt=False,
@@ -137,12 +92,61 @@ class fpgaTarget(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
+    def gdbProgStart(self,elfPath,elfLoadTimeout,mainProg=True):
+        # start the gdb process
+        self.fGdbOut = ftOpenFile(os.path.join(getSetting('workDir'), f'gdb{self.targetSuffix}.out'), 'wb')
+        try:
+            self.gdbProcess = pexpect.spawn(
+                f"riscv64-unknown-elf-gdb {elfPath}",
+                    logfile=self.fGdbOut, timeout=15, echo=False)
+            self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
+        except Exception as exc:
+            if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax)):
+                self.fpgaStartRetriesIdx += 1
+                errorAndLog (f"fpgaStart: Failed to spawn the gdb process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
+                return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.gdb)
+            self.terminateAndExit(f"fpgaStart: Failed to spawn the gdb process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+        # configure gdb
+        if (mainProg):
+            self.runCommandGdb("set confirm off")
+            self.runCommandGdb("set width 0")
+            self.runCommandGdb("set height 0")
+            self.runCommandGdb("set print entry-values no")
+            self.runCommandGdb("set remotetimeout 60")
+        self.runCommandGdb(f"set architecture riscv:rv{self.xlen}")
+        self.runCommandGdb("define hook-continue\ndont-repeat\nend") #we don't want to 'continue' on extra presses due to encoding and such
+
+        self.gdbConnect()
+
+        if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
+            self.runCommandGdb ('set $pc=0xC0000000')
+        elif (self.target=='vcu118'):
+            # reset the board
+            self.softReset()
+
+            # start the tty process
+            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
+            self.ttyProcess = fdpexpect.fdspawn(self.uartSession.fileno(),logfile=self.fTtyOut,timeout=30)
+            self.process = self.ttyProcess
+
+            self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
+
+            if (self.processor=='bluespec_p3'):
+                time.sleep(3) # Bluespec_p3 needs time here before being able to properly continue.
+        if (mainProg and isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
+            self.setupGdbCustomScoring()
+
+        self.runCommandGdb('c', endsWith='Continuing')
+
+    @decorate.debugWrap
+    @decorate.timeWrap
     def gdbLoad (self,elfLoadTimeout=15):
         self.runCommandGdb("load",timeout=elfLoadTimeout,erroneousContents="failed", expectedContents="Transfer rate")
-        if (self.procFlavor=='chisel'):
-            self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
-        else:
-            time.sleep(1)
+        #if (self.procFlavor=='chisel'):
+        #    self.expectOnOpenocd (f"Disabling abstract command writes to CSRs.","load")
+        #else:
+        #    time.sleep(1)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -354,7 +358,7 @@ class fpgaTarget(object):
 
         if ((self.target=='vcu118') and self.uartSession.is_open):
             try:
-                logging.debug("Closing uart_session.")
+                logging.debug(f"{self.targetIdInfo}Closing uart_session.")
                 self.uartSession.close()
             except Exception as exc:
                 warnAndLog(f"{self.targetIdInfo}fpgaTearDown: unable to close the serial session", exc=exc,doPrint=False)

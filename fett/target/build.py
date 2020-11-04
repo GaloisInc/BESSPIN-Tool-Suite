@@ -160,7 +160,10 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         getSetting('FreeRTOSLock').acquire()
 
     if (buildDir is None):
+        defaultBuildDir = True
         buildDir = getSetting('buildDir',targetId=targetId)
+    else:
+        defaultBuildDir = False
     #Cleaning all ".o" and ".elf" files in site
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
@@ -246,12 +249,20 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         builtElf = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),'main_fett.elf')
     if (not os.path.isfile(builtElf)):
         logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
-    cp(builtElf,getSetting('osImageElf',targetId=targetId))
+
+    if (defaultBuildDir):
+        cp(builtElf,getSetting('osImageElf',targetId=targetId))
+    else:
+        cp(builtElf,os.path.join(buildDir,'FreeRTOS.elf'))
+
     if not isEqSetting('target', 'qemu'):
         builtAsm = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),'main_fett.asm')
         if (not os.path.isfile(builtAsm)):
             logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
-        cp(builtAsm,getSetting('osImageAsm',targetId=targetId))
+        if (defaultBuildDir):
+            cp(builtAsm,getSetting('osImageAsm',targetId=targetId))
+        else:
+            cp(builtAsm,os.path.join(buildDir,'FreeRTOS.asm'))
     printAndLog(f"Files cross-compiled successfully.",doPrint=doPrint)
 
     if isEqSetting('binarySource', 'Michigan'):
