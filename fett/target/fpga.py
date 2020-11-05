@@ -62,9 +62,9 @@ class fpgaTarget(object):
         except Exception as exc:
             if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
                 self.fpgaStartRetriesIdx += 1
-                errorAndLog (f"fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
+                errorAndLog (f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
-            self.terminateAndExit(f"fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         self.setupUart()
 
@@ -84,7 +84,7 @@ class fpgaTarget(object):
                     self.stopShowingTime = common.showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout)
                     return self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
                 else:
-                    self.terminateAndExit(f"Failed to boot {self.processor}.",overrideShutdown=True,
+                    self.terminateAndExit(f"{self.targetIdInfo}Failed to boot {self.processor}.",overrideShutdown=True,
                         overrideConsole=True,exitCode=EXIT.Run)
 
         return
@@ -102,9 +102,9 @@ class fpgaTarget(object):
         except Exception as exc:
             if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax)):
                 self.fpgaStartRetriesIdx += 1
-                errorAndLog (f"fpgaStart: Failed to spawn the gdb process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
+                errorAndLog (f"{self.targetIdInfo}gdbProgStart: Failed to spawn the gdb process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.gdb)
-            self.terminateAndExit(f"fpgaStart: Failed to spawn the gdb process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.terminateAndExit(f"{self.targetIdInfo}gdbProgStart: Failed to spawn the gdb process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # configure gdb
         if (mainProg):
@@ -148,7 +148,7 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def fpgaReload (self, elfPath, elfLoadTimeout=15, stage=failStage.unknown):
         if (self.target!='vcu118'):
-            self.terminateAndExit(f"<fpgaReload> is not implemented for target {self.target}.",overrideShutdown=True)
+            self.terminateAndExit(f"{self.targetIdInfo}<fpgaReload> is not implemented for target {self.target}.",overrideShutdown=True)
         self.fpgaTearDown(isReload=True,stage=stage)
         vcu118.programBitfile(doPrint=False, isReload=True,targetId=self.targetId)
         time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
