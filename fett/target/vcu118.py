@@ -12,6 +12,7 @@ import subprocess, psutil, tftpy
 import serial, serial.tools.list_ports, usb
 import sys, signal, os, socket, time, hashlib
 import pexpect
+from pexpect import fdpexpect
 
 class vcu118Target (fpgaTarget, commonTarget):
     def __init__ (self, targetId=None):
@@ -316,6 +317,10 @@ class vcu118Target (fpgaTarget, commonTarget):
         except Exception as exc:
             logAndExit(f"{self.targetIdInfo}startUartSession: unable to open serial session on <{uartDevice}>.", exc=exc, exitCode=EXIT.Run)
 
+        # start the tty process
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
+        self.ttyProcess = fdpexpect.fdspawn(self.uartSession.fileno(),logfile=self.fTtyOut,timeout=30)
+        self.process = self.ttyProcess
 
     @decorate.debugWrap
     def findUartDevices(self):
