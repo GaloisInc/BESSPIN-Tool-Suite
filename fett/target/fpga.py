@@ -8,7 +8,6 @@ from fett.target.common import *
 from fett.target import vcu118
 from fett.target import common
 
-from pexpect import fdpexpect
 import pexpect, subprocess, enum
 
 class failStage (enum.Enum):
@@ -124,11 +123,6 @@ class fpgaTarget(object):
         elif (self.target=='vcu118'):
             # reset the board
             self.softReset()
-
-            # start the tty process
-            self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
-            self.ttyProcess = fdpexpect.fdspawn(self.uartSession.fileno(),logfile=self.fTtyOut,timeout=30)
-            self.process = self.ttyProcess
 
             self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
 
