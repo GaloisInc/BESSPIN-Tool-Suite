@@ -25,6 +25,16 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.ipHost = getSetting('vcu118IpHost')
         self.ipTarget = getTargetIp(targetId=targetId)
 
+        if ((self.elfLoader=='netboot') and 
+                ((self.ipTarget!="10.88.88.2") or (isEnabled('IsThereMoreThanOneVcu118Target')))):
+            if (isEnabled('IsThereMoreThanOneVcu118Target')):
+                warnAndLog("Cannot use netboot with a multi-board host. It is not implemented yet. Falling back to JTAG.")
+            elif (self.ipTarget!="10.88.88.2"):
+                warnAndLog("Cannot use netboot with <IP!=10.88.88.2> [see ticket #860]. Falling back to JTAG.")
+            self.elfLoader = 'JTAG'
+            setSetting('elfLoader','JTAG',targetId=self.targetId)
+
+
         self.uartSession = None
         self.uartDevice = None
 
