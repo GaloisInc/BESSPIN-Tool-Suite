@@ -28,7 +28,11 @@
       "connectal": { "timeout" : { "boot" : 360 } }
     }
   },
-  "busybox": { "timeout" : { "boot" : 80 } },
+  "busybox": { 
+    "name": "elfLoader",
+    "JTAG": { "timeout" : { "elfLoad" : 110, "boot" : 30 } },
+    "else": { "timeout" : { "boot" : 80 } } 
+  },
   "FreeBSD": {
     "vcu118": {
       "name": "procFlavor",

@@ -261,16 +261,14 @@ class commonTarget():
                 }
             os_image = data[self.osImage]
 
-            if self.target not in os_image:
-                if 'timeout' in os_image:
-                    # case -- targets not iterated under osImage (e.g. busybox)
-                    return True, os_image['timeout'], None
-                else:
-                    return False, 0, {
-                        'message': f'start: Timeout is not recorded for target=<{self.target}>.',
-                        'overrideShutdown': True,
-                        'exitCode': EXIT.Implementation
-                    }
+            if (self.osImage == 'busybox'): #special case
+                return traverse_data(os_image)
+            elif self.target not in os_image:
+                return False, 0, {
+                    'message': f'start: Timeout is not recorded for target=<{self.target}>.',
+                    'overrideShutdown': True,
+                    'exitCode': EXIT.Implementation
+                }
             target = os_image[self.target]
 
             return traverse_data(target)
