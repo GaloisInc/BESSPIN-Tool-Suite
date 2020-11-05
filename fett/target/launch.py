@@ -137,8 +137,8 @@ def startFett (targetId=None):
 """ This is the prepare function before launch (binaries, network,) """ 
 @decorate.debugWrap
 def prepareEnv (targetId=None):
-    targetInfo = f" <for target{targetId}>" if (targetId) else ''
-    printAndLog (f"Preparing the environment{targetInfo}...")
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
+    printAndLog (f"{targetInfo}Preparing the environment...")
     osImage = getSetting('osImage',targetId=targetId)
     target = getSetting('target',targetId=targetId)
 
@@ -158,7 +158,7 @@ def prepareEnv (targetId=None):
         else:
             buildApps ()
     elif (osImage=='busybox'):
-        printAndLog(f"<busybox> is only used for smoke testing the target/network. No applications are supported.")
+        printAndLog(f"{targetInfo}<busybox> is only used for smoke testing the target/network. No applications are supported.")
         setSetting('runApp',False,targetId=targetId)
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{osImage}>.",exitCode=EXIT.Dev_Bug)
@@ -192,7 +192,7 @@ def prepareEnv (targetId=None):
             logAndExit (f"<launch.prepareEnv> is not implemented for <AWS:{pvAWS}>.",exitCode=EXIT.Implementation)
     elif (target=='qemu'):
         qemu.configTapAdaptor(targetId=targetId)
-    printAndLog (f"Environment is ready.{targetInfo}")
+    printAndLog (f"{targetInfo}Environment is ready.")
 
 """ This is the loading/booting function """
 @decorate.debugWrap
