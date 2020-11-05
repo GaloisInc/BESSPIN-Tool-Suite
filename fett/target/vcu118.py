@@ -11,7 +11,7 @@ from fett.target.build import getTargetIp, freeRTOSBuildChecks, buildFreeRTOS
 import subprocess, psutil, tftpy
 import serial, serial.tools.list_ports, usb
 import sys, signal, os, socket, time, hashlib
-import pexpect
+import pexpect, threading
 from pexpect import fdpexpect
 
 class vcu118Target (fpgaTarget, commonTarget):
@@ -263,25 +263,31 @@ class vcu118Target (fpgaTarget, commonTarget):
             if (len(uartDevices)==0):
                 logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exc=exc, exitCode=EXIT.Configuration)
             elif(len(uartDevices)==1):
-                self.uartDevice = uartDevices.pop(0)
+                uartDevice = uartDevices.pop(0)
                 setSetting('vcu118UartDevices',uartDevices)
-                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{self.uartDevice}>, the only device in uart devices list.")
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in uart devices list.")
             else:
-                self.uartDevice = self.findTheRightUartDevice(uartDevices)
-                setSetting('vcu118UartDevices',uartDevices.remove(self.uartDevice))
-                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{self.uartDevice}>.")
+                uartDevice = self.findTheRightUartDevice(uartDevices)
+                setSetting('vcu118UartDevices',uartDevices.remove(uartDevice))
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
 
-            self.startUartSession(self.uartDevice)
+            uartSessionDict = self.startUartSession(uartDevice)
 
             if (isEqSetting('mode','cyberPhys')):
                 getSetting('vcu118Lock').release()
         else:
             # Not the first time to start the uart session
-            self.startUartSession(self.uartDevice)
+            uartSessionDict = self.startUartSession(self.uartDevice)
+
+        #set the uart related members
+        for name,val in uartSessionDict.items():
+            setattr(self,name,val)
+        #The main process is the ttyProcess by default
+        self.process = self.ttyProcess
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def startUartSession(self, uartDevice):
+    def startUartSession(self, uartDevice, ttyDir=None):
         # configure the serial connection
         uartSettings = getSetting('vcu118UartSettings')
         # Translate settings into serial settings
@@ -303,7 +309,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             logAndExit(f"startUartSession: bytesize {uartSettings['bytesize']} must be 5,6,7 or 8")
 
         try:
-            self.uartSession = serial.Serial(
+            uartSession = serial.Serial(
                 port=uartDevice,
                 baudrate=uartSettings['baudrate'],
                 parity=parity,
@@ -312,15 +318,21 @@ class vcu118Target (fpgaTarget, commonTarget):
                 bytesize=bytesize
             )
 
-            if not self.uartSession.is_open:
-                self.uartSession.open()
+            if not uartSession.is_open:
+                uartSession.open()
         except Exception as exc:
             logAndExit(f"{self.targetIdInfo}startUartSession: unable to open serial session on <{uartDevice}>.", exc=exc, exitCode=EXIT.Run)
 
         # start the tty process
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
-        self.ttyProcess = fdpexpect.fdspawn(self.uartSession.fileno(),logfile=self.fTtyOut,timeout=30)
-        self.process = self.ttyProcess
+        if (ttyDir is None): #default
+            ttyDir = getSetting('workDir')
+            ttySuffix = self.targetSuffix
+        else: #looking for the right uart
+            ttySuffix = f"_{uartDevice.split('/')[-1]}"
+        fTtyOut = ftOpenFile(os.path.join(ttyDir,f'tty{ttySuffix}.out'),'ab')
+        ttyProcess = fdpexpect.fdspawn(uartSession.fileno(),logfile=fTtyOut,timeout=30)
+
+        return {'fTtyOut':fTtyOut,'ttyProcess':ttyProcess,'uartSession':uartSession,'uartDevice':uartDevice}
 
     @decorate.debugWrap
     def findUartDevices(self):
@@ -343,39 +355,66 @@ class vcu118Target (fpgaTarget, commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def findTheRightUartDevice(self,uartDevices):
-        # Brute Force search for the uart devices
-        # In total: O(U!/(U-T)!) where T=nTargets (in config), and U=nUarts (available in system)
-
+        """ Brute Force search for the uart devices """
+        
         #Prepare the minimal ELF
         hwId = getSetting('vcu118HwTarget',targetId=self.targetId).split('/')[-1]
         smokeElf = self.buildSmokeElfForUartSearch(hwId)
 
-        #Try the ELF till you hit the jackpot
-        for uartDevice in uartDevices:
-            self.startUartSession(uartDevice)
-            self.gdbProgStart(smokeElf,10,mainProg=False)
-            _,wasTimeout,_ = self.expectFromTarget(hwId, f"Searching for the UART connected to {hwId}",
-                exitOnError=False, timeout=10, issueInterrupt=False,
-                suppressWarnings=True, sshRetry=False)
-
+        #Start listening on all UART devices
+        uartDevicesDict = {}
+        for uartDevice in uartDevices: #No need to thread this as it should be immediate
+            uartDevicesDict[uartDevice] = self.startUartSession(uartDevice,ttyDir=os.path.dirname(smokeElf))
+        
+        #Run the smoke program
+        self.gdbProgStart(smokeElf,10,mainProg=False)
+        
+        def checkUartDevice(uartDevice,uartDevicesDict):
+            _,uartDevicesDict[uartDevice]['wasTimeout'],_ = self.expectFromTarget(
+                hwId, f"Searching for the UART connected to {hwId}",
+                exitOnError=False, timeout=3, issueInterrupt=False,
+                suppressWarnings=True,process=uartDevicesDict[uartDevice]['ttyProcess'])
+            logging.debug(f"{self.targetIdInfo}Closing uart_session <{uartDevice}>.")
             try:
-                logging.debug(f"{self.targetIdInfo}Closing uart_session.")
-                self.uartSession.close()
+                uartDevicesDict[uartDevice]['uartSession'].close()
             except Exception as exc:
-                warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: unable to close the serial session on {uartDevice}.", exc=exc,doPrint=False)
-            self.interruptGdb()
-            self.gdbDetach()
-            self.runCommandGdb("quit",endsWith=pexpect.EOF,exitOnError=False)
-            for xFile in [self.fGdbOut, self.fTtyOut]:
-                if (xFile is None):
-                    continue
-                try:
-                    xFile.close()
-                except Exception as exc:
-                    warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
+                warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: unable to close the serial "
+                    f" session on {uartDevice}.",exc=exc,doPrint=False)
+            fTtyOut = uartDevicesDict[uartDevice]['fTtyOut']
+            try:
+                fTtyOut.close()
+            except Exception as exc:
+                warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: Failed to close "
+                    f" <{fTtyOut.name}>.",doPrint=False,exc=exc)
 
-            if (not wasTimeout):
-                return uartDevice
+        #Check which one received the text
+        for uartDevice in uartDevices:
+            xThread = threading.Thread(target=checkUartDevice, args=(uartDevice,uartDevicesDict))
+            uartDevicesDict[uartDevice]['checkThread'] = xThread
+            xThread.daemon = True
+            getSetting('trash').throwThread(xThread,f"checkUartDevice-target{self.targetId}-{self.targetId}-{uartDevice}")
+            xThread.start()
+
+        goldenDevice = None
+        for uartDevice in uartDevices:
+            uartDevicesDict[uartDevice]['checkThread'].join()
+            if (not uartDevicesDict[uartDevice]['wasTimeout']):
+                if (goldenDevice is not None):
+                    warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: <{uartDevice}> received the text too!")
+                else:
+                    goldenDevice = uartDevice
+
+        #Close gdb with the smoke program
+        self.interruptGdb()
+        self.gdbDetach()
+        self.runCommandGdb("quit",endsWith=pexpect.EOF,exitOnError=False)
+        try:
+            self.fGdbOut.close()
+        except Exception as exc:
+            warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
+
+        if (goldenDevice is not None):
+            return goldenDevice
         
         self.fpgaTearDown(stage=failStage.openocd)
         logAndExit(f"{self.targetIdInfo}findTheRightUartDevice: Brute Force device search failed to find the uart "
