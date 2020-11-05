@@ -109,8 +109,8 @@ class vcu118Target (fpgaTarget, commonTarget):
             outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
         elif (self.osImage=='busybox'):
             time.sleep(1)
-            self.runCommand ("ifconfig eth0 up",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
-            outCmd = self.runCommand (f"ip addr add {self.ipTarget}/24 dev eth0",timeout=20)
+            self.runCommand ("ifconfig eth0 up",timeout=20)
+            outCmd = self.runCommand(f"ifconfig eth0 {self.ipTarget}",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
         elif (self.osImage=='FreeRTOS'):
             isSuccess = False
             while ((not isSuccess) and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
