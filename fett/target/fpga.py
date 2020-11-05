@@ -346,7 +346,7 @@ class fpgaTarget(object):
                     regsValuesStr = ','.join([f"{relvReg}={relvRegs[relvReg]}" for relvReg in relvRegs])
                     testLogFile.write(f"\n<GDB-{sigFound}> with {regsValuesStr}\n")
 
-        if ((self.target=='vcu118') and self.uartSession.is_open):
+        if ((self.target=='vcu118') and (self.uartSession is not None) and self.uartSession.is_open):
             try:
                 logging.debug(f"{self.targetIdInfo}Closing uart_session.")
                 self.uartSession.close()
