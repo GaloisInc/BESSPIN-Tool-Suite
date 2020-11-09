@@ -5,7 +5,7 @@ vcu118 class + misc vcu118 functions
 
 from fett.base.utils.misc import *
 from fett.target.common import *
-from fett.target.fpga import fpgaTarget
+from fett.target.fpga import fpgaTarget, failStage
 from fett.target.build import getTargetIp, freeRTOSBuildChecks, buildFreeRTOS
 
 import subprocess, psutil, tftpy
