@@ -241,7 +241,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
               targetId=targetId, buildDir=buildDir)
 
     #check if the elf file was created
-    if isEqSetting('target', 'qemu'):
+    if isEqSetting('target', 'qemu' ,targetId=targetId):
         builtElf = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),
                                 'build',
                                 'FreeRTOS-main_fett.elf')
@@ -250,7 +250,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
     if (not os.path.isfile(builtElf)):
         logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
 
-    if isEqSetting('binarySource', 'Michigan'):
+    if isEqSetting('binarySource', 'Michigan', targetId=targetId):
         # Encrypt elf file
         argsList = ['docker', 'run', '-it', '--privileged=true',
                     '-v', f'{getSetting("FreeRTOSprojDir",targetId=targetId)}:/root/makeDir',
@@ -263,7 +263,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
     else:
         cp(builtElf,os.path.join(buildDir,'FreeRTOS.elf'))
 
-    if not isEqSetting('target', 'qemu'):
+    if not isEqSetting('target', 'qemu' ,targetId=targetId):
         builtAsm = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),'main_fett.asm')
         if (not os.path.isfile(builtAsm)):
             logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
@@ -278,7 +278,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
     #Cleaning all ".o" files post run
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
     cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.elf')
-    if isEqSetting("target", "qemu"):
+    if isEqSetting('target', 'qemu' ,targetId=targetId):
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.d')
 
     if (isEqSetting('mode','cyberPhys')):
