@@ -1055,26 +1055,26 @@ class commonTarget():
                     textBack = str(fetchedBytes,'utf-8')
             except UnicodeDecodeError:
                 textBack = charByCharEncoding(fetchedBytes)
-                warnAndLog ("Unrecognized character while reading from target.",doPrint=False)
+                warnAndLog (f"{self.targetIdInfo}Unrecognized character while reading from target.",doPrint=False)
         except Exception as exc:
-            warnAndLog ("Failed to read from target.",doPrint=False,exc=exc)
+            warnAndLog (f"{self.targetIdInfo}Failed to read from target.",doPrint=False,exc=exc)
             return ''
-        logging.debug(f"readFromTarget: <endsWith={endsWith}>")
-        logging.debug(f"textBack:\n{textBack}{endsWith}")
+        logging.debug(f"{self.targetIdInfo}readFromTarget: <endsWith={endsWith}>")
+        logging.debug(f"{self.targetIdInfo}textBack:\n{textBack}{endsWith}")
         return textBack
 
     @decorate.debugWrap
     def sendToTarget (self,command,exitOnError=True,process=None):
         process = self.process if process is None else process
         self.checkFallToTty ("sendToTarget", process=process)
-        logging.debug(f"sendToTarget: sending <{command}>")
+        logging.debug(f"{self.targetIdInfo}sendToTarget: sending <{command}>")
         try:
             process.sendline(command)
         except Exception as exc:
             if (exitOnError):
-                self.terminateAndExit(f"sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,exitCode=EXIT.Run)
+                self.terminateAndExit(f"{self.targetIdInfo}sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,exitCode=EXIT.Run)
             else:
-                warnAndLog (f"sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,doPrint=False)
+                warnAndLog (f"{self.targetIdInfo}sendToTarget: Failed to send <{command}> to {self.target}.",exc=exc,doPrint=False)
         return
 
     @decorate.debugWrap
@@ -1097,12 +1097,14 @@ class commonTarget():
         # prepare thread to give warning message if the expect is near timing out
         stopEvent = threading.Event()
         warningTime = 0.8 * timeout
-        warningMsg = threading.Thread(target=warningThread, args=(f"expectFromTarget: command <{command}> is near timeout ({timeout} s)", warningTime, stopEvent,suppressWarnings))
+        warningMsg = threading.Thread(target=warningThread, 
+            args=(f"{self.targetIdInfo}expectFromTarget: command <{command}> is near timeout ({timeout} s)",
+                warningTime, stopEvent,suppressWarnings))
         warningMsg.daemon = True
         getSetting('trash').throwThread(warningMsg, "warning message for expectFromTarget")
         warningMsg.start()
         self.checkFallToTty ("expectFromTarget",process=process)
-        logging.debug(f"expectFromTarget: <command={command}>, <endsWith={endsWith}>")
+        logging.debug(f"{self.targetIdInfo}expectFromTarget: <command={command}>, <endsWith={endsWith}>")
         textBack = ''
         try:
             retExpect = process.expect(endsWith,timeout=timeout)
@@ -1112,21 +1114,21 @@ class commonTarget():
                 textBack += self.readFromTarget(endsWith=endsWith[retExpect],process=process)
         except pexpect.TIMEOUT:
             if (exitOnError):
-                self.terminateAndExit(f"expectFromTarget: {self.target.capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
+                self.terminateAndExit(f"{self.targetIdInfo}expectFromTarget: {self.target.capitalize()} timed out <{timeout} seconds> while executing <{command}>.",exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
             elif (self.osImage!='FreeRTOS'):
-                warnAndLog(f"expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
+                warnAndLog(f"{self.targetIdInfo}expectFromTarget: <TIMEOUT>: {timeout} seconds while executing <{command}>.",doPrint=False)
                 textBack += self.keyboardInterrupt (exitOnError=True, process=process) if issueInterrupt else ""
             return [textBack, True, -1]
         except Exception as exc:
             if ((self.processor=='bluespec_p3') and (exc.__class__ == pexpect.EOF) 
                     and (sshRetry) and (self.isSshConn)):
-                warnAndLog("SSH connection was unexpectedly dropped. Trying to reconnect...")
+                warnAndLog(f"{self.targetIdInfo}SSH connection was unexpectedly dropped. Trying to reconnect...")
                 self.openSshConn(userName='root' if self.isCurrentUserRoot else self.userName)
                 self.sendToTarget(" ")
                 return self.expectFromTarget (endsWith,command,exitOnError=exitOnError,timeout=timeout,
                             overrideShutdown=overrideShutdown,issueInterrupt=issueInterrupt,process=None,
                             suppressWarnings=suppressWarnings,sshRetry=False)
-            self.terminateAndExit(f"expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
+            self.terminateAndExit(f"{self.targetIdInfo}expectFromTarget: Unexpected output from target while executing {command}.",exc=exc,exitCode=EXIT.Run,overrideShutdown=overrideShutdown)
         # tell warning message thread that the expect is finished
         stopEvent.set()
         if (isinstance(endsWith,str)): #only one string
