@@ -143,6 +143,7 @@ def logAndExit (message,exc=None,exitCode=EXIT.Unspecified):
         errorAndLog(message,exc=exc)
     exitFett (exitCode)
 
+@decorate.debugWrap
 def setSetting (setting, val, targetId=None):
     if (targetId is not None):
         return setSettingDict(targetId,setting,val)
@@ -151,6 +152,7 @@ def setSetting (setting, val, targetId=None):
     except Exception as exc:
         logAndExit (f"Failed to set setting <{setting}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
+@decorate.debugWrap
 def getSetting (setting, default=None, targetId=None):
     if (targetId is not None):
         return getSettingDict(targetId,setting,default=default)
@@ -161,6 +163,7 @@ def getSetting (setting, default=None, targetId=None):
             return default
         logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
+@decorate.debugWrap
 def getSettingDict (setting, hierarchy, default=None, targetId=None):
     if (targetId is not None):
         if (isinstance(hierarchy,str)):
@@ -180,6 +183,7 @@ def getSettingDict (setting, hierarchy, default=None, targetId=None):
             logAndExit (f"getSetting: Failed to obtain the value of <[{setting}]{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
     return xSetting
 
+@decorate.debugWrap
 def setSettingDict (key, setting, val, targetId=None):
     try:
         if (targetId is not None):
@@ -189,6 +193,7 @@ def setSettingDict (key, setting, val, targetId=None):
     except Exception as exc:
         logAndExit (f"Failed to set setting <{setting}> in dict <{key}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
+@decorate.debugWrap
 def isEnabled(setting, targetId=None):
     val = getSetting(setting, targetId=targetId)
     if (isinstance(val,bool)):
@@ -196,6 +201,7 @@ def isEnabled(setting, targetId=None):
     else:
         logAndExit (f"isEnabled: The value of <{setting}> is not boolean: <{val}>.",exitCode=EXIT.Dev_Bug)
 
+@decorate.debugWrap
 def isEnabledDict(setting, hierarchy, targetId=None):
     val = getSettingDict(setting, hierarchy, targetId=targetId)
     if isinstance(val, bool):
@@ -205,15 +211,18 @@ def isEnabledDict(setting, hierarchy, targetId=None):
                    f"not boolean: <{val}>",
                    exitCode=EXIT.Dev_Bug)
 
+@decorate.debugWrap
 def isEqSetting (setting, val, targetId=None):
     return (getSetting(setting, targetId=targetId) == val)
 
+@decorate.debugWrap
 def doesSettingExist (setting, targetId=None):
     if (targetId is not None):
         return doesSettingExistDict(targetId, setting)
     else:
         return (setting in _settings)
 
+@decorate.debugWrap
 def doesSettingExistDict(setting, hierarchy, targetId=None):
     if (targetId is not None):
         if (isinstance(hierarchy,str)):
