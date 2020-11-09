@@ -542,24 +542,32 @@ def prepareFpgaEnv(targetId=None):
 
     if (firstTime):
         # Find the target(s) names
-        cp(os.path.join(getSetting('tclSourceDir'), 'get_hw_targets.tcl'), gfeWorkDir)
-        getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-source','./get_hw_targets.tcl',
-                        '-log', os.path.join(gfeWorkDir,'get_hw_targets.log'), '-mode','batch']
-        try:
-            retCmd = subprocess.run(getTargetsCmd,capture_output=True,timeout=90,check=True,cwd=gfeWorkDir)
-        except Exception as exc:
-            logAndExit (f"prepareFpgaEnv: Failed to <{getTargetsCmd}>. "
-                f"Check <{os.path.join(gfeWorkDir,'get_hw_targets.log')}> for more details.",exc=exc,exitCode=EXIT.Run)
+        if (isEnabled('useCustomHwTarget') and isEqSetting('mode','cyberPhys')):
+            warnAndLog("The <useCustomHwTarget> setting is incompatible with <cyberPhys>."
+                "The value in <customHwTarget> will be ignored.")
+            setSetting('useCustomHwTarget',False)
+        if (isEnabled('useCustomHwTarget')):
+            setSetting('listVcu118HwTargets',[getSetting('customHwTarget')])
+            setSetting('IsThereMoreThanOneVcu118Target', False)
+        else:
+            cp(os.path.join(getSetting('tclSourceDir'), 'get_hw_targets.tcl'), gfeWorkDir)
+            getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-source','./get_hw_targets.tcl',
+                            '-log', os.path.join(gfeWorkDir,'get_hw_targets.log'), '-mode','batch']
+            try:
+                retCmd = subprocess.run(getTargetsCmd,capture_output=True,timeout=90,check=True,cwd=gfeWorkDir)
+            except Exception as exc:
+                logAndExit (f"prepareFpgaEnv: Failed to <{getTargetsCmd}>. "
+                    f"Check <{os.path.join(gfeWorkDir,'get_hw_targets.log')}> for more details.",exc=exc,exitCode=EXIT.Run)
 
-        try:
-            listTargetsMatch = matchExprInLines(r"listTargets=<(?P<listTargets>.*)>",retCmd.stdout.decode('utf-8').splitlines())
-            listTargets = listTargetsMatch.group('listTargets').split()
-        except Exception as exc:
-            logAndExit (f"prepareFpgaEnv: Failed to find HW targets list.",exc=exc,exitCode=EXIT.Run)
+            try:
+                listTargetsMatch = matchExprInLines(r"listTargets=<(?P<listTargets>.*)>",retCmd.stdout.decode('utf-8').splitlines())
+                listTargets = listTargetsMatch.group('listTargets').split()
+            except Exception as exc:
+                logAndExit (f"prepareFpgaEnv: Failed to find HW targets list.",exc=exc,exitCode=EXIT.Run)
         
-        setSetting('listVcu118HwTargets',listTargets)
-        printAndLog(f'prepareFpgaEnv: Found the following vcu118 targets:<{" ".join(listTargets)}>',doPrint=False)
-        setSetting('IsThereMoreThanOneVcu118Target', (len(listTargets)>1))
+            setSetting('listVcu118HwTargets',listTargets)
+            printAndLog(f'prepareFpgaEnv: Found the following vcu118 targets:<{" ".join(listTargets)}>',doPrint=False)
+            setSetting('IsThereMoreThanOneVcu118Target', (len(listTargets)>1))
 
     if (not doesSettingExist('vcu118HwTarget',targetId=targetId)):
         targetInfo = f"<target{targetId}>: " if (targetId) else ''

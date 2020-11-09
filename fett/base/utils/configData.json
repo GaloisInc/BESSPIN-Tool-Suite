@@ -111,6 +111,14 @@
             "type" : "bool"
         },
         {
+            "name" : "useCustomHwTarget",
+            "type" : "boolean"
+        },
+        {
+            "name" : "customHwTarget",
+            "type" : "string"
+        },
+        {
             "name" : "userName",
             "type" : "string"
         },
