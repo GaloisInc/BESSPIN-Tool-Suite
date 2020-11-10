@@ -14,10 +14,14 @@ import threading, queue
 def startCyberPhys():
     # Create a network lock to protect network operations while multithreading
     setSetting('networkLock',threading.Lock())
-    # Create vcu118 boards needed locks 
-    setSetting('setupUartLock',threading.Lock())
-    setSetting('findBoardsLock',threading.Lock())
-    setSetting('openocdControl',openocdControl(getSetting('nTargets')))
+    # Create vcu118 boards needed locks
+    nVCU118Targets = 0
+    for targetId in range(1,getSetting('nTargets')+1):
+        nVCU118Targets += int(isEqSetting('target','vcu118',targetId=targetId))
+    if (nVCU118Targets>0):
+        setSetting('setupUartLock',threading.Lock())
+        setSetting('findBoardsLock',threading.Lock())
+        setSetting('openocdControl',openocdControl(nVCU118Targets))
     # Create a lock for using the FreeRTOS submodule directory or FreeRTOS general settings
     setSetting('FreeRTOSLock',threading.Lock())
 
