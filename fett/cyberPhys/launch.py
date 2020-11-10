@@ -14,8 +14,10 @@ import threading, queue
 def startCyberPhys():
     # Create a network lock to protect network operations while multithreading
     setSetting('networkLock',threading.Lock())
-    # Create a vcu118 boards(s) lock 
-    setSetting('vcu118Lock',threading.Lock())
+    # Create vcu118 boards needed locks 
+    setSetting('setupUartLock',threading.Lock())
+    setSetting('findBoardsLock',threading.Lock())
+    setSetting('openocdControl',openocdControl(getSetting('nTargets')))
     # Create a lock for using the FreeRTOS submodule directory or FreeRTOS general settings
     setSetting('FreeRTOSLock',threading.Lock())
 
@@ -154,4 +156,31 @@ def endUartPiping(targetId):
         xTarget.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
     except Exception as exc:
         warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: Failed to kill the process.",exc=exc)
+
+class openocdControl:
+    """
+    - Programming FPGA cannot happen in parallel with either spawning an openocd process, 
+      or gdb connecting to an openocd process. The programming would run fine, but it would ruin both.
+    - This is a super simple and safe implementation of this logic. I think it's acceptable given that
+      the instructions between `haltAllProgramming` and `reallowProgramming` take no time.
+    - The above `instructions` refer to either spawning an openocd process (and thus connecting it to a target),
+      or the method `fpga.gdbConnect`
+    """
+    def __init__(self,nTargets):
+        self._N = nTargets
+        self._sema = threading.Semaphore(self._N)
+
+    def requestToProgram(self):
+        self._sema.acquire()
+
+    def doneProgramming(self):
+        self._sema.release()
+
+    def waitForNoProgramming(self):
+        for i in range(self._N):
+            self._sema.acquire()
+
+    def reallowProgramming(self):
+        for i in range(self._N):
+            self._sema.release()
     
