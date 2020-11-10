@@ -456,10 +456,11 @@ class vcu118Target (fpgaTarget, commonTarget):
 
 
 #--- END OF CLASS vcu118Target------------------------------
+_MAX_PROG_ATTEMPTS = 3
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programFpga(bitStream, probeFile, attempts=2, targetId=None):
+def programFpga(bitStream, probeFile, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     """programs the fpga with a given bitstream and probe file
     matches the functionality of the old `gfe-program-fpga`
     :param bitStream: valid filepath
@@ -487,14 +488,15 @@ def programFpga(bitStream, probeFile, attempts=2, targetId=None):
         getSetting('openocdControl').doneProgramming()
     if retProc.returncode != 0:
         if attempts > 0:
-            errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. Trying again...",doPrint=True)
+            errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. " 
+                f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
             programFpga(bitStream, probeFile, attempts=attempts-1, targetId=targetId)
         else:
             logAndExit(f"{targetInfo}programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
 
 @decorate.debugWrap
 @decorate.timeWrap
-def clearFlash(attempts=2, targetId=None):
+def clearFlash(attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     """ clear flash memory on Fpga
     matches the functionality of gfe-clear-flash
     """
@@ -515,7 +517,8 @@ def clearFlash(attempts=2, targetId=None):
         getSetting('openocdControl').doneProgramming()
     if retProc.returncode != 0:
         if attempts > 0:
-            errorAndLog(f"{targetInfo}clearFlash: failed to clear flash. Trying again...",doPrint=True)
+            errorAndLog(f"{targetInfo}clearFlash: failed to clear flash. "
+                f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
             clearFlash(attempts=attempts-1, targetId=targetId)
         else:
             logAndExit(f"{targetInfo}clearFlash: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
