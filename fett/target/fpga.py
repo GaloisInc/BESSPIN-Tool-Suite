@@ -121,7 +121,7 @@ class fpgaTarget(object):
             self.runCommandGdb("set remotetimeout 60")
         self.runCommandGdb(f"set architecture riscv:rv{self.xlen}")
         self.runCommandGdb("define hook-continue\ndont-repeat\nend") #we don't want to 'continue' on extra presses due to encoding and such
-        time.sleep(3)
+
         self.gdbConnect()
 
         if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
