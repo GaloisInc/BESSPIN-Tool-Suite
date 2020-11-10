@@ -259,7 +259,7 @@ class vcu118Target (fpgaTarget, commonTarget):
     def setupUart(self):
         if (self.uartDevice is None):
             if (isEqSetting('mode','cyberPhys')):
-                getSetting('vcu118Lock').acquire()
+                getSetting('setupUartLock').acquire()
 
             if (not doesSettingExist('vcu118UartDevices')):
                 setSetting('vcu118UartDevices',self.findUartDevices())
@@ -280,7 +280,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             uartSessionDict = self.startUartSession(uartDevice)
 
             if (isEqSetting('mode','cyberPhys')):
-                getSetting('vcu118Lock').release()
+                getSetting('setupUartLock').release()
         else:
             # Not the first time to start the uart session
             uartSessionDict = self.startUartSession(self.uartDevice)
@@ -477,10 +477,14 @@ def programFpga(bitStream, probeFile, attempts=2, targetId=None):
     if not os.path.exists(probeFile):
         logAndExit(f"{targetInfo}programFpga: probe file {probeFile} does not exist")
 
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('openocdControl').requestToProgram()
     retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_bit.tcl',
                 '-log', os.path.join(cwd,'prog_bit.log'),'-mode','batch',
                 '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),bitStream, probeFile],
                 timeout=90,cwd=cwd,check=False)
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('openocdControl').doneProgramming()
     if retProc.returncode != 0:
         if attempts > 0:
             errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. Trying again...",doPrint=True)
@@ -501,10 +505,14 @@ def clearFlash(attempts=2, targetId=None):
     cp(os.path.join(getSetting('tclSourceDir'), 'prog_flash.tcl'), cwd)
     cp(os.path.join(getSetting('tclSourceDir'), 'small.bin'), cwd)
 
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('openocdControl').requestToProgram()
     retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_flash.tcl',
                 '-log', os.path.join(cwd,'prog_flash.log'),'-mode','batch',
                 '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),'./small.bin'],
                 timeout=90,cwd=cwd,check=False)
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('openocdControl').doneProgramming()
     if retProc.returncode != 0:
         if attempts > 0:
             errorAndLog(f"{targetInfo}clearFlash: failed to clear flash. Trying again...",doPrint=True)
@@ -514,9 +522,9 @@ def clearFlash(attempts=2, targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def prepareFpgaEnv(targetId=None,isReload=False):
-    if (isEqSetting('mode','cyberPhys') and (not isReload)):
-        getSetting('vcu118Lock').acquire()
+def prepareFpgaEnv(targetId=None):
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('findBoardsLock').acquire()
 
     if (doesSettingExist('vcu118PrepareFpgaEnv') and isEnabled('vcu118PrepareFpgaEnv')):
         firstTime = False
@@ -580,15 +588,15 @@ def prepareFpgaEnv(targetId=None,isReload=False):
         setSetting('vcu118HwTarget',thisTarget,targetId=targetId)
         setSetting('listVcu118HwTargets',curList) #to update the list
 
-    if (isEqSetting('mode','cyberPhys') and (not isReload)):
-        getSetting('vcu118Lock').release()
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('findBoardsLock').release()
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programBitfile (doPrint=True,isReload=False,targetId=None):
+def programBitfile (doPrint=True,targetId=None):
     targetInfo = f"<target{targetId}>: " if (targetId) else ''
     printAndLog(f"{targetInfo}Preparing the VCU118 FPGA...",doPrint=doPrint)
-    prepareFpgaEnv(targetId=targetId,isReload=isReload)
+    prepareFpgaEnv(targetId=targetId)
 
     printAndLog(f"{targetInfo}Clearing the flash...",doPrint=False)
     clearFlash(targetId=targetId)

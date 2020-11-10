@@ -53,8 +53,8 @@ class fpgaTarget(object):
         openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
         self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),f'openocd{self.targetSuffix}.out'), 'ab')
 
-        if (isEqSetting('mode','cyberPhys') and (not isReload)):
-            getSetting('vcu118Lock').acquire()
+        if (isEqSetting('mode','cyberPhys')):
+            getSetting('openocdControl').waitForNoProgramming()
         openocdExtraCmds = f"gdb_port {self.gdbPort}; telnet_port {self.openocdPort}{self.getOpenocdCustomCfg(isReload=isReload)}"
         try:
             self.openocdProcess = pexpect.spawn(
@@ -65,10 +65,12 @@ class fpgaTarget(object):
             if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
                 self.fpgaStartRetriesIdx += 1
                 errorAndLog (f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
+                if (isEqSetting('mode','cyberPhys')):
+                    getSetting('openocdControl').reallowProgramming()
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
             self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
         if (isEqSetting('mode','cyberPhys')):
-            getSetting('vcu118Lock').release()
+            getSetting('openocdControl').reallowProgramming()
 
         self.setupUart()
 
@@ -154,7 +156,7 @@ class fpgaTarget(object):
         if (self.target!='vcu118'):
             self.terminateAndExit(f"{self.targetIdInfo}<fpgaReload> is not implemented for target {self.target}.",overrideShutdown=True)
         self.fpgaTearDown(isReload=True,stage=stage)
-        vcu118.programBitfile(doPrint=False, isReload=True,targetId=self.targetId)
+        vcu118.programBitfile(doPrint=False, targetId=self.targetId)
         time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
         self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout, isReload=True)
         return
@@ -188,8 +190,12 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def gdbConnect (self):
+        if (isEqSetting('mode','cyberPhys')):
+            getSetting('openocdControl').waitForNoProgramming()
         self.runCommandGdb(f"target remote localhost:{self.gdbPort}",erroneousContents="Failed")
         self.expectOnOpenocd (f"accepting 'gdb' connection on tcp/{self.gdbPort}","connect")
+        if (isEqSetting('mode','cyberPhys')):
+            getSetting('openocdControl').reallowProgramming()
 
     @decorate.debugWrap
     @decorate.timeWrap
