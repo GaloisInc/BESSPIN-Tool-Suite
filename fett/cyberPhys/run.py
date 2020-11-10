@@ -42,8 +42,6 @@ def watchdog(targetId):
                 errorAndLog(f"<target{targetId}>: {errorString}!")
                 return True
 
-        time.sleep(10)
-
         # Check process
         if ((not getSetting('targetObj',targetId=targetId).process.isalive()) 
             and handleError("Target is down")):
@@ -54,6 +52,8 @@ def watchdog(targetId):
                                     exitOnError=False,pingAttempts=3,printSuccess=False))
              and handleError("Failed to ping target")):
             break
+
+        time.sleep(10)
 
     # Will send an item to the queue anyway; If we're here because of error:
     #   Yes: So this will exit the main thread
