@@ -266,7 +266,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             uartDevices = getSetting('vcu118UartDevices')
 
             if (len(uartDevices)==0):
-                logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exc=exc, exitCode=EXIT.Configuration)
+                logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exitCode=EXIT.Configuration)
             elif(len(uartDevices)==1):
                 uartDevice = uartDevices.pop(0)
                 setSetting('vcu118UartDevices',uartDevices)
