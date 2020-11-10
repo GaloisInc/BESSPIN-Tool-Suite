@@ -21,7 +21,7 @@
         "else": { "timeout" : { "boot" : 500 } }
       }
     },
-    "qemu": { "timeout" : { "boot" : 120 } },
+    "qemu": { "timeout" : { "boot" : 200 } },
     "awsf1": {
       "name": "pvAWS",
       "firesim": { "timeout" : { "boot" : 240 } },
