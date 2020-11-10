@@ -300,19 +300,19 @@ class vcu118Target (fpgaTarget, commonTarget):
         if hasattr(serial, f"PARITY_{uartSettings['parity'].upper()}"):
             parity = getattr(serial, f"PARITY_{uartSettings['parity'].upper()}")
         else:
-            logAndExit(f"startUartSession: parity {uartSettings['parity']} must be even, odd, or none.")
+            logAndExit(f"startUartSession: parity {uartSettings['parity']} must be even, odd, or none.",exitCode=EXIT.Configuration)
 
         sbit_mapping = {1: serial.STOPBITS_ONE, 2: serial.STOPBITS_TWO}
         if uartSettings['stopbits'] in sbit_mapping:
             stopbits = sbit_mapping[uartSettings['stopbits']]
         else:
-            logAndExit(f"startUartSession: stop bits {uartSettings['stopbits']} must be 1 or 2")
+            logAndExit(f"startUartSession: stop bits {uartSettings['stopbits']} must be 1 or 2",exitCode=EXIT.Configuration)
 
         byte_mapping = {5: serial.FIVEBITS, 6: serial.SIXBITS, 7: serial.SEVENBITS, 8: serial.EIGHTBITS}
         if uartSettings['bytesize'] in byte_mapping:
             bytesize = byte_mapping[uartSettings['bytesize']]
         else:
-            logAndExit(f"startUartSession: bytesize {uartSettings['bytesize']} must be 5,6,7 or 8")
+            logAndExit(f"startUartSession: bytesize {uartSettings['bytesize']} must be 5,6,7 or 8",exitCode=EXIT.Configuration)
 
         try:
             uartSession = serial.Serial(
