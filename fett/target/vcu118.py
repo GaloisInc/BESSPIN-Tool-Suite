@@ -26,7 +26,7 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.ipTarget = getTargetIp(targetId=targetId)
 
         if ((self.elfLoader=='netboot') and (self.ipTarget!="10.88.88.2")):
-            warnAndLog("Cannot use netboot with <IP!=10.88.88.2> [see ticket #860]. Falling back to JTAG.")
+            warnAndLog(f"{self.targetIdInfo}Cannot use netboot with <IP!=10.88.88.2> [see ticket #860]. Falling back to JTAG.")
             self.elfLoader = 'JTAG'
             setSetting('elfLoader','JTAG',targetId=self.targetId)
 
@@ -270,7 +270,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             elif(len(uartDevices)==1):
                 uartDevice = uartDevices.pop(0)
                 setSetting('vcu118UartDevices',uartDevices)
-                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in uart devices list.")
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in the UART devices list.")
             else:
                 uartDevice = self.findTheRightUartDevice(uartDevices)
                 uartDevices.remove(uartDevice)
