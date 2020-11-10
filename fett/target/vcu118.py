@@ -235,7 +235,7 @@ class vcu118Target (fpgaTarget, commonTarget):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def getOpenocdCustomCfg(self):
+    def getOpenocdCustomCfg(self,isReload=False):
         # For many targets, we need to choose on which USB port to start openocd
         if (isEnabled('IsThereMoreThanOneVcu118Target')):
             hwId = getSetting('vcu118HwTarget',targetId=self.targetId).split('/')[-1]
@@ -248,7 +248,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                         continue
                     if (serial_number == hwId): #Found the USB port connected to the JTAG of this hw target
                         printAndLog(f"{self.targetIdInfo}getOpenocdCmd: USB device <{dev.dev.address}> is connected to "
-                            f"the JTAG of HW ID <{hwId}>.")
+                            f"the JTAG of HW ID <{hwId}>.",doPrint=(not isReload))
                         # return: bus-port[.port...]
                         return f"; adapter usb location {bus.location}-{'.'.join([str(num) for num in dev.dev.port_numbers])}"
             logAndExit(f"{self.targetIdInfo}getOpenocdCmd: Failed to find the USB port that is connected to "
@@ -278,7 +278,8 @@ class vcu118Target (fpgaTarget, commonTarget):
                 printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in uart devices list.")
             else:
                 uartDevice = self.findTheRightUartDevice(uartDevices)
-                setSetting('vcu118UartDevices',uartDevices.remove(uartDevice))
+                uartDevices.remove(uartDevice)
+                setSetting('vcu118UartDevices',uartDevices)
                 printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
 
             uartSessionDict = self.startUartSession(uartDevice)
@@ -359,7 +360,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                 printAndLog(f"findUartDevices: located UART device at {port.device}"
                     f"with serial number {port.serial_number}", doPrint=False)
                 uartDevices.append(port.device)
-
+        logging.debug(f"findUartDevices: Found the following UART devices: <{','.join(uartDevices)}>.")
         return uartDevices
 
     @decorate.debugWrap
@@ -518,8 +519,8 @@ def clearFlash(attempts=2, targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def prepareFpgaEnv(targetId=None):
-    if (isEqSetting('mode','cyberPhys')):
+def prepareFpgaEnv(targetId=None,isReload=False):
+    if (isEqSetting('mode','cyberPhys') and (not isReload)):
         getSetting('vcu118Lock').acquire()
 
     if (doesSettingExist('vcu118PrepareFpgaEnv') and isEnabled('vcu118PrepareFpgaEnv')):
@@ -584,7 +585,7 @@ def prepareFpgaEnv(targetId=None):
         setSetting('vcu118HwTarget',thisTarget,targetId=targetId)
         setSetting('listVcu118HwTargets',curList) #to update the list
 
-    if (isEqSetting('mode','cyberPhys')):
+    if (isEqSetting('mode','cyberPhys') and (not isReload)):
         getSetting('vcu118Lock').release()
 
 @decorate.debugWrap
@@ -592,7 +593,7 @@ def prepareFpgaEnv(targetId=None):
 def programBitfile (doPrint=True,isReload=False,targetId=None):
     targetInfo = f"<target{targetId}>: " if (targetId) else ''
     printAndLog(f"{targetInfo}Preparing the VCU118 FPGA...",doPrint=doPrint)
-    prepareFpgaEnv(targetId=targetId)
+    prepareFpgaEnv(targetId=targetId,isReload=isReload)
 
     printAndLog(f"{targetInfo}Clearing the flash...",doPrint=False)
     clearFlash(targetId=targetId)

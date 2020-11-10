@@ -44,7 +44,7 @@ class fpgaTarget(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def fpgaStart (self, elfPath, elfLoadTimeout=15):
+    def fpgaStart (self, elfPath, elfLoadTimeout=15, isReload=False):
         if (self.processor=='bluespec_p3'):
             time.sleep(3) #need time after programming the fpga
 
@@ -53,7 +53,9 @@ class fpgaTarget(object):
         openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
         self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),f'openocd{self.targetSuffix}.out'), 'ab')
 
-        openocdExtraCmds = f"gdb_port {self.gdbPort}; telnet_port {self.openocdPort}{self.getOpenocdCustomCfg()}"
+        if (isEqSetting('mode','cyberPhys') and (not isReload)):
+            getSetting('vcu118Lock').acquire()
+        openocdExtraCmds = f"gdb_port {self.gdbPort}; telnet_port {self.openocdPort}{self.getOpenocdCustomCfg(isReload=isReload)}"
         try:
             self.openocdProcess = pexpect.spawn(
                 f"openocd --command '{openocdExtraCmds}' -f {openocdCfg}",
@@ -65,6 +67,8 @@ class fpgaTarget(object):
                 errorAndLog (f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
             self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+        if (isEqSetting('mode','cyberPhys')):
+            getSetting('vcu118Lock').release()
 
         self.setupUart()
 
@@ -115,7 +119,7 @@ class fpgaTarget(object):
             self.runCommandGdb("set remotetimeout 60")
         self.runCommandGdb(f"set architecture riscv:rv{self.xlen}")
         self.runCommandGdb("define hook-continue\ndont-repeat\nend") #we don't want to 'continue' on extra presses due to encoding and such
-
+        time.sleep(3)
         self.gdbConnect()
 
         if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
@@ -152,7 +156,7 @@ class fpgaTarget(object):
         self.fpgaTearDown(isReload=True,stage=stage)
         vcu118.programBitfile(doPrint=False, isReload=True,targetId=self.targetId)
         time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
-        self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
+        self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout, isReload=True)
         return
 
     @decorate.debugWrap
