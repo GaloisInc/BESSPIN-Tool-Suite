@@ -47,16 +47,6 @@ def triage(filepath,lookfor):
     else:
         return 'FAIL'
 
-def tryAdjustScore(logFile, thisScore, logSymbol):
-    try:
-        fLog = ftOpenFile(logFile,'r')
-        logLines = fLog.read().splitlines()
-        fLog.close()
-        return (adjustToCustomScore(logLines,thisScore),
-                logSymbol)
-    except:
-        return (SCORES.FAIL, logSymbol)
-
 def scoreLog(logFile, lookfor):
     #First, get the triage decision
     logSymbol = triage(logFile,lookfor)
@@ -70,7 +60,7 @@ def scoreLog(logFile, lookfor):
         thisScore = SCORES.NONE
     else:
         thisScore = SCORES.FAIL
-    return tryAdjustScore(logFile, thisScore, logSymbol)
+    return (adjustToCustomScore(ftReadLines(logFile), thisScore), logSymbol)
 
 def bfparams(filepath):
     # we might want template parameters too...
@@ -112,7 +102,9 @@ def scoreCWE680(path, lookfor, cwes):
         # printf statement in the test following the size parameter overflow
         # was never executed).  Report NONE for CWE-680, but remove other CWEs
         # from the test list as no overruns were tested in this run.
-        return tryAdjustScore(path, SCORES.NONE, int_overflow) + (['CWE_680'],)
+        return (adjustToCustomScore(ftReadLines(logFile), SCOERS.NONE),
+                int_overflow,
+                ['CWE_680'])
 
     # Size overflow was either not detected, or not properly corrected.  Score
     # test as usual.
