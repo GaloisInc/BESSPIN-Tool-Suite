@@ -292,6 +292,8 @@ def resetTarget (curTarget):
     curTarget.tearDown() 
     rootPassword = curTarget.rootPassword
     portsBegin = curTarget.portsBegin
+    if (curTarget.target == 'vcu118'): #need to save the uartDevice
+        uartDevice = curTarget.uartDevice
     del curTarget
 
     printAndLog("resetTarget: Re-preparing the environment...",doPrint=(not isEqSetting('mode','cyberPhys')))
@@ -329,6 +331,8 @@ def resetTarget (curTarget):
     newTarget.restartMode = True
     if (isEqSetting('target','awsf1',targetId=targetId)):
         newTarget.rootPassword = rootPassword
+    elif (isEqSetting('target','vcu118',targetId=targetId)):
+        newTarget.uartDevice = uartDevice
     newTarget.portsBegin = portsBegin
     newTarget.userCreated = True
 
