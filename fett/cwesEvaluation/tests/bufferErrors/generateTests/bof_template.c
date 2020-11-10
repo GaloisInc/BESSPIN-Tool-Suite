@@ -26,6 +26,8 @@
 #define {location}
 // EXCURSION = (CONTINUOUS, DISCRETE)
 #define {excursion}
+// COMPUTE_SIZE = (SIZE_OVERFLOW, NO_COMPUTE_SIZE)
+#define {compute_size}
 
 // BUF2 = (BUF2_PRESENT, BUF2_ABSENT)
 #define {buf2}
@@ -79,13 +81,36 @@ void test(void);
 
 void test(void)
 {{
+#ifdef SIZE_OVERFLOW
+    // If the buffer were `min_size` long, there would be no overruns
+    // (remember, Int_Overflow_To_Buffer_Overflow implies Boundary_Above).
+    // This calculation uses `min_size` rather than adding 2 numbers together
+    // that sum to `N` because it's more realistic to have a size calculation
+    // that's partially correct, but later overflowed.
+    size_t {min_size} = {idx0} + {access_len} + 1;
+    // Arrive at N via overflow
+    size_t {buf_size} = {min_size} + ((~((size_t) 0)) - {min_size} + {N}) + 1;
+    if ({buf_size} < {min_size}) {{
+        // `buf_size` is too small, either because the overflow was undetected,
+        // or because the value was replaced with one that is still too small.
+        printf("BUFFER SIZE INSUFFICIENT\r\n");
+        fflush(stdout);
+    }} else {{
+        // `buf_size` was altered by the processor to be sufficiently large.
+        printf("BUFFER SIZE CORRECTED\r\n");
+        fflush(stdout);
+    }}
+#else  // NO_COMPUTE_SIZE
+    size_t {buf_size} = {N};
+#endif  // SIZE_OVERFLOW
+
     //temp var
     {tmp_var_type} {tmp_var_name};
 
 #ifdef STACK
     // Cleared via memset so that we can do error checking
     // without wiping OS structures (ie if we overflowed into bss)
-    {buf_type} {buf_name}[SIZE({buf_type},{N},{memmax})];
+    {buf_type} {buf_name}[SIZE({buf_type},{buf_size},{memmax})];
 
 #if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
     if (&{buf_name}[0] <= (uintptr_t)&__bss_end) {{
@@ -94,13 +119,13 @@ void test(void)
             return;
     }}
 #endif //FreeRTOS
-    memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{N},{memmax}));
+    memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 
 #else //HEAP
 #ifdef testgenOnFreeRTOS
-    {buf_type}* {buf_name} = pvPortMalloc(sizeof({buf_type})*SIZE({buf_type},{N},{memmax}));
+    {buf_type}* {buf_name} = pvPortMalloc(sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 #else
-    {buf_type}* {buf_name} = malloc(sizeof({buf_type})*SIZE({buf_type},{N},{memmax}));
+    {buf_type}* {buf_name} = malloc(sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 #endif
     if ({buf_name} == NULL) {{
             printf("TEST INVALID. <malloc>\r\n");
@@ -125,7 +150,7 @@ void test(void)
             fflush(stdout);
             return;
     }}
-    memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{N},{memmax}));
+    memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 #endif//FREERTOS
 #endif//BUF2_PRESENT
 #endif//STACK
@@ -137,6 +162,22 @@ void test(void)
     fflush(stdout);
     for(int idx={c_idx0}; idx{relop}({c_idx0}+{c_access_len}); idx=idx+{c_incr})
     {{
+#ifdef SIZE_OVERFLOW
+            /* Attempt to catch the case where we overwrite idx, causing
+             * non-termination.  Under most circumstances this loop is all in
+             * bounds, but out of bounds writes are possible if SIZE_OVERFLOW
+             * is defined and the processor sets `buf_size` to be less than `N`
+             */
+            if ((({c_incr} < 0) && (idx > {c_idx0})) ||
+                (({c_incr} > 0) && (idx < {c_idx0})))
+            {{
+                /* If we are here, then somehow 'idx' is GREATER than its initial value
+                   even though it is monotonically DECREASING (resp. LESS/INCREASING) */
+                printf("<write to c_idx detected>\r\n");
+                fflush(stdout);
+                break;
+            }}
+#endif  // SIZE_OVERFLOW
 #ifdef READ
 #ifdef PTR_ACCESS
                 {tmp_var_name} = *({buf_name} + idx);
