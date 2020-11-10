@@ -173,6 +173,7 @@ class openocdControl:
     def __init__(self,nTargets):
         self._N = nTargets
         self._sema = threading.Semaphore(self._N)
+        self._instrLock = threading.Lock() #to avoid deadlock if waitForNoProgramming() is called twice
 
     def requestToProgram(self):
         self._sema.acquire()
@@ -181,8 +182,10 @@ class openocdControl:
         self._sema.release()
 
     def waitForNoProgramming(self):
+        self._instrLock.acquire()
         for i in range(self._N):
             self._sema.acquire()
+        self._instrLock.release()
 
     def reallowProgramming(self):
         for i in range(self._N):
