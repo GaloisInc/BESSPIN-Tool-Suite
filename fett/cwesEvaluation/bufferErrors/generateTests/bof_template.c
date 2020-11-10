@@ -5,6 +5,9 @@
  *
 */
 
+// For fixed width integers
+#include <stdint.h>
+
 #ifndef NO_STDIO
 #include <stdio.h>
 #endif
@@ -26,7 +29,7 @@
 #define {location}
 // EXCURSION = (CONTINUOUS, DISCRETE)
 #define {excursion}
-// COMPUTE_SIZE = (SIZE_OVERFLOW, NO_COMPUTE_SIZE)
+// COMPUTE_SIZE = (SIZE_OVERFLOW, INCORRECT_MALLOC_CALL, NO_COMPUTE_SIZE)
 #define {compute_size}
 
 // BUF2 = (BUF2_PRESENT, BUF2_ABSENT)
@@ -79,11 +82,45 @@ void test(void);
 #define SIZE(_ty, N, _max) \
   (((N*sizeof(_ty)) > _max) ? (_max/sizeof(_ty)) : N)
 
+#ifdef INCORRECT_MALLOC_CALL
+/*
+ * These functions exist to test CWE-130 (Improper Handling of Length Parameter
+ * Inconsistency).  They simulate the API a programmer may use to allocate
+ * space for a message recieved over the network.  `mock_get_message_size`
+ * simulates a function that returns the size of the message in units of
+ * `buf_type`.  `allocate_message_buf` allocates a buffer to hold the message,
+ * but incorrectly treats the result of `mock_get_message_size` as the number
+ * of bytes to allocate, rather than the number of elements.  As such, it
+ * returns a buffer that is much too small.  The python test generator chooses
+ * values for the various parameters in this test that would be in bounds if
+ * `allocate_message_buf` were implemented correctly and allocated a buffer of
+ * size `mock_get_message_size() * sizeof(buf_type)`.
+ */
+size_t mock_get_message_size(void);
+{buf_type}* allocate_message_buf(void);
+
+size_t mock_get_message_size(void) {{
+  return {N};
+}}
+
+{buf_type}* allocate_message_buf(void) {{
+  // Misinterpret the result of `mock_get_message_size` as a size in bytes,
+  // rather than the number of elements of type `buf_type` the message has.
+  size_t {alloc_bytes} = SIZE(char, mock_get_message_size(), {memmax});
+#ifdef testgenOnFreeRTOS
+  return pvPortMalloc({alloc_bytes});
+#else
+  return malloc({alloc_bytes});
+#endif
+}}
+#endif  // INCORRECT_MALLOC_CALL
+
+
 void test(void)
 {{
 #ifdef SIZE_OVERFLOW
     // If the buffer were `min_size` long, there would be no overruns
-    // (remember, Int_Overflow_To_Buffer_Overflow implies Boundary_Above).
+    // (remember, SIZE_OVERFLOW implies Boundary_Above).
     // This calculation uses `min_size` rather than adding 2 numbers together
     // that sum to `N` because it's more realistic to have a size calculation
     // that's partially correct, but later overflowed.
@@ -100,7 +137,7 @@ void test(void)
         printf("BUFFER SIZE CORRECTED\r\n");
         fflush(stdout);
     }}
-#else  // NO_COMPUTE_SIZE
+#else  // !SIZE_OVERFLOW
     size_t {buf_size} = {N};
 #endif  // SIZE_OVERFLOW
 
@@ -122,11 +159,16 @@ void test(void)
     memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 
 #else //HEAP
+#ifdef INCORRECT_MALLOC_CALL
+    {buf_type}* {buf_name} = allocate_message_buf();
+#else  // !INCORRECT_MALLOC_CALL
+    size_t {alloc_bytes} = sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax});
 #ifdef testgenOnFreeRTOS
-    {buf_type}* {buf_name} = pvPortMalloc(sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
+    {buf_type}* {buf_name} = pvPortMalloc({alloc_bytes});
 #else
-    {buf_type}* {buf_name} = malloc(sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
-#endif
+    {buf_type}* {buf_name} = malloc({alloc_bytes});
+#endif  // testgenOnFreeRTOS
+#endif  // INCORRECT_MALLOC_CALL
     if ({buf_name} == NULL) {{
             printf("TEST INVALID. <malloc>\r\n");
 #ifdef testgenOnFreeRTOS

@@ -102,7 +102,7 @@ def scoreCWE680(path, lookfor, cwes):
         # printf statement in the test following the size parameter overflow
         # was never executed).  Report NONE for CWE-680, but remove other CWEs
         # from the test list as no overruns were tested in this run.
-        return (adjustToCustomScore(ftReadLines(logFile), SCOERS.NONE),
+        return (adjustToCustomScore(ftReadLines(path), SCORES.NONE),
                 int_overflow,
                 ['CWE_680'])
 

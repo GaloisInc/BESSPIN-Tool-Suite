@@ -375,6 +375,16 @@ def safeLoadJsonFile (jsonFile):
         logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
+def safeDumpJsonFile(jsonData, jsonFile):
+    try:
+        fJson = ftOpenFile(jsonFile, 'w')
+        json.dump(jsonData, fJson)
+        fJson.close()
+    except Exception as exc:
+        logAndExit(f"Failed to dump json <{jsonData}> to file <{jsonFile}>",
+                   exc=exc,
+                   exitCode=EXIT.Files_and_paths)
+
 @decorate.debugWrap
 def make (argsList,dirPath,dockerToolchainImage=None,dockerExtraMounts={},targetId=None, buildDir=None):
     if ((not dirPath) or (argsList is None)):
