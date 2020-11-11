@@ -54,7 +54,7 @@ class fpgaTarget(object):
         self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),f'openocd{self.targetSuffix}.out'), 'ab')
 
         if (isEqSetting('mode','cyberPhys')):
-            getSetting('openocdControl').waitForNoProgramming()
+            getSetting('openocdLock').acquire()
         openocdExtraCmds = (f"set _CHIPNAME riscv{self.targetSuffix}; gdb_port {self.gdbPort}; "
             f"telnet_port {self.openocdPort}{self.getOpenocdCustomCfg(isReload=isReload)}")
         try:
@@ -67,11 +67,11 @@ class fpgaTarget(object):
                 self.fpgaStartRetriesIdx += 1
                 errorAndLog (f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
                 if (isEqSetting('mode','cyberPhys')):
-                    getSetting('openocdControl').reallowProgramming()
+                    getSetting('openocdLock').release()
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
             self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
         if (isEqSetting('mode','cyberPhys')):
-            getSetting('openocdControl').reallowProgramming()
+            getSetting('openocdLock').release()
 
         self.setupUart()
 
@@ -192,11 +192,11 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def gdbConnect (self):
         if (isEqSetting('mode','cyberPhys')):
-            getSetting('openocdControl').waitForNoProgramming()
+            getSetting('openocdLock').acquire()
         self.runCommandGdb(f"target remote localhost:{self.gdbPort}",erroneousContents="Failed")
         self.expectOnOpenocd (f"accepting 'gdb' connection on tcp/{self.gdbPort}","connect")
         if (isEqSetting('mode','cyberPhys')):
-            getSetting('openocdControl').reallowProgramming()
+            getSetting('openocdLock').release()
 
     @decorate.debugWrap
     @decorate.timeWrap

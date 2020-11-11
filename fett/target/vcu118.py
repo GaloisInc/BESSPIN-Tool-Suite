@@ -486,13 +486,13 @@ def programFpga(bitStream, probeFile, attempts=_MAX_PROG_ATTEMPTS-1, targetId=No
         logAndExit(f"{targetInfo}programFpga: probe file {probeFile} does not exist")
 
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdControl').requestToProgram()
+        getSetting('openocdLock').acquire()
     retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_bit.tcl',
                 '-log', os.path.join(cwd,'prog_bit.log'),'-mode','batch',
                 '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),bitStream, probeFile],
                 timeout=90,cwd=cwd,check=False)
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdControl').doneProgramming()
+        getSetting('openocdLock').release()
     if retProc.returncode != 0:
         if attempts > 0:
             errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. " 
@@ -515,13 +515,13 @@ def clearFlash(attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     cp(os.path.join(getSetting('tclSourceDir'), 'small.bin'), cwd)
 
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdControl').requestToProgram()
+        getSetting('openocdLock').acquire()
     retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_flash.tcl',
                 '-log', os.path.join(cwd,'prog_flash.log'),'-mode','batch',
                 '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),'./small.bin'],
                 timeout=90,cwd=cwd,check=False)
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdControl').doneProgramming()
+        getSetting('openocdLock').release()
     if retProc.returncode != 0:
         if attempts > 0:
             errorAndLog(f"{targetInfo}clearFlash: failed to clear flash. "
@@ -534,7 +534,7 @@ def clearFlash(attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
 @decorate.timeWrap
 def prepareFpgaEnv(targetId=None):
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('findBoardsLock').acquire()
+        getSetting('openocdLock').acquire()
 
     if (doesSettingExist('vcu118PrepareFpgaEnv') and isEnabled('vcu118PrepareFpgaEnv')):
         firstTime = False
@@ -599,7 +599,7 @@ def prepareFpgaEnv(targetId=None):
         setSetting('listVcu118HwTargets',curList) #to update the list
 
     if (isEqSetting('mode','cyberPhys')):
-        getSetting('findBoardsLock').release()
+        getSetting('openocdLock').release()
 
 @decorate.debugWrap
 @decorate.timeWrap
