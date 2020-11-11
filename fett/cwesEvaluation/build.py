@@ -6,12 +6,12 @@ import glob
 import os, re
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
-from fett.cwesEvaluation.tests.informationLeakage.generateWrappers import generateWrappers
+from fett.cwesEvaluation.bufferErrors.generateTests.generateTests import generateTests
+from fett.cwesEvaluation.informationLeakage.generateWrappers import generateWrappers
 from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
-from fett.cwesEvaluation.tests.PPAC.freertos import prepareFreeRTOSforPPAC
+from fett.cwesEvaluation.PPAC.freertos import prepareFreeRTOSforPPAC
 
 @decorate.debugWrap
 def buildCwesEvaluation():
@@ -71,13 +71,13 @@ def buildCwesEvaluation():
         # Create class dir and build
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
-        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                 vulClass, 'sources')
 
         if vulClass == 'bufferErrors':
             vIsThereAnythingToRun = True
             isThereAReasonToBoot = True
-            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                     vulClass,'envFett.mk'), vulClassDir)
             # Generate test sources
             generateTests(vulClassDir)
@@ -92,7 +92,7 @@ def buildCwesEvaluation():
                        os.path.join(vulClassDir,
                                     f'test_extra_{os.path.basename(source)}'))
         elif vulClass == 'informationLeakage':
-            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                     vulClass,'envFett.mk'), vulClassDir)
             # Copy over concrete tests
             copyDir(sourcesDir, vulClassDir, copyContents=True)
@@ -127,7 +127,6 @@ def buildCwesEvaluation():
                     cp(os.path.join(getSetting('repoDir'),
                                     'fett',
                                     'cwesEvaluation',
-                                    'tests',
                                     vulClass,
                                     'Makefile.xcompileDir'),
                        os.path.join(vulClassDir, 'Makefile'))

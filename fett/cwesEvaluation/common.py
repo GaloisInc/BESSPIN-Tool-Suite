@@ -3,41 +3,41 @@ import pexpect
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import scoreTests
 
-import fett.cwesEvaluation.tests.bufferErrors.vulClassTester
-import fett.cwesEvaluation.tests.bufferErrors.cweScores
-import fett.cwesEvaluation.tests.PPAC.vulClassTester
-import fett.cwesEvaluation.tests.PPAC.cweScores
-import fett.cwesEvaluation.tests.resourceManagement.vulClassTester
-import fett.cwesEvaluation.tests.resourceManagement.cweScores
-import fett.cwesEvaluation.tests.informationLeakage.vulClassTester
-import fett.cwesEvaluation.tests.informationLeakage.cweScores
-import fett.cwesEvaluation.tests.numericErrors.vulClassTester
-import fett.cwesEvaluation.tests.numericErrors.cweScores
+import fett.cwesEvaluation.bufferErrors.vulClassTester
+import fett.cwesEvaluation.bufferErrors.cweScores
+import fett.cwesEvaluation.PPAC.vulClassTester
+import fett.cwesEvaluation.PPAC.cweScores
+import fett.cwesEvaluation.resourceManagement.vulClassTester
+import fett.cwesEvaluation.resourceManagement.cweScores
+import fett.cwesEvaluation.informationLeakage.vulClassTester
+import fett.cwesEvaluation.informationLeakage.cweScores
+import fett.cwesEvaluation.numericErrors.vulClassTester
+import fett.cwesEvaluation.numericErrors.cweScores
 
 cweTests = {
     "bufferErrors" :
-        fett.cwesEvaluation.tests.bufferErrors.vulClassTester.vulClassTester,
+        fett.cwesEvaluation.bufferErrors.vulClassTester.vulClassTester,
     "PPAC" :
-        fett.cwesEvaluation.tests.PPAC.vulClassTester.vulClassTester,
+        fett.cwesEvaluation.PPAC.vulClassTester.vulClassTester,
     "resourceManagement" :
-        fett.cwesEvaluation.tests.resourceManagement.vulClassTester.vulClassTester,
+        fett.cwesEvaluation.resourceManagement.vulClassTester.vulClassTester,
     "informationLeakage" :
-        fett.cwesEvaluation.tests.informationLeakage.vulClassTester.vulClassTester,
+        fett.cwesEvaluation.informationLeakage.vulClassTester.vulClassTester,
     "numericErrors" :
-        fett.cwesEvaluation.tests.numericErrors.vulClassTester.vulClassTester
+        fett.cwesEvaluation.numericErrors.vulClassTester.vulClassTester
 }
 
 cweScores = {
     "bufferErrors" :
-        fett.cwesEvaluation.tests.bufferErrors.cweScores,
+        fett.cwesEvaluation.bufferErrors.cweScores,
     "PPAC" :
-        fett.cwesEvaluation.tests.PPAC.cweScores,
+        fett.cwesEvaluation.PPAC.cweScores,
     "resourceManagement" :
-        fett.cwesEvaluation.tests.resourceManagement.cweScores,
+        fett.cwesEvaluation.resourceManagement.cweScores,
     "informationLeakage" :
-        fett.cwesEvaluation.tests.informationLeakage.cweScores,
+        fett.cwesEvaluation.informationLeakage.cweScores,
     "numericErrors" :
-        fett.cwesEvaluation.tests.numericErrors.cweScores
+        fett.cwesEvaluation.numericErrors.cweScores
 }
 
 @decorate.debugWrap

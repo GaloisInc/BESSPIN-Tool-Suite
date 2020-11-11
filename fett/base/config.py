@@ -427,7 +427,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             setSettingDict(vulClass,'configCWEs',dictConfigCWEs)
 
         # Load custom dev options (setupEnv.json)
-        setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',vulClass,'setupEnv.json'))
+        setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',vulClass,'setupEnv.json'))
         loadConfigSection(None,None,setupEnvData,vulClass,setup=True,setSettingsToSectDict=vulClass)
 
     # Load custom scoring options if enabled
