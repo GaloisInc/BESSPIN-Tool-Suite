@@ -3,7 +3,7 @@ import os
 import sys
 
 from fett.base.utils.misc import *
-import fett.cwesEvaluation.featureModelUtil as featureModelUtil
+import fett.cwesEvaluation.utils.featureModelUtil as featureModelUtil
 from fett.cwesEvaluation.bufferErrors.generateTests.bof_template import *
 from fett.cwesEvaluation.bufferErrors.generateTests.bof_instance import *
 

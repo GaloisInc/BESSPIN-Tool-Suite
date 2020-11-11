@@ -2,7 +2,7 @@
 from collections import defaultdict
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation import featureModelUtil
+from fett.cwesEvaluation.utils import featureModelUtil
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 from fett.cwesEvaluation.informationLeakage.iexutils import dirnames
 
