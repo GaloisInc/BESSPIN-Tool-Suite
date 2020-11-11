@@ -36,7 +36,7 @@ def checkValidScores ():
         return
 
     #Load CWEs exceptions
-    cweExceptionsFile = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','validScoresGFE.csv')
+    cweExceptionsFile = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','utils','validScoresGFE.csv')
     cwesExceptions = defaultdict(cweException)
     for line in ftReadLines(cweExceptionsFile):
         if ((len(line)==0) or (line.strip()[0] == '#')):

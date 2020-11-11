@@ -14,7 +14,7 @@ from fett.apps.build import buildApps
 from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
 from fett.cwesEvaluation.common import runTests
 from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
-from fett.cwesEvaluation.checkValidScores import checkValidScores
+from fett.cwesEvaluation.utils.checkValidScores import checkValidScores
 from fett.cyberPhys.build import buildCyberPhys
 from fett.cyberPhys.run import runCyberPhys
 import fett.cyberPhys.launch
