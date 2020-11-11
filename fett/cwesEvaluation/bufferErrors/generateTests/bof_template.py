@@ -129,6 +129,14 @@ class BofTestGen:
         excursion = bof_instance.Excursion.split("_")[1].upper()
         pickDataRange(bof_instance.DataSize, memBound)
 
+        # Whether or not to overflow buf size computation
+        compute_size = Choice("SIZE_OVERFLOW" if
+                              bof_instance.Int_Overflow_To_Buffer_Overflow else
+                              "NO_COMPUTE_SIZE")
+        read_after_write = Choice("READ_AFTER_WRITE" if
+                                  bof_instance.Access_Read_After_Write else
+                                  "NO_WRITE")
+
         self.PARAMS = {
 
             'N'                : pickDataRange(bof_instance.DataSize, memBound),
@@ -161,14 +169,15 @@ class BofTestGen:
             'read_write'       : Choice(ACCESS[bof_instance.Access]),
             'buf2'             : Choice('BUF2_PRESENT', 'BUF2_ABSENT'),
             'fun_bof_return'   : Choice('JMP', 'RETURN'),
+            'read_after_write' : read_after_write,
+
+            'compute_size'     : compute_size,
+            # Variable holding smallest buffer size that will cover all reads
+            # and writes.  Only used if SIZE_OVERFLOW is defined.
+            'min_size'        : Name("min_size", 3, 15),
+            # Variable holding the size of `buf`
+            'buf_size'        : Name("buf_size", 3, 15),
         }
-        read_after_write = ['NO_WRITE']
-        try:
-            if bof_instance.Access_Read_After_Write:
-                read_after_write.append('READ_AFTER_WRITE')
-        except:
-            pass
-        self.PARAMS['read_after_write'] = Choice(*read_after_write)
 
     def genInstance(self, rnd, drop=False):
         ## This is a little complicated, but since the number of params is low
