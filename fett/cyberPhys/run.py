@@ -49,7 +49,7 @@ def watchdog(targetId):
 
         # Ping network
         if ((not getSetting('targetObj',targetId=targetId).pingTarget(
-                                    exitOnError=False,pingAttempts=3,printSuccess=False))
+                                    exitOnError=False,pingAttempts=10,printSuccess=False))
              and handleError("Failed to ping target")):
             break
 
