@@ -244,6 +244,13 @@ class vcu118Target (fpgaTarget, commonTarget):
                     if (serial_number == hwId): #Found the USB port connected to the JTAG of this hw target
                         printAndLog(f"{self.targetIdInfo}getOpenocdCmd: USB device <{dev.dev.address}> is connected to "
                             f"the JTAG of HW ID <{hwId}>.",doPrint=(not isReload))
+                        try:
+                            usb.util.claim_interface(dev.dev,0)
+                            usb.util.release_interface(dev.dev,0)
+                        except Exception as exc:
+                            warnAndLog(f"{self.targetIdInfo}getOpenocdCustomCfg: Failed to claim the interface "
+                                f"of the USB port connected to the JTAG. Will continue anyway.",
+                                exc=exc, doPrint=(not isReload))
                         # return: bus-port[.port...]
                         return f"; adapter usb location {bus.location}-{'.'.join([str(num) for num in dev.dev.port_numbers])}"
             logAndExit(f"{self.targetIdInfo}getOpenocdCmd: Failed to find the USB port that is connected to "
