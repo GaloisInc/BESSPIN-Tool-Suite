@@ -27,7 +27,7 @@ class qemuTarget (commonTarget):
 
             qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)} -append \"console=ttyS0\""
             qemuCommand += f" -device virtio-net-device,netdev=usernet"
-            qemuCommand += f" -netdev tap,id=usernet,ifname={getSetting('tapAdaptor',targetId=self.targetId)}"
+            qemuCommand += f" -netdev tap,id=usernet,ifname={getSetting('tapAdaptor',targetId=self.targetId)},script=no,downscript=no"
             qemuCommand += " -device virtio-rng-device"
 
             try:
