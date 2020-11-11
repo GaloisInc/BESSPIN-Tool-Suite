@@ -8,7 +8,7 @@ import os, re
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.tests.informationLeakage.generateWrappers import generateWrappers
-from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
+from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
 from fett.cwesEvaluation.tests.PPAC.freertos import prepareFreeRTOSforPPAC
