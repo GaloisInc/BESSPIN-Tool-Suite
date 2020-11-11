@@ -14,14 +14,17 @@ import threading, queue
 def startCyberPhys():
     # Create a network lock to protect network operations while multithreading
     setSetting('networkLock',threading.Lock())
-    # Create vcu118 boards needed locks
-    nVCU118Targets = 0
-    for targetId in range(1,getSetting('nTargets')+1):
-        nVCU118Targets += int(isEqSetting('target','vcu118',targetId=targetId))
-    if (nVCU118Targets>0):
-        setSetting('setupUartLock',threading.Lock())
-        setSetting('findBoardsLock',threading.Lock())
-        setSetting('openocdControl',openocdControl(nVCU118Targets))
+    # Create the locks needed for vcu118 board(s)
+    """
+    For VCU118, we're using a conservative approach for the sake of robustness;
+    The following operations are all protected by a single lock (openocdLock):
+    - clear flash
+    - program bitfile
+    - start an openocd process
+    - gdb connect to openocd [(gdb) target remote localhost:<gdbPort>]
+    """
+    setSetting('setupUartLock',threading.Lock())
+    setSetting('openocdLock',threading.Lock())
     # Create a lock for using the FreeRTOS submodule directory or FreeRTOS general settings
     setSetting('FreeRTOSLock',threading.Lock())
 
@@ -160,34 +163,4 @@ def endUartPiping(targetId):
         xTarget.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
     except Exception as exc:
         warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: Failed to kill the process.",exc=exc)
-
-class openocdControl:
-    """
-    - Programming FPGA cannot happen in parallel with either spawning an openocd process, 
-      or gdb connecting to an openocd process. The programming would run fine, but it would ruin both.
-    - This is a super simple and safe implementation of this logic. I think it's acceptable given that
-      the instructions between `haltAllProgramming` and `reallowProgramming` take no time.
-    - The above `instructions` refer to either spawning an openocd process (and thus connecting it to a target),
-      or the method `fpga.gdbConnect`
-    """
-    def __init__(self,nTargets):
-        self._N = nTargets
-        self._sema = threading.Semaphore(self._N)
-        self._instrLock = threading.Lock() #to avoid deadlock if waitForNoProgramming() is called twice
-
-    def requestToProgram(self):
-        self._sema.acquire()
-
-    def doneProgramming(self):
-        self._sema.release()
-
-    def waitForNoProgramming(self):
-        self._instrLock.acquire()
-        for i in range(self._N):
-            self._sema.acquire()
-        self._instrLock.release()
-
-    def reallowProgramming(self):
-        for i in range(self._N):
-            self._sema.release()
     
