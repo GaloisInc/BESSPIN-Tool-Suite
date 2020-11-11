@@ -278,7 +278,7 @@ class fpgaTarget(object):
             endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15)
 
     @decorate.debugWrap     
-    def getOpenocdCustomCfg(self):
+    def getOpenocdCustomCfg(self, isReload=False):
         return '' #virtual implementation
 
     @decorate.debugWrap
