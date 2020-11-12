@@ -6,12 +6,12 @@ import glob
 import os, re
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.tests.bufferErrors.generateTests.generateTests import generateTests
-from fett.cwesEvaluation.tests.informationLeakage.generateWrappers import generateWrappers
-from fett.cwesEvaluation.templateFreeRTOS import templateFreeRTOS
+from fett.cwesEvaluation.bufferErrors.generateTests.generateTests import generateTests
+from fett.cwesEvaluation.informationLeakage.generateWrappers import generateWrappers
+from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
-from fett.cwesEvaluation.tests.PPAC.freertos import prepareFreeRTOSforPPAC
+from fett.cwesEvaluation.PPAC.freertos import prepareFreeRTOSforPPAC
 
 @decorate.debugWrap
 def buildCwesEvaluation():
@@ -62,17 +62,22 @@ def buildCwesEvaluation():
         warnAndLog("vulClass <PPAC> is not supported for <LMCO> on <debian>.")
         getSetting("vulClasses").remove("PPAC")
 
-    # Copy apps over
+    # Copy tests over
+    isThereAnythingToRun = False
+    isThereAReasonToBoot = False
     additionalFiles = []
     for vulClass in getSetting('vulClasses'):
+        vIsThereAnythingToRun = False
         # Create class dir and build
         vulClassDir = os.path.join(buildDir, vulClass)
         mkdir(vulClassDir)
-        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+        sourcesDir = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                 vulClass, 'sources')
 
         if vulClass == 'bufferErrors':
-            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+            vIsThereAnythingToRun = True
+            isThereAReasonToBoot = True
+            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                     vulClass,'envFett.mk'), vulClassDir)
             # Generate test sources
             generateTests(vulClassDir)
@@ -87,20 +92,29 @@ def buildCwesEvaluation():
                        os.path.join(vulClassDir,
                                     f'test_extra_{os.path.basename(source)}'))
         elif vulClass == 'informationLeakage':
-            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','tests',
+            cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                     vulClass,'envFett.mk'), vulClassDir)
             # Copy over concrete tests
             copyDir(sourcesDir, vulClassDir, copyContents=True)
-            generateWrappers()
+            nWrappers = generateWrappers()
+            vIsThereAnythingToRun = (nWrappers > 0)
+            if (vIsThereAnythingToRun):
+                isThereAReasonToBoot = True
         else:
             cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
             for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
                 # Check if the test should be skipped:
                 cTestName = os.path.basename(test)
                 if (isTestEnabled(vulClass,cTestName)):
+                    vIsThereAnythingToRun = True
+                    isThereAReasonToBoot = True
                     cp (test, vulClassDir)
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
+
+        isThereAnythingToRun |= vIsThereAnythingToRun
+        if (not vIsThereAnythingToRun):
+            continue
 
         if (not isEqSetting('osImage', 'FreeRTOS')):
             # copy makefile over
@@ -113,7 +127,6 @@ def buildCwesEvaluation():
                     cp(os.path.join(getSetting('repoDir'),
                                     'fett',
                                     'cwesEvaluation',
-                                    'tests',
                                     vulClass,
                                     'Makefile.xcompileDir'),
                        os.path.join(vulClassDir, 'Makefile'))
@@ -176,6 +189,8 @@ def buildCwesEvaluation():
     if getSetting('osImage') in ['debian', 'FreeBSD']:
         buildTarball(additionalFiles)
 
+    setSetting('isThereAReasonToBoot',isThereAReasonToBoot)
+    return isThereAnythingToRun
 
 @decorate.debugWrap
 @decorate.timeWrap

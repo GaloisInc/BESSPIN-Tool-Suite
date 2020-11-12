@@ -156,7 +156,7 @@
         {
             "name" : "vulClasses",
             "type" : "stringsList",
-            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors" ]
+            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC" ]
         },
         {
             "name" : "useCustomScoring",
@@ -339,9 +339,6 @@
         }
     ],
 
-    "codeInjection": [
-    ],
-
     "informationLeakage": [
         {
             "name" : "poc_paddingLeakage_secret",
@@ -350,10 +347,10 @@
             "min" : 0
         }
     ],
-
-    "cryptoErrors": [
-    ],
     
     "numericErrors": [
+    ],
+
+    "hardwareSoC": [
     ]
 }

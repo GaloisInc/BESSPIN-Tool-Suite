@@ -14,7 +14,7 @@ from fett.apps.build import buildApps
 from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
 from fett.cwesEvaluation.common import runTests
 from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
-from fett.cwesEvaluation.checkValidScores import checkValidScores
+from fett.cwesEvaluation.utils.checkValidScores import checkValidScores
 from fett.cyberPhys.build import buildCyberPhys
 from fett.cyberPhys.run import runCyberPhys
 import fett.cyberPhys.launch
@@ -152,7 +152,9 @@ def prepareEnv (targetId=None):
         setSetting('runApp',True,targetId=targetId)
 
         if isEqSetting("mode", "evaluateSecurityTests"):
-            buildCwesEvaluation()
+            isThereAnythingToRun = buildCwesEvaluation()
+            if (not isThereAnythingToRun):
+                logAndExit("Running in <evaluateSecurityTests> mode, but no tests are enabled.",exitCode=EXIT.Nothing_to_do)
         elif isEqSetting("mode", "cyberPhys"):
             buildCyberPhys(targetId=targetId)
         else:
@@ -209,8 +211,12 @@ def launchFett (targetId=None):
     else:
         printAndLog (f"Launching FETT <{getSetting('mode')} mode>...",doPrint=(not isEqSetting('mode','cyberPhys')))
     xTarget.start()
+    if (not xTarget.osHasBooted):
+        #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
+        return xTarget
     if (isEnabled('isUnix',targetId=targetId)):
-        if (getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']):
+        if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) 
+                and (not isEqSetting('mode','evaluateSecurityTests'))): #no need to change pw in evaluation mode
             xTarget.changeRootPassword()
         xTarget.createUser()
     if (isEnabled('runApp',targetId=targetId)):
@@ -246,10 +252,15 @@ def endFett (xTarget,isDeadProcess=False):
 
         if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','awsf1'))): 
             collectRemoteLogging (logAndExit,getSetting,sudoShellCommand)
-
+    
     if not ((isEqSetting('mode', 'evaluateSecurityTests') and isEqSetting('osImage', 'FreeRTOS')) 
             or (isDeadProcess)):
-        xTarget.shutdown()
+        if (xTarget.osHasBooted):
+            xTarget.shutdown()
+        else:
+            #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
+            xTarget.tearDown()
+        
     
     if (isEqSetting('mode','production')):
         tarballPath = tarArtifacts (logAndExit,getSetting)
