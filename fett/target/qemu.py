@@ -25,10 +25,11 @@ class qemuTarget (commonTarget):
         timeout = self.parseBootTimeoutDict (timeoutDict)
         if (self.osImage in ['debian', 'FreeBSD']):
 
-            qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)} -append \"console=ttyS0\""
+            qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)}"
             qemuCommand += f" -device virtio-net-device,netdev=usernet"
             qemuCommand += f" -netdev tap,id=usernet,ifname={getSetting('tapAdaptor',targetId=self.targetId)},script=no,downscript=no"
             if (self.osImage=='debian'):
+                qemuCommand += " -append \"console=ttyS0\""
                 # As mentioned in #799, FreeBSD does not seem to make use of this device by default.
                 # As mentioned in #864, this device prevents FreeBSD from booting on <Debian 10 Buster, kernel 4.19> for some reason.
                 # Ticket #333 is still open, and it covers this entropy/rng situation.
