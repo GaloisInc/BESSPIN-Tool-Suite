@@ -29,7 +29,7 @@ void cleanup_module(void) {
 For example, accessing a CSR value that is not accessible in user mode, but accessible in supervisor mode can be done as follows (where `<REGNAME>` is the register in question):
 ```c
 unsigned long tmp;
-asm volatile ("csrr %0, <REGNAME>" : "=r" (tmp));
+asm volatile ("csrr %0, <REGNAME>" : "=r" (tmp)); //volatile is not necessary for this example
 printk(KERN_INFO "<REGNAME> value = <%lx>\n", tmp);
 ```
 
@@ -55,7 +55,7 @@ cd riscv-linux
 git checkout 333e6ab0dd399fe5f668ac038a2cebd7be3e25b3
 touch .scmversion #This is crucial to avoid the dirty notation that would lead to kernel version mismatch
 cp ${SSITH-FETT-Target}/SSITH-FETT-Environment/nix/gfe/debian-linux.config nix-debian.config
-make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- KCONFIG_CONFIG=./debian-nix.config modules_prepare
+make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- KCONFIG_CONFIG=./nix-debian.config modules_prepare
 
 cd $WRKDIR
 make V=1 ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- KDIR=./riscv-linux
