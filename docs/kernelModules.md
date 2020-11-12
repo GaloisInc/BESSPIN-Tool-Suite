@@ -76,3 +76,9 @@ all: $(TARGETS)
 clean:
     make -C $(KDIR) M=$(PWD) clean
 ```
+
+To revert (clean) the `modules_prepare` step above, you can:
+```bash
+cd $WRKDIR/riscv-linux
+make clean mrproper
+```
