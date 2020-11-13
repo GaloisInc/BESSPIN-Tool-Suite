@@ -40,6 +40,7 @@ try:
     from fett.target.launch import startFett, endFett, resetTarget
     from fett.cyberPhys.launch import startCyberPhys, endCyberPhys
     from fett.base.utils import aws
+    from fett.base.threadControl import createFettLocks
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
     try:
@@ -126,7 +127,11 @@ def main (xArgs):
     setSetting('trash',trashCanObj())
     atexit.register(exitPeacefully,getSetting('trash'))
 
+    #Load the config file(s)
     loadConfiguration(configFile)
+
+    #Create the global semaphores/Locks
+    createFettLocks()
 
     #launch the tool
     if (isEqSetting('mode','cyberPhys')):
