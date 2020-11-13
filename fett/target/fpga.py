@@ -53,8 +53,9 @@ class fpgaTarget(object):
         openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
         self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),f'openocd{self.targetSuffix}.out'), 'ab')
 
-        if (isEqSetting('mode','cyberPhys')):
-            getSetting('openocdLock').acquire()
+        # Please be careful editing this part. It is protected by `openocdLock`, and it cannot be done 
+        # using a context manager to avoid deadlocks in case of retries (use of fpgaReload).
+        getSetting('openocdLock').acquire()
         openocdExtraCmds = (f"set _CHIPNAME riscv{self.targetSuffix}; gdb_port {self.gdbPort}; "
             f"telnet_port {self.openocdPort}{self.getOpenocdCustomCfg(isReload=isReload)}")
         try:
@@ -70,8 +71,7 @@ class fpgaTarget(object):
                     getSetting('openocdLock').release()
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
             self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
-        if (isEqSetting('mode','cyberPhys')):
-            getSetting('openocdLock').release()
+        getSetting('openocdLock').release()
 
         self.setupUart()
 
@@ -191,12 +191,9 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def gdbConnect (self):
-        if (isEqSetting('mode','cyberPhys')):
-            getSetting('openocdLock').acquire()
-        self.runCommandGdb(f"target remote localhost:{self.gdbPort}",erroneousContents="Failed")
-        self.expectOnOpenocd (f"accepting 'gdb' connection on tcp/{self.gdbPort}","connect")
-        if (isEqSetting('mode','cyberPhys')):
-            getSetting('openocdLock').release()
+        with getSetting('openocdLock'):
+            self.runCommandGdb(f"target remote localhost:{self.gdbPort}",erroneousContents="Failed")
+            self.expectOnOpenocd (f"accepting 'gdb' connection on tcp/{self.gdbPort}","connect")
 
     @decorate.debugWrap
     @decorate.timeWrap

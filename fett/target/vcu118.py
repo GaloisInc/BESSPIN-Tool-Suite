@@ -265,29 +265,24 @@ class vcu118Target (fpgaTarget, commonTarget):
     @decorate.timeWrap
     def setupUart(self):
         if (self.uartDevice is None):
-            if (isEqSetting('mode','cyberPhys')):
-                getSetting('setupUartLock').acquire()
+            with getSetting('setupUartLock'):
+                if (not doesSettingExist('vcu118UartDevices')):
+                    setSetting('vcu118UartDevices',self.findUartDevices())
+                uartDevices = getSetting('vcu118UartDevices')
 
-            if (not doesSettingExist('vcu118UartDevices')):
-                setSetting('vcu118UartDevices',self.findUartDevices())
-            uartDevices = getSetting('vcu118UartDevices')
+                if (len(uartDevices)==0):
+                    logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exitCode=EXIT.Configuration)
+                elif(len(uartDevices)==1):
+                    uartDevice = uartDevices.pop(0)
+                    setSetting('vcu118UartDevices',uartDevices)
+                    printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in the UART devices list.")
+                else:
+                    uartDevice = self.findTheRightUartDevice(uartDevices)
+                    uartDevices.remove(uartDevice)
+                    setSetting('vcu118UartDevices',uartDevices)
+                    printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
 
-            if (len(uartDevices)==0):
-                logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exitCode=EXIT.Configuration)
-            elif(len(uartDevices)==1):
-                uartDevice = uartDevices.pop(0)
-                setSetting('vcu118UartDevices',uartDevices)
-                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in the UART devices list.")
-            else:
-                uartDevice = self.findTheRightUartDevice(uartDevices)
-                uartDevices.remove(uartDevice)
-                setSetting('vcu118UartDevices',uartDevices)
-                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
-
-            uartSessionDict = self.startUartSession(uartDevice)
-
-            if (isEqSetting('mode','cyberPhys')):
-                getSetting('setupUartLock').release()
+                uartSessionDict = self.startUartSession(uartDevice)
         else:
             # Not the first time to start the uart session
             uartSessionDict = self.startUartSession(self.uartDevice)
@@ -485,14 +480,11 @@ def programFpga(bitStream, probeFile, attempts=_MAX_PROG_ATTEMPTS-1, targetId=No
     if not os.path.exists(probeFile):
         logAndExit(f"{targetInfo}programFpga: probe file {probeFile} does not exist")
 
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdLock').acquire()
-    retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_bit.tcl',
-                '-log', os.path.join(cwd,'prog_bit.log'),'-mode','batch',
-                '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),bitStream, probeFile],
-                timeout=90,cwd=cwd,check=False)
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdLock').release()
+    with getSetting('openocdLock'):
+        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_bit.tcl',
+                    '-log', os.path.join(cwd,'prog_bit.log'),'-mode','batch',
+                    '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),bitStream, probeFile],
+                    timeout=90,cwd=cwd,check=False)
     if retProc.returncode != 0:
         if attempts > 0:
             errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. " 
@@ -514,14 +506,11 @@ def clearFlash(attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     cp(os.path.join(getSetting('tclSourceDir'), 'prog_flash.tcl'), cwd)
     cp(os.path.join(getSetting('tclSourceDir'), 'small.bin'), cwd)
 
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdLock').acquire()
-    retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_flash.tcl',
-                '-log', os.path.join(cwd,'prog_flash.log'),'-mode','batch',
-                '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),'./small.bin'],
-                timeout=90,cwd=cwd,check=False)
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdLock').release()
+    with getSetting('openocdLock'):
+        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_flash.tcl',
+                    '-log', os.path.join(cwd,'prog_flash.log'),'-mode','batch',
+                    '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),'./small.bin'],
+                    timeout=90,cwd=cwd,check=False)
     if retProc.returncode != 0:
         if attempts > 0:
             errorAndLog(f"{targetInfo}clearFlash: failed to clear flash. "
@@ -533,73 +522,68 @@ def clearFlash(attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
 @decorate.debugWrap
 @decorate.timeWrap
 def prepareFpgaEnv(targetId=None):
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdLock').acquire()
-
-    if (doesSettingExist('vcu118PrepareFpgaEnv') and isEnabled('vcu118PrepareFpgaEnv')):
-        firstTime = False
-    else:
-        firstTime = True
-        setSetting('vcu118PrepareFpgaEnv',True)
-    
-    if (firstTime or (not isEqSetting('mode','cyberPhys'))):
-        # Clear processes
-        processesList = ['openocd', getSetting('vivadoCmd'), 'hw_server', 'loader', 'pyprogram_fpga']
-        for proc in processesList:
-            sudoShellCommand(['pkill', '-9', proc],check=False)
-
-    # Create workDir/gfe
-    targetSuffix = f'_{targetId}' if (targetId is not None) else ''
-    gfeWorkDir = os.path.join(getSetting('workDir'), f'gfe{targetSuffix}')
-    mkdir(gfeWorkDir,exitIfExists=False)
-    setSetting('gfeWorkDir',gfeWorkDir,targetId=targetId)
-
-    if (firstTime):
-        # Find the target(s) names
-        if (isEnabled('useCustomHwTarget') and isEqSetting('mode','cyberPhys')):
-            warnAndLog("The <useCustomHwTarget> setting is incompatible with <cyberPhys>."
-                "The value in <customHwTarget> will be ignored.")
-            setSetting('useCustomHwTarget',False)
-
-        cp(os.path.join(getSetting('tclSourceDir'), 'get_hw_targets.tcl'), gfeWorkDir)
-        getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-source','./get_hw_targets.tcl',
-                        '-log', os.path.join(gfeWorkDir,'get_hw_targets.log'), '-mode','batch']
-        try:
-            retCmd = subprocess.run(getTargetsCmd,capture_output=True,timeout=90,check=True,cwd=gfeWorkDir)
-        except Exception as exc:
-            logAndExit (f"prepareFpgaEnv: Failed to <{getTargetsCmd}>. "
-                f"Check <{os.path.join(gfeWorkDir,'get_hw_targets.log')}> for more details.",exc=exc,exitCode=EXIT.Run)
-
-        try:
-            listTargetsMatch = matchExprInLines(r"listTargets=<(?P<listTargets>.*)>",retCmd.stdout.decode('utf-8').splitlines())
-            listTargets = listTargetsMatch.group('listTargets').split()
-        except Exception as exc:
-            logAndExit (f"prepareFpgaEnv: Failed to find HW targets list.",exc=exc,exitCode=EXIT.Run)
-    
-        setSetting('listVcu118HwTargets',listTargets)
-        printAndLog(f'prepareFpgaEnv: Found the following vcu118 targets:<{" ".join(listTargets)}>',doPrint=False)
-        setSetting('IsThereMoreThanOneVcu118Target', (len(listTargets)>1))
-
-    if (not doesSettingExist('vcu118HwTarget',targetId=targetId)):
-        targetInfo = f"<target{targetId}>: " if (targetId) else ''
-        curList = getSetting('listVcu118HwTargets')
-        if (len(curList) == 0):
-            logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough vcu118 HW targets found!",exc=exc,exitCode=EXIT.Configuration)
-        
-        if (isEnabled('useCustomHwTarget')):
-            if (getSetting('customHwTarget') not in curList):
-                logAndExit(f"{targetInfo}prepareFpgaEnv: Custom target {getSetting('customHwTarget')} not found!",
-                    exitCode=EXIT.Configuration)
-            thisTarget = getSetting('customHwTarget')
-            curList.remove(getSetting('customHwTarget'))
+    with getSetting('openocdLock'):
+        if (doesSettingExist('vcu118PrepareFpgaEnv') and isEnabled('vcu118PrepareFpgaEnv')):
+            firstTime = False
         else:
-            thisTarget = curList.pop(0)
-        printAndLog(f"{targetInfo}prepareFpgaEnv: Using HW target <{thisTarget}>.")
-        setSetting('vcu118HwTarget',thisTarget,targetId=targetId)
-        setSetting('listVcu118HwTargets',curList) #to update the list
+            firstTime = True
+            setSetting('vcu118PrepareFpgaEnv',True)
+        
+        if (firstTime or (not isEqSetting('mode','cyberPhys'))):
+            # Clear processes
+            processesList = ['openocd', getSetting('vivadoCmd'), 'hw_server', 'loader', 'pyprogram_fpga']
+            for proc in processesList:
+                sudoShellCommand(['pkill', '-9', proc],check=False)
 
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('openocdLock').release()
+        # Create workDir/gfe
+        targetSuffix = f'_{targetId}' if (targetId is not None) else ''
+        gfeWorkDir = os.path.join(getSetting('workDir'), f'gfe{targetSuffix}')
+        mkdir(gfeWorkDir,exitIfExists=False)
+        setSetting('gfeWorkDir',gfeWorkDir,targetId=targetId)
+
+        if (firstTime):
+            # Find the target(s) names
+            if (isEnabled('useCustomHwTarget') and isEqSetting('mode','cyberPhys')):
+                warnAndLog("The <useCustomHwTarget> setting is incompatible with <cyberPhys>."
+                    "The value in <customHwTarget> will be ignored.")
+                setSetting('useCustomHwTarget',False)
+
+            cp(os.path.join(getSetting('tclSourceDir'), 'get_hw_targets.tcl'), gfeWorkDir)
+            getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-source','./get_hw_targets.tcl',
+                            '-log', os.path.join(gfeWorkDir,'get_hw_targets.log'), '-mode','batch']
+            try:
+                retCmd = subprocess.run(getTargetsCmd,capture_output=True,timeout=90,check=True,cwd=gfeWorkDir)
+            except Exception as exc:
+                logAndExit (f"prepareFpgaEnv: Failed to <{getTargetsCmd}>. "
+                    f"Check <{os.path.join(gfeWorkDir,'get_hw_targets.log')}> for more details.",exc=exc,exitCode=EXIT.Run)
+
+            try:
+                listTargetsMatch = matchExprInLines(r"listTargets=<(?P<listTargets>.*)>",retCmd.stdout.decode('utf-8').splitlines())
+                listTargets = listTargetsMatch.group('listTargets').split()
+            except Exception as exc:
+                logAndExit (f"prepareFpgaEnv: Failed to find HW targets list.",exc=exc,exitCode=EXIT.Run)
+        
+            setSetting('listVcu118HwTargets',listTargets)
+            printAndLog(f'prepareFpgaEnv: Found the following vcu118 targets:<{" ".join(listTargets)}>',doPrint=False)
+            setSetting('IsThereMoreThanOneVcu118Target', (len(listTargets)>1))
+
+        if (not doesSettingExist('vcu118HwTarget',targetId=targetId)):
+            targetInfo = f"<target{targetId}>: " if (targetId) else ''
+            curList = getSetting('listVcu118HwTargets')
+            if (len(curList) == 0):
+                logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough vcu118 HW targets found!",exc=exc,exitCode=EXIT.Configuration)
+            
+            if (isEnabled('useCustomHwTarget')):
+                if (getSetting('customHwTarget') not in curList):
+                    logAndExit(f"{targetInfo}prepareFpgaEnv: Custom target {getSetting('customHwTarget')} not found!",
+                        exitCode=EXIT.Configuration)
+                thisTarget = getSetting('customHwTarget')
+                curList.remove(getSetting('customHwTarget'))
+            else:
+                thisTarget = curList.pop(0)
+            printAndLog(f"{targetInfo}prepareFpgaEnv: Using HW target <{thisTarget}>.")
+            setSetting('vcu118HwTarget',thisTarget,targetId=targetId)
+            setSetting('listVcu118HwTargets',curList) #to update the list
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -671,59 +655,53 @@ def checkEthAdaptorIsUp ():
 @decorate.debugWrap
 @decorate.timeWrap
 def resetEthAdaptor ():
-    #In cyberPhys, this can be called many times, so have to be careful
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('networkLock').acquire()
+    with getSetting('networkLock'):
         if doesSettingExist('vcu118EthAdaptorReset') and isEnabled('vcu118EthAdaptorReset'): #for future compatibility if needed to re-reset
-            getSetting('networkLock').release()
             return #already reset
         else:
             setSetting('vcu118EthAdaptorReset',True)
 
-    #get the name and check configuration if this is the first time called
-    if (not doesSettingExist('ethAdaptor')):
-        ethAdaptor= getSetting('vcu118EthAdaptorName')
-        if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('vcu118EthAdaptorMacAddress')):
-            logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('vcu118EthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
-        #Set the adaptor's name
-        setSetting('ethAdaptor',ethAdaptor)
-        printAndLog (f"<{getSetting('ethAdaptor')}> exists and its MAC address is properly configured.",doPrint=False)
+        #get the name and check configuration if this is the first time called
+        if (not doesSettingExist('ethAdaptor')):
+            ethAdaptor= getSetting('vcu118EthAdaptorName')
+            if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('vcu118EthAdaptorMacAddress')):
+                logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('vcu118EthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
+            #Set the adaptor's name
+            setSetting('ethAdaptor',ethAdaptor)
+            printAndLog (f"<{getSetting('ethAdaptor')}> exists and its MAC address is properly configured.",doPrint=False)
 
-    #make the link go down, then up
-    sudoPromptPrefix = f"You need sudo privileges to reset the ethernet adaptor: "
-    commands = [
-                ['ip', 'addr', 'flush', 'dev', getSetting('ethAdaptor')],
-                ['ip','link','set', getSetting('ethAdaptor'), 'down'],
-                ['ip','link','set', getSetting('ethAdaptor'), 'up']
-            ]
-    nAttempts = 3
-    isReset = False
-    for iAttempt in range(nAttempts):
-        for command in commands:
-            sudoShellCommand(command,sudoPromptPrefix)
-            time.sleep(1)
-        time.sleep(2)
-        isReset = checkEthAdaptorIsUp ()
-        if (isReset):
-            #check that the IP address is properly set
-            if (getAddrOfAdaptor(getSetting('ethAdaptor'),'IP',exitIfNoAddr=False) == getSetting('vcu118IpHost')):
-                break
-            else:
-                printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is up, but it does not have the right IP. Will try to assign it.",doPrint=False)
-                sudoShellCommand(['ip','addr','add',f"{getSetting('vcu118IpHost')}/24",'dev',getSetting('ethAdaptor')],sudoPromptPrefix)
-                time.sleep(3)
-                isReset = checkEthAdaptorIsUp ()
-                if (isReset):
+        #make the link go down, then up
+        sudoPromptPrefix = f"You need sudo privileges to reset the ethernet adaptor: "
+        commands = [
+                    ['ip', 'addr', 'flush', 'dev', getSetting('ethAdaptor')],
+                    ['ip','link','set', getSetting('ethAdaptor'), 'down'],
+                    ['ip','link','set', getSetting('ethAdaptor'), 'up']
+                ]
+        nAttempts = 3
+        isReset = False
+        for iAttempt in range(nAttempts):
+            for command in commands:
+                sudoShellCommand(command,sudoPromptPrefix)
+                time.sleep(1)
+            time.sleep(2)
+            isReset = checkEthAdaptorIsUp ()
+            if (isReset):
+                #check that the IP address is properly set
+                if (getAddrOfAdaptor(getSetting('ethAdaptor'),'IP',exitIfNoAddr=False) == getSetting('vcu118IpHost')):
                     break
+                else:
+                    printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is up, but it does not have the right IP. Will try to assign it.",doPrint=False)
+                    sudoShellCommand(['ip','addr','add',f"{getSetting('vcu118IpHost')}/24",'dev',getSetting('ethAdaptor')],sudoPromptPrefix)
+                    time.sleep(3)
+                    isReset = checkEthAdaptorIsUp ()
+                    if (isReset):
+                        break
 
-        if ((not isReset) and (iAttempt < nAttempts - 1)):
-            printAndLog (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>. Trying again...",doPrint=False)
-            time.sleep(3)
+            if ((not isReset) and (iAttempt < nAttempts - 1)):
+                printAndLog (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>. Trying again...",doPrint=False)
+                time.sleep(3)
 
-    if (not isReset):
-        logAndExit (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>.",exitCode=EXIT.Network)
+        if (not isReset):
+            logAndExit (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>.",exitCode=EXIT.Network)
 
-    printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)
-
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('networkLock').release()
+        printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)

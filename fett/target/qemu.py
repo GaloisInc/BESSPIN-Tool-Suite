@@ -107,87 +107,73 @@ def findMainAdaptorInfo ():
 @decorate.debugWrap
 @decorate.timeWrap
 def configTapAdaptor(targetId=None):
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('networkLock').acquire()
+    with getSetting('networkLock'):
+        #Check the ipv4 forwarding
+        try:
+            ipForward = int(subprocess.getoutput('sudo sysctl net.ipv4.ip_forward').split()[-1])
+        except Exception as exc:
+            logAndExit ("Failed to find the values of 'net.ipv4.ip_forward'.",exc=exc,exitCode=EXIT.Run)
+        if (ipForward != 1):
+            sudoShellCommand(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
-    #Check the ipv4 forwarding
-    try:
-        ipForward = int(subprocess.getoutput('sudo sysctl net.ipv4.ip_forward').split()[-1])
-    except Exception as exc:
-        logAndExit ("Failed to find the values of 'net.ipv4.ip_forward'.",exc=exc,exitCode=EXIT.Run)
-    if (ipForward != 1):
-        sudoShellCommand(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
+        mainAdaptorName = findMainAdaptorInfo()
 
-    mainAdaptorName = findMainAdaptorInfo()
+        #Check the postrouting nat rule
+        try:
+            natTables = subprocess.getoutput('sudo iptables -t nat -S').splitlines()
+            isNatRule = (f"-A POSTROUTING -o {mainAdaptorName} -j MASQUERADE" in natTables)
+        except Exception as exc:
+            logAndExit ("Failed to find out whether the main adaptor nat was set up.",exc=exc,exitCode=EXIT.Run)
+        if (not isNatRule):
+            sudoShellCommand(['iptables','-t', 'nat','-A','POSTROUTING',
+                '-o',mainAdaptorName,'-j','MASQUERADE'])
 
-    #Check the postrouting nat rule
-    try:
-        natTables = subprocess.getoutput('sudo iptables -t nat -S').splitlines()
-        isNatRule = (f"-A POSTROUTING -o {mainAdaptorName} -j MASQUERADE" in natTables)
-    except Exception as exc:
-        logAndExit ("Failed to find out whether the main adaptor nat was set up.",exc=exc,exitCode=EXIT.Run)
-    if (not isNatRule):
-        sudoShellCommand(['iptables','-t', 'nat','-A','POSTROUTING',
-            '-o',mainAdaptorName,'-j','MASQUERADE'])
+        #Choose a unique tapAdaptorName -- no need to search for leftovers, when the machine is reset, all of them get deleted
+        tapAdaptor = f"tap{str(time.time()).replace('.','')[3:15]}" #Has to be less than 16 characters for Debian
+        if (targetId is not None):
+            if (targetId > 99): # Someone is hopeful
+                logAndExit("configTapAdaptor: Tap adaptor name should be <16 chars on Debian. target ID > 99!.",exitCode=EXIT.Dev_Bug)
+            tapAdaptor = tapAdaptor.replace('tap',f't{targetId:02}') #To guarantee uniqueness in case we were extermely unlucky
+        setSetting('tapAdaptor',tapAdaptor,targetId=targetId)
 
-    #Choose a unique tapAdaptorName -- no need to search for leftovers, when the machine is reset, all of them get deleted
-    tapAdaptor = f"tap{str(time.time()).replace('.','')[3:15]}" #Has to be less than 16 characters for Debian
-    if (targetId is not None):
-        if (targetId > 99): # Someone is hopeful
-            logAndExit("configTapAdaptor: Tap adaptor name should be <16 chars on Debian. target ID > 99!.",exitCode=EXIT.Dev_Bug)
-        tapAdaptor = tapAdaptor.replace('tap',f't{targetId:02}') #To guarantee uniqueness in case we were extermely unlucky
-    setSetting('tapAdaptor',tapAdaptor,targetId=targetId)
+        #Find a non-used IP in the range "172.16"
+        chosenIpItems = "172.16.x.1".split('.')
+        existingIPs = []
+        for adaptor in psutil.net_if_addrs():
+            for addr in psutil.net_if_addrs()[adaptor]:
+                if (addr.family == socket.AF_INET):
+                    ipAddr = addr.address.split('.')
+                    if ((ipAddr[0]==chosenIpItems[0]) and (ipAddr[1]==chosenIpItems[1])): #matches 172.16
+                        existingIPs.append(int(ipAddr[2]))
+        try:
+            minValidDigit = min(set(range(256))-set(existingIPs))
+        except Exception as exc:
+            logAndExit ("Failed to find a valid IP. Please consider deleting some lefotvers tap adaptors.",exc=exc,exitCode=EXIT.Network)
 
-    #Find a non-used IP in the range "172.16"
-    chosenIpItems = "172.16.x.1".split('.')
-    existingIPs = []
-    for adaptor in psutil.net_if_addrs():
-        for addr in psutil.net_if_addrs()[adaptor]:
-            if (addr.family == socket.AF_INET):
-                ipAddr = addr.address.split('.')
-                if ((ipAddr[0]==chosenIpItems[0]) and (ipAddr[1]==chosenIpItems[1])): #matches 172.16
-                    existingIPs.append(int(ipAddr[2]))
-    try:
-        minValidDigit = min(set(range(256))-set(existingIPs))
-    except Exception as exc:
-        logAndExit ("Failed to find a valid IP. Please consider deleting some lefotvers tap adaptors.",exc=exc,exitCode=EXIT.Network)
+        chosenIpItems[2] = str(minValidDigit)
+        setSetting('qemuIpHost','.'.join(chosenIpItems),targetId=targetId)
+        chosenIpItems[3] = '2'
+        setSetting('qemuIpTarget','.'.join(chosenIpItems),targetId=targetId)
+        targetInfo = f"<target{targetId}>: " if (targetId) else ''
+        printAndLog(f"{targetInfo}configTapAdaptor: The adaptor is <{tapAdaptor}>, and the target IP is <{getSetting('qemuIpTarget',targetId=targetId)}>.")
 
-    chosenIpItems[2] = str(minValidDigit)
-    setSetting('qemuIpHost','.'.join(chosenIpItems),targetId=targetId)
-    chosenIpItems[3] = '2'
-    setSetting('qemuIpTarget','.'.join(chosenIpItems),targetId=targetId)
-    targetInfo = f"<target{targetId}>" if (targetId) else ''
-    printAndLog(f"configTapAdaptor{targetInfo}: The adaptor is <{tapAdaptor}>, and the target IP is <{getSetting('qemuIpTarget',targetId=targetId)}>.")
+        commands = [
+            ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()],
+            ['ip', 'addr', 'add', f"{getSetting('qemuIpHost',targetId=targetId)}/24", 'dev', tapAdaptor],
+            ['ip','link','set', tapAdaptor, 'up'],
+            ['iptables', '-A', 'FORWARD', '-i', mainAdaptorName,'-o', tapAdaptor,
+                        '-m', 'state', '--state', 'RELATED,ESTABLISHED', '-j', 'ACCEPT'],
+            ['iptables', '-A', 'FORWARD', '-i', tapAdaptor,'-o', mainAdaptorName,
+                        '-j', 'ACCEPT']
+        ]
+        for command in commands:
+            sudoShellCommand(command)
+            time.sleep(1)
 
-    commands = [
-        ['ip', 'tuntap', 'add', 'mode', 'tap', 'dev', tapAdaptor, 'user', getpass.getuser()],
-        ['ip', 'addr', 'add', f"{getSetting('qemuIpHost',targetId=targetId)}/24", 'dev', tapAdaptor],
-        ['ip','link','set', tapAdaptor, 'up'],
-        ['iptables', '-A', 'FORWARD', '-i', mainAdaptorName,'-o', tapAdaptor,
-                    '-m', 'state', '--state', 'RELATED,ESTABLISHED', '-j', 'ACCEPT'],
-        ['iptables', '-A', 'FORWARD', '-i', tapAdaptor,'-o', mainAdaptorName,
-                    '-j', 'ACCEPT']
-    ]
-    for command in commands:
-        sudoShellCommand(command)
-        time.sleep(1)
-
-    printAndLog (f"qemu.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=(targetId is None))
-
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('networkLock').release()
+        printAndLog (f"qemu.configTapAdaptor: <{tapAdaptor}> is properly configured.",doPrint=(targetId is None))
 
 @decorate.debugWrap
 @decorate.timeWrap
 def clearTapAdaptor (targetId=None):
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('networkLock').acquire()
-
-    sudoShellCommand(['ip', 'tuntap', 'del', 'mode', 'tap', 'dev', getSetting('tapAdaptor',targetId=targetId)])
-
-    if (isEqSetting('mode','cyberPhys')):
-        getSetting('networkLock').release()
-
-
-    
-
+    with getSetting('networkLock'):
+        sudoShellCommand(['ip', 'tuntap', 'del', 'mode', 'tap', 'dev', getSetting('tapAdaptor',targetId=targetId)])
