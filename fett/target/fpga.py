@@ -380,13 +380,14 @@ class fpgaTarget(object):
         if (self.target=='vcu118'):
             processes = [('riscv64-unknown-elf-gdb',self.gdbProcess), ('openocd',self.openocdProcess)]
             for pName, proc in processes:
-                try:
-                    pID = os.getpgid(proc.pid)
-                except Exception as exc:
-                    warnAndLog(f"{self.targetIdInfo}Can't get pgid. Process <{pName}> was already killed.",exc=exc,doPrint=False)
-                    continue #process was already killed
-                sudoShellCommand(['kill', '-9', f"{pID}"],check=False)
-                if (not isEqSetting('mode','cyberPhys')):
+                if (isEqSetting('mode','cyberPhys')): #have to kill selectively
+                    try:
+                        pID = os.getpgid(proc.pid)
+                    except Exception as exc:
+                        warnAndLog(f"{self.targetIdInfo}Can't get pgid. Process <{pName}> was already killed.",exc=exc,doPrint=False)
+                        continue #process was already killed
+                    sudoShellCommand(['kill', '-9', f"{pID}"],check=False)
+                else: #nonsense-free
                     sudoShellCommand(['pkill', '-9', f"{pName}"],check=False)
             if (isReload):
                 filesToClose.append(self.fTtyOut)
