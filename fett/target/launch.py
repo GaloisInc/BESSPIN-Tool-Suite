@@ -25,8 +25,6 @@ from importlib.machinery import SourceFileLoader
 @decorate.debugWrap
 @decorate.timeWrap
 def startFett (targetId=None):
-    if (targetId==1):
-        time.sleep(3)
     processor = getSetting('processor',targetId=targetId)
     binarySource = getSetting('binarySource',targetId=targetId)
     osImage = getSetting('osImage',targetId=targetId)
