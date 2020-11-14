@@ -2,8 +2,8 @@
 Building CWEs Evaluation
 """
 
-import glob
-import os, re
+import glob, os, re
+from collections import defaultdict
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.bufferErrors.generateTests.generateTests import generateTests
@@ -199,13 +199,10 @@ def buildTarball(additionalFiles):
                 glob.glob(os.path.join(getSetting('buildDir'),
                                        "*",
                                        "*.riscv"))]
-    enabledCwesEvaluations = {}
+    enabledCwesEvaluations = defaultdict(list)
     for (test, path) in fileList:
         vulClass = os.path.basename(os.path.split(path)[0])
-        try:
-            enabledCwesEvaluations[vulClass].append(test)
-        except KeyError:
-            enabledCwesEvaluations[vulClass] = [test]
+        enabledCwesEvaluations[vulClass].append(test)
     setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
 
     fileList += [(os.path.basename(f), f) for f in additionalFiles]
