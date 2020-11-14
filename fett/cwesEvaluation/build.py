@@ -22,6 +22,11 @@ def buildCwesEvaluation():
     buildDir = os.path.join(getSetting('workDir'), 'build')
     mkdir(buildDir, addToSettings="buildDir")
 
+    if (isEqSetting("target", "qemu") and ("hardwareSoC" in getSetting("vulClasses"))):
+            warnAndLog("vulClass <hardwareSoC> not supported on "
+                       f"<{getSetting('target')}>. hardwareSoC tests will be skipped.")
+            getSetting("vulClasses").remove("hardwareSoC")
+
     if isEqSetting('osImage', 'FreeRTOS'):
         # create the osImages directory
         osImagesDir = os.path.join(getSetting('workDir'),'osImages')
