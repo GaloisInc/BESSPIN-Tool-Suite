@@ -9,7 +9,7 @@ from fett.base.utils.misc import *
 from fett.cwesEvaluation.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.informationLeakage.generateWrappers import generateWrappers
 from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
-from fett.cwesEvaluation.common import isTestEnabled
+from fett.cwesEvaluation.common import isTestEnabled, doesTheTestNeedBootedOs
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
 from fett.cwesEvaluation.PPAC.freertos import prepareFreeRTOSforPPAC
 
@@ -107,7 +107,7 @@ def buildCwesEvaluation():
                 cTestName = os.path.basename(test)
                 if (isTestEnabled(vulClass,cTestName)):
                     vIsThereAnythingToRun = True
-                    isThereAReasonToBoot = True
+                    isThereAReasonToBoot |= doesTheTestNeedBootedOs(vulClass,cTestName)
                     cp (test, vulClassDir)
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
