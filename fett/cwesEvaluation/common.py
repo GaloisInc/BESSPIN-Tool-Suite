@@ -148,3 +148,11 @@ def isTestEnabled (vulClass, cTestName):
         return True
     else:
         return getSettingDict(vulClass,['configCWEs',os.path.splitext(cTestName)[0]])
+
+@decorate.debugWrap
+def doesTheTestNeedBootedOs(vulClass, cTestName):
+    if (vulClass=='hardwareSoC'):
+        testName = os.path.splitext(cTestName)[0]
+        return (testName not in getSettingDict(vulClass,["doNotNeedBootedOs"]))
+    else:
+        return True
