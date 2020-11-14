@@ -13,6 +13,8 @@ import fett.cwesEvaluation.informationLeakage.vulClassTester
 import fett.cwesEvaluation.informationLeakage.cweScores
 import fett.cwesEvaluation.numericErrors.vulClassTester
 import fett.cwesEvaluation.numericErrors.cweScores
+import fett.cwesEvaluation.hardwareSoC.vulClassTester
+import fett.cwesEvaluation.hardwareSoC.cweScores
 
 cweTests = {
     "bufferErrors" :
@@ -24,7 +26,9 @@ cweTests = {
     "informationLeakage" :
         fett.cwesEvaluation.informationLeakage.vulClassTester.vulClassTester,
     "numericErrors" :
-        fett.cwesEvaluation.numericErrors.vulClassTester.vulClassTester
+        fett.cwesEvaluation.numericErrors.vulClassTester.vulClassTester,
+    "hardwareSoC" :
+        fett.cwesEvaluation.hardwareSoC.vulClassTester.vulClassTester
 }
 
 cweScores = {
@@ -37,7 +41,9 @@ cweScores = {
     "informationLeakage" :
         fett.cwesEvaluation.informationLeakage.cweScores,
     "numericErrors" :
-        fett.cwesEvaluation.numericErrors.cweScores
+        fett.cwesEvaluation.numericErrors.cweScores,
+    "hardwareSoC" :
+        fett.cwesEvaluation.hardwareSoC.cweScores
 }
 
 @decorate.debugWrap
@@ -67,7 +73,7 @@ def score(testLogDir, vulClass):
 def runTests(target, sendFiles=False, timeout=30): #executes the app
     if isEqSetting('osImage', 'FreeRTOS'):
         test, vulClass, _, logFile = getSetting("currentTest")
-        if (vulClass=='PPAC'):
+        if (vulClass in ['PPAC','hardwareSoC']):
             outLog = cweTests[vulClass](target).executeTest(test.replace('.c','.riscv'))
         else:
             # Exctract test output
