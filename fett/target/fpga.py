@@ -138,7 +138,7 @@ class fpgaTarget(object):
         if (mainProg and isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
             self.setupGdbCustomScoring()
 
-        self.runCommandGdb('c', endsWith='Continuing')
+        self.continueGdb()
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -186,7 +186,7 @@ class fpgaTarget(object):
             self.terminateAndExit(f"fpgaStart: Failed to spawn the gdb process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
         self.runCommandGdb("define hook-continue\ndont-repeat\nend")
         self.gdbConnect()
-        self.runCommandGdb('c', endsWith='Continuing')
+        self.continueGdb()
    
     @decorate.debugWrap
     @decorate.timeWrap
@@ -274,6 +274,10 @@ class fpgaTarget(object):
             self.sendToTarget('\x03',exitOnError=False,process=self.gdbProcess) #send one extra \x03
         self.keyboardInterrupt(exitOnError=False,retryCount=1,process=self.gdbProcess,
             endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15)
+
+    @decorate.debugWrap
+    def continueGdb(self):
+        self.runCommandGdb('c', endsWith='Continuing')
 
     @decorate.debugWrap     
     def getOpenocdCustomCfg(self, isReload=False):
