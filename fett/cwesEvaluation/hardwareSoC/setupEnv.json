@@ -10,7 +10,8 @@
             "val" : {
                 "test_1252" : {
                     "gdb" : 1,
-                    "bootedOs" : 1
+                    "bootedOs" : 1,
+                    "hasMethod" : 1
                 }
             }
         }
