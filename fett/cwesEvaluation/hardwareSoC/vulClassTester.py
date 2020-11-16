@@ -45,3 +45,26 @@ class vulClassTester(testgenTargetCompatibilityLayer):
     def defaultTest(self, testNum, binTest):
         self.terminateAndExit (f"<defaultTest> is not yet implemented for <hardwareSoC>.",exitCode=EXIT.Implementation)
         return
+
+    def endFreeRTOSTest (self):
+        textBack,wasTimeout,idxReturn = target.expectFromTarget([">>>End of Fett<<<", pexpect.EOF],
+                    "End FreeRTOS Test", exitOnError=False, timeout=getSetting('FreeRTOStimeout'))
+        if (idxReturn == 1):
+            target.terminateAndExit("<runTests> Unexpected EOF during test run.", exitCode=EXIT.Dev_Bug)
+        elif (wasTimeout):
+            textBack += "\n<TIMEOUT>\n"
+
+        return textBack
+
+class inGdbTest: 
+    def __init__(self,target):
+        self.target = target
+          
+    def __enter__(self): 
+        # Pause the OS
+        target.interruptGdb()
+        return self
+      
+    def __exit__(self, exc_type, exc_value, exc_traceback): 
+        # Resume the OS
+        target.continueGdb()
