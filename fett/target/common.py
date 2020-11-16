@@ -997,7 +997,7 @@ class commonTarget():
             for i in range(retryIdx + 1):
                 readAfter = self.readFromTarget(readAfter=True,process=process)
                 for xEndsWith in endsWith:
-                    if (xEndsWith in readAfter):
+                    if ((xEndsWith in readAfter) or (re.search(xEndsWith,readAfter) is not None)): #Accommodate for regex matching
                         try:
                             process.expect(xEndsWith,timeout=timeout)
                         except Exception as exc:
