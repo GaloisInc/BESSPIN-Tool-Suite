@@ -1321,6 +1321,12 @@ class commonTarget():
             ((self.target=='qemu') and (self.osImage=='debian'))
             )
 
+    def hasGdbAccess (self):
+        return (
+            (self.target=='vcu118') or
+            ((self.target=='awsf1') and (self.pvAWS=='firesim'))
+            )
+
     @decorate.debugWrap
     @decorate.timeWrap
     def getGdbOutput(self):
