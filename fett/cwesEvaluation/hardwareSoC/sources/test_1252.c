@@ -10,9 +10,7 @@ Test_1252: CPU Hardware Not Configured to Support Exclusivity of Write and Execu
 
 #include <stdio.h>
 
-int main(void);
-
 int main () {
-    printf ("<INVALID> This test is GDB interactive!\n");
+    printf ("This test is GDB interactive!\n");
     return 0;
 }
