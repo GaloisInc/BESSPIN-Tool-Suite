@@ -29,6 +29,7 @@ class commonTarget():
         self.target = getSetting('target',targetId=self.targetId)
         if (self.target=='awsf1'):
             self.pvAWS = getSetting('pvAWS',targetId=self.targetId)
+        self.targetInfo = (f"aws:{self.pvAWS}" if (self.target=='awsf1') else self.target)
         self.osImage = getSetting('osImage',targetId=self.targetId)
         self.processor = getSetting('processor',targetId=self.targetId)
         self.binarySource = getSetting('binarySource',targetId=self.targetId)
@@ -1323,21 +1324,18 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def getGdbOutput(self):
-        target = (f"aws:{self.pvAWS}" if (self.target=='awsf1') else self.target)
-        message = f"getGdbOutput is not implemented for <{target}>"
+        message = f"getGdbOutput is not implemented for <{self.targetInfo}>"
         warnAndLog(message,doPrint=False)
         return message
 
     @decorate.debugWrap
     def startGdbDebug(self):
-        target = (f"aws:{self.pvAWS}" if (self.target=='awsf1') else self.target)
-        warnAndLog(f"<gdbDebug> is not implemented for <{target}> method!")
+        warnAndLog(f"<gdbDebug> is not implemented for <{self.targetInfo}>.")
         return
 
     @decorate.debugWrap
     def endGdbDebug(self):
-        target = (f"aws:{self.pvAWS}" if (self.target=='awsf1') else self.target)
-        warnAndLog(f"<gdbDebug> is not implemented for <{target}> method!")
+        warnAndLog(f"<gdbDebug> is not implemented for <{self.targetInfo}>.")
         return
 
     @decorate.debugWrap
