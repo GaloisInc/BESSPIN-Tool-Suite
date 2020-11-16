@@ -1379,7 +1379,7 @@ class commonTarget():
             if (checkPort(iPort)):
                 self.portsBegin = iPort + self.portsStep
                 return iPort
-        self.shutdownAndExit(f"{self.targetIdInfo}findPort: Failed to find an unused port"
+        self.terminateAndExit(f"{self.targetIdInfo}findPort: Failed to find an unused port"
                     f" in the range of <{self.portsBegin}:{self.portsEnd}> for <{portUse}>.", exitCode=EXIT.Network)
 
 # END OF CLASS commonTarget

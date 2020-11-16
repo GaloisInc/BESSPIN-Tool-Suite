@@ -120,7 +120,7 @@ def startUartPiping(targetId):
             ['socat', 'STDIO,ignoreeof', f"TCP-LISTEN:{uartPipePort},reuseaddr,fork,max-children=1"],
             stdout=xTarget.process.child_fd,stdin=xTarget.process.child_fd,stderr=xTarget.process.child_fd)
     except Exception as exc:
-        xTarget.shutdownAndExit(f"{xTarget.targetIdInfo}startUartPiping: Failed to start the piping.",
+        xTarget.terminateAndExit(f"{xTarget.targetIdInfo}startUartPiping: Failed to start the piping.",
             exc=exc,exitCode=EXIT.Run)
 
     printAndLog (f"{xTarget.targetIdInfo}UART is piped to port <{uartPipePort}>.")
