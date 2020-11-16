@@ -159,6 +159,6 @@ def isTestEnabled (vulClass, cTestName):
 def doesTheTestNeedBootedOs(vulClass, cTestName):
     if (vulClass=='hardwareSoC'):
         testName = os.path.splitext(cTestName)[0]
-        return (testName not in getSettingDict(vulClass,["doNotNeedBootedOs"]))
+        return (getSettingDict(vulClass,["testsInfo",testName,"bootedOs"])==1)
     else:
         return True

@@ -4,10 +4,15 @@
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
 
     "hardwareSoC" : [
-        { 
-            "name" : "doNotNeedBootedOs",
-            "type" : "stringsList",
-            "val" : "[]"
-        } 
+        {
+            "name" : "testsInfo",
+            "type" : "dict",
+            "val" : {
+                "test_1252" : {
+                    "gdb" : 1,
+                    "bootedOs" : 1
+                }
+            }
+        }
     ]
 }
