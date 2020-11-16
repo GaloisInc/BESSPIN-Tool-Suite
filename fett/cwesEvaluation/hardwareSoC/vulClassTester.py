@@ -4,8 +4,9 @@ This file has the custom hardwareSoC methods for runTests
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
-from fett.cwesEvaluation.hardwareSoC import cweTests
+import fett.cwesEvaluation.hardwareSoC.cweTests as cweTests
 from fett.base.utils.misc import *
+import pexpect
 
 class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
@@ -47,10 +48,10 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         return
 
     def endFreeRTOSTest (self):
-        textBack,wasTimeout,idxReturn = target.expectFromTarget([">>>End of Fett<<<", pexpect.EOF],
+        textBack,wasTimeout,idxReturn = self.expectFromTarget([">>>End of Fett<<<", pexpect.EOF],
                     "End FreeRTOS Test", exitOnError=False, timeout=getSetting('FreeRTOStimeout'))
         if (idxReturn == 1):
-            target.terminateAndExit("<runTests> Unexpected EOF during test run.", exitCode=EXIT.Dev_Bug)
+            self.terminateAndExit("<runTests> Unexpected EOF during test run.", exitCode=EXIT.Dev_Bug)
         elif (wasTimeout):
             textBack += "\n<TIMEOUT>\n"
 
@@ -62,9 +63,9 @@ class inGdbTest:
           
     def __enter__(self): 
         # Pause the OS
-        target.interruptGdb()
+        self.target.interruptGdb()
         return self
       
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         # Resume the OS
-        target.continueGdb()
+        self.target.continueGdb()
