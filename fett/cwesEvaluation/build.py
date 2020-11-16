@@ -22,11 +22,6 @@ def buildCwesEvaluation():
     buildDir = os.path.join(getSetting('workDir'), 'build')
     mkdir(buildDir, addToSettings="buildDir")
 
-    if (isEqSetting("target", "qemu") and ("hardwareSoC" in getSetting("vulClasses"))):
-            warnAndLog("vulClass <hardwareSoC> not supported on "
-                       f"<{getSetting('target')}>. hardwareSoC tests will be skipped.")
-            getSetting("vulClasses").remove("hardwareSoC")
-
     if isEqSetting('osImage', 'FreeRTOS'):
         # create the osImages directory
         osImagesDir = os.path.join(getSetting('workDir'),'osImages')
@@ -56,12 +51,12 @@ def buildCwesEvaluation():
             cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
                 os.path.join(getSetting('buildDir'), 'Makefile'))
 
-        if (isEqSetting("target", "qemu") and
-            "PPAC" in getSetting("vulClasses")):
-            warnAndLog("vulClass <PPAC> not supported for "
-                       f"<{getSetting('osImage')}> on "
-                       f"<{getSetting('target')}>.  PPAC tests will be skipped.")
-            getSetting("vulClasses").remove("PPAC")
+        if (isEqSetting("target", "qemu")):
+            for vClass in ["PPAC", "hardwareSoC"]:
+                if (vClass in getSetting("vulClasses")):
+                    warnAndLog(f"vulClass <{vClass}> not supported for FreeRTOS on "
+                       f"qemu. <{vClass}> tests will be skipped.")
+            getSetting("vulClasses").remove(vClass)
 
     if (isEqSetting('binarySource','LMCO') and isEqSetting('osImage','debian') and ("PPAC" in getSetting("vulClasses"))):
         warnAndLog("vulClass <PPAC> is not supported for <LMCO> on <debian>.")
