@@ -146,7 +146,6 @@ def buildCwesEvaluation():
 
         # Write the extra testsParameters.h
         fHeader = ftOpenFile(os.path.join(vulClassDir, "testsParameters.h"), 'w')
-        # TODO: The randomizeParameters
         for xSetting, xVal in getSetting(vulClass).items():
             if (xSetting.startswith('test_')):
                 settingName = xSetting.split('test_')[-1]
