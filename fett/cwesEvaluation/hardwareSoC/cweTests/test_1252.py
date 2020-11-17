@@ -67,5 +67,8 @@ def test_1252 (target,binTest):
                 else:
                     outLog += "<Non-Protected>\n"
 
+    if (isEnabled('useCustomScoring')): #will need the gdb output here
+        outLog += target.getGdbOutput()
+
     return outLog
 

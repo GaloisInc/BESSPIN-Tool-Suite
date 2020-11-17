@@ -29,5 +29,5 @@ def test_1252(logTest,logsDir):
     else:
         score = SCORES.FAIL
 
-    return overallScore([score],testNum)
+    return overallScore([adjustToCustomScore(logText.splitlines(),score)],testNum)
 
