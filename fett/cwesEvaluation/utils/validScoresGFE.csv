@@ -1,7 +1,7 @@
 #CWE,OS(you may use '*' for all),additional allowed value other than 0
 #Several entries per cwe are allowed
 
-#1_BufferErrors
+#bufferErrors
 120,debian,1
 121,debian,1
 122,debian,1
@@ -34,7 +34,7 @@
 788,FreeBSD,1
 823,FreeBSD,1
 
-#2_PPAC
+#PPAC
 259,debian,-6
 290,debian,-6
 294,debian,1
@@ -51,7 +51,7 @@
 521,FreeRTOS,-6
 384,FreeRTOS,-6
 
-#3_ResourceManagement
+#resourceManagement
 395,*,1
 415,debian,1
 476,*,1
@@ -67,18 +67,18 @@
 771,FreeBSD,-6
 911,FreeRTOS,1
 
-#4_CodeInjection
-
-#5_InformationLeakage
+#informationLeakage
 214,FreeRTOS,-6
 526,FreeRTOS,-6
 
-#6_CryptoErrors
-
-#7_NumericErrors
+#numericErrors
 128,FreeRTOS,1
 475,debian,1
 475,FreeBSD,1
 687,FreeRTOS,1
 704,debian,1
 704,FreeBSD,1
+
+#hardwareSoC
+1252,*,-6
+1252,debian,6
