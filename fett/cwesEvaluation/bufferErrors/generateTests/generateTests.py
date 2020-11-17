@@ -25,19 +25,18 @@ def parseBytes(sz):
 def generateTests(outdir):
     settings = getSetting('bufferErrors')
     # Check that nTests is large enough to avoid score instability
-    minNTests = 30 if isEqSetting('osImage', 'FreeRTOS') else 100
+    minNTests = 40 if isEqSetting('osImage', 'FreeRTOS') else 100
     if settings['nTests'] < minNTests:
         warnAndLog(f"<generateTests> <nTests> must be at least <{minNTests}> "
                    f"for <{getSetting('osImage')}>.  Changing <nTests> to "
                    f"<{minNTests}>.")
         settings['nTests'] = minNTests
 
-    # TODO: Configurable model
-    modelPath = os.path.join(getSetting("repoDir"),
-                             "fett",
-                             "cwesEvaluation",
-                             "bufferErrors",
-                             "BufferErrors.cfr")
+    bufferErrorsDir = os.path.join(getSetting("repoDir"),
+                                   "fett",
+                                   "cwesEvaluation",
+                                   "bufferErrors")
+    modelPath = os.path.join(bufferErrorsDir, "BufferErrors.cfr")
     try:
         model = featureModelUtil.loadFM(modelPath)
     except Exception as exc:
@@ -47,14 +46,21 @@ def generateTests(outdir):
 
     # Prune out other vulnerability classes
     model = featureModelUtil.splitFM(model, ["BufferErrors_Test"])[0]
-    printAndLog(f"<generateTests> Sliced model {modelPath} with BufferErrors_Test")
-    printAndLog("<generateTests> Enumerating instances...(this can take a while)")
-    # Make sure that the buffer error test is actually enabled
-    model = featureModelUtil.addConstraints(model, ["BufferErrors_Test"])
-    instances = [BofInstance(model, x) for x in
-                 featureModelUtil.enumerateFM(model)]
-    printAndLog("<generateTests> Done generating instances")
-
+    instancePath = os.path.join(bufferErrorsDir, "CachedInstances.json")
+    if settings['useCachedInstances']:
+        printAndLog("<generateTests> Loading cached instances "
+                    f"<{instancePath}>")
+        enumeratedFM = safeLoadJsonFile(instancePath)
+    else:
+        printAndLog(f"<generateTests> Sliced model {modelPath} with BufferErrors_Test")
+        printAndLog("<generateTests> Enumerating instances...(this can take a while)")
+        # Make sure that the buffer error test is actually enabled
+        model = featureModelUtil.addConstraints(model, ["BufferErrors_Test"])
+        enumeratedFM = featureModelUtil.enumerateFM(model)
+        printAndLog(f"<generateTests> Caching instances to <{instancePath}>")
+        safeDumpJsonFile(enumeratedFM, instancePath)
+        printAndLog("<generateTests> Done generating instances")
+    instances = [BofInstance(model, x) for x in enumeratedFM]
     heapSize = parseBytes(settings['heapSize'])
     stackSize = parseBytes(settings['stackSize'])
     seed = (settings['seed'] if settings['useSeed']

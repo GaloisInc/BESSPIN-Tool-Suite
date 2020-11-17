@@ -276,6 +276,10 @@
             "type" : "bool"
         },
         {
+            "name" : "useCachedInstances",
+            "type" : "bool"
+        },
+        {
             "name" : "useSeed",
             "type" : "bool"
         },

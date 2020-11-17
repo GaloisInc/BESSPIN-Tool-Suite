@@ -2,9 +2,9 @@ import collections
 
 from fett.base.utils.misc import *
 
-# Access, Boundary, and Location all have 2 possible values, while Magnitude
-# has 3 possible values.  Therefore, NUM_CONCEPTS == 2 * 2 * 2 * 3
-NUM_CONCEPTS = 2**3 * 3
+# Access, Boundary, and Location all have 2 possible values.  Therefore,
+# NUM_CONCEPTS == 2 * 2 * 2
+NUM_CONCEPTS = 2**3
 
 def instanceToConcept(instance):
     """
@@ -14,8 +14,7 @@ def instanceToConcept(instance):
     """
     return (instance.Access,
             instance.Boundary,
-            instance.Location,
-            instance.Magnitude)
+            instance.Location)
 
 def getQuota(instance):
     """
@@ -33,6 +32,20 @@ def getQuota(instance):
         # conditions.  It does not set a lower bound.  We only care that enough
         # Excursion_Continuous tests are generated to satisfy CWE-120.
         return baseQuota // 4
+    if (instance.Boundary == "Boundary_Above" and
+        instance.Location == "Location_Heap" and
+        instance.SizeComputation == "SizeComputation_None"):
+        # Decrease representation of Boundary_Above heap tests without size
+        # computation. This increases the number of CWE-130, CWE-131, and
+        # CWE-680 tests.
+        return baseQuota // 4
+    if (instance.Location == "Location_Stack" and
+        instance.Magnitude == "Magnitude_Far"):
+        # Decrease number of tests with errors that are far from stack
+        # allocated memory.  These errors are often detected by the OS, and
+        # therefore don't necessarily test the processors themselves.  Down
+        # weighting these tests also increases test score stability.
+        return baseQuota // 2
     return baseQuota
 
 class InstanceSelector:
