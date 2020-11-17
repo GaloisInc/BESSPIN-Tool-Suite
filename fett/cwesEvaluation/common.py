@@ -76,7 +76,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         if (vulClass in ['PPAC','hardwareSoC']):
             outLog = cweTests[vulClass](target).executeTest(test.replace('.c','.riscv'))
         else:
-            # Exctract test output
+            # Extract test output
             textBack, wasTimeout, idxReturn = target.expectFromTarget(
                     [">>>End of Fett<<<", pexpect.EOF],
                     None,
