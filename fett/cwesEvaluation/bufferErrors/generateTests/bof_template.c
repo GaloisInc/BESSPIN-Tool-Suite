@@ -107,7 +107,7 @@ size_t mock_get_message_size(void) {{
   // Misinterpret the result of `mock_get_message_size` as a size in bytes,
   // rather than the number of elements of type `buf_type` the message has.
   size_t {alloc_bytes} = SIZE(char, mock_get_message_size(), {memmax});
-#ifdef testgenOnFreeRTOS
+#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
   return pvPortMalloc({alloc_bytes});
 #else
   return malloc({alloc_bytes});
@@ -163,11 +163,11 @@ void test(void)
     {buf_type}* {buf_name} = allocate_message_buf();
 #else  // !INCORRECT_MALLOC_CALL
     size_t {alloc_bytes} = sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax});
-#ifdef testgenOnFreeRTOS
+#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
     {buf_type}* {buf_name} = pvPortMalloc({alloc_bytes});
 #else
     {buf_type}* {buf_name} = malloc({alloc_bytes});
-#endif  // testgenOnFreeRTOS
+#endif  // defined(testgenOnFreeRTOS) && defined(testgenFPGA)
 #endif  // INCORRECT_MALLOC_CALL
     if ({buf_name} == NULL) {{
             printf("TEST INVALID. <malloc>\r\n");
