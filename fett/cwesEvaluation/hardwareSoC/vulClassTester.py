@@ -69,3 +69,9 @@ class inGdbTest:
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         # Resume the OS
         self.target.continueGdb()
+        if (self.target.osImage in ['debian','FreeBSD']):
+            self.target.runCommand(" ")
+        elif (self.target.osImage == 'FreeRTOS'):
+            self.target.endFreeRTOSTest()
+        else:
+            self.target.terminateAndExit(f"<inGdbTest> is not implemented for <{self.target.osImage}>.",exitCode=EXIT.Dev_Bug)
