@@ -994,15 +994,19 @@ class commonTarget():
                             process=process,sendToNonUnix=sendToNonUnix)[1]
         #See if the order is correct
         if (process):
-            for i in range(retryIdx + 1):
+            breakRetries = False
+            for i in range(retryIdx + 2):
                 readAfter = self.readFromTarget(readAfter=True,process=process)
                 for xEndsWith in endsWith:
                     if ((xEndsWith in readAfter) or (re.search(xEndsWith,readAfter) is not None)): #Accommodate for regex matching
                         try:
-                            process.expect(xEndsWith,timeout=timeout)
+                            process.expect(xEndsWith,timeout=1)
                         except Exception as exc:
                             warnAndLog(f"keyboardInterrupt: <{xEndsWith}> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
+                            breakRetries = True
                         textBack += readAfter
+                if (breakRetries):
+                    break
         self.keyboardInterruptTriggered = False #Safe to be called again
         return textBack
 
