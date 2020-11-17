@@ -11,13 +11,14 @@ def test_1252 (target,binTest):
 
     outLog = ""
     with vulClassTester.inGdbTest(target):
-        allRegs = target.getAllRegsValues()
+        pmpRegsNames = [f'pmpcfg{iCfg}' for iCfg in range(4)] + [f'pmpaddr{iCfg}' for iCfg in range(16)]
+        pmpRegsVals = target.getRegsValues(regNames=pmpRegsNames)
 
         #Check that we now have all the PMP regs values
-        pmpRegs = set([f'pmpcfg{iCfg}' for iCfg in range(4)] + [f'pmpaddr{iCfg}' for iCfg in range(16)])
-        if (len(pmpRegs - set(allRegs))>0): #missing regs
+        
+        if (len(set(pmpRegsNames) - set(pmpRegsVals))>0): #missing regs
             errorAndLog("test_1252: Failed to find the values of the following regs: "
-                f"<{','.join(pmpRegs-set(allRegs))}>")
+                f"<{','.join(set(pmpRegsNames)-set(pmpRegsVals))}>")
             outLog += "<INVALID> Missing registers values."
         else:
             bCfgPerAddr = {} #this dict will carry the 8-bits CFGs of the pmpaddr0-15
@@ -25,13 +26,13 @@ def test_1252 (target,binTest):
                 for iCfg in range(4):
                     mask = int(0xff)
                     for iByte in range(4):
-                        bCfgPerAddr[iCfg*4+iByte] = (allRegs[f'pmpcfg{iCfg}'] & mask) >> (iByte*8)
+                        bCfgPerAddr[iCfg*4+iByte] = (pmpRegsVals[f'pmpcfg{iCfg}'] & mask) >> (iByte*8)
                         mask <<= 8
             elif (target.xlen==64):
                 for iCfg in range(2):
                     mask = int(0xff)
                     for iByte in range(8):
-                        bCfgPerAddr[iCfg*8+iByte] = (allRegs[f'pmpcfg{iCfg*2}'] & mask) >> (iByte*8)
+                        bCfgPerAddr[iCfg*8+iByte] = (pmpRegsVals[f'pmpcfg{iCfg*2}'] & mask) >> (iByte*8)
                         mask <<= 8
 
             for iCfg in range(16): #looping through the 16 possible regions
@@ -46,8 +47,8 @@ def test_1252 (target,binTest):
                     outLog += f"<Disabled>\n"
                     continue
                 elif (A==1): #TOR (Top Of Range)
-                    if (    ((iCfg==0) and (allRegs[f'pmpaddr{iCfg}']>0)) or
-                            ((iCfg>0) and (allRegs[f'pmpaddr{iCfg-1}'] < allRegs[f'pmpaddr{iCfg}']))
+                    if (    ((iCfg==0) and (pmpRegsVals[f'pmpaddr{iCfg}']>0)) or
+                            ((iCfg>0) and (pmpRegsVals[f'pmpaddr{iCfg-1}'] < pmpRegsVals[f'pmpaddr{iCfg}']))
                         ):
                         outLog += f"<TOR> - "
                     else:
