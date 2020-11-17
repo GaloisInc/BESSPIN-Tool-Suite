@@ -8,7 +8,7 @@ from fett.target.common import *
 from fett.target import vcu118
 from fett.target import common
 
-import pexpect, subprocess, enum
+import pexpect, subprocess, enum, re
 
 class failStage (enum.Enum):
     openocd = enum.auto()
@@ -278,6 +278,23 @@ class fpgaTarget(object):
     @decorate.debugWrap
     def continueGdb(self):
         self.runCommandGdb('c', endsWith='Continuing')
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def getAllRegsValues(self):
+        _,retGdb,_,_ = self.runCommandGdb("info all-registers")
+        regsDict = dict()
+        for line in retGdb.splitlines():
+            regMatch = re.match(r"\s*(?P<regName>[a-z][a-z0-9]+)\s+(?P<hexVal>0x[0-9a-f]+)\s.*$",line)
+            if (regMatch is not None):
+                try:
+                    hexVal = int(regMatch.group('hexVal'),16)
+                except Exception as exc:
+                    warnAndLog(f"getAllRegsValues: Failed to read the value <{regMatch.group('hexVal')}> "
+                        f"of reg:<{regMatch.group('regName')}>",exc=exc,doPrint=False)
+                    continue
+                regsDict[regMatch.group('regName')] = hexVal
+        return regsDict
 
     @decorate.debugWrap     
     def getOpenocdCustomCfg(self, isReload=False):
