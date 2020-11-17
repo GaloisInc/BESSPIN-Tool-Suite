@@ -484,12 +484,15 @@ def ftOpenFile (filePath,mode,exitOnFileError=True):
             return None    
 
 @decorate.debugWrap
-def ftReadLines (filePath,exitOnFileError=True):
+def ftReadLines (filePath,exitOnFileError=True,splitLines=True):
     xFile = ftOpenFile (filePath,'r',exitOnFileError=exitOnFileError)
     if ((not xFile) and (not exitOnFileError)):
         return []
     try:
-        lines = xFile.read().splitlines()
+        if (splitLines):
+            lines = xFile.read().splitlines()
+        else:
+            lines = xFile.read()
         xFile.close()
         return lines
     except Exception as exc:
