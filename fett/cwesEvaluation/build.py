@@ -11,13 +11,9 @@ from fett.cwesEvaluation.informationLeakage.generateWrappers import generateWrap
 from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled, doesTheTestNeedBootedOs
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
-from fett.cwesEvaluation.PPAC.freertos import prepareFreeRTOSforPPAC
 
 @decorate.debugWrap
 def buildCwesEvaluation():
-    # TODO: Generalize
-    # TODO: Add support for custom build options and custom makefiles
-
     # Create build directory
     buildDir = os.path.join(getSetting('workDir'), 'build')
     mkdir(buildDir, addToSettings="buildDir")
@@ -51,16 +47,18 @@ def buildCwesEvaluation():
             cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
                 os.path.join(getSetting('buildDir'), 'Makefile'))
 
+        for vClass in ["PPAC"]:
+            if (vClass in getSetting("vulClasses")):
+                    warnAndLog(f"vulClass <{vClass}> is not supported on FreeRTOS. "
+                       f"<{vClass}> will be skipped.")
+            getSetting("vulClasses").remove(vClass)
+
         if (isEqSetting("target", "qemu")):
-            for vClass in ["PPAC", "hardwareSoC"]:
+            for vClass in ["hardwareSoC"]:
                 if (vClass in getSetting("vulClasses")):
                     warnAndLog(f"vulClass <{vClass}> not supported for FreeRTOS on "
                        f"qemu. <{vClass}> tests will be skipped.")
             getSetting("vulClasses").remove(vClass)
-
-    if (isEqSetting('binarySource','LMCO') and isEqSetting('osImage','debian') and ("PPAC" in getSetting("vulClasses"))):
-        warnAndLog("vulClass <PPAC> is not supported for <LMCO> on <debian>.")
-        getSetting("vulClasses").remove("PPAC")
 
     # Copy tests over
     isThereAnythingToRun = False
@@ -150,30 +148,6 @@ def buildCwesEvaluation():
             if (xSetting.startswith('test_')):
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
-        if vulClass == "PPAC":
-            if isEqSetting('osImage', 'FreeRTOS'):
-                portTarget = getSetting(f"commPortTarget")
-                fHeader.write(
-                    f'#define SPOOFING_IP "{getSettingDict("PPAC", "spoofingIP")}"\n'
-                    f'#define TCP_PORT_NUMBER {portTarget}\n')
-                prepareFreeRTOSforPPAC(fHeader)
-            else:
-                pattern = os.path.join(sourcesDir,
-                                       f'*_{getSetting("osImage")}')
-                for source in glob.glob(pattern):
-                    suffixLen = len(getSetting('osImage')) + 1
-                    outFile = os.path.join(
-                            vulClassDir,
-                            os.path.basename(source)[:-suffixLen])
-                    cp(source, outFile)
-                    additionalFiles.append(outFile)
-
-                # sshd_config location
-                if (isEqSetting('binarySource','SRI-Cambridge')):
-                    setSetting('sshdConfigPath','/fett/etc/sshd_config')
-                else: #default
-                    setSetting('sshdConfigPath','/etc/ssh/sshd_config')
-
         fHeader.close()
 
         if isEqSetting('osImage', 'FreeRTOS'):
@@ -234,24 +208,12 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     # copy the test files
     vTestsDir = os.path.join(buildDir, vulClass)
     testFiles = [test, f'main_{test}', 'testsParameters.h', 'envFett.mk']
-    #Check for extra files
-    if (vulClass=='PPAC'):
-        extraFile = os.path.join(buildDir,'lib_PPAC','extraSources',test.replace('.c','_extra.c'))
-        if (os.path.isfile(extraFile)):
-            cp (extraFile,vTestsDir)
-            testFiles.append(test.replace('.c','_extra.c')) 
 
     for testFile in testFiles:
         cp (os.path.join(vTestsDir,testFile), buildDir)
 
     fPars = ftOpenFile(os.path.join(buildDir,'testsParameters.h'),'a')
     fPars.write(f"\n#define TESTGEN_TEST_PART {part}\n")
-    if (vulClass=='PPAC'):
-        try:
-            testNum = re.findall(r'\d+',test)[0]
-        except Exception as exc:
-            logAndExit(f"Failed to extract TESTNUM from <{test}>",exc=exc,exitCode=EXIT.Dev_Bug)
-        fPars.write(f"#define TESTNUM {testNum}\n")
     fPars.close()
 
     # Build
