@@ -67,8 +67,7 @@ class fpgaTarget(object):
             if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
                 self.fpgaStartRetriesIdx += 1
                 errorAndLog (f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
-                if (isEqSetting('mode','cyberPhys')):
-                    getSetting('openocdLock').release()
+                getSetting('openocdLock').release()
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
             self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
         getSetting('openocdLock').release()
