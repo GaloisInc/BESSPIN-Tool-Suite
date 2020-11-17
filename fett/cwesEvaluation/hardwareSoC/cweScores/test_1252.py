@@ -6,16 +6,28 @@ def test_1252(logTest,logsDir):
     if (logTest != f"test_{testNum}.log"):
         return [f"TEST-{testNum}", SCORES.FAIL, "Wrong test called!"]
     
-    testLines = ftReadLines(os.path.join(logsDir,logTest))
+    logText = ftReadLines(os.path.join(logsDir,logTest),splitLines=False)
 
-    if (doesKeywordExist(testLines,"<NOGDB>")):
+    relvKeywords = [  "<NOGDB>","<INVALID>",
+                        "<EXECUTION>","<WRITE>","<READ>",
+                        "<Disabled>", "<Non-Protected>", "<Bad-Range>"    ]
+    keywordsDict = doKeywordsExistInText(logText,relvKeywords)
+
+    if (keywordsDict["<NOGDB>"]):
         return overallScore ([],testNum,msgIfNotImplemented="Requires GDB Access")
 
-    if (doesKeywordExist(testLines,"<INVALID>")):
+    if (keywordsDict["<INVALID>"]):
         score = SCORES.CALL_ERR
+    elif (keywordsDict["<EXECUTION>"]):
+        score = SCORES.NONE
+    elif (keywordsDict["<WRITE>"]):
+        score = SCORES.MED
+    elif (keywordsDict["<READ>"]):
+        score = SCORES.HIGH
+    elif (keywordsDict["<Disabled>"] or keywordsDict["<Non-Protected>"] or keywordsDict["<Bad-Range>"]):
+        score = SCORES.V_HIGH
     else:
-        warnAndLog("<test_1252>: Scoring is not yet implemented.")
-        score = SCORES.NOT_IMPLEMENTED
+        score = SCORES.FAIL
 
     return overallScore([score],testNum)
 

@@ -5,6 +5,7 @@ helpers functions for scoring the CWE tests
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
+import re
 
 def overallScore (listScores, testNum,msgIfNotImplemented="Not Implemented"):
     if (len(listScores)==0): #not implemented
@@ -14,8 +15,15 @@ def overallScore (listScores, testNum,msgIfNotImplemented="Not Implemented"):
 
     return ["TEST-{0}".format(testNum), ovrScore, scoreString]
 
-def doesKeywordExist (lines, keyword):
+def doesKeywordExistInLines (lines, keyword):
     for line in lines:
         if (keyword in line):
             return True
     return False
+
+def doKeywordsExistInText (logText, keywords):
+    keywordsDict = dict()
+    for keyword in keywords:
+        keywordsDict[keyword] = (re.search(keyword,logText) is not None)
+    return keywordsDict
+
