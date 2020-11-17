@@ -115,10 +115,11 @@ class fpgaTarget(object):
         # configure gdb
         if (mainProg):
             self.runCommandGdb("set confirm off")
-            self.runCommandGdb("set width 0")
-            self.runCommandGdb("set height 0")
+            self.runCommandGdb("set width unlimited")
+            self.runCommandGdb("set height unlimited")
             self.runCommandGdb("set print entry-values no")
             self.runCommandGdb("set remotetimeout 60")
+            self.runCommandGdb("set pagination off")
         self.runCommandGdb(f"set architecture riscv:rv{self.xlen}")
         self.runCommandGdb("define hook-continue\ndont-repeat\nend") #we don't want to 'continue' on extra presses due to encoding and such
 
