@@ -31,7 +31,6 @@ class vcu118Target (fpgaTarget, commonTarget):
             setSetting('elfLoader','JTAG',targetId=self.targetId)
 
         self.uartSession = None
-        self.uartDevice = None
 
         #Reloading till the network is up
         self.freertosNtkRetriesMax = 3
@@ -264,7 +263,7 @@ class vcu118Target (fpgaTarget, commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def setupUart(self):
-        if (self.uartDevice is None):
+        if (not doesSettingExist('vcu118UartDevice',targetId=self.targetId)):
             with getSetting('setupUartLock'):
                 if (not doesSettingExist('vcu118UartDevices')):
                     setSetting('vcu118UartDevices',self.findUartDevices())
@@ -285,11 +284,13 @@ class vcu118Target (fpgaTarget, commonTarget):
                 uartSessionDict = self.startUartSession(uartDevice)
         else:
             # Not the first time to start the uart session
-            uartSessionDict = self.startUartSession(self.uartDevice)
+            uartSessionDict = self.startUartSession(getSetting('vcu118UartDevice',targetId=self.targetId))
 
         #set the uart related members
         for name,val in uartSessionDict.items():
             setattr(self,name,val)
+        #Attach the uartDevice setting to the targetId
+        setSetting('vcu118UartDevice',self.uartDevice,targetId=self.targetId)
         #The main process is the ttyProcess by default
         self.process = self.ttyProcess
 
