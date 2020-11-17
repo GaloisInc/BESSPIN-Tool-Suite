@@ -5,6 +5,8 @@ This file has the custom PPAC methods to run tests on qemu|fpga.
 import sys, os
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 from fett.cwesEvaluation.PPAC import cweTests
+from importlib.machinery import SourceFileLoader
+import threading
 
 from fett.base.utils.misc import *
 
@@ -34,3 +36,20 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         if (switchBack):
             self.switchUser()
         return
+
+    def socketCloseAndCollect (self,xSocket):
+        def closeSocket (xSocket):
+            try:
+                xSocket.close()
+            except Exception as exc:
+                warnAndLog("Unable to close socket.\n",doPrint=False,exc=exc)
+        xThread = threading.Thread(target=closeSocket, args=(xSocket,))
+        xThread.daemon = True
+        try:
+            socketName = xSocket.getsockname()
+        except Exception as exc:
+            socketName = "UNKNOWN"
+            warnAndLog("Unable to get socket name when closing. Maybe it was already closed.\n",doPrint=False,exc=exc)
+        getSetting('trash').throwThread(xThread,f"closing socket <{socketName}>")
+        xThread.start()
+        return xThread

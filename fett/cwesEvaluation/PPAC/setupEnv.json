@@ -8,56 +8,6 @@
             "name" : "methodToExecute",
             "type" : "string",
             "val"  : "executeTest"
-        },
-        {
-            "name" : "executeOnRoot",
-            "type" : "bool",
-            "val"  : 0
-        },
-        {
-            "name" : "interactWithFreeRTOS",
-            "type" : "bool",
-            "val"  : 1
-        },
-        {
-            "name" : "createUser",
-            "type" : "bool",
-            "val"  : 1
-        },
-        {
-            "name" : "ntkOnFreeRTOS",
-            "type" : "bool",
-            "val"  : 1
-        },
-        {
-            "name" : "wolfsslOnFreeRTOS",
-            "type" : "bool",
-            "val"  : 1
-        },
-        {
-            "name" : "multiPartRunOnFreeRTOS",
-            "type" : "bool",
-            "val"  : 1
-        },
-        {
-            "name" : "pathToTraceHooksFreeRTOS",
-            "type" : "filePath",
-            "val"  : "fett/cwesEvaluation/PPAC/sources/libFreeRTOS/incTraceHooks.h"
-        },
-        {
-            "name" : "spoofingIP",
-            "type" : "ipAddress",
-            "val"  : "10.20.30.40"
-        },
-        {
-            "name" : "nSeedsForWolfSSL",
-            "type" : "int",
-            "val"  : 8
-        },
-        {
-            "name" : "crngOnDebian",
-            "type" : "bool",
-            "val"  : 1
         }
     ]
 }
