@@ -281,8 +281,19 @@ class fpgaTarget(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def getAllRegsValues(self):
-        _,retGdb,_,_ = self.runCommandGdb("info all-registers")
+    def getRegsValues(self,regNames=None):
+        if (regNames is None):
+            if (self.target=='awsf1'):
+                warnAndLog("getRegsValues: There is a problem with GDB on AWSf1 when returning <info all-registers>. "
+                    f"This command might result in error. Please specify the needed regs instead.")
+            regSpec = "all-registers"
+        elif (isinstance(regNames,list)):
+            regSpec = f"registers {' '.join(regNames)}"
+        else:
+            warnAndLog("getRegsValues: <regNames> should either be None for all regs, or a list of register "
+                f"names. Will use <{regNames} as is.")
+            regSpec = f"registers {regNames}"
+        _,retGdb,_,_ = self.runCommandGdb(f"info {regSpec}")
         regsDict = dict()
         for line in retGdb.splitlines():
             regMatch = re.match(r"\s*(?P<regName>[a-z][a-z0-9]+)\s+(?P<hexVal>0x[0-9a-f]+)\s.*$",line)
@@ -290,7 +301,7 @@ class fpgaTarget(object):
                 try:
                     hexVal = int(regMatch.group('hexVal'),16)
                 except Exception as exc:
-                    warnAndLog(f"getAllRegsValues: Failed to read the value <{regMatch.group('hexVal')}> "
+                    warnAndLog(f"getRegsValues: Failed to read the value <{regMatch.group('hexVal')}> "
                         f"of reg:<{regMatch.group('regName')}>",exc=exc,doPrint=False)
                     continue
                 regsDict[regMatch.group('regName')] = hexVal
