@@ -54,7 +54,6 @@ def runFreeRTOSCwesEvaluation():
                                    exitCode=EXIT.Implementation)
                 elif (isEqSetting('target','vcu118')):
                     vcu118.programBitfile(doPrint=False)
-                    vcu118.resetEthAdaptor()
                 elif not isEqSetting('target', 'qemu'):
                     logAndExit("<runFreeRTOSCwesEvaluation> is not "
                                f"implemented for <{getSetting('target')}>",

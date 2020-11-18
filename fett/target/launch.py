@@ -167,9 +167,9 @@ def prepareEnv (targetId=None):
         prepareOsImage (targetId=targetId)
 
     if (target=='vcu118'):
+        vcu118.resetEthAdaptor()
         if not (isEqSetting('mode', 'evaluateSecurityTests') and (osImage=='FreeRTOS')):
             vcu118.programBitfile(targetId=targetId)
-            vcu118.resetEthAdaptor()
     elif (target=='awsf1'):
         pvAWS = getSetting('pvAWS',targetId=targetId)
         if (pvAWS=='firesim'):
