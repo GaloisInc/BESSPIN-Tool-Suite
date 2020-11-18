@@ -63,7 +63,6 @@ def buildCwesEvaluation():
     # Copy tests over
     isThereAnythingToRun = False
     isThereAReasonToBoot = False
-    additionalFiles = []
     for vulClass in getSetting('vulClasses'):
         vIsThereAnythingToRun = False
         # Create class dir and build
@@ -160,14 +159,14 @@ def buildCwesEvaluation():
                        exitCode=EXIT.Implementation)
 
     if getSetting('osImage') in ['debian', 'FreeBSD']:
-        buildTarball(additionalFiles)
+        buildTarball()
 
     setSetting('isThereAReasonToBoot',isThereAReasonToBoot)
     return isThereAnythingToRun
 
 @decorate.debugWrap
 @decorate.timeWrap
-def buildTarball(additionalFiles):
+def buildTarball():
     fileList = [(os.path.basename(f), f) for f in
                 glob.glob(os.path.join(getSetting('buildDir'),
                                        "*",
@@ -178,18 +177,17 @@ def buildTarball(additionalFiles):
         enabledCwesEvaluations[vulClass].append(test)
     setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
 
-    fileList += [(os.path.basename(f), f) for f in additionalFiles]
-
-    # TODO: Do I need this += part here?  I thought it would capture the
-    # entropy thing, but it looks like it doesn't?
     fileList += [(os.path.basename(f), f) for f in
                  glob.glob(os.path.join(getSetting("buildDir"), "*.riscv"))]
-    tar(os.path.join(getSetting("buildDir"), getSetting('tarballName')),
-        fileList)
-    setSetting('sendTarballToTarget', True)
 
-    # TODO: Put this somewhere else, use it to determine what to compile, and
-    # maybe rename it
+    if (len(fileList)>0):
+        logging.debug(f"buildTarball: The tarball will contain the following: {','.join(fileList)}.")
+        tar(os.path.join(getSetting("buildDir"), getSetting('tarballName')),
+            fileList)
+        setSetting('sendTarballToTarget', True)
+    else:
+        logging.debug("buildTarball: There are no files to send to target. No need to create a tarball.")
+        setSetting('sendTarballToTarget', False)
 
 @decorate.debugWrap
 @decorate.timeWrap
