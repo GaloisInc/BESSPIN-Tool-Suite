@@ -1,6 +1,6 @@
 # This Makefile is for cross compiling the InformationLeakages tests
 
-include defaultEnvLinux.mk
+include defaultEnvUnix.mk
 
 TESTSOURCES=$(wildcard tests/*.c)
 TESTFILES=$(basename $(TESTSOURCES))

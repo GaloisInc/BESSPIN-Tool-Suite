@@ -148,7 +148,7 @@ def buildCwesEvaluation():
                                 'fett',
                                 'target',
                                 'utils',
-                                'defaultEnvLinux.mk'),
+                                'defaultEnvUnix.mk'),
                     vulClassDir)
 
         #Set the list of enabled tests

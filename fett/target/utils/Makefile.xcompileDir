@@ -1,6 +1,6 @@
 # this makefile is for cross compiling C files in a directory for emulation
 
-include defaultEnvLinux.mk
+include defaultEnvUnix.mk
 
 TARGETS := $(patsubst ./%.c, ./%.riscv, $(wildcard ./*.c))
 
