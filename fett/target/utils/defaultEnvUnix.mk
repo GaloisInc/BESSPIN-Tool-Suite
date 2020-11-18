@@ -1,4 +1,4 @@
-# This file has the necessary includes to cross-compile files for Linux
+# This file has the necessary includes to cross-compile files for Unix
 
 ifeq ($(BIN_SOURCE),SRI_Cambridge)
 	ARCH_ABI := -march=rv64imafdcxcheri -mabi=l64pc128d
@@ -6,7 +6,7 @@ else
 	ARCH_ABI := -march=rv64imafdc -mabi=lp64d
 endif
 FETT_DEFS := -DfettOnLinux -DfettOn$(OS_IMAGE) -DfettOn$(TARGET) 
-FETT_DEFS += -DtestgenOnLinux -DtestgenOn$(OS_IMAGE) -Dtestgen$(TARGET)
+FETT_DEFS += -DtestgenOnUnix -DtestgenOn$(OS_IMAGE) -Dtestgen$(TARGET)
 ifeq ($(TARGET),VCU118)
 	FETT_DEFS += -DtestgenFPGA -DfettOnFPGA #for backward compatibility
 else
