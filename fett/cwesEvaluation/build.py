@@ -9,7 +9,7 @@ from fett.base.utils.misc import *
 from fett.cwesEvaluation.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.informationLeakage.generateWrappers import generateWrappers
 from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
-from fett.cwesEvaluation.common import isTestEnabled, doesTheTestNeedBootedOs
+from fett.cwesEvaluation.common import isTestEnabled, doesTheTestNeedBootedOs, doesTheTestHaveACfile
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
 
 @decorate.debugWrap
@@ -104,16 +104,20 @@ def buildCwesEvaluation():
                     glob.glob(os.path.join(vulClassDir,"*.c"))]
         else:
             cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
-            for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
+            if (vulClass in ["PPAC", "hardwareSoC"]):
+                tests = getSettingDict(vulClass,["testsInfo"])
+            else: #all C files in sources
+                tests = [os.path.basename(f).split(".c")[0] for f in glob.glob(os.path.join(sourcesDir, "test_*.c"))]
+            for test in tests:
                 # Check if the test should be skipped:
-                cTestName = os.path.basename(test)
-                if (isTestEnabled(vulClass,cTestName)):
+                if (isTestEnabled(vulClass,test)):
                     vIsThereAnythingToRun = True
-                    isThereAReasonToBoot |= doesTheTestNeedBootedOs(vulClass,cTestName)
-                    cp (test, vulClassDir)
-                    enabledCwesEvaluations[vulClass].append(cTestName.replace(".c",".riscv"))
+                    isThereAReasonToBoot |= doesTheTestNeedBootedOs(vulClass,test)
+                    if (doesTheTestHaveACfile(vulClass,test)):
+                        cp (os.path.join(sourcesDir, f"{test}.c"), vulClassDir)
+                    enabledCwesEvaluations[vulClass].append(f"{test}.riscv")
                 else:
-                    printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
+                    printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{test}>. It is not enabled.",doPrint=False)
 
         isThereAnythingToRun |= vIsThereAnythingToRun
         if (not vIsThereAnythingToRun):

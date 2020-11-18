@@ -11,7 +11,8 @@
                 "test_1252" : {
                     "gdb" : 1,
                     "bootedOs" : 1,
-                    "hasMethod" : 1
+                    "hasMethod" : 1,
+                    "cFile" : 0
                 }
             }
         }

@@ -138,16 +138,22 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                    exitCode=EXIT.Implementation)
 
 @decorate.debugWrap
-def isTestEnabled (vulClass, cTestName):
+def isTestEnabled(vulClass, testName):
     if (getSettingDict(vulClass,'runAllTests')):
         return True
     else:
-        return getSettingDict(vulClass,['configCWEs',os.path.splitext(cTestName)[0]])
+        return getSettingDict(vulClass,['configCWEs',testName])
 
 @decorate.debugWrap
-def doesTheTestNeedBootedOs(vulClass, cTestName):
-    if (vulClass=='hardwareSoC'):
-        testName = os.path.splitext(cTestName)[0]
+def doesTheTestNeedBootedOs(vulClass, testName):
+    if (vulClass in ["hardwareSoC","PPAC"]):
         return (getSettingDict(vulClass,["testsInfo",testName,"bootedOs"])==1)
+    else:
+        return True
+
+@decorate.debugWrap
+def doesTheTestHaveACfile(vulClass, testName):
+    if (vulClass in ["hardwareSoC","PPAC"]):
+        return (getSettingDict(vulClass,["testsInfo",testName,"cFile"])==1)
     else:
         return True
