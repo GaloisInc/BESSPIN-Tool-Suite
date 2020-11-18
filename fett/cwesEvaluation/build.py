@@ -61,6 +61,7 @@ def buildCwesEvaluation():
             getSetting("vulClasses").remove(vClass)
 
     # Copy tests over
+    enabledCwesEvaluations = defaultdict(list)
     isThereAnythingToRun = False
     isThereAReasonToBoot = False
     for vulClass in getSetting('vulClasses'):
@@ -88,6 +89,8 @@ def buildCwesEvaluation():
                     cp(source,
                        os.path.join(vulClassDir,
                                     f'test_extra_{os.path.basename(source)}'))
+            enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
+                glob.glob(os.path.join(vulClassDir,"*.c"))]
         elif vulClass == 'informationLeakage':
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                     vulClass,'envFett.mk'), vulClassDir)
@@ -97,6 +100,8 @@ def buildCwesEvaluation():
             vIsThereAnythingToRun = (nWrappers > 0)
             if (vIsThereAnythingToRun):
                 isThereAReasonToBoot = True
+                enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
+                    glob.glob(os.path.join(vulClassDir,"*.c"))]
         else:
             cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
             for test in glob.glob(os.path.join(sourcesDir, "test_*.c")):
@@ -106,6 +111,7 @@ def buildCwesEvaluation():
                     vIsThereAnythingToRun = True
                     isThereAReasonToBoot |= doesTheTestNeedBootedOs(vulClass,cTestName)
                     cp (test, vulClassDir)
+                    enabledCwesEvaluations[vulClass].append(cTestName.replace(".c",".riscv"))
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{cTestName}>. It is not enabled.",doPrint=False)
 
@@ -141,6 +147,8 @@ def buildCwesEvaluation():
                                 'defaultEnvLinux.mk'),
                     vulClassDir)
 
+        #Set the list of enabled tests
+        setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
         # Write the extra testsParameters.h
         fHeader = ftOpenFile(os.path.join(vulClassDir, "testsParameters.h"), 'w')
         for xSetting, xVal in getSetting(vulClass).items():
@@ -171,17 +179,12 @@ def buildTarball():
                 glob.glob(os.path.join(getSetting('buildDir'),
                                        "*",
                                        "*.riscv"))]
-    enabledCwesEvaluations = defaultdict(list)
-    for (test, path) in fileList:
-        vulClass = os.path.basename(os.path.split(path)[0])
-        enabledCwesEvaluations[vulClass].append(test)
-    setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
 
     fileList += [(os.path.basename(f), f) for f in
                  glob.glob(os.path.join(getSetting("buildDir"), "*.riscv"))]
 
     if (len(fileList)>0):
-        logging.debug(f"buildTarball: The tarball will contain the following: {','.join(fileList)}.")
+        logging.debug(f"buildTarball: The tarball will contain the following: {fileList}.")
         tar(os.path.join(getSetting("buildDir"), getSetting('tarballName')),
             fileList)
         setSetting('sendTarballToTarget', True)
