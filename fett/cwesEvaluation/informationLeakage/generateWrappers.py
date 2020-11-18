@@ -18,7 +18,7 @@ def generateWrappers():
         for s in stores:
             for i in interpreters:
                 fileName = f"test_{t}_{s}_{i}.c"
-                if isTestEnabled('informationLeakage', fileName):
+                if isTestEnabled('informationLeakage', fileName.split(".c")[0]):
                     nFiles += 1
                     fd = ftOpenFile(os.path.join(src, fileName), "w")
                     fd.write('#include <stdio.h>\n')
