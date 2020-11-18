@@ -108,11 +108,8 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
         mkdir(baseLogDir, addToSettings="cwesEvaluationLogs")
 
-        if not sendFiles:
-            target.terminateAndExit("<runApp>: sendFiles must be True for CWEs "
-                                   "evaluation on unix hosts",
-                                   exitCode = EXIT.Dev_Bug)
-        target.sendTar(timeout=timeout)
+        if sendFiles:
+            target.sendTar(timeout=timeout)
 
         # Copy binaries to non-root user's home as well
         wasRoot = target.isCurrentUserRoot
@@ -121,14 +118,6 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         target.runCommand(f"cp *.riscv /home/{target.userName}")
         target.runCommand(f"chown {target.userName}:{target.userName} "
                           f"/home/{target.userName}/*.riscv")
-
-        # Move any pam or limit files
-        target.runCommand(f"chown root:{target.rootGroup} pam*")
-        target.runCommand("mv pam* /etc/pam.d/")
-        target.runCommand(f"chown root:{target.rootGroup} limits*")
-        target.runCommand("mv limits* /etc/security/")
-        if (isEqSetting('osImage','FreeBSD')): #need to be only writable by root
-            target.runCommand("chmod 644 /etc/pam.d/pam* /etc/security/limits*")
 
         # Become a normal user
         target.switchUser()
