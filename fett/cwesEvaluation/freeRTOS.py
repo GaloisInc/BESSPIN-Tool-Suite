@@ -28,7 +28,7 @@ def runFreeRTOSCwesEvaluation():
             logFile.write(f"<NUMPARTS={parts}>\n")
             
             for part in range(1, parts+1):
-                printAndLog(f"Running {vulClass}/{cTest} part {part}")
+                printAndLog(f"Running {vulClass}/{testName} part {part}")
                 setSetting("currentTest", (cTest, vulClass, part, logFile))
 
                 if isEqSetting('target', 'awsf1'):
