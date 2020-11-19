@@ -49,16 +49,18 @@ def buildCwesEvaluation():
 
         for vClass in ["PPAC"]:
             if (vClass in getSetting("vulClasses")):
-                    warnAndLog(f"vulClass <{vClass}> is not supported on FreeRTOS. "
-                       f"<{vClass}> will be skipped.")
-            getSetting("vulClasses").remove(vClass)
+                warnAndLog(f"vulClass <{vClass}> is not supported on FreeRTOS. "
+                    f"<{vClass}> will be skipped.")
+                getSetting("vulClasses").remove(vClass)
 
         if (isEqSetting("target", "qemu")):
             for vClass in ["hardwareSoC"]:
                 if (vClass in getSetting("vulClasses")):
                     warnAndLog(f"vulClass <{vClass}> not supported for FreeRTOS on "
                        f"qemu. <{vClass}> tests will be skipped.")
-            getSetting("vulClasses").remove(vClass)
+                    getSetting("vulClasses").remove(vClass)
+
+        fillerCfile = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','utils','fillerMainFreeRTOS.c')
 
     # Copy tests over
     enabledCwesEvaluations = defaultdict(list)
@@ -115,6 +117,8 @@ def buildCwesEvaluation():
                     isThereAReasonToBoot |= doesTheTestNeedBootedOs(vulClass,test)
                     if (doesTheTestHaveACfile(vulClass,test)):
                         cp (os.path.join(sourcesDir, f"{test}.c"), vulClassDir)
+                    elif (isEqSetting('osImage', 'FreeRTOS') and doesTheTestNeedBootedOs(vulClass,test)): #Use dummy file
+                        cp (fillerCfile, os.path.join(vulClassDir,f"{test}.c"))
                     enabledCwesEvaluations[vulClass].append(f"{test}.riscv")
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{test}>. It is not enabled.",doPrint=False)
