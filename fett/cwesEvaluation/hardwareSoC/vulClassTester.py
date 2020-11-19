@@ -36,7 +36,7 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             else:
                 self.terminateAndExit (f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
         else:
-            outLog = self.defaultTest(testNum, binTest)
+            outLog += self.defaultTest(testNum, binTest)
 
         return outLog
 

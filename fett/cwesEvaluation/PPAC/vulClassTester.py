@@ -9,28 +9,39 @@ from fett.cwesEvaluation.PPAC import cweTests
 from fett.base.utils.misc import *
 
 class vulClassTester(testgenTargetCompatibilityLayer):
-    def __init__ (self,settings):
-        super().__init__(settings)
+    def __init__ (self,target):
+        super().__init__(target)
         return
 
     def executeTest (self,binTest):
-        testName = binTest.split('.')[0]
-        if (hasattr(cweTests,testName)):
-            outLog = getattr(getattr(cweTests,testName),testName)(self,binTest)
-        elif (isEnabled('pocExploitsMode')):
-            self.terminateAndExit('<pocExploitsMode> not implemented',
-                       exitCode=EXIT.Implementation)
+        outLog = ''
+        try:
+            testName = binTest.split('.')[0]
+            testNum = testName.split('test_')[1]
+        except Exception as exc:
+            self.terminateAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+
+        outLog = "\n" + '*'*30 + f" TEST {testNum} " + '*'*30 + "\n\n"
+        outLog += f"<OSIMAGE={self.osImage}>\n"
+
+        if (self.getTestInfo(testName,'recommendation')):
+            outLog += self.recommendationTest (testName)
+        elif (self.getTestInfo(testName,'hasMethod')):
+            if (hasattr(cweTests,testName)):
+                outLog += getattr(getattr(cweTests,testName),testName)(self,binTest)
+            else:
+                self.terminateAndExit (f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
         else:
-            self.terminateAndExit(f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
-            outLog = ''
+            outLog += self.defaultTest(testNum, binTest)
+
         return outLog
 
-    def executeOnRoot (self,commands):
-        switchBack = not self.isCurrentUserRoot
-        if (switchBack): #only do this if user is not root
-            self.switchUser()
-        for command in commands:
-            self.runCommand (command)
-        if (switchBack):
-            self.switchUser()
+    def getTestInfo (self,testName,infoName):
+        return (getSettingDict("PPAC",["testsInfo",testName,infoName])==1)
+
+    def defaultTest(self, testNum, binTest):
+        self.terminateAndExit (f"<defaultTest> is not yet implemented for <PPAC>.",exitCode=EXIT.Implementation)
         return
+
+    def recommendationTest(self, testName):
+        return f'<TEXT={getSettingDict("PPAC",["testsInfo",testName,"text"])}>\n'
