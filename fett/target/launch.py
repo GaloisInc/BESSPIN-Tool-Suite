@@ -253,10 +253,6 @@ def endFett (xTarget,isDeadProcess=False):
             or (isDeadProcess)):
         if (xTarget.osHasBooted):
             xTarget.shutdown()
-        else:
-            #OS hasn't booted. Maybe just no-boot tests and nothing else to run?
-            xTarget.tearDown()
-        
     
     if (isEqSetting('mode','production')):
         tarballPath = tarArtifacts (logAndExit,getSetting)

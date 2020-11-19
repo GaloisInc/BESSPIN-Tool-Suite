@@ -87,8 +87,6 @@ class qemuTarget (commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
-        if (not self.osHasBooted):
-            return
         if (self.process.isalive()):
             self.runCommand('\x01x',endsWith=pexpect.EOF)
             self.process.terminate()
