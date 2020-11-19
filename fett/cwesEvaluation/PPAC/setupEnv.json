@@ -2,12 +2,20 @@
     "_usage" : "This json file has the environment setup that is not to be changed per run.",
     "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
+    "_testsInfo" : "testsInfo are supposed to have the following settings per test: bootedOs, hasMethod, cFile, and recommendation",
 
     "PPAC" : [
         {
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {
+                "test_PPAC_2" : {
+                    "bootedOs" : 0,
+                    "hasMethod" : 0,
+                    "cFile" : 0,
+                    "recommendation" : 1,
+                    "text" : "The hardware should not exclusively rely on the OS for authenticating a user or an administrator."
+                }
             }
         }
     ]
