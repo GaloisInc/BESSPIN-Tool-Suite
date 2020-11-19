@@ -176,8 +176,7 @@ def buildCwesEvaluation():
 
     if getSetting('osImage') in ['debian', 'FreeBSD']:
         buildTarball()
-
-    setSetting('isThereAReasonToBoot',isThereAReasonToBoot)
+        setSetting('isThereAReasonToBoot',isThereAReasonToBoot) #For FreeRTOS, this will be done per test.
     return isThereAnythingToRun
 
 @decorate.debugWrap
@@ -210,7 +209,9 @@ def prepareFreeRTOS(directory):
 @decorate.debugWrap
 @decorate.timeWrap
 def buildFreeRTOSTest(test, vulClass, part, testLogFile):
-    # TODO: Some options in target.build.prepareFreeRTOS are omitted here
+    if (part==0):
+        logging.debug(f"buildFreeRTOSTest: <{test}> is called with [part=0]. Skipping the build.")
+        return
 
     buildDir = getSetting('buildDir')
     

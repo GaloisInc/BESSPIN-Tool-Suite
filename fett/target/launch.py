@@ -167,8 +167,8 @@ def prepareEnv (targetId=None):
         prepareOsImage (targetId=targetId)
 
     if (target=='vcu118'):
-        vcu118.resetEthAdaptor()
         if not (isEqSetting('mode', 'evaluateSecurityTests') and (osImage=='FreeRTOS')):
+            vcu118.resetEthAdaptor()
             vcu118.programBitfile(targetId=targetId)
     elif (target=='awsf1'):
         pvAWS = getSetting('pvAWS',targetId=targetId)
@@ -210,7 +210,7 @@ def launchFett (targetId=None):
         printAndLog (f"Launching FETT <{getSetting('mode')} mode>...",doPrint=(not isEqSetting('mode','cyberPhys')))
     xTarget.start()
     if (not xTarget.osHasBooted):
-        #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
+        #OS hasn't booted. Maybe just no-boot tests and nothing else to run?
         return xTarget
     if (isEnabled('isUnix',targetId=targetId)):
         if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) 

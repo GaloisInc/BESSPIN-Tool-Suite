@@ -229,6 +229,8 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def start (self):
+        if (isEqSetting("mode","evaluateSecurityTests") and (not isEnabled("isThereAReasonToBoot"))):
+            return #there is no reason to boot
         def get_timeout_from_settings_dict():
             def traverse_data(layer):
                 if 'timeout' in layer:
