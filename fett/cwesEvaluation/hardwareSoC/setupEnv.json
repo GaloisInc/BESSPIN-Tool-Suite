@@ -9,6 +9,14 @@
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {
+                "test_1220" : {
+                    "gdb" : 0,
+                    "bootedOs" : 0,
+                    "hasMethod" : 0,
+                    "cFile" : 0,
+                    "recommendation" : 1,
+                    "text" : "Insufficient Granularity of Access Control."
+                },
                 "test_1252" : {
                     "gdb" : 1,
                     "bootedOs" : 1,

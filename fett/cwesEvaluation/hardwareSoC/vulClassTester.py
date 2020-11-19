@@ -30,7 +30,9 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             outLog += f"<NOGDB>\n"
             return outLog
 
-        if (self.getTestInfo(testName,'hasMethod')):
+        if (self.getTestInfo(testName,'recommendation')):
+            outLog += self.recommendationTest (testName)
+        elif (self.getTestInfo(testName,'hasMethod')):
             if (hasattr(cweTests,testName)):
                 outLog += getattr(getattr(cweTests,testName),testName)(self,binTest)
             else:
@@ -56,6 +58,9 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             textBack += "\n<TIMEOUT>\n"
 
         return textBack
+
+    def recommendationTest(self, testName):
+        return f'<TEXT={getSettingDict("hardwareSoC",["testsInfo",testName,"text"])}>\n'
 
 class inGdbTest: 
     def __init__(self,target):
