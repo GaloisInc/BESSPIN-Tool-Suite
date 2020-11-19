@@ -1,6 +1,7 @@
 # This checks the validity of the scores when the binary source is GFE
 
 from fett.base.utils.misc import *
+from fett.cwesEvaluation.scoreTests import SCORES
 
 import os
 from collections import defaultdict
@@ -10,7 +11,7 @@ class cweException:
         self.osList = ['FreeRTOS', 'FreeBSD', 'debian']
         self.legitValues = defaultdict(list)
         for iOS in self.osList:
-            self.legitValues[iOS] = [0]
+            self.legitValues[iOS] = [SCORES.V_HIGH.value, SCORES.RECOMMEND.value]
 
     def addException (self,xOS,xVal):
         if (xOS == '*'):

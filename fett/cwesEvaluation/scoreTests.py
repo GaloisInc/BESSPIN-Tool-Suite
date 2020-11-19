@@ -19,6 +19,7 @@ from fett.base.utils.misc import *
 
 class SCORES (enum.Enum):
     NINF = -10
+    RECOMMEND = -7
     NOT_IMPLEMENTED = -6
     UNKNOWN = -5
     INVALID = -4
