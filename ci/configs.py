@@ -19,6 +19,7 @@ ciAWSbucketTesting = 'aws-test-suite-bucket'
 commonDefaults = {
     ('openConsole',('No',)),
     ('gdbDebug',('No',)),
+    ('useCustomHwTarget',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',)),
     ('productionTargetIp',('172.31.30.56',))
@@ -30,12 +31,11 @@ commonDefaultsFETT = {
 
 commonDefaultsCWEs = {
     ('mode',('evaluateSecurityTests',)),
-    ('vulClasses', ('[bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors]',)),
+    ('vulClasses', ('[bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors, hardwareSoC]',)),
     ('useCustomScoring',('No',)),
     ('useCustomCompiling',('No',)),
     ('FreeRTOStimeout',(10,)),
     ('runAllTests',('Yes',)),
-    ('randomizeParameters',('No',)),
     ('nTests',(100,))
 }
 
