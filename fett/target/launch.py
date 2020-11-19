@@ -209,10 +209,7 @@ def launchFett (targetId=None):
     else:
         printAndLog (f"Launching FETT <{getSetting('mode')} mode>...",doPrint=(not isEqSetting('mode','cyberPhys')))
     xTarget.start()
-    if (not xTarget.osHasBooted):
-        #OS hasn't booted. Maybe just no-boot tests and nothing else to run?
-        return xTarget
-    if (isEnabled('isUnix',targetId=targetId)):
+    if (isEnabled('isUnix',targetId=targetId) and (xTarget.osHasBooted)):
         if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) 
                 and (not isEqSetting('mode','evaluateSecurityTests'))): #no need to change pw in evaluation mode
             xTarget.changeRootPassword()
