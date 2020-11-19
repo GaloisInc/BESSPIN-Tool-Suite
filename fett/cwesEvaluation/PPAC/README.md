@@ -7,6 +7,16 @@ An access vulnerability can allow inappropriate control of the authorizing polic
 
 ------------------
 
+## Notes on P1s ##
+
+Given that for P1s, SSITH only supports FreeRTOS (and neither safeRTOS nor secureRTOS), and FreeRTOS provides neither of the following:   
+    - A standard access control system
+    - Access Control List (ACL)
+    - POSIX compliant
+    - Users control
+    - Standard filesystem
+PPAC tests will be restrained for UNIX systems.
+
 ## Scoring Approach ##
 
 Each test part gives a score from the testgen Enum `SCORES` object based on the subjective estimation of the 
