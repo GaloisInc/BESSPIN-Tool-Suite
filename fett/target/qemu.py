@@ -12,8 +12,14 @@ class qemuTarget (commonTarget):
         
         super().__init__(targetId=targetId)
         
-        self.ipTarget = getSetting('qemuIpTarget',targetId=self.targetId)
-        self.ipHost = getSetting('qemuIpHost',targetId=self.targetId)
+        if (doesSettingExist('qemuIpTarget',targetId=self.targetId)):
+            self.ipTarget = getSetting('qemuIpTarget',targetId=self.targetId)
+        else:
+            self.ipTarget = None
+        if (doesSettingExist('qemuIpHost',targetId=self.targetId)):
+            self.ipHost = getSetting('qemuIpHost',targetId=self.targetId)
+        else:
+            self.ipHost = None
 
         return
 
@@ -63,6 +69,8 @@ class qemuTarget (commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet (self): #no need to use targetObj as we'll never activate ethernet in non-reboot mode
+        if ((self.ipTarget is None) or (self.ipHost is None)):
+            self.terminateAndExit("activateEthernet: ipTarget and ipHost are not set!",exitCode=EXIT.Dev_Bug)
         if (self.osImage=='debian'):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
@@ -79,6 +87,8 @@ class qemuTarget (commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
+        if (not self.osHasBooted):
+            return
         if (self.process.isalive()):
             self.runCommand('\x01x',endsWith=pexpect.EOF)
             self.process.terminate()

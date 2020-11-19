@@ -354,6 +354,8 @@ def cleanDirectory (xDir,endsWith='.o'):
 @decorate.debugWrap
 @decorate.timeWrap
 def crossCompileUnix(directory,extraString=''):
+    if (len(glob.glob(os.path.join(directory,"*.c"))) == 0):
+        return #there is nothing to compile
     if (isEqSetting('binarySource','SRI-Cambridge')):
         if (not isEqSetting('cross-compiler','Clang')):
             warnAndLog (f"Compiling using <{getSetting('cross-compiler')}> for <{getSetting('binarySource')}> is not supported."

@@ -166,10 +166,12 @@ def prepareEnv (targetId=None):
     if not (isEqSetting('mode', 'evaluateSecurityTests') and (osImage=='FreeRTOS')):
         prepareOsImage (targetId=targetId)
 
-    if (target=='vcu118'):
-        if not (isEqSetting('mode', 'evaluateSecurityTests') and (osImage=='FreeRTOS')):
-            vcu118.resetEthAdaptor()
-            vcu118.programBitfile(targetId=targetId)
+    if ( isEqSetting('mode', 'evaluateSecurityTests') and
+            ((osImage=='FreeRTOS') or (not isEnabled('isThereAReasonToBoot'))) ):
+        pass #No need to do any more preparation
+    elif (target=='vcu118'):
+        vcu118.resetEthAdaptor()
+        vcu118.programBitfile(targetId=targetId)
     elif (target=='awsf1'):
         pvAWS = getSetting('pvAWS',targetId=targetId)
         if (pvAWS=='firesim'):
@@ -177,8 +179,7 @@ def prepareEnv (targetId=None):
             awsf1.removeKernelModules()
             awsf1.installKernelModules()
             awsf1.configTapAdaptor()
-            if not (isEqSetting('mode', 'evaluateSecurityTests') and (osImage=='FreeRTOS')):
-                awsf1.programAFI()
+            awsf1.programAFI()
         elif (pvAWS=='connectal'):
             awsf1.prepareConnectal()
             awsf1.configTapAdaptor()
@@ -253,7 +254,7 @@ def endFett (xTarget,isDeadProcess=False):
         if (xTarget.osHasBooted):
             xTarget.shutdown()
         else:
-            #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
+            #OS hasn't booted. Maybe just no-boot tests and nothing else to run?
             xTarget.tearDown()
         
     

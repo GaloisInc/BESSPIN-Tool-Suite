@@ -12,6 +12,7 @@ def runFreeRTOSCwesEvaluation():
     printAndLog (f"Launching FETT <{getSetting('mode')} mode>...")
     baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
     mkdir(baseLogDir, addToSettings="cwesEvaluationLogs")
+    isFiresimPrepared = False #Preparation in target.launch.prepareEnv is initially skipped
 
     for vulClass, tests in getSetting("enabledCwesEvaluations").items():
         logsDir = os.path.join(baseLogDir, vulClass)
@@ -42,6 +43,12 @@ def runFreeRTOSCwesEvaluation():
 
                 if isEqSetting('target', 'awsf1'):
                     if isEqSetting('pvAWS', 'firesim'):
+                        if (not isFiresimPrepared): 
+                            awsf1.prepareFiresim()
+                            awsf1.removeKernelModules()
+                            awsf1.installKernelModules()
+                            awsf1.configTapAdaptor()
+                            isFiresimPrepared = True
                         awsf1.programAFI(doPrint=False)
                     else:
                         logAndExit("<runFreeRTOSCwesEvaluation> is not "
