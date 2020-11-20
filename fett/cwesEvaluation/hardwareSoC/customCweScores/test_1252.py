@@ -1,5 +1,5 @@
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.utils.scoringHelpers import *
+from fett.cwesEvaluation.utils.scoringAux import *
 
 def test_1252(dispName, logText):
     dispName = "TEST-1252"

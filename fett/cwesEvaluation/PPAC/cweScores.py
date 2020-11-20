@@ -5,7 +5,7 @@ scoring function for PPAC
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 from fett.cwesEvaluation.PPAC.customCweScores import *
-from fett.cwesEvaluation.utils.scoringHelpers import defaultRecommendationText
+from fett.cwesEvaluation.utils.scoringAux import defaultRecommendationText
 
 @decorate.debugWrap
 def scoreAllTests(logs):

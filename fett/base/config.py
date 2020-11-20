@@ -176,7 +176,7 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
             else:
                 val = xConfig.get(configSection,iPar['name'])
             if (len(val)==0):
-                warnAndLog(f"{fileName}: The setting <{iPar['name']}> in section [{configSection}] seems empty.")
+                warnAndLog(f"{fileName}: The setting <{iPar['name']}> in section [{configSection}] is empty!")
             if ('#' in val):
                 logAndExit(f"{fileName}: Illegal character in <{iPar['name']}> in section [{configSection}]. Is there a comment next to the value?",exitCode=EXIT.Configuration)
             if (iPar['type'] in ['filePath','dirPath']):
