@@ -98,8 +98,7 @@ class firesimTarget(fpgaTarget, commonTarget):
             "\'"
         ])
         logging.debug(f"boot: firesimCommand = {firesimCommand}")
-        targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab')
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
 
         try:
             self.ttyProcess = pexpect.spawn(firesimCommand,logfile=self.fTtyOut,timeout=30,
@@ -238,8 +237,7 @@ class connectalTarget(commonTarget):
             f"--tun={tapName}"] + extraArgs)
 
         printAndLog(f"<awsf1.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
-        targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab')
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
 
         try:
             self.ttyProcess = pexpect.spawn(connectalCommand,logfile=self.fTtyOut,timeout=90,
