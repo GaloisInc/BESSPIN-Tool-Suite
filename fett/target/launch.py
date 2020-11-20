@@ -94,13 +94,11 @@ def startFett (targetId=None):
             setSetting("linker", "GCC")
 
     # Check gdbDebug sanity
-    if (isEnabled('gdbDebug') and (binarySource!='GFE')):
-        logAndExit(f"<gdbDebug> is not implemented for <{binarySource}> targets.",exitCode=EXIT.Implementation)
     if (isEnabled('gdbDebug') and (not isEnabled('openConsole'))):
         warnAndLog("<gdbDebug> is enabled, but <openConsole> is not. <gdbDebug> will be ignored.")
         setSetting('gdbDebug',False)
-    if (isEnabled('gdbDebug') and ( (target=='qemu') or
-                                    ((target=='awsf1') and (pvAWS!='firesim'))
+    if (isEnabled('gdbDebug') and not ( (target=='vcu118') or
+                                    ((target=='awsf1') and (pvAWS in ['firesim','connectal']))
                                 )):
         targetName = target if (target!='awsf1') else f"aws:{pvAWS}"
         logAndExit(f"<gdbDebug> is not implemented on <{targetName}> .",exitCode=EXIT.Implementation)
