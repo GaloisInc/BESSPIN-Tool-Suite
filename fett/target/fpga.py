@@ -36,11 +36,18 @@ class fpgaTarget(object):
         self.fOpenocdOut = None
 
         self.gdbPort = self.findPort(portUse='GDB')
-        self.openocdPort = self.findPort(portUse='openocd')
-        printAndLog(f"{self.targetIdInfo}fpgaTarget: gdb port is <{self.gdbPort}>, and openocd telnet port is <{self.openocdPort}>.",
+        printAndLog(f"{self.targetIdInfo}fpgaTarget: gdb port is <{self.gdbPort}>.",
             doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
+        if (self.useOpenocd()):
+            self.openocdPort = self.findPort(portUse='openocd')
+            printAndLog(f"{self.targetIdInfo}fpgaTarget: openocd telnet port is <{self.openocdPort}>.",
+                doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
 
         self.readGdbOutputUnix = 0 #beginning of file
+
+    @decorate.debugWrap
+    def useOpenocd (self):
+        return ((self.target=='vcu118') or ((self.target=='awsf1') and (self.pvAWS=='firesim')))
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -48,29 +55,30 @@ class fpgaTarget(object):
         if (self.processor=='bluespec_p3'):
             time.sleep(3) #need time after programming the fpga
 
-        # start the openocd process
-        cfgSuffix = self.target if (self.target!='awsf1') else self.pvAWS
-        openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
-        self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),f'openocd{self.targetSuffix}.out'), 'ab')
+        if (self.useOpenocd()):
+            # start the openocd process
+            cfgSuffix = self.target if (self.target!='awsf1') else self.pvAWS
+            openocdCfg = os.path.join(getSetting('repoDir'),'fett','target','utils',f'openocd_{cfgSuffix}.cfg')
+            self.fOpenocdOut = ftOpenFile(os.path.join(getSetting('workDir'),f'openocd{self.targetSuffix}.out'), 'ab')
 
-        # Please be careful editing this part. It is protected by `openocdLock`, and it cannot be done 
-        # using a context manager to avoid deadlocks in case of retries (use of fpgaReload).
-        getSetting('openocdLock').acquire()
-        openocdExtraCmds = (f"set _CHIPNAME riscv{self.targetSuffix}; gdb_port {self.gdbPort}; "
-            f"telnet_port {self.openocdPort}{self.getOpenocdCustomCfg(isReload=isReload)}")
-        try:
-            self.openocdProcess = pexpect.spawn(
-                f"openocd --command '{openocdExtraCmds}' -f {openocdCfg}",
-                    logfile=self.fOpenocdOut, timeout=15, echo=False)
-            self.openocdProcess.expect(f"Listening on port {self.openocdPort} for telnet", timeout=15)
-        except Exception as exc:
-            if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
-                self.fpgaStartRetriesIdx += 1
-                errorAndLog (f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
-                getSetting('openocdLock').release()
-                return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
-            self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
-        getSetting('openocdLock').release()
+            # Please be careful editing this part. It is protected by `openocdLock`, and it cannot be done 
+            # using a context manager to avoid deadlocks in case of retries (use of fpgaReload).
+            getSetting('openocdLock').acquire()
+            openocdExtraCmds = (f"set _CHIPNAME riscv{self.targetSuffix}; gdb_port {self.gdbPort}; "
+                f"telnet_port {self.openocdPort}{self.getOpenocdCustomCfg(isReload=isReload)}")
+            try:
+                self.openocdProcess = pexpect.spawn(
+                    f"openocd --command '{openocdExtraCmds}' -f {openocdCfg}",
+                        logfile=self.fOpenocdOut, timeout=15, echo=False)
+                self.openocdProcess.expect(f"Listening on port {self.openocdPort} for telnet", timeout=15)
+            except Exception as exc:
+                if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
+                    self.fpgaStartRetriesIdx += 1
+                    errorAndLog (f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
+                    getSetting('openocdLock').release()
+                    return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
+                self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+            getSetting('openocdLock').release()
 
         self.setupUart()
 
@@ -149,7 +157,8 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def gdbDetach (self):
         self.runCommandGdb("detach")
-        self.expectOnOpenocd ("dropped 'gdb' connection","detach")
+        if (self.useOpenocd()):
+            self.expectOnOpenocd ("dropped 'gdb' connection","detach")
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -193,7 +202,8 @@ class fpgaTarget(object):
     def gdbConnect (self):
         with getSetting('openocdLock'):
             self.runCommandGdb(f"target remote localhost:{self.gdbPort}",erroneousContents="Failed")
-            self.expectOnOpenocd (f"accepting 'gdb' connection on tcp/{self.gdbPort}","connect")
+            if (self.useOpenocd()):
+                self.expectOnOpenocd (f"accepting 'gdb' connection on tcp/{self.gdbPort}","connect")
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -248,6 +258,9 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def expectOnOpenocd (self,endsWith,command,**kwargs):
+        if (not self.useOpenocd()):
+            self.terminateAndExit("<expectOnOpenocd> should not be called when <useOpenocd> is disabled.",
+                exitCode=EXIT.Dev_Bug)
         return self.expectFromTarget (endsWith,command=f"openocd:{command}",
                 overrideShutdown=True,process=self.openocdProcess,**kwargs)
 
@@ -358,10 +371,9 @@ class fpgaTarget(object):
     @decorate.timeWrap
     def fpgaTearDown (self,isReload=False,stage=failStage.unknown):
         if (isEqSetting('mode','evaluateSecurityTests') and (not isReload) and (stage > failStage.gdb)):
-            self.interruptGdb ()
-            
             # Analyze gdb output for FreeRTOS
             if (self.osImage=='FreeRTOS'):
+                self.interruptGdb ()
                 self.gdbOutLines = ftReadLines(self.fGdbOut.name)
                 relvSigs = ['SIGTRAP', 'SIGINT'] # first match list
                 testLogFile = getSetting("currentTest")[3]
@@ -397,12 +409,13 @@ class fpgaTarget(object):
             self.interruptGdb()
             self.gdbDetach()
 
-        # quit openocd
-        shellCommand(f"echo 'shutdown' | nc localhost {self.openocdPort}",check=False,shell=True)
-        try:
-            self.openocdProcess.expect(pexpect.EOF,timeout=10)
-        except Exception as exc:
-            warnAndLog(f"{self.targetIdInfo}fpgaTearDown: Failed to shutdown the openocd process.",doPrint=False,exc=exc)
+        if (self.useOpenocd()):
+            # quit openocd
+            shellCommand(f"echo 'shutdown' | nc localhost {self.openocdPort}",check=False,shell=True)
+            try:
+                self.openocdProcess.expect(pexpect.EOF,timeout=10)
+            except Exception as exc:
+                warnAndLog(f"{self.targetIdInfo}fpgaTearDown: Failed to shutdown the openocd process.",doPrint=False,exc=exc)
 
         # quit gdb
         if (stage > failStage.gdb):

@@ -1330,7 +1330,7 @@ class commonTarget():
     def hasGdbAccess (self):
         return (
             (self.target=='vcu118') or
-            ((self.target=='awsf1') and (self.pvAWS=='firesim'))
+            ((self.target=='awsf1') and (self.pvAWS in ['firesim', 'connectal']))
             )
 
     @decorate.debugWrap
