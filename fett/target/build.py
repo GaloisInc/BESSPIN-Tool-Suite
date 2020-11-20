@@ -125,6 +125,8 @@ def prepareFreeRTOSNetworkParameters(targetId=None):
             settingVal = getSetting(xSetting)
         elif (xMacro=='configIP_ADDR'): #special treatment to accommodate for many-targets
             settingVal = getTargetIp(targetId=targetId)
+        elif (xMacro=='configMAC_ADDR'): #special treatment to accommodate for many-targets
+            settingVal = getTargetMac(targetId=targetId)
         else:
             logAndExit(f"prepareFreeRTOSNetworkParameters: Cannot find setting <{xSetting}>",exitCode=EXIT.Dev_Bug)
             
@@ -146,6 +148,21 @@ def getTargetIp(targetId=None):
                 (isEqSetting('osImage','FreeBSD',targetId=targetId) and isEqSetting('target','vcu118',targetId=targetId))):
             logAndExit(f"<FreeBSD> on <vcu118> has to have the IP <10.88.88.2>; not <{ipTarget}> [ticket#853].",exitCode=EXIT.Dev_Bug)
         return ipTarget
+    else:
+        logAndExit(f"<getTargetIp> is not implemented for <{thisTarget}>.",exitCode=EXIT.Implementation)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def getTargetMac(targetId=None):
+    thisTarget = getSetting('target',targetId=targetId)
+    if (thisTarget=='vcu118'): #use hostIP + targetId
+        macInc = 1 if (targetId is None) else targetId
+        macTarget = getSetting(f"{thisTarget}MacAddrTarget")
+        macTarget = macTarget.split(':')
+        lastmac = int(macTarget[-1],16)
+        lastmac += macInc
+        macTarget[-1] = hex(lastmac)[2:]
+        return ':'.join(str(v) for v in macTarget)
     else:
         logAndExit(f"<getTargetIp> is not implemented for <{thisTarget}>.",exitCode=EXIT.Implementation)
 

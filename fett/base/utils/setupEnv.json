@@ -148,7 +148,8 @@
                     "bluespec_p2" : {
                         "debian" : "notOnAWS",
                         "FreeBSD" : "connectal",
-                        "busybox" : "notOnAWS"
+                        "busybox" : "notOnAWS",
+                        "FreeRTOS" : "notOnAWS"
                     },
                     "chisel_p3" : {
                         "debian" : "notOnAWS",

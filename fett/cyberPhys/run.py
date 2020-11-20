@@ -7,10 +7,34 @@ from fett.base.utils.misc import *
 import fett.cyberPhys.launch
 import fett.target.launch
 
+from fett.apps.unix import otaserver
+
 @decorate.debugWrap
 @decorate.timeWrap
 def runCyberPhys(xTarget):
+    printAndLog ("runCyberPhys: Starting the application stack...")
     # here anything that needs to be done on the targets before handing the user the prompt
+    if (isEnabled('sendTarballToTarget',targetId=xTarget.targetId)):
+        #send any needed files to target
+        xTarget.sendTar(timeout=60)
+
+    # assign modules
+    if (xTarget.osImage=='FreeRTOS'):
+        xTarget.appModules = []
+    elif (xTarget.osImage in ['debian', 'FreeBSD']):
+        xTarget.appModules = [otaserver]
+    else:
+        xTarget.terminateAndExit(f"<runApp> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
+
+    # The appLog will be the file object flying around for logging into app.out
+    appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
+    appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
+    setSetting("appLog",appLog)
+
+    # Install
+    for appModule in xTarget.appModules:
+        appModule.install(xTarget)
+        appLog.flush()
     return
 
 @decorate.debugWrap

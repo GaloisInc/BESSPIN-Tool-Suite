@@ -302,21 +302,22 @@ def getAppDir(app):
     return os.path.join(getSetting('repoDir'),'build', app)
 
 @decorate.debugWrap
-def getBinDir(app):
-    return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'appsBinaries', app, getSetting('osImage'))
+def getBinDir(app,targetId=None):
+    return os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource',targetId=targetId),
+        'appsBinaries', app, getSetting('osImage',targetId=targetId))
 
 @decorate.debugWrap
-def cpFilesToBuildDir (sourceDir, pattern=None):
+def cpFilesToBuildDir (sourceDir, pattern=None, targetId=None):
     # If no pattern is specified, look for "*.c" files if we're building,
     # otherwise *.riscv
     if pattern is None:
         pattern = "*.c" if isEnabled('buildApps') else "*.riscv"
-    cp (sourceDir,getSetting('buildDir'),pattern=pattern)
+    cp (sourceDir,getSetting('buildDir',targetId=targetId),pattern=pattern)
 
 @decorate.debugWrap
-def cpDirToBuildDir(sourceDir):
+def cpDirToBuildDir(sourceDir, targetId=None):
     copyDir(sourceDir, getSetting('buildDir'))
 
 @decorate.debugWrap
-def buildDirPathTuple(path):
-    return (path, os.path.join(getSetting('buildDir'), path))
+def buildDirPathTuple(path, targetId=None):
+    return (path, os.path.join(getSetting('buildDir',targetId=targetId), path))
