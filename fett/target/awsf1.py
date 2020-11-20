@@ -171,7 +171,7 @@ class firesimTarget(fpgaTarget, commonTarget):
 
         self.noNonsenseFiresim()
 
-        filesToClose = [self.fswitchOut]
+        filesToClose = [self.fswitchOut, self.fTtyOut]
         for xFile in filesToClose:
             try:
                 xFile.close()
