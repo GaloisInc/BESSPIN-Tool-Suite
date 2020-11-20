@@ -6,14 +6,6 @@ class testgenTargetCompatibilityLayer:
     """
     def __init__(self, target):
         self.target = target
-
-        setSetting('pocExploitsMode',False)
-
-        if doesSettingExist("PPAC"):
-            self.certsDir = os.path.join(getSetting('buildDir'),'lib_PPAC')
-            if isEqSetting('osImage', 'FreeRTOS'):
-                self.testPart = getSetting("currentTest")[2]
-
         self.osImage = getSetting("osImage")
 
     def __getattr__ (self,attr):
@@ -28,3 +20,12 @@ class testgenTargetCompatibilityLayer:
     def typCommand(self, command): #Note that this returns the `textBack`
         return self.target.runCommand(command,exitOnError=False)[1]
 
+    def isTestInfoEnabled (self,testName,infoName):
+        return isTestInfoEnabled(self.vulClass,testName,infoName)
+
+    def defaultTest(self, testNum, binTest):
+        self.terminateAndExit (f"<defaultTest> is not yet implemented for <{self.vulClass}>.",exitCode=EXIT.Dev_Bug)
+        return
+
+    def recommendationTest(self, testName):
+        return f'<TEXT={getSettingDict(self.vulClass,["testsInfo",testName,"text"])}>\n'

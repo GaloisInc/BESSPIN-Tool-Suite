@@ -49,21 +49,19 @@ def partitionLines (lines,testPart,testNum):
 ## NAME FORMAT IS: test_DDD((__D*_D*)|[_D*])
 ## Test Variant and SEED parts are not currently used in the Numeric_Errors tests
 @decorate.debugWrap
-def scoreAllTests(logs, testsDir):
+def scoreAllTests(logs):
     scores = {}
     for name, log in logs:
         testNum = name.split('_')[1]
         scores[testNum] = {}
-        try:
-            fLog = ftOpenFile("{0}/{1}".format(testsDir,log),"r")
-            logLines = fLog.read().splitlines()
-            fLog.close()
-            nPartsMatch = re.match(r'^<NUMPARTS=(?P<numParts>\d+)>$',logLines[0])
-            numParts = int(nPartsMatch.group('numParts'))
-        except Exception as exc:
-            errorAndLog(f"Failed to score {log}.",exc=exc,doPrint=False)
+        logLines = ftReadLines(log)
+        nPartsMatch = matchExprInLines(r'^<NUMPARTS=(?P<numParts>\d+)>$',logLines)
+        if (nPartsMatch is None):
+            errorAndLog(f"Failed to score {name}.",doPrint=False)
             scores[testNum][1] = SCORES.FAIL
             continue
+
+        numParts = int(nPartsMatch.group('numParts'))
 
         for thisPart in range(1, numParts + 1):
             partLines = partitionLines (logLines,thisPart,testNum) #partitioning first make sure the scoring is done for this part only

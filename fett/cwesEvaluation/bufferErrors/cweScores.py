@@ -82,6 +82,6 @@ def scoreByCWE(rows):
         tab.append([f"{test}", v[0], v[1]])
     return tab
 
-def scoreAllTests(logs, testsDir):
-    tab = count.tabulate(testsDir, count.QEMU_FPGA_LOOKFOR)
+def scoreAllTests(logs):
+    tab = count.tabulate(logs, count.QEMU_FPGA_LOOKFOR)
     return scoreByCWE(tab)

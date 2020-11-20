@@ -1,16 +1,13 @@
-from fett.cwesEvaluation.resourceManagement.cweScores.helpers import *
+from fett.cwesEvaluation.resourceManagement.customCweScores.helpers import *
 
-def test_825 (logTest,testsDir):
+def test_825 (logLines):
     testNum = 825
-    if (logTest != "test_{0}.log".format(testNum)):
-        return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
-    testLines = readLogLines(logTest,testsDir)
 
-    osImage = getOsImage(testLines,testNum=testNum)
+    osImage = getOsImage(logLines,testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
         nParts = 2
-        partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
+        partsLines = regPartitionTest (logLines,nParts,testNum=testNum)
         partsScores = {}
 
         for iPart in range(1,nParts+1):
@@ -27,7 +24,7 @@ def test_825 (logTest,testsDir):
 
     elif (osImage == 'FreeRTOS'):
         nParts = 2
-        partsLines = regPartitionTestFreeRTOS(testLines,nParts,testNum=testNum)
+        partsLines = regPartitionTestFreeRTOS(logLines,nParts,testNum=testNum)
         partsScores = {}
 
         if (doesKeywordExist(partsLines[1],"<REGULAR_PASSED>")):

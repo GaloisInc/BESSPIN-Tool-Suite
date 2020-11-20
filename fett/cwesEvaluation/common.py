@@ -148,13 +148,14 @@ def isTestEnabled(vulClass, testName):
 @decorate.debugWrap
 def doesTheTestNeedBootedOs(vulClass, testName):
     if (vulClass in ["hardwareSoC","PPAC"]):
-        return (getSettingDict(vulClass,["testsInfo",testName,"bootedOs"])==1)
+        return isTestInfoEnabled(vulClass,testName,"bootedOs")        
     else:
         return True
 
 @decorate.debugWrap
 def doesTheTestHaveACfile(vulClass, testName):
     if (vulClass in ["hardwareSoC","PPAC"]):
-        return (getSettingDict(vulClass,["testsInfo",testName,"cFile"])==1)
+        return isTestInfoEnabled(vulClass,testName,"cFile")   
     else:
         return True
+

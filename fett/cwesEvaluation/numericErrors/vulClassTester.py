@@ -14,6 +14,11 @@ partCount = {"test_456" : 3,
              "test_824" : 2}
 
 class vulClassTester(testgenTargetCompatibilityLayer):
+    def __init__(self, target):
+        super().__init__(target)
+        self.vulClass = "numericErrors"
+        return
+
     def executeTest (self,binTest):
         testName = binTest.split('.')[0]
         testNum = testName.split('_')[1]

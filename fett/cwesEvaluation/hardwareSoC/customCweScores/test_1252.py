@@ -1,12 +1,8 @@
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.hardwareSoC.cweScores.helpers import *
+from fett.cwesEvaluation.utils.scoringHelpers import *
 
-def test_1252(logTest,logsDir):
-    testNum = 1252
-    if (logTest != f"test_{testNum}.log"):
-        return [f"TEST-{testNum}", SCORES.FAIL, "Wrong test called!"]
-    
-    logText = ftReadLines(os.path.join(logsDir,logTest),splitLines=False)
+def test_1252(dispName, logText):
+    dispName = "TEST-1252"
 
     relvKeywords = [  "<NOGDB>","<INVALID>",
                         "<EXECUTION>","<WRITE>","<READ>",
@@ -14,7 +10,7 @@ def test_1252(logTest,logsDir):
     keywordsDict = doKeywordsExistInText(logText,relvKeywords)
 
     if (keywordsDict["<NOGDB>"]):
-        return overallScore ([],testNum,msgIfNotImplemented="Requires GDB Access")
+        return overallScore ([],dispName,msgIfNotImplemented="Requires GDB Access")
 
     if (keywordsDict["<INVALID>"]):
         score = SCORES.CALL_ERR
@@ -29,5 +25,5 @@ def test_1252(logTest,logsDir):
     else:
         score = SCORES.FAIL
 
-    return overallScore([adjustToCustomScore(logText.splitlines(),score)],testNum)
+    return overallScore([adjustToCustomScore(logText.splitlines(),score)],dispName)
 

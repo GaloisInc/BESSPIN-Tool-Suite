@@ -31,6 +31,7 @@ testsInfo = {
 class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
+        self.vulClass = "resourceManagement"
         return
 
     def executeTest (self,binTest):

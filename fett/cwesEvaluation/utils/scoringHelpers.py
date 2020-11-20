@@ -1,22 +1,21 @@
-#! /usr/bin/env python3
 """  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 helpers functions for scoring the CWE tests
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
-import re
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
+import re
 
-def overallScore (listScores, testNum, msgIfNotImplemented="Not Implemented", 
+def overallScore (listScores, dispName, msgIfNotImplemented="Not Implemented", 
         msgIfRecommended="Error - Recommendation text is not available"):
     if (len(listScores)==0): #not implemented
-        return ["TEST-{0}".format(testNum), SCORES.NOT_IMPLEMENTED, msgIfNotImplemented]
+        return [dispName, SCORES.NOT_IMPLEMENTED, msgIfNotImplemented]
     elif ((len(listScores)==1) and (listScores[0]==SCORES.RECOMMEND)):
-        return [f"TEST-{testNum}", SCORES.RECOMMEND, msgIfRecommended]
+        return [dispName, SCORES.RECOMMEND, msgIfRecommended]
     ovrScore = SCORES.minScore(listScores)
     scoreString = ', '.join([f"p{i+1:02d}:{partScore}" for i,partScore in enumerate(listScores)])
 
-    return ["TEST-{0}".format(testNum), ovrScore, scoreString]
+    return [dispName, ovrScore, scoreString]
 
 def doesKeywordExistInLines (lines, keyword):
     for line in lines:
@@ -30,13 +29,12 @@ def doKeywordsExistInText (logText, keywords):
         keywordsDict[keyword] = (re.search(keyword,logText) is not None)
     return keywordsDict
 
-def defaultRecommendationText (testNum, logsDir):
-    logLines = ftReadLines(os.path.join(logsDir,f"test_{testNum}.log"))
+def defaultRecommendationText (dispName, testLog):
+    logLines = ftReadLines(testLog)
     if doesKeywordExistInLines (logLines,"<INVALID>"):
-        return overallScore([SCORES.CALL_ERR],testNum)
+        return overallScore([SCORES.CALL_ERR],dispName)
     textMatch = matchExprInLines (r"^<TEXT=(?P<cweText>.+)>",logLines)
     if (textMatch is None):
-        return overallScore([SCORES.RECOMMEND],testNum)
+        return overallScore([SCORES.RECOMMEND],dispName)
     else:
-        return overallScore([SCORES.RECOMMEND],testNum,msgIfRecommended=textMatch.group("cweText"))
-
+        return overallScore([SCORES.RECOMMEND],dispName,msgIfRecommended=textMatch.group("cweText"))
