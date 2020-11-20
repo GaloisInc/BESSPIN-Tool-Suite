@@ -5,7 +5,7 @@ Building any binaries or images for cyberPhys
 
 from fett.base.utils.misc import *
 import fett.target.build
-from fett.apps.build import cpFilesToBuildDir, getBinDir, buildDirPathTuple
+from fett.apps.build import cpFilesToBuildDir, getBinDir, buildDirPathTuple, getAppDir
 import functools
 
 @decorate.debugWrap
@@ -36,14 +36,29 @@ def copyOtaUpdateserverFiles(tarName, targetId=None):
     Stuff the server binary into a tar file
     """
     # Just grab the pre-built binary
-    cpFilesToBuildDir (getBinDir('ota-update-server',targetId=targetId), pattern="ota.elf", targetId=targetId)
-    # Create the tarball here to be sent to target
-    tarFiles = ["ota.elf"]
+    osImage = getSetting('osImage',targetId=targetId)
+    otaAppDir = getAppDir('ota-update-server')
+    otaBinDir = getBinDir('ota-update-server',targetId=targetId)
+    cpFilesToBuildDir (otaBinDir, pattern="ota.elf", targetId=targetId)
+    cpFilesToBuildDir (otaAppDir, pattern="key.txt", targetId=targetId)
+    tarFiles = ["ota.elf","key.txt"]
 
-    if getSetting('osImage',targetId=targetId) in ['FreeBSD']:
+    runtimeFilesDir = os.path.join(otaAppDir, osImage)
+    if osImage == 'debian':
+        cpFilesToBuildDir (runtimeFilesDir, pattern="ota.service", targetId=targetId)
+        tarFiles += ["ota.service"]
+    elif osImage == 'FreeBSD':
+        cpFilesToBuildDir (runtimeFilesDir, pattern="ota.sh", targetId=targetId)
+        tarFiles += ["ota.sh"]
+    else:
+        logAndExit (f"Installing ota-update-server is not supported on <{osImage}>",
+                    exitCode=EXIT.Dev_Bug)
+
+    # Create the tarball here to be sent to target
+    if osImage == 'FreeBSD':
         # add GDB
-        cpFilesToBuildDir (getBinDir('ota-update-server',targetId=targetId), pattern="gdb-freebsd-riscv64-static", targetId=targetId)
-        tarFiles.append("gdb-freebsd-riscv64-static")
+        cpFilesToBuildDir (otaBinDir, pattern="gdb-freebsd-riscv64-static", targetId=targetId)
+        tarFiles += ["gdb-freebsd-riscv64-static"]
     
     buildDirPathTuplePartial = functools.partial(buildDirPathTuple, targetId=targetId)
     filesList=map(buildDirPathTuplePartial, tarFiles)

@@ -316,7 +316,7 @@ def cpFilesToBuildDir (sourceDir, pattern=None, targetId=None):
 
 @decorate.debugWrap
 def cpDirToBuildDir(sourceDir, targetId=None):
-    copyDir(sourceDir, getSetting('buildDir'))
+    copyDir(sourceDir, getSetting('buildDir', targetId=targetId))
 
 @decorate.debugWrap
 def buildDirPathTuple(path, targetId=None):
