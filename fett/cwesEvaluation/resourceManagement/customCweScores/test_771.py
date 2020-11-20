@@ -1,19 +1,16 @@
-from fett.cwesEvaluation.resourceManagement.cweScores.helpers import *
+from fett.cwesEvaluation.resourceManagement.customCweScores.helpers import *
 
-def test_771 (logTest,testsDir):
+def test_771 (logLines):
     testNum = 771
-    if (logTest != "test_{0}.log".format(testNum)):
-        return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
-    testLines = readLogLines(logTest,testsDir)
 
-    osImage = getOsImage(testLines,testNum=testNum)
+    osImage = getOsImage(logLines,testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
         return overallScore ([],testNum)
 
     elif (osImage == 'FreeRTOS'):
         nParts = 5
-        partsLines = regPartitionTestFreeRTOS(testLines,nParts,testNum=testNum)
+        partsLines = regPartitionTestFreeRTOS(logLines,nParts,testNum=testNum)
         partsScores = {}
 
         if (doesKeywordExist(partsLines[1],"<F_MALLOC_SUCCEEDED>")):

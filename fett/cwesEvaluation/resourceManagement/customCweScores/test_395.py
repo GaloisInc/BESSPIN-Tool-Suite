@@ -1,16 +1,13 @@
-from fett.cwesEvaluation.resourceManagement.cweScores.helpers import *
-import time
+from fett.cwesEvaluation.resourceManagement.customCweScores.helpers import *
 
-def test_476 (logTest,testsDir):
-    testNum = 476
-    if (logTest != "test_{0}.log".format(testNum)):
-        return ["CWE-{0}".format(testNum), "--", "Wrong test called!"]
-    testLines = readLogLines(logTest,testsDir)
-    osImage = getOsImage(testLines,testNum=testNum)
+def test_395 (logLines):
+    testNum = 395
+
+    osImage = getOsImage(logLines,testNum=testNum)
 
     if (osImage == 'debian' or osImage == 'FreeBSD'):
-        nParts = 3
-        partsLines = regPartitionTest (testLines,nParts,testNum=testNum)
+        nParts = 2
+        partsLines = regPartitionTest (logLines,nParts,testNum=testNum)
         partsScores = {}
 
         for iPart in range(1,nParts+1):
@@ -20,14 +17,12 @@ def test_476 (logTest,testsDir):
                 partsScores[iPart] = SCORES.V_HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault')):
                 partsScores[iPart] = SCORES.HIGH
-            elif (doesKeywordExist(partsLines[iPart],'<REGULAR>') and (iPart==1)):
-                partsScores[iPart] = SCORES.NONE
             else:
                 partsScores[iPart] = SCORES.FAIL
 
     elif (osImage == 'FreeRTOS'):
         nParts = 2
-        partsLines = regPartitionTestFreeRTOS(testLines,nParts,testNum=testNum)
+        partsLines = regPartitionTestFreeRTOS(logLines,nParts,testNum=testNum)
         partsScores = {}
 
         if (doesKeywordExist(partsLines[1],"<DEREFERENCE-VIOLATION_PASSED_SUCCESSFULLY>")):

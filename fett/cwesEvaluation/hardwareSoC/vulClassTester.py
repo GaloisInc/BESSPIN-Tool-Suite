@@ -11,6 +11,7 @@ import pexpect
 class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
+        self.vulClass = "hardwareSoC"
         return
 
     def executeTest (self,binTest):
@@ -25,14 +26,14 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         outLog += f"<OSIMAGE={self.osImage}>\n"
         outLog += f"<XLEN={self.xlen}>\n"
 
-        if (self.getTestInfo(testName,'gdb') and (not self.hasGdbAccess())):
+        if (self.isTestInfoEnabled(testName,'gdb') and (not self.hasGdbAccess())):
             warnAndLog (f"Test <{testNum}> requires GDB access!")
             outLog += f"<NOGDB>\n"
             return outLog
 
-        if (self.getTestInfo(testName,'recommendation')):
+        if (self.isTestInfoEnabled(testName,'recommendation')):
             outLog += self.recommendationTest (testName)
-        elif (self.getTestInfo(testName,'hasMethod')):
+        elif (self.isTestInfoEnabled(testName,'hasMethod')):
             if (hasattr(cweTests,testName)):
                 outLog += getattr(getattr(cweTests,testName),testName)(self,binTest)
             else:
@@ -41,13 +42,6 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             outLog += self.defaultTest(testNum, binTest)
 
         return outLog
-
-    def getTestInfo (self,testName,infoName):
-        return (getSettingDict("hardwareSoC",["testsInfo",testName,infoName])==1)
-
-    def defaultTest(self, testNum, binTest):
-        self.terminateAndExit (f"<defaultTest> is not yet implemented for <hardwareSoC>.",exitCode=EXIT.Implementation)
-        return
 
     def endFreeRTOSTest (self):
         textBack,wasTimeout,idxReturn = self.expectFromTarget([">>>End of Fett<<<", pexpect.EOF],
@@ -58,9 +52,6 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             textBack += "\n<TIMEOUT>\n"
 
         return textBack
-
-    def recommendationTest(self, testName):
-        return f'<TEXT={getSettingDict("hardwareSoC",["testsInfo",testName,"text"])}>\n'
 
 class inGdbTest: 
     def __init__(self,target):

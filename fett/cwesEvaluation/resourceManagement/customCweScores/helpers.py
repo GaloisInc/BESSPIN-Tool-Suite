@@ -8,12 +8,6 @@ import re
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 
-def readLogLines (logTest,testsDir):
-    fLog = ftOpenFile("{0}/{1}".format(testsDir,logTest),"r")
-    lines = fLog.read().splitlines()
-    fLog.close()
-    return lines
-
 def getOsImage (lines,testNum=None):
     warnText = "" if (testNum is None) else " in test_{0}.log".format(testNum)
     for line in lines:
@@ -23,20 +17,20 @@ def getOsImage (lines,testNum=None):
     print ("Error: Could not determine <osImage>{0}.".format(warnText))
     return "NoOsImageFound"
 
-def regPartitionTest (testLines,nParts,testNum=None):
+def regPartitionTest (logLines,nParts,testNum=None):
     partsLines = {}
     for iPart in range(1,nParts+1):
         start = f"---Part{iPart:02d}:"
         end = f"---Part{iPart+1:02d}:" if (iPart<nParts) else "-"*50
-        partsLines[iPart] = partitionLines(testLines,start,end,testNum=testNum)
+        partsLines[iPart] = partitionLines(logLines,start,end,testNum=testNum)
     return partsLines
 
-def regPartitionTestFreeRTOS (testLines,nParts,testNum=None):
+def regPartitionTestFreeRTOS (logLines,nParts,testNum=None):
     partsLines = {}
     for iPart in range(1,nParts+1):
         start = f"---Part{iPart:02d}:"
         end = [f">>>End", "<GDB-SIG", "Error", "error", "---Part{:02d}:".format(iPart+1)]
-        partsLines[iPart] = partitionLines(testLines,start,end,testNum=testNum,doPrintWarnings=False)
+        partsLines[iPart] = partitionLines(logLines,start,end,testNum=testNum,doPrintWarnings=False)
         #print(partsLines[iPart])
     return partsLines
 

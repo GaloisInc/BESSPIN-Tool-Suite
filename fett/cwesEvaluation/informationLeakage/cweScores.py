@@ -5,6 +5,7 @@ from fett.base.utils.misc import *
 from fett.cwesEvaluation.utils import featureModelUtil
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 from fett.cwesEvaluation.informationLeakage.iexutils import dirnames
+import glob,os
 
 """
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -45,7 +46,7 @@ def generateCweMap():
         mapping[t] = [ cwe for (cwe, on) in zip(CWES, result) if on ]
     return mapping
 
-def scoreAllTests(logs, testsDir):
+def scoreAllTests(logs):
     cwemap = generateCweMap()
     scoresDict = defaultdict(list)
     for name, log in logs:
@@ -53,7 +54,7 @@ def scoreAllTests(logs, testsDir):
         testNums = cwemap[driver]
         for testNum in testNums:
             testNum = testNum.split("_")[1]
-            scoresDict[testNum].append(scoreTest(log, testsDir))
+            scoresDict[testNum].append(scoreTest(log))
 
     ret = []
     for testNum, listScores in scoresDict.items():
@@ -72,13 +73,8 @@ def scoreAllTests(logs, testsDir):
     return ret
 
 
-def scoreTest(logTest, testsDir):
-    try:
-        fLog = ftOpenFile("{0}/{1}".format(testsDir,logTest),"r")
-        log = fLog.read()
-        fLog.close()
-    except:
-        return SCORES.FAIL
+def scoreTest(logTest):
+    log = ftReadLines(logTest,splitLines=False)
 
     if log.find('TEST NOT IMPLEMENTED') >= 0:
         score = SCORES.NOT_IMPLEMENTED
