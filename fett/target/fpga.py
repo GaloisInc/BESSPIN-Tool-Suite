@@ -286,7 +286,8 @@ class fpgaTarget(object):
         if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
             self.sendToTarget('\x03',exitOnError=False,process=self.gdbProcess) #send one extra \x03
         self.keyboardInterrupt(exitOnError=False,retryCount=1,process=self.gdbProcess,
-            endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15)
+            endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15,
+            respondEndsWith=(r"Stop debugging it\? \(y or n\)","y"))
 
     @decorate.debugWrap
     def continueGdb(self):
@@ -411,7 +412,7 @@ class fpgaTarget(object):
 
         if (self.useOpenocd()):
             # quit openocd
-            shellCommand(f"echo 'shutdown' | nc localhost {self.openocdPort}",check=False,shell=True)
+            shellCommand(f"echo 'shutdown' | nc localhost {self.openocdPort}",check=False,shell=True,timeout=5)
             try:
                 self.openocdProcess.expect(pexpect.EOF,timeout=10)
             except Exception as exc:
