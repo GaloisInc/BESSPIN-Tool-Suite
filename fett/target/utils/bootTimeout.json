@@ -15,8 +15,8 @@
         "name": "elfLoader",
         "JTAG": { 
           "name" : "procLevel",
-          "p2" : { "timeout" : { "elfLoad" : 600, "boot" : 300 } },
-          "p3" : { "timeout" : { "elfLoad" : 600, "boot" : 1000 } }
+          "p2" : { "timeout" : { "elfLoad" : 900, "boot" : 300 } },
+          "p3" : { "timeout" : { "elfLoad" : 900, "boot" : 1000 } }
         },
         "else": { "timeout" : { "boot" : 500 } }
       }
