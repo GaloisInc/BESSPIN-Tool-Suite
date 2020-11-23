@@ -67,14 +67,7 @@ def watchdog(targetId):
                 return True
 
         # Check process
-        if ((not getSetting('targetObj',targetId=targetId).process.isalive()) 
-            and handleError("Target is down")):
-            break
-
-        # Ping network
-        if ((not getSetting('targetObj',targetId=targetId).pingTarget(
-                                    exitOnError=False,pingAttempts=10,printSuccess=False))
-             and handleError("Failed to ping target")):
+        if not isTargetAlive(targetId) and handleError("Target is not alive"):
             break
 
         time.sleep(10)
@@ -85,3 +78,30 @@ def watchdog(targetId):
     fett.cyberPhys.launch.ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
 
     return
+
+@decorate.debugWrap
+@decorate.timeWrap
+def isTargetAlive(targetId):
+    xTarget = getSetting('targetObj',targetId=targetId)
+    if not xTarget.process.isalive():
+        printAndLog(f"Target <{targetId}> process is not alive.")
+        return False
+
+    if not xTarget.pingTarget(exitOnError=False,pingAttempts=10,printSuccess=False):
+        printAndLog(f"Target <{targetId}> does not respond to ping.")
+        return False
+
+    osImage = getSetting('osImage',targetId=targetId)
+    if osImage == 'FreeRTOS':
+        # TODO
+        logAndExit (f"<isTargetAlive> is not implemented for <{osImage}>.",exitCode=EXIT.Implementation)
+    elif osImage in ['debian', 'FreeBSD']:
+        if not otaserver.deploymentTest(xTarget):
+            printAndLog(f"Target <{targetId}> ota server doesn't respond. Attempting to recover.")
+            if not otaserver.restart(xTarget):
+                printAndLog(f"Target <{targetId}> ota recovery failed.")
+                return False
+    else:
+        logAndExit (f"<isTargetAlive> is not implemented for <{osImage}>.",exitCode=EXIT.Implementation)
+
+    return True
