@@ -210,7 +210,10 @@ def launchFett (targetId=None):
     xTarget.start()
     if (isEnabled('isUnix',targetId=targetId) and (xTarget.osHasBooted)):
         if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) 
-                and (not isEqSetting('mode','evaluateSecurityTests'))): #no need to change pw in evaluation mode
+                and (   (not isEqSetting('mode','evaluateSecurityTests')) 
+                        or isEqSetting('binarySource','SRI-Cambridge',targetId=targetId) #Have to change pw if SRI-Cambridge
+                    )
+            ): #no need to change pw in evaluation mode
             xTarget.changeRootPassword()
         xTarget.createUser()
     if (isEnabled('runApp',targetId=targetId)):
