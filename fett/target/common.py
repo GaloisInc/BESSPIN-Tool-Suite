@@ -965,7 +965,22 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,exitOnError=True,timeout=15,retryCount=3,process=None,endsWith=None, sendToNonUnix=False):
+    def keyboardInterrupt ( self, exitOnError=True, timeout=15, retryCount=3,
+                            process=None, endsWith=None, sendToNonUnix=False):
+        """
+        " keyboardInterrupt: Attemtps to ^C and recover.
+        "   ARGUMENTS:
+        "   ----------
+        "   exitOnError: Boolean. Whether to return or terminateAndExit in case of error.
+        "   timeout: how long to wait for endsWith before timing out.
+        "   retryCount: How many retries/(^Cs) before error.
+        "   process: runCommand with a different process than self.process
+        "   endsWith: String/regex or list of strings/regex. The expected returns when either is received from target.
+        "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
+        "   --------
+        "   RETURNS:
+        "   A string containing all text returned back from the target during the resolving of the interrupt.
+        """
         process = self.process if process is None else process
         if (endsWith is None):
             endsWith = [self.getDefaultEndWith()]
