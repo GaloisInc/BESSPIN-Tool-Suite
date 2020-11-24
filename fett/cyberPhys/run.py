@@ -12,7 +12,7 @@ from fett.apps.unix import otaserver
 @decorate.debugWrap
 @decorate.timeWrap
 def runCyberPhys(xTarget):
-    printAndLog ("runCyberPhys: Starting the application stack...")
+    printAndLog (f"{xTarget.targetIdInfo}runCyberPhys: Starting the application stack...")
     # here anything that needs to be done on the targets before handing the user the prompt
     if (isEnabled('sendTarballToTarget',targetId=xTarget.targetId)):
         #send any needed files to target
@@ -24,7 +24,7 @@ def runCyberPhys(xTarget):
     elif (xTarget.osImage in ['debian', 'FreeBSD']):
         xTarget.appModules = [otaserver]
     else:
-        xTarget.terminateAndExit(f"<runApp> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
+        xTarget.terminateAndExit(f"{xTarget.targetIdInfo}<runApp> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
 
     # The appLog will be the file object flying around for logging into app.out
     appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
@@ -84,24 +84,24 @@ def watchdog(targetId):
 def isTargetAlive(targetId):
     xTarget = getSetting('targetObj',targetId=targetId)
     if not xTarget.process.isalive():
-        printAndLog(f"Target <{targetId}> process is not alive.")
+        printAndLog(f"{xTarget.targetIdInfo}process is not alive.")
         return False
 
     if not xTarget.pingTarget(exitOnError=False,pingAttempts=10,printSuccess=False):
-        printAndLog(f"Target <{targetId}> does not respond to ping.")
+        printAndLog(f"{xTarget.targetIdInfo}does not respond to ping.")
         return False
 
     osImage = getSetting('osImage',targetId=targetId)
     if osImage == 'FreeRTOS':
         # TODO
-        logAndExit (f"<isTargetAlive> is not implemented for <{osImage}>.",exitCode=EXIT.Implementation)
+        logAndExit (f"{xTarget.targetIdInfo}<isTargetAlive> is not implemented for <{osImage}>.",exitCode=EXIT.Implementation)
     elif osImage in ['debian', 'FreeBSD']:
         if not otaserver.deploymentTest(xTarget):
-            printAndLog(f"Target <{targetId}> ota server doesn't respond. Attempting to recover.")
+            printAndLog(f"{xTarget.targetIdInfo}ota server doesn't respond. Attempting to recover.")
             if not otaserver.restart(xTarget):
-                printAndLog(f"Target <{targetId}> ota recovery failed.")
+                printAndLog(f"{xTarget.targetIdInfo}ota recovery failed.")
                 return False
     else:
-        logAndExit (f"<isTargetAlive> is not implemented for <{osImage}>.",exitCode=EXIT.Implementation)
+        logAndExit (f"{xTarget.targetIdInfo}<isTargetAlive> is not implemented for <{osImage}>.",exitCode=EXIT.Implementation)
 
     return True
