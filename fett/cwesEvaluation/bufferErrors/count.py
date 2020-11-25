@@ -23,12 +23,12 @@ CWE_680_INT_OVERFLOW_LOOKFOR = [
         ]
 
 def triage(filepath,lookfor):
-    testRan = False
     if not filepath.is_file():
         logAndExit(f"<bufferErrors.count.triage> <{filepath}> is not a file",
                    exitCode=EXIT.Files_and_paths)
     for (symbol, indicators) in lookfor:
         log = ftOpenFile(filepath, 'r')
+        testRan = False
         for line in log:
             if '<BufferErrors Start>' in line:
                 testRan = True

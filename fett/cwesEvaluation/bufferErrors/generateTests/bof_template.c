@@ -47,10 +47,16 @@
 #endif
 
 // Required for memset's definition
-#ifdef STACK
+#if defined(STACK) || defined(testgenOnDebian)
 #include <string.h>
 #endif
 
+#ifdef testgenOnDebian
+// Required for sigaction
+#include <signal.h>
+// Required for _exit
+#include <unistd.h>
+#endif
 
 #ifdef VAR_ARGS
 #include<stdarg.h>
@@ -303,6 +309,12 @@ void test(void)
 #endif//JMP
 }}
 
+#ifdef testgenOnDebian
+void handle_signal(int signum) {{
+    // Exit with signal number as return code
+    _exit(signum);
+}};
+#endif
 
 /*
  * Main Function
@@ -313,6 +325,19 @@ int main()
     setbuf(stdout, NULL);
     printf("<BufferErrors Start>\r\n");
     fflush(stdout);
+
+#ifdef testgenOnDebian
+    // Register segmentation fault signal handler on Debian to prevent
+    // interleaving of "unhandled signal 11" messages and test output.
+    struct sigaction sigsegv_action;
+    memset(&sigsegv_action, 0, sizeof(sigsegv_action));
+    sigsegv_action.sa_handler = handle_signal;
+    if (sigaction(SIGSEGV, &sigsegv_action, NULL)) {{
+        printf("TEST INVALID. <sigaction>\r\n");
+        fflush(stdout);
+        return 0;
+    }};
+#endif
 
 #ifdef JMP
     int jmp_return = setjmp(env);
