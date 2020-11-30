@@ -7,6 +7,7 @@ core
 *.mypy_cache/
 .DS_STORE
 .idea/
+.vscode/
 
 # CI Gitignores
 ci/userdata.txt
