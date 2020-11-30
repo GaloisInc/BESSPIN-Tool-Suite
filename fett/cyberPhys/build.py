@@ -5,7 +5,7 @@ Building any binaries or images for cyberPhys
 
 from fett.base.utils.misc import *
 import fett.target.build
-from fett.apps.build import cpFilesToBuildDir, getBinDir, buildDirPathTuple, getAppDir
+from fett.apps.build import cpFilesToBuildDir, getBinDir, buildDirPathTuple
 import functools
 
 @decorate.debugWrap
@@ -37,7 +37,7 @@ def copyOtaUpdateserverFiles(tarName, targetId=None):
     """
     # Just grab the pre-built binary
     osImage = getSetting('osImage',targetId=targetId)
-    otaAppDir = getAppDir('ota-update-server')
+    otaAppDir = getCyberphysAppDir('ota-update-server')
     otaBinDir = getBinDir('ota-update-server',targetId=targetId)
     cpFilesToBuildDir (otaBinDir, pattern="ota.elf", targetId=targetId)
     cpFilesToBuildDir (otaAppDir, pattern="key.txt", targetId=targetId)
@@ -68,8 +68,9 @@ def copyOtaUpdateserverFiles(tarName, targetId=None):
 @decorate.timeWrap
 def buildOtaUpdateServer(tarName, targetId=None):
     if (isEnabled('buildApps')):
+        # Build server
         logAndExit (f"Building from source is not supported for the OTA update server application",
-                    exitCode=EXIT.Configuration)
+                   exitCode=EXIT.Configuration)
     else:
         tarFiles = copyOtaUpdateserverFiles(tarName,targetId=targetId)
         #Create the tarball here to be sent to target
@@ -101,3 +102,7 @@ def prepareFreeRTOS(targetId=None):
 
     return os.path.join(buildDir,'FreeRTOS.elf')
 
+
+@decorate.debugWrap
+def getCyberphysAppDir(app):
+    return os.path.join(getSetting('repoDir'),'build','cyberphys', app)
