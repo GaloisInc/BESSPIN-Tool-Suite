@@ -191,7 +191,6 @@
             "name" : "nixEnv",
             "type" : "dict",
             "val" : {
-                "netboot" : "FETT_NETBOOT",
                 "debian" : {
                     "vcu118" : "FETT_GFE_DEBIAN_VCU118",
                     "qemu" : "FETT_GFE_DEBIAN_QEMU",
