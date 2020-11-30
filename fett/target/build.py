@@ -217,7 +217,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
             envVars.append(f"INC_FETT_APPS={buildDir}")
             if (isEqSetting('cross-compiler','Clang')):
                 # check that the sysroot env variable exists:
-                sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
+                sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot', str(getSetting('xlen',targetId=targetId))])
                 if (sysRootEnv not in os.environ):
                     logAndExit (f"{targetInfo}<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
                 envVars.append(f"SYSROOT_DIR={os.environ[sysRootEnv]}")
