@@ -324,13 +324,14 @@ def importImage(targetId=None):
             if (isEqSetting('procLevel','p3',targetId=targetId)):
                 warnAndLog(f"<importImage>: Netboot is currently not supported on P3. Falling back to JTAG.")
                 setSetting('elfLoader','JTAG',targetId=targetId)
-            netbootElf = os.path.join(getSetting('osImagesDir',targetId=targetId),f"netboot.elf")
-            setSetting('netbootElf',netbootElf,targetId=targetId)
-            netbootImage = getSettingDict('nixEnv','netboot')
-            if (netbootImage in os.environ):
-                cp(os.environ[netbootImage],netbootElf)
             else:
-                logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
+                netbootElf = os.path.join(getSetting('osImagesDir',targetId=targetId),f"netboot.elf")
+                setSetting('netbootElf',netbootElf,targetId=targetId)
+                netbootImage = getSettingDict('nixEnv','netboot')
+                if (netbootImage in os.environ):
+                    cp(os.environ[netbootImage],netbootElf)
+                else:
+                    logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
     else:
         warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is <{getSetting('target',targetId=targetId)}>", doPrint=False)
     logging.info(f"{getSetting('osImage',targetId=targetId)} image imported successfully.")
