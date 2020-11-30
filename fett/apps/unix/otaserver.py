@@ -37,7 +37,7 @@ def install (xTarget):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def deploymentTest (xTarget) -> bool:
+def isServiceRunning (xTarget):
     appLog = getSetting('appLog',targetId=xTarget.targetId)
     otaserver_port = getSetting('OtaServerPortTarget')
     url = f"http://{xTarget.ipTarget}:{otaserver_port}"
@@ -67,5 +67,4 @@ def restart (xTarget):
     else:
         xTarget.terminateAndExit (f"{xTarget.targetIdInfo}Can't restart ota service on <{getSetting('osImage',targetId=xTarget.targetId)}>",
                      exitCode=EXIT.Dev_Bug)
-    printAndLog(f"{xTarget.targetIdInfo}Ota restared. Testing...",tee=appLog)
-    return deploymentTest(xTarget)
+    printAndLog(f"{xTarget.targetIdInfo}Ota restared.",tee=appLog)
