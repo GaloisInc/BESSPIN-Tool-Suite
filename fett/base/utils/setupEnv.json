@@ -211,7 +211,10 @@
                     "firesim" :  "FETT_GFE_BUSYBOX_FIRESIM"
                 },
                 "FreeRTOS" : {
-                    "clang-sysroot" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
+                    "clang-sysroot" : {
+                        "32" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
+                        "64" : "RISCV64_CLANG_BAREMETAL_SYSROOT"
+                    },
                     "vcu118" : "FETT_GFE_FREERTOS_VCU118",
                     "firesim" :  "FETT_GFE_FREERTOS_FIRESIM"
                 },
