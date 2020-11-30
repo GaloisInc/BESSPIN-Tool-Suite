@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 import fett.cyberPhys.launch
 import fett.target.launch
 
-from fett.apps.unix import otaserver
+from fett.cyberPhys import otaserver
 
 @decorate.debugWrap
 @decorate.timeWrap
