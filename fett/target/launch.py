@@ -158,6 +158,8 @@ def prepareEnv (targetId=None):
     elif (osImage=='busybox'):
         printAndLog(f"{targetInfo}<busybox> is only used for smoke testing the target/network. No applications are supported.")
         setSetting('runApp',False,targetId=targetId)
+        if (isEqSetting("mode", "evaluateSecurityTests")):
+            setSetting("isThereAReasonToBoot",True) #boot to test
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{osImage}>.",exitCode=EXIT.Dev_Bug)
 
