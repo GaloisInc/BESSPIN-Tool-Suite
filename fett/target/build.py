@@ -156,12 +156,15 @@ def getTargetIp(targetId=None):
 def getTargetMac(targetId=None):
     thisTarget = getSetting('target',targetId=targetId)
     if (thisTarget=='vcu118'): #use hostIP + targetId
-        macInc = 1 if (targetId is None) else targetId
-        macTarget = getSetting(f"{thisTarget}MacAddrTarget")
-        macTarget = macTarget.split(':')
-        lastmac = int(macTarget[-1],16)
-        lastmac += macInc
-        macTarget[-1] = hex(lastmac)[2:]
+        try:
+            macInc = 1 if (targetId is None) else targetId
+            macTarget = getSetting(f"{thisTarget}MacAddrTarget")
+            macTarget = macTarget.split(':')
+            lastmac = int(macTarget[-1],16)
+            lastmac = (lastmac + macInc) % 0xff
+            macTarget[-1] = f"{lastmac:#0{4}x}"[2:]
+        except Exception as exc:
+            logAndExit(f"getTargetMac: Failed to add {macInc} to {macTarget}",exc=exc,exitCode=EXIT.Dev_Bug)
         return ':'.join(str(v) for v in macTarget)
     else:
         logAndExit(f"<getTargetIp> is not implemented for <{thisTarget}>.",exitCode=EXIT.Implementation)

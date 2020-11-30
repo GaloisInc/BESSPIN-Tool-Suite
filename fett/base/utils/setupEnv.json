@@ -336,6 +336,11 @@
                 "vid" : 4292,
                 "pid" : 60016
             }
-        }
+        },
+        {
+            "name" : "OtaServerPortTarget",
+            "type" : "int",
+            "val" : 5050
+        },
     ]
 }

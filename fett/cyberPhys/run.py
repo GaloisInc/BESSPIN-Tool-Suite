@@ -27,9 +27,9 @@ def runCyberPhys(xTarget):
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}<runApp> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
 
     # The appLog will be the file object flying around for logging into app.out
-    appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
+    appLog = ftOpenFile(os.path.join(getSetting('workDir'),f"app{xTarget.targetSuffix}.out"), 'a')
     appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
-    setSetting("appLog",appLog)
+    setSetting("appLog",appLog,targetId=xTarget.targetId)
 
     # Install
     for appModule in xTarget.appModules:
