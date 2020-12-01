@@ -2,23 +2,9 @@
 - This file is included in the used FreeRTOSIPConfig.h
 */
 
-/* Flags for using HTTP */
 #define ipconfigUSE_HTTP 0
 #define ipconfigUSE_FTP  0
-
-/* For FETT only...
-   We include DHCP to offer CVE-2019-16602
-   We include DNS  to offer CVE-2019-16525
-
-   Note that the FETT application does NOT actually USE DNS or DHCP, but we
-   include the code in the build to include these CVEs in the application's
-   attack surface.
-
-   See comments in FreeRTOS/Demo/RISC-V_Galois_P1/FreeRTOSIPConfig.h
-*/
 #define ipconfigUSE_DHCP 0
-/* Short DHCP timeout so that DHCP fails fast and falls back on static IP assignment */
-#define ipconfigMAXIMUM_DISCOVER_TX_PERIOD ( 2000 / portTICK_PERIOD_MS )
 #define ipconfigUSE_DNS 0
 
 

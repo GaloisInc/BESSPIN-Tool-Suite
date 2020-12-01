@@ -13,3 +13,6 @@ FREERTOS_SRC += $(FREERTOS_IP_SRC)
 DEMO_SRC = main.c \
 	$(INC_FETT_APPS)/main_fett.c \
 	demo/main_netboot.c
+
+configCPU_CLOCK_HZ=100000000
+OPT = -O2
