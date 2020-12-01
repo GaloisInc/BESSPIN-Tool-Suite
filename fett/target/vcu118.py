@@ -25,11 +25,6 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.ipHost = getSetting('vcu118IpHost')
         self.ipTarget = getTargetIp(targetId=targetId)
 
-        if ((self.elfLoader=='netboot') and (self.ipTarget!="10.88.88.2")):
-            warnAndLog(f"{self.targetIdInfo}Cannot use netboot with <IP!=10.88.88.2> [see ticket #860]. Falling back to JTAG.")
-            self.elfLoader = 'JTAG'
-            setSetting('elfLoader','JTAG',targetId=self.targetId)
-
         self.uartSession = None
 
         #Reloading till the network is up
