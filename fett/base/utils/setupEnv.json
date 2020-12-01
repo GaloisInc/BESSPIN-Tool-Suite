@@ -233,9 +233,14 @@
             "val" : "filesToSend.tar"
         },
         {
-            "name" : "FreeRTOSforkName",
+            "name" : "FreeRTOSforkName_10",
             "type" : "string",
             "val" : "FreeRTOS-10.0.1"
+        },
+        {
+            "name" : "FreeRTOSforkName_upstream",
+            "type" : "string",
+            "val" : "FreeRTOS-mirror"
         },
         {
             "name" : "FreeRTOSprojNameNonQemu",

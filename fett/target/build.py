@@ -48,13 +48,13 @@ def prepareOsImage (targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def freeRTOSBuildChecks(targetId=None):
+def freeRTOSBuildChecks(targetId=None,freertosFork="10"):
     """
     Check FreeRTOS build parameters and set settings appropriately
     """
     with getSetting('FreeRTOSLock'):
         # Check if FreeRTOS mirror is checked out properly
-        forkDir = os.path.join(getSetting('repoDir'),getSetting('FreeRTOSforkName'))
+        forkDir = os.path.join(getSetting('repoDir'),getSetting(f'FreeRTOSforkName_{freertosFork}'))
         setSetting('FreeRTOSforkDir',forkDir)
         if (not os.path.isdir(getSetting('FreeRTOSforkDir'))):
             logAndExit (f"Failed to find the FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}>. Please use <git submodule update --init>.",exitCode=EXIT.Environment)
@@ -334,7 +334,7 @@ def importImage(targetId=None):
                 setSetting("netbootElf",netbootElf,targetId=targetId)
                 mkdir(netbootBuildDir)
                 copyDir(os.path.join(getSetting('repoDir'),'fett','target','utils','srcNetboot'),netbootBuildDir,copyContents=True)
-                freeRTOSBuildChecks(targetId=targetId)
+                freeRTOSBuildChecks(targetId=targetId,freertosFork="upstream")
                 prepareFreeRTOSNetworkParameters(targetId=targetId, buildDir=netbootBuildDir)
                 #Write the bianry source for team specific codes
                 configHfile = ftOpenFile (os.path.join(netbootBuildDir,'fettUserConfig.h'),'a')
