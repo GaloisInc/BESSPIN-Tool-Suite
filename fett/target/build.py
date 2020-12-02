@@ -338,7 +338,7 @@ def importImage(targetId=None):
                 configHfile.write(f"#define BIN_SOURCE_{getSetting('binarySource',targetId=targetId).replace('-','_')}\n")
                 configHfile.close()
                 buildFreeRTOS(doPrint=False, targetId=targetId, buildDir=netbootBuildDir)
-    else:
+    elif (isEqSetting('elfLoader','netboot',targetId=targetId)):
         warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is <{getSetting('target',targetId=targetId)}>", doPrint=False)
     logging.info(f"{getSetting('osImage',targetId=targetId)} image imported successfully.")
 
