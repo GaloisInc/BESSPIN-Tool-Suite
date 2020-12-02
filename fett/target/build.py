@@ -145,9 +145,6 @@ def getTargetIp(targetId=None):
     if (thisTarget=='vcu118'): #use hostIP + targetId
         ipInc = 1 if (targetId is None) else targetId
         ipTarget = str(ipaddress.ip_address(getSetting(f"{thisTarget}IpHost"))+ipInc)
-        if ((ipTarget!="10.88.88.2") and 
-                (isEqSetting('osImage','FreeBSD',targetId=targetId) and isEqSetting('target','vcu118',targetId=targetId))):
-            logAndExit(f"<FreeBSD> on <vcu118> has to have the IP <10.88.88.2>; not <{ipTarget}> [ticket#853].",exitCode=EXIT.Dev_Bug)
         return ipTarget
     else:
         logAndExit(f"<getTargetIp> is not implemented for <{thisTarget}>.",exitCode=EXIT.Implementation)
