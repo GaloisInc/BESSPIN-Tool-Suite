@@ -317,10 +317,38 @@ def selectImagePaths(targetId=None):
 
 @decorate.debugWrap
 def importImage(targetId=None):
+    targetIdInfo = f'<target{targetId}>: ' if (targetId) else ''
     imagePaths = selectImagePaths(targetId=targetId)
     for ip in imagePaths:
         cp (ip, getSetting('osImagesDir',targetId=targetId))
     if (isEqSetting('target', 'vcu118', targetId=targetId)):
+        # Fix the FreeBSD IP
+        if (isEqSetting('osImage','FreeBSD',targetId=targetId) and isEqSetting('binarySource','GFE',targetId=targetId)):
+            # prepare the string
+            hardcodedString = '"inet XXX.XXX.XXX.XXX/24"' 
+            # ^ has to match the string in: SSITH-FETT-Environment/nix/gfe/freebsd/freebsd-rootfs-image.nix  
+            correctIpString = hardcodedString.replace("XXX.XXX.XXX.XXX",getTargetIp(targetId=targetId))
+            paddedString = correctIpString + ' '*(len(hardcodedString)-len(correctIpString))
+            # load the binary
+            osImageElf = getSetting('osImageElf',targetId=targetId)
+            fElf = ftOpenFile(osImageElf,"rb")
+            elfData = fElf.read()
+            fElf.close()
+            # Edit the binary with the right IP
+            try:
+                elfData = elfData.replace(bytes(hardcodedString,'utf-8'),bytes(paddedString,'utf-8'))
+            except Exception as exc:
+                logAndExit(f"{targetIdInfo} Failed to replace the IP in the FreeBSD ELF.",exc=exc,exitCode=EXIT.Run)
+            # Write the binary
+            try:
+                os.chmod(osImageElf, 0o775) #The binary is non-editable by default
+                fElf = open(osImageElf,"wb")
+                fElf.write(elfData)
+                fElf.close()
+            except Exception as exc:
+                logAndExit(f"{targetIdInfo} Failed to write the edited FreeBSD ELF.",exc=exc,exitCode=EXIT.Run)
+
+        # Get the netboot ELF
         if (isEqSetting('elfLoader','netboot',targetId=targetId) and (getSetting('osImage',targetId=targetId) in ['debian', 'FreeBSD', 'busybox'])):
             if (isEqSetting('procLevel','p3',targetId=targetId)):
                 warnAndLog(f"<importImage>: Netboot is currently not supported on P3. Falling back to JTAG.")
