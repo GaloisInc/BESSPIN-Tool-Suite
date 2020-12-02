@@ -67,7 +67,7 @@ class commonTarget():
         self.sshLimitRetries = 3
         self.sshECDSAkeyWasUpdated = False
 
-        self.onlySsh = ((self.osImage=='FreeBSD') and (self.target=='vcu118'))
+        self.onlySsh = ((self.osImage=='FreeBSD') and (self.target=='vcu118') and (self.binarySource=='GFE'))
 
         self.osHasBooted = False
         self.isCurrentUserRoot = True #This will be the indicator of which user we are logged in as.
