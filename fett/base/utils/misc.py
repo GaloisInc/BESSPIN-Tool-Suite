@@ -553,7 +553,12 @@ def shellCommand (argsList, check=True, timeout=30, **kwargs):
     try:
         retRun = subprocess.run(argsList, stdout=shellOut, stderr=shellOut, timeout=timeout, check=check, **kwargs)
     except Exception as exc:
-        logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
+        if ((not check) and (exc.__class__ == subprocess.TimeoutExpired)):
+            warnAndLog (f"shell: Timeout in <{argsList}>. Will continue anyway since <check> is disabled.",
+                exc=exc, doPrint=False)
+            retRun = subprocess.CompletedProcess(argsList,1) #return empty stdout/stderr and error code of 1
+        else:
+            logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
     shellOut.close()
     return retRun
 
@@ -635,3 +640,7 @@ def sha512_crypt(password, salt=None, rounds=None):
     if salt is None:
         salt = crypt.mksalt(crypt.METHOD_SHA512, rounds=rounds)
     return crypt.crypt(password, salt)
+
+@decorate.debugWrap
+def isTestInfoEnabled (vulClass,testName,infoName):
+    return (getSettingDict(vulClass,["testsInfo",testName,infoName])==1)

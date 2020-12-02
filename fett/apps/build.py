@@ -25,7 +25,7 @@ def buildApps ():
     if (isEnabled('buildApps') and isEnabled('isUnix')):
         targetUtilsDir = os.path.join(getSetting('repoDir'),'fett','target','utils')
         cp(os.path.join(targetUtilsDir,'Makefile.xcompileDir'),os.path.join(getSetting('buildDir'),'Makefile'))
-        cp(os.path.join(targetUtilsDir,'defaultEnvLinux.mk'),getSetting('buildDir'))
+        cp(os.path.join(targetUtilsDir,'defaultEnvUnix.mk'),getSetting('buildDir'))
 
     if (isEqSetting('osImage','FreeRTOS')):
         buildFreeRTOSapps()

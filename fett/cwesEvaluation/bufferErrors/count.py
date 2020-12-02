@@ -23,12 +23,12 @@ CWE_680_INT_OVERFLOW_LOOKFOR = [
         ]
 
 def triage(filepath,lookfor):
-    testRan = False
     if not filepath.is_file():
         logAndExit(f"<bufferErrors.count.triage> <{filepath}> is not a file",
                    exitCode=EXIT.Files_and_paths)
     for (symbol, indicators) in lookfor:
         log = ftOpenFile(filepath, 'r')
+        testRan = False
         for line in log:
             if '<BufferErrors Start>' in line:
                 testRan = True
@@ -111,39 +111,33 @@ def scoreCWE680(path, lookfor, cwes):
     return scoreLog(path, lookfor) + (cwes,)
 
 
-def tabulate(dirpath,lookfor):
-    dirpath = Path(dirpath)
-    if not dirpath.is_dir():
-        logAndExit(f"<bufferErrors.count.tabulate> <{dirpath}> is not a directory",
-                   exitCode=EXIT.Files_and_paths)
+def tabulate(logs,lookfor):
+    if (len(logs)==0):
+        warnAndLog('<bufferErrors.count.tabulate> No log files found!')
+
     rows = []
-    for path in dirpath.iterdir():
-        if path.name.endswith('.log'):
-            cfile = Path(os.path.join(getSetting("buildDir"),
-                                      "bufferErrors",
-                                      f"{path.stem}.c"))
-            if not cfile.is_file():
-                logAndExit(f"<bufferErrors.count.tabulate> C file {cfile} not found")
-            params = bfparams(cfile)
-            if "CWE_680" in params["CWE"]:
-                # CWE_680 has two parts and requires special scoring
-                result, logSymbol, cwes = scoreCWE680(path,
-                                                      lookfor,
-                                                      params["CWE"])
-                params["CWE"] = cwes
-            else:
-                result, logSymbol = scoreLog (path, lookfor)
-            row = ({'TestNumber': path.stem,
-                    'Result': result},
-                   logSymbol)
-            row[0].update(params)
-            # TODO: also record simulator and binary hashes?
-            rows.append(row)
+    for name, log in logs:
+        cfile = Path(os.path.join(getSetting("buildDir"),
+                            "bufferErrors", f"{name}.c"))
+        if not cfile.is_file():
+            logAndExit(f"<bufferErrors.count.tabulate> C file {cfile} not found")
+        params = bfparams(cfile)
+        if "CWE_680" in params["CWE"]:
+            # CWE_680 has two parts and requires special scoring
+            result, logSymbol, cwes = scoreCWE680(Path(log),
+                                                  lookfor,
+                                                  params["CWE"])
+            params["CWE"] = cwes
+        else:
+            result, logSymbol = scoreLog (Path(log), lookfor)
+        row = ({'TestNumber': name,
+                'Result': result},
+               logSymbol)
+        row[0].update(params)
+        # TODO: also record simulator and binary hashes?
+        rows.append(row)
     rows.sort(key=test_ord)
-    if not rows:
-        logAndExit('<bufferErrors.count.tabulate> No log files found in '
-                   f'<{dirpath}>',
-                   exitCode=EXIT.Dev_Bug)
+    
     if isEnabledDict('bufferErrors', 'csvFile'):
         writeCSV(rows)
     return [row[0] for row in rows]

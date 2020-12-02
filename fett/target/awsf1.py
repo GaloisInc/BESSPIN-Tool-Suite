@@ -98,8 +98,7 @@ class firesimTarget(fpgaTarget, commonTarget):
             "\'"
         ])
         logging.debug(f"boot: firesimCommand = {firesimCommand}")
-        targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab')
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
 
         try:
             self.ttyProcess = pexpect.spawn(firesimCommand,logfile=self.fTtyOut,timeout=30,
@@ -155,7 +154,7 @@ class firesimTarget(fpgaTarget, commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
-        if (isEqSetting('mode','evaluateSecurityTests')):
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
             self.fpgaTearDown()
 
         if (self.process.isalive()):
@@ -172,7 +171,7 @@ class firesimTarget(fpgaTarget, commonTarget):
 
         self.noNonsenseFiresim()
 
-        filesToClose = [self.fswitchOut]
+        filesToClose = [self.fswitchOut, self.fTtyOut]
         for xFile in filesToClose:
             try:
                 xFile.close()
@@ -187,7 +186,7 @@ class firesimTarget(fpgaTarget, commonTarget):
         This method ensures all relvant processes are killed. In a no-nonsense and brute way.
         """
         wereProcessesKilled = {'FireSim-f1':False, 'switch0':False} #False for wasKilled
-        if (isEqSetting('mode','evaluateSecurityTests')):
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
             wereProcessesKilled.update({'openocd':False, 'riscv64-unknown-elf-gdb':False})
 
         def getAliveProcesses():
@@ -212,9 +211,11 @@ class firesimTarget(fpgaTarget, commonTarget):
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
-class connectalTarget(commonTarget):
+class connectalTarget(fpgaTarget, commonTarget):
     def __init__(self, targetId=None):
-        super().__init__(targetId=targetId)
+        commonTarget.__init__(self, targetId=targetId)
+        fpgaTarget.__init__(self, targetId=targetId)
+
         self.ipTarget = getSetting('awsf1IpTarget')
         self.ipHost = getSetting('awsf1IpHost')
 
@@ -229,26 +230,33 @@ class connectalTarget(commonTarget):
 
         extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
         tapName = getSetting('awsf1TapAdaptorName')
-        connectalCommand = ' '.join([
-            os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
-            f"--dtb={getSetting('osImageDtb')}",
-            f"--block={getSetting('osImageImg')}",
-            f"--elf={getSetting('osImageElf')}"] + ([
-            f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else []) + [
-            f"--tun={tapName}"] + extraArgs)
+        connectalCommand = ' '.join(
+              [os.path.join(awsConnectalHostPath, "ssith_aws_fpga")]
+            + [f"--dtb={getSetting('osImageDtb')}"]
+            + [f"--block={getSetting('osImageImg')}"]
+            + [f"--elf={getSetting('osImageElf')}"]
+            + ([f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else [])
+            + [f"--tun={tapName}"]
+            + extraArgs
+            + ([f"--gdb-port {self.gdbPort}", "--start-halted"] 
+                    if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')) 
+                    else [])
+            )
 
         printAndLog(f"<awsf1.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
-        targetSuffix = f'_{self.targetId}' if (self.targetId) else ''
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{targetSuffix}.out'),'ab')
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
 
         try:
             self.ttyProcess = pexpect.spawn(connectalCommand,logfile=self.fTtyOut,timeout=90,
                                          cwd=awsConnectalHostPath)
             self.process = self.ttyProcess
-            time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
         except Exception as exc:
             self.terminateAndExit(f"boot: Failed to spawn the connectal process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
+            self.fpgaStart(getSetting('osImageElf'))
+        
+        self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
 
          # The tap needs to be turned up AFTER booting
         setAdaptorUpDown(getSetting('awsf1TapAdaptorName'), 'up')
@@ -286,16 +294,25 @@ class connectalTarget(commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
+            self.fpgaTearDown()
+
         if (self.process.isalive()):
             # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
             self.runCommand("\x01x",endsWith=pexpect.EOF,exitOnError=False,timeout=5)
 
-            if (self.process.isalive()):
-                try:
-                    subprocess.check_call(['sudo', 'kill', '-9', f"{self.process.pid}"],
-                                        stdout=self.fTtyOut, stderr=self.fTtyOut)
-                except Exception as exc:
-                    warnAndLog("targetTearDown: Failed to kill <connectal> process.",doPrint=False,exc=exc)
+        procsToKill = ["ssith_aws_fpga"]
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
+            procsToKill.append("riscv64-unknown-elf-gdb")
+        for proc in procsToKill:
+            sudoShellCommand(['pkill', '-9', f"{proc}"],check=False)
+
+        filesToClose = [self.fTtyOut]
+        for xFile in filesToClose:
+            try:
+                xFile.close()
+            except Exception as exc:
+                warnAndLog(f"targetTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
         return
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 

@@ -192,7 +192,6 @@
             "name" : "nixEnv",
             "type" : "dict",
             "val" : {
-                "netboot" : "FETT_NETBOOT",
                 "debian" : {
                     "vcu118" : "FETT_GFE_DEBIAN_VCU118",
                     "qemu" : "FETT_GFE_DEBIAN_QEMU",
@@ -213,7 +212,10 @@
                     "firesim" :  "FETT_GFE_BUSYBOX_FIRESIM"
                 },
                 "FreeRTOS" : {
-                    "clang-sysroot" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
+                    "clang-sysroot" : {
+                        "32" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
+                        "64" : "RISCV64_CLANG_BAREMETAL_SYSROOT"
+                    },
                     "vcu118" : "FETT_GFE_FREERTOS_VCU118",
                     "firesim" :  "FETT_GFE_FREERTOS_FIRESIM"
                 },
@@ -232,9 +234,14 @@
             "val" : "filesToSend.tar"
         },
         {
-            "name" : "FreeRTOSforkName",
+            "name" : "FreeRTOSforkName_10",
             "type" : "string",
             "val" : "FreeRTOS-10.0.1"
+        },
+        {
+            "name" : "FreeRTOSforkName_upstream",
+            "type" : "string",
+            "val" : "FreeRTOS-mirror"
         },
         {
             "name" : "FreeRTOSprojNameNonQemu",

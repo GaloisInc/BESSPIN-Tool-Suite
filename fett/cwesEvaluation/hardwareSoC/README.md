@@ -13,10 +13,17 @@ In case of a multi-part tests, the overall test score is the minimum score achie
 
 ------------------
 
+### TEST-1220 ###
+Insufficient Granularity of Access Control \[[CWE-1220](https://cwe.mitre.org/data/definitions/1220.html)\].  
+
+**Notes:**   
+
+- This is a design recommendation. No test to be implemented. 
+
+------------------
+
 ### TEST-1252 ###
 CPU Hardware Not Configured to Support Exclusivity of Write and Execute Operations \[[CWE-1252](https://cwe.mitre.org/data/definitions/1252.html)\].
-
-**Related CWEs**   
 
 **Notes:**   
 
@@ -28,4 +35,4 @@ CPU Hardware Not Configured to Support Exclusivity of Write and Execute Operatio
   - If a region that is protected against writing exists, but not against execution, then the score is `MED`.
   - If a region that is protected against execution exists, then the score is `NONE`.
 
-  ------------------
+------------------

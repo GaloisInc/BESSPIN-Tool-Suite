@@ -5,51 +5,34 @@ This file has the custom PPAC methods to run tests on qemu|fpga.
 import sys, os
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 from fett.cwesEvaluation.PPAC import cweTests
-from importlib.machinery import SourceFileLoader
-import threading
 
 from fett.base.utils.misc import *
 
 class vulClassTester(testgenTargetCompatibilityLayer):
-    def __init__ (self,settings):
-        super().__init__(settings)
+    def __init__ (self,target):
+        super().__init__(target)
+        self.vulClass = "PPAC"
         return
 
     def executeTest (self,binTest):
-        testName = binTest.split('.')[0]
-        if (hasattr(cweTests,testName)):
-            outLog = getattr(getattr(cweTests,testName),testName)(self,binTest)
-        elif (isEnabled('pocExploitsMode')):
-            self.terminateAndExit('<pocExploitsMode> not implemented',
-                       exitCode=EXIT.Implementation)
-        else:
-            self.terminateAndExit(f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
-            outLog = ''
-        return outLog
-
-    def executeOnRoot (self,commands):
-        switchBack = not self.isCurrentUserRoot
-        if (switchBack): #only do this if user is not root
-            self.switchUser()
-        for command in commands:
-            self.runCommand (command)
-        if (switchBack):
-            self.switchUser()
-        return
-
-    def socketCloseAndCollect (self,xSocket):
-        def closeSocket (xSocket):
-            try:
-                xSocket.close()
-            except Exception as exc:
-                warnAndLog("Unable to close socket.\n",doPrint=False,exc=exc)
-        xThread = threading.Thread(target=closeSocket, args=(xSocket,))
-        xThread.daemon = True
+        outLog = ''
         try:
-            socketName = xSocket.getsockname()
+            testName = binTest.split('.')[0]
+            testNum = testName.split('test_')[1]
         except Exception as exc:
-            socketName = "UNKNOWN"
-            warnAndLog("Unable to get socket name when closing. Maybe it was already closed.\n",doPrint=False,exc=exc)
-        getSetting('trash').throwThread(xThread,f"closing socket <{socketName}>")
-        xThread.start()
-        return xThread
+            self.terminateAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+
+        outLog = "\n" + '*'*30 + f" TEST {testNum} " + '*'*30 + "\n\n"
+        outLog += f"<OSIMAGE={self.osImage}>\n"
+
+        if (self.isTestInfoEnabled(testName,'recommendation')):
+            outLog += self.recommendationTest (testName)
+        elif (self.isTestInfoEnabled(testName,'hasMethod')):
+            if (hasattr(cweTests,testName)):
+                outLog += getattr(getattr(cweTests,testName),testName)(self,binTest)
+            else:
+                self.terminateAndExit (f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
+        else:
+            outLog += self.defaultTest(testNum, binTest)
+
+        return outLog

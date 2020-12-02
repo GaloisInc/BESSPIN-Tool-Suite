@@ -10,3 +10,6 @@
 [submodule "SSITH-FETT-Binaries"]
 	path = SSITH-FETT-Binaries
 	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Binaries.git
+[submodule "FreeRTOS-mirror"]
+	path = FreeRTOS-mirror
+	url = git@github.com:GaloisInc/FreeRTOS-mirror.git

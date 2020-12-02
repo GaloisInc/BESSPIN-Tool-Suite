@@ -94,13 +94,11 @@ def startFett (targetId=None):
             setSetting("linker", "GCC")
 
     # Check gdbDebug sanity
-    if (isEnabled('gdbDebug') and (binarySource!='GFE')):
-        logAndExit(f"<gdbDebug> is not implemented for <{binarySource}> targets.",exitCode=EXIT.Implementation)
     if (isEnabled('gdbDebug') and (not isEnabled('openConsole'))):
         warnAndLog("<gdbDebug> is enabled, but <openConsole> is not. <gdbDebug> will be ignored.")
         setSetting('gdbDebug',False)
-    if (isEnabled('gdbDebug') and ( (target=='qemu') or
-                                    ((target=='awsf1') and (pvAWS!='firesim'))
+    if (isEnabled('gdbDebug') and not ( (target=='vcu118') or
+                                    ((target=='awsf1') and (pvAWS in ['firesim','connectal']))
                                 )):
         targetName = target if (target!='awsf1') else f"aws:{pvAWS}"
         logAndExit(f"<gdbDebug> is not implemented on <{targetName}> .",exitCode=EXIT.Implementation)
@@ -160,16 +158,20 @@ def prepareEnv (targetId=None):
     elif (osImage=='busybox'):
         printAndLog(f"{targetInfo}<busybox> is only used for smoke testing the target/network. No applications are supported.")
         setSetting('runApp',False,targetId=targetId)
+        if (isEqSetting("mode", "evaluateSecurityTests")):
+            setSetting("isThereAReasonToBoot",True) #boot to test
     else:
         logAndExit (f"<launch.prepareEnv> is not implemented for <{osImage}>.",exitCode=EXIT.Dev_Bug)
 
     if not (isEqSetting('mode', 'evaluateSecurityTests') and (osImage=='FreeRTOS')):
         prepareOsImage (targetId=targetId)
 
-    if (target=='vcu118'):
-        if not (isEqSetting('mode', 'evaluateSecurityTests') and (osImage=='FreeRTOS')):
-            vcu118.programBitfile(targetId=targetId)
-            vcu118.resetEthAdaptor()
+    if ( isEqSetting('mode', 'evaluateSecurityTests') and
+            ((osImage=='FreeRTOS') or (not isEnabled('isThereAReasonToBoot'))) ):
+        pass #No need to do any more preparation
+    elif (target=='vcu118'):
+        vcu118.resetEthAdaptor()
+        vcu118.programBitfile(targetId=targetId)
     elif (target=='awsf1'):
         pvAWS = getSetting('pvAWS',targetId=targetId)
         if (pvAWS=='firesim'):
@@ -177,8 +179,7 @@ def prepareEnv (targetId=None):
             awsf1.removeKernelModules()
             awsf1.installKernelModules()
             awsf1.configTapAdaptor()
-            if not (isEqSetting('mode', 'evaluateSecurityTests') and (osImage=='FreeRTOS')):
-                awsf1.programAFI()
+            awsf1.programAFI()
         elif (pvAWS=='connectal'):
             awsf1.prepareConnectal()
             awsf1.configTapAdaptor()
@@ -209,12 +210,12 @@ def launchFett (targetId=None):
     else:
         printAndLog (f"Launching FETT <{getSetting('mode')} mode>...",doPrint=(not isEqSetting('mode','cyberPhys')))
     xTarget.start()
-    if (not xTarget.osHasBooted):
-        #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
-        return xTarget
-    if (isEnabled('isUnix',targetId=targetId)):
+    if (isEnabled('isUnix',targetId=targetId) and (xTarget.osHasBooted)):
         if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) 
-                and (not isEqSetting('mode','evaluateSecurityTests'))): #no need to change pw in evaluation mode
+                and (   (not isEqSetting('mode','evaluateSecurityTests')) 
+                        or isEqSetting('binarySource','SRI-Cambridge',targetId=targetId) #Have to change pw if SRI-Cambridge
+                    )
+            ): #no need to change pw in evaluation mode
             xTarget.changeRootPassword()
         xTarget.createUser()
     if (isEnabled('runApp',targetId=targetId)):
@@ -255,10 +256,6 @@ def endFett (xTarget,isDeadProcess=False):
             or (isDeadProcess)):
         if (xTarget.osHasBooted):
             xTarget.shutdown()
-        else:
-            #OS hasn't booted. Maybe just hardwareSoC no-boot tests and nothing else to run?
-            xTarget.tearDown()
-        
     
     if (isEqSetting('mode','production')):
         tarballPath = tarArtifacts (logAndExit,getSetting)
@@ -290,8 +287,6 @@ def resetTarget (curTarget):
     curTarget.tearDown() 
     rootPassword = curTarget.rootPassword
     portsBegin = curTarget.portsBegin
-    if (curTarget.target == 'vcu118'): #need to save the uartDevice
-        uartDevice = curTarget.uartDevice
     del curTarget
 
     printAndLog("resetTarget: Re-preparing the environment...",doPrint=(not isEqSetting('mode','cyberPhys')))
@@ -329,8 +324,6 @@ def resetTarget (curTarget):
     newTarget.restartMode = True
     if (isEqSetting('target','awsf1',targetId=targetId)):
         newTarget.rootPassword = rootPassword
-    elif (isEqSetting('target','vcu118',targetId=targetId)):
-        newTarget.uartDevice = uartDevice
     newTarget.portsBegin = portsBegin
     newTarget.userCreated = True
 

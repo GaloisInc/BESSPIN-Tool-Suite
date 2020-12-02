@@ -11,6 +11,7 @@ import pexpect
 class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
+        self.vulClass = "hardwareSoC"
         return
 
     def executeTest (self,binTest):
@@ -25,27 +26,22 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         outLog += f"<OSIMAGE={self.osImage}>\n"
         outLog += f"<XLEN={self.xlen}>\n"
 
-        if (self.getTestInfo(testName,'gdb') and (not self.hasGdbAccess())):
+        if (self.isTestInfoEnabled(testName,'gdb') and (not self.hasGdbAccess())):
             warnAndLog (f"Test <{testNum}> requires GDB access!")
             outLog += f"<NOGDB>\n"
             return outLog
 
-        if (self.getTestInfo(testName,'hasMethod')):
+        if (self.isTestInfoEnabled(testName,'recommendation')):
+            outLog += self.recommendationTest (testName)
+        elif (self.isTestInfoEnabled(testName,'hasMethod')):
             if (hasattr(cweTests,testName)):
                 outLog += getattr(getattr(cweTests,testName),testName)(self,binTest)
             else:
                 self.terminateAndExit (f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
         else:
-            outLog = self.defaultTest(testNum, binTest)
+            outLog += self.defaultTest(testNum, binTest)
 
         return outLog
-
-    def getTestInfo (self,testName,infoName):
-        return (getSettingDict("hardwareSoC",["testsInfo",testName,infoName])==1)
-
-    def defaultTest(self, testNum, binTest):
-        self.terminateAndExit (f"<defaultTest> is not yet implemented for <hardwareSoC>.",exitCode=EXIT.Implementation)
-        return
 
     def endFreeRTOSTest (self):
         textBack,wasTimeout,idxReturn = self.expectFromTarget([">>>End of Fett<<<", pexpect.EOF],

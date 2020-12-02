@@ -4,20 +4,6 @@
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
 
     "numericErrors" : [
-        {
-            "name" : "multiPartRunOnFreeRTOS",
-            "type" : "bool",
-            "val" : 1
-        },
-        {
-            "name" : "methodToExecute",
-            "type" : "string",
-            "val" : "executeTest"
-        },
-        {
-            "name" : "getGdbInsightFreeRTOS",
-            "type" : "bool",
-            "val" : 1
-        }
+
     ]
 }

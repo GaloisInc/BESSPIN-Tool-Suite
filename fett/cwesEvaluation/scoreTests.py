@@ -19,6 +19,7 @@ from fett.base.utils.misc import *
 
 class SCORES (enum.Enum):
     NINF = -10
+    RECOMMEND = -7
     NOT_IMPLEMENTED = -6
     UNKNOWN = -5
     INVALID = -4
@@ -69,35 +70,7 @@ class SCORES (enum.Enum):
         return SCORES(avgValue)
 
 @decorate.debugWrap
-@decorate.timeWrap
-def tryScoreTest(scorerModule, testName, logTest, testsDir):
-    try:
-        return getattr(getattr(scorerModule,testName),testName)(logTest, testsDir)
-    except AttributeError as e:
-        return scorerModule.scoreTest(testName, logTest, testsDir)
-    except Exception as exc:
-        errorAndLog("tryScoreTest: Failed to score.",exc=exc,doPrint=False)
-        throw(exc)
-
-@decorate.debugWrap
-def scoreLogs(scorerModule, logs, testsDir):
-    try:
-        return scorerModule.scoreAllTests(logs, testsDir)
-    except AttributeError as e:
-        ret = []
-        for testName, log in logs:
-            try:
-                ret.append(tryScoreTest(scorerModule, testName, log, testsDir))
-            except Exception as exc:
-                errorAndLog("<{0}>: Failed to parse <{1}>.".format(testName,log),
-                            exc=exc)
-                testNum = testName.split('_')[1]
-                ret.append(["TEST-{0}".format(testNum), SCORES.FAIL, "Failed to Score!"])
-    return ret
-
-# TODO: Renmae testsDir to something more like logDir
-@decorate.debugWrap
-def scoreTests(scorerModule, csvPath, testsDir):
+def scoreTests(scorerModule, csvPath, logsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
@@ -109,9 +82,8 @@ def scoreTests(scorerModule, csvPath, testsDir):
                    exc=exc)
 
     # Get all the log files
-    contents = sorted(os.listdir(testsDir))
-    logs = [(f.split('.')[0], f) for f in contents if f.endswith(".log")]
-    rows = scoreLogs(scorerModule, logs, testsDir)
+    logs = [(os.path.basename(f).split('.')[0], f) for f in glob.glob(os.path.join(logsDir, '*.log'))]
+    rows = scorerModule.scoreAllTests(logs)
     if (len(rows) < 1): #nothing to score
         warnAndLog("<scoreTests>: There are no logs to score.")
     else:

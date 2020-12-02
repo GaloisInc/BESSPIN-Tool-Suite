@@ -8,8 +8,9 @@ import re
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 
 class vulClassTester(testgenTargetCompatibilityLayer):
-    def __init__(self,settings):
-        super().__init__(settings)
+    def __init__(self, target):
+        super().__init__(target)
+        self.vulClass = "informationLeakage"
         return
 
     def executeTest(self, binTest):

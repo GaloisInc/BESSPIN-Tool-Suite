@@ -48,13 +48,13 @@ def prepareOsImage (targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def freeRTOSBuildChecks(targetId=None):
+def freeRTOSBuildChecks(targetId=None,freertosFork="10"):
     """
     Check FreeRTOS build parameters and set settings appropriately
     """
     with getSetting('FreeRTOSLock'):
         # Check if FreeRTOS mirror is checked out properly
-        forkDir = os.path.join(getSetting('repoDir'),getSetting('FreeRTOSforkName'))
+        forkDir = os.path.join(getSetting('repoDir'),getSetting(f'FreeRTOSforkName_{freertosFork}'))
         setSetting('FreeRTOSforkDir',forkDir)
         if (not os.path.isdir(getSetting('FreeRTOSforkDir'))):
             logAndExit (f"Failed to find the FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}>. Please use <git submodule update --init>.",exitCode=EXIT.Environment)
@@ -106,8 +106,11 @@ def freeRTOSBuildChecks(targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def prepareFreeRTOSNetworkParameters(targetId=None):
+def prepareFreeRTOSNetworkParameters(targetId=None, buildDir=None):
     #Include the network configuration parameters
+    if (buildDir is None):
+        buildDir = getSetting('buildDir',targetId=targetId)
+
     #This is a list of tuples: (settingName, macroNameBase, int/hex)
     thisTarget = getSetting('target',targetId=targetId)
     listConfigIpParams = [(f"{thisTarget}MacAddrTarget",'configMAC_ADDR', hex), (f"{thisTarget}IpTarget",'configIP_ADDR', int),
@@ -119,7 +122,7 @@ def prepareFreeRTOSNetworkParameters(targetId=None):
         elif (xType==hex):
             return "0x{:02X}".format(int(val,16))
 
-    configIpHfile = ftOpenFile (os.path.join(getSetting('buildDir',targetId=targetId),'fettFreeRTOSIPConfig.h'),'a')
+    configIpHfile = ftOpenFile (os.path.join(buildDir,'fettFreeRTOSIPConfig.h'),'a')
     for xSetting,xMacro,xType in listConfigIpParams:
         if (doesSettingExist(xSetting)):
             settingVal = getSetting(xSetting)
@@ -176,6 +179,7 @@ def getTargetMac(targetId=None):
 @decorate.debugWrap
 @decorate.timeWrap
 def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
+    targetInfo = f'<target{targetId}>: ' if (targetId) else ''
     with getSetting('FreeRTOSLock'):
         if (buildDir is None):
             defaultBuildDir = True
@@ -189,7 +193,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
             cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.d')
 
         #Compile
-        printAndLog (f"Cross-compiling...",doPrint=doPrint)
+        printAndLog (f"{targetInfo}Cross-compiling...",doPrint=doPrint)
         envVars = extraEnvVars
         envVars.append(f"XLEN={getSetting('xlen',targetId=targetId)}")
         envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
@@ -237,9 +241,9 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
             envVars.append(f"INC_FETT_APPS={buildDir}")
             if (isEqSetting('cross-compiler','Clang')):
                 # check that the sysroot env variable exists:
-                sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot'])
+                sysRootEnv = getSettingDict('nixEnv',['FreeRTOS', 'clang-sysroot', str(getSetting('xlen',targetId=targetId))])
                 if (sysRootEnv not in os.environ):
-                    logAndExit (f"<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
+                    logAndExit (f"{targetInfo}<${sysRootEnv}> not found in the nix path.",exitCode=EXIT.Environment)
                 envVars.append(f"SYSROOT_DIR={os.environ[sysRootEnv]}")
 
         logging.debug(f"going to make using {envVars}")
@@ -262,11 +266,11 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         if isEqSetting('target', 'qemu' ,targetId=targetId):
             builtElf = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),
                                     'build',
-                                    'FreeRTOS-main_fett.elf')
+                                    f'FreeRTOS-{mainName}.elf')
         else:
             builtElf = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),'main_fett.elf')
         if (not os.path.isfile(builtElf)):
-            logAndExit(f"<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
+            logAndExit(f"{targetInfo}<make> executed without errors, but cannot find <{builtElf}>.",exitCode=EXIT.Run)
 
         if isEqSetting('binarySource', 'Michigan', targetId=targetId):
             # Encrypt elf file
@@ -284,12 +288,12 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         if not isEqSetting('target', 'qemu' ,targetId=targetId):
             builtAsm = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),'main_fett.asm')
             if (not os.path.isfile(builtAsm)):
-                logAndExit(f"<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
+                logAndExit(f"{targetInfo}<make> executed without errors, but cannot find <{builtAsm}>.",exitCode=EXIT.Run)
             if (defaultBuildDir):
                 cp(builtAsm,getSetting('osImageAsm',targetId=targetId))
             else:
                 cp(builtAsm,os.path.join(buildDir,'FreeRTOS.asm'))
-        printAndLog(f"Files cross-compiled successfully.",doPrint=doPrint)
+        printAndLog(f"{targetInfo}Files cross-compiled successfully.",doPrint=doPrint)
 
         #Cleaning all ".o" files post run
         cleanDirectory (getSetting('FreeRTOSforkDir'),endsWith='.o')
@@ -348,13 +352,19 @@ def importImage(targetId=None):
             if (isEqSetting('procLevel','p3',targetId=targetId)):
                 warnAndLog(f"<importImage>: Netboot is currently not supported on P3. Falling back to JTAG.")
                 setSetting('elfLoader','JTAG',targetId=targetId)
-            netbootElf = os.path.join(getSetting('osImagesDir',targetId=targetId),f"netboot.elf")
-            setSetting('netbootElf',netbootElf,targetId=targetId)
-            netbootImage = getSettingDict('nixEnv','netboot')
-            if (netbootImage in os.environ):
-                cp(os.environ[netbootImage],netbootElf)
             else:
-                logAndExit (f"<${netbootImage}> not found in the nix path.",exitCode=EXIT.Environment)
+                netbootBuildDir = os.path.join(getSetting('osImagesDir',targetId=targetId),'buildNetbootElf')
+                netbootElf = os.path.join(netbootBuildDir,f"FreeRTOS.elf")
+                setSetting("netbootElf",netbootElf,targetId=targetId)
+                mkdir(netbootBuildDir)
+                copyDir(os.path.join(getSetting('repoDir'),'fett','target','utils','srcNetboot'),netbootBuildDir,copyContents=True)
+                freeRTOSBuildChecks(targetId=targetId,freertosFork="upstream")
+                prepareFreeRTOSNetworkParameters(targetId=targetId, buildDir=netbootBuildDir)
+                #Write the bianry source for team specific codes
+                configHfile = ftOpenFile (os.path.join(netbootBuildDir,'fettUserConfig.h'),'a')
+                configHfile.write(f"#define BIN_SOURCE_{getSetting('binarySource',targetId=targetId).replace('-','_')}\n")
+                configHfile.close()
+                buildFreeRTOS(doPrint=False, targetId=targetId, buildDir=netbootBuildDir)
     else:
         warnAndLog(f"<importImage>: the netboot elfLoader was selected but is ignored as target is <{getSetting('target',targetId=targetId)}>", doPrint=False)
     logging.info(f"{getSetting('osImage',targetId=targetId)} image imported successfully.")
@@ -378,6 +388,8 @@ def cleanDirectory (xDir,endsWith='.o'):
 @decorate.debugWrap
 @decorate.timeWrap
 def crossCompileUnix(directory,extraString=''):
+    if (len(glob.glob(os.path.join(directory,"*.c"))) == 0):
+        return #there is nothing to compile
     if (isEqSetting('binarySource','SRI-Cambridge')):
         if (not isEqSetting('cross-compiler','Clang')):
             warnAndLog (f"Compiling using <{getSetting('cross-compiler')}> for <{getSetting('binarySource')}> is not supported."

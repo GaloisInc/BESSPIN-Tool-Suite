@@ -229,6 +229,8 @@ class commonTarget():
     @decorate.debugWrap
     @decorate.timeWrap
     def start (self):
+        if (isEqSetting("mode","evaluateSecurityTests") and (not isEnabled("isThereAReasonToBoot"))):
+            return #there is no reason to boot
         def get_timeout_from_settings_dict():
             def traverse_data(layer):
                 if 'timeout' in layer:
@@ -965,12 +967,35 @@ class commonTarget():
         return
 
     @decorate.debugWrap
-    def keyboardInterrupt (self,exitOnError=True,timeout=15,retryCount=3,process=None,endsWith=None, sendToNonUnix=False):
+    def keyboardInterrupt ( self, exitOnError=True, timeout=15, retryCount=3, process=None,
+                            endsWith=None, sendToNonUnix=False, respondEndsWith=None):
+        """
+        " keyboardInterrupt: Attemtps to ^C and recover.
+        "   ARGUMENTS:
+        "   ----------
+        "   exitOnError: Boolean. Whether to return or terminateAndExit in case of error.
+        "   timeout: how long to wait for endsWith before timing out.
+        "   retryCount: How many retries/(^Cs) before error.
+        "   process: runCommand with a different process than self.process
+        "   endsWith: String/regex or list of strings/regex. The expected returns when either is received from target.
+        "   sendToNonUnix: Boolean. If enabled, the command is sent to non-Unix targets as well.
+        "   respondEndsWith: A tuple: (A special endsWith, what to respond if encountered it)
+        "   --------
+        "   RETURNS:
+        "   A string containing all text returned back from the target during the resolving of the interrupt.
+        """
         process = self.process if process is None else process
         if (endsWith is None):
             endsWith = [self.getDefaultEndWith()]
         elif (isinstance(endsWith,str)):
             endsWith = [endsWith]
+        if (respondEndsWith is not None):
+            try:
+                specialEndsWith, specialResponse = respondEndsWith
+            except Exception as exc:
+                self.terminateAndExit("keyboardInterrupt: Called with illegal <respondEndsWith> argument.",
+                    overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Dev_Bug)
+            endsWith = [specialEndsWith] + endsWith
         if (self.terminateTargetStarted and (process == self.process)):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
@@ -985,13 +1010,23 @@ class commonTarget():
             if retryIdx > 0:
                 warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
             retCommand = self.runCommand("\x03",endsWith=endsWith,exitOnError=False,timeout=timeout,
-                            issueInterrupt=False,process=process,sendToNonUnix=sendToNonUnix)
+                            issueInterrupt=False,suppressErrors=True,process=process,sendToNonUnix=sendToNonUnix)
             textBack = retCommand[1]
             doTimeout = retCommand[2]
             retryIdx += 1
-        if ((not retCommand[0]) or (retCommand[2])):
-            textBack += self.runCommand(" ",endsWith=endsWith,exitOnError=exitOnError,timeout=timeout,
-                            process=process,sendToNonUnix=sendToNonUnix)[1]
+        if ((respondEndsWith is not None) and (retCommand[3]==0)): #Got the special response
+            endsWith.remove(specialEndsWith)
+            textBack += self.runCommand(specialResponse,endsWith=endsWith,exitOnError=exitOnError,timeout=timeout,
+                            process=process,suppressErrors=True,sendToNonUnix=sendToNonUnix)[1]
+        elif ((not retCommand[0]) or (retCommand[2])):
+            retCommand2 = self.runCommand(" ",endsWith=endsWith,exitOnError=exitOnError,timeout=timeout,
+                            process=process,suppressErrors=True,sendToNonUnix=sendToNonUnix)
+            textBack += retCommand2[1]
+            if ((respondEndsWith is not None) and (retCommand2[3]==0)): #Got the special response
+                endsWith.remove(specialEndsWith)
+                textBack += self.runCommand(specialResponse,endsWith=endsWith[1:],exitOnError=exitOnError,timeout=timeout,
+                            process=process,suppressErrors=True,sendToNonUnix=sendToNonUnix)[1]
+
         #See if the order is correct
         if (process):
             breakRetries = False
@@ -1328,7 +1363,7 @@ class commonTarget():
     def hasGdbAccess (self):
         return (
             (self.target=='vcu118') or
-            ((self.target=='awsf1') and (self.pvAWS=='firesim'))
+            ((self.target=='awsf1') and (self.pvAWS in ['firesim', 'connectal']))
             )
 
     @decorate.debugWrap
