@@ -692,6 +692,7 @@ def resetEthAdaptor ():
             printAndLog("Enabling NAT on main adaptor.")
             sudoShellCommand(['iptables','-t', 'nat','-A','POSTROUTING',
                 '-o',mainAdaptorName,'-j','MASQUERADE'])
+            sudoShellCommand(['iptables', '-P', 'FORWARD', 'ACCEPT'])
 
         #get the name and check configuration if this is the first time called
         if (not doesSettingExist('ethAdaptor')):
