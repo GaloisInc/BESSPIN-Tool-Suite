@@ -105,8 +105,8 @@ class vcu118Target (fpgaTarget, commonTarget):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            self.runCommand(f"ip route add default via {self.ipHost}")
             outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
+            self.runCommand(f"ip route add default via {self.ipHost}")
         elif (self.osImage=='busybox'):
             time.sleep(1)
             self.runCommand ("ifconfig eth0 up",timeout=20)
