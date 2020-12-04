@@ -676,17 +676,20 @@ def resetEthAdaptor ():
         except Exception as exc:
             logAndExit ("Failed to find the values of 'net.ipv4.ip_forward'.",exc=exc,exitCode=EXIT.Run)
         if (ipForward != 1):
+            printAndLog("IP forwarding was not enabled, enabling now.")
             sudoShellCommand(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
 
         mainAdaptorName = findMainAdaptorInfo()
+        printAndLog(f"Found main Ethernet adaptor <{mainAdaptorName}>.")
 
         #Check the postrouting nat rule
         try:
             natTables = subprocess.getoutput('sudo iptables -t nat -S').splitlines()
             isNatRule = (f"-A POSTROUTING -o {mainAdaptorName} -j MASQUERADE" in natTables)
         except Exception as exc:
-            logAndExit ("Failed to find out whether the main adaptor nat was set up.",exc=exc,exitCode=EXIT.Run)
+            logAndExit ("Failed to find out whether the main adaptor NAT was set up.",exc=exc,exitCode=EXIT.Run)
         if (not isNatRule):
+            printAndLog("Enabling NAT on main adaptor.")
             sudoShellCommand(['iptables','-t', 'nat','-A','POSTROUTING',
                 '-o',mainAdaptorName,'-j','MASQUERADE'])
 
