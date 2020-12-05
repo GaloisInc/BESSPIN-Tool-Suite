@@ -109,6 +109,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             self.runCommand(f"ip route add default via {self.ipHost}")
             self.runCommand(f"ip link set dev eth0 address {self.macTarget}")
             outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
+            self.runCommand(f"ip route add default via {self.ipHost}")
         elif (self.osImage=='busybox'):
             time.sleep(1)
             self.runCommand(f"ip link set dev eth0 address {self.macTarget}")
@@ -654,12 +655,49 @@ def checkEthAdaptorIsUp ():
 
 @decorate.debugWrap
 @decorate.timeWrap
+def findMainAdaptorInfo ():
+    if doesSettingExist('mainAdaptorName'):
+        return getSetting('mainAdaptorName')
+    #blindly find an adaptor connected to internet (hopefully -- maybe needs to be more sophisticated if needed)
+    for xAdaptor in psutil.net_if_addrs():
+        if ((xAdaptor != 'lo') and (not xAdaptor.startswith('docker')) and (not xAdaptor.startswith('tap')) and (not xAdaptor.endswith('fpga'))):
+            setSetting('mainAdaptorName',xAdaptor)
+            return xAdaptor
+
+    logAndExit(f"findMainAdaptorInfo: Failed to blindly find an adaptor connected to internet.",exitCode=EXIT.Network)
+
+@decorate.debugWrap
+@decorate.timeWrap
 def resetEthAdaptor ():
     with getSetting('networkLock'):
         if doesSettingExist('vcu118EthAdaptorReset') and isEnabled('vcu118EthAdaptorReset'): #for future compatibility if needed to re-reset
             return #already reset
         else:
             setSetting('vcu118EthAdaptorReset',True)
+
+        #Check the ipv4 forwarding
+        try:
+            ipForward = int(subprocess.getoutput('sudo sysctl net.ipv4.ip_forward').split()[-1])
+        except Exception as exc:
+            logAndExit ("Failed to find the values of 'net.ipv4.ip_forward'.",exc=exc,exitCode=EXIT.Run)
+        if (ipForward != 1):
+            printAndLog("IP forwarding was not enabled, enabling now.")
+            sudoShellCommand(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
+
+        mainAdaptorName = findMainAdaptorInfo()
+        printAndLog(f"Found main Ethernet adaptor <{mainAdaptorName}>.")
+
+        #Check the postrouting nat rule
+        try:
+            natTables = subprocess.getoutput('sudo iptables -t nat -S').splitlines()
+            isNatRule = (f"-A POSTROUTING -o {mainAdaptorName} -j MASQUERADE" in natTables)
+        except Exception as exc:
+            logAndExit ("Failed to find out whether the main adaptor NAT was set up.",exc=exc,exitCode=EXIT.Run)
+        if (not isNatRule):
+            printAndLog("Enabling NAT on main adaptor.")
+            sudoShellCommand(['iptables','-t', 'nat','-A','POSTROUTING',
+                '-o',mainAdaptorName,'-j','MASQUERADE'])
+            sudoShellCommand(['iptables', '-P', 'FORWARD', 'ACCEPT'])
 
         #get the name and check configuration if this is the first time called
         if (not doesSettingExist('ethAdaptor')):
