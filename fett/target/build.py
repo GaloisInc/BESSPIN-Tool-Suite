@@ -124,7 +124,9 @@ def prepareFreeRTOSNetworkParameters(targetId=None, buildDir=None):
 
     configIpHfile = ftOpenFile (os.path.join(buildDir,'fettFreeRTOSIPConfig.h'),'a')
     for xSetting,xMacro,xType in listConfigIpParams:
-        if (doesSettingExist(xSetting)):
+        if isEqSetting('mode','cyberPhys') and (xMacro=='configMAC_ADDR'):
+            settingVal = getTargetMac(targetId=targetId)
+        elif (doesSettingExist(xSetting)):
             settingVal = getSetting(xSetting)
         elif (xMacro=='configIP_ADDR'): #special treatment to accommodate for many-targets
             settingVal = getTargetIp(targetId=targetId)

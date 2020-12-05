@@ -107,11 +107,11 @@ class vcu118Target (fpgaTarget, commonTarget):
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             self.runCommand(f"ip route add default via {self.ipHost}")
-            self.runCommand(f"ip link set dev eth0 address {self.macHost}")
+            self.runCommand(f"ip link set dev eth0 address {self.macTarget}")
             outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
         elif (self.osImage=='busybox'):
             time.sleep(1)
-            self.runCommand(f"ip link set dev eth0 address {self.macHost}")
+            self.runCommand(f"ip link set dev eth0 address {self.macTarget}")
             self.runCommand ("ifconfig eth0 up",timeout=20)
             outCmd = self.runCommand(f"ifconfig eth0 {self.ipTarget}",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
         elif (self.osImage=='FreeRTOS'):
@@ -132,7 +132,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     else:
                         self.terminateAndExit("Network is not up on target.",exitCode=EXIT.Network) 
         elif (self.osImage=='FreeBSD'):
-            self.runCommand(f"ifconfig xae0 ethet {self.macHost}")
+            self.runCommand(f"ifconfig xae0 ethet {self.macTarget}")
             self.runCommand(f"route add default {self.ipHost}")
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
