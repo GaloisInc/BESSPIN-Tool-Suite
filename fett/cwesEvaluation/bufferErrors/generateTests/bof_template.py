@@ -129,11 +129,6 @@ def sizeof(typ):
 C_MULTIBYTE_INTEGRAL_TYPES = [ 'int16_t', 'int32_t', 'int64_t' ]
 # The set of supported C floating point types
 C_FLOATING_TYPES = [ 'float', 'double' ]
-# The set of supported C types that are wider than 1 byte
-C_MULTIBYTE_TYPES = [ f"{q}{t}" for q in ['', 'u'] for t in C_MULTIBYTE_INTEGRAL_TYPES] \
-                   + C_FLOATING_TYPES
-# The set of supported C types including those that are 1 byte wide
-C_TYPES = C_MULTIBYTE_TYPES + ['int8_t', 'uint8_t']
 
 ## Derive C Template values from BOF attributes defined in Clafer file
 MAGNITUDE    = { 'Magnitude_VeryClose' : (0, 10),
@@ -229,6 +224,23 @@ class BofTestGen:
         # Range object representing the intersection between `magRange` and
         # memBound`
         dataRange = pickDataRange(bof_instance.DataSize, memBound)
+
+        # The set of supported C types that are wider than 1 byte
+        c_multibyte_types = []
+        # The set of supported C types including those that are 1 byte wide
+        c_types = []
+        # Fill c_multibyte_types and c_types based on which types are enabled
+        # in config.ini
+        numeric_types = getSettingDict("bufferErrors", "numericTypes")
+        if not numeric_types:
+            logAndExit("<numericTypes> configuration option may not be empty",
+                       exitCode=EXIT.Configuration)
+        if "ints" in numeric_types:
+            c_multibyte_types += [ f"{q}{t}" for q in ['', 'u'] for t in C_MULTIBYTE_INTEGRAL_TYPES]
+            c_types += c_multibyte_types + ['int8_t', 'uint8_t']
+        if "floats" in numeric_types:
+            c_multibyte_types += C_FLOATING_TYPES
+            c_types += C_FLOATING_TYPES
 
         def chooseIdx0(N):
             '''
@@ -348,11 +360,11 @@ class BofTestGen:
             """
             if incorrect_malloc:
                 # Filter out types that won't produce legal N values
-                legal_types = [x for x in C_MULTIBYTE_TYPES if
+                legal_types = [x for x in c_multibyte_types if
                                incorrectMallocMinN(x) <= dataRange.hi]
                 return Choice(*legal_types)
             # Choose from all supported C types
-            return Choice(*C_TYPES)
+            return Choice(*c_types)
 
         def chooseN():
             """
@@ -416,9 +428,9 @@ class BofTestGen:
             # Type of data `buf` stores
             'buf_type'         : chooseBufType(),
             # Type of data `buf2` stores
-            'buf_type2'        : Choice(*C_TYPES),
+            'buf_type2'        : Choice(*c_types),
             # Type of the temporary variable
-            'tmp_var_type'     : Choice(*C_TYPES),
+            'tmp_var_type'     : Choice(*c_types),
 
             # Whether to access the buffer via array indexing or pointer
             # arithmetic

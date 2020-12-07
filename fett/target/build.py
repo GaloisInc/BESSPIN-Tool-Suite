@@ -239,7 +239,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         if isEqSetting('target', 'qemu' ,targetId=targetId):
             builtElf = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),
                                     'build',
-                                    f'FreeRTOS-{mainName}.elf')
+                                    'FreeRTOS-main_fett.elf')
         else:
             builtElf = os.path.join(getSetting('FreeRTOSprojDir',targetId=targetId),'main_fett.elf')
         if (not os.path.isfile(builtElf)):

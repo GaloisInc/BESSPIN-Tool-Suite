@@ -66,10 +66,11 @@ class InstanceSelector:
         underQuota = numSelected < (getSettingDict('bufferErrors', 'nTests') //
                                     NUM_CONCEPTS *
                                     NUM_CONCEPTS)
-        while ((underQuota and
+        while (isEnabledDict("bufferErrors", "enforceQuotas") and
+               ((underQuota and
                 self.conceptCounts[concept] >= getQuota(instance)) or
-               ((not underQuota) and
-                self.conceptCounts[concept] >= (getQuota(instance) + 1))):
+                ((not underQuota) and
+                 self.conceptCounts[concept] >= (getQuota(instance) + 1)))):
             # Sample until an instance is chosen that helps meet a quota.
             # If all quotas have been reached and nTests is not a multiple of
             # NUM_CONCEPTS, then select an instance that is at (but not

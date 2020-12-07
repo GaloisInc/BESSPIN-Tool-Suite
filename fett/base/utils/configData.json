@@ -280,6 +280,15 @@
             "type" : "bool"
         },
         {
+            "name" : "enforceQuotas",
+            "type" : "bool"
+        },
+        {
+            "name" : "numericTypes",
+            "type" : "stringsList",
+            "choices" : [ "ints", "floats" ]
+        },
+        {
             "name" : "useSeed",
             "type" : "bool"
         },
