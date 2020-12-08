@@ -528,6 +528,8 @@ def prepareFpgaEnv(targetId=None):
         if (firstTime or (not isEqSetting('mode','cyberPhys'))):
             # Clear processes
             processesList = ['openocd', getSetting('vivadoCmd'), 'hw_server', 'loader', 'pyprogram_fpga']
+            if (isEqSetting('mode','cyberPhys')):
+                processesList.append('socat') # targets' UART get piped
             for proc in processesList:
                 sudoShellCommand(['pkill', '-9', proc],check=False)
 
