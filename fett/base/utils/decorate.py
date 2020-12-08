@@ -10,7 +10,11 @@ def debugWrap (func):
             caller = sys._getframe(1).f_code.co_name
         except:
             caller = 'unknown-caller'
-        logging.debug(f"Entering <{func.__name__}>. [called from <{caller}>]")
+        if (('targetId' in kwargs) and (kwargs['targetId'] is not None)):
+            targetInfo = f"<target{kwargs['targetId']}>: "
+        else:
+            targetInfo = ''
+        logging.debug(f"{targetInfo}Entering <{func.__name__}>. [called from <{caller}>]") 
         #logging.debug(f">>>> args={args}, kwargs={kwargs}") #super-duper debug
         ret = func(*args, **kwargs)
         logging.debug(f"Exitting <{func.__name__}>.")
