@@ -259,24 +259,23 @@ class vcu118Target (fpgaTarget, commonTarget):
     @decorate.timeWrap
     def setupUart(self):
         if (not doesSettingExist('vcu118UartDevice',targetId=self.targetId)):
-            with getSetting('setupUartLock'):
-                if (not doesSettingExist('vcu118UartDevices')):
-                    setSetting('vcu118UartDevices',self.findUartDevices())
-                uartDevices = getSetting('vcu118UartDevices')
+            if (not doesSettingExist('vcu118UartDevices')):
+                setSetting('vcu118UartDevices',self.findUartDevices())
+            uartDevices = getSetting('vcu118UartDevices')
 
-                if (len(uartDevices)==0):
-                    logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exitCode=EXIT.Configuration)
-                elif(len(uartDevices)==1):
-                    uartDevice = uartDevices.pop(0)
-                    setSetting('vcu118UartDevices',uartDevices)
-                    printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in the UART devices list.")
-                else:
-                    uartDevice = self.findTheRightUartDevice(uartDevices)
-                    uartDevices.remove(uartDevice)
-                    setSetting('vcu118UartDevices',uartDevices)
-                    printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
+            if (len(uartDevices)==0):
+                logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exitCode=EXIT.Configuration)
+            elif(len(uartDevices)==1):
+                uartDevice = uartDevices.pop(0)
+                setSetting('vcu118UartDevices',uartDevices)
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in the UART devices list.")
+            else:
+                uartDevice = self.findTheRightUartDevice(uartDevices)
+                uartDevices.remove(uartDevice)
+                setSetting('vcu118UartDevices',uartDevices)
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
 
-                uartSessionDict = self.startUartSession(uartDevice)
+            uartSessionDict = self.startUartSession(uartDevice)
         else:
             # Not the first time to start the uart session
             uartSessionDict = self.startUartSession(getSetting('vcu118UartDevice',targetId=self.targetId))

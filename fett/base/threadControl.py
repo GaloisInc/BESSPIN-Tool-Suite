@@ -16,10 +16,8 @@ def createFettLocks():
     The following operations are all protected by a single lock (openocdLock):
     - clear flash
     - program bitfile
-    - start an openocd process
-    - gdb connect to openocd [(gdb) target remote localhost:<gdbPort>]
+    - start an openocd process + gdb setup and connect
     """
-    setSetting('setupUartLock',threading.Lock())
     setSetting('openocdLock',threading.Lock())
     # Create a lock for using the FreeRTOS submodule directory or FreeRTOS general settings
     setSetting('FreeRTOSLock',threading.Lock())
