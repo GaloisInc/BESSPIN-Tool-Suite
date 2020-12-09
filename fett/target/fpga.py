@@ -72,10 +72,10 @@ class fpgaTarget(object):
                         logfile=self.fOpenocdOut, timeout=15, echo=False)
                 self.openocdProcess.expect(f"Listening on port {self.openocdPort} for telnet", timeout=15)
             except Exception as exc:
+                getSetting('openocdLock').release()
                 if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
                     self.fpgaStartRetriesIdx += 1
                     errorAndLog (f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
-                    getSetting('openocdLock').release()
                     return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
                 self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
@@ -113,11 +113,11 @@ class fpgaTarget(object):
                     logfile=self.fGdbOut, timeout=15, echo=False)
             self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
         except Exception as exc:
+            if (self.useOpenocd()):
+                getSetting('openocdLock').release()
             if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax)):
                 self.fpgaStartRetriesIdx += 1
                 errorAndLog (f"{self.targetIdInfo}gdbProgStart: Failed to spawn the gdb process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
-                if (self.useOpenocd()):
-                    getSetting('openocdLock').release()
                 return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.gdb)
             self.terminateAndExit(f"{self.targetIdInfo}gdbProgStart: Failed to spawn the gdb process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
