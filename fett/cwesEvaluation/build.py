@@ -9,7 +9,7 @@ from fett.base.utils.misc import *
 from fett.cwesEvaluation.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.informationLeakage.generateWrappers import generateWrappers
 from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
-from fett.cwesEvaluation.common import isTestEnabled, doesTheTestNeedBootedOs, doesTheTestHaveACfile
+from fett.cwesEvaluation.common import isTestEnabled
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
 
 @decorate.debugWrap
@@ -98,20 +98,18 @@ def buildCwesEvaluation():
                 enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
                     glob.glob(os.path.join(vulClassDir,"*.c"))]
         else:
-            cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
             if (vulClass in ["PPAC", "hardwareSoC"]):
                 tests = getSettingDict(vulClass,["testsInfo"])
             else: #all C files in sources
+                cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
                 tests = [os.path.basename(f).split(".c")[0] for f in glob.glob(os.path.join(sourcesDir, "test_*.c"))]
             for test in tests:
                 # Check if the test should be skipped:
                 if (isTestEnabled(vulClass,test)):
                     vIsThereAnythingToRun = True
-                    isThereAReasonToBoot |= doesTheTestNeedBootedOs(vulClass,test)
-                    if (doesTheTestHaveACfile(vulClass,test)):
+                    if (vulClass not in ["hardwareSoC","PPAC"]): #No need to boot for self-assessment
+                        isThereAReasonToBoot = True 
                         cp (os.path.join(sourcesDir, f"{test}.c"), vulClassDir)
-                    elif (isEqSetting('osImage', 'FreeRTOS') and doesTheTestNeedBootedOs(vulClass,test)): #Use dummy file
-                        cp (fillerCfile, os.path.join(vulClassDir,f"{test}.c"))
                     enabledCwesEvaluations[vulClass].append(f"{test}.riscv")
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{test}>. It is not enabled.",doPrint=False)
@@ -167,9 +165,9 @@ def buildCwesEvaluation():
                        f"<{getSetting('osImage')}>.",
                        exitCode=EXIT.Implementation)
 
+    setSetting('isThereAReasonToBoot',isThereAReasonToBoot)
     if getSetting('osImage') in ['debian', 'FreeBSD']:
         buildTarball()
-        setSetting('isThereAReasonToBoot',isThereAReasonToBoot) #For FreeRTOS, this will be done per test.
     return isThereAnythingToRun
 
 @decorate.debugWrap
