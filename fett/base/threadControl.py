@@ -19,6 +19,8 @@ def createFettLocks():
     - start an openocd process + gdb setup and connect
     """
     setSetting('openocdLock',threading.Lock())
+    # We also need a lock for TFTP
+    setSetting('tftpLock',threading.Lock())
     # Create a lock for using the FreeRTOS submodule directory or FreeRTOS general settings
     setSetting('FreeRTOSLock',threading.Lock())
 
