@@ -551,11 +551,6 @@ def prepareFpgaEnv(targetId=None):
 
         if (firstTime):
             # Find the target(s) names
-            if (isEnabled('useCustomHwTarget') and isEqSetting('mode','cyberPhys')):
-                warnAndLog("The <useCustomHwTarget> setting is incompatible with <cyberPhys>."
-                    "The value in <customHwTarget> will be ignored.")
-                setSetting('useCustomHwTarget',False)
-
             cp(os.path.join(getSetting('tclSourceDir'), 'get_hw_targets.tcl'), gfeWorkDir)
             getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-source','./get_hw_targets.tcl',
                             '-log', os.path.join(gfeWorkDir,'get_hw_targets.log'), '-mode','batch']
@@ -582,11 +577,11 @@ def prepareFpgaEnv(targetId=None):
                 logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough vcu118 HW targets found!",exitCode=EXIT.Configuration)
             
             if (isEnabled('useCustomHwTarget')):
-                if (getSetting('customHwTarget') not in curList):
-                    logAndExit(f"{targetInfo}prepareFpgaEnv: Custom target {getSetting('customHwTarget')} not found!",
+                if (getSetting('customHwTarget',targetId=targetId) not in curList):
+                    logAndExit(f"{targetInfo}prepareFpgaEnv: Custom target {getSetting('customHwTarget',targetId=targetId)} not found!",
                         exitCode=EXIT.Configuration)
-                thisTarget = getSetting('customHwTarget')
-                curList.remove(getSetting('customHwTarget'))
+                thisTarget = getSetting('customHwTarget',targetId=targetId)
+                curList.remove(getSetting('customHwTarget',targetId=targetId))
             else:
                 thisTarget = curList.pop(0)
             printAndLog(f"{targetInfo}prepareFpgaEnv: Using HW target <{thisTarget}>.")

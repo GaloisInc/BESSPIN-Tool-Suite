@@ -98,6 +98,10 @@
             "name" : "sourceVariant",
             "type" : "string",
             "choices" : [ "default", "purecap", "temporal" ]
+        },
+        {
+            "name" : "customHwTarget",
+            "type" : "string"
         }
     ],
 
@@ -113,10 +117,6 @@
         {
             "name" : "useCustomHwTarget",
             "type" : "boolean"
-        },
-        {
-            "name" : "customHwTarget",
-            "type" : "string"
         },
         {
             "name" : "userName",
