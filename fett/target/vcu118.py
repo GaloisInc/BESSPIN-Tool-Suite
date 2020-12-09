@@ -65,16 +65,16 @@ class vcu118Target (fpgaTarget, commonTarget):
                     server = tftpy.TftpServer(dirname)
                 except Exception as exc:
                     self.terminateAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overrideShutdown=True,exitCode=EXIT.Run)
+                with getSetting('tftpLock'):
+                    serverThread = threading.Thread(target=server.listen, kwargs={'listenip': self.ipHost, 'listenport': listenPort})
+                    serverThread.daemon = True
+                    getSetting('trash').throwThread(serverThread, "TFTP server listening on host for netboot")
+                    serverThread.start()
+                    printAndLog (f"Started TFTP server on port {listenPort}.",doPrint=False)
+                    time.sleep(1)
+                    self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
+                    self.expectFromTarget("Finished receiving","Netbooting",timeout=timeout,overrideShutdown=True)
 
-                serverThread = threading.Thread(target=server.listen, kwargs={'listenip': self.ipHost, 'listenport': listenPort})
-                serverThread.daemon = True
-                getSetting('trash').throwThread(serverThread, "TFTP server listening on host for netboot")
-                serverThread.start()
-                printAndLog (f"Started TFTP server on port {listenPort}.",doPrint=False)
-                time.sleep(1)
-                self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
-
-            time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
 
             if (self.elfLoader=='netboot'):
@@ -264,24 +264,29 @@ class vcu118Target (fpgaTarget, commonTarget):
     @decorate.timeWrap
     def setupUart(self):
         if (not doesSettingExist('vcu118UartDevice',targetId=self.targetId)):
-            with getSetting('setupUartLock'):
-                if (not doesSettingExist('vcu118UartDevices')):
-                    setSetting('vcu118UartDevices',self.findUartDevices())
-                uartDevices = getSetting('vcu118UartDevices')
+            if (not doesSettingExist('vcu118UartDevices')):
+                setSetting('vcu118UartDevices',self.findUartDevices())
+                if (isEqSetting('mode','cyberPhys')):
+                    if ((getSetting('nTargets') > len(getSetting('vcu118UartDevices')))):
+                        logAndExit(f"{self.targetIdInfo}setupUart: Number of UART devices "
+                            f"(={len(getSetting('vcu118UartDevices'))}) < < Number of targets "
+                            f"(={getSetting('nTargets')}).",exitCode=EXIT.Configuration)
 
-                if (len(uartDevices)==0):
-                    logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exitCode=EXIT.Configuration)
-                elif(len(uartDevices)==1):
-                    uartDevice = uartDevices.pop(0)
-                    setSetting('vcu118UartDevices',uartDevices)
-                    printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in the UART devices list.")
-                else:
-                    uartDevice = self.findTheRightUartDevice(uartDevices)
-                    uartDevices.remove(uartDevice)
-                    setSetting('vcu118UartDevices',uartDevices)
-                    printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
+            uartDevices = getSetting('vcu118UartDevices')
 
-                uartSessionDict = self.startUartSession(uartDevice)
+            if (len(uartDevices)==0):
+                logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exitCode=EXIT.Configuration)
+            elif(len(uartDevices)==1):
+                uartDevice = uartDevices.pop(0)
+                setSetting('vcu118UartDevices',uartDevices)
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in the UART devices list.")
+            else:
+                uartDevice = self.findTheRightUartDevice(uartDevices)
+                uartDevices.remove(uartDevice)
+                setSetting('vcu118UartDevices',uartDevices)
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
+
+            uartSessionDict = self.startUartSession(uartDevice)
         else:
             # Not the first time to start the uart session
             uartSessionDict = self.startUartSession(getSetting('vcu118UartDevice',targetId=self.targetId))
@@ -533,6 +538,8 @@ def prepareFpgaEnv(targetId=None):
         if (firstTime or (not isEqSetting('mode','cyberPhys'))):
             # Clear processes
             processesList = ['openocd', getSetting('vivadoCmd'), 'hw_server', 'loader', 'pyprogram_fpga']
+            if (isEqSetting('mode','cyberPhys')):
+                processesList.append('socat') # targets' UART get piped
             for proc in processesList:
                 sudoShellCommand(['pkill', '-9', proc],check=False)
 
@@ -572,7 +579,7 @@ def prepareFpgaEnv(targetId=None):
             targetInfo = f"<target{targetId}>: " if (targetId) else ''
             curList = getSetting('listVcu118HwTargets')
             if (len(curList) == 0):
-                logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough vcu118 HW targets found!",exc=exc,exitCode=EXIT.Configuration)
+                logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough vcu118 HW targets found!",exitCode=EXIT.Configuration)
             
             if (isEnabled('useCustomHwTarget')):
                 if (getSetting('customHwTarget') not in curList):

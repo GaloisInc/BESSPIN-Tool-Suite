@@ -72,17 +72,16 @@ class fpgaTarget(object):
                         logfile=self.fOpenocdOut, timeout=15, echo=False)
                 self.openocdProcess.expect(f"Listening on port {self.openocdPort} for telnet", timeout=15)
             except Exception as exc:
+                getSetting('openocdLock').release()
                 if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax - 1)):
                     self.fpgaStartRetriesIdx += 1
                     errorAndLog (f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
-                    getSetting('openocdLock').release()
                     return self.fpgaReload (elfPath, elfLoadTimeout=elfLoadTimeout, stage=failStage.openocd)
                 self.terminateAndExit(f"{self.targetIdInfo}fpgaStart: Failed to spawn the openocd process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
-            getSetting('openocdLock').release()
 
         self.setupUart()
 
-        self.gdbProgStart(elfPath,elfLoadTimeout)
+        self.gdbProgStart(elfPath,elfLoadTimeout) #releasing the openocd lock happens here
         
         if ((self.processor=='bluespec_p3') and (self.target=='vcu118')):
             _,wasTimeout,_ = self.expectFromTarget("bbl loader", f"attempt to boot {self.processor}",
@@ -114,6 +113,8 @@ class fpgaTarget(object):
                     logfile=self.fGdbOut, timeout=15, echo=False)
             self.gdbProcess.expect(self.getGdbEndsWith(), timeout=15)
         except Exception as exc:
+            if (self.useOpenocd()):
+                getSetting('openocdLock').release()
             if ((self.target=='vcu118') and (self.fpgaStartRetriesIdx < self.fpgaStartRetriesMax)):
                 self.fpgaStartRetriesIdx += 1
                 errorAndLog (f"{self.targetIdInfo}gdbProgStart: Failed to spawn the gdb process. Trying again ({self.fpgaStartRetriesIdx+1}/{self.fpgaStartRetriesMax})...",exc=exc)
@@ -135,14 +136,24 @@ class fpgaTarget(object):
 
         if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
             self.runCommandGdb ('set $pc=0xC0000000')
+            if (self.useOpenocd() and mainProg):
+                getSetting('openocdLock').release()
         elif (self.target=='vcu118'):
             # reset the board
             self.softReset()
+
+            # release before the load (takes time)
+            if (self.useOpenocd() and mainProg):
+                getSetting('openocdLock').release()
 
             self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
 
             if (self.processor=='bluespec_p3'):
                 time.sleep(3) # Bluespec_p3 needs time here before being able to properly continue.
+        elif (self.useOpenocd() and mainProg):
+            getSetting('openocdLock').release()
+            self.terminateAndExit(f"{self.targetIdInfo}gdbProgStart: Releasing the openocd lock is not "
+                f"implemented for <{self.target}>.", exitCode=EXIT.Implementation)
         if (mainProg and isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
             self.setupGdbCustomScoring()
 
@@ -200,10 +211,9 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def gdbConnect (self):
-        with getSetting('openocdLock'):
-            self.runCommandGdb(f"target remote localhost:{self.gdbPort}",erroneousContents="Failed")
-            if (self.useOpenocd()):
-                self.expectOnOpenocd (f"accepting 'gdb' connection on tcp/{self.gdbPort}","connect")
+        self.runCommandGdb(f"target remote localhost:{self.gdbPort}",erroneousContents="Failed")
+        if (self.useOpenocd()):
+            self.expectOnOpenocd (f"accepting 'gdb' connection on tcp/{self.gdbPort}","connect")
 
     @decorate.debugWrap
     @decorate.timeWrap
