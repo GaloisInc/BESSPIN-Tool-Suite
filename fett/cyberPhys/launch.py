@@ -18,19 +18,19 @@ def startCyberPhys():
     runThreadPerTarget(fett.target.launch.startFett)
     printAndLog (f"FETT <cyberPhys mode> is launched!")
 
-    # - We need a way for communication between this (main thread) and the watchdog threads [and interacting thread].
-    # - We'll use queues. Each queue should be used in one-way communication. So there is a main queue that is watched here.
-    # - And we create a queue for each watchdog [and interacting thread] (Creating a threading.Event() is possible, but not
-    #   for interactive, so we'll keep it all as queues for consistency and more future compatibility).
-    exitQueue = queue.Queue(maxsize=getSetting('nTargets')+int(isEnabled('interactiveShell')))
-    setSetting('cyberPhysQueue',exitQueue)
-    for targetId in range(1,getSetting('nTargets')+1):
-        setSetting('watchdogQueue',queue.Queue(maxsize=1),targetId=targetId)
-
-    # Start the watchdogs
-    allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
-
     if (isEnabled('interactiveShell')):
+        # - We need a way for communication between this (main thread) and the watchdog threads [and interacting thread].
+        # - We'll use queues. Each queue should be used in one-way communication. So there is a main queue that is watched here.
+        # - And we create a queue for each watchdog [and interacting thread] (Creating a threading.Event() is possible, but not
+        #   for interactive, so we'll keep it all as queues for consistency and more future compatibility).
+        exitQueue = queue.Queue(maxsize=getSetting('nTargets')+int(isEnabled('interactiveShell')))
+        setSetting('cyberPhysQueue',exitQueue)
+        for targetId in range(1,getSetting('nTargets')+1):
+            setSetting('watchdogQueue',queue.Queue(maxsize=1),targetId=targetId)
+
+        # Start the watchdogs
+        allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
+
         # Pipe the UART
         runThreadPerTarget(startUartPiping)
         printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
@@ -42,18 +42,18 @@ def startCyberPhys():
         allThreads += runThreadPerTarget(fett.cyberPhys.interactive.interact,
                         addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
 
-    # Start the watch on the watchdogs [+ interactive shell]
-    ftQueueUtils("cyberPhysMain:queue",exitQueue,'get') #block until receiving an error or termination
+        # Start the watch on the watchdogs [+ interactive shell]
+        ftQueueUtils("cyberPhysMain:queue",exitQueue,'get') #block until receiving an error or termination
     
-    # Terminating all threads
-    for targetId in range(1,getSetting('nTargets')+1):
-        ftQueueUtils(f"target{targetId}:watchdog:queue",getSetting('watchdogQueue',targetId=targetId),'put')
-    if (isEnabled('interactiveShell')):
-        ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
+        # Terminating all threads
+        for targetId in range(1,getSetting('nTargets')+1):
+            ftQueueUtils(f"target{targetId}:watchdog:queue",getSetting('watchdogQueue',targetId=targetId),'put')
+        if (isEnabled('interactiveShell')):
+            ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
 
-    # Waiting for all threads to terminate
-    for xThread in allThreads:
-        xThread.join()
+        # Waiting for all threads to terminate
+        for xThread in allThreads:
+            xThread.join()
 
     return
 
