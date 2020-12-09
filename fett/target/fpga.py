@@ -141,8 +141,11 @@ class fpgaTarget(object):
         elif (self.target=='vcu118'):
             # reset the board
             self.softReset()
+
+            # release before the load (takes time)
             if (self.useOpenocd() and mainProg):
                 getSetting('openocdLock').release()
+
             self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
 
             if (self.processor=='bluespec_p3'):
