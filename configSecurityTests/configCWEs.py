@@ -18,7 +18,7 @@ def main (xArgs):
         exit(1)
 
     #default section or chosen section
-    xSection = 'configCWEs'
+    xSection = 'enabledTests'
     if (xArgs.section):
         xSection = xArgs.section
     if (not xConfig.has_section(xSection)):
