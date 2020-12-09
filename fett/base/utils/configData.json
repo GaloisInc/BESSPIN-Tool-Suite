@@ -167,6 +167,15 @@
             "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC" ]
         },
         {
+            "name" : "useCustomCWEsConfigsPath",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomCWEsConfigs",
+            "type" : "dirPath",
+            "condition" : "useCustomCWEsConfigsPath"
+        },
+        {
             "name" : "useCustomScoring",
             "type" : "boolean"
         },
