@@ -53,13 +53,6 @@ def buildCwesEvaluation():
                     f"<{vClass}> will be skipped.")
                 getSetting("vulClasses").remove(vClass)
 
-        if (isEqSetting("target", "qemu")):
-            for vClass in ["hardwareSoC"]:
-                if (vClass in getSetting("vulClasses")):
-                    warnAndLog(f"vulClass <{vClass}> not supported for FreeRTOS on "
-                       f"qemu. <{vClass}> tests will be skipped.")
-                    getSetting("vulClasses").remove(vClass)
-
         fillerCfile = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','utils','fillerMainFreeRTOS.c')
 
     # Copy tests over
