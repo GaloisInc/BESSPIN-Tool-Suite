@@ -280,6 +280,20 @@
             "type" : "bool"
         },
         {
+            "name" : "useCustomErrorModel",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomErrorModel",
+            "type" : "filePath",
+            "condition" : "useCustomErrorModel"
+        },
+        {
+            "name" : "numericTypes",
+            "type" : "stringsList",
+            "choices" : [ "ints", "floats" ]
+        },
+        {
             "name" : "useSeed",
             "type" : "bool"
         },
