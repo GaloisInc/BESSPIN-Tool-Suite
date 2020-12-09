@@ -396,6 +396,12 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
     #load main global configs
     loadConfigSection(xConfig, CWES_SECTION, configData, CWES_SECTION)
 
+    #The location of all the vulClass.ini files
+    if (isEnabled('useCustomCWEsConfigsPath')):
+        configCWEsParentPath = getSetting('pathToCustomCWEsConfigs')
+    else: #use default
+        configCWEsParentPath = os.path.join(getSetting('repoDir'),'configSecurityTests')
+
     # load vulClass configs
     for vulClass in getSetting('vulClasses'): #load settings per vulClass
         vulClassDict = dict()
@@ -403,26 +409,31 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         loadConfigSection(xConfig, vulClass, configData, vulClass, 
                 addSectionToConfigDict='commonVulClassesParameters', setSettingsToSectDict=vulClass)
 
+        configCWEsPath = os.path.join(configCWEsParentPath,f'{vulClass}.ini')
+
         if (vulClass in ['bufferErrors']):
             setSettingDict(vulClass,'runAllTests',True)
             printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
+        elif (isEnabled('useCustomCWEsConfigsPath') and isEnabledDict(vulClass,'runAllTests')):
+            warnAndLog(f"{vulClass}: <runAllTests> is enabled; The <test_*> settings in <{configCWEsPath}>"
+                f"will be ignored.") 
+            # The ignoring happens in fett/cwesEvaluation/common.py:isTestEnabled() which checks
+            # the `runAllTests` setting _before_ proceeding and checking the `test_*` setting.
 
-        # Load selected tests
+        # Load selected tests + custom scores
         sectionName = 'configCWEs'
-        if (not getSettingDict(vulClass,'runAllTests')):
-            configCWEsPath = os.path.join(getSetting('repoDir'),'configSecurityTests',f'{vulClass}.ini')
-            configCWEs = loadIniFile(configCWEsPath)
-            try:
-                assert configCWEs.has_section(sectionName), f"has_section('{sectionName}')"
-            except Exception as exc:
-                logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+        configCWEs = loadIniFile(configCWEsPath)
+        try:
+            assert configCWEs.has_section(sectionName), f"has_section('{sectionName}')"
+        except Exception as exc:
+            logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
 
-            dictConfigCWEs = dict() 
-            for xTest in configCWEs.options(sectionName):
-                try:
-                    dictConfigCWEs[xTest] = configCWEs.getboolean(sectionName,xTest)
-                except Exception as exc:
-                    logAndExit(f"The value of <{xTest}> should be boolean in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+        dictConfigCWEs = dict() 
+        for xTest in configCWEs.options(sectionName):
+            try:
+                dictConfigCWEs[xTest] = configCWEs.getboolean(sectionName,xTest)
+            except Exception as exc:
+                logAndExit(f"The value of <{xTest}> should be boolean in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
 
             setSettingDict(vulClass,'configCWEs',dictConfigCWEs)
 
