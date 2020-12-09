@@ -66,7 +66,7 @@ class InstanceSelector:
         underQuota = numSelected < (getSettingDict('bufferErrors', 'nTests') //
                                     NUM_CONCEPTS *
                                     NUM_CONCEPTS)
-        while (isEnabledDict("bufferErrors", "enforceQuotas") and
+        while ((not isEnabledDict("bufferErrors", "useCustomErrorModel")) and
                ((underQuota and
                 self.conceptCounts[concept] >= getQuota(instance)) or
                 ((not underQuota) and

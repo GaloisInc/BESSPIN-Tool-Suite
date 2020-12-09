@@ -36,7 +36,9 @@ def generateTests(outdir):
                                    "fett",
                                    "cwesEvaluation",
                                    "bufferErrors")
-    modelPath = os.path.join(bufferErrorsDir, "BufferErrors.cfr")
+    modelPath = (settings['pathToCustomErrorModel'] if
+                 settings['useCustomErrorModel'] else
+                 os.path.join(bufferErrorsDir, "BufferErrors.cfr"))
     try:
         model = featureModelUtil.loadFM(modelPath)
     except Exception as exc:
@@ -47,7 +49,7 @@ def generateTests(outdir):
     # Prune out other vulnerability classes
     model = featureModelUtil.splitFM(model, ["BufferErrors_Test"])[0]
     instancePath = os.path.join(bufferErrorsDir, "CachedInstances.json")
-    if settings['useCachedInstances']:
+    if settings['useCachedInstances'] and not settings['useCustomErrorModel']:
         printAndLog("<generateTests> Loading cached instances "
                     f"<{instancePath}>")
         enumeratedFM = safeLoadJsonFile(instancePath)
@@ -57,8 +59,9 @@ def generateTests(outdir):
         # Make sure that the buffer error test is actually enabled
         model = featureModelUtil.addConstraints(model, ["BufferErrors_Test"])
         enumeratedFM = featureModelUtil.enumerateFM(model)
-        printAndLog(f"<generateTests> Caching instances to <{instancePath}>")
-        safeDumpJsonFile(enumeratedFM, instancePath)
+        if not settings['useCustomErrorModel']:
+            printAndLog(f"<generateTests> Caching instances to <{instancePath}>")
+            safeDumpJsonFile(enumeratedFM, instancePath)
         printAndLog("<generateTests> Done generating instances")
     instances = [BofInstance(model, x) for x in enumeratedFM]
     heapSize = parseBytes(settings['heapSize'])

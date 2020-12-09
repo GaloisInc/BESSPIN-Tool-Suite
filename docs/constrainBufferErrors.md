@@ -6,30 +6,22 @@ test suite.
 
 ## Buffer Errors Clafer ##
 
-The buffer errors clafer file
-(`fett/cwesEvaluation/bufferErrors/buffErrors.cfr`) defines a set of program
-constraints and specifies a mapping from CWEs to constraints.  You
-may force the setting of certain constraints by listing them at the end of the
-`BufferErrors_Test` section.  For example, if you'd like to only generate stack
-tests, rather than a mix of stack and heap tests, you should add
-`[Location_Stack]` to the end of the clafer file (indented by two spaces to
-apply it to the `BufferErrors_Test` section).  You may add as many constraints
-as you'd like, and the tool will take their conjunction.  You should not remove
-any definitions from this file.
+The buffer errors tool uses a clafer model to define a set of program
+constraints and specifies a mapping from CWEs to constraints.  You may force
+the setting of of specific constraints by providing your own custom error
+model.  To do so, create a copy of the builtin model
+(`fett/cwesEvaluation/bufferErrors/bufferErrors.cfr`) and list the constraints
+you would like to set at the end of the `BufferErrors_Test` section.  For
+example, if you'd like to only generate stack tests, rather than a mix of stack
+and heap tests, you should add `[Location_Stack]` to the end of the clafer file
+(indented by two spaces to apply it to the `BufferErrors_Test` section).  You
+may add as many constraints as you'd like, and the tool will take their
+conjunction.  You should not remove any definitions from this file.
 
-### Important Configuration Changes ###
-
-If you modify the clafer file, you must also make the following changes to
-the `bufferErrors` section of `config.ini`:
-
-* Set `useCachedInstances` to `No` for the first run.  This will cause the tool
-  to regenerate the set of instances that the clafer file defines.  Depending
-  on how you've modified the file, this may take a while to run (up to half an
-  hour or so).  After running to tool to completion, you may re-enable
-  `useCachedInstances`.  You must disable `useCachedInstances` for the first
-  run every time you modify the clafer file.
-* Set `enforceQuotas` to `No`.  This option must be disabled any time you
-  use a custom clafer file.
+To use your custom model, make the following changes to the `bufferErrors
+section of `config.ini`:
+* Set `useCustomErrorModel` to `Yes`
+* Set `pathToCustomErrorModel` to point to your custom error model file
 
 ## Constraining Numeric Types ##
 
@@ -44,12 +36,8 @@ Say you would like to constrain the tool to only generate indexed array
 buffer errors in the stack with a magnitude of close and only using integer
 types.  Here are the steps you would take to accomplish this:
 
-1. Make the following changes to the `bufferErrors` section of `config.ini`:
-  * Set `useCachedInstances` to `No`
-  * Set `enforceQuotas` to `No`
-  * Set `numericTypes` to `[ints]`
-2. Add the following lines to the bottom of
-   `fett/cwesEvaluation/bufferErrors/buffErrors.cfr`:
+1. Make a copy of `fett/cwesEvaluation/bufferErrors/bufferErrors.cfr`
+2. Add the following lines to the bottom of your error model:
 ```
   [BufferIndexScheme_IndexArray]
   [Location_Stack]
@@ -147,6 +135,8 @@ BufferErrors_Test : BufferErrors_Weakness ?
   [Magnitude_Close]
 // End of BufferErrors
 ```
-3. Run Fett
-4. Optionally disable `useCachedInstaces` in `config.ini` if you plan on
-   re-running Fett with the same clafer file.
+3. Make the following changes to the `bufferErrors` section of `config.ini`:
+  * Set `useCustomErrorModel` to `Yes`
+  * Set `pathToCustomErrorModel` to your error model file
+  * Set `numericTypes` to `[ints]`
+4. Run Fett

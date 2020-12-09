@@ -280,8 +280,13 @@
             "type" : "bool"
         },
         {
-            "name" : "enforceQuotas",
+            "name" : "useCustomErrorModel",
             "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomErrorModel",
+            "type" : "filePath",
+            "condition" : "useCustomErrorModel"
         },
         {
             "name" : "numericTypes",
