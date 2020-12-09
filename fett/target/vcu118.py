@@ -64,16 +64,16 @@ class vcu118Target (fpgaTarget, commonTarget):
                     server = tftpy.TftpServer(dirname)
                 except Exception as exc:
                     self.terminateAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overrideShutdown=True,exitCode=EXIT.Run)
+                with getSetting('tftpLock'):
+                    serverThread = threading.Thread(target=server.listen, kwargs={'listenip': self.ipHost, 'listenport': listenPort})
+                    serverThread.daemon = True
+                    getSetting('trash').throwThread(serverThread, "TFTP server listening on host for netboot")
+                    serverThread.start()
+                    printAndLog (f"Started TFTP server on port {listenPort}.",doPrint=False)
+                    time.sleep(1)
+                    self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
+                    self.expectFromTarget("Finished receiving","Netbooting",timeout=timeout,overrideShutdown=True)
 
-                serverThread = threading.Thread(target=server.listen, kwargs={'listenip': self.ipHost, 'listenport': listenPort})
-                serverThread.daemon = True
-                getSetting('trash').throwThread(serverThread, "TFTP server listening on host for netboot")
-                serverThread.start()
-                printAndLog (f"Started TFTP server on port {listenPort}.",doPrint=False)
-                time.sleep(1)
-                self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
-
-            time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
 
             if (self.elfLoader=='netboot'):
