@@ -27,6 +27,7 @@ def loadJsonFile (jsonFile):
 def loadIniFile (iniFile):
     xConfig = configparser.ConfigParser()
     try:
+        xConfig.optionxform = str # Hack it to be case sensitive
         fConfig = open(iniFile,'r')
         xConfig.read_file(fConfig)
         fConfig.close()
@@ -151,7 +152,7 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
                 assert xConfig.has_option(configSection,iPar['name']), f"has_option('{iPar['name']}')"
             except Exception as exc:
                 logAndExit(f"{fileName}: <{iPar['name']}> not found in section [{configSection}].",exc=exc,exitCode=EXIT.Configuration)
-            optionsInConfig[iPar['name'].lower()] = True #Be careful! configparser options are always case insensitive and are all lowercase
+            optionsInConfig[iPar['name']] = True
         
         if (iPar['type'] in 'integer'): #works for int or integer
             try:
