@@ -435,7 +435,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             except Exception as exc:
                 logAndExit(f"The value of <{xTest}> should be boolean in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
 
-            setSettingDict(vulClass,'configCWEs',dictConfigCWEs)
+        setSettingDict(vulClass,'configCWEs',dictConfigCWEs)
 
         # Load custom dev options (setupEnv.json)
         setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',vulClass,'setupEnv.json'))
