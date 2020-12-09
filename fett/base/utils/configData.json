@@ -101,7 +101,13 @@
         },
         {
             "name" : "customHwTarget",
-            "type" : "string"
+            "type" : "string",
+            "condition" : "useCustomHwTarget"
+        },
+        {
+            "name" : "customTargetIp",
+            "type" : "string",
+            "condition" : "useCustomTargetIp"
         }
     ],
 
@@ -137,6 +143,10 @@
         {
             "name": "productionTargetIp",
             "type": "ipAddress"
+        },
+        {
+            "name" : "useCustomTargetIp",
+            "type" : "boolean"
         }
     ],
 
