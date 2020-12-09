@@ -39,7 +39,7 @@ void cyberphys_free(void *ptr);
  * Send CAN frames over Socket
  * Assumes UDP protocol
  */
-int32_t cyberphys_sendto(cyberphys_socket_t socket, void *buff, size_t len,
+int32_t canframe_sendto(cyberphys_socket_t socket, void *buff, size_t len,
                          int flags, cyberphys_sockaddr_t *dest,
                          socklen_t addr_len);
 
@@ -47,7 +47,7 @@ int32_t cyberphys_sendto(cyberphys_socket_t socket, void *buff, size_t len,
  * Receive CAN frames over Socket
  * Assumes UDP protocol
  */
-int32_t cyberphys_recvfrom(cyberphys_socket_t socket, void *buf, size_t len,
+int32_t canframe_recvfrom(cyberphys_socket_t socket, void *buf, size_t len,
                            int flags, cyberphys_sockaddr_t *src,
                            socklen_t *addr_len);
 

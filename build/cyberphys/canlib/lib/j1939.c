@@ -181,12 +181,12 @@ uint8_t send_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t servadd
     frame.can_dlc = message_len;
     memset(frame.data, 0, sizeof(frame.data));
     memcpy(frame.data, message, message_len);
-    cyberphys_sendto(socket, &frame, sizeof(can_frame), 0,
+    canframe_sendto(socket, &frame, sizeof(can_frame), 0,
            &servaddr, sizeof(servaddr));
   } else { /* message must be sent over multiple packets */
     uint8_t np;
     can_frame *packets = data_to_bam_can_frames(pgn, message, message_len, &np);
-    cyberphys_sendto(socket, packets, sizeof(can_frame) * (np + 1), 0,
+    canframe_sendto(socket, packets, sizeof(can_frame) * (np + 1), 0,
            &servaddr, sizeof(servaddr));
     cyberphys_free(packets);
   }
@@ -199,7 +199,7 @@ uint8_t recv_can_message(cyberphys_socket_t socket, void *rmessage, size_t *rmes
   char buffer[RECV_BUFF_SIZE];
 
   /* recv can frame data */
-  nbytes = cyberphys_recv(socket, (char *)buffer, sizeof(buffer), MSG_WAITALL);
+  nbytes = canframe_recv(socket, (char *)buffer, sizeof(buffer), MSG_WAITALL);
   frame = (can_frame *)&buffer[0];
 
   if (nbytes ==
