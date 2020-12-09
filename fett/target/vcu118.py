@@ -261,6 +261,12 @@ class vcu118Target (fpgaTarget, commonTarget):
         if (not doesSettingExist('vcu118UartDevice',targetId=self.targetId)):
             if (not doesSettingExist('vcu118UartDevices')):
                 setSetting('vcu118UartDevices',self.findUartDevices())
+                if (isEqSetting('mode','cyberPhys')):
+                    if ((getSetting('nTargets') > len(getSetting('vcu118UartDevices')))):
+                        logAndExit(f"{self.targetIdInfo}setupUart: Number of UART devices "
+                            f"(={len(getSetting('vcu118UartDevices'))}) < < Number of targets "
+                            f"(={getSetting('nTargets')}).",exitCode=EXIT.Configuration)
+
             uartDevices = getSetting('vcu118UartDevices')
 
             if (len(uartDevices)==0):
