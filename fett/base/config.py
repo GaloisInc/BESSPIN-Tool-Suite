@@ -15,6 +15,9 @@ TARGET_SECTION = 'target'
 CWES_SECTION = 'evaluateSecurityTests'
 CYBERPHYS_SECTION = 'cyberPhys'
 
+CWES_ENABLED_TESTS_SECTION = "enabledTests"
+CWES_SELF_ASSESSMENT_SECTION = "selfAssessment"
+
 def loadJsonFile (jsonFile):
     try:
         fJson = open(jsonFile,'r')
@@ -215,7 +218,7 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
                             f" section [{configSection}].",exc=exc,exitCode=EXIT.Configuration)
             elif ('List' in iPar['type']):
                 if ((val[0] != '[') or (val[-1] != ']')):
-                    logAndExit("ValueError in reading configuration file. <{iPar['name']}> has to be of type "
+                    logAndExit(f"ValueError in reading configuration file. <{iPar['name']}> has to be of type "
                                f"{iPar['type']} in section [{configSection}]. A {iPar['type']} has to have contents between brackets.",
                                exitCode = EXIT.Configuration)
                 if (len(val[1:-1]) == 0):
@@ -422,21 +425,37 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             # the `runAllTests` setting _before_ proceeding and checking the `test_*` setting.
 
         # Load selected tests + custom scores
-        sectionName = 'configCWEs'
         configCWEs = loadIniFile(configCWEsPath)
-        try:
-            assert configCWEs.has_section(sectionName), f"has_section('{sectionName}')"
-        except Exception as exc:
-            logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
 
-        dictConfigCWEs = dict() 
-        for xTest in configCWEs.options(sectionName):
+        sectionNames = [CWES_ENABLED_TESTS_SECTION]
+        if (vulClass in ['PPAC','hardwareSoC']):
+            sectionNames.append(CWES_SELF_ASSESSMENT_SECTION)
+        for sectionName in sectionNames:
             try:
-                dictConfigCWEs[xTest] = configCWEs.getboolean(sectionName,xTest)
+                assert configCWEs.has_section(sectionName), f"has_section('{sectionName}')"
+            except Exception as exc:
+                logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+
+        # Load enabled tests
+        dictEnabledTests = dict() 
+        for xTest in configCWEs.options(CWES_ENABLED_TESTS_SECTION):
+            try:
+                dictEnabledTests[xTest] = configCWEs.getboolean(CWES_ENABLED_TESTS_SECTION,xTest)
             except Exception as exc:
                 logAndExit(f"The value of <{xTest}> should be boolean in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+        setSettingDict(vulClass,'enabledTests',dictEnabledTests)
 
-        setSettingDict(vulClass,'configCWEs',dictConfigCWEs)
+        # Load the self assessment
+        if (vulClass in ['PPAC','hardwareSoC']):
+            dictSelfAssessmentCWEs = dict()
+            for xAssessment in configCWEs.options(CWES_SELF_ASSESSMENT_SECTION):
+                if (xAssessment.startswith("assessment_")):
+                    dictSelfAssessmentCWEs[xAssessment] = configCWEs.get(CWES_SELF_ASSESSMENT_SECTION,xAssessment)
+                    if (dictSelfAssessmentCWEs[xAssessment] not in getSetting('cwesAssessments')):
+                        logAndExit(f"ValueError in reading <{configCWEsPath}>. Illegal value for <{xAssessment}> "
+                            f"in section [{CWES_SELF_ASSESSMENT_SECTION}]. Value has to be in "
+                            f"[{','.join(getSetting('cwesAssessments'))}]", exitCode = EXIT.Configuration)
+            setSettingDict(vulClass,'selfAssessment',dictSelfAssessmentCWEs)
 
         # Load custom dev options (setupEnv.json)
         setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',vulClass,'setupEnv.json'))

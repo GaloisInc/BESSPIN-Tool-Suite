@@ -342,6 +342,11 @@
                 "vid" : 4292,
                 "pid" : 60016
             }
+        },
+        {
+            "name" : "cwesAssessments",
+            "type" : "stringsList",
+            "val" : "[HIGH, MED, LOW, NA, UNKNOWN]"
         }
     ]
 }

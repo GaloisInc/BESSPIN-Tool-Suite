@@ -143,7 +143,7 @@ def isTestEnabled(vulClass, testName):
     if (getSettingDict(vulClass,'runAllTests')):
         return True
     else:
-        return getSettingDict(vulClass,['configCWEs',testName])
+        return getSettingDict(vulClass,['enabledTests',testName])
 
 @decorate.debugWrap
 def doesTheTestNeedBootedOs(vulClass, testName):
