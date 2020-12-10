@@ -14,7 +14,7 @@ def test_825 (logLines):
             if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<POINTER_USED_IMPROPERLY>')):
-                partsScores[iPart] = SCORES.V_HIGH
+                partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or doesKeywordExist(partsLines[iPart],'Aborted')):
                 partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'<REGULAR_PASSED>')):
@@ -32,7 +32,7 @@ def test_825 (logLines):
         else:
             partsScores[1] = SCORES.HIGH
         if (doesKeywordExist(partsLines[2],"<POINTER_USED_IMPROPERLY>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.HIGH
 

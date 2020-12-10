@@ -14,7 +14,7 @@ def test_468 (logLines):
             if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<WRONG_OFFSET>')):
-                partsScores[iPart] = SCORES.V_HIGH
+                partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault')):
                 partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'<CORRECT_SCALED>')):
@@ -32,7 +32,7 @@ def test_468 (logLines):
         else:
             partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2],"<WRONG_OFFSET>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.FAIL
 

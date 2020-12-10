@@ -11,7 +11,7 @@ class cweException:
         self.osList = ['FreeRTOS', 'FreeBSD', 'debian']
         self.legitValues = defaultdict(list)
         for iOS in self.osList:
-            self.legitValues[iOS] = [SCORES.V_HIGH.value]
+            self.legitValues[iOS] = [SCORES.HIGH.value]
 
     def addException (self,xOS,xVal):
         if (xOS == '*'):

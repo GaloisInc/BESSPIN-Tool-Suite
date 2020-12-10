@@ -20,7 +20,7 @@ def test_690 (logLines):
         if (doesKeywordExist(partsLines[2],"<INVALID>")):
             partsScores[2] = SCORES.CALL_ERR
         elif (doesKeywordExist(partsLines[2],'<DEREFERENCE_VIOLATION_PASSED_SUCCESSFULLY>')):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2],'Segmentation fault')):
             partsScores[2] = SCORES.HIGH
         else:
@@ -36,7 +36,7 @@ def test_690 (logLines):
         else:
             partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2],"<DEREFERENCE_VIOLATION_PASSED_SUCCESSFULLY>") or doesKeywordExist(partsLines[2],"<GDB-SIGINT>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2],"<TIMEOUT>")): #timeout with no trapping
             partsScores[2] = SCORES.HIGH
         else:

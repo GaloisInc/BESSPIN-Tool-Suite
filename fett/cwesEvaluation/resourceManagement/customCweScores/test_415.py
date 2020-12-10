@@ -14,7 +14,7 @@ def test_415 (logLines):
             if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<DOUBLE_FREE_OF_')):
-                partsScores[iPart] = SCORES.V_HIGH
+                partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or 
                     doesKeywordExist(partsLines[iPart],'double free detected') or 
                     doesKeywordExist(partsLines[iPart],'Abort trap') ):
@@ -28,19 +28,19 @@ def test_415 (logLines):
         partsScores = {}
 
         if (doesKeywordExist(partsLines[1], "<ERROR-SIGABRT>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[1], "<DOUBLE_FREE_OF_STACK>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[1], "<GDB-SIGTRAP>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         else:
             partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2], "<ERROR-SIGABRT>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2], "<GDB-SIGTRAP>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2], "<DOUBLE_FREE_OF_STR_INT_ON_STACK>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.FAIL
 

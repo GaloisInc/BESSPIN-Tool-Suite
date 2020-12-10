@@ -66,7 +66,7 @@ def scoreAllTests(logs):
         notes = "Results: " + ', '.join(notesList)
         implemented = [ s for s in listScores if s != SCORES.NOT_IMPLEMENTED ]
         if len(implemented) > 0:
-            score = SCORES.avgScore(implemented,ignoreErrors=False)
+            score = SCORES.avgScore(implemented)
         else:
             score = SCORES.NOT_IMPLEMENTED
         ret.append([f"CWE-{testNum}", score, notes])
@@ -79,7 +79,7 @@ def scoreTest(logTest):
     if log.find('TEST NOT IMPLEMENTED') >= 0:
         score = SCORES.NOT_IMPLEMENTED
     elif log.find('TEST FAILED') >= 0:
-        score = SCORES.V_HIGH
+        score = SCORES.HIGH
     elif log.find('TEST ERROR') >= 0:
         score = SCORES.CALL_ERR
     elif ((log.find('TEST PASSED') >= 0) or (log.find('Illegal instruction') >= 0)):
