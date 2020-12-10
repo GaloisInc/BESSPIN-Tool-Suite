@@ -149,7 +149,7 @@ def getTargetIp(targetId=None):
     if (thisTarget=='vcu118'):
         # use hardcoded IP if provided
         if isEnabled('useCustomTargetIp'):
-            return getSetting('customTargetIP',targetId=targetId)
+            return getSetting('customTargetIp',targetId=targetId)
         else: #use hostIP + targetId
             ipInc = 1 if (targetId is None) else targetId
             ipTarget = str(ipaddress.ip_address(getSetting(f"{thisTarget}IpHost"))+ipInc)
