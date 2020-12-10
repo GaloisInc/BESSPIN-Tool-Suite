@@ -35,7 +35,7 @@ def score(testScores):
             e += 1
         else:
             validScores.append(testScore)
-            if (testScore < SCORES.DETECTED): #V_LOW --> V_HIGH
+            if (testScore < SCORES.DETECTED): #LOW --> HIGH
                 s += 1
     t = len(validScores) # Total valid
 
@@ -54,9 +54,9 @@ def score(testScores):
           This is due to the OS memory management, boundaries, etc. 
         - s=0 should be V-HIGH, and s=t should be DETECTED
         """
-        unadjustedScore = ((t-s)/float(t))*(SCORES.DETECTED.value-SCORES.V_HIGH.value) 
-        if (unadjustedScore < SCORES.V_HIGH.value):
-            ovrScore = SCORES.V_HIGH
+        unadjustedScore = ((t-s)/float(t))*(SCORES.DETECTED.value-SCORES.HIGH.value) 
+        if (unadjustedScore < SCORES.HIGH.value):
+            ovrScore = SCORES.HIGH
         else:
             ovrScore = SCORES(math.floor(unadjustedScore))
 

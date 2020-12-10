@@ -20,7 +20,7 @@ def test_822 (logLines):
         if (doesKeywordExist(partsLines[2], "<INVALID>")):
             partsScores[2] = SCORES.CALL_ERR
         elif (doesKeywordExist(partsLines[2],"<EXECUTING_MALICIOUS_CODE>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.FAIL
 
@@ -40,7 +40,7 @@ def test_822 (logLines):
         if (doesKeywordExist(partsLines[2], "<INVALID>")):
             partsScores[2] = SCORES.CALL_ERR
         elif (doesKeywordExist(partsLines[2], "<EXECUTING_MALICIOUS_CODE>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.FAIL
 

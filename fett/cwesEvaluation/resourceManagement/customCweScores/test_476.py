@@ -15,7 +15,7 @@ def test_476 (logLines):
             if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<DEREFERENCE-VIOLATION>')):
-                partsScores[iPart] = SCORES.V_HIGH
+                partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault')):
                 partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'<REGULAR>') and (iPart==1)):
@@ -29,13 +29,13 @@ def test_476 (logLines):
         partsScores = {}
 
         if (doesKeywordExist(partsLines[1],"<DEREFERENCE-VIOLATION_PASSED_SUCCESSFULLY>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[1],"<TIMEOUT>")): #timeout with no trapping
             partsScores[1] = SCORES.HIGH
         else:
             partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2],"<DEREFERENCE-VIOLATION_PASSED_SUCCESSFULLY>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2],"<TIMEOUT>")): #timeout with no trapping
             partsScores[2] = SCORES.HIGH
         else:

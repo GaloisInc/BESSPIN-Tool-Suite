@@ -14,7 +14,7 @@ def test_763 (logLines):
             if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<RELEASE_OF_INVALID_POINTER_ERROR>')):
-                partsScores[iPart] = SCORES.V_HIGH
+                partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or doesKeywordExist(partsLines[iPart],'Abort')):
                 partsScores[iPart] = SCORES.HIGH
             else:
@@ -26,15 +26,15 @@ def test_763 (logLines):
         partsScores = {}
 
         if (doesKeywordExist(partsLines[1],"<RELEASE_OF_INVALID_POINTER_PASSED_SUCCESSFULLY>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif(doesKeywordExist(partsLines[1],"<GDB-SIGTRAP>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         else:
             partsScores[1] = SCORES.HIGH
         if (doesKeywordExist(partsLines[2],"<RELEASE_OF_INVALID_POINTER_PASSED_SUCCESSFULLY>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif(doesKeywordExist(partsLines[2],"<GDB-SIGTRAP>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.HIGH
 

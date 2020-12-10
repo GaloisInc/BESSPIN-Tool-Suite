@@ -26,13 +26,11 @@ class SCORES (enum.Enum):
     FAIL = -3
     DOS = -2
     CALL_ERR = -1
-    V_HIGH = 0
-    HIGH = 1
-    MED = 2
-    LOW = 3
-    V_LOW = 4
-    DETECTED = 5
-    NONE = 6
+    HIGH = 0
+    MED = 1
+    LOW = 2
+    DETECTED = 3
+    NONE = 4
     INF = 10
 
     def __str__ (self): #to replace '_' by '-' when printing
@@ -61,20 +59,20 @@ class SCORES (enum.Enum):
                 minScore = xScore
         return minScore
 
-    def avgScore (scoreList,ignoreErrors=False): #Always floors
+    def avgScore (scoreList): #Always floors
         sumScores = 0
         for xScore in scoreList:
-            if not (ignoreErrors and (xScore.value<SCORES.V_HIGH.value)):
-                sumScores += xScore.value
+            sumScores += xScore.value
         avgValue = sumScores // len(scoreList)
         return SCORES(avgValue)
 
     def toScore (strScore):
         # Let's be explicit and use a hardcoded 1:1 mapping
         mapToScores = {
-            'HIGH' : SCORES.V_HIGH,
+            'HIGH' : SCORES.HIGH,
             'MED' : SCORES.MED,
-            'LOW' : SCORES.V_LOW,
+            'LOW' : SCORES.LOW,
+            'NONE' : SCORES.NONE,
             'NA' : SCORES.NOT_APPLICABLE,
             'UNKNOWN' : SCORES.UNKNOWN
         }
