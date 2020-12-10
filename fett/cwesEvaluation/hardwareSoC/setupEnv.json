@@ -2,7 +2,7 @@
     "_usage" : "This json file has the environment setup that is not to be changed per run.",
     "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
-    "_testsInfo" : "testsInfo are supposed to have the following settings per test: gdb, bootedOs, hasMethod, cFile, and recommendation",
+    "_testsInfo" : "testsInfo are supposed to have the following settings per test: cweText",
 
     "hardwareSoC" : [
         {
@@ -10,19 +10,10 @@
             "type" : "dict",
             "val" : {
                 "test_1220" : {
-                    "gdb" : 0,
-                    "bootedOs" : 0,
-                    "hasMethod" : 0,
-                    "cFile" : 0,
-                    "recommendation" : 1,
-                    "text" : "Insufficient Granularity of Access Control."
+                    "cweText" : "Insufficient Granularity of Access Control"
                 },
                 "test_1252" : {
-                    "gdb" : 1,
-                    "bootedOs" : 1,
-                    "hasMethod" : 1,
-                    "cFile" : 0,
-                    "recommendation" : 0
+                    "cweText" : "CPU Hardware Not Configured to Support Exclusivity of Write and Execute Operations"
                 }
             }
         }
