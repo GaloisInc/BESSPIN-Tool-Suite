@@ -427,7 +427,9 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         # Load selected tests + custom scores
         configCWEs = loadIniFile(configCWEsPath)
 
-        sectionNames = [CWES_ENABLED_TESTS_SECTION]
+        sectionNames = []
+        if (vulClass not in ['bufferErrors']):
+            sectionNames.append(CWES_ENABLED_TESTS_SECTION)
         if (vulClass in ['PPAC','hardwareSoC']):
             sectionNames.append(CWES_SELF_ASSESSMENT_SECTION)
         for sectionName in sectionNames:
@@ -437,13 +439,14 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
                 logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
 
         # Load enabled tests
-        dictEnabledTests = dict() 
-        for xTest in configCWEs.options(CWES_ENABLED_TESTS_SECTION):
-            try:
-                dictEnabledTests[xTest] = configCWEs.getboolean(CWES_ENABLED_TESTS_SECTION,xTest)
-            except Exception as exc:
-                logAndExit(f"The value of <{xTest}> should be boolean in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
-        setSettingDict(vulClass,'enabledTests',dictEnabledTests)
+        if (vulClass not in ['bufferErrors']):
+            dictEnabledTests = dict() 
+            for xTest in configCWEs.options(CWES_ENABLED_TESTS_SECTION):
+                try:
+                    dictEnabledTests[xTest] = configCWEs.getboolean(CWES_ENABLED_TESTS_SECTION,xTest)
+                except Exception as exc:
+                    logAndExit(f"The value of <{xTest}> should be boolean in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+            setSettingDict(vulClass,'enabledTests',dictEnabledTests)
 
         # Load the self assessment
         if (vulClass in ['PPAC','hardwareSoC']):
