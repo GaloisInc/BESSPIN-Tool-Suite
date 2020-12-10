@@ -108,7 +108,12 @@ class vcu118Target (fpgaTarget, commonTarget):
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
             self.runCommand(f"ip route add default via {self.ipHost}")
             self.runCommand(f"ip link set dev eth0 address {self.macTarget}")
-            outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
+            # In case the TI ethernet chip doesn't come up, retry
+            outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],exitOnError=False)
+            isSuccess, _, _, _ = outCmd
+            if not isSuccess:
+                self.runCommand ("ifdown eth0",exitOnError=False)
+                outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
             self.runCommand(f"ip route add default via {self.ipHost}")
         elif (self.osImage=='busybox'):
             time.sleep(1)
@@ -123,7 +128,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     erroneousContents=["(Error)","INVALID"],timeout=20,
                     exitOnError=False,suppressErrors=True
                     )
-                isSuccess, _, wasTimeout, _ = outCmd
+                isSuccess, _, _, _ = outCmd
                 if (isSuccess):
                     isSuccess = self.pingTarget(exitOnError=False)
                 if (not isSuccess):
