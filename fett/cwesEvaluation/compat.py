@@ -27,5 +27,16 @@ class testgenTargetCompatibilityLayer:
         self.terminateAndExit (f"<defaultTest> is not yet implemented for <{self.vulClass}>.",exitCode=EXIT.Dev_Bug)
         return
 
-    def recommendationTest(self, testName):
-        return f'<TEXT={getSettingDict(self.vulClass,["testsInfo",testName,"text"])}>\n'
+    def executeTest (self,binTest):
+        if (self.vulClass not in ["PPAC", "hardwareSoC"]):
+            self.terminateAndExit (f"<executeTest> is not implemented for <{self.vulClass}>.",exitCode=EXIT.Dev_Bug)
+        
+        outLog = ''
+        try:
+            testName = binTest.split('.')[0]
+        except Exception as exc:
+            self.terminateAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+
+        outLog = "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
+
+        return outLog

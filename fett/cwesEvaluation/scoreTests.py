@@ -19,7 +19,7 @@ from fett.base.utils.misc import *
 
 class SCORES (enum.Enum):
     NINF = -10
-    RECOMMEND = -7
+    NOT_APPLICABLE = -7
     NOT_IMPLEMENTED = -6
     UNKNOWN = -5
     INVALID = -4
@@ -36,7 +36,7 @@ class SCORES (enum.Enum):
     INF = 10
 
     def __str__ (self): #to replace '_' by '-' when printing
-        if (self.name == "NOT_IMPLEMENTED"):
+        if (self.name in ["NOT_IMPLEMENTED","NOT_APPLICABLE"]):
             return "N/A"
         else:
             return "%s" % self.name.replace('_','-')
@@ -68,6 +68,22 @@ class SCORES (enum.Enum):
                 sumScores += xScore.value
         avgValue = sumScores // len(scoreList)
         return SCORES(avgValue)
+
+    def toScore (strScore):
+        # Let's be explicit and use a hardcoded 1:1 mapping
+        mapToScores = {
+            'HIGH' : SCORES.V_HIGH,
+            'MED' : SCORES.MED,
+            'LOW' : SCORES.V_LOW,
+            'NA' : SCORES.NOT_APPLICABLE,
+            'UNKNOWN' : SCORES.UNKNOWN
+        }
+        if (strScore not in mapToScores):
+            logAndExit(f"toScore: The string <{strScore}> is not mapped to any score.",exitCode=EXIT.Dev_Bug)
+        if (set(mapToScores.keys()) != set(getSetting('cwesAssessments'))):
+            logAndExit(f"toScore: The mapping in this function has to match the <cwesAssessments> allowed strings",
+                exitCode=EXIT.Dev_Bug) #This should prevent both structures from diverging
+        return mapToScores[strScore]
 
 @decorate.debugWrap
 def scoreTests(scorerModule, csvPath, logsDir):
