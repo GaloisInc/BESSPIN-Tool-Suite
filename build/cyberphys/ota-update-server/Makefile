@@ -1,7 +1,9 @@
 # use EXTRA_LINUX_CFLAGS/EXTRA_FREEBSD_CFLAGS to specify anything extra, like OpenSSL library location
 LINUX_CC = riscv64-unknown-linux-gnu-gcc
-LINUX_CFLAGS = -fno-stack-protector -z execstack -O0 -march=rv64imafd -mabi=lp64d -g -lcrypto
+LCRYPTO_LD_FLAGS = -lcrypto -I$(FETT_LCRYPTO_DIR)/include  -L$(FETT_LCRYPTO_DIR)/lib
+LINUX_CFLAGS = -fno-stack-protector -z execstack -O0 -march=rv64imafd -mabi=lp64d -g $(LCRYPTO_LD_FLAGS)
 LINUX_OBJDUMP = riscv64-unknown-linux-gnu-objdump
+
 FREEBSD_CC = riscv64-unknown-freebsd12.1-gcc
 FREEBSD_CFLAGS = -fno-stack-protector -z execstack -O0 -march=rv64imafd -mabi=lp64d -g -lcrypto
 FREEBSD_OBJDUMP = riscv64-unknown-freebsd12.1-objdump
