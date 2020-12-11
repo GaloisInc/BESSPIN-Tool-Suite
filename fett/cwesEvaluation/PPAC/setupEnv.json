@@ -9,11 +9,16 @@
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {
+                "test_PPAC_1" : {
+                    "cweText" : "Missing authorization in privileged resource access"
+                },
                 "test_PPAC_2" : {
                     "cweText" : "Reliance on OS and software authentication"
+                },
+                "test_PPAC_3" : {
+                    "cweText" : "Security exceptions are not logged to a privileged location"
                 }
             }
         }
     ]
 }
-
