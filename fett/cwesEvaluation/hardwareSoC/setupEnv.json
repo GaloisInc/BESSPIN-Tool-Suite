@@ -39,9 +39,6 @@
                 "test_1224" : {
                     "cweText" : "Improper Restriction of Write-Once Bit Fields"
                 },
-                "test_1229" : {
-                    "cweText" : "Creation of Emergent Resource"
-                },
                 "test_1231" : {
                     "cweText" : "Improper Implementation of Lock Protection Registers"
                 },
