@@ -410,15 +410,19 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
     for vulClass in getSetting('vulClasses'): #load settings per vulClass
         vulClassDict = dict()
         setSetting(vulClass,vulClassDict)
+
+        if (vulClass in ['bufferErrors']): #prior to loadConfigSection
+            xConfig.set(vulClass,'runAllTests','Yes')
+            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
+
         loadConfigSection(xConfig, vulClass, configData, vulClass, 
                 addSectionToConfigDict='commonVulClassesParameters', setSettingsToSectDict=vulClass)
 
         configCWEsPath = os.path.join(configCWEsParentPath,f'{vulClass}.ini')
 
-        if (vulClass in ['bufferErrors']):
-            setSettingDict(vulClass,'runAllTests',True)
-            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
-        elif (isEnabled('useCustomCWEsConfigsPath') and isEnabledDict(vulClass,'runAllTests')):
+        
+        if ((vulClass not in ['bufferErrors']) 
+                and (isEnabled('useCustomCWEsConfigsPath') and isEnabledDict(vulClass,'runAllTests'))):
             warnAndLog(f"{vulClass}: <runAllTests> is enabled; The <test_*> settings in <{configCWEsPath}>"
                 f"will be ignored.") 
             # The ignoring happens in fett/cwesEvaluation/common.py:isTestEnabled() which checks
