@@ -50,10 +50,10 @@ cweScores = {
 @decorate.timeWrap
 def executeTest(target, vulClass, binTest, logDir):
     if isEnabled('isUnix') and target.isCurrentUserRoot and target.osHasBooted:
-        # Tests expect to started as normal user
+        # Tests expect to be started as normal user
         target.switchUser()
     testName = binTest.split('.')[0]
-    printAndLog(f"Executing {testName}...")
+    printAndLog(f"Executing {testName}...", doPrint=(vulClass not in ["PPAC", "hardwareSoC"]))
     outLog = cweTests[vulClass](target).executeTest(binTest)
     logFileName = os.path.join(logDir, f'{testName}.log')
     logFile = ftOpenFile(logFileName, 'w')
