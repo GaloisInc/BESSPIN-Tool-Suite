@@ -60,11 +60,6 @@ Improper Restriction of Write-Once Bit Fields \[[CWE-1224](https://cwe.mitre.org
 
 ------------------
 
-### TEST-1229 ###
-Creation of Emergent Resource \[[CWE-1229](https://cwe.mitre.org/data/definitions/1229.html)\].
-
-------------------
-
 ### TEST-1231 ###
 Improper Implementation of Lock Protection Registers \[[CWE-1231](https://cwe.mitre.org/data/definitions/1231.html)\].
 
