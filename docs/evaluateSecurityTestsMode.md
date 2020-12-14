@@ -21,6 +21,8 @@ to run in the `evaluateSecurityTests` mode, the `evaluateSecurityTests` section 
   - `vulClasses`: A list of the vunerability classes to be executed, contained by square brackets and comma
     separated. Choose among the NIST list: *bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors*. The names follow [attachment 3 of the
     SSITH BAA](https://www.ntsc.org/assets/uploads/HR001117S0023.pdf). When a `$vulClass` is included, its configuration section is loaded as well. Please note that the classes *codeInjection* and *cryptoErrors* are yet to be implemented.
+  - `useCustomCWEsConfigsPath`: If disabled, then the `.ini` files in [./configSecurityTests](./configSecurityTests) will be used by default, which we reference as `${configCWEs}` in the rest of this document.
+  - `pathToCustomCWEsConfigs`: The path containing the CWEs config files in case `useCustomCWEsConfigsPath` is enabled.
   - `useCustomScoring`: Configure the scoring methods as instructed in
     the parameters in the `[customizedScoring]` section.  More
     details are in the scoring section in this document.
@@ -31,12 +33,13 @@ to run in the `evaluateSecurityTests` mode, the `evaluateSecurityTests` section 
 
 
 Regarding each vulnerability class section, it is worth mentioning that:
+  - `useSelfAssessment`: If enabled, then instead of running tests for this class, the scores will be loaded from the `.ini` configuration files in `${configCWEs}`. This is useful in calculating the security figure of merit (TBD), especially in case of incremental runs. 
   - `runAllTests`: Either run all the existing tests to this class, or
-    use the customized `configSecurityTests/$vulClass.ini` to choose which ones to run.  Note that
+    use the customized `${configCWEs}/$vulClass.ini` to choose which ones to run.  Note that
     you can use the utility [configSecurityTests/configCWEs.py](./configSecurityTests/configCWEs.py)
     to configure the desired `$vulClass.ini` automatically.  This
     utility can be used to enable, disable, or toggle all or selected
-    CWE tests. Note that is non-applicable to buffer errors. 
+    CWE tests. Note that is non-applicable to buffer errors. For `bufferErrors`, customizing which tests to run is done using `useCustomErrorModel` instead. More details are provided in [config.ini](./config.ini). 
   - `test_<parameterName>`: Any parameter that starts with the prefix
     `test_` is a test related parameter.
   - `randomizeParameters`: If this is enabled, then all the tests
@@ -69,17 +72,15 @@ The scores levels are following the python Enum object `SCORES` defined
   3. `DOS`: There was a denial of service; a test attempted to perform
      a legal action, and it was prevented from doing so.
   4. `CALL-ERR`: A call to a particular API has failed.
-  5. `V-HIGH`: Very high weakness revealed by the test.  This means no
-     security.  The non-secure baseline GFE scores `V-HIGH` on all
+  5. `HIGH`: High weakness revealed by the test.  This means no
+     security.  The non-secure baseline GFE scores `HIGH` on all
      tests.
-  6. `HIGH`
-  7. `MED`
-  8. `LOW`
-  9. `V-LOW`
-  10. `DETECTED`: The test ran to completion, and the weakness
+  6. `MED`
+  7. `LOW`
+  8. `DETECTED`: The test ran to completion, and the weakness
       exists.  However, the processor was able to detect that a
       violation occurred.  This is a good score.
-  11. `NONE`: This is the best achievable score.  Not only that the
+  9. `NONE`: This is the best achievable score.  Not only that the
       processor was able to detect the violation, it also prevented
       the test from continuing with the breach.
 
