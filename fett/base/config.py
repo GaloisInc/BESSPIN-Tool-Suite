@@ -414,7 +414,9 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         if (vulClass in ['bufferErrors']): #prior to loadConfigSection
             xConfig.set(vulClass,'runAllTests','Yes')
             printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
-
+        if (vulClass in ['PPAC', 'hardwareSoC']): #priot to load ConfigSection
+            xConfig.set(vulClass,'selfAssessment','Yes')
+            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <selfAssessment> for <{vulClass}>",doPrint=False)
         loadConfigSection(xConfig, vulClass, configData, vulClass, 
                 addSectionToConfigDict='commonVulClassesParameters', setSettingsToSectDict=vulClass)
 
