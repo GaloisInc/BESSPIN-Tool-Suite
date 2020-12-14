@@ -13,13 +13,13 @@ def generateWrappers():
     stores       = dirnames(os.path.join(src, "stores", "*.c"))
     interpreters = dirnames(os.path.join(src, "interpreters", "*.c"))
 
-    nFiles = 0
+    enabledTests = set()
     for t in tests:
         for s in stores:
             for i in interpreters:
                 fileName = f"test_{t}_{s}_{i}.c"
                 if isTestEnabled('informationLeakage', fileName.split(".c")[0]):
-                    nFiles += 1
+                    enabledTests.add(t)
                     fd = ftOpenFile(os.path.join(src, fileName), "w")
                     fd.write('#include <stdio.h>\n')
                     fd.write('int main()\n')
@@ -28,5 +28,5 @@ def generateWrappers():
                     fd.write('}\n')
                     fd.close()
 
-    return nFiles
+    return enabledTests
 
