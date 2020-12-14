@@ -4,6 +4,56 @@
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
 
     "numericErrors" : [
-
+        {
+            "name" : "testsInfo",
+            "type" : "dict",
+            "val" : {
+                "test_128" : {
+                    "cweText" : "Wrap-around Error"
+                },
+                "test_190" : {
+                    "cweText" : "Integer Overflow or Wraparound"
+                },
+                "test_191" : {
+                    "cweText" : "Integer Underflow (Wrap or Wraparound)"
+                },
+                "test_192" : {
+                    "cweText" : "Integer Coercion Error"
+                },
+                "test_194" : {
+                    "cweText" : "Unexpected Sign Extension"
+                },
+                "test_195" : {
+                    "cweText" : "Signed to Unsigned Conversion Error"
+                },
+                "test_196" : {
+                    "cweText" : "Unsigned to Signed Conversion Error"
+                },
+                "test_197" : {
+                    "cweText" : "Numeric Truncation Error"
+                },
+                "test_234" : {
+                    "cweText" : "Failure to Handle Missing Parameter"
+                },
+                "test_369" : {
+                    "cweText" : "Divide By Zero"
+                },
+                "test_456" : {
+                    "cweText" : "Missing Initialization of a Variable"
+                },
+                "test_457" : {
+                    "cweText" : "Use of Uninitialized Variable"
+                },
+                "test_665" : {
+                    "cweText" : "Improper Initialization"
+                },
+                "test_681" : {
+                    "cweText" : "Incorrect Conversion between Numeric Types"
+                },
+                "test_824" : {
+                    "cweText" : "Access of Uninitialized Pointer"
+                }
+            }
+        }
     ]
 }
