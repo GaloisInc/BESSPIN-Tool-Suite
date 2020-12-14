@@ -23,6 +23,13 @@ def runFreeRTOSCwesEvaluation():
             testName = test.split('.')[0]
             cTest = f"{testName}.c"
             logFile = ftOpenFile(os.path.join(logsDir, f"{testName}.log"), 'w')
+
+            setSetting('isThereAReasonToBoot', (vulClass not in ['PPAC', 'hardwareSoC']))
+            if (not isEnabled('isThereAReasonToBoot')):
+                setSetting("currentTest", (cTest, vulClass, 0, logFile))
+                fett.target.launch.launchFett()
+                logFile.close()
+                continue #no need for the rest
             
             partsMatch = matchExprInLines(r".*NUM_OF_TEST_PARTS ([0-9]+).*",
                                           ftReadLines(os.path.join(testsDir,cTest)))
