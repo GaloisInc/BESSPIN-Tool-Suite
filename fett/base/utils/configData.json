@@ -252,7 +252,7 @@
             "type" : "bool"
         },
         {
-            "name" : "selfAssessment",
+            "name" : "useSelfAssessment",
             "type" : "bool"
         }
     ],
