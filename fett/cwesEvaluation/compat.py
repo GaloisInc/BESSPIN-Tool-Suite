@@ -20,9 +20,6 @@ class testgenTargetCompatibilityLayer:
     def typCommand(self, command): #Note that this returns the `textBack`
         return self.objTarget.runCommand(command,exitOnError=False)[1]
 
-    def isTestInfoEnabled (self,testName,infoName):
-        return isTestInfoEnabled(self.vulClass,testName,infoName)
-
     def defaultTest(self, testNum, binTest):
         self.terminateAndExit (f"<defaultTest> is not yet implemented for <{self.vulClass}>.",exitCode=EXIT.Dev_Bug)
         return
