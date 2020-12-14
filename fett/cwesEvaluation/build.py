@@ -165,8 +165,8 @@ def buildCwesEvaluation():
                        f"<{getSetting('osImage')}>.",
                        exitCode=EXIT.Implementation)
 
-    setSetting('isThereAReasonToBoot',isThereAReasonToBoot)
     if getSetting('osImage') in ['debian', 'FreeBSD']:
+        setSetting('isThereAReasonToBoot',isThereAReasonToBoot) #This is set per class in FreeRTOS
         buildTarball()
     return isThereAnythingToRun
 
