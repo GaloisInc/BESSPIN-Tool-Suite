@@ -436,7 +436,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         sectionNames = []
         if (vulClass not in ['bufferErrors']):
             sectionNames.append(CWES_ENABLED_TESTS_SECTION)
-        if (vulClass not in ['bufferErrors','informationLeakage']):
+        if (isEnabledDict(vulClass,'useSelfAssessment')):
             sectionNames.append(CWES_SELF_ASSESSMENT_SECTION)
         for sectionName in sectionNames:
             try:

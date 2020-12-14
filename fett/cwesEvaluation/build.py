@@ -11,6 +11,7 @@ from fett.cwesEvaluation.informationLeakage.generateWrappers import generateWrap
 from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
+from fett.cwesEvaluation.informationLeakage.cweScores import generateCweMap
 
 @decorate.debugWrap
 def buildCwesEvaluation():
@@ -91,12 +92,25 @@ def buildCwesEvaluation():
                                     vulClass,'envFett.mk'), vulClassDir)
             # Copy over concrete tests
             copyDir(sourcesDir, vulClassDir, copyContents=True)
-            nWrappers = generateWrappers()
-            vIsThereAnythingToRun = (nWrappers > 0)
+            enabledTests = generateWrappers()
+            vIsThereAnythingToRun = (len(enabledTests) > 0)
             if (vIsThereAnythingToRun):
-                isThereAReasonToBoot = True
-                enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
-                    glob.glob(os.path.join(vulClassDir,"*.c"))]
+                if (isEnabledDict(vulClass,'useSelfAssessment')):
+                    cweMap = generateCweMap()
+                    try: 
+                        enabledCWEs = set()
+                        for driver in enabledTests:
+                            enabledCWEs.update(set(cweMap[driver]))
+                        enabledCwesEvaluations[vulClass] = sorted(
+                                [cwe.replace('CWE_','test_') + ".riscv" for cwe in enabledCWEs]
+                            )
+                    except Exception as exc:
+                        logAndExit(f"buildCwesEvaluation: Failed to generate the tests list from the input ini "
+                            f"configuration for <informationLeakage> in <selfAssessment> mode.",exc=exc,exitCode=EXIT.Dev_Bug)
+                else:
+                    isThereAReasonToBoot = True
+                    enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
+                        glob.glob(os.path.join(vulClassDir,"*.c"))]
         else:
             if (isEnabledDict(vulClass,'useSelfAssessment')):
                 tests = getSettingDict(vulClass,["testsInfo"])
@@ -148,6 +162,9 @@ def buildCwesEvaluation():
 
         #Set the list of enabled tests
         setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
+
+        if (isEnabledDict(vulClass,'useSelfAssessment')):
+            continue
         # Write the extra testsParameters.h
         fHeader = ftOpenFile(os.path.join(vulClassDir, "testsParameters.h"), 'w')
         for xSetting, xVal in getSetting(vulClass).items():
