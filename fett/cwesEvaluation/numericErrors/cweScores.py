@@ -26,6 +26,9 @@ import re
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
+from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests
+
+VULCLASS = "numericErrors"
 
 @decorate.debugWrap
 def partitionLines (lines,testPart,testNum):
@@ -50,6 +53,9 @@ def partitionLines (lines,testPart,testNum):
 ## Test Variant and SEED parts are not currently used in the Numeric_Errors tests
 @decorate.debugWrap
 def scoreAllTests(logs):
+    if (isEnabledDict(VULCLASS,"useSelfAssessment")):
+        return defaultSelfAssessmentScoreAllTests(VULCLASS, logs)
+
     scores = {}
     for name, log in logs:
         testNum = name.split('_')[1]

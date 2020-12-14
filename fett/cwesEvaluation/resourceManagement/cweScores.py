@@ -5,9 +5,15 @@ scoring function for resourceManagement
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 from fett.cwesEvaluation.resourceManagement.customCweScores import *
+from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests
+
+VULCLASS = "resourceManagement"
 
 @decorate.debugWrap
 def scoreAllTests(logs):
+    if (isEnabledDict(VULCLASS,"useSelfAssessment")):
+        return defaultSelfAssessmentScoreAllTests(VULCLASS, logs)
+
     ret = []
     for name, log in logs:
         logLines = ftReadLines(log)

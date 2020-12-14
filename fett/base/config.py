@@ -414,7 +414,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         if (vulClass in ['bufferErrors']): #prior to loadConfigSection
             xConfig.set(vulClass,'runAllTests','Yes')
             printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
-        if (vulClass in ['PPAC', 'hardwareSoC']): #priot to load ConfigSection
+        if (vulClass in ['PPAC', 'hardwareSoC']): #prior to load ConfigSection
             xConfig.set(vulClass,'useSelfAssessment','Yes')
             printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <useSelfAssessment> for <{vulClass}>",doPrint=False)
         loadConfigSection(xConfig, vulClass, configData, vulClass, 
@@ -436,7 +436,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         sectionNames = []
         if (vulClass not in ['bufferErrors']):
             sectionNames.append(CWES_ENABLED_TESTS_SECTION)
-        if (vulClass in ['PPAC','hardwareSoC']):
+        if (vulClass not in ['bufferErrors','informationLeakage']):
             sectionNames.append(CWES_SELF_ASSESSMENT_SECTION)
         for sectionName in sectionNames:
             try:
@@ -445,7 +445,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
                 logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
 
         # Load enabled tests
-        if (vulClass not in ['bufferErrors']):
+        if (CWES_ENABLED_TESTS_SECTION in sectionNames):
             dictEnabledTests = dict() 
             for xTest in configCWEs.options(CWES_ENABLED_TESTS_SECTION):
                 try:
@@ -455,7 +455,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             setSettingDict(vulClass,'enabledTests',dictEnabledTests)
 
         # Load the self assessment
-        if (vulClass in ['PPAC','hardwareSoC']):
+        if (CWES_SELF_ASSESSMENT_SECTION in sectionNames):
             dictSelfAssessmentCWEs = dict()
             for xAssessment in configCWEs.options(CWES_SELF_ASSESSMENT_SECTION):
                 if (xAssessment.startswith("assessment_")):

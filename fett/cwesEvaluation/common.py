@@ -53,7 +53,7 @@ def executeTest(target, vulClass, binTest, logDir):
         # Tests expect to be started as normal user
         target.switchUser()
     testName = binTest.split('.')[0]
-    printAndLog(f"Executing {testName}...", doPrint=(vulClass not in ["PPAC", "hardwareSoC"]))
+    printAndLog(f"Executing {testName}...", doPrint=(not isEnabledDict(vulClass,'useSelfAssessment')))
     outLog = cweTests[vulClass](target).executeTest(binTest)
     logFileName = os.path.join(logDir, f'{testName}.log')
     logFile = ftOpenFile(logFileName, 'w')
@@ -73,7 +73,7 @@ def score(testLogDir, vulClass):
 def runTests(target, sendFiles=False, timeout=30): #executes the app
     if isEqSetting('osImage', 'FreeRTOS'):
         test, vulClass, _, logFile = getSetting("currentTest")
-        if (vulClass in ['PPAC','hardwareSoC']):
+        if (isEnabledDict(vulClass,'useSelfAssessment')):
             outLog = cweTests[vulClass](target).executeTest(test.replace('.c','.riscv'))
         else:
             # Extract test output

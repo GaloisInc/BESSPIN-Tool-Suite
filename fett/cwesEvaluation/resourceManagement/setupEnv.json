@@ -4,6 +4,104 @@
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
 
     "resourceManagement" : [
-
+        {
+            "name" : "testsInfo",
+            "type" : "dict",
+            "val" : {
+                "test_188" : {
+                    "cweText" : "Reliance on Data/Memory Layout"
+                },
+                "test_415" : {
+                    "cweText" : "Double Free"
+                },
+                "test_416" : {
+                    "cweText" : "Use After Free"
+                },
+                "test_400" : {
+                    "cweText" : "Uncontrolled Resource Consumption"
+                },
+                "test_404" : {
+                    "cweText" : "Improper Resource Shutdown or Release"
+                },
+                "test_457" : {
+                    "cweText" : "Use of Uninitialized Variable"
+                },
+                "test_463" : {
+                    "cweText" : "Deletion of Data Structure Sentinel"
+                },
+                "test_467" : {
+                    "cweText" : "Use of sizeof() on a Pointer Type"
+                },
+                "test_468" : {
+                    "cweText" : "Incorrect Pointer Scaling"
+                },
+                "test_476" : {
+                    "cweText" : "NULL Pointer Dereference"
+                },
+                "test_562" : {
+                    "cweText" : "Return of Stack Variable Address"
+                },
+                "test_587" : {
+                    "cweText" : "Assignment of a Fixed Address to a Pointer"
+                },
+                "test_588" : {
+                    "cweText" : "Attempt to Access Child of a Non-structure Pointer"
+                },
+                "test_590" : {
+                    "cweText" : "Free of Memory not on the Heap"
+                },
+                "test_665" : {
+                    "cweText" : "Improper Initialization"
+                },
+                "test_668" : {
+                    "cweText" : "Exposure of Resource to Wrong Sphere"
+                },
+                "test_669" : {
+                    "cweText" : "Incorrect Resource Transfer Between Spheres"
+                },
+                "test_672" : {
+                    "cweText" : "Operation on a Resource after Expiration or Release"
+                },
+                "test_690" : {
+                    "cweText" : "Unchecked Return Value to NULL Pointer Dereference"
+                },
+                "test_761" : {
+                    "cweText" : "Free of Pointer not at Start of Buffer"
+                },
+                "test_762" : {
+                    "cweText" : "Mismatched Memory Management Routines"
+                },
+                "test_763" : {
+                    "cweText" : "Release of Invalid Pointer or Reference"
+                },
+                "test_770" : {
+                    "cweText" : "Allocation of Resources Without Limits or Throttling"
+                },
+                "test_771" : {
+                    "cweText" : "Missing Reference to Active Allocated Resource"
+                },
+                "test_772" : {
+                    "cweText" : "Missing Release of Resource after Effective Lifetime"
+                },
+                "test_789" : {
+                    "cweText" : "Uncontrolled Memory Allocation"
+                },
+                "test_825" : {
+                    "cweText" : "Expired Pointer Dereference"
+                },
+                "test_908" : {
+                    "cweText" : "Use of Uninitialized Resource"
+                },
+                "test_909" : {
+                    "cweText" : "Missing Initialization of Resource"
+                },
+                "test_911" : {
+                    "cweText" : "Improper Update of Reference Count"
+                },
+                "test_920" : {
+                    "cweText" : "Improper Restriction of Power Consumption"
+                }
+            }
+        }
     ]
 }

@@ -20,8 +20,15 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         return
 
     def executeTest (self,binTest):
-        testName = binTest.split('.')[0]
-        testNum = testName.split('_')[1]
+        try:
+            testName = binTest.split('.')[0]
+            testNum = testName.split('_')[1]
+        except Exception as exc:
+            self.terminateAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+
+        if (isEnabledDict(self.vulClass,'useSelfAssessment')):
+            return "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
+
         if testName in partCount:
             numParts = partCount [testName]
         else:
