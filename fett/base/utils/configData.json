@@ -250,6 +250,10 @@
         {
             "name" : "runAllTests",
             "type" : "bool"
+        },
+        {
+            "name" : "selfAssessment",
+            "type" : "bool"
         }
     ],
 
