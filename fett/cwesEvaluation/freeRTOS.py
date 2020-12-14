@@ -24,7 +24,7 @@ def runFreeRTOSCwesEvaluation():
             cTest = f"{testName}.c"
             logFile = ftOpenFile(os.path.join(logsDir, f"{testName}.log"), 'w')
 
-            setSetting('isThereAReasonToBoot', (vulClass not in ['PPAC', 'hardwareSoC']))
+            setSetting('isThereAReasonToBoot', not isEnabledDict(vulClass,'useSelfAssessment'))
             if (not isEnabled('isThereAReasonToBoot')):
                 setSetting("currentTest", (cTest, vulClass, 0, logFile))
                 fett.target.launch.launchFett()
