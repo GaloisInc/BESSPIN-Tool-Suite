@@ -641,6 +641,3 @@ def sha512_crypt(password, salt=None, rounds=None):
         salt = crypt.mksalt(crypt.METHOD_SHA512, rounds=rounds)
     return crypt.crypt(password, salt)
 
-@decorate.debugWrap
-def isTestInfoEnabled (vulClass,testName,infoName):
-    return (getSettingDict(vulClass,["testsInfo",testName,infoName])==1)
