@@ -4,6 +4,7 @@ Building CWEs Evaluation
 
 import glob, os, re
 from collections import defaultdict
+from pathlib import Path
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.bufferErrors.generateTests.generateTests import generateTests
@@ -12,6 +13,7 @@ from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
 from fett.cwesEvaluation.common import isTestEnabled
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
 from fett.cwesEvaluation.informationLeakage.cweScores import generateCweMap
+from fett.cwesEvaluation.bufferErrors.count import bfparams
 
 @decorate.debugWrap
 def buildCwesEvaluation():
@@ -70,23 +72,35 @@ def buildCwesEvaluation():
 
         if vulClass == 'bufferErrors':
             vIsThereAnythingToRun = True
-            isThereAReasonToBoot = True
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                     vulClass,'envFett.mk'), vulClassDir)
             # Generate test sources
             generateTests(vulClassDir)
-            if isEnabledDict('bufferErrors', 'useExtraTests'):
-                # Copy extra tests over, prepending C files with 'test_extra_'
-                extraSources = getSettingDict('bufferErrors', 'extraSources')
-                if extraSources[0] != '/':
-                    extraSources = os.path.join(getSetting('repoDir'),
-                                                extraSources)
-                for source in glob.glob(os.path.join(extraSources, '*.c')):
-                    cp(source,
-                       os.path.join(vulClassDir,
-                                    f'test_extra_{os.path.basename(source)}'))
-            enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
-                glob.glob(os.path.join(vulClassDir,"*.c"))]
+            if (isEnabledDict(vulClass,'useSelfAssessment')):
+                enabledCWEs = set()
+                for cFile in glob.glob(os.path.join(vulClassDir,"*.c")):
+                    testParams = bfparams(Path(cFile))
+                    if ('CWE' in testParams):
+                        enabledCWEs.update(set(testParams['CWE']))
+                    else:
+                        warnAndLog(f"buildCwesEvaluation: Failed to parse the CWE parameters in {cFile}.")
+                enabledCwesEvaluations[vulClass] = sorted(
+                        [cwe.replace('CWE_','test_') + ".riscv" for cwe in enabledCWEs]
+                    )
+            else:
+                isThereAReasonToBoot = True
+                if isEnabledDict('bufferErrors', 'useExtraTests'):
+                    # Copy extra tests over, prepending C files with 'test_extra_'
+                    extraSources = getSettingDict('bufferErrors', 'extraSources')
+                    if extraSources[0] != '/':
+                        extraSources = os.path.join(getSetting('repoDir'),
+                                                    extraSources)
+                    for source in glob.glob(os.path.join(extraSources, '*.c')):
+                        cp(source,
+                           os.path.join(vulClassDir,
+                                        f'test_extra_{os.path.basename(source)}'))
+                enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
+                    glob.glob(os.path.join(vulClassDir,"*.c"))]
         elif vulClass == 'informationLeakage':
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                     vulClass,'envFett.mk'), vulClassDir)

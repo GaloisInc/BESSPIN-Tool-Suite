@@ -3,13 +3,16 @@ import os
 from importlib.machinery import SourceFileLoader
 import math
 
+from fett.base.utils.misc import *
 import fett.cwesEvaluation.bufferErrors.count as count
 from fett.cwesEvaluation.scoreTests import SCORES
+from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests
 """
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 scoring functions for each CWE test
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 """
+VULCLASS = "bufferErrors"
 
 def score(testScores):
     """
@@ -83,5 +86,8 @@ def scoreByCWE(rows):
     return tab
 
 def scoreAllTests(logs):
+    if (isEnabledDict(VULCLASS,"useSelfAssessment")):
+        return defaultSelfAssessmentScoreAllTests(VULCLASS, logs)
+
     tab = count.tabulate(logs, count.QEMU_FPGA_LOOKFOR)
     return scoreByCWE(tab)

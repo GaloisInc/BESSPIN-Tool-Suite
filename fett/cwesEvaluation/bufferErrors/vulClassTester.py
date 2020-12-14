@@ -9,10 +9,18 @@ from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
-        self.vulClass = "bufferError"
+        self.vulClass = "bufferErrors"
         return
 
     def executeTest(self, binTest):
+        try:
+            testName = binTest.split('.')[0]
+        except Exception as exc:
+            self.terminateAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+
+        if (isEnabledDict(self.vulClass,'useSelfAssessment')):
+            return "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
+
         if isEqSetting("osImage", "debian"):
             # Run test, and if it returns 11, then echo "Segmentation fault".
             # This is needed because the debian buffer errors tests catch
