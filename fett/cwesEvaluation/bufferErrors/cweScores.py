@@ -61,7 +61,7 @@ def score(testScores):
         if (unadjustedScore < SCORES.HIGH.value):
             ovrScore = SCORES.HIGH
         else:
-            ovrScore = SCORES(math.floor(unadjustedScore))
+            ovrScore = SCORES(math.floor(abs(unadjustedScore-0.1))) #Slight adjustment, being more conservative in scoring
 
     return (ovrScore, notes)
 
