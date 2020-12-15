@@ -52,10 +52,10 @@ def score(testScores):
         ovrScore = SCORES.avgScore(validScores)
     else: #partial score
         """ 
-        - Currently, every 's' is considered as V-HIGH.
+        - Currently, every 's' is considered as HIGH.
         - Even the baseline (non-secure) processor can block some of the buffer overflows from happening.
           This is due to the OS memory management, boundaries, etc. 
-        - s=0 should be V-HIGH, and s=t should be DETECTED
+        - s=0 should be HIGH, and s=t should be DETECTED
         """
         unadjustedScore = ((t-s)/float(t))*(SCORES.DETECTED.value-SCORES.HIGH.value) 
         if (unadjustedScore < SCORES.HIGH.value):

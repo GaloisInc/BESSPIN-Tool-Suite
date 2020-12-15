@@ -19,7 +19,7 @@ the tests that are relevant to the CWE in question.
 
 ## Scoring Approach ##
 
-Each test attempts to show the existence of a weakness, and then reports what happens. If the processor reacts to the attempt by blocking it or detecting it, then they score `NONE` or `DETECTED` respectively. If they do not react, and the test runs to completion, then the score is `V-HIGH` conveying the existence of the weakness related to this test.   
+Each test attempts to show the existence of a weakness, and then reports what happens. If the processor reacts to the attempt by blocking it or detecting it, then they score `NONE` or `DETECTED` respectively. If they do not react, and the test runs to completion, then the score is `HIGH` conveying the existence of the weakness related to this test.   
 In case of multi-part tests, the overall test score is the minimum score achieved among this test's parts.   
 
 ## MAL (Memory Allocation and Deallocation Bugs) ##
@@ -106,7 +106,7 @@ Missing Release of Resource after Effective Lifetime
   it. Function `B` keeps opening files until it is not able to
   anymore, then returns. The test runs function `A` first, then
   executes function `B`, then calls function `A` again. `CALL-ERR` if
-  function `A` fails in the first run, and `V-HIGH` if function `A`
+  function `A` fails in the first run, and `HIGH` if function `A`
   fails in the second run.
 
 *Possible Extensions:*
