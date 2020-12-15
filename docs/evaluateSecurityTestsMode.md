@@ -39,7 +39,7 @@ Regarding each vulnerability class section, it is worth mentioning that:
     you can use the utility [configSecurityTests/configCWEs.py](./configSecurityTests/configCWEs.py)
     to configure the desired `$vulClass.ini` automatically.  This
     utility can be used to enable, disable, or toggle all or selected
-    CWE tests. Note that is non-applicable to buffer errors. For `bufferErrors`, customizing which tests to run is done using `useCustomErrorModel` instead. More details are provided in [config.ini](./config.ini). 
+    CWE tests. Note that is non-applicable to buffer errors. For `bufferErrors`, customizing which tests to run is done using `useCustomErrorModel` instead. More details are provided in [constrainBufferErrors.md](./docs/constrainBufferErrors.md). 
   - `test_<parameterName>`: Any parameter that starts with the prefix
     `test_` is a test related parameter.
   - `randomizeParameters`: If this is enabled, then all the tests
