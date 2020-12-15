@@ -148,20 +148,6 @@ The CWE website shows 2 examples of this problem in C. The first shows a simple 
 **Test Parts:**
 - p01: A "varargs" function is declared that expects exactly four arguments. It is then calls with just 3 arguments, returning an undefined result. This code is adapted from the second example on the CWE page linked above. If the result of the function is successfully printed, then this is scored as "TEST FAILED".
 
-### TEST-475 ###
-Undefined Behavior for Input to API \[[CWE-475](https://cwe.mitre.org/data/definitions/475.html)\].
-
-**Related CWEs**
-- [CWE-475](https://cwe.mitre.org/data/definitions/475.html).
-
-**Notes:**
-This CWE applies to potentially any API or library that could give rise to undefined behavior. So many to choose from!
-
-**Test Parts:**
-- p01: In this case, we choose to call the strcat() function from C's <string.h> library with an
-argument that is not a properly zero-terminated C-string, resulting in undefined behavior.
-If an attempt to find the length of that string succeeds, then this test is scored "TEST FAILED".
-
 ### TEST-559 ###
 Often Misused: Arguments and Parameters \[[CWE-559](https://cwe.mitre.org/data/definitions/559.html)\].
 

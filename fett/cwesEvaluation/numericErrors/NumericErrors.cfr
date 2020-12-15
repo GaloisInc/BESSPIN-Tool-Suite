@@ -55,12 +55,10 @@ abstract Numeric_Weakness
 
     or ARG_CWE
       CWE_234
-      CWE_475
       CWE_686
       CWE_687
 
     [ CWE_234 <=> ( Undefined_behavior && Argument_missing ) ]
-    [ CWE_475 <=> ( Undefined_behavior && Argument_fails_callee_precondition ) ]
     [ CWE_686 <=> ( Undefined_behavior && Argument_wrong_type ) ]
     [ CWE_687 <=> ( Undefined_behavior && Argument_fails_callee_precondition ) ]
 
@@ -134,7 +132,6 @@ NumericErrors_Test : Numeric_Weakness ?
     TEST_369
     TEST_456
     TEST_457
-    TEST_475
     TEST_665
     TEST_686
     TEST_687
@@ -166,7 +163,6 @@ NumericErrors_Test : Numeric_Weakness ?
 [ TEST_369 => CWE_369 ]
 [ TEST_456 => CWE_456 ]
 [ TEST_457 => CWE_457 ]
-[ TEST_475 => CWE_475 ]
 [ TEST_665 => CWE_665 ]
 [ TEST_686 => CWE_686 ]
 [ TEST_687 => CWE_687 ]
