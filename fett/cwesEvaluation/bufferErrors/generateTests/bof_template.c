@@ -52,8 +52,10 @@
 #endif
 
 #ifdef testgenOnDebian
-// Required for sigaction
-#include <signal.h>
+    #ifndef BIN_SOURCE_LMCO
+        // Required for sigaction
+        #include <signal.h>
+    #endif
 // Required for _exit
 #include <unistd.h>
 #endif
@@ -326,7 +328,7 @@ int main()
     printf("<BufferErrors Start>\r\n");
     fflush(stdout);
 
-#ifdef testgenOnDebian
+#if (defined(testgenOnDebian) && !defined(BIN_SOURCE_LMCO))
     // Register segmentation fault signal handler on Debian to prevent
     // interleaving of "unhandled signal 11" messages and test output.
     struct sigaction sigsegv_action;
