@@ -1391,7 +1391,12 @@ class commonTarget():
         switchUsers = not self.isCurrentUserRoot
         if (switchUsers):
             self.switchUser() #has to be executed on root
-        self.runCommand (f"echo \"PermitRootLogin yes\" >> {getSetting('sshdConfigPath')}")
+        # sshd_config location
+        if (isEqSetting('binarySource','SRI-Cambridge')):
+            sshdConfigPath = "/fett/etc/sshd_config"
+        else: #default
+            sshdConfigPath = "/etc/ssh/sshd_config"
+        self.runCommand (f"echo \"PermitRootLogin yes\" >> {sshdConfigPath}")
         self.retartSshService()
         self.isSshRootEnabled = True
         if (switchUsers):
