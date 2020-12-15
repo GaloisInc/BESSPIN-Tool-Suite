@@ -18,17 +18,17 @@ See `sources/test_456.c` for an example.
 
 ## Scoring Approach ##
 
-In the face of undefined behavior and possibly aborts, it is difficult to write test code that reliably produces predictable output. To this end, the scoring code recognizes both test-generated output and output from OS or CPU-level intervention. The following table shows the particular string that is matched in each test's log file, its numeric "score" and that score's interpretation:
+In the face of undefined behavior and possibly aborts, it is difficult to write test code that reliably produces predictable output. To this end, the scoring code recognizes both test-generated output and output from OS or CPU-level intervention. The following table shows the particular string that is matched in each test's log file and its score:
 
-|Matching String   |Numeric Score|Overall Score|
-|------------------|-------------|-------------|
-|TEST FAILED       |4            |V-HIGH       |
-|TOP SECRET STUFF  |4            |V-HIGH       |
-|SEGFAULT          |3            |HIGH         |
-|Segmentation Fault|3            |HIGH         |
-|TEST PASSED       |0            |NONE         |
-|\<ABORT\>         |0            |NONE         |
-|TEST ERROR        |-1           |CALL-ERR     |
+|Matching String   |Score|
+|------------------|-------------|
+|TEST FAILED       |HIGH       |
+|TOP SECRET STUFF  |HIGH       |
+|SEGFAULT          |HIGH         |
+|Segmentation Fault|HIGH         |
+|TEST PASSED       |NONE         |
+|\<ABORT\>         |NONE         |
+|TEST ERROR        |CALL-ERR     |
 
 Notes:
 

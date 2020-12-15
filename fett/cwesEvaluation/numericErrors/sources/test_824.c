@@ -77,7 +77,7 @@ void p02()
   // is appropriate for that CPU and OS.
 
   // If this results in "TOP SECRET STUFF" appearing in the log,
-  // then this will be marked as a V-HIGH FAIL.
+  // then this will be scored as HIGH.
 }
 
 

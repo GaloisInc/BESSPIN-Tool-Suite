@@ -51,7 +51,7 @@ in the above components. For example:
 ## Scoring Approach ##
 
 Each test is scored by checking if the test driver is able to learn a secret value. If it is, then
-the test is scored 'V-HIGH'; otherwise there is no weakness at the test is scored 'NONE'. 
+the test is scored 'HIGH'; otherwise there is no weakness at the test is scored 'NONE'. 
 
 Scores are grouped by CWE; the CWE score is the average of the related tests' scores.
   

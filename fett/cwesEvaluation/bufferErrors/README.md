@@ -14,7 +14,7 @@ arbitrary code execution, or various forms of capability denial.
 
 Each test attempts to show the existence of a buffer error *weakness*, i.e. a _potential_ vulnerability. 
 Hence, if a test runs to completion, we count the test as witnessing the weakness.
-Each CWE is assigned a score from NONE to V-HIGH as the fraction of detected errors (e.g., traps) decreases.
+Each CWE is assigned a score from NONE to HIGH as the fraction of detected errors (e.g., traps) decreases.
 The rationale for this is that the MMU on commodity-off-the-shelf systems will typically detect _some_
 buffer errors, and should be treated as a baseline.
 

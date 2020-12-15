@@ -5,7 +5,7 @@ scoring the CWEs
     -- FAIL: the test did not run or could not be parsed or any other weird error.
     -- CALL-ERR: call error to the sys call or module needed for that test
     -- DoS: The test is denied though didn't breach yet. Impractical hardware.
-- SCALE: NONE (no weakness) -> V-LOW -> LOW -> MED -> HIGH -> V-HIGH
+- SCALE: NONE (no weakness) -> LOW ->MED -> HIGH
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 import os
