@@ -205,18 +205,6 @@ Function Call with Incorrect Number of Parameters \[[CWE-685](https://cwe.mitre.
 
 This CWE most notably affects C when "varargs" functions are used, such as printf(). As such, this is a repetition of CWE-234 above, so no additional test case has been added.
 
-### TEST-686 ###
-Function Call with Incorrect Argument Type \[[CWE-686](https://cwe.mitre.org/data/definitions/686.html)\].
-
-**Related CWEs**
-- [CWE-686](https://cwe.mitre.org/data/definitions/686.html).
-
-**Notes:**
-This test subverts C's type model by assigning a pointer to the library function strchr() to another pointer-to-function that has the wrong number and types of its arguments.  This test has been adapted from the example shown in the SEI's CERT C Coding Standard \[[Rule EXP37-C](https://wiki.sei.cmu.edu/confluence/display/c/EXP37-C.+Call+functions+with+the+correct+number+and+type+of+arguments)\].
-
-**Test Parts:**
-- p01: As above - calling function via incorrectly typed pointer. If program control flow passes to the statement following the bad call, then this is scored "TEST FAILED".
-
 ### TEST-687 ###
 Function Call with Incorrectly Specified Argument Value \[[CWE-687](https://cwe.mitre.org/data/definitions/687.html)\].
 
