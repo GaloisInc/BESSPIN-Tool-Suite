@@ -21,7 +21,7 @@ to run in the `evaluateSecurityTests` mode, the `evaluateSecurityTests` section 
   - `vulClasses`: A list of the vunerability classes to be executed, contained by square brackets and comma
     separated. Choose among the NIST list: *bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors*. The names follow [attachment 3 of the
     SSITH BAA](https://www.ntsc.org/assets/uploads/HR001117S0023.pdf). When a `$vulClass` is included, its configuration section is loaded as well. Please note that the classes *codeInjection* and *cryptoErrors* are yet to be implemented.
-  - `useCustomCWEsConfigsPath`: If disabled, then the `.ini` files in [./configSecurityTests](./configSecurityTests) will be used by default, which we reference as `${configCWEs}` in the rest of this document.
+  - `useCustomCWEsConfigsPath`: If disabled, then the `.ini` files in [./configSecurityTests](./configSecurityTests) will be used by default, which we reference as `${CWEsConfigs}` in the rest of this document.
   - `pathToCustomCWEsConfigs`: The path containing the CWEs config files in case `useCustomCWEsConfigsPath` is enabled.
   - `useCustomScoring`: Configure the scoring methods as instructed in
     the parameters in the `[customizedScoring]` section.  More
@@ -33,9 +33,9 @@ to run in the `evaluateSecurityTests` mode, the `evaluateSecurityTests` section 
 
 
 Regarding each vulnerability class section, it is worth mentioning that:
-  - `useSelfAssessment`: If enabled, then instead of running tests for this class, the scores will be loaded from the `.ini` configuration files in `${configCWEs}`. This is useful in calculating the security figure of merit (TBD), especially in case of incremental runs. 
+  - `useSelfAssessment`: If enabled, then instead of running tests for this class, the scores will be loaded from the `.ini` configuration files in `${CWEsConfigs}`. This is useful in calculating the security figure of merit (TBD), especially in case of incremental runs. 
   - `runAllTests`: Either run all the existing tests to this class, or
-    use the customized `${configCWEs}/$vulClass.ini` to choose which ones to run.  Note that
+    use the customized `${CWEsConfigs}/$vulClass.ini` to choose which ones to run.  Note that
     you can use the utility [configSecurityTests/configCWEs.py](./configSecurityTests/configCWEs.py)
     to configure the desired `$vulClass.ini` automatically.  This
     utility can be used to enable, disable, or toggle all or selected
