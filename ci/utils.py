@@ -113,6 +113,7 @@ def generateConfigFile(repoDir, outDir, dictConfig, testMode):
     templateConfigPath = os.path.join(repoDir, "config.ini")
     xConfig = configparser.ConfigParser()
     try:
+        xConfig.optionxform = str # Hack it to be case sensitive
         fConfig = open(templateConfigPath, "r")
         xConfig.read_file(fConfig)
         fConfig.close()
