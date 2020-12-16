@@ -92,10 +92,7 @@ def isTargetAlive(targetId):
         return False
 
     osImage = getSetting('osImage',targetId=targetId)
-    if osImage == 'FreeRTOS':
-        # TODO
-        logAndExit (f"{xTarget.targetIdInfo}<isTargetAlive> is not implemented for <{osImage}>.",exitCode=EXIT.Implementation)
-    elif osImage in ['debian', 'FreeBSD']:
+    if osImage in ['debian', 'FreeBSD']:
         if not otaserver.isServiceRunning(xTarget):
             printAndLog(f"{xTarget.targetIdInfo}ota server doesn't respond. Restarting.")
             otaserver.restart(xTarget)

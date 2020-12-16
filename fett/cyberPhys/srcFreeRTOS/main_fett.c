@@ -72,12 +72,27 @@ static const uint8_t ucGatewayAddress[4] = {configGATEWAY_ADDR0, configGATEWAY_A
 static const uint8_t ucDNSServerAddress[4] = {configDNS_SERVER_ADDR0, configDNS_SERVER_ADDR1, configDNS_SERVER_ADDR2, configDNS_SERVER_ADDR3};
 const uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADDR2, configMAC_ADDR3, configMAC_ADDR4, configMAC_ADDR5};
 
-void main_fett(void)
-{
-    xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
+void startNetwork (void);
+
+void startNetwork () {
+    BaseType_t funcReturn;
 
     FreeRTOS_printf((">>> ECU: FreeRTOS_IPInit\r\n"));
-    FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
+    funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
+    if (funcReturn != pdPASS) {
+        fettPrintf ("(Error)~  startNetwork: Failed to initialize network. [ret=%d].\n",funcReturn);
+    } else {
+        fettPrintf ("(Info)~  startNetwork: Network IP initialized successfully!.\n");
+    }
+}
+
+void main_fett(void)
+{
+    startNetwork();
+
+    xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
+
+    fettPrintf ("\n>>>Beginning of Fett<<<\n");
 }
 
 static void prvSensorTask(void *pvParameters)
@@ -130,7 +145,7 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
         }
 
         /* Print out the network configuration, which may have come from a DHCP
-		server. */
+        server. */
         FreeRTOS_GetAddressConfiguration(&ulIPAddress, &ulNetMask, &ulGatewayAddress, &ulDNSServerAddress);
         FreeRTOS_inet_ntoa(ulIPAddress, cBuffer);
         FreeRTOS_printf(("\r\n\r\n>>> ECIU: IP Address: %s\r\n", cBuffer));
