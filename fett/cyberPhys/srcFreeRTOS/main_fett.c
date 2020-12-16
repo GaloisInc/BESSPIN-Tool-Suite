@@ -143,6 +143,9 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
 
         FreeRTOS_inet_ntoa(ulDNSServerAddress, cBuffer);
         FreeRTOS_printf((">>> ECU: DNS Server Address: %s\r\n\r\n\r\n", cBuffer));
+
+        // For compliance with FETT tool
+        FreeRTOS_printf((">>>Beginning of Fett<<<\r\n"));
     }
 }
 /*-----------------------------------------------------------*/

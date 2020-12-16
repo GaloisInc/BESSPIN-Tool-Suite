@@ -101,7 +101,9 @@ def prepareFreeRTOS(targetId=None):
     buildDir = getSetting('buildDir',targetId=targetId)
     fett.target.build.buildFreeRTOS(targetId=targetId, buildDir=buildDir)
 
-    return os.path.join(buildDir,'FreeRTOS.elf')
+    cp(os.path.join(buildDir,'FreeRTOS.elf'), getSetting('osImageElf',targetId=targetId))
+    return
+
 
 
 @decorate.debugWrap
