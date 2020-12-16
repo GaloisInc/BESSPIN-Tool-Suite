@@ -146,7 +146,7 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
 
         // For compliance with FETT tool
         FreeRTOS_printf((">>>Beginning of Fett<<<\r\n"));
-        FreeRTOS_printf(("<NTK-READY>\r\n"))
+        FreeRTOS_printf(("<NTK-READY>\r\n"));
     }
 }
 /*-----------------------------------------------------------*/
