@@ -114,11 +114,6 @@
                 "test_789" : {
                     "cweText" : "Uncontrolled Memory Allocation"
                 },
-                "test_822" : {
-                    "cweText" : "Untrusted Pointer Dereference",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
-                },
                 "test_825" : {
                     "cweText" : "Expired Pointer Dereference",
                     "unix" : 2,

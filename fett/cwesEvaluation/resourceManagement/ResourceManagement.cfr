@@ -29,7 +29,6 @@ ResourceManagement_Test ?
     CWE_468 // done
     CWE_588 // done
     CWE_690 // done
-    CWE_822 // not started and end of PTR
     CWE_399 // general and start of General Resources
     CWE_400 // unimplemented but planned for phase 3
     CWE_404 // general
@@ -64,7 +63,7 @@ ResourceManagement_Test ?
   [ MAL => CWE_735 && CWE_736 && CWE_737 && CWE_738 && CWE_739 && CWE_672 ]
   [ MAL => CWE_706 && CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 ]
   [ MAL => CWE_825 && CWE_911 ]
-  [ PTR => CWE_188 && CWE_476 && CWE_468 && CWE_588 && CWE_690 && CWE_822 ]
+  [ PTR => CWE_188 && CWE_476 && CWE_468 && CWE_588 && CWE_690 ]
   [ General_Resources => CWE_399 && CWE_400 && CWE_404 && CWE_405 ]
   [ General_Resources => CWE_610 && CWE_664 && CWE_669 && CWE_694 ]
   [ General_Resources => CWE_774 && CWE_913 && CWE_416 && CWE_562 && CWE_415 ]
