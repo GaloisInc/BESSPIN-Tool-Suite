@@ -97,7 +97,5 @@ def isTargetAlive(targetId):
             printAndLog(f"{xTarget.targetIdInfo}ota server doesn't respond. Restarting.")
             otaserver.restart(xTarget)
             return otaserver.isServiceRunning(xTarget)
-    else:
-        logAndExit (f"{xTarget.targetIdInfo}<isTargetAlive> is not implemented for <{osImage}>.",exitCode=EXIT.Implementation)
 
     return True

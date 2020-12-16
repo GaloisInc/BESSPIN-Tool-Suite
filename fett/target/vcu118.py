@@ -125,7 +125,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             while ((not isSuccess) and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
                 self.freertosNtkRetriesIdx += 1
                 outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",
-                    erroneousContents=["(Error)","INVALID"],timeout=20,
+                    erroneousContents=["(Error)","INVALID"],timeout=90,
                     exitOnError=False,suppressErrors=True
                     )
                 isSuccess, _, _, _ = outCmd
