@@ -8,102 +8,68 @@
 // abstract CWEs and abstract and concrete CWEs is not yet fully
 // specified herein.
 
+// @note Tadros Dec 2020: revised and updated
+
 ResourceManagement_Test ?
   or ResourceManagement_CWEs
-    CWE_735 // general and start of MAL
-    CWE_736 // done
-    CWE_737 // done
-    CWE_738 // done
-    CWE_739 // done
-    CWE_672 // done
-    CWE_706 // end of general
-    CWE_761 // done
-    CWE_762 // done
-    CWE_763 // done
-    CWE_771 // wip
-    CWE_772 // not started
-    CWE_825 // done
-    CWE_911 // not started and end of MAL
-    CWE_188 // start of PTR
-    CWE_476 // done
-    CWE_468 // done
-    CWE_588 // done
-    CWE_690 // done
-    CWE_399 // general and start of General Resources
-    CWE_400 // unimplemented but planned for phase 3
-    CWE_404 // general
-    CWE_405 // unimplemented but planned for phase 3
-    CWE_610 // general
-    CWE_664 // general
-    CWE_669 // unimplemented but planned for phase 3
-    CWE_694 // general
-    CWE_774 // unimplemented but planned for phase 3
-    CWE_913 // unimplemented but planned for phase 3
-    CWE_416 // not started
-    CWE_562 // done
-    CWE_415 // end of General Resources
+    CWE_188
+    CWE_415
+    CWE_416
+    CWE_468
+    CWE_476
+    CWE_562
+    CWE_588
+    CWE_690
+    CWE_761
+    CWE_762
+    CWE_763
+    CWE_771
+    CWE_772
+    CWE_825
+    CWE_911
 
   or ResourceManagement_BF_Classes
     MAL
     PTR
     General_Resources
 
-  or ResourceManagement_Status
-    RE_Phase3 // planned for support in phase 3 on P3 processors
-    RE_WIP_FreeRTOS // work-in-progress for FreeRTOS
-    RE_WIP_Debian // work-in-progress for Debian
-    RE_WIP_FreeBSD // work-in-progress for FreeBSD
-    RE_NI_FreeRTOS // unimplemented as of yet for FreeRTOS
-    RE_NI_Debian // unimplemented as of yet for Debian
-    RE_NI_FreeBSD // unimplemented as of yet for FreeBSD
-    RE_DONE_FreeRTOS // implemented in FreeRTOS
-    RE_DONE_Debian // implemented in Debian
-    RE_DONE_FreeBSD // implemented in FreeBSD
-
-  [ MAL => CWE_735 && CWE_736 && CWE_737 && CWE_738 && CWE_739 && CWE_672 ]
-  [ MAL => CWE_706 && CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 ]
+  [ MAL => CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 ]
   [ MAL => CWE_825 && CWE_911 ]
   [ PTR => CWE_188 && CWE_476 && CWE_468 && CWE_588 && CWE_690 ]
-  [ General_Resources => CWE_399 && CWE_400 && CWE_404 && CWE_405 ]
-  [ General_Resources => CWE_610 && CWE_664 && CWE_669 && CWE_694 ]
-  [ General_Resources => CWE_774 && CWE_913 && CWE_416 && CWE_562 && CWE_415 ]
-  [ RE_Phase3 => CWE_400 && CWE_405 && CWE_669 && CWE_774 && CWE_913 ]
-  [ RE_WIP_FreeRTOS => CWE_771 ]
-  [ RE_WIP_Debian => CWE_771 ]
-  [ RE_WIP_FreeBSD => MAL && PTR && General_Resources ]
-  [ RE_NI_FreeRTOS => CWE_772 ]
-  [ RE_NI_Debian => CWE_772 ]
-  [ RE_NI_FreeBSD => CWE_772 ]
-  [ RE_DONE_FreeRTOS => CWE_761 && CWE_762 && CWE_763 && CWE_772 && CWE_825 ]
-  [ RE_DONE_FreeRTOS => CWE_188 && CWE_476 && CWE_468 && CWE_588 ]
-  [ RE_DONE_FreeRTOS => CWE_690 && CWE_562 ]
-  [ RE_DONE_Debian => CWE_761 && CWE_762 && CWE_763 && CWE_772 && CWE_825 ]
-  [ RE_DONE_Debian => CWE_188 && CWE_476 && CWE_468 && CWE_588 ]
-  [ RE_DONE_Debian => CWE_690 && CWE_562 ]
-  [ RE_DONE_FreeBSD <=> RE_DONE_Debian ]
+  [ General_Resources => CWE_416 && CWE_562 && CWE_415 ]
 
   xor ResourceManagement_test
     ResourceManagement_test_188
+    ResourceManagement_test_415
+    ResourceManagement_test_416
     ResourceManagement_test_468
     ResourceManagement_test_476
+    ResourceManagement_test_562
     ResourceManagement_test_588
     ResourceManagement_test_690
     ResourceManagement_test_761
     ResourceManagement_test_762
     ResourceManagement_test_763
+    ResourceManagement_test_771
     ResourceManagement_test_772
     ResourceManagement_test_825
+    ResourceManagement_test_911
 
   [ ResourceManagement_test_188 => CWE_188 ]
+  [ ResourceManagement_test_415 => CWE_415 ]
+  [ ResourceManagement_test_416 => CWE_416 ]
   [ ResourceManagement_test_468 => CWE_468 ]
   [ ResourceManagement_test_476 => CWE_476 ]
+  [ ResourceManagement_test_562 => CWE_562 ]
   [ ResourceManagement_test_588 => CWE_588 ]
   [ ResourceManagement_test_690 => CWE_690 ]
   [ ResourceManagement_test_761 => CWE_761 ]
   [ ResourceManagement_test_762 => CWE_762 ]
   [ ResourceManagement_test_763 => CWE_763 ]
+  [ ResourceManagement_test_771 => CWE_771 ]
   [ ResourceManagement_test_772 => CWE_772 ]
   [ ResourceManagement_test_825 => CWE_825 ]
+  [ ResourceManagement_test_911 => CWE_911 ]
 
 // End of Resource Management error model
 
