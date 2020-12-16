@@ -110,7 +110,6 @@ abstract Numeric_Weakness
       CWE_197
       CWE_369
       CWE_681
-      CWE_704
 
 NumericErrors_Test : Numeric_Weakness ?
   xor Test
@@ -127,7 +126,6 @@ NumericErrors_Test : Numeric_Weakness ?
     TEST_456
     TEST_457
     TEST_665
-    TEST_704
     TEST_824
 
   [ CWE_128 <=> ( Overflow && Multiplication && Value_exceeds_type && Unsigned_integer && Magnitude_Small && Excursion_Discrete ) ]
@@ -140,7 +138,6 @@ NumericErrors_Test : Numeric_Weakness ?
   [ CWE_197 <=> ( Truncation && Basic_assignment && Signed_integer && Value_conversion && Magnitude_Large && Excursion_Discrete ) ]
   [ CWE_369 <=> ( Distortion && Signed_integer && Division && Domain_error && Magnitude_Large && Excursion_Discrete ) ]
   [ CWE_681 <-> ( Undefined_behavior && Loss_of_precision && Truncation && Value_conversion && Signed_integer && Unsigned_integer && Pointer) ]
-  [ CWE_704 <=> ( Undefined_behavior && Pointer && Value_conversion && Domain_error && Magnitude_Large && Excursion_Discrete ) ]
 
 
 [ TEST_128 => CWE_128 ]
@@ -156,5 +153,4 @@ NumericErrors_Test : Numeric_Weakness ?
 [ TEST_456 => CWE_456 ]
 [ TEST_457 => CWE_457 ]
 [ TEST_665 => CWE_665 ]
-[ TEST_704 => CWE_704 ]
 [ TEST_824 => CWE_824 ]
