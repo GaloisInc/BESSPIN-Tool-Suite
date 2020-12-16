@@ -137,7 +137,7 @@ NumericErrors_Test : Numeric_Weakness ?
   [ CWE_196 <=> ( Undefined_behavior && Unsigned_integer && Value_conversion && Magnitude_Large && Excursion_Discrete ) ]
   [ CWE_197 <=> ( Truncation && Basic_assignment && Signed_integer && Value_conversion && Magnitude_Large && Excursion_Discrete ) ]
   [ CWE_369 <=> ( Distortion && Signed_integer && Division && Domain_error && Magnitude_Large && Excursion_Discrete ) ]
-  [ CWE_681 <-> ( Unspecified_behavior && Loss_of_precision && Truncation && Distortion && Value_conversion && Magnitude_Large && Signed_integer && Unsigned_integer && Pointer && Excursion_Discrete) ]
+  [ CWE_681 <=> ( Unspecified_behavior && Loss_of_precision && Truncation && Distortion && Value_conversion && Magnitude_Large && Signed_integer && Unsigned_integer && Pointer && Excursion_Discrete) ]
 
 
 [ TEST_128 => CWE_128 ]
