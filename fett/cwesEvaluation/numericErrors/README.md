@@ -205,21 +205,6 @@ Function Call with Incorrect Number of Parameters \[[CWE-685](https://cwe.mitre.
 
 This CWE most notably affects C when "varargs" functions are used, such as printf(). As such, this is a repetition of CWE-234 above, so no additional test case has been added.
 
-### TEST-687 ###
-Function Call with Incorrectly Specified Argument Value \[[CWE-687](https://cwe.mitre.org/data/definitions/687.html)\].
-
-**Related CWEs**
-- [CWE-687](https://cwe.mitre.org/data/definitions/687.html).
-
-This CWE is very general - potentially covered any function call with "the wrong value" passed as an argument.  This could be true of any non-total function in any program or library.
-
-The CWE description does refer to one particularly dangerous example in C - calling malloc() with a ZERO value as the argument, which is an Unspecified Behavior.  The returned pointer might be NULL, or might point to an area of memory that should not be accessed.
-
-This test case illustrates that particular problem, since it is both relevant and potentially mitigated by SSITH CPUs.  See \[[Rule MEM04-C](https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations)\] for more details.
-
-**Test Parts:**
-- p01: As described above - calling malloc() with a ZERO as argument. A successful attempt to subsequently dereference that pointer is scored as "TEST FAILED".
-
 ### TEST-688 ###
 Function Call with Incorrect Variable or Reference as Argument \[[CWE-688](https://cwe.mitre.org/data/definitions/688.html)\].
 
