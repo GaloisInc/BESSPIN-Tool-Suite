@@ -353,21 +353,6 @@ Incorrect Calculation \[[CWE-682](https://cwe.mitre.org/data/definitions/682.htm
 **Notes:**
 This CWE is rather general, covering any "incorrect calculation" the result of which is "later used in security-critical decisions or resource management." It is actually a parent of CWEs 128, 190, 191, 192, and 369 in the CWE hierarchy. These CWEs cover more specific cases of numeric calculation errors, and are dealt with above. As such, no specific test case has been designed for CWE 682.
 
-### TEST-704 ###
-Incorrect Type Conversion or Cast \[[CWE-704](https://cwe.mitre.org/data/definitions/704.html)\].
-
-**Related CWEs**
-- [CWE-681](https://cwe.mitre.org/data/definitions/681.html).
-- [CWE-588](https://cwe.mitre.org/data/definitions/588.html).
-
-**Notes:**
-This CWE is rather general, covering any "incorrect conversion or cast", many of which are covered by its child CWEs 681 and others covered above.
-
-One specific case does yield an interesting test case, though, arising from its child CWE 588. This case covers an attempted conversion from a "pointer-to-function" to a "pointer-to-data" and then an attempt to write to the data at the resulting pointer location - a possible route for code injection and other related vulnerabilities. Some operating systems prevent this kind of attach by making program instructions "read only" or "execute only", but bare-metal or small systems like FreeRTOS may not do this, making this an interesting test case.
-
-**Test Parts:**
-- p01: This test converts a function pointer into a pointer to a "struct" data object, then attempts to write to the data referenced by the resulting pointer. The result is undefined behavior or a program crash on some systems. A SSITH platform might pass the test by preventing the initial cast operation, or by preventing the subsequent assignment via the pointer value.
-
 ### TEST-369 ###
 Division by Zero \[[CWE-369](https://cwe.mitre.org/data/definitions/369.html)\].
 
