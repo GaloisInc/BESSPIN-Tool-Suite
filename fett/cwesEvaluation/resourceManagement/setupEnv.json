@@ -2,6 +2,8 @@
     "_usage" : "This json file has the environment setup that is not to be changed per run.",
     "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
+    "_unix" : "Number of parts of unix tests OR the string 'method' for custom test",
+    "_FreeRTOS" : "Number of FreeRTOS tests parts -- currently not used",
 
     "resourceManagement" : [
         {
@@ -9,13 +11,19 @@
             "type" : "dict",
             "val" : {
                 "test_188" : {
-                    "cweText" : "Reliance on Data/Memory Layout"
+                    "cweText" : "Reliance on Data/Memory Layout",
+                    "unix" : 6,
+                    "FreeRTOS" : 3
                 },
                 "test_415" : {
-                    "cweText" : "Double Free"
+                    "cweText" : "Double Free",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
                 },
                 "test_416" : {
-                    "cweText" : "Use After Free"
+                    "cweText" : "Use After Free",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
                 },
                 "test_400" : {
                     "cweText" : "Uncontrolled Resource Consumption"
@@ -33,19 +41,27 @@
                     "cweText" : "Use of sizeof() on a Pointer Type"
                 },
                 "test_468" : {
-                    "cweText" : "Incorrect Pointer Scaling"
+                    "cweText" : "Incorrect Pointer Scaling",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
                 },
                 "test_476" : {
-                    "cweText" : "NULL Pointer Dereference"
+                    "cweText" : "NULL Pointer Dereference",
+                    "unix" : 3,
+                    "FreeRTOS" : 2
                 },
                 "test_562" : {
-                    "cweText" : "Return of Stack Variable Address"
+                    "cweText" : "Return of Stack Variable Address",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
                 },
                 "test_587" : {
                     "cweText" : "Assignment of a Fixed Address to a Pointer"
                 },
                 "test_588" : {
-                    "cweText" : "Attempt to Access Child of a Non-structure Pointer"
+                    "cweText" : "Attempt to Access Child of a Non-structure Pointer",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
                 },
                 "test_590" : {
                     "cweText" : "Free of Memory not on the Heap"
@@ -63,31 +79,50 @@
                     "cweText" : "Operation on a Resource after Expiration or Release"
                 },
                 "test_690" : {
-                    "cweText" : "Unchecked Return Value to NULL Pointer Dereference"
+                    "cweText" : "Unchecked Return Value to NULL Pointer Dereference",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
                 },
                 "test_761" : {
-                    "cweText" : "Free of Pointer not at Start of Buffer"
+                    "cweText" : "Free of Pointer not at Start of Buffer",
+                    "unix" : 4,
+                    "FreeRTOS" : 4
                 },
                 "test_762" : {
-                    "cweText" : "Mismatched Memory Management Routines"
+                    "cweText" : "Mismatched Memory Management Routines",
+                    "unix" : 3,
+                    "FreeRTOS" : 3
                 },
                 "test_763" : {
-                    "cweText" : "Release of Invalid Pointer or Reference"
+                    "cweText" : "Release of Invalid Pointer or Reference",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
                 },
                 "test_770" : {
                     "cweText" : "Allocation of Resources Without Limits or Throttling"
                 },
                 "test_771" : {
-                    "cweText" : "Missing Reference to Active Allocated Resource"
+                    "cweText" : "Missing Reference to Active Allocated Resource",
+                    "unix" : 1,
+                    "FreeRTOS" : 5
                 },
                 "test_772" : {
-                    "cweText" : "Missing Release of Resource after Effective Lifetime"
+                    "cweText" : "Missing Release of Resource after Effective Lifetime",
+                    "unix" : "method",
+                    "FreeRTOS" : 2
                 },
                 "test_789" : {
                     "cweText" : "Uncontrolled Memory Allocation"
                 },
+                "test_822" : {
+                    "cweText" : "Untrusted Pointer Dereference",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
+                },
                 "test_825" : {
-                    "cweText" : "Expired Pointer Dereference"
+                    "cweText" : "Expired Pointer Dereference",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
                 },
                 "test_908" : {
                     "cweText" : "Use of Uninitialized Resource"
@@ -96,7 +131,9 @@
                     "cweText" : "Missing Initialization of Resource"
                 },
                 "test_911" : {
-                    "cweText" : "Improper Update of Reference Count"
+                    "cweText" : "Improper Update of Reference Count",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
                 },
                 "test_920" : {
                     "cweText" : "Improper Restriction of Power Consumption"
