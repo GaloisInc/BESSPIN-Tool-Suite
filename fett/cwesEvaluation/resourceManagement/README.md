@@ -427,36 +427,6 @@ of the data type.  For example, if the type of `p` is `T*` and `sizeof(T)
   subscript operator rather than pointer arithmetic. For example,
   replace `*(p+k)` with `p[k]`. 
 
-### TEST-395 ###
-
-Use of `NullPointerException` Catch to Detect `NULL` Pointer
-Dereference
-\[[CWE-395](https://cwe.mitre.org/data/definitions/395.html)\].
-
-**Related CWEs**
-
-**Notes:**
-- Catching `NullPointerException` (or comparable trap or signal)
-  should not be used as an alternative to programmatic checks to
-  prevent dereferencing a `NULL` pointer.  We have shown an example,
-  using try-catch clause, describing the error handler
-  mechanism. However, for the `NULL` pointer exception this should never
-  be used.
-
-**FreeRTOS:**
-- Implemented.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a try-catch read and
-  try-catch write operation when the application dereferences a NULL
-  pointer trying to read from, or assign to it.
-- The `try_catch_test_read` function shows an example of `NULL`
-  pointer trying to read it.
-- The `try_catch_test_write` function shows an example of `NULL`
-  pointer trying to write it.
-- This weakness results in a fact that catching the resulting
-  exception was easier than fixing the underlying problem.
-
 ### TEST-771 ##
 
 Missing Reference to Active Allocated Resource

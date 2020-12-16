@@ -25,7 +25,6 @@ ResourceManagement_Test ?
     CWE_825 // done
     CWE_911 // not started and end of MAL
     CWE_188 // start of PTR
-    CWE_395 // done
     CWE_476 // done
     CWE_468 // done
     CWE_588 // done
@@ -65,7 +64,7 @@ ResourceManagement_Test ?
   [ MAL => CWE_735 && CWE_736 && CWE_737 && CWE_738 && CWE_739 && CWE_672 ]
   [ MAL => CWE_706 && CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 ]
   [ MAL => CWE_825 && CWE_911 ]
-  [ PTR => CWE_188 && CWE_395 && CWE_476 && CWE_468 && CWE_588 && CWE_690 && CWE_822 ]
+  [ PTR => CWE_188 && CWE_476 && CWE_468 && CWE_588 && CWE_690 && CWE_822 ]
   [ General_Resources => CWE_399 && CWE_400 && CWE_404 && CWE_405 ]
   [ General_Resources => CWE_610 && CWE_664 && CWE_669 && CWE_694 ]
   [ General_Resources => CWE_774 && CWE_913 && CWE_416 && CWE_562 && CWE_415 ]
@@ -77,16 +76,15 @@ ResourceManagement_Test ?
   [ RE_NI_Debian => CWE_772 ]
   [ RE_NI_FreeBSD => CWE_772 ]
   [ RE_DONE_FreeRTOS => CWE_761 && CWE_762 && CWE_763 && CWE_772 && CWE_825 ]
-  [ RE_DONE_FreeRTOS => CWE_188 && CWE_395 && CWE_476 && CWE_468 && CWE_588 ]
+  [ RE_DONE_FreeRTOS => CWE_188 && CWE_476 && CWE_468 && CWE_588 ]
   [ RE_DONE_FreeRTOS => CWE_690 && CWE_562 ]
   [ RE_DONE_Debian => CWE_761 && CWE_762 && CWE_763 && CWE_772 && CWE_825 ]
-  [ RE_DONE_Debian => CWE_188 && CWE_395 && CWE_476 && CWE_468 && CWE_588 ]
+  [ RE_DONE_Debian => CWE_188 && CWE_476 && CWE_468 && CWE_588 ]
   [ RE_DONE_Debian => CWE_690 && CWE_562 ]
   [ RE_DONE_FreeBSD <=> RE_DONE_Debian ]
 
   xor ResourceManagement_test
     ResourceManagement_test_188
-    ResourceManagement_test_395
     ResourceManagement_test_468
     ResourceManagement_test_476
     ResourceManagement_test_588
@@ -98,7 +96,6 @@ ResourceManagement_Test ?
     ResourceManagement_test_825
 
   [ ResourceManagement_test_188 => CWE_188 ]
-  [ ResourceManagement_test_395 => CWE_395 ]
   [ ResourceManagement_test_468 => CWE_468 ]
   [ ResourceManagement_test_476 => CWE_476 ]
   [ ResourceManagement_test_588 => CWE_588 ]
