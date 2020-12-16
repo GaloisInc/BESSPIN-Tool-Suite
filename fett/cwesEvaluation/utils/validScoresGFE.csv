@@ -1,0 +1,10 @@
+#CWE,OS(you may use '*' for all),additional allowed value other than 0
+#Several entries per cwe are allowed
+
+#resourceManagement
+771,debian,-6
+771,FreeBSD,-6
+
+#informationLeakage
+214,FreeRTOS,-6
+526,FreeRTOS,-6

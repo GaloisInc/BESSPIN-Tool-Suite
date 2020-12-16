@@ -1,0 +1,70 @@
+# This Makefile is for cross compiling the InformationLeakages tests
+
+include defaultEnvUnix.mk
+
+TESTSOURCES=$(wildcard tests/*.c)
+TESTFILES=$(basename $(TESTSOURCES))
+TESTS=$(TESTFILES:tests/%=%)
+
+STORESOURCES=$(wildcard stores/*.c)
+STOREFILES=$(basename $(STORESOURCES))
+STORES=$(STOREFILES:stores/%=%)
+
+INTERPRETERSOURCES=$(wildcard interpreters/*.c)
+INTERPRETERFILES=$(basename $(INTERPRETERSOURCES))
+INTERPRETERS=$(INTERPRETERFILES:interpreters/%=%)
+
+PARAMETERS  ?= include/parameters
+
+# Display the build targets
+$(info TESTS=$(TESTS))
+$(info STORES=$(STORES))
+$(info INTERPRETERS=$(INTERPRETERS))
+
+HEADERS = $(wildcard include/*.h) $(PARAMETERS)/parameters.h
+SOURCES = control/control.c 
+
+
+# Generate library files to be built
+FSOURCES = $(wildcard functions/*.c)
+FOBJS	= $(FSOURCES:.c=.o) $(SOURCES:.c=.o) 
+MAINOBJS = $(TESTSOURCES:.c=.o) $(STORESOURCES:.c=.o) $(INTERPRETERSOURCES:.c=.o)
+
+CFLAGS += -Iinclude
+CFLAGS += -I$(PARAMETERS)
+
+# Compiling objects
+functions/%.o: functions/%.c
+	$(CC) -c -o $@ $(CFLAGS) $<
+
+control/%.o: control/%.c
+	$(CC) -c -o $@ $(CFLAGS) $<
+
+stores/%.o: stores/%.c
+	$(CC) -c -o $@ $(CFLAGS) $<
+
+interpreters/%.o: interpreters/%.c
+	$(CC) -c -o $@ $(CFLAGS) $<
+
+tests/%.o: tests/%.c
+	$(CC) -c -o $@ $(CFLAGS) $<
+
+all: $(FOBJS) $(MAINOBJS)
+	for test in $(TESTS); do \
+		for store in $(STORES); do \
+			for interp in $(INTERPRETERS); do \
+				if [ -f test_$$test'_'$$store'_'$$interp.c ] ; \
+				then \
+					$(CC) -c $(CFLAGS) stores/$$store.o interpreters/$$interp.o tests/$$test.o $(FOBJS) -o $$test'_'$$store'_'$$interp.o ; \
+					$(LD) $(LDFLAGS) stores/$$store.o interpreters/$$interp.o tests/$$test.o $(FOBJS) -o test_$$test'_'$$store'_'$$interp.riscv ; \
+				fi; \
+			done; \
+		done; \
+	done; 
+
+
+clean:
+	rm -f functions/*.o control/*.o stores/*.o interpreters/*.o tests/*.o
+	rm -f *.o *.riscv
+
+.PHONY: clean all

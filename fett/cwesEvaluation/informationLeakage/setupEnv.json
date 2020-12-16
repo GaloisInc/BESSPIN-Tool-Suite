@@ -1,0 +1,73 @@
+{
+    "_usage" : "This json file has the environment setup that is not to be changed per run.",
+    "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
+    "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
+
+    "informationLeakage" : [
+        {
+            "name" : "classSpecificMake",
+            "type" : "bool",
+            "val"  : 1
+        },
+        {
+            "name" : "testsInfo",
+            "type" : "dict",
+            "val" : {
+                "test_200" : {
+                    "cweText" : "Exposure of Sensitive Information to an Unauthorized Actor"
+                },
+                "test_201" : {
+                    "cweText" : "Exposure of Sensitive Information Through Sent Data"
+                },
+                "test_202" : {
+                    "cweText" : "Exposure of Sensitive Information Through Data Queries"
+                },
+                "test_203" : {
+                    "cweText" : "Observable Discrepancy"
+                },
+                "test_205" : {
+                    "cweText" : "Observable Behavioral Discrepancy"
+                },
+                "test_206" : {
+                    "cweText" : "Observable Internal Behavioral Discrepancy"
+                },
+                "test_208" : {
+                    "cweText" : "Observable Timing Discrepancy"
+                },
+                "test_209" : {
+                    "cweText" : "Generation of Error Message Containing Sensitive Information"
+                },
+                "test_212" : {
+                    "cweText" : "Improper Removal of Sensitive Information Before Storage or Transfer"
+                },
+                "test_214" : {
+                    "cweText" : "Invocation of Process Using Visible Sensitive Information"
+                },
+                "test_226" : {
+                    "cweText" : "Sensitive Information Uncleared in Resource Before Release for Reuse"
+                },
+                "test_244" : {
+                    "cweText" : "Improper Clearing of Heap Memory Before Release ('Heap Inspection')"
+                },
+                "test_321" : {
+                    "cweText" : "Use of Hard-coded Cryptographic Key"
+                },
+                "test_385" : {
+                    "cweText" : "Covert Timing Channel"
+                },
+                "test_524" : {
+                    "cweText" : "Use of Cache Containing Sensitive Information"
+                },
+                "test_526" : {
+                    "cweText" : "Exposure of Sensitive Information Through Environmental Variables"
+                },
+                "test_612" : {
+                    "cweText" : "Improper Authorization of Index Containing Sensitive Information"
+                },
+                "test_707" : {
+                    "cweText" : "Improper Neutralization"
+                }
+            }
+        }
+    ]
+}

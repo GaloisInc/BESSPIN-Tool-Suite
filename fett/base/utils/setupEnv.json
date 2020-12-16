@@ -14,28 +14,28 @@
             "val" : "fett/base/utils/configData.json"
         },
         {
-            "name" : "vcu118IpTarget",
-            "type" : "ipAddress",
-            "val" : "10.88.88.2"
+            "name" : "cyberPhysDefaultConfigFile",
+            "type" : "filePath",
+            "val" : "cyberPhys.ini"
+        },
+        {
+            "name" : "commPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "commPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
         },
         {
             "name" : "vcu118IpHost",
             "type" : "ipAddress",
             "val" : "10.88.88.1"
-        },
-        {
-            "name" : "vcu118PortHost",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
-        },
-        {
-            "name" : "vcu118PortTarget",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
         },
         {
             "name" : "vcu118NetMaskTarget",
@@ -68,20 +68,6 @@
             "val" : "172.16.0.1"
         },
         {
-            "name" : "awsf1PortHost",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
-        },
-        {
-            "name" : "awsf1PortTarget",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
-        },
-        {
             "name" : "awsf1TapAdaptorName",
             "type" : "string",
             "val" : "tap0"
@@ -100,20 +86,6 @@
             "name" : "awsf1MacAddrTarget",
             "type" : "macAddress",
             "val" : "00:12:6D:00:00:02"
-        },
-        {
-            "name" : "qemuPortHost",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
-        },
-        {
-            "name" : "qemuPortTarget",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535,
-            "val" : 1234
         },
         {
             "name" : "HTTPPortTarget",
@@ -219,7 +191,6 @@
             "name" : "nixEnv",
             "type" : "dict",
             "val" : {
-                "netboot" : "FETT_NETBOOT",
                 "debian" : {
                     "vcu118" : "FETT_GFE_DEBIAN_VCU118",
                     "qemu" : "FETT_GFE_DEBIAN_QEMU",
@@ -240,7 +211,10 @@
                     "firesim" :  "FETT_GFE_BUSYBOX_FIRESIM"
                 },
                 "FreeRTOS" : {
-                    "clang-sysroot" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
+                    "clang-sysroot" : {
+                        "32" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
+                        "64" : "RISCV64_CLANG_BAREMETAL_SYSROOT"
+                    },
                     "vcu118" : "FETT_GFE_FREERTOS_VCU118",
                     "firesim" :  "FETT_GFE_FREERTOS_FIRESIM"
                 },
@@ -259,9 +233,14 @@
             "val" : "filesToSend.tar"
         },
         {
-            "name" : "FreeRTOSforkName",
+            "name" : "FreeRTOSforkName_10",
             "type" : "string",
             "val" : "FreeRTOS-10.0.1"
+        },
+        {
+            "name" : "FreeRTOSforkName_upstream",
+            "type" : "string",
+            "val" : "FreeRTOS-mirror"
         },
         {
             "name" : "FreeRTOSprojNameNonQemu",
@@ -328,18 +307,46 @@
             "val" : 8278
         },
         {
-            "name" : "gdbRemotePort",
+            "name" : "portsRangeStart",
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 3334
+            "val" : 3000
         },
         {
-            "name" : "openocdTelnetPort",
+            "name" : "portsRangeEnd",
             "type" : "int",
             "min" : 1024,
             "max" : 10000,
-            "val" : 4445
+            "val" : 6000
+        },
+        {
+            "name" : "vivadoCmd",
+            "type" : "string",
+            "val" : "vivado_lab"
+        },
+        {
+            "name" : "tclSourceDir",
+            "type" : "dirPath",
+            "val" : "fett/target/utils/tcl"
+        },
+        {
+            "name" : "vcu118UartSettings",
+            "type" : "dict",
+            "val" : {
+                "timeout" : 1,
+                "baudrate" : 115200,
+                "parity" : "NONE",
+                "stopbits" : 2,
+                "bytesize" : 8,
+                "vid" : 4292,
+                "pid" : 60016
+            }
+        },
+        {
+            "name" : "cwesAssessments",
+            "type" : "stringsList",
+            "val" : "[HIGH, MED, LOW, NONE, NA, UNKNOWN]"
         }
     ]
 }

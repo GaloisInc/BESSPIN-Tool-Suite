@@ -89,10 +89,11 @@ def exitFett (exitCode):
                     hostIp=aws.getInstanceIp(inExit_logAndExit),
                     fpgaIp=inExit_GetSetting('productionTargetIp')
                     )
-        printAndLog("Sent termination message to the SQS queue.")       
+        printAndLog("Sent termination message to the SQS queue.")
 
+    exitPeacefully(getSetting('trash'))
     printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
-    exit(exitCode.value)
+    os._exit(exitCode.value)
 
 def exitOnInterrupt (xSig,xFrame):
     exitFett(EXIT.Interrupted)
@@ -106,7 +107,7 @@ def formatExc (exc):
 
 def printAndLog (message,doPrint=True,tee=None):
     if (doPrint):
-        print("(Info)~  " + message)
+        print("(Info)~  " + message, flush=True)
     if (tee):
         try:
             tee.write(message + '\n')
@@ -120,14 +121,14 @@ def printAndLog (message,doPrint=True,tee=None):
 
 def warnAndLog (message,doPrint=True,exc=None):
     if (doPrint):
-        print("(Warning)~  " + message)
+        print("(Warning)~  " + message, flush=True)
     logging.warning(message)
     if (exc):
         logging.warning(traceback.format_exc())
     
 def errorAndLog (message,doPrint=True,exc=None):
     if (doPrint):
-        print("(Error)~  " + message)
+        print("(Error)~  " + message, flush=True)
     logging.error(message)
     if (exc):
         logging.error(traceback.format_exc())
@@ -142,13 +143,19 @@ def logAndExit (message,exc=None,exitCode=EXIT.Unspecified):
         errorAndLog(message,exc=exc)
     exitFett (exitCode)
 
-def setSetting (setting, val):
+@decorate.debugWrap
+def setSetting (setting, val, targetId=None):
+    if (targetId is not None):
+        return setSettingDict(targetId,setting,val)
     try:
         _settings[setting] = val
     except Exception as exc:
         logAndExit (f"Failed to set setting <{setting}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
-def getSetting (setting, default=None):
+@decorate.debugWrap
+def getSetting (setting, default=None, targetId=None):
+    if (targetId is not None):
+        return getSettingDict(targetId,setting,default=default)
     try:
         return _settings[setting]
     except Exception as exc:
@@ -156,7 +163,13 @@ def getSetting (setting, default=None):
             return default
         logAndExit (f"getSetting: Failed to obtain the value of <{setting}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
-def getSettingDict (setting,hierarchy):
+@decorate.debugWrap
+def getSettingDict (setting, hierarchy, default=None, targetId=None):
+    if (targetId is not None):
+        if (isinstance(hierarchy,str)):
+            return getSettingDict(targetId,[setting,hierarchy],default=default)
+        else:
+            return getSettingDict(targetId,[setting]+hierarchy,default=default)
     xSetting = getSetting(setting)
     if (isinstance(hierarchy,str)):
         hierarchy = [hierarchy]
@@ -164,25 +177,33 @@ def getSettingDict (setting,hierarchy):
         try:
             xSetting = xSetting[item]
         except Exception as exc:
+            if default is not None:
+                return default
             hierarchyPretty = ''.join([f"[{x}]" for x in hierarchy])
-            logAndExit (f"getSetting: Failed to obtain the value of <{setting}{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+            logAndExit (f"getSetting: Failed to obtain the value of <[{setting}]{hierarchyPretty}>.",exc=exc,exitCode=EXIT.Dev_Bug)
     return xSetting
 
-def setSettingDict (key, setting, val):
+@decorate.debugWrap
+def setSettingDict (key, setting, val, targetId=None):
     try:
-        _settings[key][setting] = val
+        if (targetId is not None):
+            _settings[targetId][key][setting] = val
+        else:
+            _settings[key][setting] = val
     except Exception as exc:
         logAndExit (f"Failed to set setting <{setting}> in dict <{key}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
-def isEnabled(setting):
-    val = getSetting(setting)
+@decorate.debugWrap
+def isEnabled(setting, targetId=None):
+    val = getSetting(setting, targetId=targetId)
     if (isinstance(val,bool)):
         return val
     else:
         logAndExit (f"isEnabled: The value of <{setting}> is not boolean: <{val}>.",exitCode=EXIT.Dev_Bug)
 
-def isEnabledDict(setting, hierarchy):
-    val = getSettingDict(setting, hierarchy)
+@decorate.debugWrap
+def isEnabledDict(setting, hierarchy, targetId=None):
+    val = getSettingDict(setting, hierarchy, targetId=targetId)
     if isinstance(val, bool):
         return val
     else:
@@ -190,20 +211,33 @@ def isEnabledDict(setting, hierarchy):
                    f"not boolean: <{val}>",
                    exitCode=EXIT.Dev_Bug)
 
-def isEqSetting (setting,val):
-    return (getSetting(setting) == val)
+@decorate.debugWrap
+def isEqSetting (setting, val, targetId=None):
+    return (getSetting(setting, targetId=targetId) == val)
 
-def doesSettingExist (setting):
-    return (setting in _settings)
+@decorate.debugWrap
+def doesSettingExist (setting, targetId=None):
+    if (targetId is not None):
+        return doesSettingExistDict(targetId, setting)
+    else:
+        return (setting in _settings)
 
-def doesSettingExistDict(setting, hierarchy):
+@decorate.debugWrap
+def doesSettingExistDict(setting, hierarchy, targetId=None):
+    if (targetId is not None):
+        if (isinstance(hierarchy,str)):
+            return doesSettingExistDict(targetId,[setting,hierarchy])
+        else:
+            return doesSettingExistDict(targetId,[setting]+hierarchy)
     xSetting = getSetting(setting)
     if isinstance(hierarchy, str):
         hierarchy = [hierarchy]
     for item in hierarchy:
         if item in xSetting:
-            return True
-    return False
+            xSetting = xSetting[item]
+        else:
+            return False
+    return True
 
 def dumpSettings ():
     logging.debug(f"settings = {_settings}")
@@ -341,12 +375,24 @@ def safeLoadJsonFile (jsonFile):
         logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
+def safeDumpJsonFile(jsonData, jsonFile):
+    try:
+        fJson = ftOpenFile(jsonFile, 'w')
+        json.dump(jsonData, fJson)
+        fJson.close()
+    except Exception as exc:
+        logAndExit(f"Failed to dump json <{jsonData}> to file <{jsonFile}>",
+                   exc=exc,
+                   exitCode=EXIT.Files_and_paths)
+
 @decorate.debugWrap
-def make (argsList,dirPath,dockerToolchainImage=None,dockerExtraMounts={}):
+def make (argsList,dirPath,dockerToolchainImage=None,dockerExtraMounts={},targetId=None, buildDir=None):
     if ((not dirPath) or (argsList is None)):
         logAndExit (f"make: <dirPath={dirPath}> or <argsList={argsList}> cannot be empty/None.",exitCode=EXIT.Dev_Bug)
     # open a file for stdout/stderr
-    outMake = ftOpenFile(os.path.join(getSetting('buildDir'),'make.out'),'a')
+    if (buildDir is None):
+        buildDir = getSetting('buildDir',targetId=targetId)
+    outMake = ftOpenFile(os.path.join(buildDir,'make.out'),'a')
 
     if (dockerToolchainImage):
         dockerArgsList = ['sudo', 'docker', 'run', '-it', '--privileged=true',
@@ -438,12 +484,15 @@ def ftOpenFile (filePath,mode,exitOnFileError=True):
             return None    
 
 @decorate.debugWrap
-def ftReadLines (filePath,exitOnFileError=True):
+def ftReadLines (filePath,exitOnFileError=True,splitLines=True):
     xFile = ftOpenFile (filePath,'r',exitOnFileError=exitOnFileError)
     if ((not xFile) and (not exitOnFileError)):
         return []
     try:
-        lines = xFile.read().splitlines()
+        if (splitLines):
+            lines = xFile.read().splitlines()
+        else:
+            lines = xFile.read()
         xFile.close()
         return lines
     except Exception as exc:
@@ -504,7 +553,12 @@ def shellCommand (argsList, check=True, timeout=30, **kwargs):
     try:
         retRun = subprocess.run(argsList, stdout=shellOut, stderr=shellOut, timeout=timeout, check=check, **kwargs)
     except Exception as exc:
-        logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
+        if ((not check) and (exc.__class__ == subprocess.TimeoutExpired)):
+            warnAndLog (f"shell: Timeout in <{argsList}>. Will continue anyway since <check> is disabled.",
+                exc=exc, doPrint=False)
+            retRun = subprocess.CompletedProcess(argsList,1) #return empty stdout/stderr and error code of 1
+        else:
+            logAndExit (f"shell: Failed to <{argsList}>. Check <shell.out> for more details.",exc=exc,exitCode=EXIT.Run)
     shellOut.close()
     return retRun
 
@@ -574,7 +628,7 @@ def zstdDecompress(inputFilePath, outputFilePath):
 @decorate.debugWrap
 def collectRemoteLogging (logAndExitFunc,getSettingFunc,sudoShellCommandFunc):
     printAndLog ("Fetching remote logs if there are any.")
-    ipTarget = getSettingFunc(f"{getSettingFunc('target')}IpTarget")
+    ipTarget = getSettingFunc(f"awsf1IpTarget")
     # cp the directory for non-fresh instances
     rsyslogsPath = os.path.join(getSettingFunc('extraArtifactsPath'),f"rsyslogs_{ipTarget}")
     sudoShellCommandFunc(['cp','-r',f'/var/log/{ipTarget}',rsyslogsPath],check=False)
@@ -586,3 +640,4 @@ def sha512_crypt(password, salt=None, rounds=None):
     if salt is None:
         salt = crypt.mksalt(crypt.METHOD_SHA512, rounds=rounds)
     return crypt.crypt(password, salt)
+

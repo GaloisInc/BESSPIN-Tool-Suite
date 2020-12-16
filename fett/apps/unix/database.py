@@ -23,14 +23,14 @@ def install(target):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def sqliteCmd(target, sqlite_bin, xDb, cmd, tee=None, expectedContents=None, shutdownOnError=True, suppressErrors=False):
+def sqliteCmd(target, sqlite_bin, xDb, cmd, tee=None, expectedContents=None, exitOnError=True, suppressErrors=False):
     # change all single-quotes in the command to '"'"' to prevent shell
     # variable parsing issues
     escaped_cmd = cmd.replace('\'', '\'"\'"\'')
     return target.runCommand(f"{sqlite_bin} {xDb} '{escaped_cmd}'",
                              expectedContents=expectedContents,
                              suppressErrors=suppressErrors,
-                             shutdownOnError=shutdownOnError,
+                             exitOnError=exitOnError,
                              erroneousContents=["Error:","near","error",
                                                 "No such file or directory"],
                              tee=tee)
@@ -45,10 +45,10 @@ def deploymentTest(target):
     target.switchUser()
 
     # Close over locals for brevity
-    def sqlite_test(cmd, expectedContents=None, shutdownOnError=True, suppressErrors=False):
+    def sqlite_test(cmd, expectedContents=None, exitOnError=True, suppressErrors=False):
         return sqliteCmd(target, sqlite_bin, xDb, cmd,
                          expectedContents=expectedContents,
-                         shutdownOnError=shutdownOnError,
+                         exitOnError=exitOnError,
                          suppressErrors=suppressErrors,
                          tee=appLog)
 
@@ -96,7 +96,7 @@ def deploymentTest(target):
         printAndLog(f"Test[drop_table]: Drop {xTable} table", doPrint=False,tee=getSetting('appLog'))
         retCommand = sqlite_test(".tables",
                                 expectedContents=[f"{xTable}"],
-                                shutdownOnError=False,
+                                exitOnError=False,
                                 suppressErrors=True)
         if (not retCommand[0]):
             printAndLog(f"Test[drop_table]: Invalid input parameter table {xTable}. Provide valid table name.", doPrint=False)
@@ -108,11 +108,11 @@ def deploymentTest(target):
 
     def drop_database(pathToFile='~'):
         printAndLog(f"Test[drop_database]: Drop sqlite {xDb} database", doPrint=False,tee=getSetting('appLog'))
-        if target.doesFileExist(xFile=xDb, pathToFile=pathToFile, shutdownOnError=False):
+        if target.doesFileExist(xFile=xDb, pathToFile=pathToFile, exitOnError=False):
             target.runCommand(f"rm -f {pathToFile}/{xDb}",tee=appLog)
             printAndLog(f"Test[drop_database]: Database {xDb} dropped successfully!", doPrint=False,tee=getSetting('appLog'))
         else:
-            target.shutdownAndExit(f"\nTest[drop_database]: Failed to find <{pathToFile}/{xDb}> on target.", exitCode=EXIT.Run)
+            target.terminateAndExit(f"\nTest[drop_database]: Failed to find <{pathToFile}/{xDb}> on target.", exitCode=EXIT.Run)
         return
 
     create_database_and_table()

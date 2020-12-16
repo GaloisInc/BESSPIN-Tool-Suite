@@ -50,7 +50,7 @@ def install (target):
         target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog, timeout=nginxTimeout)
         target.runCommand("service nginx start", erroneousContents=["failed"], tee=appLog, timeout=nginxTimeout)
     else:
-        target.shutdownAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
+        target.terminateAndExit (f"Can't start nginx service on <{getSetting('osImage')}>",
                      exitCode=EXIT.Dev_Bug)
 
     printAndLog("Nginx installed successfully.",tee=appLog)
@@ -108,38 +108,38 @@ def deploymentTest(target):
     printAndLog("Test[HTTP]: Fetching index via HTTP", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"http://{targetIP}:{httpPort}/index.html")
     if (not code):
-        target.shutdownAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[HTTP]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[HTTP]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 1. Nginx must be compiled with ssl support
     target.genStdinEntropy()
     printAndLog("Test[HTTPS]: Fetching index via HTTPS", doPrint=False,tee=getSetting('appLog'))
     _,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html")
     if (not code):
-        target.shutdownAndExit (f"Test[HTTPS]: Failed! [Fatal]",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[HTTPS]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit (f"Test[HTTPS]: Failed! [Got code {code}].",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[HTTPS]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 2. HTTP2 support
     target.genStdinEntropy()
     printAndLog("Test[HTTP2]: Fetching index via HTTP2", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html", http2=True)
     if (not code):
-        target.shutdownAndExit (f"Test[HTTP2]: Failed! [Fatal]",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[HTTP2]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit (f"Test[HTTP2]: Failed! [Got code {code}].",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[HTTP2]: Failed! [Got code {code}].",exitCode=EXIT.Run)
     elif version != 'HTTP/2':
-        target.shutdownAndExit (f"Test[HTTP2]: Failed! [Got wrong version <{version}>].",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[HTTP2]: Failed! [Got wrong version <{version}>].",exitCode=EXIT.Run)
 
     # 3. Error redirect is working
     target.genStdinEntropy()
     printAndLog("Test[Error Redirect]: Fetching private resource", doPrint=False,tee=getSetting('appLog'))
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html")
     if (not code):
-        target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Fatal]",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[Error Redirect]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code != '302':
-        target.shutdownAndExit (f"Test[Error Redirect]: Failed! [Got code {code}].",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[Error Redirect]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 4. "Hidden" resource
     target.genStdinEntropy()
@@ -147,47 +147,47 @@ def deploymentTest(target):
     version,code = curlTest(target, f"https://{targetIP}:{httpsPort}/private/secret.html",
                                 extra=["-H", "Host: secret_server"])
     if (not code):
-        target.shutdownAndExit (f"Test[Private Resource]: Failed! [Fatal]",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[Private Resource]: Failed! [Fatal]",exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit (f"Test[Private Resource]: Failed! [Got code {code}].",exitCode=EXIT.Run)
+        target.terminateAndExit (f"Test[Private Resource]: Failed! [Got code {code}].",exitCode=EXIT.Run)
 
     # 5. Fetching text.txt via HTTP
     target.genStdinEntropy()
     printAndLog("Test[Text File]: Fetching text.txt via HTTP", doPrint=False, tee=getSetting('appLog'))
     _, code = curlTest(target, f"http://{targetIP}:{httpPort}/test.txt")
     if (not code):
-        target.shutdownAndExit(f"Test[Text File]: Failed! [Fatal]", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Text File]: Failed! [Fatal]", exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit(f"Test[Text File]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Text File]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 6. Fetching static.html  via HTTP
     target.genStdinEntropy()
     printAndLog("Test[Static HTTP]: Fetching static.html via HTTP", doPrint=False, tee=getSetting('appLog'))
     _, code = curlTest(target, f"http://{targetIP}:{httpPort}/static.html")
     if (not code):
-        target.shutdownAndExit(f"Test[Static HTTP]: Failed! [Fatal]", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Static HTTP]: Failed! [Fatal]", exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit(f"Test[Static HTTP]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Static HTTP]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 7. Fetching stanford.png - an image via HTTP
     target.genStdinEntropy()
     printAndLog("Test[Image Resource]: Fetching stanford.png via HTTP", doPrint=False, tee=getSetting('appLog'))
     _, code = curlTest(target, f"http://{targetIP}:{httpPort}/stanford.png")
     if (not code):
-        target.shutdownAndExit(f"Test[Image Resource]: Failed! [Fatal]", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Image Resource]: Failed! [Fatal]", exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit(f"Test[Image Resource]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Image Resource]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 8. Fetching static https web page
     target.genStdinEntropy()
     printAndLog("Test[Static HTTP2]: Fetching static https web page", doPrint=False, tee=getSetting('appLog'))
     version, code = curlTest(target, f"https://{targetIP}:{httpsPort}/static.html", http2=True)
     if (not code):
-        target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Fatal]", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Static HTTP2]: Failed! [Fatal]", exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Static HTTP2]: Failed! [Got code {code}].", exitCode=EXIT.Run)
     elif version != 'HTTP/2':
-        target.shutdownAndExit(f"Test[Static HTTP2]: Failed! [Got wrong version <{version}>].", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Static HTTP2]: Failed! [Got wrong version <{version}>].", exitCode=EXIT.Run)
 
     # 9. page opens another internet web page through a link
     target.genStdinEntropy()
@@ -196,9 +196,9 @@ def deploymentTest(target):
     _, code = curlTest(target, f"https://{targetIP}:{httpsPort}/index.html",
                        extra=[ "Host: https://www.wikipedia.org/"],http2=True)
     if (not code):
-        target.shutdownAndExit(f"Test[Web page through a link]: Failed! [Fatal]", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Web page through a link]: Failed! [Fatal]", exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit(f"Test[Web page through a link]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Web page through a link]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     # 10. page receives a request and saves on the local filesystem
     target.genStdinEntropy()
@@ -209,9 +209,9 @@ def deploymentTest(target):
                               '%{size_upload} %{http_code}', "--silent","--output","/dev/null"],
                                  method="POST", rawOutput=True)
     if (not code):
-        target.shutdownAndExit(f"Test[Upload text file]: Failed! [Fatal]", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Upload text file]: Failed! [Fatal]", exitCode=EXIT.Run)
     elif code != '200':
-        target.shutdownAndExit(f"Test[Upload text file]: Failed! [Got code {code}].", exitCode=EXIT.Run)
+        target.terminateAndExit(f"Test[Upload text file]: Failed! [Got code {code}].", exitCode=EXIT.Run)
 
     printAndLog(f"Test[Upload text file]:The total amount of bytes that were uploaded is: {size_upload}.",
                 doPrint=False, tee=getSetting('appLog'))

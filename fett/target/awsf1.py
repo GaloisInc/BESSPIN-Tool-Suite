@@ -3,25 +3,17 @@ from fett.target.common import *
 from fett.target.fpga import fpgaTarget
 
 class firesimTarget(fpgaTarget, commonTarget):
-    def __init__(self):
+    def __init__(self, targetId=None):
 
-        commonTarget.__init__(self)
-        fpgaTarget.__init__(self)
+        commonTarget.__init__(self, targetId=targetId)
+        fpgaTarget.__init__(self, targetId=targetId)
 
         self.ipTarget = getSetting('awsf1IpTarget')
         self.ipHost = getSetting('awsf1IpHost')  
-        self.portTarget = getSetting('awsf1PortTarget')
-        self.portHost = getSetting('awsf1PortHost')
 
         self.switch0Proc = None
         self.fswitchOut = None
         self.switch0timing = ['6405', '10', '200'] # dictated by cloudGFE
-
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -43,7 +35,7 @@ class firesimTarget(fpgaTarget, commonTarget):
                                         cwd=awsFiresimSimPath)
             self.switch0Proc.expect("Assuming tap0",timeout=10)
         except Exception as exc:
-            self.shutdownAndExit(f"boot: Failed to spawn the switch0 process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.terminateAndExit(f"boot: Failed to spawn the switch0 process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         # 2. fsim
         firesimCommand = ' '.join([
@@ -106,7 +98,7 @@ class firesimTarget(fpgaTarget, commonTarget):
             "\'"
         ])
         logging.debug(f"boot: firesimCommand = {firesimCommand}")
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
 
         try:
             self.ttyProcess = pexpect.spawn(firesimCommand,logfile=self.fTtyOut,timeout=30,
@@ -114,13 +106,13 @@ class firesimTarget(fpgaTarget, commonTarget):
             self.process = self.ttyProcess
             time.sleep(1)
         except Exception as exc:
-            self.shutdownAndExit(f"boot: Failed to spawn the firesim process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.terminateAndExit(f"boot: Failed to spawn the firesim process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
 
         if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
-            self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overwriteShutdown=True)
+            self.expectFromTarget("Waiting for connection from gdb","Starting Firesim with GDB",timeout=30,overrideShutdown=True)
             self.fpgaStart(getSetting('osImageElf'))
         
-        self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
+        self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
 
         # The tap needs to be turned up AFTER booting
         if (isEqSetting('binarySource','Michigan')): #Michigan P1 needs some time before the network hook can detect the UP event
@@ -154,7 +146,7 @@ class firesimTarget(fpgaTarget, commonTarget):
                 timeout = 30
             self.runCommand("isNetworkUp",endsWith=ntkReadyString,erroneousContents="(Error)",timeout=timeout)
         else:
-            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+            self.terminateAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
         self.pingTarget()
 
@@ -162,7 +154,7 @@ class firesimTarget(fpgaTarget, commonTarget):
 
     @decorate.debugWrap
     def targetTearDown(self):
-        if (isEqSetting('mode','evaluateSecurityTests')):
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
             self.fpgaTearDown()
 
         if (self.process.isalive()):
@@ -175,17 +167,17 @@ class firesimTarget(fpgaTarget, commonTarget):
             # This also happens if a unix OS didn't exit properly. Towards the end of making each
             # run a standalone and independent of previous runs, we send this interrupt if the 
             # process is still alive.
-            self.runCommand('\x1d\x1d',endsWith=pexpect.EOF,shutdownOnError=False,timeout=5,sendToNonUnix=True)
+            self.runCommand('\x1d\x1d',endsWith=pexpect.EOF,exitOnError=False,timeout=5,sendToNonUnix=True)
 
         self.noNonsenseFiresim()
 
-        filesToClose = [self.fswitchOut]
+        filesToClose = [self.fswitchOut, self.fTtyOut]
         for xFile in filesToClose:
             try:
                 xFile.close()
             except Exception as exc:
                 warnAndLog(f"targetTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
-        return True
+        return
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -194,7 +186,7 @@ class firesimTarget(fpgaTarget, commonTarget):
         This method ensures all relvant processes are killed. In a no-nonsense and brute way.
         """
         wereProcessesKilled = {'FireSim-f1':False, 'switch0':False} #False for wasKilled
-        if (isEqSetting('mode','evaluateSecurityTests')):
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
             wereProcessesKilled.update({'openocd':False, 'riscv64-unknown-elf-gdb':False})
 
         def getAliveProcesses():
@@ -219,24 +211,13 @@ class firesimTarget(fpgaTarget, commonTarget):
 
     # ------------------ END OF CLASS firesimTarget ----------------------------------------
 
-class connectalTarget(commonTarget):
-    def __init__(self):
-        super().__init__()
+class connectalTarget(fpgaTarget, commonTarget):
+    def __init__(self, targetId=None):
+        commonTarget.__init__(self, targetId=targetId)
+        fpgaTarget.__init__(self, targetId=targetId)
+
         self.ipTarget = getSetting('awsf1IpTarget')
         self.ipHost = getSetting('awsf1IpHost')
-        self.portTarget = getSetting('awsf1PortTarget')
-        self.portHost = getSetting('awsf1PortHost')
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
-
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -249,26 +230,33 @@ class connectalTarget(commonTarget):
 
         extraArgs = getSetting('ssithAwsFpgaExtraArgs', default=[])
         tapName = getSetting('awsf1TapAdaptorName')
-        connectalCommand = ' '.join([
-            os.path.join(awsConnectalHostPath, "ssith_aws_fpga"),
-            f"--dtb={getSetting('osImageDtb')}",
-            f"--block={getSetting('osImageImg')}",
-            f"--elf={getSetting('osImageElf')}"] + ([
-            f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else []) + [
-            f"--tun={tapName}"] + extraArgs)
+        connectalCommand = ' '.join(
+              [os.path.join(awsConnectalHostPath, "ssith_aws_fpga")]
+            + [f"--dtb={getSetting('osImageDtb')}"]
+            + [f"--block={getSetting('osImageImg')}"]
+            + [f"--elf={getSetting('osImageElf')}"]
+            + ([f"--elf={getSetting('osImageExtraElf')}"] if getSetting('osImageExtraElf') is not None else [])
+            + [f"--tun={tapName}"]
+            + extraArgs
+            + ([f"--gdb-port {self.gdbPort}", "--start-halted"] 
+                    if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')) 
+                    else [])
+            )
 
         printAndLog(f"<awsf1.connectalTarget.boot> connectal command: \"{connectalCommand}\"", doPrint=False)
-
-        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),'tty.out'),'ab')
+        self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab')
 
         try:
             self.ttyProcess = pexpect.spawn(connectalCommand,logfile=self.fTtyOut,timeout=90,
                                          cwd=awsConnectalHostPath)
             self.process = self.ttyProcess
-            time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overwriteShutdown=True)
         except Exception as exc:
-            self.shutdownAndExit(f"boot: Failed to spawn the connectal process.",overwriteShutdown=True,exc=exc,exitCode=EXIT.Run)
+            self.terminateAndExit(f"boot: Failed to spawn the connectal process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
+
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
+            self.fpgaStart(getSetting('osImageElf'))
+        
+        self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
 
          # The tap needs to be turned up AFTER booting
         setAdaptorUpDown(getSetting('awsf1TapAdaptorName'), 'up')
@@ -299,24 +287,33 @@ class connectalTarget(commonTarget):
                 self.runCommand (f"echo 'ifconfig_vtnet0_alias0=\"inet {self.ipTarget}/24\"' >> /etc/rc.conf")
                 self.runCommand (f"echo 'defaultrouter=\"{self.ipHost}\"' >> /etc/rc.conf")
         else:
-            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
+            self.terminateAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <AWS:{getSetting('pvAWS')}>.")
 
         self.pingTarget()
         return 
 
     @decorate.debugWrap
     def targetTearDown(self):
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
+            self.fpgaTearDown()
+
         if (self.process.isalive()):
             # connectal exits with "Ctrl-A x". In case smth needed interruption. If not, it will timeout, which is fine.
-            self.runCommand("\x01x",endsWith=pexpect.EOF,shutdownOnError=False,timeout=5)
+            self.runCommand("\x01x",endsWith=pexpect.EOF,exitOnError=False,timeout=5)
 
-            if (self.process.isalive()):
-                try:
-                    subprocess.check_call(['sudo', 'kill', '-9', f"{self.process.pid}"],
-                                        stdout=self.fTtyOut, stderr=self.fTtyOut)
-                except Exception as exc:
-                    warnAndLog("targetTearDown: Failed to kill <connectal> process.",doPrint=False,exc=exc)
-        return True
+        procsToKill = ["ssith_aws_fpga"]
+        if (isEqSetting('mode','evaluateSecurityTests') or isEnabled('gdbDebug')):
+            procsToKill.append("riscv64-unknown-elf-gdb")
+        for proc in procsToKill:
+            sudoShellCommand(['pkill', '-9', f"{proc}"],check=False)
+
+        filesToClose = [self.fTtyOut]
+        for xFile in filesToClose:
+            try:
+                xFile.close()
+            except Exception as exc:
+                warnAndLog(f"targetTearDown: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
+        return
     # ------------------ END OF CLASS connectalTarget ----------------------------------------
 
 
@@ -714,12 +711,12 @@ def startRemoteLogging (target):
             # send the conf file
             target.sendFile(
                     getSetting('workDir'), syslogConfName,
-                    toTarget=True, shutdownOnError=False
+                    toTarget=True, exitOnError=False
                 )
-            target.runCommand(f"mv {syslogConfName} /etc/rsyslog.d/",shutdownOnError=False)
+            target.runCommand(f"mv {syslogConfName} /etc/rsyslog.d/",exitOnError=False)
 
         # restart rsyslog
-        target.runCommand("service rsyslog restart",shutdownOnError=False)
+        target.runCommand("service rsyslog restart",exitOnError=False)
 
     elif (isEqSetting('osImage','FreeBSD')):
         if (not target.restartMode):
@@ -748,7 +745,7 @@ def startUartPiping(target):
             ['socat', 'STDIO,ignoreeof', f"TCP-LISTEN:{getSetting('uartFwdPort')},reuseaddr,fork,max-children=1"],
             stdout=target.process.child_fd,stdin=target.process.child_fd,stderr=target.process.child_fd)
     except Exception as exc:
-        target.shutdownAndExit(f"startUartPiping: Failed to start the listening process.",exc=exc,exitCode=EXIT.Run)
+        target.terminateAndExit(f"startUartPiping: Failed to start the listening process.",exc=exc,exitCode=EXIT.Run)
 
 @decorate.debugWrap
 def endUartPiping(target):

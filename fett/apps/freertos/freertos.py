@@ -186,7 +186,7 @@ def deploymentTest(target):
         try:
             subprocess.run(['sudo',sys.executable,os.path.join(getSetting('repoDir'),'fett','apps','freertos','sudoScapy.py'),'+'.join(sys.path),hostIP,targetIP,str(TFTPPort)], stdout=getSetting('appLog'),stderr=getSetting('appLog'), timeout=10, check=True, shell=False)
         except Exception as exc:
-            target.shutdownAndExit(f"Failed to send the malicious packets using <sudoScapy.py>",exc=exc,exitCode=EXIT.Run)
+            target.terminateAndExit(f"Failed to send the malicious packets using <sudoScapy.py>",exc=exc,exitCode=EXIT.Run)
 
             printAndLog("Back from LMCO SCAPY Test",doPrint=True,tee=getSetting('appLog'))
 
@@ -233,9 +233,6 @@ def deploymentTest(target):
 @decorate.debugWrap
 @decorate.timeWrap
 def terminateAppStack (target):
-    if isEqSetting('mode', 'evaluateSecurityTests'):
-        # Nothing to do
-        return True
     if (isEqSetting('binarySource','Michigan')):
         return michigan.terminateAppStack(target)
     ###################################
@@ -263,7 +260,7 @@ def terminateAppStack (target):
     return True
 
 @decorate.debugWrap
-def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],shutdownOnError=True,timeout=60,suppressErrors=False,endOfApp=False,tee=True):
+def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousContents=[],exitOnError=True,timeout=60,suppressErrors=False,endOfApp=False,tee=True):
     if isinstance(endsWith,str):
         endsWith = [endsWith]
     elif (not isinstance(endsWith,list)):
@@ -276,19 +273,19 @@ def rtosRunCommand (target,command,endsWith=[],expectedContents=None,erroneousCo
 
     teeFile = getSetting('appLog') if (tee) else None
     retCommand = target.runCommand(command,endsWith=[">>>End of Fett<<<"] + endsWith,
-        expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],shutdownOnError=shutdownOnError,
+        expectedContents=expectedContents,erroneousContents=erroneousContents + ['(Error)','EXIT: exiting FETT with code <1>'],exitOnError=exitOnError,
         timeout=timeout,suppressErrors=suppressErrors,tee=teeFile)
 
     if ((retCommand[3] == 0) and (not endOfApp)): #FETT exited prematurely
-        target.shutdownAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
+        target.terminateAndExit(f"rtosRunCommand: FreeRTOS finished prematurely.",exitCode=EXIT.Run)
 
     return
 
 @decorate.debugWrap
 def rtosShutdownAndExit (target, message, exc=None, exitCode=None):
     # Run to completion
-    rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,shutdownOnError=False,timeout=30, tee=False)
-    target.shutdownAndExit(message, exc=exc, exitCode=exitCode)
+    rtosRunCommand(target,"endFreeRTOSapps",endOfApp=True,exitOnError=False,timeout=30, tee=False)
+    target.terminateAndExit(message, exc=exc, exitCode=exitCode)
 
 @decorate.debugWrap
 def prepareAssets ():

@@ -52,8 +52,13 @@ if [ $target == 'aws' ]; then
 elif [ $target == 'qemu' ]; then
     sudo iptables --flush
     sudo iptables -t nat --flush
-    for xTap in $(ip -br addr | grep "^tap.*" | awk '{ print $1 }'); do
-        sudo ip tuntap del mode tap dev $xTap
+    for xTap in $(ip -br addr | grep "^t.*" | awk '{ print $1 }'); do
+        ipAddr=$(ip -br addr show $xTap | awk '{ print $3 }')
+        network=$(echo "$ipAddr" | cut -d '.' -f1,2)
+        if [ ! -z $network ] && [ $network == '172.16' ]; then
+            echo "Deleting $xTap..."
+            sudo ip tuntap del mode tap dev $xTap
+        fi
     done
 else
     echo "ERROR: target type has to be in { aws | qemu }."

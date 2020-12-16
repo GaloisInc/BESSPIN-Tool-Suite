@@ -5,7 +5,7 @@ scoring the CWEs
     -- FAIL: the test did not run or could not be parsed or any other weird error.
     -- CALL-ERR: call error to the sys call or module needed for that test
     -- DoS: The test is denied though didn't breach yet. Impractical hardware.
-- SCALE: NONE (no weakness) -> V-LOW -> LOW -> MED -> HIGH -> V-HIGH
+- SCALE: NONE (no weakness) -> LOW ->MED -> HIGH
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 import os
@@ -19,23 +19,22 @@ from fett.base.utils.misc import *
 
 class SCORES (enum.Enum):
     NINF = -10
+    NOT_APPLICABLE = -7
     NOT_IMPLEMENTED = -6
     UNKNOWN = -5
     INVALID = -4
     FAIL = -3
     DOS = -2
     CALL_ERR = -1
-    V_HIGH = 0
-    HIGH = 1
-    MED = 2
-    LOW = 3
-    V_LOW = 4
-    DETECTED = 5
-    NONE = 6
+    HIGH = 0
+    MED = 1
+    LOW = 2
+    DETECTED = 3
+    NONE = 4
     INF = 10
 
     def __str__ (self): #to replace '_' by '-' when printing
-        if (self.name == "NOT_IMPLEMENTED"):
+        if (self.name in ["NOT_IMPLEMENTED","NOT_APPLICABLE"]):
             return "N/A"
         else:
             return "%s" % self.name.replace('_','-')
@@ -60,44 +59,32 @@ class SCORES (enum.Enum):
                 minScore = xScore
         return minScore
 
-    def avgScore (scoreList,ignoreErrors=False): #Always floors
+    def avgScore (scoreList): #Always floors
         sumScores = 0
         for xScore in scoreList:
-            if not (ignoreErrors and (xScore.value<SCORES.V_HIGH.value)):
-                sumScores += xScore.value
+            sumScores += xScore.value
         avgValue = sumScores // len(scoreList)
         return SCORES(avgValue)
 
-@decorate.debugWrap
-@decorate.timeWrap
-def tryScoreTest(scorerModule, testName, logTest, testsDir):
-    try:
-        return getattr(getattr(scorerModule,testName),testName)(logTest, testsDir)
-    except AttributeError as e:
-        return scorerModule.scoreTest(testName, logTest, testsDir)
-    except Exception as exc:
-        errorAndLog("tryScoreTest: Failed to score.",exc=exc,doPrint=False)
-        throw(exc)
+    def toScore (strScore):
+        # Let's be explicit and use a hardcoded 1:1 mapping
+        mapToScores = {
+            'HIGH' : SCORES.HIGH,
+            'MED' : SCORES.MED,
+            'LOW' : SCORES.LOW,
+            'NONE' : SCORES.NONE,
+            'NA' : SCORES.NOT_APPLICABLE,
+            'UNKNOWN' : SCORES.UNKNOWN
+        }
+        if (strScore not in mapToScores):
+            logAndExit(f"toScore: The string <{strScore}> is not mapped to any score.",exitCode=EXIT.Dev_Bug)
+        if (set(mapToScores.keys()) != set(getSetting('cwesAssessments'))):
+            logAndExit(f"toScore: The mapping in this function has to match the <cwesAssessments> allowed strings",
+                exitCode=EXIT.Dev_Bug) #This should prevent both structures from diverging
+        return mapToScores[strScore]
 
 @decorate.debugWrap
-def scoreLogs(scorerModule, logs, testsDir):
-    try:
-        return scorerModule.scoreAllTests(logs, testsDir)
-    except AttributeError as e:
-        ret = []
-        for testName, log in logs:
-            try:
-                ret.append(tryScoreTest(scorerModule, testName, log, testsDir))
-            except Exception as exc:
-                errorAndLog("<{0}>: Failed to parse <{1}>.".format(testName,log),
-                            exc=exc)
-                testNum = testName.split('_')[1]
-                ret.append(["TEST-{0}".format(testNum), SCORES.FAIL, "Failed to Score!"])
-    return ret
-
-# TODO: Renmae testsDir to something more like logDir
-@decorate.debugWrap
-def scoreTests(scorerModule, csvPath, testsDir):
+def scoreTests(scorerModule, csvPath, logsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
@@ -109,9 +96,8 @@ def scoreTests(scorerModule, csvPath, testsDir):
                    exc=exc)
 
     # Get all the log files
-    contents = sorted(os.listdir(testsDir))
-    logs = [(f.split('.')[0], f) for f in contents if f.endswith(".log")]
-    rows = scoreLogs(scorerModule, logs, testsDir)
+    logs = [(os.path.basename(f).split('.')[0], f) for f in sorted(glob.glob(os.path.join(logsDir, '*.log')))]
+    rows = scorerModule.scoreAllTests(logs)
     if (len(rows) < 1): #nothing to score
         warnAndLog("<scoreTests>: There are no logs to score.")
     else:

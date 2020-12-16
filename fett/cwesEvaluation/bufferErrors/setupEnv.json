@@ -1,0 +1,74 @@
+{
+    "_usage" : "This json file has the environment setup that is not to be changed per run.",
+    "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
+    "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
+
+    "bufferErrors" : [
+        {
+            "name" : "testsInfo",
+            "type" : "dict",
+            "val" : {
+                "test_118" : {
+                    "cweText" : "Incorrect Access of Indexable Resource ('Range Error')"
+                },
+                "test_119" : {
+                    "cweText" : "Improper Restriction of Operations within the Bounds of a Memory Buffer"
+                },
+                "test_120" : {
+                    "cweText" : "Buffer Copy without Checking Size of Input ('Classic Buffer Overflow')"
+                },
+                "test_121" : {
+                    "cweText" : "Stack-based Buffer Overflow"
+                },
+                "test_122" : {
+                    "cweText" : "Heap-based Buffer Overflow"
+                },
+                "test_123" : {
+                    "cweText" : "Write-what-where Condition"
+                },
+                "test_124" : {
+                    "cweText" : "Buffer Underwrite ('Buffer Underflow')"
+                },
+                "test_125" : {
+                    "cweText" : "Out-of-bounds Read"
+                },
+                "test_126" : {
+                    "cweText" : "Buffer Over-read"
+                },
+                "test_127" : {
+                    "cweText" : "Buffer Under-read"
+                },
+                "test_129" : {
+                    "cweText" : "Improper Validation of Array Index"
+                },
+                "test_130" : {
+                    "cweText" : "Improper Handling of Length Parameter Inconsistency"
+                },
+                "test_131" : {
+                    "cweText" : "Incorrect Calculation of Buffer Size"
+                },
+                "test_680" : {
+                    "cweText" : "Integer Overflow to Buffer Overflow"
+                },
+                "test_786" : {
+                    "cweText" : "Access of Memory Location Before Start of Buffer"
+                },
+                "test_787" : {
+                    "cweText" : "Out-of-bounds Write"
+                },
+                "test_788" : {
+                    "cweText" : "Access of Memory Location After End of Buffer"
+                },
+                "test_805" : {
+                    "cweText" : "Buffer Access with Incorrect Length Value"
+                },
+                "test_806" : {
+                    "cweText" : "Buffer Access Using Size of Source Buffer"
+                },
+                "test_823" : {
+                    "cweText" : "Use of Out-of-range Pointer Offset"
+                }
+            }
+        }
+    ]
+}

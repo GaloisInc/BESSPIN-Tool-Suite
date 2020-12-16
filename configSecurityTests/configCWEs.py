@@ -11,13 +11,14 @@ def main (xArgs):
 	#reading configuration file
     xConfig = configparser.ConfigParser()
     try:
+        xConfig.optionxform = str # Hack it to be case sensitive
         xConfig.read(xArgs.file)
     except:
         print("Error in reading configuration file <{0}>. Please check its syntax.".format(xArgs.file))
         exit(1)
 
     #default section or chosen section
-    xSection = 'configCWEs'
+    xSection = 'enabledTests'
     if (xArgs.section):
         xSection = xArgs.section
     if (not xConfig.has_section(xSection)):

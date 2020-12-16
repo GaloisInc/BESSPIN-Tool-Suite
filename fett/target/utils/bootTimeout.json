@@ -4,33 +4,45 @@
       "name": "procFlavor",
       "bluespec": {
         "name": "elfLoader",
-        "JTAG": { "timeout" : { "elfLoad" : 650, "boot" : 600 } },
-        "else": { "timeout" : { "boot" : 600 } }
+        "JTAG": { 
+          "name" : "procLevel",
+          "p2" : { "timeout" : { "elfLoad" : 650, "boot" : 660 } },
+          "p3" : { "timeout" : { "elfLoad" : 700, "boot" : 500 } }
+        },
+        "else": { "timeout" : { "boot" : 660 } }
       },
       "chisel": {
         "name": "elfLoader",
         "JTAG": { 
           "name" : "procLevel",
-          "p2" : { "timeout" : { "elfLoad" : 600, "boot" : 300 } },
-          "p3" : { "timeout" : { "elfLoad" : 600, "boot" : 1000 } }
+          "p2" : { "timeout" : { "elfLoad" : 900, "boot" : 300 } },
+          "p3" : { "timeout" : { "elfLoad" : 900, "boot" : 1000 } }
         },
         "else": { "timeout" : { "boot" : 500 } }
       }
     },
-    "qemu": { "timeout" : { "boot" : 120 } },
+    "qemu": { "timeout" : { "boot" : 200 } },
     "awsf1": {
       "name": "pvAWS",
       "firesim": { "timeout" : { "boot" : 240 } },
       "connectal": { "timeout" : { "boot" : 360 } }
     }
   },
-  "busybox": { "timeout" : { "boot" : 80 } },
+  "busybox": { 
+    "name": "elfLoader",
+    "JTAG": { "timeout" : { "elfLoad" : 110, "boot" : 30 } },
+    "else": { "timeout" : { "boot" : 80 } } 
+  },
   "FreeBSD": {
     "vcu118": {
       "name": "procFlavor",
       "bluespec": {
         "name": "elfLoader",
-        "JTAG": { "timeout" : { "elfLoad" : 1200, "boot" : 500 } },
+        "JTAG": {
+          "name" : "procLevel",
+          "p2" : { "timeout" : { "elfLoad" : 1200, "boot" : 500 } },
+          "p3" : { "timeout" : { "elfLoad" : 1300, "boot" : 600 } }
+        },
         "else": { "timeout" : { "boot" : 800 } }
       },
       "chisel": {

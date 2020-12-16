@@ -38,7 +38,9 @@ try:
     from fett.base.utils.misc import *
     from fett.base.config import loadConfiguration, genProdConfig
     from fett.target.launch import startFett, endFett, resetTarget
+    from fett.cyberPhys.launch import startCyberPhys, endCyberPhys
     from fett.base.utils import aws
+    from fett.base.threadControl import createFettLocks
     import logging, argparse, os, shutil, atexit, signal
 except Exception as exc:
     try:
@@ -125,39 +127,49 @@ def main (xArgs):
     setSetting('trash',trashCanObj())
     atexit.register(exitPeacefully,getSetting('trash'))
 
+    #Load the config file(s)
     loadConfiguration(configFile)
 
+    #Create the global semaphores/Locks
+    createFettLocks()
+
     #launch the tool
-    xTarget = startFett()
-    instruction = None
-    if (isEqSetting('mode','production')):
-        def sendSuccessMsgToPortal (nodeSuffix, reasonSuffix):
-            aws.sendSQS(getSetting(f'{getSetting("fettEntrypoint")}SqsQueueTX'), logAndExit, 'success', 
-                    getSetting('prodJobId'), f"{getSetting('prodJobId')}-{nodeSuffix}",
-                    reason=f'fett-target-production-{reasonSuffix}',
-                    hostIp=aws.getInstanceIp(logAndExit),
-                    fpgaIp=getSetting('productionTargetIp')
-                    )
-            printAndLog(f"Sent {reasonSuffix} message to the SQS queue.")
+    if (isEqSetting('mode','cyberPhys')):
+        startCyberPhys()
+        endCyberPhys()
+    else:
+        xTarget = startFett()
 
-        # Notify portal that we have deployed successfully
-        sendSuccessMsgToPortal('DEPLOY','deployment')
+        instruction = None
+        if (isEqSetting('mode','production')):
+            def sendSuccessMsgToPortal (nodeSuffix, reasonSuffix):
+                aws.sendSQS(getSetting(f'{getSetting("fettEntrypoint")}SqsQueueTX'), logAndExit, 'success', 
+                        getSetting('prodJobId'), f"{getSetting('prodJobId')}-{nodeSuffix}",
+                        reason=f'fett-target-production-{reasonSuffix}',
+                        hostIp=aws.getInstanceIp(logAndExit),
+                        fpgaIp=getSetting('productionTargetIp')
+                        )
+                printAndLog(f"Sent {reasonSuffix} message to the SQS queue.")
 
-        # Wait for portal to instruct us to do something
-        while (instruction != 'termination'):
-            instruction = aws.pollPortalIndefinitely (getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), xTarget.process, logAndExit)
-            if (instruction == 'deadProcess'):
-                warnAndLog ("The main process is dead. Will exit without a notice from Portal.")
-                break
-            printAndLog(f"Received {instruction} notice from Portal.")            
+            # Notify portal that we have deployed successfully
+            sendSuccessMsgToPortal('DEPLOY','deployment')
 
-            if (instruction == 'reset'):
-                # execute reset flow 
-                xTarget = resetTarget(xTarget)
-                # Notify portal that we have reset successfully
-                sendSuccessMsgToPortal('RESET','reset')
-        
-    endFett(xTarget,(instruction=='deadProcess'))
+            # Wait for portal to instruct us to do something
+            while (instruction != 'termination'):
+                instruction = aws.pollPortalIndefinitely (getSetting(f'{getSetting("fettEntrypoint")}S3Bucket'), xTarget.process, logAndExit)
+                if (instruction == 'deadProcess'):
+                    warnAndLog ("The main process is dead. Will exit without a notice from Portal.")
+                    break
+                printAndLog(f"Received {instruction} notice from Portal.")            
+
+                if (instruction == 'reset'):
+                    # execute reset flow 
+                    xTarget = resetTarget(xTarget)
+                    # Notify portal that we have reset successfully
+                    sendSuccessMsgToPortal('RESET','reset')
+
+        endFett(xTarget,(instruction=='deadProcess'))
+
     exitFett(EXIT.Success)
 
 if __name__ == '__main__':

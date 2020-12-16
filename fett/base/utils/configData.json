@@ -11,12 +11,41 @@
     "_wildValue" : "only for hexList. If present, this value means something special.",
     "_exception" : "only for hexList. If present, this option's value is not legal",
 
-    "backend" : [
+    "functionality" : [
         {
             "name" : "mode",
             "type" : "string",
-            "choices" : [ "test", "production", "evaluateSecurityTests" ]
+            "choices" : [ "test", "production", "evaluateSecurityTests", "cyberPhys" ]
+        }
+    ],
+
+    "cyberPhys" : [
+        {
+            "name" : "nTargets",
+            "type" : "int",
+            "min" : 1,
+            "max" : 10
         },
+        {
+            "name" : "interactiveShell",
+            "type" : "bool"
+        },
+        {
+            "name" : "resetOnWatchdog",
+            "type" : "bool"
+        },
+        {
+            "name" : "useCustomCyberPhysConfig",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomCyberPhysConfig",
+            "type" : "filePath",
+            "condition" : "useCustomCyberPhysConfig"
+        }
+    ],
+
+    "target" : [
         {
             "name" : "target",
             "type" : "string",
@@ -41,14 +70,6 @@
             "name" : "elfLoader",
             "type" : "string",
             "choices" : [ "JTAG", "netboot" ]
-        },
-        {
-            "name" : "openConsole",
-            "type" : "bool"
-        },
-        {
-            "name" : "gdbDebug",
-            "type" : "bool"
         },
         {
             "name" : "useCustomOsImage",
@@ -77,18 +98,25 @@
             "name" : "sourceVariant",
             "type" : "string",
             "choices" : [ "default", "purecap", "temporal" ]
+        }
+    ],
+
+    "common" : [
+        {
+            "name" : "openConsole",
+            "type" : "bool"
         },
         {
-            "name" : "netbootPortRangeStart",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
+            "name" : "gdbDebug",
+            "type" : "bool"
         },
         {
-            "name" : "netbootPortRangeEnd",
-            "type" : "int",
-            "min" : 1024,
-            "max" : 65535
+            "name" : "useCustomHwTarget",
+            "type" : "boolean"
+        },
+        {
+            "name" : "customHwTarget",
+            "type" : "string"
         },
         {
             "name" : "userName",
@@ -136,7 +164,16 @@
         {
             "name" : "vulClasses",
             "type" : "stringsList",
-            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors" ]
+            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC" ]
+        },
+        {
+            "name" : "useCustomCWEsConfigsPath",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomCWEsConfigs",
+            "type" : "dirPath",
+            "condition" : "useCustomCWEsConfigsPath"
         },
         {
             "name" : "useCustomScoring",
@@ -213,6 +250,10 @@
         {
             "name" : "runAllTests",
             "type" : "bool"
+        },
+        {
+            "name" : "useSelfAssessment",
+            "type" : "bool"
         }
     ],
 
@@ -248,69 +289,37 @@
             "type" : "bool"
         },
         {
+            "name" : "useCachedInstances",
+            "type" : "bool"
+        },
+        {
+            "name" : "useCustomErrorModel",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomErrorModel",
+            "type" : "filePath",
+            "condition" : "useCustomErrorModel"
+        },
+        {
+            "name" : "numericTypes",
+            "type" : "stringsList",
+            "choices" : [ "ints", "floats" ]
+        },
+        {
             "name" : "useSeed",
             "type" : "bool"
         },
         {
             "name" : "seed",
             "type" : "int"
-        },
-        {
-            "name" : "poc_heartbleed_real_payload_len",
-            "type" : "int",
-            "min" : 0,
-            "max" : 65535
-        },
-        {
-            "name" : "poc_heartbleed_nominal_payload_len",
-            "type" : "int",
-            "min" : 0,
-            "max" : 65535
         }
     ],
 
     "PPAC": [
-        {
-            "name" : "randomizeParameters",
-            "type" : "bool"
-        },
-        {
-            "name" : "test_nAllowedAuthAttempts",
-            "type" : "int",
-            "min" : 1,
-            "max" : 10
-        },
-        {
-            "name" : "useSeedForWolfSSL",
-            "type" : "bool"
-        },
-        {
-            "name" : "seedForWolfSSL",
-            "type" : "int",
-            "min" : 0,
-            "max" : 255
-        },
-        {
-            "name" : "test_nAllowedInteractions",
-            "type" : "int",
-            "min" : 1,
-            "max" : 9
-        },
-        {
-            "name" : "poc_dictionaryAttack_rootPassword",
-            "type" : "string"
-        },
-        {
-            "name" : "poc_dictionaryAttack_usePamTally",
-            "type" : "bool"
-        }
     ],
 
     "resourceManagement": [
-        {
-            "name" : "randomizeParameters",
-            "type" : "bool"
-        },
         {
             "name" : "test_nResourceLimit",
             "type" : "int",
@@ -319,21 +328,12 @@
         }
     ],
 
-    "codeInjection": [
-    ],
-
     "informationLeakage": [
-        {
-            "name" : "poc_paddingLeakage_secret",
-            "type" : "hex",
-            "size" : 8,
-            "min" : 0
-        }
-    ],
-
-    "cryptoErrors": [
     ],
     
     "numericErrors": [
+    ],
+
+    "hardwareSoC": [
     ]
 }

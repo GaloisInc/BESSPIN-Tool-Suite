@@ -1,32 +1,31 @@
 #! /usr/bin/env python3
 """ 
-Main vcu118 class + misc vcu118 functions
+vcu118 class + misc vcu118 functions
 """
 
 from fett.base.utils.misc import *
 from fett.target.common import *
-from fett.target.fpga import fpgaTarget
+from fett.target.fpga import fpgaTarget, failStage
+from fett.target.build import getTargetIp, freeRTOSBuildChecks, buildFreeRTOS
 
 import subprocess, psutil, tftpy
+import serial, serial.tools.list_ports, usb
 import sys, signal, os, socket, time, hashlib
-import pexpect
+import pexpect, threading
+from pexpect import fdpexpect
 
 class vcu118Target (fpgaTarget, commonTarget):
-    def __init__ (self):
+    def __init__ (self, targetId=None):
 
-        commonTarget.__init__(self)
-        fpgaTarget.__init__(self)
+        commonTarget.__init__(self, targetId=targetId)
+        fpgaTarget.__init__(self, targetId=targetId)
 
-        self.ipTarget = getSetting('vcu118IpTarget')
-        self.ipHost = getSetting('vcu118IpHost')  
-        self.portTarget = getSetting('vcu118PortTarget')
-        self.portHost = getSetting('vcu118PortHost')
+        self.osImageElf = getSetting('osImageElf',targetId=self.targetId)
 
-        # Important for the Web Server
-        self.httpPortTarget  = getSetting('HTTPPortTarget')
-        self.httpsPortTarget = getSetting('HTTPSPortTarget')
-        self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
-        self.votingHttpsPortTarget = getSetting('VotingHTTPSPortTarget')
+        self.ipHost = getSetting('vcu118IpHost')
+        self.ipTarget = getTargetIp(targetId=targetId)
+
+        self.uartSession = None
 
         #Reloading till the network is up
         self.freertosNtkRetriesMax = 3
@@ -34,6 +33,9 @@ class vcu118Target (fpgaTarget, commonTarget):
         #Reloading till the fpga starts
         self.fpgaStartRetriesMax = 3
         self.fpgaStartRetriesIdx = 0
+        #Retrying to boot bluespec_p3
+        self.bluespec_p3BootAttemptsMax = 5
+        self.bluespec_p3BootAttemptsIdx = 0
 
         return
 
@@ -41,48 +43,40 @@ class vcu118Target (fpgaTarget, commonTarget):
     @decorate.timeWrap
     def boot(self,endsWith="login:",timeoutDict={"elfLoad":90, "boot":90}):
         timeout = self.parseBootTimeoutDict(timeoutDict)
-        if (getSetting('osImage') in ['debian', 'FreeBSD', 'busybox']):
-            if (isEqSetting('elfLoader','JTAG')):
+        if (self.osImage in ['debian', 'FreeBSD', 'busybox']):
+            if (self.elfLoader=='JTAG'):
                 elfLoadTimeout = self.parseBootTimeoutDict(timeoutDict,key="elfLoad")
-                self.fpgaStart(getSetting('osImageElf'),elfLoadTimeout=elfLoadTimeout)
-            elif (isEqSetting('elfLoader','netboot')):
-                self.fpgaStart(getSetting('netbootElf'),elfLoadTimeout=30)
+                self.fpgaStart(self.osImageElf,elfLoadTimeout=elfLoadTimeout)
+            elif (self.elfLoader=='netboot'):
+                self.fpgaStart(getSetting('netbootElf',targetId=self.targetId),elfLoadTimeout=30)
             else:
-                self.shutdownAndExit (f"boot: ELF loader <{getSetting('elfLoader')}> not implemented.",overwriteShutdown=True,exitCode=EXIT.Dev_Bug)
+                self.terminateAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overrideShutdown=True,exitCode=EXIT.Dev_Bug)
 
-            if (isEqSetting('elfLoader','netboot')):
-                self.expectFromTarget('>',"Starting netboot loader",timeout=60)
-                dirname, basename = os.path.split(os.path.abspath(getSetting('osImageElf')))
-                listenPort = None
-                rangeStart = getSetting('netbootPortRangeStart')
-                rangeEnd = getSetting('netbootPortRangeEnd')
-                if (rangeStart > rangeEnd):
-                    self.shutdownAndExit(f"boot: The netboot port range {rangeStart}-{rangeEnd} is too small. Please choose a wider range.", overwriteShutdown=True,exitCode=EXIT.Configuration)
-                for i in range(rangeStart, rangeEnd+1):
-                    if (checkPort(i, self.ipHost)):
-                        listenPort = i
-                if listenPort is None:
-                    self.shutdownAndExit(f"boot: Could not find open ports in the range {rangeStart}-{rangeEnd}. Please choose another range.",exitCode=EXIT.Network)
+            if (self.elfLoader=='netboot'):
+                self.expectFromTarget('>',"Starting netboot loader",timeout=60,overrideShutdown=True)
+                dirname, basename = os.path.split(os.path.abspath(self.osImageElf))
+                listenPort = self.findPort(portUse='netboot')
+                printAndLog(f"{self.targetIdInfo}boot: netboot port is <{listenPort}>.")
                 try:
                     #Need to divert the tftpy logging. Otherwise, in case of debug (`-d`), our logging will get smothered.
                     logging.getLogger('tftpy').propagate = False
                     logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.log'),'w'))
                     server = tftpy.TftpServer(dirname)
                 except Exception as exc:
-                    self.shutdownAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overwriteShutdown=True,exitCode=EXIT.Run)
+                    self.terminateAndExit(f"boot: Could not create TFTP server for netboot.", exc=exc,overrideShutdown=True,exitCode=EXIT.Run)
+                with getSetting('tftpLock'):
+                    serverThread = threading.Thread(target=server.listen, kwargs={'listenip': self.ipHost, 'listenport': listenPort})
+                    serverThread.daemon = True
+                    getSetting('trash').throwThread(serverThread, "TFTP server listening on host for netboot")
+                    serverThread.start()
+                    printAndLog (f"Started TFTP server on port {listenPort}.",doPrint=False)
+                    time.sleep(1)
+                    self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
+                    self.expectFromTarget("Finished receiving","Netbooting",timeout=timeout,overrideShutdown=True)
 
-                serverThread = threading.Thread(target=server.listen, kwargs={'listenip': self.ipHost, 'listenport': listenPort})
-                serverThread.daemon = True
-                getSetting('trash').throwThread(serverThread, "TFTP server listening on host for netboot")
-                serverThread.start()
-                printAndLog (f"Started TFTP server on port {listenPort}.",doPrint=False)
-                time.sleep(1)
-                self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
 
-            time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout)
-
-            if (isEqSetting('elfLoader','netboot')):
+            if (self.elfLoader=='netboot'):
                 server.stop()
                 serverThread.join(timeout=30)
                 if (serverThread.is_alive()):
@@ -93,37 +87,37 @@ class vcu118Target (fpgaTarget, commonTarget):
             # starting prompt is still '#'
             if (self.onlySsh):
                 if (not self.openSshConn(endsWith="\r\n#")):
-                    self.shutdownAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
+                    self.terminateAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
-        elif (isEqSetting('osImage','FreeRTOS')):
-            self.fpgaStart(getSetting('osImageElf'),elfLoadTimeout=60) 
+        elif (self.osImage=='FreeRTOS'):
+            self.fpgaStart(self.osImageElf,elfLoadTimeout=60) 
             time.sleep(1)
-            self.expectFromTarget(endsWith,"Booting",timeout=timeout)
+            self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
         else:
-            self.shutdownAndExit(f"<boot> is not implemented for <{getSetting('osImage')}> on <{getSetting('target')}>.")
+            self.terminateAndExit(f"<boot> is not implemented for <{self.osImage}> on <{self.target}>.",overrideShutdown=True)
 
     @decorate.debugWrap
     @decorate.timeWrap
     def activateEthernet (self):
         if self.onlySsh:
             return ''
-        if (isEqSetting('osImage','debian')):
+        if (self.osImage=='debian'):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            self.runCommand(f"ip route add default via {self.ipHost}")
             outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
-        elif (isEqSetting('osImage','busybox')):
+            self.runCommand(f"ip route add default via {self.ipHost}")
+        elif (self.osImage=='busybox'):
             time.sleep(1)
-            self.runCommand ("ifconfig eth0 up",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
-            outCmd = self.runCommand (f"ip addr add {self.ipTarget}/24 dev eth0",timeout=20)
-        elif (isEqSetting('osImage','FreeRTOS')):
+            self.runCommand ("ifconfig eth0 up",timeout=20)
+            outCmd = self.runCommand(f"ifconfig eth0 {self.ipTarget}",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
+        elif (self.osImage=='FreeRTOS'):
             isSuccess = False
             while ((not isSuccess) and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
                 self.freertosNtkRetriesIdx += 1
                 outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",
                     erroneousContents=["(Error)","INVALID"],timeout=20,
-                    shutdownOnError=False,suppressErrors=True
+                    exitOnError=False,suppressErrors=True
                     )
                 isSuccess, _, wasTimeout, _ = outCmd
                 if (isSuccess):
@@ -131,26 +125,26 @@ class vcu118Target (fpgaTarget, commonTarget):
                 if (not isSuccess):
                     if (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax):
                         warnAndLog(f"Network is not up on target. Trying again ({self.freertosNtkRetriesIdx+1}/{self.freertosNtkRetriesMax})...")
-                        self.fpgaReload(getSetting('osImageElf'),elfLoadTimeout=30)
+                        self.fpgaReload(self.osImageElf,elfLoadTimeout=30)
                     else:
-                        self.shutdownAndExit("Network is not up on target.",exitCode=EXIT.Network) 
-        elif (isEqSetting('osImage','FreeBSD')):
+                        self.terminateAndExit("Network is not up on target.",exitCode=EXIT.Network) 
+        elif (self.osImage=='FreeBSD'):
             self.runCommand(f"route add default {self.ipHost}")
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
-            self.shutdownAndExit(f"<activateEthernet> is not implemented for<{getSetting('osImage')}> on <{getSetting('target')}>.")
+            self.terminateAndExit(f"<activateEthernet> is not implemented for<{self.osImage}> on <{self.target}>.")
 
-        if (not isEqSetting('osImage','FreeRTOS')):
+        if (self.osImage!='FreeRTOS'):
             self.pingTarget()
 
-        if (isEqSetting('osImage','FreeBSD')): #use ssh instead of JTAG
+        if (self.osImage=='FreeBSD'): #use ssh instead of JTAG
             self.openSshConn()
         return outCmd
 
     @decorate.debugWrap
     def targetTearDown(self):
         self.fpgaTearDown()
-        return True
+        return
 
     @decorate.debugWrap
     def interact (self):
@@ -161,7 +155,7 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.inInteractMode = True
         if (self.isSshConn): #only interact on the JTAG
             self.closeSshConn()
-        if (isEqSetting('osImage','FreeRTOS')):
+        if (self.osImage=='FreeRTOS'):
             printAndLog (f"FreeRTOS is left running on target. Enter \"--exit + Enter\" to exit.")
         else:
             printAndLog (f"Entering pseudo-interactive mode. Root password: \'{self.rootPassword}\'. Enter \"--exit + Enter\" to exit.")
@@ -216,87 +210,397 @@ class vcu118Target (fpgaTarget, commonTarget):
             if (instruction == '--exit'): #exit
                 exitTerminal = True
             elif (instruction == '--ctrlc'):
-                self.sendToTarget(b'\x03\r\n',shutdownOnError=False)
+                self.sendToTarget(b'\x03\r\n',exitOnError=False)
             elif (('shutdown' in instruction) or ('poweroff' in instruction) or ('halt' in instruction)):
                 warnAndLog ("Please use \'--exit\' instead of direct shutting down command.")
-                self.sendToTarget(" ",shutdownOnError=False)
+                self.sendToTarget(" ",exitOnError=False)
             else:
-                self.sendToTarget(instruction,shutdownOnError=False)
+                self.sendToTarget(instruction,exitOnError=False)
                 time.sleep(1)
 
         stopReading.set()
         time.sleep(5)
         return
 
-#--- END OF CLASS vcu118Target------------------------------
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def getOpenocdCustomCfg(self,isReload=False):
+        # For many targets, we need to choose on which USB port to start openocd
+        if (isEnabled('IsThereMoreThanOneVcu118Target')):
+            hwId = getSetting('vcu118HwTarget',targetId=self.targetId).split('/')[-1]
+            for bus in usb.busses():
+                for dev in bus.devices:
+                    try:
+                        #hasattr() returns true, but getattr gives an error, so we have to work around it
+                        serial_number = dev.dev.serial_number 
+                    except:
+                        continue
+                    if (serial_number == hwId): #Found the USB port connected to the JTAG of this hw target
+                        printAndLog(f"{self.targetIdInfo}getOpenocdCmd: USB device <{dev.dev.address}> is connected to "
+                            f"the JTAG of HW ID <{hwId}>.",doPrint=(not isReload))
+                        try:
+                            usb.util.claim_interface(dev.dev,0)
+                            usb.util.release_interface(dev.dev,0)
+                        except Exception as exc:
+                            warnAndLog(f"{self.targetIdInfo}getOpenocdCustomCfg: Failed to claim the interface "
+                                f"of the USB port connected to the JTAG. Will continue anyway.",
+                                exc=exc, doPrint=(not isReload))
+                        # return: bus-port[.port...]
+                        return f"; adapter usb location {bus.location}-{'.'.join([str(num) for num in dev.dev.port_numbers])}"
+            logAndExit(f"{self.targetIdInfo}getOpenocdCmd: Failed to find the USB port that is connected to "
+                f"the JTAG of HW ID <{hwId}>.",exitCode=EXIT.Configuration)
+        else:
+            # In case of a single board, the openocd configuration in `fett/target/utils/openocd_vcu118.cfg`
+            # uses `ftdi_vid_pid` to select the device with the correct vendor ID and product ID, so no need
+            # for further specification.
+            return ''
 
-def programFpga(bitStream, probeFile, attempts=2):
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def setupUart(self):
+        if (not doesSettingExist('vcu118UartDevice',targetId=self.targetId)):
+            if (not doesSettingExist('vcu118UartDevices')):
+                setSetting('vcu118UartDevices',self.findUartDevices())
+                if (isEqSetting('mode','cyberPhys')):
+                    if ((getSetting('nTargets') > len(getSetting('vcu118UartDevices')))):
+                        logAndExit(f"{self.targetIdInfo}setupUart: Number of UART devices "
+                            f"(={len(getSetting('vcu118UartDevices'))}) < < Number of targets "
+                            f"(={getSetting('nTargets')}).",exitCode=EXIT.Configuration)
+
+            uartDevices = getSetting('vcu118UartDevices')
+
+            if (len(uartDevices)==0):
+                logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exitCode=EXIT.Configuration)
+            elif(len(uartDevices)==1):
+                uartDevice = uartDevices.pop(0)
+                setSetting('vcu118UartDevices',uartDevices)
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in the UART devices list.")
+            else:
+                uartDevice = self.findTheRightUartDevice(uartDevices)
+                uartDevices.remove(uartDevice)
+                setSetting('vcu118UartDevices',uartDevices)
+                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
+
+            uartSessionDict = self.startUartSession(uartDevice)
+        else:
+            # Not the first time to start the uart session
+            uartSessionDict = self.startUartSession(getSetting('vcu118UartDevice',targetId=self.targetId))
+
+        #set the uart related members
+        for name,val in uartSessionDict.items():
+            setattr(self,name,val)
+        #Attach the uartDevice setting to the targetId
+        setSetting('vcu118UartDevice',self.uartDevice,targetId=self.targetId)
+        #The main process is the ttyProcess by default
+        self.process = self.ttyProcess
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def startUartSession(self, uartDevice, ttyDir=None):
+        # configure the serial connection
+        uartSettings = getSetting('vcu118UartSettings')
+        # Translate settings into serial settings
+        if hasattr(serial, f"PARITY_{uartSettings['parity'].upper()}"):
+            parity = getattr(serial, f"PARITY_{uartSettings['parity'].upper()}")
+        else:
+            logAndExit(f"startUartSession: parity {uartSettings['parity']} must be even, odd, or none.",exitCode=EXIT.Configuration)
+
+        sbit_mapping = {1: serial.STOPBITS_ONE, 2: serial.STOPBITS_TWO}
+        if uartSettings['stopbits'] in sbit_mapping:
+            stopbits = sbit_mapping[uartSettings['stopbits']]
+        else:
+            logAndExit(f"startUartSession: stop bits {uartSettings['stopbits']} must be 1 or 2",exitCode=EXIT.Configuration)
+
+        byte_mapping = {5: serial.FIVEBITS, 6: serial.SIXBITS, 7: serial.SEVENBITS, 8: serial.EIGHTBITS}
+        if uartSettings['bytesize'] in byte_mapping:
+            bytesize = byte_mapping[uartSettings['bytesize']]
+        else:
+            logAndExit(f"startUartSession: bytesize {uartSettings['bytesize']} must be 5,6,7 or 8",exitCode=EXIT.Configuration)
+
+        try:
+            uartSession = serial.Serial(
+                port=uartDevice,
+                baudrate=uartSettings['baudrate'],
+                parity=parity,
+                stopbits=stopbits,
+                timeout=uartSettings['timeout'],
+                bytesize=bytesize
+            )
+
+            if not uartSession.is_open:
+                uartSession.open()
+        except Exception as exc:
+            logAndExit(f"{self.targetIdInfo}startUartSession: unable to open serial session on <{uartDevice}>.", exc=exc, exitCode=EXIT.Run)
+
+        # start the tty process
+        if (ttyDir is None): #default
+            ttyDir = getSetting('workDir')
+            ttySuffix = self.targetSuffix
+        else: #looking for the right uart
+            ttySuffix = f"_{uartDevice.split('/')[-1]}"
+        fTtyOut = ftOpenFile(os.path.join(ttyDir,f'tty{ttySuffix}.out'),'ab')
+        ttyProcess = fdpexpect.fdspawn(uartSession.fileno(),logfile=fTtyOut,timeout=30)
+
+        return {'fTtyOut':fTtyOut,'ttyProcess':ttyProcess,'uartSession':uartSession,'uartDevice':uartDevice}
+
+    @decorate.debugWrap
+    def findUartDevices(self):
+        # Get a list of all serial ports with the desired VID/PID
+        uartSettings = getSetting('vcu118UartSettings')
+        vid = uartSettings['vid']
+        pid = uartSettings['pid']
+        uartDevices = []
+        for port in serial.tools.list_ports.comports():
+            if ((port.vid != vid) or (port.pid != pid)):
+                continue #not the CP2105 chips we're looking for
+            if (port.location.endswith('1')): 
+            # Silabs chip on VCU118 has two ports. Locate port 1 from the hardware description
+                printAndLog(f"findUartDevices: located UART device at {port.device}"
+                    f"with serial number {port.serial_number}", doPrint=False)
+                uartDevices.append(port.device)
+        logging.debug(f"findUartDevices: Found the following UART devices: <{','.join(uartDevices)}>.")
+        return uartDevices
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def findTheRightUartDevice(self,uartDevices):
+        """ Brute Force search for the uart devices """
+        
+        #Prepare the minimal ELF
+        hwId = getSetting('vcu118HwTarget',targetId=self.targetId).split('/')[-1]
+        smokeElf = self.buildSmokeElfForUartSearch(hwId)
+
+        #Start listening on all UART devices
+        uartDevicesDict = {}
+        for uartDevice in uartDevices: #No need to thread this as it should be immediate
+            uartDevicesDict[uartDevice] = self.startUartSession(uartDevice,ttyDir=os.path.dirname(smokeElf))
+        
+        #Run the smoke program
+        self.gdbProgStart(smokeElf,10,mainProg=False)
+        
+        def checkUartDevice(uartDevice,uartDevicesDict):
+            _,uartDevicesDict[uartDevice]['wasTimeout'],_ = self.expectFromTarget(
+                hwId, f"Searching for the UART connected to {hwId}",
+                exitOnError=False, timeout=3, issueInterrupt=False,
+                suppressWarnings=True,process=uartDevicesDict[uartDevice]['ttyProcess'])
+            logging.debug(f"{self.targetIdInfo}Closing uart_session <{uartDevice}>.")
+            try:
+                uartDevicesDict[uartDevice]['uartSession'].close()
+            except Exception as exc:
+                warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: unable to close the serial "
+                    f" session on {uartDevice}.",exc=exc,doPrint=False)
+            fTtyOut = uartDevicesDict[uartDevice]['fTtyOut']
+            try:
+                fTtyOut.close()
+            except Exception as exc:
+                warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: Failed to close "
+                    f" <{fTtyOut.name}>.",doPrint=False,exc=exc)
+
+        #Check which one received the text
+        for uartDevice in uartDevices:
+            xThread = threading.Thread(target=checkUartDevice, args=(uartDevice,uartDevicesDict))
+            uartDevicesDict[uartDevice]['checkThread'] = xThread
+            xThread.daemon = True
+            getSetting('trash').throwThread(xThread,f"checkUartDevice-target{self.targetId}-{self.targetId}-{uartDevice}")
+            xThread.start()
+
+        goldenDevice = None
+        for uartDevice in uartDevices:
+            uartDevicesDict[uartDevice]['checkThread'].join()
+            if (not uartDevicesDict[uartDevice]['wasTimeout']):
+                if (goldenDevice is not None):
+                    warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: <{uartDevice}> received the text too!")
+                else:
+                    goldenDevice = uartDevice
+
+        #Close gdb with the smoke program
+        self.interruptGdb()
+        self.gdbDetach()
+        self.runCommandGdb("quit",endsWith=pexpect.EOF,exitOnError=False)
+        try:
+            self.fGdbOut.close()
+        except Exception as exc:
+            warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
+
+        if (goldenDevice is not None):
+            return goldenDevice
+        
+        self.fpgaTearDown(stage=failStage.openocd)
+        logAndExit(f"{self.targetIdInfo}findTheRightUartDevice: Brute Force device search failed to find the uart "
+            f"device connected to {hwId}.",exitCode=EXIT.Configuration)
+
+    @decorate.debugWrap
+    @decorate.timeWrap
+    def buildSmokeElfForUartSearch(self,hwId):
+        freeRTOSBuildChecks(targetId=self.targetId)
+        if (not doesSettingExist('buildDir',targetId=self.targetId)): #In case of busybox for instance
+            buildDir = os.path.join(getSetting('workDir'), f'build{self.targetSuffix}')
+            mkdir(buildDir)
+            setSetting('buildDir',buildDir,targetId=self.targetId)
+        buildDir = os.path.join(getSetting('buildDir',targetId=self.targetId),'buildSmokeElfForUart')
+        mkdir(buildDir)
+
+        #Copy the C files
+        copyDir(os.path.join(getSetting('repoDir'),'fett','target','utils','srcMinimalFreeRTOS'),buildDir,copyContents=True)
+
+        #The needed configs
+        fConfig = ftOpenFile(os.path.join(buildDir,'fettFreeRTOSConfig.h'),'a')
+        fConfig.write(f"#define\tFETT_HWID\t\"{hwId}\"\n")
+        fConfig.close()
+
+        configHfile = ftOpenFile (os.path.join(buildDir,'fettUserConfig.h'),'a')
+        configHfile.write(f"#define BIN_SOURCE_{getSetting('binarySource',targetId=self.targetId).replace('-','_')}\n")
+        configHfile.close()
+
+        #build the elf
+        buildFreeRTOS(doPrint=False, targetId=self.targetId, buildDir=buildDir)
+
+        return os.path.join(buildDir,'FreeRTOS.elf')
+
+
+#--- END OF CLASS vcu118Target------------------------------
+_MAX_PROG_ATTEMPTS = 3
+
+@decorate.debugWrap
+@decorate.timeWrap
+def programFpga(bitStream, probeFile, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     """programs the fpga with a given bitstream and probe file
     matches the functionality of the old `gfe-program-fpga`
     :param bitStream: valid filepath
     :param probeFile: valid probe file
     """
-    # top level params
-    vivado = 'vivado_lab'
-    sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils')
-    cwd = os.path.join(getSetting('workDir'), 'gfe')
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
+    cwd = getSetting('gfeWorkDir',targetId=targetId)
 
     # copy files over to workDir
-    cp(os.path.join(sourceDir, 'tcl', 'prog_bit.tcl'), cwd)
+    cp(os.path.join(getSetting('tclSourceDir'), 'prog_bit.tcl'), cwd)
 
     # check that the input files exist
     if not os.path.exists(bitStream):
-        logAndExit(f"programFpga: bitstream file {bitStream} does not exist")
+        logAndExit(f"{targetInfo}programFpga: bitstream file {bitStream} does not exist")
     if not os.path.exists(probeFile):
-        logAndExit(f"programFpga: probe file {probeFile} does not exist")
+        logAndExit(f"{targetInfo}programFpga: probe file {probeFile} does not exist")
 
-    # run tcl files to program the bitstreams, and clean up output
-    retProc = shellCommand([vivado,'-nojournal','-notrace','-nolog','-source','./prog_bit.tcl',
-            '-mode','batch','-tclargs',bitStream, probeFile],timeout=90,cwd=cwd,check=False)
+    with getSetting('openocdLock'):
+        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_bit.tcl',
+                    '-log', os.path.join(cwd,'prog_bit.log'),'-mode','batch',
+                    '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),bitStream, probeFile],
+                    timeout=90,cwd=cwd,check=False)
     if retProc.returncode != 0:
         if attempts > 0:
-            errorAndLog(f"programFpga: failed to program the FPGA. Trying again...",doPrint=True)
-            programFpga(bitStream, probeFile, attempts=attempts-1)
+            errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. " 
+                f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
+            programFpga(bitStream, probeFile, attempts=attempts-1, targetId=targetId)
         else:
-            logAndExit(f"programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
-
-
-def clearFlash(attempts=2):
-    """ clear flash memory on Fpga
-    matches the functionality of gfe-clear-flash
-    """
-    sourceDir = os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'tcl')
-    cwd = os.path.join(getSetting('workDir'), 'gfe')
-
-    # copy files over to workDir
-    cp(os.path.join(sourceDir, 'program_flash'), cwd)
-    cp(os.path.join(sourceDir, 'small.bin'), cwd)
-
-    # "normal" operation exits code 1, so check=False
-    retProc = shellCommand(['./program_flash', 'datafile', './small.bin'],timeout=90,check=False,cwd=cwd)
-    if retProc.returncode != 1:
-        if attempts > 0:
-            errorAndLog(f"clearFlash: failed to clear flash. Trying again...",doPrint=True)
-            clearFlash(attempts=attempts-1)
-        else:
-            logAndExit(f"programFpga: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
+            logAndExit(f"{targetInfo}programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programBitfile (doPrint=True,isReload=False):
-    printAndLog("Preparing the FPGA environment...",doPrint=doPrint)
-    clearProcesses()
-    if (not isReload):
-        gfeDir = os.path.join(getSetting('workDir'), 'gfe')
-        if not os.path.exists(gfeDir):
-            mkdir (gfeDir)
+def clearFlash(attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
+    """ clear flash memory on Fpga
+    matches the functionality of gfe-clear-flash
+    """
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
+    cwd = getSetting('gfeWorkDir',targetId=targetId)
 
-    printAndLog("Clearing the flash...",doPrint=False)
-    clearFlash()
+    # copy files over to workDir
+    cp(os.path.join(getSetting('tclSourceDir'), 'prog_flash.tcl'), cwd)
+    cp(os.path.join(getSetting('tclSourceDir'), 'small.bin'), cwd)
 
-    if (not doesSettingExist('bitAndProbefiles')):
-        bitAndProbefiles = selectBitAndProbeFiles()
-        setSetting('bitAndProbefiles',bitAndProbefiles)
+    with getSetting('openocdLock'):
+        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_flash.tcl',
+                    '-log', os.path.join(cwd,'prog_flash.log'),'-mode','batch',
+                    '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),'./small.bin'],
+                    timeout=90,cwd=cwd,check=False)
+    if retProc.returncode != 0:
+        if attempts > 0:
+            errorAndLog(f"{targetInfo}clearFlash: failed to clear flash. "
+                f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
+            clearFlash(attempts=attempts-1, targetId=targetId)
+        else:
+            logAndExit(f"{targetInfo}clearFlash: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def prepareFpgaEnv(targetId=None):
+    with getSetting('openocdLock'):
+        if (doesSettingExist('vcu118PrepareFpgaEnv') and isEnabled('vcu118PrepareFpgaEnv')):
+            firstTime = False
+        else:
+            firstTime = True
+            setSetting('vcu118PrepareFpgaEnv',True)
+        
+        if (firstTime or (not isEqSetting('mode','cyberPhys'))):
+            # Clear processes
+            processesList = ['openocd', getSetting('vivadoCmd'), 'hw_server', 'loader', 'pyprogram_fpga']
+            if (isEqSetting('mode','cyberPhys')):
+                processesList.append('socat') # targets' UART get piped
+            for proc in processesList:
+                sudoShellCommand(['pkill', '-9', proc],check=False)
+
+        # Create workDir/gfe
+        targetSuffix = f'_{targetId}' if (targetId is not None) else ''
+        gfeWorkDir = os.path.join(getSetting('workDir'), f'gfe{targetSuffix}')
+        mkdir(gfeWorkDir,exitIfExists=False)
+        setSetting('gfeWorkDir',gfeWorkDir,targetId=targetId)
+
+        if (firstTime):
+            # Find the target(s) names
+            if (isEnabled('useCustomHwTarget') and isEqSetting('mode','cyberPhys')):
+                warnAndLog("The <useCustomHwTarget> setting is incompatible with <cyberPhys>."
+                    "The value in <customHwTarget> will be ignored.")
+                setSetting('useCustomHwTarget',False)
+
+            cp(os.path.join(getSetting('tclSourceDir'), 'get_hw_targets.tcl'), gfeWorkDir)
+            getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-source','./get_hw_targets.tcl',
+                            '-log', os.path.join(gfeWorkDir,'get_hw_targets.log'), '-mode','batch']
+            try:
+                retCmd = subprocess.run(getTargetsCmd,capture_output=True,timeout=90,check=True,cwd=gfeWorkDir)
+            except Exception as exc:
+                logAndExit (f"prepareFpgaEnv: Failed to <{getTargetsCmd}>. "
+                    f"Check <{os.path.join(gfeWorkDir,'get_hw_targets.log')}> for more details.",exc=exc,exitCode=EXIT.Run)
+
+            try:
+                listTargetsMatch = matchExprInLines(r"listTargets=<(?P<listTargets>.*)>",retCmd.stdout.decode('utf-8').splitlines())
+                listTargets = listTargetsMatch.group('listTargets').split()
+            except Exception as exc:
+                logAndExit (f"prepareFpgaEnv: Failed to find HW targets list.",exc=exc,exitCode=EXIT.Run)
+        
+            setSetting('listVcu118HwTargets',listTargets)
+            printAndLog(f'prepareFpgaEnv: Found the following vcu118 targets:<{" ".join(listTargets)}>',doPrint=False)
+            setSetting('IsThereMoreThanOneVcu118Target', (len(listTargets)>1))
+
+        if (not doesSettingExist('vcu118HwTarget',targetId=targetId)):
+            targetInfo = f"<target{targetId}>: " if (targetId) else ''
+            curList = getSetting('listVcu118HwTargets')
+            if (len(curList) == 0):
+                logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough vcu118 HW targets found!",exitCode=EXIT.Configuration)
+            
+            if (isEnabled('useCustomHwTarget')):
+                if (getSetting('customHwTarget') not in curList):
+                    logAndExit(f"{targetInfo}prepareFpgaEnv: Custom target {getSetting('customHwTarget')} not found!",
+                        exitCode=EXIT.Configuration)
+                thisTarget = getSetting('customHwTarget')
+                curList.remove(getSetting('customHwTarget'))
+            else:
+                thisTarget = curList.pop(0)
+            printAndLog(f"{targetInfo}prepareFpgaEnv: Using HW target <{thisTarget}>.")
+            setSetting('vcu118HwTarget',thisTarget,targetId=targetId)
+            setSetting('listVcu118HwTargets',curList) #to update the list
+
+@decorate.debugWrap
+@decorate.timeWrap
+def programBitfile (doPrint=True,targetId=None):
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
+    printAndLog(f"{targetInfo}Preparing the VCU118 FPGA...",doPrint=doPrint)
+    prepareFpgaEnv(targetId=targetId)
+
+    printAndLog(f"{targetInfo}Clearing the flash...",doPrint=False)
+    clearFlash(targetId=targetId)
+
+    if (not doesSettingExist('bitAndProbefiles',targetId=targetId)):
+        bitAndProbefiles = selectBitAndProbeFiles(targetId=targetId)
+        setSetting('bitAndProbefiles',bitAndProbefiles,targetId=targetId)
         for xFile in bitAndProbefiles:
             if not os.path.isfile(xFile):
                 logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
@@ -310,39 +614,41 @@ def programBitfile (doPrint=True,isReload=False):
                     break
                 md5.update(chunk)
             bitfile.close()
-            setSetting('md5bifile',md5.hexdigest())
+            setSetting('md5bifile',md5.hexdigest(),targetId=targetId)
         except Exception as exc:
             logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
 
-    printAndLog("Programming the bitfile...",doPrint=doPrint)
-    programFpga(*getSetting('bitAndProbefiles'))
-    printAndLog(f"Programmed bitfile {getSetting('bitAndProbefiles')[0]} (md5: {getSetting('md5bifile')})",doPrint=doPrint)
+    printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
+    programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)
+    printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
+        f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
 
-    printAndLog("FPGA was programmed successfully!",doPrint=doPrint)
+    printAndLog(f"{targetInfo}FPGA was programmed successfully!",doPrint=doPrint)
 
 @decorate.debugWrap
-def selectBitAndProbeFiles ():
-    bitfileName = "soc_" + getSetting('processor') + ".bit"
-    probfileName = "soc_" + getSetting('processor') + ".ltx"
+def selectBitAndProbeFiles (targetId=None):
+    bitfileName = "soc_" + getSetting('processor',targetId=targetId) + ".bit"
+    probfileName = "soc_" + getSetting('processor',targetId=targetId) + ".ltx"
 
-    if getSetting('useCustomProcessor'):
-        bitfileDir = getSetting('pathToCustomProcessorSource')
+    if getSetting('useCustomProcessor',targetId=targetId):
+        bitfileDir = getSetting('pathToCustomProcessorSource',targetId=targetId)
     else:
         useNix = False
         # If source is GFE, we check the nix environment for latest bitfiles
-        if getSetting('binarySource') == 'GFE':
+        if getSetting('binarySource',targetId=targetId) == 'GFE':
             envBitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
             if envBitfileDir in os.environ:
                 bitfileDir = os.environ[envBitfileDir]
                 useNix = True
             else:
-                printAndLog(f"Could not find bitfileDir for <{getSetting('processor')}> in nix environment. Falling back to binary repo.", doPrint=False)
+                printAndLog(f"Could not find bitfileDir for <{getSetting('processor',targetId=targetId)}> in nix environment. Falling back to binary repo.", doPrint=False)
         if (not useNix): #use binaries repo
-            bitfileDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'bitfiles', 'vcu118')
+            bitfileDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource',targetId=targetId), 'bitfiles', 'vcu118')
     
     return (os.path.join(bitfileDir, bitfileName),os.path.join(bitfileDir, probfileName))
 
 @decorate.debugWrap
+@decorate.timeWrap
 def checkEthAdaptorIsUp ():
     try:
         return psutil.net_if_stats()[getSetting('ethAdaptor')].isup
@@ -350,61 +656,92 @@ def checkEthAdaptorIsUp ():
         logAndExit (f"vcu118.checkEthAdaptorIsUp: Failed to check that <{getSetting('ethAdaptor')}> is up.",exc=exc,exitCode=EXIT.Network)
 
 @decorate.debugWrap
-def resetEthAdaptor ():
-    #get the name and check configuration if this is the first time called
-    if (not doesSettingExist('ethAdaptor')):
-        ethAdaptor= getSetting('vcu118EthAdaptorName')
-        if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('vcu118EthAdaptorMacAddress')):
-            logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('vcu118EthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
-        #Set the adaptor's name
-        setSetting('ethAdaptor',ethAdaptor)
-        printAndLog (f"<{getSetting('ethAdaptor')}> exists and its MAC address is properly configured.",doPrint=False)
+@decorate.timeWrap
+def findMainAdaptorInfo ():
+    if doesSettingExist('mainAdaptorName'):
+        return getSetting('mainAdaptorName')
+    #blindly find an adaptor connected to internet (hopefully -- maybe needs to be more sophisticated if needed)
+    for xAdaptor in psutil.net_if_addrs():
+        if ((xAdaptor != 'lo') and (not xAdaptor.startswith('docker')) and (not xAdaptor.startswith('tap')) and (not xAdaptor.endswith('fpga'))):
+            setSetting('mainAdaptorName',xAdaptor)
+            return xAdaptor
 
-    #make the link go down, then up
-    sudoPromptPrefix = f"You need sudo privileges to reset the ethernet adaptor: "
-    commands = [
-                ['ip', 'addr', 'flush', 'dev', getSetting('ethAdaptor')],
-                ['ip','link','set', getSetting('ethAdaptor'), 'down'],
-                ['ip','link','set', getSetting('ethAdaptor'), 'up']
-            ]
-    nAttempts = 3
-    isReset = False
-    for iAttempt in range(nAttempts):
-        for command in commands:
-            sudoShellCommand(command,sudoPromptPrefix)
-            time.sleep(1)
-        time.sleep(2)
-        isReset = checkEthAdaptorIsUp ()
-        if (isReset):
-            #check that the IP address is properly set
-            if (getAddrOfAdaptor(getSetting('ethAdaptor'),'IP',exitIfNoAddr=False) == getSetting('vcu118IpHost')):
-                break
-            else:
-                printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is up, but it does not have the right IP. Will try to assign it.",doPrint=False)
-                sudoShellCommand(['ip','addr','add',f"{getSetting('vcu118IpHost')}/24",'dev',getSetting('ethAdaptor')],sudoPromptPrefix)
-                time.sleep(3)
-                isReset = checkEthAdaptorIsUp ()
-                if (isReset):
-                    break
-
-        if ((not isReset) and (iAttempt < nAttempts - 1)):
-            printAndLog (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>. Trying again...",doPrint=False)
-            time.sleep(3)
-
-    if (not isReset):
-        logAndExit (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>.",exitCode=EXIT.Network)
-
-    printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)
+    logAndExit(f"findMainAdaptorInfo: Failed to blindly find an adaptor connected to internet.",exitCode=EXIT.Network)
 
 @decorate.debugWrap
-def clearProcesses ():
-    processesList = ['openocd', 'vivado_lab', 'hw_server', 'loader', 'pyprogram_fpga']
-    procs = {p.pid : p.info for p in psutil.process_iter(['name', 'username'])}
-    for pid, pinfo in procs.items():
-        if ((pinfo['username'] == getpass.getuser()) and (pinfo['name'] in processesList)):
-            if (psutil.pid_exists(pid)):
-                warnAndLog (f"Killing the hanging process <{pinfo['name']}:{pid}>",doPrint=False)
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except Exception as exc:
-                    errorAndLog(f"Failed to kill <{pinfo['name']}:{pid}>.",doPrint=False,exc=exc)
+@decorate.timeWrap
+def resetEthAdaptor ():
+    with getSetting('networkLock'):
+        if doesSettingExist('vcu118EthAdaptorReset') and isEnabled('vcu118EthAdaptorReset'): #for future compatibility if needed to re-reset
+            return #already reset
+        else:
+            setSetting('vcu118EthAdaptorReset',True)
+
+        #Check the ipv4 forwarding
+        try:
+            ipForward = int(subprocess.getoutput('sudo sysctl net.ipv4.ip_forward').split()[-1])
+        except Exception as exc:
+            logAndExit ("Failed to find the values of 'net.ipv4.ip_forward'.",exc=exc,exitCode=EXIT.Run)
+        if (ipForward != 1):
+            printAndLog("IP forwarding was not enabled, enabling now.")
+            sudoShellCommand(['sysctl', '-w', 'net.ipv4.ip_forward=1'])
+
+        mainAdaptorName = findMainAdaptorInfo()
+        printAndLog(f"Found main Ethernet adaptor <{mainAdaptorName}>.")
+
+        #Check the postrouting nat rule
+        try:
+            natTables = subprocess.getoutput('sudo iptables -t nat -S').splitlines()
+            isNatRule = (f"-A POSTROUTING -o {mainAdaptorName} -j MASQUERADE" in natTables)
+        except Exception as exc:
+            logAndExit ("Failed to find out whether the main adaptor NAT was set up.",exc=exc,exitCode=EXIT.Run)
+        if (not isNatRule):
+            printAndLog("Enabling NAT on main adaptor.")
+            sudoShellCommand(['iptables','-t', 'nat','-A','POSTROUTING',
+                '-o',mainAdaptorName,'-j','MASQUERADE'])
+            sudoShellCommand(['iptables', '-P', 'FORWARD', 'ACCEPT'])
+
+        #get the name and check configuration if this is the first time called
+        if (not doesSettingExist('ethAdaptor')):
+            ethAdaptor= getSetting('vcu118EthAdaptorName')
+            if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('vcu118EthAdaptorMacAddress')):
+                logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('vcu118EthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
+            #Set the adaptor's name
+            setSetting('ethAdaptor',ethAdaptor)
+            printAndLog (f"<{getSetting('ethAdaptor')}> exists and its MAC address is properly configured.",doPrint=False)
+
+        #make the link go down, then up
+        sudoPromptPrefix = f"You need sudo privileges to reset the ethernet adaptor: "
+        commands = [
+                    ['ip', 'addr', 'flush', 'dev', getSetting('ethAdaptor')],
+                    ['ip','link','set', getSetting('ethAdaptor'), 'down'],
+                    ['ip','link','set', getSetting('ethAdaptor'), 'up']
+                ]
+        nAttempts = 3
+        isReset = False
+        for iAttempt in range(nAttempts):
+            for command in commands:
+                sudoShellCommand(command,sudoPromptPrefix)
+                time.sleep(1)
+            time.sleep(2)
+            isReset = checkEthAdaptorIsUp ()
+            if (isReset):
+                #check that the IP address is properly set
+                if (getAddrOfAdaptor(getSetting('ethAdaptor'),'IP',exitIfNoAddr=False) == getSetting('vcu118IpHost')):
+                    break
+                else:
+                    printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is up, but it does not have the right IP. Will try to assign it.",doPrint=False)
+                    sudoShellCommand(['ip','addr','add',f"{getSetting('vcu118IpHost')}/24",'dev',getSetting('ethAdaptor')],sudoPromptPrefix)
+                    time.sleep(3)
+                    isReset = checkEthAdaptorIsUp ()
+                    if (isReset):
+                        break
+
+            if ((not isReset) and (iAttempt < nAttempts - 1)):
+                printAndLog (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>. Trying again...",doPrint=False)
+                time.sleep(3)
+
+        if (not isReset):
+            logAndExit (f"vcu118.resetEthAdaptor: Failed to reset <{getSetting('ethAdaptor')}>.",exitCode=EXIT.Network)
+
+        printAndLog (f"vcu118.resetEthAdaptor: <{getSetting('ethAdaptor')}> is properly reset.",doPrint=False)
