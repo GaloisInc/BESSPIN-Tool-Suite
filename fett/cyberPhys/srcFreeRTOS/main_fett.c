@@ -92,14 +92,14 @@ void main_fett(void)
 
     xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
 
-    fettPrintf ("\n>>>Beginning of Fett<<<\r\n");
+    FreeRTOS_printf(("\n>>>Beginning of Fett<<<\r\n"));
 }
 
 static void prvSensorTask(void *pvParameters)
 {
     (void)pvParameters;
 
-    printf(">>> ECU: Starting prvSensorTask\r\n");
+    FreeRTOS_printf((">>> ECU: Starting prvSensorTask\r\n"));
 
     // Give the sensor time to power up
     vTaskDelay(pdMS_TO_TICKS(100));
