@@ -7,7 +7,9 @@
 #ifndef can_h
 #define can_h
 
+#ifndef FREERTOS
 #include <netinet/in.h>
+#endif
 #include <stdint.h>
 
 typedef uint32_t canid_t;
@@ -27,23 +29,27 @@ typedef uint32_t can_err_mask_t;
  * @data:    the CAN frame payload.
  */
 #pragma pack(1)
-typedef struct {
-  canid_t can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-  uint8_t can_dlc; /* data length code: 0 .. 8 */
-  uint8_t data[8] __attribute__((aligned(8)));
+typedef struct
+{
+    canid_t can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+    uint8_t can_dlc; /* data length code: 0 .. 8 */
+    uint8_t data[8] __attribute__((aligned(8)));
 } can_frame;
 #pragma pack(0)
 
+#ifndef FREERTOS
 /**
  * struct can_network - Simulated CAN network over UDP
  * @fd:         network file descriptor
  * @port:       UDP port
  * @servaddr:   network address
  */
-typedef struct {
-  int fd;
-  int port;
-  struct sockaddr_in servaddr;
+typedef struct
+{
+    int fd;
+    int port;
+    struct sockaddr_in servaddr;
 } can_network;
+#endif
 
 #endif /*can_h*/

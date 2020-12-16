@@ -28,24 +28,29 @@ typedef struct freertos_sockaddr cyberphys_sockaddr_t;
 
 #endif
 
-/*
+/**
  * Cyberphys Multiplatform Memory Allocation
  */
 void *cyberphys_malloc(size_t len);
 
+/**
+ * Cyberphys Multiplatform Memory Deallocation
+ */
 void cyberphys_free(void *ptr);
 
-/*
+/**
  * Send CAN frames over Socket
  * Assumes UDP protocol
+ * @returns number of bytes sent, or error code
  */
 int32_t canframe_sendto(cyberphys_socket_t socket, void *buff, size_t len,
                          int flags, cyberphys_sockaddr_t *dest,
                          socklen_t addr_len);
 
-/*
+/**
  * Receive CAN frames over Socket
- * Assumes UDP protocol
+ * Assumes UDP protocol, socket bound to a particular port
+ * @returns number of bytes received, or error code
  */
 int32_t canframe_recvfrom(cyberphys_socket_t socket, void *buf, size_t len,
                            int flags, cyberphys_sockaddr_t *src,
