@@ -95,6 +95,7 @@ def prepareFreeRTOS(targetId=None):
 
     #copy the C files, .mk files, and any directory
     copyDir(os.path.join(getSetting('repoDir'),'fett','cyberPhys','srcFreeRTOS'),getSetting('buildDir',targetId=targetId),copyContents=True)
+    copyDir(os.path.join(getSetting('repoDir'),'build','cyberphys','canlib'),getSetting('buildDir',targetId=targetId),copyContents=True)
 
     fett.target.build.prepareFreeRTOSNetworkParameters(targetId=targetId)
     buildDir = getSetting('buildDir',targetId=targetId)
