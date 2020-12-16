@@ -216,6 +216,10 @@ def isEqSetting (setting, val, targetId=None):
     return (getSetting(setting, targetId=targetId) == val)
 
 @decorate.debugWrap
+def isEqSettingDict(setting, hierarchy, val, targetId=None):
+    return (getSettingDict(setting, hierarchy, targetId=targetId) == val)
+
+@decorate.debugWrap
 def doesSettingExist (setting, targetId=None):
     if (targetId is not None):
         return doesSettingExistDict(targetId, setting)
