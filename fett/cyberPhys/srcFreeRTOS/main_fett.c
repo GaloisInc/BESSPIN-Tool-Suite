@@ -80,9 +80,9 @@ void startNetwork () {
     FreeRTOS_printf((">>> ECU: FreeRTOS_IPInit\r\n"));
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
     if (funcReturn != pdPASS) {
-        fettPrintf ("(Error)~  startNetwork: Failed to initialize network. [ret=%d].\n",funcReturn);
+        FreeRTOS_printf(("(Error)~  startNetwork: Failed to initialize network. [ret=%d].\r\n",funcReturn));
     } else {
-        fettPrintf ("(Info)~  startNetwork: Network IP initialized successfully!.\n");
+        FreeRTOS_printf(("(Info)~  startNetwork: Network IP initialized successfully!.\r\n"));
     }
 }
 
@@ -92,7 +92,7 @@ void main_fett(void)
 
     xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
 
-    fettPrintf ("\n>>>Beginning of Fett<<<\n");
+    fettPrintf ("\n>>>Beginning of Fett<<<\r\n");
 }
 
 static void prvSensorTask(void *pvParameters)
