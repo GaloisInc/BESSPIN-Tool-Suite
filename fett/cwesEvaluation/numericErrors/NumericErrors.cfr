@@ -49,15 +49,12 @@ abstract Numeric_Weakness
   ARG_Weakness ?
     xor Argument_error
       Argument_missing
-      Argument_fails_callee_precondition
       Argument_wrong_order
 
     or ARG_CWE
       CWE_234
-      CWE_687
 
     [ CWE_234 <=> ( Undefined_behavior && Argument_missing ) ]
-    [ CWE_687 <=> ( Undefined_behavior && Argument_fails_callee_precondition ) ]
 
 
   // FRS attributes - from the Bugs Framework FRS page
@@ -130,7 +127,6 @@ NumericErrors_Test : Numeric_Weakness ?
     TEST_456
     TEST_457
     TEST_665
-    TEST_687
     TEST_704
     TEST_824
 
@@ -160,6 +156,5 @@ NumericErrors_Test : Numeric_Weakness ?
 [ TEST_456 => CWE_456 ]
 [ TEST_457 => CWE_457 ]
 [ TEST_665 => CWE_665 ]
-[ TEST_687 => CWE_687 ]
 [ TEST_704 => CWE_704 ]
 [ TEST_824 => CWE_824 ]
