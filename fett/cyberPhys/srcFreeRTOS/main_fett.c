@@ -89,7 +89,7 @@ const uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADD
  * "HH:MM:SS"
  */
 char* getCurrTime(void) {
-    static char* buf[16] = {0};
+    static char buf[16] = {0};
     TickType_t t = xTaskGetTickCount();
     uint32_t n_seconds = t/configTICK_RATE_HZ;
     uint32_t n_minutes = n_seconds/60;
@@ -134,11 +134,11 @@ static void prvInfoTask(void *pvParameters)
     for (;;)
     {
         // Copy data over
-        taskENTERCRITICAL();
+        taskENTER_CRITICAL();
         local_throttle = throttle;
         local_brake = brake;
         local_gear = gear;
-        taskEXITCRITICAL();
+        taskEXIT_CRITICAL();
 
         FreeRTOS_printf((">>>%s (prvInfoTask) Gear: %#x, throttle: %u, brake: %u\r\n",getCurrTime(), local_gear, local_throttle, local_brake));
 
@@ -293,11 +293,11 @@ static void prvCanTxTask(void *pvParameters)
     for (;;)
     {
         // Copy data over
-        taskENTERCRITICAL();
+        taskENTER_CRITICAL();
         local_throttle = throttle;
         local_brake = brake;
         local_gear = gear;
-        taskEXITCRITICAL();
+        taskEXIT_CRITICAL();
         // Send throttle
         if (send_can_message(xClientSocket, &xDestinationAddress, PGN_THROTTLE_INPUT, (void *)&local_throttle, sizeof(local_throttle)) != SUCCESS)
         {
