@@ -12,6 +12,7 @@
 #include "FreeRTOS_Sockets.h"
 
 /* Drivers */
+#include "bsp.h"
 #include "iic.h"
 #include "ads1015.h"
 
@@ -98,7 +99,7 @@ char* getCurrTime(void) {
     n_minutes = n_minutes - n_hours*60;
     n_seconds = n_seconds - n_minutes*60;
 
-    sprintf(buf, "%2u:%2u:%2u", n_hours, n_minutes, n_seconds);
+    sprintf(buf, "%02u:%02u:%02u", n_hours, n_minutes, n_seconds);
     return buf;
 }
 
@@ -116,6 +117,7 @@ void startNetwork () {
 
 void main_fett(void)
 {
+    prvSetupHardware();
     startNetwork();
 
     xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
@@ -160,12 +162,12 @@ static void prvSensorTask(void *pvParameters)
     for (;;)
     {
         throttle_raw = ads1015_get_channel(THROTTLE_ADC_CHANNEL);
+        msleep(1);
         brake_raw = ads1015_get_channel(BRAKE_ADC_CHANNEL);
+        msleep(1);
 
         throttle = (uint8_t)((throttle_raw - THROTTLE_MIN) * throttle_gain / (THROTTLE_MAX - THROTTLE_MIN));
         brake = (uint8_t)((brake_raw - BRAKE_MIN) * brake_gain / (BRAKE_MAX - BRAKE_MIN));
-
-        msleep(1);
 
         int res = iic_receive(&Iic0, SHIFTER_I2C_ADDRESS, &gear, 1);
         if (res < 1) {
