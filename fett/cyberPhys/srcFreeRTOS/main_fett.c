@@ -121,7 +121,7 @@ void main_fett(void)
     startNetwork();
 
     xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
-    xTaskCreate(prvSensorTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
+    xTaskCreate(prvInfoTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
 
     FreeRTOS_printf(("\n>>>Beginning of Fett<<<\r\n"));
 }
