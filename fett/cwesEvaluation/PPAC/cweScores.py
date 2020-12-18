@@ -3,25 +3,8 @@ scoring function for PPAC
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
-from fett.cwesEvaluation.PPAC.customCweScores import *
-from fett.cwesEvaluation.utils.scoringAux import defaultRecommendationText
+from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests
 
 @decorate.debugWrap
 def scoreAllTests(logs):
-    ret = []
-    for name, log in logs:
-        dispName = name.replace('_','-').upper()
-        if (isTestInfoEnabled("PPAC",name,"recommendation")):
-            ret.append(defaultRecommendationText(dispName, log))
-            continue
-        #else: custom score
-        logText = ftReadLines(log,splitLines=False)
-        try:
-            testScorerFunc = getattr(globals()[name],name)
-        except Exception as exc:
-            errorAndLog(f"scoreAllTests-PPAC: Could not locate the scorer function for <{name}>",exc=exc)
-            ret.append([dispName, SCORES.FAIL, "Failed to Score!"])
-            continue
-        ret.append(testScorerFunc(dispName,logText))
-    return ret
+    return defaultSelfAssessmentScoreAllTests("PPAC", logs)

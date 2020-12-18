@@ -14,34 +14,34 @@ def test_771 (logLines):
         partsScores = {}
 
         if (doesKeywordExist(partsLines[1],"<F_MALLOC_SUCCEEDED>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         else:
             partsScores[1] = SCORES.NONE
         if (doesKeywordExist(partsLines[2],"<POINTER_IS_NULL>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif(doesKeywordExist(partsLines[2],"<FREE_WAS_NOT_TRAPPED>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.HIGH
 
         if (doesKeywordExist(partsLines[3],"<POINTER_IS_NULL>")):
-            partsScores[3] = SCORES.V_HIGH
+            partsScores[3] = SCORES.HIGH
         elif(doesKeywordExist(partsLines[3],"<FREE_WAS_NOT_TRAPPED>")):
-            partsScores[3] = SCORES.V_HIGH
+            partsScores[3] = SCORES.HIGH
         else:
             partsScores[3] = SCORES.HIGH
 
         if (doesKeywordExist(partsLines[4],"<POINTER_IS_NULL>")):
-            partsScores[4] = SCORES.V_HIGH
+            partsScores[4] = SCORES.HIGH
         elif(doesKeywordExist(partsLines[4],"<FREE_WAS_NOT_TRAPPED>")):
-            partsScores[4] = SCORES.V_HIGH
+            partsScores[4] = SCORES.HIGH
         else:
             partsScores[4] = SCORES.HIGH
 
         if (doesKeywordExist(partsLines[5],"<POINTER_IS_NULL>")):
-            partsScores[5] = SCORES.V_HIGH
+            partsScores[5] = SCORES.HIGH
         elif(doesKeywordExist(partsLines[5],"<FREE_WAS_NOT_TRAPPED>")):
-            partsScores[5] = SCORES.V_HIGH
+            partsScores[5] = SCORES.HIGH
         else:
             partsScores[5] = SCORES.HIGH
 

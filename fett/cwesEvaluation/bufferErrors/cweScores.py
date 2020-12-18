@@ -3,13 +3,16 @@ import os
 from importlib.machinery import SourceFileLoader
 import math
 
+from fett.base.utils.misc import *
 import fett.cwesEvaluation.bufferErrors.count as count
 from fett.cwesEvaluation.scoreTests import SCORES
+from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests
 """
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 scoring functions for each CWE test
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 """
+VULCLASS = "bufferErrors"
 
 def score(testScores):
     """
@@ -35,7 +38,7 @@ def score(testScores):
             e += 1
         else:
             validScores.append(testScore)
-            if (testScore < SCORES.DETECTED): #V_LOW --> V_HIGH
+            if (testScore < SCORES.DETECTED): #LOW --> HIGH
                 s += 1
     t = len(validScores) # Total valid
 
@@ -49,16 +52,16 @@ def score(testScores):
         ovrScore = SCORES.avgScore(validScores)
     else: #partial score
         """ 
-        - Currently, every 's' is considered as V-HIGH.
+        - Currently, every 's' is considered as HIGH.
         - Even the baseline (non-secure) processor can block some of the buffer overflows from happening.
           This is due to the OS memory management, boundaries, etc. 
-        - s=0 should be V-HIGH, and s=t should be DETECTED
+        - s=0 should be DETECTED, and s=t should be HIGH.
         """
-        unadjustedScore = ((t-s)/float(t))*(SCORES.DETECTED.value-SCORES.V_HIGH.value) 
-        if (unadjustedScore < SCORES.V_HIGH.value):
-            ovrScore = SCORES.V_HIGH
+        unadjustedScore = ((t-s)/float(t))*(SCORES.DETECTED.value-SCORES.HIGH.value) 
+        if (unadjustedScore < SCORES.HIGH.value):
+            ovrScore = SCORES.HIGH
         else:
-            ovrScore = SCORES(math.floor(unadjustedScore))
+            ovrScore = SCORES(math.floor(abs(unadjustedScore-0.1))) #Slight adjustment, being more conservative in scoring
 
     return (ovrScore, notes)
 
@@ -83,5 +86,8 @@ def scoreByCWE(rows):
     return tab
 
 def scoreAllTests(logs):
+    if (isEnabledDict(VULCLASS,"useSelfAssessment")):
+        return defaultSelfAssessmentScoreAllTests(VULCLASS, logs)
+
     tab = count.tabulate(logs, count.QEMU_FPGA_LOOKFOR)
     return scoreByCWE(tab)

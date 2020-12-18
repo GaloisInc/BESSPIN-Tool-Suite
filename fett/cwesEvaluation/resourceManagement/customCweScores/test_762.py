@@ -21,7 +21,7 @@ def test_762 (logLines):
             if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<INVALID_FREE_OF_')):
-                partsScores[iPart] = SCORES.V_HIGH
+                partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or 
                     doesKeywordExist(partsLines[iPart],'Aborted') or
                     doesKeywordExist(partsLines[iPart],'Abort trap') ):
@@ -35,20 +35,20 @@ def test_762 (logLines):
         partsScores = {}
 
         if (not doesKeywordExist(partsLines[1],"<MEMORY_FREE_CORRECTLY>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         else:
             partsScores[1] = SCORES.NONE
         if (doesKeywordExist(partsLines[2],"<INVALID_FREE_OF_STACK>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif(doesKeywordExist(partsLines[2],"<GDB-SIGTRAP>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.HIGH
 
         if (doesKeywordExist(partsLines[3],"<INVALID_FREE_OF_MEMORY>")):
-            partsScores[3] = SCORES.V_HIGH
+            partsScores[3] = SCORES.HIGH
         elif(doesKeywordExist(partsLines[3],"<GDB-SIGTRAP>")):
-            partsScores[3] = SCORES.V_HIGH
+            partsScores[3] = SCORES.HIGH
         else:
             partsScores[3] = SCORES.HIGH
 

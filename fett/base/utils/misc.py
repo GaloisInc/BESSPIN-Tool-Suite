@@ -216,6 +216,10 @@ def isEqSetting (setting, val, targetId=None):
     return (getSetting(setting, targetId=targetId) == val)
 
 @decorate.debugWrap
+def isEqSettingDict(setting, hierarchy, val, targetId=None):
+    return (getSettingDict(setting, hierarchy, targetId=targetId) == val)
+
+@decorate.debugWrap
 def doesSettingExist (setting, targetId=None):
     if (targetId is not None):
         return doesSettingExistDict(targetId, setting)
@@ -641,6 +645,3 @@ def sha512_crypt(password, salt=None, rounds=None):
         salt = crypt.mksalt(crypt.METHOD_SHA512, rounds=rounds)
     return crypt.crypt(password, salt)
 
-@decorate.debugWrap
-def isTestInfoEnabled (vulClass,testName,infoName):
-    return (getSettingDict(vulClass,["testsInfo",testName,infoName])==1)

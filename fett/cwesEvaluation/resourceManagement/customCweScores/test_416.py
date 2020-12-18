@@ -14,7 +14,7 @@ def test_416 (logLines):
             if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<POINTER_USED_IMPROPERLY>') or doesKeywordExist(partsLines[iPart],'<DOUBLE_FREE_OF_STACK>')):
-                partsScores[iPart] = SCORES.V_HIGH
+                partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or doesKeywordExist(partsLines[iPart],'double free detected')):
                 partsScores[iPart] = SCORES.HIGH
             else:
@@ -26,21 +26,21 @@ def test_416 (logLines):
         partsScores = {}
 
         if (doesKeywordExist(partsLines[1], "<ERROR-SIGABRT>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[1], "<POINTER_USED_IMPROPERLY>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[1], "<GDB-SIGTRAP>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         else:
             partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2], "<ERROR-SIGABRT>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2], "<GDB-SIGTRAP>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2], "<POINTER_USED_IMPROPERLY>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2], "<DOUBLE_FREE_OF_STACK>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.FAIL
 

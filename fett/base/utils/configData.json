@@ -177,6 +177,15 @@
             "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC" ]
         },
         {
+            "name" : "useCustomCWEsConfigsPath",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomCWEsConfigs",
+            "type" : "dirPath",
+            "condition" : "useCustomCWEsConfigsPath"
+        },
+        {
             "name" : "useCustomScoring",
             "type" : "boolean"
         },
@@ -251,6 +260,10 @@
         {
             "name" : "runAllTests",
             "type" : "bool"
+        },
+        {
+            "name" : "useSelfAssessment",
+            "type" : "bool"
         }
     ],
 
@@ -288,6 +301,20 @@
         {
             "name" : "useCachedInstances",
             "type" : "bool"
+        },
+        {
+            "name" : "useCustomErrorModel",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomErrorModel",
+            "type" : "filePath",
+            "condition" : "useCustomErrorModel"
+        },
+        {
+            "name" : "numericTypes",
+            "type" : "stringsList",
+            "choices" : [ "ints", "floats" ]
         },
         {
             "name" : "useSeed",

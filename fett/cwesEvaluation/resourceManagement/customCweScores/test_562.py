@@ -13,7 +13,7 @@ def test_562 (logLines):
         if (doesKeywordExist(partsLines[1],"<INVALID>")):
             partsScores[1] = SCORES.CALL_ERR
         elif (doesKeywordExist(partsLines[1],'<VALID_ARRAY_CONTENT>')):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[1],'<NOT_VALID_ARRAY_CONTENT>') or doesKeywordExist(partsLines[1],'Segmentation fault')):
             partsScores[1] = SCORES.HIGH
         else:
@@ -34,15 +34,15 @@ def test_562 (logLines):
         partsScores = {}
 
         if (not doesKeywordExist(partsLines[1], "<DEREFERENCE-VIOLATION>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif(doesKeywordExist(partsLines[2], "<GDB-SIGINT>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif(not doesKeywordExist(partsLines[2], "<DEREFERENCE-VIOLATION>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         else:
             partsScores[1] = SCORES.NONE
         if (not doesKeywordExist(partsLines[2], "<VALID_ARRAY_CONTENT>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.NONE
 

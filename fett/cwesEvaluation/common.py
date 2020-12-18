@@ -50,10 +50,10 @@ cweScores = {
 @decorate.timeWrap
 def executeTest(target, vulClass, binTest, logDir):
     if isEnabled('isUnix') and target.isCurrentUserRoot and target.osHasBooted:
-        # Tests expect to started as normal user
+        # Tests expect to be started as normal user
         target.switchUser()
     testName = binTest.split('.')[0]
-    printAndLog(f"Executing {testName}...")
+    printAndLog(f"Executing {testName}...", doPrint=(not isEnabledDict(vulClass,'useSelfAssessment')))
     outLog = cweTests[vulClass](target).executeTest(binTest)
     logFileName = os.path.join(logDir, f'{testName}.log')
     logFile = ftOpenFile(logFileName, 'w')
@@ -73,7 +73,7 @@ def score(testLogDir, vulClass):
 def runTests(target, sendFiles=False, timeout=30): #executes the app
     if isEqSetting('osImage', 'FreeRTOS'):
         test, vulClass, _, logFile = getSetting("currentTest")
-        if (vulClass in ['PPAC','hardwareSoC']):
+        if (isEnabledDict(vulClass,'useSelfAssessment')):
             outLog = cweTests[vulClass](target).executeTest(test.replace('.c','.riscv'))
         else:
             # Extract test output
@@ -143,19 +143,5 @@ def isTestEnabled(vulClass, testName):
     if (getSettingDict(vulClass,'runAllTests')):
         return True
     else:
-        return getSettingDict(vulClass,['configCWEs',testName])
-
-@decorate.debugWrap
-def doesTheTestNeedBootedOs(vulClass, testName):
-    if (vulClass in ["hardwareSoC","PPAC"]):
-        return isTestInfoEnabled(vulClass,testName,"bootedOs")        
-    else:
-        return True
-
-@decorate.debugWrap
-def doesTheTestHaveACfile(vulClass, testName):
-    if (vulClass in ["hardwareSoC","PPAC"]):
-        return isTestInfoEnabled(vulClass,testName,"cFile")   
-    else:
-        return True
+        return getSettingDict(vulClass,['enabledTests',testName])
 

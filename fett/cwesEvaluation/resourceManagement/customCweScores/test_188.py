@@ -18,7 +18,7 @@ def test_188 (logLines):
             if (doesKeywordExist(partsLines[iPart],"<INVALID>")):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],"<WRONG_PROTOCOL>")):
-                partsScores[iPart] = SCORES.V_HIGH
+                partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],specialKeywords[iPart])):
                 partsScores[iPart] = SCORES.NONE
             else:
@@ -32,21 +32,21 @@ def test_188 (logLines):
         if (doesKeywordExist(partsLines[1],"<PROTOCOL_ONE_BYTE_IN_FRONT>")):
             partsScores[1] = SCORES.NONE
         else:
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         if (doesKeywordExist(partsLines[2],"<PROTOCOL_ONE_BYTE_PAST>")):
             partsScores[2] = SCORES.NONE
         else:
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
 
         if (doesKeywordExist(partsLines[3],"<EXPECTED_INPUT_PAST>")):
                 partsScores[3] = SCORES.NONE
         else:
-            partsScores[3] = SCORES.V_HIGH
+            partsScores[3] = SCORES.HIGH
 
         if (doesKeywordExist(partsLines[4],"<EXPECTED_INPUT_PAST>")):
             partsScores[4] = SCORES.NONE
         else:
-            partsScores[4] = SCORES.V_HIGH
+            partsScores[4] = SCORES.HIGH
 
     else:
         print (f"Error: parsing test_{testNum}.log is not implemented for <{osImage}>.")

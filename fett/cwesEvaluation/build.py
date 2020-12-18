@@ -4,13 +4,16 @@ Building CWEs Evaluation
 
 import glob, os, re
 from collections import defaultdict
+from pathlib import Path
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.bufferErrors.generateTests.generateTests import generateTests
 from fett.cwesEvaluation.informationLeakage.generateWrappers import generateWrappers
 from fett.cwesEvaluation.utils.templateFreeRTOS import templateFreeRTOS
-from fett.cwesEvaluation.common import isTestEnabled, doesTheTestNeedBootedOs, doesTheTestHaveACfile
+from fett.cwesEvaluation.common import isTestEnabled
 from fett.target.build import freeRTOSBuildChecks, buildFreeRTOS, crossCompileUnix, cleanDirectory
+from fett.cwesEvaluation.informationLeakage.cweScores import generateCweMap
+from fett.cwesEvaluation.bufferErrors.count import bfparams
 
 @decorate.debugWrap
 def buildCwesEvaluation():
@@ -53,13 +56,6 @@ def buildCwesEvaluation():
                     f"<{vClass}> will be skipped.")
                 getSetting("vulClasses").remove(vClass)
 
-        if (isEqSetting("target", "qemu")):
-            for vClass in ["hardwareSoC"]:
-                if (vClass in getSetting("vulClasses")):
-                    warnAndLog(f"vulClass <{vClass}> not supported for FreeRTOS on "
-                       f"qemu. <{vClass}> tests will be skipped.")
-                    getSetting("vulClasses").remove(vClass)
-
         fillerCfile = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','utils','fillerMainFreeRTOS.c')
 
     # Copy tests over
@@ -76,49 +72,72 @@ def buildCwesEvaluation():
 
         if vulClass == 'bufferErrors':
             vIsThereAnythingToRun = True
-            isThereAReasonToBoot = True
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                     vulClass,'envFett.mk'), vulClassDir)
             # Generate test sources
             generateTests(vulClassDir)
-            if isEnabledDict('bufferErrors', 'useExtraTests'):
-                # Copy extra tests over, prepending C files with 'test_extra_'
-                extraSources = getSettingDict('bufferErrors', 'extraSources')
-                if extraSources[0] != '/':
-                    extraSources = os.path.join(getSetting('repoDir'),
-                                                extraSources)
-                for source in glob.glob(os.path.join(extraSources, '*.c')):
-                    cp(source,
-                       os.path.join(vulClassDir,
-                                    f'test_extra_{os.path.basename(source)}'))
-            enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
-                glob.glob(os.path.join(vulClassDir,"*.c"))]
+            if (isEnabledDict(vulClass,'useSelfAssessment')):
+                enabledCWEs = set()
+                for cFile in glob.glob(os.path.join(vulClassDir,"*.c")):
+                    testParams = bfparams(Path(cFile))
+                    if ('CWE' in testParams):
+                        enabledCWEs.update(set(testParams['CWE']))
+                    else:
+                        warnAndLog(f"buildCwesEvaluation: Failed to parse the CWE parameters in {cFile}.")
+                enabledCwesEvaluations[vulClass] = sorted(
+                        [cwe.replace('CWE_','test_') + ".riscv" for cwe in enabledCWEs]
+                    )
+            else:
+                isThereAReasonToBoot = True
+                if isEnabledDict('bufferErrors', 'useExtraTests'):
+                    # Copy extra tests over, prepending C files with 'test_extra_'
+                    extraSources = getSettingDict('bufferErrors', 'extraSources')
+                    if extraSources[0] != '/':
+                        extraSources = os.path.join(getSetting('repoDir'),
+                                                    extraSources)
+                    for source in glob.glob(os.path.join(extraSources, '*.c')):
+                        cp(source,
+                           os.path.join(vulClassDir,
+                                        f'test_extra_{os.path.basename(source)}'))
+                enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
+                    glob.glob(os.path.join(vulClassDir,"*.c"))]
         elif vulClass == 'informationLeakage':
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',
                                     vulClass,'envFett.mk'), vulClassDir)
             # Copy over concrete tests
             copyDir(sourcesDir, vulClassDir, copyContents=True)
-            nWrappers = generateWrappers()
-            vIsThereAnythingToRun = (nWrappers > 0)
+            enabledTests = generateWrappers()
+            vIsThereAnythingToRun = (len(enabledTests) > 0)
             if (vIsThereAnythingToRun):
-                isThereAReasonToBoot = True
-                enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
-                    glob.glob(os.path.join(vulClassDir,"*.c"))]
+                if (isEnabledDict(vulClass,'useSelfAssessment')):
+                    cweMap = generateCweMap()
+                    try: 
+                        enabledCWEs = set()
+                        for driver in enabledTests:
+                            enabledCWEs.update(set(cweMap[driver]))
+                        enabledCwesEvaluations[vulClass] = sorted(
+                                [cwe.replace('CWE_','test_') + ".riscv" for cwe in enabledCWEs]
+                            )
+                    except Exception as exc:
+                        logAndExit(f"buildCwesEvaluation: Failed to generate the tests list from the input ini "
+                            f"configuration for <informationLeakage> in <selfAssessment> mode.",exc=exc,exitCode=EXIT.Dev_Bug)
+                else:
+                    isThereAReasonToBoot = True
+                    enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
+                        glob.glob(os.path.join(vulClassDir,"*.c"))]
         else:
-            cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
-            if (vulClass in ["PPAC", "hardwareSoC"]):
+            if (isEnabledDict(vulClass,'useSelfAssessment')):
                 tests = getSettingDict(vulClass,["testsInfo"])
             else: #all C files in sources
+                cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
                 tests = [os.path.basename(f).split(".c")[0] for f in glob.glob(os.path.join(sourcesDir, "test_*.c"))]
             for test in tests:
                 # Check if the test should be skipped:
                 if (isTestEnabled(vulClass,test)):
                     vIsThereAnythingToRun = True
-                    isThereAReasonToBoot |= doesTheTestNeedBootedOs(vulClass,test)
-                    if (doesTheTestHaveACfile(vulClass,test)):
+                    if (not isEnabledDict(vulClass,'useSelfAssessment')): #No need to boot for self-assessment
+                        isThereAReasonToBoot = True 
                         cp (os.path.join(sourcesDir, f"{test}.c"), vulClassDir)
-                    elif (isEqSetting('osImage', 'FreeRTOS') and doesTheTestNeedBootedOs(vulClass,test)): #Use dummy file
-                        cp (fillerCfile, os.path.join(vulClassDir,f"{test}.c"))
                     enabledCwesEvaluations[vulClass].append(f"{test}.riscv")
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{test}>. It is not enabled.",doPrint=False)
@@ -157,6 +176,9 @@ def buildCwesEvaluation():
 
         #Set the list of enabled tests
         setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
+
+        if (isEnabledDict(vulClass,'useSelfAssessment')):
+            continue
         # Write the extra testsParameters.h
         fHeader = ftOpenFile(os.path.join(vulClassDir, "testsParameters.h"), 'w')
         for xSetting, xVal in getSetting(vulClass).items():
@@ -175,8 +197,8 @@ def buildCwesEvaluation():
                        exitCode=EXIT.Implementation)
 
     if getSetting('osImage') in ['debian', 'FreeBSD']:
+        setSetting('isThereAReasonToBoot',isThereAReasonToBoot) #This is set per class in FreeRTOS
         buildTarball()
-        setSetting('isThereAReasonToBoot',isThereAReasonToBoot) #For FreeRTOS, this will be done per test.
     return isThereAnythingToRun
 
 @decorate.debugWrap

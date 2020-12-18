@@ -2,7 +2,7 @@ import glob
 import os
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.common import score, doesTheTestNeedBootedOs
+from fett.cwesEvaluation.common import score
 from fett.target import awsf1, vcu118
 import fett.target.launch
 
@@ -23,8 +23,8 @@ def runFreeRTOSCwesEvaluation():
             testName = test.split('.')[0]
             cTest = f"{testName}.c"
             logFile = ftOpenFile(os.path.join(logsDir, f"{testName}.log"), 'w')
-            
-            setSetting('isThereAReasonToBoot',doesTheTestNeedBootedOs(vulClass,testName))
+
+            setSetting('isThereAReasonToBoot', not isEnabledDict(vulClass,'useSelfAssessment'))
             if (not isEnabled('isThereAReasonToBoot')):
                 setSetting("currentTest", (cTest, vulClass, 0, logFile))
                 fett.target.launch.launchFett()

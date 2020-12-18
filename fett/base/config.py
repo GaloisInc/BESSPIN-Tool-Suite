@@ -15,6 +15,9 @@ TARGET_SECTION = 'target'
 CWES_SECTION = 'evaluateSecurityTests'
 CYBERPHYS_SECTION = 'cyberPhys'
 
+CWES_ENABLED_TESTS_SECTION = "enabledTests"
+CWES_SELF_ASSESSMENT_SECTION = "selfAssessment"
+
 def loadJsonFile (jsonFile):
     try:
         fJson = open(jsonFile,'r')
@@ -27,6 +30,7 @@ def loadJsonFile (jsonFile):
 def loadIniFile (iniFile):
     xConfig = configparser.ConfigParser()
     try:
+        xConfig.optionxform = str # Hack it to be case sensitive
         fConfig = open(iniFile,'r')
         xConfig.read_file(fConfig)
         fConfig.close()
@@ -151,7 +155,7 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
                 assert xConfig.has_option(configSection,iPar['name']), f"has_option('{iPar['name']}')"
             except Exception as exc:
                 logAndExit(f"{fileName}: <{iPar['name']}> not found in section [{configSection}].",exc=exc,exitCode=EXIT.Configuration)
-            optionsInConfig[iPar['name'].lower()] = True #Be careful! configparser options are always case insensitive and are all lowercase
+            optionsInConfig[iPar['name']] = True
         
         if (iPar['type'] in 'integer'): #works for int or integer
             try:
@@ -214,7 +218,7 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
                             f" section [{configSection}].",exc=exc,exitCode=EXIT.Configuration)
             elif ('List' in iPar['type']):
                 if ((val[0] != '[') or (val[-1] != ']')):
-                    logAndExit("ValueError in reading configuration file. <{iPar['name']}> has to be of type "
+                    logAndExit(f"ValueError in reading configuration file. <{iPar['name']}> has to be of type "
                                f"{iPar['type']} in section [{configSection}]. A {iPar['type']} has to have contents between brackets.",
                                exitCode = EXIT.Configuration)
                 if (len(val[1:-1]) == 0):
@@ -396,35 +400,71 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
     #load main global configs
     loadConfigSection(xConfig, CWES_SECTION, configData, CWES_SECTION)
 
+    #The location of all the vulClass.ini files
+    if (isEnabled('useCustomCWEsConfigsPath')):
+        configCWEsParentPath = getSetting('pathToCustomCWEsConfigs')
+    else: #use default
+        configCWEsParentPath = os.path.join(getSetting('repoDir'),'configSecurityTests')
+
     # load vulClass configs
     for vulClass in getSetting('vulClasses'): #load settings per vulClass
         vulClassDict = dict()
         setSetting(vulClass,vulClassDict)
+
+        if (vulClass in ['bufferErrors']): #prior to loadConfigSection
+            xConfig.set(vulClass,'runAllTests','Yes')
+            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
+        if (vulClass in ['PPAC', 'hardwareSoC']): #prior to load ConfigSection
+            xConfig.set(vulClass,'useSelfAssessment','Yes')
+            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <useSelfAssessment> for <{vulClass}>",doPrint=False)
         loadConfigSection(xConfig, vulClass, configData, vulClass, 
                 addSectionToConfigDict='commonVulClassesParameters', setSettingsToSectDict=vulClass)
 
-        if (vulClass in ['bufferErrors']):
-            setSettingDict(vulClass,'runAllTests',True)
-            printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
+        configCWEsPath = os.path.join(configCWEsParentPath,f'{vulClass}.ini')
 
-        # Load selected tests
-        sectionName = 'configCWEs'
-        if (not getSettingDict(vulClass,'runAllTests')):
-            configCWEsPath = os.path.join(getSetting('repoDir'),'configSecurityTests',f'{vulClass}.ini')
-            configCWEs = loadIniFile(configCWEsPath)
+        
+        if ((vulClass not in ['bufferErrors']) 
+                and (isEnabled('useCustomCWEsConfigsPath') and isEnabledDict(vulClass,'runAllTests'))):
+            warnAndLog(f"{vulClass}: <runAllTests> is enabled; The <test_*> settings in <{configCWEsPath}>"
+                f"will be ignored.") 
+            # The ignoring happens in fett/cwesEvaluation/common.py:isTestEnabled() which checks
+            # the `runAllTests` setting _before_ proceeding and checking the `test_*` setting.
+
+        # Load selected tests + custom scores
+        configCWEs = loadIniFile(configCWEsPath)
+
+        sectionNames = []
+        if (vulClass not in ['bufferErrors']):
+            sectionNames.append(CWES_ENABLED_TESTS_SECTION)
+        if (isEnabledDict(vulClass,'useSelfAssessment')):
+            sectionNames.append(CWES_SELF_ASSESSMENT_SECTION)
+        for sectionName in sectionNames:
             try:
                 assert configCWEs.has_section(sectionName), f"has_section('{sectionName}')"
             except Exception as exc:
                 logAndExit(f"Section <{sectionName}> not found in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
 
-            dictConfigCWEs = dict() 
-            for xTest in configCWEs.options(sectionName):
+        # Load enabled tests
+        if (CWES_ENABLED_TESTS_SECTION in sectionNames):
+            dictEnabledTests = dict() 
+            for xTest in configCWEs.options(CWES_ENABLED_TESTS_SECTION):
                 try:
-                    dictConfigCWEs[xTest] = configCWEs.getboolean(sectionName,xTest)
+                    dictEnabledTests[xTest] = configCWEs.getboolean(CWES_ENABLED_TESTS_SECTION,xTest)
                 except Exception as exc:
                     logAndExit(f"The value of <{xTest}> should be boolean in <{configCWEsPath}>.",exc=exc,exitCode=EXIT.Configuration)
+            setSettingDict(vulClass,'enabledTests',dictEnabledTests)
 
-            setSettingDict(vulClass,'configCWEs',dictConfigCWEs)
+        # Load the self assessment
+        if (CWES_SELF_ASSESSMENT_SECTION in sectionNames):
+            dictSelfAssessmentCWEs = dict()
+            for xAssessment in configCWEs.options(CWES_SELF_ASSESSMENT_SECTION):
+                if (xAssessment.startswith("assessment_")):
+                    dictSelfAssessmentCWEs[xAssessment] = configCWEs.get(CWES_SELF_ASSESSMENT_SECTION,xAssessment)
+                    if (dictSelfAssessmentCWEs[xAssessment] not in getSetting('cwesAssessments')):
+                        logAndExit(f"ValueError in reading <{configCWEsPath}>. Illegal value for <{xAssessment}> "
+                            f"in section [{CWES_SELF_ASSESSMENT_SECTION}]. Value has to be in "
+                            f"[{','.join(getSetting('cwesAssessments'))}]", exitCode = EXIT.Configuration)
+            setSettingDict(vulClass,'selfAssessment',dictSelfAssessmentCWEs)
 
         # Load custom dev options (setupEnv.json)
         setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',vulClass,'setupEnv.json'))

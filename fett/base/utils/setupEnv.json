@@ -349,6 +349,11 @@
             "name" : "OtaServerPortTarget",
             "type" : "int",
             "val" : 5050
+        },
+        {
+            "name" : "cwesAssessments",
+            "type" : "stringsList",
+            "val" : "[HIGH, MED, LOW, NONE, NA, UNKNOWN]"
         }
     ]
 }

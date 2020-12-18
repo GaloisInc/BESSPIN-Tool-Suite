@@ -2,27 +2,147 @@
     "_usage" : "This json file has the environment setup that is not to be changed per run.",
     "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
-    "_testsInfo" : "testsInfo are supposed to have the following settings per test: gdb, bootedOs, hasMethod, cFile, and recommendation",
+    "_testsInfo" : "testsInfo are supposed to have the following settings per test: cweText",
 
     "hardwareSoC" : [
         {
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {
+                "test_1037" : {
+                    "cweText" : "Processor Optimization Removal or Modification of Security-critical Code"
+                },
+                "test_1050" : {
+                    "cweText" : "Excessive Platform Resource Consumption within a Loop"
+                },
+                "test_1189" : {
+                    "cweText" : "Improper Isolation of Shared Resources on System-on-Chip (SoC)"
+                },
+                "test_1193" : {
+                    "cweText" : "Power-On of Untrusted Execution Core Before Enabling Fabric Access Control"
+                },
+                "test_1209" : {
+                    "cweText" : "Failure to Disable Reserved Bits"
+                },
                 "test_1220" : {
-                    "gdb" : 0,
-                    "bootedOs" : 0,
-                    "hasMethod" : 0,
-                    "cFile" : 0,
-                    "recommendation" : 1,
-                    "text" : "Insufficient Granularity of Access Control."
+                    "cweText" : "Insufficient Granularity of Access Control"
+                },
+                "test_1221" : {
+                    "cweText" : "Incorrect Register Defaults or Module Parameters"
+                },
+                "test_1222" : {
+                    "cweText" : "Insufficient Granularity of Address Regions Protected by Register Locks"
+                },
+                "test_1223" : {
+                    "cweText" : "Race Condition for Write-Once Attributes"
+                },
+                "test_1224" : {
+                    "cweText" : "Improper Restriction of Write-Once Bit Fields"
+                },
+                "test_1231" : {
+                    "cweText" : "Improper Implementation of Lock Protection Registers"
+                },
+                "test_1232" : {
+                    "cweText" : "Improper Lock Behavior After Power State Transition"
+                },
+                "test_1233" : {
+                    "cweText" : "Improper Hardware Lock Protection for Security Sensitive Controls"
+                },
+                "test_1234" : {
+                    "cweText" : "Hardware Internal or Debug Modes Allow Override of Locks"
+                },
+                "test_1239" : {
+                    "cweText" : "Improper Zeroization of Hardware Register"
+                },
+                "test_1240" : {
+                    "cweText" : "Use of a Risky Cryptographic Primitive"
+                },
+                "test_1241" : {
+                    "cweText" : "Use of Predictable Algorithm in Random Number Generator"
+                },
+                "test_1242" : {
+                    "cweText" : "Inclusion of Undocumented Features or Chicken Bits"
+                },
+                "test_1243" : {
+                    "cweText" : "Exposure of Security-Sensitive Fuse Values During Debug"
+                },
+                "test_1245" : {
+                    "cweText" : "Improper Finite State Machines (FSMs) in Hardware Logic"
+                },
+                "test_1246" : {
+                    "cweText" : "Improper Write Handling in Limited-write Non-Volatile Memories"
+                },
+                "test_1251" : {
+                    "cweText" : "Mirrored Regions with Different Values"
                 },
                 "test_1252" : {
-                    "gdb" : 1,
-                    "bootedOs" : 1,
-                    "hasMethod" : 1,
-                    "cFile" : 0,
-                    "recommendation" : 0
+                    "cweText" : "CPU Hardware Not Configured to Support Exclusivity of Write and Execute Operations"
+                },
+                "test_1253" : {
+                    "cweText" : "Incorrect Selection of Fuse Values"
+                },
+                "test_1254" : {
+                    "cweText" : "Incorrect Comparison Logic Granularity"
+                },
+                "test_1256" : {
+                    "cweText" : "Hardware Features Enable Physical Attacks from Software"
+                },
+                "test_1257" : {
+                    "cweText" : "Improper Access Control Applied to Mirrored or Aliased Memory Regions"
+                },
+                "test_1259" : {
+                    "cweText" : "Improper Protection of Security Identifiers"
+                },
+                "test_1260" : {
+                    "cweText" : "Improper Handling of Overlap Between Protected Memory Ranges"
+                },
+                "test_1261" : {
+                    "cweText" : "Improper Handling of Single Event Upsets"
+                },
+                "test_1262" : {
+                    "cweText" : "Register Interface Allows Software Access to Sensitive Data or Security Settings"
+                },
+                "test_1264" : {
+                    "cweText" : "Hardware Logic with Insecure De-Synchronization between Control and Data Channels"
+                },
+                "test_1268" : {
+                    "cweText" : "Agents Included in Control Policy are not Contained in Less-Privileged Policy"
+                },
+                "test_1270" : {
+                    "cweText" : "Generation of Incorrect Security Identifiers"
+                },
+                "test_1271" : {
+                    "cweText" : "Missing Known Value on Reset for Registers Holding Security Settings"
+                },
+                "test_1272" : {
+                    "cweText" : "Debug/Power State Transitions Leak Information"
+                },
+                "test_1273" : {
+                    "cweText" : "Device Unlock Credential Sharing"
+                },
+                "test_1274" : {
+                    "cweText" : "Insufficient Protections on the Volatile Memory Containing Boot Code"
+                },
+                "test_1276" : {
+                    "cweText" : "Hardware Block Incorrectly Connected to Larger System"
+                },
+                "test_1277" : {
+                    "cweText" : "Firmware Not Updateable"
+                },
+                "test_1279" : {
+                    "cweText" : "Cryptographic Primitives used without Successful Self-Test"
+                },
+                "test_1280" : {
+                    "cweText" : "Access Control Check Implemented After Asset is Accessed"
+                },
+                "test_1281" : {
+                    "cweText" : "Sequence of Processor Instructions Leads to Unexpected Behavior (Halt and Catch Fire)"
+                },
+                "test_1282" : {
+                    "cweText" : "Assumed-Immutable Data Stored in Writable Memory"
+                },
+                "test_1283" : {
+                    "cweText" : "Mutable Attestation or Measurement Reporting Data"
                 }
             }
         }

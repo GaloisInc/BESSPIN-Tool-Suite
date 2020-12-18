@@ -55,7 +55,7 @@ def scoreLog(logFile, lookfor):
     elif (logSymbol == 'ERR'):
         thisScore = SCORES.CALL_ERR
     elif (logSymbol in ['COMPLETED', 'TIMED OUT']):
-        thisScore = SCORES.V_HIGH
+        thisScore = SCORES.HIGH
     elif (logSymbol == 'TRAPPED'):
         thisScore = SCORES.NONE
     else:

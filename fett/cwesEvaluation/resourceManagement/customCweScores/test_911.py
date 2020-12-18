@@ -22,7 +22,7 @@ def test_911 (logLines):
             partsScores[2] = SCORES.CALL_ERR
         elif (doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_CHUNK_FREE>") or
             doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_UNION_DATA_SET_TO_ONE>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2],'Segmentation fault') or doesKeywordExist(partsLines[2],'Aborted')):
             partsScores[2] = SCORES.HIGH
         else:
@@ -41,7 +41,7 @@ def test_911 (logLines):
 
         if (doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_CHUNK_FREE>") or
             doesKeywordExist(partsLines[2], "<UNKNOWN_REFERENCE_COUNTER_AFTER_UNION_DATA_SET_TO_ONE>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[2], "<GDB-SIGINT>") or doesKeywordExist(partsLines[2],"<TIMEOUT>")):
             partsScores[2] = SCORES.HIGH
         else:

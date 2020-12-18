@@ -19,7 +19,7 @@ the tests that are relevant to the CWE in question.
 
 ## Scoring Approach ##
 
-Each test attempts to show the existence of a weakness, and then reports what happens. If the processor reacts to the attempt by blocking it or detecting it, then they score `NONE` or `DETECTED` respectively. If they do not react, and the test runs to completion, then the score is `V-HIGH` conveying the existence of the weakness related to this test.   
+Each test attempts to show the existence of a weakness, and then reports what happens. If the processor reacts to the attempt by blocking it or detecting it, then they score `NONE` or `DETECTED` respectively. If they do not react, and the test runs to completion, then the score is `HIGH` conveying the existence of the weakness related to this test.   
 In case of multi-part tests, the overall test score is the minimum score achieved among this test's parts.   
 
 ## MAL (Memory Allocation and Deallocation Bugs) ##
@@ -106,7 +106,7 @@ Missing Release of Resource after Effective Lifetime
   it. Function `B` keeps opening files until it is not able to
   anymore, then returns. The test runs function `A` first, then
   executes function `B`, then calls function `A` again. `CALL-ERR` if
-  function `A` fails in the first run, and `V-HIGH` if function `A`
+  function `A` fails in the first run, and `HIGH` if function `A`
   fails in the second run.
 
 *Possible Extensions:*
@@ -427,36 +427,6 @@ of the data type.  For example, if the type of `p` is `T*` and `sizeof(T)
   subscript operator rather than pointer arithmetic. For example,
   replace `*(p+k)` with `p[k]`. 
 
-### TEST-395 ###
-
-Use of `NullPointerException` Catch to Detect `NULL` Pointer
-Dereference
-\[[CWE-395](https://cwe.mitre.org/data/definitions/395.html)\].
-
-**Related CWEs**
-
-**Notes:**
-- Catching `NullPointerException` (or comparable trap or signal)
-  should not be used as an alternative to programmatic checks to
-  prevent dereferencing a `NULL` pointer.  We have shown an example,
-  using try-catch clause, describing the error handler
-  mechanism. However, for the `NULL` pointer exception this should never
-  be used.
-
-**FreeRTOS:**
-- Implemented.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a try-catch read and
-  try-catch write operation when the application dereferences a NULL
-  pointer trying to read from, or assign to it.
-- The `try_catch_test_read` function shows an example of `NULL`
-  pointer trying to read it.
-- The `try_catch_test_write` function shows an example of `NULL`
-  pointer trying to write it.
-- This weakness results in a fact that catching the resulting
-  exception was easier than fixing the underlying problem.
-
 ### TEST-771 ##
 
 Missing Reference to Active Allocated Resource
@@ -573,32 +543,3 @@ Attempt to Access Child of a Non-structure Pointer
   The result is an exception `EXP-BAD_ACCESS` signal 
   handled by the emulated try catch block.
 
-### TEST-822 ###
-
-Untrusted Pointer Dereference
-\[[CWE-822](https://cwe.mitre.org/data/definitions/822.html)\].
-
-**Related CWEs**
-- [CWE-119](https://cwe.mitre.org/data/definitions/119.html).
-- [CWE-781](https://cwe.mitre.org/data/definitions/781.html).
-- [CWE-125](https://cwe.mitre.org/data/definitions/125.html).
-- [CWE-787](https://cwe.mitre.org/data/definitions/787.html).
-- [CWE-465](https://cwe.mitre.org/data/definitions/465.html).
-
-**Notes:**
-- The program obtains a value from an untrusted source, converts this 
-value to a pointer, and dereferences the resulting pointer.
-
-**FreeRTOS:**
-- Implemented.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of untrusted Pointer Dereference.
- 
-- The `compare` function compares two strings character by character. 
-- The `do_malicious_modification` function: 
-  If the pointer is de-referenced for a write operation, the attack 
-  might allow modification of critical program state variables,
-  cause a crash, or execute code.
-
------------------- 

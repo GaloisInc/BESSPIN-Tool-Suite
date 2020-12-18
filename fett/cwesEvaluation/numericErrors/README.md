@@ -18,17 +18,17 @@ See `sources/test_456.c` for an example.
 
 ## Scoring Approach ##
 
-In the face of undefined behavior and possibly aborts, it is difficult to write test code that reliably produces predictable output. To this end, the scoring code recognizes both test-generated output and output from OS or CPU-level intervention. The following table shows the particular string that is matched in each test's log file, its numeric "score" and that score's interpretation:
+In the face of undefined behavior and possibly aborts, it is difficult to write test code that reliably produces predictable output. To this end, the scoring code recognizes both test-generated output and output from OS or CPU-level intervention. The following table shows the particular string that is matched in each test's log file and its score:
 
-|Matching String   |Numeric Score|Overall Score|
-|------------------|-------------|-------------|
-|TEST FAILED       |4            |V-HIGH       |
-|TOP SECRET STUFF  |4            |V-HIGH       |
-|SEGFAULT          |3            |HIGH         |
-|Segmentation Fault|3            |HIGH         |
-|TEST PASSED       |0            |NONE         |
-|\<ABORT\>         |0            |NONE         |
-|TEST ERROR        |-1           |CALL-ERR     |
+|Matching String   |Score|
+|------------------|-------------|
+|TEST FAILED       |HIGH       |
+|TOP SECRET STUFF  |HIGH       |
+|SEGFAULT          |HIGH         |
+|Segmentation Fault|HIGH         |
+|TEST PASSED       |NONE         |
+|\<ABORT\>         |NONE         |
+|TEST ERROR        |CALL-ERR     |
 
 Notes:
 
@@ -148,20 +148,6 @@ The CWE website shows 2 examples of this problem in C. The first shows a simple 
 **Test Parts:**
 - p01: A "varargs" function is declared that expects exactly four arguments. It is then calls with just 3 arguments, returning an undefined result. This code is adapted from the second example on the CWE page linked above. If the result of the function is successfully printed, then this is scored as "TEST FAILED".
 
-### TEST-475 ###
-Undefined Behavior for Input to API \[[CWE-475](https://cwe.mitre.org/data/definitions/475.html)\].
-
-**Related CWEs**
-- [CWE-475](https://cwe.mitre.org/data/definitions/475.html).
-
-**Notes:**
-This CWE applies to potentially any API or library that could give rise to undefined behavior. So many to choose from!
-
-**Test Parts:**
-- p01: In this case, we choose to call the strcat() function from C's <string.h> library with an
-argument that is not a properly zero-terminated C-string, resulting in undefined behavior.
-If an attempt to find the length of that string succeeds, then this test is scored "TEST FAILED".
-
 ### TEST-559 ###
 Often Misused: Arguments and Parameters \[[CWE-559](https://cwe.mitre.org/data/definitions/559.html)\].
 
@@ -218,33 +204,6 @@ Function Call with Incorrect Number of Parameters \[[CWE-685](https://cwe.mitre.
 - [CWE-685](https://cwe.mitre.org/data/definitions/685.html).
 
 This CWE most notably affects C when "varargs" functions are used, such as printf(). As such, this is a repetition of CWE-234 above, so no additional test case has been added.
-
-### TEST-686 ###
-Function Call with Incorrect Argument Type \[[CWE-686](https://cwe.mitre.org/data/definitions/686.html)\].
-
-**Related CWEs**
-- [CWE-686](https://cwe.mitre.org/data/definitions/686.html).
-
-**Notes:**
-This test subverts C's type model by assigning a pointer to the library function strchr() to another pointer-to-function that has the wrong number and types of its arguments.  This test has been adapted from the example shown in the SEI's CERT C Coding Standard \[[Rule EXP37-C](https://wiki.sei.cmu.edu/confluence/display/c/EXP37-C.+Call+functions+with+the+correct+number+and+type+of+arguments)\].
-
-**Test Parts:**
-- p01: As above - calling function via incorrectly typed pointer. If program control flow passes to the statement following the bad call, then this is scored "TEST FAILED".
-
-### TEST-687 ###
-Function Call with Incorrectly Specified Argument Value \[[CWE-687](https://cwe.mitre.org/data/definitions/687.html)\].
-
-**Related CWEs**
-- [CWE-687](https://cwe.mitre.org/data/definitions/687.html).
-
-This CWE is very general - potentially covered any function call with "the wrong value" passed as an argument.  This could be true of any non-total function in any program or library.
-
-The CWE description does refer to one particularly dangerous example in C - calling malloc() with a ZERO value as the argument, which is an Unspecified Behavior.  The returned pointer might be NULL, or might point to an area of memory that should not be accessed.
-
-This test case illustrates that particular problem, since it is both relevant and potentially mitigated by SSITH CPUs.  See \[[Rule MEM04-C](https://wiki.sei.cmu.edu/confluence/display/c/MEM04-C.+Beware+of+zero-length+allocations)\] for more details.
-
-**Test Parts:**
-- p01: As described above - calling malloc() with a ZERO as argument. A successful attempt to subsequently dereference that pointer is scored as "TEST FAILED".
 
 ### TEST-688 ###
 Function Call with Incorrect Variable or Reference as Argument \[[CWE-688](https://cwe.mitre.org/data/definitions/688.html)\].
@@ -393,21 +352,6 @@ Incorrect Calculation \[[CWE-682](https://cwe.mitre.org/data/definitions/682.htm
 
 **Notes:**
 This CWE is rather general, covering any "incorrect calculation" the result of which is "later used in security-critical decisions or resource management." It is actually a parent of CWEs 128, 190, 191, 192, and 369 in the CWE hierarchy. These CWEs cover more specific cases of numeric calculation errors, and are dealt with above. As such, no specific test case has been designed for CWE 682.
-
-### TEST-704 ###
-Incorrect Type Conversion or Cast \[[CWE-704](https://cwe.mitre.org/data/definitions/704.html)\].
-
-**Related CWEs**
-- [CWE-681](https://cwe.mitre.org/data/definitions/681.html).
-- [CWE-588](https://cwe.mitre.org/data/definitions/588.html).
-
-**Notes:**
-This CWE is rather general, covering any "incorrect conversion or cast", many of which are covered by its child CWEs 681 and others covered above.
-
-One specific case does yield an interesting test case, though, arising from its child CWE 588. This case covers an attempted conversion from a "pointer-to-function" to a "pointer-to-data" and then an attempt to write to the data at the resulting pointer location - a possible route for code injection and other related vulnerabilities. Some operating systems prevent this kind of attach by making program instructions "read only" or "execute only", but bare-metal or small systems like FreeRTOS may not do this, making this an interesting test case.
-
-**Test Parts:**
-- p01: This test converts a function pointer into a pointer to a "struct" data object, then attempts to write to the data referenced by the resulting pointer. The result is undefined behavior or a program crash on some systems. A SSITH platform might pass the test by preventing the initial cast operation, or by preventing the subsequent assignment via the pointer value.
 
 ### TEST-369 ###
 Division by Zero \[[CWE-369](https://cwe.mitre.org/data/definitions/369.html)\].

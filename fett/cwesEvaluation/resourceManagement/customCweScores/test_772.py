@@ -21,7 +21,7 @@ def test_772 (logLines):
         elif (not doesKeywordExist(part1B,"<LIMIT-REACHED>")):
             partsScores[1] = SCORES.CALL_ERR
         elif (doesKeywordExist(part1A2,"<DOS-ACHIEVED>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
         elif (doesKeywordExist(part1A2,"<FILE-OPENED>")):
             partsScores[1] = SCORES.NONE
         else:
@@ -36,12 +36,12 @@ def test_772 (logLines):
         partsScores = {}
 
         if (doesKeywordExist(partsLines[1],"<LEAKED_BLOCK>")):
-            partsScores[1] = SCORES.V_HIGH
+            partsScores[1] = SCORES.HIGH
 
         else:
             partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2],"<EVERY_ALLOCATION_EXCEPT_THE_LAST_IS_LOST>")):
-            partsScores[2] = SCORES.V_HIGH
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.FAIL
 
