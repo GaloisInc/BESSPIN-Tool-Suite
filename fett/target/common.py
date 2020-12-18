@@ -530,6 +530,7 @@ class commonTarget():
         else:
             self.terminateAndExit(f"<createUser> is not implemented for <{self.osImage}> on <{self.target}>.",overrideConsole=True,exitCode=EXIT.Implementation)
         self.userCreated = True
+        printAndLog (f"{self.targetIdInfo}User created!",doPrint=(not self.targetId))
 
     @decorate.debugWrap
     @decorate.timeWrap
