@@ -397,9 +397,6 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
             if ((self.processor=='bluespec_p3') and isEqSetting('mode','evaluateSecurityTests')):
-                # execute tests through SSH
-                self.enableSshOnRoot()
-                time.sleep(15)
                 self.openSshConn()
 
         elif (self.osImage=='FreeBSD'):
@@ -761,6 +758,8 @@ class commonTarget():
 
 
         if (self.osImage in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)): #send through SSH
+            if (currentUser == 'root'):
+                self.enableSshOnRoot()
             portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
 
             # if sending TO target, then "scp host target" otherwise flipped
@@ -1250,6 +1249,9 @@ class commonTarget():
         if (self.sshRetries >= self.sshLimitRetries): #to protect it from excessive attempts
             return False
 
+        if (userName == 'root'):
+            self.enableSshOnRoot()
+
         portPart = '' if (not self.sshHostPort) else f" -p {self.sshHostPort}"
         sshCommand = f"ssh{portPart} {userName}@{self.ipTarget}"
         sshPassword = self.rootPassword  if (userName=='root') else self.userPassword
@@ -1401,6 +1403,8 @@ class commonTarget():
         self.isSshRootEnabled = True
         if (switchUsers):
             self.switchUser() #switch back
+        if (self.processor == 'bluespec_p3'): #needs time to take effect
+            time.sleep(15)
 
     @decorate.debugWrap
     @decorate.timeWrap
