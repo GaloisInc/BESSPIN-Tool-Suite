@@ -2,7 +2,7 @@
 Building CWEs Evaluation
 """
 
-import glob, os, re
+import glob, os, re, random
 from collections import defaultdict
 from pathlib import Path
 
@@ -190,6 +190,14 @@ def buildCwesEvaluation():
             if (xSetting.startswith('test_')):
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
+        if (vulClass == "resourceManagement"):
+            if (isEnabledDict(vulClass,"useSeed")):
+                seed = getSettingDict(vulClass,"seed")
+                printAndLog(f"{vulClass}: Using the custom seed <{seed}>.")
+            else:
+                seed = random.randrange(pow(2,32)) #This is the maximum value in configData.json (-1 of course)
+                printAndLog(f"{vulClass}: Using the seed <{seed}>.")
+            fHeader.write(f"#define RM_SEED {seed}\n")
         fHeader.close()
 
         if isEqSetting('osImage', 'FreeRTOS'):

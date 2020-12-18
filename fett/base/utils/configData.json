@@ -321,6 +321,16 @@
 
     "resourceManagement": [
         {
+            "name" : "useSeed",
+            "type" : "bool"
+        },
+        {
+            "name" : "seed",
+            "type" : "int",
+            "min" : 0,
+            "max" : 4294967295
+        },
+        {
             "name" : "test_nResourceLimit",
             "type" : "int",
             "min" : 5,
