@@ -117,7 +117,8 @@ class commonTarget():
     @decorate.timeWrap
     def switchUser (self):
         if (not self.userCreated):
-            self.terminateAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
+            warnAndLog("<switchUser> is called, but a user was never created.")
+            self.createUser()
 
         if (self.osImage in ['debian', 'FreeBSD']):
             if (not self.isSshConn):
