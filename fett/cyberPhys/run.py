@@ -70,7 +70,7 @@ def watchdog(targetId):
         if not isTargetAlive(targetId) and handleError("Target is not alive"):
             break
 
-        time.sleep(10)
+        time.sleep(1)
 
     # Will send an item to the queue anyway; If we're here because of error:
     #   Yes: So this will exit the main thread

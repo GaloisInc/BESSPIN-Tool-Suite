@@ -69,14 +69,21 @@ static void prvInfoTask(void *pvParameters);
 void startNetwork (void);
 char* getCurrTime(void);
 
+// ADC resoluton 12 bits (0-2048)
+// Throttle min: 162?
+// Brake min: 1384
+// T max: 2048
+// Brake max 1220
 uint8_t throttle;
 uint16_t throttle_raw;
 uint16_t throttle_scaling_factor;
 uint16_t throttle_gain;
+uint16_t throttle_average;
 uint8_t brake;
 uint16_t brake_raw;
 uint16_t brake_scaling_factor;
 uint16_t brake_gain;
+uint16_t brake_average;
 uint8_t gear;
 
 static const uint8_t ucIPAddress[4] = {configIP_ADDR0, configIP_ADDR1, configIP_ADDR2, configIP_ADDR3};
@@ -93,13 +100,15 @@ char* getCurrTime(void) {
     static char buf[16] = {0};
     TickType_t t = xTaskGetTickCount();
     uint32_t n_seconds = t/configTICK_RATE_HZ;
+    uint32_t n_ms = t - n_seconds*configTICK_RATE_HZ;
+    n_ms = (n_ms * 1000)/configTICK_RATE_HZ;
     uint32_t n_minutes = n_seconds/60;
     uint32_t n_hours = n_minutes/60;
 
     n_minutes = n_minutes - n_hours*60;
     n_seconds = n_seconds - n_minutes*60;
 
-    sprintf(buf, "%02u:%02u:%02u", n_hours, n_minutes, n_seconds);
+    sprintf(buf, "%02u:%02u:%02u.%03u", n_hours, n_minutes, n_seconds, n_ms);
     return buf;
 }
 
@@ -129,7 +138,8 @@ void main_fett(void)
 static void prvInfoTask(void *pvParameters)
 {
     (void)pvParameters;
-    uint8_t local_throttle, local_brake, local_gear;
+    uint16_t local_throttle, local_brake;
+    uint8_t local_gear;
 
     FreeRTOS_printf((">>>%s Starting prvInfoTask\r\n",getCurrTime()));
 
@@ -137,8 +147,8 @@ static void prvInfoTask(void *pvParameters)
     {
         // Copy data over
         taskENTER_CRITICAL();
-        local_throttle = throttle;
-        local_brake = brake;
+        local_throttle = throttle_raw;
+        local_brake = brake_raw;
         local_gear = gear;
         taskEXIT_CRITICAL();
 
@@ -162,9 +172,7 @@ static void prvSensorTask(void *pvParameters)
     for (;;)
     {
         throttle_raw = ads1015_get_channel(THROTTLE_ADC_CHANNEL);
-        msleep(1);
         brake_raw = ads1015_get_channel(BRAKE_ADC_CHANNEL);
-        msleep(1);
 
         throttle = (uint8_t)((throttle_raw - THROTTLE_MIN) * throttle_gain / (THROTTLE_MAX - THROTTLE_MIN));
         brake = (uint8_t)((brake_raw - BRAKE_MIN) * brake_gain / (BRAKE_MAX - BRAKE_MIN));
@@ -290,16 +298,22 @@ static void prvCanTxTask(void *pvParameters)
 
     FreeRTOS_printf((">>>%s (prvCanTxTask) socket connected\r\n", getCurrTime()));
 
-    uint8_t local_throttle, local_brake, local_gear;
+    uint16_t local_throttle, local_brake;
+    uint8_t local_gear;
 
     for (;;)
     {
         // Copy data over
         taskENTER_CRITICAL();
-        local_throttle = throttle;
-        local_brake = brake;
+        local_throttle = throttle_raw;
+        local_brake = brake_raw;
         local_gear = gear;
         taskEXIT_CRITICAL();
+
+        // prepare to be network endian
+        local_throttle = FreeRTOS_htons(local_throttle);
+        local_brake = FreeRTOS_htons(local_brake);
+
         // Send throttle
         if (send_can_message(xClientSocket, &xDestinationAddress, PGN_THROTTLE_INPUT, (void *)&local_throttle, sizeof(local_throttle)) != SUCCESS)
         {

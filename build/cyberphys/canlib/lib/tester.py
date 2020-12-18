@@ -5,6 +5,15 @@ import select
 import time
 from can import BusABC, Message
 
+from PyQt5 import QtWidgets, QtCore
+from pyqtgraph import PlotWidget, plot
+import pyqtgraph as pg
+import sys  # We need sys so that we can pass argv to QApplication
+import os
+import time
+from random import randint
+
+
 BIND_PORT = 5002
 TX_PORT = 5001
 TX_IP = "10.88.88.2"
@@ -61,14 +70,108 @@ class UDPBus(BusABC):
         return None, False
 
 
-bus = UDPBus(BIND_PORT)
+# bus = UDPBus(BIND_PORT)
+#
+# # send a message
+# message = Message(arbitration_id=0XAAFEEE00, is_extended_id=True,
+#                   data=[0xAA, 0xBB, 0xCC, 0xDD])
 
-# send a message
-message = Message(arbitration_id=0XAAFEEE00, is_extended_id=True,
-                  data=[0xAA, 0xBB, 0xCC, 0xDD])
+# # iterate over received messages
+# for msg in bus:
+#     print(f"id={hex(msg.arbitration_id)}, data={msg.data}")
+#     bus.send(message, TX_IP,TX_PORT)
 
-# iterate over received messages
-for msg in bus:
-    print(f"id={hex(msg.arbitration_id)}, data={msg.data}")
-    bus.send(message, TX_IP,TX_PORT)
+ID_GEAR = 0xaa780280
+ID_THROTTLE = 0xaa780d00
+ID_BRAKE = 0xaa780d80
 
+class MainWindow(QtWidgets.QMainWindow):
+    labels = ['throttle', 'brake', 'gear']
+    pen = pg.mkPen(color=(255, 0, 0),width=3)
+    cnt = 0
+
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+
+        self.graphWidget = pg.GraphicsLayoutWidget()
+        self.setCentralWidget(self.graphWidget)
+        self.resize(1420,1860)
+        self.graphWidget.setBackground('w')
+
+        self.xs = []
+        self.ys = []
+        self.lines = []
+        self.axis = []
+        self.starttime = time.time()
+
+        for idx in range(0, len(self.labels)):
+            ax = self.graphWidget.addPlot(row=idx, col=0)
+            ax.showGrid(x = True, y = True, alpha = 1.0)
+            ax.enableAutoScale()
+            ax.setLabels(left=self.labels[idx])
+            line = ax.plot(self.xs,[],pen=pg.mkPen('b', width=3))
+            font=pg.QtGui.QFont()
+            font.setPixelSize(25)
+            font.setWeight(pg.QtGui.QFont.Bold)
+            ax.getAxis("bottom").tickFont = font
+            ax.getAxis("left").tickFont = font
+            self.axis.append(ax)
+            self.lines.append(line)
+            self.ys.append([])
+
+        self.bus = UDPBus(BIND_PORT)
+
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.update_data)
+        self.timer.start(100)
+
+    def update_data(self):
+        wait_for_brake = True
+        wait_for_throttle = True
+        wait_for_gear = True
+
+        gear = -420;
+        brake = -420;
+        throttle = -420;
+
+        while wait_for_brake or wait_for_throttle or wait_for_gear:
+            msg = self.bus.recv(timeout=0.1)
+            if msg is not None:
+                data = int.from_bytes(msg.data, byteorder='big', signed=False)
+                print(f"ID={hex(msg.arbitration_id)}, value={data}, raw={msg.data}")
+                if msg.arbitration_id == ID_GEAR:
+                    gear = data
+                    wait_for_gear = False
+                elif msg.arbitration_id == ID_THROTTLE:
+                    throttle = data
+                    wait_for_throttle = False
+                elif msg.arbitration_id == ID_BRAKE:
+                    brake = data
+                    wait_for_brake = False
+                else:
+                    print("Unknown ID")
+
+        sim_time = time.time() - self.starttime
+        self.xs.append(sim_time)
+        self.ys[0].append(throttle)
+        self.ys[1].append(brake)
+        self.ys[2].append(gear)
+
+        if len(self.xs) > 100:
+            self.xs = self.xs[1:100]
+            self.ys[0] = self.ys[0][1:100]
+            self.ys[1] = self.ys[1][1:100]
+            self.ys[2] = self.ys[2][1:100]
+
+        for idx in range(0, len(self.lines)):
+            self.lines[idx].setData(self.xs,self.ys[idx])
+
+
+def threaded_plot_render():
+    print("Starting live plot thread")
+    app = QtWidgets.QApplication(sys.argv)
+    w = MainWindow()
+    w.show()
+    sys.exit(app.exec_())
+
+threaded_plot_render()
