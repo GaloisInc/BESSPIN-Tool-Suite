@@ -149,6 +149,16 @@
                     "test_rlr_heapExhaustion"
                 ]
             }
+        },
+        {
+            "name" : "funcTestsInfo",
+            "type" : "dict",
+            "val" : {
+                "test_rlr_heapExhaustion" : {
+                    "unix" : 1,
+                    "FreeRTOS" : 1
+                }
+            }
         }
     ]
 }
