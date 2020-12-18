@@ -134,6 +134,21 @@
                     "cweText" : "Improper Restriction of Power Consumption"
                 }
             }
+        },
+        {
+            "name" : "mapTestsToCwes",
+            "type" : "dict",
+            "val" : {
+                "test_400" : [
+                    "test_rlr_heapExhaustion"
+                ],
+                "test_770" : [
+                    "test_rlr_heapExhaustion"
+                ],
+                "test_789" : [
+                    "test_rlr_heapExhaustion"
+                ]
+            }
         }
     ]
 }
