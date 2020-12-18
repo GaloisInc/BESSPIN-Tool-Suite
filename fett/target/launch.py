@@ -211,13 +211,14 @@ def launchFett (targetId=None):
         printAndLog (f"Launching FETT <{getSetting('mode')} mode>...",doPrint=(not isEqSetting('mode','cyberPhys')))
     xTarget.start()
     if (isEnabled('isUnix',targetId=targetId) and (xTarget.osHasBooted)):
-        if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) 
-                and (   (not isEqSetting('mode','evaluateSecurityTests')) 
+        if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) #don't do it for busybox
+                and (   (getSetting('mode') in ['test', 'production'])
                         or isEqSetting('binarySource','SRI-Cambridge',targetId=targetId) #Have to change pw if SRI-Cambridge
                     )
             ): #no need to change pw in evaluation mode
             xTarget.changeRootPassword()
-        xTarget.createUser()
+        if (getSetting('mode') in ['test', 'production']):
+            xTarget.createUser()
     if (isEnabled('runApp',targetId=targetId)):
         if isEqSetting('mode', 'evaluateSecurityTests'):
             sendTimeout = 20*len(getSetting('vulClasses'))
