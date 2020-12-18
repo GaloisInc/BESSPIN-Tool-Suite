@@ -232,7 +232,7 @@ def launchFett (targetId=None):
             xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget',targetId=targetId))
         else:
             runCyberPhys(xTarget)
-    if (not isEqSetting('mode','evaluateSecurityTests')):
+    if (getSetting('mode') in ['test', 'production']):
         if (isEnabled('isUnix',targetId=targetId) and isEnabled("useCustomCredentials")):
             xTarget.changeUserPassword()
         if isEnabled('isUnix',targetId=targetId) and isEnabled("rootUserAccess"):
@@ -335,7 +335,8 @@ def resetTarget (curTarget):
         fett.cyberPhys.launch.startUartPiping(targetId)
 
     if ((getSetting('target',targetId=targetId) in ['vcu118', 'qemu']) #We currently do not use a separate .img file
-            and (isEnabled('isUnix',targetId=targetId))):
+            and (isEnabled('isUnix',targetId=targetId)) 
+            and (getSetting('mode') in ['test', 'production'])):
         newTarget.createUser()
         if (getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']):
             newTarget.changeRootPassword()
