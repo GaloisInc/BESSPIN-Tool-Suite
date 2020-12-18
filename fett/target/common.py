@@ -847,9 +847,11 @@ class commonTarget():
         printAndLog (f"{self.targetIdInfo}sendTar: Sending files...",doPrint=(not self.targetId))
         #---send the archive
         if ((self.binarySource in ['GFE', 'SRI-Cambridge']) and (self.osImage=='FreeBSD')):
-            self.switchUser() #this is assuming it was on root
+            if (self.userCreated):
+                self.switchUser() #this is assuming it was on root
             self.sendFile (getSetting('buildDir',targetId=self.targetId),self.tarballName,timeout=timeout,forceScp=True)
-            self.switchUser()
+            if (self.userCreated):
+                self.switchUser()
             self.runCommand(f"mv /home/{self.userName}/{self.tarballName} /root/")
         else:
             self.sendFile (getSetting('buildDir',targetId=self.targetId),self.tarballName,timeout=timeout)
