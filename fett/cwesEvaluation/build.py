@@ -131,6 +131,11 @@ def buildCwesEvaluation():
             else: #all C files in sources
                 cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
                 tests = [os.path.basename(f).split(".c")[0] for f in glob.glob(os.path.join(sourcesDir, "test_*.c"))]
+                if (doesSettingExistDict(vulClass,["mapTestsToCwes"])): #this class has special maps
+                    for cweTest, testsList in getSettingDict(vulClass,["mapTestsToCwes"]).items():
+                        if (isTestEnabled(vulClass,cweTest)):
+                            for test in testsList:
+                                setSettingDict(vulClass,['enabledTests',test],True)
             for test in tests:
                 # Check if the test should be skipped:
                 if (isTestEnabled(vulClass,test)):
