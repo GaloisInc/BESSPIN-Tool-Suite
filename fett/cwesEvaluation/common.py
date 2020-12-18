@@ -76,9 +76,10 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             # Extract test output
             textBack, wasTimeout, idxReturn = target.expectFromTarget(
                     [">>>End of Fett<<<", pexpect.EOF],
-                    None,
+                    "runCweTest",
                     exitOnError=False,
-                    timeout=getSetting('FreeRTOStimeout'))
+                    timeout=getSetting('FreeRTOStimeout'),
+                    suppressWarnings=True)
 
             if idxReturn == 1:
                 if isEqSetting('target', 'qemu'):
