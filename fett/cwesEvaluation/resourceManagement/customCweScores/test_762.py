@@ -23,6 +23,7 @@ def test_762 (logLines):
             elif (doesKeywordExist(partsLines[iPart],'<INVALID_FREE_OF_')):
                 partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') or 
+                    doesKeywordExist(partsLines[iPart],'Abort') or
                     doesKeywordExist(partsLines[iPart],'Aborted') or
                     doesKeywordExist(partsLines[iPart],'Abort trap') ):
                 partsScores[iPart] = SCORES.HIGH
