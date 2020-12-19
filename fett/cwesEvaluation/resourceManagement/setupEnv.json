@@ -140,13 +140,13 @@
             "type" : "dict",
             "val" : {
                 "test_400" : [
-                    "test_rlr_heapExhaustion"
+                    "test_rlr_heapExhaust"
                 ],
                 "test_770" : [
-                    "test_rlr_heapExhaustion"
+                    "test_rlr_heapExhaust"
                 ],
                 "test_789" : [
-                    "test_rlr_heapExhaustion"
+                    "test_rlr_heapExhaust"
                 ]
             }
         },
@@ -154,7 +154,7 @@
             "name" : "funcTestsInfo",
             "type" : "dict",
             "val" : {
-                "test_rlr_heapExhaustion" : {
+                "test_rlr_heapExhaust" : {
                     "unix" : 1,
                     "FreeRTOS" : 1,
                     "highKeywords" : {
