@@ -4,7 +4,7 @@ After=syslog.target network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/sbin/ota /root/key.txt
+ExecStart=/usr/local/sbin/ota /root/key
 PrivateTmp=true
 
 [Install]

@@ -11,7 +11,7 @@ desc="OTA Update Server"
 rcvar="ota_enable"
 
 command="/usr/local/sbin/${name}"
-command_args="/root/key.txt &"
+command_args="/root/key &"
 
 pidfile="/var/run/${name}.pid"
 

@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     err = server_listen(server);
     if (err)
     {
-        printf("Failed to listen on address :5050\n");
+        printf("Failed to listen on address :%u\n",HSTATIC_PORT);
         return err;
     }
 

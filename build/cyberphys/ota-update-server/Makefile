@@ -1,3 +1,4 @@
+# NOTE: might have to be modified for secured version
 # use EXTRA_LINUX_CFLAGS/EXTRA_FREEBSD_CFLAGS to specify anything extra, like OpenSSL library location
 LINUX_CC = riscv64-unknown-linux-gnu-gcc
 LCRYPTO_LD_FLAGS = -lcrypto -I$(FETT_LCRYPTO_DIR)/include  -L$(FETT_LCRYPTO_DIR)/lib
@@ -19,8 +20,6 @@ SRCS := $(shell find ./src/*.c)
 
 all: linux freebsd
 
-# Builds main binary responsible for running
-# the HSTATIC server (`./hstatic.out`).
 linux: ./cmd/main.c $(SRCS)
 	$(LINUX_CC) $(EXTRA_LINUX_CFLAGS) $(LINUX_CFLAGS) -Wall $^ -o ./main-linux.elf
 	$(LINUX_OBJDUMP) -S main-linux.elf > main-linux.asm
@@ -29,9 +28,9 @@ freebsd: ./cmd/main.c $(SRCS)
 	$(FREEBSD_CC) $(EXTRA_FREEBSD_CFLAGS) $(FREEBSD_CFLAGS) -Wall $^ -o ./main-freebsd.elf
 	$(FREEBSD_OBJDUMP) -S main-freebsd.elf > main-freebsd.asm
 
-# Removes any binary generated.
 clean:
 	@find . -name "*.out" -type f -delete
 	@find . -name "*.asm" -type f -delete
+	@find . -name "*.elf" -type f -delete
 
 .PHONY: build clean

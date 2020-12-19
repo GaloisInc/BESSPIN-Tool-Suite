@@ -40,8 +40,8 @@ def copyOtaUpdateserverFiles(tarName, targetId=None):
     otaAppDir = getCyberphysAppDir('ota-update-server')
     otaBinDir = getBinDir('ota-update-server',targetId=targetId)
     cpFilesToBuildDir (otaBinDir, pattern="ota.elf", targetId=targetId)
-    cpFilesToBuildDir (otaAppDir, pattern="key.txt", targetId=targetId)
-    tarFiles = ["ota.elf","key.txt"]
+    cpFilesToBuildDir (otaAppDir, pattern="key", targetId=targetId)
+    tarFiles = ["ota.elf","key"]
 
     runtimeFilesDir = os.path.join(otaAppDir, osImage)
     if osImage == 'debian':

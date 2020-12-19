@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#! /usr/bin/env python3
 import pandas as pd
 
 specs_filename = "can_specification.csv"
@@ -29,8 +29,6 @@ with open(header_filename, "w") as f:
         f.write(f"#define BYTE_LENGTH_{field_name.upper()} {row['Byte Length']}\n")
         if row['PGN'] != '':
             f.write(f"#define PGN_{field_name.upper()} {row['PGN']}\n")
-        if row['SPN'] != '':
-            f.write(f"#define SPN_{field_name.upper()} {row['SPN']}\n")
 
     f.write("\n#endif")
     

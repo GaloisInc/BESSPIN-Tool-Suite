@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#! /usr/bin/env python3
 import struct
 import socket
 import select
@@ -81,9 +81,9 @@ class UDPBus(BusABC):
 #     print(f"id={hex(msg.arbitration_id)}, data={msg.data}")
 #     bus.send(message, TX_IP,TX_PORT)
 
-ID_GEAR = 0xaa780280
-ID_THROTTLE = 0xaa780d00
-ID_BRAKE = 0xaa780d80
+ID_GEAR = 0xaa780280 # should be 0XAAF00500
+ID_THROTTLE = 0xaa780d00 # should be 0XAAF01A00
+ID_BRAKE = 0xaa780d80 # should be 0XAAF01B00
 
 class MainWindow(QtWidgets.QMainWindow):
     labels = ['throttle', 'brake', 'gear']
