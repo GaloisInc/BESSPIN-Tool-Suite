@@ -25,6 +25,7 @@ def buildCyberPhys (targetId=None):
         tarName = os.path.join(getSetting('buildDir',targetId=targetId),getSetting('tarballName'))
         buildOtaUpdateServer(tarName, targetId=targetId)
         #buildInfotainmentServer(tarName, targetId=targetId)
+        setSetting('sendTarballToTarget',True,targetId=targetId)
     else:
         # Nothing to send
         setSetting('sendTarballToTarget',False,targetId=targetId)
@@ -49,16 +50,13 @@ def copyOtaUpdateserverFiles(tarName, targetId=None):
         tarFiles += ["ota.service"]
     elif osImage == 'FreeBSD':
         cpFilesToBuildDir (runtimeFilesDir, pattern="ota.sh", targetId=targetId)
-        tarFiles += ["ota.sh"]
+        # add GDB because it is not included in FreeBSD by default
+        # NOTE: this might not work on secure platforms
+        cpFilesToBuildDir (otaBinDir, pattern="gdb-freebsd-riscv64-static", targetId=targetId)
+        tarFiles += ["ota.sh", "gdb-freebsd-riscv64-static"]
     else:
         logAndExit (f"Installing ota-update-server is not supported on <{osImage}>",
                     exitCode=EXIT.Dev_Bug)
-
-    # Create the tarball here to be sent to target
-    if osImage == 'FreeBSD':
-        # add GDB
-        cpFilesToBuildDir (otaBinDir, pattern="gdb-freebsd-riscv64-static", targetId=targetId)
-        tarFiles += ["gdb-freebsd-riscv64-static"]
     
     buildDirPathTuplePartial = functools.partial(buildDirPathTuple, targetId=targetId)
     filesList=map(buildDirPathTuplePartial, tarFiles)
@@ -75,8 +73,6 @@ def buildOtaUpdateServer(tarName, targetId=None):
         tarFiles = copyOtaUpdateserverFiles(tarName,targetId=targetId)
         #Create the tarball here to be sent to target
         tar (tarName, tarFiles)
-        setSetting('sendTarballToTarget',True,targetId=targetId)
-    return
 
 @decorate.debugWrap
 @decorate.timeWrap

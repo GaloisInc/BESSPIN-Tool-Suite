@@ -68,6 +68,8 @@ def watchdog(targetId):
 
         # Check process
         if not isTargetAlive(targetId) and handleError("Target is not alive"):
+            appLog = getSetting('appLog',targetId=targetId)
+            appLog.close()
             break
 
         time.sleep(1)

@@ -38,18 +38,14 @@ def install (xTarget):
 @decorate.debugWrap
 @decorate.timeWrap
 def isServiceRunning (xTarget):
-    appLog = getSetting('appLog',targetId=xTarget.targetId)
     otaserver_port = getSetting('OtaServerPortTarget')
     url = f"http://{xTarget.ipTarget}:{otaserver_port}"
     try:
         resp = requests.get(url)
-        if resp.status_code == 200:
-            return True
-        else:
-            printAndLog(f"{xTarget.targetIdInfo}Ota service test failed!",tee=appLog)
-            return False
+        assert (resp.status_code == 200),f"{xTarget.targetIdInfo}Ota service: resp != 200."
+        return True
     except Exception as e:
-        printAndLog(f"{xTarget.targetIdInfo}Ota service test failed with exception <{e}>",tee=appLog)
+        warnAndLog(f"{xTarget.targetIdInfo}Ota service test failed.",exc=e)
         return False
 
 @decorate.debugWrap
