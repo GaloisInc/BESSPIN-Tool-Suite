@@ -130,8 +130,6 @@ def prepareFreeRTOSNetworkParameters(targetId=None, buildDir=None):
             settingVal = getSetting(xSetting)
         elif (xMacro=='configIP_ADDR'): #special treatment to accommodate for many-targets
             settingVal = getTargetIp(targetId=targetId)
-        elif (xMacro=='configMAC_ADDR'): #special treatment to accommodate for many-targets
-            settingVal = getTargetMac(targetId=targetId)
         else:
             logAndExit(f"prepareFreeRTOSNetworkParameters: Cannot find setting <{xSetting}>",exitCode=EXIT.Dev_Bug)
             
@@ -163,7 +161,7 @@ def getTargetMac(targetId=None):
     thisTarget = getSetting('target',targetId=targetId)
     if (thisTarget=='vcu118'): #use hostIP + targetId
         try:
-            macInc = 1 if (targetId is None) else targetId
+            macInc = 0 if (targetId is None) else targetId
             macTarget = getSetting(f"{thisTarget}MacAddrTarget")
             macTarget = macTarget.split(':')
             lastmac = int(macTarget[-1],16)

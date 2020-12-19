@@ -29,22 +29,25 @@
 
 void main_fett(void);
 
-#define CYBERPHYS_BROADCAST_ADDR "10.88.88.255"
+#define STRINGIZE_NX(A) #A
+#define STRINGIZE(A) STRINGIZE_NX(A)
+#define CYBERPHYS_BROADCAST_ADDR STRINGIZE(configGATEWAY_ADDR0) "." STRINGIZE(configGATEWAY_ADDR1) "." STRINGIZE(configGATEWAY_ADDR2) ".255"
 
 #define SENSORTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define CAN_TX_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define CAN_RX_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define INFOTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 
-#define SENSORTASK_PRIORITY tskIDLE_PRIORITY+10
-#define CAN_RX_TASK_PRIORITY tskIDLE_PRIORITY+5
-#define CAN_TX_TASK_PRIORITY tskIDLE_PRIORITY+6
+#define SENSORTASK_PRIORITY tskIDLE_PRIORITY+4
+#define CAN_TX_TASK_PRIORITY tskIDLE_PRIORITY+3
+#define CAN_RX_TASK_PRIORITY tskIDLE_PRIORITY+2
 #define INFOTASK_PRIORITY tskIDLE_PRIORITY+1
 
 #define CAN_RX_PORT (5001UL)
 #define CAN_TX_PORT (5002UL)
 
 #define SENSOR_LOOP_DELAY_MS pdMS_TO_TICKS(100)
+#define SENSOR_POWER_UP_DELAY_MS pdMS_TO_TICKS(100)
 #define BROADCAST_LOOP_DELAY_MS pdMS_TO_TICKS(100)
 #define INFOTASK_LOOP_DELAY_MS pdMS_TO_TICKS(1000)
 
@@ -97,6 +100,7 @@ const uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADD
  * "HH:MM:SS"
  */
 char* getCurrTime(void) {
+#ifdef USE_CURRENT_TIME
     static char buf[16] = {0};
     TickType_t t = xTaskGetTickCount();
     uint32_t n_seconds = t/configTICK_RATE_HZ;
@@ -110,26 +114,27 @@ char* getCurrTime(void) {
 
     sprintf(buf, "%02u:%02u:%02u.%03u", n_hours, n_minutes, n_seconds, n_ms);
     return buf;
+#else
+    return "";
+#endif
 }
 
 void startNetwork () {
     BaseType_t funcReturn;
 
-    FreeRTOS_printf((">>>%s ECU: FreeRTOS_IPInit\r\n",getCurrTime()));
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
     if (funcReturn != pdPASS) {
         FreeRTOS_printf(("%s (Error)~  startNetwork: Failed to initialize network. [ret=%d].\r\n",getCurrTime(), funcReturn));
     } else {
         FreeRTOS_printf(("%s (Info)~  startNetwork: Network IP initialized successfully!.\r\n",getCurrTime()));
     }
+
+    FreeRTOS_printf((">>>%s ECU: FreeRTOS_IPInit\r\n",getCurrTime()));
 }
 
 void main_fett(void)
 {
-    prvSetupHardware();
     startNetwork();
-
-    xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
     xTaskCreate(prvInfoTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
 
     FreeRTOS_printf(("\n>>>Beginning of Fett<<<\r\n"));
@@ -167,7 +172,7 @@ static void prvSensorTask(void *pvParameters)
     FreeRTOS_printf((">>>%s Starting prvSensorTask\r\n",getCurrTime()));
 
     // Give the sensor time to power up
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(SENSOR_POWER_UP_DELAY_MS);
 
     for (;;)
     {
@@ -206,6 +211,7 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
 		created. */
         if (xTasksAlreadyCreated == pdFALSE)
         {
+            xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
             ulsPort = CAN_TX_PORT;
             xTaskCreate(prvCanTxTask, "prvCanTxTask", CAN_TX_STACK_SIZE, (void *)ulsPort, CAN_TX_TASK_PRIORITY, NULL);
             ulsPort = CAN_RX_PORT;

@@ -1,6 +1,6 @@
 # This file has the necessary includes to run Fett on FreeRTOS
 
-CFLAGS += -DFETT_APPS -DFREERTOS -DBSP_USE_IIC0
+CFLAGS += -DFETT_APPS -DFREERTOS -DBSP_USE_IIC0 -DUSE_CURRENT_TIME
 
 # Network
 CFLAGS += -I$(FREERTOS_IP_INCLUDE)
