@@ -156,7 +156,19 @@
             "val" : {
                 "test_rlr_heapExhaustion" : {
                     "unix" : 1,
-                    "FreeRTOS" : 1
+                    "FreeRTOS" : 1,
+                    "highKeywords" : {
+                        "debian" : {
+                            "any" : ["<END-OF-MAIN>", "Killed", "Out of memory"]
+                        },
+                        "FreeBSD" : {
+                            "any" : ["<END-OF-MAIN>", "Killed", "out of swap space"]
+                        },
+                        "FreeRTOS" : {
+                            "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
+                            "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
+                        }
+                    }
                 }
             }
         }
