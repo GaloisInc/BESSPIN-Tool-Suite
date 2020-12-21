@@ -44,3 +44,5 @@ gradually ‘fades’ between values. Use “signal_L” and “signal_R” for 
 0XAAFEF200,uint,throttle (int),maybe?,,4,,YES,65266,51,Throttle state
 0XAAFEFA00,uint,parkingbrake_input (int),maybe?,,4,,YES,65274,619,Parking brake input state
 0XAAFEFC00,uint8_t,fuel (uint8_t),required by Infotainment Server,0/100,1,%,YES,65276,96,Percentage of fuel remaining
+0XAAFEGA00,uint8_t,button (uint8_t), broadcast by Infotainment Thin Client, ,1,,,,,Button pressed on infotainment screen. 0x01 Station 1 0x02 Station 2 0x03 station 3, 0x10 volume down, 0x11 volume up
+
