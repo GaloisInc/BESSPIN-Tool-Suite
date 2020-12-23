@@ -78,10 +78,6 @@
 jmp_buf env;
 #endif
 
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
-extern uintptr_t __bss_end;
-#endif
-
 /*****************************
  * Functions
  * **************************/
@@ -156,14 +152,6 @@ void test(void)
     // Cleared via memset so that we can do error checking
     // without wiping OS structures (ie if we overflowed into bss)
     {buf_type} {buf_name}[SIZE({buf_type},{buf_size},{memmax})];
-
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
-    if (&{buf_name}[0] <= (uintptr_t)&__bss_end) {{
-            printf("TEST INVALID. <buf1>\r\n");
-            fflush(stdout);
-            return;
-    }}
-#endif //FreeRTOS
     memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 
 #else //HEAP
@@ -193,15 +181,8 @@ void test(void)
 #ifdef STACK
 #ifdef BUF2_PRESENT
     {buf_type2} {buf_name2}[SIZE({buf_type2},{N2},{memmax})];
-
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
-    if (&{buf_name2}[0] <= (uintptr_t)&__bss_end) {{
-            printf("TEST INVALID. <buf2>\r\n");
-            fflush(stdout);
-            return;
-    }}
     memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
-#endif//FREERTOS
+
 #endif//BUF2_PRESENT
 #endif//STACK
 
