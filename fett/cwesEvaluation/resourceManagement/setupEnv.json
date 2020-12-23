@@ -140,13 +140,13 @@
             "type" : "dict",
             "val" : {
                 "test_400" : [
-                    "test_rlr_heapExhaust"
+                    "test_rlr_heapExhaust", "test_rlr_stackExhaust"
                 ],
                 "test_770" : [
-                    "test_rlr_heapExhaust"
+                    "test_rlr_heapExhaust", "test_rlr_stackExhaust"
                 ],
                 "test_789" : [
-                    "test_rlr_heapExhaust"
+                    "test_rlr_heapExhaust", "test_rlr_stackExhaust"
                 ]
             }
         },
@@ -169,8 +169,25 @@
                             "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
                         }
                     }
+                },
+                "test_rlr_stackExhaust" : {
+                    "unix" : 1,
+                    "FreeRTOS" : 1,
+                    "highKeywords" : {
+                        "debian" : {
+                            "any" : ["Segmentation fault"]
+                        },
+                        "FreeBSD" : {
+                            "any" : ["Segmentation fault"]
+                        },
+                        "FreeRTOS" : {
+                            "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
+                            "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
+                        }
+                    }
                 }
             }
+
         }
     ]
 }
