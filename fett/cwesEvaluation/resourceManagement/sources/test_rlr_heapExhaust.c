@@ -30,6 +30,7 @@ static char * exhaustHeap (void);
         #else
             printf("\n<INVALID> Part[%d] not in [1,%d].\n",TESTGEN_TEST_PART,NUM_OF_TEST_PARTS);
         #endif
+        return;
     }
 
 // --------------- Debian && FreeBSD test ---------------
