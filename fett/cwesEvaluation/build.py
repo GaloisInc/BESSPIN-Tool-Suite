@@ -188,7 +188,7 @@ def buildCwesEvaluation():
         fHeader.close()
 
         if isEqSetting('osImage', 'FreeRTOS'):
-            prepareFreeRTOS(vulClassDir)
+            templateFreeRTOS(vulClassDir)
         elif getSetting('osImage') in ['debian', 'FreeBSD']:
             crossCompileUnix(vulClassDir,extraString=f'{vulClass} tests')
         else:
@@ -220,13 +220,6 @@ def buildTarball():
     else:
         logging.debug("buildTarball: There are no files to send to target. No need to create a tarball.")
         setSetting('sendTarballToTarget', False)
-
-@decorate.debugWrap
-@decorate.timeWrap
-def prepareFreeRTOS(directory):
-    # TODO: Just inline this function if its just a one liner
-    # Generate main files
-    templateFreeRTOS(directory)
 
 @decorate.debugWrap
 @decorate.timeWrap
