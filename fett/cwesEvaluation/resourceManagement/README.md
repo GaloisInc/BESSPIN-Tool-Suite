@@ -543,3 +543,28 @@ Attempt to Access Child of a Non-structure Pointer
   The result is an exception `EXP-BAD_ACCESS` signal 
   handled by the emulated try catch block.
 
+## RLR (Resources Limits and Releasing) ##
+
+This is a custom sub-class that we use to group some of the interleaved CWEs. The sources of this sub-class have the prefix `test_rlr_`. 
+
+**Related CWEs**
+- [CWE-400](https://cwe.mitre.org/data/definitions/400.html).
+- [CWE-404](https://cwe.mitre.org/data/definitions/404.html).
+- [CWE-770](https://cwe.mitre.org/data/definitions/770.html).
+- [CWE-771](https://cwe.mitre.org/data/definitions/771.html).
+- [CWE-772](https://cwe.mitre.org/data/definitions/772.html).
+- [CWE-789](https://cwe.mitre.org/data/definitions/789.html).
+
+**Tests**
+A. No limit to allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-770](https://cwe.mitre.org/data/definitions/770.html), and [CWE-789](https://cwe.mitre.org/data/definitions/789.html). This is tested by the following:
+    A1. Heap exhaustion.
+    A2. Stack exhaustion.
+B. Losing references to actively allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), and [CWE-771](https://cwe.mitre.org/data/definitions/771.html). This is tested by two concepts:
+    B1. Lack of.
+    B2. Error.
+C. Not closing/returning/releasing a resource. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-404](https://cwe.mitre.org/data/definitions/404.html), and [CWE-772](https://cwe.mitre.org/data/definitions/772.html).
+D. Incorrectly releasing a resource before actually stopping to use it. The related CWE is [CWE-404](https://cwe.mitre.org/data/definitions/404.html).
+
+### TEST - HEAP EXHAUSTION ###
+
+The source file is `test_rlr_heapExhaust.c`. The test calls a function that allocates a lot of memory without freeing all of it. The RM seed is used in this test to randomize the amount of memory allocated at each malloc call, and to randomize the scarce calls to free. Whether there is a security protection or not, this test is destined to collapse because the system has to run out of memory at some point. 
