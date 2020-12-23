@@ -26,7 +26,9 @@ typedef enum {
   INVALID_BUFF_SIZE = 2,
   UNKNOWN_RECV = 3,
   INVALID_LEN = 4,
-  INVALID_ID = 5
+  INVALID_ID = 5,
+  ERR_RECV = 6,
+  EMPTY_RECV = 7
 } j1939_status;
 
 /**

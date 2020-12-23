@@ -9,11 +9,14 @@ with open(header_filename, "w") as f:
     f.write("#ifndef CANLIB_H\n") 
     f.write("#define CANLIB_H\n") 
     for _, row in specdf.iterrows():
+        print(f"Processing row: {row}")
         field_name = row["Field Name"].split()[0].lower()
         field_type = row["Field Name"].split()[1].replace('(','').replace(')','')
         can_id = row["CAN ID"]
         f.write("\n")
-        f.write(f"// {row['Field Name']}, {row['Required by Hardware']}\n")
+        f.write(f"// {row['Field Name']}\n")
+        f.write(f"// Sender: {row['Sender']}\n")
+        f.write(f"// Receiver: {row['Receiver']}\n")
         if row["Bounds/Range"] != '':
             f.write(f"// Bounds/Range: {row['Bounds/Range']}\n")
         if row["Units"] != '':

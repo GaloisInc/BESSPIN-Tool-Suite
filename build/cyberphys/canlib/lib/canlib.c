@@ -5,6 +5,7 @@
 /* Unix */
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <stdlib.h>
 #else
 /* FreRTOS */
 #include "FreeRTOS_Sockets.h"

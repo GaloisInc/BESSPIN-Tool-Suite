@@ -1,46 +1,11 @@
-CAN ID,Type,Field Name,Required by Hardware,Bounds/Range,Byte Length,Units,J1939?,PGN,SPN,Field Description
-0XAA0397AC,fixed,rpmspin (float),maybe?,,4,,,,,
-0XAA2D94D7,bool,two_step (bool),maybe?,0/1,4,,,,,
-0XAA2FEEF2,uint8_t,Infotainment - Volume State (bool),required by Infotainment Server,0/1,1,,,,,"0 = mute 
-1 = volume"
-0XAA43A0C5,fixed,water_temperature (float),maybe?,,4,C,YES,,,Water temperature [C]
-0XAA5164AD,int,tcs (int),maybe?,,4,,,,,
-0XAA7DD59E,fixed,rpm_tacho (float),maybe?,,4,,,,,
-0XAA7E1BAE,bool,running (bool),maybe?,0/1,4,,,,,Engine running state
-0XAA7FEC07,uint,radiator_fan_spin (int),maybe?,,4,,,,,
-0XAA86CF0A,uint,lightbar (int),maybe?,,4,,,,,Lightbar state
-0XAAA17CD5,bool,tcs_active (bool),maybe?,0/1,4,,,,,
-0XAAA59DCF,uint,lowpressure (int),maybe?,,4,,,,,Low fuel pressure indicator
-0XAAAAB571,uint8_t,Infotainment - Music State (bool),required by Infotainment Server,0/1,1,,,,,"0 = pause 
-1 = play"
-0XAABE5635,uint,throttle_factor (int),maybe?,,4,,,,,
-0XAABE5DF6,fixed,car_y (float),required by Infotainment Server,,4,m,,,,infotainment position of car to display y coordinate
-0XAABFA005,fixed,parkingbrake (float),maybe?,0/1,4,,,,,Parking brake state. 0.5 = halfway on
-0XAACC43BF,fixed,car_z (float),required by Infotainment Server,,4,m,,,,infotainment position of car to display z coordinate
-0XAAF00400,fixed,rpm (float),maybe?,,4,rpm,YES,61444,190,Engine RPM
-0XAAF00500,uint8_t,gear (uint8_t),sent by ECU,"R, N, D, 1, 2, 3, 4, 5, 6",1,,YES,61445,523,selected gear
-0XAAF00900,int,steering (int),TODO,,4,,YES,61449,1807,Steering state
-0XAAF01A00,uint8_t,throttle_input (uint8_t),sent by ECU,0/255,1,,YES,61466,3464,Throttle input state
-0XAAF01B00,uint8_t,brake_intput (uint8_t),sent by ECU,0/255,1,,YES,61467,,Brake input state
-0XAAF01D00,int,steering_input (int),TODO,,4,,YES,61469,3683,Steering input state
-0XAAF9AEF9,uint,reverse (int),maybe?,,4,,,,,Reverse gear state
-0XAAFAD8C4,int,turnsignal (int),maybe?,-1/1,4,,,,,"Turn signal value. -1 = Left, 1 = Right,
-gradually ‘fades’ between values. Use “signal_L” and “signal_R” for flashing indicators"
-0XAAFC9F00,uint,oil (int),maybe?,,4,,YES,64671,8856,
-0XAAFCDACE,fixed,car_x (float),required by Infotainment Server,,4,m,,,,infotainment position of car to display x coordinate
-0XAAFD0400,bool,lowfuel (bool),maybe?,0/1,4,,YES,64772,5105,Low fuel indicator
-0XAAFD6E6D,uint,lowhighbeam (int),maybe?,,4,,,,,Low-high beam state
-0XAAFDCC00,uint,hazard (int),maybe?,,4,,YES,64972,2875,
-0XAAFDCC00,bool,hazard_signal (bool),maybe?,0/1,4,,YES,64972,2875,
-0XAAFDD400,bool,ignition (bool),maybe?,0/1,4,,YES,64980,10145,Engine state
-0XAAFE4000,uint,headlights (int),maybe?,,4,,YES,65088,2350,
-0XAAFE4000,uint,lights (int),maybe?,0/2,4,,YES,65088,2404,"General light state. 1 = low, 2 = high"
-0XAAFE4000,uint,signal_l (int),maybe?,0/1,4,,YES,65088,2368,Left signal state. 0.5 = halfway to full blink
-0XAAFE4000,uint,signal_r (int),duplicate ID!,0/1,4,,YES,65088,2370,Right signal state. 0.5 = halfway to full blink
-0XAAFE4100,bool,left_signal (bool),maybe?,0/1,4,,YES,65089,2367,
-0XAAFE4100,bool,right_signal (bool),maybe?,0/1,4,,YES,65089,2369,
-0XAAFE6E00,fixed,wheelspeed (float),maybe?,,4,m/s,YES,65134,1592-1595,Wheel speed [m/s]
-0XAAFEEE00,fixed,oil_temperature (float),maybe?,,4,C,YES,65262,175,Oil temperature [C]
-0XAAFEF200,uint,throttle (int),maybe?,,4,,YES,65266,51,Throttle state
-0XAAFEFA00,uint,parkingbrake_input (int),maybe?,,4,,YES,65274,619,Parking brake input state
-0XAAFEFC00,uint8_t,fuel (uint8_t),required by Infotainment Server,0/100,1,%,YES,65276,96,Percentage of fuel remaining
+CAN ID,Type,Field Name,Sender,Receiver,Bounds/Range,Byte Length,Units,J1939?,PGN,Field Description
+0XAAF01000,uint8_t,gear (uint8_t),ECU,ignition,"P, R, N, D",1,,YES,122890,selected gear
+0XAAF01A00,uint8_t,throttle_input (uint8_t),ECU,ignition,0/100,1,,YES,122932,Throttle input state
+0XAAF01B00,uint8_t,brake_input (uint8_t),ECU,ignition,0/100,1,,YES,122934,Brake input state
+0XAAF01D00,int8_t,steering_input (int8_t),ECU,ignition,-100..100,1,,YES,122938,Steering input state
+0XAAFEAA00,uint8_t,fuel (uint8_t),ignition,Infotainment Thin Client,0/100,1,%,YES,130552,Percentage of fuel remaining
+0XAAFEAAC1,fixed,car_x (float),ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display x coordinate
+0XAAFEADF6,fixed,car_y (float),ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display y coordinate
+0XAAFEAABF,fixed,car_z (float),ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display z coordinate
+0XAAFECA00,uint8_t,button_pressed (uint8_t),Infotainment Thin Client,Infotainment Server,N/A,1,,No,,Button pressed on infotainment screen.0x01 Station 1 0x02 Station 2 0x03 station 3  0x10 volume down  0x11 volume up
+0XAA2FEEF2,uint8_t,infotainment_state (uint8_t),Infotainment Server,Infotainment Thin Client,N/A,1,,No,,Bit 0 mute off/on  bit 1 music pause/play  bit 2-7 volume

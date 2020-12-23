@@ -215,7 +215,7 @@ uint8_t send_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *dstadd
 uint8_t recv_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *srcaddr,
                          void *rmessage, size_t *rmessage_len)
 {
-    uint32_t nbytes;
+    int32_t nbytes;
     can_frame *frame;
     char buffer[RECV_BUFF_SIZE];
     socklen_t srclen = sizeof(*srcaddr);
@@ -229,10 +229,18 @@ uint8_t recv_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *srcadd
 #endif
     nbytes = canframe_recvfrom(socket, (char *)buffer, sizeof(buffer), flags,
                                srcaddr, &srclen);
+    printf("Received %i bytes\r\n", nbytes);
+    if (nbytes == 0) {
+        return EMPTY_RECV;
+    }
+    if (nbytes <= 0) {
+        return ERR_RECV;
+    }
     frame = (can_frame *)&buffer[0];
 
     if (nbytes <= sizeof(can_frame))
     { /* extract data field from single can frame */
+        printf("Attempting to decode single frame, rmessage_len =  %u\r\n",frame->can_dlc);
         *rmessage_len = frame->can_dlc;
         /* Check if message len matches the received data*/
         if (frame->can_dlc != (nbytes-5)) {
@@ -249,6 +257,7 @@ uint8_t recv_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *srcadd
     { /* perform multiple can frame protocol */
         if (pgn_from_id(frame->can_id) == PGN_BAM)
         {
+            printf("Decoding multiple packets\r\n");
             uint32_t rpgn;
             uint16_t rnbytes, rnpackets;
 
@@ -262,6 +271,7 @@ uint8_t recv_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *srcadd
         }
         else
         { /* no other known protocol */
+            printf("Unknown protocol\r\n");
             return UNKNOWN_RECV;
         }
     }
