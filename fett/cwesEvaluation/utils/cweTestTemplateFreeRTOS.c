@@ -1,6 +1,6 @@
 /* This is the CWE test template
-- MAIN_DECLARATION will be substituted by the test's main function declaration
-- TEST_NAME will be substituted by the test's main function name
+- MAIN(_)DECLARATION will be substituted by the test's main function declaration
+- TEST(_)NAME will be substituted by the test's main function name
 */
 
 #include <stdio.h>
