@@ -35,9 +35,16 @@ commonDefaultsCWEs = {
     ('useCustomScoring',('No',)),
     ('useCustomCompiling',('No',)),
     ('FreeRTOStimeout',(10,)),
-    ('runAllTests',('Yes',)),
-    ('nTests',(100,))
+    ('runAllTests',('Yes',))
 }
+
+unixDefaultsCWEs = commonDefaultsCWEs.union({
+    ('nTests',(100,))
+})
+
+freertosDefaultsCWEs = commonDefaultsCWEs.union({
+    ('nTests',(40,))
+})
 
 unixDefaults = commonDefaults.union({
     ('useCustomCredentials',('yes',)),
@@ -160,8 +167,8 @@ appSets = {
                 'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsFETT)
             },
             'cwe' : {
-                'gfe_freertos' : gfe_freertosAllTargets_onprem.union(commonDefaultsCWEs),
-                'gfe_unix' : gfe_unixAllTargets_onprem.union(commonDefaultsCWEs)
+                'gfe_freertos' : gfe_freertosAllTargets_onprem.union(freertosDefaultsCWEs),
+                'gfe_unix' : gfe_unixAllTargets_onprem.union(unixDefaultsCWEs)
             }
         }
     },
@@ -172,8 +179,8 @@ appSets = {
                 'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsFETT)
             },
             'cwe' : {
-                'gfe_freertos' : gfe_freertosDevPR_onprem.union(commonDefaultsCWEs),
-                'gfe_unix' : gfe_unixDevPR_onprem.union(commonDefaultsCWEs)
+                'gfe_freertos' : gfe_freertosDevPR_onprem.union(freertosDefaultsCWEs),
+                'gfe_unix' : gfe_unixDevPR_onprem.union(unixDefaultsCWEs)
             }
         },
         'aws' : {
@@ -188,9 +195,9 @@ appSets = {
                 'sri-cambridge_unix' : sri_cambridge_unixDevPR_aws.union(commonDefaultsFETT)
             },
             'cwe' : { 
-                'gfe_debian' : gfe_debianDevPR_aws.union(commonDefaultsCWEs), 
-                'gfe_freebsd' : gfe_freebsdDevPR_aws.union(commonDefaultsCWEs), 
-                'gfe_freertos' : gfe_freertosDevPR_aws.union(commonDefaultsCWEs)
+                'gfe_debian' : gfe_debianDevPR_aws.union(unixDefaultsCWEs), 
+                'gfe_freebsd' : gfe_freebsdDevPR_aws.union(unixDefaultsCWEs), 
+                'gfe_freertos' : gfe_freertosDevPR_aws.union(freertosDefaultsCWEs)
             }
         }
     }
