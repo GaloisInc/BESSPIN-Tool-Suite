@@ -182,7 +182,7 @@
                         },
                         "FreeRTOS" : {
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
-                            "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
+                            "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
                         }
                     }
                 }
