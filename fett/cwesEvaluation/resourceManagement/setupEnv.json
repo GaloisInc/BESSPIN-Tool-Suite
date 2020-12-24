@@ -162,7 +162,7 @@
                             "any" : ["<END-OF-MAIN>", "Killed", "Out of memory"]
                         },
                         "FreeBSD" : {
-                            "any" : ["<END-OF-MAIN>", "Killed", "out of swap space"]
+                            "any" : ["<END-OF-MAIN>", "Killed", "out of swap space", "<TIMEOUT>"]
                         },
                         "FreeRTOS" : {
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
@@ -178,7 +178,7 @@
                             "any" : ["Segmentation fault"]
                         },
                         "FreeBSD" : {
-                            "any" : ["Segmentation fault"]
+                            "any" : ["Segmentation fault", "<TIMEOUT>"]
                         },
                         "FreeRTOS" : {
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
