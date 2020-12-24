@@ -13,6 +13,8 @@
 ResourceManagement_Test ?
   or ResourceManagement_CWEs
     CWE_188
+    CWE_400
+    CWE_404
     CWE_415
     CWE_416
     CWE_468
@@ -23,8 +25,10 @@ ResourceManagement_Test ?
     CWE_761
     CWE_762
     CWE_763
+    CWE_770
     CWE_771
     CWE_772
+    CWE_789
     CWE_825
     CWE_911
 
@@ -32,11 +36,13 @@ ResourceManagement_Test ?
     MAL
     PTR
     General_Resources
+    RLR
 
   [ MAL => CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 ]
   [ MAL => CWE_825 && CWE_911 ]
   [ PTR => CWE_188 && CWE_476 && CWE_468 && CWE_588 && CWE_690 ]
   [ General_Resources => CWE_416 && CWE_562 && CWE_415 ]
+  [ RLR => CWE_400 && CWE_404 && CWE_770 && CWE_771 && CWE_772 && CWE_789 ]
 
   xor ResourceManagement_test
     ResourceManagement_test_188
@@ -50,10 +56,10 @@ ResourceManagement_Test ?
     ResourceManagement_test_761
     ResourceManagement_test_762
     ResourceManagement_test_763
-    ResourceManagement_test_771
-    ResourceManagement_test_772
     ResourceManagement_test_825
     ResourceManagement_test_911
+    RLR_test_heapExhaust
+    RLR_test_stackExhaust
 
   [ ResourceManagement_test_188 => CWE_188 ]
   [ ResourceManagement_test_415 => CWE_415 ]
@@ -66,10 +72,10 @@ ResourceManagement_Test ?
   [ ResourceManagement_test_761 => CWE_761 ]
   [ ResourceManagement_test_762 => CWE_762 ]
   [ ResourceManagement_test_763 => CWE_763 ]
-  [ ResourceManagement_test_771 => CWE_771 ]
-  [ ResourceManagement_test_772 => CWE_772 ]
   [ ResourceManagement_test_825 => CWE_825 ]
   [ ResourceManagement_test_911 => CWE_911 ]
+  [ RLR_test_heapExhaust => CWE_400 || CWE_770 || CWE_789 ]
+  [ RLR_test_stackExhaust => CWE_400 || CWE_770 || CWE_789 ]
 
 // End of Resource Management error model
 
