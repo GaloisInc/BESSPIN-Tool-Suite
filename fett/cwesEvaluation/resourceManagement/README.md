@@ -477,12 +477,17 @@ This is a custom sub-class that we use to group some of the interleaved CWEs. Th
 - [CWE-789](https://cwe.mitre.org/data/definitions/789.html): Uncontrolled Memory Allocation.
 
 **Tests**
+
 A. No limit to allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-770](https://cwe.mitre.org/data/definitions/770.html), and [CWE-789](https://cwe.mitre.org/data/definitions/789.html). This is tested by the following:
+
     A1. Heap exhaustion.
     A2. Stack exhaustion.
+
 B. Losing references to actively allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-404](https://cwe.mitre.org/data/definitions/404.html),[CWE-771](https://cwe.mitre.org/data/definitions/771.html), and [CWE-772](https://cwe.mitre.org/data/definitions/772.html). This is tested by two concepts:
+
     B1. Not closing/releasing a resource after its usage.
     B2. Losing the references because of an error (lack of error handling).
+
 C. Incorrectly releasing a resource before actually stopping to use it. The related CWE is [CWE-404](https://cwe.mitre.org/data/definitions/404.html).
 
 ### TEST - HEAP EXHAUSTION ###
