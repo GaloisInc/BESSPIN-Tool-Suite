@@ -140,10 +140,19 @@
             "type" : "dict",
             "val" : {
                 "test_400" : [
-                    "test_rlr_heapExhaust", "test_rlr_stackExhaust"
+                    "test_rlr_heapExhaust", "test_rlr_stackExhaust", "test_rlr_noRelease"
+                ],
+                "test_404" : [
+                    "test_rlr_noRelease"
                 ],
                 "test_770" : [
                     "test_rlr_heapExhaust", "test_rlr_stackExhaust"
+                ],
+                "test_771" : [
+                    "test_rlr_noRelease"
+                ],
+                "test_772" : [
+                    "test_rlr_noRelease"
                 ],
                 "test_789" : [
                     "test_rlr_heapExhaust", "test_rlr_stackExhaust"
@@ -183,6 +192,20 @@
                         "FreeRTOS" : {
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
                             "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
+                        }
+                    }
+                },
+                "test_rlr_noRelease" : {
+                    "unix" : 1,
+                    "FreeRTOS" : 1,
+                    "highKeywords" : {
+                        "any" : {
+                            "any" : ["<END-OF-MAIN>"]
+                        }
+                    },
+                    "NEG-call-errKeywords" : {
+                        "any" : {
+                            "any" : ["<NO-FREE>"]
                         }
                     }
                 }
