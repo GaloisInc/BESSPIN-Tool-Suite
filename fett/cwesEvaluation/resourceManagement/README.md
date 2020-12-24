@@ -568,3 +568,7 @@ D. Incorrectly releasing a resource before actually stopping to use it. The rela
 ### TEST - HEAP EXHAUSTION ###
 
 The source file is `test_rlr_heapExhaust.c`. The test calls a function that allocates a lot of memory without freeing all of it. The RM seed is used in this test to randomize the amount of memory allocated at each malloc call, and to randomize the scarce calls to free. Whether there is a security protection or not, this test is destined to collapse because the system has to run out of memory at some point. 
+
+### TEST - STACK EXHAUSTION ###
+
+The source file is `test_rlr_stackExhaust.c`. The test implements three similar functions that just allocates 100 bytes on the stack, and then call a dispatch function that chooses one of three functions to call, and so on recursively. Randomization is in the value that is filled in the stack and the order of allocation. Similar to the heap exhaustion test, whether there is a security protection or not, this test is destined to collapse. On Debian and FreeRTOS/FreeBSD on qemu, this segfaults. For both FreeRTOS and FreeBSD on non-qemu, this just times-out.
