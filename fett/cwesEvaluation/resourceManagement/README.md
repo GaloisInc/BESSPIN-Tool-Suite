@@ -480,11 +480,10 @@ This is a custom sub-class that we use to group some of the interleaved CWEs. Th
 A. No limit to allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-770](https://cwe.mitre.org/data/definitions/770.html), and [CWE-789](https://cwe.mitre.org/data/definitions/789.html). This is tested by the following:
     A1. Heap exhaustion.
     A2. Stack exhaustion.
-B. Losing references to actively allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), and [CWE-771](https://cwe.mitre.org/data/definitions/771.html). This is tested by two concepts:
-    B1. Lack of.
-    B2. Error.
-C. Not closing/returning/releasing a resource. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-404](https://cwe.mitre.org/data/definitions/404.html), and [CWE-772](https://cwe.mitre.org/data/definitions/772.html).
-D. Incorrectly releasing a resource before actually stopping to use it. The related CWE is [CWE-404](https://cwe.mitre.org/data/definitions/404.html).
+B. Losing references to actively allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-404](https://cwe.mitre.org/data/definitions/404.html),[CWE-771](https://cwe.mitre.org/data/definitions/771.html), and [CWE-772](https://cwe.mitre.org/data/definitions/772.html). This is tested by two concepts:
+    B1. Not closing/releasing a resource after its usage.
+    B2. Losing the references because of an error (lack of error handling).
+C. Incorrectly releasing a resource before actually stopping to use it. The related CWE is [CWE-404](https://cwe.mitre.org/data/definitions/404.html).
 
 ### TEST - HEAP EXHAUSTION ###
 
@@ -493,3 +492,7 @@ The source file is `test_rlr_heapExhaust.c`. The test calls a function that allo
 ### TEST - STACK EXHAUSTION ###
 
 The source file is `test_rlr_stackExhaust.c`. The test implements three similar functions that just allocates 100 bytes on the stack, and then call a dispatch function that chooses one of three functions to call, and so on recursively. Randomization is in the value that is filled in the stack and the order of allocation. Similar to the heap exhaustion test, whether there is a security protection or not, this test is destined to collapse. On Debian and FreeRTOS/FreeBSD on qemu, this segfaults. For both FreeRTOS and FreeBSD on non-qemu, this just times-out.
+
+### TEST - NO RELEASE ###
+
+The source file is `test_rlr_noRelease.c`. The test calls a `noRelease` function 50 times. This function allocates a random number of bytes, then randomly (with 20\% probability) misses to free the allocated chunk and returns.
