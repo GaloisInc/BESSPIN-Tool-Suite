@@ -501,3 +501,7 @@ The source file is `test_rlr_stackExhaust.c`. The test implements three similar 
 ### TEST - NO RELEASE ###
 
 The source file is `test_rlr_noRelease.c`. The test calls a `noRelease` function 50 times. This function allocates a random number of bytes, then randomly (with 20\% probability) misses to free the allocated chunk and returns.
+
+### TEST - ERROR RELEASE ###
+
+The source file is `test_rlr_errorRelease.c`. The test calls a `errorRelease` function 50 times. This function allocates a random number of bytes, then randomly (with 20\% probability) calls `abort()` before freeing the memory.

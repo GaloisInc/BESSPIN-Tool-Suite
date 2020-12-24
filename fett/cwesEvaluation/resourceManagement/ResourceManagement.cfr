@@ -61,6 +61,7 @@ ResourceManagement_Test ?
     RLR_test_heapExhaust
     RLR_test_stackExhaust
     RLR_test_noRelease
+    RLR_test_errorRelease
 
   [ ResourceManagement_test_188 => CWE_188 ]
   [ ResourceManagement_test_415 => CWE_415 ]
@@ -78,6 +79,7 @@ ResourceManagement_Test ?
   [ RLR_test_heapExhaust => CWE_400 || CWE_770 || CWE_789 ]
   [ RLR_test_stackExhaust => CWE_400 || CWE_770 || CWE_789 ]
   [ RLR_test_noRelease => CWE_400 || CWE_404 || CWE_771 || CWE_772 ]
+  [ RLR_test_errorRelease => CWE_400 || CWE_404 || CWE_771 || CWE_772 ]
 
 // End of Resource Management error model
 
