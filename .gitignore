@@ -7,6 +7,8 @@ core
 *.mypy_cache/
 .DS_STORE
 .idea/
+fett/cwesEvaluation/*/*.als
+fett/cwesEvaluation/*/*.map
 
 # CI Gitignores
 ci/userdata.txt
