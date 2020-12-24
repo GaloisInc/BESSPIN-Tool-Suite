@@ -63,12 +63,15 @@ def defaultScoreTest(testName, logLines, testsInfoSection):
     osFlavor = "unix" if isEnabled("isUnix") else "FreeRTOS"
     nParts = getSettingDict(VULCLASS,[testsInfoSection,testName,osFlavor])
 
-    scoreOptions = [SCORES.HIGH, SCORES.MED, SCORES.LOW, SCORES.NONE]
+    scoreOptions = [SCORES.CALL_ERR, SCORES.HIGH, SCORES.MED, SCORES.LOW, SCORES.NONE]
+
+    def scoreToKey(xScore):
+        return f"{str(xScore).lower()}Keywords"
 
     # Collect goldenKeywords
     goldenKeywords = defaultdict(list)
     for xScore in scoreOptions:
-        key = f"{str(xScore).lower()}Keywords"
+        key = scoreToKey(xScore)
         if doesSettingExistDict(VULCLASS,[testsInfoSection,testName,key]):
             curDict = deepcopy(getSettingDict(VULCLASS,[testsInfoSection,testName,key]))
             for setting in ["osImage", "target"]:
@@ -80,19 +83,16 @@ def defaultScoreTest(testName, logLines, testsInfoSection):
                     logAndExit(f"defaultScoreTest: Failed to parse the <{setting}> keywords for <{testName}>.",exitCode=EXIT.Dev_Bug)
             goldenKeywords[key] = curDict
 
-    relvKeywords = ["<INVALID>"] + [levelKeyword for levelKeywords in goldenKeywords.values() for levelKeyword in levelKeywords]
+    goldenKeywords[scoreToKey(SCORES.CALL_ERR)] += ["<INVALID>"] #INVALID is common
+    relvKeywords =  [levelKeyword for levelKeywords in goldenKeywords.values() for levelKeyword in levelKeywords]
     scoredKeywords = doKeywordsExistInText('\n'.join(logLines),relvKeywords)
 
     def scorePart(partLogLines):
-        if (scoredKeywords["<INVALID>"]):
-            return SCORES.CALL_ERR
-        else:
-            for xScore in scoreOptions:
-                key = f"{str(xScore).lower()}Keywords"
-                for goldenKeyword in goldenKeywords[key]:
-                    if (scoredKeywords[goldenKeyword]):
-                        return xScore
-            return SCORES.FAIL
+        for xScore in scoreOptions:
+            for goldenKeyword in goldenKeywords[scoreToKey(xScore)]:
+                if (scoredKeywords[goldenKeyword]):
+                    return xScore
+        return SCORES.FAIL
 
     if (nParts == 1):
         partsLines = {1: logLines}
