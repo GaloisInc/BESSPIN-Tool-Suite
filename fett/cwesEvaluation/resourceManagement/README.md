@@ -251,28 +251,6 @@ Double Free \[[CWE-415](https://cwe.mitre.org/data/definitions/415.html)\].
 
 **Linux Debian and FreeBSD:** 
 - The test demonstrates the consequences of double `free`. 
-  
-### TEST-416 ###
-
-Use After Free \[[CWE-416](https://cwe.mitre.org/data/definitions/416.html)\].
-
-**Related CWEs**
-- [CWE-825](https://cwe.mitre.org/data/definitions/825.html).
-- [CWE-123](https://cwe.mitre.org/data/definitions/123.html).
-- [CWE-415](https://cwe.mitre.org/data/definitions/415.html).
-- [CWE-364](https://cwe.mitre.org/data/definitions/364.html).
-- [CWE-120](https://cwe.mitre.org/data/definitions/120.html).
-
-**Notes:**
-- Referencing memory after it has been freed can cause a program to crash, 
-use unexpected values, or execute code.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the improper use of pointer that points to de-allocated 
-memory as well as consequences of double `free()`. 
 
 ### TEST-911 ###
 
@@ -471,6 +449,7 @@ This is a custom sub-class that we use to group some of the interleaved CWEs. Th
 
 - [CWE-400](https://cwe.mitre.org/data/definitions/400.html): Uncontrolled Resource Consumption.
 - [CWE-404](https://cwe.mitre.org/data/definitions/404.html): Improper Resource Shutdown or Release.
+- [CWE-416](https://cwe.mitre.org/data/definitions/416.html): Use After Free.
 - [CWE-770](https://cwe.mitre.org/data/definitions/770.html): Allocation of Resources Without Limits or Throttling.
 - [CWE-771](https://cwe.mitre.org/data/definitions/771.html): Missing Reference to Active Allocated Resource.
 - [CWE-772](https://cwe.mitre.org/data/definitions/772.html): Missing Release of Resource after Effective Lifetime.
@@ -488,7 +467,7 @@ B. Losing references to actively allocated resources. The related CWEs are [CWE-
     B1. Not closing/releasing a resource after its usage.
     B2. Losing the references because of an error (lack of error handling).
 
-C. Incorrectly releasing a resource before actually stopping to use it. The related CWE is [CWE-404](https://cwe.mitre.org/data/definitions/404.html).
+C. Incorrectly releasing a resource before actually stopping to use it. The related CWEs are [CWE-404](https://cwe.mitre.org/data/definitions/404.html), and [CWE-416](https://cwe.mitre.org/data/definitions/416.html).
 
 ### TEST - HEAP EXHAUSTION ###
 
@@ -505,3 +484,7 @@ The source file is `test_rlr_noRelease.c`. The test calls a `noRelease` function
 ### TEST - ERROR RELEASE ###
 
 The source file is `test_rlr_errorRelease.c`. The test calls a `errorRelease` function 50 times. This function allocates a random number of bytes, then randomly (with 20\% probability) calls `abort()` before freeing the memory.
+
+### TEST - USE POST RELEASE ###
+
+The source file is `test_rlr_usePostRelease.c`. The test calls a `usePostRelease` function 50 times. This function allocates a random number of bytes for two pointers, then free one, and after that, it allocates random number of bytes for three extra pointers, then randomly (with 20\% probability) decides to use the freed pointer with `memcpy` either as source in part 1, or as destination in part 2. In the end, it frees all the allocated memory.

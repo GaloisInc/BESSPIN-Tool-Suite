@@ -143,7 +143,10 @@
                     "test_rlr_heapExhaust", "test_rlr_stackExhaust", "test_rlr_noRelease", "test_rlr_errorRelease"
                 ],
                 "test_404" : [
-                    "test_rlr_noRelease", "test_rlr_errorRelease"
+                    "test_rlr_noRelease", "test_rlr_errorRelease", "test_rlr_usePostRelease"
+                ],
+                "test_416" : [
+                    "test_rlr_usePostRelease"
                 ],
                 "test_770" : [
                     "test_rlr_heapExhaust", "test_rlr_stackExhaust"
@@ -227,6 +230,27 @@
                     "NEG-call-errKeywords" : {
                         "any" : {
                             "any" : ["<CAUSE-ERROR>"]
+                        }
+                    }
+                },
+                "test_rlr_usePostRelease" : {
+                    "unix" : 2,
+                    "FreeRTOS" : 2,
+                    "highKeywords" : {
+                        "debian" : {
+                            "any" : ["<END-OF-MAIN>", "Aborted"]
+                        },
+                        "FreeBSD" : {
+                            "any" : ["<END-OF-MAIN>"]
+                        },
+                        "FreeRTOS" : {
+                            "qemu" : ["<END-OF-MAIN>"],
+                            "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
+                        }
+                    },
+                    "NEG-call-errKeywords" : {
+                        "any" : {
+                            "any" : ["<USE-POST-FREE>"]
                         }
                     }
                 }
