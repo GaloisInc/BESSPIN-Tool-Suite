@@ -41,7 +41,12 @@ class vulClassTester(testgenTargetCompatibilityLayer):
 
         for iPart in range(getSettingDict(self.vulClass,[testsInfoSection,testName,"unix"])):
             outLog += "-"*20 + "Part{:02d}: <TEST>".format(iPart+1) + "-"*20 + "\n"
-            _,textBack,isTimeout,_ = self.runCommand(f"./{binTest} {iPart+1}",exitOnError=False,suppressErrors=True)
+            if ("extraUnixTimeout" in getSettingDict(self.vulClass,[testsInfoSection,testName])):
+                timeout = 120
+            else:
+                timeout = 60
+            _,textBack,isTimeout,_ = self.runCommand(f"./{binTest} {iPart+1}",
+                                        exitOnError=False,suppressErrors=True,timeout=timeout)
             outLog += textBack
             if (isTimeout):
                 outLog += "\n<TIMEOUT>\n"

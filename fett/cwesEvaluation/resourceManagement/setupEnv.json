@@ -169,6 +169,7 @@
                 "test_rlr_heapExhaust" : {
                     "unix" : 1,
                     "FreeRTOS" : 1,
+                    "extraUnixTimeout" : "Yes",
                     "highKeywords" : {
                         "debian" : {
                             "any" : ["<END-OF-MAIN>", "Killed", "Out of memory"]
