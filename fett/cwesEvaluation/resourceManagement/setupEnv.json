@@ -238,7 +238,7 @@
                     "FreeRTOS" : 2,
                     "highKeywords" : {
                         "debian" : {
-                            "any" : ["<END-OF-MAIN>", "Aborted"]
+                            "any" : ["<END-OF-MAIN>", "Aborted", "Segmentation fault"]
                         },
                         "FreeBSD" : {
                             "any" : ["<END-OF-MAIN>"]
