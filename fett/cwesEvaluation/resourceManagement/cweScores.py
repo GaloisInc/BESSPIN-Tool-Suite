@@ -5,7 +5,7 @@ scoring function for resourceManagement
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 from fett.cwesEvaluation.resourceManagement.customCweScores import *
-from fett.cwesEvaluation.resourceManagement.customCweScores.helpers import regPartitionTest
+from fett.cwesEvaluation.resourceManagement.customCweScores.helpers import regPartitionTest, regPartitionTestFreeRTOS
 from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests, overallScore, doKeywordsExistInText
 import fett.cwesEvaluation.common
 from collections import defaultdict
@@ -108,8 +108,10 @@ def defaultScoreTest(testName, logLines, testsInfoSection):
     if (nParts == 1):
         partsLines = {1: logLines}
     else:
-        for iPart in range(1,nParts+1):
-            partsLines = regPartitionTest (logLines,nParts,testNum=testName)
+        if (isEqSetting('osImage','FreeRTOS')):
+            partsLines = regPartitionTestFreeRTOS(logLines,nParts,testNum=testName)
+        else:
+            partsLines = regPartitionTest(logLines,nParts,testNum=testName)
     
     listScores = [adjustToCustomScore(partsLines[iPart],scorePart(partsLines[iPart])) for iPart in range(1,nParts+1)]
     if (testsInfoSection=="funcTestsInfo"): #This is not ready to display yet
