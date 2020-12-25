@@ -89,8 +89,7 @@ def defaultScoreTest(testName, logLines, testsInfoSection):
 
     goldenKeywords[scoreToKey(SCORES.CALL_ERR)] += ["<INVALID>"] #INVALID is common
     relvKeywords =  [levelKeyword for levelKeywords in goldenKeywords.values() for levelKeyword in levelKeywords]
-    scoredKeywords = doKeywordsExistInText('\n'.join(logLines),relvKeywords)
-
+    
     def scorePart(partLogLines):
         """
         for each score, starting with the worst --> best; do
@@ -98,6 +97,7 @@ def defaultScoreTest(testName, logLines, testsInfoSection):
             if one of the golden NEG-keywors does not exist --> return this score
         done
         """
+        scoredKeywords = doKeywordsExistInText('\n'.join(partLogLines),relvKeywords)
         for xScore in scoreOptions:   
             for negate in [False, True]:
                 for goldenKeyword in goldenKeywords[scoreToKey(xScore,negate=negate)]:
