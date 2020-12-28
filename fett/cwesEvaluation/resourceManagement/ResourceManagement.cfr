@@ -35,13 +35,11 @@ ResourceManagement_Test ?
   or ResourceManagement_BF_Classes
     MAL
     PTR
-    General_Resources
+    Misc
     RLR
 
-  [ MAL => CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 ]
-  [ MAL => CWE_825 && CWE_911 ]
-  [ PTR => CWE_188 && CWE_476 && CWE_468 && CWE_588 && CWE_690 ]
-  [ General_Resources => CWE_416 && CWE_562 && CWE_415 ]
+  [ MAL => CWE_415 && CWE_416 && CWE_562 && CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 && CWE_825 && CWE_911 ]
+  [ PTR => CWE_188 && CWE_468 && CWE_476 && CWE_588 && CWE_690 ]
   [ RLR => CWE_400 && CWE_404 && CWE_416 && CWE_770 && CWE_771 && CWE_772 && CWE_789 ]
 
   xor ResourceManagement_test
