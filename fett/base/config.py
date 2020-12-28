@@ -150,12 +150,26 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
         if (setup):
             if ('val' not in iPar):
                 logAndExit(f"While reading json setupEnv file. <{iPar['name']}> is missing <val>.",exitCode=EXIT.Configuration)
+            elif ('condition' in iPar):
+                logAndExit (f"The <condition> option is not yet implemented for the setupEnv json.",exitCode=EXIT.Configuration)
         else:
+            optionsInConfig[iPar['name']] = True
+            if ('condition' in iPar):
+                if (xConfig.has_option(configSection,iPar['condition'])):
+                    try:
+                        doLoadOption = xConfig.getboolean(configSection,iPar['condition'])
+                    except Exception as exc:
+                        logAndExit(f"Configuration file: <{iPar['condition']}> has to be boolean in section [{configSection}].",exc=exc,exitCode=EXIT.Configuration)
+                else:
+                    logAndExit(f"Configuration file: The condition <{iPar['condition']}> is not found in section [{configSection}].",exitCode=EXIT.Configuration)
+                if (not doLoadOption):
+                    printAndLog(f"Configuration file: Skipping <{iPar['name']}> since <{iPar['condition']}> is disabled.",doPrint=False)
+                    continue
+
             try:
                 assert xConfig.has_option(configSection,iPar['name']), f"has_option('{iPar['name']}')"
             except Exception as exc:
                 logAndExit(f"{fileName}: <{iPar['name']}> not found in section [{configSection}].",exc=exc,exitCode=EXIT.Configuration)
-            optionsInConfig[iPar['name']] = True
         
         if (iPar['type'] in 'integer'): #works for int or integer
             try:
@@ -184,24 +198,12 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
             if ('#' in val):
                 logAndExit(f"{fileName}: Illegal character in <{iPar['name']}> in section [{configSection}]. Is there a comment next to the value?",exitCode=EXIT.Configuration)
             if (iPar['type'] in ['filePath','dirPath']):
-                doCheckPath = True
                 if (setup):
                     val = os.path.join(getSetting('repoDir'),val)
-                if (not setup and ('condition' in iPar)): #skip checking the path if the setting is disabled
-                    if (xConfig.has_option(configSection,iPar['condition'])):
-                        try:
-                            doCheckPath = xConfig.getboolean(configSection,iPar['condition'])
-                        except Exception as exc:
-                            logAndExit("Configuration file: <%s> has to be boolean in section [%s]." %(iPar['condition'],configSection),exc=exc,exitCode=EXIT.Configuration)
-                    else:
-                        logAndExit(f"Configuration file: The condition <{iPar['condition']}> is not found in section [{configSection}].",exitCode=EXIT.Configuration)
-                elif (setup and ('condition' in iPar)):
-                    logAndExit (f"The <condition> option is not yet implemented for the setupEnv json.",exitCode=EXIT.Configuration)
-                if (doCheckPath):
-                    if ((iPar['type'] == 'filePath') and (not os.path.isfile(val))):
-                        logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{configSection}].",exitCode=EXIT.Configuration)
-                    if ((iPar['type'] == 'dirPath') and (not os.path.isdir(val))):
-                        logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{configSection}].",exitCode=EXIT.Configuration)
+                if ((iPar['type'] == 'filePath') and (not os.path.isfile(val))):
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{configSection}].",exitCode=EXIT.Configuration)
+                if ((iPar['type'] == 'dirPath') and (not os.path.isdir(val))):
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{configSection}].",exitCode=EXIT.Configuration)
             elif (iPar['type'] == 'ipAddress'):
                 ipMatch = re.match(r"(\d{1,3}\.){3}\d{1,3}$",val)
                 if (ipMatch is None):
