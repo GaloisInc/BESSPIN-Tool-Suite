@@ -1,6 +1,7 @@
 #include "testsParameters.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 
 #define MALLOC_SIZE_MAX 0xFFFF 
@@ -48,12 +49,15 @@ static char * exhaustHeap (void);
 static char * exhaustHeap (void) {
     char * dump;
     size_t xSizeToMalloc;
+    char valToWrite;
 
     srand(RM_SEED); //RM_SEED is written in fett/cwesEvaluation/build.py
 
     while(1) {
         xSizeToMalloc = (size_t) ((rand() % (MALLOC_SIZE_MAX-MALLOC_SIZE_MIN+1)) + MALLOC_SIZE_MIN);
-        dump = (char *) MALLOC(xSizeToMalloc * sizeof(char)); 
+        dump = (char *) MALLOC(xSizeToMalloc * sizeof(char));
+        valToWrite = (char) (rand()%256); 
+        memset (dump, valToWrite, xSizeToMalloc * sizeof(char)); 
         if (!(rand()%PERCENT_FREE)) {
             FREE(dump);
         }
