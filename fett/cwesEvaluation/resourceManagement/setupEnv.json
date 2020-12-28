@@ -31,9 +31,6 @@
                 "test_404" : {
                     "cweText" : "Improper Resource Shutdown or Release"
                 },
-                "test_457" : {
-                    "cweText" : "Use of Uninitialized Variable"
-                },
                 "test_463" : {
                     "cweText" : "Deletion of Data Structure Sentinel"
                 },
