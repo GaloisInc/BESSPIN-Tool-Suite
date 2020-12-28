@@ -4,6 +4,7 @@
     "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
     "_unix" : "Number of parts of unix tests OR the string 'method' for custom test",
     "_FreeRTOS" : "Number of FreeRTOS tests parts -- currently not used",
+    "_useDefaultScorer" : "Whether to use a custom scorer or the default scorer -- absent means False",
 
     "resourceManagement" : [
         {
@@ -35,7 +36,15 @@
                     "cweText" : "Deletion of Data Structure Sentinel"
                 },
                 "test_467" : {
-                    "cweText" : "Use of sizeof() on a Pointer Type"
+                    "cweText" : "Use of sizeof() on a Pointer Type",
+                    "unix" : 1,
+                    "FreeRTOS" : 1,
+                    "useDefaultScorer" : "Yes",
+                    "highKeywords" : {
+                        "any" : {
+                            "any" : ["<END-OF-MAIN>"]
+                        }
+                    }
                 },
                 "test_468" : {
                     "cweText" : "Incorrect Pointer Scaling",
