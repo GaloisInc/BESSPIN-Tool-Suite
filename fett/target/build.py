@@ -160,8 +160,8 @@ def getTargetIp(targetId=None):
 def getTargetMac(targetId=None):
     thisTarget = getSetting('target',targetId=targetId)
     if (thisTarget=='vcu118'): #use hostIP + targetId
-            macInc = 0 if (targetId is None) else targetId
-            macTarget = getSetting(f"{thisTarget}MacAddrTarget")
+        macInc = 0 if (targetId is None) else targetId
+        macTarget = getSetting(f"{thisTarget}MacAddrTarget")
         try:
             macTarget = macTarget.split(':')
             lastmac = int(macTarget[-1],16)
