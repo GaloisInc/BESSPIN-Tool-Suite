@@ -65,54 +65,6 @@ Reliance on Data or Memory Layout \[[CWE-188](https://cwe.mitre.org/data/definit
 - The `example_input_args_past_on_stack` function: The similar as previous example related to the 
   byte past, except that arguments are considered on the stack.
 
-### TEST-772 ###
-
-Missing Release of Resource after Effective Lifetime 
-\[[CWE-772](https://cwe.mitre.org/data/definitions/772.html)\].
-
-**Related CWEs**
-- [CWE-399](https://cwe.mitre.org/data/definitions/399.html).
-- [CWE-400](https://cwe.mitre.org/data/definitions/400.html).
-- [CWE-404](https://cwe.mitre.org/data/definitions/404.html).
-- [CWE-405](https://cwe.mitre.org/data/definitions/405.html).
-- [CWE-664](https://cwe.mitre.org/data/definitions/664.html).
-- [CWE-772](https://cwe.mitre.org/data/definitions/772.html).
-- [CWE-775](https://cwe.mitre.org/data/definitions/775.html).
-
-**Notes:**
-- nResourceLimit>2. The limit for the resource for the user during the test. 
-
-**FreeRTOS:**
-- Implemented. There are two examples of `memory leak` through the use 
-  of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a missing release of a
-  resource by spawning a process that has a function that opens many
-  files, and does not release them despite returning. The file
-  descriptors are not used anywhere else in that code, but causes DoS
-  to other parts of this process.
-- This weakness results in a denial of service, either for a process
-  or a system, as opposed to normal function.
-- `ulimit` is used to limit the number of files opened per process to
-  the configurable `nResourceLimit` so that the test takes a
-  reasonable time. Note that the number should be *greater than four*,
-  because every process has three already-opened file descriptors by
-  default: `STDIN`, `STDOUT`, and `STDERR`.
-
-*Test Parts:*
-
-- p01: There are two functions. Function `A` opens one file and closes
-  it. Function `B` keeps opening files until it is not able to
-  anymore, then returns. The test runs function `A` first, then
-  executes function `B`, then calls function `A` again. `CALL-ERR` if
-  function `A` fails in the first run, and `HIGH` if function `A`
-  fails in the second run.
-
-*Possible Extensions:*
-
-- Use a different resource; network sockets for example.
-
 ### TEST-825 ###
 
 Expired Pointer Dereference \[[CWE-825](https://cwe.mitre.org/data/definitions/825.html)\].
@@ -299,28 +251,6 @@ Double Free \[[CWE-415](https://cwe.mitre.org/data/definitions/415.html)\].
 
 **Linux Debian and FreeBSD:** 
 - The test demonstrates the consequences of double `free`. 
-  
-### TEST-416 ###
-
-Use After Free \[[CWE-416](https://cwe.mitre.org/data/definitions/416.html)\].
-
-**Related CWEs**
-- [CWE-825](https://cwe.mitre.org/data/definitions/825.html).
-- [CWE-123](https://cwe.mitre.org/data/definitions/123.html).
-- [CWE-415](https://cwe.mitre.org/data/definitions/415.html).
-- [CWE-364](https://cwe.mitre.org/data/definitions/364.html).
-- [CWE-120](https://cwe.mitre.org/data/definitions/120.html).
-
-**Notes:**
-- Referencing memory after it has been freed can cause a program to crash, 
-use unexpected values, or execute code.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the improper use of pointer that points to de-allocated 
-memory as well as consequences of double `free()`. 
 
 ### TEST-911 ###
 
@@ -427,38 +357,6 @@ of the data type.  For example, if the type of `p` is `T*` and `sizeof(T)
   subscript operator rather than pointer arithmetic. For example,
   replace `*(p+k)` with `p[k]`. 
 
-### TEST-771 ##
-
-Missing Reference to Active Allocated Resource
-\[[CWE-771](https://cwe.mitre.org/data/definitions/771.html)\].
-
-**Related CWEs**
-- [CWE-400](https://cwe.mitre.org/data/definitions/400.html).
-- [CWE-773](https://cwe.mitre.org/data/definitions/773.html).
-
-**Notes:**
-
-*Per NIST*: The software does not properly maintain a reference to a
-resource that has been allocated, which prevents the resource from
-being reclaimed.
-
-This does not necessarily apply in languages or frameworks that
-automatically perform garbage collection, since the removal of all
-references may act as a signal that the resource is ready to be
-reclaimed.
-
-This test defines a C macro wrapper around memory allocation and
-deallocation then uses the same test code for all OSs.
-
-TODO: Introduce a test based upon the SEI CERT C Coding Standard
-Section 9.4.3 for Linux and FreeBSD using `recalloc`.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- Implemented through the use of `malloc`/`free`.
-
 ### TEST-562 ###
 
 Return of Stack Variable Address
@@ -543,3 +441,50 @@ Attempt to Access Child of a Non-structure Pointer
   The result is an exception `EXP-BAD_ACCESS` signal 
   handled by the emulated try catch block.
 
+## RLR (Resources Limits and Releasing) ##
+
+This is a custom sub-class that we use to group some of the interleaved CWEs. The sources of this sub-class have the prefix `test_rlr_`. 
+
+**CWEs**
+
+- [CWE-400](https://cwe.mitre.org/data/definitions/400.html): Uncontrolled Resource Consumption.
+- [CWE-404](https://cwe.mitre.org/data/definitions/404.html): Improper Resource Shutdown or Release.
+- [CWE-416](https://cwe.mitre.org/data/definitions/416.html): Use After Free.
+- [CWE-770](https://cwe.mitre.org/data/definitions/770.html): Allocation of Resources Without Limits or Throttling.
+- [CWE-771](https://cwe.mitre.org/data/definitions/771.html): Missing Reference to Active Allocated Resource.
+- [CWE-772](https://cwe.mitre.org/data/definitions/772.html): Missing Release of Resource after Effective Lifetime.
+- [CWE-789](https://cwe.mitre.org/data/definitions/789.html): Uncontrolled Memory Allocation.
+
+**Tests**
+
+A. No limit to allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-770](https://cwe.mitre.org/data/definitions/770.html), and [CWE-789](https://cwe.mitre.org/data/definitions/789.html). This is tested by the following:
+
+    A1. Heap exhaustion.
+    A2. Stack exhaustion.
+
+B. Losing references to actively allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-404](https://cwe.mitre.org/data/definitions/404.html),[CWE-771](https://cwe.mitre.org/data/definitions/771.html), and [CWE-772](https://cwe.mitre.org/data/definitions/772.html). This is tested by two concepts:
+
+    B1. Not closing/releasing a resource after its usage.
+    B2. Losing the references because of an error (lack of error handling).
+
+C. Incorrectly releasing a resource before actually stopping to use it. The related CWEs are [CWE-404](https://cwe.mitre.org/data/definitions/404.html), and [CWE-416](https://cwe.mitre.org/data/definitions/416.html).
+
+### TEST - HEAP EXHAUSTION ###
+
+The source file is `test_rlr_heapExhaust.c`. The test calls a function that allocates a lot of memory without freeing all of it. The RM seed is used in this test to randomize the amount of memory allocated at each malloc call, and to randomize the scarce calls to free. Whether there is a security protection or not, this test is destined to collapse because the system has to run out of memory at some point. 
+
+### TEST - STACK EXHAUSTION ###
+
+The source file is `test_rlr_stackExhaust.c`. The test implements three similar functions that just allocates 100 bytes on the stack, and then call a dispatch function that chooses one of three functions to call, and so on recursively. Randomization is in the value that is filled in the stack and the order of allocation. Similar to the heap exhaustion test, whether there is a security protection or not, this test is destined to collapse. On Debian and FreeRTOS/FreeBSD on qemu, this segfaults. For both FreeRTOS and FreeBSD on non-qemu, this just times-out.
+
+### TEST - NO RELEASE ###
+
+The source file is `test_rlr_noRelease.c`. The test calls a `noRelease` function 50 times. This function allocates a random number of bytes, then randomly (with 20\% probability) misses to free the allocated chunk and returns.
+
+### TEST - ERROR RELEASE ###
+
+The source file is `test_rlr_errorRelease.c`. The test calls a `errorRelease` function 50 times. This function allocates a random number of bytes, then randomly (with 20\% probability) calls `abort()` before freeing the memory.
+
+### TEST - USE POST RELEASE ###
+
+The source file is `test_rlr_usePostRelease.c`. The test calls a `usePostRelease` function 50 times. This function allocates a random number of bytes for two pointers, then free one, and after that, it allocates random number of bytes for three extra pointers, then randomly (with 20\% probability) decides to use the freed pointer with `memcpy` either as source in part 1, or as destination in part 2. In the end, it frees all the allocated memory.

@@ -117,7 +117,8 @@ class commonTarget():
     @decorate.timeWrap
     def switchUser (self):
         if (not self.userCreated):
-            self.terminateAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
+            warnAndLog("<switchUser> is called, but a user was never created.")
+            self.createUser()
 
         if (self.osImage in ['debian', 'FreeBSD']):
             if (not self.isSshConn):
@@ -397,9 +398,6 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
             if ((self.processor=='bluespec_p3') and isEqSetting('mode','evaluateSecurityTests')):
-                # execute tests through SSH
-                self.enableSshOnRoot()
-                time.sleep(15)
                 self.openSshConn()
 
         elif (self.osImage=='FreeBSD'):
@@ -532,6 +530,7 @@ class commonTarget():
         else:
             self.terminateAndExit(f"<createUser> is not implemented for <{self.osImage}> on <{self.target}>.",overrideConsole=True,exitCode=EXIT.Implementation)
         self.userCreated = True
+        printAndLog (f"{self.targetIdInfo}User created!",doPrint=(not self.targetId))
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -761,6 +760,8 @@ class commonTarget():
 
 
         if (self.osImage in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)): #send through SSH
+            if (currentUser == 'root'):
+                self.enableSshOnRoot()
             portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
 
             # if sending TO target, then "scp host target" otherwise flipped
@@ -848,9 +849,11 @@ class commonTarget():
         printAndLog (f"{self.targetIdInfo}sendTar: Sending files...",doPrint=(not self.targetId))
         #---send the archive
         if ((self.binarySource in ['GFE', 'SRI-Cambridge']) and (self.osImage=='FreeBSD')):
-            self.switchUser() #this is assuming it was on root
+            if (self.userCreated):
+                self.switchUser() #this is assuming it was on root
             self.sendFile (getSetting('buildDir',targetId=self.targetId),self.tarballName,timeout=timeout,forceScp=True)
-            self.switchUser()
+            if (self.userCreated):
+                self.switchUser()
             self.runCommand(f"mv /home/{self.userName}/{self.tarballName} /root/")
         else:
             self.sendFile (getSetting('buildDir',targetId=self.targetId),self.tarballName,timeout=timeout)
@@ -1250,6 +1253,9 @@ class commonTarget():
         if (self.sshRetries >= self.sshLimitRetries): #to protect it from excessive attempts
             return False
 
+        if (userName == 'root'):
+            self.enableSshOnRoot()
+
         portPart = '' if (not self.sshHostPort) else f" -p {self.sshHostPort}"
         sshCommand = f"ssh{portPart} {userName}@{self.ipTarget}"
         sshPassword = self.rootPassword  if (userName=='root') else self.userPassword
@@ -1401,6 +1407,9 @@ class commonTarget():
         self.isSshRootEnabled = True
         if (switchUsers):
             self.switchUser() #switch back
+        if ((self.processor == 'bluespec_p3') 
+            or ((self.target == 'awsf1') and (self.osImage == 'FreeBSD'))): #needs time to take effect
+            time.sleep(15)
 
     @decorate.debugWrap
     @decorate.timeWrap

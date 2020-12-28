@@ -8,6 +8,8 @@ core
 .DS_STORE
 .idea/
 .vscode/
+fett/cwesEvaluation/*/*.als
+fett/cwesEvaluation/*/*.map
 
 # CI Gitignores
 ci/userdata.txt

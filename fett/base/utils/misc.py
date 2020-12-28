@@ -184,14 +184,29 @@ def getSettingDict (setting, hierarchy, default=None, targetId=None):
     return xSetting
 
 @decorate.debugWrap
-def setSettingDict (key, setting, val, targetId=None):
-    try:
-        if (targetId is not None):
-            _settings[targetId][key][setting] = val
+def setSettingDict (setting, hierarchy, val, targetId=None):
+    if (targetId is not None):
+        if (isinstance(hierarchy,str)):
+            setSettingDict(targetId,[setting,hierarchy],val)
         else:
-            _settings[key][setting] = val
-    except Exception as exc:
-        logAndExit (f"Failed to set setting <{setting}> in dict <{key}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+            setSettingDict(targetId,[setting]+hierarchy,val)
+
+    if (isinstance(hierarchy,str)): #convert to list
+        hierarchy = [hierarchy] 
+
+    newDict = val
+    while (hierarchy): 
+        # recursively create a dict bottom-up
+        # Note that it has to be fetched/updated per level not to lose any data
+        key = hierarchy.pop()
+        newDict = {key : newDict}
+
+        if (doesSettingExistDict(setting, hierarchy)):
+            oldDict = getSettingDict(setting, hierarchy)
+            oldDict.update(newDict)
+            setSettingDict(setting, hierarchy, oldDict)
+        else: #it's a new setting
+            setSettingDict(setting, hierarchy, newDict) #This can be called with an empty hierarchy, then it will just return
 
 @decorate.debugWrap
 def isEnabled(setting, targetId=None):

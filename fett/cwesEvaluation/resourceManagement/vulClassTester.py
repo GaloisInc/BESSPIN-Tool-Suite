@@ -23,24 +23,33 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         if (not isEnabled('isUnix')):
             self.terminateAndExit (f"<executeTest> for FreeRTOS should never be called.",exitCode=EXIT.Dev_Bug)
         
-        if (isEqSettingDict(self.vulClass,["testsInfo",testName,"unix"],"method")):
+        testsInfoSection = "testsInfo" if (testName in getSettingDict(self.vulClass,"testsInfo")) else "funcTestsInfo"
+
+        if (isEqSettingDict(self.vulClass,[testsInfoSection,testName,"unix"],"method")):
             if (hasattr(cweTests,testName)):
                 outLog = getattr(getattr(cweTests,testName),testName)(self,binTest)
             else:
                 self.terminateAndExit (f"Calling unknown method <{testName}>.",exitCode=EXIT.Dev_Bug)
         else:
-            outLog = self.defaultUnixTest(testName, binTest)
+            outLog = self.defaultUnixTest(testName, binTest, testsInfoSection)
 
         return outLog
 
-    def defaultUnixTest(self,testName, binTest):
+    def defaultUnixTest(self, testName, binTest, testsInfoSection):
         outLog = "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
         outLog += f"\n<OSIMAGE={getSetting('osImage')}>\n"
 
-        for iPart in range(getSettingDict(self.vulClass,["testsInfo",testName,"unix"])):
+        for iPart in range(getSettingDict(self.vulClass,[testsInfoSection,testName,"unix"])):
             outLog += "-"*20 + "Part{:02d}: <TEST>".format(iPart+1) + "-"*20 + "\n"
-            outLog += self.typCommand(f"./{binTest} {iPart+1}")
-            
+            if ("extraUnixTimeout" in getSettingDict(self.vulClass,[testsInfoSection,testName])):
+                timeout = 120
+            else:
+                timeout = 60
+            _,textBack,isTimeout,_ = self.runCommand(f"./{binTest} {iPart+1}",
+                                        exitOnError=False,suppressErrors=True,timeout=timeout)
+            outLog += textBack
+            if (isTimeout):
+                outLog += "\n<TIMEOUT>\n"
             if (isEnabled('useCustomScoring')): #will need the gdb output here
                 outLog += self.getGdbOutput()
 

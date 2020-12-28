@@ -2,7 +2,7 @@
 Building CWEs Evaluation
 """
 
-import glob, os, re
+import glob, os, re, random
 from collections import defaultdict
 from pathlib import Path
 
@@ -131,6 +131,12 @@ def buildCwesEvaluation():
             else: #all C files in sources
                 cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
                 tests = [os.path.basename(f).split(".c")[0] for f in glob.glob(os.path.join(sourcesDir, "test_*.c"))]
+                if (doesSettingExistDict(vulClass,["mapTestsToCwes"])): #this class has special maps
+                    for cweTest, testsList in getSettingDict(vulClass,["mapTestsToCwes"]).items():
+                        for test in testsList:
+                            isAlreadyEnabled = getSettingDict(vulClass,['enabledTests',test], default=False)
+                            setSettingDict( vulClass,['enabledTests',test],
+                                    (isAlreadyEnabled or isTestEnabled(vulClass,cweTest)) )
             for test in tests:
                 # Check if the test should be skipped:
                 if (isTestEnabled(vulClass,test)):
@@ -185,10 +191,18 @@ def buildCwesEvaluation():
             if (xSetting.startswith('test_')):
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
+        if (vulClass == "resourceManagement"):
+            if (isEnabledDict(vulClass,"useSeed")):
+                seed = getSettingDict(vulClass,"seed")
+                printAndLog(f"{vulClass}: Using the custom seed <{seed}>.")
+            else:
+                seed = random.randrange(pow(2,32)) #This is the maximum value in configData.json (-1 of course)
+                printAndLog(f"{vulClass}: Using the seed <{seed}>.")
+            fHeader.write(f"#define RM_SEED {seed}\n")
         fHeader.close()
 
         if isEqSetting('osImage', 'FreeRTOS'):
-            prepareFreeRTOS(vulClassDir)
+            templateFreeRTOS(vulClassDir)
         elif getSetting('osImage') in ['debian', 'FreeBSD']:
             crossCompileUnix(vulClassDir,extraString=f'{vulClass} tests')
         else:
@@ -220,13 +234,6 @@ def buildTarball():
     else:
         logging.debug("buildTarball: There are no files to send to target. No need to create a tarball.")
         setSetting('sendTarballToTarget', False)
-
-@decorate.debugWrap
-@decorate.timeWrap
-def prepareFreeRTOS(directory):
-    # TODO: Just inline this function if its just a one liner
-    # Generate main files
-    templateFreeRTOS(directory)
 
 @decorate.debugWrap
 @decorate.timeWrap

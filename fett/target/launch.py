@@ -211,13 +211,14 @@ def launchFett (targetId=None):
         printAndLog (f"Launching FETT <{getSetting('mode')} mode>...",doPrint=(not isEqSetting('mode','cyberPhys')))
     xTarget.start()
     if (isEnabled('isUnix',targetId=targetId) and (xTarget.osHasBooted)):
-        if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) 
-                and (   (not isEqSetting('mode','evaluateSecurityTests')) 
+        if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) #don't do it for busybox
+                and (   (getSetting('mode') in ['test', 'production'])
                         or isEqSetting('binarySource','SRI-Cambridge',targetId=targetId) #Have to change pw if SRI-Cambridge
                     )
             ): #no need to change pw in evaluation mode
             xTarget.changeRootPassword()
-        xTarget.createUser()
+        if (getSetting('mode') in ['test', 'production']):
+            xTarget.createUser()
     if (isEnabled('runApp',targetId=targetId)):
         if isEqSetting('mode', 'evaluateSecurityTests'):
             sendTimeout = 20*len(getSetting('vulClasses'))
@@ -231,7 +232,7 @@ def launchFett (targetId=None):
             xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget',targetId=targetId))
         else:
             runCyberPhys(xTarget)
-    if (not isEqSetting('mode','evaluateSecurityTests')):
+    if (getSetting('mode') in ['test', 'production']):
         if (isEnabled('isUnix',targetId=targetId) and isEnabled("useCustomCredentials")):
             xTarget.changeUserPassword()
         if isEnabled('isUnix',targetId=targetId) and isEnabled("rootUserAccess"):
@@ -334,7 +335,8 @@ def resetTarget (curTarget):
         fett.cyberPhys.launch.startUartPiping(targetId)
 
     if ((getSetting('target',targetId=targetId) in ['vcu118', 'qemu']) #We currently do not use a separate .img file
-            and (isEnabled('isUnix',targetId=targetId))):
+            and (isEnabled('isUnix',targetId=targetId)) 
+            and (getSetting('mode') in ['test', 'production'])):
         newTarget.createUser()
         if (getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']):
             newTarget.changeRootPassword()
