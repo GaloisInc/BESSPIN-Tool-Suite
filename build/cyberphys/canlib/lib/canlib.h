@@ -106,7 +106,7 @@
 // Bounds/Range: N/A
 // J1939 compatible: No
 // Description: 
-//	Bit 0 mute off/on  bit 1 music pause/play  bit 2-7 volume
+//	Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
 #define CAN_ID_INFOTAINMENT_STATE 0XAA2FEEF2
 #define BYTE_LENGTH_INFOTAINMENT_STATE 1
 
