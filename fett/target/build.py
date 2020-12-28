@@ -124,7 +124,9 @@ def prepareFreeRTOSNetworkParameters(targetId=None, buildDir=None):
 
     configIpHfile = ftOpenFile (os.path.join(buildDir,'fettFreeRTOSIPConfig.h'),'a')
     for xSetting,xMacro,xType in listConfigIpParams:
-        if (doesSettingExist(xSetting)):
+        if isEqSetting('mode','cyberPhys') and (xMacro=='configMAC_ADDR'):
+            settingVal = getTargetMac(targetId=targetId)
+        elif (doesSettingExist(xSetting)):
             settingVal = getSetting(xSetting)
         elif (xMacro=='configIP_ADDR'): #special treatment to accommodate for many-targets
             settingVal = getTargetIp(targetId=targetId)
@@ -142,10 +144,32 @@ def prepareFreeRTOSNetworkParameters(targetId=None, buildDir=None):
 @decorate.timeWrap
 def getTargetIp(targetId=None):
     thisTarget = getSetting('target',targetId=targetId)
+    if (thisTarget=='vcu118'):
+        # use hardcoded IP if provided
+        if isEnabled('useCustomTargetIp'):
+            return getSetting('customTargetIp',targetId=targetId)
+        else: #use hostIP + targetId
+            ipInc = 1 if (targetId is None) else targetId
+            ipTarget = str(ipaddress.ip_address(getSetting(f"{thisTarget}IpHost"))+ipInc)
+            return ipTarget
+    else:
+        logAndExit(f"<getTargetIp> is not implemented for <{thisTarget}>.",exitCode=EXIT.Implementation)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def getTargetMac(targetId=None):
+    thisTarget = getSetting('target',targetId=targetId)
     if (thisTarget=='vcu118'): #use hostIP + targetId
-        ipInc = 1 if (targetId is None) else targetId
-        ipTarget = str(ipaddress.ip_address(getSetting(f"{thisTarget}IpHost"))+ipInc)
-        return ipTarget
+        macInc = 0 if (targetId is None) else targetId
+        macTarget = getSetting(f"{thisTarget}MacAddrTarget")
+        try:
+            macTarget = macTarget.split(':')
+            lastmac = int(macTarget[-1],16)
+            lastmac = (lastmac + macInc) % 0xff
+            macTarget[-1] = f"{lastmac:#0{4}x}"[2:]
+        except Exception as exc:
+            logAndExit(f"getTargetMac: Failed to add {macInc} to {macTarget}",exc=exc,exitCode=EXIT.Dev_Bug)
+        return ':'.join(str(v) for v in macTarget)
     else:
         logAndExit(f"<getTargetIp> is not implemented for <{thisTarget}>.",exitCode=EXIT.Implementation)
 

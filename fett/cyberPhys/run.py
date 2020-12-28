@@ -7,10 +7,34 @@ from fett.base.utils.misc import *
 import fett.cyberPhys.launch
 import fett.target.launch
 
+from fett.cyberPhys import otaserver
+
 @decorate.debugWrap
 @decorate.timeWrap
 def runCyberPhys(xTarget):
+    printAndLog (f"{xTarget.targetIdInfo}runCyberPhys: Starting the application stack...")
     # here anything that needs to be done on the targets before handing the user the prompt
+    if (isEnabled('sendTarballToTarget',targetId=xTarget.targetId)):
+        #send any needed files to target
+        xTarget.sendTar(timeout=60)
+
+    # assign modules
+    if (xTarget.osImage=='FreeRTOS'):
+        xTarget.appModules = []
+    elif (xTarget.osImage in ['debian', 'FreeBSD']):
+        xTarget.appModules = [otaserver]
+    else:
+        xTarget.terminateAndExit(f"{xTarget.targetIdInfo}<runApp> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
+
+    # The appLog will be the file object flying around for logging into app.out
+    appLog = ftOpenFile(os.path.join(getSetting('workDir'),f"app{xTarget.targetSuffix}.out"), 'a')
+    appLog.write('-'*20 + "<FETT-APPS-OUT>" + '-'*20 + '\n\n')
+    setSetting("appLog",appLog,targetId=xTarget.targetId)
+
+    # Install
+    for appModule in xTarget.appModules:
+        appModule.install(xTarget)
+        appLog.flush()
     return
 
 @decorate.debugWrap
@@ -43,17 +67,12 @@ def watchdog(targetId):
                 return True
 
         # Check process
-        if ((not getSetting('targetObj',targetId=targetId).process.isalive()) 
-            and handleError("Target is down")):
+        if not isTargetAlive(targetId) and handleError("Target is not alive"):
+            appLog = getSetting('appLog',targetId=targetId)
+            appLog.close()
             break
 
-        # Ping network
-        if ((not getSetting('targetObj',targetId=targetId).pingTarget(
-                                    exitOnError=False,pingAttempts=10,printSuccess=False))
-             and handleError("Failed to ping target")):
-            break
-
-        time.sleep(10)
+        time.sleep(1)
 
     # Will send an item to the queue anyway; If we're here because of error:
     #   Yes: So this will exit the main thread
@@ -61,3 +80,24 @@ def watchdog(targetId):
     fett.cyberPhys.launch.ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
 
     return
+
+@decorate.debugWrap
+@decorate.timeWrap
+def isTargetAlive(targetId):
+    xTarget = getSetting('targetObj',targetId=targetId)
+    if not xTarget.process.isalive():
+        printAndLog(f"{xTarget.targetIdInfo}process is not alive.")
+        return False
+
+    if not xTarget.pingTarget(exitOnError=False,pingAttempts=10,printSuccess=False):
+        printAndLog(f"{xTarget.targetIdInfo}does not respond to ping.")
+        return False
+
+    osImage = getSetting('osImage',targetId=targetId)
+    if osImage in ['debian', 'FreeBSD']:
+        if not otaserver.isServiceRunning(xTarget):
+            printAndLog(f"{xTarget.targetIdInfo}ota server doesn't respond. Restarting.")
+            otaserver.restart(xTarget)
+            return otaserver.isServiceRunning(xTarget)
+
+    return True

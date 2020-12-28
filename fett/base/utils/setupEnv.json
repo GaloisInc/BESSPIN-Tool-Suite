@@ -143,12 +143,14 @@
                     "chisel_p2" : {
                         "debian" : "firesim",
                         "FreeBSD" : "notOnAWS",
-                        "busybox" : "notOnAWS"
+                        "busybox" : "notOnAWS",
+                        "FreeRTOS" : "notOnAWS"
                     },
                     "bluespec_p2" : {
                         "debian" : "notOnAWS",
                         "FreeBSD" : "connectal",
-                        "busybox" : "notOnAWS"
+                        "busybox" : "notOnAWS",
+                        "FreeRTOS" : "notOnAWS"
                     },
                     "chisel_p3" : {
                         "debian" : "notOnAWS",
@@ -342,6 +344,11 @@
                 "vid" : 4292,
                 "pid" : 60016
             }
+        },
+        {
+            "name" : "OtaServerPortTarget",
+            "type" : "int",
+            "val" : 5050
         },
         {
             "name" : "cwesAssessments",
