@@ -479,3 +479,10 @@ The source file is `test_rlr_usePostRelease.c`. The test calls a `usePostRelease
 
 The following are the miscellaneous CWEs that do not belong to a particular sub-category:
 
+### TEST-467 ###
+
+Use of sizeof() on a Pointer Type
+\[[CWE-467](https://cwe.mitre.org/data/definitions/467.html)\].
+
+The test dynamically allocates a block of memory based on the `sizeof` the pointer type instead of the data structure type. The test does this for `char` and then for `long unsigned int`. The CWE's description implies that using `sizeof` on a pointer should be signaled as a bug even if used intentionally. 
+
