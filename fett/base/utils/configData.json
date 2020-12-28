@@ -100,9 +100,17 @@
             "choices" : [ "default", "purecap", "temporal" ]
         },
         {
+            "name" : "useCustomHwTarget",
+            "type" : "boolean"
+        },
+        {
             "name" : "customHwTarget",
             "type" : "string",
             "condition" : "useCustomHwTarget"
+        },
+        {
+            "name" : "useCustomTargetIp",
+            "type" : "boolean"
         },
         {
             "name" : "customTargetIp",
@@ -119,10 +127,6 @@
         {
             "name" : "gdbDebug",
             "type" : "bool"
-        },
-        {
-            "name" : "useCustomHwTarget",
-            "type" : "boolean"
         },
         {
             "name" : "userName",
@@ -143,10 +147,6 @@
         {
             "name": "productionTargetIp",
             "type": "ipAddress"
-        },
-        {
-            "name" : "useCustomTargetIp",
-            "type" : "boolean"
         }
     ],
 
