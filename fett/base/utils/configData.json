@@ -114,7 +114,7 @@
         },
         {
             "name" : "customTargetIp",
-            "type" : "string",
+            "type" : "ipAddress",
             "condition" : "useCustomTargetIp"
         }
     ],
