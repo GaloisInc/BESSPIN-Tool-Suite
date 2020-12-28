@@ -23,7 +23,9 @@ def scoreAllTests(logs):
     funcTestsScores = dict()
     for name, log in logs:
         logLines = ftReadLines(log)
-        if (name in getSettingDict(VULCLASS,["testsInfo"])): #regular CWE test
+        testsInfoSection = "testsInfo" if (name in getSettingDict(VULCLASS,"testsInfo")) else "funcTestsInfo"
+        if ((testsInfoSection=="testsInfo") 
+                and (not doesSettingExistDict(VULCLASS,[testsInfoSection,name,"useDefaultScorer"]))):
             try:
                 testScorerFunc = getattr(globals()[name],name)
             except Exception as exc:
@@ -31,13 +33,16 @@ def scoreAllTests(logs):
                 ret.append([f"{name.replace('_','-').upper()}", SCORES.FAIL, "Failed to Score!"])
                 continue
             ret.append(testScorerFunc(logLines))
-        else: #special grouped tests (non CWEs)
-            scoreInfo = defaultScoreTest(name, logLines, "funcTestsInfo")
-            printAndLog(f"{VULCLASS}-Score-Details: {scoreInfo}",doPrint=False)
-            try:
-                funcTestsScores[scoreInfo[0]] = scoreInfo[1]
-            except Exception as exc:
-                logAndExit(f"scoreAllTests-{VULCLASS}: Failed to read the output of overallScore for {name}.")
+        else: # Use the custom scorer
+            scoreInfo = defaultScoreTest(name, logLines, testsInfoSection)
+            if (testsInfoSection=="testsInfo"): #regular CWE
+                ret.append(scoreInfo)
+            else: #sub-class CWEs
+                printAndLog(f"{VULCLASS}-Score-Details: {scoreInfo}",doPrint=False)
+                try:
+                    funcTestsScores[scoreInfo[0]] = scoreInfo[1]
+                except Exception as exc:
+                    logAndExit(f"scoreAllTests-{VULCLASS}: Failed to read the output of overallScore for {name}.")
 
     # Append ret with the CWEs scores based on funcTests
     for test, funcTests in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
