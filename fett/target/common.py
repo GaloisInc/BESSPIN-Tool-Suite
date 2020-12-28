@@ -1407,7 +1407,8 @@ class commonTarget():
         self.isSshRootEnabled = True
         if (switchUsers):
             self.switchUser() #switch back
-        if ((self.processor == 'bluespec_p3') or (self.binarySource == 'SRI-Cambridge')): #needs time to take effect
+        if ((self.processor == 'bluespec_p3') 
+            or ((self.target == 'awsf1') and (self.osImage == 'FreeBSD'))): #needs time to take effect
             time.sleep(15)
 
     @decorate.debugWrap
