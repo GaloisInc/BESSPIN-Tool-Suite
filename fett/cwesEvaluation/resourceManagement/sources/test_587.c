@@ -26,6 +26,8 @@
 */ 
 #ifdef testgenOnFreeBSD
     #define FIXED_ADDR_DATA 0x40810008
+#elif (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+    #define FIXED_ADDR_DATA 0xc01d0000
 #else
     #define FIXED_ADDR_DATA 0x15000
 #endif
