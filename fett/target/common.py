@@ -1422,7 +1422,7 @@ class commonTarget():
         if (self.osImage=='FreeBSD'):
             if (self.binarySource=='SRI-Cambridge'):
                 self.runCommand("service fett_sshd restart")
-            elif (self.target=='awsf1'):
+            elif (self.target in ['awsf1','qemu']):
                 self.runCommand("pkill -f /usr/sbin/sshd")
                 self.runCommand("/usr/sbin/sshd")
             else:
