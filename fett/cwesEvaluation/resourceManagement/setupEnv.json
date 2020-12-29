@@ -62,7 +62,29 @@
                     "FreeRTOS" : 2
                 },
                 "test_587" : {
-                    "cweText" : "Assignment of a Fixed Address to a Pointer"
+                    "cweText" : "Assignment of a Fixed Address to a Pointer",
+                    "unix" : 2,
+                    "FreeRTOS" : 2,
+                    "useDefaultScorer" : "Yes",
+                    "highKeywords" : {
+                        "any" : {
+                            "any" : ["<END-OF-MAIN>"]
+                        }
+                    },
+                    "medKeywords"  : {
+                        "any" : {
+                            "any" : ["<VALUE-ASSIGNED>"]
+                        }
+                    },
+                    "noneKeywords" : {
+                        "FreeRTOS" : {
+                            "qemu" : ["<QEMU ABORTED>"],
+                            "any" : ["<GDB-SIGTRAP>"]
+                        },
+                        "any" : {
+                            "any" : ["Segmentation fault"]
+                        }
+                    }
                 },
                 "test_588" : {
                     "cweText" : "Attempt to Access Child of a Non-structure Pointer",
