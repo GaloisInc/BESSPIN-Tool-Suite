@@ -340,7 +340,6 @@ of the data type.  For example, if the type of `p` is `T*` and `sizeof(T)
 
 **Related CWEs**
 - [CWE-362](https://cwe.mitre.org/data/definitions/362.html).  
-- [CWE-665](https://cwe.mitre.org/data/definitions/665.html).  
 
 **Notes:**
 - A `NULL` pointer dereference occurs when the application

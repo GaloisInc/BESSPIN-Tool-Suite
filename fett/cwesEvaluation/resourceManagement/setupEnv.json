@@ -95,9 +95,6 @@
                 "test_590" : {
                     "cweText" : "Free of Memory not on the Heap"
                 },
-                "test_665" : {
-                    "cweText" : "Improper Initialization"
-                },
                 "test_668" : {
                     "cweText" : "Exposure of Resource to Wrong Sphere"
                 },
