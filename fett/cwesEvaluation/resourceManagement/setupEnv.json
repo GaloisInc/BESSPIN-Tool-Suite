@@ -77,6 +77,14 @@
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
                             "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>", "<TIMEOUT>"]
                         }
+                    },
+                    "call-errKeywords" : {
+                        "FreeRTOS" : {
+                            "any" : ["Pipeline exception"]
+                        },
+                        "any" : {
+                            "any" : []
+                        }
                     }
                 },
                 "test_588" : {
