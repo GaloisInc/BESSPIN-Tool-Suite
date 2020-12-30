@@ -21,8 +21,8 @@ def regPartitionTest (logLines,nParts,testNum=None):
     partsLines = {}
     for iPart in range(1,nParts+1):
         start = f"---Part{iPart:02d}:"
-        end = f"---Part{iPart+1:02d}:" if (iPart<nParts) else "-"*50
-        partsLines[iPart] = partitionLines(logLines,start,end,testNum=testNum)
+        end = f"---Part{iPart+1:02d}:" if (iPart<nParts) else "NO-NEED-TO-DETECT-AN-ENDING"
+        partsLines[iPart] = partitionLines(logLines,start,end,testNum=testNum,doPrintWarnings=False)
     return partsLines
 
 def regPartitionTestFreeRTOS (logLines,nParts,testNum=None):
