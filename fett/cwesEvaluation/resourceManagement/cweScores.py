@@ -18,9 +18,19 @@ def scoreAllTests(logs):
     if (isEnabledDict(VULCLASS,"useSelfAssessment")):
         return defaultSelfAssessmentScoreAllTests(VULCLASS, logs)
 
-    # Score the log files
     ret = []
     funcTestsScores = dict()
+
+    def storeTestScore(testsInfoSection, scoreInfo):
+        try:
+            testName = scoreInfo[0]
+            if (testsInfoSection == "testsInfo"): #it's ready for display
+                testName = testName.replace('-','_').lower()
+            funcTestsScores[testName] = scoreInfo[1]
+        except Exception as exc:
+            logAndExit(f"scoreAllTests-{VULCLASS}: Failed to read the output of overallScore for {name}.")
+
+    # Score the log files
     for name, log in logs:
         logLines = ftReadLines(log)
         testsInfoSection = "testsInfo" if (name in getSettingDict(VULCLASS,"testsInfo")) else "funcTestsInfo"
@@ -32,17 +42,15 @@ def scoreAllTests(logs):
                 errorAndLog(f"scoreAllTests-{VULCLASS}: Could not locate the scorer function for <{name}>",exc=exc)
                 ret.append([f"{name.replace('_','-').upper()}", SCORES.FAIL, "Failed to Score!"])
                 continue
-            ret.append(testScorerFunc(logLines))
+            scoreInfo = testScorerFunc(logLines)
         else: # Use the custom scorer
             scoreInfo = defaultScoreTest(name, logLines, testsInfoSection)
-            if (testsInfoSection=="testsInfo"): #regular CWE
-                ret.append(scoreInfo)
-            else: #sub-class CWEs
-                printAndLog(f"{VULCLASS}-Score-Details: {scoreInfo}",doPrint=False)
-                try:
-                    funcTestsScores[scoreInfo[0]] = scoreInfo[1]
-                except Exception as exc:
-                    logAndExit(f"scoreAllTests-{VULCLASS}: Failed to read the output of overallScore for {name}.")
+
+        storeTestScore(testsInfoSection, scoreInfo)
+        if (testsInfoSection=="testsInfo"): #regular CWE with its own test
+            ret.append(scoreInfo)
+        else: #only sub-class CWEs
+            printAndLog(f"{VULCLASS}-Score-Details: {scoreInfo}",doPrint=False)
 
     # Append ret with the CWEs scores based on funcTests
     for test, funcTests in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
