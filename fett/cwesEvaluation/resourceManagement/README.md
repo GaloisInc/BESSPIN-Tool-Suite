@@ -440,6 +440,7 @@ This is a custom sub-class that we use to group some of the interleaved CWEs. Th
 - [CWE-400](https://cwe.mitre.org/data/definitions/400.html): Uncontrolled Resource Consumption.
 - [CWE-404](https://cwe.mitre.org/data/definitions/404.html): Improper Resource Shutdown or Release.
 - [CWE-416](https://cwe.mitre.org/data/definitions/416.html): Use After Free.
+- [CWE-672](https://cwe.mitre.org/data/definitions/672.html): Operation on a Resource after Expiration or Release.
 - [CWE-770](https://cwe.mitre.org/data/definitions/770.html): Allocation of Resources Without Limits or Throttling.
 - [CWE-771](https://cwe.mitre.org/data/definitions/771.html): Missing Reference to Active Allocated Resource.
 - [CWE-772](https://cwe.mitre.org/data/definitions/772.html): Missing Release of Resource after Effective Lifetime.
@@ -457,7 +458,7 @@ B. Losing references to actively allocated resources. The related CWEs are [CWE-
     B1. Not closing/releasing a resource after its usage.
     B2. Losing the references because of an error (lack of error handling).
 
-C. Incorrectly releasing a resource before actually stopping to use it. The related CWEs are [CWE-404](https://cwe.mitre.org/data/definitions/404.html), and [CWE-416](https://cwe.mitre.org/data/definitions/416.html).
+C. Incorrectly releasing a resource before actually stopping to use it. The related CWEs are [CWE-404](https://cwe.mitre.org/data/definitions/404.html), [CWE-416](https://cwe.mitre.org/data/definitions/416.html), and [CWE-672](https://cwe.mitre.org/data/definitions/672.html).
 
 ### TEST - HEAP EXHAUSTION ###
 
