@@ -5,38 +5,10 @@
 #include <sys/types.h>
 
 #ifdef testgenOnUnix 
-    #include <sys/mman.h>
-#endif
-
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
-    #include "FreeRTOS.h"
-    #define MALLOC pvPortMalloc
-    #define FREE vPortFree
-#else
-    #define MALLOC malloc
-    #define FREE free
-#endif
-
-/* The values have to be fixed and non-dynamic to fit the CWE description.
- We could have them generated pre-compilation and include them in testParameters.h if we 
- really want them to be random. Will have to figure out the appropriate ranges if we
- elect to go that way.
- The values were obtained by trying to allocate function/array dynamically, then using 
- a value slightly larger.
-*/ 
-#ifdef testgenOnFreeBSD
-    #define FIXED_ADDR_DATA 0x40810008
-#elif (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
-    #define FIXED_ADDR_DATA 0xc01d0000
-#else
     #define FIXED_ADDR_DATA 0x15000
-#endif
-
-#ifdef testgenOnUnix 
     #define FIXED_ADDR_FUNC 0x2000020000
-#elif testgenQEMU //FreeRTOS-Qemu
-    #define FIXED_ADDR_FUNC 0x20400300
-#else //other FreeRTOS
+#else
+    #define FIXED_ADDR_DATA 0xc000d000
     #define FIXED_ADDR_FUNC 0xc000d000
 #endif
 
@@ -104,69 +76,68 @@ int testegenTestFunc () {
 
 static int jumpToFixedAddr () {
     printf("<JUMP-TO-FIXED-ADDR>\n");
-
-    void (*pTest) (void) = copyToFixedAddr;
-    printf("pTest=<%lx>\n",(unsigned long int) pTest);
-    testegenTestFunc();
-
+    
     int (*pFunction) (void) = (int (*)(void)) FIXED_ADDR_FUNC;
 
-    printf("<VALUE-ASSIGNED>\n");
-
-    // The assembly (little endian) for:
-    //  int func () { return 0xbb }
-    #ifdef testgenOnUnix
-        // 0xe4221141, 0x7930800, 0x853e0bb0, 0x1416422, 0xXXXX8082
-        unsigned char prog[] = {
-            0x41, 0x11, 0x22, 0xe4,
-            0x00, 0x08, 0x93, 0x07,
-            0xb0, 0x0b, 0x3e, 0x85,
-            0x22, 0x64, 0x41, 0x01,
-            0x82, 0x80
-        };
-    #else
-        // 0xff010113, 0x00812623, 0x01010413, 0x0bb00793, 0x00078513, 0x00c12403, 0x01010113, 0x00008067
-        unsigned char prog[] = {
-            0x13, 0x01, 0x01, 0xff,
-            0x23, 0x26, 0x81, 0x00,
-            0x13, 0x04, 0x01, 0x01,
-            0x93, 0x07, 0xb0, 0x0b,
-            0x13, 0x85, 0x07, 0x00,
-            0x03, 0x24, 0xc1, 0x00,
-            0x13, 0x01, 0x01, 0x01,
-            0x67, 0x80, 0x00, 0x00          
-        };
-    #endif
-
-    #ifdef testgenOnUnix 
-        // Mark this block as executable
-        mmap (pFunction, sizeof(prog), PROT_READ|PROT_WRITE|PROT_EXEC,
-                 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-    #endif
-    
-    memcpy(pFunction,prog,sizeof(prog));
-    printf("<MEMORY-READY>\n");
-
     return (*pFunction) ();
+    /* The function call will cause a segfault/trap unless we use a value in the right region for pFunction,
+        and we store a valid stub/program in that location. Here's some simple steps in case someone wants to
+        craft a specific attack:
+        (*) To get a value, the easiest thing to do is to:
+                void (*pTest) (void) = copyToFixedAddr; //any existing function
+                printf("pTest=<%lx>\n",(unsigned long int) pTest);
+            Then use a larger value to guarantee you're in the right region, for instance:
+            - For GFE-Debian/FreeBSD-qemu and GFE-Debian-awsf1, the value 0x2000020000 works
+            - For GFE-FreeRTOS-qemu, the value 0x20400300 works.
+            - For GFE/LMCO-FreeRTOS-awsf1, the value 0xc000d000 works.
+
+        (*) You need a program. For example, the assembly (little endian) for returning the int value 187:
+            >>> int func () { return 0xbb; }, is:
+            - P2: 0xe4221141, 0x7930800, 0x853e0bb0, 0x1416422, 0xXXXX8082
+                unsigned char prog[] = {
+                    0x41, 0x11, 0x22, 0xe4,
+                    0x00, 0x08, 0x93, 0x07,
+                    0xb0, 0x0b, 0x3e, 0x85,
+                    0x22, 0x64, 0x41, 0x01,
+                    0x82, 0x80
+                };
+            - P1: 0xff010113, 0x00812623, 0x01010413, 0x0bb00793, 0x00078513, 0x00c12403, 0x01010113, 0x00008067
+                unsigned char prog[] = {
+                    0x13, 0x01, 0x01, 0xff,
+                    0x23, 0x26, 0x81, 0x00,
+                    0x13, 0x04, 0x01, 0x01,
+                    0x93, 0x07, 0xb0, 0x0b,
+                    0x13, 0x85, 0x07, 0x00,
+                    0x03, 0x24, 0xc1, 0x00,
+                    0x13, 0x01, 0x01, 0x01,
+                    0x67, 0x80, 0x00, 0x00          
+                };
+
+        (*) Then, before calling the function, you need to change the permissions in that block (in case of unix), 
+            and copy the bytes over:
+            - #include <sys/mman.h>
+            - mmap (pFunction, sizeof(prog), PROT_READ|PROT_WRITE|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+            - memcpy(pFunction,prog,sizeof(prog));
+    */
     
 }
 
 static void copyToFixedAddr () {
     printf("<COPY-TO-FIXED-ADDR>\n");
 
-    int * pTest = (int *) MALLOC (4);
-    printf("pTest=<%lx>\n",(unsigned long int) pTest);
-    FREE(pTest);
-
     int * pAddr = (int *) FIXED_ADDR_DATA;
     int inst = 0x0bb00f93; //0x0bb00f93 is "li t6,0xbb", chosen arbitrarily
-
-    printf("<VALUE-ASSIGNED>\n");
     
     memcpy(pAddr,&inst,4);
-
-    printf("<MEMORY-READY>\n");
-    printf("Value of pAddr=<%x>, addr =<%lx>\n",*pAddr,(long unsigned int) pAddr);
-
+    /* The memcpy line will cause a segfault/trap unless we use a value in the right region
+        For example, you can get a working value by running the following:
+            int * pTest = (int *) MALLOC (sizeof(int));
+            printf("pTest=<%lx>\n",(unsigned long int) pTest);
+            FREE(pTest);
+        Then, you can choose a larger value, for instance:
+        - For GFE-FreeBSD-vcu118/qemu/awsf1, the value 0x40810008 is good.
+        - For GFE/LMCO-FreeRTOS-vcu118/awsf1, the value 0xc01d0000 is good.
+        - For GFE-FreeRTOS-qemu or GFE-Debian-qemu/vcu118/awsf1, the value 0x15000 works. 
+    */
     return;
 }
