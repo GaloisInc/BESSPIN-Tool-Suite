@@ -29,7 +29,7 @@ def regPartitionTestFreeRTOS (logLines,nParts,testNum=None):
     partsLines = {}
     for iPart in range(1,nParts+1):
         start = f"---Part{iPart:02d}:"
-        end = [f">>>End", "<GDB-SIG", "Error", "error", "---Part{:02d}:".format(iPart+1)]
+        end = "---Part{:02d}:".format(iPart+1) if (iPart<nParts) else "NO-NEED-TO-DETECT-AN-ENDING"
         partsLines[iPart] = partitionLines(logLines,start,end,testNum=testNum,doPrintWarnings=False)
         #print(partsLines[iPart])
     return partsLines
