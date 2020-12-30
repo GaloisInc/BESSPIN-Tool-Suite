@@ -71,7 +71,7 @@
                             "any" : ["<END-OF-MAIN>", "Segmentation fault"]
                         },
                         "FreeBSD" : {
-                            "any" : ["<END-OF-MAIN>", "Segmentation fault"]
+                            "any" : ["<END-OF-MAIN>", "Segmentation fault", "Signal 34"]
                         },
                         "FreeRTOS" : {
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
