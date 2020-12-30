@@ -486,3 +486,10 @@ Use of sizeof() on a Pointer Type
 
 The test dynamically allocates a block of memory based on the `sizeof` the pointer type instead of the data structure type. The test does this for `char` and then for `long unsigned int`. The CWE's description implies that using `sizeof` on a pointer should be signaled as a bug even if used intentionally. 
 
+### TEST-587 ###
+
+Assignment of a Fixed Address to a Pointer
+\[[CWE-587](https://cwe.mitre.org/data/definitions/587.html)\].
+
+The test assigns a fixed address to a pointer, then there are two parts: p1. It copies data over to that address. p2. Attemps to execute the code starting at that address. Note that the tests do not successfully *hack* the processors as this requires some reverse engineering, the C file has some examples on how to do that if needed.
+
