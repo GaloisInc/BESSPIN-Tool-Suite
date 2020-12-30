@@ -23,6 +23,7 @@ ResourceManagement_Test ?
     CWE_562
     CWE_587
     CWE_588
+    CWE_590
     CWE_690
     CWE_761
     CWE_762
@@ -40,7 +41,7 @@ ResourceManagement_Test ?
     MISC
     RLR
 
-  [ MAL => CWE_415 && CWE_416 && CWE_562 && CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 && CWE_825 && CWE_911 ]
+  [ MAL => CWE_415 && CWE_416 && CWE_562 && CWE_590 && CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 && CWE_825 && CWE_911 ]
   [ PTR => CWE_188 && CWE_468 && CWE_476 && CWE_588 && CWE_690 ]
   [ RLR => CWE_400 && CWE_404 && CWE_416 && CWE_770 && CWE_771 && CWE_772 && CWE_789 ]
   [ MISC => CWE_467 && CWE_587 ]
@@ -76,7 +77,7 @@ ResourceManagement_Test ?
   [ ResourceManagement_test_588 => CWE_588 ]
   [ ResourceManagement_test_690 => CWE_690 ]
   [ ResourceManagement_test_761 => CWE_761 ]
-  [ ResourceManagement_test_762 => CWE_762 ]
+  [ ResourceManagement_test_762 => CWE_762 || CWE_590 ]
   [ ResourceManagement_test_763 => CWE_763 ]
   [ ResourceManagement_test_825 => CWE_825 ]
   [ ResourceManagement_test_911 => CWE_911 ]

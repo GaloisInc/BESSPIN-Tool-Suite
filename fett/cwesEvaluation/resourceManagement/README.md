@@ -78,6 +78,12 @@ Return of Stack Variable Address \[[CWE-562](https://cwe.mitre.org/data/definiti
 - The `fill_array_with_malloc` is recommended way of allocating memory
   on the stack.
 
+### TEST-590 ###
+
+Free of Memory not on the Heap \[[CWE-590](https://cwe.mitre.org/data/definitions/590.html)\].
+
+This is covered by test-762.
+
 
 ### TEST-761 ###
 
