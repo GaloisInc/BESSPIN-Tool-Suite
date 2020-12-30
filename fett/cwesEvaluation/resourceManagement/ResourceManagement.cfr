@@ -24,6 +24,7 @@ ResourceManagement_Test ?
     CWE_587
     CWE_588
     CWE_590
+    CWE_672
     CWE_690
     CWE_761
     CWE_762
@@ -41,7 +42,7 @@ ResourceManagement_Test ?
     MISC
     RLR
 
-  [ MAL => CWE_415 && CWE_416 && CWE_562 && CWE_590 && CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 && CWE_825 && CWE_911 ]
+  [ MAL => CWE_415 && CWE_416 && CWE_562 && CWE_590 && CWE_672 && CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 && CWE_825 && CWE_911 ]
   [ PTR => CWE_188 && CWE_468 && CWE_476 && CWE_588 && CWE_690 ]
   [ RLR => CWE_400 && CWE_404 && CWE_416 && CWE_770 && CWE_771 && CWE_772 && CWE_789 ]
   [ MISC => CWE_467 && CWE_587 ]
@@ -85,7 +86,7 @@ ResourceManagement_Test ?
   [ RLR_test_stackExhaust => CWE_400 || CWE_770 || CWE_789 ]
   [ RLR_test_noRelease => CWE_400 || CWE_404 || CWE_771 || CWE_772 ]
   [ RLR_test_errorRelease => CWE_400 || CWE_404 || CWE_771 || CWE_772 ]
-  [ RLR_test_errorRelease => CWE_404 || CWE_416 ]
+  [ RLR_test_errorRelease => CWE_404 || CWE_416 || CWE_672 ]
 
 // End of Resource Management error model
 

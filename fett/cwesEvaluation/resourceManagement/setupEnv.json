@@ -177,6 +177,9 @@
                 "test_590" : [
                     "test_762"
                 ],
+                "test_672" : [
+                    "test_rlr_usePostRelease"
+                ],
                 "test_770" : [
                     "test_rlr_heapExhaust", "test_rlr_stackExhaust"
                 ],
