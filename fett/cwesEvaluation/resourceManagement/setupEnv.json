@@ -67,22 +67,15 @@
                     "FreeRTOS" : 2,
                     "useDefaultScorer" : "Yes",
                     "highKeywords" : {
-                        "any" : {
-                            "any" : ["<END-OF-MAIN>"]
-                        }
-                    },
-                    "medKeywords"  : {
-                        "any" : {
-                            "any" : ["<VALUE-ASSIGNED>"]
-                        }
-                    },
-                    "noneKeywords" : {
-                        "FreeRTOS" : {
-                            "qemu" : ["<QEMU ABORTED>"],
-                            "any" : ["<GDB-SIGTRAP>"]
+                        "debian" : {
+                            "any" : ["<END-OF-MAIN>", "Segmentation fault"]
                         },
-                        "any" : {
-                            "any" : ["Segmentation fault"]
+                        "FreeBSD" : {
+                            "any" : ["<END-OF-MAIN>", "Segmentation fault"]
+                        },
+                        "FreeRTOS" : {
+                            "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
+                            "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
                         }
                     }
                 },
