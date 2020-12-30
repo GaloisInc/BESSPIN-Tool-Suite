@@ -97,7 +97,7 @@ def scoreTests(scorerModule, csvPath, logsDir):
 
     # Get all the log files
     logs = [(os.path.basename(f).split('.')[0], f) for f in sorted(glob.glob(os.path.join(logsDir, '*.log')))]
-    rows = scorerModule.scoreAllTests(logs)
+    rows = sorted(scorerModule.scoreAllTests(logs))
     if (len(rows) < 1): #nothing to score
         warnAndLog("<scoreTests>: There are no logs to score.")
     else:
