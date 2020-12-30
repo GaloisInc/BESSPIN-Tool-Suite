@@ -129,7 +129,7 @@ following:
 These are the special known instructions:   
 - LMCO P1: Add `exception_handler` to `funcCheckpoints`.
 - LMCO P2: Add `Illegal` to `stdoutKeywords`.
-- SRI-Cambridge P2: Add `security exception` to `stdoutKeywords`.
+- SRI-Cambridge P2: Add `security exception` and `Signal 34` to `stdoutKeywords`.
 
 ## Customize Tests Compiling
 
