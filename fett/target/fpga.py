@@ -51,9 +51,13 @@ class fpgaTarget(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def fpgaStart (self, elfPath, elfLoadTimeout=15, isReload=False):
-        if (self.processor=='bluespec_p3'):
-            time.sleep(3) #need time after programming the fpga
+    def fpgaStart (self, elfPath, elfLoadTimeout=15, isReload=False):      
+        if (self.target == 'vcu118'):
+            time.sleep(3) 
+            # After programming the fpga, the OS needs a moment to release the resource to be used by openocd.
+            # I am suspecting a mistake by Vivado in terminating while still using the USB adaptor (CWE-672 ;)).
+            # Since this python codes run so fast, going directly from programFpga to spawning openocd does not 
+            # work. 3 seconds might be excessive, but it is safer since we sometimes run this on slow NUCs.
 
         if (self.useOpenocd()):
             # start the openocd process
@@ -178,7 +182,6 @@ class fpgaTarget(object):
             self.terminateAndExit(f"{self.targetIdInfo}<fpgaReload> is not implemented for target {self.target}.",overrideShutdown=True)
         self.fpgaTearDown(isReload=True,stage=stage)
         vcu118.programBitfile(doPrint=False, targetId=self.targetId)
-        time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
         self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout, isReload=True)
         return
 
