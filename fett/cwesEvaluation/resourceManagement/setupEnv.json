@@ -95,12 +95,6 @@
                 "test_590" : {
                     "cweText" : "Free of Memory not on the Heap"
                 },
-                "test_668" : {
-                    "cweText" : "Exposure of Resource to Wrong Sphere"
-                },
-                "test_669" : {
-                    "cweText" : "Incorrect Resource Transfer Between Spheres"
-                },
                 "test_672" : {
                     "cweText" : "Operation on a Resource after Expiration or Release"
                 },
