@@ -9,17 +9,25 @@
 #ifdef testgenOnFreeRTOS
 
 #if (defined(testgenFPGA))
-#include "FreeRTOS.h"
+    #include "FreeRTOS.h"
+    #define MALLOC pvPortMalloc
+    #define FREE vPortFree
+#else
+    #define MALLOC malloc
+    #define FREE free
 #endif
 
 // ----------------- FreeRTOS Test ----------
-#define MALLOC(size) pvPortMalloc(size)
-#define FREE(ptr)   vPortFree(ptr)
+
 #define NUM_OF_TEST_PARTS 4
 
 int contains_char_malicious(char c) {
     char *str;
     str = (char*)MALLOC(20*sizeof(char));
+    if (str == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return FAILURE;
+    }
     strcpy(str, "Search!");
     while (*str != NULL) {
         if (*str == c) {
@@ -42,6 +50,10 @@ int contains_char_valid(char c) {
     char *str;
     int i = 0;
     str = (char*)MALLOC(20*sizeof(char));
+    if (str == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return FAILURE;
+    }
     strcpy(str, "Search!");
     while (i < strlen(str)) {
         if (str[i] == c) {
@@ -82,6 +94,10 @@ int contains_char_valid(char c) {
     char *str;
     int i = 0;
     str = (char*)malloc(20*sizeof(char));
+    if (str == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return FAILURE;
+    }
     strcpy(str, "Search!");
     while (i < strlen(str)) {
         if (str[i] == c) {
@@ -102,6 +118,10 @@ int contains_char_valid(char c) {
 int contains_char_malicious(char c) {
     char *str;
     str = (char*)malloc(20*sizeof(char));
+    if (str == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return FAILURE;
+    }
     strcpy(str, "Search!");
     while (*str != NULL) {
         if (*str == c) {

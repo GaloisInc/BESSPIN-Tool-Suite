@@ -76,6 +76,11 @@ static void uninitString (void);
 static int *useUninit (bool x) {
     int *pVal = (int *) MALLOC (sizeof(int));
 
+    if (pVal == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return NULL;
+    }
+
     if (x) {
         printf("<INVALID> useUninit should never be called with true.\n");
         *pVal = 0xBB; //arbitrary value
@@ -88,9 +93,14 @@ static int *useUninit (bool x) {
 // This function allocates a number of chars on the heap, but leave a bunch of them unitialized
 #define XSTRLEN 10
 static void uninitString () {
-    char *xStr = (char *) MALLOC (XSTRLEN*sizeof(char));
     int i;
     char shortStr[] = "BBBBB"; 
+    char *xStr = (char *) MALLOC (XSTRLEN*sizeof(char));
+
+    if (xStr == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
 
     strcpy (xStr, shortStr);
 

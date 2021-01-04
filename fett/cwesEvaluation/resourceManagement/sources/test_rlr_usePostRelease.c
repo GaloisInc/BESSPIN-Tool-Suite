@@ -87,11 +87,19 @@ static void usePostRelease (int i, int isSource) {
     xSizeToMallocMain = (size_t) ((rand() % (MALLOC_SIZE_MAX-MALLOC_SIZE_MIN+1)) + MALLOC_SIZE_MIN);
     pMain = (char *) MALLOC(xSizeToMallocMain * sizeof(char));
     pSecond = (char *) MALLOC(xSizeToMallocMain * sizeof(char)); 
+    if ((pMain == NULL) || (pSecond == NULL)) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     FREE(pMain);
     xSizeToMallocExtra = (size_t) ((rand() % (MALLOC_SIZE_MAX-MALLOC_SIZE_MIN+1)) + MALLOC_SIZE_MIN);
     pExtra1 = (char *) MALLOC(xSizeToMallocExtra * sizeof(char)); 
     pExtra2 = (char *) MALLOC(xSizeToMallocExtra * sizeof(char)); 
     pExtra3 = (char *) MALLOC(xSizeToMallocExtra * sizeof(char)); 
+    if ((pExtra1 == NULL) || (pExtra2 == NULL) || (pExtra3 == NULL)) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     if (rand()%PERCENT_USE) {
         printf("<%d>: <NO-USE>.\n",i);
     } else { //use post free
