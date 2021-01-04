@@ -50,6 +50,8 @@ static void sizeofPtr() {
     size_t xSizeToMalloc;
     char xChar, *pChar;
 
+    srand(RM_SEED); //RM_SEED is written in fett/cwesEvaluation/build.py
+
     xSizeToMalloc = (size_t) ((rand() % (MALLOC_SIZE_MAX-MALLOC_SIZE_MIN+1)) + MALLOC_SIZE_MIN);
     xChar = (char) (rand()%(256*sizeof(xChar)));
     pChar = (char *) MALLOC(xSizeToMalloc * sizeof(pChar));
