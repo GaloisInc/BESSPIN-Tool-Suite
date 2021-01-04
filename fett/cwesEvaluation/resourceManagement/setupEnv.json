@@ -32,9 +32,6 @@
                 "test_404" : {
                     "cweText" : "Improper Resource Shutdown or Release"
                 },
-                "test_463" : {
-                    "cweText" : "Deletion of Data Structure Sentinel"
-                },
                 "test_467" : {
                     "cweText" : "Use of sizeof() on a Pointer Type",
                     "unix" : 1,
@@ -149,9 +146,6 @@
                     "cweText" : "Improper Update of Reference Count",
                     "unix" : 2,
                     "FreeRTOS" : 2
-                },
-                "test_920" : {
-                    "cweText" : "Improper Restriction of Power Consumption"
                 }
             }
         },
