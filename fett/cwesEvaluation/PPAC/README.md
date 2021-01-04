@@ -33,8 +33,8 @@ Missing authorization in privileged resource access.
 - [CWE-284](https://cwe.mitre.org/data/definitions/284.html).   
 - [CWE-285](https://cwe.mitre.org/data/definitions/285.html).   
 - [CWE-288](https://cwe.mitre.org/data/definitions/288.html).
-- [CWE-688](https://cwe.mitre.org/data/definitions/688.html).   
-- [CWE-689](https://cwe.mitre.org/data/definitions/689.html). 
+- [CWE-668](https://cwe.mitre.org/data/definitions/668.html).   
+- [CWE-669](https://cwe.mitre.org/data/definitions/669.html). 
 - [CWE-862](https://cwe.mitre.org/data/definitions/862.html).  
 - [CWE-863](https://cwe.mitre.org/data/definitions/863.html).  
 
