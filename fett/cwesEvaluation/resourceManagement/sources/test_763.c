@@ -16,6 +16,10 @@
 
 void wrong_shift_address_assignment(void){
     int* x = MALLOC(sizeof(int) * 5);
+    if (x == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     x += sizeof(int);
     FREE(x);
     printf("\n<RELEASE_OF_INVALID_POINTER_PASSED_SUCCESSFULLY>\n");
@@ -24,6 +28,10 @@ void wrong_shift_address_assignment(void){
 void wrong_address_assignment(void){
     int x;
     int *p = MALLOC(sizeof(*p));
+    if (p == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     x = 12;
     p = &x; //assign the address of x to p
     FREE(p);

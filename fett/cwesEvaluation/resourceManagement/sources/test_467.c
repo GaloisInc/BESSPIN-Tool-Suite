@@ -53,11 +53,19 @@ static void sizeofPtr() {
     xSizeToMalloc = (size_t) ((rand() % (MALLOC_SIZE_MAX-MALLOC_SIZE_MIN+1)) + MALLOC_SIZE_MIN);
     xChar = (char) (rand()%(256*sizeof(xChar)));
     pChar = (char *) MALLOC(xSizeToMalloc * sizeof(pChar));
+    if (pChar == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     memset (pChar, xChar, xSizeToMalloc * sizeof(pChar));
 
     xSizeToMalloc = (size_t) ((rand() % (MALLOC_SIZE_MAX-MALLOC_SIZE_MIN+1)) + MALLOC_SIZE_MIN);
     xInt = (long unsigned int) (rand()%(256*sizeof(xInt)));
     pInt = (long unsigned int *) MALLOC(xSizeToMalloc * sizeof(pInt));
+    if (pInt == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     memset (pInt, xInt, xSizeToMalloc * sizeof(pInt));
 
     FREE(pChar);

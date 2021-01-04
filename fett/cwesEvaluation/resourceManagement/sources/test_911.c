@@ -25,9 +25,17 @@ correct_implicit_reference_count(){
     struct node *ptrA, *ptrB;
     ptrA = MALLOC(sizeof(struct node)); //objA RCobjA=1
     ptrB = MALLOC(sizeof(struct node)); //objA RCobjB=1
+    if ((ptrA == NULL) || (ptrB == NULL)) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     ptrB->next = ptrA; //objA RCobjA=2
     FREE(ptrA); //objA RCobjA=2
     ptrA = MALLOC(sizeof(struct node)); //objA RCobjA=1
+    if (ptrA == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     printf("\n<REFERENCE_COUNTER_DECREASED_BY_ONE_FIRST_TIME>\n");
     FREE(ptrB); //objA RCobjA=0
     printf("\n<REFERENCE_COUNTER_DECREASED_BY_ONE_SECOND_TIME>\n");
@@ -47,6 +55,11 @@ unknown_implicit_reference_count(){
     // objC is of type union so the next pointer and data share the same
     // memory location.
     union unode* ptrC=MALLOC(sizeof(union unode));//objC
+
+    if ((ptrA == NULL) || (ptrB == NULL) || (ptrC == NULL)) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
 
     ptrB->next = ptrC->next = ptrA; //objA RCobjA=3
     //object's B next pointer and object's C next pointer and pointer A

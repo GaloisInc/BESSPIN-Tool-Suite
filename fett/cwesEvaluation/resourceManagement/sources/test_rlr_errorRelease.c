@@ -59,6 +59,10 @@ static void errorRelease (int i) {
     size_t xSizeToMalloc;
     xSizeToMalloc = (size_t) ((rand() % (MALLOC_SIZE_MAX-MALLOC_SIZE_MIN+1)) + MALLOC_SIZE_MIN);
     p = (char *) MALLOC(xSizeToMalloc * sizeof(char)); 
+    if (p == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     if (rand()%PERCENT_ERROR) {
         printf("<%d>: <NO-ERROR>.\n",i);
     } else { //cause an error here
