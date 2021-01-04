@@ -581,7 +581,7 @@ def prepareFpgaEnv(targetId=None):
             if (len(curList) == 0):
                 logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough vcu118 HW targets found!",exitCode=EXIT.Configuration)
             
-            if (isEnabled('useCustomHwTarget')):
+            if (isEnabled('useCustomHwTarget',targetId=targetId)):
                 if (getSetting('customHwTarget',targetId=targetId) not in curList):
                     logAndExit(f"{targetInfo}prepareFpgaEnv: Custom target {getSetting('customHwTarget',targetId=targetId)} not found!",
                         exitCode=EXIT.Configuration)
