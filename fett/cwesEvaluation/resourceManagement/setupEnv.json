@@ -187,10 +187,10 @@
                     "test_rlr_heapExhaust", "test_rlr_stackExhaust"
                 ],
                 "test_908" : [
-                    "test_ri_uninitStack"
+                    "test_ri_uninitStack", "test_ri_uninitHeap"
                 ],
                 "test_909" : [
-                    "test_ri_uninitStack"
+                    "test_ri_uninitStack", "test_ri_uninitHeap"
                 ]
             }
         },
@@ -288,6 +288,15 @@
                     }
                 },
                 "test_ri_uninitStack" : {
+                    "unix" : 2,
+                    "FreeRTOS" : 2,
+                    "highKeywords" : {
+                        "any" : {
+                            "any" : ["<END-OF-MAIN>"]
+                        }
+                    }
+                },
+                "test_ri_uninitHeap" : {
                     "unix" : 2,
                     "FreeRTOS" : 2,
                     "highKeywords" : {
