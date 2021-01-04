@@ -61,5 +61,10 @@
       "temporal": { "timeout" : { "boot" : 1000 } },
       "else": { "timeout" : { "boot" : 540 } }
     }
+  },
+  "FreeRTOS": { 
+    "name": "cross-compiler",
+    "GCC": { "timeout" : { "elfLoad" : 60, "boot" : 30 } },
+    "Clang": { "timeout" : { "elfLoad" : 120, "boot" : 30 } }
   }
 }

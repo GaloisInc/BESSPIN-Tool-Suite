@@ -91,7 +91,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     self.terminateAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
         elif (self.osImage=='FreeRTOS'):
-            self.fpgaStart(self.osImageElf,elfLoadTimeout=60) 
+            self.fpgaStart(self.osImageElf,elfLoadTimeout=self.parseBootTimeoutDict(timeoutDict,key="elfLoad")) 
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
         else:

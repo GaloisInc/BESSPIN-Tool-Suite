@@ -266,7 +266,7 @@ class commonTarget():
                 }
             os_image = data[self.osImage]
 
-            if (self.osImage == 'busybox'): #special case
+            if (self.osImage in ['busybox', 'FreeRTOS']): #special case
                 return traverse_data(os_image)
             elif self.target not in os_image:
                 return False, 0, {
@@ -278,23 +278,17 @@ class commonTarget():
 
             return traverse_data(target)
 
-        if (self.osImage in ['FreeRTOS']):
-            timeoutDict = { "boot" : 30 }
-        elif self.osImage in ['debian', 'busybox', 'FreeBSD']:
-            success, timeoutDict, message = get_timeout_from_settings_dict()
-
-            if not success:
-                self.terminateAndExit(**message)
-
+        success, timeoutDict, message = get_timeout_from_settings_dict()
+        if not success:
+            self.terminateAndExit(**message)
+        if self.osImage in ['debian', 'busybox', 'FreeBSD']:
             if (self.restartMode and (self.target=='awsf1')):
                 for timeout in timeoutDict.keys():
                     timeoutDict[timeout] += 120 #takes longer to restart
 
             printAndLog(f"{self.targetIdInfo}start: Booting <{self.osImage}> on "
                         f"<{self.target}>. This might take a while...")
-        else:
-            self.terminateAndExit(f"start: <{self.osImage}> is not implemented on "
-                f"<{self.target}>.",overrideShutdown=True, exitCode=EXIT.Implementation)
+        
         self.sumTimeout = sum(timeoutDict.values())
         if (self.osImage=='debian'):
             if (not isEqSetting('mode','cyberPhys')):
