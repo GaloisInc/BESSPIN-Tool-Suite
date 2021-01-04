@@ -185,6 +185,12 @@
                 ],
                 "test_789" : [
                     "test_rlr_heapExhaust", "test_rlr_stackExhaust"
+                ],
+                "test_908" : [
+                    "test_ri_uninitStack"
+                ],
+                "test_909" : [
+                    "test_ri_uninitStack"
                 ]
             }
         },
@@ -278,6 +284,15 @@
                     "NEG-call-errKeywords" : {
                         "any" : {
                             "any" : ["<USE-POST-FREE>"]
+                        }
+                    }
+                },
+                "test_ri_uninitStack" : {
+                    "unix" : 2,
+                    "FreeRTOS" : 2,
+                    "highKeywords" : {
+                        "any" : {
+                            "any" : ["<END-OF-MAIN>"]
                         }
                     }
                 }
