@@ -481,6 +481,28 @@ The source file is `test_rlr_errorRelease.c`. The test calls a `errorRelease` fu
 The source file is `test_rlr_usePostRelease.c`. The test calls a `usePostRelease` function 50 times. This function allocates a random number of bytes for two pointers, then free one, and after that, it allocates random number of bytes for three extra pointers, then randomly (with 20\% probability) decides to use the freed pointer with `memcpy` either as source in part 1, or as destination in part 2. In the end, it frees all the allocated memory.
 
 
+## RI (Resources Initialization) ##
+
+This is a custom sub-class that we use to group some of the interleaved CWEs. The sources of this sub-class have the prefix `test_ri_`. 
+
+**CWEs**
+
+- [CWE-908](https://cwe.mitre.org/data/definitions/908.html): Use of Uninitialized Resource.
+- [CWE-909](https://cwe.mitre.org/data/definitions/909.html): Missing Initialization of Resource.
+
+**Tests**
+
+We use two tests to evaluate these two CWEs; one for the stack initialization, and the other for the heap.
+
+### TEST - STACK INITIALIZATION ###
+
+The source file is `test_ri_uninitStack.c`. The test has two parts: p1. Return an integer variable that was never initialized. p2. Declares a string with a certain length, and then `strcpy` to it a shorter string, leaving the rest of bytes uninitialized. Then, it accesses the characters that are beyond the `NULL` value. Both of the test parts demonstrate instances of information leaking from the stack.
+
+### TEST - HEAP INITIALIZATION ###
+
+The source file is `test_ri_uninitHeap.c`. The test has two parts: p1. Return a pointer to an integer that was never initialized. p2. Allocates a string with a certain length, and then `strcpy` to it a shorter string, leaving the rest of bytes uninitialized. Then, it accesses the characters that are beyong the `NULL` byte. Both of the test parts demonstrate instances of information leaking from the heap.
+
+
 ## Miscellaneous ##
 
 The following are the miscellaneous CWEs that do not belong to a particular sub-category:
