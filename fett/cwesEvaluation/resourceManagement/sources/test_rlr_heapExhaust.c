@@ -4,8 +4,14 @@
 #include <string.h>
 #include <sys/types.h>
 
-#define MALLOC_SIZE_MAX 0xFFFF 
-#define MALLOC_SIZE_MIN 0xF000
+#if (defined(testgenOnFreeRTOS) && defined(testgenQEMU))
+    #define MALLOC_SIZE_MAX 0x008F 
+    #define MALLOC_SIZE_MIN 0x0000
+#else
+    #define MALLOC_SIZE_MAX 0xFFFF 
+    #define MALLOC_SIZE_MIN 0xF000
+#endif
+
 #define PERCENT_FREE 100 // Free 1 in 100 allocations
 
 #if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))

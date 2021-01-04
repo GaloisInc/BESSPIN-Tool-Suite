@@ -3,8 +3,14 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#define MALLOC_SIZE_MAX 0xFFFF 
-#define MALLOC_SIZE_MIN 0xF000
+#if (defined(testgenOnFreeRTOS) && defined(testgenQEMU))
+    #define MALLOC_SIZE_MAX 0x008F 
+    #define MALLOC_SIZE_MIN 0x0000
+#else
+    #define MALLOC_SIZE_MAX 0xFFFF 
+    #define MALLOC_SIZE_MIN 0xF000
+#endif
+
 #define N_CALLS 50
 #define PERCENT_NO_FREE 5 //Do not free 1 in 5 calls
 
