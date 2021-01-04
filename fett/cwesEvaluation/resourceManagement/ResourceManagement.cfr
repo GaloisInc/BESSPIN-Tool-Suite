@@ -34,6 +34,8 @@ ResourceManagement_Test ?
     CWE_772
     CWE_789
     CWE_825
+    CWE_908
+    CWE_909
     CWE_911
 
   or ResourceManagement_BF_Classes
@@ -41,10 +43,12 @@ ResourceManagement_Test ?
     PTR
     MISC
     RLR
+    RI
 
   [ MAL => CWE_415 && CWE_416 && CWE_562 && CWE_590 && CWE_672 && CWE_761 && CWE_762 && CWE_763 && CWE_771 && CWE_772 && CWE_825 && CWE_911 ]
   [ PTR => CWE_188 && CWE_468 && CWE_476 && CWE_588 && CWE_690 ]
   [ RLR => CWE_400 && CWE_404 && CWE_416 && CWE_770 && CWE_771 && CWE_772 && CWE_789 ]
+  [ RI => CWE_908 && CWE_909 ]
   [ MISC => CWE_467 && CWE_587 ]
 
   xor ResourceManagement_test
@@ -67,6 +71,8 @@ ResourceManagement_Test ?
     RLR_test_noRelease
     RLR_test_errorRelease
     RLR_test_usePostRelease
+    RI_test_uninitStack
+    RI_test_uninitHeap
 
   [ ResourceManagement_test_188 => CWE_188 ]
   [ ResourceManagement_test_415 => CWE_415 ]
@@ -87,6 +93,8 @@ ResourceManagement_Test ?
   [ RLR_test_noRelease => CWE_400 || CWE_404 || CWE_771 || CWE_772 ]
   [ RLR_test_errorRelease => CWE_400 || CWE_404 || CWE_771 || CWE_772 ]
   [ RLR_test_errorRelease => CWE_404 || CWE_416 || CWE_672 ]
+  [ RI_test_uninitStack => CWE_908 || CWE_909 ]
+  [ RI_test_uninitHeap => CWE_908 || CWE_909 ]
 
 // End of Resource Management error model
 
