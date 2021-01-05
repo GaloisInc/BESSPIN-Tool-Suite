@@ -23,7 +23,7 @@
 #define {read_write}
 // READ_AFTER_WRITE = (READ_AFTER_WRITE, NO_READ)
 #define {read_after_write}
-// BUF_ACCESS = (PTR_ACCESS, ARRAY_ACCESS)
+// BUF_ACCESS = (PTR_ACCESS, ARRAY_ACCESS, PATH_MANIPULATION_ACCESS)
 #define {buf_access}
 // LOCATION = (STACK, HEAP)
 #define {location}
@@ -67,6 +67,15 @@
 #ifdef JMP
 #include<setjmp.h>
 #include<stdlib.h>
+#endif
+
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(testgenOnFreeRTOS)
+// Required for realpath
+#include <limits.h>
+#include <stdlib.h>
+// Required for strnlen
+#include <string.h>
+#define MIN(a,b) (((a)<(b))?(a):(b))
 #endif
 
 
@@ -299,6 +308,69 @@ void handle_signal(int signum) {{
 }};
 #endif
 
+#ifdef PATH_MANIPULATION_ACCESS
+void test_path_manipulation(void) {{
+#ifdef testgenOnFreeRTOS
+    printf("TEST INVALID.  <not on FreeRTOS>\r\n");
+    fflush(stdout);
+#else
+    if ({memmax} <= (PATH_MAX * sizeof(char))) {{
+        // Not enough memory to perform both a proper and an improper realpath
+        printf("TEST INVALID. <insufficient memory>\r\n");
+        fflush(stdout);
+        return;
+    }}
+
+    // Perform allocations.  {buf_name} holds a buffer with size less than
+    // PATH_MAX, and {buf_name2} holds a buffer of size PATH_MAX.  The SIZE calls
+    // ensure that these two buffers do not exceed {memmax}.
+    size_t {buf_size} = SIZE(char,
+                             MIN({N}, PATH_MAX-1),
+                             {memmax} - (PATH_MAX * sizeof(char)));
+#ifdef STACK
+    char {buf_name}[{buf_size}];
+    char {buf_name2}[PATH_MAX];
+#else
+    char* {buf_name} = malloc(sizeof(char) * {buf_size});
+    char* {buf_name2} = malloc(sizeof(char) * PATH_MAX);
+    if ({buf_name} == NULL || {buf_name2} == NULL) {{
+        printf("TEST INVALID. <malloc>\r\n");
+        fflush(stdout);
+        return;
+    }};
+#endif
+    // Determine the actual length of '.' when expanded
+    char* {tmp_var_name} = realpath(".", {buf_name2});
+    if (!{tmp_var_name}) {{
+        printf("TEST INVALID. <realpath buf2>\r\n");
+        fflush(stdout);
+        return;
+    }};
+    if ({buf_size} < strnlen({buf_name2}, PATH_MAX)) {{
+        // realpath will overflow {buf_name}, thus stressing additional CWEs
+        printf("BUFFER SIZE INSUFFICIENT\r\n");
+    }} else {{
+        // realpath will not overflow {buf_name}.  This test only stresses
+        // CWE 785
+        printf("BUFFER SIZE SUFFICIENT\r\n");
+    }}
+    fflush(stdout);
+
+    // Call realpath with buffer smaller than PATH_MAX
+    {tmp_var_name} = realpath(".", {buf_name});
+    if (!{tmp_var_name}) {{
+        printf("TEST INVALID. <realpath buf>\r\n");
+        fflush(stdout);
+        return;
+    }}
+
+#ifdef JMP
+    longjmp(env, 2);
+#endif
+#endif // !testgenOnFreeRTOS
+}};
+#endif  // PATH_MANIPULATION_ACCESS
+
 /*
  * Main Function
  *
@@ -327,7 +399,12 @@ int main()
     if (jmp_return != 0)
         goto COMPLETE;
 #endif
+
+#ifdef PATH_MANIPULATION_ACCESS
+    test_path_manipulation();
+#else
     test();
+#endif
 
     COMPLETE:
     printf("TEST COMPLETED\n");

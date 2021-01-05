@@ -20,6 +20,11 @@ def getQuota(instance):
     """
     Given an instance, returns the quota for the concept it belongs to.
     """
+    if instance.BufferIndexScheme == "BufferIndexScheme_PathManipulation":
+        # Path manipulation test quotas are enforced by InstanceSelector, and
+        # should not be selected as part of the random test selection process
+        return 0
+
     baseQuota = (getSettingDict('bufferErrors', 'nTests') // NUM_CONCEPTS)
     if (instance.Boundary == "Boundary_Above" and
         instance.Access == "Access_Write" and
@@ -57,10 +62,21 @@ class InstanceSelector:
         nTests = getSettingDict('bufferErrors', 'nTests')
         self.conceptCounts = collections.defaultdict(int)
         self.instancePairs = instancePairs
+        self.pathManipulationPairs = [x for x in instancePairs if
+                                      x[0].BufferIndexScheme ==
+                                      "BufferIndexScheme_PathManipulation"]
         self.rnd = rnd
 
     def chooseInstance(self):
         numSelected = sum(self.conceptCounts.values())
+        if (not isEqSetting('osImage', 'FreeRTOS') and
+            numSelected < 0.05 * getSettingDict('bufferErrors', 'nTests')):
+            # Force selection of a small number of CWE_785 tests on Unix
+            # platforms
+            (instance, tg) = self.rnd.choice(self.pathManipulationPairs)
+            self.conceptCounts[instanceToConcept(instance)] += 1
+            return tg
+
         (instance, tg) = self.rnd.choice(self.instancePairs)
         concept = instanceToConcept(instance)
         underQuota = numSelected < (getSettingDict('bufferErrors', 'nTests') //
