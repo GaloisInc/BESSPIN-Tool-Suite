@@ -133,16 +133,16 @@ class vcu118Target (fpgaTarget, commonTarget):
                     isSuccess = self.pingTarget(exitOnError=False)
                 if (not isSuccess):
                     if (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax):
-                        warnAndLog(f"Network is not up on target. Trying again ({self.freertosNtkRetriesIdx+1}/{self.freertosNtkRetriesMax})...")
+                        warnAndLog(f"{self.targetIdInfo}Network is not up on target. Trying again ({self.freertosNtkRetriesIdx+1}/{self.freertosNtkRetriesMax})...")
                         self.fpgaReload(self.osImageElf,elfLoadTimeout=30)
                     else:
-                        self.terminateAndExit("Network is not up on target.",exitCode=EXIT.Network) 
+                        self.terminateAndExit(f"{self.targetIdInfo}Network is not up on target.",exitCode=EXIT.Network) 
         elif (self.osImage=='FreeBSD'):
             self.runCommand(f"ifconfig xae0 ethet {self.macTarget}")
             self.runCommand(f"route add default {self.ipHost}")
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
-            self.terminateAndExit(f"<activateEthernet> is not implemented for<{self.osImage}> on <{self.target}>.")
+            self.terminateAndExit(f"{self.targetIdInfo}<activateEthernet> is not implemented for<{self.osImage}> on <{self.target}>.")
 
         if (self.osImage!='FreeRTOS'):
             self.pingTarget()
