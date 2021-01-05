@@ -238,7 +238,10 @@ class commonTarget():
                     return True, layer['timeout'], None
                 elif 'name' in layer:
                     name = layer['name']
-                    setting = getSetting(name,targetId=self.targetId)
+                    if (name in ["cross-compiler"]): #A list of non-target settings in bootTimeout.json
+                        setting = getSetting(name)
+                    else:
+                        setting = getSetting(name,targetId=self.targetId)
                     if setting in layer:
                         return traverse_data(layer[setting])
                     elif 'else' in layer:
