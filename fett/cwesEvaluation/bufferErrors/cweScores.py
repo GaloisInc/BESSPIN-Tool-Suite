@@ -56,12 +56,23 @@ def score(testScores):
         - Even the baseline (non-secure) processor can block some of the buffer overflows from happening.
           This is due to the OS memory management, boundaries, etc. 
         - s=0 should be DETECTED, and s=t should be HIGH.
+        - The value (t-s)/t represents the proportion of tests in which errors
+          were detected.  Unix OS images have a larger range of values that
+          score HIGH because those OSes detect more overflows as a baseline.
+          The proportion of detected errors maps to scores as follows:
+          - Unix: [0, 0.4), FreeRTOS: [0, 1/3) - HIGH
+          - Unix: [0.4, 2/3), FreeRTOS [1/3, 2/3) - MED
+          - All: [2/3, 1) - LOW
+          - All: 1 - DETECTED
         """
-        unadjustedScore = ((t-s)/float(t))*(SCORES.DETECTED.value-SCORES.HIGH.value) 
-        if (unadjustedScore < SCORES.HIGH.value):
+        detectedRatio = (t-s) / float(t)
+        unadjustedScore = detectedRatio*(SCORES.DETECTED.value-SCORES.HIGH.value)
+        if (unadjustedScore < SCORES.HIGH.value or
+            (getSetting('osImage') in ['debian', 'FreeBSD'] and
+             detectedRatio < 0.4)):
             ovrScore = SCORES.HIGH
         else:
-            ovrScore = SCORES(math.floor(abs(unadjustedScore-0.1))) #Slight adjustment, being more conservative in scoring
+            ovrScore = SCORES(math.floor(unadjustedScore))
 
     return (ovrScore, notes)
 
