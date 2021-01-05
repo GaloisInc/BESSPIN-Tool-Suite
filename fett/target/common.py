@@ -990,22 +990,24 @@ class commonTarget():
             try:
                 specialEndsWith, specialResponse = respondEndsWith
             except Exception as exc:
-                self.terminateAndExit("keyboardInterrupt: Called with illegal <respondEndsWith> argument.",
+                self.terminateAndExit(f"{self.targetIdInfo}keyboardInterrupt: Called with illegal <respondEndsWith> argument.",
                     overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Dev_Bug)
             endsWith = [specialEndsWith] + endsWith
         if (self.terminateTargetStarted and (process == self.process)):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
-            self.terminateAndExit("keyboardInterrupt: interrupting is not resolving properly",overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Run)
+            self.terminateAndExit(f"{self.targetIdInfo}keyboardInterrupt: interrupting is not resolving properly",
+                overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Run)
         else:
             self.keyboardInterruptTriggered = True
         if ((not isEnabled('isUnix',targetId=self.targetId)) and (process == self.process)):
-            self.terminateAndExit(f"<keyboardInterrupt> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"{self.targetIdInfo}<keyboardInterrupt> is not implemented for <{self.osImage}>.",
+                exitCode=EXIT.Implementation)
         doTimeout = True
         retryIdx = 0
         while doTimeout and retryIdx < retryCount:
             if retryIdx > 0:
-                warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
+                warnAndLog(f"{self.targetIdInfo}keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
             retCommand = self.runCommand("\x03",endsWith=endsWith,exitOnError=False,timeout=timeout,
                             issueInterrupt=False,suppressErrors=True,process=process,sendToNonUnix=sendToNonUnix)
             textBack = retCommand[1]
@@ -1034,7 +1036,8 @@ class commonTarget():
                         try:
                             process.expect(xEndsWith,timeout=1)
                         except Exception as exc:
-                            warnAndLog(f"keyboardInterrupt: <{xEndsWith}> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
+                            warnAndLog(f"{self.targetIdInfo}keyboardInterrupt: <{xEndsWith}> was in process.after, "
+                                f"but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
                             breakRetries = True
                         textBack += readAfter
                 if (breakRetries):

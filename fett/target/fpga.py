@@ -296,8 +296,7 @@ class fpgaTarget(object):
     @decorate.debugWrap
     def interruptGdb(self):
         """implement keyboardInterrupt for GDB"""
-        if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
-            self.sendToTarget('\x03',exitOnError=False,process=self.gdbProcess) #send one extra \x03
+        self.sendToTarget('\x03',exitOnError=False,process=self.gdbProcess) #send one extra \x03
         self.keyboardInterrupt(exitOnError=False,retryCount=1,process=self.gdbProcess,
             endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15,
             respondEndsWith=(r"Stop debugging it\? \(y or n\)","y"))

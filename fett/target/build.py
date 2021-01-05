@@ -146,7 +146,7 @@ def getTargetIp(targetId=None):
     thisTarget = getSetting('target',targetId=targetId)
     if (thisTarget=='vcu118'):
         # use hardcoded IP if provided
-        if isEnabled('useCustomTargetIp'):
+        if isEnabled('useCustomTargetIp',targetId=targetId):
             return getSetting('customTargetIp',targetId=targetId)
         else: #use hostIP + targetId
             ipInc = 1 if (targetId is None) else targetId
