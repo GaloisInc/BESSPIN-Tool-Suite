@@ -332,6 +332,7 @@ static void prvCanRxTask(void *pvParameters)
     uint32_t ulIPAddress;
     struct freertos_sockaddr xBindAddress;
     struct freertos_sockaddr xClient;
+    size_t msg_len;
 
     FreeRTOS_printf((">>>%s Starting prvCanRxTask\r\n", getCurrTime()));
 
