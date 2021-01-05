@@ -22,7 +22,10 @@
 #define MIN_VOLUME 0
 
 // the maximum volume
-#define MAX_VOLUME 11
+#define MAX_VOLUME 31
+
+// the "default" volume
+#define DEFAULT_VOLUME 11
 
 // the states of the state machines; note that the current volume and
 // selected station are not reflected here but are stored in variables.
@@ -45,11 +48,11 @@ typedef enum { START = POSITION_SET + 1,
                STOP } top_level_state;
 
 typedef struct infotainment_state_t {
-    top_level_state S;
+    top_level_state T;
     volume_state V;
     uint8_t volume;
     music_state M;
-    station_state C;
+    station_state S;
     uint8_t station;
     position_state P;
     float pos_x;
@@ -76,7 +79,7 @@ typedef struct infotainment_state_t {
 #define volume(c) ((c & VOLUME_MASK) >> 3)
 
 // CAN payload construction function (takes an infotainment_state_t)
-#define state_packet(s) ((s.volume << 3) | (s.station << 1) | (1 & (s.M == MUSIC_PLAYING)))
+#define music_state_packet(s) ((s.volume << 3) | (s.station << 1) | (1 & (s.M == MUSIC_PLAYING)))
 // no need for bitmasks with the positions because they're just floats
 
 #endif // __INFOTAINMENT_DEFS_H__

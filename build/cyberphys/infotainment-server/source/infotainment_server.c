@@ -6,6 +6,7 @@
  */
 
 // general includes
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -26,10 +27,10 @@
 #include "infotainment_server.h"
 
 // initialize global state variables
-infotainment_state the_state = { .S = START };
+infotainment_state the_state = { .T = START };
 
 bool initialize(void) {
-    if (the_state.S == RUNNING) {
+    if (the_state.T == RUNNING) {
         error("initialize called on running server");
     }
 
@@ -37,14 +38,14 @@ bool initialize(void) {
     // we'll set the various fields to sane values
     the_state.V = VOLUME_UNKNOWN;
     the_state.M = MUSIC_UNKNOWN;
-    the_state.C = STATION_UNKNOWN;
+    the_state.S = STATION_UNKNOWN;
     the_state.P = POSITION_UNKNOWN;
     the_state.volume = 0;
     the_state.station = 0;
     the_state.pos_x = 0.0f;
     the_state.pos_y = 0.0f;
     the_state.pos_z = 0.0f;
-    the_state.S = RUNNING;
+    the_state.T = RUNNING;
 
     return true;
 }
@@ -105,7 +106,7 @@ int main_loop(void) {
 
     debug("socket number is %d\n", udp_socket());
     
-    while (the_state.S == RUNNING) {
+    while (the_state.T == RUNNING) {
         // zero out the buffer
         memset(&message, 0, MESSAGE_BUFFER_SIZE);
 
@@ -161,9 +162,9 @@ int main_loop(void) {
         // broadcast the new state; we always broadcast the current music state, 
         // and we also broadcast any position state that has been updated
 
-        broadcast_music_state();
+        broadcast_music_state(&broadcast_address);
         if (position_updated) {
-            broadcast_updated_position(frame->can_id);
+            broadcast_updated_position(&broadcast_address, frame->can_id);
         }
     }
 
@@ -223,25 +224,151 @@ bool update_position(can_frame *frame) {
     } else {
         *old_position = *position;
         changed = true;
-        debug("updated %s-coordinate to %f\n", dimension, *position);
+        debug("updated %s-coordinate to %f\n", dimension, *old_position);
     }
 
     return changed;
 }
 
 bool handle_button_press(can_frame *frame) {
-    return false;
+    // make sure the frame is an appropriate type
+    assert(frame->can_id == CAN_ID_BUTTON_PRESSED);
+
+    // interpret the payload as a single byte
+    unsigned char *payload = (unsigned char *) frame->data;
+    bool changed = false;
+
+    switch (*payload) {
+        case BUTTON_STATION_1:
+            debug("station 1 set\n");
+            changed = set_station(1);
+            break;
+        case BUTTON_STATION_2:
+            debug("station 2 set\n");
+            changed = set_station(2);
+            break;
+        case BUTTON_STATION_3:
+            debug("station 3 set\n");
+            changed = set_station(3);
+            break;
+        case BUTTON_VOLUME_DOWN:
+            debug("volume down pressed\n");
+            changed = decrease_volume();
+            break;
+        case BUTTON_VOLUME_UP:
+            debug("volume up pressed\n");
+            changed = increase_volume();
+            break;
+        default:
+            debug("invalid button press (%d) received, ignoring\n", *payload);
+    }
+
+    return changed;
 }
 
-void broadcast_music_state() {
-
+bool set_station(uint8_t station) {
+    bool changed = !(the_state.station == station);
+    the_state.M = MUSIC_PLAYING;
+    the_state.S = STATION_SET;
+    the_state.station = station;
+    return changed;
 }
 
-void broadcast_updated_position(canid_t can_id) {
+bool increase_volume() {
+    bool changed = false;
+    switch (the_state.V) {
+        case VOLUME_UNKNOWN:
+            changed = true;
+            the_state.V = VOLUME_IN_RANGE;
+            the_state.volume = DEFAULT_VOLUME;
+            break;
+        case VOLUME_IN_RANGE:
+        case VOLUME_OFF:
+            changed = !(the_state.volume == MAX_VOLUME);
+            the_state.volume = the_state.volume + 1;
+            if (the_state.volume == MAX_VOLUME) {
+                the_state.V = VOLUME_MAX;
+            } else {
+                the_state.V = VOLUME_IN_RANGE;
+            }
+            break;
+        default:
+            break;
+    }
+    return changed;
+}
 
+bool decrease_volume() {
+    bool changed = false;
+    switch (the_state.V) {
+        case VOLUME_UNKNOWN:
+            changed = true;
+            the_state.V = VOLUME_IN_RANGE;
+            the_state.volume = DEFAULT_VOLUME;
+            break;
+        case VOLUME_IN_RANGE:
+        case VOLUME_MAX:
+            changed = !(the_state.volume == MIN_VOLUME);
+            the_state.volume = the_state.volume - 1;
+            if (the_state.volume == MIN_VOLUME) {
+                the_state.V = VOLUME_OFF;
+            } else {
+                the_state.V = VOLUME_IN_RANGE;
+            }
+            break;
+        default:
+            break;
+    }
+    return changed;
+}
+
+void broadcast_music_state(struct sockaddr_in *broadcast_address) {
+    if (the_state.M == MUSIC_UNKNOWN || the_state.S == STATION_UNKNOWN ||
+        the_state.V == VOLUME_UNKNOWN) {
+        debug("warning: broadcasting music state with default values\n");
+    }
+
+    uint8_t data = music_state_packet(the_state);
+    can_frame frame = { .can_id = CAN_ID_INFOTAINMENT_STATE, .can_dlc = 1 };
+    frame.data[0] = data;
+
+    debug("broadasting music state frame: music %d, station %d, volume %d",
+          the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
+    canframe_sendto(udp_socket(), &frame, sizeof(frame), 0, // no flags
+                    broadcast_address, sizeof(broadcast_address));
+}
+
+void broadcast_updated_position(struct sockaddr_in *broadcast_address, 
+                                canid_t can_id) {
+    float position = 0.0f;
+    char *dimension = "";
+    switch (can_id) {
+        case CAN_ID_CAR_X:
+            position = the_state.pos_x;
+            dimension = "x";
+            break;
+        case CAN_ID_CAR_Y:
+            position = the_state.pos_y;
+            dimension = "y";
+            break;
+        case CAN_ID_CAR_Z:
+            position = the_state.pos_z;
+            dimension = "z";
+            break;
+        default:
+            error("broadcast_updated_position called with bad CAN id: %d", can_id);
+    }
+
+    can_frame frame = { .can_id = can_id, .can_dlc = 4 };
+    float *buffer = (float *) frame.data;
+    *buffer = position;
+
+    debug("broadcasting new %s position: %f", dimension, position);
+    canframe_sendto(udp_socket(), &frame, sizeof(frame), 0, // no flags
+                    broadcast_address, sizeof(broadcast_address));
 }
 
 void stop(void) {
     debug("stopping state machine after current iteration\n");
-    the_state.S = STOP;
+    the_state.T = STOP;
 }

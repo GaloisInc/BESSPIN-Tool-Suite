@@ -38,11 +38,20 @@ bool update_position(can_frame *frame);
 // changed, false otherwise
 bool handle_button_press(can_frame *frame);
 
+// state change for setting the music station
+bool set_station(uint8_t station);
+
+// state change for a volume increase button press
+bool increase_volume();
+
+// state change for a volume decrease button press
+bool decrease_volume();
+
 // broadcast the current music state
-void broadcast_music_state();
+void broadcast_music_state(struct sockaddr_in *broadcast_address);
 
 // broadcast an updated position state for the dimension specified in the CAN ID
-void broadcast_updated_position(canid_t can_id);
+void broadcast_updated_position(struct sockaddr_in *broadcast_address, canid_t can_id);
 
 // stop the server (e.g., on a Ctrl-C)
 void stop(void);
