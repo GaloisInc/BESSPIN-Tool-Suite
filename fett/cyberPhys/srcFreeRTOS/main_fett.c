@@ -394,7 +394,7 @@ uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr * xCli
     if (res == SUCCESS)
     {
         /* Copy message over to a persistent buffer */
-        memcpy(j1939_rx_buf, msg, msg_len);
+        memcpy(j1939_rx_buf, msg, *msg_len);
     }
     return res;
 }

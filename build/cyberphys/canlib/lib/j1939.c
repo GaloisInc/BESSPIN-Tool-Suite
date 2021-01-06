@@ -238,7 +238,7 @@ uint8_t recv_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *srcadd
     }
     frame = (can_frame *)&buffer[0];
 
-    if (nbytes <= sizeof(can_frame))
+    if (nbytes <= (int32_t)sizeof(can_frame))
     { /* extract data field from single can frame */
         printf("Attempting to decode single frame, rmessage_len =  %u\r\n",frame->can_dlc);
         *rmessage_len = frame->can_dlc;
