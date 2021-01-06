@@ -390,7 +390,7 @@ uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr * xCli
     char msg[64];
 
     /* Receive a message that can overflow the msg buffer */
-    uint8_t res = recv_can_message(xListeningSocket, &xClient, msg, &msg_len);
+    uint8_t res = recv_can_message(xListeningSocket, xClient, msg, msg_len);
     if (res == SUCCESS)
     {
         /* Copy message over to a persistent buffer */

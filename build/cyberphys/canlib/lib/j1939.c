@@ -263,8 +263,10 @@ uint8_t recv_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *srcadd
 
             /* get bam nbytes, data */
             params_bam(frame, &rpgn, &rnbytes, &rnpackets);
+            printf("Got: rpgn: %#X, rnbytes: %u, rnpackets: %u\r\n", rpgn, rnbytes, rnpackets);
             void *rmsg = (void *)bam_can_frames_to_data((can_frame *)buffer);
             *rmessage_len = rnbytes;
+            printf("rmessage_len: %u\r\n", rmessage_len);
             memcpy(rmessage, (void *)rmsg, *rmessage_len);
             cyberphys_free(rmsg);
             return SUCCESS;
