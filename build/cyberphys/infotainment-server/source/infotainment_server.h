@@ -8,12 +8,11 @@
 #ifndef __INFOTAINMENT_SERVER_H__
 #define __INFOTAINMENT_SERVER_H__
 
-#include "infotainment_defs.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "can.h"
+#include "infotainment_defs.h"
 
 // the size of the message receive buffer
 #define MESSAGE_BUFFER_SIZE 128
