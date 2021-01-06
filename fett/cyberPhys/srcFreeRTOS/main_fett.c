@@ -27,8 +27,6 @@
 #error "One or more peripherals are nor present, this test cannot be run"
 #endif
 
-void main_fett(void);
-
 #define STRINGIZE_NX(A) #A
 #define STRINGIZE(A) STRINGIZE_NX(A)
 #define CYBERPHYS_BROADCAST_ADDR STRINGIZE(configGATEWAY_ADDR0) "." STRINGIZE(configGATEWAY_ADDR1) "." STRINGIZE(configGATEWAY_ADDR2) ".255"
@@ -69,15 +67,17 @@ static void prvCanTxTask(void *pvParameters);
 static void prvCanRxTask(void *pvParameters);
 static void prvInfoTask(void *pvParameters);
 
+void main_fett(void);
 void startNetwork (void);
 char* getCurrTime(void);
+uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr * xClient, size_t * msg_len);
 int16_t min(int16_t a, int16_t b);
 int16_t max(int16_t a, int16_t b);
 
 SemaphoreHandle_t data_mutex;
 
 /* CAN rx buffer */
-uint8_t j1939_rx_buf[64];
+uint8_t j1939_rx_buf[64] __attribute__ ((aligned (64)));
 
 /* Stereing assist config */
 bool camera_ok;
@@ -86,6 +86,10 @@ uint8_t steering_assist;
 /* Gains */
 int16_t throttle_gain;
 int16_t brake_gain;
+int16_t throttle_min;
+int16_t throttle_max;
+int16_t brake_min;
+int16_t brake_max;
 
 /* Raw readings */
 int16_t throttle_raw;
@@ -206,6 +210,10 @@ static void prvInfoTask(void *pvParameters)
         }
         FreeRTOS_printf((">>>%s (prvInfoTask:scaled_data) Gear: %#x, throttle: %u, brake: %u\r\n",getCurrTime(), local_gear, local_throttle, local_brake));
 
+        if (camera_ok) {
+            FreeRTOS_printf((">>>%s (prvInfoTask:LKAS) Camera OK: %d, steering_assist: %d\r\n",getCurrTime(), camera_ok, steering_assist));
+        }
+
         vTaskDelay(INFOTASK_LOOP_DELAY_MS);
     }
 }
@@ -213,8 +221,14 @@ static void prvInfoTask(void *pvParameters)
 static void prvSensorTask(void *pvParameters)
 {
     (void)pvParameters;
+
     throttle_gain = THROTTLE_GAIN;
     brake_gain = BRAKE_GAIN;
+    throttle_min = THROTTLE_MIN;
+    throttle_max = THROTTLE_MAX;
+    brake_min = BRAKE_MIN;
+    brake_max = BRAKE_MAX;
+
     int16_t tmp;
     uint8_t tmp_gear;
 
@@ -227,8 +241,8 @@ static void prvSensorTask(void *pvParameters)
     {
         throttle_raw = (int16_t) ads1015_get_channel(THROTTLE_ADC_CHANNEL);
 
-        tmp = max(throttle_raw-THROTTLE_MIN, 0); // remove offset
-        tmp = tmp * throttle_gain / (THROTTLE_MAX - THROTTLE_MIN);
+        tmp = max(throttle_raw-throttle_min, 0); // remove offset
+        tmp = tmp * throttle_gain / (throttle_max - throttle_min);
         tmp = min(max(tmp, 0), 100);
         if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(10) ) == pdTRUE )
         {
@@ -237,8 +251,8 @@ static void prvSensorTask(void *pvParameters)
         }
 
         brake_raw = (int16_t) ads1015_get_channel(BRAKE_ADC_CHANNEL);
-        tmp = max(BRAKE_MAX - brake_raw, 0); // reverse brake
-        tmp = tmp * brake_gain / (BRAKE_MAX - BRAKE_MIN);
+        tmp = max(brake_max - brake_raw, 0); // reverse brake
+        tmp = tmp * brake_gain / (brake_max - brake_min);
         tmp = min(max(tmp, 0), 100);
         if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(10) ) == pdTRUE )
         {
@@ -358,9 +372,7 @@ static void prvCanRxTask(void *pvParameters)
 
     for (;;)
     {
-        /* NOTE: here is the vulnerability - j1939_rx_buf is only 64 bytes long,
-        but recv_can_message() reads up to 512 bytes */
-        uint8_t res = recv_can_message(xListeningSocket, &xClient, j1939_rx_buf, &msg_len);
+        uint8_t res = process_j1939(xListeningSocket, &xClient, &msg_len);
         if (res == SUCCESS)
         {
             FreeRTOS_inet_ntoa(xClient.sin_addr, cBuffer);
@@ -372,6 +384,19 @@ static void prvCanRxTask(void *pvParameters)
             FreeRTOS_printf((">>>%s (prvCanRxTask) recv_can_message returned %u\r\n", getCurrTime(), res));
         }
     }
+}
+
+uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr * xClient, size_t * msg_len) {
+    char msg[64];
+
+    /* Receive a message that can overflow the msg buffer */
+    uint8_t res = recv_can_message(xListeningSocket, &xClient, msg, &msg_len);
+    if (res == SUCCESS)
+    {
+        /* Copy message over to a persistent buffer */
+        memcpy(j1939_rx_buf, msg, msg_len);
+    }
+    return res;
 }
 
 static void prvCanTxTask(void *pvParameters)
