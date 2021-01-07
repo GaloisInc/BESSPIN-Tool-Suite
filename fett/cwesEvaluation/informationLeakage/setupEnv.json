@@ -48,9 +48,6 @@
                 },
                 "test_524" : {
                     "cweText" : "Use of Cache Containing Sensitive Information"
-                },
-                "test_612" : {
-                    "cweText" : "Improper Authorization of Index Containing Sensitive Information"
                 }
             }
         }
