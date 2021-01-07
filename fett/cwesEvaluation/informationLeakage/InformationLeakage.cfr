@@ -119,7 +119,6 @@ InformationLeakage_Test : iex_weakness ?
     CWE_212
     CWE_226
     CWE_524
-    CWE_612
 
   ///////////////////////////////////////////
   // Bugs Framework association with CWEs  //
@@ -167,23 +166,10 @@ InformationLeakage_Test : iex_weakness ?
     <=> CWE_524
   ]
 
-  [ side
-    && cross_boundary
-    && sw_behavior
-       && (unclear_before_release
-           || cross_boundary
-           || atn_aut)
-    && (on_demand || once)
-  /*--------------------*/
-    <=> CWE_612
-  ]
-
 
   [ Test_directsys          => (transferred) ]
-  [ Test_indexing           => (side && cross_boundary && (unclear_before_release || cross_boundary || atn_aut) 
-                                && sw_behavior && (on_demand || once)) ]
-  [ Test_indexing2          => (side && cross_boundary && (unclear_before_release || cross_boundary || atn_aut) 
-                                && sw_behavior && (on_demand || once)) ]
+  [ Test_indexing           => (side && cross_boundary && sw_behavior && (on_demand || once)) ]
+  [ Test_indexing2          => (side && cross_boundary && sw_behavior && (on_demand || once)) ]
   [ Test_loginmsg           => ((covert || side) && sw_behavior) ]
   [ Test_error              => (sw_behavior && improper_details && once && (legitimate || diagnostic)) ]
   [ Test_markprivate        => (unclear_before_release || cross_boundary) ]

@@ -27,8 +27,7 @@ def generateCweMap():
              "CWE_203",
              "CWE_212",
              "CWE_226",
-             "CWE_524",
-             "CWE_612" ]
+             "CWE_524" ]
     fmfile  = os.path.join(getSetting('repoDir'),
                            'fett',
                            'cwesEvaluation',
