@@ -2,9 +2,11 @@ CANLIB = ../../canlib/lib
 
 SERVER_SRCS =	./main.c \
 				./infotainment_server.c \
+				./infotainment_utils.c \
 				$(CANLIB)/*.c
 
 TEST_SRCS =	./test_client.c \
+			./infotainment_utils.c \
 			$(CANLIB)/*.c
 
 all: infotainment_server test_client

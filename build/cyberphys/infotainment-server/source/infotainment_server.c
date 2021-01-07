@@ -25,6 +25,7 @@
 #include "infotainment_defs.h"
 #include "infotainment_debug.h"
 #include "infotainment_server.h"
+#include "infotainment_utils.h"
 
 // initialize global state variables
 infotainment_state the_state = { .T = START };
@@ -50,46 +51,6 @@ bool initialize(void) {
     return true;
 }
 
-int udp_socket(void) {
-    static int socketfd = -1;
-    static struct sockaddr_in listen_address;
-
-    // create the socket if it doesn't exist or is closed     
-    if (socketfd < 0 || (fcntl(socketfd, F_GETFD) == -1 && errno != EBADF)) {
-        debug("creating socket\n");
-
-        if ((socketfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-            error("unable to create socket: error %d\n", errno);
-        } 
-        
-        // initialize the listen address
-        memset((char *) &listen_address, 0, sizeof(listen_address));
-        listen_address.sin_family = AF_INET;
-        listen_address.sin_port = htons(CAN_NETWORK_PORT);
-        listen_address.sin_addr.s_addr = htonl(INADDR_ANY);
-
-        // bind the socket to the port
-        if (bind(socketfd, 
-                 (struct sockaddr *) &listen_address, 
-                 sizeof(listen_address)) == -1) {
-            error("unable to listen on CAN network port (%d)\n", 
-                  CAN_NETWORK_PORT);
-        }
-
-        // set socket options to receive broadcasts
-        int broadcast_permission = 1;
-        if (setsockopt(socketfd, SOL_SOCKET, SO_BROADCAST, (void *) &broadcast_permission, 
-                       sizeof(broadcast_permission)) < 0) {
-            error("unable to set broadcast listening mode\n");
-        }
-
-        debug("socket created, listening for broadcasts on CAN network port (%d)\n", 
-              CAN_NETWORK_PORT);
-    }
-
-    return socketfd;   
-}
-
 int main_loop(void) {
     // initialize socket address and buffer data structures
     struct sockaddr_in broadcast_address;
@@ -104,7 +65,7 @@ int main_loop(void) {
     broadcast_address.sin_port = htons(MUX_PORT);
     broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 
-    debug("socket number is %d\n", udp_socket());
+    debug("socket number is %d\n", udp_socket(CAN_NETWORK_PORT));
     
     while (the_state.T == RUNNING) {
         // zero out the buffer
@@ -112,7 +73,7 @@ int main_loop(void) {
 
         // receive a packet
         int32_t bytes_received = 
-            canframe_recvfrom(udp_socket(), &message, MESSAGE_BUFFER_SIZE, 0, // no flags
+            canframe_recvfrom(udp_socket(CAN_NETWORK_PORT), &message, MESSAGE_BUFFER_SIZE, 0, // no flags
                               &receive_address, &receive_address_len);
 
         // decode the packet
@@ -171,7 +132,7 @@ int main_loop(void) {
     debug("stop signal received, cleaning up\n");
     // close the UDP socket in an orderly fashion since we're
     // no longer listening
-    close(udp_socket());
+    close(udp_socket(CAN_NETWORK_PORT));
 
     return 0;
 }
@@ -192,39 +153,21 @@ bool is_relevant(canid_t can_id) {
 
 bool update_position(can_frame *frame) {
     // make sure the frame is an appropriate type
-    if (frame->can_id != CAN_ID_CAR_X && frame->can_id != CAN_ID_CAR_Y &&
-        frame->can_id != CAN_ID_CAR_Z) {
-        error("attempt to update position from invalid frame, this should never happen");
-    }
+    assert(frame->can_id == CAN_ID_CAR_X || frame->can_id == CAN_ID_CAR_Y ||
+           frame->can_id == CAN_ID_CAR_Z);
 
     // interpret the payload as a float
-    float *position;
-    float *old_position;
-    position = (float *) frame->data;
-    
+    float *position = (float *) frame->data;
+    float *old_position = position_for_dimension(the_state, frame->can_id);    
+    char dimension = char_for_dimension(frame->can_id);
     bool changed = false;
-    const char *dimension = "";
-    switch (frame->can_id) {
-        case CAN_ID_CAR_X:
-            dimension = "x";
-            old_position = &the_state.pos_x;
-            break;
-        case CAN_ID_CAR_Y:
-            dimension = "y";
-            old_position = &the_state.pos_y;
-            break;
-        case CAN_ID_CAR_Z:
-            dimension = "z";
-            old_position = &the_state.pos_z;
-            break;
-    }
 
     if (*old_position == *position) {
-        debug("%s-coordinate update (%f) results in no change\n", dimension, *position);
+        debug("%c-coordinate update (%f) results in no change\n", dimension, *position);
     } else {
         *old_position = *position;
         changed = true;
-        debug("updated %s-coordinate to %f\n", dimension, *old_position);
+        debug("updated %c-coordinate to %f\n", dimension, *old_position);
     }
 
     return changed;
@@ -329,42 +272,31 @@ void broadcast_music_state(struct sockaddr_in *broadcast_address) {
     }
 
     uint8_t data = music_state_packet(the_state);
-    can_frame frame = { .can_id = CAN_ID_INFOTAINMENT_STATE, .can_dlc = 1 };
+    can_frame frame = { .can_id = CAN_ID_MUSIC_STATE, .can_dlc = BYTE_LENGTH_MUSIC_STATE };
     frame.data[0] = data;
 
     debug("broadasting music state frame: music %d, station %d, volume %d",
           the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
-    canframe_sendto(udp_socket(), &frame, sizeof(frame), 0, // no flags
+    canframe_sendto(udp_socket(CAN_NETWORK_PORT), &frame, sizeof(frame), 0, // no flags
                     broadcast_address, sizeof(broadcast_address));
 }
 
 void broadcast_updated_position(struct sockaddr_in *broadcast_address, 
                                 canid_t can_id) {
-    float position = 0.0f;
-    char *dimension = "";
-    switch (can_id) {
-        case CAN_ID_CAR_X:
-            position = the_state.pos_x;
-            dimension = "x";
-            break;
-        case CAN_ID_CAR_Y:
-            position = the_state.pos_y;
-            dimension = "y";
-            break;
-        case CAN_ID_CAR_Z:
-            position = the_state.pos_z;
-            dimension = "z";
-            break;
-        default:
-            error("broadcast_updated_position called with bad CAN id: %d", can_id);
-    }
+    // make sure the ID is appropriate
+    assert(can_id == CAN_ID_CAR_X || can_id == CAN_ID_CAR_Y ||
+           can_id == CAN_ID_CAR_Z);
 
-    can_frame frame = { .can_id = can_id, .can_dlc = 4 };
+    float *position = position_for_dimension(the_state, can_id);
+    char dimension = char_for_dimension(can_id);
+
+    // BYTE_LENGTH_CAR_X is the same as Y and Z
+    can_frame frame = { .can_id = can_id, .can_dlc = BYTE_LENGTH_CAR_X };
     float *buffer = (float *) frame.data;
-    *buffer = position;
+    *buffer = *position;
 
-    debug("broadcasting new %s position: %f", dimension, position);
-    canframe_sendto(udp_socket(), &frame, sizeof(frame), 0, // no flags
+    debug("broadcasting new %c position: %f", dimension, *position);
+    canframe_sendto(udp_socket(CAN_NETWORK_PORT), &frame, sizeof(frame), 0, // no flags
                     broadcast_address, sizeof(broadcast_address));
 }
 

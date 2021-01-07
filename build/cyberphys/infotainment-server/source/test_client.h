@@ -17,9 +17,6 @@
 // the size of the message receive buffer
 #define MESSAGE_BUFFER_SIZE 128
 
-// get the UDP socket, creating it if necessary
-int udp_socket(void);
-
 // the main event loop
 int main_loop(void);
 
@@ -30,12 +27,13 @@ void print_frame(can_frame *frame);
 void print_position_frame(can_frame *frame);
 
 // print a received infotainment state frame
-void print_infotainment_state_frame(can_frame *frame);
+void print_music_state_frame(can_frame *frame);
 
 // send a button press
-void send_button_press(uint8_t button);
+void send_button_press(uint8_t button, struct sockaddr_in *broadcast_address);
 
 // send a coordinate
-void send_coordinate(canid_t dimension, float coordinate);
+void send_coordinate(canid_t dimension_id, float coordinate,
+                     struct sockaddr_in *broadcast_address);
 
 #endif // __TEST_CLIENT_H__

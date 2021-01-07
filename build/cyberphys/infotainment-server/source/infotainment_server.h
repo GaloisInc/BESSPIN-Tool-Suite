@@ -20,9 +20,6 @@
 // initialize the server state
 bool initialize(void);
 
-// get the UDP socket, creating it if necessary
-int udp_socket(void);
-
 // the main event loop
 int main_loop(void);
 
