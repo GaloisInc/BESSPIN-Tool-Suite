@@ -125,10 +125,8 @@ InformationLeakage_Test : iex_weakness ?
   // Bugs Framework association with CWEs  //
   ///////////////////////////////////////////
   [ sw_behavior
-    && (inj || unprotected_sensitive_data)
-    && improper_details
-    && legitimate
-    && diagnostic
+    && ((inj || unprotected_sensitive_data) || improper_details)
+    && (legitimate || diagnostic)
     && once
     <=> CWE_200
   ]
@@ -181,19 +179,23 @@ InformationLeakage_Test : iex_weakness ?
   ]
 
 
-  [ Test_directsys          => CWE_201 ]
-  [ Test_indexing           => CWE_202 ]
-  [ Test_indexing2          => CWE_202 ]
-  [ Test_loginmsg           => CWE_203 ]
-  [ Test_error              => CWE_200 ]
-  [ Test_markprivate        => CWE_212 ]
-  [ Test_setenv             => CWE_212 ]
-  [ Test_classifydeclassify => CWE_226 ]
-  [ Test_cache              => CWE_524 ]
-  [ Test_indexing           => CWE_612 ]
-  [ Test_indexing2          => CWE_612 ]
-  [ Test_atoi               => CWE_200 ]
-  [ Test_systemconfig       => CWE_200 ]
+  [ Test_directsys          => (transferred) ]
+  [ Test_indexing           => (side && cross_boundary && (unclear_before_release || cross_boundary || atn_aut) 
+                                && sw_behavior && (on_demand || once)) ]
+  [ Test_indexing2          => (side && cross_boundary && (unclear_before_release || cross_boundary || atn_aut) 
+                                && sw_behavior && (on_demand || once)) ]
+  [ Test_loginmsg           => ((covert || side) && sw_behavior) ]
+  [ Test_error              => (sw_behavior && improper_details && once && (legitimate || diagnostic)) ]
+  [ Test_markprivate        => (unclear_before_release || cross_boundary) ]
+  [ Test_setenv             => (random && sw_behavior && side && cross_boundary) ]
+  [ Test_classifydeclassify => ((legitimate || diagnostic) && sw_behavior
+                                && (unclear_before_release || cross_boundary)) ]
+  [ Test_cache              => ((legitimate || diagnostic) && on_timing
+                                && (unclear_before_release || cross_boundary)) ]
+  [ Test_atoi               => (sw_behavior && (inj || unprotected_sensitive_data) 
+                                && once && (legitimate || diagnostic)) ]
+  [ Test_systemconfig       => (sw_behavior && (inj || unprotected_sensitive_data) 
+                                && once && (legitimate || diagnostic)) ]
 
   ///////////////////////////////////////////////////////////////////////
   // The following constraints describe the concrete tests as realized //
