@@ -31,9 +31,6 @@
                 "test_206" : {
                     "cweText" : "Observable Internal Behavioral Discrepancy"
                 },
-                "test_208" : {
-                    "cweText" : "Observable Timing Discrepancy"
-                },
                 "test_212" : {
                     "cweText" : "Improper Removal of Sensitive Information Before Storage or Transfer"
                 },
@@ -42,9 +39,6 @@
                 },
                 "test_244" : {
                     "cweText" : "Improper Clearing of Heap Memory Before Release ('Heap Inspection')"
-                },
-                "test_385" : {
-                    "cweText" : "Covert Timing Channel"
                 },
                 "test_524" : {
                     "cweText" : "Use of Cache Containing Sensitive Information"
