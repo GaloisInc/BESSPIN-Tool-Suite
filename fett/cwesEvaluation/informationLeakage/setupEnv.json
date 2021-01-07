@@ -49,9 +49,6 @@
                 "test_244" : {
                     "cweText" : "Improper Clearing of Heap Memory Before Release ('Heap Inspection')"
                 },
-                "test_321" : {
-                    "cweText" : "Use of Hard-coded Cryptographic Key"
-                },
                 "test_385" : {
                     "cweText" : "Covert Timing Channel"
                 },
