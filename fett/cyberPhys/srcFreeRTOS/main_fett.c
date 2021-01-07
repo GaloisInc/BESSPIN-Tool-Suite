@@ -74,6 +74,16 @@ uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr * xCli
 int16_t min(int16_t a, int16_t b);
 int16_t max(int16_t a, int16_t b);
 
+portTickType network1;
+portTickType network2;
+portTickType network3;
+portTickType network4;
+
+portTickType sensor1;
+portTickType sensor2;
+portTickType sensor3;
+portTickType sensor4;
+
 SemaphoreHandle_t data_mutex;
 
 /* CAN rx buffer */
@@ -214,6 +224,9 @@ static void prvInfoTask(void *pvParameters)
             FreeRTOS_printf((">>>%s (prvInfoTask:LKAS) Camera OK: %d, steering_assist: %d\r\n",getCurrTime(), camera_ok, steering_assist));
         }
 
+        FreeRTOS_printf((">>>%s (prvInfoTask:network ticks) 1: %u, 2: %u, 3: %u, 4: %u\r\n",getCurrTime(), network1, network2, network3, network4));
+        FreeRTOS_printf((">>>%s (prvInfoTask:sensor ticks) 1: %u, 2: %u, 3: %u, 4: %u\r\n",getCurrTime(), sensor1, sensor2, sensor3, sensor4));
+
         vTaskDelay(INFOTASK_LOOP_DELAY_MS);
     }
 }
@@ -239,6 +252,7 @@ static void prvSensorTask(void *pvParameters)
 
     for (;;)
     {
+        sensor1 = xTaskGetTickCount();
         throttle_raw = (int16_t) ads1015_get_channel(THROTTLE_ADC_CHANNEL);
 
         tmp = max(throttle_raw-throttle_min, 0); // remove offset
@@ -249,7 +263,9 @@ static void prvSensorTask(void *pvParameters)
             throttle = (uint8_t)tmp;
             xSemaphoreGive( data_mutex );
         }
+        sensor1 = xTaskGetTickCount() - sensor1;
 
+        sensor2 = xTaskGetTickCount();
         brake_raw = (int16_t) ads1015_get_channel(BRAKE_ADC_CHANNEL);
         tmp = max(brake_max - brake_raw, 0); // reverse brake
         tmp = tmp * brake_gain / (brake_max - brake_min);
@@ -259,7 +275,9 @@ static void prvSensorTask(void *pvParameters)
             brake = (uint8_t)tmp;
             xSemaphoreGive( data_mutex );
         }
+        sensor2 = xTaskGetTickCount() - sensor2;
 
+        sensor3 = xTaskGetTickCount();
         int res = iic_receive(&Iic0, SHIFTER_I2C_ADDRESS, &gear_raw, 1);
         if (res < 1) {
             FreeRTOS_printf((">>>%s (prvSensorTask) iic_receive error: %i\r\n", getCurrTime(), res));
@@ -288,6 +306,7 @@ static void prvSensorTask(void *pvParameters)
             gear = (uint8_t)tmp_gear;
             xSemaphoreGive( data_mutex );
         }
+        sensor3 = xTaskGetTickCount() - sensor3;
 
         /* Place this task in the blocked state until it is time to run again. */
         vTaskDelay(SENSOR_LOOP_DELAY_MS);
@@ -423,6 +442,7 @@ static void prvCanTxTask(void *pvParameters)
     for (;;)
     {
         /* Copy data over */
+        network4 = xTaskGetTickCount();
         if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
         {
             local_throttle = throttle;
@@ -430,22 +450,32 @@ static void prvCanTxTask(void *pvParameters)
             local_gear = gear;
             xSemaphoreGive( data_mutex );
         }
+        network4 = xTaskGetTickCount() - network4;
 
         /* Send throttle */
+        network1 = xTaskGetTickCount();
         if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_THROTTLE_INPUT), (void *)&local_throttle, sizeof(local_throttle)) != SUCCESS)
         {
             FreeRTOS_printf((">>>%s (prvCanTxTask) send throttle failed\r\n", getCurrTime()));
         }
+        network1 = xTaskGetTickCount() - network1;
+
         /* Send brake */
+        network2 = xTaskGetTickCount();
         if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_BRAKE_INPUT), (void *)&local_brake, sizeof(local_brake)) != SUCCESS)
         {
             FreeRTOS_printf((">>>%s (prvCanTxTask) send brake failed\r\n", getCurrTime()));
         }
+        network2 = xTaskGetTickCount() - network2;
+
         /* Send gear */
+        network3 = xTaskGetTickCount();
         if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&local_gear, sizeof(local_gear)) != SUCCESS)
         {
             FreeRTOS_printf((">>>%s (prvCanTxTask) send gear failed\r\n",getCurrTime()));
         }
+        network3 = xTaskGetTickCount() - network3;
+
         if (camera_ok) {
             /* Steering assist */
             if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_STEERING_INPUT), (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
