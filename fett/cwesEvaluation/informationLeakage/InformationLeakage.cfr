@@ -138,6 +138,7 @@ InformationLeakage_Test : iex_weakness ?
   ]
 
   [ (unclear_before_release || cross_boundary)
+    && on_demand
   /*--------------------*/
     <=> CWE_202
   ]
@@ -183,16 +184,16 @@ InformationLeakage_Test : iex_weakness ?
   ]
 
 
-  [ Test_directsys          => (transferred) ]
-  [ Test_indexing           => (side && cross_boundary && sw_behavior && (on_demand || once)) ]
-  [ Test_indexing2          => (side && cross_boundary && sw_behavior && (on_demand || once)) ]
-  [ Test_loginmsg           => ((covert || side) && sw_behavior && on_demand) ]
+  [ Test_directsys          => (transferred && once) ]
+  [ Test_indexing           => (side && cross_boundary && sw_behavior && once && on_demand) ]
+  [ Test_indexing2          => (side && cross_boundary && sw_behavior && once && on_demand) ]
+  [ Test_loginmsg           => ((covert || side) && sw_behavior && once && on_demand) ]
   [ Test_error              => (sw_behavior && improper_details && once && (legitimate || diagnostic)) ]
-  [ Test_markprivate        => (unclear_before_release || cross_boundary) ]
+  [ Test_markprivate        => (unclear_before_release || cross_boundary) && once ]
   [ Test_setenv             => (random && sw_behavior && side && cross_boundary && once) ]
   [ Test_classifydeclassify => ((legitimate || diagnostic) && sw_behavior
-                                && (unclear_before_release || cross_boundary)) ]
-  [ Test_cache              => ((legitimate || diagnostic) && on_timing
+                                && (unclear_before_release || cross_boundary) && on_demand && once) ]
+  [ Test_cache              => ((legitimate || diagnostic) && on_timing && once
                                 && (unclear_before_release || cross_boundary)) ]
   [ Test_atoi               => (sw_behavior && (inj || unprotected_sensitive_data) 
                                 && once && (legitimate || diagnostic)) ]
