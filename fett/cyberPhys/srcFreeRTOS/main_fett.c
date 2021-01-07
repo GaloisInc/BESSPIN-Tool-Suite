@@ -196,6 +196,7 @@ static void prvInfoTask(void *pvParameters)
     (void)pvParameters;
     int16_t local_throttle, local_brake;
     uint8_t local_gear;
+    uint32_t network1_ms, network2_ms, network3_ms, network4_ms, sensor1_ms, sensor2_ms, sensor3_ms, sensor4_ms;
 
     FreeRTOS_printf((">>>%s Starting prvInfoTask\r\n",getCurrTime()));
 
@@ -224,8 +225,20 @@ static void prvInfoTask(void *pvParameters)
             FreeRTOS_printf((">>>%s (prvInfoTask:LKAS) Camera OK: %d, steering_assist: %d\r\n",getCurrTime(), camera_ok, steering_assist));
         }
 
-        FreeRTOS_printf((">>>%s (prvInfoTask:network ticks) 1: %u, 2: %u, 3: %u, 4: %u\r\n",getCurrTime(), network1, network2, network3, network4));
-        FreeRTOS_printf((">>>%s (prvInfoTask:sensor ticks) 1: %u, 2: %u, 3: %u, 4: %u\r\n",getCurrTime(), sensor1, sensor2, sensor3, sensor4));
+        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(10) ) == pdTRUE )
+        {
+            network1_ms = (network1 * 1000)/configTICK_RATE_HZ;
+            network2_ms = (network2 * 1000)/configTICK_RATE_HZ;
+            network3_ms = (network3 * 1000)/configTICK_RATE_HZ;
+            network4_ms = (network4 * 1000)/configTICK_RATE_HZ;
+            sensor1_ms = (sensor1 * 1000)/configTICK_RATE_HZ;
+            sensor2_ms = (sensor2 * 1000)/configTICK_RATE_HZ;
+            sensor3_ms = (sensor3 * 1000)/configTICK_RATE_HZ;
+            sensor4_ms = (sensor4 * 1000)/configTICK_RATE_HZ;
+            xSemaphoreGive( data_mutex );
+        }
+        FreeRTOS_printf((">>>%s (prvInfoTask:network ticks) 1: %u[ms], 2: %u[ms], 3: %u[ms], 4: %u[ms]\r\n",getCurrTime(), network1_ms, network2_ms, network3_ms, network4_ms));
+        FreeRTOS_printf((">>>%s (prvInfoTask:sensor ticks) 1: %u[ms], 2: %u[ms], 3: %u[ms], 4: %u[ms]\r\n",getCurrTime(), sensor1_ms, sensor2_ms, sensor3_ms, sensor4_ms));
 
         vTaskDelay(INFOTASK_LOOP_DELAY_MS);
     }
@@ -242,7 +255,8 @@ static void prvSensorTask(void *pvParameters)
     brake_min = BRAKE_MIN;
     brake_max = BRAKE_MAX;
 
-    int16_t tmp;
+    int16_t tmp_brake;
+    int16_t tmp_throttle;
     uint8_t tmp_gear;
 
     FreeRTOS_printf((">>>%s Starting prvSensorTask\r\n",getCurrTime()));
@@ -255,26 +269,16 @@ static void prvSensorTask(void *pvParameters)
         sensor1 = xTaskGetTickCount();
         throttle_raw = (int16_t) ads1015_get_channel(THROTTLE_ADC_CHANNEL);
 
-        tmp = max(throttle_raw-throttle_min, 0); // remove offset
-        tmp = tmp * throttle_gain / (throttle_max - throttle_min);
-        tmp = min(max(tmp, 0), 100);
-        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(10) ) == pdTRUE )
-        {
-            throttle = (uint8_t)tmp;
-            xSemaphoreGive( data_mutex );
-        }
+        tmp_throttle = max(throttle_raw-throttle_min, 0); // remove offset
+        tmp_throttle = tmp_throttle * throttle_gain / (throttle_max - throttle_min);
+        tmp_throttle = min(max(tmp_throttle, 0), 100);
         sensor1 = xTaskGetTickCount() - sensor1;
 
         sensor2 = xTaskGetTickCount();
         brake_raw = (int16_t) ads1015_get_channel(BRAKE_ADC_CHANNEL);
-        tmp = max(brake_max - brake_raw, 0); // reverse brake
-        tmp = tmp * brake_gain / (brake_max - brake_min);
-        tmp = min(max(tmp, 0), 100);
-        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(10) ) == pdTRUE )
-        {
-            brake = (uint8_t)tmp;
-            xSemaphoreGive( data_mutex );
-        }
+        tmp_brake = max(brake_max - brake_raw, 0); // reverse brake
+        tmp_brake = tmp_brake * brake_gain / (brake_max - brake_min);
+        tmp_brake = min(max(tmp_brake, 0), 100);
         sensor2 = xTaskGetTickCount() - sensor2;
 
         sensor3 = xTaskGetTickCount();
@@ -304,6 +308,8 @@ static void prvSensorTask(void *pvParameters)
         if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(10) ) == pdTRUE )
         {
             gear = (uint8_t)tmp_gear;
+            throttle = (uint8_t)tmp_throttle;
+            brake = (uint8_t)tmp_brake;
             xSemaphoreGive( data_mutex );
         }
         sensor3 = xTaskGetTickCount() - sensor3;
