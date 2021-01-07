@@ -100,14 +100,14 @@
 #define CAN_ID_BUTTON_PRESSED 0XAAFECA00
 #define BYTE_LENGTH_BUTTON_PRESSED 1
 
-// infotainment_state (uint8_t)
+// music_state (uint8_t)
 // Sender: Infotainment Server
 // Receiver: Infotainment Thin Client
 // Bounds/Range: N/A
 // J1939 compatible: No
 // Description: 
 //	Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
-#define CAN_ID_INFOTAINMENT_STATE 0XAA2FEEF2
-#define BYTE_LENGTH_INFOTAINMENT_STATE 1
+#define CAN_ID_MUSIC_STATE 0XAA2FEEF2
+#define BYTE_LENGTH_MUSIC_STATE 1
 
 #endif
