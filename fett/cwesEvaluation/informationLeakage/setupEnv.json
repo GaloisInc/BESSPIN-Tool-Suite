@@ -34,9 +34,6 @@
                 "test_208" : {
                     "cweText" : "Observable Timing Discrepancy"
                 },
-                "test_209" : {
-                    "cweText" : "Generation of Error Message Containing Sensitive Information"
-                },
                 "test_212" : {
                     "cweText" : "Improper Removal of Sensitive Information Before Storage or Transfer"
                 },
@@ -60,9 +57,6 @@
                 },
                 "test_612" : {
                     "cweText" : "Improper Authorization of Index Containing Sensitive Information"
-                },
-                "test_707" : {
-                    "cweText" : "Improper Neutralization"
                 }
             }
         }

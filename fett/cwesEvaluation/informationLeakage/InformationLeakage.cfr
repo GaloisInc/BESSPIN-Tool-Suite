@@ -112,21 +112,29 @@ InformationLeakage_Test : iex_weakness ?
   [ Test_cache => Store_cached ]
 
   or CWE
+    CWE_200
     CWE_201
     CWE_202
     CWE_203
-    CWE_209
     CWE_212
     CWE_214
     CWE_226
     CWE_524
     CWE_526
     CWE_612
-    CWE_707
 
   ///////////////////////////////////////////
   // Bugs Framework association with CWEs  //
   ///////////////////////////////////////////
+  [ sw_behavior
+    && (inj || unprotected_sensitive_data)
+    && improper_details
+    && legitimate
+    && diagnostic
+    && once
+    <=> CWE_200
+  ]
+
   [ transferred
   /*--------------------*/
     <=> CWE_201
@@ -141,14 +149,6 @@ InformationLeakage_Test : iex_weakness ?
     && sw_behavior
   /*--------------------*/
     <=> CWE_203
-  ]
-
-  [ legitimate && diagnostic
-    && improper_details
-    && sw_behavior
-    && once
-  /*--------------------*/
-    <=> CWE_209
   ]
 
   [ high
@@ -198,18 +198,12 @@ InformationLeakage_Test : iex_weakness ?
     <=> CWE_612
   ]
 
-  [ sw_behavior
-    && (inj || unprotected_sensitive_data)
-  /*--------------------*/
-    <=> CWE_707
-  ]
-
 
   [ Test_directsys          => CWE_201 ]
   [ Test_indexing           => CWE_202 ]
   [ Test_indexing2          => CWE_202 ]
   [ Test_loginmsg           => CWE_203 ]
-  [ Test_error              => CWE_209 ]
+  [ Test_error              => CWE_200 ]
   [ Test_markprivate        => CWE_212 ]
   [ Test_setenv             => CWE_214 ]
   [ Test_classifydeclassify => CWE_226 ]
@@ -217,8 +211,8 @@ InformationLeakage_Test : iex_weakness ?
   [ Test_setenv             => CWE_526 ]
   [ Test_indexing           => CWE_612 ]
   [ Test_indexing2          => CWE_612 ]
-  [ Test_atoi               => CWE_707 ]
-  [ Test_systemconfig       => CWE_707 ]
+  [ Test_atoi               => CWE_200 ]
+  [ Test_systemconfig       => CWE_200 ]
 
   ///////////////////////////////////////////////////////////////////////
   // The following constraints describe the concrete tests as realized //
