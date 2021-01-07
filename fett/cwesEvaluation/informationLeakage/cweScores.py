@@ -25,6 +25,8 @@ def generateCweMap():
              "CWE_201",
              "CWE_202",
              "CWE_203",
+             "CWE_205",
+             "CWE_206",
              "CWE_212",
              "CWE_226",
              "CWE_524" ]
