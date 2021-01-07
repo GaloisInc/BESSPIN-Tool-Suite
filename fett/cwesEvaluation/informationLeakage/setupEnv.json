@@ -37,9 +37,6 @@
                 "test_212" : {
                     "cweText" : "Improper Removal of Sensitive Information Before Storage or Transfer"
                 },
-                "test_214" : {
-                    "cweText" : "Invocation of Process Using Visible Sensitive Information"
-                },
                 "test_226" : {
                     "cweText" : "Sensitive Information Uncleared in Resource Before Release for Reuse"
                 },
@@ -51,9 +48,6 @@
                 },
                 "test_524" : {
                     "cweText" : "Use of Cache Containing Sensitive Information"
-                },
-                "test_526" : {
-                    "cweText" : "Exposure of Sensitive Information Through Environmental Variables"
                 },
                 "test_612" : {
                     "cweText" : "Improper Authorization of Index Containing Sensitive Information"
