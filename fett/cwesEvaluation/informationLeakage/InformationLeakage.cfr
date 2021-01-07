@@ -119,7 +119,6 @@ InformationLeakage_Test : iex_weakness ?
     CWE_212
     CWE_214
     CWE_226
-    CWE_321
     CWE_524
     CWE_526
     CWE_612
@@ -205,10 +204,6 @@ InformationLeakage_Test : iex_weakness ?
     <=> CWE_707
   ]
 
-  [ high
-  /*--------------------*/
-    <=> CWE_321
-  ]
 
   [ Test_directsys          => CWE_201 ]
   [ Test_indexing           => CWE_202 ]
