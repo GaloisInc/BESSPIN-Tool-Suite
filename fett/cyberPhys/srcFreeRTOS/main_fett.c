@@ -77,7 +77,7 @@ int16_t max(int16_t a, int16_t b);
 SemaphoreHandle_t data_mutex;
 
 /* CAN rx buffer */
-uint8_t j1939_rx_buf[64] __attribute__ ((aligned (64)));
+uint8_t j1939_rx_buf[0x64] __attribute__ ((aligned (64)));
 
 /* Stereing assist config */
 bool camera_ok;

