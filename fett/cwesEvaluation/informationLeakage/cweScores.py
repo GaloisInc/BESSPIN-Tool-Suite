@@ -21,18 +21,14 @@ def parseTestName(testName):
 @decorate.debugWrap
 @decorate.timeWrap
 def generateCweMap():
-    CWES = [ "CWE_201",
+    CWES = [ "CWE_200",
+             "CWE_201",
              "CWE_202",
              "CWE_203",
-             "CWE_209",
              "CWE_212",
-             "CWE_214",
              "CWE_226",
-             "CWE_321",
              "CWE_524",
-             "CWE_526",
-             "CWE_612",
-             "CWE_707" ]
+             "CWE_612" ]
     fmfile  = os.path.join(getSetting('repoDir'),
                            'fett',
                            'cwesEvaluation',
