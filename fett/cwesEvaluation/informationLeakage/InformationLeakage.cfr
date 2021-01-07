@@ -117,10 +117,8 @@ InformationLeakage_Test : iex_weakness ?
     CWE_202
     CWE_203
     CWE_212
-    CWE_214
     CWE_226
     CWE_524
-    CWE_526
     CWE_612
 
   ///////////////////////////////////////////
@@ -157,14 +155,6 @@ InformationLeakage_Test : iex_weakness ?
     <=> CWE_212
   ]
 
-  [ random
-    && side
-    && cross_boundary
-    && sw_behavior
-  /*--------------------*/
-    <=> CWE_214
-  ]
-
   [ (legitimate || diagnostic)
     && (unclear_before_release || cross_boundary)
     && sw_behavior
@@ -177,14 +167,6 @@ InformationLeakage_Test : iex_weakness ?
     && on_timing
   /*--------------------*/
     <=> CWE_524
-  ]
-
-  [ random
-    && side
-    && cross_boundary
-    && sw_behavior
-  /*--------------------*/
-    <=> CWE_526
   ]
 
   [ side
@@ -205,10 +187,9 @@ InformationLeakage_Test : iex_weakness ?
   [ Test_loginmsg           => CWE_203 ]
   [ Test_error              => CWE_200 ]
   [ Test_markprivate        => CWE_212 ]
-  [ Test_setenv             => CWE_214 ]
+  [ Test_setenv             => CWE_212 ]
   [ Test_classifydeclassify => CWE_226 ]
   [ Test_cache              => CWE_524 ]
-  [ Test_setenv             => CWE_526 ]
   [ Test_indexing           => CWE_612 ]
   [ Test_indexing2          => CWE_612 ]
   [ Test_atoi               => CWE_200 ]
