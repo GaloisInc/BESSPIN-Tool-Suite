@@ -90,7 +90,7 @@ jmp_buf env;
 /*****************************
  * Functions
  * **************************/
-void test(void);
+void test_buffer_overflow(void);
 
 #define SIZE(_ty, N, _max) \
   (((N*sizeof(_ty)) > _max) ? (_max/sizeof(_ty)) : N)
@@ -129,7 +129,7 @@ size_t mock_get_message_size(void) {{
 #endif  // INCORRECT_MALLOC_CALL
 
 
-void test(void)
+void test_buffer_overflow(void)
 {{
 #ifdef SIZE_OVERFLOW
     // If the buffer were `min_size` long, there would be no overruns
@@ -321,44 +321,48 @@ void test_path_manipulation(void) {{
         return;
     }}
 
-    // Perform allocations.  {buf_name} holds a buffer with size less than
-    // PATH_MAX, and {buf_name2} holds a buffer of size PATH_MAX.  The SIZE calls
-    // ensure that these two buffers do not exceed {memmax}.
+    // Allocate {buf_name2} to hold the result of a proper realpath call
+#ifdef STACK
+    char {buf_name2}[PATH_MAX];
+#else
+    char* {buf_name2} = malloc(sizeof(char) * PATH_MAX);
+    if ({buf_name2} == NULL) {{
+        printf("TEST INVALID. <malloc {buf_name2}>\r\n");
+        fflush(stdout);
+        return;
+    }};
+#endif
+
+    // Expand "." into a properly sized buffer
+    if (!realpath(".", {buf_name2})) {{
+        printf("TEST INVALID. <realpath buf2>\r\n");
+        fflush(stdout);
+        return;
+    }};
+
+    // {tmp_var_name} represents the maximum size for {buf_name}.  {buf_name}
+    // must be at most 1 byte smaller than what is required to store the path
+    // expansion (including null terminator), so {tmp_var_name} is equal to the
+    // strlen of {buf_name2}.
+    size_t {tmp_var_name} = strnlen({buf_name2}, PATH_MAX);
+
+    // Allocate {buf_name}
     size_t {buf_size} = SIZE(char,
-                             MIN({N}, PATH_MAX-1),
+                             ({N} % {tmp_var_name}) + 1,
                              {memmax} - (PATH_MAX * sizeof(char)));
 #ifdef STACK
     char {buf_name}[{buf_size}];
-    char {buf_name2}[PATH_MAX];
 #else
     char* {buf_name} = malloc(sizeof(char) * {buf_size});
-    char* {buf_name2} = malloc(sizeof(char) * PATH_MAX);
-    if ({buf_name} == NULL || {buf_name2} == NULL) {{
+    if ({buf_name} == NULL) {{
         printf("TEST INVALID. <malloc>\r\n");
         fflush(stdout);
         return;
     }};
 #endif
-    // Determine the actual length of '.' when expanded
-    char* {tmp_var_name} = realpath(".", {buf_name2});
-    if (!{tmp_var_name}) {{
-        printf("TEST INVALID. <realpath buf2>\r\n");
-        fflush(stdout);
-        return;
-    }};
-    if ({buf_size} < strnlen({buf_name2}, PATH_MAX)) {{
-        // realpath will overflow {buf_name}, thus stressing additional CWEs
-        printf("BUFFER SIZE INSUFFICIENT\r\n");
-    }} else {{
-        // realpath will not overflow {buf_name}.  This test only stresses
-        // CWE 785
-        printf("BUFFER SIZE SUFFICIENT\r\n");
-    }}
-    fflush(stdout);
 
-    // Call realpath with buffer smaller than PATH_MAX
-    {tmp_var_name} = realpath(".", {buf_name});
-    if (!{tmp_var_name}) {{
+    // Call realpath with {buf_name}, which will overflow the buffer
+    if (!realpath(".", {buf_name})) {{
         printf("TEST INVALID. <realpath buf>\r\n");
         fflush(stdout);
         return;
@@ -403,7 +407,7 @@ int main()
 #ifdef PATH_MANIPULATION_ACCESS
     test_path_manipulation();
 #else
-    test();
+    test_buffer_overflow();
 #endif
 
     COMPLETE:

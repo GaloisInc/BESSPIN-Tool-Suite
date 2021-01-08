@@ -22,11 +22,6 @@ CWE_680_INT_OVERFLOW_LOOKFOR = [
             ('INSUFFICIENT', ['BUFFER SIZE INSUFFICIENT'])
         ]
 
-CWE_785_REALPATH_OVERFLOW_LOOKFOR = [
-            ('SUFFICIENT',   ['BUFFER SIZE SUFFICIENT']),
-            ('INSUFFICIENT', ['BUFFER SIZE INSUFFICIENT'])
-        ]
-
 def triage(filepath,lookfor):
     if not filepath.is_file():
         logAndExit(f"<bufferErrors.count.triage> <{filepath}> is not a file",
@@ -115,27 +110,6 @@ def scoreCWE680(path, lookfor, cwes):
     # test as usual.
     return scoreLog(path, lookfor) + (cwes,)
 
-def scoreCWE785(path, lookfor, cwes):
-    """
-    Special scoring function for CWE 785.  In addition to the usual inputs to
-    scoreLog, this function takes an additional parameter `cwes` of the list of
-    CWEs that the generated test stresses.  This function also returns an extra
-    tuple value of the actual CWEs that were tested, which may differ from
-    `cwes` if no overflow occurred in the realpath call.
-    """
-
-    # Check whether a buffer overflow occurred on the realpath call
-    realpath_overflow = triage(path, CWE_785_REALPATH_OVERFLOW_LOOKFOR + lookfor)
-    if realpath_overflow == "SUFFICIENT":
-        # Buffer size was large enough to hold the result of the realpath call.
-        # No overrun occurred, so only report scores for CWE-785.
-        tested_cwes = ['CWE_785']
-    else:
-        # A buffer overrun occurred in the realpath call.  Report scores for
-        # all CWES in cwes list.
-        tested_cwes = cwes
-
-    return scoreLog(path, lookfor) + (tested_cwes,)
 
 def tabulate(logs,lookfor):
     if (len(logs)==0):
@@ -150,20 +124,7 @@ def tabulate(logs,lookfor):
         params = bfparams(cfile)
         if "CWE_680" in params["CWE"]:
             # CWE_680 has two parts and requires special scoring
-            if "CWE_785" in params["CWE"]:
-                # This should never happen, but check anyway to catch future
-                # bugs
-                logAndExit(f"<bufferErrors.count.tabulate> <{cfile}> "
-                           "tests mutually exclusive CWEs 680 and 785.  Check "
-                           "buffer errors clafer model for errors.",
-                           exitCode=EXIT.Dev_Bug)
             result, logSymbol, cwes = scoreCWE680(Path(log),
-                                                  lookfor,
-                                                  params["CWE"])
-            params["CWE"] = cwes
-        elif "CWE_785" in params["CWE"]:
-            # CWE_785 requires special scoring to detect realpath overflows
-            result, logSymbol, cwes = scoreCWE785(Path(log),
                                                   lookfor,
                                                   params["CWE"])
             params["CWE"] = cwes
