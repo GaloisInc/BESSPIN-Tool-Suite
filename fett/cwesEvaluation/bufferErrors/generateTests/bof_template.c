@@ -23,7 +23,7 @@
 #define {read_write}
 // READ_AFTER_WRITE = (READ_AFTER_WRITE, NO_READ)
 #define {read_after_write}
-// BUF_ACCESS = (PTR_ACCESS, ARRAY_ACCESS)
+// BUF_ACCESS = (PTR_ACCESS, ARRAY_ACCESS, PATH_MANIPULATION_ACCESS)
 #define {buf_access}
 // LOCATION = (STACK, HEAP)
 #define {location}
@@ -69,6 +69,15 @@
 #include<stdlib.h>
 #endif
 
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(testgenOnFreeRTOS)
+// Required for realpath
+#include <limits.h>
+#include <stdlib.h>
+// Required for strnlen
+#include <string.h>
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif
+
 
 /*****************************
  * Globals
@@ -81,7 +90,7 @@ jmp_buf env;
 /*****************************
  * Functions
  * **************************/
-void test(void);
+void test_buffer_overflow(void);
 
 #define SIZE(_ty, N, _max) \
   (((N*sizeof(_ty)) > _max) ? (_max/sizeof(_ty)) : N)
@@ -120,7 +129,7 @@ size_t mock_get_message_size(void) {{
 #endif  // INCORRECT_MALLOC_CALL
 
 
-void test(void)
+void test_buffer_overflow(void)
 {{
 #ifdef SIZE_OVERFLOW
     // If the buffer were `min_size` long, there would be no overruns
@@ -299,6 +308,73 @@ void handle_signal(int signum) {{
 }};
 #endif
 
+#ifdef PATH_MANIPULATION_ACCESS
+void test_path_manipulation(void) {{
+#ifdef testgenOnFreeRTOS
+    printf("TEST INVALID.  <not on FreeRTOS>\r\n");
+    fflush(stdout);
+#else
+    if ({memmax} <= (PATH_MAX * sizeof(char))) {{
+        // Not enough memory to perform both a proper and an improper realpath
+        printf("TEST INVALID. <insufficient memory>\r\n");
+        fflush(stdout);
+        return;
+    }}
+
+    // Allocate {buf_name2} to hold the result of a proper realpath call
+#ifdef STACK
+    char {buf_name2}[PATH_MAX];
+#else
+    char* {buf_name2} = malloc(sizeof(char) * PATH_MAX);
+    if ({buf_name2} == NULL) {{
+        printf("TEST INVALID. <malloc {buf_name2}>\r\n");
+        fflush(stdout);
+        return;
+    }};
+#endif
+
+    // Expand "." into a properly sized buffer
+    if (!realpath(".", {buf_name2})) {{
+        printf("TEST INVALID. <realpath buf2>\r\n");
+        fflush(stdout);
+        return;
+    }};
+
+    // {tmp_var_name} represents the maximum size for {buf_name}.  {buf_name}
+    // must be at most 1 byte smaller than what is required to store the path
+    // expansion (including null terminator), so {tmp_var_name} is equal to the
+    // strlen of {buf_name2}.
+    size_t {tmp_var_name} = strnlen({buf_name2}, PATH_MAX);
+
+    // Allocate {buf_name}
+    size_t {buf_size} = SIZE(char,
+                             ({N} % {tmp_var_name}) + 1,
+                             {memmax} - (PATH_MAX * sizeof(char)));
+#ifdef STACK
+    char {buf_name}[{buf_size}];
+#else
+    char* {buf_name} = malloc(sizeof(char) * {buf_size});
+    if ({buf_name} == NULL) {{
+        printf("TEST INVALID. <malloc>\r\n");
+        fflush(stdout);
+        return;
+    }};
+#endif
+
+    // Call realpath with {buf_name}, which will overflow the buffer
+    if (!realpath(".", {buf_name})) {{
+        printf("TEST INVALID. <realpath buf>\r\n");
+        fflush(stdout);
+        return;
+    }}
+
+#ifdef JMP
+    longjmp(env, 2);
+#endif
+#endif // !testgenOnFreeRTOS
+}};
+#endif  // PATH_MANIPULATION_ACCESS
+
 /*
  * Main Function
  *
@@ -327,7 +403,12 @@ int main()
     if (jmp_return != 0)
         goto COMPLETE;
 #endif
-    test();
+
+#ifdef PATH_MANIPULATION_ACCESS
+    test_path_manipulation();
+#else
+    test_buffer_overflow();
+#endif
 
     COMPLETE:
     printf("TEST COMPLETED\n");

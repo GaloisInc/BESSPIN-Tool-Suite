@@ -135,7 +135,8 @@ MAGNITUDE    = { 'Magnitude_VeryClose' : (0, 10),
                  'Magnitude_Close'     : (10, 100),
                  'Magnitude_Far'       : (100, 1000) }
 SCHEME       = { 'BufferIndexScheme_IndexArray' : 'ARRAY_ACCESS',
-                 'BufferIndexScheme_PointerArithmetic' : 'PTR_ACCESS' }
+                 'BufferIndexScheme_PointerArithmetic' : 'PTR_ACCESS',
+                 'BufferIndexScheme_PathManipulation' : 'PATH_MANIPULATION_ACCESS'}
 ACCESS       = { 'Access_Read' : 'READ', 'Access_Write' : 'WRITE' }
 LOCATION     = { 'Location_Stack' : 'STACK', 'Location_Heap' : 'HEAP' }
 COMPUTE_SIZE = { 'SizeComputation_None' : 'NO_COMPUTE_SIZE',
@@ -225,22 +226,27 @@ class BofTestGen:
         # memBound`
         dataRange = pickDataRange(bof_instance.DataSize, memBound)
 
-        # The set of supported C types that are wider than 1 byte
-        c_multibyte_types = []
-        # The set of supported C types including those that are 1 byte wide
-        c_types = []
-        # Fill c_multibyte_types and c_types based on which types are enabled
-        # in config.ini
-        numeric_types = getSettingDict("bufferErrors", "numericTypes")
-        if not numeric_types:
-            logAndExit("<numericTypes> configuration option may not be empty",
-                       exitCode=EXIT.Configuration)
-        if "ints" in numeric_types:
-            c_multibyte_types += [ f"{q}{t}" for q in ['', 'u'] for t in C_MULTIBYTE_INTEGRAL_TYPES]
-            c_types += c_multibyte_types + ['int8_t', 'uint8_t']
-        if "floats" in numeric_types:
-            c_multibyte_types += C_FLOATING_TYPES
-            c_types += C_FLOATING_TYPES
+        if (bof_instance.BufferIndexScheme == "BufferIndexScheme_PathManipulation"):
+            # Only chars are supported for path manipulation tests
+            c_multibyte_types = []
+            c_types = ["char"]
+        else:
+            # The set of supported C types that are wider than 1 byte
+            c_multibyte_types = []
+            # The set of supported C types including those that are 1 byte wide
+            c_types = []
+            # Fill c_multibyte_types and c_types based on which types are enabled
+            # in config.ini
+            numeric_types = getSettingDict("bufferErrors", "numericTypes")
+            if not numeric_types:
+                logAndExit("<numericTypes> configuration option may not be empty",
+                           exitCode=EXIT.Configuration)
+            if "ints" in numeric_types:
+                c_multibyte_types += [ f"{q}{t}" for q in ['', 'u'] for t in C_MULTIBYTE_INTEGRAL_TYPES]
+                c_types += c_multibyte_types + ['int8_t', 'uint8_t']
+            if "floats" in numeric_types:
+                c_multibyte_types += C_FLOATING_TYPES
+                c_types += C_FLOATING_TYPES
 
         def chooseIdx0(N):
             '''

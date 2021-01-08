@@ -42,6 +42,13 @@ BufferErrors_Test : BufferErrors_Weakness ?
   xor BufferIndexScheme
     BufferIndexScheme_PointerArithmetic
     BufferIndexScheme_IndexArray
+    BufferIndexScheme_PathManipulation
+  [ BufferIndexScheme_PathManipulation => (Access_Write &&
+                                           Boundary_Above &&
+                                           Magnitude_VeryClose &&
+                                           Excursion_Continuous &&
+                                           SizeComputation_None &&
+                                           !Access_Read_After_Write) ]
 
   or CWE
     CWE_118
@@ -58,6 +65,7 @@ BufferErrors_Test : BufferErrors_Weakness ?
     CWE_130
     CWE_131
     CWE_680
+    CWE_785
     CWE_786
     CWE_787
     CWE_788
@@ -78,6 +86,7 @@ BufferErrors_Test : BufferErrors_Weakness ?
     [ CWE_131 <=> ( SizeComputation_IntOverflowToBufferOverflow ||
                     SizeComputation_IncorrectMallocCall ) ]
     [ CWE_680 <=> ( SizeComputation_IntOverflowToBufferOverflow ) ]
+    [ CWE_785 <=> ( BufferIndexScheme_PathManipulation ) ]
     [ CWE_786 <=> ( Boundary_Below ) ]
     [ CWE_787 <=> ( Access_Write) ]
     [ CWE_788 <=> ( Boundary_Above ) ]
