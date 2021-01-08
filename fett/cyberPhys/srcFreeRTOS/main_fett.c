@@ -45,6 +45,8 @@
 #define CAN_TX_PORT (5002UL)
 
 #define SENSOR_LOOP_DELAY_MS pdMS_TO_TICKS(100)
+#define SENSOR_GEAR_LOOP_DELAY_MS pdMS_TO_TICKS(1000)
+
 #define SENSOR_POWER_UP_DELAY_MS pdMS_TO_TICKS(100)
 #define BROADCAST_LOOP_DELAY_MS pdMS_TO_TICKS(100)
 #define INFOTASK_LOOP_DELAY_MS pdMS_TO_TICKS(1000)
@@ -62,8 +64,11 @@
 
 #define SHIFTER_I2C_ADDRESS 0x30
 
-static void prvSensorTask(void *pvParameters);
-static void prvCanTxTask(void *pvParameters);
+static void prvSensorBrakeTask(void *pvParameters);
+static void prvSensorThrottleTask(void *pvParameters);
+static void prvSensorGearTask(void *pvParameters);
+static void prvSensorLkasTask(void *pvParameters);
+
 static void prvCanRxTask(void *pvParameters);
 static void prvInfoTask(void *pvParameters);
 
@@ -73,16 +78,6 @@ char* getCurrTime(void);
 uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr * xClient, size_t * msg_len);
 int16_t min(int16_t a, int16_t b);
 int16_t max(int16_t a, int16_t b);
-
-portTickType network1;
-portTickType network2;
-portTickType network3;
-portTickType network4;
-
-portTickType sensor1;
-portTickType sensor2;
-portTickType sensor3;
-portTickType sensor4;
 
 SemaphoreHandle_t data_mutex;
 
@@ -111,12 +106,21 @@ uint8_t throttle;
 uint8_t brake;
 uint8_t gear;
 
+/* Debug info */
+uint32_t hz_sensor_gear_task;
+uint32_t hz_sensor_throttle_task;
+uint32_t hz_sensor_brake_task;
+
 /* Network config variables */
 static const uint8_t ucIPAddress[4] = {configIP_ADDR0, configIP_ADDR1, configIP_ADDR2, configIP_ADDR3};
 static const uint8_t ucNetMask[4] = {configNET_MASK0, configNET_MASK1, configNET_MASK2, configNET_MASK3};
 static const uint8_t ucGatewayAddress[4] = {configGATEWAY_ADDR0, configGATEWAY_ADDR1, configGATEWAY_ADDR2, configGATEWAY_ADDR3};
 static const uint8_t ucDNSServerAddress[4] = {configDNS_SERVER_ADDR0, configDNS_SERVER_ADDR1, configDNS_SERVER_ADDR2, configDNS_SERVER_ADDR3};
 const uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADDR2, configMAC_ADDR3, configMAC_ADDR4, configMAC_ADDR5};
+
+/* Global network settings */
+Socket_t xClientSocket;
+struct freertos_sockaddr xDestinationAddress;
 
 /* Auxilliary function */
 int16_t min(int16_t a, int16_t b)
@@ -195,96 +199,64 @@ static void prvInfoTask(void *pvParameters)
 {
     (void)pvParameters;
     int16_t local_throttle, local_brake;
+    int16_t local_throttle_raw, local_brake_raw;
     uint8_t local_gear;
-    uint32_t network1_ms, network2_ms, network3_ms, network4_ms, sensor1_ms, sensor2_ms, sensor3_ms, sensor4_ms;
+    uint32_t hz_sensor_gear_task_old = 0;
+    uint32_t hz_sensor_throttle_task_old = 0;
+    uint32_t hz_sensor_brake_task_old = 0;
 
     FreeRTOS_printf((">>>%s Starting prvInfoTask\r\n",getCurrTime()));
 
     for (;;)
     {
-        // Copy data over
+        /* Copy data over */
         if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
         {
-            local_throttle = throttle_raw;
-            local_brake = brake_raw;
-            local_gear = gear;
-            xSemaphoreGive( data_mutex );
-        }
-        FreeRTOS_printf((">>>%s (prvInfoTask:raw_data) Gear: %#x, throttle: %d, brake: %d\r\n",getCurrTime(), local_gear, local_throttle, local_brake));
-
-        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
-        {
+            local_throttle_raw = throttle_raw;
+            local_brake_raw = brake_raw;
             local_throttle = throttle;
             local_brake = brake;
             local_gear = gear;
             xSemaphoreGive( data_mutex );
         }
-        FreeRTOS_printf((">>>%s (prvInfoTask:scaled_data) Gear: %#x, throttle: %u, brake: %u\r\n",getCurrTime(), local_gear, local_throttle, local_brake));
+        FreeRTOS_printf((">>>%s (prvInfoTask:raw) throttle: %d, brake: %d\r\n",getCurrTime(), local_throttle_raw, local_brake_raw));
+        FreeRTOS_printf((">>>%s (prvInfoTask:scaled) Gear: %#x, throttle: %u, brake: %u\r\n",getCurrTime(), local_gear, local_throttle, local_brake));
+        FreeRTOS_printf((">>>%s (prvInfoTask:hz) prvSensorGearTask: %u[Hz]\r\n",getCurrTime(), hz_sensor_gear_task - hz_sensor_gear_task_old));
+        FreeRTOS_printf((">>>%s (prvInfoTask:hz) prvSensorBrakeTask: %u[Hz]\r\n",getCurrTime(), hz_sensor_brake_task - hz_sensor_brake_task_old));
+        FreeRTOS_printf((">>>%s (prvInfoTask:hz) prvSensorThrottleeTask: %u[Hz]\r\n",getCurrTime(), hz_sensor_throttle_task - hz_sensor_throttle_task_old));
+        hz_sensor_gear_task_old = hz_sensor_gear_task;
+        hz_sensor_brake_task_old = hz_sensor_brake_task;
+        hz_sensor_throttle_task_old = hz_sensor_throttle_task;
 
         if (camera_ok) {
             FreeRTOS_printf((">>>%s (prvInfoTask:LKAS) Camera OK: %d, steering_assist: %d\r\n",getCurrTime(), camera_ok, steering_assist));
         }
 
-        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(10) ) == pdTRUE )
-        {
-            network1_ms = (network1 * 1000)/configTICK_RATE_HZ;
-            network2_ms = (network2 * 1000)/configTICK_RATE_HZ;
-            network3_ms = (network3 * 1000)/configTICK_RATE_HZ;
-            network4_ms = (network4 * 1000)/configTICK_RATE_HZ;
-            sensor1_ms = (sensor1 * 1000)/configTICK_RATE_HZ;
-            sensor2_ms = (sensor2 * 1000)/configTICK_RATE_HZ;
-            sensor3_ms = (sensor3 * 1000)/configTICK_RATE_HZ;
-            sensor4_ms = (sensor4 * 1000)/configTICK_RATE_HZ;
-            xSemaphoreGive( data_mutex );
-        }
-        FreeRTOS_printf((">>>%s (prvInfoTask:network ticks) 1: %u[ms], 2: %u[ms], 3: %u[ms], 4: %u[ms]\r\n",getCurrTime(), network1_ms, network2_ms, network3_ms, network4_ms));
-        FreeRTOS_printf((">>>%s (prvInfoTask:sensor ticks) 1: %u[ms], 2: %u[ms], 3: %u[ms], 4: %u[ms]\r\n",getCurrTime(), sensor1_ms, sensor2_ms, sensor3_ms, sensor4_ms));
-
         vTaskDelay(INFOTASK_LOOP_DELAY_MS);
     }
 }
 
-static void prvSensorTask(void *pvParameters)
+/**
+ * Read and update gear values
+ */
+static void prvSensorGearTask(void *pvParameters)
 {
     (void)pvParameters;
 
-    throttle_gain = THROTTLE_GAIN;
-    brake_gain = BRAKE_GAIN;
-    throttle_min = THROTTLE_MIN;
-    throttle_max = THROTTLE_MAX;
-    brake_min = BRAKE_MIN;
-    brake_max = BRAKE_MAX;
-
-    int16_t tmp_brake;
-    int16_t tmp_throttle;
     uint8_t tmp_gear;
+    hz_sensor_gear_task = 0;
 
-    FreeRTOS_printf((">>>%s Starting prvSensorTask\r\n",getCurrTime()));
+    FreeRTOS_printf((">>>%s Starting prvSensorGearTask\r\n",getCurrTime()));
 
     // Give the sensor time to power up
     vTaskDelay(SENSOR_POWER_UP_DELAY_MS);
 
     for (;;)
     {
-        sensor1 = xTaskGetTickCount();
-        throttle_raw = (int16_t) ads1015_get_channel(THROTTLE_ADC_CHANNEL);
-
-        tmp_throttle = max(throttle_raw-throttle_min, 0); // remove offset
-        tmp_throttle = tmp_throttle * throttle_gain / (throttle_max - throttle_min);
-        tmp_throttle = min(max(tmp_throttle, 0), 100);
-        sensor1 = xTaskGetTickCount() - sensor1;
-
-        sensor2 = xTaskGetTickCount();
-        brake_raw = (int16_t) ads1015_get_channel(BRAKE_ADC_CHANNEL);
-        tmp_brake = max(brake_max - brake_raw, 0); // reverse brake
-        tmp_brake = tmp_brake * brake_gain / (brake_max - brake_min);
-        tmp_brake = min(max(tmp_brake, 0), 100);
-        sensor2 = xTaskGetTickCount() - sensor2;
-
-        sensor3 = xTaskGetTickCount();
+        hz_sensor_gear_task++;
         int res = iic_receive(&Iic0, SHIFTER_I2C_ADDRESS, &gear_raw, 1);
         if (res < 1) {
-            FreeRTOS_printf((">>>%s (prvSensorTask) iic_receive error: %i\r\n", getCurrTime(), res));
+            FreeRTOS_printf((">>>%s (prvSensorGearTask) iic_receive error: %i\r\n", getCurrTime(), res));
         }
 
         switch (gear_raw) {
@@ -301,20 +273,130 @@ static void prvSensorTask(void *pvParameters)
                 tmp_gear = 'D';
                 break;
             default:
-                FreeRTOS_printf((">>>%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), gear_raw));
+                FreeRTOS_printf((">>>%s (prvSensorGearTask) unknown gear value: %c\r\n", getCurrTime(), gear_raw));
                 break;
         }
 
-        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(10) ) == pdTRUE )
+        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
         {
             gear = (uint8_t)tmp_gear;
+            xSemaphoreGive( data_mutex );
+        }
+
+        /* Send gear */
+        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&tmp_gear, sizeof(tmp_gear)) != SUCCESS)
+        {
+            FreeRTOS_printf((">>>%s (prvSensorGearTask) send gear failed\r\n",getCurrTime()));
+        }
+
+        vTaskDelay(SENSOR_GEAR_LOOP_DELAY_MS);
+    }
+}
+
+/**
+ * Read and update throttle values
+ */
+static void prvSensorThrottleTask(void *pvParameters)
+{
+    (void)pvParameters;
+    int16_t tmp_throttle;
+    hz_sensor_throttle_task = 0;
+    throttle_gain = THROTTLE_GAIN;
+    throttle_min = THROTTLE_MIN;
+    throttle_max = THROTTLE_MAX;
+
+    FreeRTOS_printf((">>>%s Starting prvSensorThrottleTask\r\n",getCurrTime()));
+
+    // Give the sensor time to power up
+    vTaskDelay(SENSOR_POWER_UP_DELAY_MS);
+
+    for (;;)
+    {
+        hz_sensor_throttle_task++;
+        throttle_raw = (int16_t) ads1015_get_channel(THROTTLE_ADC_CHANNEL);
+        tmp_throttle = max(throttle_raw-throttle_min, 0); // remove offset
+        tmp_throttle = tmp_throttle * throttle_gain / (throttle_max - throttle_min);
+        tmp_throttle = min(max(tmp_throttle, 0), 100);
+
+        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
+        {
             throttle = (uint8_t)tmp_throttle;
+            xSemaphoreGive( data_mutex );
+        }
+
+        /* Send throttle */
+        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_THROTTLE_INPUT),(void *)&tmp_throttle, sizeof(tmp_throttle)) != SUCCESS)
+        {
+            FreeRTOS_printf((">>>%s (prvSensorThrottleTask) send throttle failed\r\n", getCurrTime()));
+        }
+
+        vTaskDelay(SENSOR_LOOP_DELAY_MS);
+    }
+}
+
+/**
+ * Read and update brake values
+ */
+static void prvSensorBrakeTask(void *pvParameters)
+{
+    (void)pvParameters;
+    int16_t tmp_brake;
+    hz_sensor_brake_task = 0;
+    brake_gain = BRAKE_GAIN;
+    brake_min = BRAKE_MIN;
+    brake_max = BRAKE_MAX;
+
+    FreeRTOS_printf((">>>%s Starting prvSensorBrakeTask\r\n",getCurrTime()));
+
+    // Give the sensor time to power up
+    vTaskDelay(SENSOR_POWER_UP_DELAY_MS);
+
+    for (;;)
+    {
+        hz_sensor_brake_task++;
+        brake_raw = (int16_t) ads1015_get_channel(BRAKE_ADC_CHANNEL);
+        tmp_brake = max(brake_max - brake_raw, 0); // reverse brake
+        tmp_brake = tmp_brake * brake_gain / (brake_max - brake_min);
+        tmp_brake = min(max(tmp_brake, 0), 100);
+
+        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
+        {
             brake = (uint8_t)tmp_brake;
             xSemaphoreGive( data_mutex );
         }
-        sensor3 = xTaskGetTickCount() - sensor3;
 
-        /* Place this task in the blocked state until it is time to run again. */
+        /* Send brake */
+        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_BRAKE_INPUT), (void *)&tmp_brake, sizeof(tmp_brake)) != SUCCESS)
+        {
+            FreeRTOS_printf((">>>%s (prvSensorBrakeTask) send brake failed\r\n", getCurrTime()));
+        }
+
+        vTaskDelay(SENSOR_LOOP_DELAY_MS);
+    }
+}
+
+/**
+ * Read and update LKAS values
+ */
+static void prvSensorLkasTask(void *pvParameters)
+{
+    (void)pvParameters;
+
+    FreeRTOS_printf((">>>%s Starting prvSensorLkasTask\r\n",getCurrTime()));
+
+    // Give the sensor time to power up
+    vTaskDelay(SENSOR_POWER_UP_DELAY_MS);
+
+    for (;;)
+    {
+        if (camera_ok) {
+            /* Steering assist */
+            if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_STEERING_INPUT), (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
+            {
+                FreeRTOS_printf((">>>%s (prvSensorLkasTask) send steering_assist failed\r\n",getCurrTime()));
+            }
+        }
+
         vTaskDelay(SENSOR_LOOP_DELAY_MS);
     }
 }
@@ -325,7 +407,6 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
 {
     uint32_t ulIPAddress, ulNetMask, ulGatewayAddress, ulDNSServerAddress;
     char cBuffer[16];
-    uint64_t ulsPort;
     static BaseType_t xTasksAlreadyCreated = pdFALSE;
 
     /* If the network has just come up...*/
@@ -338,11 +419,19 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
 		created. */
         if (xTasksAlreadyCreated == pdFALSE)
         {
-            xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
-            ulsPort = CAN_TX_PORT;
-            xTaskCreate(prvCanTxTask, "prvCanTxTask", CAN_TX_STACK_SIZE, (void *)ulsPort, CAN_TX_TASK_PRIORITY, NULL);
-            ulsPort = CAN_RX_PORT;
-            xTaskCreate(prvCanRxTask, "prvCanRxTask", CAN_RX_STACK_SIZE, (void *)ulsPort, CAN_RX_TASK_PRIORITY, NULL);
+            /* Configure TX addr */
+            xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
+            xDestinationAddress.sin_port = (uint16_t)(CAN_TX_PORT);
+            xDestinationAddress.sin_port = FreeRTOS_htons(xDestinationAddress.sin_port);
+            xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
+            configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
+
+            xTaskCreate(prvSensorGearTask, "prvSensorGearTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
+            xTaskCreate(prvSensorBrakeTask, "prvSensorBrakeTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
+            xTaskCreate(prvSensorThrottleTask, "prvSensorThrottleTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
+            xTaskCreate(prvSensorLkasTask, "prvSensorLkasTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
+            xTaskCreate(prvCanRxTask, "prvCanRxTask", CAN_RX_STACK_SIZE, NULL, CAN_RX_TASK_PRIORITY, NULL);
+
             xTasksAlreadyCreated = pdTRUE;
         }
 
@@ -386,7 +475,7 @@ static void prvCanRxTask(void *pvParameters)
 	after the network is up, so the IP address is valid here. */
     FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     xBindAddress.sin_addr = ulIPAddress;
-    xBindAddress.sin_port = (uint16_t)((uint64_t)pvParameters) & 0xffffUL;
+    xBindAddress.sin_port = (uint16_t)(CAN_RX_PORT);
     xBindAddress.sin_port = FreeRTOS_htons(xBindAddress.sin_port);
 
     /* Bind the socket to the port that the client task will send to. */
@@ -424,72 +513,4 @@ uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr * xCli
     return res;
 }
 
-static void prvCanTxTask(void *pvParameters)
-{
-    uint32_t ulIPAddress;
-    Socket_t xClientSocket;
-    struct freertos_sockaddr xDestinationAddress;
 
-    FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
-    // Broadcast address
-    xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-    xDestinationAddress.sin_port = (uint16_t)((uint64_t)pvParameters) & 0xffffUL;
-    xDestinationAddress.sin_port = FreeRTOS_htons(xDestinationAddress.sin_port);
-
-    FreeRTOS_printf((">>> Starting prvCanTxTask\r\n"));
-
-    xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
-    configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
-
-    FreeRTOS_printf((">>>%s (prvCanTxTask) socket connected\r\n", getCurrTime()));
-
-    uint8_t local_throttle, local_brake, local_gear;
-
-    for (;;)
-    {
-        /* Copy data over */
-        network4 = xTaskGetTickCount();
-        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
-        {
-            local_throttle = throttle;
-            local_brake = brake;
-            local_gear = gear;
-            xSemaphoreGive( data_mutex );
-        }
-        network4 = xTaskGetTickCount() - network4;
-
-        /* Send throttle */
-        network1 = xTaskGetTickCount();
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_THROTTLE_INPUT), (void *)&local_throttle, sizeof(local_throttle)) != SUCCESS)
-        {
-            FreeRTOS_printf((">>>%s (prvCanTxTask) send throttle failed\r\n", getCurrTime()));
-        }
-        network1 = xTaskGetTickCount() - network1;
-
-        /* Send brake */
-        network2 = xTaskGetTickCount();
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_BRAKE_INPUT), (void *)&local_brake, sizeof(local_brake)) != SUCCESS)
-        {
-            FreeRTOS_printf((">>>%s (prvCanTxTask) send brake failed\r\n", getCurrTime()));
-        }
-        network2 = xTaskGetTickCount() - network2;
-
-        /* Send gear */
-        network3 = xTaskGetTickCount();
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&local_gear, sizeof(local_gear)) != SUCCESS)
-        {
-            FreeRTOS_printf((">>>%s (prvCanTxTask) send gear failed\r\n",getCurrTime()));
-        }
-        network3 = xTaskGetTickCount() - network3;
-
-        if (camera_ok) {
-            /* Steering assist */
-            if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_STEERING_INPUT), (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
-            {
-                FreeRTOS_printf((">>>%s (prvCanTxTask) send steering_assist failed\r\n",getCurrTime()));
-            }   
-        }
-
-        vTaskDelay(BROADCAST_LOOP_DELAY_MS);
-    }
-}
