@@ -24,7 +24,7 @@
 #include "infotainment_debug.h"
 #include "infotainment_utils.h"
 
-int udp_socket(int port) {
+int udp_socket(int listen_port) {
     static int socketfd = -1;
     static struct sockaddr_in listen_address;
 
@@ -34,7 +34,7 @@ int udp_socket(int port) {
     socklen_t current_len;
 
     if (getsockname(socketfd, (struct sockaddr *) &current_address, &current_len) == 0) {
-        if (current_address.sin_port != htons(port)) {
+        if (current_address.sin_port != htons(listen_port)) {
             // it's listening on the wrong port, close it
             debug("closing socket on port %d\n", ntohs(current_address.sin_port));
             close(socketfd);
@@ -47,7 +47,7 @@ int udp_socket(int port) {
 
     // create the socket if it doesn't exist or has been closed     
     if (socketfd < 0 || (fcntl(socketfd, F_GETFD) == -1 && errno != EBADF)) {
-        debug("creating socket on port %d\n", port);
+        debug("creating socket on port %d\n", listen_port);
 
         if ((socketfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
             error("unable to create socket: error %d\n", errno);
@@ -56,14 +56,14 @@ int udp_socket(int port) {
         // initialize the listen address
         memset((char *) &listen_address, 0, sizeof(listen_address));
         listen_address.sin_family = AF_INET;
-        listen_address.sin_port = htons(port);
+        listen_address.sin_port = htons(listen_port);
         listen_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
         // bind the socket to the port
         if (bind(socketfd, 
                  (struct sockaddr *) &listen_address, 
                  sizeof(listen_address)) == -1) {
-            error("unable to listen on port %d\n", port);
+            error("unable to listen on port %d\n", listen_port);
         }
 
         // set socket options to receive broadcasts
@@ -73,7 +73,7 @@ int udp_socket(int port) {
             error("unable to set broadcast listening mode\n");
         }
 
-        debug("socket created, listening for broadcasts on port %d\n", port);
+        debug("socket created, listening for broadcasts on port %d\n", listen_port);
     }
 
     return socketfd;   
@@ -157,9 +157,9 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
     return result;
 }
 
-int32_t broadcast_frame(int from_port, int to_port, can_frame *frame) {
+int broadcast_frame(int from_port, int to_port, can_frame *frame) {
     struct ifaddrs *addresses, *addr;
-    int32_t result = 0x7fffffff; // maximum value for a signed 32-bit int
+    int result = 0x7fffffff; // maximum value for a signed 32-bit int
 
     // get all interfaces
     if (getifaddrs(&addresses) == -1) {
@@ -179,7 +179,7 @@ int32_t broadcast_frame(int from_port, int to_port, can_frame *frame) {
 
         debug("sending frame to broadcast address %s\n", 
               inet_ntoa(broadcast_address->sin_addr));
-        int32_t bytes = 
+        int bytes = 
             sendto(udp_socket(from_port), frame, sizeof(can_frame), 0, // no flags
                    (struct sockaddr *) broadcast_address, sizeof(broadcast_address));
         if (bytes < result) {

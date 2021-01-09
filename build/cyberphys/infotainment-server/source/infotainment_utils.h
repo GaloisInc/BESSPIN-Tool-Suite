@@ -10,11 +10,11 @@
 #include "infotainment_defs.h"
 
 /**
- * Get a UDP socket listening on port, creating it if necessary.
- * @param port The port number.
+ * Get a UDP socket listening on the specified port, creating it if necessary.
+ * @param listen_port The port number.
  * @return 0 if successful, error code if not successful
  */
-int udp_socket(int port);
+int udp_socket(int listen_port);
 
 /**
  * Get a character (x, y, z) based on the CAN ID for a position dimension.
@@ -54,4 +54,4 @@ can_frame *receive_frame(int port, uint8_t *buffer, int buffer_len,
  * that if more than one broadcast encounters an error, only the lowest error code is
  * returned.
  */
-int32_t broadcast_frame(int from_port, int to_port, can_frame *frame);
+int broadcast_frame(int from_port, int to_port, can_frame *frame);
