@@ -44,10 +44,10 @@ bool increase_volume();
 bool decrease_volume();
 
 // broadcast the current music state
-void broadcast_music_state(struct sockaddr_in *broadcast_address);
+void broadcast_music_state();
 
 // broadcast an updated position state for the dimension specified in the CAN ID
-void broadcast_updated_position(struct sockaddr_in *broadcast_address, canid_t can_id);
+void broadcast_updated_position(canid_t can_id);
 
 // stop the server (e.g., on a Ctrl-C)
 void stop(void);

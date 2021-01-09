@@ -19,7 +19,6 @@
 
 #include "can.h"
 #include "canlib.h"
-#include "cyberphys.h"
 
 #include "infotainment_defs.h"
 #include "infotainment_debug.h"
@@ -32,8 +31,27 @@ int main_loop(void) {
     struct sockaddr_in receive_address;
     socklen_t receive_address_len;
     uint8_t message[MESSAGE_BUFFER_SIZE];
-    size_t message_len;
     can_frame *frame;
+
+    // broadcast all outgoing packets to the world (but our world is small)
+    broadcast_address.sin_family = AF_INET;
+    broadcast_address.sin_port = htons(CAN_NETWORK_PORT);
+    broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+
+    debug("socket number is %d\n", udp_socket(MUX_PORT));
+
+    // send a frame
+    send_button_press(BUTTON_STATION_1, &broadcast_address);
+
+    // zero out the buffer
+    memset(&message, 0, MESSAGE_BUFFER_SIZE);
+
+    // receive a frame
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+                          &receive_address, &receive_address_len);
+    if (frame != NULL) {
+        print_frame(frame);
+    }
 
     return 0;
 }
@@ -92,8 +110,7 @@ void send_button_press(uint8_t button, struct sockaddr_in *broadcast_address) {
     frame.data[0] = button;
 
     debug("broadcasting button press frame (%d)\n", button);
-    canframe_sendto(udp_socket(MUX_PORT), &frame, sizeof(frame), 0, // no flags
-                    broadcast_address, sizeof(broadcast_address));
+    broadcast_frame(MUX_PORT, CAN_NETWORK_PORT, &frame);
 }
 
 void send_coordinate(canid_t dimension_id, float coordinate,
@@ -119,8 +136,7 @@ void send_coordinate(canid_t dimension_id, float coordinate,
             break;
     }
     debug("broadcasting %s-coordinate update (%f)\n", dimension, coordinate);
-    canframe_sendto(udp_socket(MUX_PORT), &frame, sizeof(frame), 0, // no flags
-                    broadcast_address, sizeof(broadcast_address));
+    broadcast_frame(MUX_PORT, CAN_NETWORK_PORT, &frame);
 }
 
 // just run the main loop, no frills

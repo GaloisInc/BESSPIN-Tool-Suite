@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -118,5 +119,74 @@ float *position_for_dimension(infotainment_state the_state, canid_t dimension_id
             debug("position_for_dimension called for bad CAN farme type %x\n", dimension_id);
     }
 
+    return result;
+}
+
+can_frame *receive_frame(int port, uint8_t *message, int message_len, 
+                         struct sockaddr_in *receive_address, 
+                         socklen_t *receive_address_len) {
+    can_frame *result = NULL;
+
+    while (result == NULL && errno != EINTR) {
+        debug("waiting for CAN frame\n");
+        int32_t bytes = recvfrom(udp_socket(port), message, message_len, 0, // no flags
+                                 (struct sockaddr *) receive_address, receive_address_len);
+
+        // decode the packet
+        if (bytes < 0) {
+            debug("CAN frame receive failed\n");
+            continue;
+        } else if (bytes == 0) {
+            debug("received empty CAN frame\n");
+            continue;
+        }
+
+        debug("received %i bytes\n", bytes);
+        result = (can_frame *) message;
+        if (bytes <= sizeof(can_frame) && (result->can_dlc != bytes - 5)) {
+            debug("received CAN message with invalid length (%d)\n", bytes);
+            result = NULL;
+            continue;
+        } else {
+            debug("received (probable) J1939 message, ignoring\n");
+            result = NULL;
+            continue;
+        }
+    }
+
+    return result;
+}
+
+int32_t broadcast_frame(int from_port, int to_port, can_frame *frame) {
+    struct ifaddrs *addresses, *addr;
+    int32_t result = 0x7fffffff; // maximum value for a signed 32-bit int
+
+    // get all interfaces
+    if (getifaddrs(&addresses) == -1) {
+        error("could not get interface addresses (error %d), exiting\n", errno);
+    }
+
+    // broadcast to every one of our broadcast addresses
+    for (addr = addresses; addr != NULL; addr = addr->ifa_next) {
+        if (addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET ||
+            addr->ifa_broadaddr == NULL) {
+            // empty or non-IPv4 address, or empty broadcast address
+            continue;
+        } 
+        
+        struct sockaddr_in *broadcast_address = (struct sockaddr_in *) addr->ifa_broadaddr;
+        broadcast_address->sin_port = htons(to_port);
+
+        debug("sending frame to broadcast address %s\n", 
+              inet_ntoa(broadcast_address->sin_addr));
+        int32_t bytes = 
+            sendto(udp_socket(from_port), frame, sizeof(can_frame), 0, // no flags
+                   (struct sockaddr *) broadcast_address, sizeof(broadcast_address));
+        if (bytes < result) {
+            result = bytes; // always return the lowest error code
+        }
+    }  
+
+    freeifaddrs(addresses);
     return result;
 }

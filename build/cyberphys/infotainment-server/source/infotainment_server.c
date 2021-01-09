@@ -20,7 +20,6 @@
 
 #include "can.h"
 #include "canlib.h"
-#include "cyberphys.h"
 
 #include "infotainment_defs.h"
 #include "infotainment_debug.h"
@@ -57,13 +56,7 @@ int main_loop(void) {
     struct sockaddr_in receive_address;
     socklen_t receive_address_len;
     uint8_t message[MESSAGE_BUFFER_SIZE];
-    size_t message_len;
     can_frame *frame;
-
-    // broadcast all outgoing packets to the world (but our world is small)
-    broadcast_address.sin_family = AF_INET;
-    broadcast_address.sin_port = htons(MUX_PORT);
-    broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 
     debug("socket number is %d\n", udp_socket(CAN_NETWORK_PORT));
     
@@ -72,37 +65,15 @@ int main_loop(void) {
         memset(&message, 0, MESSAGE_BUFFER_SIZE);
 
         // receive a packet
-        int32_t bytes_received = 
-            canframe_recvfrom(udp_socket(CAN_NETWORK_PORT), &message, MESSAGE_BUFFER_SIZE, 0, // no flags
+        frame = receive_frame(CAN_NETWORK_PORT, message, MESSAGE_BUFFER_SIZE, 
                               &receive_address, &receive_address_len);
-
-        // decode the packet
-        if (bytes_received < 0) {
-            debug("CAN message receive failed\n");
-            continue;
-        } else if (bytes_received == 0) {
-            debug("Received empty CAN message\n");
-            continue;
-        }
-
-        debug("received %i bytes\n", bytes_received);
         
         // attempt to decode the frame and see if it is for us
-        frame = (can_frame *) &message[0];
-        if (bytes_received <= sizeof(can_frame)) {
-            // extract data field
-            message_len = frame->can_dlc;
-            if (message_len != bytes_received - 5) {
-                debug("received CAN message with invalid length\n");
-                continue;
-            }
-            // check for CAN ID that matches ours
-            if (!is_relevant(frame->can_id)) {
-                debug("received CAN message with irrelevant ID %x\n", frame->can_id);
-                continue;
-            }
-        } else {
-            debug("received J1939 message, ignoring\n");
+        if (frame == NULL) {
+            continue;
+        } else if (!is_relevant(frame->can_id)) {
+            debug("received CAN message with irrelevant ID %x\n", frame->can_id);
+            continue;
         }
 
         // change our state based on the received CAN frame
@@ -123,9 +94,9 @@ int main_loop(void) {
         // broadcast the new state; we always broadcast the current music state, 
         // and we also broadcast any position state that has been updated
 
-        broadcast_music_state(&broadcast_address);
+        broadcast_music_state();
         if (position_updated) {
-            broadcast_updated_position(&broadcast_address, frame->can_id);
+            broadcast_updated_position(frame->can_id);
         }
     }
 
@@ -265,7 +236,7 @@ bool decrease_volume() {
     return changed;
 }
 
-void broadcast_music_state(struct sockaddr_in *broadcast_address) {
+void broadcast_music_state() {
     if (the_state.M == MUSIC_UNKNOWN || the_state.S == STATION_UNKNOWN ||
         the_state.V == VOLUME_UNKNOWN) {
         debug("warning: broadcasting music state with default values\n");
@@ -277,12 +248,10 @@ void broadcast_music_state(struct sockaddr_in *broadcast_address) {
 
     debug("broadasting music state frame: music %d, station %d, volume %d",
           the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
-    canframe_sendto(udp_socket(CAN_NETWORK_PORT), &frame, sizeof(frame), 0, // no flags
-                    broadcast_address, sizeof(broadcast_address));
+    broadcast_frame(CAN_NETWORK_PORT, MUX_PORT, &frame);
 }
 
-void broadcast_updated_position(struct sockaddr_in *broadcast_address, 
-                                canid_t can_id) {
+void broadcast_updated_position(canid_t can_id) {
     // make sure the ID is appropriate
     assert(can_id == CAN_ID_CAR_X || can_id == CAN_ID_CAR_Y ||
            can_id == CAN_ID_CAR_Z);
@@ -296,8 +265,7 @@ void broadcast_updated_position(struct sockaddr_in *broadcast_address,
     *buffer = *position;
 
     debug("broadcasting new %c position: %f", dimension, *position);
-    canframe_sendto(udp_socket(CAN_NETWORK_PORT), &frame, sizeof(frame), 0, // no flags
-                    broadcast_address, sizeof(broadcast_address));
+    broadcast_frame(CAN_NETWORK_PORT, MUX_PORT, &frame);
 }
 
 void stop(void) {
