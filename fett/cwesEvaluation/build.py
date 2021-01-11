@@ -256,7 +256,8 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     fPars.close()
 
     # Build
-    if vulClass == "informationLeakage":
+    if ((vulClass == "informationLeakage") 
+            and (test.split(".c")[0] not in getSettingDict("informationLeakage","nonstandardTests"))):
         testInfo = os.path.splitext(os.path.basename(test))[0].split("_")[1:]
         variantNames = (f"informationLeakage/tests/{testInfo[0]}.c "
                         f"informationLeakage/stores/{testInfo[1]}.c "
