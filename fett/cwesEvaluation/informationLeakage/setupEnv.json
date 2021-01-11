@@ -44,6 +44,11 @@
                     "cweText" : "Use of Cache Containing Sensitive Information"
                 }
             }
+        },
+        {
+            "name" : "nonstandardTests",
+            "type" : "stringsList",
+            "val" : "[test_noClearMalloc]"
         }
     ]
 }

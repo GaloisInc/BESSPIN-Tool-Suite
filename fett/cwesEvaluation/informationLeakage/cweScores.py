@@ -38,7 +38,7 @@ def generateCweMap():
     src = os.path.join(getSetting('buildDir'), 'informationLeakage')
     fm = featureModelUtil.loadFM(fmfile)
 
-    tests        = dirnames(f"{src}/tests/*.c")
+    tests        = dirnames(f"{src}/tests/*.c") + [t.split("test_")[-1] for t in dirnames(f"{src}/nonstandard/*.c")]
     mapping = {}
     for t in tests:
         cfg    = [f"Test_{t}"]

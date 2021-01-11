@@ -1,6 +1,11 @@
 ## Parse the name containg the main invocation to figure out which variants
-## to use for the test script, store, interpreter
-VARIANT_SRC	  = $(addprefix $(INC_FETT_APPS)/,$(VARIANT_NAMES))
+## to use for the test script, store, interpreter. With exception of nonstandard tests
+
+ifeq ($(VARIANT_NAMES),)
+	VARIANT_SRC	:= 
+else
+	VARIANT_SRC	= $(addprefix $(INC_FETT_APPS)/,$(VARIANT_NAMES))
+endif
 
 $(info VARIANT_NAMES=$(VARIANT_NAMES))
 $(info VARIANT_SRC=$(VARIANT_SRC))

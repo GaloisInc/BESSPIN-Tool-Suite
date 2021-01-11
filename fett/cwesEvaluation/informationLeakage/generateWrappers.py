@@ -8,12 +8,21 @@ from fett.cwesEvaluation.informationLeakage.iexutils import dirnames
 
 def generateWrappers():
     src = os.path.join(getSetting('buildDir'), 'informationLeakage')
+    enabledTests = set()
 
+    # Nonstandard tests
+    nonStdDir = os.path.join(src, "nonstandard")
+    tests = dirnames(os.path.join(nonStdDir, "*.c"))
+    for t in tests:
+        if (isTestEnabled('informationLeakage',t)):
+            cp (os.path.join(nonStdDir, f"{t}.c"), src)
+            enabledTests.add(t.split('test_')[-1])
+
+    # Standard tests
     tests        = dirnames(os.path.join(src, "tests", "*.c"))
     stores       = dirnames(os.path.join(src, "stores", "*.c"))
     interpreters = dirnames(os.path.join(src, "interpreters", "*.c"))
 
-    enabledTests = set()
     for t in tests:
         for s in stores:
             for i in interpreters:
