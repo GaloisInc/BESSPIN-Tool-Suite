@@ -190,14 +190,15 @@ def buildCwesEvaluation():
             if (xSetting.startswith('test_')):
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
-        if (vulClass in ["resourceManagement", "informationLeakage"]):
+        vulClassesSeeds = {"resourceManagement":"RM", "informationLeakage":"IEX"}
+        if (vulClass in vulClassesSeeds):
             if (isEnabledDict(vulClass,"useSeed")):
                 seed = getSettingDict(vulClass,"seed")
                 printAndLog(f"{vulClass}: Using the custom seed <{seed}>.")
             else:
                 seed = random.randrange(pow(2,32)) #This is the maximum value in configData.json (-1 of course)
                 printAndLog(f"{vulClass}: Using the seed <{seed}>.")
-            fHeader.write(f"#define RM_SEED {seed}\n")
+            fHeader.write(f"#define {vulClassesSeeds[vulClass]}_SEED {seed}\n")
         fHeader.close()
 
         if isEqSetting('osImage', 'FreeRTOS'):
