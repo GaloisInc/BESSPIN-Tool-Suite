@@ -106,14 +106,14 @@ def buildCwesEvaluation():
                                     vulClass,'envFett.mk'), vulClassDir)
             # Copy over concrete tests
             copyDir(sourcesDir, vulClassDir, copyContents=True)
-            enabledTests = generateWrappers()
-            vIsThereAnythingToRun = (len(enabledTests) > 0)
+            enabledDrivers, enabledBins = generateWrappers()
+            vIsThereAnythingToRun = (len(enabledDrivers) > 0)
             if (vIsThereAnythingToRun):
                 if (isEnabledDict(vulClass,'useSelfAssessment')):
                     cweMap = generateCweMap()
                     try: 
                         enabledCWEs = set()
-                        for driver in enabledTests:
+                        for driver in enabledDrivers:
                             enabledCWEs.update(set(cweMap[driver]))
                         enabledCwesEvaluations[vulClass] = sorted(
                                 [cwe.replace('CWE_','test_') + ".riscv" for cwe in enabledCWEs]
@@ -123,8 +123,7 @@ def buildCwesEvaluation():
                             f"configuration for <informationLeakage> in <selfAssessment> mode.",exc=exc,exitCode=EXIT.Dev_Bug)
                 else:
                     isThereAReasonToBoot = True
-                    enabledCwesEvaluations[vulClass] = [os.path.basename(f).replace(".c",".riscv") for f in
-                        glob.glob(os.path.join(vulClassDir,"*.c"))]
+                    enabledCwesEvaluations[vulClass] = enabledBins
         else:
             if (isEnabledDict(vulClass,'useSelfAssessment')):
                 tests = getSettingDict(vulClass,["testsInfo"])

@@ -14,12 +14,16 @@ INTERPRETERSOURCES=$(wildcard interpreters/*.c)
 INTERPRETERFILES=$(basename $(INTERPRETERSOURCES))
 INTERPRETERS=$(INTERPRETERFILES:interpreters/%=%)
 
+NONSTDSOURCES=$(wildcard nonstandard/*.c)
+NONSTDBINS=$(NONSTDSOURCES:nonstandard/%.c=%.riscv)
+
 PARAMETERS  ?= include/parameters
 
 # Display the build targets
 $(info TESTS=$(TESTS))
 $(info STORES=$(STORES))
 $(info INTERPRETERS=$(INTERPRETERS))
+$(info NONSTDBINS=$(NONSTDBINS))
 
 HEADERS = $(wildcard include/*.h) $(PARAMETERS)/parameters.h
 SOURCES = control/control.c 
@@ -49,7 +53,11 @@ interpreters/%.o: interpreters/%.c
 tests/%.o: tests/%.c
 	$(CC) -c -o $@ $(CFLAGS) $<
 
-all: $(FOBJS) $(MAINOBJS)
+%.riscv: nonstandard/%.c
+	$(CC) -c -o $(@:%.riscv=nonstandard/%.o) $(CFLAGS) $<
+	$(LD) -o $@ $(LDFLAGS) $(<:.c=.o)
+
+all: $(FOBJS) $(MAINOBJS) $(NONSTDBINS)
 	for test in $(TESTS); do \
 		for store in $(STORES); do \
 			for interp in $(INTERPRETERS); do \
