@@ -190,7 +190,7 @@ def buildCwesEvaluation():
             if (xSetting.startswith('test_')):
                 settingName = xSetting.split('test_')[-1]
                 fHeader.write(f"#define {settingName} {xVal}\n")
-        if (vulClass == "resourceManagement"):
+        if (vulClass in ["resourceManagement", "informationLeakage"]):
             if (isEnabledDict(vulClass,"useSeed")):
                 seed = getSettingDict(vulClass,"seed")
                 printAndLog(f"{vulClass}: Using the custom seed <{seed}>.")
