@@ -79,13 +79,12 @@ def scoreAllTests(logs):
 
 def scoreTest(logTest):
     log = ftReadLines(logTest,splitLines=False)
-
-    if log.find('TEST NOT IMPLEMENTED') >= 0:
+    if log.find('TEST ERROR') >= 0:
+        score = SCORES.CALL_ERR
+    elif log.find('TEST NOT IMPLEMENTED') >= 0:
         score = SCORES.NOT_IMPLEMENTED
     elif log.find('TEST FAILED') >= 0:
         score = SCORES.HIGH
-    elif log.find('TEST ERROR') >= 0:
-        score = SCORES.CALL_ERR
     elif ((log.find('TEST PASSED') >= 0) or (log.find('Illegal instruction') >= 0)):
         score = SCORES.NONE
     else:
