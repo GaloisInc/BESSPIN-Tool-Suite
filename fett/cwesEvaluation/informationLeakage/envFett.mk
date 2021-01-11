@@ -12,7 +12,7 @@ GENERIC_SRC = $(wildcard $(INC_FETT_APPS)/informationLeakage/control/*.c)   \
 
 $(info GENERIC_SRC=$(GENERIC_SRC))
 
-CFLAGS += -DmainDEMO_TYPE=12 -DFETT_APPS -DtestgenOnFreeRTOS
+CFLAGS += -DFETT_APPS -DtestgenOnFreeRTOS
 
 ifeq ($(BSP),qemu)
 	CFLAGS += -DtestgenQEMU
@@ -36,12 +36,9 @@ else
 	CFLAGS += -DtestgenFPGA
 	DEMO_SRC = main.c $(VARIANT_SRC) $(GENERIC_SRC)
 
-$(info DEMO_SRC = $(DEMO_SRC))
-
 	INCLUDES += -I$(INC_FETT_APPS)/informationLeakage/include
 	INCLUDES += -I$(INC_FETT_APPS)/informationLeakage/include/parameters
 	INCLUDES += -I$(INC_FETT_APPS)
-	CFLAGS := $(filter-out -Werror,$(CFLAGS))
 endif
 
 ifeq ($(BSP),awsf1)
