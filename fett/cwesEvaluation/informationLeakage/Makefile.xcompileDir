@@ -34,7 +34,7 @@ FSOURCES = $(wildcard functions/*.c)
 FOBJS	= $(FSOURCES:.c=.o) $(SOURCES:.c=.o) 
 MAINOBJS = $(TESTSOURCES:.c=.o) $(STORESOURCES:.c=.o) $(INTERPRETERSOURCES:.c=.o)
 
-CFLAGS += -Iinclude
+CFLAGS += -Iinclude -I.
 CFLAGS += -I$(PARAMETERS)
 
 # Compiling objects
