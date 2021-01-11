@@ -343,6 +343,16 @@
     ],
 
     "informationLeakage": [
+        {
+            "name" : "useSeed",
+            "type" : "bool"
+        },
+        {
+            "name" : "seed",
+            "type" : "int",
+            "min" : 0,
+            "max" : 4294967295
+        }
     ],
     
     "numericErrors": [
