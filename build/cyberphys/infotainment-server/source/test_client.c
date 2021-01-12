@@ -47,11 +47,15 @@ int main_loop(void) {
     // zero out the buffer
     memset(&message, 0, MESSAGE_BUFFER_SIZE);
 
-    // receive a frame
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
-                          &receive_address, &receive_address_len);
-    if (frame != NULL) {
-        print_frame(frame);
+    // receive and print frames
+    int i = 0;
+    while (i < 2) {
+        frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+                              &receive_address, &receive_address_len);
+        if (frame != NULL) {
+            print_frame(frame);
+            i = i + 1;
+        }
     }
 
     return 0;
