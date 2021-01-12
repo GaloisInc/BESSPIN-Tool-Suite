@@ -35,6 +35,8 @@ def tryCheckJSON(cmd):
         logAndExit(f"<featureModelUtil> Unexpected or malformed JSON from <{cmd}>",
                    exc=exc)
 
+@decorate.debugWrap
+@decorate.timeWrap
 def claferOfFM(fm):
     """
     computes the pipeline: cat fm | besspin-feature-model-tool print-clafer
@@ -47,6 +49,8 @@ def claferOfFM(fm):
     out = tryCheckOutput(cmd)
     return out
 
+@decorate.debugWrap
+@decorate.timeWrap
 def addConstraints(fm, cs):
     fm = copy.deepcopy(fm)
     for c in cs:
@@ -63,6 +67,8 @@ def dumpJSONToTemp(v,delete=True):
     temp.flush()
     return temp
 
+@decorate.debugWrap
+@decorate.timeWrap
 def checkMust(fm, cs):
     temp = dumpJSONToTemp(fm)
     cmd = ["besspin-feature-model-tool", "check-req", temp.name] + cs
@@ -70,6 +76,8 @@ def checkMust(fm, cs):
     temp.close()
     return r
 
+@decorate.debugWrap
+@decorate.timeWrap
 def checkSat(fm, css):
     """
     Given css: list[list[String]], a list of features
@@ -103,6 +111,8 @@ def pruneFeatures(features, rootFeatures):
             fs[f] = features[f]
     return fs
 
+@decorate.debugWrap
+@decorate.timeWrap
 def enumerateFM(fm):
     t = dumpJSONToTemp(fm, delete=False)
     cmd = ["besspin-feature-model-tool", "all-configs", t.name]
@@ -110,6 +120,8 @@ def enumerateFM(fm):
     t.close()
     return r
 
+@decorate.debugWrap
+@decorate.timeWrap
 def splitFM(fm, roots=None):
     features = {}
     if roots is None:
@@ -136,6 +148,8 @@ def splitFM(fm, roots=None):
         models.append(fmForRoot)
     return models
 
+@decorate.debugWrap
+@decorate.timeWrap
 def loadFM(fn):
     f, ext = os.path.splitext(fn)
 
