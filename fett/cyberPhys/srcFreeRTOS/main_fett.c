@@ -28,17 +28,18 @@
 
 #define STRINGIZE_NX(A) #A
 #define STRINGIZE(A) STRINGIZE_NX(A)
-#define CYBERPHYS_BROADCAST_ADDR STRINGIZE(configGATEWAY_ADDR0) "." STRINGIZE(configGATEWAY_ADDR1) "." STRINGIZE(configGATEWAY_ADDR2) ".255"
+#define CYBERPHYS_BROADCAST_ADDR STRINGIZE(configGATEWAY_ADDR0) \
+"." STRINGIZE(configGATEWAY_ADDR1) "." STRINGIZE(configGATEWAY_ADDR2) ".255"
 
 #define SENSORTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define CAN_TX_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define CAN_RX_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define INFOTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 
-#define SENSORTASK_PRIORITY tskIDLE_PRIORITY+4
-#define CAN_RX_TASK_PRIORITY tskIDLE_PRIORITY+3
-#define CAN_TX_TASK_PRIORITY tskIDLE_PRIORITY+2
-#define INFOTASK_PRIORITY tskIDLE_PRIORITY+1
+#define SENSORTASK_PRIORITY tskIDLE_PRIORITY + 4
+#define CAN_RX_TASK_PRIORITY tskIDLE_PRIORITY + 3
+#define CAN_TX_TASK_PRIORITY tskIDLE_PRIORITY + 2
+#define INFOTASK_PRIORITY tskIDLE_PRIORITY + 1
 
 #define CAN_RX_PORT (5001UL)
 #define CAN_TX_PORT (5002UL)
@@ -65,9 +66,9 @@ static void prvCanRxTask(void *pvParameters);
 static void prvInfoTask(void *pvParameters);
 
 void main_fett(void);
-void startNetwork (void);
-char* getCurrTime(void);
-uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr * xClient, size_t * msg_len);
+void startNetwork(void);
+char *getCurrTime(void);
+uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len);
 int16_t min(int16_t a, int16_t b);
 int16_t max(int16_t a, int16_t b);
 
@@ -77,7 +78,7 @@ uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress, uint16_t u
 SemaphoreHandle_t data_mutex;
 
 /* CAN rx buffer */
-uint8_t j1939_rx_buf[0x64] __attribute__ ((aligned (64)));
+uint8_t j1939_rx_buf[0x64] __attribute__((aligned(64)));
 
 /* Stereing assist config */
 bool camera_ok;
@@ -120,9 +121,12 @@ struct freertos_sockaddr xDestinationAddress;
 /* Auxilliary function */
 int16_t min(int16_t a, int16_t b)
 {
-    if (a > b) {
+    if (a > b)
+    {
         return b;
-    } else {
+    }
+    else
+    {
         return a;
     }
 }
@@ -130,9 +134,12 @@ int16_t min(int16_t a, int16_t b)
 /* Auxilliary function */
 int16_t max(int16_t a, int16_t b)
 {
-    if (a > b) {
+    if (a > b)
+    {
         return a;
-    } else {
+    }
+    else
+    {
         return b;
     }
 }
@@ -141,18 +148,19 @@ int16_t max(int16_t a, int16_t b)
  * Print uptime in human readable format
  * "HH:MM:SS"
  */
-char* getCurrTime(void) {
+char *getCurrTime(void)
+{
 #ifdef USE_CURRENT_TIME
     static char buf[16] = {0};
     TickType_t t = xTaskGetTickCount();
-    uint32_t n_seconds = t/configTICK_RATE_HZ;
-    uint32_t n_ms = t - n_seconds*configTICK_RATE_HZ;
-    n_ms = (n_ms * 1000)/configTICK_RATE_HZ;
-    uint32_t n_minutes = n_seconds/60;
-    uint32_t n_hours = n_minutes/60;
+    uint32_t n_seconds = t / configTICK_RATE_HZ;
+    uint32_t n_ms = t - n_seconds * configTICK_RATE_HZ;
+    n_ms = (n_ms * 1000) / configTICK_RATE_HZ;
+    uint32_t n_minutes = n_seconds / 60;
+    uint32_t n_hours = n_minutes / 60;
 
-    n_minutes = n_minutes - n_hours*60;
-    n_seconds = n_seconds - n_minutes*60;
+    n_minutes = n_minutes - n_hours * 60;
+    n_seconds = n_seconds - n_minutes * 60;
 
     sprintf(buf, "%02u:%02u:%02u.%03u", n_hours, n_minutes, n_seconds, n_ms);
     return buf;
@@ -181,17 +189,21 @@ uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress,
     return uxRand();
 }
 
-void startNetwork () {
+void startNetwork()
+{
     BaseType_t funcReturn;
 
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
-    if (funcReturn != pdPASS) {
-        FreeRTOS_printf(("%s (Error)~  startNetwork: Failed to initialize network. [ret=%d].\r\n",getCurrTime(), funcReturn));
-    } else {
-        FreeRTOS_printf(("%s (Info)~  startNetwork: Network IP initialized successfully!.\r\n",getCurrTime()));
+    if (funcReturn != pdPASS)
+    {
+        FreeRTOS_printf(("%s (Error)~  startNetwork: Failed to initialize network. [ret=%d].\r\n", getCurrTime(), funcReturn));
+    }
+    else
+    {
+        FreeRTOS_printf(("%s (Info)~  startNetwork: Network IP initialized successfully!.\r\n", getCurrTime()));
     }
 
-    FreeRTOS_printf((">>>%s ECU: FreeRTOS_IPInit\r\n",getCurrTime()));
+    FreeRTOS_printf((">>>%s ECU: FreeRTOS_IPInit\r\n", getCurrTime()));
 }
 
 void main_fett(void)
@@ -219,29 +231,30 @@ static void prvInfoTask(void *pvParameters)
     uint32_t hz_sensor_task_old = 0;
     uint32_t hz_cantx_task_old = 0;
 
-    FreeRTOS_printf((">>>%s Starting prvInfoTask\r\n",getCurrTime()));
+    FreeRTOS_printf((">>>%s Starting prvInfoTask\r\n", getCurrTime()));
 
     for (;;)
     {
         /* Copy data over */
-        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
+        if (xSemaphoreTake(data_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
         {
             local_throttle_raw = throttle_raw;
             local_brake_raw = brake_raw;
             local_throttle = throttle;
             local_brake = brake;
             local_gear = gear;
-            xSemaphoreGive( data_mutex );
+            xSemaphoreGive(data_mutex);
         }
-        FreeRTOS_printf((">>>%s (prvInfoTask:raw) throttle: %d, brake: %d\r\n",getCurrTime(), local_throttle_raw, local_brake_raw));
-        FreeRTOS_printf((">>>%s (prvInfoTask:scaled) Gear: %#x, throttle: %u, brake: %u\r\n",getCurrTime(), local_gear, local_throttle, local_brake));
-        FreeRTOS_printf((">>>%s (prvInfoTask:hz) prvSensorTask: %u[Hz]\r\n",getCurrTime(), hz_sensor_task - hz_sensor_task_old));
-        FreeRTOS_printf((">>>%s (prvInfoTask:hz) prvCanTxTask: %u[Hz]\r\n",getCurrTime(), hz_cantx_task - hz_cantx_task_old));
+        FreeRTOS_printf((">>>%s (prvInfoTask:raw) throttle: %d, brake: %d\r\n", getCurrTime(), local_throttle_raw, local_brake_raw));
+        FreeRTOS_printf((">>>%s (prvInfoTask:scaled) Gear: %#x, throttle: %u, brake: %u\r\n", getCurrTime(), local_gear, local_throttle, local_brake));
+        FreeRTOS_printf((">>>%s (prvInfoTask:hz) prvSensorTask: %u[Hz]\r\n", getCurrTime(), hz_sensor_task - hz_sensor_task_old));
+        FreeRTOS_printf((">>>%s (prvInfoTask:hz) prvCanTxTask: %u[Hz]\r\n", getCurrTime(), hz_cantx_task - hz_cantx_task_old));
         hz_sensor_task_old = hz_sensor_task;
         hz_cantx_task_old = hz_cantx_task;
 
-        if (camera_ok) {
-            FreeRTOS_printf((">>>%s (prvInfoTask:LKAS) Camera OK: %d, steering_assist: %d\r\n",getCurrTime(), camera_ok, steering_assist));
+        if (camera_ok)
+        {
+            FreeRTOS_printf((">>>%s (prvInfoTask:LKAS) Camera OK: %d, steering_assist: %d\r\n", getCurrTime(), camera_ok, steering_assist));
         }
 
         vTaskDelay(INFOTASK_LOOP_DELAY_MS);
@@ -283,7 +296,7 @@ static void prvSensorTask(void *pvParameters)
     brake_min = BRAKE_MIN;
     brake_max = BRAKE_MAX;
 
-    FreeRTOS_printf((">>>%s Starting prvSensorTask\r\n",getCurrTime()));
+    FreeRTOS_printf((">>>%s Starting prvSensorTask\r\n", getCurrTime()));
 
     // Give the sensor time to power up
     vTaskDelay(SENSOR_POWER_UP_DELAY_MS);
@@ -299,22 +312,23 @@ static void prvSensorTask(void *pvParameters)
         configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &tmp_gear, 1) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
 
-        switch (tmp_gear) {
-            case 0x28:
-                tmp_gear = 'P';
-                break;
-            case 0x27:
-                tmp_gear = 'R';
-                break;
-            case 0x26:
-                tmp_gear = 'N';
-                break;
-            case 0x25:
-                tmp_gear = 'D';
-                break;
-            default:
-                FreeRTOS_printf((">>>%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), gear_raw));
-                break;
+        switch (tmp_gear)
+        {
+        case 0x28:
+            tmp_gear = 'P';
+            break;
+        case 0x27:
+            tmp_gear = 'R';
+            break;
+        case 0x26:
+            tmp_gear = 'N';
+            break;
+        case 0x25:
+            tmp_gear = 'D';
+            break;
+        default:
+            FreeRTOS_printf((">>>%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), gear_raw));
+            break;
         }
 
         /* Request throttle */
@@ -324,12 +338,12 @@ static void prvSensorTask(void *pvParameters)
         configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &throttle_raw, 2) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
 
-        tmp_throttle = max(throttle_raw-throttle_min, 0); // remove offset
+        tmp_throttle = max(throttle_raw - throttle_min, 0); // remove offset
         tmp_throttle = tmp_throttle * throttle_gain / (throttle_max - throttle_min);
         tmp_throttle = min(max(tmp_throttle, 0), 100);
-        
+
         /* Request brake */
-        state= BRAKE;
+        state = BRAKE;
         configASSERT(iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &state, 1) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
         configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &brake_raw, 2) != -1);
@@ -339,12 +353,12 @@ static void prvSensorTask(void *pvParameters)
         tmp_brake = tmp_brake * brake_gain / (brake_max - brake_min);
         tmp_brake = min(max(tmp_brake, 0), 100);
 
-        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
+        if (xSemaphoreTake(data_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
         {
             gear = (uint8_t)tmp_gear;
             throttle = (uint8_t)tmp_throttle;
             brake = (uint8_t)tmp_brake;
-            xSemaphoreGive( data_mutex );
+            xSemaphoreGive(data_mutex);
         }
 
         vTaskDelay(SENSOR_LOOP_DELAY_MS);
@@ -440,7 +454,7 @@ static void prvCanRxTask(void *pvParameters)
         {
             FreeRTOS_inet_ntoa(xClient.sin_addr, cBuffer);
             FreeRTOS_printf((">>>%s (prvCanRxTask) recv_can_message %u bytes from %s:%u\r\n",
-                            getCurrTime(), msg_len, cBuffer, FreeRTOS_ntohs(xClient.sin_port)));
+                             getCurrTime(), msg_len, cBuffer, FreeRTOS_ntohs(xClient.sin_port)));
         }
         else
         {
@@ -449,7 +463,8 @@ static void prvCanRxTask(void *pvParameters)
     }
 }
 
-uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr * xClient, size_t * msg_len) {
+uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len)
+{
     char msg[64];
 
     /* Receive a message that can overflow the msg buffer */
@@ -488,12 +503,12 @@ static void prvCanTxTask(void *pvParameters)
     {
         hz_cantx_task++;
         /* Copy data over */
-        if( xSemaphoreTake( data_mutex, pdMS_TO_TICKS(100) ) == pdTRUE )
+        if (xSemaphoreTake(data_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
         {
             local_throttle = throttle;
             local_brake = brake;
             local_gear = gear;
-            xSemaphoreGive( data_mutex );
+            xSemaphoreGive(data_mutex);
         }
 
         /* Send throttle */
@@ -511,14 +526,15 @@ static void prvCanTxTask(void *pvParameters)
         /* Send gear */
         if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&local_gear, sizeof(local_gear)) != SUCCESS)
         {
-            FreeRTOS_printf((">>>%s (prvCanTxTask) send gear failed\r\n",getCurrTime()));
+            FreeRTOS_printf((">>>%s (prvCanTxTask) send gear failed\r\n", getCurrTime()));
         }
 
-        if (camera_ok) {
+        if (camera_ok)
+        {
             /* Steering assist */
             if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_STEERING_INPUT), (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
             {
-                FreeRTOS_printf((">>>%s (prvCanTxTask) send steering_assist failed\r\n",getCurrTime()));
+                FreeRTOS_printf((">>>%s (prvCanTxTask) send steering_assist failed\r\n", getCurrTime()));
             }
         }
 
