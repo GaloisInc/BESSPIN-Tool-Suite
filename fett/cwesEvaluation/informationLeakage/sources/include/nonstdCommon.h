@@ -13,7 +13,7 @@
     #define MALLOC_BLOCK_SIZE_MAX 0x00FF 
     #define MALLOC_BLOCK_SIZE_MIN 0x0064 //A block of 100 bytes
 #endif
-#define MAX_SECRET_VALUE 0xFE //Avoid all ones
+#define MAX_SECRET_VALUE 0x54 //Easy solution to avoid 0xff, 0xaa, 0x5a, and 0x55
 #define MIN_SECRET_VALUE 0x02 //Avoid zero and one
 #define N_MATCHES_TO_COUNT 4 //Have to find the byte value 4 times to avoid unfortunate coincidences
 
