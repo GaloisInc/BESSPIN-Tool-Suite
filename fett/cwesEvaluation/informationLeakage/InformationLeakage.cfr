@@ -110,6 +110,7 @@ InformationLeakage_Test : iex_weakness ?
     Test_setenv
     Test_systemconfig
     Test_noClearMalloc
+    Test_noClearRealloc
   [ Test_cache => Store_cached ]
 
   or CWE
@@ -210,6 +211,8 @@ InformationLeakage_Test : iex_weakness ?
   [ Test_systemconfig       => (sw_behavior && (inj || unprotected_sensitive_data) 
                                 && once && (legitimate || diagnostic)) ]
   [ Test_noClearMalloc      =>  (sw_behavior && unclear_before_release && legitimate 
+                                && once && unprotected_sensitive_data) ]
+  [ Test_noClearRealloc      =>  (sw_behavior && unclear_before_release && legitimate 
                                 && once && unprotected_sensitive_data) ]
 
   ///////////////////////////////////////////////////////////////////////
