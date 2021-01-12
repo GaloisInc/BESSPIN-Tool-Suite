@@ -16,7 +16,7 @@ static unsigned char * storeSecret(secretLocInfo_t * secretInfo, reallocSize_t o
         void *pReturn;
 
         // First, arguments exceptions
-        if ((ptr == NULL) && (size = 0)) {
+        if ((ptr == NULL) && (size == 0)) {
             return NULL;
         }
         if (size == 0) {
