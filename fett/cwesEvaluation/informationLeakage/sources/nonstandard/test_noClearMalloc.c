@@ -48,7 +48,8 @@ static void storeSecret(secretLocInfo_t * secretInfo) {
     for (iByte=0; iByte<xSizeToMalloc; iByte++) {
         pSecret[iByte] = secretInfo->secret;
     }
-    DEBUG_PRINTF("storeSecret: Secret stored in <%lx>!\n",(unsigned long int) pSecret);
+    DEBUG_PRINTF("storeSecret: Secret stored in <%lx> with size <%lx>!\n",
+                    (unsigned long int) pSecret, (unsigned long int) xSizeToMalloc);
     secretInfo->pSecret = pSecret;
     secretInfo->szSecret = xSizeToMalloc;
     
