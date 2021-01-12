@@ -31,21 +31,41 @@ def generateCweMap():
              "CWE_226",
              "CWE_244",
              "CWE_524" ]
-    fmfile  = os.path.join(getSetting('repoDir'),
+    vulClassDir = os.path.join(getSetting('repoDir'),
                            'fett',
                            'cwesEvaluation',
-                           'informationLeakage',
-                           'InformationLeakage.cfr')
-    src = os.path.join(getSetting('buildDir'), 'informationLeakage')
-    fm = featureModelUtil.loadFM(fmfile)
+                           'informationLeakage')
+    fmfile  = os.path.join(vulClassDir, 'InformationLeakage.cfr')
+    src = os.path.join(vulClassDir, 'sources')
 
+    # Compare the mapping[tests] and .cfr hash versus the saved values
+    savedMapFile = getSettingDict(VULCLASS,"cwesMapFile")
+    mapping = safeLoadJsonFile (savedMapFile)
     tests        = dirnames(f"{src}/tests/*.c") + [t.split("test_")[-1] for t in dirnames(f"{src}/nonstandard/*.c")]
-    mapping = {}
-    for t in tests:
-        cfg    = [f"Test_{t}"]
-        fm2    = featureModelUtil.addConstraints(fm, cfg)
-        result = featureModelUtil.checkMust(fm2, CWES)
-        mapping[t] = [ cwe for (cwe, on) in zip(CWES, result) if on ]
+    doComputeMap = False
+
+    if (set(mapping.keys()) != set(tests)): #Re-generate the map
+        warnAndLog (f"IEX:generateCweMap: The available tests do not match the info saved in"
+            f" {savedMapFile}. The file is now updated, please consider committing any changes"
+            f" accordingly.")
+        doComputeMap = True
+
+    computedModelHash = computeMd5ForFile(fmfile)
+    if (computedModelHash != getSettingDict(VULCLASS,"modelHash")):
+        warnAndLog (f"IEX:generateCweMap: The saved hash in {os.path.join(vulClassDir,'setupEnv.json')}"
+            f" does not match the computed value <{computedModelHash}>. Please consider committing any"
+            f" model changes accordingly.")
+        doComputeMap = True
+
+    if (doComputeMap):
+        fm = featureModelUtil.loadFM(fmfile)
+        mapping = {}
+        for t in tests:
+            cfg    = [f"Test_{t}"]
+            fm2    = featureModelUtil.addConstraints(fm, cfg)
+            result = featureModelUtil.checkMust(fm2, CWES)
+            mapping[t] = [ cwe for (cwe, on) in zip(CWES, result) if on ]
+        safeDumpJsonFile(mapping, savedMapFile)
     return mapping
 
 def scoreAllTests(logs):

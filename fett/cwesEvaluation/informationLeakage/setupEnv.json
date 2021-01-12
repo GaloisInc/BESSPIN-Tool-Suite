@@ -49,6 +49,16 @@
             "name" : "nonstandardTests",
             "type" : "stringsList",
             "val" : "[test_noClearMalloc, test_noClearReallocShrink, test_noClearReallocExpand]"
+        },
+        {
+            "name" : "cwesMapFile",
+            "type" : "filePath",
+            "val" : "fett/cwesEvaluation/informationLeakage/testsAndCwesMap.json"
+        },
+        {
+            "name" : "modelHash",
+            "type" : "string",
+            "val" : "881fd9c860903791bd0bb8071dd6e1c3"
         }
     ]
 }
