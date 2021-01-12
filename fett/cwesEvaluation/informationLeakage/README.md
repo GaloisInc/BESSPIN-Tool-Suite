@@ -131,7 +131,8 @@ TEST FAILED.
 ```
 
 ## Adding a test
- TBD
+
+You can easily add `nonstandard tests` as explained in the end of this document.
  
 ## Implemented Components
 
@@ -303,3 +304,15 @@ The test directly calls `set_env` to set an environment variable with sensitive 
 This test sends a request to read sysconfig. The request pre-empts the
 implementation's tagging scheme to trick the system into performing a system
 read rather than an unprivileged read.
+
+## Nonstandard Tests
+
+In addition to the tests structure explained above, there are also a few of nonstandard tests that are standalone. These tests are enumerated as follows:
+
+### TEST - NoClearMalloc
+
+This test dynamically allocates a chunk in the memory, then fill it with a certain secret value. Then, it frees this chunk. After that, a different function attempts to read the values from the freed address range. If the secret is still there, then this means that the weakness exists. This is related to the improper clearing of heap memory before release.
+
+### TEST - NoClearRealloc
+
+Similar to the previous test, this test is related to the improper clearing of heap memory before release. The difference is that this test is mainly concerned with the use of `realloc`. After using `realloc`, the developer lose the reference to the initial pointer and is unable to clear it. Which means that any sensitive information would remain inaccessible in the heap waiting to be exploited by a heap inspection attack. This test has two parts: a shrinking `realloc`, and an expansion `realloc`.
