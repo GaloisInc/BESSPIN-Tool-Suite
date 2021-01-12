@@ -105,8 +105,9 @@ void print_music_state_frame(can_frame *frame) {
     // make sure the frame is an appropriate type
     assert(frame->can_id == CAN_ID_MUSIC_STATE);
 
-    debug("music state CAN frame received: playing = %d, station = %d, volume = %d\n",
-          play(frame->data[0]), station(frame->data[0]), volume(frame->data[0]));
+    debug("music state CAN frame received: raw = %d, playing = %d, station = %d, volume = %d\n",
+          frame->data[0], play(frame->data[0]), 
+          station(frame->data[0]), volume(frame->data[0]));
 }
 
 void send_button_press(uint8_t button) {
