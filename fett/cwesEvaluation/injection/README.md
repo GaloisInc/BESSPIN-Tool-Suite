@@ -11,7 +11,7 @@ by a less trusted domain include:
   hypervisor, or enclave.
 - Internal pointers, including:
   - Return addresses.
-  - Virtual methods tables.
+  - Virtual method tables.
   - Handlers for interrupts, exceptions, or IRQs.
   - GOT entries.
 - Heap metadata.
