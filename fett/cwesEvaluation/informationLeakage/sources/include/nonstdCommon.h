@@ -7,7 +7,7 @@
 #include <sys/types.h>
 
 #if (defined(testgenOnFreeRTOS) && defined(testgenQEMU))
-    #define MALLOC_BLOCK_SIZE_MAX 0x004F //Maximum allocatable size in FreeRTOS qemu
+    #define MALLOC_BLOCK_SIZE_MAX 0x004F //Maximum allocatable size in FreeRTOS qemu is 0x8F
     #define MALLOC_BLOCK_SIZE_MIN 0x0020 //A block of 32 bytes
 #else
     #define MALLOC_BLOCK_SIZE_MAX 0x00FF 

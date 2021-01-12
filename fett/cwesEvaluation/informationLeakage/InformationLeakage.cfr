@@ -110,7 +110,8 @@ InformationLeakage_Test : iex_weakness ?
     Test_setenv
     Test_systemconfig
     Test_noClearMalloc
-    Test_noClearRealloc
+    Test_noClearReallocShrink
+    Test_noClearReallocExpand
   [ Test_cache => Store_cached ]
 
   or CWE
@@ -195,25 +196,27 @@ InformationLeakage_Test : iex_weakness ?
   ]
 
 
-  [ Test_directsys          => (transferred && once) ]
-  [ Test_indexing           => (side && cross_boundary && sw_behavior && once && on_demand) ]
-  [ Test_indexing2          => (side && cross_boundary && sw_behavior && once && on_demand) ]
-  [ Test_loginmsg           => ((covert || side) && sw_behavior && once && on_demand) ]
-  [ Test_error              => (sw_behavior && improper_details && once && (legitimate || diagnostic)) ]
-  [ Test_markprivate        => (unclear_before_release || cross_boundary) && once ]
-  [ Test_setenv             => (random && sw_behavior && side && cross_boundary && once) ]
-  [ Test_classifydeclassify => ((legitimate || diagnostic) && sw_behavior
-                                && (unclear_before_release || cross_boundary) && on_demand && once) ]
-  [ Test_cache              => ((legitimate || diagnostic) && on_timing && once
-                                && (unclear_before_release || cross_boundary)) ]
-  [ Test_atoi               => (sw_behavior && (inj || unprotected_sensitive_data) 
-                                && once && (legitimate || diagnostic)) ]
-  [ Test_systemconfig       => (sw_behavior && (inj || unprotected_sensitive_data) 
-                                && once && (legitimate || diagnostic)) ]
-  [ Test_noClearMalloc      =>  (sw_behavior && unclear_before_release && legitimate 
-                                && once && unprotected_sensitive_data) ]
-  [ Test_noClearRealloc      =>  (sw_behavior && unclear_before_release && legitimate 
-                                && once && unprotected_sensitive_data) ]
+  [ Test_directsys              => (transferred && once) ]
+  [ Test_indexing               => (side && cross_boundary && sw_behavior && once && on_demand) ]
+  [ Test_indexing2              => (side && cross_boundary && sw_behavior && once && on_demand) ]
+  [ Test_loginmsg               => ((covert || side) && sw_behavior && once && on_demand) ]
+  [ Test_error                  => (sw_behavior && improper_details && once && (legitimate || diagnostic)) ]
+  [ Test_markprivate            => (unclear_before_release || cross_boundary) && once ]
+  [ Test_setenv                 => (random && sw_behavior && side && cross_boundary && once) ]
+  [ Test_classifydeclassify     => ((legitimate || diagnostic) && sw_behavior
+                                    && (unclear_before_release || cross_boundary) && on_demand && once) ]
+  [ Test_cache                  => ((legitimate || diagnostic) && on_timing && once
+                                    && (unclear_before_release || cross_boundary)) ]
+  [ Test_atoi                   => (sw_behavior && (inj || unprotected_sensitive_data) 
+                                    && once && (legitimate || diagnostic)) ]
+  [ Test_systemconfig           => (sw_behavior && (inj || unprotected_sensitive_data) 
+                                    && once && (legitimate || diagnostic)) ]
+  [ Test_noClearMalloc          =>  (sw_behavior && unclear_before_release && legitimate 
+                                    && once && unprotected_sensitive_data) ]
+  [ Test_noClearReallocShrink  =>  (sw_behavior && unclear_before_release && legitimate 
+                                    && once && unprotected_sensitive_data) ]
+  [ Test_noClearReallocExpand  =>  (sw_behavior && unclear_before_release && legitimate 
+                                    && once && unprotected_sensitive_data) ]
 
   ///////////////////////////////////////////////////////////////////////
   // The following constraints describe the concrete tests as realized //

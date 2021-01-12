@@ -1,8 +1,7 @@
-/* Test noClearRealloc */
-#include "nonstdCommon.h"
+/* Functions for noClearRealloc */
+#include "noClearRealloc.h"
 
-static void noClearReallocTest(void);
-static unsigned char * storeSecret(secretLocInfo_t * secretInfo);
+static unsigned char * storeSecret(secretLocInfo_t * secretInfo, reallocSize_t option);
 
 // Define a _manual_ realloc for FreeRTOS because heap_4 does not define a realloc
 #if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
@@ -41,19 +40,7 @@ static unsigned char * storeSecret(secretLocInfo_t * secretInfo);
     }
 #endif
 
-#ifdef testgenOnFreeRTOS
-    void main() {
-        noClearReallocTest();
-        return;
-    }
-#else
-    int main() {
-        noClearReallocTest();
-        return 0;
-    }
-#endif
-
-static void noClearReallocTest() {
+void noClearReallocTest(reallocSize_t option) {
     unsigned char * pReallocatedSecret;
     secretLocInfo_t * secretInfo = mallocSecretInfo();
 
@@ -62,7 +49,7 @@ static void noClearReallocTest() {
     DEBUG_PRINTF("noClearReallocTest: secret created: <%x>\n",secretInfo->secret);
 
     //Store it in a random-sized block + realloc that block
-    pReallocatedSecret = storeSecret(secretInfo);
+    pReallocatedSecret = storeSecret(secretInfo, option);
 
     //Try to find the secret
     findSecret(secretInfo);
@@ -72,10 +59,11 @@ static void noClearReallocTest() {
     return;
 }
 
-static unsigned char * storeSecret(secretLocInfo_t * secretInfo) {
+static unsigned char * storeSecret(secretLocInfo_t * secretInfo, reallocSize_t option) {
     unsigned char *pSecret;
     unsigned int iByte;
     size_t xSizeToMalloc;
+    size_t realloc_max, realloc_min; //the range to choose from
 
     xSizeToMalloc = (size_t) ((rand() % (MALLOC_BLOCK_SIZE_MAX-MALLOC_BLOCK_SIZE_MIN+1)) + MALLOC_BLOCK_SIZE_MIN);
     pSecret = (unsigned char*) test_malloc(xSizeToMalloc*sizeof(unsigned char));
@@ -95,7 +83,20 @@ static unsigned char * storeSecret(secretLocInfo_t * secretInfo) {
                     (unsigned long int) pSecret,(unsigned long int) xSizeToMalloc);
     
     //Now let's realloc to a new random size, and lose reference to the old pointer
-    xSizeToMalloc = (size_t) ((rand() % (MALLOC_BLOCK_SIZE_MAX-MALLOC_BLOCK_SIZE_MIN+1)) + MALLOC_BLOCK_SIZE_MIN);
+    switch (option) {
+        case SHRINK:
+            realloc_max = xSizeToMalloc - (size_t) DELTA_SIZE_MIN;
+            realloc_min = (size_t) (MALLOC_BLOCK_SIZE_MIN - DELTA_SIZE_MIN);
+            break;
+        case EXPAND:
+            realloc_max = (size_t) (MALLOC_BLOCK_SIZE_MAX + DELTA_SIZE_MIN);
+            realloc_min = xSizeToMalloc + (size_t) DELTA_SIZE_MIN;
+            break;
+        default:
+            puts("storeSecret: Unrecognized realloc size option.\n TEST ERROR.\n");
+            EXIT;
+    }
+    xSizeToMalloc = (size_t) ((rand() % (realloc_max-realloc_min+1)) + realloc_min);
     pSecret = (unsigned char*) test_realloc(pSecret, xSizeToMalloc*sizeof(unsigned char),
                                     secretInfo->szSecret*sizeof(unsigned char));
     if (pSecret == NULL) {
