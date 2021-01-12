@@ -19,6 +19,8 @@
 #define TEST_CHECKED 0x2 
 
 #ifdef testgenOnFreeRTOS
+    #include "FreeRTOS.h"
+    #include "task.h"
     #define EXIT puts(">>>End of Fett<<<\n"); vTaskDelete(NULL)   
 #else
     #define EXIT exit(1)

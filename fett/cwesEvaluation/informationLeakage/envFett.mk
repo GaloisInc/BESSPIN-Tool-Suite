@@ -3,18 +3,16 @@
 
 ifeq ($(VARIANT_NAMES),)
 	VARIANT_SRC	:= 
+	GENERIC_SRC := $(wildcard $(INC_FETT_APPS)/*.c)
 else
 	VARIANT_SRC	= $(addprefix $(INC_FETT_APPS)/,$(VARIANT_NAMES))
+	GENERIC_SRC = $(wildcard $(INC_FETT_APPS)/informationLeakage/control/*.c)   \
+	              $(wildcard $(INC_FETT_APPS)/informationLeakage/functions/*.c) \
+	              $(wildcard $(INC_FETT_APPS)/*.c)
 endif
 
 $(info VARIANT_NAMES=$(VARIANT_NAMES))
 $(info VARIANT_SRC=$(VARIANT_SRC))
-
-
-GENERIC_SRC = $(wildcard $(INC_FETT_APPS)/informationLeakage/control/*.c)   \
-              $(wildcard $(INC_FETT_APPS)/informationLeakage/functions/*.c) \
-              $(wildcard $(INC_FETT_APPS)/*.c)
-
 $(info GENERIC_SRC=$(GENERIC_SRC))
 
 CFLAGS += -DFETT_APPS -DtestgenOnFreeRTOS
