@@ -48,7 +48,7 @@
         {
             "name" : "nonstandardTests",
             "type" : "stringsList",
-            "val" : "[test_noClearMalloc, test_noClearRealloc]"
+            "val" : "[test_noClearMalloc, test_noClearReallocShrink, test_noClearReallocExpand]"
         }
     ]
 }
