@@ -33,6 +33,8 @@ SOURCES = control/control.c
 FSOURCES = $(wildcard functions/*.c)
 FOBJS	= $(FSOURCES:.c=.o) $(SOURCES:.c=.o) 
 MAINOBJS = $(TESTSOURCES:.c=.o) $(STORESOURCES:.c=.o) $(INTERPRETERSOURCES:.c=.o)
+NONSTDUTILSSOURCES=$(wildcard nonstd_utils/*.c)
+NONSTDUTILSOBJS = $(NONSTDUTILSSOURCES:.c=.o)
 
 CFLAGS += -Iinclude -I.
 CFLAGS += -I$(PARAMETERS)
@@ -53,9 +55,12 @@ interpreters/%.o: interpreters/%.c
 tests/%.o: tests/%.c
 	$(CC) -c -o $@ $(CFLAGS) $<
 
-%.riscv: nonstandard/%.c
+nonstd_utils/%.o: nonstd_utils/%.c
+	$(CC) -c -o $@ $(CFLAGS) $<
+
+%.riscv: nonstandard/%.c $(NONSTDUTILSOBJS)
 	$(CC) -c -o $(@:%.riscv=nonstandard/%.o) $(CFLAGS) $<
-	$(LD) -o $@ $(LDFLAGS) $(<:.c=.o)
+	$(LD) -o $@ $(LDFLAGS) $(NONSTDUTILSOBJS) $(<:.c=.o)
 
 all: $(FOBJS) $(MAINOBJS) $(NONSTDBINS)
 	for test in $(TESTS); do \

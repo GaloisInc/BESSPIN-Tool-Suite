@@ -1,14 +1,14 @@
 ## Parse the name containg the main invocation to figure out which variants
 ## to use for the test script, store, interpreter. With exception of nonstandard tests
 
+GENERIC_SRC = $(wildcard $(INC_FETT_APPS)/*.c)
 ifeq ($(VARIANT_NAMES),)
 	VARIANT_SRC	:= 
-	GENERIC_SRC := $(wildcard $(INC_FETT_APPS)/*.c)
+	GENERIC_SRC += $(wildcard $(INC_FETT_APPS)/informationLeakage/nonstd_utils/*.c)
 else
 	VARIANT_SRC	= $(addprefix $(INC_FETT_APPS)/,$(VARIANT_NAMES))
-	GENERIC_SRC = $(wildcard $(INC_FETT_APPS)/informationLeakage/control/*.c)   \
-	              $(wildcard $(INC_FETT_APPS)/informationLeakage/functions/*.c) \
-	              $(wildcard $(INC_FETT_APPS)/*.c)
+	GENERIC_SRC += $(wildcard $(INC_FETT_APPS)/informationLeakage/control/*.c)   \
+	              $(wildcard $(INC_FETT_APPS)/informationLeakage/functions/*.c)
 endif
 
 $(info VARIANT_NAMES=$(VARIANT_NAMES))
@@ -34,7 +34,8 @@ ifeq ($(BSP),qemu)
 		$(INC_FETT_APPS)/informationLeakage/control \
 		$(INC_FETT_APPS)/informationLeakage/stores \
 		$(INC_FETT_APPS)/informationLeakage/interpreters \
-		$(INC_FETT_APPS)/informationLeakage/tests
+		$(INC_FETT_APPS)/informationLeakage/tests \
+		$(INC_FETT_APPS)/informationLeakage/nonstd_utils
 else
 	CFLAGS += -DtestgenFPGA
 	DEMO_SRC = main.c $(VARIANT_SRC) $(GENERIC_SRC)
