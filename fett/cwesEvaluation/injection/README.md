@@ -10,9 +10,9 @@ by a less trusted domain include:
 - Machine-language instructions of an application, operating system kernel,
   hypervisor, or enclave.
 - Internal pointers, including:
-  - return addresses.
-  - virtual methods tables.
-  - handlers for interrupts, exceptions, or IRQs.
+  - Return addresses.
+  - Virtual methods tables.
+  - Handlers for interrupts, exceptions, or IRQs.
   - GOT entries.
 - Heap metadata.
 - Protected information, including credentials or cryptographic keys.
