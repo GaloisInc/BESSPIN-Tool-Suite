@@ -24,7 +24,7 @@ def main(xArgs):
         print(f"(Error)~  Failed to create the log file <{logFile}>.\n{formatExc(exc)}.")
         exitFett(EXIT.Files_and_paths)
     logLevel = logging.DEBUG if (xArgs.debug) else logging.INFO 
-    logging.basicConfig(filename=logFile,filemode='w',format='(%(levelname)s)~  %(message)s',datefmt='%I:%M:%S %p',level=logLevel)
+    logging.basicConfig(filename=logFile,filemode='w',format='%(asctime)s: (%(levelname)s)~  %(message)s',datefmt='%I:%M:%S %p',level=logLevel)
 
     setSetting('repoDir',repoDir)
     setSetting('workDir',workDir)
