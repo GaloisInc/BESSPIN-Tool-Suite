@@ -70,8 +70,8 @@ typedef struct infotainment_state_t {
 #define BUTTON_VOLUME_UP 0x11
 
 #define PAUSE_PLAY_MASK 0x1 // (0x1 << 0)
-#define STATION_MASK (0x11 << 1)
-#define VOLUME_MASK (0x11111 << 3)
+#define STATION_MASK 6 // 0b110
+#define VOLUME_MASK 248 // 0b11111000
 
 // CAN payload decode functions (takes the payload of a CAN packet)
 #define play(c) (c & PAUSE_PLAY_MASK)
