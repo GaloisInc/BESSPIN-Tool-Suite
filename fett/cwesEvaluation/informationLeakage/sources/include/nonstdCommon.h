@@ -1,5 +1,8 @@
 /* This is the common header for nonstandard tests */
 
+#ifndef __NON_STD_COMMON_H__
+#define __NON_STD_COMMON_H__
+
 #include "testsParameters.h"
 #include <stdlib.h>
 #include <string.h>
@@ -56,3 +59,5 @@ typedef struct secretLocInfo_ {
 secretLocInfo_t * mallocSecretInfo (void);
 unsigned char createSecret(void);
 void findSecret(secretLocInfo_t * secretInfo);
+
+#endif // For the header guard
