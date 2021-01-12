@@ -5,7 +5,7 @@ scoring function for resourceManagement
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 from fett.cwesEvaluation.resourceManagement.customCweScores import *
-from fett.cwesEvaluation.resourceManagement.customCweScores.helpers import regPartitionTest, regPartitionTestFreeRTOS
+from fett.cwesEvaluation.multipartLogHelpers import regPartitionTest, regPartitionTestFreeRTOS
 from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests, overallScore, doKeywordsExistInText
 import fett.cwesEvaluation.common
 from collections import defaultdict

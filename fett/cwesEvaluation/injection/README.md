@@ -118,11 +118,30 @@ vulnerability to bypass protection mechanisms that enforce separation of trust
 domains.  For example, an exploit overrunning a buffer of untrusted data to
 overwrite trusted internal program state.
 
+**Notes:**
+- The test uses a buffer overflow to write untrusted data into a trusted field,
+  then branches on a read from the trusted field.  It has two parts:
+  1. The untrusted data does not overflow the buffer and control flow is
+     unaltered.
+  2. The untrusted data overflows the buffer into the trusted field, which
+     alters the control flow of the program.
+
+- The `tagged_buffer_t` struct contains an array `buffer` and an int `flags`.
+  It mimics the common pattern of a struct containing data, as well as metadata
+  with information on how to interpret the data.
+- The `get_untrusted_data` function simulates a copy of untrusted data to a
+  buffer.
+- The `write_buffer` function:
+  1. Creates a `tagged_buffer_t`.
+  2. Calls `get_untrusted_data`.
+  3. Branches on the `flag` field of the `tagged_buffer_t`.
+- This test is the same on all supported OSes.
+
 **FreeRTOS:**
-- Not yet implemented.
+- Implemented.
 
 **Linux Debian and FreeBSD:**
-- Not yet implemented.
+- Implemented.
 
 ------------------
 

@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-helpers functions for scoring the CWE tests
+helpers functions for scoring CWE tests with multiple parts
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 import re

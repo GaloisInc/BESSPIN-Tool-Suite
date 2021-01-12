@@ -1,4 +1,4 @@
-from fett.cwesEvaluation.resourceManagement.customCweScores.helpers import *
+from fett.cwesEvaluation.multipartLogHelpers import *
 
 def test_825 (logLines):
     testNum = 825

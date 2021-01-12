@@ -1,0 +1,26 @@
+{
+    "_usage" : "This json file has the environment setup that is not to be changed per run.",
+    "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
+    "_options" : "All types and options are explained in SSITH-FETT-Target/fett/base/utils/configData.json",
+    "_unix" : "Number of parts of unix tests OR the string 'method' for custom test",
+    "_FreeRTOS" : "Number of FreeRTOS tests parts -- currently not used",
+
+    "injection" : [
+        {
+            "name" : "testsInfo",
+            "type" : "dict",
+            "val" : {
+                "test_822" : {
+                    "cweText" : "Untrusted Pointer Dereference",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
+                },
+                "test_inj_3" : {
+                    "cweText" : "Untrusted Data Accessed as Trusted Data",
+                    "unix" : 2,
+                    "FreeRTOS" : 2
+                }
+            }
+        }
+    ]
+}

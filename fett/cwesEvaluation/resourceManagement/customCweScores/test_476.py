@@ -1,4 +1,4 @@
-from fett.cwesEvaluation.resourceManagement.customCweScores.helpers import *
+from fett.cwesEvaluation.multipartLogHelpers import *
 import time
 
 def test_476 (logLines):

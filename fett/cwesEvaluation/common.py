@@ -15,6 +15,8 @@ import fett.cwesEvaluation.numericErrors.vulClassTester
 import fett.cwesEvaluation.numericErrors.cweScores
 import fett.cwesEvaluation.hardwareSoC.vulClassTester
 import fett.cwesEvaluation.hardwareSoC.cweScores
+import fett.cwesEvaluation.injection.vulClassTester
+import fett.cwesEvaluation.injection.cweScores
 
 cweTests = {
     "bufferErrors" :
@@ -28,7 +30,9 @@ cweTests = {
     "numericErrors" :
         fett.cwesEvaluation.numericErrors.vulClassTester.vulClassTester,
     "hardwareSoC" :
-        fett.cwesEvaluation.hardwareSoC.vulClassTester.vulClassTester
+        fett.cwesEvaluation.hardwareSoC.vulClassTester.vulClassTester,
+    "injection" :
+        fett.cwesEvaluation.injection.vulClassTester.vulClassTester,
 }
 
 cweScores = {
@@ -43,7 +47,9 @@ cweScores = {
     "numericErrors" :
         fett.cwesEvaluation.numericErrors.cweScores,
     "hardwareSoC" :
-        fett.cwesEvaluation.hardwareSoC.cweScores
+        fett.cwesEvaluation.hardwareSoC.cweScores,
+    "injection" :
+        fett.cwesEvaluation.injection.cweScores
 }
 
 @decorate.debugWrap
