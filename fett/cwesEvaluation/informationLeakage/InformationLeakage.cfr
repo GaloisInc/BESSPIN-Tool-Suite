@@ -121,6 +121,7 @@ InformationLeakage_Test : iex_weakness ?
     CWE_206
     CWE_212
     CWE_226
+    CWE_244
     CWE_524
 
   ///////////////////////////////////////////
@@ -175,6 +176,14 @@ InformationLeakage_Test : iex_weakness ?
     && sw_behavior
   /*--------------------*/
     <=> CWE_226
+  ]
+
+  [
+   unclear_before_release
+   && legitimate
+   && sw_behavior
+  /*--------------------*/
+    <=> CWE_244
   ]
 
   [ (legitimate || diagnostic)
