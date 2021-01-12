@@ -13,10 +13,10 @@
 #include <stdbool.h>
 
 // the CAN network port is where we receive CAN packets to be processed
-#define CAN_NETWORK_PORT 8888
+#define CAN_NETWORK_PORT 5085
 
 // the MUX port is where we send CAN packets to be relayed
-#define MUX_PORT 8889
+#define MUX_PORT 2689 // CMUX on a telephone keypad
 
 // the minimum volume
 #define MIN_VOLUME 0
@@ -69,16 +69,16 @@ typedef struct infotainment_state_t {
 #define BUTTON_VOLUME_DOWN 0x10
 #define BUTTON_VOLUME_UP 0x11
 
-#define PAUSE_PLAY_MASK 0x1 // (0x1 << 0)
+#define PAUSE_PLAY_MASK 1 // 0b1
 #define STATION_MASK 6 // 0b110
 #define VOLUME_MASK 248 // 0b11111000
 
-// CAN payload decode functions (takes the payload of a CAN packet)
+// music state decode functions (takes the payload of a music state CAN packet)
 #define play(c) (c & PAUSE_PLAY_MASK)
 #define station(c) ((c & STATION_MASK) >> 1)
 #define volume(c) ((c & VOLUME_MASK) >> 3)
 
-// CAN payload construction function (takes an infotainment_state_t)
+// music state construction function (takes an infotainment_state_t)
 #define music_state_packet(s) ((s.volume << 3) | (s.station << 1) | (1 & (s.M == MUSIC_PLAYING)))
 // no need for bitmasks with the positions because they're just floats
 
