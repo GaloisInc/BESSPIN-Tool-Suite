@@ -67,7 +67,7 @@ test_fail();
 #endif
 
 #if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
-
+#include "FreeRTOS.h"
 #define test_malloc pvPortMalloc
 #define test_free   vPortFree
 #else

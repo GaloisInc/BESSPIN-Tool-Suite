@@ -18,7 +18,7 @@ def generateWrappers():
         if (isTestEnabled('informationLeakage',t)):
             enabledDrivers.add(t.split("test_")[-1])
             enabledBins.append(f"{t}.riscv")
-            #File won't be used. Just to conform to the tool standards, and avoid "crossCompileUnix" skipping.
+            # In unix this file will avoid "crossCompileUnix" skipping, and will be used by FreeRTOS
             cp (os.path.join(nonStdDir,f"{t}.c"),src) 
         else: #delete the file
             try:
