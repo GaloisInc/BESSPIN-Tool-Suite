@@ -259,6 +259,8 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
     if ((vulClass == "informationLeakage") 
             and (test.split(".c")[0] not in getSettingDict("informationLeakage","nonstandardTests"))):
         testInfo = os.path.splitext(os.path.basename(test))[0].split("_")[1:]
+        if (len(testInfo) != 3):
+            logAndExit(f"buildFreeRTOSTest: Failed to parse the name of {test}.",exitCode=EXIT.Dev_Bug)
         variantNames = (f"informationLeakage/tests/{testInfo[0]}.c "
                         f"informationLeakage/stores/{testInfo[1]}.c "
                         f"informationLeakage/interpreters/{testInfo[2]}.c")
