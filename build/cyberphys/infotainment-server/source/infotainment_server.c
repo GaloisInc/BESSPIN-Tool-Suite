@@ -31,7 +31,8 @@ infotainment_state the_state = { .T = START };
 
 bool initialize(void) {
     if (the_state.T == RUNNING) {
-        error("initialize called on running server\n");
+        debug("initialize called on running server\n");
+        return false;
     }
 
     // initialize the state; we don't know much initially but
@@ -96,7 +97,7 @@ int main_loop(void) {
 
         broadcast_music_state();
         if (position_updated) {
-            broadcast_updated_position(frame->can_id);
+            broadcast_position(frame->can_id);
         }
     }
 
@@ -254,7 +255,7 @@ void broadcast_music_state() {
     broadcast_frame(CAN_NETWORK_PORT, MUX_PORT, &frame);
 }
 
-void broadcast_updated_position(canid_t can_id) {
+void broadcast_position(canid_t can_id) {
     // make sure the ID is appropriate
     assert(can_id == CAN_ID_CAR_X || can_id == CAN_ID_CAR_Y ||
            can_id == CAN_ID_CAR_Z);

@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// basic debug and error functions, for now
+// basic debug and error output functions
 #define error(args...) { fprintf(stderr, ##args); exit(1); }
 #define debug(args...) { fprintf(stderr, ##args); }
 

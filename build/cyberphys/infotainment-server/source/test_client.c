@@ -40,8 +40,9 @@ int main_loop(void) {
 
     debug("socket number is %d\n", udp_socket(MUX_PORT));
 
-    // send a frame
-    send_button_press(BUTTON_STATION_1, &broadcast_address);
+    // send enough frames to initialize the infotainment system to a known state
+    send_button_press(BUTTON_STATION_1);
+    send_button_press(BUTTON_VOLUME_UP);
 
     // zero out the buffer
     memset(&message, 0, MESSAGE_BUFFER_SIZE);
@@ -104,7 +105,7 @@ void print_music_state_frame(can_frame *frame) {
           play(frame->data[0]), station(frame->data[0]), volume(frame->data[0]));
 }
 
-void send_button_press(uint8_t button, struct sockaddr_in *broadcast_address) {
+void send_button_press(uint8_t button) {
     can_frame frame = { .can_id = CAN_ID_BUTTON_PRESSED, 
                         .can_dlc = BYTE_LENGTH_BUTTON_PRESSED };
     frame.data[0] = button;
@@ -113,8 +114,7 @@ void send_button_press(uint8_t button, struct sockaddr_in *broadcast_address) {
     broadcast_frame(MUX_PORT, CAN_NETWORK_PORT, &frame);
 }
 
-void send_coordinate(canid_t dimension_id, float coordinate,
-                     struct sockaddr_in *broadcast_address) {
+void send_coordinate(canid_t dimension_id, float coordinate) {
     // make sure the CAN ID is reasonable
     assert(dimension_id == CAN_ID_CAR_X || dimension_id == CAN_ID_CAR_Y ||
            dimension_id == CAN_ID_CAR_Z);

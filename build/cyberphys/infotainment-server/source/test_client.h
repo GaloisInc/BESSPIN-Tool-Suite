@@ -14,26 +14,49 @@
 #include "can.h"
 #include "infotainment_defs.h"
 
-// the size of the message receive buffer
+/**
+ * The size of the message receive buffer.
+ */
 #define MESSAGE_BUFFER_SIZE 128
 
-// the main event loop
+/**
+ * The main event loop.
+ * @return 0 if terminated cleanly; currently, there is no other way
+ * to terminate without the program dying.
+ */
 int main_loop(void);
 
-// print a received CAN frame
+/**
+ * Print a received CAN frame to the console.
+ * @param frame The CAN frame.
+ */
 void print_frame(can_frame *frame);
 
-// print a received position frame
+/**
+ * Print a received position CAN frame to the console.
+ * @param frame The CAN frame. Must have ID CAN_ID_CAR_X, CAN_ID_CAR_Y, 
+ * or CAN_ID_CAR_Z.
+ */
 void print_position_frame(can_frame *frame);
 
-// print a received infotainment state frame
+/**
+ * Print a received infotainment state CAN frame to the console.
+ * @param frame The CAN frame. Must have ID CAN_ID_INFOTAINMENT_STATE.
+ */
 void print_music_state_frame(can_frame *frame);
 
-// send a button press
-void send_button_press(uint8_t button, struct sockaddr_in *broadcast_address);
+/**
+ * Send a button press for the specified button.
+ * @param button The button code.
+ */
+void send_button_press(uint8_t button);
 
-// send a coordinate
-void send_coordinate(canid_t dimension_id, float coordinate,
-                     struct sockaddr_in *broadcast_address);
+/**
+ * Send a coordinate update for the specified dimension.
+ * @param dimension_id The dimension CAN ID. Must be CAN_ID_CAR_X,
+ * CAN_ID_CAR_Y, or CAN_ID_CAR_Z.
+ * @param coordinate The coordinate to send.
+ */
+void send_coordinate(canid_t dimension_id, float coordinate);
 
 #endif // __TEST_CLIENT_H__

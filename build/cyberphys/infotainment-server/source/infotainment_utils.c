@@ -166,36 +166,17 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
 }
 
 int broadcast_frame(int from_port, int to_port, can_frame *frame) {
-    struct ifaddrs *addresses, *addr;
-    int result = 0x7fffffff; // maximum value for a signed 32-bit int
+    int result = 0;
 
-    // get all interfaces
-    if (getifaddrs(&addresses) == -1) {
-        error("could not get interface addresses (error %d), exiting\n", errno);
-    }
+    struct sockaddr_in broadcast_address;
+    memset(&broadcast_address, 0, sizeof(struct sockaddr_in));
+    broadcast_address.sin_family = AF_INET;
+    broadcast_address.sin_port = htons(to_port);
+    broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 
-    // broadcast to every one of our broadcast addresses
-    for (addr = addresses; addr != NULL; addr = addr->ifa_next) {
-        if (addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET ||
-            addr->ifa_broadaddr == NULL) {
-            // empty or non-IPv4 address, or empty broadcast address
-            continue;
-        } 
-        
-        struct sockaddr_in *broadcast_address = 
-            (struct sockaddr_in *) addr->ifa_broadaddr;
-        broadcast_address->sin_port = htons(to_port);
-
-        debug("sending frame to broadcast address %s:%d\n", 
-              inet_ntoa(broadcast_address->sin_addr), to_port);
-        int bytes = 
-            sendto(udp_socket(from_port), frame, 5 + frame->can_dlc, 0, // no flags
-                   (struct sockaddr *) broadcast_address, sizeof(struct sockaddr_in));
-        if (bytes < result) {
-            result = bytes; // always return the lowest error code
-        }
-    }  
-
-    freeifaddrs(addresses);
-    return result;
+    debug("sending frame to broadcast address %s:%d\n",
+        inet_ntoa(broadcast_address.sin_addr), to_port);
+    return sendto(udp_socket(from_port), frame, 5 + frame->can_dlc, 0, // no flags
+                  (struct sockaddr *) &broadcast_address, 
+                  sizeof(struct sockaddr_in));
 }
