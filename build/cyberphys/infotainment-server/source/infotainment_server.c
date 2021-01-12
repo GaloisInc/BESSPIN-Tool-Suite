@@ -31,7 +31,7 @@ infotainment_state the_state = { .T = START };
 
 bool initialize(void) {
     if (the_state.T == RUNNING) {
-        error("initialize called on running server");
+        error("initialize called on running server\n");
     }
 
     // initialize the state; we don't know much initially but
@@ -134,7 +134,8 @@ bool update_position(can_frame *frame) {
     bool changed = false;
 
     if (*old_position == *position) {
-        debug("%c-coordinate update (%f) results in no change\n", dimension, *position);
+        debug("%c-coordinate update (%f) results in no change\n", 
+              dimension, *position);
     } else {
         *old_position = *position;
         changed = true;
@@ -174,7 +175,8 @@ bool handle_button_press(can_frame *frame) {
             changed = increase_volume();
             break;
         default:
-            debug("invalid button press (%d) received, ignoring\n", *payload);
+            debug("invalid button press (%d) received, ignoring\n", 
+                  *payload);
     }
 
     return changed;
@@ -243,10 +245,11 @@ void broadcast_music_state() {
     }
 
     uint8_t data = music_state_packet(the_state);
-    can_frame frame = { .can_id = CAN_ID_MUSIC_STATE, .can_dlc = BYTE_LENGTH_MUSIC_STATE };
+    can_frame frame = { .can_id = CAN_ID_MUSIC_STATE, 
+                        .can_dlc = BYTE_LENGTH_MUSIC_STATE };
     frame.data[0] = data;
 
-    debug("broadasting music state frame: music %d, station %d, volume %d",
+    debug("broadasting music state frame: music %d, station %d, volume %d\n",
           the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
     broadcast_frame(CAN_NETWORK_PORT, MUX_PORT, &frame);
 }
@@ -264,7 +267,7 @@ void broadcast_updated_position(canid_t can_id) {
     float *buffer = (float *) frame.data;
     *buffer = *position;
 
-    debug("broadcasting new %c position: %f", dimension, *position);
+    debug("broadcasting new %c position: %f\n", dimension, *position);
     broadcast_frame(CAN_NETWORK_PORT, MUX_PORT, &frame);
 }
 

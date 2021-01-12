@@ -31,10 +31,10 @@ int udp_socket(int listen_port) {
     // check that the socket is listening on the right port; if not, and if
     // it's still open, close it and make another one
     struct sockaddr_in current_address;
-    socklen_t current_len;
+    socklen_t current_len = sizeof(struct sockaddr_in);
 
     if (getsockname(socketfd, (struct sockaddr *) &current_address, &current_len) == 0) {
-        if (current_address.sin_port != htons(listen_port)) {
+        if (ntohs(current_address.sin_port) != listen_port) {
             // it's listening on the wrong port, close it
             debug("closing socket on port %d\n", ntohs(current_address.sin_port));
             close(socketfd);
@@ -42,6 +42,8 @@ int udp_socket(int listen_port) {
         } // else we leave the socket alone
     } else {
         // couldn't get socket status, reset it to -1
+        debug("couldn't get socket status for socket %d, errno %d\n", 
+              socketfd, errno);
         socketfd = -1;
     }
 
@@ -59,18 +61,18 @@ int udp_socket(int listen_port) {
         listen_address.sin_port = htons(listen_port);
         listen_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
-        // bind the socket to the port
-        if (bind(socketfd, 
-                 (struct sockaddr *) &listen_address, 
-                 sizeof(listen_address)) == -1) {
-            error("unable to listen on port %d\n", listen_port);
-        }
-
         // set socket options to receive broadcasts
         int broadcast_permission = 1;
         if (setsockopt(socketfd, SOL_SOCKET, SO_BROADCAST, (void *) &broadcast_permission, 
                        sizeof(broadcast_permission)) < 0) {
             error("unable to set broadcast listening mode\n");
+        }
+        
+        // bind the socket to the port
+        if (bind(socketfd, 
+                 (struct sockaddr *) &listen_address, 
+                 sizeof(listen_address)) == -1) {
+            error("unable to listen on port %d\n", listen_port);
         }
 
         debug("socket created, listening for broadcasts on port %d\n", listen_port);
@@ -116,7 +118,8 @@ float *position_for_dimension(infotainment_state the_state, canid_t dimension_id
             result = &the_state.pos_z;
             break;
         default:
-            debug("position_for_dimension called for bad CAN farme type %x\n", dimension_id);
+            debug("position_for_dimension called for bad CAN frame type %x\n",
+                  dimension_id);
     }
 
     return result;
@@ -129,8 +132,10 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
 
     while (result == NULL && errno != EINTR) {
         debug("waiting for CAN frame\n");
+        *receive_address_len = sizeof(struct sockaddr_in); // must be initialized
         int32_t bytes = recvfrom(udp_socket(port), message, message_len, 0, // no flags
-                                 (struct sockaddr *) receive_address, receive_address_len);
+                                 (struct sockaddr *) receive_address,
+                                 receive_address_len);
 
         // decode the packet
         if (bytes < 0) {
@@ -139,16 +144,19 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
         } else if (bytes == 0) {
             debug("received empty CAN frame\n");
             continue;
+        } else if (bytes < 5) {
+            debug("received partial CAN frame, ignoring\n");
+            continue;
         }
 
         debug("received %i bytes\n", bytes);
         result = (can_frame *) message;
-        if (bytes <= sizeof(can_frame) && (result->can_dlc != bytes - 5)) {
-            debug("received CAN message with invalid length (%d)\n", bytes);
+        if (sizeof(can_frame) < bytes) {
+            debug("received (probable) J1939 message, ignoring\n");
             result = NULL;
             continue;
-        } else {
-            debug("received (probable) J1939 message, ignoring\n");
+        } else if (result->can_dlc != bytes - 5) {
+            debug("received CAN message with invalid length (%d)\n", bytes);
             result = NULL;
             continue;
         }
@@ -174,14 +182,15 @@ int broadcast_frame(int from_port, int to_port, can_frame *frame) {
             continue;
         } 
         
-        struct sockaddr_in *broadcast_address = (struct sockaddr_in *) addr->ifa_broadaddr;
+        struct sockaddr_in *broadcast_address = 
+            (struct sockaddr_in *) addr->ifa_broadaddr;
         broadcast_address->sin_port = htons(to_port);
 
-        debug("sending frame to broadcast address %s\n", 
-              inet_ntoa(broadcast_address->sin_addr));
+        debug("sending frame to broadcast address %s:%d\n", 
+              inet_ntoa(broadcast_address->sin_addr), to_port);
         int bytes = 
-            sendto(udp_socket(from_port), frame, sizeof(can_frame), 0, // no flags
-                   (struct sockaddr *) broadcast_address, sizeof(broadcast_address));
+            sendto(udp_socket(from_port), frame, 5 + frame->can_dlc, 0, // no flags
+                   (struct sockaddr *) broadcast_address, sizeof(struct sockaddr_in));
         if (bytes < result) {
             result = bytes; // always return the lowest error code
         }
