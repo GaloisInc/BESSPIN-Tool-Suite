@@ -250,7 +250,7 @@ void broadcast_music_state() {
                         .can_dlc = BYTE_LENGTH_MUSIC_STATE };
     frame.data[0] = data;
 
-    debug("broadasting music state frame: music %d, station %d, volume %d\n",
+    debug("broadasting music state frame: playing %d, station %d, volume %d\n",
           the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
     broadcast_frame(CAN_NETWORK_PORT, MUX_PORT, &frame);
 }
