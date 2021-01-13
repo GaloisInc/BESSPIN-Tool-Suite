@@ -120,10 +120,6 @@ static const uint8_t ucGatewayAddress[4] = {configGATEWAY_ADDR0, configGATEWAY_A
 static const uint8_t ucDNSServerAddress[4] = {configDNS_SERVER_ADDR0, configDNS_SERVER_ADDR1, configDNS_SERVER_ADDR2, configDNS_SERVER_ADDR3};
 const uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADDR2, configMAC_ADDR3, configMAC_ADDR4, configMAC_ADDR5};
 
-/* Global network settings */
-Socket_t xClientSocket;
-struct freertos_sockaddr xDestinationAddress;
-
 /* Auxilliary function */
 int16_t min(int16_t a, int16_t b)
 {
@@ -202,7 +198,7 @@ void startNetwork()
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
     if (funcReturn != pdPASS)
     {
-        FreeRTOS_printf(("%s (Error)~  startNetwork: Failed to initialize network. [ret=%d].\r\n", getCurrTime(), funcReturn));
+        FreeRTOS_printf(("%s (Error)~  startNetwork: Failed to initialize network. [ret=%ld].\r\n", getCurrTime(), funcReturn));
     }
     else
     {
@@ -256,13 +252,6 @@ void prvMainTask (void *pvParameters) {
     camera_ok = FALSE;
 
     /* Create the tasks */
-    // Configure TX addr 
-    xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-    xDestinationAddress.sin_port = (uint16_t)(CAN_TX_PORT);
-    xDestinationAddress.sin_port = FreeRTOS_htons(xDestinationAddress.sin_port);
-    xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
-    configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
-
     funcReturn = xTaskCreate(prvInfoTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
     funcReturn &= xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
     funcReturn &= xTaskCreate(prvCanTxTask, "prvCanTxTask", CAN_TX_STACK_SIZE, NULL, CAN_TX_TASK_PRIORITY, NULL);
@@ -389,7 +378,7 @@ static void prvSensorTask(void *pvParameters)
         state = THROTTLE;
         configASSERT(iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &state, 1) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
-        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &throttle_raw, 2) != -1);
+        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, (uint8_t*)&throttle_raw, 2) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
 
         tmp_throttle = max(throttle_raw - throttle_min, 0); // remove offset
@@ -400,7 +389,7 @@ static void prvSensorTask(void *pvParameters)
         state = BRAKE;
         configASSERT(iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &state, 1) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
-        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &brake_raw, 2) != -1);
+        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, (uint8_t*)&brake_raw, 2) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
 
         tmp_brake = max(brake_max - brake_raw, 0); // reverse brake
@@ -486,7 +475,7 @@ static void prvCanRxTask(void *pvParameters)
     FreeRTOS_bind(xListeningSocket, &xBindAddress, sizeof(xBindAddress));
 
     FreeRTOS_inet_ntoa(xBindAddress.sin_addr, cBuffer);
-    FreeRTOS_printf((">>>%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, CAN_RX_PORT));
+    FreeRTOS_printf((">>>%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
 
     for (;;)
     {
@@ -494,7 +483,7 @@ static void prvCanRxTask(void *pvParameters)
         if (res == SUCCESS)
         {
             FreeRTOS_inet_ntoa(xClient.sin_addr, cBuffer);
-            FreeRTOS_printf((">>>%s (prvCanRxTask) recv_can_message %u bytes from %s:%u\r\n",
+            FreeRTOS_printf((">>>%s (prvCanRxTask) recv_can_message %lu bytes from %s:%u\r\n",
                              getCurrTime(), msg_len, cBuffer, FreeRTOS_ntohs(xClient.sin_port)));
         }
         else
