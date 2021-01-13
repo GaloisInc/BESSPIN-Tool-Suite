@@ -383,6 +383,12 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def fpgaTearDown (self,isReload=False,stage=failStage.unknown):
+        # Sanitize the failStage
+        if ((stage > failStage.openocd) and (self.openocdProcess is None)):
+            stage = failStage.openocd
+        elif ((stage > failStage.gdb) and (self.gdbProcess is None)):
+            stage = failStage.gdb
+
         if (isEqSetting('mode','evaluateSecurityTests') and (not isReload) and (stage > failStage.gdb)):
             # Analyze gdb output for FreeRTOS
             if (self.osImage=='FreeRTOS'):
@@ -422,7 +428,7 @@ class fpgaTarget(object):
             self.interruptGdb()
             self.gdbDetach()
 
-        if (self.useOpenocd()):
+        if ((stage > failStage.openocd) and self.useOpenocd()):
             # quit openocd
             shellCommand(f"echo 'shutdown' | nc localhost {self.openocdPort}",check=False,shell=True,timeout=5)
             try:
