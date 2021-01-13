@@ -31,11 +31,13 @@
 #define CYBERPHYS_BROADCAST_ADDR STRINGIZE(configGATEWAY_ADDR0) \
 "." STRINGIZE(configGATEWAY_ADDR1) "." STRINGIZE(configGATEWAY_ADDR2) ".255"
 
+#define MAINTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define SENSORTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define CAN_TX_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define CAN_RX_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define INFOTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 
+#define MAINTASK_PRIORITY tskIDLE_PRIORITY + 5
 #define SENSORTASK_PRIORITY tskIDLE_PRIORITY + 4
 #define CAN_RX_TASK_PRIORITY tskIDLE_PRIORITY + 3
 #define CAN_TX_TASK_PRIORITY tskIDLE_PRIORITY + 2
@@ -60,12 +62,15 @@
 
 #define TEENSY_I2C_ADDRESS 0x30
 
+#define NOTIFY_SUCCESS_NTK  0x00000001
+
 static void prvSensorTask(void *pvParameters);
 static void prvCanTxTask(void *pvParameters);
 static void prvCanRxTask(void *pvParameters);
 static void prvInfoTask(void *pvParameters);
 
 void main_fett(void);
+void prvMainTask (void *pvParameters);
 void startNetwork(void);
 char *getCurrTime(void);
 uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len);
@@ -76,6 +81,7 @@ uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress, uint16_t u
                                             uint32_t ulDestinationAddress, uint16_t usDestinationPort);
 
 SemaphoreHandle_t data_mutex;
+TaskHandle_t xMainTask = NULL;
 
 /* CAN rx buffer */
 uint8_t j1939_rx_buf[0x64] __attribute__((aligned(64)));
@@ -113,10 +119,6 @@ static const uint8_t ucNetMask[4] = {configNET_MASK0, configNET_MASK1, configNET
 static const uint8_t ucGatewayAddress[4] = {configGATEWAY_ADDR0, configGATEWAY_ADDR1, configGATEWAY_ADDR2, configGATEWAY_ADDR3};
 static const uint8_t ucDNSServerAddress[4] = {configDNS_SERVER_ADDR0, configDNS_SERVER_ADDR1, configDNS_SERVER_ADDR2, configDNS_SERVER_ADDR3};
 const uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADDR2, configMAC_ADDR3, configMAC_ADDR4, configMAC_ADDR5};
-
-/* Global network settings */
-Socket_t xClientSocket;
-struct freertos_sockaddr xDestinationAddress;
 
 /* Auxilliary function */
 int16_t min(int16_t a, int16_t b)
@@ -196,7 +198,7 @@ void startNetwork()
     funcReturn = FreeRTOS_IPInit(ucIPAddress, ucNetMask, ucGatewayAddress, ucDNSServerAddress, ucMACAddress);
     if (funcReturn != pdPASS)
     {
-        FreeRTOS_printf(("%s (Error)~  startNetwork: Failed to initialize network. [ret=%d].\r\n", getCurrTime(), funcReturn));
+        FreeRTOS_printf(("%s (Error)~  startNetwork: Failed to initialize network. [ret=%ld].\r\n", getCurrTime(), funcReturn));
     }
     else
     {
@@ -208,6 +210,40 @@ void startNetwork()
 
 void main_fett(void)
 {
+    BaseType_t funcReturn;
+
+    FreeRTOS_printf(("\n>>>Beginning of Fett<<<\r\n"));
+    
+    startNetwork();
+
+    funcReturn = xTaskCreate(prvMainTask, "prvMainTask", MAINTASK_STACK_SIZE, NULL, MAINTASK_PRIORITY, NULL);
+
+    if (funcReturn == pdPASS) {
+        FreeRTOS_printf (("(Info)~  main_fett: Created prvMainTask successfully.\n"));
+    } else {
+        FreeRTOS_printf (("(Error)~  main_fett: Failed to create prvMainTask.\n"));
+    }
+}
+
+void prvMainTask (void *pvParameters) {
+    (void) pvParameters;
+    BaseType_t funcReturn;
+    uint32_t recvNotification = 0;
+
+    xMainTask = xTaskGetCurrentTaskHandle();
+
+    funcReturn = xTaskNotifyWait(0xffffffffUL, 0xffffffffUL, &recvNotification, pdMS_TO_TICKS(20000)); //it should take less than 15s
+    if (funcReturn != pdPASS) {
+        FreeRTOS_printf (("(Error)~  prvMainTask: Failed to receive a notification.\n"));
+        vTaskDelete(NULL);
+    } else if (recvNotification != NOTIFY_SUCCESS_NTK) {
+        FreeRTOS_printf (("(Error)~  prvMainTask: Unexpected notification value <%08x>.\n",recvNotification));
+        vTaskDelete(NULL);
+    } else {
+        // For compliance with FETT tool
+        FreeRTOS_printf(("<NTK-READY>\r\n"));
+    }
+    
     /* Initialize mutex */
     data_mutex = xSemaphoreCreateMutex();
     configASSERT(data_mutex != NULL);
@@ -215,11 +251,18 @@ void main_fett(void)
     /* Camera is not connected, don't use */
     camera_ok = FALSE;
 
-    startNetwork();
+    /* Create the tasks */
+    funcReturn = xTaskCreate(prvInfoTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
+    funcReturn &= xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
+    funcReturn &= xTaskCreate(prvCanTxTask, "prvCanTxTask", CAN_TX_STACK_SIZE, NULL, CAN_TX_TASK_PRIORITY, NULL);
+    funcReturn &= xTaskCreate(prvCanRxTask, "prvCanRxTask", CAN_RX_STACK_SIZE, NULL, CAN_RX_TASK_PRIORITY, NULL);
+    if (funcReturn == pdPASS) {
+        FreeRTOS_printf (("(Info)~  prvMainTask: Created all app tasks successfully.\n"));
+    } else {
+        FreeRTOS_printf (("(Error)~  prvMainTask: Failed to create the app tasks.\n"));
+    }
 
-    xTaskCreate(prvInfoTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
-
-    FreeRTOS_printf(("\n>>>Beginning of Fett<<<\r\n"));
+    vTaskDelete(NULL);
 }
 
 static void prvInfoTask(void *pvParameters)
@@ -335,7 +378,7 @@ static void prvSensorTask(void *pvParameters)
         state = THROTTLE;
         configASSERT(iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &state, 1) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
-        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &throttle_raw, 2) != -1);
+        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, (uint8_t*)&throttle_raw, 2) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
 
         tmp_throttle = max(throttle_raw - throttle_min, 0); // remove offset
@@ -346,7 +389,7 @@ static void prvSensorTask(void *pvParameters)
         state = BRAKE;
         configASSERT(iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &state, 1) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
-        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &brake_raw, 2) != -1);
+        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, (uint8_t*)&brake_raw, 2) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
 
         tmp_brake = max(brake_max - brake_raw, 0); // reverse brake
@@ -371,32 +414,11 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
 {
     uint32_t ulIPAddress, ulNetMask, ulGatewayAddress, ulDNSServerAddress;
     char cBuffer[16];
-    static BaseType_t xTasksAlreadyCreated = pdFALSE;
+    BaseType_t funcReturn;
 
     /* If the network has just come up...*/
     if (eNetworkEvent == eNetworkUp)
     {
-        // For compliance with FETT tool
-        FreeRTOS_printf(("<NTK-READY>\r\n"));
-
-        /* Create the tasks that use the IP stack if they have not already been
-		created. */
-        if (xTasksAlreadyCreated == pdFALSE)
-        {
-            /* Configure TX addr */
-            xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-            xDestinationAddress.sin_port = (uint16_t)(CAN_TX_PORT);
-            xDestinationAddress.sin_port = FreeRTOS_htons(xDestinationAddress.sin_port);
-            xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
-            configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
-
-            xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
-            xTaskCreate(prvCanTxTask, "prvCanTxTask", CAN_TX_STACK_SIZE, NULL, CAN_TX_TASK_PRIORITY, NULL);
-            xTaskCreate(prvCanRxTask, "prvCanRxTask", CAN_RX_STACK_SIZE, NULL, CAN_RX_TASK_PRIORITY, NULL);
-
-            xTasksAlreadyCreated = pdTRUE;
-        }
-
         /* Print out the network configuration, which may have come from a DHCP
         server. */
         FreeRTOS_GetAddressConfiguration(&ulIPAddress, &ulNetMask, &ulGatewayAddress, &ulDNSServerAddress);
@@ -411,6 +433,15 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
 
         FreeRTOS_inet_ntoa(ulDNSServerAddress, cBuffer);
         FreeRTOS_printf((">>> ECU: DNS Server Address: %s\r\n\r\n\r\n", cBuffer));
+
+        // notify main
+        if (xMainTask == NULL) {
+            FreeRTOS_printf(("(Error)~  NtkHook: Unable to get the handle of <prvMainTask>.\n"));
+        }
+        funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_NTK ,eSetBits);
+        if (funcReturn != pdPASS) {
+            FreeRTOS_printf(("(Error)~  NtkHook: Failed to notify <prvMainTask>!\n"));
+        }
     }
 }
 /*-----------------------------------------------------------*/
@@ -438,14 +469,13 @@ static void prvCanRxTask(void *pvParameters)
 	after the network is up, so the IP address is valid here. */
     FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     xBindAddress.sin_addr = ulIPAddress;
-    xBindAddress.sin_port = (uint16_t)(CAN_RX_PORT);
-    xBindAddress.sin_port = FreeRTOS_htons(xBindAddress.sin_port);
+    xBindAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_RX_PORT);
 
     /* Bind the socket to the port that the client task will send to. */
     FreeRTOS_bind(xListeningSocket, &xBindAddress, sizeof(xBindAddress));
 
     FreeRTOS_inet_ntoa(xBindAddress.sin_addr, cBuffer);
-    FreeRTOS_printf((">>>%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, CAN_RX_PORT));
+    FreeRTOS_printf((">>>%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
 
     for (;;)
     {
@@ -453,7 +483,7 @@ static void prvCanRxTask(void *pvParameters)
         if (res == SUCCESS)
         {
             FreeRTOS_inet_ntoa(xClient.sin_addr, cBuffer);
-            FreeRTOS_printf((">>>%s (prvCanRxTask) recv_can_message %u bytes from %s:%u\r\n",
+            FreeRTOS_printf((">>>%s (prvCanRxTask) recv_can_message %lu bytes from %s:%u\r\n",
                              getCurrTime(), msg_len, cBuffer, FreeRTOS_ntohs(xClient.sin_port)));
         }
         else
@@ -487,8 +517,7 @@ static void prvCanTxTask(void *pvParameters)
     FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     // Broadcast address
     xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-    xDestinationAddress.sin_port = (uint16_t)(CAN_TX_PORT);
-    xDestinationAddress.sin_port = FreeRTOS_htons(xDestinationAddress.sin_port);
+    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_TX_PORT);
 
     FreeRTOS_printf((">>> Starting prvCanTxTask\r\n"));
 
