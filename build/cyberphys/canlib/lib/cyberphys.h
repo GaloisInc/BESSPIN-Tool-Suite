@@ -21,8 +21,8 @@ typedef struct sockaddr_in cyberphys_sockaddr_t;
 #else
 
 #include "FreeRTOS.h"
-#include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
+#include "FreeRTOS_IP.h"
 typedef Socket_t cyberphys_socket_t;
 typedef struct freertos_sockaddr cyberphys_sockaddr_t;
 

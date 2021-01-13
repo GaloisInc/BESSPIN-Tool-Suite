@@ -87,7 +87,7 @@ def prepareFreeRTOS(targetId=None):
     setSetting('osImageAsm',osImageAsm,targetId=targetId)
 
     #build it
-    fett.target.build.freeRTOSBuildChecks(targetId=targetId)
+    fett.target.build.freeRTOSBuildChecks(targetId=targetId,freertosFork="upstream")
 
     #copy the C files, .mk files, and any directory
     copyDir(os.path.join(getSetting('repoDir'),'fett','cyberPhys','srcFreeRTOS'),getSetting('buildDir',targetId=targetId),copyContents=True)
