@@ -6,7 +6,7 @@ Misc required functions for fett.py
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess, pathlib
 import tarfile, sys, json, re, getpass, time
-import crypt
+import crypt, hashlib
 import zstandard
 
 from fett.base.utils import decorate
@@ -659,4 +659,22 @@ def sha512_crypt(password, salt=None, rounds=None):
     if salt is None:
         salt = crypt.mksalt(crypt.METHOD_SHA512, rounds=rounds)
     return crypt.crypt(password, salt)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def computeMd5ForFile (filepath):
+    BLOCKSIZE = 65536
+    fIn = ftOpenFile(filepath, "rb")
+    try:
+        md5 = hashlib.md5()
+        while True:
+            chunk = fIn.read(BLOCKSIZE)
+            if (not chunk):
+                break
+            md5.update(chunk)
+        md5Val = md5.hexdigest()
+    except Exception as exc:
+        logAndExit(f"Failed to compute md5 for <{filepath}>.", exc=exc, exitCode=EXIT.Files_and_paths)
+    fIn.close()
+    return md5Val
 

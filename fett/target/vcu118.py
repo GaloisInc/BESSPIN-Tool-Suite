@@ -10,7 +10,7 @@ from fett.target.build import getTargetIp, getTargetMac, freeRTOSBuildChecks, bu
 
 import subprocess, psutil, tftpy
 import serial, serial.tools.list_ports, usb
-import sys, signal, os, socket, time, hashlib
+import sys, signal, os, socket, time
 import pexpect, threading
 from pexpect import fdpexpect
 
@@ -609,19 +609,7 @@ def programBitfile (doPrint=True,targetId=None):
         for xFile in bitAndProbefiles:
             if not os.path.isfile(xFile):
                 logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
-
-        try:
-            bitfile = ftOpenFile(bitAndProbefiles[0], "rb")
-            md5 = hashlib.md5()
-            while True:
-                chunk = bitfile.read(65536)
-                if not chunk:
-                    break
-                md5.update(chunk)
-            bitfile.close()
-            setSetting('md5bifile',md5.hexdigest(),targetId=targetId)
-        except Exception as exc:
-            logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
+        setSetting('md5bifile',computeMd5ForFile(bitAndProbefiles[0]),targetId=targetId)
 
     printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
     programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)

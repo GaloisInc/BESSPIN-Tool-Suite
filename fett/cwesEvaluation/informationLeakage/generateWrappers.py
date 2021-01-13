@@ -36,6 +36,13 @@ def generateWrappers():
         for s in stores:
             for i in interpreters:
                 fileName = f"test_{t}_{s}_{i}.c"
+                # Skip the not-implemented tests
+                if ((t == "cache") and (s != "cached")):
+                    printAndLog(f"generateWrappers: Skipping {fileName}. It is not implemented.",doPrint=False)
+                    continue
+                if ((t == "setenv") and isEqSetting('osImage','FreeRTOS')):
+                    printAndLog(f"generateWrappers: Skipping {fileName}. It is not implemented on FreeRTOS.",doPrint=False)
+                    continue
                 if isTestEnabled('informationLeakage', fileName.split(".c")[0]):
                     enabledDrivers.add(t)
                     enabledBins.append(fileName.replace(".c",".riscv"))
