@@ -674,7 +674,7 @@ def computeMd5ForFile (filepath):
             md5.update(chunk)
         md5Val = md5.hexdigest()
     except Exception as exc:
-        logAndExit(f"Faile to compute md5 for <{filepath}>.", exc=exc, exitCode=EXIT.Files_and_paths)
+        logAndExit(f"Failed to compute md5 for <{filepath}>.", exc=exc, exitCode=EXIT.Files_and_paths)
     fIn.close()
     return md5Val
 
