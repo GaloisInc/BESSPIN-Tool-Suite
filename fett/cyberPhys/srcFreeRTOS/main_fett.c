@@ -480,8 +480,7 @@ static void prvCanRxTask(void *pvParameters)
 	after the network is up, so the IP address is valid here. */
     FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     xBindAddress.sin_addr = ulIPAddress;
-    xBindAddress.sin_port = (uint16_t)(CAN_RX_PORT);
-    xBindAddress.sin_port = FreeRTOS_htons(xBindAddress.sin_port);
+    xBindAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_RX_PORT);
 
     /* Bind the socket to the port that the client task will send to. */
     FreeRTOS_bind(xListeningSocket, &xBindAddress, sizeof(xBindAddress));
@@ -529,8 +528,7 @@ static void prvCanTxTask(void *pvParameters)
     FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     // Broadcast address
     xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-    xDestinationAddress.sin_port = (uint16_t)(CAN_TX_PORT);
-    xDestinationAddress.sin_port = FreeRTOS_htons(xDestinationAddress.sin_port);
+    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_TX_PORT);
 
     FreeRTOS_printf((">>> Starting prvCanTxTask\r\n"));
 
