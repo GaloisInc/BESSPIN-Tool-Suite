@@ -1,5 +1,7 @@
 # This file has the necessary includes to run Fett on FreeRTOS
 
+WERROR =
+
 CFLAGS += -DFETT_APPS -DFREERTOS -DBSP_USE_IIC0 -DUSE_CURRENT_TIME
 
 # FETT Apps sources
