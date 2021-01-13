@@ -5,7 +5,7 @@ SERVER_SRCS =	./main.c \
 				./infotainment_utils.c \
 				$(CANLIB)/*.c
 
-TEST_SRCS =	./test_client.c \
+TEST_SRCS = ./test_client.c \
 			./infotainment_utils.c \
 			$(CANLIB)/*.c
 
@@ -23,4 +23,4 @@ clean:
 	@find . -name "*.elf" -type f -delete
 	rm -f infotainment_server test_client
 
-.PHONY:	infotainment_server test_client clean
+.PHONY: infotainment_server test_client clean
