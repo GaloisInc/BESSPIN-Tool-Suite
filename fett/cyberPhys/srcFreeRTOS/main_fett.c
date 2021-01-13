@@ -255,11 +255,22 @@ void prvMainTask (void *pvParameters) {
     /* Camera is not connected, don't use */
     camera_ok = FALSE;
 
+    /* Create the tasks */
+    // Configure TX addr 
+    xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
+    xDestinationAddress.sin_port = (uint16_t)(CAN_TX_PORT);
+    xDestinationAddress.sin_port = FreeRTOS_htons(xDestinationAddress.sin_port);
+    xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
+    configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
+
     funcReturn = xTaskCreate(prvInfoTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
+    funcReturn &= xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
+    funcReturn &= xTaskCreate(prvCanTxTask, "prvCanTxTask", CAN_TX_STACK_SIZE, NULL, CAN_TX_TASK_PRIORITY, NULL);
+    funcReturn &= xTaskCreate(prvCanRxTask, "prvCanRxTask", CAN_RX_STACK_SIZE, NULL, CAN_RX_TASK_PRIORITY, NULL);
     if (funcReturn == pdPASS) {
-        FreeRTOS_printf (("(Info)~  prvMainTask: Created prvInfoTask successfully.\n"));
+        FreeRTOS_printf (("(Info)~  prvMainTask: Created all app tasks successfully.\n"));
     } else {
-        FreeRTOS_printf (("(Error)~  prvMainTask: Failed to create prvInfoTask.\n"));
+        FreeRTOS_printf (("(Error)~  prvMainTask: Failed to create the app tasks.\n"));
     }
 
     vTaskDelete(NULL);
@@ -414,32 +425,11 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
 {
     uint32_t ulIPAddress, ulNetMask, ulGatewayAddress, ulDNSServerAddress;
     char cBuffer[16];
-    static BaseType_t xTasksAlreadyCreated = pdFALSE;
     BaseType_t funcReturn;
 
     /* If the network has just come up...*/
     if (eNetworkEvent == eNetworkUp)
     {
-
-        /* Create the tasks that use the IP stack if they have not already been
-		created. */
-        /*
-        if (xTasksAlreadyCreated == pdFALSE)
-        {
-            // Configure TX addr 
-            xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-            xDestinationAddress.sin_port = (uint16_t)(CAN_TX_PORT);
-            xDestinationAddress.sin_port = FreeRTOS_htons(xDestinationAddress.sin_port);
-            xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
-            configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
-
-            xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
-            xTaskCreate(prvCanTxTask, "prvCanTxTask", CAN_TX_STACK_SIZE, NULL, CAN_TX_TASK_PRIORITY, NULL);
-            xTaskCreate(prvCanRxTask, "prvCanRxTask", CAN_RX_STACK_SIZE, NULL, CAN_RX_TASK_PRIORITY, NULL);
-
-            xTasksAlreadyCreated = pdTRUE;
-        }*/
-
         /* Print out the network configuration, which may have come from a DHCP
         server. */
         FreeRTOS_GetAddressConfiguration(&ulIPAddress, &ulNetMask, &ulGatewayAddress, &ulDNSServerAddress);
