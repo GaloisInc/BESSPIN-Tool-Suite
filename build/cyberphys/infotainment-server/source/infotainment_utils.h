@@ -30,7 +30,7 @@ char char_for_dimension(canid_t dimension_id);
  * @param dimension_id The dimension to find.
  * @return a pointer to the appropriate position float.
  */
-float *position_for_dimension(infotainment_state the_state, canid_t dimension_id);
+float *position_for_dimension(infotainment_state *the_state, canid_t dimension_id);
 
 /**
  * Receives a CAN frame sent to the specified port.

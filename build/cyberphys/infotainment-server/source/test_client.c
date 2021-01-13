@@ -5,6 +5,12 @@
  * @refine besspin_cyberphys.lando
  */
 
+// NOTE: We assume that the infotainment server under test is the only other
+// entity sending CAN packets on the network; the expected numbers and ordering
+// of response packets will not work otherwise. Thus, these tests are only 
+// useful for testing the infotainment server in isolation, not while running 
+// in a full system.
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -40,41 +46,151 @@ int main_loop(void) {
 
     debug("socket number is %d\n", udp_socket(MUX_PORT));
 
-    // send enough frames to initialize the infotainment system to a known state
-    send_button_press(BUTTON_STATION_1);
-    send_button_press(BUTTON_VOLUME_UP);
 
     // zero out the buffer
     memset(&message, 0, MESSAGE_BUFFER_SIZE);
 
-    // receive and print frames
-    int i = 0;
-    while (i < 2) {
+    // send enough frames to initialize the infotainment system to a known state;
+    // we expect one response for each frame we send, including the position 
+    // setting (which we expect to always be a change from the initial position
+    // of 0.0f, 0.0f, 0.0f).
+    send_button_press(BUTTON_STATION_1);
+    print_frame(receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+                              &receive_address, &receive_address_len));
+    send_coordinate(CAN_ID_CAR_X, 1.0f);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_position(frame, CAN_ID_CAR_X, 1.0f);
+
+    send_coordinate(CAN_ID_CAR_Y, 1.0f);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_position(frame, CAN_ID_CAR_Y, 1.0f);
+
+    send_coordinate(CAN_ID_CAR_Z, 1.0f);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_position(frame, CAN_ID_CAR_Z, 1.0f);
+
+    for (int i = 0; i < MAX_VOLUME + 2; i++) {
+        // lower the volume to 0 no matter what it started at; this also tests
+        // min volume
+        send_button_press(BUTTON_VOLUME_DOWN);
         frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
                               &receive_address, &receive_address_len);
-        if (frame != NULL) {
-            print_frame(frame);
-            i = i + 1;
-        }
+        print_frame(frame);
     }
 
+    // the final music state frame should have music on, station 1, 
+    // volume MIN_VOLUME
+    assert_music_state(frame, 1, 1, MIN_VOLUME);
+
+    // test volume up
+    send_button_press(BUTTON_VOLUME_UP);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_music_state(frame, 1, 1, MIN_VOLUME + 1);
+
+    // test volume down
+    send_button_press(BUTTON_VOLUME_DOWN);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_music_state(frame, 1, 1, MIN_VOLUME);
+
+    // test volume all the way up (max volume)
+    for (int i = 0; i < MAX_VOLUME + 2; i++) {
+        send_button_press(BUTTON_VOLUME_UP);
+        frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+                              &receive_address, &receive_address_len);
+        print_frame(frame);
+    }
+    assert_music_state(frame, 1, 1, MAX_VOLUME);
+
+    // test station 2 (station 1 was already tested)
+    send_button_press(BUTTON_STATION_2);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_music_state(frame, 1, 2, MAX_VOLUME);
+
+    // test station 3
+    send_button_press(BUTTON_STATION_3);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_music_state(frame, 1, 3, MAX_VOLUME);
+
+    // test sending redundant position changes for x, y followed by a position
+    // change for z; only the z one should result in a packet
+    send_coordinate(CAN_ID_CAR_X, 1.0f);
+    send_coordinate(CAN_ID_CAR_Y, 1.0f);
+    send_coordinate(CAN_ID_CAR_Z, 1.1f);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_position(frame, CAN_ID_CAR_Z, 1.1f);
+
+    // send position updates back to 0.0 for all coordinates so we can run
+    // the tests again without restarting the server
+    send_coordinate(CAN_ID_CAR_X, 0.0f);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_position(frame, CAN_ID_CAR_X, 0.0f);
+
+    send_coordinate(CAN_ID_CAR_Y, 0.0f);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_position(frame, CAN_ID_CAR_Y, 0.0f);
+
+    send_coordinate(CAN_ID_CAR_Z, 0.0f);
+    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_position(frame, CAN_ID_CAR_Z, 0.0f);
+
+    debug("\n\nTESTS SUCCESSFUL\n");
     return 0;
 }
 
+void assert_music_state(can_frame *frame, int play, int station, int volume) {
+    assert(frame->can_id == CAN_ID_MUSIC_STATE);
+    assert(play(frame->data[0]) == play);
+    assert(station(frame->data[0]) == station);
+    assert(volume(frame->data[0]) == volume);
+}
+
+void assert_position(can_frame *frame, canid_t dimension_id, float position) {
+    assert(frame->can_id == dimension_id);
+    float *frame_position = (float *) frame->data;
+    assert(*frame_position == position);
+}
+
 void print_frame(can_frame *frame) {
+    if (frame == NULL) {
+        debug("null frame received\n");
+
+    } else {
     switch (frame->can_id) {
-        case CAN_ID_CAR_X:
-        case CAN_ID_CAR_Y: 
-        case CAN_ID_CAR_Z:
-            print_position_frame(frame);
-            break;
+            case CAN_ID_CAR_X:
+            case CAN_ID_CAR_Y: 
+            case CAN_ID_CAR_Z:
+                print_position_frame(frame);
+                break;
         
-        case CAN_ID_MUSIC_STATE:
-            print_music_state_frame(frame);
-            break;
-        
-        default:
-            debug("irrelevant CAN frame of type %d received.\n", frame->can_id);
+            case CAN_ID_MUSIC_STATE:
+                print_music_state_frame(frame);
+                break;
+
+            default:
+                debug("irrelevant CAN frame of type %d received.\n", frame->can_id);
+        }
     }
 }
 

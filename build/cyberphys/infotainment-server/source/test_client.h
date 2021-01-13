@@ -27,6 +27,23 @@
 int main_loop(void);
 
 /**
+ * Asserts a particular expected music state.
+ * @param frame The CAN frame. Must have ID CAN_ID_INFOTAINMENT_STATE.
+ * @param play The expected value for the playing flag (0 or 1).
+ * @param station The expected value for the station (0-3).
+ * @param volume The expected value for the volume (MIN_VOLUME-MAX_VOLUME).
+ */
+void assert_music_state(can_frame *frame, int play, int station, int volume);
+
+/**
+ * Asserts a particular expected position.
+ * @param frame The CAN frame. Must have ID dimension_id.
+ * @param dimension_id The expected ID for the CAN frame.
+ * @param position The expected position.
+ */
+void assert_position(can_frame *frame, canid_t dimension_id, float position);
+
+/**
  * Print a received CAN frame to the console.
  * @param frame The CAN frame.
  */

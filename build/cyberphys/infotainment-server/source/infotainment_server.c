@@ -73,13 +73,13 @@ int main_loop(void) {
         if (frame == NULL) {
             continue;
         } else if (!is_relevant(frame->can_id)) {
-            debug("received CAN message with irrelevant ID %x\n", frame->can_id);
+            debug("received CAN frame with irrelevant ID %x\n", frame->can_id);
             continue;
         }
 
         // change our state based on the received CAN frame
 
-        debug("processing CAN message with ID %x\n", frame->can_id);
+        debug("processing CAN frame with ID %x\n", frame->can_id);
         bool position_updated = false;
         switch (frame->can_id) {
             case CAN_ID_CAR_X:
@@ -92,10 +92,13 @@ int main_loop(void) {
                 handle_button_press(frame);
         }
 
-        // broadcast the new state; we always broadcast the current music state, 
-        // and we also broadcast any position state that has been updated
+        // broadcast the new state; we always broadcast the current music state
+        // if a button was pressed, and we also broadcast any position state 
+        // that has been updated
 
-        broadcast_music_state();
+        if (frame->can_id == CAN_ID_BUTTON_PRESSED) {
+            broadcast_music_state();
+        }
         if (position_updated) {
             broadcast_position(frame->can_id);
         }
@@ -130,7 +133,7 @@ bool update_position(can_frame *frame) {
 
     // interpret the payload as a float
     float *position = (float *) frame->data;
-    float *old_position = position_for_dimension(the_state, frame->can_id);    
+    float *old_position = position_for_dimension(&the_state, frame->can_id);    
     char dimension = char_for_dimension(frame->can_id);
     bool changed = false;
 
@@ -260,13 +263,12 @@ void broadcast_position(canid_t can_id) {
     assert(can_id == CAN_ID_CAR_X || can_id == CAN_ID_CAR_Y ||
            can_id == CAN_ID_CAR_Z);
 
-    float *position = position_for_dimension(the_state, can_id);
+    float *position = position_for_dimension(&the_state, can_id);
     char dimension = char_for_dimension(can_id);
 
     // BYTE_LENGTH_CAR_X is the same as Y and Z
     can_frame frame = { .can_id = can_id, .can_dlc = BYTE_LENGTH_CAR_X };
-    float *buffer = (float *) frame.data;
-    *buffer = *position;
+    memcpy(&frame.data[0], position, sizeof(float));
 
     debug("broadcasting new %c position: %f\n", dimension, *position);
     broadcast_frame(CAN_NETWORK_PORT, MUX_PORT, &frame);

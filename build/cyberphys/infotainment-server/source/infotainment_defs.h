@@ -13,10 +13,12 @@
 #include <stdbool.h>
 
 // the CAN network port is where we receive CAN packets to be processed
-#define CAN_NETWORK_PORT 5085
+#define CAN_NETWORK_PORT 5001
 
 // the MUX port is where we send CAN packets to be relayed
-#define MUX_PORT 2689 // CMUX on a telephone keypad
+// note: is this necesary or do we always send CAN packets to the 
+// main CAN network port?
+#define MUX_PORT 5002
 
 // the minimum volume
 #define MIN_VOLUME 0
@@ -41,6 +43,9 @@ typedef enum { MUSIC_UNKNOWN = VOLUME_MAX + 1,
                MUSIC_PLAYING } music_state;
 typedef enum { STATION_UNKNOWN = MUSIC_PLAYING + 1,
                STATION_SET } station_state;
+// note: if the position doesn't need to be relayed, we can get rid of
+// this part of the state machine and state storage and just deal with
+// music state
 typedef enum { POSITION_UNKNOWN = STATION_SET + 1,
                POSITION_SET } position_state;
 typedef enum { START = POSITION_SET + 1,
