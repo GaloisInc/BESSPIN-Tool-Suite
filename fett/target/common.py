@@ -985,6 +985,9 @@ class commonTarget():
         "   A string containing all text returned back from the target during the resolving of the interrupt.
         """
         process = self.process if process is None else process
+        if (process is None):
+            self.terminateAndExit(f"{self.targetIdInfo}<keyboardInterrupt> is called, but the process is <None>.",
+                exitCode=EXIT.Run)
         if (endsWith is None):
             endsWith = [self.getDefaultEndWith()]
         elif (isinstance(endsWith,str)):
