@@ -55,3 +55,5 @@ can_frame *receive_frame(int port, uint8_t *buffer, int buffer_len,
  * returned.
  */
 int broadcast_frame(int from_port, int to_port, can_frame *frame);
+
+bool is_our_address(int port, struct sockaddr_in *address);

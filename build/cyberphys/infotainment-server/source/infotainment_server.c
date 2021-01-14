@@ -59,14 +59,14 @@ int main_loop(void) {
     uint8_t message[MESSAGE_BUFFER_SIZE];
     can_frame *frame;
 
-    debug("socket number is %d\n", udp_socket(CAN_NETWORK_PORT));
+    debug("socket number is %d\n", udp_socket(RECEIVE_PORT));
     
     while (the_state.T == RUNNING) {
         // zero out the buffer
         memset(&message, 0, MESSAGE_BUFFER_SIZE);
 
         // receive a packet
-        frame = receive_frame(CAN_NETWORK_PORT, message, MESSAGE_BUFFER_SIZE, 
+        frame = receive_frame(RECEIVE_PORT, message, MESSAGE_BUFFER_SIZE, 
                               &receive_address, &receive_address_len);
         
         // attempt to decode the frame and see if it is for us
@@ -107,7 +107,7 @@ int main_loop(void) {
     debug("stop signal received, cleaning up\n");
     // close the UDP socket in an orderly fashion since we're
     // no longer listening
-    close(udp_socket(CAN_NETWORK_PORT));
+    close(udp_socket(RECEIVE_PORT));
 
     return 0;
 }
@@ -255,7 +255,7 @@ void broadcast_music_state() {
 
     debug("broadasting music state frame: playing %d, station %d, volume %d\n",
           the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
-    broadcast_frame(CAN_NETWORK_PORT, MUX_PORT, &frame);
+    broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
 }
 
 void broadcast_position(canid_t can_id) {
@@ -271,7 +271,7 @@ void broadcast_position(canid_t can_id) {
     memcpy(&frame.data[0], position, sizeof(float));
 
     debug("broadcasting new %c position: %f\n", dimension, *position);
-    broadcast_frame(CAN_NETWORK_PORT, MUX_PORT, &frame);
+    broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
 }
 
 void stop(void) {

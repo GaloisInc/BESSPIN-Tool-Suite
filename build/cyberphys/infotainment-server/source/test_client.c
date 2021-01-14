@@ -10,6 +10,12 @@
 // of response packets will not work otherwise. Thus, these tests are only 
 // useful for testing the infotainment server in isolation, not while running 
 // in a full system.
+//
+// This test client _sends_ packets to the RECEIVE_PORT, and _listens_
+// on the SEND_PORT, so as to communicate with the server properly. If 
+// SEND_PORT and RECEIVE_PORT are the same, testing cannot be carried out
+// on the same machine as the server because of the same IP addresses and
+// port numbers being used.
 
 #include <assert.h>
 #include <errno.h>
@@ -41,10 +47,10 @@ int main_loop(void) {
 
     // broadcast all outgoing packets to the world (but our world is small)
     broadcast_address.sin_family = AF_INET;
-    broadcast_address.sin_port = htons(CAN_NETWORK_PORT);
+    broadcast_address.sin_port = htons(RECEIVE_PORT);
     broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 
-    debug("socket number is %d\n", udp_socket(MUX_PORT));
+    debug("socket number is %d\n", udp_socket(SEND_PORT));
 
 
     // zero out the buffer
@@ -55,22 +61,22 @@ int main_loop(void) {
     // setting (which we expect to always be a change from the initial position
     // of 0.0f, 0.0f, 0.0f).
     send_button_press(BUTTON_STATION_1);
-    print_frame(receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+    print_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                               &receive_address, &receive_address_len));
     send_coordinate(CAN_ID_CAR_X, 1.0f);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_X, 1.0f);
 
     send_coordinate(CAN_ID_CAR_Y, 1.0f);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_Y, 1.0f);
 
     send_coordinate(CAN_ID_CAR_Z, 1.0f);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_Z, 1.0f);
@@ -79,7 +85,7 @@ int main_loop(void) {
         // lower the volume to 0 no matter what it started at; this also tests
         // min volume
         send_button_press(BUTTON_VOLUME_DOWN);
-        frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+        frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
                               &receive_address, &receive_address_len);
         print_frame(frame);
     }
@@ -90,14 +96,14 @@ int main_loop(void) {
 
     // test volume up
     send_button_press(BUTTON_VOLUME_UP);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_music_state(frame, 1, 1, MIN_VOLUME + 1);
 
     // test volume down
     send_button_press(BUTTON_VOLUME_DOWN);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_music_state(frame, 1, 1, MIN_VOLUME);
@@ -105,7 +111,7 @@ int main_loop(void) {
     // test volume all the way up (max volume)
     for (int i = 0; i < MAX_VOLUME + 2; i++) {
         send_button_press(BUTTON_VOLUME_UP);
-        frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+        frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
                               &receive_address, &receive_address_len);
         print_frame(frame);
     }
@@ -113,14 +119,14 @@ int main_loop(void) {
 
     // test station 2 (station 1 was already tested)
     send_button_press(BUTTON_STATION_2);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_music_state(frame, 1, 2, MAX_VOLUME);
 
     // test station 3
     send_button_press(BUTTON_STATION_3);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE,
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_music_state(frame, 1, 3, MAX_VOLUME);
@@ -130,7 +136,7 @@ int main_loop(void) {
     send_coordinate(CAN_ID_CAR_X, 1.0f);
     send_coordinate(CAN_ID_CAR_Y, 1.0f);
     send_coordinate(CAN_ID_CAR_Z, 1.1f);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_Z, 1.1f);
@@ -138,19 +144,19 @@ int main_loop(void) {
     // send position updates back to 0.0 for all coordinates so we can run
     // the tests again without restarting the server
     send_coordinate(CAN_ID_CAR_X, 0.0f);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_X, 0.0f);
 
     send_coordinate(CAN_ID_CAR_Y, 0.0f);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_Y, 0.0f);
 
     send_coordinate(CAN_ID_CAR_Z, 0.0f);
-    frame = receive_frame(MUX_PORT, message, MESSAGE_BUFFER_SIZE, 
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_Z, 0.0f);
@@ -189,7 +195,7 @@ void print_frame(can_frame *frame) {
                 break;
 
             default:
-                debug("irrelevant CAN frame of type %d received.\n", frame->can_id);
+                debug("irrelevant CAN frame with id %x received.\n", frame->can_id);
         }
     }
 }
@@ -232,7 +238,7 @@ void send_button_press(uint8_t button) {
     frame.data[0] = button;
 
     debug("broadcasting button press frame (%d)\n", button);
-    broadcast_frame(MUX_PORT, CAN_NETWORK_PORT, &frame);
+    broadcast_frame(SEND_PORT, RECEIVE_PORT, &frame);
 }
 
 void send_coordinate(canid_t dimension_id, float coordinate) {
@@ -257,7 +263,7 @@ void send_coordinate(canid_t dimension_id, float coordinate) {
             break;
     }
     debug("broadcasting %s-coordinate update (%f)\n", dimension, coordinate);
-    broadcast_frame(MUX_PORT, CAN_NETWORK_PORT, &frame);
+    broadcast_frame(SEND_PORT, RECEIVE_PORT, &frame);
 }
 
 // just run the main loop, no frills

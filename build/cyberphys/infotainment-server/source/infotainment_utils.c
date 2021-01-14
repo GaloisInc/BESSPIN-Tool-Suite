@@ -140,6 +140,14 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
                                  (struct sockaddr *) receive_address,
                                  receive_address_len);
 
+        // if the frame came from us, ignore it; we determine this to be the case if
+        // the receive address matches one of our interface addresses _and_ the port
+        // number matches the port number of our socket
+        if (is_our_address(port, (struct sockaddr_in *) receive_address)) {
+            debug("received CAN from from ourselves, ignoring\n");
+            continue;
+        }
+
         // decode the packet
         if (bytes < 0) {
             debug("CAN frame receive failed\n");
@@ -182,4 +190,41 @@ int broadcast_frame(int from_port, int to_port, can_frame *frame) {
     return sendto(udp_socket(from_port), frame, 5 + frame->can_dlc, 0, // no flags
                   (struct sockaddr *) &broadcast_address, 
                   sizeof(struct sockaddr_in));
+}
+
+bool is_our_address(int port, struct sockaddr_in *check_address) {
+    bool result = false;
+    struct ifaddrs *addresses, *addr;
+
+    // get all interfaces
+    if (getifaddrs(&addresses) == -1) {
+        error("could not get interface addresses (error %d)\n", errno);
+    }
+
+    // check each address to see whether it matches
+    for (addr = addresses; addr != NULL; addr = addr->ifa_next) {
+        if (addr->ifa_addr == NULL || addr->ifa_addr->sa_family != AF_INET) {
+            // not an IPv4 address
+            continue;
+        }
+        struct sockaddr_in *our_address = (struct sockaddr_in *) addr->ifa_addr;
+        result = result || ((our_address->sin_addr.s_addr - 
+                             check_address->sin_addr.s_addr) == 0);
+    }
+
+    if (result) {
+        // if an address matched, check the port of the socket
+        struct sockaddr_in socket_addr;
+        socklen_t len = sizeof(struct sockaddr_in);
+        if (getsockname(udp_socket(port), 
+                        (struct sockaddr *) &socket_addr, &len) == -1) {
+            // this isn't fatal, it just means we might receive our own packet
+            debug("couldn't get socket info for local socket\n");
+            result = false;
+        } else {
+            result = (check_address->sin_port == socket_addr.sin_port);
+        }
+    }
+
+    return result;
 }

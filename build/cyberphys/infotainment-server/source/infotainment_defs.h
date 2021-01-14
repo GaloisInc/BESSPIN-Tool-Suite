@@ -12,13 +12,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// the CAN network port is where we receive CAN packets to be processed
-#define CAN_NETWORK_PORT 5001
+// we listen for CAN packets on the receive port
+#define RECEIVE_PORT 5002
 
-// the MUX port is where we send CAN packets to be relayed
-// note: is this necesary or do we always send CAN packets to the 
-// main CAN network port?
-#define MUX_PORT 5002
+// we send CAN packets to the send port
+#define SEND_PORT 5002
 
 // the minimum volume
 #define MIN_VOLUME 0
