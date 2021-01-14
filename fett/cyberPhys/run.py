@@ -16,7 +16,10 @@ def runCyberPhys(xTarget):
     # here anything that needs to be done on the targets before handing the user the prompt
     if (isEnabled('sendTarballToTarget',targetId=xTarget.targetId)):
         #send any needed files to target
-        xTarget.sendTar(timeout=60)
+        scpTimeout = 60
+        if (xTarget.osImage == "FreeBSD"):
+            scpTimeout += 120
+        xTarget.sendTar(timeout=scpTimeout)
 
     # assign modules
     if (xTarget.osImage=='FreeRTOS'):
