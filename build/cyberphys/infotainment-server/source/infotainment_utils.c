@@ -144,7 +144,7 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
         // the receive address matches one of our interface addresses _and_ the port
         // number matches the port number of our socket
         if (is_our_address(port, (struct sockaddr_in *) receive_address)) {
-            debug("received CAN from from ourselves, ignoring\n");
+            debug("received CAN frame from ourselves, ignoring\n");
             continue;
         }
 
