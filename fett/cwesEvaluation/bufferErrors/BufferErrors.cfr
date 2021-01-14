@@ -69,6 +69,8 @@ BufferErrors_Test : BufferErrors_Weakness ?
     CWE_786
     CWE_787
     CWE_788
+    CWE_805
+    CWE_806
     CWE_823
 
     [ CWE_118 ]
@@ -90,6 +92,8 @@ BufferErrors_Test : BufferErrors_Weakness ?
     [ CWE_786 <=> ( Boundary_Below ) ]
     [ CWE_787 <=> ( Access_Write) ]
     [ CWE_788 <=> ( Boundary_Above ) ]
+    [ CWE_805 <=> CWE_120 ]
+    [ CWE_806 <=> CWE_120 ]
     [ CWE_823 <=> ( BufferIndexScheme_PointerArithmetic ) ]
 // End of BufferErrors
 
