@@ -61,13 +61,17 @@ int udp_socket(int listen_port) {
         listen_address.sin_port = htons(listen_port);
         listen_address.sin_addr.s_addr = htonl(INADDR_ANY);
 
-        // set socket options to receive broadcasts
-        int broadcast_permission = 1;
-        if (setsockopt(socketfd, SOL_SOCKET, SO_BROADCAST, (void *) &broadcast_permission, 
-                       sizeof(broadcast_permission)) < 0) {
+        // set socket options to receive broadcasts and share address/port
+        if (setsockopt(socketfd, SOL_SOCKET, SO_BROADCAST, 
+                       &(int){1}, sizeof(int)) < 0) {
             error("unable to set broadcast listening mode\n");
         }
-        
+        if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEPORT, 
+                       &(int){1}, sizeof(int)) < 0) {
+            // this is not fatal but does mean a hack that tries to listen
+            // on the same port won't work
+            debug("warning: unable to set port reuse mode\n");
+        }
         // bind the socket to the port
         if (bind(socketfd, 
                  (struct sockaddr *) &listen_address, 
