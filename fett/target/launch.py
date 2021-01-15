@@ -290,6 +290,7 @@ def resetTarget (curTarget):
     curTarget.tearDown() 
     rootPassword = curTarget.rootPassword
     portsBegin = curTarget.portsBegin
+    userCreated = curTarget.userCreated
     del curTarget
 
     printAndLog("resetTarget: Re-preparing the environment...",doPrint=(not isEqSetting('mode','cyberPhys')))
@@ -328,7 +329,7 @@ def resetTarget (curTarget):
     if (isEqSetting('target','awsf1',targetId=targetId)):
         newTarget.rootPassword = rootPassword
     newTarget.portsBegin = portsBegin
-    newTarget.userCreated = True
+    newTarget.userCreated = userCreated
 
     newTarget.start()
     if (isEqSetting('mode','production')):
