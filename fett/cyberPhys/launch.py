@@ -32,8 +32,9 @@ def startCyberPhys():
         allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
 
         # Pipe the UART
-        runThreadPerTarget(startUartPiping)
-        printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
+        if (isEnabled('pipeTheUart')):
+            runThreadPerTarget(startUartPiping)
+            printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
         # Create an interactor queue
         # Interactor can be terminated because of a watchdog reported error, or by the user
         setSetting('interactorQueue',queue.Queue(maxsize=2))

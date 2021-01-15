@@ -334,7 +334,7 @@ def resetTarget (curTarget):
     newTarget.start()
     if (isEqSetting('mode','production')):
         awsf1.startUartPiping(newTarget)
-    elif (isEqSetting('mode','cyberPhys')):
+    elif (isEqSetting('mode','cyberPhys') and isEnabled('pipeTheUart')):
         fett.cyberPhys.launch.startUartPiping(targetId)
 
     if ((getSetting('target',targetId=targetId) in ['vcu118', 'qemu']) #We currently do not use a separate .img file

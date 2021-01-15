@@ -99,7 +99,10 @@ class cyberPhysShell(cmd.Cmd):
         Displays the ports to which the UART/TTY is piped for the running targets"""
         printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
         for iTarget in range(1,getSetting('nTargets')+1):
-            printAndLog(f"<target{iTarget}>: {getSetting('uartPipePort',targetId=iTarget)}")
+            if (isEnabled('isUartPiped',targetId=iTarget)):
+                printAndLog(f"<target{iTarget}>: {getSetting('uartPipePort',targetId=iTarget)}")
+            else:
+                printAndLog(f"<target{iTarget}>: UART not piped. Use <pipe {iTarget}> to start piping it.")
         return
 
     def do_info(self,inp):
