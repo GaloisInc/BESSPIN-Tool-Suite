@@ -81,6 +81,12 @@ int main_loop(void) {
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_Z, 1.0f);
 
+    send_coordinate(CAN_ID_CAR_R, 1.0f);
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_position(frame, CAN_ID_CAR_R, 1.0f);
+
     for (int i = 0; i < MAX_VOLUME + 2; i++) {
         // lower the volume to 0 no matter what it started at; this also tests
         // min volume
@@ -135,6 +141,7 @@ int main_loop(void) {
     // change for z; only the z one should result in a packet
     send_coordinate(CAN_ID_CAR_X, 1.0f);
     send_coordinate(CAN_ID_CAR_Y, 1.0f);
+    send_coordinate(CAN_ID_CAR_R, 1.0f);
     send_coordinate(CAN_ID_CAR_Z, 1.1f);
     frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                           &receive_address, &receive_address_len);

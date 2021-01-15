@@ -90,6 +90,17 @@
 #define CAN_ID_CAR_Z 0XAAFEAABF
 #define BYTE_LENGTH_CAR_Z 4
 
+// car_r (float)
+// Sender: ignition
+// Receiver: Infotainment Thin Client
+// Bounds/Range: 0-360
+// Units: degrees
+// J1939 compatible: No
+// Description: 
+//	infotainment position of car to display rotation
+#define CAN_ID_CAR_R 0XAACDAD11
+#define BYTE_LENGTH_CAR_R 4
+
 // button_pressed (uint8_t)
 // Sender: Infotainment Thin Client
 // Receiver: Infotainment Server

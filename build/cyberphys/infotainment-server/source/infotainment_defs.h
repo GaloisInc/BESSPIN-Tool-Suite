@@ -61,6 +61,7 @@ typedef struct infotainment_state_t {
     float pos_x;
     float pos_y;
     float pos_z;
+    float pos_r;
 } infotainment_state;
 
 // constants for interpreting CAN messages; these are subject to 

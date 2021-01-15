@@ -46,6 +46,7 @@ bool initialize(void) {
     the_state.pos_x = 0.0f;
     the_state.pos_y = 0.0f;
     the_state.pos_z = 0.0f;
+    the_state.pos_r = 0.0f;
     the_state.T = RUNNING;
 
     return true;
@@ -85,6 +86,7 @@ int main_loop(void) {
             case CAN_ID_CAR_X:
             case CAN_ID_CAR_Y:
             case CAN_ID_CAR_Z:
+            case CAN_ID_CAR_R:
                 position_updated = update_position(frame);
                 break;
             
@@ -120,6 +122,7 @@ bool is_relevant(canid_t can_id) {
         case CAN_ID_CAR_X:
         case CAN_ID_CAR_Y:
         case CAN_ID_CAR_Z:
+        case CAN_ID_CAR_R:
             result = true;
     }
 
@@ -129,7 +132,7 @@ bool is_relevant(canid_t can_id) {
 bool update_position(can_frame *frame) {
     // make sure the frame is an appropriate type
     assert(frame->can_id == CAN_ID_CAR_X || frame->can_id == CAN_ID_CAR_Y ||
-           frame->can_id == CAN_ID_CAR_Z);
+           frame->can_id == CAN_ID_CAR_Z || frame->can_id == CAN_ID_CAR_R);
 
     // interpret the payload as a float
     float *position = (float *) frame->data;
@@ -138,12 +141,12 @@ bool update_position(can_frame *frame) {
     bool changed = false;
 
     if (*old_position == *position) {
-        debug("%c-coordinate update (%f) results in no change\n", 
+        debug("%c position update (%f) results in no change\n", 
               dimension, *position);
     } else {
         *old_position = *position;
         changed = true;
-        debug("updated %c-coordinate to %f\n", dimension, *old_position);
+        debug("updated %c position to %f\n", dimension, *old_position);
     }
 
     return changed;
@@ -261,7 +264,7 @@ void broadcast_music_state() {
 void broadcast_position(canid_t can_id) {
     // make sure the ID is appropriate
     assert(can_id == CAN_ID_CAR_X || can_id == CAN_ID_CAR_Y ||
-           can_id == CAN_ID_CAR_Z);
+           can_id == CAN_ID_CAR_Z || can_id == CAN_ID_CAR_R);
 
     float *position = position_for_dimension(&the_state, can_id);
     char dimension = char_for_dimension(can_id);

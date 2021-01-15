@@ -92,17 +92,17 @@ char char_for_dimension(canid_t dimension_id) {
         case CAN_ID_CAR_X:
             result = 'x';
             break;
-        
         case CAN_ID_CAR_Y:
             result = 'y';
             break;
-
         case CAN_ID_CAR_Z:
             result = 'z';
             break;
-
+        case CAN_ID_CAR_R:
+            result = 'r';
+            break;
         default:
-            debug("char_for_dimension called for bad CAN frame type %x\n", dimension_id);
+            error("char_for_dimension called for bad CAN frame type %x\n", dimension_id);
     }
 
     return result;
@@ -120,6 +120,9 @@ float *position_for_dimension(infotainment_state *the_state, canid_t dimension_i
             break;
         case CAN_ID_CAR_Z:
             result = &(the_state->pos_z);
+            break;
+        case CAN_ID_CAR_R:
+            result = &(the_state->pos_r);
             break;
         default:
             error("position_for_dimension called for bad CAN frame type %x\n",

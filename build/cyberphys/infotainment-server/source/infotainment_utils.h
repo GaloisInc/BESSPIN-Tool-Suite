@@ -17,7 +17,7 @@
 int udp_socket(int listen_port);
 
 /**
- * Get a character (x, y, z) based on the CAN ID for a position dimension.
+ * Get a character (x, y, z, r) based on the CAN ID for a position dimension.
  * @param dimension_id The CAN ID for the dimension.
  * @return the character.
  */
