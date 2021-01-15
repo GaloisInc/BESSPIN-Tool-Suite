@@ -122,6 +122,7 @@ def startFett (targetId=None):
             awsf1.startRemoteLogging (xTarget)
     elif (isEqSetting('mode','cyberPhys')):
         setSetting('targetObj',xTarget,targetId=targetId)
+        setSetting('isUartPiped',False,targetId=targetId)
 
     # Pipe UART to the network
     if (isEqSetting('mode','production')):

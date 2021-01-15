@@ -113,6 +113,9 @@ def runThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True,
 @decorate.debugWrap
 def startUartPiping(targetId):
     xTarget = getSetting('targetObj',targetId=targetId)
+    if (isEnabled('isUartPiped',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}startUartPiping: the UART is already piped to port <{getSetting('uartPipePort',targetId=targetId)}>.")
+        return
     uartPipePort = xTarget.findPort(portUse='uartFwdPort')
     setSetting('uartPipePort',uartPipePort,targetId=targetId)
     try:
@@ -122,14 +125,17 @@ def startUartPiping(targetId):
     except Exception as exc:
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}startUartPiping: Failed to start the piping.",
             exc=exc,exitCode=EXIT.Run)
-
+    setSetting('isUartPiped',True,targetId=targetId)
     printAndLog (f"{xTarget.targetIdInfo}UART is piped to port <{uartPipePort}>.")
 
 @decorate.debugWrap
 def endUartPiping(targetId):
+    if (not isEnabled('isUartPiped',targetId=targetId)):
+        return #The function gets called in case the uart was piped in the interactive mode
     xTarget = getSetting('targetObj',targetId=targetId)
     try:
         xTarget.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
     except Exception as exc:
         warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: Failed to kill the process.",exc=exc)
+    setSetting('isUartPiped',False,targetId=targetId)
     
