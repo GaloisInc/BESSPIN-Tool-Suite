@@ -50,6 +50,9 @@
                 "test_680" : {
                     "cweText" : "Integer Overflow to Buffer Overflow"
                 },
+                "test_785" : {
+                    "cweText" : "Use of Path Manipulation Function without Maximum-sized Buffer"
+                },
                 "test_786" : {
                     "cweText" : "Access of Memory Location Before Start of Buffer"
                 },
