@@ -210,7 +210,7 @@ void print_frame(can_frame *frame) {
 void print_position_frame(can_frame *frame) {
     // make sure the frame is an appropriate type
     assert(frame->can_id == CAN_ID_CAR_X || frame->can_id == CAN_ID_CAR_Y ||
-           frame->can_id == CAN_ID_CAR_Z);
+           frame->can_id == CAN_ID_CAR_Z || frame->can_id == CAN_ID_CAR_R);
 
     // interpret the payload as a float
     float *position = (float *) frame->data;
