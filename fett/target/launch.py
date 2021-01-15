@@ -313,7 +313,8 @@ def resetTarget (curTarget):
         if (isEqSetting('target','qemu',targetId=targetId)):
             qemu.configTapAdaptor(targetId=targetId)
         elif (isEqSetting('target','vcu118',targetId=targetId)):
-            vcu118.programBitfile(targetId=targetId)
+            if (isEnabled('programBitfileOnReset')):
+                vcu118.programBitfile(targetId=targetId)
             vcu118.resetEthAdaptor()
         else:
             logAndExit (f"<resetTarget> is not implemented for <{getSetting('target',targetId=targetId)}>."
