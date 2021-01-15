@@ -353,7 +353,7 @@ def resetTarget (curTarget):
             if (isEnabled("rootUserAccess")):
                 newTarget.enableRootUserAccess()
 
-    if (isEqSetting('mode','cyberPhys')):
+    if (isEqSetting('mode','cyberPhys') and isEnabled('runApp',targetId=targetId)):
         runCyberPhys(newTarget)
 
     return newTarget
