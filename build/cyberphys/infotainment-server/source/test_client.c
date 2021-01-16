@@ -141,8 +141,9 @@ int main_loop(void) {
     // change for z; only the z one should result in a packet
     send_coordinate(CAN_ID_CAR_X, 1.0f);
     send_coordinate(CAN_ID_CAR_Y, 1.0f);
+    send_coordinate(CAN_ID_CAR_Z, 1.1f); // one of these is not like the others
     send_coordinate(CAN_ID_CAR_R, 1.0f);
-    send_coordinate(CAN_ID_CAR_Z, 1.1f);
+
     frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
                           &receive_address, &receive_address_len);
     print_frame(frame);
@@ -167,6 +168,12 @@ int main_loop(void) {
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_Z, 0.0f);
+
+    send_coordinate(CAN_ID_CAR_R, 0.0f);
+    frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE, 
+                          &receive_address, &receive_address_len);
+    print_frame(frame);
+    assert_position(frame, CAN_ID_CAR_R, 0.0f);
 
     debug("\n\nTESTS SUCCESSFUL\n");
     return 0;
