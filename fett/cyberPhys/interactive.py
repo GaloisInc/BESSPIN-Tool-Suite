@@ -114,6 +114,34 @@ class cyberPhysShell(cmd.Cmd):
                 printAndLog(f"\t{xInfo} = {self.getTargetMember(iTarget,xInfo)}")
         return
 
+    def do_pipe(self,inp):
+        """pipe [start|stop] TARGET_ID
+        starts|stops piping the target with the chosen ID"""
+        items = inp.split(' ')
+        if (len(items)>2):
+            print(self.do_pipe.__doc__)
+            return
+        if (len(items)==1):
+            action, targetId = ['start', items[0]]
+        else:
+            action, targetId = items
+        
+        try:
+            assert (action in ['start', 'stop']), "validating piping action"
+            assert (int(targetId) in range(1,getSetting('nTargets')+1)), "validating target ID"
+            targetId = int(targetId)
+        except Exception as exc:
+            warnAndLog("Error in using pipe", exc=exc, doPrint=False)
+            print(self.do_pipe.__doc__)
+            return
+        if (action == 'start'):
+            fett.cyberPhys.launch.startUartPiping(targetId)
+        else:
+            fett.cyberPhys.launch.endUartPiping(targetId)
+
+        
+
+
 
 
     

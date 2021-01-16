@@ -131,9 +131,10 @@ def startUartPiping(targetId):
 
 @decorate.debugWrap
 def endUartPiping(targetId):
-    if (not isEnabled('isUartPiped',targetId=targetId)):
-        return #The function gets called in case the uart was piped in the interactive mode
     xTarget = getSetting('targetObj',targetId=targetId)
+    if (not isEnabled('isUartPiped',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: The UART is not piped!")
+        return #The function gets called in case the uart was piped in the interactive mode
     try:
         xTarget.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
     except Exception as exc:
