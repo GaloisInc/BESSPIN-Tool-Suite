@@ -194,6 +194,7 @@ void print_frame(can_frame *frame) {
             case CAN_ID_CAR_X:
             case CAN_ID_CAR_Y: 
             case CAN_ID_CAR_Z:
+            case CAN_ID_CAR_R:
                 print_position_frame(frame);
                 break;
         
@@ -214,20 +215,9 @@ void print_position_frame(can_frame *frame) {
 
     // interpret the payload as a float
     float *position = (float *) frame->data;
-    const char *dimension = "";
-    switch (frame->can_id) {
-        case CAN_ID_CAR_X:
-            dimension = "x";
-            break;
-        case CAN_ID_CAR_Y:
-            dimension = "y";
-            break;
-        case CAN_ID_CAR_Z:
-            dimension = "z";
-            break;
-    }
 
-    debug("%s-position CAN frame received: %f\n", dimension, *position);
+    debug("%c-position CAN frame received: %f\n", 
+          char_for_dimension(frame->can_id), *position);
 }
 
 void print_music_state_frame(can_frame *frame) {
@@ -251,25 +241,14 @@ void send_button_press(uint8_t button) {
 void send_coordinate(canid_t dimension_id, float coordinate) {
     // make sure the CAN ID is reasonable
     assert(dimension_id == CAN_ID_CAR_X || dimension_id == CAN_ID_CAR_Y ||
-           dimension_id == CAN_ID_CAR_Z);
+           dimension_id == CAN_ID_CAR_Z || dimension_id == CAN_ID_CAR_R);
 
     can_frame frame = { .can_id = dimension_id, .can_dlc = BYTE_LENGTH_CAR_X };
     float *buffer = (float *) frame.data;
     *buffer = coordinate;
     
-    char *dimension = "";
-    switch (dimension_id) {
-        case CAN_ID_CAR_X:
-            dimension = "x";
-            break;
-        case CAN_ID_CAR_Y:
-            dimension = "y";
-            break;
-        case CAN_ID_CAR_Z:
-            dimension = "z";
-            break;
-    }
-    debug("broadcasting %s-coordinate update (%f)\n", dimension, coordinate);
+    debug("broadcasting %c-coordinate update (%f)\n", 
+          char_for_dimension(dimension_id), coordinate);
     broadcast_frame(SEND_PORT, RECEIVE_PORT, &frame);
 }
 
