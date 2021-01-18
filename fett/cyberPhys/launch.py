@@ -8,7 +8,7 @@ import fett.target.launch
 import fett.cyberPhys.interactive
 import fett.cyberPhys.run
 from fett.base.threadControl import ftQueueUtils
-import threading, queue
+import threading, queue, pexpect
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -35,6 +35,9 @@ def startCyberPhys():
         if (isEnabled('pipeTheUart')):
             runThreadPerTarget(startUartPiping)
             printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
+        else: #log the output instead
+            runThreadPerTarget(startTtyLogging)
+
         # Create an interactor queue
         # Interactor can be terminated because of a watchdog reported error, or by the user
         setSetting('interactorQueue',queue.Queue(maxsize=2))
@@ -63,8 +66,9 @@ def startCyberPhys():
 def endCyberPhys():
     printAndLog (f"Terminating FETT...")
     if (isEnabled('interactiveShell')):
-        # End UART piping
+        # End piping and logging
         runThreadPerTarget(endUartPiping)
+        runThreadPerTarget(stopTtyLogging)
     # Terminate the targets
     runThreadPerTarget(fett.target.launch.endFett,
                     mapTargetSettingsToKwargs=[('xTarget','targetObj')],
@@ -140,4 +144,49 @@ def endUartPiping(targetId):
     except Exception as exc:
         warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: Failed to kill the process.",exc=exc)
     setSetting('isUartPiped',False,targetId=targetId)
+
+
+class TtyLogger(threading.Thread):
+    def __init__(self, xTarget):
+        self.xTarget = xTarget
+        self.process = xTarget.process
+        self.stopLogging = threading.Event()
+        threading.Thread.__init__(self)
+        self.daemon = True
+        getSetting('trash').throwThread(self,f"<TtyLogger> for target{xTarget.targetId}")
+
+    def run(self):
+        while (not self.stopLogging.is_set()):
+            try:
+                fetchedBytes = self.process.readline().rstrip()
+                textBack = str(fetchedBytes,'utf-8')
+            except pexpect.TIMEOUT:
+                continue
+            except Exception as exc:
+                warnAndLog(f"{self.xTarget.targetIdInfo}TtyLogger: Failed to read from target! Logging will stop.",exc=exc)
+                break
+
+    def stop(self):
+        self.stopLogging.set()
+
+@decorate.debugWrap
+def startTtyLogging(targetId):
+    xTarget = getSetting('targetObj',targetId=targetId)
+    if (not doesSettingExist('isTtyLogging',targetId=targetId)): #first time, create one
+        setSetting('isTtyLogging',True,targetId=targetId)
+    elif (isEnabled('isTtyLogging',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}startTtyLogging: the TTY is already being logged.")
+        return
+    ttyLogger = TtyLogger(xTarget)
+    setSetting('ttyLogger',ttyLogger,targetId=targetId)
+    ttyLogger.start()
+
+@decorate.debugWrap
+def stopTtyLogging(targetId):
+    if (not isEnabled('isTtyLogging',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}stopTtyLogging: The TTY was not being logged!",doPrint=False)
+        return
+    getSetting('ttyLogger',targetId=targetId).stop()
+
+
     

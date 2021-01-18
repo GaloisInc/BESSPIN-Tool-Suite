@@ -287,6 +287,7 @@ def resetTarget (curTarget):
         awsf1.endUartPiping(curTarget)
     elif (isEqSetting('mode','cyberPhys')):
         fett.cyberPhys.launch.endUartPiping(targetId)
+        fett.cyberPhys.launch.stopTtyLogging(targetId)
     curTarget.tearDown() 
     rootPassword = curTarget.rootPassword
     portsBegin = curTarget.portsBegin
@@ -334,8 +335,11 @@ def resetTarget (curTarget):
     newTarget.start()
     if (isEqSetting('mode','production')):
         awsf1.startUartPiping(newTarget)
-    elif (isEqSetting('mode','cyberPhys') and isEnabled('pipeTheUart')):
-        fett.cyberPhys.launch.startUartPiping(targetId)
+    elif (isEqSetting('mode','cyberPhys')):
+        if (isEnabled('pipeTheUart')):
+            fett.cyberPhys.launch.startUartPiping(targetId)
+        else:
+            fett.cyberPhys.launch.startTtyLogging(targetId)
 
     if ((getSetting('target',targetId=targetId) in ['vcu118', 'qemu']) #We currently do not use a separate .img file
             and (isEnabled('isUnix',targetId=targetId)) 
