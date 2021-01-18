@@ -123,6 +123,7 @@ def startFett (targetId=None):
     elif (isEqSetting('mode','cyberPhys')):
         setSetting('targetObj',xTarget,targetId=targetId)
         setSetting('isUartPiped',False,targetId=targetId)
+        setSetting('isTtyLogging',False,targetId=targetId)
 
     # Pipe UART to the network
     if (isEqSetting('mode','production')):

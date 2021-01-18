@@ -172,14 +172,13 @@ class TtyLogger(threading.Thread):
 @decorate.debugWrap
 def startTtyLogging(targetId):
     xTarget = getSetting('targetObj',targetId=targetId)
-    if (not doesSettingExist('isTtyLogging',targetId=targetId)): #first time, create one
-        setSetting('isTtyLogging',True,targetId=targetId)
-    elif (isEnabled('isTtyLogging',targetId=targetId)):
+    if (isEnabled('isTtyLogging',targetId=targetId)):
         warnAndLog(f"{xTarget.targetIdInfo}startTtyLogging: the TTY is already being logged.")
         return
     ttyLogger = TtyLogger(xTarget)
     setSetting('ttyLogger',ttyLogger,targetId=targetId)
     ttyLogger.start()
+    setSetting('isTtyLogging',True,targetId=targetId)
 
 @decorate.debugWrap
 def stopTtyLogging(targetId):
@@ -187,6 +186,7 @@ def stopTtyLogging(targetId):
         warnAndLog(f"{xTarget.targetIdInfo}stopTtyLogging: The TTY was not being logged!",doPrint=False)
         return
     getSetting('ttyLogger',targetId=targetId).stop()
+    setSetting('isTtyLogging',False,targetId=targetId)
 
 
     
