@@ -121,6 +121,9 @@ def startUartPiping(targetId):
     if (isEnabled('isUartPiped',targetId=targetId)):
         warnAndLog(f"{xTarget.targetIdInfo}startUartPiping: the UART is already piped to port <{getSetting('uartPipePort',targetId=targetId)}>.")
         return
+    if (isEnabled('isTtyLogging',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}startUartPiping: Has to turn off tty logging first.")
+        stopTtyLogging(targetId)
     uartPipePort = xTarget.findPort(portUse='uartFwdPort')
     setSetting('uartPipePort',uartPipePort,targetId=targetId)
     try:
@@ -175,6 +178,9 @@ def startTtyLogging(targetId):
     if (isEnabled('isTtyLogging',targetId=targetId)):
         warnAndLog(f"{xTarget.targetIdInfo}startTtyLogging: the TTY is already being logged.")
         return
+    if (isEnabled('isUartPiped',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}startTtyLogging: Has to turn off uart piping first.")
+        endUartPiping(targetId)
     ttyLogger = TtyLogger(xTarget)
     setSetting('ttyLogger',ttyLogger,targetId=targetId)
     ttyLogger.start()
