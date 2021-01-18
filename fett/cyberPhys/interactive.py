@@ -135,9 +135,11 @@ class cyberPhysShell(cmd.Cmd):
             print(self.do_pipe.__doc__)
             return
         if (action == 'start'):
+            fett.cyberPhys.launch.stopTtyLogging(targetId)
             fett.cyberPhys.launch.startUartPiping(targetId)
         else:
-            fett.cyberPhys.launch.endUartPiping(targetId)
+            fett.cyberPhys.launch.endUartPiping(targetId, doPrintWarning=True)
+            fett.cyberPhys.launch.startTtyLogging(targetId)
 
         
 

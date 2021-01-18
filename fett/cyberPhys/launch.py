@@ -137,10 +137,10 @@ def startUartPiping(targetId):
     printAndLog (f"{xTarget.targetIdInfo}UART is piped to port <{uartPipePort}>.")
 
 @decorate.debugWrap
-def endUartPiping(targetId):
+def endUartPiping(targetId, doPrintWarning=False):
     xTarget = getSetting('targetObj',targetId=targetId)
     if (not isEnabled('isUartPiped',targetId=targetId)):
-        warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: The UART is not piped!")
+        warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: The UART is not piped!",doPrint=doPrintWarning)
         return #The function gets called in case the uart was piped in the interactive mode
     try:
         xTarget.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
@@ -154,6 +154,7 @@ class TtyLogger(threading.Thread):
         self.xTarget = xTarget
         self.process = xTarget.process
         self.stopLogging = threading.Event()
+        self.finishedLogging = threading.Event()
         threading.Thread.__init__(self)
         self.daemon = True
         getSetting('trash').throwThread(self,f"<TtyLogger> for target{xTarget.targetId}")
@@ -161,16 +162,18 @@ class TtyLogger(threading.Thread):
     def run(self):
         while (not self.stopLogging.is_set()):
             try:
-                fetchedBytes = self.process.readline().rstrip()
+                fetchedBytes = self.process.read_nonblocking(size=1024,timeout=1) #size is arbitrary; it wouldn't matter much
                 textBack = str(fetchedBytes,'utf-8')
             except pexpect.TIMEOUT:
                 continue
             except Exception as exc:
                 warnAndLog(f"{self.xTarget.targetIdInfo}TtyLogger: Failed to read from target! Logging will stop.",exc=exc)
                 break
+        self.finishedLogging.set()
 
     def stop(self):
         self.stopLogging.set()
+        self.finishedLogging.wait() #This to ensure not to return before the `read` times out
 
 @decorate.debugWrap
 def startTtyLogging(targetId):
