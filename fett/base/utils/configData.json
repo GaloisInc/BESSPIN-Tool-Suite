@@ -35,6 +35,10 @@
             "type" : "bool"
         },
         {
+            "name" : "pipeTheUart",
+            "type" : "bool"
+        },
+        {
             "name" : "useCustomCyberPhysConfig",
             "type" : "boolean"
         },
