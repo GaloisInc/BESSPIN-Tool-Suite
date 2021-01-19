@@ -32,7 +32,7 @@
 "." STRINGIZE(configGATEWAY_ADDR1) "." STRINGIZE(configGATEWAY_ADDR2) ".255"
 
 #define MAINTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
-#define SENSORTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
+#define SENSORTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 20U
 #define CAN_TX_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define CAN_RX_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
 #define INFOTASK_STACK_SIZE configMINIMAL_STACK_SIZE * 10U
@@ -40,13 +40,12 @@
 #define MAINTASK_PRIORITY tskIDLE_PRIORITY + 5
 #define SENSORTASK_PRIORITY tskIDLE_PRIORITY + 4
 #define CAN_RX_TASK_PRIORITY tskIDLE_PRIORITY + 3
-#define CAN_TX_TASK_PRIORITY tskIDLE_PRIORITY + 2
 #define INFOTASK_PRIORITY tskIDLE_PRIORITY + 1
 
 #define CAN_RX_PORT (5001UL)
 #define CAN_TX_PORT (5002UL)
 
-#define SENSOR_LOOP_DELAY_MS pdMS_TO_TICKS(10)
+#define SENSOR_LOOP_DELAY_MS pdMS_TO_TICKS(40)
 
 #define SENSOR_POWER_UP_DELAY_MS pdMS_TO_TICKS(100)
 #define BROADCAST_LOOP_DELAY_MS pdMS_TO_TICKS(50)
@@ -65,7 +64,6 @@
 #define NOTIFY_SUCCESS_NTK  0x00000001
 
 static void prvSensorTask(void *pvParameters);
-static void prvCanTxTask(void *pvParameters);
 static void prvCanRxTask(void *pvParameters);
 static void prvInfoTask(void *pvParameters);
 
@@ -161,8 +159,8 @@ char *getCurrTime(void)
     uint32_t n_minutes = n_seconds / 60;
     uint32_t n_hours = n_minutes / 60;
 
-    n_minutes = n_minutes - n_hours * 60;
     n_seconds = n_seconds - n_minutes * 60;
+    n_minutes = n_minutes - n_hours * 60;
 
     sprintf(buf, "%02u:%02u:%02u.%03u", n_hours, n_minutes, n_seconds, n_ms);
     return buf;
@@ -191,6 +189,21 @@ uint32_t ulApplicationGetNextSequenceNumber(uint32_t ulSourceAddress,
     return uxRand();
 }
 
+/*
+ * Set *pulNumber to a random number, and return pdTRUE. When the random number
+ * generator is broken, it shall return pdFALSE.
+ * The macros ipconfigRAND32() and configRAND32() are not in use
+ * anymore in FreeRTOS+TCP.
+ *
+ * THIS IS ONLY A DUMMY IMPLEMENTATION THAT RETURNS A PSEUDO RANDOM NUMBER SO IS
+ * NOT INTENDED FOR USE IN PRODUCTION SYSTEMS.
+ */
+BaseType_t xApplicationGetRandomNumber( uint32_t * pulNumber )
+{
+    *pulNumber = uxRand();
+    return pdTRUE;
+}
+
 void startNetwork()
 {
     BaseType_t funcReturn;
@@ -205,7 +218,7 @@ void startNetwork()
         FreeRTOS_printf(("%s (Info)~  startNetwork: Network IP initialized successfully!.\r\n", getCurrTime()));
     }
 
-    FreeRTOS_printf((">>>%s ECU: FreeRTOS_IPInit\r\n", getCurrTime()));
+    FreeRTOS_printf(("%s ECU: FreeRTOS_IPInit\r\n", getCurrTime()));
 }
 
 void main_fett(void)
@@ -219,9 +232,9 @@ void main_fett(void)
     funcReturn = xTaskCreate(prvMainTask, "prvMainTask", MAINTASK_STACK_SIZE, NULL, MAINTASK_PRIORITY, NULL);
 
     if (funcReturn == pdPASS) {
-        FreeRTOS_printf (("(Info)~  main_fett: Created prvMainTask successfully.\n"));
+        FreeRTOS_printf(("%s (Info)~  main_fett: Created prvMainTask successfully.<<<\r\n", getCurrTime()));
     } else {
-        FreeRTOS_printf (("(Error)~  main_fett: Failed to create prvMainTask.\n"));
+        FreeRTOS_printf(("%s (Error)~  main_fett: Failed to create prvMainTask.<<<\r\n", getCurrTime()));
     }
 }
 
@@ -231,13 +244,26 @@ void prvMainTask (void *pvParameters) {
     uint32_t recvNotification = 0;
 
     xMainTask = xTaskGetCurrentTaskHandle();
+    FreeRTOS_printf(("%s (Info)~  prvMainTask started.\r\n", getCurrTime()));
 
-    funcReturn = xTaskNotifyWait(0xffffffffUL, 0xffffffffUL, &recvNotification, pdMS_TO_TICKS(20000)); //it should take less than 15s
+    uint8_t dummy = 1;
+    // Give the sensor time to power up
+    vTaskDelay(SENSOR_POWER_UP_DELAY_MS);
+    int res = iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &dummy, 1);
+    if (res == 1) {
+        FreeRTOS_printf(("%s (Info)~ prvMainTask: iic_transmit OK\r\n", getCurrTime()));
+    } else {
+        FreeRTOS_printf(("%s (Error)~ prvMainTask: iic_transmit failed with %d. Terminating...\r\n", getCurrTime(), res));
+        // Triggers an exception
+        configASSERT(false);
+    }
+
+    funcReturn = xTaskNotifyWait(0xffffffffUL, 0xffffffffUL, &recvNotification, pdMS_TO_TICKS(60000)); //it should take less than 15s
     if (funcReturn != pdPASS) {
-        FreeRTOS_printf (("(Error)~  prvMainTask: Failed to receive a notification.\n"));
+        FreeRTOS_printf (("%s (Error)~  prvMainTask: Failed to receive a notification.\n", getCurrTime()));
         vTaskDelete(NULL);
     } else if (recvNotification != NOTIFY_SUCCESS_NTK) {
-        FreeRTOS_printf (("(Error)~  prvMainTask: Unexpected notification value <%08x>.\n",recvNotification));
+        FreeRTOS_printf (("%s (Error)~  prvMainTask: Unexpected notification value <%08x>.\n", getCurrTime(),recvNotification));
         vTaskDelete(NULL);
     } else {
         // For compliance with FETT tool
@@ -254,12 +280,11 @@ void prvMainTask (void *pvParameters) {
     /* Create the tasks */
     funcReturn = xTaskCreate(prvInfoTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
     funcReturn &= xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
-    funcReturn &= xTaskCreate(prvCanTxTask, "prvCanTxTask", CAN_TX_STACK_SIZE, NULL, CAN_TX_TASK_PRIORITY, NULL);
     funcReturn &= xTaskCreate(prvCanRxTask, "prvCanRxTask", CAN_RX_STACK_SIZE, NULL, CAN_RX_TASK_PRIORITY, NULL);
     if (funcReturn == pdPASS) {
-        FreeRTOS_printf (("(Info)~  prvMainTask: Created all app tasks successfully.\n"));
+        FreeRTOS_printf (("%s (Info)~  prvMainTask: Created all app tasks successfully.\n", getCurrTime()));
     } else {
-        FreeRTOS_printf (("(Error)~  prvMainTask: Failed to create the app tasks.\n"));
+        FreeRTOS_printf (("%s (Error)~  prvMainTask: Failed to create the app tasks.\n", getCurrTime()));
     }
 
     vTaskDelete(NULL);
@@ -274,7 +299,7 @@ static void prvInfoTask(void *pvParameters)
     uint32_t hz_sensor_task_old = 0;
     uint32_t hz_cantx_task_old = 0;
 
-    FreeRTOS_printf((">>>%s Starting prvInfoTask\r\n", getCurrTime()));
+    FreeRTOS_printf(("%s Starting prvInfoTask\r\n", getCurrTime()));
 
     for (;;)
     {
@@ -288,16 +313,16 @@ static void prvInfoTask(void *pvParameters)
             local_gear = gear;
             xSemaphoreGive(data_mutex);
         }
-        FreeRTOS_printf((">>>%s (prvInfoTask:raw) throttle: %d, brake: %d\r\n", getCurrTime(), local_throttle_raw, local_brake_raw));
-        FreeRTOS_printf((">>>%s (prvInfoTask:scaled) Gear: %#x, throttle: %u, brake: %u\r\n", getCurrTime(), local_gear, local_throttle, local_brake));
-        FreeRTOS_printf((">>>%s (prvInfoTask:hz) prvSensorTask: %u[Hz]\r\n", getCurrTime(), hz_sensor_task - hz_sensor_task_old));
-        FreeRTOS_printf((">>>%s (prvInfoTask:hz) prvCanTxTask: %u[Hz]\r\n", getCurrTime(), hz_cantx_task - hz_cantx_task_old));
+        FreeRTOS_printf(("%s (prvInfoTask:raw) throttle: %d, brake: %d\r\n", getCurrTime(), local_throttle_raw, local_brake_raw));
+        FreeRTOS_printf(("%s (prvInfoTask:scaled) Gear: %#x, throttle: %u, brake: %u\r\n", getCurrTime(), local_gear, local_throttle, local_brake));
+        FreeRTOS_printf(("%s (prvInfoTask:hz) prvSensorTask: %u[Hz]\r\n", getCurrTime(), hz_sensor_task - hz_sensor_task_old));
+        FreeRTOS_printf(("%s (prvInfoTask:hz) prvCanTxTask: %u[Hz]\r\n", getCurrTime(), hz_cantx_task - hz_cantx_task_old));
         hz_sensor_task_old = hz_sensor_task;
         hz_cantx_task_old = hz_cantx_task;
 
         if (camera_ok)
         {
-            FreeRTOS_printf((">>>%s (prvInfoTask:LKAS) Camera OK: %d, steering_assist: %d\r\n", getCurrTime(), camera_ok, steering_assist));
+            FreeRTOS_printf(("%s (prvInfoTask:LKAS) Camera OK: %d, steering_assist: %d\r\n", getCurrTime(), camera_ok, steering_assist));
         }
 
         vTaskDelay(INFOTASK_LOOP_DELAY_MS);
@@ -319,8 +344,25 @@ static void prvSensorTask(void *pvParameters)
 {
     (void)pvParameters;
 
+    uint32_t ulIPAddress;
+    Socket_t xClientSocket;
+    struct freertos_sockaddr xDestinationAddress;
+
+    FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
+    // Broadcast address
+    xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
+    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_TX_PORT);
+
+    FreeRTOS_printf(("%s Starting prvSensorTask\r\n", getCurrTime()));
+
+    xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
+    configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
+
+    FreeRTOS_printf(("%s (prvSensorTask) socket connected\r\n", getCurrTime()));
+
     hz_sensor_task = 0;
     uint8_t state;
+    uint8_t tmp_var;
 
     // Gear variables
     uint8_t tmp_gear;
@@ -339,11 +381,6 @@ static void prvSensorTask(void *pvParameters)
     brake_min = BRAKE_MIN;
     brake_max = BRAKE_MAX;
 
-    FreeRTOS_printf((">>>%s Starting prvSensorTask\r\n", getCurrTime()));
-
-    // Give the sensor time to power up
-    vTaskDelay(SENSOR_POWER_UP_DELAY_MS);
-
     for (;;)
     {
         hz_sensor_task++;
@@ -352,26 +389,33 @@ static void prvSensorTask(void *pvParameters)
         state = GEAR;
         configASSERT(iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &state, 1) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
-        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &tmp_gear, 1) != -1);
+        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &tmp_var, 1) != -1);
         vTaskDelay(pdMS_TO_TICKS(1));
 
-        switch (tmp_gear)
+        switch (tmp_var)
         {
         case 0x28:
-            tmp_gear = 'P';
+            tmp_var = 'P';
             break;
         case 0x27:
-            tmp_gear = 'R';
+            tmp_var = 'R';
             break;
         case 0x26:
-            tmp_gear = 'N';
+            tmp_var = 'N';
             break;
         case 0x25:
-            tmp_gear = 'D';
+            tmp_var = 'D';
             break;
         default:
-            FreeRTOS_printf((">>>%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), gear_raw));
+            FreeRTOS_printf(("%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), gear_raw));
             break;
+        }
+        tmp_gear = tmp_var;
+
+        /* Send gear */
+        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        {
+            FreeRTOS_printf(("%s (prvSensorTask) send gear failed\r\n", getCurrTime()));
         }
 
         /* Request throttle */
@@ -384,6 +428,13 @@ static void prvSensorTask(void *pvParameters)
         tmp_throttle = max(throttle_raw - throttle_min, 0); // remove offset
         tmp_throttle = tmp_throttle * throttle_gain / (throttle_max - throttle_min);
         tmp_throttle = min(max(tmp_throttle, 0), 100);
+        tmp_var = (uint8_t)tmp_throttle;
+
+        /* Send throttle */
+        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_THROTTLE_INPUT), (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        {
+            FreeRTOS_printf(("%s (prvSensorTask) send throttle failed\r\n", getCurrTime()));
+        }
 
         /* Request brake */
         state = BRAKE;
@@ -395,6 +446,13 @@ static void prvSensorTask(void *pvParameters)
         tmp_brake = max(brake_max - brake_raw, 0); // reverse brake
         tmp_brake = tmp_brake * brake_gain / (brake_max - brake_min);
         tmp_brake = min(max(tmp_brake, 0), 100);
+        tmp_var = (uint8_t)tmp_brake;
+
+        /* Send brake */
+        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_BRAKE_INPUT), (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        {
+            FreeRTOS_printf(("%s (prvSensorTask) send brake failed\r\n", getCurrTime()));
+        }
 
         if (xSemaphoreTake(data_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
         {
@@ -402,6 +460,15 @@ static void prvSensorTask(void *pvParameters)
             throttle = (uint8_t)tmp_throttle;
             brake = (uint8_t)tmp_brake;
             xSemaphoreGive(data_mutex);
+        }
+
+        if (camera_ok)
+        {
+            /* Steering assist */
+            if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_STEERING_INPUT), (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
+            {
+                FreeRTOS_printf(("%s (prvSensorTask) send steering_assist failed\r\n", getCurrTime()));
+            }
         }
 
         vTaskDelay(SENSOR_LOOP_DELAY_MS);
@@ -423,24 +490,24 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
         server. */
         FreeRTOS_GetAddressConfiguration(&ulIPAddress, &ulNetMask, &ulGatewayAddress, &ulDNSServerAddress);
         FreeRTOS_inet_ntoa(ulIPAddress, cBuffer);
-        FreeRTOS_printf(("\r\n\r\n>>> ECIU: IP Address: %s\r\n", cBuffer));
+        FreeRTOS_printf(("\r\n\r\n%s ECIU: IP Address: %s\r\n", getCurrTime(), cBuffer));
 
         FreeRTOS_inet_ntoa(ulNetMask, cBuffer);
-        FreeRTOS_printf((">>> ECU: Subnet Mask: %s\r\n", cBuffer));
+        FreeRTOS_printf(("%s ECU: Subnet Mask: %s\r\n", getCurrTime(), cBuffer));
 
         FreeRTOS_inet_ntoa(ulGatewayAddress, cBuffer);
-        FreeRTOS_printf((">>> ECU: Gateway Address: %s\r\n", cBuffer));
+        FreeRTOS_printf(("%s ECU: Gateway Address: %s\r\n", getCurrTime(), cBuffer));
 
         FreeRTOS_inet_ntoa(ulDNSServerAddress, cBuffer);
-        FreeRTOS_printf((">>> ECU: DNS Server Address: %s\r\n\r\n\r\n", cBuffer));
+        FreeRTOS_printf(("%s ECU: DNS Server Address: %s\r\n\r\n\r\n", getCurrTime(), cBuffer));
 
         // notify main
         if (xMainTask == NULL) {
-            FreeRTOS_printf(("(Error)~  NtkHook: Unable to get the handle of <prvMainTask>.\n"));
+            FreeRTOS_printf(("%s (Error)~  NtkHook: Unable to get the handle of <prvMainTask>.\n", getCurrTime()));
         }
         funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_NTK ,eSetBits);
         if (funcReturn != pdPASS) {
-            FreeRTOS_printf(("(Error)~  NtkHook: Failed to notify <prvMainTask>!\n"));
+            FreeRTOS_printf(("%s (Error)~  NtkHook: Failed to notify <prvMainTask>!\n", getCurrTime()));
         }
     }
 }
@@ -456,7 +523,7 @@ static void prvCanRxTask(void *pvParameters)
     struct freertos_sockaddr xClient;
     size_t msg_len;
 
-    FreeRTOS_printf((">>>%s Starting prvCanRxTask\r\n", getCurrTime()));
+    FreeRTOS_printf(("%s Starting prvCanRxTask\r\n", getCurrTime()));
 
     /* Attempt to open the socket. */
     xListeningSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
@@ -475,7 +542,7 @@ static void prvCanRxTask(void *pvParameters)
     FreeRTOS_bind(xListeningSocket, &xBindAddress, sizeof(xBindAddress));
 
     FreeRTOS_inet_ntoa(xBindAddress.sin_addr, cBuffer);
-    FreeRTOS_printf((">>>%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
+    FreeRTOS_printf(("%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
 
     for (;;)
     {
@@ -483,12 +550,12 @@ static void prvCanRxTask(void *pvParameters)
         if (res == SUCCESS)
         {
             FreeRTOS_inet_ntoa(xClient.sin_addr, cBuffer);
-            FreeRTOS_printf((">>>%s (prvCanRxTask) recv_can_message %lu bytes from %s:%u\r\n",
+            FreeRTOS_printf(("%s (prvCanRxTask) recv_can_message %lu bytes from %s:%u\r\n",
                              getCurrTime(), msg_len, cBuffer, FreeRTOS_ntohs(xClient.sin_port)));
         }
         else
         {
-            FreeRTOS_printf((">>>%s (prvCanRxTask) recv_can_message returned %u\r\n", getCurrTime(), res));
+            FreeRTOS_printf(("%s (prvCanRxTask) recv_can_message returned %u\r\n", getCurrTime(), res));
         }
     }
 }
@@ -505,68 +572,4 @@ uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClie
         memcpy(j1939_rx_buf, msg, *msg_len);
     }
     return res;
-}
-
-static void prvCanTxTask(void *pvParameters)
-{
-    (void)pvParameters;
-    uint32_t ulIPAddress;
-    Socket_t xClientSocket;
-    struct freertos_sockaddr xDestinationAddress;
-
-    FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
-    // Broadcast address
-    xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_TX_PORT);
-
-    FreeRTOS_printf((">>> Starting prvCanTxTask\r\n"));
-
-    xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
-    configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
-
-    FreeRTOS_printf((">>>%s (prvCanTxTask) socket connected\r\n", getCurrTime()));
-
-    uint8_t local_throttle, local_brake, local_gear;
-
-    for (;;)
-    {
-        hz_cantx_task++;
-        /* Copy data over */
-        if (xSemaphoreTake(data_mutex, pdMS_TO_TICKS(100)) == pdTRUE)
-        {
-            local_throttle = throttle;
-            local_brake = brake;
-            local_gear = gear;
-            xSemaphoreGive(data_mutex);
-        }
-
-        /* Send throttle */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_THROTTLE_INPUT), (void *)&local_throttle, sizeof(local_throttle)) != SUCCESS)
-        {
-            FreeRTOS_printf((">>>%s (prvCanTxTask) send throttle failed\r\n", getCurrTime()));
-        }
-
-        /* Send brake */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_BRAKE_INPUT), (void *)&local_brake, sizeof(local_brake)) != SUCCESS)
-        {
-            FreeRTOS_printf((">>>%s (prvCanTxTask) send brake failed\r\n", getCurrTime()));
-        }
-
-        /* Send gear */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&local_gear, sizeof(local_gear)) != SUCCESS)
-        {
-            FreeRTOS_printf((">>>%s (prvCanTxTask) send gear failed\r\n", getCurrTime()));
-        }
-
-        if (camera_ok)
-        {
-            /* Steering assist */
-            if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_STEERING_INPUT), (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
-            {
-                FreeRTOS_printf((">>>%s (prvCanTxTask) send steering_assist failed\r\n", getCurrTime()));
-            }
-        }
-
-        vTaskDelay(BROADCAST_LOOP_DELAY_MS);
-    }
 }
