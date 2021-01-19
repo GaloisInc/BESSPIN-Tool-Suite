@@ -1,0 +1,9 @@
+.vscode
+.o
+a.out
+infotainment_server
+infotainment_server_linux
+infotainment_server_freebsd
+test_client
+test_client_linux
+test_client_freebsd
