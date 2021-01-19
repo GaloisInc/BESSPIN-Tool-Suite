@@ -122,6 +122,8 @@ def startFett (targetId=None):
             awsf1.startRemoteLogging (xTarget)
     elif (isEqSetting('mode','cyberPhys')):
         setSetting('targetObj',xTarget,targetId=targetId)
+        setSetting('isUartPiped',False,targetId=targetId)
+        setSetting('isTtyLogging',False,targetId=targetId)
 
     # Pipe UART to the network
     if (isEqSetting('mode','production')):
@@ -286,9 +288,11 @@ def resetTarget (curTarget):
         awsf1.endUartPiping(curTarget)
     elif (isEqSetting('mode','cyberPhys')):
         fett.cyberPhys.launch.endUartPiping(targetId)
+        fett.cyberPhys.launch.stopTtyLogging(targetId)
     curTarget.tearDown() 
     rootPassword = curTarget.rootPassword
     portsBegin = curTarget.portsBegin
+    userCreated = curTarget.userCreated
     del curTarget
 
     printAndLog("resetTarget: Re-preparing the environment...",doPrint=(not isEqSetting('mode','cyberPhys')))
@@ -309,7 +313,8 @@ def resetTarget (curTarget):
         if (isEqSetting('target','qemu',targetId=targetId)):
             qemu.configTapAdaptor(targetId=targetId)
         elif (isEqSetting('target','vcu118',targetId=targetId)):
-            vcu118.programBitfile(targetId=targetId)
+            if (isEnabled('programBitfileOnReset')):
+                vcu118.programBitfile(targetId=targetId)
             vcu118.resetEthAdaptor()
         else:
             logAndExit (f"<resetTarget> is not implemented for <{getSetting('target',targetId=targetId)}>."
@@ -327,13 +332,16 @@ def resetTarget (curTarget):
     if (isEqSetting('target','awsf1',targetId=targetId)):
         newTarget.rootPassword = rootPassword
     newTarget.portsBegin = portsBegin
-    newTarget.userCreated = True
+    newTarget.userCreated = userCreated
 
     newTarget.start()
     if (isEqSetting('mode','production')):
         awsf1.startUartPiping(newTarget)
     elif (isEqSetting('mode','cyberPhys')):
-        fett.cyberPhys.launch.startUartPiping(targetId)
+        if (isEnabled('pipeTheUart')):
+            fett.cyberPhys.launch.startUartPiping(targetId)
+        else:
+            fett.cyberPhys.launch.startTtyLogging(targetId)
 
     if ((getSetting('target',targetId=targetId) in ['vcu118', 'qemu']) #We currently do not use a separate .img file
             and (isEnabled('isUnix',targetId=targetId)) 
@@ -346,7 +354,7 @@ def resetTarget (curTarget):
             if (isEnabled("rootUserAccess")):
                 newTarget.enableRootUserAccess()
 
-    if (isEqSetting('mode','cyberPhys')):
+    if (isEqSetting('mode','cyberPhys') and isEnabled('runApp',targetId=targetId)):
         runCyberPhys(newTarget)
 
     return newTarget

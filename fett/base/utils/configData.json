@@ -35,6 +35,14 @@
             "type" : "bool"
         },
         {
+            "name" : "programBitfileOnReset",
+            "type" : "bool"
+        },
+        {
+            "name" : "pipeTheUart",
+            "type" : "bool"
+        },
+        {
             "name" : "useCustomCyberPhysConfig",
             "type" : "boolean"
         },

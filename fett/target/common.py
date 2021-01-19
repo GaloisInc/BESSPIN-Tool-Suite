@@ -1401,7 +1401,7 @@ class commonTarget():
         if (switchUsers):
             self.switchUser() #has to be executed on root
         # sshd_config location
-        if (isEqSetting('binarySource','SRI-Cambridge')):
+        if (self.binarySource == 'SRI-Cambridge'):
             sshdConfigPath = "/fett/etc/sshd_config"
         else: #default
             sshdConfigPath = "/etc/ssh/sshd_config"
