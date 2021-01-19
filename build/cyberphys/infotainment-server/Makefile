@@ -12,7 +12,7 @@ TEST_SRCS = source/test_client.c \
 LINUX_CC = riscv64-unknown-linux-gnu-gcc
 FREEBSD_CC = riscv64-unknown-freebsd12.1-gcc
 
-all: native
+all: native linux freebsd
 
 native: infotainment_server_native test_client_native
 
@@ -44,6 +44,6 @@ clean:
 	@find . -name "*.out" -type f -delete
 	@find . -name "*.asm" -type f -delete
 	@find . -name "*.elf" -type f -delete
-	rm -f infotainment_server test_client
+	rm -f infotainment_server* test_client*
 
-.PHONY: infotainment_server test_client clean
+.PHONY: infotainment_server test_client infotainment_server_freebsd test_client_freebsd infotainment_server_linux test_client_linux clean
