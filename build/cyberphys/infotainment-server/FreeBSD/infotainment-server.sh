@@ -15,6 +15,6 @@ command="/usr/local/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 
 load_rc_config $name
-: ${ota_enable:="no"}
+: ${infotainment_server_enable:="no"}
 
 run_rc_command "$1"
