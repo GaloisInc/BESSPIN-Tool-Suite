@@ -1,0 +1,11 @@
+[Unit]
+Description=Infotainment Server
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/infotainment_server
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

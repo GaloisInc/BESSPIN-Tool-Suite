@@ -24,7 +24,7 @@ def buildCyberPhys (targetId=None):
         # ota server, infotainment
         tarName = os.path.join(getSetting('buildDir',targetId=targetId),getSetting('tarballName'))
         buildOtaUpdateServer(tarName, targetId=targetId)
-        #buildInfotainmentServer(tarName, targetId=targetId)
+        buildInfotainmentServer(tarName, targetId=targetId)
         setSetting('sendTarballToTarget',True,targetId=targetId)
     else:
         # Nothing to send
@@ -64,6 +64,34 @@ def copyOtaUpdateserverFiles(tarName, targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
+def copyInfotainmentServerFiles(tarName, targetId=None):
+    """
+    Stuff the server binary into a tar file
+    """
+    # grab the pre-built binary
+    osImage = getSetting('osImage', targetId=targetId)
+    infotainmentBinDir = getBinDir('infotainment-server', targetId=targetId)
+    cpFilesToBuildDir(infotainmentBinDir, pattern="infotainment_server", targetId=targetId)
+    tarFiles = ["infotainment_server"]
+
+    infotainmentAppDir = getCyberphysAppDir('infotainment-server')
+    runtimeFilesDir = os.path.join(infotainmentAppDir, osImage)
+    if osImage == 'debian':
+        cpFilesToBuildDir(runtimeFilesDir, pattern="infotainment-server.service", targetId=targetId)
+        tarFiles += ["infotainment-server.service"]
+    elif osImage == 'FreeBSD':
+        cpFilesToBuildDir(runtimeFilesDir, pattern="infotainment-server.sh", targetId=targetId)
+        tarFiles += ["infotainment-server.sh"]
+    else:
+        logAndExit(f"Installing infotainment-server is not supported on <{osImage}>",
+                   exitCode=EXIT.Dev_Bug)
+
+    buildDirPathTuplePartial = functools.partial(buildDirPathTuple, targetId=targetId)
+    filesList=map(buildDirPathTuplePartial, tarFiles)
+    return filesList
+
+@decorate.debugWrap
+@decorate.timeWrap
 def buildOtaUpdateServer(tarName, targetId=None):
     if (isEnabled('buildApps')):
         # Build server
@@ -73,6 +101,18 @@ def buildOtaUpdateServer(tarName, targetId=None):
         tarFiles = copyOtaUpdateserverFiles(tarName,targetId=targetId)
         #Create the tarball here to be sent to target
         tar (tarName, tarFiles)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def buildInfotainmentServer(tarName, targetId=None):
+    if (isEnabled('buildApps')):
+        # Build server
+        logAndExit(f"Building from source is not supported for the infotainment server application",
+                   exitCode=EXIT.Configuration)
+    else:
+        tarFiles = copyInfotainmentServerFiles(tarName, targetId=targetId)
+        # create the tarball here to be sent to target
+        tar(tarName, tarFiles)
 
 @decorate.debugWrap
 @decorate.timeWrap
