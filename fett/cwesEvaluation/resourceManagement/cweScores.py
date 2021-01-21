@@ -76,7 +76,7 @@ def defaultScoreTest(testName, logLines, testsInfoSection):
     osFlavor = "unix" if isEnabled("isUnix") else "FreeRTOS"
     nParts = getSettingDict(VULCLASS,[testsInfoSection,testName,osFlavor])
 
-    scoreOptions = [SCORES.CALL_ERR, SCORES.HIGH, SCORES.MED, SCORES.LOW, SCORES.NONE]
+    scoreOptions = [SCORES.FAIL, SCORES.CALL_ERR, SCORES.HIGH, SCORES.MED, SCORES.LOW, SCORES.NONE]
 
     def scoreToKey(xScore, negate=False):
         if (negate):
