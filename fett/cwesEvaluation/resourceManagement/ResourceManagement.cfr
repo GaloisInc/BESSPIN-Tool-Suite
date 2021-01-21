@@ -17,6 +17,7 @@ ResourceManagement_Test ?
     CWE_404
     CWE_415
     CWE_416
+    CWE_463
     CWE_467
     CWE_468
     CWE_476
@@ -49,11 +50,12 @@ ResourceManagement_Test ?
   [ PTR => CWE_188 && CWE_468 && CWE_476 && CWE_588 && CWE_690 ]
   [ RLR => CWE_400 && CWE_404 && CWE_416 && CWE_770 && CWE_771 && CWE_772 && CWE_789 ]
   [ RI => CWE_908 && CWE_909 ]
-  [ MISC => CWE_467 && CWE_587 ]
+  [ MISC => CWE_467 && CWE_587 && CWE_463]
 
   xor ResourceManagement_test
     ResourceManagement_test_188
     ResourceManagement_test_415
+    ResourceManagement_test_463
     ResourceManagement_test_467
     ResourceManagement_test_468
     ResourceManagement_test_476
@@ -76,6 +78,7 @@ ResourceManagement_Test ?
 
   [ ResourceManagement_test_188 => CWE_188 ]
   [ ResourceManagement_test_415 => CWE_415 ]
+  [ ResourceManagement_test_463 => CWE_463 ]
   [ ResourceManagement_test_467 => CWE_467 ]
   [ ResourceManagement_test_468 => CWE_468 ]
   [ ResourceManagement_test_476 => CWE_476 ]

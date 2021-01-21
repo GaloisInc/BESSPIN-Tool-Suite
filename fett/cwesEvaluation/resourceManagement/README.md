@@ -507,6 +507,13 @@ The source file is `test_ri_uninitHeap.c`. The test has two parts: p1. Return a 
 
 The following are the miscellaneous CWEs that do not belong to a particular sub-category:
 
+### TEST-463 ###
+
+Deletion of Data Structure Sentinel
+\[[CWE-463](https://cwe.mitre.org/data/definitions/463.html)\].
+
+The test dynamically allocates a small block of memory for a string, and another one for an integer array. Then it overwrites the sentinel. When the string is printed using `printf`, the contents of the integer array are leaked.
+
 ### TEST-467 ###
 
 Use of sizeof() on a Pointer Type
