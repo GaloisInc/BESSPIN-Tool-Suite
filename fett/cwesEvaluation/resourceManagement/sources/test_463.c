@@ -77,6 +77,10 @@ static void deleteStrSentinel (short testPart) {
     srand(RM_SEED); //RM_SEED is written in fett/cwesEvaluation/build.py
     szStr = (size_t) ((rand() % (STR_SIZE_MAX-STR_SIZE_MIN+1)) + STR_SIZE_MIN);
     pTargetStr = (char *) MALLOC (sizeof(char)*szStr);
+    if (pTargetStr == NULL) {
+        printf("<INVALID> Failed to Malloc the char*.\n");
+        return;
+    }
     
     //fill string with the letter 's'
     memset(pTargetStr,'s',szStr-1); 
@@ -91,6 +95,10 @@ static void deleteStrSentinel (short testPart) {
         printf("<OVERWRITTEN-STR-SENTINEL>\n");
     } else { // PART02
         pSecretInt = (int *) MALLOC (sizeof(int)*SECRET_SIZE);
+        if (pSecretInt == NULL) {
+            printf("<INVALID> Failed to Malloc the int*.\n");
+            return;
+        }
 
         szPtrDiff = ((size_t) pSecretInt) - ((size_t) pTargetStr);
         printf("<PTR-DIFF=%d>\n",(unsigned) szPtrDiff);
