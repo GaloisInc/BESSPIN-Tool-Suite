@@ -221,7 +221,7 @@ def adjustToCustomScore (lines,defaultScore):
     customScore = customScorePart(lines)
     if ((customScore == SCORES.DETECTED) and (defaultScore == SCORES.CALL_ERR)): #The test was prevented from continuing
         return SCORES.NONE #PREVENTED
-    elif ((customScore > defaultScore) and (defaultScore > SCORES.FAIL)): #FAIL is FAIL
+    elif (customScore > defaultScore):
         return customScore 
     else:
         return defaultScore
