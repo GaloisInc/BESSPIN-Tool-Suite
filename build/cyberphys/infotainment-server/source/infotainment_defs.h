@@ -27,6 +27,9 @@
 // the "default" volume
 #define DEFAULT_VOLUME 11
 
+// the default broadcast address (as a string)
+#define DEFAULT_BROADCAST_ADDRESS "255.255.255.255"
+
 // the states of the state machines; note that the current volume and
 // selected station are not reflected here but are stored in variables.
 // also note that ensuring distinct values requires these definitions to

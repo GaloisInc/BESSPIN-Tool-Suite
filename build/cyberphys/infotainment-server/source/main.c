@@ -8,6 +8,7 @@
 #include <signal.h>
 #include "infotainment_server.h"
 #include "infotainment_debug.h"
+#include "infotainment_utils.h"
 
 void interrupt_handler(int unused) {
     debug("interrupt received\n");
@@ -24,7 +25,12 @@ int main(int argc, char** argv) {
     sigaction(SIGINT, &action, NULL);
 
     debug("infotainment server starting\n");
-    
+
+    if (argc == 2) {
+        // one argument means an override of the broadcast address
+        set_broadcast_address(argv[1]);
+    }
+
     int result;
 
     if (initialize()) {

@@ -46,6 +46,12 @@ can_frame *receive_frame(int port, uint8_t *buffer, int buffer_len,
                          socklen_t *receive_address_len);
 
 /**
+ * Sets the broadcast address to use.
+ * @param address The broadcast address, as a string.
+ */
+void set_broadcast_address(char *address);
+
+/**
  * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces.
  * @param from_port The port to broadcast from.
  * @param to_port The port to broadcast to.
@@ -56,4 +62,11 @@ can_frame *receive_frame(int port, uint8_t *buffer, int buffer_len,
  */
 int broadcast_frame(int from_port, int to_port, can_frame *frame);
 
+/**
+ * Checks to see if the specified address is one of the addresses for the
+ * socket created on the specified port.
+ * @param port The port of the socket to check.
+ * @param address The socket address to check.
+ * @return true if the address is one of our addresses, false otherwise.
+ */
 bool is_our_address(int port, struct sockaddr_in *address);

@@ -10,7 +10,7 @@ TEST_SRCS = source/test_client.c \
 			$(CANLIB)/*.c
 
 LINUX_CC = riscv64-unknown-linux-gnu-gcc
-FREEBSD_CC = riscv64-unknown-freebsd12.1-gcc
+FREEBSD_CC = clang -target riscv64-unknown-freebsd12.1 --sysroot=$(FETT_GFE_FREEBSD_SYSROOT)
 
 all: native linux freebsd
 

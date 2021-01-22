@@ -262,5 +262,11 @@ void send_coordinate(canid_t dimension_id, float coordinate) {
 // just run the main loop, no frills
 int main(int argc, char** argv) {
     debug("infotainment test client starting\n");
+
+    if (argc == 2) {
+        // one argument means an override of the broadcast address
+        set_broadcast_address(argv[1]);
+    }
+
     return main_loop();
 }

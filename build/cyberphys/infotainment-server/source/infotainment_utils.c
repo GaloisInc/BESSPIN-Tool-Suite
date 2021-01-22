@@ -24,6 +24,8 @@
 #include "infotainment_debug.h"
 #include "infotainment_utils.h"
 
+static char *broadcast_address = DEFAULT_BROADCAST_ADDRESS;
+
 int udp_socket(int listen_port) {
     static int socketfd = -1;
     static struct sockaddr_in listen_address;
@@ -146,9 +148,12 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
         // if the frame came from us, ignore it; we determine this to be the case if
         // the receive address matches one of our interface addresses _and_ the port
         // number matches the port number of our socket
-        if (is_our_address(port, (struct sockaddr_in *) receive_address)) {
+        if (is_our_address(port, receive_address)) {
             debug("received CAN frame from ourselves, ignoring\n");
             continue;
+        } else {
+            debug("received %i bytes from %s\n",
+                  bytes, inet_ntoa(receive_address->sin_addr));
         }
 
         // decode the packet
@@ -163,7 +168,6 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
             continue;
         }
 
-        debug("received %i bytes\n", bytes);
         result = (can_frame *) message;
         if (sizeof(can_frame) < bytes) {
             debug("received (probable) J1939 message, ignoring\n");
@@ -179,19 +183,24 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
     return result;
 }
 
+void set_broadcast_address(char *address) {
+    debug("setting broadcast address to %s\n", address);
+    broadcast_address = address;
+}
+
 int broadcast_frame(int from_port, int to_port, can_frame *frame) {
     int result = 0;
 
-    struct sockaddr_in broadcast_address;
-    memset(&broadcast_address, 0, sizeof(struct sockaddr_in));
-    broadcast_address.sin_family = AF_INET;
-    broadcast_address.sin_port = htons(to_port);
-    broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    struct sockaddr_in broadcast_addr;
+    memset(&broadcast_addr, 0, sizeof(struct sockaddr_in));
+    broadcast_addr.sin_family = AF_INET;
+    broadcast_addr.sin_port = htons(to_port);
+    broadcast_addr.sin_addr.s_addr = inet_addr(broadcast_address);
 
     debug("sending frame to broadcast address %s:%d\n",
-        inet_ntoa(broadcast_address.sin_addr), to_port);
+        inet_ntoa(broadcast_addr.sin_addr), to_port);
     return sendto(udp_socket(from_port), frame, 5 + frame->can_dlc, 0, // no flags
-                  (struct sockaddr *) &broadcast_address, 
+                  (struct sockaddr *) &broadcast_addr, 
                   sizeof(struct sockaddr_in));
 }
 
