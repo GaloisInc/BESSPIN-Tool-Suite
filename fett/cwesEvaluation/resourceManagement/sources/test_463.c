@@ -5,8 +5,8 @@
 #include <sys/types.h>
 
 #define STR_SIZE_MIN 1
-#define STR_SIZE_MAX 24 //For the malloc to be within 32 bits
-#define SECRET_SIZE 4 //chosen arbitrary -->  4*sizeof(int) = 16 bytes (the golden keyword is 16*'A')
+#define STR_SIZE_MAX 100 //Arbitrary value
+#define SECRET_SIZE 4 //chosen arbitrarily -->  4*sizeof(int) = 16 bytes (the golden keyword is 16*'A')
 
 #if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
     #include "FreeRTOS.h"
@@ -47,31 +47,32 @@ static void deleteStrSentinel (void);
 #endif //ifdef testgenOnFreeRTOS
 
 static void deleteStrSentinel () {
-    char * targetStr;
-    size_t strLen;
-    int *secretInt, i;
+    char * pTargetStr;
+    size_t szStr, szPtrDiff;
+    int *pSecretInt, i;
 
     srand(RM_SEED); //RM_SEED is written in fett/cwesEvaluation/build.py
-    strLen = (size_t) ((rand() % (STR_SIZE_MAX-STR_SIZE_MIN+1)) + STR_SIZE_MIN);
-    targetStr = (char *) MALLOC (sizeof(char)*strLen);
-    secretInt = (int *) MALLOC (sizeof(int)*SECRET_SIZE);
+    szStr = (size_t) ((rand() % (STR_SIZE_MAX-STR_SIZE_MIN+1)) + STR_SIZE_MIN);
+    pTargetStr = (char *) MALLOC (sizeof(char)*szStr);
+    pSecretInt = (int *) MALLOC (sizeof(int)*SECRET_SIZE);
 
-    printf("<DIFF-PTR=%x>\n",(unsigned) (secretInt)  - (unsigned) (targetStr)); //This has to be "20" for the test to work
+    szPtrDiff = ((size_t) pSecretInt) - ((size_t) pTargetStr);
+    printf("<PTR-DIFF=%d>\n",(unsigned) szPtrDiff);
     
     for (i=0; i<SECRET_SIZE; i++) {
-        secretInt[i] = 0x41414141; //"AAAA"
+        pSecretInt[i] = 0x41414141; //"AAAA"
     }
 
-    memset(targetStr,'s',strLen-1); //fill string with the letter 's'
-    targetStr[strLen] = 0;
-    printf("len<%s>:%ld\n",targetStr,(unsigned) strLen);
+    memset(pTargetStr,'s',szStr-1); //fill string with the letter 's'
+    pTargetStr[szStr-1] = 0;
+    printf("len<%s>:%d\n",pTargetStr,(unsigned) szStr);
 
-    //overwrite the sentinel with 'x' and ensure all nibbles are non-zero up to the secret integer
-    memset(&targetStr[strLen-1],'x',8*sizeof(int)-strLen+1);
-    printf("<%s>\n",targetStr);
+    //overwrite the sentinel with 'x' and ensure all nibbles are non-zero all the way up to the secret integer
+    memset(&pTargetStr[szStr-1],'x',szPtrDiff-szStr+1);
+    printf("<%s>\n",pTargetStr);
     
-    FREE(targetStr);
-    //FREE(secretInt); //To avoid the double free since the pointers areas will get confused
+    FREE(pTargetStr);
+    //FREE(pSecretInt); //To avoid the double free since the pointers areas will get confused
 
     return;
 }

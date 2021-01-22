@@ -512,7 +512,7 @@ The following are the miscellaneous CWEs that do not belong to a particular sub-
 Deletion of Data Structure Sentinel
 \[[CWE-463](https://cwe.mitre.org/data/definitions/463.html)\].
 
-The test dynamically allocates a small block of memory for a string, and another one for an integer array. Then it overwrites the sentinel. When the string is printed using `printf`, the contents of the integer array are leaked.
+The test dynamically allocates a memory for a string, and another one for an integer array. Then it overwrites the sentinel. When the string is printed using `printf`, the contents of the integer array are leaked.
 
 ### TEST-467 ###
 
