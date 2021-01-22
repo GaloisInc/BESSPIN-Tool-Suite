@@ -11,6 +11,8 @@ TEST_SRCS = source/test_client.c \
 
 LINUX_CC = riscv64-unknown-linux-gnu-gcc
 FREEBSD_CC = clang -target riscv64-unknown-freebsd12.1 --sysroot=$(FETT_GFE_FREEBSD_SYSROOT)
+FREEBSD_FLAGS = -Wno-error=sign-compare -mno-relax -fuse-ld=lld
+ARCH_FLAGS = -march=rv64imafdc -mabi=lp64d
 
 all: native linux freebsd
 
@@ -29,16 +31,16 @@ test_client_native:
 	gcc -I$(CANLIB) $(TEST_SRCS) -o test_client
 
 infotainment_server_linux:
-	$(LINUX_CC) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_linux
+	$(LINUX_CC) $(ARCH_FLAGS) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_linux
 
 test_client_linux:
-	$(LINUX_CC) -I$(CANLIB) $(TEST_SRCS) -o test_client_linux
+	$(LINUX_CC) $(ARCH_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_linux
 	
 infotainment_server_freebsd:
-	$(FREEBSD_CC) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_freebsd
+	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_freebsd
 
 test_client_freebsd:
-	$(FREEBSD_CC) -I$(CANLIB) $(TEST_SRCS) -o test_client_freebsd
+	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_freebsd
 	
 clean:
 	@find . -name "*.out" -type f -delete
