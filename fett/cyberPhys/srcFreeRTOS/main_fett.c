@@ -45,7 +45,7 @@
 #define CAN_RX_PORT (5001UL)
 #define CAN_TX_PORT (5002UL)
 
-#define SENSOR_LOOP_DELAY_MS pdMS_TO_TICKS(40)
+#define SENSOR_LOOP_DELAY_MS pdMS_TO_TICKS(50)
 
 #define SENSOR_POWER_UP_DELAY_MS pdMS_TO_TICKS(100)
 #define BROADCAST_LOOP_DELAY_MS pdMS_TO_TICKS(50)
@@ -55,7 +55,7 @@
 #define THROTTLE_MIN 64
 #define THROTTLE_GAIN 100
 
-#define BRAKE_MAX 525
+#define BRAKE_MAX 510
 #define BRAKE_MIN 456
 #define BRAKE_GAIN 100
 
@@ -109,7 +109,6 @@ uint8_t gear;
 /* Debug info */
 uint32_t hz_sensor_task;
 uint32_t hz_sensor_throttle_task;
-uint32_t hz_cantx_task;
 
 /* Network config variables */
 static const uint8_t ucIPAddress[4] = {configIP_ADDR0, configIP_ADDR1, configIP_ADDR2, configIP_ADDR3};
@@ -297,7 +296,6 @@ static void prvInfoTask(void *pvParameters)
     int16_t local_throttle_raw, local_brake_raw;
     uint8_t local_gear;
     uint32_t hz_sensor_task_old = 0;
-    uint32_t hz_cantx_task_old = 0;
 
     FreeRTOS_printf(("%s Starting prvInfoTask\r\n", getCurrTime()));
 
@@ -316,9 +314,7 @@ static void prvInfoTask(void *pvParameters)
         FreeRTOS_printf(("%s (prvInfoTask:raw) throttle: %d, brake: %d\r\n", getCurrTime(), local_throttle_raw, local_brake_raw));
         FreeRTOS_printf(("%s (prvInfoTask:scaled) Gear: %#x, throttle: %u, brake: %u\r\n", getCurrTime(), local_gear, local_throttle, local_brake));
         FreeRTOS_printf(("%s (prvInfoTask:hz) prvSensorTask: %u[Hz]\r\n", getCurrTime(), hz_sensor_task - hz_sensor_task_old));
-        FreeRTOS_printf(("%s (prvInfoTask:hz) prvCanTxTask: %u[Hz]\r\n", getCurrTime(), hz_cantx_task - hz_cantx_task_old));
         hz_sensor_task_old = hz_sensor_task;
-        hz_cantx_task_old = hz_cantx_task;
 
         if (camera_ok)
         {
@@ -329,14 +325,6 @@ static void prvInfoTask(void *pvParameters)
     }
 }
 
-// State machine
-enum teensy_state
-{
-    GEAR = 1,
-    THROTTLE = 2,
-    BRAKE = 3,
-};
-
 /**
  * Read and update gear values
  */
@@ -344,6 +332,7 @@ static void prvSensorTask(void *pvParameters)
 {
     (void)pvParameters;
 
+    int returnval;
     uint32_t ulIPAddress;
     Socket_t xClientSocket;
     struct freertos_sockaddr xDestinationAddress;
@@ -361,7 +350,7 @@ static void prvSensorTask(void *pvParameters)
     FreeRTOS_printf(("%s (prvSensorTask) socket connected\r\n", getCurrTime()));
 
     hz_sensor_task = 0;
-    uint8_t state;
+    uint8_t data[5];
     uint8_t tmp_var;
 
     // Gear variables
@@ -376,7 +365,6 @@ static void prvSensorTask(void *pvParameters)
 
     // Brake variables
     int16_t tmp_brake;
-    hz_cantx_task = 0;
     brake_gain = BRAKE_GAIN;
     brake_min = BRAKE_MIN;
     brake_max = BRAKE_MAX;
@@ -385,46 +373,43 @@ static void prvSensorTask(void *pvParameters)
     {
         hz_sensor_task++;
 
-        /* Request gear */
-        state = GEAR;
-        configASSERT(iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &state, 1) != -1);
+        returnval = iic_receive(&Iic0, TEENSY_I2C_ADDRESS, data, 5);
         vTaskDelay(pdMS_TO_TICKS(1));
-        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, &tmp_var, 1) != -1);
-        vTaskDelay(pdMS_TO_TICKS(1));
+        if (returnval < 1) {
+            FreeRTOS_printf(("%s (prvSensorTask) iic_receive error: %i\r\n", getCurrTime(), returnval));
+            vTaskDelay(pdMS_TO_TICKS(100));
+            continue;
+        }
 
-        switch (tmp_var)
+        // data[4] = gear
+        switch (data[4])
         {
         case 0x28:
-            tmp_var = 'P';
+            tmp_gear = 'P';
             break;
         case 0x27:
-            tmp_var = 'R';
+            tmp_gear = 'R';
             break;
         case 0x26:
-            tmp_var = 'N';
+            tmp_gear = 'N';
             break;
         case 0x25:
-            tmp_var = 'D';
+            tmp_gear = 'D';
             break;
         default:
-            FreeRTOS_printf(("%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), gear_raw));
+            FreeRTOS_printf(("%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), data[4]));
             break;
         }
-        tmp_gear = tmp_var;
 
         /* Send gear */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&tmp_gear, sizeof(tmp_gear)) != SUCCESS)
         {
             FreeRTOS_printf(("%s (prvSensorTask) send gear failed\r\n", getCurrTime()));
         }
 
-        /* Request throttle */
-        state = THROTTLE;
-        configASSERT(iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &state, 1) != -1);
-        vTaskDelay(pdMS_TO_TICKS(1));
-        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, (uint8_t*)&throttle_raw, 2) != -1);
-        vTaskDelay(pdMS_TO_TICKS(1));
-
+        /* Process throttle */
+        // data[2,3] = throttle_raw
+        throttle_raw = (int16_t)(data[3] << 8 | data[2]);
         tmp_throttle = max(throttle_raw - throttle_min, 0); // remove offset
         tmp_throttle = tmp_throttle * throttle_gain / (throttle_max - throttle_min);
         tmp_throttle = min(max(tmp_throttle, 0), 100);
@@ -437,12 +422,8 @@ static void prvSensorTask(void *pvParameters)
         }
 
         /* Request brake */
-        state = BRAKE;
-        configASSERT(iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &state, 1) != -1);
-        vTaskDelay(pdMS_TO_TICKS(1));
-        configASSERT(iic_receive(&Iic0, TEENSY_I2C_ADDRESS, (uint8_t*)&brake_raw, 2) != -1);
-        vTaskDelay(pdMS_TO_TICKS(1));
-
+        // data[0,1] = brake_raw
+        brake_raw = (int16_t)(data[1] << 8 | data[0]);
         tmp_brake = max(brake_max - brake_raw, 0); // reverse brake
         tmp_brake = tmp_brake * brake_gain / (brake_max - brake_min);
         tmp_brake = min(max(tmp_brake, 0), 100);
