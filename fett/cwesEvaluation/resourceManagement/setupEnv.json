@@ -37,6 +37,11 @@
                     "unix" : 1,
                     "FreeRTOS" : 1,
                     "useDefaultScorer" : "Yes",
+                    "medKeywords" : {
+                        "any" : {
+                            "any" : ["<OVERWRITTEN-STR-SENTINEL>"]
+                        }
+                    },
                     "highKeywords" : {
                         "any" : {
                             "any" : ["AAAAAAAAAAAAAAAA"]
