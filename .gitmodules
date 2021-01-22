@@ -13,3 +13,6 @@
 [submodule "FreeRTOS-mirror"]
 	path = FreeRTOS-mirror
 	url = git@github.com:GaloisInc/FreeRTOS-mirror.git
+[submodule "FreeRTOS"]
+	path = FreeRTOS
+	url = git@github.com:GaloisInc/FreeRTOS.git

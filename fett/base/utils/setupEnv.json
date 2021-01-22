@@ -245,6 +245,11 @@
             "val" : "FreeRTOS-mirror"
         },
         {
+            "name" : "FreeRTOSforkName_classic",
+            "type" : "string",
+            "val" : "FreeRTOS"
+        },
+        {
             "name" : "FreeRTOSprojNameNonQemu",
             "type" : "string",
             "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
