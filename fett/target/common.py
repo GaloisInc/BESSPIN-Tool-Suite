@@ -228,60 +228,62 @@ class commonTarget():
             logAndExit (f"Failed to extract the timeout value for <{key}> from the timeout dict.",exc=exc,exitCode=EXIT.Dev_Bug)
 
     @decorate.debugWrap
+    def get_timeout_from_settings_dict(self,osImage):
+        def traverse_data(layer):
+            if 'timeout' in layer:
+                return True, layer['timeout'], None
+            elif 'name' in layer:
+                name = layer['name']
+                if (name in ["cross-compiler"]): #A list of non-target settings in bootTimeout.json
+                    setting = getSetting(name)
+                else:
+                    setting = getSetting(name,targetId=self.targetId)
+                if setting in layer:
+                    return traverse_data(layer[setting])
+                elif 'else' in layer:
+                    return traverse_data(layer['else'])
+                else:
+                    return False, 0, {
+                        'message': f'Unrecognized value <{setting}> for setting <{name}> in <bootTimeout.json>.',
+                        'overrideShutdown': True,
+                        'exitCode': EXIT.Dev_Bug
+                    }
+            else:
+                return False, 0, {
+                    'message': f'Unrecognized layer <{layer}> in <bootTimeout.json>.',
+                    'overrideShutdown': True,
+                    'exitCode': EXIT.Dev_Bug
+                }
+
+        data = safeLoadJsonFile(os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'bootTimeout.json'))
+
+        if (osImage not in data):
+            return False, 0, {
+                'message': f'start: Timeout is not recorded for osImage=<{osImage}>.',
+                'overrideShutdown': True,
+                'exitCode': EXIT.Implementation
+            }
+        os_image = data[osImage]
+
+        if (osImage in ['busybox', 'FreeRTOS']): #special case
+            return traverse_data(os_image)
+        elif self.target not in os_image:
+            return False, 0, {
+                'message': f'start: Timeout is not recorded for target=<{self.target}>.',
+                'overrideShutdown': True,
+                'exitCode': EXIT.Implementation
+            }
+        target = os_image[self.target]
+
+        return traverse_data(target)
+
+    @decorate.debugWrap
     @decorate.timeWrap
     def start (self):
         if (isEqSetting("mode","evaluateSecurityTests") and (not isEnabled("isThereAReasonToBoot"))):
             return #there is no reason to boot
-        def get_timeout_from_settings_dict():
-            def traverse_data(layer):
-                if 'timeout' in layer:
-                    return True, layer['timeout'], None
-                elif 'name' in layer:
-                    name = layer['name']
-                    if (name in ["cross-compiler"]): #A list of non-target settings in bootTimeout.json
-                        setting = getSetting(name)
-                    else:
-                        setting = getSetting(name,targetId=self.targetId)
-                    if setting in layer:
-                        return traverse_data(layer[setting])
-                    elif 'else' in layer:
-                        return traverse_data(layer['else'])
-                    else:
-                        return False, 0, {
-                            'message': f'Unrecognized value <{setting}> for setting <{name}> in <bootTimeout.json>.',
-                            'overrideShutdown': True,
-                            'exitCode': EXIT.Dev_Bug
-                        }
-                else:
-                    return False, 0, {
-                        'message': f'Unrecognized layer <{layer}> in <bootTimeout.json>.',
-                        'overrideShutdown': True,
-                        'exitCode': EXIT.Dev_Bug
-                    }
-
-            data = safeLoadJsonFile(os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'bootTimeout.json'))
-
-            if (self.osImage not in data):
-                return False, 0, {
-                    'message': f'start: Timeout is not recorded for osImage=<{self.osImage}>.',
-                    'overrideShutdown': True,
-                    'exitCode': EXIT.Implementation
-                }
-            os_image = data[self.osImage]
-
-            if (self.osImage in ['busybox', 'FreeRTOS']): #special case
-                return traverse_data(os_image)
-            elif self.target not in os_image:
-                return False, 0, {
-                    'message': f'start: Timeout is not recorded for target=<{self.target}>.',
-                    'overrideShutdown': True,
-                    'exitCode': EXIT.Implementation
-                }
-            target = os_image[self.target]
-
-            return traverse_data(target)
-
-        success, timeoutDict, message = get_timeout_from_settings_dict()
+        
+        success, timeoutDict, message = self.get_timeout_from_settings_dict(self.osImage)
         if not success:
             self.terminateAndExit(**message)
         if self.osImage in ['debian', 'busybox', 'FreeBSD']:
