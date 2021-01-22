@@ -7,5 +7,6 @@ CAN ID,Type,Field Name,Sender,Receiver,Bounds/Range,Byte Length,Units,J1939?,PGN
 0XAAFEAAC1,fixed,car_x (float),ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display x coordinate
 0XAAFEADF6,fixed,car_y (float),ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display y coordinate
 0XAAFEAABF,fixed,car_z (float),ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display z coordinate
+0XAACDAD11,fixed,car_r (float),ignition,Infotainment Thin Client,N/A,4,m,no,,infotainment position of car to display r rotation
 0XAAFECA00,uint8_t,button_pressed (uint8_t),Infotainment Thin Client,Infotainment Server,N/A,1,,No,,Button pressed on infotainment screen.0x01 Station 1 0x02 Station 2 0x03 station 3  0x10 volume down  0x11 volume up
 0XAA2FEEF2,uint8_t,infotainment_state (uint8_t),Infotainment Server,Infotainment Thin Client,N/A,1,,No,,Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
