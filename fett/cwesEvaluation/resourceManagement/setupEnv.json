@@ -37,11 +37,6 @@
                     "unix" : 1,
                     "FreeRTOS" : 1,
                     "useDefaultScorer" : "Yes",
-                    "NEG-failKeywords" : {
-                        "any" : {
-                            "any" : ["<DIFF-PTR=20>"]
-                        }
-                    },
                     "highKeywords" : {
                         "any" : {
                             "any" : ["AAAAAAAAAAAAAAAA"]
