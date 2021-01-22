@@ -34,17 +34,12 @@
                 },
                 "test_463" : {
                     "cweText" : "Deletion of Data Structure Sentinel",
-                    "unix" : 1,
-                    "FreeRTOS" : 1,
+                    "unix" : 2,
+                    "FreeRTOS" : 2,
                     "useDefaultScorer" : "Yes",
-                    "medKeywords" : {
-                        "any" : {
-                            "any" : ["<OVERWRITTEN-STR-SENTINEL>"]
-                        }
-                    },
                     "highKeywords" : {
                         "any" : {
-                            "any" : ["AAAAAAAAAAAAAAAA"]
+                            "any" : ["<OVERWRITTEN-STR-SENTINEL>", "AAAAAAAAAAAAAAAA"]
                         }
                     }
                 },
