@@ -58,17 +58,24 @@ static void deleteStrSentinel () {
 
     szPtrDiff = ((size_t) pSecretInt) - ((size_t) pTargetStr);
     printf("<PTR-DIFF=%d>\n",(unsigned) szPtrDiff);
-    
+
     for (i=0; i<SECRET_SIZE; i++) {
-        pSecretInt[i] = 0x41414141; //"AAAA"
+        pSecretInt[i] = 0x41414141; //"AAAA"; the secret
     }
 
-    memset(pTargetStr,'s',szStr-1); //fill string with the letter 's'
+    //fill string with the letter 's'
+    memset(pTargetStr,'s',szStr-1); 
     pTargetStr[szStr-1] = 0;
     printf("len<%s>:%d\n",pTargetStr,(unsigned) szStr);
+    
+    //Overwrite the sentinel and printf
+    pTargetStr[szStr-1] = 'x';
+    printf("<%s>\n",pTargetStr);
+    printf("<OVERWRITTEN-STR-SENTINEL>\n");
 
-    //overwrite the sentinel with 'x' and ensure all nibbles are non-zero all the way up to the secret integer
-    memset(&pTargetStr[szStr-1],'x',szPtrDiff-szStr+1);
+
+    //Out-of-boundary and ensure all nibbles are non-zero all the way up to the secret integer
+    memset(&pTargetStr[szStr],'x',szPtrDiff-szStr);
     printf("<%s>\n",pTargetStr);
     
     FREE(pTargetStr);
