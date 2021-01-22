@@ -53,8 +53,8 @@ static void deleteStrSentinel () {
 
     srand(RM_SEED); //RM_SEED is written in fett/cwesEvaluation/build.py
     strLen = (size_t) ((rand() % (STR_SIZE_MAX-STR_SIZE_MIN+1)) + STR_SIZE_MIN);
-    targetStr = (char *) malloc (sizeof(char)*strLen);
-    secretInt = (int *) malloc (sizeof(int)*SECRET_SIZE);
+    targetStr = (char *) MALLOC (sizeof(char)*strLen);
+    secretInt = (int *) MALLOC (sizeof(int)*SECRET_SIZE);
 
     printf("<DIFF-PTR=%x>\n",(unsigned) (secretInt)  - (unsigned) (targetStr)); //This has to be "20" for the test to work
     
@@ -70,8 +70,8 @@ static void deleteStrSentinel () {
     memset(&targetStr[strLen-1],'x',8*sizeof(int)-strLen+1);
     printf("<%s>\n",targetStr);
     
-    free(targetStr);
-    //free(secretInt); //To avoid the double free since the pointers areas will get confused
+    FREE(targetStr);
+    //FREE(secretInt); //To avoid the double free since the pointers areas will get confused
 
     return;
 }
