@@ -104,7 +104,7 @@ static void deleteStrSentinel (short testPart) {
         szPtrDiff = ((size_t) pSecretInt) - ((size_t) pTargetStr);
         printf("<PTR-DIFF=%ld>\n", szPtrDiff);
         if (szPtrDiff < 0) {
-            printf("<INVALID> The int chunk <%lx> is not at a higher address than the char chunk <+%lx>.\n",
+            printf("<INVALID> The int chunk <%lx> is not at a higher address than the char chunk <%lx>.\n",
                 (long unsigned) pSecretInt, (long unsigned) pTargetStr);
             return;
         }
