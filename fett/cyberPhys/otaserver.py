@@ -15,7 +15,7 @@ def install (xTarget):
     xTarget.runCommand("echo \"Starting ota service...\"",tee=appLog)
     xTarget.runCommand("mkdir -p /usr/local/sbin",tee=appLog)
     xTarget.runCommand("install ota.elf /usr/local/sbin/ota", erroneousContents="install:",tee=appLog)
-    serviceTimeout = 120
+    serviceTimeout = 180
     if isEqSetting('osImage','debian',targetId=xTarget.targetId):
         xTarget.runCommand("cp ota.service /lib/systemd/system/ota.service", erroneousContents="install:",tee=appLog)
         xTarget.runCommand("systemctl enable ota.service", timeout=serviceTimeout, tee=appLog)

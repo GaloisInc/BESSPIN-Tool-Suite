@@ -690,7 +690,7 @@ class commonTarget():
     #                False         = send from target to host. Requires an SSH connection.
     @decorate.debugWrap
     @decorate.timeWrap
-    def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,forceScp=False,timeout=30,exitOnError=True): #send File to target
+    def sendFile (self,pathToFile,xFile,targetPathToFile=None,toTarget=True,forceScp=False,timeout=60,exitOnError=True): #send File to target
         if (not isEnabled('isUnix',targetId=self.targetId)):
             self.terminateAndExit(f"<sendFile> is not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)
 

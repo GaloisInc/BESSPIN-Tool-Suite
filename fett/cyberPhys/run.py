@@ -96,11 +96,11 @@ def isTargetAlive(targetId):
         printAndLog(f"{xTarget.targetIdInfo}does not respond to ping.")
         return False
 
-    osImage = getSetting('osImage',targetId=targetId)
-    if osImage in ['debian', 'FreeBSD']:
-        if not otaserver.isServiceRunning(xTarget):
-            printAndLog(f"{xTarget.targetIdInfo}ota server doesn't respond. Restarting.")
-            otaserver.restart(xTarget)
-            return otaserver.isServiceRunning(xTarget)
+    # osImage = getSetting('osImage',targetId=targetId)
+    # if osImage in ['debian', 'FreeBSD']:
+    #     if not otaserver.isServiceRunning(xTarget):
+    #         printAndLog(f"{xTarget.targetIdInfo}ota server doesn't respond. Restarting.")
+    #         otaserver.restart(xTarget)
+    #         return otaserver.isServiceRunning(xTarget)
 
     return True

@@ -54,7 +54,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                 self.terminateAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overrideShutdown=True,exitCode=EXIT.Dev_Bug)
 
             if (self.elfLoader=='netboot'):
-                self.expectFromTarget('>',"Starting netboot loader",timeout=60,overrideShutdown=True)
+                self.expectFromTarget('>',"Starting netboot loader",timeout=120,overrideShutdown=True)
                 dirname, basename = os.path.split(os.path.abspath(self.osImageElf))
                 listenPort = self.findPort(portUse='netboot')
                 printAndLog(f"{self.targetIdInfo}boot: netboot port is <{listenPort}>.")
