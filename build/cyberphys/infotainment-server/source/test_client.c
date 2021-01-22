@@ -39,16 +39,10 @@
 
 int main_loop(void) {
     // initialize socket address and buffer data structures
-    struct sockaddr_in broadcast_address;
     struct sockaddr_in receive_address;
     socklen_t receive_address_len;
     uint8_t message[MESSAGE_BUFFER_SIZE];
     can_frame *frame;
-
-    // broadcast all outgoing packets to the world (but our world is small)
-    broadcast_address.sin_family = AF_INET;
-    broadcast_address.sin_port = htons(RECEIVE_PORT);
-    broadcast_address.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 
     debug("socket number is %d\n", udp_socket(SEND_PORT));
 
