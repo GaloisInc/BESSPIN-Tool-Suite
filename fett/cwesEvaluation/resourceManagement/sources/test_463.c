@@ -71,7 +71,8 @@ static void deleteStrSentinel (short testPart);
 
 static void deleteStrSentinel (short testPart) {
     char * pTargetStr;
-    size_t szStr, szPtrDiff;
+    size_t szStr;
+    long int szPtrDiff;
     int *pSecretInt, i;
 
     srand(RM_SEED); //RM_SEED is written in fett/cwesEvaluation/build.py
@@ -101,14 +102,19 @@ static void deleteStrSentinel (short testPart) {
         }
 
         szPtrDiff = ((size_t) pSecretInt) - ((size_t) pTargetStr);
-        printf("<PTR-DIFF=%d>\n",(unsigned) szPtrDiff);
+        printf("<PTR-DIFF=%ld>\n", szPtrDiff);
+        if (szPtrDiff < 0) {
+            printf("<INVALID> The int chunk <%lx> is not at a higher address than the char chunk <+%lx>.\n",
+                (long unsigned) pSecretInt, (long unsigned) pTargetStr);
+            return;
+        }
 
         for (i=0; i<SECRET_SIZE; i++) {
             pSecretInt[i] = 0x41414141; //"AAAA"; the secret
         }
 
         //Out-of-boundary and ensure all nibbles are non-zero all the way up to the secret integer
-        memset(&pTargetStr[szStr],'x',szPtrDiff-szStr);
+        memset(&pTargetStr[szStr],'x',(size_t) szPtrDiff-szStr);
         printf("<%s>\n",pTargetStr);
     }
     
