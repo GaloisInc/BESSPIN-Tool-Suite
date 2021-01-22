@@ -49,7 +49,11 @@ class vcu118Target (fpgaTarget, commonTarget):
                 elfLoadTimeout = self.parseBootTimeoutDict(timeoutDict,key="elfLoad")
                 self.fpgaStart(self.osImageElf,elfLoadTimeout=elfLoadTimeout)
             elif (self.elfLoader=='netboot'):
-                self.fpgaStart(getSetting('netbootElf',targetId=self.targetId),elfLoadTimeout=30)
+                success, netbootTimeoutDict, message = self.get_timeout_from_settings_dict("FreeRTOS")
+                if not success:
+                    self.terminateAndExit(**message)
+                self.fpgaStart(getSetting('netbootElf',targetId=self.targetId),
+                        elfLoadTimeout=self.parseBootTimeoutDict(netbootTimeoutDict,key="elfLoad"))
             else:
                 self.terminateAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overrideShutdown=True,exitCode=EXIT.Dev_Bug)
 
