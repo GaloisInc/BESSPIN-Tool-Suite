@@ -46,7 +46,6 @@ int main_loop(void) {
 
     debug("socket number is %d\n", udp_socket(SEND_PORT));
 
-
     // zero out the buffer
     memset(&message, 0, MESSAGE_BUFFER_SIZE);
 
