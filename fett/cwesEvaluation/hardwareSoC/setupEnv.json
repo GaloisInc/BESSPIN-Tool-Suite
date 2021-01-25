@@ -9,6 +9,15 @@
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {
+                "test_208" : {
+                    "cweText" : "Observable Timing Discrepancy"
+                },
+                "test_385" : {
+                    "cweText" : "Covert Timing Channel"
+                },
+                "test_920" : {
+                    "cweText" : "Improper Restriction of Power Consumption"
+                },
                 "test_1037" : {
                     "cweText" : "Processor Optimization Removal or Modification of Security-critical Code"
                 },
