@@ -33,7 +33,9 @@ def scoreControlFlowTest(logLines, testName):
     testNum = testName[5:].upper().replace("_", "-")
     info = getSettingDict(VULCLASS, ["testsInfo", testName, "cweText"])
 
-    if "<QEMU_NOT_IMPLEMENTED>" in logLines:
+    if "<FAIL>" in logLines:
+        score = SCORES.FAIL
+    elif "<QEMU_NOT_IMPLEMENTED>" in logLines:
         score = SCORES.NOT_IMPLEMENTED
         info = "Not implemented on QEMU."
     elif "<INVALID>" in logLines:

@@ -29,7 +29,7 @@ void malicious(void) {
 #ifdef testgenOnFreeRTOS
 void injector(void* params) {
     // Send malicious address as integer.
-    MessageBufferHandle_t *msg_buf = params;
+    MessageBufferHandle_t *msg_buf = (MessageBufferHandle_t*) params;
     uint64_t address = (uint64_t) &malicious;
     size_t sent_bytes = xMessageBufferSend(*msg_buf,
                                            &address,
@@ -95,7 +95,7 @@ void stdin_test(void) {
     int_fn_union data = { .fn = benign };
 
     // Leak malicious address.
-    printf("%p\n", &malicious);
+    printf("<malicious address %p>\n", &malicious);
     printf("<LEAKED>\n");
 
     // Take a number over stdin and store in data.num (thus overwriting data.fn

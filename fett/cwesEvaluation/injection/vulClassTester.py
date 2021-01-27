@@ -2,6 +2,9 @@
 """  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 This file has the custom resourceManagement methods to run tests on qemu|fpga.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
+
+import re
+
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 
 from fett.base.utils.misc import *
@@ -21,8 +24,15 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         if isTimeout:
             return (leakTextBack, True)
 
-        # Address is one line before "<LEAKED>".  Send it back to test over stdin.
-        address = leakTextBack.split("\n")[-2]
+        # Parse leaked address from output
+        address_match = re.search(r'<malicious address (0x[0-9a-f]+)>',
+                                  leakTextBack)
+        if address_match is None:
+            # Test made it to <LEAKED> statement, but the address didn't leak.
+            # Something went wrong with the test.
+            return (leakTextBack + "\n<FAIL>\nCouldn't find leaked address.\n",
+                    False)
+        address = address_match.group(1)
         _, injectionTextBack, isTimeout, _ = self.runCommand(
                 address,
                 exitOnError=False,
