@@ -60,7 +60,7 @@
 #include<stdlib.h>
 #endif
 
-#if defined(PATH_MANIPULATION_ACCESS) && !defined(testgenOnFreeRTOS)
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(testgenOnFreeRTOS) && !defined(BIN_SOURCE_LMCO)
 // Required for realpath
 #include <limits.h>
 #include <stdlib.h>
@@ -292,7 +292,7 @@ void test_buffer_overflow(void)
 #endif//JMP
 }}
 
-#ifdef PATH_MANIPULATION_ACCESS
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(BIN_SOURCE_LMCO)
 void test_path_manipulation(void) {{
 #ifdef testgenOnFreeRTOS
     printf("TEST INVALID.  <not on FreeRTOS>\r\n");
@@ -357,7 +357,7 @@ void test_path_manipulation(void) {{
 #endif
 #endif // !testgenOnFreeRTOS
 }};
-#endif  // PATH_MANIPULATION_ACCESS
+#endif  // PATH_MANIPULATION_ACCESS && !BIN_SOURCE_LMCO
 
 /*
  * Main Function
@@ -376,7 +376,12 @@ int main()
 #endif
 
 #ifdef PATH_MANIPULATION_ACCESS
+#ifdef BIN_SOURCE_LMCO
+    printf("TEST INVALID. <No realpath on bare metal>\r\n");
+    fflush(stdout);
+#else
     test_path_manipulation();
+#endif
 #else
     test_buffer_overflow();
 #endif
