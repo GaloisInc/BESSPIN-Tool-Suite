@@ -105,7 +105,7 @@ def scoreTests(scorerModule, csvPath, logsDir):
         try:
             fcsv = ftOpenFile(csvPath, "w")
             for row in rows:
-                fcsv.write(f"{row[0].split('-')[1]},{row[1]},{row[1].value},{row[2]}\n")
+                fcsv.write(f"{'-'.join(row[0].split('-')[1:])},{row[1]},{row[1].value},{row[2]}\n")
             fcsv.close()
         except Exception as exc:
             logAndExit(f"<scoreTests> Failed to generate the csv output "
