@@ -11,10 +11,7 @@
 #endif  // !testgenOnFreeRTOS
 
 typedef union {
-    // It's safe to use a 64 bit integer even on 32 bit platforms because
-    // RISC-V is little endian, so the low order bytes will line up with the
-    // function pointer.
-    uint64_t num;
+    uintptr_t num;
     void (* const fn)(void);
 } int_fn_union;
 
@@ -30,7 +27,7 @@ void malicious(void) {
 void injector(void* params) {
     // Send malicious address as integer.
     MessageBufferHandle_t *msg_buf = (MessageBufferHandle_t*) params;
-    uint64_t address = (uint64_t) &malicious;
+    uintptr_t address = (uintptr_t) &malicious;
     size_t sent_bytes = xMessageBufferSend(*msg_buf,
                                            &address,
                                            sizeof(address),
@@ -50,10 +47,10 @@ void message_buffer_test(void) {
     // Set function pointer to benign function.
     int_fn_union data = { .fn = benign };
 
-    // Create a message buffer large enough to hold uint64_t, including message
+    // Create a message buffer large enough to hold uintptr_t, including message
     // header.
     MessageBufferHandle_t msg_buf =
-        xMessageBufferCreate(sizeof(size_t) + sizeof(uint64_t));
+        xMessageBufferCreate(sizeof(size_t) + sizeof(uintptr_t));
     if (msg_buf == NULL) {
         printf("<INVALID>\n");
         printf("Failed to create message buffer.\n");
@@ -107,7 +104,7 @@ void stdin_test(void) {
         printf("Failed to read from stdin\n");
         return;
     }
-    data.num = (uint64_t) strtoull(line, NULL, 0);
+    data.num = (uintptr_t) strtoull(line, NULL, 0);
     if (data.num == 0 || data.num == ULLONG_MAX) {
         printf("<INVALID>\n");
         printf("Failed to convert string to integer\n");
@@ -120,13 +117,6 @@ void stdin_test(void) {
 #endif  // !testgenOnFreeRTOS
 
 int main(void) {
-    // Sanity check that platform does not modify pointers to be larger than 64
-    // bits (i.e. fat pointers).
-    if (sizeof(void(*)(void)) > sizeof(uint64_t)) {
-        printf("<INVALID>\n");
-        printf("Pointer type too large\n");
-        return 0;
-    }
 #ifdef testgenOnFreeRTOS
 #ifdef testgenQEMU
     // Not implemented for QEMU due to issues with FreeRTOS tasks on QEMU.

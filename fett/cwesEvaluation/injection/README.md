@@ -109,16 +109,16 @@ overwrite trusted internal program state.
 - The FreeRTOS test uses tasks as a source of untrusted information.
 - The `injector` function is run in a task, where it:
   1. Takes a pointer to a message buffer handle as input.
-  2. Casts the address of the `malicious` function to a `uint64_t` and sends it
-     over the message buffer.
+  2. Casts the address of the `malicious` function to a `uintptr_t` and sends
+     it over the message buffer.
 - The `message_buffer_test` function:
   1. Creates an `int_fn_union`, and initializes the `fn` field to the address
      of the `benign` function.
   2. Creates a message buffer.
   3. Creates a task running the `injector` function, and passes it a pointer to
      the message buffer handler.
-  4. Reads a `uint64_t` from the message buffer handler, and stores it into the
-     `num` field of the union.
+  4. Reads a `uintptr_t` from the message buffer handler, and stores it into
+     the `num` field of the union.
   5. Executes the `fn` field of the union.
 
 **Linux Debian and FreeBSD:**
