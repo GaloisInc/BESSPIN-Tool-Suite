@@ -18,9 +18,35 @@ def scoreAllTests(logs):
     # Score the log files
     for name, log in logs:
         logLines = ftReadLines(log)
-        scoreInfo = scoreControlFlowTest(logLines, name)
+        if name == 'test_inj_1':
+            scoreInfo = scoreInj1Test(logLines, name)
+        else:
+            scoreInfo = scoreControlFlowTest(logLines, name)
         ret.append(scoreInfo)
     return ret
+
+def scoreInj1Test(logLines, testName):
+    testNum = testName[5:].upper().replace("_", "-")
+    info = getSettingDict(VULCLASS, ["testsInfo", testName, "cweText"])
+
+    if "<BEGIN_INJECTION_TEST>" not in logLines:
+        # Test did not run
+        score = SCORES.FAIL
+    elif "<QEMU_NOT_IMPLEMENTED>" in logLines:
+        score = SCORES.NOT_IMPLEMENTED
+        info = "Not implemented on QEMU."
+    elif "<INVALID>" in logLines:
+        score = SCORES.INVALID
+    elif "Segmentation fault" in logLines:
+        # This is the expected result on unix, as the OS should detect the
+        # attempt to execute from the stack.
+        score = SCORES.DETECTED
+    elif "<END_INJECTION_TEST>" in logLines:
+        score = SCORES.NONE
+    else:
+        score = SCORES.HIGH
+
+    return [f"TEST-{testNum}", adjustToCustomScore(logLines, score), info]
 
 def scoreControlFlowTest(logLines, testName):
     """
@@ -33,18 +59,17 @@ def scoreControlFlowTest(logLines, testName):
     testNum = testName[5:].upper().replace("_", "-")
     info = getSettingDict(VULCLASS, ["testsInfo", testName, "cweText"])
 
-    if "<FAIL>" in logLines:
+    if "<BEGIN_INJECTION_TEST>" not in logLines:
+        # Test did not run
         score = SCORES.FAIL
     elif "<QEMU_NOT_IMPLEMENTED>" in logLines:
         score = SCORES.NOT_IMPLEMENTED
         info = "Not implemented on QEMU."
     elif "<INVALID>" in logLines:
         score = SCORES.INVALID
-    elif "<EXECUTING_MALICIOUS_CODE>" in logLines:
-        score = SCORES.HIGH
     elif "<EXECUTING_BENIGN_CODE>" in logLines:
         score = SCORES.NONE
     else:
-        score = SCORES.FAIL
+        score = SCORES.HIGH
 
     return [f"TEST-{testNum}", adjustToCustomScore(logLines, score), info]

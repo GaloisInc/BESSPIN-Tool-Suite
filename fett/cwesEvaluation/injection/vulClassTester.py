@@ -9,30 +9,61 @@ from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 
 from fett.base.utils.misc import *
 
+# Opcode of EBREAK instruction
+EBREAK_OPCODE = int('00000000000100000000000001110011', 2)
+
 class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
         self.vulClass = "injection"
         return
 
-    def executeInj3Test(self, binTest):
+    def executeUpToLeak(self, binTest, leakId):
+        """
+        Execute binTest until it prints <LEAKED>, then extract the address
+        identified by leakId
+        """
         _, leakTextBack, isTimeout, _ = self.runCommand(
                 f"./{binTest}",
                 endsWith="<LEAKED>",
                 exitOnError=False,
                 suppressErrors=True)
         if isTimeout:
-            return (leakTextBack, True)
+            return (leakTextBack, True, None)
 
         # Parse leaked address from output
-        address_match = re.search(r'<malicious address (0x[0-9a-f]+)>',
+        address_match = re.search(f'<{leakId} (0x[0-9a-f]+)>',
                                   leakTextBack)
         if address_match is None:
             # Test made it to <LEAKED> statement, but the address didn't leak.
             # Something went wrong with the test.
             return (leakTextBack + "\n<FAIL>\nCouldn't find leaked address.\n",
-                    False)
-        address = address_match.group(1)
+                    False,
+                    None)
+
+        return (leakTextBack, False, address_match.group(1))
+
+    def executeInj1Test(self, binTest):
+        leakTextBack, isTimeout, address = self.executeUpToLeak(binTest,
+                                                                "buffer address")
+        if address is None:
+            return (leakTextBack, isTimeout)
+
+        returnPointerOffset = getSettingDict(
+                self.vulClass,
+                ["testsInfo", "test_inj_1", "unixReturnPointerOffset"])
+        _, injectionTextBack, isTimeout, _ = self.runCommand(
+                f"0\n{EBREAK_OPCODE}\n{returnPointerOffset}\n{address}\n",
+                exitOnError=False,
+                suppressErrors=True)
+        return (leakTextBack + injectionTextBack), isTimeout
+
+    def executeInj3Test(self, binTest):
+        leakTextBack, isTimeout, address = self.executeUpToLeak(binTest,
+                                                                "malicious address")
+        if address is None:
+            return (leakTextBack, isTimeout)
+
         _, injectionTextBack, isTimeout, _ = self.runCommand(
                 address,
                 exitOnError=False,
@@ -52,7 +83,9 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         outLog = "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
         outLog += f"\n<OSIMAGE={getSetting('osImage')}>\n"
 
-        if testName == "test_inj_3":
+        if testName == "test_inj_1":
+            textBack, isTimeout = self.executeInj1Test(binTest)
+        elif testName == "test_inj_3":
             textBack, isTimeout = self.executeInj3Test(binTest)
         else:
             self.terminateAndExit(f"<executeTest> Unknown test <{testName}>.",
