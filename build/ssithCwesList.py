@@ -38,11 +38,29 @@ cwesShortcuts = {
 }
 vulClasses = list(cwesShortcuts.values())
 cwesCsvHeaders = {"vulClass" : 1, "CWE":2, "Link":3, "Description":4, "CWEs List":6, "# CWEs":7}
+exclusions = ( #These are not checked: fPath-vulClass
+    [f"configSecurityTests-test-{vClass}" for vClass in ["bufferErrors", "informationLeakage"]]
+    +
+    [f"ClaferModel-{vClass}" for vClass in ["PPAC", "hardwareSoC", "injection"]]
+)
 
 class cwesDict:
     def __init__(self, fPath):
         self.fPath = fPath
         self._cwes = {vulClass : [] for vulClass in vulClasses}
+
+    def compare (self, target, checkDescription=False):
+        for vulClass in vulClasses:
+            if (f"{target.fPath}-{vulClass}" in exclusions):
+                continue
+            cwes1 = set([xCwe.id for xCwe in self._cwes[vulClass]])
+            cwes2 = set([xCwe.id for xCwe in target._cwes[vulClass]])
+            if (cwes1 == cwes2):
+                continue
+            else:
+                errorExit(f"MISMATCH! <{self.fPath}> ^ <{target.fPath}> = {cwes1 ^ cwes2} in <{vulClass}>.")
+
+        print(f"CHECK: <{self.fPath}> matches <{target.fPath}>.")
 
 class cwesDictCFR(cwesDict):
     def __init__(self,fPath):
@@ -90,9 +108,8 @@ class cwesDictINI(cwesDict):
             configSection = "selfAssessment"
         else:
             errorExit(f"addVulClass: called with the wrong sectionType <{sectionType}>.")
-
-        if ((vulClass in ["bufferErrors", "informationLeakage"]) and (sectionType=="test")):
-            return #Test selection is done differently for those classes
+        if (f"{self.fPath}-{vulClass}" in exclusions):
+            return #ini is done differently for these classes
         if (not vConfig.has_section(configSection)):
             errorExit(f"Missing section <{configSection}> in <{self.fPath}> for <{vulClass}>.")
 
@@ -128,7 +145,7 @@ class cwesDictCSV(cwesDict):
 class cwe:
     def __init__(self,vulClass,num):
         self.vulClass = vulClass
-        self.id = num
+        self.id = num.replace('-','_')
 
 class csvRow(cwe):
     def __init__(self, row):
@@ -220,10 +237,16 @@ def main(xArgs):
     # Load the cfr files
     cfrCWEs = cwesDictCFR("ClaferModel")
     for vulClass in vulClasses:
-        if (vulClass in ["PPAC", "hardwareSoC", "injection"]):
+        if (f"{cfrCWEs.fPath}-{vulClass}" in exclusions):
             continue #No clafer models for these vulClasses
         vCfrCWEs = loadFile(os.path.join(cwesEvaluationDir,vulClass, f"{vulClass[0].upper()}{vulClass[1:]}.cfr"),"cfr")
         cfrCWEs.addVulClass(vulClass,vCfrCWEs)
+
+    #Synchronize (considering the google spreadsheet as the golden ref)
+    #1. ini test
+    spreadsheetCWEs.compare(testConfigCWEs)
+    #2. ini assignment
+    spreadsheetCWEs.compare(assessConfigCWEs)
 
 
 if __name__ == '__main__':
