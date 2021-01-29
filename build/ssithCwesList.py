@@ -192,8 +192,6 @@ def main(xArgs):
     assessConfigCWEs = cwesDictINI("configSecurityTests-assessment")
     configCWEsDir = os.path.join(repoDir,"configSecurityTests")
     for vulClass in vulClasses:
-        if (vulClass in ["injection"]): #<TODO> Skip injection for now 
-            continue
         vConfig = loadFile(os.path.join(configCWEsDir,f"{vulClass}.ini"),"ini")
         testConfigCWEs.addVulClass(vulClass,vConfig,"test")
         assessConfigCWEs.addVulClass(vulClass,vConfig,"assessment")
@@ -202,8 +200,6 @@ def main(xArgs):
     cwesEvaluationDir = os.path.join(repoDir,"fett","cwesEvaluation")
     setupEnvCWEs = cwesDictJSON("setupEnv")
     for vulClass in vulClasses:
-        if (vulClass in ["injection"]): #<TODO> Skip injection for now 
-            continue
         vJson = loadFile(os.path.join(cwesEvaluationDir,vulClass, "setupEnv.json"),"json")
         setupEnvCWEs.addVulClass(vulClass,vJson)
 
