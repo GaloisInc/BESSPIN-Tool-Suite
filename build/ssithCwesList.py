@@ -24,7 +24,7 @@ optional arguments:
   -h, --help  show this help message and exit
 """
 
-import sys, os, argparse, json, configparser
+import sys, os, argparse, json, configparser, subprocess
 
 # Globals
 cwesShortcuts = {
@@ -43,6 +43,16 @@ class cwesDict:
     def __init__(self, fPath):
         self.fPath = fPath
         self._cwes = {vulClass : [] for vulClass in vulClasses}
+
+class cwesDictCFR(cwesDict):
+    def __init__(self,fPath):
+        super().__init__(fPath)
+
+    def addVulClass(self,vulClass,vCfr):
+        for xCwe in vCfr:
+            cweNum = xCwe.split("CWE_")[-1]
+            self._cwes[vulClass].append(cwe(vulClass,cweNum))
+
 
 class cwesDictJSON(cwesDict):
     def __init__(self,fPath):
@@ -170,6 +180,10 @@ def loadFile (fPath,fType):
             ret = configparser.ConfigParser()
             ret.optionxform = str # Hack it to be case sensitive
             ret.read_file(f)
+        elif (fType=="cfr"):
+            cfrCmd = ["clafer", "-s", "-o", "-m", "fmjson", fPath]
+            cfrData = json.loads(subprocess.check_output(cfrCmd,stderr=subprocess.STDOUT))
+            ret = cfrData["features"]["CWE"]["children"]
         else:
             raise Exception(f"Unknwon type <{fType}>")
         f.close()
@@ -202,6 +216,14 @@ def main(xArgs):
     for vulClass in vulClasses:
         vJson = loadFile(os.path.join(cwesEvaluationDir,vulClass, "setupEnv.json"),"json")
         setupEnvCWEs.addVulClass(vulClass,vJson)
+
+    # Load the cfr files
+    cfrCWEs = cwesDictCFR("ClaferModel")
+    for vulClass in vulClasses:
+        if (vulClass in ["PPAC", "hardwareSoC", "injection"]):
+            continue #No clafer models for these vulClasses
+        vCfrCWEs = loadFile(os.path.join(cwesEvaluationDir,vulClass, f"{vulClass[0].upper()}{vulClass[1:]}.cfr"),"cfr")
+        cfrCWEs.addVulClass(vulClass,vCfrCWEs)
 
 
 if __name__ == '__main__':
