@@ -11,7 +11,7 @@
 // @note Tadros Dec 2020: revised and updated
 
 ResourceManagement_Test ?
-  or ResourceManagement_CWEs
+  or CWE
     CWE_188
     CWE_400
     CWE_404
