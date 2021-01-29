@@ -32,12 +32,7 @@ abstract Numeric_Weakness
       Initialization_missing
       Initialization_partial
       Initialization_present_but_wrong
-
-    or INI_CWE
-      CWE_456
-      CWE_457
-      CWE_665
-      CWE_824
+      
 
     [ CWE_456 <=> ( Undefined_behavior && Initialization_missing && Signed_integer ) ]
     [ CWE_457 <=> ( Undefined_behavior && Initialization_missing && Signed_integer ) ]
@@ -50,9 +45,6 @@ abstract Numeric_Weakness
     xor Argument_error
       Argument_missing
       Argument_wrong_order
-
-    or ARG_CWE
-      CWE_234
 
     [ CWE_234 <=> ( Undefined_behavior && Argument_missing ) ]
 
@@ -99,18 +91,7 @@ abstract Numeric_Weakness
       Excursion_Continuous
       Excursion_Discrete
 
-    or FRS_CWE
-      CWE_128
-      CWE_190
-      CWE_191
-      CWE_192
-      CWE_194
-      CWE_195
-      CWE_196
-      CWE_197
-      CWE_369
-      CWE_681
-
+    
 NumericErrors_Test : Numeric_Weakness ?
   xor Test
     TEST_128
@@ -127,6 +108,23 @@ NumericErrors_Test : Numeric_Weakness ?
     TEST_457
     TEST_665
     TEST_824
+
+  or CWE
+      CWE_128
+      CWE_190
+      CWE_191
+      CWE_192
+      CWE_194
+      CWE_195
+      CWE_196
+      CWE_197
+      CWE_234
+      CWE_369
+      CWE_456
+      CWE_457
+      CWE_665
+      CWE_681
+      CWE_824
 
   [ CWE_128 <=> ( Overflow && Multiplication && Value_exceeds_type && Unsigned_integer && Magnitude_Small && Excursion_Discrete ) ]
   [ CWE_190 <=> ( Undefined_behavior && Addition && Value_exceeds_type && Signed_integer && Magnitude_Large && Excursion_Discrete ) ]
