@@ -43,7 +43,55 @@ class cwesDict:
     def __init__(self, fPath):
         self.fPath = fPath
         self._cwes = {vulClass : [] for vulClass in vulClasses}
-    
+
+class cwesDictJSON(cwesDict):
+    def __init__(self,fPath):
+        super().__init__(fPath)
+
+    def addVulClass(self,vulClass,vJson):
+        vDict = vJson
+        if (vulClass not in vDict):
+            errorExit(f"Missing key <{vulClass}> in <{self.fPath}> for <{vulClass}>.")
+        vDict = vDict[vulClass]
+        foundTestsInfo = False
+        for xContents in vDict:
+            if (("name" in xContents) and (xContents["name"] == "testsInfo")):
+                vDict = xContents["val"]
+                foundTestsInfo = True
+                break
+        if (not foundTestsInfo):
+            errorExit(f"Missing key <testsInfo> in <{self.fPath}> for <{vulClass}>.")
+        for xTest,xItems in vDict.items():
+            cweNum = xTest.split("test_")[-1]
+            xCwe = cwe(vulClass,cweNum)
+            if ("cweText" not in xItems):
+                errorExit(f"Missing key <cweText> in <{self.fPath}> for <{vulClass}:{xTest}>.")
+            xCwe.description = xItems["cweText"]
+            self._cwes[vulClass].append(xCwe)
+
+class cwesDictINI(cwesDict):
+    def __init__(self,fPath):
+        super().__init__(fPath)
+
+    def addVulClass(self,vulClass,vConfig,sectionType):
+        if (sectionType=="test"):
+            configSection = "enabledTests"
+        elif (sectionType=="assessment"):
+            configSection = "selfAssessment"
+        else:
+            errorExit(f"addVulClass: called with the wrong sectionType <{sectionType}>.")
+
+        if ((vulClass in ["bufferErrors", "informationLeakage"]) and (sectionType=="test")):
+            return #Test selection is done differently for those classes
+        if (not vConfig.has_section(configSection)):
+            errorExit(f"Missing section <{configSection}> in <{self.fPath}> for <{vulClass}>.")
+
+        for option in vConfig.options(configSection):
+            if (option.startswith('_')): #That's a fake option
+                continue
+            cweNum = option.split(f"{sectionType}_")[-1]
+            self._cwes[vulClass].append(cwe(vulClass,cweNum))
+
 class cwesDictCSV(cwesDict):
     def __init__(self,fPath):
         super().__init__(fPath)
@@ -67,15 +115,22 @@ class cwesDictCSV(cwesDict):
                     f"number of CWE rows(={len(self._cwes[vulClass])}).")
         print("CHECK: Spreadsheet totals.")
 
-class csvRow:
+class cwe:
+    def __init__(self,vulClass,num):
+        self.vulClass = vulClass
+        self.id = num
+
+class csvRow(cwe):
     def __init__(self, row):
         #Read the overall count list
         self.doesHaveCwesList = (row[cwesCsvHeaders["CWEs List"]] in cwesShortcuts)
         if (self.doesHaveCwesList):
             self.cwesListVulClass = cwesShortcuts[row[cwesCsvHeaders["CWEs List"]]]
             self.cwesListCount = int(row[cwesCsvHeaders["# CWEs"]])
-        self.vulClass = cwesShortcuts[row[cwesCsvHeaders["vulClass"]]]
         self.description = row[cwesCsvHeaders["Description"]]
+        vulClass = cwesShortcuts[row[cwesCsvHeaders["vulClass"]]]
+        num = row[cwesCsvHeaders["CWE"]].split("CWE-")[-1]
+        super().__init__(vulClass,num)
 
 def formatExc (exc):
     """ format the exception for printing """
@@ -132,7 +187,25 @@ def main(xArgs):
     spreadsheetCWEs = loadFile(xArgs.csvFile,"csv")
     spreadsheetCWEs.checkSpreadsheetTotals()
 
-    # Load the ini file 
+    # Load the config ini files
+    testConfigCWEs = cwesDictINI("configSecurityTests-test")
+    assessConfigCWEs = cwesDictINI("configSecurityTests-assessment")
+    configCWEsDir = os.path.join(repoDir,"configSecurityTests")
+    for vulClass in vulClasses:
+        if (vulClass in ["injection"]): #<TODO> Skip injection for now 
+            continue
+        vConfig = loadFile(os.path.join(configCWEsDir,f"{vulClass}.ini"),"ini")
+        testConfigCWEs.addVulClass(vulClass,vConfig,"test")
+        assessConfigCWEs.addVulClass(vulClass,vConfig,"assessment")
+
+    # Load the setupEnv files
+    cwesEvaluationDir = os.path.join(repoDir,"fett","cwesEvaluation")
+    setupEnvCWEs = cwesDictJSON("setupEnv")
+    for vulClass in vulClasses:
+        if (vulClass in ["injection"]): #<TODO> Skip injection for now 
+            continue
+        vJson = loadFile(os.path.join(cwesEvaluationDir,vulClass, "setupEnv.json"),"json")
+        setupEnvCWEs.addVulClass(vulClass,vJson)
 
 
 if __name__ == '__main__':
