@@ -58,6 +58,11 @@ class cwesDict:
             cwes1 = set(self._cwes[vulClass].keys())
             cwes2 = set(target._cwes[vulClass].keys())
             if (cwes1 == cwes2):
+                if (checkDescription):
+                    for xCwe in self._cwes[vulClass].values():
+                        yCwe = target._cwes[vulClass][xCwe.id]
+                        if (yCwe.description not in xCwe.description):
+                            errorExit(f"MISMATCH! description of <{xCwe.id}> in [<{self.fPath}> ^ <{target.fPath}>] in <{vulClass}>.")
                 continue
             else:
                 errorExit(f"MISMATCH! <{self.fPath}> ^ <{target.fPath}> = {cwes1 ^ cwes2} in <{vulClass}>.")
