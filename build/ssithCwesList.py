@@ -49,14 +49,14 @@ exclusions = ( #These are not checked: fPath-vulClass
 class cwesDict:
     def __init__(self, fPath):
         self.fPath = fPath
-        self._cwes = {vulClass : [] for vulClass in vulClasses}
+        self._cwes = {vulClass : {} for vulClass in vulClasses}
 
     def compare (self, target, checkDescription=False):
         for vulClass in vulClasses:
             if (f"{target.fPath}-{vulClass}" in exclusions):
                 continue
-            cwes1 = set([xCwe.id for xCwe in self._cwes[vulClass]])
-            cwes2 = set([xCwe.id for xCwe in target._cwes[vulClass]])
+            cwes1 = set(self._cwes[vulClass].keys())
+            cwes2 = set(target._cwes[vulClass].keys())
             if (cwes1 == cwes2):
                 continue
             else:
@@ -71,7 +71,7 @@ class cwesDictCFR(cwesDict):
     def addVulClass(self,vulClass,vCfr):
         for xCwe in vCfr:
             cweNum = xCwe.split("CWE_")[-1]
-            self._cwes[vulClass].append(cwe(vulClass,cweNum))
+            self._cwes[vulClass][cweNum] = cwe(vulClass,cweNum)
 
 
 class cwesDictJSON(cwesDict):
@@ -97,7 +97,7 @@ class cwesDictJSON(cwesDict):
             if ("cweText" not in xItems):
                 errorExit(f"Missing key <cweText> in <{self.fPath}> for <{vulClass}:{xTest}>.")
             xCwe.description = xItems["cweText"]
-            self._cwes[vulClass].append(xCwe)
+            self._cwes[vulClass][cweNum] = xCwe
 
 class cwesDictINI(cwesDict):
     def __init__(self,fPath):
@@ -119,7 +119,7 @@ class cwesDictINI(cwesDict):
             if (option.startswith('_')): #That's a fake option
                 continue
             cweNum = option.split(f"{sectionType}_")[-1]
-            self._cwes[vulClass].append(cwe(vulClass,cweNum))
+            self._cwes[vulClass][cweNum] = cwe(vulClass,cweNum)
 
 class cwesDictCSV(cwesDict):
     def __init__(self,fPath):
@@ -128,7 +128,7 @@ class cwesDictCSV(cwesDict):
 
     def addCsvCwe(self,row):
         xCwe = csvRow(row)
-        self._cwes[xCwe.vulClass].append(xCwe)
+        self._cwes[xCwe.vulClass][xCwe.id] = xCwe
         if (xCwe.doesHaveCwesList):
             self.loadedCount[xCwe.cwesListVulClass] = xCwe.cwesListCount
 
