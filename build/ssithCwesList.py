@@ -42,6 +42,8 @@ exclusions = ( #These are not checked: fPath-vulClass
     [f"configSecurityTests-test-{vClass}" for vClass in ["bufferErrors", "informationLeakage"]]
     +
     [f"ClaferModel-{vClass}" for vClass in ["PPAC", "hardwareSoC", "injection"]]
+    + 
+    [f"{fPath}-injection" for fPath in ["configSecurityTests-test","configSecurityTests-assessment","setupEnv"]]
 )
 
 class cwesDict:
