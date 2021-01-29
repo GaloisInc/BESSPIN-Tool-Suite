@@ -249,6 +249,12 @@ def main(xArgs):
     spreadsheetCWEs.compare(testConfigCWEs)
     #2. ini assignment
     spreadsheetCWEs.compare(assessConfigCWEs)
+    #3. setupEnv 
+    spreadsheetCWEs.compare(setupEnvCWEs,checkDescription=True)
+    #4. cfr
+    spreadsheetCWEs.compare(cfrCWEs)
+
+    # Generate the README
 
 
 if __name__ == '__main__':
