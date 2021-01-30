@@ -42,8 +42,6 @@ exclusions = ( #These are not checked: fPath-vulClass
     [f"configSecurityTests-test-{vClass}" for vClass in ["bufferErrors", "informationLeakage"]]
     +
     [f"ClaferModel-{vClass}" for vClass in ["PPAC", "hardwareSoC", "injection"]]
-    + 
-    [f"{fPath}-injection" for fPath in ["configSecurityTests-test","configSecurityTests-assessment","setupEnv"]]
 )
 
 class cwesDict:
@@ -108,7 +106,7 @@ class cwesDictJSON(cwesDict):
             if ("cweText" not in xItems):
                 errorExit(f"Missing key <cweText> in <{self.fPath}> for <{vulClass}:{xTest}>.")
             xCwe.description = xItems["cweText"]
-            self._cwes[vulClass][cweNum] = xCwe
+            self._cwes[vulClass][xCwe.id] = xCwe
 
 class cwesDictINI(cwesDict):
     def __init__(self,fPath):
@@ -130,7 +128,8 @@ class cwesDictINI(cwesDict):
             if (option.startswith('_')): #That's a fake option
                 continue
             cweNum = option.split(f"{sectionType}_")[-1]
-            self._cwes[vulClass][cweNum] = cwe(vulClass,cweNum)
+            xCwe = cwe(vulClass,cweNum)
+            self._cwes[vulClass][xCwe.id] = xCwe
 
 class cwesDictCSV(cwesDict):
     def __init__(self,fPath):
@@ -158,7 +157,7 @@ class cwesDictCSV(cwesDict):
 class cwe:
     def __init__(self,vulClass,num):
         self.vulClass = vulClass
-        self.id = num.replace('-','_')
+        self.id = num.replace('-','_').upper()
 
 class csvRow(cwe):
     def __init__(self, row):
