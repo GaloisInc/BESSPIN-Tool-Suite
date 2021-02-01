@@ -11,12 +11,14 @@ constraints and specifies a mapping from CWEs to constraints.  You may force
 the setting of of specific constraints by providing your own custom error
 model.  To do so, create a copy of the builtin model
 (`fett/cwesEvaluation/bufferErrors/bufferErrors.cfr`) and list the constraints
-you would like to set at the end of the `BufferErrors_Test` section.  For
-example, if you'd like to only generate stack tests, rather than a mix of stack
-and heap tests, you should add `[Location_Stack]` to the end of the clafer file
-(indented by two spaces to apply it to the `BufferErrors_Test` section).  You
-may add as many constraints as you'd like, and the tool will take their
-conjunction.  You should not remove any definitions from this file.
+you would like to set at the end of the `BufferErrors_Test` section.  Do not
+directly edit the builtin model definition.
+
+For example, if you'd like to only generate stack tests, rather than a mix of
+stack and heap tests, you should add `[Location_Stack]` to the end of your
+clafer file (indented by two spaces to apply it to the `BufferErrors_Test`
+section).  You may add as many constraints as you'd like, and the tool will
+take their conjunction.  You should not remove any definitions from this file.
 
 To use your custom model, make the following changes to the `bufferErrors
 section of `config.ini`:
@@ -36,7 +38,8 @@ Say you would like to constrain the tool to only generate indexed array
 buffer errors in the stack with a magnitude of close and only using integer
 types.  Here are the steps you would take to accomplish this:
 
-1. Make a copy of `fett/cwesEvaluation/bufferErrors/bufferErrors.cfr`
+1. Make a copy of `fett/cwesEvaluation/bufferErrors/bufferErrors.cfr`.  Do not
+   directly edit `fett/cwesEvaluation/bufferErrors/bufferErrors.cfr`.
 2. Add the following lines to the bottom of your error model:
 ```
   [BufferIndexScheme_IndexArray]

@@ -71,6 +71,7 @@ class InstanceSelector:
         numSelected = sum(self.conceptCounts.values())
         if (not isEqSetting('osImage', 'FreeRTOS') and
             not isEqSetting('binarySource', 'LMCO') and
+            not isEnabledDict("bufferErrors", "useCustomErrorModel") and
             numSelected < 0.05 * getSettingDict('bufferErrors', 'nTests')):
             # Force selection of a small number of CWE_785 tests on Unix
             # platforms (except LMCO due to realpath not being available when
