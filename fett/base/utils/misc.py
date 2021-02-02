@@ -387,7 +387,7 @@ def touch(filepath, mode=0o666, permissive=True):
 
 def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
     try:
-        fJson = ftOpenFile(jsonFile, 'r')
+        fJson = open(jsonFile, 'r')
         jsonData = json.load(fJson)
         fJson.close()
     except Exception as exc:
@@ -398,7 +398,7 @@ def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
 
 def safeDumpJsonFile(jsonData, jsonFile):
     try:
-        fJson = ftOpenFile(jsonFile, 'w')
+        fJson = open(jsonFile, 'w')
         json.dump(jsonData, fJson)
         fJson.close()
     except Exception as exc:
