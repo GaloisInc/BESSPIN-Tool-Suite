@@ -10,6 +10,7 @@ core
 .vscode/
 fett/cwesEvaluation/*/*.als
 fett/cwesEvaluation/*/*.map
+fett/target/utils/uartDevicesMap.json
 
 # CI Gitignores
 ci/userdata.txt
