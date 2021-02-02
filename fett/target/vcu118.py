@@ -663,7 +663,7 @@ def programBitfile (doPrint=True,targetId=None):
     prepareFpgaEnv(targetId=targetId)
 
     printAndLog(f"{targetInfo}Clearing the flash...",doPrint=False)
-    #clearFlash(targetId=targetId)
+    clearFlash(targetId=targetId)
 
     if (not doesSettingExist('bitAndProbefiles',targetId=targetId)):
         bitAndProbefiles = selectBitAndProbeFiles(targetId=targetId)
@@ -674,7 +674,7 @@ def programBitfile (doPrint=True,targetId=None):
         setSetting('md5bifile',computeMd5ForFile(bitAndProbefiles[0]),targetId=targetId)
 
     printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
-    #programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)
+    programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)
     printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
         f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
 
