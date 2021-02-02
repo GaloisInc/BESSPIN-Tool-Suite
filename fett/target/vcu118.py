@@ -291,6 +291,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                 uartSN = uartSNs.pop(0)
             else:
                 uartSN = self.findTheRightUartDevice(objUartDevices)
+            logging.debug(f"{self.targetIdInfo}setupUart: uartSN is <{uartSN}>.")
             uartDevice = objUartDevices.getUartDevice(uartSN)
             objUartDevices.removeUartDevice(uartSN)
             fpgaHwId = getSetting('vcu118HwTarget',targetId=self.targetId).split('/')[-1]
@@ -386,7 +387,9 @@ class vcu118Target (fpgaTarget, commonTarget):
         # Check if it's saved
         uartSN = objUartDevices.getUartSerialNumber(hwId,"fpgaHwId")
         if (uartSN is not None):
+            logging.debug(f"{self.targetIdInfo}findTheRightUartDevice: Already associated with <{uartSN}>.")
             return uartSN
+        logging.debug(f"{self.targetIdInfo}findTheRightUartDevice: searching among <{','.join(objUartDevices.getAllUartDevices())}>.")
 
         #Prepare the minimal ELF
         smokeElf = self.buildSmokeElfForUartSearch(hwId)
@@ -444,6 +447,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
 
         if (goldenDevice is not None):
+            logging.debug(f"{self.targetIdInfo}findTheRightUartDevice: golden device is {goldenDevice}.")
             return objUartDevices.getUartSerialNumber(goldenDevice,"uartDevice")
         
         self.fpgaTearDown(stage=failStage.openocd)
@@ -512,8 +516,6 @@ class UartDevices:
         for serialNumber,xVal in xDict.items():
             if (xVal == val):
                 return serialNumber
-            else:
-                break
         return None
 
     def getAllUartSNs(self):
