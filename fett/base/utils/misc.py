@@ -385,12 +385,14 @@ def touch(filepath, mode=0o666, permissive=True):
     except Exception as exc:
         logAndExit(f"touch: Error touching file {filepath}", exc=exc)
 
-def safeLoadJsonFile (jsonFile):
+def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
     try:
         fJson = ftOpenFile(jsonFile, 'r')
         jsonData = json.load(fJson)
         fJson.close()
     except Exception as exc:
+        if (emptyIfNoFile and isinstance(exc,FileNotFoundError)):
+            return {}
         logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
