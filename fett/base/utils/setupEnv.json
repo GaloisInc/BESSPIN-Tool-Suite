@@ -368,7 +368,8 @@
         {
             "name" : "uartDevicesSavedMap",
             "type" : "filePath",
-            "val" : "fett/target/utils/uartDevicesMap.json"
+            "val" : "fett/target/utils/uartDevicesMap.json",
+            "ignore" : true
         }
     ]
 }
