@@ -50,10 +50,7 @@ def copyOtaUpdateserverFiles(tarName, targetId=None):
         tarFiles += ["ota.service"]
     elif osImage == 'FreeBSD':
         cpFilesToBuildDir (runtimeFilesDir, pattern="ota.sh", targetId=targetId)
-        # add GDB because it is not included in FreeBSD by default
-        # NOTE: this might not work on secure platforms
-        cpFilesToBuildDir (otaBinDir, pattern="gdb-freebsd-riscv64-static", targetId=targetId)
-        tarFiles += ["ota.sh", "gdb-freebsd-riscv64-static"]
+        tarFiles += ["ota.sh"]
     else:
         logAndExit (f"Installing ota-update-server is not supported on <{osImage}>",
                     exitCode=EXIT.Dev_Bug)

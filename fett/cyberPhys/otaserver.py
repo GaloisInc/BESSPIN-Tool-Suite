@@ -21,8 +21,6 @@ def install (xTarget):
         xTarget.runCommand("systemctl enable ota.service", timeout=serviceTimeout, tee=appLog)
         xTarget.runCommand("systemctl start ota.service", erroneousContents=["Failed to start", "error code"],tee=appLog)
     elif isEqSetting('osImage','FreeBSD',targetId=xTarget.targetId):
-        # Install gdb
-        xTarget.runCommand("install gdb-freebsd-riscv64-static /usr/local/sbin/gdb", erroneousContents="install:",tee=appLog)
         # Install OTA server
         xTarget.runCommand("install -d /usr/local/etc/rc.d",tee=appLog)
         xTarget.runCommand("install ota.sh /usr/local/etc/rc.d/ota", erroneousContents="install:",tee=appLog)
