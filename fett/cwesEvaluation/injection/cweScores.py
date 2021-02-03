@@ -61,12 +61,12 @@ def scoreControlFlowTest(logLines, testName):
 
     testNum, info = getTestNumAndInfo(testName)
 
-    if "<BEGIN_INJECTION_TEST>" not in logLines:
-        # Test did not run
-        score = SCORES.FAIL
-    elif "<QEMU_NOT_IMPLEMENTED>" in logLines:
+    if "<QEMU_NOT_IMPLEMENTED>" in logLines:
         score = SCORES.NOT_IMPLEMENTED
         info = "Not implemented on QEMU."
+    elif "<BEGIN_INJECTION_TEST>" not in logLines:
+        # Test did not run
+        score = SCORES.FAIL
     elif "<INVALID>" in logLines:
         score = SCORES.INVALID
     elif "<EXECUTING_BENIGN_CODE>" in logLines:
