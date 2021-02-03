@@ -82,12 +82,12 @@ example:
   is the expected value of the return pointer.  If these values do not match
   then the test will score INVALID, indicating that the offset between the
   start of the buffer and the return pointer is incorrect.  This offset is set
-  with the `unixReturnPointerOffset` and `rtosReturnPointerOffset` fields in
-  `fett/cwesEvaluation/injection/setupEnv.json`.  These offsets are known to
-  work on GFE processors, but may require tweaking on systems that modify stack
-  layout.  The offsets themselves are in units of width `sizeof(uintptr_t)`.
-  For example, the offset setting of `3` for Unix indicates that the return
-  pointer is `3 * sizeof(uintptr_t)` bytes from the start of `buf`.
+  with the `inj1UnixReturnPointerOffset` and `inj1RtosReturnPointerOffset`
+  fields in `config.ini`.  These offsets are known to work on GFE processors,
+  but may require tweaking on systems that modify stack layout.  The offsets
+  themselves are in units of width `sizeof(uintptr_t)`.  For example, the
+  offset setting of `3` for Unix indicates that the return pointer is `3 *
+  sizeof(uintptr_t)` bytes from the start of `buf`.
 
 **FreeRTOS:**
 - The FreeRTOS test uses tasks as a source of untrusted information.
@@ -127,7 +127,7 @@ example:
 - Fett sends the following values to the test program:
   1. The first offset: `0`.
   2. The first value: The EBREAK opcode.
-  3. The second offset:  `unixReturnPointerOffset`.
+  3. The second offset:  `inj1UnixReturnPointerOffset`.
   4. The second value: The address of `buf`.
 - The return of `stdin_test` will then jump to `buf`, but the OS will detect
   execution of non-executable memory and raise a segmentation fault.

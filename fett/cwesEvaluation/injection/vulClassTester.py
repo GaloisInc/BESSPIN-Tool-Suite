@@ -49,9 +49,8 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         if address is None:
             return (leakTextBack, isTimeout)
 
-        returnPointerOffset = getSettingDict(
-                self.vulClass,
-                ["testsInfo", "test_inj_1", "unixReturnPointerOffset"])
+        returnPointerOffset = getSettingDict(self.vulClass,
+                                             "inj1UnixReturnPointerOffset")
         _, injectionTextBack, isTimeout, _ = self.runCommand(
                 f"0\n{EBREAK_OPCODE}\n{returnPointerOffset}\n{address}\n",
                 exitOnError=False,

@@ -12,10 +12,10 @@
 
 #include "testsParameters.h"
 
-#ifdef testgenOnFreeRTOS
-
 // EBREAK opcode
 #define EBREAK 0b00000000000100000000000001110011
+
+#ifdef testgenOnFreeRTOS
 
 typedef struct {
     uintptr_t* buf;
@@ -62,13 +62,13 @@ static void message_buffer_test(const void* ret_ptr) {
     xInjectedTaskHandle = xTaskGetCurrentTaskHandle();
 
     // Run injector function as it's own task.
-    BaseType_t injector_task = xTaskCreate(injector,
-                                           "injector",
-                                           configMINIMAL_STACK_SIZE * 10,
-                                           &data,
-                                           configMAX_PRIORITIES - 1,
-                                           NULL);
-    if (injector_task != pdPASS) {
+    BaseType_t task_created = xTaskCreate(injector,
+                                          "injector",
+                                          configMINIMAL_STACK_SIZE * 10,
+                                          &data,
+                                          configMAX_PRIORITIES - 1,
+                                          NULL);
+    if (task_created != pdPASS) {
         printf("<INVALID>\n");
         printf("Failed to create task.\n");
         return;
@@ -83,6 +83,7 @@ static void message_buffer_test(const void* ret_ptr) {
 
     // If injection succeeded, then the return from this function will jump
     // into the ebreak variable.
+    printf("<RETURNING>\n");
 }
 
 #else  // !testgenOnFreeRTOS
@@ -115,12 +116,27 @@ static void write_buf(uintptr_t* buf, const void* expected_ret_ptr) {
 
     uintptr_t* write_location = buf + offset;
 
-    // If offset is nonzero, perform a sanity check that buf + offset points to
-    // the caller's stored return pointer.
-    if (offset && ((void*) *write_location) != expected_ret_ptr) {
-        printf("<INVALID>\n");
-        printf("Return pointer not at expected offset\n");
-        exit(0);
+    if (offset) {
+        // If offset is nonzero, this function is overwriting the stored return
+        // pointer with the address of the buffer.  `offset` should point to
+        // `expected_ret_ptr` and `value` should be the start of `buf`.
+        if (((void*) *write_location) != expected_ret_ptr) {
+            printf("<INVALID>\n");
+            printf("Return pointer not at expected offset.\n");
+            exit(0);
+        }
+        if ((uintptr_t*) value != buf) {
+            printf("<INVALID>\n");
+            printf("Return pointer overwrite value does not match address of buffer.\n");
+            exit(0);
+        }
+    } else {
+        // If the offset is zero, this function is writing the injected opcode.
+        if (value != EBREAK) {
+            printf("<INVALID>\n");
+            printf("Unexpected injected opcode.\n");
+            exit(0);
+        }
     }
 
     *write_location = value;
@@ -140,6 +156,17 @@ static void stdin_test(const void* expected_ret_ptr) {
     // Second read into buffer should overwrite stored return pointer with the
     // address of buf
     write_buf(buf, expected_ret_ptr);
+
+    // Print before returning so that scoring can differentiate between
+    // segfaults occuring in the return, and segfaults occuring due to the
+    // previous out of bounds writes.
+    printf("<RETURNING>\n");
+
+#ifdef testgenOnDebian
+    // Short sleep to ensure previous print completes and does not interleave
+    // with kmesg segfault message.
+    sleep(1);
+#endif
 
     // Return should jump into buf.  Debian and FreeBSD should detect execution
     // of non-executable memory and raise a segmentation fault.

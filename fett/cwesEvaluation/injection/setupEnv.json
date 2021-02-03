@@ -9,9 +9,7 @@
             "type" : "dict",
             "val" : {
                 "test_inj_1" : {
-                    "cweText" : "Untrusted Data Accessed as Machine Language Instructions",
-                    "unixReturnPointerOffset" : 3,
-                    "rtosReturnPointerOffset" : 5
+                    "cweText" : "Untrusted Data Accessed as Machine Language Instructions"
                 },
                 "test_inj_2" : {
                     "cweText" : "Untrusted Data Accessed as Heap Metadata"

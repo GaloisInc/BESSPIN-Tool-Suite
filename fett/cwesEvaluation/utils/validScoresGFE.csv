@@ -13,6 +13,6 @@
 
 #injection
 INJ-1,FreeRTOS,-6
-INJ-1,debian,3
-INJ-1,FreeBSD,3
+INJ-1,debian,4
+INJ-1,FreeBSD,4
 INJ-3,FreeRTOS,-6
