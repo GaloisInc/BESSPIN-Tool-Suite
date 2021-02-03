@@ -64,6 +64,9 @@ def scoreControlFlowTest(logLines, testName):
     if "<QEMU_NOT_IMPLEMENTED>" in logLines:
         score = SCORES.NOT_IMPLEMENTED
         info = "Not implemented on QEMU."
+    elif "<FREEBSD_NOT_IMPLEMENTED>" in logLines:
+        score = SCORES.NOT_IMPLEMENTED
+        info = "Not implemented on FreeBSD."
     elif "<BEGIN_INJECTION_TEST>" not in logLines:
         # Test did not run
         score = SCORES.FAIL
