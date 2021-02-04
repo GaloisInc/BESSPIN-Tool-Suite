@@ -374,7 +374,10 @@ def importImage(targetId=None):
 
         # Get the netboot ELF
         if (isEqSetting('elfLoader','netboot',targetId=targetId) and (getSetting('osImage',targetId=targetId) in ['debian', 'FreeBSD', 'busybox'])):
-            if (isEqSetting('procLevel','p3',targetId=targetId)):
+            if (getSetting('vcu118Mode',targetId=targetId) in ["flashBoot", "flashProgramAndBoot"]):
+                warnAndLog(f"<importImage>: Netboot is not needed in flash modes.",doPrint=False)
+                setSetting('elfLoader','JTAG',targetId=targetId)
+            elif (isEqSetting('procLevel','p3',targetId=targetId)):
                 warnAndLog(f"<importImage>: Netboot is currently not supported on P3. Falling back to JTAG.")
                 setSetting('elfLoader','JTAG',targetId=targetId)
             else:
