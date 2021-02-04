@@ -182,7 +182,7 @@
         {
             "name" : "vulClasses",
             "type" : "stringsList",
-            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC" ]
+            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC", "injection" ]
         },
         {
             "name" : "useCustomCWEsConfigsPath",
@@ -367,5 +367,8 @@
     ],
 
     "hardwareSoC": [
+    ],
+
+    "injection": [
     ]
 }

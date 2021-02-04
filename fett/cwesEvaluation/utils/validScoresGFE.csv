@@ -10,3 +10,6 @@
 226,FreeBSD,1
 244,FreeBSD,4
 526,FreeRTOS,-6
+
+#injection
+INJ-3,FreeRTOS,-6

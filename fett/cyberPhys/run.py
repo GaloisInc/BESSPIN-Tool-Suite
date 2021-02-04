@@ -7,7 +7,7 @@ from fett.base.utils.misc import *
 import fett.cyberPhys.launch
 import fett.target.launch
 
-from fett.cyberPhys import otaserver
+from fett.cyberPhys import otaserver, infotainmentserver
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -25,7 +25,7 @@ def runCyberPhys(xTarget):
     if (xTarget.osImage=='FreeRTOS'):
         xTarget.appModules = []
     elif (xTarget.osImage in ['debian', 'FreeBSD']):
-        xTarget.appModules = [otaserver]
+        xTarget.appModules = [otaserver, infotainmentserver]
     else:
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}<runApp> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
 

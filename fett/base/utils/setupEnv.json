@@ -364,6 +364,12 @@
             "name" : "cweTestTemplateFreeRTOS",
             "type" : "filePath",
             "val" : "fett/cwesEvaluation/utils/cweTestTemplateFreeRTOS.c"
+        },
+        {
+            "name" : "uartDevicesSavedMap",
+            "type" : "filePath",
+            "val" : "fett/target/utils/uartDevicesMap.json",
+            "ignore" : true
         }
     ]
 }

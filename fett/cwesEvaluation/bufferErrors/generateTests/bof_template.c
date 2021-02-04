@@ -47,17 +47,8 @@
 #endif
 
 // Required for memset's definition
-#if defined(STACK) || defined(testgenOnDebian)
+#ifdef STACK
 #include <string.h>
-#endif
-
-#ifdef testgenOnDebian
-    #ifndef BIN_SOURCE_LMCO
-        // Required for sigaction
-        #include <signal.h>
-    #endif
-// Required for _exit
-#include <unistd.h>
 #endif
 
 #ifdef VAR_ARGS
@@ -69,7 +60,7 @@
 #include<stdlib.h>
 #endif
 
-#if defined(PATH_MANIPULATION_ACCESS) && !defined(testgenOnFreeRTOS)
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(testgenOnFreeRTOS) && !defined(BIN_SOURCE_LMCO)
 // Required for realpath
 #include <limits.h>
 #include <stdlib.h>
@@ -301,14 +292,7 @@ void test_buffer_overflow(void)
 #endif//JMP
 }}
 
-#ifdef testgenOnDebian
-void handle_signal(int signum) {{
-    // Exit with signal number as return code
-    _exit(signum);
-}};
-#endif
-
-#ifdef PATH_MANIPULATION_ACCESS
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(BIN_SOURCE_LMCO)
 void test_path_manipulation(void) {{
 #ifdef testgenOnFreeRTOS
     printf("TEST INVALID.  <not on FreeRTOS>\r\n");
@@ -373,7 +357,7 @@ void test_path_manipulation(void) {{
 #endif
 #endif // !testgenOnFreeRTOS
 }};
-#endif  // PATH_MANIPULATION_ACCESS
+#endif  // PATH_MANIPULATION_ACCESS && !BIN_SOURCE_LMCO
 
 /*
  * Main Function
@@ -385,19 +369,6 @@ int main()
     printf("<BufferErrors Start>\r\n");
     fflush(stdout);
 
-#if (defined(testgenOnDebian) && !defined(BIN_SOURCE_LMCO))
-    // Register segmentation fault signal handler on Debian to prevent
-    // interleaving of "unhandled signal 11" messages and test output.
-    struct sigaction sigsegv_action;
-    memset(&sigsegv_action, 0, sizeof(sigsegv_action));
-    sigsegv_action.sa_handler = handle_signal;
-    if (sigaction(SIGSEGV, &sigsegv_action, NULL)) {{
-        printf("TEST INVALID. <sigaction>\r\n");
-        fflush(stdout);
-        return 0;
-    }};
-#endif
-
 #ifdef JMP
     int jmp_return = setjmp(env);
     if (jmp_return != 0)
@@ -405,7 +376,12 @@ int main()
 #endif
 
 #ifdef PATH_MANIPULATION_ACCESS
+#ifdef BIN_SOURCE_LMCO
+    printf("TEST INVALID. <No realpath on bare metal>\r\n");
+    fflush(stdout);
+#else
     test_path_manipulation();
+#endif
 #else
     test_buffer_overflow();
 #endif
