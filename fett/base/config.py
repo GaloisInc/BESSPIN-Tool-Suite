@@ -538,13 +538,13 @@ def loadCyberPhysConfiguration (configData):
                 setSettingsToSectDict=iTarget)
         setExtraTargetSettings(targetId=iTarget)
 
-    #Check that the custom options are consistent
-    customSettings = ["useCustomTargetIp", "useCustomHwTarget"]
-    for customSetting in customSettings:
-        t1Val = getSetting(customSetting,targetId=1)
+    #Check that the unmixable options are consistent
+    unmixableSettings = ["useCustomTargetIp", "useCustomHwTarget", "vcu118Mode"]
+    for unmixableSetting in unmixableSettings:
+        t1Val = getSetting(unmixableSetting,targetId=1)
         for iTarget in range(2,getSetting('nTargets')+1):
-            if (t1Val != getSetting(customSetting,targetId=iTarget)):
-                logAndExit(f"Mixed <{customSetting}> values are not allowed. "
-                    f"Please set <{customSetting}> consistently among all targets.",
+            if (t1Val != getSetting(unmixableSetting,targetId=iTarget)):
+                logAndExit(f"Mixed <{unmixableSetting}> values are not allowed. "
+                    f"Please set <{unmixableSetting}> consistently among all targets.",
                     exitCode=EXIT.Implementation)
 
