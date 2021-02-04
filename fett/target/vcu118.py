@@ -640,12 +640,21 @@ def programBitfile (doPrint=True,targetId=None):
                 logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
         setSetting('md5bifile',computeMd5ForFile(bitAndProbefiles[0]),targetId=targetId)
 
-    printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
-    programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)
-    printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
-        f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
+    mode = getSetting('vcu118Mode',targetId=targetId)
+    if (mode=='nonPersistent'):
+        printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
+        programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)
+        printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
+            f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
+    elif (mode=='flashProgramAndBoot'):
+        logAndExit(f"{targetInfo}<programBitfile> is not yet implemented for <{mode}> VCU118 mode.",
+            exitCode=EXIT.Implementation)
+    elif (mode=='flashBoot'):
+        warnAndLog(f"{targetInfo} Will proceed assuming the VCU118 flash was programmed and powercycled.")
+    else:
+        logAndExit(f"{targetInfo}programBitfile: Unrecognized VCU118 mode <{mode}>.",exitCode=EXIT.Dev_Bug)
 
-    printAndLog(f"{targetInfo}FPGA was programmed successfully!",doPrint=doPrint)
+    printAndLog(f"{targetInfo}FPGA is ready!",doPrint=doPrint)
 
 @decorate.debugWrap
 def selectBitAndProbeFiles (targetId=None):
