@@ -13,6 +13,9 @@ def runFreeRTOSCwesEvaluation():
     baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
     mkdir(baseLogDir, addToSettings="cwesEvaluationLogs")
     isFiresimPrepared = False #Preparation in target.launch.prepareEnv is initially skipped
+    if (isEqSetting('target','vcu118') and (not isEqSetting('vcu118Mode','nonPersistent'))):
+        logAndExit(f"Using the vcu118 mode <{getSetting('vcu118Mode')}> with FreeRTOS in "
+            "<evaluateSecurityTests> mode is not supported.",exitCode=EXIT.Configuration)
 
     for vulClass, tests in getSetting("enabledCwesEvaluations").items():
         logsDir = os.path.join(baseLogDir, vulClass)
