@@ -58,7 +58,7 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def fpgaStart (self, elfPath, elfLoadTimeout=15, isReload=False):      
-        if ((self.target=='vcu118') and (not self.flashMode)): #No need to wait when using flash
+        if (self.target=='vcu118'):
             time.sleep(3) 
             # After programming the fpga, the OS needs a moment to release the resource to be used by openocd.
             # I am suspecting a mistake by Vivado in terminating while still using the USB adaptor (CWE-672 ;)).
