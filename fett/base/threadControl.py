@@ -23,6 +23,9 @@ def createFettLocks():
     setSetting('tftpLock',threading.Lock())
     # Create a lock for using the FreeRTOS submodule directory or FreeRTOS general settings
     setSetting('FreeRTOSLock',threading.Lock())
+    # When programming flash, we need to wait for all targets before power cycling
+    if (isEqSetting('mode','cyberPhys')):
+        setSetting('vcu118FlashCounter',Counter(getSetting("nVcu118Targets")))
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -39,3 +42,24 @@ def ftQueueUtils(queueName,xQueue,method,timeout=None,itemToPut=True,exitFunc=lo
             exitFunc(f"Failed to get from <{queueName}>.",exc=exc,exitCode=EXIT.Dev_Bug)
     else:
         exitFunc(f"<ftQueueUtils> not implemented for method<{method}>.",exitCode=EXIT.Implementation)
+
+
+class Counter:
+    def __init__(self,goldenCount):
+        self._count = 0
+        self.goldenCount = goldenCount
+        self._lock = threading.Lock()
+        self._event = threading.Event()
+        self._event.clear() #to be explicit
+
+    def incAndCheck(self): #Have to be done in the same lock acquiring to avoid multiple calls
+        with self._lock:
+            self._count += 1
+            return (self._count == self.goldenCount)
+
+    def waitForEverything(self):
+        self._event.wait()
+
+    def userIsReady(self):
+        self._event.set()
+
