@@ -9,8 +9,30 @@ from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 
 from fett.base.utils.misc import *
 
+###############################################################################
+#### INJ-1 Constants
+###############################################################################
+
 # Opcode of EBREAK instruction
 EBREAK_OPCODE = int('00000000000100000000000001110011', 2)
+
+###############################################################################
+#### INJ-2 Constants
+###############################################################################
+
+# Each GNU malloc allocation places a 64 bit size header before the returned
+# pointer.  `untrusted1` is a buffer of 64-bit ints, so the offset into this
+# header is -1.
+BLOCK_SIZE_OFFSET = -1
+
+# Additional bytes beyond the size of `untrusted1` that the test allocates for
+# `untrusted2`.
+UNTRUSTED2_BYTES_INCREASE = 32
+
+# This is the index to write in `untrusted2` to overwrite the `trusted`
+# integer.  It is 16 bytes from the end of the old `untrusted1` buffer, which
+# puts it exactly on top of `trusted`.
+TRUSTED_OVERWRITE_INDEX = 10
 
 class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
@@ -57,6 +79,28 @@ class vulClassTester(testgenTargetCompatibilityLayer):
                 suppressErrors=True)
         return (leakTextBack + injectionTextBack), isTimeout
 
+    def executeInj2Test(self, binTest):
+        if isEqSetting("osImage", "FreeBSD"):
+            return ("<FREEBSD_NOT_IMPLEMENTED>\n"
+                    "Inj-2 test is not implemented on FreeBSD\n",
+                    False)
+        _, leakTextBack, isTimeout, _ = self.runCommand(
+                f"./{binTest}",
+                endsWith="<READY FOR INPUT>",
+                exitOnError=False,
+                suppressErrors=True)
+        if isTimeout:
+            return (leakTextBack, isTimeout)
+
+        _, injectionTextBack, isTimeout, _ = self.runCommand(
+                f"{BLOCK_SIZE_OFFSET}\n"
+                f"{UNTRUSTED2_BYTES_INCREASE}\n"
+                f"{TRUSTED_OVERWRITE_INDEX}\n"
+                "1\n",
+                exitOnError=False,
+                suppressErrors=True)
+        return (leakTextBack + injectionTextBack), isTimeout
+
     def executeInj3Test(self, binTest):
         leakTextBack, isTimeout, address = self.executeUpToLeak(binTest,
                                                                 "malicious address")
@@ -84,6 +128,8 @@ class vulClassTester(testgenTargetCompatibilityLayer):
 
         if testName == "test_inj_1":
             textBack, isTimeout = self.executeInj1Test(binTest)
+        elif testName == "test_inj_2":
+            textBack, isTimeout = self.executeInj2Test(binTest)
         elif testName == "test_inj_3":
             textBack, isTimeout = self.executeInj3Test(binTest)
         else:

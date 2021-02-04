@@ -143,11 +143,60 @@ of untrusted heap data that overwrites trusted `malloc` metadata in a
 neighboring chunk such that a subsequent `free` of that chunk causes the memory
 allocator to write untrusted data in trusted memory.
 
-**FreeRTOS:**
-- Not yet implemented.
+**Notes:**
+- Although the mechanism for obtaining untrusted data and offsets for heap
+  metadata differ between FreeRTOS and Debian, the tests are otherwise
+  identical.  This test:
+  1. Allocates a buffer `untrusted1` to store untrusted data.
+  2. Allocates an integer `trusted` to store trusted data, and sets it to `0`.
+     This will be allocated directly after `untrusted1`, with the 16 byte
+     heap metadata header for `trusted` inbetween.
+  3. Takes an untrusted value `index1`.  `index1` is chosen such that it points
+     to the size field of heap metadata for `untrusted1`.
+  4. Takes an untrusted value `increment1`.  `increment1` is 32, as that
+     matches the additional size of the allocation in step 7.
+  5. Increments `untrusted1[index]` by `increment1`.
+  6. Frees `unstrusted1`.  This places the block at the front of the free list,
+     but with size metadata that indicates the block is 32 bytes larger than it
+     actually is.
+  7. Allocates a buffer `untrusted2` that is 32 bytes larger than `untrusted1`.
+     Because of the incorrect size metadata, the allocator will return the
+     block of memory that formerly held `untrusted1`.
+  8. Takes an untrusted value `index2`.  `index2` points to memory 16 bytes
+     after the end of the old `untrusted1` buffer.  This is in bounds for
+     `untrusted2`, but overlaps with the allocation for `trusted`.
+  9. Takes an untrusted value `increment2`.  `increment2` is 1, but any
+     non-zero number would work.
+  10. Increments `untrusted2[index2]` by `increment2`.
+  11. Branches on `trusted` being nonzero, demonstrating that untrusted data
+      has been stored in a trusted variable.
 
-**Linux Debian and FreeBSD:**
-- Not yet implemented.
+**FreeRTOS:**
+- The FreeRTOS test uses tasks as a source of untrusted information.
+- `untrusted1` is a buffer of 8 32-bit integers.
+- `untrusted2` is a buffer of 16 32-bit integers (32 bytes larger than
+  `untrusted1`).
+- `index1` is `-3`, as the size header is 12 bytes (3 32-bit ints) before the
+  `untrusted1` pointer returned by `pvPortMalloc`.
+- `index2` is `12`, which is 16 bytes (4 32-bit ints) beyond the end of the
+  `untrusted1` allocation, and therefore just past the 16 byte header for
+  `trusted` and into the `trusted` data itself.
+
+**Linux Debian:**
+- The Debian test uses `stdin` as a source of untrusted information.
+- `untrusted1` is a buffer of 8 64-bit integers.
+- `untrusted2` is a buffer of 12 64-bit integers (32 bytes larger than
+  `untrusted1`).
+- `index1` is `-1`, as the size header is 8 bytes (1 64-bit int) before the
+  `untrusted1` pointer returned by `malloc`.
+- `index2` is `10`, which is 16 bytes (2 64-bit ints) beyond the end of the
+  `untrusted1` allocation, and therefore just past the 16 byte header for
+  `trusted` and into the `trusted` data itself.
+
+**FreeBSD:**
+- This test is not implemented and scores N/A on FreeBSD as the FreeBSD malloc
+  implementation (jemalloc) does not place heap metadata directly adjacent to
+  the pointers it returns.
 
 ------------------
 
