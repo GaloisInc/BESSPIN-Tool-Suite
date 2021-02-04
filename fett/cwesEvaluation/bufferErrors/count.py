@@ -130,8 +130,14 @@ def tabulate(logs,lookfor):
             params["CWE"] = cwes
         else:
             result, logSymbol = scoreLog (Path(log), lookfor)
+        # "Adjusted Result" is the string representation of `result` because
+        # `fixup` transforms SCORES enums to score values that are used only by
+        # the buffer errors tool.  So "Result" ends up being the unadjusted
+        # internal score, and "Adjusted Result" matches the scores in
+        # scores.csv and scoreReport.log.
         row = ({'TestNumber': name,
-                'Result': result},
+                'Result': result,
+                'Adjusted Result': str(result)},
                logSymbol)
         row[0].update(params)
         # TODO: also record simulator and binary hashes?
