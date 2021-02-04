@@ -647,14 +647,34 @@ def programBitfile (doPrint=True,targetId=None):
         printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
             f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
     elif (mode=='flashProgramAndBoot'):
+        checkThatUartIsKnownForFlash(targetId=targetId)
+        # Prepare the binary
+        # Program flash
         logAndExit(f"{targetInfo}<programBitfile> is not yet implemented for <{mode}> VCU118 mode.",
             exitCode=EXIT.Implementation)
     elif (mode=='flashBoot'):
+        checkThatUartIsKnownForFlash(targetId=targetId)
         warnAndLog(f"{targetInfo} Will proceed assuming the VCU118 flash was programmed and powercycled.")
     else:
         logAndExit(f"{targetInfo}programBitfile: Unrecognized VCU118 mode <{mode}>.",exitCode=EXIT.Dev_Bug)
 
     printAndLog(f"{targetInfo}FPGA is ready!",doPrint=doPrint)
+
+@decorate.debugWrap
+def checkThatUartIsKnownForFlash (targetId=None):
+    """ Pre-target class, check that there is an associated UART before proceeding with Flash """
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
+    hwId = getSetting('vcu118HwTarget',targetId=targetId).split('/')[-1]
+    if (not doesSettingExist('vcu118UartDevices')):
+        objUartDevices = UartDevices()
+    else:
+        objUartDevices = getSetting('vcu118UartDevices')
+
+    if (objUartDevices.getUartSerialNumber(hwId,"fpgaHwId") is None):
+        logAndExit(f"{targetInfo}: There is no saved UART serial number for "
+            f"<{getSetting('vcu118HwTarget',targetId=targetId)}>! Cannot use flash modes before "
+            "having UART configuration saved first.",exitCode=EXIT.Run)
+
 
 @decorate.debugWrap
 def selectBitAndProbeFiles (targetId=None):
