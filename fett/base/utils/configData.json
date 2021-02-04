@@ -370,5 +370,15 @@
     ],
 
     "injection": [
+        {
+            "name" : "inj1UnixReturnPointerOffset",
+            "type" : "int",
+            "min" : 1
+        },
+        {
+            "name" : "inj1RtosReturnPointerOffset",
+            "type" : "int",
+            "min" : 1
+        }
     ]
 }

@@ -102,9 +102,11 @@ void stdin_test(void) {
     if (getline(&line, &len, stdin) == -1) {
         printf("<INVALID>\n");
         printf("Failed to read from stdin\n");
+        free(line);
         return;
     }
     data.num = (uintptr_t) strtoull(line, NULL, 0);
+    free(line);
     if (data.num == 0 || data.num == ULLONG_MAX) {
         printf("<INVALID>\n");
         printf("Failed to convert string to integer\n");
@@ -117,6 +119,7 @@ void stdin_test(void) {
 #endif  // !testgenOnFreeRTOS
 
 int main(void) {
+    printf("<BEGIN_INJECTION_TEST>\n");
 #ifdef testgenOnFreeRTOS
 #ifdef testgenQEMU
     // Not implemented for QEMU due to issues with FreeRTOS tasks on QEMU.
