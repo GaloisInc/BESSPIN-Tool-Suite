@@ -548,3 +548,13 @@ def loadCyberPhysConfiguration (configData):
                     f"Please set <{unmixableSetting}> consistently among all targets.",
                     exitCode=EXIT.Implementation)
 
+    #Set any countable settings
+    settingsToCount = [("target","vcu118")]
+    for xSetting,xVal in settingsToCount:
+        count = 0
+        for iTarget in range(1,getSetting('nTargets')+1):
+            if (isEqSetting(xSetting,xVal,targetId=iTarget)):
+                count += 1
+        setSetting(f"n{xVal[0].upper()}{xVal[1:]}{xSetting[0].upper()}{xSetting[1:]}s",count)
+
+
