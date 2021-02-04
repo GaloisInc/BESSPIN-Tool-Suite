@@ -648,7 +648,7 @@ def programBitfile (doPrint=True,targetId=None):
             f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
     elif (mode=='flashProgramAndBoot'):
         checkThatUartIsKnownForFlash(targetId=targetId)
-        # Prepare the binary
+        prepareOsBinaryForFlash(targetId=targetId)
         # Program flash
         logAndExit(f"{targetInfo}<programBitfile> is not yet implemented for <{mode}> VCU118 mode.",
             exitCode=EXIT.Implementation)
@@ -675,6 +675,30 @@ def checkThatUartIsKnownForFlash (targetId=None):
             f"<{getSetting('vcu118HwTarget',targetId=targetId)}>! Cannot use flash modes before "
             "having UART configuration saved first.",exitCode=EXIT.Run)
 
+@decorate.debugWrap
+@decorate.timeWrap
+def prepareOsBinaryForFlash(targetId=None):
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
+    targetSuffix = f'_{targetId}' if (targetId) else ''
+    if (not doesSettingExist('buildDir',targetId=targetId)): #In case of busybox for instance
+        buildDir = os.path.join(getSetting('workDir'), f'build{targetSuffix}')
+        mkdir(buildDir)
+        setSetting('buildDir',buildDir,targetId=targetId)
+    buildDir = os.path.join(getSetting('buildDir',targetId=targetId),'vcu118FlashBuild')
+    mkdir(buildDir)
+
+    #Copy the necessary files
+    copyDir(os.path.join(getSetting('repoDir'),'fett','target','utils','vcu118FlashBuild'),buildDir,copyContents=True)
+    cp(getSetting('osImageElf',targetId=targetId),os.path.join(buildDir,"prog.elf"))
+
+    printAndLog (f"{targetInfo}Building the flash binary...",doPrint=False)
+    envVars = []
+    envVars.append(f"XLEN={getSetting('xlen',targetId=targetId)}")
+    envVars.append(f"BIN_SOURCE={getSetting('binarySource',targetId=targetId).replace('-','_')}")
+    envVars.append(f"PROG=prog.elf")
+    make (envVars,buildDir,buildDir=buildDir)
+    setSetting('osImageElf',os.path.join(buildDir,"bootmem.bin"),targetId=targetId) #use the new binary
+    return
 
 @decorate.debugWrap
 def selectBitAndProbeFiles (targetId=None):
