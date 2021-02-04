@@ -552,7 +552,7 @@ def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     elif(mode=="flash"):
         tclMode = "bitstreamAndData_flash"
         extraFile = getSetting('osImageElf',targetId=targetId)
-        timeout = 600
+        timeout = 1000
     else:
         logAndExit(f"{targetInfo}programVcu118: Called with a non-recognized mode <{mode}>.",exitCode=EXIT.Dev_Bug)
 
@@ -562,7 +562,13 @@ def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
                     '-tclargs',tclMode,getSetting('vcu118HwTarget',targetId=targetId),
                     getSetting('bitAndProbefiles',targetId=targetId)[0], extraFile],
                     timeout=timeout,cwd=cwd,check=False)
-    if retProc.returncode != 0:
+        isSuccess = (retProc.returncode == 0)
+        if ((mode=="flash") and (retProc.returncode==1)): #check for the tcmalloc weird error exception
+            logText = ftReadLines(os.path.join(cwd,'prog_vcu118.log'),splitLines=False)
+            isSuccess = ( (len(re.findall("Program/Verify Operation successful.",logText))==3)
+                            and (re.search("out of memory",logText) is not None) ) #looks like it went well
+
+    if (not isSuccess):
         if attempts > 0:
             errorAndLog(f"{targetInfo}programVcu118: failed to program the FPGA. " 
                 f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
