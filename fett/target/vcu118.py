@@ -537,30 +537,38 @@ _MAX_PROG_ATTEMPTS = 3
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programFpga(bitStream, probeFile, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
-    """programs the fpga with a given bitstream and probe file
-    matches the functionality of the old `gfe-program-fpga`
-    :param bitStream: valid filepath
-    :param probeFile: valid probe file
+def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
+    """programs the vcu118 fpga, either with a given bitstream and probe file or the flash with the bitstream and the os binary
     """
     targetInfo = f"<target{targetId}>: " if (targetId) else ''
     cwd = getSetting('gfeWorkDir',targetId=targetId)
 
-    # copy files over to workDir
+    # copy tcl file over to workDir
     cp(os.path.join(getSetting('tclSourceDir'), 'prog_vcu118.tcl'), cwd)
+    if (mode=="bitstream"):
+        tclMode = "bitstream_nonpersistent"
+        extraFile = getSetting('bitAndProbefiles',targetId=targetId)[1]
+        timeout = 120
+    elif(mode=="flash"):
+        tclMode = "bitstreamAndData_flash"
+        extraFile = getSetting('osImageElf',targetId=targetId)
+        timeout = 600
+    else:
+        logAndExit(f"{targetInfo}programVcu118: Called with a non-recognized mode <{mode}>.",exitCode=EXIT.Dev_Bug)
 
     with getSetting('openocdLock'):
         retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_vcu118.tcl',
                     '-log', os.path.join(cwd,'prog_vcu118.log'),'-mode','batch',
-                    '-tclargs',"bitstream_nonpersistent",getSetting('vcu118HwTarget',targetId=targetId),
-                    bitStream, probeFile],timeout=120,cwd=cwd,check=False)
+                    '-tclargs',tclMode,getSetting('vcu118HwTarget',targetId=targetId),
+                    getSetting('bitAndProbefiles',targetId=targetId)[0], extraFile],
+                    timeout=timeout,cwd=cwd,check=False)
     if retProc.returncode != 0:
         if attempts > 0:
-            errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. " 
+            errorAndLog(f"{targetInfo}programVcu118: failed to program the FPGA. " 
                 f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
-            programFpga(bitStream, probeFile, attempts=attempts-1, targetId=targetId)
+            programVcu118(mode, attempts=attempts-1, targetId=targetId)
         else:
-            logAndExit(f"{targetInfo}programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
+            logAndExit(f"{targetInfo}programVcu118: failed to program the FPGA.",exitCode=EXIT.Run)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -643,15 +651,16 @@ def programBitfile (doPrint=True,targetId=None):
     mode = getSetting('vcu118Mode',targetId=targetId)
     if (mode=='nonPersistent'):
         printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
-        programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)
+        programVcu118("bitstream",targetId=targetId)
         printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
             f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
     elif (mode=='flashProgramAndBoot'):
         checkThatUartIsKnownForFlash(targetId=targetId)
         prepareOsBinaryForFlash(targetId=targetId)
-        # Program flash
-        logAndExit(f"{targetInfo}<programBitfile> is not yet implemented for <{mode}> VCU118 mode.",
-            exitCode=EXIT.Implementation)
+        printAndLog(f"{targetInfo}Programming the flash...",doPrint=doPrint)
+        programVcu118("flash",targetId=targetId)
+        printAndLog(f"{targetInfo}Programmed with bitstream {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
+            f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
     elif (mode=='flashBoot'):
         checkThatUartIsKnownForFlash(targetId=targetId)
         warnAndLog(f"{targetInfo} Will proceed assuming the VCU118 flash was programmed and powercycled.")
