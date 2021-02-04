@@ -43,6 +43,12 @@ class fpgaTarget(object):
             printAndLog(f"{self.targetIdInfo}fpgaTarget: openocd telnet port is <{self.openocdPort}>.",
                 doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
 
+        if ( (self.target=='vcu118') and
+            (getSetting('vcu118Mode',targetId=self.targetId) in ["flashBoot", "flashProgramAndBoot"]) ):
+            self.flashMode = True
+        else:
+            self.flashMode = False
+
         self.readGdbOutputUnix = 0 #beginning of file
 
     @decorate.debugWrap
@@ -52,7 +58,7 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def fpgaStart (self, elfPath, elfLoadTimeout=15, isReload=False):      
-        if (self.target == 'vcu118'):
+        if ((self.target=='vcu118') and (not self.flashMode)): #No need to wait when using flash
             time.sleep(3) 
             # After programming the fpga, the OS needs a moment to release the resource to be used by openocd.
             # I am suspecting a mistake by Vivado in terminating while still using the USB adaptor (CWE-672 ;)).
@@ -150,10 +156,10 @@ class fpgaTarget(object):
             if (self.useOpenocd() and mainProg):
                 getSetting('openocdLock').release()
 
-            self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
-
-            if (self.processor=='bluespec_p3'):
-                time.sleep(3) # Bluespec_p3 needs time here before being able to properly continue.
+            if (not self.flashMode): #No need to load when flash
+                self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
+                if (self.processor=='bluespec_p3'):
+                    time.sleep(3) # Bluespec_p3 needs time here before being able to properly continue.
         elif (self.useOpenocd() and mainProg):
             getSetting('openocdLock').release()
             self.terminateAndExit(f"{self.targetIdInfo}gdbProgStart: Releasing the openocd lock is not "
@@ -230,21 +236,25 @@ class fpgaTarget(object):
         else:
             time.sleep(1)
 
-        if (self.processor=='bluespec_p3'):
+        if (self.flashMode and (self.procFlavor=='bluespec') and (self.xlen==64)): 
+            #For bluespec_p2 and bluespec_p3, we need to explicitly instruct the fpga to execute the beginning of the flash
+            for xCommand in ["set $a0 = 0", "set $a1 = 0x70000020", "set $t0 = 0x44000000", "set $pc = 0x44000000"]:
+                self.runCommandGdb(xCommand)
+                time.sleep(1)
+        elif (self.processor=='bluespec_p3'): #Do not do it when flashMode
             self.setUnixBluespecP3()
 
-        # detach from gdb
-        self.gdbDetach()
+        if (not self.flashMode): #No need
+            # detach from gdb
+            self.gdbDetach()
+            # Re-connect
+            self.gdbConnect()
+            if (self.processor=='bluespec_p3'):
+                self.setUnixBluespecP3()
 
-        # Re-connect
-        self.gdbConnect()
-
-        if (self.processor=='bluespec_p3'):
-            self.setUnixBluespecP3()
-
-        if ((not isRepeated) and (self.osImage=='FreeRTOS')):
-            if (self.procFlavor=='bluespec'):
-                self.softReset(isRepeated=True)
+            if ((not isRepeated) and (self.osImage=='FreeRTOS')):
+                if (self.procFlavor=='bluespec'):
+                    self.softReset(isRepeated=True)
 
     @decorate.debugWrap
     @decorate.timeWrap
