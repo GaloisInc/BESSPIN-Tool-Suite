@@ -661,6 +661,7 @@ def programBitfile (doPrint=True,targetId=None):
         programVcu118("flash",targetId=targetId)
         printAndLog(f"{targetInfo}Programmed with bitstream {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
             f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
+        waitForTargetsAndUser(targetId=targetId)
     elif (mode=='flashBoot'):
         checkThatUartIsKnownForFlash(targetId=targetId)
         warnAndLog(f"{targetInfo} Will proceed assuming the VCU118 flash was programmed and powercycled.")
@@ -708,6 +709,20 @@ def prepareOsBinaryForFlash(targetId=None):
     make (envVars,buildDir,buildDir=buildDir)
     setSetting('osImageElf',os.path.join(buildDir,"bootmem.bin"),targetId=targetId) #use the new binary
     return
+
+@decorate.debugWrap
+@decorate.timeWrap
+def waitForTargetsAndUser (targetId=None):
+    # Wait for all targets
+    if (isEqSetting('mode','cyberPhys')):
+        if (not getSetting('vcu118FlashCounter').incAndCheck()): #not done yet
+            getSetting('vcu118FlashCounter').waitForEverything()
+            return
+    # Wait for user
+    printAndLog("Power cycle the FPGA(s) then press Enter to continue...")
+    input()
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('vcu118FlashCounter').userIsReady()
 
 @decorate.debugWrap
 def selectBitAndProbeFiles (targetId=None):
