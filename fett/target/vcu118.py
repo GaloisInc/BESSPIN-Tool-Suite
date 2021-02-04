@@ -547,19 +547,13 @@ def programFpga(bitStream, probeFile, attempts=_MAX_PROG_ATTEMPTS-1, targetId=No
     cwd = getSetting('gfeWorkDir',targetId=targetId)
 
     # copy files over to workDir
-    cp(os.path.join(getSetting('tclSourceDir'), 'prog_bit.tcl'), cwd)
-
-    # check that the input files exist
-    if not os.path.exists(bitStream):
-        logAndExit(f"{targetInfo}programFpga: bitstream file {bitStream} does not exist")
-    if not os.path.exists(probeFile):
-        logAndExit(f"{targetInfo}programFpga: probe file {probeFile} does not exist")
+    cp(os.path.join(getSetting('tclSourceDir'), 'prog_vcu118.tcl'), cwd)
 
     with getSetting('openocdLock'):
-        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_bit.tcl',
-                    '-log', os.path.join(cwd,'prog_bit.log'),'-mode','batch',
-                    '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),bitStream, probeFile],
-                    timeout=90,cwd=cwd,check=False)
+        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_vcu118.tcl',
+                    '-log', os.path.join(cwd,'prog_vcu118.log'),'-mode','batch',
+                    '-tclargs',"bitstream_nonpersistent",getSetting('vcu118HwTarget',targetId=targetId),
+                    bitStream, probeFile],timeout=120,cwd=cwd,check=False)
     if retProc.returncode != 0:
         if attempts > 0:
             errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. " 
@@ -567,32 +561,6 @@ def programFpga(bitStream, probeFile, attempts=_MAX_PROG_ATTEMPTS-1, targetId=No
             programFpga(bitStream, probeFile, attempts=attempts-1, targetId=targetId)
         else:
             logAndExit(f"{targetInfo}programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
-
-@decorate.debugWrap
-@decorate.timeWrap
-def clearFlash(attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
-    """ clear flash memory on Fpga
-    matches the functionality of gfe-clear-flash
-    """
-    targetInfo = f"<target{targetId}>: " if (targetId) else ''
-    cwd = getSetting('gfeWorkDir',targetId=targetId)
-
-    # copy files over to workDir
-    cp(os.path.join(getSetting('tclSourceDir'), 'prog_flash.tcl'), cwd)
-    cp(os.path.join(getSetting('tclSourceDir'), 'small.bin'), cwd)
-
-    with getSetting('openocdLock'):
-        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_flash.tcl',
-                    '-log', os.path.join(cwd,'prog_flash.log'),'-mode','batch',
-                    '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),'./small.bin'],
-                    timeout=90,cwd=cwd,check=False)
-    if retProc.returncode != 0:
-        if attempts > 0:
-            errorAndLog(f"{targetInfo}clearFlash: failed to clear flash. "
-                f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
-            clearFlash(attempts=attempts-1, targetId=targetId)
-        else:
-            logAndExit(f"{targetInfo}clearFlash: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -663,9 +631,6 @@ def programBitfile (doPrint=True,targetId=None):
     targetInfo = f"<target{targetId}>: " if (targetId) else ''
     printAndLog(f"{targetInfo}Preparing the VCU118 FPGA...",doPrint=doPrint)
     prepareFpgaEnv(targetId=targetId)
-
-    printAndLog(f"{targetInfo}Clearing the flash...",doPrint=False)
-    clearFlash(targetId=targetId)
 
     if (not doesSettingExist('bitAndProbefiles',targetId=targetId)):
         bitAndProbefiles = selectBitAndProbeFiles(targetId=targetId)
