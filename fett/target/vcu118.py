@@ -552,7 +552,7 @@ def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     elif(mode=="flash"):
         tclMode = "bitstreamAndData_flash"
         extraFile = getSetting('osImageElf',targetId=targetId)
-        timeout = 1000
+        timeout = 2500
     else:
         logAndExit(f"{targetInfo}programVcu118: Called with a non-recognized mode <{mode}>.",exitCode=EXIT.Dev_Bug)
 
