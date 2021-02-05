@@ -45,7 +45,7 @@
         "JTAG": {
           "name" : "procLevel",
           "p2" : { "timeout" : { "elfLoad" : 1200, "boot" : 500 } },
-          "p3" : { "timeout" : { "elfLoad" : 1300, "boot" : 600 } }
+          "p3" : { "timeout" : { "elfLoad" : 1800, "boot" : 600 } }
         },
         "else": { "timeout" : { "boot" : 800 } }
       },
