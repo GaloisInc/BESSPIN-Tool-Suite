@@ -81,7 +81,7 @@ def bfparams(filepath):
 
 def test_ord(t):
     try:
-        return int(t[0]['TestNumber'])
+        return int(t['TestNumber'])
     except:
         return -1
 
