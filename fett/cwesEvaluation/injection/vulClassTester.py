@@ -16,6 +16,13 @@ from fett.base.utils.misc import *
 # Opcode of EBREAK instruction
 EBREAK_OPCODE = int('00000000000100000000000001110011', 2)
 
+# Minimum return pointer offset to try.  Set to first value out of bounds for
+# `buf`.
+MIN_RETURN_POINTER_OFFSET = 2
+
+# Maximum return pointer offset to try.
+MAX_RETURN_POINTER_OFFSET = 8
+
 ###############################################################################
 #### INJ-2 Constants
 ###############################################################################
@@ -65,19 +72,29 @@ class vulClassTester(testgenTargetCompatibilityLayer):
 
         return (leakTextBack, False, address_match.group(1))
 
-    def executeInj1Test(self, binTest):
+    def executeInj1TestPart(self, binTest, returnPointerOffset):
         leakTextBack, isTimeout, address = self.executeUpToLeak(binTest,
                                                                 "buffer address")
         if address is None:
             return (leakTextBack, isTimeout)
 
-        returnPointerOffset = getSettingDict(self.vulClass,
-                                             "inj1UnixReturnPointerOffset")
         _, injectionTextBack, isTimeout, _ = self.runCommand(
                 f"0\n{EBREAK_OPCODE}\n{returnPointerOffset}\n{address}\n",
                 exitOnError=False,
                 suppressErrors=True)
         return (leakTextBack + injectionTextBack), isTimeout
+
+    def executeInj1Test(self, binTest):
+        textBack = ""
+        for returnPointerOffset in range(MIN_RETURN_POINTER_OFFSET,
+                                         MAX_RETURN_POINTER_OFFSET+1):
+            textBack += f"\n<OFFSET {returnPointerOffset}>\n";
+            partTextBack, isTimeout = \
+                    self.executeInj1TestPart(binTest, returnPointerOffset)
+            textBack += partTextBack
+            if isTimeout:
+                textBack += "\n<TIMEOUT>\n"
+        return textBack, False
 
     def executeInj2Test(self, binTest):
         if isEqSetting("osImage", "FreeBSD"):

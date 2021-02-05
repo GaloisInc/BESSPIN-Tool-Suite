@@ -253,8 +253,6 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
 
     fPars = ftOpenFile(os.path.join(buildDir,'testsParameters.h'),'a')
     fPars.write(f"\n#define TESTGEN_TEST_PART {part}\n")
-    if vulClass == "injection" and test == "test_inj_1.c":
-        fPars.write(f"\n#define RET_PTR_OFFSET {getSettingDict(vulClass, 'inj1RtosReturnPointerOffset')}\n")
     fPars.close()
 
     # Build

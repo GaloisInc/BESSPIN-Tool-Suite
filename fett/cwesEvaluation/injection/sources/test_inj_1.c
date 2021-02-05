@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -15,12 +16,30 @@
 // EBREAK opcode
 #define EBREAK 0b00000000000100000000000001110011
 
+// Return `true` if `ptr` points to the stored return pointer
+static bool is_return_pointer(uintptr_t* ptr, const void** expected_ret) {
+    uintptr_t ptr_int = (uintptr_t) *ptr;
+    uintptr_t expected_int = (uintptr_t) *expected_ret;
+    // `ptr` should point to `expected_int` (within a few bytes).
+    if (ptr_int > expected_int || expected_int - ptr_int > 8) {
+        printf("<INVALID>\n");
+        printf("Return pointer not at expected offset.\n");
+        return false;
+    }
+    return true;
+}
+
 #ifdef testgenOnFreeRTOS
+
+// FreeRTOS test has 8 parts (will try offsets 1 through 8)
+#define NUM_OF_TEST_PARTS 8
+
+#define RET_PTR_OFFSET TESTGEN_TEST_PART
 
 typedef struct {
     uintptr_t* buf;
     // The expected stored return value (for sanity checking)
-    const void* expected_ret;
+    const void** expected_ret;
 } shared_task_data_t;
 
 // Handle for task to notify after performing injection
@@ -36,9 +55,7 @@ static void injector(void* params) {
     uintptr_t* ret = data->buf + RET_PTR_OFFSET;
 
     // Sanity check that `ret` points to the stored return pointer
-    if (((void*) *ret) != data->expected_ret) {
-        printf("<INVALID>\n");
-        printf("Return pointer not at expected offset\n");
+    if (!is_return_pointer(ret, data->expected_ret)) {
         vTaskDelete(NULL);
         return;
     }
@@ -52,7 +69,7 @@ static void injector(void* params) {
     vTaskDelete(NULL);
 }
 
-static void message_buffer_test(const void* ret_ptr) {
+static void message_buffer_test(const void** ret_ptr) {
     // Setup shared data
     uintptr_t ebreak;
     shared_task_data_t data = {
@@ -110,7 +127,7 @@ static uintptr_t read_value() {
 
 // Read two values from stdin, the first is an index, and the second is a
 // value.  Set buf[index] = value.
-static void write_buf(uintptr_t* buf, const void* expected_ret_ptr) {
+static void write_buf(uintptr_t* buf, const void** expected_ret_ptr) {
     uintptr_t offset = read_value();
     uintptr_t value = read_value();
 
@@ -119,10 +136,11 @@ static void write_buf(uintptr_t* buf, const void* expected_ret_ptr) {
     if (offset) {
         // If offset is nonzero, this function is overwriting the stored return
         // pointer with the address of the buffer.  `offset` should point to
-        // `expected_ret_ptr` and `value` should be the start of `buf`.
-        if (((void*) *write_location) != expected_ret_ptr) {
-            printf("<INVALID>\n");
-            printf("Return pointer not at expected offset.\n");
+        // `expected_ret_ptr` (within a few bytes) and `value` should be the
+        // start of `buf`.
+        uintptr_t write_int = (uintptr_t) *write_location;
+        uintptr_t expected_int = (uintptr_t) *expected_ret_ptr;
+        if (!is_return_pointer(write_location, expected_ret_ptr)) {
             exit(0);
         }
         if ((uintptr_t*) value != buf) {
@@ -143,7 +161,7 @@ static void write_buf(uintptr_t* buf, const void* expected_ret_ptr) {
 }
 
 
-static void stdin_test(const void* expected_ret_ptr) {
+static void stdin_test(const void** expected_ret_ptr) {
     uintptr_t buf[2];
 
     // Leak buffer address and offset
@@ -177,17 +195,25 @@ int main(void) {
     printf("<BEGIN_INJECTION_TEST>\n");
     const void* ret_ptr = &&ret_location;
 #ifdef testgenOnFreeRTOS
+    printf("\n<OFFSET %d>\n", RET_PTR_OFFSET);
 #ifdef testgenQEMU
     // Not implemented for QEMU due to issues with FreeRTOS tasks on QEMU.
     printf("<QEMU_NOT_IMPLEMENTED>\n");
     printf("FreeRTOS INJ-1 test is not implemented on QEMU.\n");
 #else  // !testgenOnQEMU
-    message_buffer_test(ret_ptr);
+    message_buffer_test(&ret_ptr);
 #endif  // !testgenOnQEMU
 #else  // !testgenOnFreeRTOS
-    stdin_test(ret_ptr);
+    stdin_test(&ret_ptr);
 #endif  // !testgenOnFreeRTOS
 ret_location:
+    if (ret_ptr != &&ret_location) {
+        // Overwrote the local variable `ret_ptr`, not the actual return
+        // pointer.  These two cases are indistinguishable to the return offset
+        // check function, so the test needs to check here.
+        printf("<INVALID>\n");
+        printf("Overwrote main's ret_ptr local variable\n");
+    }
     printf("<END_INJECTION_TEST>\n");
     return 0;
 }
