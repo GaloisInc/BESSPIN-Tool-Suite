@@ -85,11 +85,11 @@ def scoreByCWE(rows):
                 _, cweNum = cwe.split("_")
                 cweNum    = f"CWE-{cweNum}"
                 try:
-                    results[cweNum].append(row['Result'])
+                    results[cweNum].append(row['Adjusted Result'])
                 except:
-                    results[cweNum] = [row['Result']]
+                    results[cweNum] = [row['Adjusted Result']]
         else:
-            results[row['TestNumber']] = [row['Result']]
+            results[row['TestNumber']] = [row['Adjusted Result']]
     tab = []
     for test in sorted(results.keys()):
         v = score(results[test])
