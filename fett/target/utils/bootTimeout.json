@@ -30,7 +30,11 @@
   },
   "busybox": { 
     "name": "elfLoader",
-    "JTAG": { "timeout" : { "elfLoad" : 110, "boot" : 30 } },
+    "JTAG": { 
+      "name" : "procLevel",
+      "p2" : { "timeout" : { "elfLoad" : 110, "boot" : 30 } },
+      "p3" : { "timeout" : { "elfLoad" : 120, "boot" : 60 } }
+    },
     "else": { "timeout" : { "boot" : 80 } } 
   },
   "FreeBSD": {
