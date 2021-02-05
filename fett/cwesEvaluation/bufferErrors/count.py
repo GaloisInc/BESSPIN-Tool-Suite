@@ -130,23 +130,17 @@ def tabulate(logs,lookfor):
             params["CWE"] = cwes
         else:
             result, logSymbol = scoreLog (Path(log), lookfor)
-        # "Adjusted Result" is the string representation of `result` because
-        # `fixup` transforms SCORES enums to score values that are used only by
-        # the buffer errors tool.  So "Result" ends up being the unadjusted
-        # internal score, and "Adjusted Result" matches the scores in
-        # scores.csv and scoreReport.log.
-        row = ({'TestNumber': name,
-                'Result': result,
-                'Adjusted Result': str(result)},
-               logSymbol)
-        row[0].update(params)
+        row = {'TestNumber': name,
+               'Result': logSymbol,
+               'Adjusted Result': result}
+        row.update(params)
         # TODO: also record simulator and binary hashes?
         rows.append(row)
     rows.sort(key=test_ord)
     
     if isEnabledDict('bufferErrors', 'csvFile'):
         writeCSV(rows)
-    return [row[0] for row in rows]
+    return rows
 
 def writeCSV(rows):
     csvOut = ftOpenFile(os.path.join(getSetting('cwesEvaluationLogs'),
@@ -154,20 +148,18 @@ def writeCSV(rows):
                                      'bufferErrors.csv'),
                         'w')
     # this works since Py3 dicts preserve insertion order
-    csvOut.write(','.join(rows[0][0].keys()) + '\n')
-    for row, logSymbol in rows:
+    csvOut.write(','.join(rows[0].keys()) + '\n')
+    for row in rows:
         vs = row.values()
-        vss = [ fixup(v, logSymbol) for v in vs ]
+        vss = [ fixup(v) for v in vs ]
         csvOut.write(','.join(vss) + '\n')
     csvOut.close()
 
-def fixup(v, logSymbol):
+def fixup(v):
     if type(v) == list:
         vals = ','.join(v)
         return f"\"[{vals}]\""
-    elif type(v) == SCORES:
-        return logSymbol
-    elif type(v) == bool:
+    elif type(v) in [bool, SCORES]:
         return str(v)
     return v
 
