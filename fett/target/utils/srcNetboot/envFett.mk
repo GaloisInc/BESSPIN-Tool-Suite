@@ -1,7 +1,8 @@
 # This file has the necessary includes to compile Fett netboot
 
 #FETT includes
-CFLAGS += -DFETT_APPS
+WERROR =
+CFLAGS += -DFETT_APPS -DipconfigUSE_DHCP=0
 INCLUDES += -I$(INC_FETT_APPS)
 
 # main_netboot specific additions
