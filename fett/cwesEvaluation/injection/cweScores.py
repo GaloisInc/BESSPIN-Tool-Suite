@@ -2,6 +2,8 @@
 scoring function for injection
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
+import re
+
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests
@@ -30,9 +32,7 @@ def getTestNumAndInfo(testName):
     info = getSettingDict(VULCLASS, ["testsInfo", testName, "cweText"])
     return (testNum, info)
 
-def scoreInj1Test(logLines, testName):
-    testNum, info = getTestNumAndInfo(testName)
-
+def scoreInj1TestPart(logLines, testNum, info):
     if "<QEMU_NOT_IMPLEMENTED>" in logLines:
         score = SCORES.NOT_IMPLEMENTED
         info = "Not implemented on QEMU."
@@ -50,6 +50,31 @@ def scoreInj1Test(logLines, testName):
         score = SCORES.HIGH
 
     return [f"TEST-{testNum}", adjustToCustomScore(logLines, score), info]
+
+def scoreInj1Test(logLines, testName):
+    testNum, info = getTestNumAndInfo(testName)
+
+    # Get indices for each test part
+    indices = [x[1] for x in zip(logLines, range(len(logLines))) if
+               re.match("<OFFSET [0-9]+>", x[0])]
+    indices.append(len(logLines))
+
+    # Score each part
+    scores = {}
+    for i in range(len(indices)-1):
+        score = scoreInj1TestPart(logLines[indices[i]:indices[i+1]], testNum, info)
+        # Only need one of each score, so it's OK that they get potentially
+        # overwritten
+        scores[score[1]] = score
+
+    # Order is significant here.  For example, if one of the parts scores HIGH
+    # and the others score NONE and DETECTED, then the overall score is HIGH.
+    for score in [SCORES.NOT_IMPLEMENTED, SCORES.HIGH, SCORES.DETECTED, SCORES.NONE]:
+        if score in scores:
+            return scores[score]
+
+    # A valid offset was never found
+    return [f"TEST-{testNum}", adjustToCustomScore(logLines, SCORES.FAIL), info]
 
 def scoreControlFlowTest(logLines, testName):
     """

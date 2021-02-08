@@ -81,13 +81,9 @@ example:
   value to be overwritten with the address of the `ret_location` label, which
   is the expected value of the return pointer.  If these values do not match
   then the test will score INVALID, indicating that the offset between the
-  start of the buffer and the return pointer is incorrect.  This offset is set
-  with the `inj1UnixReturnPointerOffset` and `inj1RtosReturnPointerOffset`
-  fields in `config.ini`.  These offsets are known to work on GFE processors,
-  but may require tweaking on systems that modify stack layout.  The offsets
-  themselves are in units of width `sizeof(uintptr_t)`.  For example, the
-  offset setting of `3` for Unix indicates that the return pointer is `3 *
-  sizeof(uintptr_t)` bytes from the start of `buf`.
+  start of the buffer and the return pointer is incorrect.  FETT re-runs the
+  test with different offsets and only scores the test for which it correctly
+  locates the stored return pointer.
 
 **FreeRTOS:**
 - The FreeRTOS test uses tasks as a source of untrusted information.
