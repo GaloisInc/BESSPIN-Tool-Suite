@@ -39,22 +39,31 @@
  *
  * We want to overwrite xBlockSize.  This struct is 8 bytes, but FreeRTOS
  * aligns on 16 byte boundaries, so it pads the struct out to 16 bytes.
- * Therefore, the xBlockSize field is 12 bytes before the pointer returned by
- * pvPortMalloc, or 3 32-bit ints before the pointer.
+ * Therefore, the xBlockSize field is 12 bytes (3 32-bit ints) before the
+ * pointer returned by pvPortMallon 32 bit systems, and 8 bytes (1 64-bit int)
+ * before the pointer on 64 bit systems.
  */
+#if __riscv_xlen == 64
+#define BLOCK_SIZE_OFFSET -1
+#else
 #define BLOCK_SIZE_OFFSET -3
+#endif
 
 // This is the index to write in `untrusted2` to overwrite the `trusted`
 // integer.  It is 16 bytes from the end of the old `untrusted1` buffer, which
 // puts it exactly on top of `trusted`.
+#if __riscv_xlen == 64
+#define TRUSTED_OVERWRITE_INDEX 10
+#else
 #define TRUSTED_OVERWRITE_INDEX 12
+#endif
 
 // Represents a write request between tasks to increment a value in a buffer.
 typedef struct {
     // Index in the buffer to write.
     int index;
     // How much to increment the data in buffer[index] by.
-    int32_t increment;
+    size_t increment;
 } buffer_increment_t;
 
 // Send a buffer_increment_t to a task
@@ -101,7 +110,7 @@ static void injector(void* params) {
 
 // Receieve and apply a write request from a task.
 static bool get_buffer_increment(const MessageBufferHandle_t* msg_buf,
-                                 int32_t* untrusted,
+                                 size_t* untrusted,
                                  int untrusted_size) {
     buffer_increment_t increment;
     size_t recv_bytes = xMessageBufferReceive(
@@ -132,12 +141,12 @@ static bool get_buffer_increment(const MessageBufferHandle_t* msg_buf,
     if (increment.index < 0) {
         // The allocator sets the first bit of the size field to 1 to indicate
         // the block is allocated.  We need to mask this out to check the size.
-        size_t block_allocated_bit = (size_t) 1 << 31;
+        size_t block_allocated_bit = (size_t) 1 << (__riscv_xlen - 1);
 
-        // Size should be the data size (untrusted_size * sizeof(int32_t)) +
+        // Size should be the data size (untrusted_size * sizeof(size_t)) +
         // the header size (BLOCK_HEADER_BYTES)
         if ((((size_t) untrusted[increment.index]) & ~block_allocated_bit) !=
-            (untrusted_size * sizeof(int32_t)) + BLOCK_HEADER_BYTES) {
+            (untrusted_size * sizeof(size_t)) + BLOCK_HEADER_BYTES) {
             printf("<INVALID>\n");
             printf("Failed to find size header.\n");
             return false;
@@ -151,14 +160,14 @@ static bool get_buffer_increment(const MessageBufferHandle_t* msg_buf,
 
 
 static void rtos_test() {
-    int32_t* untrusted1 = (int32_t*) pvPortMalloc(sizeof(int32_t)*UNTRUSTED1_SIZE);
+    size_t* untrusted1 = (size_t*) pvPortMalloc(sizeof(size_t)*UNTRUSTED1_SIZE);
     if (untrusted1 == NULL) {
         printf("<INVALID>\n");
         printf("untrusted1 allocation failed.\n");
         return;
     }
 
-    int32_t* trusted = (int32_t*) pvPortMalloc(sizeof(int32_t));
+    size_t* trusted = (size_t*) pvPortMalloc(sizeof(size_t));
     if (trusted == NULL) {
         printf("<INVALID>\n");
         printf("trusted allocation failed.\n");
@@ -168,7 +177,7 @@ static void rtos_test() {
 
     // `trusted` should be exactly after `untrusted1` (accounting for the
     // header for `trusted`).
-    if (trusted != untrusted1 + UNTRUSTED1_SIZE + (BLOCK_HEADER_BYTES / sizeof(int32_t*))) {
+    if (trusted != untrusted1 + UNTRUSTED1_SIZE + (BLOCK_HEADER_BYTES / sizeof(size_t*))) {
         printf("<INVALID>\n");
         printf("Trusted allocation not immediately after untrusted1\n");
         vPortFree(untrusted1);
@@ -215,8 +224,8 @@ static void rtos_test() {
     // of the free list, and will allso appear large enough to store
     // `untrusted2` due to the modified metadata.
     int untrusted2_size = UNTRUSTED1_SIZE +
-                          (UNTRUSTED2_BYTES_INCREASE / sizeof(int32_t));
-    int32_t* untrusted2 = (int32_t*) pvPortMalloc(sizeof(int32_t) * untrusted2_size);
+                          (UNTRUSTED2_BYTES_INCREASE / sizeof(size_t));
+    size_t* untrusted2 = (size_t*) pvPortMalloc(sizeof(size_t) * untrusted2_size);
 
     // Sanity check that the same memory location was returned.
     if (untrusted1 != untrusted2) {
