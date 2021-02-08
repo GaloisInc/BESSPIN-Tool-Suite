@@ -141,7 +141,7 @@ static bool get_buffer_increment(const MessageBufferHandle_t* msg_buf,
     if (increment.index < 0) {
         // The allocator sets the first bit of the size field to 1 to indicate
         // the block is allocated.  We need to mask this out to check the size.
-        size_t block_allocated_bit = (size_t) 1 << 31;
+        size_t block_allocated_bit = (size_t) 1 << (__riscv_xlen - 1);
 
         // Size should be the data size (untrusted_size * sizeof(size_t)) +
         // the header size (BLOCK_HEADER_BYTES)
