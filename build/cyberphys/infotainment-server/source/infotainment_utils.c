@@ -224,6 +224,8 @@ bool is_our_address(int port, struct sockaddr_in *check_address) {
                              check_address->sin_addr.s_addr) == 0);
     }
 
+    freeifaddrs(addresses);
+    
     if (result) {
         // if an address matched, check the port of the socket
         struct sockaddr_in socket_addr;
