@@ -17,7 +17,13 @@ from fett.base.utils.misc import *
 EBREAK_OPCODE = int('00000000000100000000000001110011', 2)
 
 # Minimum return pointer offset to try.  Set to first value out of bounds for
-# `buf`.
+# `buf`.  The debian and FreeRTOS tests have the same
+# MAX_RETURN_POINTER_OFFSET, but the debian test's MIN_RETURN_POINTER_OFFSET is
+# one larger than on FreeRTOS.  This is because `buf` on debian is 2 elements,
+# but it is only a single integer on FreeRTOS.  Therefore, the test on debian
+# skips testing with an offset of 1 because it's known to be part of `buf` and
+# cannot be the return pointer.  As a result, the Debian test has 7 parts while
+# the FreeRTOS test has 8 parts.
 MIN_RETURN_POINTER_OFFSET = 2
 
 # Maximum return pointer offset to try.
