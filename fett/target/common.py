@@ -766,7 +766,7 @@ class commonTarget():
             # if sending TO target, then "scp host target" otherwise flipped
             scpTargetPath = f"{currentUser}@{self.ipTarget}:{targetPath}"
             scpArgs       = f"{hostPath} {scpTargetPath}" if toTarget else f"{scpTargetPath} {hostPath}"
-            scpCommand    = f"env SSH_AUTH_SOCK= scp{portPart} {scpArgs}"
+            scpCommand    = f"env -u SSH_AUTH_SOCK scp{portPart} {scpArgs}"
 
             passwordPrompt = [f"Password for {currentUser}@[\w-]+\:",f"{currentUser}@[\w\-\.]+\'s password\:","\)\?"]
             scpOutFile = ftOpenFile(os.path.join(getSetting('workDir'),f'scp{self.targetSuffix}.out'),'a')
