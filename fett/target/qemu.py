@@ -122,7 +122,7 @@ def configTapAdaptor(targetId=None):
     with getSetting('networkLock'):
         #Check the ipv4 forwarding
         try:
-            ipForward = int(subprocess.getoutput('sudo sysctl net.ipv4.ip_forward').split()[-1])
+            ipForward = int(subprocess.getoutput('sysctl net.ipv4.ip_forward').split()[-1])
         except Exception as exc:
             logAndExit ("Failed to find the values of 'net.ipv4.ip_forward'.",exc=exc,exitCode=EXIT.Run)
         if (ipForward != 1):
