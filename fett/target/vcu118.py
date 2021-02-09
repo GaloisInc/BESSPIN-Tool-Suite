@@ -13,6 +13,7 @@ import serial, serial.tools.list_ports, usb
 import sys, signal, os, socket, time
 import pexpect, threading
 from pexpect import fdpexpect
+from math import sqrt
 
 class vcu118Target (fpgaTarget, commonTarget):
     def __init__ (self, targetId=None):
@@ -552,7 +553,16 @@ def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     elif(mode=="flash"):
         tclMode = "bitstreamAndData_flash"
         extraFile = getSetting('osImageElf',targetId=targetId)
-        timeout = 2500
+        # timeout depends on the files sizes; this equation is empirical (250*sqrt(bit)+200*sqrt(data)-850) + 15% margin
+        try:
+            bitstreamSize = os.path.getsize(getSetting('bitAndProbefiles',targetId=targetId)[0])/(1024*1024)
+            datafileSize = os.path.getsize(extraFile)/(1024*1024)
+            timeout = int(1.15*(250*sqrt(bitstreamSize) + 200*sqrt(datafileSize) - 850))
+            logging.debug(f"{targetInfo}programVcu118: Will use flash timeout of <{timeout}>.")
+        except Exception as exc:
+            timeout = 2400 #fallout value
+            errorAndLog(f"{targetInfo}programVcu118: Failed to compute the flashing timeout. "
+                f"Will use the default value <{timeout}>.",exc=exc)
     else:
         logAndExit(f"{targetInfo}programVcu118: Called with a non-recognized mode <{mode}>.",exitCode=EXIT.Dev_Bug)
 
