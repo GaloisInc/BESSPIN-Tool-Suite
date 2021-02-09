@@ -63,6 +63,10 @@ def generateTests(outdir):
             printAndLog(f"<generateTests> Caching instances to <{instancePath}>")
             safeDumpJsonFile(enumeratedFM, instancePath)
         printAndLog("<generateTests> Done generating instances")
+    if not enumeratedFM:
+        logAndExit(f'<generateTests> Error model <{modelPath}> contains '
+                   'unsatisfiable constraints.',
+                   exitCode=EXIT.Configuration)
     instances = [BofInstance(model, x) for x in enumeratedFM]
     heapSize = parseBytes(getSettingDict('bufferErrors', 'heapSize'))
     stackSize = parseBytes(getSettingDict('bufferErrors', 'stackSize'))
