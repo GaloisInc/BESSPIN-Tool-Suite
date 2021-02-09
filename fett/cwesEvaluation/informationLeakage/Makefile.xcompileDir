@@ -14,12 +14,16 @@ INTERPRETERSOURCES=$(wildcard interpreters/*.c)
 INTERPRETERFILES=$(basename $(INTERPRETERSOURCES))
 INTERPRETERS=$(INTERPRETERFILES:interpreters/%=%)
 
+NONSTDSOURCES=$(wildcard nonstandard/*.c)
+NONSTDBINS=$(NONSTDSOURCES:nonstandard/%.c=%.riscv)
+
 PARAMETERS  ?= include/parameters
 
 # Display the build targets
 $(info TESTS=$(TESTS))
 $(info STORES=$(STORES))
 $(info INTERPRETERS=$(INTERPRETERS))
+$(info NONSTDBINS=$(NONSTDBINS))
 
 HEADERS = $(wildcard include/*.h) $(PARAMETERS)/parameters.h
 SOURCES = control/control.c 
@@ -29,8 +33,10 @@ SOURCES = control/control.c
 FSOURCES = $(wildcard functions/*.c)
 FOBJS	= $(FSOURCES:.c=.o) $(SOURCES:.c=.o) 
 MAINOBJS = $(TESTSOURCES:.c=.o) $(STORESOURCES:.c=.o) $(INTERPRETERSOURCES:.c=.o)
+NONSTDUTILSSOURCES=$(wildcard nonstd_utils/*.c)
+NONSTDUTILSOBJS = $(NONSTDUTILSSOURCES:.c=.o)
 
-CFLAGS += -Iinclude
+CFLAGS += -Iinclude -I.
 CFLAGS += -I$(PARAMETERS)
 
 # Compiling objects
@@ -49,7 +55,14 @@ interpreters/%.o: interpreters/%.c
 tests/%.o: tests/%.c
 	$(CC) -c -o $@ $(CFLAGS) $<
 
-all: $(FOBJS) $(MAINOBJS)
+nonstd_utils/%.o: nonstd_utils/%.c
+	$(CC) -c -o $@ $(CFLAGS) $<
+
+%.riscv: nonstandard/%.c $(NONSTDUTILSOBJS)
+	$(CC) -c -o $(@:%.riscv=nonstandard/%.o) $(CFLAGS) $<
+	$(LD) -o $@ $(LDFLAGS) $(NONSTDUTILSOBJS) $(<:.c=.o)
+
+all: $(FOBJS) $(MAINOBJS) $(NONSTDBINS)
 	for test in $(TESTS); do \
 		for store in $(STORES); do \
 			for interp in $(INTERPRETERS); do \

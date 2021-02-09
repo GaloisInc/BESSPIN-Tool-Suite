@@ -6,7 +6,7 @@
     "_choices" : "a list of acceptable choices. Use for int or str",
     "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
     "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
-    "_condition" : "only for filePath. If present, only check the path validity if the option in the condition is True.",
+    "_condition" : "If present, only check the value validity if the option in the condition is True.",
     "_size" : "only for hex. Number of hex characters (if less, it will be padded by zeros)",
     "_wildValue" : "only for hexList. If present, this value means something special.",
     "_exception" : "only for hexList. If present, this option's value is not legal",
@@ -32,6 +32,14 @@
         },
         {
             "name" : "resetOnWatchdog",
+            "type" : "bool"
+        },
+        {
+            "name" : "programBitfileOnReset",
+            "type" : "bool"
+        },
+        {
+            "name" : "pipeTheUart",
             "type" : "bool"
         },
         {
@@ -98,6 +106,24 @@
             "name" : "sourceVariant",
             "type" : "string",
             "choices" : [ "default", "purecap", "temporal" ]
+        },
+        {
+            "name" : "useCustomHwTarget",
+            "type" : "boolean"
+        },
+        {
+            "name" : "customHwTarget",
+            "type" : "string",
+            "condition" : "useCustomHwTarget"
+        },
+        {
+            "name" : "useCustomTargetIp",
+            "type" : "boolean"
+        },
+        {
+            "name" : "customTargetIp",
+            "type" : "ipAddress",
+            "condition" : "useCustomTargetIp"
         }
     ],
 
@@ -109,14 +135,6 @@
         {
             "name" : "gdbDebug",
             "type" : "bool"
-        },
-        {
-            "name" : "useCustomHwTarget",
-            "type" : "boolean"
-        },
-        {
-            "name" : "customHwTarget",
-            "type" : "string"
         },
         {
             "name" : "userName",
@@ -164,7 +182,7 @@
         {
             "name" : "vulClasses",
             "type" : "stringsList",
-            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC" ]
+            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC", "injection" ]
         },
         {
             "name" : "useCustomCWEsConfigsPath",
@@ -321,19 +339,36 @@
 
     "resourceManagement": [
         {
-            "name" : "test_nResourceLimit",
+            "name" : "useSeed",
+            "type" : "bool"
+        },
+        {
+            "name" : "seed",
             "type" : "int",
-            "min" : 5,
-            "max" : 100
+            "min" : 0,
+            "max" : 4294967295
         }
     ],
 
     "informationLeakage": [
+        {
+            "name" : "useSeed",
+            "type" : "bool"
+        },
+        {
+            "name" : "seed",
+            "type" : "int",
+            "min" : 0,
+            "max" : 4294967295
+        }
     ],
     
     "numericErrors": [
     ],
 
     "hardwareSoC": [
+    ],
+
+    "injection": [
     ]
 }

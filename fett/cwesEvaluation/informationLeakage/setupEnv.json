@@ -31,17 +31,8 @@
                 "test_206" : {
                     "cweText" : "Observable Internal Behavioral Discrepancy"
                 },
-                "test_208" : {
-                    "cweText" : "Observable Timing Discrepancy"
-                },
-                "test_209" : {
-                    "cweText" : "Generation of Error Message Containing Sensitive Information"
-                },
                 "test_212" : {
                     "cweText" : "Improper Removal of Sensitive Information Before Storage or Transfer"
-                },
-                "test_214" : {
-                    "cweText" : "Invocation of Process Using Visible Sensitive Information"
                 },
                 "test_226" : {
                     "cweText" : "Sensitive Information Uncleared in Resource Before Release for Reuse"
@@ -49,25 +40,25 @@
                 "test_244" : {
                     "cweText" : "Improper Clearing of Heap Memory Before Release ('Heap Inspection')"
                 },
-                "test_321" : {
-                    "cweText" : "Use of Hard-coded Cryptographic Key"
-                },
-                "test_385" : {
-                    "cweText" : "Covert Timing Channel"
-                },
                 "test_524" : {
                     "cweText" : "Use of Cache Containing Sensitive Information"
-                },
-                "test_526" : {
-                    "cweText" : "Exposure of Sensitive Information Through Environmental Variables"
-                },
-                "test_612" : {
-                    "cweText" : "Improper Authorization of Index Containing Sensitive Information"
-                },
-                "test_707" : {
-                    "cweText" : "Improper Neutralization"
                 }
             }
+        },
+        {
+            "name" : "nonstandardTests",
+            "type" : "stringsList",
+            "val" : "[test_noClearMalloc, test_noClearReallocShrink, test_noClearReallocExpand]"
+        },
+        {
+            "name" : "cwesMapFile",
+            "type" : "filePath",
+            "val" : "fett/cwesEvaluation/informationLeakage/testsAndCwesMap.json"
+        },
+        {
+            "name" : "modelHash",
+            "type" : "string",
+            "val" : "881fd9c860903791bd0bb8071dd6e1c3"
         }
     ]
 }

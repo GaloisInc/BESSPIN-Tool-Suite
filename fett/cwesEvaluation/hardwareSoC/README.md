@@ -10,6 +10,21 @@ This Vulnerability Class will be only self-assessed.
 
 ------------------
 
+### TEST-208 ###
+Observable Timing Discrepancy \[[CWE-208](https://cwe.mitre.org/data/definitions/208.html)\].
+
+------------------
+
+### TEST-385 ###
+Covert Timing Channel \[[CWE-385](https://cwe.mitre.org/data/definitions/385.html)\].
+
+------------------
+
+### TEST-920 ###
+Improper Restriction of Power Consumption \[[CWE-920](https://cwe.mitre.org/data/definitions/920.html)\].
+
+------------------
+
 ### TEST-1037 ###
 Processor Optimization Removal or Modification of Security-critical Code \[[CWE-1037](https://cwe.mitre.org/data/definitions/1037.html)\].
 

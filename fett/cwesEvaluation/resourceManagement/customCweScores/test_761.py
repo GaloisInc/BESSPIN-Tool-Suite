@@ -38,8 +38,7 @@ def test_761 (logLines):
         elif (doesKeywordExist(partsLines[4],'<DEREFERENCE-VIOLATION>')):
             partsScores[4] = SCORES.HIGH
         elif (doesKeywordExist(partsLines[4],'Segmentation fault') or 
-                doesKeywordExist(partsLines[4],'Aborted') or
-                doesKeywordExist(partsLines[4],'Abort trap') ):
+                doesKeywordExist(partsLines[4],'Abort') ):
             partsScores[4] = SCORES.HIGH
         else:
             partsScores[4] = SCORES.FAIL

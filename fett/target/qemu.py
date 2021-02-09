@@ -95,7 +95,10 @@ class qemuTarget (commonTarget):
         return
 
     def interact(self):
-        printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
+        if (self.osImage=='FreeRTOS'):
+            printAndLog (f"FreeRTOS is left running on target. Press \"Ctrl + E\" to exit.")
+        else:
+            printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         super().interact()
 #--- END OF CLASS qemuTarget------------------------------
 

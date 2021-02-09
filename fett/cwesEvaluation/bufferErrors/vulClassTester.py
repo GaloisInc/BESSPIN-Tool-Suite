@@ -6,6 +6,8 @@ This file has the custom bufferError methods to run tests on qemu|fpga.
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 
+BOF_OUTPUT_FILE = "bof-output.txt"
+
 class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
@@ -22,14 +24,13 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             return "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
 
         if isEqSetting("osImage", "debian"):
-            # Run test, and if it returns 11, then echo "Segmentation fault".
-            # This is needed because the debian buffer errors tests catch
-            # SIGSEGV to prevent the kernel from printing debug info that can
-            # interleave with test output.  A side effect of catching SIGSEGV
-            # is that the normal "Segmentation fault" message is not printed,
-            # so we must print it as part of the run command.
-            return self.typCommand(f"./{binTest} ; "
-                                   "[ $? -eq 11 ] && "
-                                   "echo 'Segmentation fault'")
+            # On debian, kmesg output can interleave with test output and break
+            # scoring.  To fix this, redirect test stdout to a separate file,
+            # then concatinate it with any kmesg output that printed during the
+            # run.  Test output must come before kmesg output to allow scoring
+            # to deduce where in the run an error was detected.
+            kmesg_output = self.typCommand(f"./{binTest} > {BOF_OUTPUT_FILE}")
+            test_output = self.typCommand(f"cat {BOF_OUTPUT_FILE}")
+            return test_output + kmesg_output
         else:
             return self.typCommand(f"./{binTest}")

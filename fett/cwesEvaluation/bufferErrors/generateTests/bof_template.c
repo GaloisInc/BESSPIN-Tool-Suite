@@ -23,7 +23,7 @@
 #define {read_write}
 // READ_AFTER_WRITE = (READ_AFTER_WRITE, NO_READ)
 #define {read_after_write}
-// BUF_ACCESS = (PTR_ACCESS, ARRAY_ACCESS)
+// BUF_ACCESS = (PTR_ACCESS, ARRAY_ACCESS, PATH_MANIPULATION_ACCESS)
 #define {buf_access}
 // LOCATION = (STACK, HEAP)
 #define {location}
@@ -47,17 +47,8 @@
 #endif
 
 // Required for memset's definition
-#if defined(STACK) || defined(testgenOnDebian)
+#ifdef STACK
 #include <string.h>
-#endif
-
-#ifdef testgenOnDebian
-    #ifndef BIN_SOURCE_LMCO
-        // Required for sigaction
-        #include <signal.h>
-    #endif
-// Required for _exit
-#include <unistd.h>
 #endif
 
 #ifdef VAR_ARGS
@@ -69,6 +60,15 @@
 #include<stdlib.h>
 #endif
 
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(testgenOnFreeRTOS) && !defined(BIN_SOURCE_LMCO)
+// Required for realpath
+#include <limits.h>
+#include <stdlib.h>
+// Required for strnlen
+#include <string.h>
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif
+
 
 /*****************************
  * Globals
@@ -78,14 +78,10 @@
 jmp_buf env;
 #endif
 
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
-extern uintptr_t __bss_end;
-#endif
-
 /*****************************
  * Functions
  * **************************/
-void test(void);
+void test_buffer_overflow(void);
 
 #define SIZE(_ty, N, _max) \
   (((N*sizeof(_ty)) > _max) ? (_max/sizeof(_ty)) : N)
@@ -124,7 +120,7 @@ size_t mock_get_message_size(void) {{
 #endif  // INCORRECT_MALLOC_CALL
 
 
-void test(void)
+void test_buffer_overflow(void)
 {{
 #ifdef SIZE_OVERFLOW
     // If the buffer were `min_size` long, there would be no overruns
@@ -156,14 +152,6 @@ void test(void)
     // Cleared via memset so that we can do error checking
     // without wiping OS structures (ie if we overflowed into bss)
     {buf_type} {buf_name}[SIZE({buf_type},{buf_size},{memmax})];
-
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
-    if (&{buf_name}[0] <= (uintptr_t)&__bss_end) {{
-            printf("TEST INVALID. <buf1>\r\n");
-            fflush(stdout);
-            return;
-    }}
-#endif //FreeRTOS
     memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
 
 #else //HEAP
@@ -193,15 +181,8 @@ void test(void)
 #ifdef STACK
 #ifdef BUF2_PRESENT
     {buf_type2} {buf_name2}[SIZE({buf_type2},{N2},{memmax})];
-
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
-    if (&{buf_name2}[0] <= (uintptr_t)&__bss_end) {{
-            printf("TEST INVALID. <buf2>\r\n");
-            fflush(stdout);
-            return;
-    }}
     memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
-#endif//FREERTOS
+
 #endif//BUF2_PRESENT
 #endif//STACK
 
@@ -311,12 +292,72 @@ void test(void)
 #endif//JMP
 }}
 
-#ifdef testgenOnDebian
-void handle_signal(int signum) {{
-    // Exit with signal number as return code
-    _exit(signum);
-}};
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(BIN_SOURCE_LMCO)
+void test_path_manipulation(void) {{
+#ifdef testgenOnFreeRTOS
+    printf("TEST INVALID.  <not on FreeRTOS>\r\n");
+    fflush(stdout);
+#else
+    if ({memmax} <= (PATH_MAX * sizeof(char))) {{
+        // Not enough memory to perform both a proper and an improper realpath
+        printf("TEST INVALID. <insufficient memory>\r\n");
+        fflush(stdout);
+        return;
+    }}
+
+    // Allocate {buf_name2} to hold the result of a proper realpath call
+#ifdef STACK
+    char {buf_name2}[PATH_MAX];
+#else
+    char* {buf_name2} = malloc(sizeof(char) * PATH_MAX);
+    if ({buf_name2} == NULL) {{
+        printf("TEST INVALID. <malloc {buf_name2}>\r\n");
+        fflush(stdout);
+        return;
+    }};
 #endif
+
+    // Expand "." into a properly sized buffer
+    if (!realpath(".", {buf_name2})) {{
+        printf("TEST INVALID. <realpath buf2>\r\n");
+        fflush(stdout);
+        return;
+    }};
+
+    // {tmp_var_name} represents the maximum size for {buf_name}.  {buf_name}
+    // must be at most 1 byte smaller than what is required to store the path
+    // expansion (including null terminator), so {tmp_var_name} is equal to the
+    // strlen of {buf_name2}.
+    size_t {tmp_var_name} = strnlen({buf_name2}, PATH_MAX);
+
+    // Allocate {buf_name}
+    size_t {buf_size} = SIZE(char,
+                             ({N} % {tmp_var_name}) + 1,
+                             {memmax} - (PATH_MAX * sizeof(char)));
+#ifdef STACK
+    char {buf_name}[{buf_size}];
+#else
+    char* {buf_name} = malloc(sizeof(char) * {buf_size});
+    if ({buf_name} == NULL) {{
+        printf("TEST INVALID. <malloc>\r\n");
+        fflush(stdout);
+        return;
+    }};
+#endif
+
+    // Call realpath with {buf_name}, which will overflow the buffer
+    if (!realpath(".", {buf_name})) {{
+        printf("TEST INVALID. <realpath buf>\r\n");
+        fflush(stdout);
+        return;
+    }}
+
+#ifdef JMP
+    longjmp(env, 2);
+#endif
+#endif // !testgenOnFreeRTOS
+}};
+#endif  // PATH_MANIPULATION_ACCESS && !BIN_SOURCE_LMCO
 
 /*
  * Main Function
@@ -328,25 +369,22 @@ int main()
     printf("<BufferErrors Start>\r\n");
     fflush(stdout);
 
-#if (defined(testgenOnDebian) && !defined(BIN_SOURCE_LMCO))
-    // Register segmentation fault signal handler on Debian to prevent
-    // interleaving of "unhandled signal 11" messages and test output.
-    struct sigaction sigsegv_action;
-    memset(&sigsegv_action, 0, sizeof(sigsegv_action));
-    sigsegv_action.sa_handler = handle_signal;
-    if (sigaction(SIGSEGV, &sigsegv_action, NULL)) {{
-        printf("TEST INVALID. <sigaction>\r\n");
-        fflush(stdout);
-        return 0;
-    }};
-#endif
-
 #ifdef JMP
     int jmp_return = setjmp(env);
     if (jmp_return != 0)
         goto COMPLETE;
 #endif
-    test();
+
+#ifdef PATH_MANIPULATION_ACCESS
+#ifdef BIN_SOURCE_LMCO
+    printf("TEST INVALID. <No realpath on bare metal>\r\n");
+    fflush(stdout);
+#else
+    test_path_manipulation();
+#endif
+#else
+    test_buffer_overflow();
+#endif
 
     COMPLETE:
     printf("TEST COMPLETED\n");

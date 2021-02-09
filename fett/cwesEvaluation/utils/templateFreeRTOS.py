@@ -28,32 +28,18 @@ def renameMain (testsDir,cTest):
 
 
 def templateFreeRTOS(testsDir):
+    #Load the template 
+    testTemplate = ftReadLines(getSetting("cweTestTemplateFreeRTOS"),splitLines=False)
+
     #For each file: rename main + Generating the main_testgen wrapper
     for srcTest in sorted(os.listdir(testsDir)):
         if (srcTest.endswith(".c")):
             testName = srcTest.split('.')[0]
             mainDeclaration = renameMain(testsDir,srcTest)
+            #Customize the template
+            testLines = testTemplate.replace("MAIN_DECLARATION",mainDeclaration)
+            testLines = testLines.replace("TEST_NAME",testName)
+            #Write the test
             fmain = ftOpenFile("{0}/main_{1}.c".format(testsDir,testName), "w")
-            fmain.write("// This file is generated automatically by testgen\n\n")
-            #standard includes
-            fmain.write("#include <stdio.h>\n#include <string.h>\n#include <unistd.h>\n\n")
-            # Include fettFreeRTOS.h
-            # TODO: The compiler complains if we dont include this, but do we
-            # *actually* need it?  It defines xMainTask, which we also don't
-            # use but need for Include fettFreeRTOS.h for compilati
-            # TODO: The compiler complains if we dont include this, but do we
-            # *actually* need it?  It defines xMainTask, which we also don't
-            # use but need for fettNtk.c.  Do we even need that?  It feels like
-            # this build could be streamlined as we don't need all of the fett
-            # stuff
-
-            #Declarations
-            fmain.write("\nvoid main_fett (void);\n\n")
-            fmain.write("extern {0};\n".format(mainDeclaration))
-
-            #The main function
-            fmain.write("\n\nvoid main_fett (void)\n{\n")
-            fmain.write("\tprintf (\">>>Beginning of Fett<<<\\n\");\n\n")
-            fmain.write("\tmain_{0} ();\n".format(testName))
-            fmain.write("\n\tprintf (\">>>End of Fett<<<\\n\");\n}\n")
+            fmain.write(testLines)
             fmain.close()

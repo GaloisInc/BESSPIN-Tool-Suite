@@ -1,0 +1,11 @@
+[Unit]
+Description=OTA Update Server
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/ota /root/key
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

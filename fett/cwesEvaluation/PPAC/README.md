@@ -14,11 +14,13 @@ This Vulnerability Class will be only self-assessed. Three created CWE concepts 
 ## Notes on P1s ##
 
 Given that for P1s, SSITH only supports FreeRTOS (and neither safeRTOS nor secureRTOS), and FreeRTOS provides neither of the following:   
+
     - A standard access control system
     - Access Control List (ACL)
     - POSIX compliant
     - Users control
     - Standard filesystem
+
 PPAC assessment will be restrained for UNIX systems.
 
 ------------------
@@ -30,7 +32,9 @@ Missing authorization in privileged resource access.
 **Related CWEs**
 - [CWE-284](https://cwe.mitre.org/data/definitions/284.html).   
 - [CWE-285](https://cwe.mitre.org/data/definitions/285.html).   
-- [CWE-288](https://cwe.mitre.org/data/definitions/288.html).   
+- [CWE-288](https://cwe.mitre.org/data/definitions/288.html).
+- [CWE-668](https://cwe.mitre.org/data/definitions/668.html).   
+- [CWE-669](https://cwe.mitre.org/data/definitions/669.html). 
 - [CWE-862](https://cwe.mitre.org/data/definitions/862.html).  
 - [CWE-863](https://cwe.mitre.org/data/definitions/863.html).  
 

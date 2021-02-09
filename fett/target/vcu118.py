@@ -6,11 +6,11 @@ vcu118 class + misc vcu118 functions
 from fett.base.utils.misc import *
 from fett.target.common import *
 from fett.target.fpga import fpgaTarget, failStage
-from fett.target.build import getTargetIp, freeRTOSBuildChecks, buildFreeRTOS
+from fett.target.build import getTargetIp, getTargetMac, freeRTOSBuildChecks, buildFreeRTOS
 
 import subprocess, psutil, tftpy
 import serial, serial.tools.list_ports, usb
-import sys, signal, os, socket, time, hashlib
+import sys, signal, os, socket, time
 import pexpect, threading
 from pexpect import fdpexpect
 
@@ -24,6 +24,7 @@ class vcu118Target (fpgaTarget, commonTarget):
 
         self.ipHost = getSetting('vcu118IpHost')
         self.ipTarget = getTargetIp(targetId=targetId)
+        self.macTarget = getTargetMac(targetId=targetId)
 
         self.uartSession = None
 
@@ -48,7 +49,11 @@ class vcu118Target (fpgaTarget, commonTarget):
                 elfLoadTimeout = self.parseBootTimeoutDict(timeoutDict,key="elfLoad")
                 self.fpgaStart(self.osImageElf,elfLoadTimeout=elfLoadTimeout)
             elif (self.elfLoader=='netboot'):
-                self.fpgaStart(getSetting('netbootElf',targetId=self.targetId),elfLoadTimeout=30)
+                success, netbootTimeoutDict, message = self.get_timeout_from_settings_dict("FreeRTOS")
+                if not success:
+                    self.terminateAndExit(**message)
+                self.fpgaStart(getSetting('netbootElf',targetId=self.targetId),
+                        elfLoadTimeout=self.parseBootTimeoutDict(netbootTimeoutDict,key="elfLoad"))
             else:
                 self.terminateAndExit (f"boot: ELF loader <{self.elfLoader}> not implemented.",overrideShutdown=True,exitCode=EXIT.Dev_Bug)
 
@@ -90,7 +95,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     self.terminateAndExit("Boot: In <onlySsh> mode, and failed to open SSH.")
 
         elif (self.osImage=='FreeRTOS'):
-            self.fpgaStart(self.osImageElf,elfLoadTimeout=60) 
+            self.fpgaStart(self.osImageElf,elfLoadTimeout=self.parseBootTimeoutDict(timeoutDict,key="elfLoad")) 
             time.sleep(1)
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
         else:
@@ -105,10 +110,18 @@ class vcu118Target (fpgaTarget, commonTarget):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
+            self.runCommand(f"ip route add default via {self.ipHost}")
+            self.runCommand(f"ip link set dev eth0 address {self.macTarget}")
+            # In case the TI ethernet chip doesn't come up, retry
+            outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],exitOnError=False)
+            isSuccess, _, _, _ = outCmd
+            if not isSuccess:
+                self.runCommand ("ifdown eth0",exitOnError=False)
+                outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
             self.runCommand(f"ip route add default via {self.ipHost}")
         elif (self.osImage=='busybox'):
             time.sleep(1)
+            self.runCommand(f"ip link set dev eth0 address {self.macTarget}")
             self.runCommand ("ifconfig eth0 up",timeout=20)
             outCmd = self.runCommand(f"ifconfig eth0 {self.ipTarget}",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],timeout=20)
         elif (self.osImage=='FreeRTOS'):
@@ -116,23 +129,24 @@ class vcu118Target (fpgaTarget, commonTarget):
             while ((not isSuccess) and (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax)):
                 self.freertosNtkRetriesIdx += 1
                 outCmd = self.runCommand("isNetworkUp",endsWith="<NTK-READY>",
-                    erroneousContents=["(Error)","INVALID"],timeout=20,
+                    erroneousContents=["(Error)","INVALID"],timeout=90,
                     exitOnError=False,suppressErrors=True
                     )
-                isSuccess, _, wasTimeout, _ = outCmd
+                isSuccess, _, _, _ = outCmd
                 if (isSuccess):
                     isSuccess = self.pingTarget(exitOnError=False)
                 if (not isSuccess):
                     if (self.freertosNtkRetriesIdx < self.freertosNtkRetriesMax):
-                        warnAndLog(f"Network is not up on target. Trying again ({self.freertosNtkRetriesIdx+1}/{self.freertosNtkRetriesMax})...")
+                        warnAndLog(f"{self.targetIdInfo}Network is not up on target. Trying again ({self.freertosNtkRetriesIdx+1}/{self.freertosNtkRetriesMax})...")
                         self.fpgaReload(self.osImageElf,elfLoadTimeout=30)
                     else:
-                        self.terminateAndExit("Network is not up on target.",exitCode=EXIT.Network) 
+                        self.terminateAndExit(f"{self.targetIdInfo}Network is not up on target.",exitCode=EXIT.Network) 
         elif (self.osImage=='FreeBSD'):
+            self.runCommand(f"ifconfig xae0 ethet {self.macTarget}")
             self.runCommand(f"route add default {self.ipHost}")
             outCmd = self.runCommand (f"ifconfig xae0 inet {self.ipTarget}/24",timeout=60)
         else:
-            self.terminateAndExit(f"<activateEthernet> is not implemented for<{self.osImage}> on <{self.target}>.")
+            self.terminateAndExit(f"{self.targetIdInfo}<activateEthernet> is not implemented for<{self.osImage}> on <{self.target}>.")
 
         if (self.osImage!='FreeRTOS'):
             self.pingTarget()
@@ -257,30 +271,32 @@ class vcu118Target (fpgaTarget, commonTarget):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def setupUart(self):
+    def setupUart(self): #The execution of this method is protected by openocdLock in fpga.py
         if (not doesSettingExist('vcu118UartDevice',targetId=self.targetId)):
             if (not doesSettingExist('vcu118UartDevices')):
-                setSetting('vcu118UartDevices',self.findUartDevices())
+                objUartDevices = self.findUartDevices()
+                setSetting('vcu118UartDevices',objUartDevices)
                 if (isEqSetting('mode','cyberPhys')):
-                    if ((getSetting('nTargets') > len(getSetting('vcu118UartDevices')))):
+                    if ((getSetting('nTargets') > len(objUartDevices.getAllUartDevices()))):
                         logAndExit(f"{self.targetIdInfo}setupUart: Number of UART devices "
-                            f"(={len(getSetting('vcu118UartDevices'))}) < < Number of targets "
+                            f"(={len(objUartDevices.getAllUartDevices())}) < < Number of targets "
                             f"(={getSetting('nTargets')}).",exitCode=EXIT.Configuration)
 
-            uartDevices = getSetting('vcu118UartDevices')
+            objUartDevices = getSetting('vcu118UartDevices')
+            uartSNs = objUartDevices.getAllUartSNs()
 
-            if (len(uartDevices)==0):
+            if (len(uartSNs)==0):
                 logAndExit(f"{self.targetIdInfo}setupUart: The uart devices list is empty!", exitCode=EXIT.Configuration)
-            elif(len(uartDevices)==1):
-                uartDevice = uartDevices.pop(0)
-                setSetting('vcu118UartDevices',uartDevices)
-                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>, the only device in the UART devices list.")
+            elif(len(uartSNs)==1):
+                uartSN = uartSNs.pop(0)
             else:
-                uartDevice = self.findTheRightUartDevice(uartDevices)
-                uartDevices.remove(uartDevice)
-                setSetting('vcu118UartDevices',uartDevices)
-                printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
-
+                uartSN = self.findTheRightUartDevice(objUartDevices)
+            logging.debug(f"{self.targetIdInfo}setupUart: uartSN is <{uartSN}>.")
+            uartDevice = objUartDevices.getUartDevice(uartSN)
+            objUartDevices.removeUartDevice(uartSN)
+            fpgaHwId = getSetting('vcu118HwTarget',targetId=self.targetId).split('/')[-1]
+            objUartDevices.associateFpgaHwId(uartSN,fpgaHwId)
+            printAndLog(f"{self.targetIdInfo}setupUart: Will use <{uartDevice}>.")
             uartSessionDict = self.startUartSession(uartDevice)
         else:
             # Not the first time to start the uart session
@@ -345,11 +361,12 @@ class vcu118Target (fpgaTarget, commonTarget):
 
     @decorate.debugWrap
     def findUartDevices(self):
+        # Initialize a UartDevices obj
+        uartDevices = UartDevices()
         # Get a list of all serial ports with the desired VID/PID
         uartSettings = getSetting('vcu118UartSettings')
         vid = uartSettings['vid']
         pid = uartSettings['pid']
-        uartDevices = []
         for port in serial.tools.list_ports.comports():
             if ((port.vid != vid) or (port.pid != pid)):
                 continue #not the CP2105 chips we're looking for
@@ -357,22 +374,29 @@ class vcu118Target (fpgaTarget, commonTarget):
             # Silabs chip on VCU118 has two ports. Locate port 1 from the hardware description
                 printAndLog(f"findUartDevices: located UART device at {port.device}"
                     f"with serial number {port.serial_number}", doPrint=False)
-                uartDevices.append(port.device)
-        logging.debug(f"findUartDevices: Found the following UART devices: <{','.join(uartDevices)}>.")
+                uartDevices.addUartPort(port)
+        logging.debug(f"findUartDevices: Found the following UART devices: <{','.join(uartDevices.getAllUartDevices())}>.")
         return uartDevices
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def findTheRightUartDevice(self,uartDevices):
+    def findTheRightUartDevice(self,objUartDevices):
         """ Brute Force search for the uart devices """
-        
-        #Prepare the minimal ELF
         hwId = getSetting('vcu118HwTarget',targetId=self.targetId).split('/')[-1]
+        
+        # Check if it's saved
+        uartSN = objUartDevices.getUartSerialNumber(hwId,"fpgaHwId")
+        if (uartSN is not None):
+            logging.debug(f"{self.targetIdInfo}findTheRightUartDevice: Already associated with <{uartSN}>.")
+            return uartSN
+        logging.debug(f"{self.targetIdInfo}findTheRightUartDevice: searching among <{','.join(objUartDevices.getAllUartDevices())}>.")
+
+        #Prepare the minimal ELF
         smokeElf = self.buildSmokeElfForUartSearch(hwId)
 
         #Start listening on all UART devices
         uartDevicesDict = {}
-        for uartDevice in uartDevices: #No need to thread this as it should be immediate
+        for uartDevice in objUartDevices.getAllUartDevices(): #No need to thread this as it should be immediate
             uartDevicesDict[uartDevice] = self.startUartSession(uartDevice,ttyDir=os.path.dirname(smokeElf))
         
         #Run the smoke program
@@ -397,7 +421,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     f" <{fTtyOut.name}>.",doPrint=False,exc=exc)
 
         #Check which one received the text
-        for uartDevice in uartDevices:
+        for uartDevice in objUartDevices.getAllUartDevices():
             xThread = threading.Thread(target=checkUartDevice, args=(uartDevice,uartDevicesDict))
             uartDevicesDict[uartDevice]['checkThread'] = xThread
             xThread.daemon = True
@@ -405,7 +429,7 @@ class vcu118Target (fpgaTarget, commonTarget):
             xThread.start()
 
         goldenDevice = None
-        for uartDevice in uartDevices:
+        for uartDevice in objUartDevices.getAllUartDevices():
             uartDevicesDict[uartDevice]['checkThread'].join()
             if (not uartDevicesDict[uartDevice]['wasTimeout']):
                 if (goldenDevice is not None):
@@ -423,7 +447,8 @@ class vcu118Target (fpgaTarget, commonTarget):
             warnAndLog(f"{self.targetIdInfo}findTheRightUartDevice: Failed to close <{xFile.name}>.",doPrint=False,exc=exc)
 
         if (goldenDevice is not None):
-            return goldenDevice
+            logging.debug(f"{self.targetIdInfo}findTheRightUartDevice: golden device is {goldenDevice}.")
+            return objUartDevices.getUartSerialNumber(goldenDevice,"uartDevice")
         
         self.fpgaTearDown(stage=failStage.openocd)
         logAndExit(f"{self.targetIdInfo}findTheRightUartDevice: Brute Force device search failed to find the uart "
@@ -459,6 +484,55 @@ class vcu118Target (fpgaTarget, commonTarget):
 
 
 #--- END OF CLASS vcu118Target------------------------------
+class UartDevices:
+    def __init__(self):
+        # Load the saved map if any
+        self._uartHwIdMap = safeLoadJsonFile (getSetting("uartDevicesSavedMap"), emptyIfNoFile=True)
+        self._uartDevicesMap = {}
+
+    def addUartPort(self,objPort):
+        serialNumber = objPort.serial_number
+        if (serialNumber not in self._uartHwIdMap):
+            self._uartHwIdMap[serialNumber] = None
+        self._uartDevicesMap[serialNumber] = objPort.device
+    
+    def associateFpgaHwId(self,uartSerialNumber,fpgaHwId):
+        self._uartHwIdMap[uartSerialNumber] = fpgaHwId
+        self.exportUartMap() #Save it every time the HwIdMap is updated
+
+    def getUartDevice(self,serialNumber):
+        if (serialNumber in self._uartDevicesMap):
+            return self._uartDevicesMap[serialNumber]
+        else:
+            return None
+
+    def getUartSerialNumber(self,val,valType):
+        if (valType == "fpgaHwId"):
+            xDict = self._uartHwIdMap
+        elif (valType == "uartDevice"):
+            xDict = self._uartDevicesMap
+        else:
+            logAndExit(f"getUartSerialNumber: Unknown valType <{valType}>.",exitCode=EXIT.Dev_Bug)
+        for serialNumber,xVal in xDict.items():
+            if (xVal == val):
+                return serialNumber
+        return None
+
+    def getAllUartSNs(self):
+        return list(self._uartDevicesMap.keys())
+
+    def getAllUartDevices(self):
+        return list(self._uartDevicesMap.values())
+
+    def removeUartDevice(self,uartSerialNumber):
+        self._uartDevicesMap.pop(uartSerialNumber,None)
+
+    def exportUartMap(self):
+        safeDumpJsonFile(self._uartHwIdMap, getSetting("uartDevicesSavedMap"))
+
+
+#--- END OF CLASSES ------------------------------
+
 _MAX_PROG_ATTEMPTS = 3
 
 @decorate.debugWrap
@@ -546,11 +620,6 @@ def prepareFpgaEnv(targetId=None):
 
         if (firstTime):
             # Find the target(s) names
-            if (isEnabled('useCustomHwTarget') and isEqSetting('mode','cyberPhys')):
-                warnAndLog("The <useCustomHwTarget> setting is incompatible with <cyberPhys>."
-                    "The value in <customHwTarget> will be ignored.")
-                setSetting('useCustomHwTarget',False)
-
             cp(os.path.join(getSetting('tclSourceDir'), 'get_hw_targets.tcl'), gfeWorkDir)
             getTargetsCmd = [getSetting('vivadoCmd'),'-nojournal','-source','./get_hw_targets.tcl',
                             '-log', os.path.join(gfeWorkDir,'get_hw_targets.log'), '-mode','batch']
@@ -576,12 +645,12 @@ def prepareFpgaEnv(targetId=None):
             if (len(curList) == 0):
                 logAndExit(f"{targetInfo}prepareFpgaEnv: Not enough vcu118 HW targets found!",exitCode=EXIT.Configuration)
             
-            if (isEnabled('useCustomHwTarget')):
-                if (getSetting('customHwTarget') not in curList):
-                    logAndExit(f"{targetInfo}prepareFpgaEnv: Custom target {getSetting('customHwTarget')} not found!",
+            if (isEnabled('useCustomHwTarget',targetId=targetId)):
+                if (getSetting('customHwTarget',targetId=targetId) not in curList):
+                    logAndExit(f"{targetInfo}prepareFpgaEnv: Custom target {getSetting('customHwTarget',targetId=targetId)} not found!",
                         exitCode=EXIT.Configuration)
-                thisTarget = getSetting('customHwTarget')
-                curList.remove(getSetting('customHwTarget'))
+                thisTarget = getSetting('customHwTarget',targetId=targetId)
+                curList.remove(getSetting('customHwTarget',targetId=targetId))
             else:
                 thisTarget = curList.pop(0)
             printAndLog(f"{targetInfo}prepareFpgaEnv: Using HW target <{thisTarget}>.")
@@ -604,19 +673,7 @@ def programBitfile (doPrint=True,targetId=None):
         for xFile in bitAndProbefiles:
             if not os.path.isfile(xFile):
                 logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
-
-        try:
-            bitfile = ftOpenFile(bitAndProbefiles[0], "rb")
-            md5 = hashlib.md5()
-            while True:
-                chunk = bitfile.read(65536)
-                if not chunk:
-                    break
-                md5.update(chunk)
-            bitfile.close()
-            setSetting('md5bifile',md5.hexdigest(),targetId=targetId)
-        except Exception as exc:
-            logAndExit(f"Could not compute md5 for file <{bitAndProbefiles[0]}>.", exc=exc, exitCode=EXIT.Run)
+        setSetting('md5bifile',computeMd5ForFile(bitAndProbefiles[0]),targetId=targetId)
 
     printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
     programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)

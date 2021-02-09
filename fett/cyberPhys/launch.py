@@ -8,7 +8,7 @@ import fett.target.launch
 import fett.cyberPhys.interactive
 import fett.cyberPhys.run
 from fett.base.threadControl import ftQueueUtils
-import threading, queue
+import threading, queue, pexpect
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -32,8 +32,12 @@ def startCyberPhys():
         allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
 
         # Pipe the UART
-        runThreadPerTarget(startUartPiping)
-        printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
+        if (isEnabled('pipeTheUart')):
+            runThreadPerTarget(startUartPiping)
+            printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
+        else: #log the output instead
+            runThreadPerTarget(startTtyLogging)
+
         # Create an interactor queue
         # Interactor can be terminated because of a watchdog reported error, or by the user
         setSetting('interactorQueue',queue.Queue(maxsize=2))
@@ -62,8 +66,9 @@ def startCyberPhys():
 def endCyberPhys():
     printAndLog (f"Terminating FETT...")
     if (isEnabled('interactiveShell')):
-        # End UART piping
+        # End piping and logging
         runThreadPerTarget(endUartPiping)
+        runThreadPerTarget(stopTtyLogging)
     # Terminate the targets
     runThreadPerTarget(fett.target.launch.endFett,
                     mapTargetSettingsToKwargs=[('xTarget','targetObj')],
@@ -113,6 +118,12 @@ def runThreadPerTarget(func, tArgs=(), tKwargs=None, addTargetIdToKwargs=True,
 @decorate.debugWrap
 def startUartPiping(targetId):
     xTarget = getSetting('targetObj',targetId=targetId)
+    if (isEnabled('isUartPiped',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}startUartPiping: the UART is already piped to port <{getSetting('uartPipePort',targetId=targetId)}>.")
+        return
+    if (isEnabled('isTtyLogging',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}startUartPiping: Has to turn off tty logging first.")
+        stopTtyLogging(targetId)
     uartPipePort = xTarget.findPort(portUse='uartFwdPort')
     setSetting('uartPipePort',uartPipePort,targetId=targetId)
     try:
@@ -122,14 +133,69 @@ def startUartPiping(targetId):
     except Exception as exc:
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}startUartPiping: Failed to start the piping.",
             exc=exc,exitCode=EXIT.Run)
-
+    setSetting('isUartPiped',True,targetId=targetId)
     printAndLog (f"{xTarget.targetIdInfo}UART is piped to port <{uartPipePort}>.")
 
 @decorate.debugWrap
-def endUartPiping(targetId):
+def endUartPiping(targetId, doPrintWarning=False):
     xTarget = getSetting('targetObj',targetId=targetId)
+    if (not isEnabled('isUartPiped',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: The UART is not piped!",doPrint=doPrintWarning)
+        return #The function gets called in case the uart was piped in the interactive mode
     try:
         xTarget.uartSocatProc.kill() # No need for fancier ways as we use Popen with shell=False
     except Exception as exc:
         warnAndLog(f"{xTarget.targetIdInfo}endUartPiping: Failed to kill the process.",exc=exc)
+    setSetting('isUartPiped',False,targetId=targetId)
+
+
+class TtyLogger(threading.Thread):
+    def __init__(self, xTarget):
+        self.xTarget = xTarget
+        self.process = xTarget.process
+        self.stopLogging = threading.Event()
+        self.finishedLogging = threading.Event()
+        threading.Thread.__init__(self)
+        self.daemon = True
+        getSetting('trash').throwThread(self,f"<TtyLogger> for target{xTarget.targetId}")
+
+    def run(self):
+        while (not self.stopLogging.is_set()):
+            try:
+                fetchedBytes = self.process.read_nonblocking(size=1024,timeout=1) #size is arbitrary; it wouldn't matter much
+                textBack = str(fetchedBytes,'utf-8')
+            except pexpect.TIMEOUT:
+                continue
+            except Exception as exc:
+                warnAndLog(f"{self.xTarget.targetIdInfo}TtyLogger: Failed to read from target! Logging will stop.",exc=exc)
+                break
+        self.finishedLogging.set()
+
+    def stop(self):
+        self.stopLogging.set()
+        self.finishedLogging.wait() #This to ensure not to return before the `read` times out
+
+@decorate.debugWrap
+def startTtyLogging(targetId):
+    xTarget = getSetting('targetObj',targetId=targetId)
+    if (isEnabled('isTtyLogging',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}startTtyLogging: the TTY is already being logged.")
+        return
+    if (isEnabled('isUartPiped',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}startTtyLogging: Has to turn off uart piping first.")
+        endUartPiping(targetId)
+    ttyLogger = TtyLogger(xTarget)
+    setSetting('ttyLogger',ttyLogger,targetId=targetId)
+    ttyLogger.start()
+    setSetting('isTtyLogging',True,targetId=targetId)
+
+@decorate.debugWrap
+def stopTtyLogging(targetId):
+    if (not isEnabled('isTtyLogging',targetId=targetId)):
+        warnAndLog(f"{xTarget.targetIdInfo}stopTtyLogging: The TTY was not being logged!",doPrint=False)
+        return
+    getSetting('ttyLogger',targetId=targetId).stop()
+    setSetting('isTtyLogging',False,targetId=targetId)
+
+
     

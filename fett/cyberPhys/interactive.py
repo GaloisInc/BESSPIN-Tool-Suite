@@ -99,7 +99,10 @@ class cyberPhysShell(cmd.Cmd):
         Displays the ports to which the UART/TTY is piped for the running targets"""
         printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
         for iTarget in range(1,getSetting('nTargets')+1):
-            printAndLog(f"<target{iTarget}>: {getSetting('uartPipePort',targetId=iTarget)}")
+            if (isEnabled('isUartPiped',targetId=iTarget)):
+                printAndLog(f"<target{iTarget}>: {getSetting('uartPipePort',targetId=iTarget)}")
+            else:
+                printAndLog(f"<target{iTarget}>: UART not piped. Use <pipe {iTarget}> to start piping it.")
         return
 
     def do_info(self,inp):
@@ -110,6 +113,36 @@ class cyberPhysShell(cmd.Cmd):
             for xInfo in ['target', 'processor', 'osImage']:
                 printAndLog(f"\t{xInfo} = {self.getTargetMember(iTarget,xInfo)}")
         return
+
+    def do_pipe(self,inp):
+        """pipe [start|stop] TARGET_ID
+        starts|stops piping the target with the chosen ID"""
+        items = inp.split(' ')
+        if (len(items)>2):
+            print(self.do_pipe.__doc__)
+            return
+        if (len(items)==1):
+            action, targetId = ['start', items[0]]
+        else:
+            action, targetId = items
+        
+        try:
+            assert (action in ['start', 'stop']), "validating piping action"
+            assert (int(targetId) in range(1,getSetting('nTargets')+1)), "validating target ID"
+            targetId = int(targetId)
+        except Exception as exc:
+            warnAndLog("Error in using pipe", exc=exc, doPrint=False)
+            print(self.do_pipe.__doc__)
+            return
+        if (action == 'start'):
+            fett.cyberPhys.launch.stopTtyLogging(targetId)
+            fett.cyberPhys.launch.startUartPiping(targetId)
+        else:
+            fett.cyberPhys.launch.endUartPiping(targetId, doPrintWarning=True)
+            fett.cyberPhys.launch.startTtyLogging(targetId)
+
+        
+
 
 
 

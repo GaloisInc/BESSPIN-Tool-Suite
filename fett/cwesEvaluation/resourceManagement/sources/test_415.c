@@ -25,6 +25,10 @@ typedef struct Str_Int {
 void
 double_free( char * src) {
     char* ptr = (char*)MALLOC(4);
+    if (ptr == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     strcpy(ptr, src);
     FREE(ptr);
     FREE(ptr);
@@ -36,6 +40,10 @@ double_free( char * src) {
 void
 double_free_str_int(int in) {
     Str_Int *mew = MALLOC(sizeof(Str_Int));
+    if (mew == NULL) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
+    }
     mew->value = in;
     FREE(mew);
     FREE(mew);

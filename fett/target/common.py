@@ -117,7 +117,8 @@ class commonTarget():
     @decorate.timeWrap
     def switchUser (self):
         if (not self.userCreated):
-            self.terminateAndExit ("switchUser: Unable to switch user when no user was created.",exitCode=EXIT.Dev_Bug)
+            warnAndLog("<switchUser> is called, but a user was never created.")
+            self.createUser()
 
         if (self.osImage in ['debian', 'FreeBSD']):
             if (not self.isSshConn):
@@ -227,73 +228,72 @@ class commonTarget():
             logAndExit (f"Failed to extract the timeout value for <{key}> from the timeout dict.",exc=exc,exitCode=EXIT.Dev_Bug)
 
     @decorate.debugWrap
+    def get_timeout_from_settings_dict(self,osImage):
+        def traverse_data(layer):
+            if 'timeout' in layer:
+                return True, layer['timeout'], None
+            elif 'name' in layer:
+                name = layer['name']
+                if (name in ["cross-compiler"]): #A list of non-target settings in bootTimeout.json
+                    setting = getSetting(name)
+                else:
+                    setting = getSetting(name,targetId=self.targetId)
+                if setting in layer:
+                    return traverse_data(layer[setting])
+                elif 'else' in layer:
+                    return traverse_data(layer['else'])
+                else:
+                    return False, 0, {
+                        'message': f'Unrecognized value <{setting}> for setting <{name}> in <bootTimeout.json>.',
+                        'overrideShutdown': True,
+                        'exitCode': EXIT.Dev_Bug
+                    }
+            else:
+                return False, 0, {
+                    'message': f'Unrecognized layer <{layer}> in <bootTimeout.json>.',
+                    'overrideShutdown': True,
+                    'exitCode': EXIT.Dev_Bug
+                }
+
+        data = safeLoadJsonFile(os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'bootTimeout.json'))
+
+        if (osImage not in data):
+            return False, 0, {
+                'message': f'start: Timeout is not recorded for osImage=<{osImage}>.',
+                'overrideShutdown': True,
+                'exitCode': EXIT.Implementation
+            }
+        os_image = data[osImage]
+
+        if (osImage in ['busybox', 'FreeRTOS']): #special case
+            return traverse_data(os_image)
+        elif self.target not in os_image:
+            return False, 0, {
+                'message': f'start: Timeout is not recorded for target=<{self.target}>.',
+                'overrideShutdown': True,
+                'exitCode': EXIT.Implementation
+            }
+        target = os_image[self.target]
+
+        return traverse_data(target)
+
+    @decorate.debugWrap
     @decorate.timeWrap
     def start (self):
         if (isEqSetting("mode","evaluateSecurityTests") and (not isEnabled("isThereAReasonToBoot"))):
             return #there is no reason to boot
-        def get_timeout_from_settings_dict():
-            def traverse_data(layer):
-                if 'timeout' in layer:
-                    return True, layer['timeout'], None
-                elif 'name' in layer:
-                    name = layer['name']
-                    setting = getSetting(name,targetId=self.targetId)
-                    if setting in layer:
-                        return traverse_data(layer[setting])
-                    elif 'else' in layer:
-                        return traverse_data(layer['else'])
-                    else:
-                        return False, 0, {
-                            'message': f'Unrecognized value <{setting}> for setting <{name}> in <bootTimeout.json>.',
-                            'overrideShutdown': True,
-                            'exitCode': EXIT.Dev_Bug
-                        }
-                else:
-                    return False, 0, {
-                        'message': f'Unrecognized layer <{layer}> in <bootTimeout.json>.',
-                        'overrideShutdown': True,
-                        'exitCode': EXIT.Dev_Bug
-                    }
-
-            data = safeLoadJsonFile(os.path.join(getSetting('repoDir'), 'fett', 'target', 'utils', 'bootTimeout.json'))
-
-            if (self.osImage not in data):
-                return False, 0, {
-                    'message': f'start: Timeout is not recorded for osImage=<{self.osImage}>.',
-                    'overrideShutdown': True,
-                    'exitCode': EXIT.Implementation
-                }
-            os_image = data[self.osImage]
-
-            if (self.osImage == 'busybox'): #special case
-                return traverse_data(os_image)
-            elif self.target not in os_image:
-                return False, 0, {
-                    'message': f'start: Timeout is not recorded for target=<{self.target}>.',
-                    'overrideShutdown': True,
-                    'exitCode': EXIT.Implementation
-                }
-            target = os_image[self.target]
-
-            return traverse_data(target)
-
-        if (self.osImage in ['FreeRTOS']):
-            timeoutDict = { "boot" : 30 }
-        elif self.osImage in ['debian', 'busybox', 'FreeBSD']:
-            success, timeoutDict, message = get_timeout_from_settings_dict()
-
-            if not success:
-                self.terminateAndExit(**message)
-
+        
+        success, timeoutDict, message = self.get_timeout_from_settings_dict(self.osImage)
+        if not success:
+            self.terminateAndExit(**message)
+        if self.osImage in ['debian', 'busybox', 'FreeBSD']:
             if (self.restartMode and (self.target=='awsf1')):
                 for timeout in timeoutDict.keys():
                     timeoutDict[timeout] += 120 #takes longer to restart
 
             printAndLog(f"{self.targetIdInfo}start: Booting <{self.osImage}> on "
                         f"<{self.target}>. This might take a while...")
-        else:
-            self.terminateAndExit(f"start: <{self.osImage}> is not implemented on "
-                f"<{self.target}>.",overrideShutdown=True, exitCode=EXIT.Implementation)
+        
         self.sumTimeout = sum(timeoutDict.values())
         if (self.osImage=='debian'):
             if (not isEqSetting('mode','cyberPhys')):
@@ -397,9 +397,6 @@ class commonTarget():
                 self.ensureCrngIsUp () #check we have enough entropy for ssh
 
             if ((self.processor=='bluespec_p3') and isEqSetting('mode','evaluateSecurityTests')):
-                # execute tests through SSH
-                self.enableSshOnRoot()
-                time.sleep(15)
                 self.openSshConn()
 
         elif (self.osImage=='FreeBSD'):
@@ -532,6 +529,7 @@ class commonTarget():
         else:
             self.terminateAndExit(f"<createUser> is not implemented for <{self.osImage}> on <{self.target}>.",overrideConsole=True,exitCode=EXIT.Implementation)
         self.userCreated = True
+        printAndLog (f"{self.targetIdInfo}User created!",doPrint=(not self.targetId))
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -761,6 +759,8 @@ class commonTarget():
 
 
         if (self.osImage in ['debian', 'FreeBSD'] and (forceScp or self.isSshConn)): #send through SSH
+            if (currentUser == 'root'):
+                self.enableSshOnRoot()
             portPart = '' if (not self.sshHostPort) else f" -P {self.sshHostPort}"
 
             # if sending TO target, then "scp host target" otherwise flipped
@@ -848,9 +848,11 @@ class commonTarget():
         printAndLog (f"{self.targetIdInfo}sendTar: Sending files...",doPrint=(not self.targetId))
         #---send the archive
         if ((self.binarySource in ['GFE', 'SRI-Cambridge']) and (self.osImage=='FreeBSD')):
-            self.switchUser() #this is assuming it was on root
+            if (self.userCreated):
+                self.switchUser() #this is assuming it was on root
             self.sendFile (getSetting('buildDir',targetId=self.targetId),self.tarballName,timeout=timeout,forceScp=True)
-            self.switchUser()
+            if (self.userCreated):
+                self.switchUser()
             self.runCommand(f"mv /home/{self.userName}/{self.tarballName} /root/")
         else:
             self.sendFile (getSetting('buildDir',targetId=self.targetId),self.tarballName,timeout=timeout)
@@ -985,6 +987,9 @@ class commonTarget():
         "   A string containing all text returned back from the target during the resolving of the interrupt.
         """
         process = self.process if process is None else process
+        if (process is None):
+            self.terminateAndExit(f"{self.targetIdInfo}<keyboardInterrupt> is called, but the process is <None>.",
+                exitCode=EXIT.Run)
         if (endsWith is None):
             endsWith = [self.getDefaultEndWith()]
         elif (isinstance(endsWith,str)):
@@ -993,22 +998,24 @@ class commonTarget():
             try:
                 specialEndsWith, specialResponse = respondEndsWith
             except Exception as exc:
-                self.terminateAndExit("keyboardInterrupt: Called with illegal <respondEndsWith> argument.",
+                self.terminateAndExit(f"{self.targetIdInfo}keyboardInterrupt: Called with illegal <respondEndsWith> argument.",
                     overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Dev_Bug)
             endsWith = [specialEndsWith] + endsWith
         if (self.terminateTargetStarted and (process == self.process)):
             return ''
         if (self.keyboardInterruptTriggered): #to break any infinite loop
-            self.terminateAndExit("keyboardInterrupt: interrupting is not resolving properly",overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Run)
+            self.terminateAndExit(f"{self.targetIdInfo}keyboardInterrupt: interrupting is not resolving properly",
+                overrideShutdown=True,overrideConsole=True,exitCode=EXIT.Run)
         else:
             self.keyboardInterruptTriggered = True
         if ((not isEnabled('isUnix',targetId=self.targetId)) and (process == self.process)):
-            self.terminateAndExit(f"<keyboardInterrupt> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"{self.targetIdInfo}<keyboardInterrupt> is not implemented for <{self.osImage}>.",
+                exitCode=EXIT.Implementation)
         doTimeout = True
         retryIdx = 0
         while doTimeout and retryIdx < retryCount:
             if retryIdx > 0:
-                warnAndLog(f"keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
+                warnAndLog(f"{self.targetIdInfo}keyboardInterrupt: keyboard interrupt failed! Trying again ({retryIdx}/{retryCount})...") 
             retCommand = self.runCommand("\x03",endsWith=endsWith,exitOnError=False,timeout=timeout,
                             issueInterrupt=False,suppressErrors=True,process=process,sendToNonUnix=sendToNonUnix)
             textBack = retCommand[1]
@@ -1037,7 +1044,8 @@ class commonTarget():
                         try:
                             process.expect(xEndsWith,timeout=1)
                         except Exception as exc:
-                            warnAndLog(f"keyboardInterrupt: <{xEndsWith}> was in process.after, but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
+                            warnAndLog(f"{self.targetIdInfo}keyboardInterrupt: <{xEndsWith}> was in process.after, "
+                                f"but could not pexpect.expect it. Will continue anyway.",doPrint=False,exc=exc)
                             breakRetries = True
                         textBack += readAfter
                 if (breakRetries):
@@ -1250,6 +1258,9 @@ class commonTarget():
         if (self.sshRetries >= self.sshLimitRetries): #to protect it from excessive attempts
             return False
 
+        if (userName == 'root'):
+            self.enableSshOnRoot()
+
         portPart = '' if (not self.sshHostPort) else f" -p {self.sshHostPort}"
         sshCommand = f"ssh{portPart} {userName}@{self.ipTarget}"
         sshPassword = self.rootPassword  if (userName=='root') else self.userPassword
@@ -1392,7 +1403,7 @@ class commonTarget():
         if (switchUsers):
             self.switchUser() #has to be executed on root
         # sshd_config location
-        if (isEqSetting('binarySource','SRI-Cambridge')):
+        if (self.binarySource == 'SRI-Cambridge'):
             sshdConfigPath = "/fett/etc/sshd_config"
         else: #default
             sshdConfigPath = "/etc/ssh/sshd_config"
@@ -1401,6 +1412,9 @@ class commonTarget():
         self.isSshRootEnabled = True
         if (switchUsers):
             self.switchUser() #switch back
+        if ((self.processor == 'bluespec_p3') 
+            or ((self.target == 'awsf1') and (self.osImage == 'FreeBSD'))): #needs time to take effect
+            time.sleep(15)
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -1413,7 +1427,7 @@ class commonTarget():
         if (self.osImage=='FreeBSD'):
             if (self.binarySource=='SRI-Cambridge'):
                 self.runCommand("service fett_sshd restart")
-            elif (self.target=='awsf1'):
+            elif (self.target in ['awsf1','qemu']):
                 self.runCommand("pkill -f /usr/sbin/sshd")
                 self.runCommand("/usr/sbin/sshd")
             else:

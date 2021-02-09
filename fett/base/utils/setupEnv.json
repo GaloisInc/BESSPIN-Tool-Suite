@@ -143,12 +143,14 @@
                     "chisel_p2" : {
                         "debian" : "firesim",
                         "FreeBSD" : "notOnAWS",
-                        "busybox" : "notOnAWS"
+                        "busybox" : "notOnAWS",
+                        "FreeRTOS" : "notOnAWS"
                     },
                     "bluespec_p2" : {
                         "debian" : "notOnAWS",
                         "FreeBSD" : "connectal",
-                        "busybox" : "notOnAWS"
+                        "busybox" : "notOnAWS",
+                        "FreeRTOS" : "notOnAWS"
                     },
                     "chisel_p3" : {
                         "debian" : "notOnAWS",
@@ -241,6 +243,11 @@
             "name" : "FreeRTOSforkName_upstream",
             "type" : "string",
             "val" : "FreeRTOS-mirror"
+        },
+        {
+            "name" : "FreeRTOSforkName_classic",
+            "type" : "string",
+            "val" : "FreeRTOS"
         },
         {
             "name" : "FreeRTOSprojNameNonQemu",
@@ -344,9 +351,25 @@
             }
         },
         {
+            "name" : "OtaServerPortTarget",
+            "type" : "int",
+            "val" : 5050
+        },
+        {
             "name" : "cwesAssessments",
             "type" : "stringsList",
             "val" : "[HIGH, MED, LOW, NONE, NA, UNKNOWN]"
+        },
+        {
+            "name" : "cweTestTemplateFreeRTOS",
+            "type" : "filePath",
+            "val" : "fett/cwesEvaluation/utils/cweTestTemplateFreeRTOS.c"
+        },
+        {
+            "name" : "uartDevicesSavedMap",
+            "type" : "filePath",
+            "val" : "fett/target/utils/uartDevicesMap.json",
+            "ignore" : true
         }
     ]
 }

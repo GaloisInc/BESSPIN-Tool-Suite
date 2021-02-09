@@ -15,6 +15,8 @@ import fett.cwesEvaluation.numericErrors.vulClassTester
 import fett.cwesEvaluation.numericErrors.cweScores
 import fett.cwesEvaluation.hardwareSoC.vulClassTester
 import fett.cwesEvaluation.hardwareSoC.cweScores
+import fett.cwesEvaluation.injection.vulClassTester
+import fett.cwesEvaluation.injection.cweScores
 
 cweTests = {
     "bufferErrors" :
@@ -28,7 +30,9 @@ cweTests = {
     "numericErrors" :
         fett.cwesEvaluation.numericErrors.vulClassTester.vulClassTester,
     "hardwareSoC" :
-        fett.cwesEvaluation.hardwareSoC.vulClassTester.vulClassTester
+        fett.cwesEvaluation.hardwareSoC.vulClassTester.vulClassTester,
+    "injection" :
+        fett.cwesEvaluation.injection.vulClassTester.vulClassTester,
 }
 
 cweScores = {
@@ -43,15 +47,14 @@ cweScores = {
     "numericErrors" :
         fett.cwesEvaluation.numericErrors.cweScores,
     "hardwareSoC" :
-        fett.cwesEvaluation.hardwareSoC.cweScores
+        fett.cwesEvaluation.hardwareSoC.cweScores,
+    "injection" :
+        fett.cwesEvaluation.injection.cweScores
 }
 
 @decorate.debugWrap
 @decorate.timeWrap
 def executeTest(target, vulClass, binTest, logDir):
-    if isEnabled('isUnix') and target.isCurrentUserRoot and target.osHasBooted:
-        # Tests expect to be started as normal user
-        target.switchUser()
     testName = binTest.split('.')[0]
     printAndLog(f"Executing {testName}...", doPrint=(not isEnabledDict(vulClass,'useSelfAssessment')))
     outLog = cweTests[vulClass](target).executeTest(binTest)
@@ -79,9 +82,10 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             # Extract test output
             textBack, wasTimeout, idxReturn = target.expectFromTarget(
                     [">>>End of Fett<<<", pexpect.EOF],
-                    None,
+                    "runCweTest",
                     exitOnError=False,
-                    timeout=getSetting('FreeRTOStimeout'))
+                    timeout=getSetting('FreeRTOStimeout'),
+                    suppressWarnings=True)
 
             if idxReturn == 1:
                 if isEqSetting('target', 'qemu'):
@@ -111,18 +115,6 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
         if sendFiles:
             target.sendTar(timeout=timeout)
 
-        if (target.osHasBooted):
-            # Copy binaries to non-root user's home as well
-            wasRoot = target.isCurrentUserRoot
-            if not target.isCurrentUserRoot:
-                target.switchUser()
-            target.runCommand(f"cp *.riscv /home/{target.userName}")
-            target.runCommand(f"chown {target.userName}:{target.userName} "
-                              f"/home/{target.userName}/*.riscv")
-
-            # Become a normal user
-            target.switchUser()
-
         # Batch tests by vulnerability class
         for vulClass, tests in getSetting("enabledCwesEvaluations").items():
             logDir = os.path.join(baseLogDir, vulClass)
@@ -132,8 +124,6 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
 
             score(logDir, vulClass)
 
-        if (target.osHasBooted and (target.isCurrentUserRoot != wasRoot)):
-            target.switchUser()
     else:
         target.terminateAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
                    exitCode=EXIT.Implementation)

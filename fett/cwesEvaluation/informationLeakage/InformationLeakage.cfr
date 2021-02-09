@@ -109,31 +109,40 @@ InformationLeakage_Test : iex_weakness ?
     Test_markprivate
     Test_setenv
     Test_systemconfig
+    Test_noClearMalloc
+    Test_noClearReallocShrink
+    Test_noClearReallocExpand
   [ Test_cache => Store_cached ]
 
   or CWE
+    CWE_200
     CWE_201
     CWE_202
     CWE_203
-    CWE_209
+    CWE_205
+    CWE_206
     CWE_212
-    CWE_214
     CWE_226
-    CWE_321
+    CWE_244
     CWE_524
-    CWE_526
-    CWE_612
-    CWE_707
 
   ///////////////////////////////////////////
   // Bugs Framework association with CWEs  //
   ///////////////////////////////////////////
+  [ sw_behavior
+    && (inj || unprotected_sensitive_data || improper_details)
+    && (legitimate || diagnostic)
+    && once
+    <=> CWE_200
+  ]
+
   [ transferred
   /*--------------------*/
     <=> CWE_201
   ]
 
   [ (unclear_before_release || cross_boundary)
+    && on_demand
   /*--------------------*/
     <=> CWE_202
   ]
@@ -144,26 +153,24 @@ InformationLeakage_Test : iex_weakness ?
     <=> CWE_203
   ]
 
-  [ legitimate && diagnostic
-    && improper_details
+  [ (covert || side)
     && sw_behavior
-    && once
+    && (on_demand || once)
   /*--------------------*/
-    <=> CWE_209
+    <=> CWE_205
+  ]
+
+  [ (covert || side)
+    && sw_behavior
+    && (on_demand || once)
+  /*--------------------*/
+    <=> CWE_206
   ]
 
   [ high
     && (unclear_before_release || cross_boundary)
   /*--------------------*/
     <=> CWE_212
-  ]
-
-  [ random
-    && side
-    && cross_boundary
-    && sw_behavior
-  /*--------------------*/
-    <=> CWE_214
   ]
 
   [ (legitimate || diagnostic)
@@ -173,6 +180,14 @@ InformationLeakage_Test : iex_weakness ?
     <=> CWE_226
   ]
 
+  [
+   unclear_before_release
+   && legitimate
+   && sw_behavior
+  /*--------------------*/
+    <=> CWE_244
+  ]
+
   [ (legitimate || diagnostic)
     && (unclear_before_release || cross_boundary)
     && on_timing
@@ -180,50 +195,28 @@ InformationLeakage_Test : iex_weakness ?
     <=> CWE_524
   ]
 
-  [ random
-    && side
-    && cross_boundary
-    && sw_behavior
-  /*--------------------*/
-    <=> CWE_526
-  ]
 
-  [ side
-    && cross_boundary
-    && sw_behavior
-       && (unclear_before_release
-           || cross_boundary
-           || atn_aut)
-    && (on_demand || once)
-  /*--------------------*/
-    <=> CWE_612
-  ]
-
-  [ sw_behavior
-    && (inj || unprotected_sensitive_data)
-  /*--------------------*/
-    <=> CWE_707
-  ]
-
-  [ high
-  /*--------------------*/
-    <=> CWE_321
-  ]
-
-  [ Test_directsys          => CWE_201 ]
-  [ Test_indexing           => CWE_202 ]
-  [ Test_indexing2          => CWE_202 ]
-  [ Test_loginmsg           => CWE_203 ]
-  [ Test_error              => CWE_209 ]
-  [ Test_markprivate        => CWE_212 ]
-  [ Test_setenv             => CWE_214 ]
-  [ Test_classifydeclassify => CWE_226 ]
-  [ Test_cache              => CWE_524 ]
-  [ Test_setenv             => CWE_526 ]
-  [ Test_indexing           => CWE_612 ]
-  [ Test_indexing2          => CWE_612 ]
-  [ Test_atoi               => CWE_707 ]
-  [ Test_systemconfig       => CWE_707 ]
+  [ Test_directsys              => (transferred && once) ]
+  [ Test_indexing               => (side && cross_boundary && sw_behavior && once && on_demand) ]
+  [ Test_indexing2              => (side && cross_boundary && sw_behavior && once && on_demand) ]
+  [ Test_loginmsg               => ((covert || side) && sw_behavior && once && on_demand) ]
+  [ Test_error                  => (sw_behavior && improper_details && once && (legitimate || diagnostic)) ]
+  [ Test_markprivate            => (unclear_before_release || cross_boundary) && once ]
+  [ Test_setenv                 => (random && sw_behavior && side && cross_boundary && once) ]
+  [ Test_classifydeclassify     => ((legitimate || diagnostic) && sw_behavior
+                                    && (unclear_before_release || cross_boundary) && on_demand && once) ]
+  [ Test_cache                  => ((legitimate || diagnostic) && on_timing && once
+                                    && (unclear_before_release || cross_boundary)) ]
+  [ Test_atoi                   => (sw_behavior && (inj || unprotected_sensitive_data) 
+                                    && once && (legitimate || diagnostic)) ]
+  [ Test_systemconfig           => (sw_behavior && (inj || unprotected_sensitive_data) 
+                                    && once && (legitimate || diagnostic)) ]
+  [ Test_noClearMalloc          =>  (sw_behavior && unclear_before_release && legitimate 
+                                    && once && unprotected_sensitive_data) ]
+  [ Test_noClearReallocShrink  =>  (sw_behavior && unclear_before_release && legitimate 
+                                    && once && unprotected_sensitive_data) ]
+  [ Test_noClearReallocExpand  =>  (sw_behavior && unclear_before_release && legitimate 
+                                    && once && unprotected_sensitive_data) ]
 
   ///////////////////////////////////////////////////////////////////////
   // The following constraints describe the concrete tests as realized //

@@ -13,22 +13,22 @@ typedef struct SubString {
 
 #ifdef testgenOnFreeRTOS
 #if (defined(testgenFPGA))
-#include "FreeRTOS.h"
+  #include "FreeRTOS.h"
+  #define MALLOC(size) pvPortMalloc(size)
+  #define FREE(ptr)   vPortFree(ptr)
+#else
+  #define MALLOC malloc
+  #define FREE free
 #endif
 
 // ----------------- FreeRTOS Test ----------
-#define MALLOC(size) pvPortMalloc(size)
-#define FREE(ptr)   vPortFree(ptr)
+
 #define NUM_OF_TEST_PARTS 2
 
 static SubStr *
 SubStr_new(char* s, unsigned int l)
 {
-    #if (defined(testgenFPGA))
-        SubStr *r = MALLOC(sizeof(int) * 5);
-    #else
-        SubStr *r = malloc(sizeof(SubStr));
-    #endif
+    SubStr *r = MALLOC(sizeof(int) * 5);
 
     if (r != NULL) {
     printf("Memory allocation succeeded.\n");

@@ -6,7 +6,7 @@ Misc required functions for fett.py
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess, pathlib
 import tarfile, sys, json, re, getpass, time
-import crypt
+import crypt, hashlib
 import zstandard
 
 from fett.base.utils import decorate
@@ -184,14 +184,29 @@ def getSettingDict (setting, hierarchy, default=None, targetId=None):
     return xSetting
 
 @decorate.debugWrap
-def setSettingDict (key, setting, val, targetId=None):
-    try:
-        if (targetId is not None):
-            _settings[targetId][key][setting] = val
+def setSettingDict (setting, hierarchy, val, targetId=None):
+    if (targetId is not None):
+        if (isinstance(hierarchy,str)):
+            setSettingDict(targetId,[setting,hierarchy],val)
         else:
-            _settings[key][setting] = val
-    except Exception as exc:
-        logAndExit (f"Failed to set setting <{setting}> in dict <{key}> to <{val}>.",exc=exc,exitCode=EXIT.Dev_Bug)
+            setSettingDict(targetId,[setting]+hierarchy,val)
+
+    if (isinstance(hierarchy,str)): #convert to list
+        hierarchy = [hierarchy] 
+
+    newDict = val
+    while (hierarchy): 
+        # recursively create a dict bottom-up
+        # Note that it has to be fetched/updated per level not to lose any data
+        key = hierarchy.pop()
+        newDict = {key : newDict}
+
+        if (doesSettingExistDict(setting, hierarchy)):
+            oldDict = getSettingDict(setting, hierarchy)
+            oldDict.update(newDict)
+            setSettingDict(setting, hierarchy, oldDict)
+        else: #it's a new setting
+            setSettingDict(setting, hierarchy, newDict) #This can be called with an empty hierarchy, then it will just return
 
 @decorate.debugWrap
 def isEnabled(setting, targetId=None):
@@ -214,6 +229,10 @@ def isEnabledDict(setting, hierarchy, targetId=None):
 @decorate.debugWrap
 def isEqSetting (setting, val, targetId=None):
     return (getSetting(setting, targetId=targetId) == val)
+
+@decorate.debugWrap
+def isEqSettingDict(setting, hierarchy, val, targetId=None):
+    return (getSettingDict(setting, hierarchy, targetId=targetId) == val)
 
 @decorate.debugWrap
 def doesSettingExist (setting, targetId=None):
@@ -366,18 +385,20 @@ def touch(filepath, mode=0o666, permissive=True):
     except Exception as exc:
         logAndExit(f"touch: Error touching file {filepath}", exc=exc)
 
-def safeLoadJsonFile (jsonFile):
+def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
     try:
-        fJson = ftOpenFile(jsonFile, 'r')
+        fJson = open(jsonFile, 'r')
         jsonData = json.load(fJson)
         fJson.close()
     except Exception as exc:
+        if (emptyIfNoFile and isinstance(exc,FileNotFoundError)):
+            return {}
         logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
 def safeDumpJsonFile(jsonData, jsonFile):
     try:
-        fJson = ftOpenFile(jsonFile, 'w')
+        fJson = open(jsonFile, 'w')
         json.dump(jsonData, fJson)
         fJson.close()
     except Exception as exc:
@@ -640,4 +661,22 @@ def sha512_crypt(password, salt=None, rounds=None):
     if salt is None:
         salt = crypt.mksalt(crypt.METHOD_SHA512, rounds=rounds)
     return crypt.crypt(password, salt)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def computeMd5ForFile (filepath):
+    BLOCKSIZE = 65536
+    fIn = ftOpenFile(filepath, "rb")
+    try:
+        md5 = hashlib.md5()
+        while True:
+            chunk = fIn.read(BLOCKSIZE)
+            if (not chunk):
+                break
+            md5.update(chunk)
+        md5Val = md5.hexdigest()
+    except Exception as exc:
+        logAndExit(f"Failed to compute md5 for <{filepath}>.", exc=exc, exitCode=EXIT.Files_and_paths)
+    fIn.close()
+    return md5Val
 

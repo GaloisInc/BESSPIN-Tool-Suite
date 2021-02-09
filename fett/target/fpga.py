@@ -51,9 +51,13 @@ class fpgaTarget(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def fpgaStart (self, elfPath, elfLoadTimeout=15, isReload=False):
-        if (self.processor=='bluespec_p3'):
-            time.sleep(3) #need time after programming the fpga
+    def fpgaStart (self, elfPath, elfLoadTimeout=15, isReload=False):      
+        if (self.target == 'vcu118'):
+            time.sleep(3) 
+            # After programming the fpga, the OS needs a moment to release the resource to be used by openocd.
+            # I am suspecting a mistake by Vivado in terminating while still using the USB adaptor (CWE-672 ;)).
+            # Since this python codes run so fast, going directly from programFpga to spawning openocd does not 
+            # work. 3 seconds might be excessive, but it is safer since we sometimes run this on slow NUCs.
 
         if (self.useOpenocd()):
             # start the openocd process
@@ -178,7 +182,6 @@ class fpgaTarget(object):
             self.terminateAndExit(f"{self.targetIdInfo}<fpgaReload> is not implemented for target {self.target}.",overrideShutdown=True)
         self.fpgaTearDown(isReload=True,stage=stage)
         vcu118.programBitfile(doPrint=False, targetId=self.targetId)
-        time.sleep(3) #sometimes after programming the fpga, the OS needs a second to release the resource to be used by openocd
         self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout, isReload=True)
         return
 
@@ -293,8 +296,7 @@ class fpgaTarget(object):
     @decorate.debugWrap
     def interruptGdb(self):
         """implement keyboardInterrupt for GDB"""
-        if ((self.target=='awsf1') and (self.pvAWS=='firesim')):
-            self.sendToTarget('\x03',exitOnError=False,process=self.gdbProcess) #send one extra \x03
+        self.sendToTarget('\x03',exitOnError=False,process=self.gdbProcess) #send one extra \x03
         self.keyboardInterrupt(exitOnError=False,retryCount=1,process=self.gdbProcess,
             endsWith=self.getGdbEndsWith(),sendToNonUnix=True,timeout=15,
             respondEndsWith=(r"Stop debugging it\? \(y or n\)","y"))
@@ -381,6 +383,12 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def fpgaTearDown (self,isReload=False,stage=failStage.unknown):
+        # Sanitize the failStage
+        if ((stage > failStage.openocd) and (self.openocdProcess is None)):
+            stage = failStage.openocd
+        elif ((stage > failStage.gdb) and (self.gdbProcess is None)):
+            stage = failStage.gdb
+
         if (isEqSetting('mode','evaluateSecurityTests') and (not isReload) and (stage > failStage.gdb)):
             # Analyze gdb output for FreeRTOS
             if (self.osImage=='FreeRTOS'):
@@ -420,7 +428,7 @@ class fpgaTarget(object):
             self.interruptGdb()
             self.gdbDetach()
 
-        if (self.useOpenocd()):
+        if ((stage > failStage.openocd) and self.useOpenocd()):
             # quit openocd
             shellCommand(f"echo 'shutdown' | nc localhost {self.openocdPort}",check=False,shell=True,timeout=5)
             try:

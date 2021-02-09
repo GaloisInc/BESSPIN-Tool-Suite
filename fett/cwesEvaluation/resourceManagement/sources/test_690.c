@@ -27,11 +27,7 @@ SubStr_new(char* s, unsigned int l, int i)
         SubStr *r; // create NULL pointer
         return r;
     } else {
-        #if(defined(testgenOnFreeRTOS) && defined(testgenFPGA))
-            SubStr *r = MALLOC(sizeof(SubStr));
-        #else
-            SubStr *r = malloc(sizeof(SubStr));
-        #endif
+        SubStr *r = MALLOC(sizeof(SubStr));
         if (r != NULL) {
             printf("Memory allocation succeeded.\n");
             r->str = s;

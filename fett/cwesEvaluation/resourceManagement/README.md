@@ -30,121 +30,60 @@ after its lifetime.
 
 Related CWEs:
 
-### TEST-188 ###
+### TEST-415 ###
 
-Reliance on Data or Memory Layout \[[CWE-188](https://cwe.mitre.org/data/definitions/188.html)\].
-
-**Related CWEs**
-- [CWE-435](https://cwe.mitre.org/data/definitions/435.html).  
-- [CWE-1105](https://cwe.mitre.org/data/definitions/1105.html).  
-- [CWE-198](https://cwe.mitre.org/data/definitions/198.html).
-- [CWE-137](https://cwe.mitre.org/data/definitions/137.html).  
-
-
-**Notes:**
-- The software makes invalid assumptions about how protocol data 
-  or memory is organized at a lower level, resulting in unintended program behavior.  
-
-**FreeRTOS:**
-- Implemented.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a calculating an offset relative to another 
-  field to pick out a specific piece of data on the stack memory segment. 
-   
-- The `example_byte_past` function: In this example the memory address of variable `e` 
-  is derived by adding 1 to the address of variable `d`. This derived address is then used 
-  to assign the value `e` to the variable `e`. Here, variable `e` may not be one byte past `d` and 
-  it depends of the protocol implementation.
-- The `example_byte_in_front` function: The similar explanation like in the previous example
-  except that the variable `b` may be one byte in front of `a`. 
-- The `example_three_bytes_past` function: In this example variable `h` 
-  may be three bytes past the variable `g`.
-- The `example_three_bytes_in_front` function: In this example variable `v` 
-  may be three bytes in front of the variable `u`.
-- The `example_input_args_past_on_stack` function: The similar as previous example related to the 
-  byte past, except that arguments are considered on the stack.
-
-### TEST-772 ###
-
-Missing Release of Resource after Effective Lifetime 
-\[[CWE-772](https://cwe.mitre.org/data/definitions/772.html)\].
+Double Free \[[CWE-415](https://cwe.mitre.org/data/definitions/415.html)\].
 
 **Related CWEs**
-- [CWE-399](https://cwe.mitre.org/data/definitions/399.html).
-- [CWE-400](https://cwe.mitre.org/data/definitions/400.html).
-- [CWE-404](https://cwe.mitre.org/data/definitions/404.html).
-- [CWE-405](https://cwe.mitre.org/data/definitions/405.html).
-- [CWE-664](https://cwe.mitre.org/data/definitions/664.html).
-- [CWE-772](https://cwe.mitre.org/data/definitions/772.html).
-- [CWE-775](https://cwe.mitre.org/data/definitions/775.html).
+- [CWE-666](https://cwe.mitre.org/data/definitions/666.html).
+- [CWE-675](https://cwe.mitre.org/data/definitions/675.html).
+- [CWE-825](https://cwe.mitre.org/data/definitions/825.html).
+- [CWE-123](https://cwe.mitre.org/data/definitions/123.html).
+- [CWE-416](https://cwe.mitre.org/data/definitions/416.html).
+- [CWE-364](https://cwe.mitre.org/data/definitions/364.html).
 
 **Notes:**
-- nResourceLimit>2. The limit for the resource for the user during the test. 
-
-**FreeRTOS:**
-- Implemented. There are two examples of `memory leak` through the use 
-  of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a missing release of a
-  resource by spawning a process that has a function that opens many
-  files, and does not release them despite returning. The file
-  descriptors are not used anywhere else in that code, but causes DoS
-  to other parts of this process.
-- This weakness results in a denial of service, either for a process
-  or a system, as opposed to normal function.
-- `ulimit` is used to limit the number of files opened per process to
-  the configurable `nResourceLimit` so that the test takes a
-  reasonable time. Note that the number should be *greater than four*,
-  because every process has three already-opened file descriptors by
-  default: `STDIN`, `STDOUT`, and `STDERR`.
-
-*Test Parts:*
-
-- p01: There are two functions. Function `A` opens one file and closes
-  it. Function `B` keeps opening files until it is not able to
-  anymore, then returns. The test runs function `A` first, then
-  executes function `B`, then calls function `A` again. `CALL-ERR` if
-  function `A` fails in the first run, and `HIGH` if function `A`
-  fails in the second run.
-
-*Possible Extensions:*
-
-- Use a different resource; network sockets for example.
-
-### TEST-825 ###
-
-Expired Pointer Dereference \[[CWE-825](https://cwe.mitre.org/data/definitions/825.html)\].
-
-**Related CWEs**
-- [CWE-627](https://cwe.mitre.org/data/definitions/627.html).  
-- [CWE-415](https://cwe.mitre.org/data/definitions/415.html).  
-- [CWE-119](https://cwe.mitre.org/data/definitions/119.html).  
-- [CWE-416](https://cwe.mitre.org/data/definitions/416.html).  
-- [CWE-562](https://cwe.mitre.org/data/definitions/562.html).  
-- [CWE-125](https://cwe.mitre.org/data/definitions/125.html). 
-- [CWE-787](https://cwe.mitre.org/data/definitions/787.html). 
-
-**Notes:**
-- The program dereferences a pointer that contains a location for
-  memory that was previously valid, but is no longer valid.
+- The product calls `free()` twice on the same memory address, 
+  potentially leading to modification of unexpected memory locations.
 
 **FreeRTOS:**
 - Implemented through the use of `pvPortMalloc`/`pvPortFree`.
 
 **Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a ``free`` operation as
-  follows. 
-- The  `test_double_free` function shows freeing a pointer variable
-  more than once.
-- The `test_free_no_longer_valid` function shows freeing a pointer
-  after copying a string value into destination array using the
-  `strcpy` function. This pointer is later incorrectly used in the
-  `printf` function. When freeing pointers, be sure to set them to
-  `NULL` once they are freed. 
-- The utilization of multiple or complex data structures may lower the
-  usefulness of this strategy. 
+- The test demonstrates the consequences of double `free`. 
+
+
+### TEST-562 ###
+
+Return of Stack Variable Address \[[CWE-562](https://cwe.mitre.org/data/definitions/825.html)\].
+
+**Related CWEs**
+- [CWE-758](https://cwe.mitre.org/data/definitions/758.html).
+- [CWE-672](https://cwe.mitre.org/data/definitions/672.html).
+- [CWE-825](https://cwe.mitre.org/data/definitions/825.html).
+- [CWE-1006](https://cwe.mitre.org/data/definitions/1006.html).
+
+**Notes:**
+- A function returns the address of a stack variable, which will cause
+  unintended program behavior, typically in the form of a program crash.
+
+**FreeRTOS:**
+- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
+
+**Linux Debian and FreeBSD:** 
+- The test demonstrates the consequences of address stack allocation. 
+- The `fill_array` function shows an address of stack memory
+  associated with local variable `a` returned. This will lead to the
+  program crash caused when attempting to print elements.
+- The `fill_array_with_malloc` is recommended way of allocating memory
+  on the stack.
+
+### TEST-590 ###
+
+Free of Memory not on the Heap \[[CWE-590](https://cwe.mitre.org/data/definitions/590.html)\].
+
+This is covered by test-762.
+
 
 ### TEST-761 ###
 
@@ -252,75 +191,41 @@ Release of Invalid Pointer or Reference \[[CWE-763](https://cwe.mitre.org/data/d
   to the pointer, which leads to error saying that p no longer points 
   to dynamically allocated memory. Hence it is incorrect to call `free()` 
   with it. 
-  
-### TEST-562 ###
 
-Return of Stack Variable Address \[[CWE-562](https://cwe.mitre.org/data/definitions/825.html)\].
+
+### TEST-825 ###
+
+Expired Pointer Dereference \[[CWE-825](https://cwe.mitre.org/data/definitions/825.html)\].
 
 **Related CWEs**
-- [CWE-758](https://cwe.mitre.org/data/definitions/758.html).
-- [CWE-672](https://cwe.mitre.org/data/definitions/672.html).
-- [CWE-825](https://cwe.mitre.org/data/definitions/825.html).
-- [CWE-1006](https://cwe.mitre.org/data/definitions/1006.html).
+- [CWE-627](https://cwe.mitre.org/data/definitions/627.html).  
+- [CWE-415](https://cwe.mitre.org/data/definitions/415.html).  
+- [CWE-119](https://cwe.mitre.org/data/definitions/119.html).  
+- [CWE-416](https://cwe.mitre.org/data/definitions/416.html).  
+- [CWE-562](https://cwe.mitre.org/data/definitions/562.html).  
+- [CWE-125](https://cwe.mitre.org/data/definitions/125.html). 
+- [CWE-787](https://cwe.mitre.org/data/definitions/787.html). 
 
 **Notes:**
-- A function returns the address of a stack variable, which will cause
-  unintended program behavior, typically in the form of a program crash.
+- The program dereferences a pointer that contains a location for
+  memory that was previously valid, but is no longer valid.
 
 **FreeRTOS:**
 - Implemented through the use of `pvPortMalloc`/`pvPortFree`.
 
 **Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of address stack allocation. 
-- The `fill_array` function shows an address of stack memory
-  associated with local variable `a` returned. This will lead to the
-  program crash caused when attempting to print elements.
-- The `fill_array_with_malloc` is recommended way of allocating memory
-  on the stack.
-  
-### TEST-415 ###
+- The test demonstrates the consequences of a ``free`` operation as
+  follows. 
+- The  `test_double_free` function shows freeing a pointer variable
+  more than once.
+- The `test_free_no_longer_valid` function shows freeing a pointer
+  after copying a string value into destination array using the
+  `strcpy` function. This pointer is later incorrectly used in the
+  `printf` function. When freeing pointers, be sure to set them to
+  `NULL` once they are freed. 
+- The utilization of multiple or complex data structures may lower the
+  usefulness of this strategy. 
 
-Double Free \[[CWE-415](https://cwe.mitre.org/data/definitions/415.html)\].
-
-**Related CWEs**
-- [CWE-666](https://cwe.mitre.org/data/definitions/666.html).
-- [CWE-675](https://cwe.mitre.org/data/definitions/675.html).
-- [CWE-825](https://cwe.mitre.org/data/definitions/825.html).
-- [CWE-123](https://cwe.mitre.org/data/definitions/123.html).
-- [CWE-416](https://cwe.mitre.org/data/definitions/416.html).
-- [CWE-364](https://cwe.mitre.org/data/definitions/364.html).
-
-**Notes:**
-- The product calls `free()` twice on the same memory address, 
-  potentially leading to modification of unexpected memory locations.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of double `free`. 
-  
-### TEST-416 ###
-
-Use After Free \[[CWE-416](https://cwe.mitre.org/data/definitions/416.html)\].
-
-**Related CWEs**
-- [CWE-825](https://cwe.mitre.org/data/definitions/825.html).
-- [CWE-123](https://cwe.mitre.org/data/definitions/123.html).
-- [CWE-415](https://cwe.mitre.org/data/definitions/415.html).
-- [CWE-364](https://cwe.mitre.org/data/definitions/364.html).
-- [CWE-120](https://cwe.mitre.org/data/definitions/120.html).
-
-**Notes:**
-- Referencing memory after it has been freed can cause a program to crash, 
-use unexpected values, or execute code.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the improper use of pointer that points to de-allocated 
-memory as well as consequences of double `free()`. 
 
 ### TEST-911 ###
 
@@ -356,42 +261,48 @@ Improper Update of Reference Count \[[CWE-911](https://cwe.mitre.org/data/defini
   but from the compiler's view point it is just the store of the integer type, 
   so additional analysis is needed. 
   
-  
 
 ## PTR (NULL or Incorrect Pointer Dereference Class) ##
 
 The software improperly dereferences incorrect or null
 pointer. \[[more](https://samate.nist.gov/BF/Classes/PTR.html)\].
+Related CWEs:
 
-### TEST-476 ###
+### TEST-188 ###
 
-`NULL` Pointer Dereference
-\[[CWE-476](https://cwe.mitre.org/data/definitions/476.html)\].
+Reliance on Data or Memory Layout \[[CWE-188](https://cwe.mitre.org/data/definitions/188.html)\].
 
 **Related CWEs**
-- [CWE-362](https://cwe.mitre.org/data/definitions/362.html).  
-- [CWE-665](https://cwe.mitre.org/data/definitions/665.html).  
+- [CWE-435](https://cwe.mitre.org/data/definitions/435.html).  
+- [CWE-1105](https://cwe.mitre.org/data/definitions/1105.html).  
+- [CWE-198](https://cwe.mitre.org/data/definitions/198.html).
+- [CWE-137](https://cwe.mitre.org/data/definitions/137.html).  
+
 
 **Notes:**
-- A `NULL` pointer dereference occurs when the application
-  dereferences a pointer that it expects to be valid, but is `NULL`,
-  typically causing a crash or exit.
+- The software makes invalid assumptions about how protocol data 
+  or memory is organized at a lower level, resulting in unintended program behavior.  
 
 **FreeRTOS:**
 - Implemented.
 
 **Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a read and write operation
-  when the application dereferences a `NULL` pointer trying to read
-  from, or assign to it.
-- The `regular_test` function shows valid pointer dereference. 
-- The `malicious_test_read` function shows an example of `NULL` pointer
-  trying to read it.
-- The `malicious_test_write` function shows an example of `NULL` pointer
-  trying to write it.
-- This weakness results in a fact that the processor was able to
-  detect the violation and it also prevented the test from continuing
-  with the breach.
+- The test demonstrates the consequences of a calculating an offset relative to another 
+  field to pick out a specific piece of data on the stack memory segment. 
+   
+- The `example_byte_past` function: In this example the memory address of variable `e` 
+  is derived by adding 1 to the address of variable `d`. This derived address is then used 
+  to assign the value `e` to the variable `e`. Here, variable `e` may not be one byte past `d` and 
+  it depends of the protocol implementation.
+- The `example_byte_in_front` function: The similar explanation like in the previous example
+  except that the variable `b` may be one byte in front of `a`. 
+- The `example_three_bytes_past` function: In this example variable `h` 
+  may be three bytes past the variable `g`.
+- The `example_three_bytes_in_front` function: In this example variable `v` 
+  may be three bytes in front of the variable `u`.
+- The `example_input_args_past_on_stack` function: The similar as previous example related to the 
+  byte past, except that arguments are considered on the stack.
+
 
 ### TEST-468 ###
 
@@ -427,120 +338,35 @@ of the data type.  For example, if the type of `p` is `T*` and `sizeof(T)
   subscript operator rather than pointer arithmetic. For example,
   replace `*(p+k)` with `p[k]`. 
 
-### TEST-395 ###
 
-Use of `NullPointerException` Catch to Detect `NULL` Pointer
-Dereference
-\[[CWE-395](https://cwe.mitre.org/data/definitions/395.html)\].
+### TEST-476 ###
+
+`NULL` Pointer Dereference
+\[[CWE-476](https://cwe.mitre.org/data/definitions/476.html)\].
 
 **Related CWEs**
+- [CWE-362](https://cwe.mitre.org/data/definitions/362.html).  
 
 **Notes:**
-- Catching `NullPointerException` (or comparable trap or signal)
-  should not be used as an alternative to programmatic checks to
-  prevent dereferencing a `NULL` pointer.  We have shown an example,
-  using try-catch clause, describing the error handler
-  mechanism. However, for the `NULL` pointer exception this should never
-  be used.
+- A `NULL` pointer dereference occurs when the application
+  dereferences a pointer that it expects to be valid, but is `NULL`,
+  typically causing a crash or exit.
 
 **FreeRTOS:**
 - Implemented.
 
 **Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a try-catch read and
-  try-catch write operation when the application dereferences a NULL
-  pointer trying to read from, or assign to it.
-- The `try_catch_test_read` function shows an example of `NULL`
-  pointer trying to read it.
-- The `try_catch_test_write` function shows an example of `NULL`
-  pointer trying to write it.
-- This weakness results in a fact that catching the resulting
-  exception was easier than fixing the underlying problem.
-
-### TEST-771 ##
-
-Missing Reference to Active Allocated Resource
-\[[CWE-771](https://cwe.mitre.org/data/definitions/771.html)\].
-
-**Related CWEs**
-- [CWE-400](https://cwe.mitre.org/data/definitions/400.html).
-- [CWE-773](https://cwe.mitre.org/data/definitions/773.html).
-
-**Notes:**
-
-*Per NIST*: The software does not properly maintain a reference to a
-resource that has been allocated, which prevents the resource from
-being reclaimed.
-
-This does not necessarily apply in languages or frameworks that
-automatically perform garbage collection, since the removal of all
-references may act as a signal that the resource is ready to be
-reclaimed.
-
-This test defines a C macro wrapper around memory allocation and
-deallocation then uses the same test code for all OSs.
-
-TODO: Introduce a test based upon the SEI CERT C Coding Standard
-Section 9.4.3 for Linux and FreeBSD using `recalloc`.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- Implemented through the use of `malloc`/`free`.
-
-### TEST-562 ###
-
-Return of Stack Variable Address
-\[[CWE-562](https://cwe.mitre.org/data/definitions/562.html)\].
-
-**Notes:**
-
-*Per NIST*: A function returns the address of a stack variable, which
-will cause unintended program behavior, typically in the form of a
-crash.
-
-The implicit allocation is trivially implemented in a function 
-`char* f(void)` that returns a stack-allocated buffer.  Note that 
-a decent C compiler will warn about such code, but will happily
-generate a binary for this undefined behavior.
-
-**FreeRTOS:**
-- Unimplemented as of yet.
-
-**Linux Debian and FreeBSD:** 
-- Implemented and tested in Qemu.
-
-### TEST-690 ###
-
-Unchecked Return Value to `NULL` Pointer Dereference
-\[[CWE-690](https://cwe.mitre.org/data/definitions/690.html)\].
-
-**Related CWEs**
-- [CWE-252](https://cwe.mitre.org/data/definitions/252.html).
-- [CWE-476](https://cwe.mitre.org/data/definitions/476.html).
-- [CWE-119](https://cwe.mitre.org/data/definitions/119.html).
-
-**Notes:**
-- The product does not check for an error after calling a function
-  that can return with a `NULL` pointer if the function fails, which
-  leads to a resultant `NULL` pointer dereference.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a `strcpy` operation
-  when the application copying from a `NULL` pointer and non `NULL`
-  pointer source.
-- The `test_regular` function shows a valid pointed by source
-  (including the `NULL` character) to the character array destination.
-- The `test_malicious` function will fail due to `NULL` pointer
-  de-referencing.
-- While unchecked return value are not limited to returns of `NULL`
-  pointer, function return `NULL` to indicate an error status.  When
-  this error condition is not checked, a `NULL` pointer dereference
-  can occur.
+- The test demonstrates the consequences of a read and write operation
+  when the application dereferences a `NULL` pointer trying to read
+  from, or assign to it.
+- The `regular_test` function shows valid pointer dereference. 
+- The `malicious_test_read` function shows an example of `NULL` pointer
+  trying to read it.
+- The `malicious_test_write` function shows an example of `NULL` pointer
+  trying to write it.
+- This weakness results in a fact that the processor was able to
+  detect the violation and it also prevented the test from continuing
+  with the breach.
 
 ### TEST-588 ###
 
@@ -573,32 +399,132 @@ Attempt to Access Child of a Non-structure Pointer
   The result is an exception `EXP-BAD_ACCESS` signal 
   handled by the emulated try catch block.
 
-### TEST-822 ###
 
-Untrusted Pointer Dereference
-\[[CWE-822](https://cwe.mitre.org/data/definitions/822.html)\].
+### TEST-690 ###
+
+Unchecked Return Value to `NULL` Pointer Dereference
+\[[CWE-690](https://cwe.mitre.org/data/definitions/690.html)\].
 
 **Related CWEs**
+- [CWE-252](https://cwe.mitre.org/data/definitions/252.html).
+- [CWE-476](https://cwe.mitre.org/data/definitions/476.html).
 - [CWE-119](https://cwe.mitre.org/data/definitions/119.html).
-- [CWE-781](https://cwe.mitre.org/data/definitions/781.html).
-- [CWE-125](https://cwe.mitre.org/data/definitions/125.html).
-- [CWE-787](https://cwe.mitre.org/data/definitions/787.html).
-- [CWE-465](https://cwe.mitre.org/data/definitions/465.html).
 
 **Notes:**
-- The program obtains a value from an untrusted source, converts this 
-value to a pointer, and dereferences the resulting pointer.
+- The product does not check for an error after calling a function
+  that can return with a `NULL` pointer if the function fails, which
+  leads to a resultant `NULL` pointer dereference.
 
 **FreeRTOS:**
-- Implemented.
+- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
 
 **Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of untrusted Pointer Dereference.
- 
-- The `compare` function compares two strings character by character. 
-- The `do_malicious_modification` function: 
-  If the pointer is de-referenced for a write operation, the attack 
-  might allow modification of critical program state variables,
-  cause a crash, or execute code.
+- The test demonstrates the consequences of a `strcpy` operation
+  when the application copying from a `NULL` pointer and non `NULL`
+  pointer source.
+- The `test_regular` function shows a valid pointed by source
+  (including the `NULL` character) to the character array destination.
+- The `test_malicious` function will fail due to `NULL` pointer
+  de-referencing.
+- While unchecked return value are not limited to returns of `NULL`
+  pointer, function return `NULL` to indicate an error status.  When
+  this error condition is not checked, a `NULL` pointer dereference
+  can occur.
 
------------------- 
+## RLR (Resources Limits and Releasing) ##
+
+This is a custom sub-class that we use to group some of the interleaved CWEs. The sources of this sub-class have the prefix `test_rlr_`. 
+
+**CWEs**
+
+- [CWE-400](https://cwe.mitre.org/data/definitions/400.html): Uncontrolled Resource Consumption.
+- [CWE-404](https://cwe.mitre.org/data/definitions/404.html): Improper Resource Shutdown or Release.
+- [CWE-416](https://cwe.mitre.org/data/definitions/416.html): Use After Free.
+- [CWE-672](https://cwe.mitre.org/data/definitions/672.html): Operation on a Resource after Expiration or Release.
+- [CWE-770](https://cwe.mitre.org/data/definitions/770.html): Allocation of Resources Without Limits or Throttling.
+- [CWE-771](https://cwe.mitre.org/data/definitions/771.html): Missing Reference to Active Allocated Resource.
+- [CWE-772](https://cwe.mitre.org/data/definitions/772.html): Missing Release of Resource after Effective Lifetime.
+- [CWE-789](https://cwe.mitre.org/data/definitions/789.html): Uncontrolled Memory Allocation.
+
+**Tests**
+
+A. No limit to allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-770](https://cwe.mitre.org/data/definitions/770.html), and [CWE-789](https://cwe.mitre.org/data/definitions/789.html). This is tested by the following:
+
+    A1. Heap exhaustion.
+    A2. Stack exhaustion.
+
+B. Losing references to actively allocated resources. The related CWEs are [CWE-400](https://cwe.mitre.org/data/definitions/400.html), [CWE-404](https://cwe.mitre.org/data/definitions/404.html),[CWE-771](https://cwe.mitre.org/data/definitions/771.html), and [CWE-772](https://cwe.mitre.org/data/definitions/772.html). This is tested by two concepts:
+
+    B1. Not closing/releasing a resource after its usage.
+    B2. Losing the references because of an error (lack of error handling).
+
+C. Incorrectly releasing a resource before actually stopping to use it. The related CWEs are [CWE-404](https://cwe.mitre.org/data/definitions/404.html), [CWE-416](https://cwe.mitre.org/data/definitions/416.html), and [CWE-672](https://cwe.mitre.org/data/definitions/672.html).
+
+### TEST - HEAP EXHAUSTION ###
+
+The source file is `test_rlr_heapExhaust.c`. The test calls a function that allocates a lot of memory without freeing all of it. The RM seed is used in this test to randomize the amount of memory allocated at each malloc call, and to randomize the scarce calls to free. Whether there is a security protection or not, this test is destined to collapse because the system has to run out of memory at some point. 
+
+### TEST - STACK EXHAUSTION ###
+
+The source file is `test_rlr_stackExhaust.c`. The test implements three similar functions that just allocates 100 bytes on the stack, and then call a dispatch function that chooses one of three functions to call, and so on recursively. Randomization is in the value that is filled in the stack and the order of allocation. Similar to the heap exhaustion test, whether there is a security protection or not, this test is destined to collapse. On Debian and FreeRTOS/FreeBSD on qemu, this segfaults. For both FreeRTOS and FreeBSD on non-qemu, this just times-out.
+
+### TEST - NO RELEASE ###
+
+The source file is `test_rlr_noRelease.c`. The test calls a `noRelease` function 50 times. This function allocates a random number of bytes, then randomly (with 20\% probability) misses to free the allocated chunk and returns.
+
+### TEST - ERROR RELEASE ###
+
+The source file is `test_rlr_errorRelease.c`. The test calls a `errorRelease` function 50 times. This function allocates a random number of bytes, then randomly (with 20\% probability) calls `abort()` before freeing the memory.
+
+### TEST - USE POST RELEASE ###
+
+The source file is `test_rlr_usePostRelease.c`. The test calls a `usePostRelease` function 50 times. This function allocates a random number of bytes for two pointers, then free one, and after that, it allocates random number of bytes for three extra pointers, then randomly (with 20\% probability) decides to use the freed pointer with `memcpy` either as source in part 1, or as destination in part 2. In the end, it frees all the allocated memory.
+
+
+## RI (Resources Initialization) ##
+
+This is a custom sub-class that we use to group some of the interleaved CWEs. The sources of this sub-class have the prefix `test_ri_`. 
+
+**CWEs**
+
+- [CWE-908](https://cwe.mitre.org/data/definitions/908.html): Use of Uninitialized Resource.
+- [CWE-909](https://cwe.mitre.org/data/definitions/909.html): Missing Initialization of Resource.
+
+**Tests**
+
+We use two tests to evaluate these two CWEs; one for the stack initialization, and the other for the heap.
+
+### TEST - STACK INITIALIZATION ###
+
+The source file is `test_ri_uninitStack.c`. The test has two parts: p1. Return an integer variable that was never initialized. p2. Declares a string with a certain length, and then `strcpy` to it a shorter string, leaving the rest of bytes uninitialized. Then, it accesses the characters that are beyond the `NULL` value. Both of the test parts demonstrate instances of information leaking from the stack.
+
+### TEST - HEAP INITIALIZATION ###
+
+The source file is `test_ri_uninitHeap.c`. The test has two parts: p1. Return a pointer to an integer that was never initialized. p2. Allocates a string with a certain length, and then `strcpy` to it a shorter string, leaving the rest of bytes uninitialized. Then, it accesses the characters that are beyong the `NULL` byte. Both of the test parts demonstrate instances of information leaking from the heap.
+
+
+## Miscellaneous ##
+
+The following are the miscellaneous CWEs that do not belong to a particular sub-category:
+
+### TEST-463 ###
+
+Deletion of Data Structure Sentinel
+\[[CWE-463](https://cwe.mitre.org/data/definitions/463.html)\].
+
+The test dynamically allocates a memory for a string, and another one for an integer array. Then it overwrites the sentinel. When the string is printed using `printf`, the contents of the integer array are leaked.
+
+### TEST-467 ###
+
+Use of sizeof() on a Pointer Type
+\[[CWE-467](https://cwe.mitre.org/data/definitions/467.html)\].
+
+The test dynamically allocates a block of memory based on the `sizeof` the pointer type instead of the data structure type. The test does this for `char` and then for `long unsigned int`. The CWE's description implies that using `sizeof` on a pointer should be signaled as a bug even if used intentionally. 
+
+### TEST-587 ###
+
+Assignment of a Fixed Address to a Pointer
+\[[CWE-587](https://cwe.mitre.org/data/definitions/587.html)\].
+
+The test assigns a fixed address to a pointer, then there are two parts: p1. It copies data over to that address. p2. Attemps to execute the code starting at that address. Note that the tests do not successfully *hack* the processors as this requires some reverse engineering, the C file has some examples on how to do that if needed.
+

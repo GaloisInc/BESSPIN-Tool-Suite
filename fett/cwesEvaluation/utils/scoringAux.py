@@ -7,16 +7,17 @@ from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 import re
 
 def overallScore (listScores, dispName, msgIfNotImplemented="Not Implemented", 
-        isSelfAssessment=False, msgIfSelfAssessment="Error - CWE text is not available"):
+        isSelfAssessment=False, msgIfSelfAssessment="Error - CWE text is not available", scoreString=None):
     if (len(listScores)==0): #not implemented
         return [dispName, SCORES.NOT_IMPLEMENTED, msgIfNotImplemented]
     
     ovrScore = SCORES.minScore(listScores)
 
-    if (isSelfAssessment):
-        scoreString = msgIfSelfAssessment
-    else:
-        scoreString = ', '.join([f"p{i+1:02d}:{partScore}" for i,partScore in enumerate(listScores)])
+    if (scoreString is None):
+        if (isSelfAssessment):
+            scoreString = msgIfSelfAssessment
+        else:
+            scoreString = ', '.join([f"p{i+1:02d}:{partScore}" for i,partScore in enumerate(listScores)])
 
     return [dispName, ovrScore, scoreString]
 

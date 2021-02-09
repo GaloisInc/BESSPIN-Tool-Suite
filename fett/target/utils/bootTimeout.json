@@ -30,7 +30,11 @@
   },
   "busybox": { 
     "name": "elfLoader",
-    "JTAG": { "timeout" : { "elfLoad" : 110, "boot" : 30 } },
+    "JTAG": { 
+      "name" : "procLevel",
+      "p2" : { "timeout" : { "elfLoad" : 110, "boot" : 30 } },
+      "p3" : { "timeout" : { "elfLoad" : 120, "boot" : 60 } }
+    },
     "else": { "timeout" : { "boot" : 80 } } 
   },
   "FreeBSD": {
@@ -40,8 +44,8 @@
         "name": "elfLoader",
         "JTAG": {
           "name" : "procLevel",
-          "p2" : { "timeout" : { "elfLoad" : 1200, "boot" : 500 } },
-          "p3" : { "timeout" : { "elfLoad" : 1300, "boot" : 600 } }
+          "p2" : { "timeout" : { "elfLoad" : 1800, "boot" : 550 } },
+          "p3" : { "timeout" : { "elfLoad" : 1800, "boot" : 600 } }
         },
         "else": { "timeout" : { "boot" : 800 } }
       },
@@ -49,8 +53,8 @@
         "name": "elfLoader",
         "JTAG": { 
           "name" : "procLevel",
-          "p2" : { "timeout" : { "elfLoad" : 1000, "boot" : 300 } },
-          "p3" : { "timeout" : { "elfLoad" : 1100, "boot" : 1700 } }
+          "p2" : { "timeout" : { "elfLoad" : 1500, "boot" : 300 } },
+          "p3" : { "timeout" : { "elfLoad" : 1500, "boot" : 1700 } }
         },
         "else": { "timeout" : { "boot" : 540 } }
       }
@@ -61,5 +65,10 @@
       "temporal": { "timeout" : { "boot" : 1000 } },
       "else": { "timeout" : { "boot" : 540 } }
     }
+  },
+  "FreeRTOS": { 
+    "name": "cross-compiler",
+    "GCC": { "timeout" : { "elfLoad" : 60, "boot" : 30 } },
+    "Clang": { "timeout" : { "elfLoad" : 120, "boot" : 30 } }
   }
 }
