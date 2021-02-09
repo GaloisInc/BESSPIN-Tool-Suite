@@ -236,15 +236,20 @@ class fpgaTarget(object):
         else:
             time.sleep(1)
 
+        bluespecExtraUnixCommands = ["set $a0 = 0", "set $a1 = 0x70000020"]
+
         if (self.flashMode and (self.procFlavor=='bluespec') and (self.xlen==64)): 
             #For bluespec_p2 and bluespec_p3, we need to explicitly instruct the fpga to execute the beginning of the flash
-            for xCommand in ["set $a0 = 0", "set $a1 = 0x70000020", "set $t0 = 0x44000000", "set $pc = 0x44000000"]:
-                self.runCommandGdb(xCommand)
-                time.sleep(1)
-        elif (self.processor=='bluespec_p3'): #Do not do it when flashMode
-            self.setUnixBluespecP3()
+            t0pcSetCommands = ["set $t0 = 0x44000000", "p $pc = 0x44000000"]
+            self.seqGdbCommands(bluespecExtraUnixCommands + t0pcSetCommands, sleepTime=0.5)
+            self.continueGdb()
+            self.interruptGdb()
+            self.seqGdbCommands(t0pcSetCommands, sleepTime=0.5)
+        elif (self.processor=='bluespec_p3'): #Already done in flash mode
+            self.seqGdbCommands(bluespecExtraUnixCommands)
+            time.sleep(2)
 
-        if (not self.flashMode): #No need
+        if (not self.flashMode): #No need in case of flash
             # detach from gdb
             self.gdbDetach()
             # Re-connect
@@ -258,12 +263,10 @@ class fpgaTarget(object):
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def setUnixBluespecP3 (self):
-        # required to boot unix on bluespec_p3
-        self.runCommandGdb("set $a0 = 0")
-        time.sleep(1)
-        self.runCommandGdb("set $a1 = 0x70000020")
-        time.sleep(3)
+    def seqGdbCommands (self, commands, sleepTime=1):
+        for command in commands:
+            self.runCommandGdb(command)
+            time.sleep(sleepTime)
 
     @decorate.debugWrap
     @decorate.timeWrap
