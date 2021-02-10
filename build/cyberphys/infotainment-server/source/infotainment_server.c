@@ -295,8 +295,8 @@ void broadcast_heartbeat_ack(can_frame *frame) {
 
     // but we still need the right byte order to output debug info
     uint32_t *heartbeat_id = (uint32_t *) &ack.data[0];
-    debug("broadcasting response to heartbeat request %d\n", 
-          ntohl(*heartbeat_id));
+    debug("broadcasting response to heartbeat request %ju\n", 
+          (uintmax_t) ntohl(*heartbeat_id));
     broadcast_frame(RECEIVE_PORT, SEND_PORT, &ack);
 }
 
