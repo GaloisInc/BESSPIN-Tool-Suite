@@ -8,6 +8,7 @@
 #include <task.h>
 #else // !testgenOnFreeRTOS
 #include <stdlib.h>
+#include "inj_unix_helpers.h"
 #endif
 
 // Number of elements in untrusted1.
@@ -248,26 +249,12 @@ static void rtos_test() {
     // Don't free untrusted2 or trusted as they are overlapping memory regions.
 }
 
-#else
-
-// Read an int from stdin
-static int read_value() {
-    char* line = NULL;
-    size_t len = 0;
-    if (getline(&line, &len, stdin) == -1) {
-        printf("<INVALID>\n");
-        printf("Failed to read from stdin\n");
-        free(line);
-        exit(0);
-    }
-    int value = atoi(line);
-    free(line);
-    return value;
-}
+#endif  // testgenOnFreeRTOS
+#ifdef testgenOnDebian
 
 static bool get_buffer_increment(int64_t* untrusted, int64_t untrusted_size) {
     // Read index
-    int index = read_value();
+    int index = read_int();
 
     // Check for overflows, but not underflows to metadata.
     if (index >= untrusted_size) {
@@ -290,7 +277,7 @@ static bool get_buffer_increment(int64_t* untrusted, int64_t untrusted_size) {
     }
 
     // Read and apply increment
-    int64_t increment = (int64_t) read_value();
+    int64_t increment = (int64_t) read_int();
     untrusted[index] += increment;
 
     return true;
@@ -361,7 +348,7 @@ static void debian_test() {
 
     // Don't free untrusted2 or trusted as they are overlapping memory regions.
 }
-#endif
+#endif  // testgenOnDebian
 
 int main(void) {
     printf("<BEGIN_INJECTION_TEST>\n");

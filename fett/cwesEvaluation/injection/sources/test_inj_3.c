@@ -6,8 +6,8 @@
 #include <message_buffer.h>
 #include <task.h>
 #else  // !testgenOnFreeRTOS
-#include <limits.h>
 #include <stdlib.h>
+#include "inj_unix_helpers.h"
 #endif  // !testgenOnFreeRTOS
 
 typedef union {
@@ -97,21 +97,7 @@ void stdin_test(void) {
 
     // Take a number over stdin and store in data.num (thus overwriting data.fn
     // without triggering a const error).
-    char* line = NULL;
-    size_t len = 0;
-    if (getline(&line, &len, stdin) == -1) {
-        printf("<INVALID>\n");
-        printf("Failed to read from stdin\n");
-        free(line);
-        return;
-    }
-    data.num = (uintptr_t) strtoull(line, NULL, 0);
-    free(line);
-    if (data.num == 0 || data.num == ULLONG_MAX) {
-        printf("<INVALID>\n");
-        printf("Failed to convert string to integer\n");
-        return;
-    }
+    data.num = read_uintptr_t();
 
     // Execute injected function pointer.
     data.fn();
