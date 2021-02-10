@@ -55,6 +55,8 @@ def startCyberPhys():
         if (isEnabled('interactiveShell')):
             ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
 
+        # TODO: Create a listener thread that reads CAN messages from a socket
+
         # Waiting for all threads to terminate
         for xThread in allThreads:
             xThread.join()
@@ -197,5 +199,19 @@ def stopTtyLogging(targetId):
     getSetting('ttyLogger',targetId=targetId).stop()
     setSetting('isTtyLogging',False,targetId=targetId)
 
+# import socket
+# PORT = 5002
+# HOST = "10.88.88.1"
+# CAN_MIN_BYTES = 4 + 1 + 1  # sending an empty frame doesn't make sense, min 6 bytes per frame
+# CAN_MAX_BYTES = 64 + 4 + 1  # 64 bytes of DATA, 4 bytes of ID, 1 byte od DLC
 
-    
+# @decorate.debugWrap
+# @decorate.timeWrap
+# def listenToCanMessages():
+#     """
+#     Open a socket, bind to a port and listen to the targets
+#     """
+#     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+#         s.bind((HOST, PORT))
+#         while (1):
+#             rx_data, (sender_addr, port) = s.recvfrom(CAN_MAX_BYTES)
