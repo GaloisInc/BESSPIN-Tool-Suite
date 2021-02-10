@@ -137,8 +137,6 @@ def prepareFreeRTOS(targetId=None):
     cp(os.path.join(buildDir,'FreeRTOS.elf'), getSetting('osImageElf',targetId=targetId))
     return
 
-
-
 @decorate.debugWrap
 def getCyberphysAppDir(app):
     return os.path.join(getSetting('repoDir'),'build','cyberphys', app)

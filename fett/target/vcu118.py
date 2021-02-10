@@ -557,7 +557,7 @@ def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
         try:
             bitstreamSize = os.path.getsize(getSetting('bitAndProbefiles',targetId=targetId)[0])/(1024*1024)
             datafileSize = os.path.getsize(extraFile)/(1024*1024)
-            timeout = int(1.15*(250*sqrt(bitstreamSize) + 200*sqrt(datafileSize) - 850))
+            timeout = int(1.15*(250*sqrt(bitstreamSize) + 200*sqrt(datafileSize) - 850))*1.5
             logging.debug(f"{targetInfo}programVcu118: Will use flash timeout of <{timeout}>.")
         except Exception as exc:
             timeout = 2400 #fallout value
@@ -711,7 +711,7 @@ def prepareOsBinaryForFlash(targetId=None):
         mkdir(buildDir)
         setSetting('buildDir',buildDir,targetId=targetId)
     buildDir = os.path.join(getSetting('buildDir',targetId=targetId),'vcu118FlashBuild')
-    mkdir(buildDir)
+    mkdir(buildDir,exitIfExists=False)
 
     #Copy the necessary files
     copyDir(os.path.join(getSetting('repoDir'),'fett','target','utils','vcu118FlashBuild'),buildDir,copyContents=True)
