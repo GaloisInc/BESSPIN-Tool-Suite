@@ -93,11 +93,11 @@
 // car_r (float)
 // Sender: ignition
 // Receiver: Infotainment Thin Client
-// Bounds/Range: 0-360
-// Units: degrees
-// J1939 compatible: No
+// Bounds/Range: N/A
+// Units: m
+// J1939 compatible: no
 // Description: 
-//	infotainment position of car to display rotation
+//	infotainment position of car to display r rotation
 #define CAN_ID_CAR_R 0XAACDAD11
 #define BYTE_LENGTH_CAR_R 4
 
@@ -120,5 +120,25 @@
 //	Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
 #define CAN_ID_MUSIC_STATE 0XAA2FEEF2
 #define BYTE_LENGTH_MUSIC_STATE 1
+
+// heartbeat_req (uint32_t)
+// Sender: FETT Target Tool
+// Receiver: All
+// Bounds/Range: N/A
+// J1939 compatible: No
+// Description: 
+//	Heartbeat request with request number in network byte order
+#define CAN_ID_HEARTBEAT_REQ 0XAABEA737
+#define BYTE_LENGTH_HEARTBEAT_REQ 4
+
+// heartbeat_ack (uint32_t)
+// Sender: All
+// Receiver: FETT Target Tool
+// Bounds/Range: N/A
+// J1939 compatible: No
+// Description: 
+//	Heartbeat acknowledgement with number matching a heartbeat_req in network byte order
+#define CAN_ID_HEARTBEAT_ACK 0XAABEA225
+#define BYTE_LENGTH_HEARTBEAT_ACK 4
 
 #endif
