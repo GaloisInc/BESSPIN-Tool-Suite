@@ -87,6 +87,12 @@ void broadcast_music_state();
 void broadcast_position(canid_t can_id);
 
 /**
+ * Broadcast an acknoweledgement to the specified heartbeat request.
+ * @param frame The request CAN frame. Must have ID CAN_ID_HEARTBEAT_REQ.
+ */
+void broadcast_heartbeat_ack(can_frame *frame);
+
+/**
  * Stop the server (typically from a Ctrl-C handler).
  */
 void stop(void);
