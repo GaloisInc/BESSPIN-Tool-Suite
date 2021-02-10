@@ -12,4 +12,9 @@
 526,FreeRTOS,-6
 
 #injection
+INJ-1,FreeRTOS,-6
+INJ-1,debian,4
+INJ-1,FreeBSD,4
+INJ-2,FreeRTOS,-6
+INJ-2,FreeBSD,-6
 INJ-3,FreeRTOS,-6

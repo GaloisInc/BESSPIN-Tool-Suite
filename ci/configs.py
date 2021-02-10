@@ -20,6 +20,7 @@ commonDefaults = {
     ('openConsole',('No',)),
     ('gdbDebug',('No',)),
     ('useCustomHwTarget',('No',)),
+    ('useCustomTargetIp',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',)),
     ('productionTargetIp',('172.31.30.56',))
@@ -31,7 +32,7 @@ commonDefaultsFETT = {
 
 commonDefaultsCWEs = {
     ('mode',('evaluateSecurityTests',)),
-    ('vulClasses', ('[bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors, hardwareSoC]',)),
+    ('vulClasses', ('[bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors, hardwareSoC, injection]',)),
     ('useCustomScoring',('No',)),
     ('useCustomCompiling',('No',)),
     ('FreeRTOStimeout',(10,)),
@@ -39,7 +40,9 @@ commonDefaultsCWEs = {
 }
 
 unixDefaultsCWEs = commonDefaultsCWEs.union({
-    ('nTests',(100,))
+    ('nTests',(100,)),
+    ('cross-compiler',('GCC','Clang',)), # If cross-compiler is Clang, linker will be over-written to LLD
+    ('linker',('GCC',)),
 })
 
 freertosDefaultsCWEs = commonDefaultsCWEs.union({

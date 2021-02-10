@@ -13,6 +13,7 @@ import serial, serial.tools.list_ports, usb
 import sys, signal, os, socket, time
 import pexpect, threading
 from pexpect import fdpexpect
+from math import sqrt
 
 class vcu118Target (fpgaTarget, commonTarget):
     def __init__ (self, targetId=None):
@@ -537,62 +538,53 @@ _MAX_PROG_ATTEMPTS = 3
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programFpga(bitStream, probeFile, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
-    """programs the fpga with a given bitstream and probe file
-    matches the functionality of the old `gfe-program-fpga`
-    :param bitStream: valid filepath
-    :param probeFile: valid probe file
+def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
+    """programs the vcu118 fpga, either with a given bitstream and probe file or the flash with the bitstream and the os binary
     """
     targetInfo = f"<target{targetId}>: " if (targetId) else ''
     cwd = getSetting('gfeWorkDir',targetId=targetId)
 
-    # copy files over to workDir
-    cp(os.path.join(getSetting('tclSourceDir'), 'prog_bit.tcl'), cwd)
-
-    # check that the input files exist
-    if not os.path.exists(bitStream):
-        logAndExit(f"{targetInfo}programFpga: bitstream file {bitStream} does not exist")
-    if not os.path.exists(probeFile):
-        logAndExit(f"{targetInfo}programFpga: probe file {probeFile} does not exist")
-
-    with getSetting('openocdLock'):
-        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_bit.tcl',
-                    '-log', os.path.join(cwd,'prog_bit.log'),'-mode','batch',
-                    '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),bitStream, probeFile],
-                    timeout=90,cwd=cwd,check=False)
-    if retProc.returncode != 0:
-        if attempts > 0:
-            errorAndLog(f"{targetInfo}programFpga: failed to program the FPGA. " 
-                f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
-            programFpga(bitStream, probeFile, attempts=attempts-1, targetId=targetId)
-        else:
-            logAndExit(f"{targetInfo}programFpga: failed to program the FPGA.",exitCode=EXIT.Run)
-
-@decorate.debugWrap
-@decorate.timeWrap
-def clearFlash(attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
-    """ clear flash memory on Fpga
-    matches the functionality of gfe-clear-flash
-    """
-    targetInfo = f"<target{targetId}>: " if (targetId) else ''
-    cwd = getSetting('gfeWorkDir',targetId=targetId)
-
-    # copy files over to workDir
-    cp(os.path.join(getSetting('tclSourceDir'), 'prog_flash.tcl'), cwd)
-    cp(os.path.join(getSetting('tclSourceDir'), 'small.bin'), cwd)
+    # copy tcl file over to workDir
+    cp(os.path.join(getSetting('tclSourceDir'), 'prog_vcu118.tcl'), cwd)
+    if (mode=="bitstream"):
+        tclMode = "bitstream_nonpersistent"
+        extraFile = getSetting('bitAndProbefiles',targetId=targetId)[1]
+        timeout = 120
+    elif(mode=="flash"):
+        tclMode = "bitstreamAndData_flash"
+        extraFile = getSetting('osImageElf',targetId=targetId)
+        # timeout depends on the files sizes; this equation is empirical (250*sqrt(bit)+200*sqrt(data)-850) + 15% margin
+        try:
+            bitstreamSize = os.path.getsize(getSetting('bitAndProbefiles',targetId=targetId)[0])/(1024*1024)
+            datafileSize = os.path.getsize(extraFile)/(1024*1024)
+            timeout = int(1.15*(250*sqrt(bitstreamSize) + 200*sqrt(datafileSize) - 850))
+            logging.debug(f"{targetInfo}programVcu118: Will use flash timeout of <{timeout}>.")
+        except Exception as exc:
+            timeout = 2400 #fallout value
+            errorAndLog(f"{targetInfo}programVcu118: Failed to compute the flashing timeout. "
+                f"Will use the default value <{timeout}>.",exc=exc)
+    else:
+        logAndExit(f"{targetInfo}programVcu118: Called with a non-recognized mode <{mode}>.",exitCode=EXIT.Dev_Bug)
 
     with getSetting('openocdLock'):
-        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_flash.tcl',
-                    '-log', os.path.join(cwd,'prog_flash.log'),'-mode','batch',
-                    '-tclargs',getSetting('vcu118HwTarget',targetId=targetId),'./small.bin'],
-                    timeout=90,cwd=cwd,check=False)
-    if retProc.returncode != 0:
+        retProc = shellCommand([getSetting('vivadoCmd'),'-nojournal','-source','./prog_vcu118.tcl',
+                    '-log', os.path.join(cwd,'prog_vcu118.log'),'-mode','batch',
+                    '-tclargs',tclMode,getSetting('vcu118HwTarget',targetId=targetId),
+                    getSetting('bitAndProbefiles',targetId=targetId)[0], extraFile],
+                    timeout=timeout,cwd=cwd,check=False)
+        isSuccess = (retProc.returncode == 0)
+        if ((mode=="flash") and (retProc.returncode==1)): #check for the tcmalloc weird error exception
+            logText = ftReadLines(os.path.join(cwd,'prog_vcu118.log'),splitLines=False)
+            isSuccess = ( (len(re.findall("Program/Verify Operation successful.",logText))==3)
+                            and (re.search("out of memory",logText) is not None) ) #looks like it went well
+
+    if (not isSuccess):
         if attempts > 0:
-            errorAndLog(f"{targetInfo}clearFlash: failed to clear flash. "
+            errorAndLog(f"{targetInfo}programVcu118: failed to program the FPGA. " 
                 f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
-            clearFlash(attempts=attempts-1, targetId=targetId)
+            programVcu118(mode, attempts=attempts-1, targetId=targetId)
         else:
-            logAndExit(f"{targetInfo}clearFlash: failed to clear flash for the FPGA.",exitCode=EXIT.Run)
+            logAndExit(f"{targetInfo}programVcu118: failed to program the FPGA.",exitCode=EXIT.Run)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -664,9 +656,6 @@ def programBitfile (doPrint=True,targetId=None):
     printAndLog(f"{targetInfo}Preparing the VCU118 FPGA...",doPrint=doPrint)
     prepareFpgaEnv(targetId=targetId)
 
-    printAndLog(f"{targetInfo}Clearing the flash...",doPrint=False)
-    clearFlash(targetId=targetId)
-
     if (not doesSettingExist('bitAndProbefiles',targetId=targetId)):
         bitAndProbefiles = selectBitAndProbeFiles(targetId=targetId)
         setSetting('bitAndProbefiles',bitAndProbefiles,targetId=targetId)
@@ -675,12 +664,81 @@ def programBitfile (doPrint=True,targetId=None):
                 logAndExit(f"<{xFile}> does not exist.", exitCode=EXIT.Files_and_paths)
         setSetting('md5bifile',computeMd5ForFile(bitAndProbefiles[0]),targetId=targetId)
 
-    printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
-    programFpga(*getSetting('bitAndProbefiles',targetId=targetId),targetId=targetId)
-    printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
-        f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
+    mode = getSetting('vcu118Mode',targetId=targetId)
+    if (mode=='nonPersistent'):
+        printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
+        programVcu118("bitstream",targetId=targetId)
+        printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
+            f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
+    elif (mode=='flashProgramAndBoot'):
+        checkThatUartIsKnownForFlash(targetId=targetId)
+        prepareOsBinaryForFlash(targetId=targetId)
+        printAndLog(f"{targetInfo}Programming the flash...",doPrint=doPrint)
+        programVcu118("flash",targetId=targetId)
+        printAndLog(f"{targetInfo}Programmed with bitstream {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
+            f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
+        waitForTargetsAndUser(targetId=targetId)
+    elif (mode=='flashBoot'):
+        checkThatUartIsKnownForFlash(targetId=targetId)
+        warnAndLog(f"{targetInfo} Will proceed assuming the VCU118 flash was programmed and powercycled.")
+    else:
+        logAndExit(f"{targetInfo}programBitfile: Unrecognized VCU118 mode <{mode}>.",exitCode=EXIT.Dev_Bug)
 
-    printAndLog(f"{targetInfo}FPGA was programmed successfully!",doPrint=doPrint)
+    printAndLog(f"{targetInfo}FPGA is ready!",doPrint=doPrint)
+
+@decorate.debugWrap
+def checkThatUartIsKnownForFlash (targetId=None):
+    """ Pre-target class, check that there is an associated UART before proceeding with Flash """
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
+    hwId = getSetting('vcu118HwTarget',targetId=targetId).split('/')[-1]
+    if (not doesSettingExist('vcu118UartDevices')):
+        objUartDevices = UartDevices()
+    else:
+        objUartDevices = getSetting('vcu118UartDevices')
+
+    if (objUartDevices.getUartSerialNumber(hwId,"fpgaHwId") is None):
+        logAndExit(f"{targetInfo}: There is no saved UART serial number for "
+            f"<{getSetting('vcu118HwTarget',targetId=targetId)}>! Cannot use flash modes before "
+            "having UART configuration saved first.",exitCode=EXIT.Run)
+
+@decorate.debugWrap
+@decorate.timeWrap
+def prepareOsBinaryForFlash(targetId=None):
+    targetInfo = f"<target{targetId}>: " if (targetId) else ''
+    targetSuffix = f'_{targetId}' if (targetId) else ''
+    if (not doesSettingExist('buildDir',targetId=targetId)): #In case of busybox for instance
+        buildDir = os.path.join(getSetting('workDir'), f'build{targetSuffix}')
+        mkdir(buildDir)
+        setSetting('buildDir',buildDir,targetId=targetId)
+    buildDir = os.path.join(getSetting('buildDir',targetId=targetId),'vcu118FlashBuild')
+    mkdir(buildDir)
+
+    #Copy the necessary files
+    copyDir(os.path.join(getSetting('repoDir'),'fett','target','utils','vcu118FlashBuild'),buildDir,copyContents=True)
+    cp(getSetting('osImageElf',targetId=targetId),os.path.join(buildDir,"prog.elf"))
+
+    printAndLog (f"{targetInfo}Building the flash binary...",doPrint=False)
+    envVars = []
+    envVars.append(f"XLEN={getSetting('xlen',targetId=targetId)}")
+    envVars.append(f"BIN_SOURCE={getSetting('binarySource',targetId=targetId).replace('-','_')}")
+    envVars.append(f"PROG=prog.elf")
+    make (envVars,buildDir,buildDir=buildDir)
+    setSetting('osImageElf',os.path.join(buildDir,"bootmem.bin"),targetId=targetId) #use the new binary
+    return
+
+@decorate.debugWrap
+@decorate.timeWrap
+def waitForTargetsAndUser (targetId=None):
+    # Wait for all targets
+    if (isEqSetting('mode','cyberPhys')):
+        if (not getSetting('vcu118FlashCounter').incAndCheck()): #not done yet
+            getSetting('vcu118FlashCounter').waitForEverything()
+            return
+    # Wait for user
+    printAndLog("Power cycle the FPGA(s) then press Enter to continue...")
+    input()
+    if (isEqSetting('mode','cyberPhys')):
+        getSetting('vcu118FlashCounter').userIsReady()
 
 @decorate.debugWrap
 def selectBitAndProbeFiles (targetId=None):

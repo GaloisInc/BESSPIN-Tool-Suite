@@ -63,11 +63,71 @@ example:
 - Jump to execute trusted code in an unintended manner, such as in return
   oriented programming.
 
+**Notes:**
+
+- Although the mechanism for obtaining untrusted data differs between FreeRTOS
+  and Unix, the basic structure of the test is the same.  This test:
+  1. Leaks the address of a buffer.
+  2. Places untrusted user data in the buffer.  Specifically, the test places
+     the EBREAK opcode in the buffer.
+  3. Due to missing bounds checks, places untrusted over the end of the buffer
+     and into a stored return pointer.  The test places the address of the
+     buffer here.
+  4. When returning from a function, execution jumps to the buffer containing
+     the EBREAK instruction.
+- Because the test overwrites a stored return pointer, it is sensitive to stack
+  layout.  It contains sanity checks to determine whether the second write will
+  overwrite the return pointer.  The test accomplishes this by comparing the
+  value to be overwritten with the address of the `ret_location` label, which
+  is the expected value of the return pointer.  If these values do not match
+  then the test will score INVALID, indicating that the offset between the
+  start of the buffer and the return pointer is incorrect.  FETT re-runs the
+  test with different offsets and only scores the test for which it correctly
+  locates the stored return pointer.
+
 **FreeRTOS:**
-- Not yet implemented.
+- The FreeRTOS test uses tasks as a source of untrusted information.
+- The `shared_task_data_t` struct holds the data shared between the two tasks.
+  It contains:
+  * A pointer to a `uintptr_t`.
+  * A pointer to the expected return value for sanity checking.
+- The `injector` function is run in a task, where it:
+  1. Takes a pointer to a `shared_task_data_t` as input.
+  2. Places the EBREAK opcode in `buf`.
+  3. Computes the address of a stored return pointer in the other task using
+     `buf` and a known offset.
+  4. Overwrites the stored return pointer with the address for `buf`.
+  5. Notifies the other task to unblock it.
+- The `message_buffer_test` function:
+  1. Creates a `shared_task_data_t` where `buf` points to a local stack
+     variable `ebreak`.
+  2. Creates a task running the `injector` function and passes it a pointer to
+     the `shared_task_data_t`.
+  3. Waits for a notification from the task.
+  4. Returns.  If the return pointer was successfully overwritten, this return
+     will jump into the `ebreak` variable.
 
 **Linux Debian and FreeBSD:**
-- Not yet implemented.
+- The Debian and FreeBSD test uses `stdin` as a source of untrusted
+  information.
+- The `stdin_test` function:
+  1. Creates a `uintptr_t` buffer `buf` on the stack and leaks its address.
+  2. Takes 4 lines over stdin:
+     1. An offset (O1).
+     2. A value (V1).
+     3. An offset (O2).
+     4. A value (V2).
+  3. Writes V1 at `buf + O1`.
+  4. Writes V2 at `buf + O2`.
+  5. Returns.
+- Fett sends the following values to the test program:
+  1. The first offset: `0`.
+  2. The first value: The EBREAK opcode.
+  3. The second offset:  `inj1UnixReturnPointerOffset`.
+  4. The second value: The address of `buf`.
+- The return of `stdin_test` will then jump to `buf`, but the OS will detect
+  execution of non-executable memory and raise a segmentation fault.
+  Therefore, the expected score on Unix is DETECTED.
 
 ------------------
 
@@ -79,11 +139,60 @@ of untrusted heap data that overwrites trusted `malloc` metadata in a
 neighboring chunk such that a subsequent `free` of that chunk causes the memory
 allocator to write untrusted data in trusted memory.
 
-**FreeRTOS:**
-- Not yet implemented.
+**Notes:**
+- Although the mechanism for obtaining untrusted data and offsets for heap
+  metadata differ between FreeRTOS and Debian, the tests are otherwise
+  identical.  This test:
+  1. Allocates a buffer `untrusted1` to store untrusted data.
+  2. Allocates an integer `trusted` to store trusted data, and sets it to `0`.
+     This will be allocated directly after `untrusted1`, with the 16 byte
+     heap metadata header for `trusted` inbetween.
+  3. Takes an untrusted value `index1`.  `index1` is chosen such that it points
+     to the size field of heap metadata for `untrusted1`.
+  4. Takes an untrusted value `increment1`.  `increment1` is 32, as that
+     matches the additional size of the allocation in step 7.
+  5. Increments `untrusted1[index]` by `increment1`.
+  6. Frees `unstrusted1`.  This places the block at the front of the free list,
+     but with size metadata that indicates the block is 32 bytes larger than it
+     actually is.
+  7. Allocates a buffer `untrusted2` that is 32 bytes larger than `untrusted1`.
+     Because of the incorrect size metadata, the allocator will return the
+     block of memory that formerly held `untrusted1`.
+  8. Takes an untrusted value `index2`.  `index2` points to memory 16 bytes
+     after the end of the old `untrusted1` buffer.  This is in bounds for
+     `untrusted2`, but overlaps with the allocation for `trusted`.
+  9. Takes an untrusted value `increment2`.  `increment2` is 1, but any
+     non-zero number would work.
+  10. Increments `untrusted2[index2]` by `increment2`.
+  11. Branches on `trusted` being nonzero, demonstrating that untrusted data
+      has been stored in a trusted variable.
 
-**Linux Debian and FreeBSD:**
-- Not yet implemented.
+**FreeRTOS:**
+- The FreeRTOS test uses tasks as a source of untrusted information.
+- `untrusted1` is a buffer of 8 32-bit integers.
+- `untrusted2` is a buffer of 16 32-bit integers (32 bytes larger than
+  `untrusted1`).
+- `index1` is `-3`, as the size header is 12 bytes (3 32-bit ints) before the
+  `untrusted1` pointer returned by `pvPortMalloc`.
+- `index2` is `12`, which is 16 bytes (4 32-bit ints) beyond the end of the
+  `untrusted1` allocation, and therefore just past the 16 byte header for
+  `trusted` and into the `trusted` data itself.
+
+**Linux Debian:**
+- The Debian test uses `stdin` as a source of untrusted information.
+- `untrusted1` is a buffer of 8 64-bit integers.
+- `untrusted2` is a buffer of 12 64-bit integers (32 bytes larger than
+  `untrusted1`).
+- `index1` is `-1`, as the size header is 8 bytes (1 64-bit int) before the
+  `untrusted1` pointer returned by `malloc`.
+- `index2` is `10`, which is 16 bytes (2 64-bit ints) beyond the end of the
+  `untrusted1` allocation, and therefore just past the 16 byte header for
+  `trusted` and into the `trusted` data itself.
+
+**FreeBSD:**
+- This test is not implemented and scores N/A on FreeBSD as the FreeBSD malloc
+  implementation (jemalloc) does not place heap metadata directly adjacent to
+  the pointers it returns.
 
 ------------------
 
@@ -133,20 +242,3 @@ overwrite trusted internal program state.
   4. Executes the `fn` field of the union.
 - When prompted, FETT writes the leaked `malicious` address to the running
   test's `stdin`.
-
-------------------
-
-### TEST-INJ-4 ###
-
-Untrusted Data Accessed as Memory Address.  The program obtains a value from an
-untrusted source and converts this value to a memory address.  Examples of
-memory addresses that may be manipulated include:
-
-- Pointers (as in [CWE-822](https://cwe.mitre.org/data/definitions/822.html)).
-- Return values.
-
-**FreeRTOS:**
-- Not yet implemented.
-
-**Linux Debian and FreeBSD:**
-- Not yet implemented.
