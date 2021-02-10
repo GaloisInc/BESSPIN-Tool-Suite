@@ -229,6 +229,22 @@ void print_music_state_frame(can_frame *frame) {
           station(frame->data[0]), volume(frame->data[0]));
 }
 
+void print_heartbeat_ack_frame(can_frame *frame, uint32_t expected_number) {
+    // make sure the frame is an appropriate type
+    assert(frame->can_id == CAN_ID_HEARTBEAT_ACK);
+
+    uint32_t *number = (uint32_t *) &frame->data[0];
+    uint32_t reordered_number = ntohl(*number);
+
+    if (expected_number == reordered_number) {
+        debug("heartbeat ack CAN frame received with expected number %d\n", 
+              reordered_number);
+    } else {
+        error("heartbeat ack CAN frame received with unexpected number %d\n",
+              reordered_number);
+    }
+}
+
 void send_button_press(uint8_t button) {
     can_frame frame = { .can_id = CAN_ID_BUTTON_PRESSED, 
                         .can_dlc = BYTE_LENGTH_BUTTON_PRESSED };
@@ -249,6 +265,18 @@ void send_coordinate(canid_t dimension_id, float coordinate) {
     
     debug("broadcasting %c-coordinate update (%f)\n", 
           char_for_dimension(dimension_id), coordinate);
+    broadcast_frame(SEND_PORT, RECEIVE_PORT, &frame);
+}
+
+void send_heartbeat_req(uint32_t number) {
+    can_frame frame = { .can_id = CAN_ID_HEARTBEAT_REQ,
+                        .can_dlc = BYTE_LENGTH_HEARTBEAT_REQ };
+
+    // copy in the number in the correct byte order
+    uint32_t *number_in_frame = (uint32_t *) &frame.data[0];
+    *number_in_frame = htonl(number);
+
+    debug("broadcasting heartbeat request number %d\n", number);
     broadcast_frame(SEND_PORT, RECEIVE_PORT, &frame);
 }
 
