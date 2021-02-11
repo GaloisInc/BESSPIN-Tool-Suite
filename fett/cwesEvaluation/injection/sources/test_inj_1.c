@@ -7,8 +7,9 @@
 #include <message_buffer.h>
 #include <task.h>
 #else  // !testgenOnFreeRTOS
-#include <limits.h>
 #include <stdlib.h>
+#include <time.h>
+#include "inj_unix_helpers.h"
 #endif  // !testgenOnFreeRTOS
 
 #include "testsParameters.h"
@@ -106,30 +107,11 @@ static void message_buffer_test(const void** ret_ptr) {
 #else  // !testgenOnFreeRTOS
 
 // Read a uintptr_t from stdin
-static uintptr_t read_value() {
-    char* line = NULL;
-    size_t len = 0;
-    if (getline(&line, &len, stdin) == -1) {
-        printf("<INVALID>\n");
-        printf("Failed to read from stdin\n");
-        free(line);
-        exit(0);
-    }
-    uintptr_t value = (uintptr_t) strtoull(line, NULL, 0);
-    free(line);
-    if (value == ULLONG_MAX) {
-        printf("<INVALID>\n");
-        printf("Failed to convert string to integer\n");
-        exit(0);
-    }
-    return value;
-}
-
 // Read two values from stdin, the first is an index, and the second is a
 // value.  Set buf[index] = value.
 static void write_buf(uintptr_t* buf, const void** expected_ret_ptr) {
-    uintptr_t offset = read_value();
-    uintptr_t value = read_value();
+    uintptr_t offset = read_uintptr_t();
+    uintptr_t value = read_uintptr_t();
 
     uintptr_t* write_location = buf + offset;
 
@@ -138,8 +120,6 @@ static void write_buf(uintptr_t* buf, const void** expected_ret_ptr) {
         // pointer with the address of the buffer.  `offset` should point to
         // `expected_ret_ptr` (within a few bytes) and `value` should be the
         // start of `buf`.
-        uintptr_t write_int = (uintptr_t) *write_location;
-        uintptr_t expected_int = (uintptr_t) *expected_ret_ptr;
         if (!is_return_pointer(write_location, expected_ret_ptr)) {
             exit(0);
         }
@@ -182,8 +162,16 @@ static void stdin_test(const void** expected_ret_ptr) {
 
 #ifdef testgenOnDebian
     // Short sleep to ensure previous print completes and does not interleave
-    // with kmesg segfault message.
-    sleep(1);
+    // with kmesg segfault message.  Use nanosleep syscall instead of sleep for
+    // bare metal support.
+    struct timespec duration = { .tv_sec = 1, .tv_nsec = 0 };
+    int do_sleep = 1;
+    while (do_sleep) {
+        // Run nanosleep in loop until duration has elapsed because nanosleep
+        // can return early and store the remaining time in its second
+        // argument.  See nanosleep(2) man page for more.
+        do_sleep = nanosleep(&duration, &duration);
+    }
 #endif
 
     // Return should jump into buf.  Debian and FreeBSD should detect execution
