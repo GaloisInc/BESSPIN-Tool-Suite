@@ -5,7 +5,7 @@ Misc required functions for fett.py
 
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess, pathlib
-import tarfile, sys, json, re, getpass, time
+import tarfile, sys, json, re, getpass, time, configparser
 import crypt, hashlib
 import zstandard
 
@@ -405,6 +405,26 @@ def safeDumpJsonFile(jsonData, jsonFile):
         logAndExit(f"Failed to dump json <{jsonData}> to file <{jsonFile}>",
                    exc=exc,
                    exitCode=EXIT.Files_and_paths)
+
+def safeLoadIniFile (iniFile):
+    xConfig = configparser.ConfigParser()
+    try:
+        xConfig.optionxform = str # Hack it to be case sensitive
+        fConfig = open(iniFile,'r')
+        xConfig.read_file(fConfig)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to read configuration file <{iniFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    return xConfig
+
+def safeDumpIniFile(xConfig, iniFile):
+    try:
+        fConfig = open(iniFile, 'w')
+        xConfig.write(fConfig,space_around_delimiters=True)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to dump config data <{xConfig}> to file <{iniFile}>",
+                   exc=exc, exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap
 def make (argsList,dirPath,dockerToolchainImage=None,dockerExtraMounts={},targetId=None, buildDir=None):
