@@ -10,12 +10,11 @@ def main(xArgs):
 
     # Let's do this ugly workaround to have this utility use the tool, but not to be part of the tool
     sys.path.insert(0, repoDir)
-    from fett.base.utils.misc import trashCanObj, exitPeacefully, setSetting, getSetting
+    from fett.base.utils.misc import trashCanObj, exitPeacefully, setSetting, getSetting, exitFett, EXIT
     from fett.base.config import loadConfiguration
     from fett.cwesEvaluation.common import score
     from fett.cwesEvaluation.utils.checkValidScores import checkValidScores
 
-    vulClass = xArgs.vulClass
     logFile = os.path.join(workDir,'vulClassScore.log')
     try:
         fLog = open(logFile,'w')
@@ -38,18 +37,31 @@ def main(xArgs):
     # Load all configuration and setup settings
     setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
-    configFile = os.path.join(repoDir,'myConfig.ini')
+    if (xArgs.configFile):
+        configFile = os.path.abspath(xArgs.configFile)
+    else:
+        configFile = os.path.join(repoDir,'config.ini')
+        print(f"Using the default configuration in <{configFile}>.")
     setSetting('configFile', configFile)
 
     loadConfiguration(configFile)
 
-    score (os.path.join(getSetting('cwesEvaluationLogs'),vulClass), vulClass)
+    if (getSetting('mode') != 'evaluateSecurityTests'):
+        print(f"(Error)~  This utility is only for <evaluateSecurityTests> mode.")
+        exitFett(EXIT.Configuration)
+
+    if (xArgs.vulClass == "all"):
+        for vulClass in getSetting("vulClasses"): 
+            score (os.path.join(getSetting('cwesEvaluationLogs'),vulClass), vulClass)
+    else:
+        score (os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass), xArgs.vulClass)
     checkValidScores()
 
 if __name__ == '__main__':
     # Reading the bash arguments
     xArgParser = argparse.ArgumentParser (description='Scores the CWEs logs for a failed run (Debug utility).')
-    xArgParser.add_argument ('vulClass', help='The vulnerability class to score.')
+    xArgParser.add_argument ('-c', '--configFile', help='Overwrites the default config file: ./config.ini')
+    xArgParser.add_argument ('-v', '--vulClass', help='Single vulnerability class to score. Default is <all>',default="all")
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
 
     xArgs = xArgParser.parse_args()
