@@ -140,18 +140,21 @@ bool update_position(can_frame *frame) {
     assert(frame->can_id == CAN_ID_CAR_X || frame->can_id == CAN_ID_CAR_Y ||
            frame->can_id == CAN_ID_CAR_Z || frame->can_id == CAN_ID_CAR_R);
 
-    // interpret the payload as a float
-    float *position = (float *) frame->data;
-    *position = iu_ntohf(*position);
+    // copy the payload into a float and fix its byte order; this is done
+    // instead of a simple cast to (float *) for alignment reasons
+    float position;
+    memcpy(&position, &frame->data[0], sizeof(float));
+    position = iu_ntohf(position);
+
     float *old_position = position_for_dimension(&the_state, frame->can_id);    
     char dimension = char_for_dimension(frame->can_id);
     bool changed = false;
 
-    if (*old_position == *position) {
+    if (*old_position == position) {
         debug("%c position update (%f) results in no change\n", 
-              dimension, *position);
+              dimension, position);
     } else {
-        *old_position = *position;
+        *old_position = position;
         changed = true;
         debug("updated %c position to %f\n", dimension, *old_position);
     }
