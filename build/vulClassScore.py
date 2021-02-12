@@ -12,7 +12,7 @@ def main(xArgs):
     sys.path.insert(0, repoDir)
     from fett.base.utils.misc import trashCanObj, exitPeacefully, setSetting, getSetting, exitFett, EXIT
     from fett.base.config import loadConfiguration
-    from fett.cwesEvaluation.common import score
+    from fett.cwesEvaluation.scoreTests import scoreTests
     from fett.cwesEvaluation.utils.checkValidScores import checkValidScores
 
     logFile = os.path.join(workDir,'vulClassScore.log')
@@ -52,9 +52,9 @@ def main(xArgs):
 
     if (xArgs.vulClass == "all"):
         for vulClass in getSetting("vulClasses"): 
-            score (os.path.join(getSetting('cwesEvaluationLogs'),vulClass), vulClass)
+            scoreTests (vulClass, os.path.join(getSetting('cwesEvaluationLogs'),vulClass))
     else:
-        score (os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass), xArgs.vulClass)
+        scoreTests (xArgs.vulClass, os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass))
     checkValidScores()
 
 if __name__ == '__main__':

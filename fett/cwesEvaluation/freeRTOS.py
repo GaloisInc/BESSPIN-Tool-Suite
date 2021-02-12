@@ -2,7 +2,7 @@ import glob
 import os
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.common import score
+from fett.cwesEvaluation.scoreTests import scoreTests
 from fett.target import awsf1, vcu118
 import fett.target.launch
 
@@ -82,7 +82,6 @@ def runFreeRTOSCwesEvaluation():
 
             logFile.close()
         # Score the tests
-        score(os.path.join(getSetting("cwesEvaluationLogs"), vulClass),
-              vulClass)
+        scoreTests(vulClass, logsDir)
 
 

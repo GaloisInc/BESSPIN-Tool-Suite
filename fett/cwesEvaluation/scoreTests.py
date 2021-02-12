@@ -8,13 +8,9 @@ scoring the CWEs
 - SCALE: NONE (no weakness) -> LOW ->MED -> HIGH
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
-import os
-import glob
-import sys
+import os, glob, sys
 from importlib.machinery import SourceFileLoader
-import enum
-import re
-
+import enum, re
 from fett.base.utils.misc import *
 
 class SCORES (enum.Enum):
@@ -84,8 +80,9 @@ class SCORES (enum.Enum):
         return mapToScores[strScore]
 
 @decorate.debugWrap
-def scoreTests(scorerModule, csvPath, logsDir):
+def scoreTests(vulClass, logsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
+    csvPath = os.path.join(logsDir, "scores.csv")
     fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
         setSetting("reportFile", fScoresReport)
@@ -97,6 +94,11 @@ def scoreTests(scorerModule, csvPath, logsDir):
 
     # Get all the log files
     logs = [(os.path.basename(f).split('.')[0], f) for f in sorted(glob.glob(os.path.join(logsDir, '*.log')))]
+    scorerModulePath = os.path.join(getSetting("repoDir"),"fett","cwesEvaluation",vulClass,"cweScores.py")
+    try:
+        scorerModule = SourceFileLoader("cweScores",scorerModulePath).load_module()
+    except Exception as exc:
+        logAndExit(f"Failed to load the <cweScores> module for <{vulClass}>.",exc=exc,exitCode=EXIT.Dev_Bug)
     rows = sorted(scorerModule.scoreAllTests(logs))
     if (len(rows) < 1): #nothing to score
         warnAndLog("<scoreTests>: There are no logs to score.")
