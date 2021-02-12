@@ -70,3 +70,17 @@ int broadcast_frame(int from_port, int to_port, can_frame *frame);
  * @return true if the address is one of our addresses, false otherwise.
  */
 bool is_our_address(int port, struct sockaddr_in *address);
+
+/**
+ * Converts a float from network byte order to local byte order.
+ * @param val The float value to convert.
+ * @return the converted float value.
+ */
+float iu_ntohf(float val);
+
+/**
+ * Converts a float from local byte order to network byte order.
+ * @param val The float value to convert.
+ * @return the converted float value.
+ */
+float iu_htonf(float val);

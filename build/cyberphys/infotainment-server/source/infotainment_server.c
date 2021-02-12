@@ -142,6 +142,7 @@ bool update_position(can_frame *frame) {
 
     // interpret the payload as a float
     float *position = (float *) frame->data;
+    *position = iu_ntohf(*position);
     float *old_position = position_for_dimension(&the_state, frame->can_id);    
     char dimension = char_for_dimension(frame->can_id);
     bool changed = false;
@@ -277,7 +278,8 @@ void broadcast_position(canid_t can_id) {
 
     // BYTE_LENGTH_CAR_X is the same as Y and Z
     can_frame frame = { .can_id = can_id, .can_dlc = BYTE_LENGTH_CAR_X };
-    memcpy(&frame.data[0], position, sizeof(float));
+    float network_position = iu_htonf(*position);
+    memcpy(&frame.data[0], &network_position, sizeof(float));
 
     debug("broadcasting new %c position: %f\n", dimension, *position);
     broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
