@@ -12,6 +12,7 @@ import os, glob, sys
 from importlib.machinery import SourceFileLoader
 import enum, re
 from fett.base.utils.misc import *
+import fett.base.config
 
 class SCORES (enum.Enum):
     NINF = -10
@@ -69,6 +70,7 @@ class SCORES (enum.Enum):
             'MED' : SCORES.MED,
             'LOW' : SCORES.LOW,
             'NONE' : SCORES.NONE,
+            'DETECTED' : SCORES.DETECTED,
             'NA' : SCORES.NOT_APPLICABLE,
             'UNKNOWN' : SCORES.UNKNOWN
         }
@@ -83,6 +85,7 @@ class SCORES (enum.Enum):
 def scoreTests(vulClass, logsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     csvPath = os.path.join(logsDir, "scores.csv")
+    iniPath = os.path.join(logsDir, f"{vulClass}.ini")
     scoresDict = getSettingDict("cweScores",vulClass)
     fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
@@ -104,19 +107,27 @@ def scoreTests(vulClass, logsDir):
     if (len(rows) < 1): #nothing to score
         warnAndLog("<scoreTests>: There are no logs to score.")
     else:
-        # output a csv file + store the scores in the dict
+        # output a csv file + ini file + store the scores in the dict
+        fcsv = ftOpenFile(csvPath, "w")
+        xConfig = configparser.ConfigParser()
+        xConfig.optionxform = str # Hack it to be case sensitive
+        xConfig.add_section(fett.base.config.CWES_SELF_ASSESSMENT_SECTION)
+        if (vulClass not in ["bufferErrors", "informationLeakage"]):
+            xConfig.add_section(fett.base.config.CWES_ENABLED_TESTS_SECTION)
         try:
-            fcsv = ftOpenFile(csvPath, "w")
             for row in rows:
                 cweName = f"{'-'.join(row[0].split('-')[1:])}"
                 scoresDict[cweName] = row[1]
+                xConfig.set(fett.base.config.CWES_SELF_ASSESSMENT_SECTION,f"assessment_{cweName}",f"{row[1]}")
+                if (vulClass not in ["bufferErrors", "informationLeakage"]):
+                    xConfig.set(fett.base.config.CWES_ENABLED_TESTS_SECTION,f"test_{cweName}",'No') #already tested
                 fcsv.write(f"{cweName},{row[1]},{row[1].value},{row[2]}\n")
             fcsv.close()
         except Exception as exc:
-            logAndExit(f"<scoreTests> Failed to generate the csv output "
-                       f"file <{csvPath}>.",
+            logAndExit(f"<scoreTests> Failed to generate the needed files and outputs for <{vulClass}> scores.",
                        exc=exc,
                        exitCode=EXIT.Files_and_paths)
+        safeDumpIniFile(xConfig,iniPath)
         # Build table for scoring
         for row in tabulate(rows):
             printAndLog(row, tee=fScoresReport)

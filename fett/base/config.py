@@ -8,7 +8,8 @@ import configparser, json, os, re
 import base64
 from fett.base.utils.misc import *
 from importlib.machinery import SourceFileLoader
-from fett.cwesEvaluation.scoreTests import SCORES
+import fett.cwesEvaluation.scoreTests
+SCORES = fett.cwesEvaluation.scoreTests.SCORES
 
 COMMON_SECTIONS = ['functionality', 'common', 'applications', 'build']
 TARGET_SECTION = 'target'

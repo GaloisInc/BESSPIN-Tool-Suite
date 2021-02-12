@@ -358,7 +358,7 @@
         {
             "name" : "cwesAssessments",
             "type" : "stringsList",
-            "val" : "[HIGH, MED, LOW, NONE, NA, UNKNOWN]"
+            "val" : "[HIGH, MED, LOW, NONE, DETECTED, NA, UNKNOWN]"
         },
         {
             "name" : "cweTestTemplateFreeRTOS",
