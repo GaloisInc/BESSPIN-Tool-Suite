@@ -42,6 +42,10 @@ infotainment_server_freebsd:
 test_client_freebsd:
 	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_freebsd
 	
+fett_binaries: linux freebsd
+	cp infotainment_server_linux ../../../SSITH-FETT-Binaries/GFE/appsBinaries/infotainment-server/debian
+	cp infotainment_server_freebsd ../../../SSITH-FETT-Binaries/GFE/appsBinaries/infotainment-server/FreeBSD
+
 clean:
 	@find . -name "*.out" -type f -delete
 	@find . -name "*.asm" -type f -delete
