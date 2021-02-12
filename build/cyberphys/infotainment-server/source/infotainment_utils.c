@@ -242,3 +242,27 @@ bool is_our_address(int port, struct sockaddr_in *check_address) {
 
     return result;
 }
+
+float iu_ntohf(float val) {
+    union {
+        uint32_t i;
+        float f;
+    } conv;
+
+    conv.f = val;
+    conv.i = ntohl(conv.i);
+
+    return conv.f;
+}
+
+float iu_htonf(float val) {
+    union {
+        uint32_t i;
+        float f;
+    } conv;
+
+    conv.f = val;
+    conv.i = htonl(conv.i);
+
+    return conv.f;
+}

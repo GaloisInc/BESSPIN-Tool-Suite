@@ -212,7 +212,7 @@ void assert_music_state(can_frame *frame, int play, int station, int volume) {
 void assert_position(can_frame *frame, canid_t dimension_id, float position) {
     assert(frame->can_id == dimension_id);
     float *frame_position = (float *) frame->data;
-    assert(*frame_position == position);
+    assert(iu_ntohf(*frame_position) == position);
 }
 
 void print_frame(can_frame *frame) {
@@ -247,7 +247,7 @@ void print_position_frame(can_frame *frame) {
     float *position = (float *) frame->data;
 
     debug("%c-position CAN frame received: %f\n", 
-          char_for_dimension(frame->can_id), *position);
+          char_for_dimension(frame->can_id), iu_ntohf(*position));
 }
 
 void print_music_state_frame(can_frame *frame) {
@@ -291,7 +291,7 @@ void send_coordinate(canid_t dimension_id, float coordinate) {
 
     can_frame frame = { .can_id = dimension_id, .can_dlc = BYTE_LENGTH_CAR_X };
     float *buffer = (float *) frame.data;
-    *buffer = coordinate;
+    *buffer = iu_htonf(coordinate);
     
     debug("broadcasting %c-coordinate update (%f)\n", 
           char_for_dimension(dimension_id), coordinate);
