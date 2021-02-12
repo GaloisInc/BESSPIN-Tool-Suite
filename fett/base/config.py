@@ -408,6 +408,9 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
     else: #use default
         configCWEsParentPath = os.path.join(getSetting('repoDir'),'configSecurityTests')
 
+    #Create a dict for the scores
+    setSetting("cweScores",{vulClass:{} for vulClass in getSetting('vulClasses')})
+
     # load vulClass configs
     for vulClass in getSetting('vulClasses'): #load settings per vulClass
         vulClassDict = dict()

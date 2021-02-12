@@ -83,6 +83,7 @@ class SCORES (enum.Enum):
 def scoreTests(vulClass, logsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     csvPath = os.path.join(logsDir, "scores.csv")
+    scoresDict = getSettingDict("cweScores",vulClass)
     fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
         setSetting("reportFile", fScoresReport)
@@ -103,11 +104,13 @@ def scoreTests(vulClass, logsDir):
     if (len(rows) < 1): #nothing to score
         warnAndLog("<scoreTests>: There are no logs to score.")
     else:
-        # output a csv file
+        # output a csv file + store the scores in the dict
         try:
             fcsv = ftOpenFile(csvPath, "w")
             for row in rows:
-                fcsv.write(f"{'-'.join(row[0].split('-')[1:])},{row[1]},{row[1].value},{row[2]}\n")
+                cweName = f"{'-'.join(row[0].split('-')[1:])}"
+                scoresDict[cweName] = row[1]
+                fcsv.write(f"{cweName},{row[1]},{row[1].value},{row[2]}\n")
             fcsv.close()
         except Exception as exc:
             logAndExit(f"<scoreTests> Failed to generate the csv output "
