@@ -28,7 +28,7 @@ def scoreAllTests(logs):
     return ret
 
 def getTestNumAndInfo(testName):
-    testNum = testName.split("test_")[1:].replace("_", "-")
+    testNum = testName.split("test_")[1].replace("_", "-")
     info = getSettingDict(VULCLASS, ["testsInfo", testName, "cweText"])
     return (testNum, info)
 
