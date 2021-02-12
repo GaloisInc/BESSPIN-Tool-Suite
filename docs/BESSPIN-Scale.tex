@@ -1,0 +1,158 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{The BESSPIN Scale}
+%\author{Ramy Tadros}
+\date{\vspace{-0.5cm}}
+
+\usepackage{graphicx}
+
+\usepackage[dvipsnames]{xcolor}
+\usepackage[pdfborderstyle={/S/U/W 1}, colorlinks = true, urlcolor = blue, linkcolor=black]{hyperref}
+%\usepackage{natbib}
+
+
+\addtolength{\oddsidemargin}{-.875in}
+\addtolength{\evensidemargin}{-.875in}
+\addtolength{\textwidth}{1.75in}
+
+\addtolength{\topmargin}{-.875in}
+\addtolength{\textheight}{1.25in}
+\usepackage{paralist}     % inline lists
+
+\usepackage{nicefrac}     % better (smaller) inline fractions...
+\usepackage{amsmath}      % to automatically break multiline equations
+\usepackage{amssymb}
+\usepackage{mathtools}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+\newcommand{\normTWO}[1]{\left\lVert#1\right\rVert}
+\newcommand{\norm}[1]{\left|#1\right|}
+
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\newcommand{\pushcode}[1][1]{\hskip\dimexpr#1\algorithmicindent\relax}
+\newcommand{\RED}{\textcolor{red}}
+\newcommand{\BLUE}{\textcolor{blue}}
+
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{enumitem}
+\usepackage{ mathrsfs }
+%\usepackage{tcolorbox}
+\usepackage{tikz,lipsum,lmodern}
+\usepackage[most]{tcolorbox}
+\usepackage{comment}
+%\usepackage{refcount}
+\usepackage{relsize}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The BESSPIN scale is the security figure of merit that is used to evaluate the SSITH hardware. As any security metric, it is more subjective than empirical, but more structured than qualitative. Since the SSITH program fundamentally relies on the MITRE CWEs enumeration to determine the various weaknesses against which it works on protecting, the BESSPIN scale is heavily inspired by the structure of CWSS. Nevertheless, to make it more intuitive and more relevant to SSITH, we designed our own metrics and rules.
+
+The scale is represented by a percentage, where 0\% means there is no protection against any SSITH CWEs, while an ideal SSITH processor is 100\%-SSITH on the BESSPIN scale. 
+
+\section{Formulation}
+
+To compute the BESSPIN scale, $\mathcal{B}$, for a given processor, we need the individual CWEs tests scores, which we group then into weakness categories. We use a structurally similar method to CWESS in combining these categories scores to obtain a separate score per vulnerability class, and the overall BESSPIN scale.
+
+The SSITH CWEs, $\mathcal{S}$, is the set of all CWEs in the SSITH program picked from the MITRE CWEs. $\mathcal{S}$ is divided into a set of vulnerability classes (see Section~\ref{sec:classes}). Each class, $\mathcal{V} \subset \mathcal{S}$, is also a set of CWEs. Each class is decomposed into some weakness categories or concepts. A category of weaknesses, $\mathcal{C} \subset \mathcal{V}$, is the set of CWEs whose description intersects with its definition; A CWE can belong to more than a single category. The class and SSITH CWEs can thus be written as:
+\begin{equation}
+    \begin{array}{c}
+        \mathcal{V} = \{ cwe : cwe \in \mathcal{C} \ \wedge \ \mathcal{C} \in \mathcal{V} \} \\
+        \mathcal{S} = \{ cwe : cwe \in \mathcal{V} \ \wedge \ \mathcal{V} \in \mathcal{S} \} 
+    \end{array}
+\end{equation}
+
+The BESSPIN security evaluation tool assigns each CWE a score value, $score_{cwe}$, from the {\scshape SCORES} enum object in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/cwesEvaluation/scoreTests.py}{scoreTests.py}. Any value conveying a failure of any kind would disqualify the computation of the scale. This leaves us with the following acceptable scores: {\scshape none}, {\scshape detected}, {\scshape low}, {\scshape med}, and {\scshape high}. As explained in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/docs/evaluateSecurityTestsMode.md}{the security evaluation document}, {\scshape high} means the weakness is critical and leads to the lowest score on the BESSPIN scale, and either {\scshape none} or {\scshape detected} denotes the best score. For the sake of the scale, the CWE score can thus be normalized as follows:
+\begin{equation}
+\begin{array}{rl}
+\mathbf{S}(cwe) = \\ 
+      0, &   score_{cwe} = \text{{\scshape high}} \\
+      0.33, & score_{cwe} = \text{{\scshape med}} \\
+      0.67, & score_{cwe} = \text{{\scshape low}} \\
+      1, &    score_{cwe} = \text{{\scshape none} or {\scshape detected}}
+\end{array}
+\end{equation}
+
+The score of a category of weaknesses is the arithmetic average of the scores of its CWEs:
+\begin{equation}
+    \mathbf{S}(\mathcal{C}) = \overline{\mathbf{S}(cwe)}, \ \ cwe \in \mathcal{C}
+\end{equation}
+
+The BESSPIN coefficient, $\beta(\mathcal{C})$, is a measure that reflects the importance of a category of CWEs, $\mathcal{C}$, and its relevance to the SSITH program. It is formalized as: 
+\begin{equation}
+    \beta(\mathcal{C}) = \mathbf{TI}(\mathcal{C}) 
+    \times \mathbf{AV}(\mathcal{C}) 
+    \times \mathbf{ENV}(\mathcal{C}) 
+    \times \mathbf{SSITH}(\mathcal{C})
+\end{equation}
+
+where each of the factors can take the values $0.33$, $0.67$, and $1$:
+\begin{itemize}
+    \item $\mathbf{TI}(\mathcal{C})$: As defined by CWSS, the technical impact (TI) is the potential result that can be produced by the weakness, assuming that the weakness can be successfully reached and exploited. This is also related to the possible acquired privilege (AP). It can take the values: $1$ for critical, $0.67$ for moderate, and $0.33$ for limited.
+    \item $\mathbf{AV}(\mathcal{C})$: The access vector (AV) identifies the channel through which an attacker must communicate to reach the functionality that contains the weakness. It can take the values: $1$ for user mode, network, or application, $0.67$ for supervisor mode, i.e. operating system, and $0.33$ for machine mode, i.e. hardware access.
+    \item $\mathbf{ENV}(\mathcal{C})$: The environmental metric group for the BESSPIN scale constitutes of two concepts: 1. Business impact, which is the potential impact to the business or mission if the weakness can be successfully exploited. 2. The likelihood of the weakness to be discovered and exploited. $\mathbf{ENV}(\mathcal{C})$ can take the same values as $\mathbf{TI}(\mathcal{C})$. To reduce the subjectivity of the evaluation, we limit each concept to two scores only; either $0.5$ for high or $0.17$ for low. The summation of the two scores will thus be limited to the same three values as all other factors.
+    \item $\mathbf{SSITH}(\mathcal{C})$: The SSITH factor is a measure of how relevant the weakness category $\mathcal{C}$ is to the SSITH program. It can take the values: $1$ for strongly relevant, $0.67$ for relevant, and $0.33$ for somewhat relevant. 
+\end{itemize} 
+
+We can thus compute the BESSPIN scale for a particular vulnerability class, $\mathbf{S}(\mathcal{V})$:
+\begin{equation}
+  \mathbf{S}(\mathcal{V}) =
+    100\% \times \frac{
+      \mathlarger{\mathlarger{\sum}}_{\mathcal{C}_{j} \in \mathcal{V}} \bigg( \beta(\mathcal{C}_{j}) \cdot \mathbf{S}(\mathcal{C}_{j}) \bigg)
+    }{
+      \mathlarger{\mathlarger{\sum}}_{\mathcal{C}_{j} \in \mathcal{V}} \beta(\mathcal{C}_{j})
+    }
+\end{equation}
+
+Similarly, we can compute the BESSPIN scale for a given processor:
+\begin{equation}
+\mathcal{B} =
+    100 \times \frac{
+      \mathlarger{\mathlarger{\sum}}_{\mathcal{V}_{i} \in \mathcal{S}} \ \mathlarger{\mathlarger{\sum}}_{\mathcal{C}_{j} \in \mathcal{V}_{i}} \bigg( \beta(\mathcal{C}_{j}) \cdot \mathbf{S}(\mathcal{C}_{j}) \bigg)
+    }{
+      \mathlarger{\mathlarger{\sum}}_{\mathcal{V}_{i} \in \mathcal{S}} \ \mathlarger{\mathlarger{\sum}}_{\mathcal{C}_{j} \in \mathcal{V}_{i}} \beta(\mathcal{C}_{j})
+    } \ \% \ \text{\textsc{SSITH}}
+\end{equation}
+
+\section{Vulnerability Classes and Categories}
+\label{sec:classes}
+
+\subsection{Buffer Errors}
+
+\subsection{Permission, Privileges, and Access Control}
+
+\subsection{Resource Management}
+
+\subsection{Information Leakage}
+Information leakage is the exposure of parties to information which they are not intended to see. Beyond leaking sensitive data, this can include revealing information that enables subsequent attacks. Information can be leaked by directly sending data to unauthorized parties, or through side or covert channels that indirectly allow parties to learn something about otherwise secret data. It is divided to the following weakness categories:
+\begin{enumerate}
+    \item \textbf{Information Exposure:} Data was \textit{intentionally} disclosed to actors, but the data contained information that should not have been made available to those actors.
+    \begin{itemize}
+        \item Covered by CWEs: 200, 201, and 202.
+    \end{itemize}
+    
+    \item \textbf{Observable Discrepancy:} The product behaves differently in a way that is observable to an unauthorized user.
+    \begin{itemize}
+        \item Covered by CWEs: 203, 205, and 206.
+    \end{itemize}
+    
+    \item \textbf{Improper Sanitization:} Resources were made accessible to unauthorized users, but those resources were previously containing sensitive information, which \textit{unintentionally} discloses them to those users.
+    \begin{itemize}
+        \item Covered by CWEs: 200, 212, 226, 244, and 524.
+    \end{itemize}
+\end{enumerate}   
+
+\subsection{Numeric Errors}
+
+\subsection{Hardware/SoC}
+
+\subsection{Injection}
+      
+\section{BESSPIN Coefficient Values}
+\href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/docs/BESSPIN-Coeffs.md}{The BESSPIN coefficients document} has the factors values used to compute the BESSPIN coefficients for each weakness category. They were evaluated by the BESSPIN team and DARPA. 
+
+\end{document}
