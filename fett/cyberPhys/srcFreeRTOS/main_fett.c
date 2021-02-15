@@ -376,7 +376,7 @@ static void prvSensorTask(void *pvParameters)
     brake_min = BRAKE_MIN;
     brake_max = BRAKE_MAX;
 
-    volatile int err_cnt = 0;
+    int err_cnt = 0;
 
     for (;;)
     {
