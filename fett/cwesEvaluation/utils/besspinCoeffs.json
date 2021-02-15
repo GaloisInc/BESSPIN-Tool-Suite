@@ -1,0 +1,63 @@
+{
+    "_info" : "This file has the weakness categories and their assigned BESSPIN coefficient factors weights.",
+    "_moreInfo" : "Please check ../../../docs/BESSPIN-Scale.pdf",
+    "_TI" : "The Technical Impact is the potential result that can be produced by the weakness, assuming that the weakness can be successfully reached and exploited. This is also related to the possible acquired privilege (AP).",
+    "_TI_values" : "critical, moderate, limited",
+    "_AV" : "The Access Vector identifies the channel through which an attacker must communicate to reach the functionality that contains the weakness.",
+    "_AV_values" : "user, supervisor, machine",
+    "_ENV" : "The environmental metric group",
+    "_ENV_BI" : "The Business Impact  is the potential impact to the business or mission if the weakness can be successfully exploited",
+    "_ENV_BI_values" : "high, low",
+    "_ENV_LDX" : "The Likelihood of the weakness to be Discovered and eXploited",
+    "_ENV_LDX_values" : "high, low",
+    "_SSITH" : "The SSITH factor is a measure of how relevant the weakness category C is to the SSITH program.",
+    "_SSITH_values" : "strongly, relevant, somewhat",
+
+    "bufferErrors" : {},
+    "PPAC" : {},
+    "resourceManagement" : {},
+    "informationLeakage" : {
+        "IE" : {
+            "name" : "Information Exposure",
+            "cwes" : ["200", "201", "202"],
+            "factors" : {
+                "TI" : "critical",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "high"
+                },
+                "SSITH" : "relevant"
+            }
+        },
+        "OD" : {
+            "name" : "Observable Discrepancy",
+            "cwes" : ["203", "205", "206"],
+            "factors" : {
+                "TI" : "moderate",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "low",
+                    "LDX" : "low"
+                },
+                "SSITH" : "somewhat"
+            }
+        },
+        "IS" : {
+            "name" : "Improper Sanitization",
+            "cwes" : ["200", "212", "226", "244", "524"],
+            "factors" : {
+                "TI" : "critical",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "high"
+                },
+                "SSITH" : "strongly"
+            }
+        }
+    },
+    "numericErrors" : {},
+    "hardwareSoC" : {},
+    "injection" : {}
+}
