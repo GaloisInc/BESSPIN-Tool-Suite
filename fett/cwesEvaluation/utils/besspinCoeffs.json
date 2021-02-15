@@ -155,7 +155,47 @@
         }
     },
 
-    "numericErrors" : {},
+    "numericErrors" : {
+        "RDE" : {
+            "name" : "Range/Domain Errors",
+            "cwes" : ["128", "190", "191", "369"],
+            "factors" : {
+                "TI" : "moderate",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "low",
+                    "LDX" : "high"
+                },
+                "SSITH" : "somewhat"
+            }
+        },
+        "TE" : {
+            "name" : "Type Errors",
+            "cwes" : ["192", "194", "195", "196", "197", "681"],
+            "factors" : {
+                "TI" : "moderate",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "low",
+                    "LDX" : "high"
+                },
+                "SSITH" : "relevant"
+            }
+        },
+        "VE" : {
+            "name" : "Value Errors",
+            "cwes" : ["234", "456", "457", "665", "824"],
+            "factors" : {
+                "TI" : "critical",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "high"
+                },
+                "SSITH" : "strongly"
+            }
+        }
+    },
 
     "hardwareSoC" : {},
 
