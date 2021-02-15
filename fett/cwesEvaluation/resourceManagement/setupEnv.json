@@ -22,9 +22,7 @@
                     "FreeRTOS" : 2
                 },
                 "test_416" : {
-                    "cweText" : "Use After Free",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
+                    "cweText" : "Use After Free"
                 },
                 "test_400" : {
                     "cweText" : "Uncontrolled Resource Consumption"
@@ -130,14 +128,10 @@
                     "cweText" : "Allocation of Resources Without Limits or Throttling"
                 },
                 "test_771" : {
-                    "cweText" : "Missing Reference to Active Allocated Resource",
-                    "unix" : 1,
-                    "FreeRTOS" : 5
+                    "cweText" : "Missing Reference to Active Allocated Resource"
                 },
                 "test_772" : {
-                    "cweText" : "Missing Release of Resource after Effective Lifetime",
-                    "unix" : "method",
-                    "FreeRTOS" : 2
+                    "cweText" : "Missing Release of Resource after Effective Lifetime"
                 },
                 "test_789" : {
                     "cweText" : "Uncontrolled Memory Allocation"
