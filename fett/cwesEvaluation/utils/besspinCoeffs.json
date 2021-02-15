@@ -13,7 +13,34 @@
     "_SSITH" : "The SSITH factor is a measure of how relevant the weakness category C is to the SSITH program.",
     "_SSITH_values" : "strongly, relevant, somewhat",
 
-    "bufferErrors" : {},
+    "bufferErrors" : {
+        "BE" : {
+            "name" : "Boundary Error",
+            "cwes" : ["118", "119", "120", "121", "122", "123", "124", "125", "126", "127", "786", "787", "788", "805", "806", "823"],
+            "factors" : {
+                "TI" : "critical",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "high"
+                },
+                "SSITH" : "strongly"
+            }
+        },
+        "ISH" : {
+            "name" : "Improper Size Handling",
+            "cwes" : ["120", "123", "124", "125", "126", "127", "129", "130", "131", "680", "785", "786", "787", "788", "805", "806", "823"],
+            "factors" : {
+                "TI" : "critical",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "high"
+                },
+                "SSITH" : "strongly"
+            }
+        }
+    },
     "PPAC" : {},
     "resourceManagement" : {},
     "informationLeakage" : {
