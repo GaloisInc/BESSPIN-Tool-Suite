@@ -49,28 +49,13 @@ def checkValidScores ():
     
     #error Count:
     errCount = 0
-    baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
+    osImage = getSetting('osImage')
     for vulClass in getSetting("vulClasses"):
-        csvScoresFile = os.path.join(baseLogDir, vulClass, 'scores.csv')
-
-        #check for the scores.csv file
-        if (not os.path.isfile(csvScoresFile)):
-            warnAndLog(f"No scores found for <{vulClass}>.")
-            continue
-
-        #Read the scores
-        for line in ftReadLines(csvScoresFile):
-            if (len(line)==0):
-                continue
-            items = line.split(',')
-            if (len(items) < 4):
-                logAndExit (f"Unexpected line <{line}> in <{csvScoresFile}>.",exitCode=EXIT.Dev_Bug)
-            try:
-                scoreVal = int(items[2])
-            except Exception as exc:
-                logAndExit (f"Non-integer value <{items[2]}> in <{csvScoresFile}>.",exitCode=EXIT.Dev_Bug,exc=exc)
-            if (scoreVal not in cwesExceptions[items[0]].getLegitValues(getSetting('osImage'))):
-                errorAndLog (f"checkValidScores: Unaccepted score in <{vulClass}>: (cwe-{items[0]}:{items[1]})")
+        vScoresDict = getSettingDict("cweScores",vulClass)
+        for cwe,score in vScoresDict.items():
+            scoreVal = score.value
+            if (score.value not in cwesExceptions[cwe].getLegitValues(osImage)):
+                errorAndLog (f"checkValidScores: Unaccepted score in <{vulClass}>: (CWE-{cwe}:{score})")
                 errCount += 1
                 
     if (errCount > 0):
