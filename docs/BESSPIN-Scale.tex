@@ -50,15 +50,15 @@
 
 \section{Introduction}
 
-The BESSPIN scale is the security figure of merit that is used to evaluate the SSITH hardware. As any security metric, it is more subjective than empirical, but more structured than qualitative. Since the SSITH program fundamentally relies on the MITRE CWEs enumeration to determine the various weaknesses against which it works on protecting, the BESSPIN scale is heavily inspired by the structure of CWSS. Nevertheless, to make it more intuitive and more relevant to SSITH, we designed our own metrics and rules.
+The BESSPIN scale is the security figure of merit that is used to evaluate the SSITH hardware. As any security metric, it is more subjective than empirical, but more structured than qualitative. Since the SSITH program fundamentally relies on the MITRE CWEs enumeration to determine the various weaknesses against which it works on protecting, the BESSPIN scale is inspired by the structure of CWSS. Nevertheless, to make it more intuitive and more relevant to SSITH, we designed our own metrics and rules.
 
 The scale is represented by a percentage, where 0\% means there is no protection against any SSITH CWEs, while an ideal SSITH processor is 100\%-SSITH on the BESSPIN scale. 
 
 \section{Formulation}
 
-To compute the BESSPIN scale, $\mathcal{B}$, for a given processor, we need the individual CWEs tests scores, which we group then into weakness categories. We use a structurally similar method to CWESS in combining these categories scores to obtain a separate score per vulnerability class, and the overall BESSPIN scale.
+To compute the BESSPIN scale, $\mathcal{B}$, for a given processor, we need the individual CWEs tests scores, which we group then into weakness categories. We use a structurally similar method to CWSS in combining these categories scores to obtain a separate score per vulnerability class, and the overall BESSPIN scale.
 
-The SSITH CWEs, $\mathcal{S}$, is the set of all CWEs in the SSITH program picked from the MITRE CWEs. $\mathcal{S}$ is divided into a set of vulnerability classes (see Section~\ref{sec:classes}). Each class, $\mathcal{V} \subset \mathcal{S}$, is also a set of CWEs. Each class is decomposed into some weakness categories or concepts. A category of weaknesses, $\mathcal{C} \subset \mathcal{V}$, is the set of CWEs whose description intersects with its definition; A CWE can belong to more than a single category. The class and SSITH CWEs can thus be written as:
+The SSITH CWEs, $\mathcal{S}$, is the set of all CWEs in the SSITH program picked from the MITRE CWEs. $\mathcal{S}$ is divided into a set of vulnerability classes (see Section~\ref{sec:classes}). Each class, $\mathcal{V} \subset \mathcal{S}$, is also a set of CWEs. Each class is decomposed into some weakness categories or concepts. A category of weaknesses, $\mathcal{C} \subset \mathcal{V}$, is the set of CWEs whose descriptions intersect with its definition; A CWE can belong to more than a single category. The class and SSITH CWEs can thus be written as:
 \begin{equation}
     \begin{array}{c}
         \mathcal{V} = \{ cwe : cwe \in \mathcal{C} \ \wedge \ \mathcal{C} \in \mathcal{V} \} \\
@@ -94,7 +94,13 @@ where each of the factors can take the values $0.33$, $0.67$, and $1$:
 \begin{itemize}
     \item $\mathbf{TI}(\mathcal{C})$: As defined by CWSS, the technical impact (TI) is the potential result that can be produced by the weakness, assuming that the weakness can be successfully reached and exploited. This is also related to the possible acquired privilege (AP). It can take the values: $1$ for critical, $0.67$ for moderate, and $0.33$ for limited.
     \item $\mathbf{AV}(\mathcal{C})$: The access vector (AV) identifies the channel through which an attacker must communicate to reach the functionality that contains the weakness. It can take the values: $1$ for user mode, network, or application, $0.67$ for supervisor mode, i.e. operating system, and $0.33$ for machine mode, i.e. hardware access.
-    \item $\mathbf{ENV}(\mathcal{C})$: The environmental metric group for the BESSPIN scale constitutes of two concepts: 1. Business impact, which is the potential impact to the business or mission if the weakness can be successfully exploited. 2. The likelihood of the weakness to be discovered and exploited. $\mathbf{ENV}(\mathcal{C})$ can take the same values as $\mathbf{TI}(\mathcal{C})$. To reduce the subjectivity of the evaluation, we limit each concept to two scores only; either $0.5$ for high or $0.17$ for low. The summation of the two scores will thus be limited to the same three values as all other factors.
+    \item $\mathbf{ENV}(\mathcal{C})$: The environmental metric group for the BESSPIN scale constitutes of two concepts:
+    \begin{equation}
+        \mathbf{ENV}(\mathcal{C}) = \mathbf{BI}(\mathcal{C}) + \mathbf{LDX}(\mathcal{C})
+    \end{equation}
+    1. The Business Impact (BI) is the potential impact to the business or mission if the weakness can be successfully exploited. 2. The Likelihood of the weakness to be Discovered and eXploited (LDX). 
+    
+    To reduce the subjectivity of the evaluation, we limit each of these concepts to two scores only; either $0.5$ for high or $0.17$ for low. The summation of the two scores will thus be limited to the same three values as all other factors.
     \item $\mathbf{SSITH}(\mathcal{C})$: The SSITH factor is a measure of how relevant the weakness category $\mathcal{C}$ is to the SSITH program. It can take the values: $1$ for strongly relevant, $0.67$ for relevant, and $0.33$ for somewhat relevant. 
 \end{itemize} 
 
@@ -111,21 +117,62 @@ We can thus compute the BESSPIN scale for a particular vulnerability class, $\ma
 Similarly, we can compute the BESSPIN scale for a given processor:
 \begin{equation}
 \mathcal{B} =
-    100 \times \frac{
+    100\% \times \frac{
       \mathlarger{\mathlarger{\sum}}_{\mathcal{V}_{i} \in \mathcal{S}} \ \mathlarger{\mathlarger{\sum}}_{\mathcal{C}_{j} \in \mathcal{V}_{i}} \bigg( \beta(\mathcal{C}_{j}) \cdot \mathbf{S}(\mathcal{C}_{j}) \bigg)
     }{
       \mathlarger{\mathlarger{\sum}}_{\mathcal{V}_{i} \in \mathcal{S}} \ \mathlarger{\mathlarger{\sum}}_{\mathcal{C}_{j} \in \mathcal{V}_{i}} \beta(\mathcal{C}_{j})
-    } \ \% \ \text{\textsc{SSITH}}
+    } 
 \end{equation}
 
 \section{Vulnerability Classes and Categories}
 \label{sec:classes}
 
 \subsection{Buffer Errors}
+Buffer Errors allow inappropriate read and/or write access to locations within memory associated with variables, data structures, or internal program data. Inappropriate access to memory is exploited to subvert the normal hardware operations creating security vulnerability in the hardware.
+\begin{enumerate}
+    \item \textbf{Boundary Error:} The software accesses through an array a memory location that is outside the boundaries of that array.
+    \begin{itemize}
+        \item Covered by CWEs: 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 786, 787, 788, 805, 806, and 823.
+    \end{itemize}
+    
+    \item \textbf{Improper Size Handling:} The software either miscalculates the size of a memory buffer or offset, or blindly trusts a provided size or offset. This might lead to a buffer overflow.
+    \begin{itemize}
+        \item Covered by CWEs: 120, 123, 124, 125, 126, 127, 129, 130, 131, 680, 785, 786, 787, 788, 805, 806, and 823.
+    \end{itemize}
+\end{enumerate}
 
-\subsection{Permission, Privileges, and Access Control}
+\subsection{Permission, Privileges, and Access Control (PPAC)}
+PPAC weaknesses allow the execution of unauthorized operations in a system. A privilege vulnerability can allow inappropriate access to system privileges. A permission vulnerability can allow inappropriate permission to perform functions. An access vulnerability can allow inappropriate control of the authorizing policies for the hardware.
+\begin{enumerate}
+    \item \textbf{Authorization:} Access authorization to privileged resource access and authentication to grant such authorization.
+    \begin{itemize}
+        \item Covered by CWEs: PPAC-1, PPAC-2.
+    \end{itemize}
+    
+    \item \textbf{Accountability:} Tracking of activities that were performed.
+    \begin{itemize}
+        \item Covered by CWEs: PPAC-3.
+    \end{itemize}
+\end{enumerate}
 
 \subsection{Resource Management}
+Resource management weaknesses allow improper use of the hardware resources that, in turn, allow external takeover of hardware resources. This includes improper access to hardware resources such as memory, CPU, and communication and/or preventing valid users from gaining access to these resources.
+\begin{enumerate}
+    \item \textbf{Memory/Data Layout:} The software makes invalid assumptions about how protocol data or memory is organized at a lower level, resulting in unintended program behavior.
+    \begin{itemize}
+        \item Covered by CWEs: 188, 463, 467, 562, 587, 588, 590, 762, and 763.
+    \end{itemize}
+    
+    \item \textbf{Resource Control:} The software does not properly control the allocation, initialization, maintenance, sanitizing, and release of a resource.
+    \begin{itemize}
+        \item Covered by CWEs: 400, 404, 415, 416, 672, 770, 771, 772, 789, 908, 909, and 911.
+    \end{itemize}
+    
+    \item \textbf{Pointers misuse:} Software produces a faulty value or behavior as a result of pointer misuse. 
+    \begin{itemize}
+        \item Covered by CWEs: 415, 416, 468, 476, 588, 690, 761, and 825. 
+    \end{itemize}
+\end{enumerate}    
 
 \subsection{Information Leakage}
 Information leakage is the exposure of parties to information which they are not intended to see. Beyond leaking sensitive data, this can include revealing information that enables subsequent attacks. Information can be leaked by directly sending data to unauthorized parties, or through side or covert channels that indirectly allow parties to learn something about otherwise secret data. It is divided to the following weakness categories:
@@ -147,12 +194,63 @@ Information leakage is the exposure of parties to information which they are not
 \end{enumerate}   
 
 \subsection{Numeric Errors}
+Numeric Errors allow exploitation of improper calculation or conversion of numbers and numeric types. Improper/incorrect calculations can allow subversion of security critical operational decisions and/or resource management.
+\begin{enumerate}
+    \item \textbf{Range/Domain Errors:} The software produces a faulty result due to range or domain violations.
+    \begin{itemize}
+        \item Covered by CWEs: 128, 190, 191, and 369.
+    \end{itemize}
+    
+    \item \textbf{Type Errors:} The software produces a faulty result due to conversions between data types.
+    \begin{itemize}
+        \item Covered by CWEs:  192, 194, 195, 196, 197, and 681.
+    \end{itemize}
+    
+    \item \textbf{Value Errors:} The software used an incorrect value because a resource was not properly initialized, or function was called with incorrect arguments. 
+    \begin{itemize}
+        \item Covered by CWEs: 234, 456, 457, 665, and 824.
+    \end{itemize}
+\end{enumerate} 
 
 \subsection{Hardware/SoC}
+\begin{enumerate}
+    \item \textbf{Improper Hardware Design:} Mistakes in hardware design leading to faults, disclosing sensitive information, or leading to complete system breaches. 
+    \begin{itemize}
+        \item Covered by CWEs: 1037, 1209, 1221, 1224, 1231, 1233, 1234, 1239, 1242, 1243, 1245, 1246, 1251, 1253, 1256, 1257, 1259, 1260, 1261, 1264, 1270, 1271, 1274, 1276, 1277, 1280, 1281, 1282, and 1283.
+    \end{itemize}
+    
+    \item \textbf{Mishandling Permissions and Boundaries:} The SoC does not handle permissions and boundaries in a proper way which may lead to disclosing sensitive information, or privilege escalation.
+    \begin{itemize}
+        \item Covered by CWEs: 1189, 1193, 1220, 1223, 1234, 1251, 1252, 1257, 1259, 1260, 1262, 1268, 1273, 1274, 1276, 1280, 1282, and 1283. 
+    \end{itemize}
+    
+    \item \textbf{Vulnerable Transitions:} During power or state transition, some assumptions made by the SoC design might not hold, which could be exploited to access sensitive data or alter the SoC operation.  
+    \begin{itemize}
+        \item Covered by CWEs: 1193, 1221, 1223, 1232, 1239, 1243, 1264, 1271, 1272, and 1280. 
+    \end{itemize}
+    
+    \item \textbf{DoS and Side Channels:} This category is focused on the weaknesses that lead to resources exhaustion leading to DoS, or discrepancies that might be exploited by a side channel attack. 
+    \begin{itemize}
+        \item Covered by CWEs: 208, 385, 920, 1050, 1246, and 1254. 
+    \end{itemize}
+    
+    \item \textbf{Crypto and Security Elements:} Improper design of cryptography systems or making the wrong security assumptions is often deterimental to the security. This category also concerns with the design and operation of any security elements in the SoC, such as secure boot.
+    \begin{itemize}
+        \item Covered by CWEs: 1037, 1231, 1233, 1240, 1241, 1243, 1259, 1262, 1270, 1273, 1277, 1279, 1282, and 1283. 
+    \end{itemize}
+\end{enumerate} 
 
 \subsection{Injection}
-      
+The injection class represents architectural weaknesses that allow information from a less trusted domain to replace information in a more trusted domain in violation of an explicit or implied policy. Use of the injected information in the context of the more trusted domain could be detrimental to system operation or security.
+\begin{enumerate}
+    \item \textbf{Trust Untrusted Data:} Untrusted data is accessed as trusted data.
+    \begin{itemize}
+        \item Covered by CWEs: INJ-1, INJ-2, and INJ-3.
+    \end{itemize}
+\end{enumerate} 
+
+
 \section{BESSPIN Coefficient Values}
-\href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/docs/BESSPIN-Coeffs.md}{The BESSPIN coefficients document} has the factors values used to compute the BESSPIN coefficients for each weakness category. They were evaluated by the BESSPIN team and DARPA. 
+\href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/docs/BESSPIN-Coeffs.md}{The BESSPIN coefficients document} has the factors values used to compute the BESSPIN coefficients for each weakness category. They were evaluated by the BESSPIN team and DARPA.
 
 \end{document}
