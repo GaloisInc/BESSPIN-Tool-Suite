@@ -92,6 +92,11 @@ int main_loop(void) {
             
             case CAN_ID_BUTTON_PRESSED:
                 handle_button_press(frame);
+                break;
+
+            case CAN_ID_HEARTBEAT_REQ:
+                broadcast_heartbeat_ack(frame);
+                break;
         }
 
         // broadcast the new state; we always broadcast the current music state
@@ -123,6 +128,7 @@ bool is_relevant(canid_t can_id) {
         case CAN_ID_CAR_Y:
         case CAN_ID_CAR_Z:
         case CAN_ID_CAR_R:
+        case CAN_ID_HEARTBEAT_REQ:
             result = true;
     }
 
@@ -275,6 +281,23 @@ void broadcast_position(canid_t can_id) {
 
     debug("broadcasting new %c position: %f\n", dimension, *position);
     broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
+}
+
+void broadcast_heartbeat_ack(can_frame *frame) {
+    assert(frame->can_id == CAN_ID_HEARTBEAT_REQ);
+
+    can_frame ack = { .can_id = CAN_ID_HEARTBEAT_ACK, 
+                      .can_dlc = BYTE_LENGTH_HEARTBEAT_ACK };
+
+    // just copy the data, which must be in the right byte order already,
+    // from the heartbeat request
+    memcpy(&ack.data[0], &frame->data[0], sizeof(uint32_t));
+
+    // but we still need the right byte order to output debug info
+    uint32_t *heartbeat_id = (uint32_t *) &ack.data[0];
+    debug("broadcasting response to heartbeat request %ju\n", 
+          (uintmax_t) ntohl(*heartbeat_id));
+    broadcast_frame(RECEIVE_PORT, SEND_PORT, &ack);
 }
 
 void stop(void) {

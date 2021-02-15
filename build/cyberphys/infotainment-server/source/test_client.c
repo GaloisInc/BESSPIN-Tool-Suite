@@ -49,6 +49,12 @@ int main_loop(void) {
     // zero out the buffer
     memset(&message, 0, MESSAGE_BUFFER_SIZE);
 
+    // send a heartbeat
+    send_heartbeat_req(1);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              1);
+
     // send enough frames to initialize the infotainment system to a known state;
     // we expect one response for each frame we send, including the position 
     // setting (which we expect to always be a change from the initial position
@@ -79,6 +85,12 @@ int main_loop(void) {
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_R, 1.0f);
+
+    // send a heartbeat
+    send_heartbeat_req(16);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              16);
 
     for (int i = 0; i < MAX_VOLUME + 2; i++) {
         // lower the volume to 0 no matter what it started at; this also tests
@@ -116,6 +128,12 @@ int main_loop(void) {
     }
     assert_music_state(frame, 1, 1, MAX_VOLUME);
 
+    // send a heartbeat
+    send_heartbeat_req(256);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              256);
+
     // test station 2 (station 1 was already tested)
     send_button_press(BUTTON_STATION_2);
     frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
@@ -142,6 +160,12 @@ int main_loop(void) {
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_Z, 1.1f);
 
+    // send a heartbeat
+    send_heartbeat_req(65536);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              65536);
+
     // send position updates back to 0.0 for all coordinates so we can run
     // the tests again without restarting the server
     send_coordinate(CAN_ID_CAR_X, 0.0f);
@@ -167,6 +191,12 @@ int main_loop(void) {
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_R, 0.0f);
+
+    // send a heartbeat
+    send_heartbeat_req(2147483648);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              2147483648);
 
     debug("\n\nTESTS SUCCESSFUL\n");
     return 0;
@@ -229,6 +259,22 @@ void print_music_state_frame(can_frame *frame) {
           station(frame->data[0]), volume(frame->data[0]));
 }
 
+void print_heartbeat_ack_frame(can_frame *frame, uint32_t expected_number) {
+    // make sure the frame is an appropriate type
+    assert(frame->can_id == CAN_ID_HEARTBEAT_ACK);
+
+    uint32_t *number = (uint32_t *) &frame->data[0];
+    uint32_t reordered_number = ntohl(*number);
+
+    if (expected_number == reordered_number) {
+        debug("heartbeat ack CAN frame received with expected number %ju\n", 
+              (uintmax_t) reordered_number);
+    } else {
+        error("heartbeat ack CAN frame received with unexpected number %ju\n",
+              (uintmax_t) reordered_number);
+    }
+}
+
 void send_button_press(uint8_t button) {
     can_frame frame = { .can_id = CAN_ID_BUTTON_PRESSED, 
                         .can_dlc = BYTE_LENGTH_BUTTON_PRESSED };
@@ -249,6 +295,18 @@ void send_coordinate(canid_t dimension_id, float coordinate) {
     
     debug("broadcasting %c-coordinate update (%f)\n", 
           char_for_dimension(dimension_id), coordinate);
+    broadcast_frame(SEND_PORT, RECEIVE_PORT, &frame);
+}
+
+void send_heartbeat_req(uint32_t number) {
+    can_frame frame = { .can_id = CAN_ID_HEARTBEAT_REQ,
+                        .can_dlc = BYTE_LENGTH_HEARTBEAT_REQ };
+
+    // copy in the number in the correct byte order
+    uint32_t *number_in_frame = (uint32_t *) &frame.data[0];
+    *number_in_frame = htonl(number);
+
+    debug("broadcasting heartbeat request number %ju\n", (uintmax_t) number);
     broadcast_frame(SEND_PORT, RECEIVE_PORT, &frame);
 }
 
