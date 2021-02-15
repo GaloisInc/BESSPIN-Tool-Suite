@@ -41,8 +41,38 @@
             }
         }
     },
-    "PPAC" : {},
+
+    "PPAC" : {
+        "AUT" : {
+            "name" : "Authorization",
+            "cwes" : ["PPAC_1", "PPAC_2"],
+            "factors" : {
+                "TI" : "critical",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "low"
+                },
+                "SSITH" : "somewhat"
+            }
+        },
+        "ACC" : {
+            "name" : "Accountability",
+            "cwes" : ["PPAC_3"],
+            "factors" : {
+                "TI" : "limited",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "low",
+                    "LDX" : "low"
+                },
+                "SSITH" : "somewhat"
+            }
+        }
+    },
+
     "resourceManagement" : {},
+
     "informationLeakage" : {
         "IE" : {
             "name" : "Information Exposure",
@@ -84,7 +114,10 @@
             }
         }
     },
+
     "numericErrors" : {},
+
     "hardwareSoC" : {},
+
     "injection" : {}
 }
