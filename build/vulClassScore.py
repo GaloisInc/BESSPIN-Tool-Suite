@@ -14,6 +14,7 @@ def main(xArgs):
     from fett.base.config import loadConfiguration
     from fett.cwesEvaluation.scoreTests import scoreTests
     from fett.cwesEvaluation.utils.checkValidScores import checkValidScores
+    from fett.cwesEvaluation.utils.computeBesspinScale import computeBesspinScale
 
     logFile = os.path.join(workDir,'vulClassScore.log')
     try:
@@ -56,6 +57,7 @@ def main(xArgs):
     else:
         scoreTests (xArgs.vulClass, os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass))
     checkValidScores()
+    computeBesspinScale()
 
 if __name__ == '__main__':
     # Reading the bash arguments

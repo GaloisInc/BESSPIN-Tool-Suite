@@ -15,6 +15,7 @@ from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
 from fett.cwesEvaluation.common import runTests
 from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
 from fett.cwesEvaluation.utils.checkValidScores import checkValidScores
+from fett.cwesEvaluation.utils.computeBesspinScale import computeBesspinScale
 from fett.cyberPhys.build import buildCyberPhys
 from fett.cyberPhys.run import runCyberPhys
 import fett.cyberPhys.launch
@@ -268,6 +269,7 @@ def endFett (xTarget,isDeadProcess=False):
         printAndLog(f"Artifacts tarball uploaded to S3.")
     elif (isEqSetting('mode', 'evaluateSecurityTests')):
         checkValidScores()
+        computeBesspinScale()
 
 """ This resets the target without changing the .img + without deployment tests """
 @decorate.debugWrap
