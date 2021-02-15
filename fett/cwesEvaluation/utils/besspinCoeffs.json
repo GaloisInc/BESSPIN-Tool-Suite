@@ -199,5 +199,19 @@
 
     "hardwareSoC" : {},
 
-    "injection" : {}
+    "injection" : {
+        "UD" : {
+            "name" : "Trust Untrusted Data",
+            "cwes" : ["INJ_1", "INJ_2", "INJ_3"],
+            "factors" : {
+                "TI" : "critical",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "high"
+                },
+                "SSITH" : "strongly"
+            }
+        }
+    }
 }
