@@ -431,6 +431,10 @@ class commonTarget():
             if (self.osImage=='FreeBSD'):
                 self.runCommand("service motd restart")
 
+        # Disable rsyslogd
+        if ((self.osImage=='debian') and isEqSetting('mode','cyberphys')):
+            self.runCommand("service rsyslog stop")
+
         printAndLog (f"{self.targetIdInfo}start: {self.osImage} booted successfully!")
         return
 
