@@ -71,7 +71,47 @@
         }
     },
 
-    "resourceManagement" : {},
+    "resourceManagement" : {
+        "MDL" : {
+            "name" : "Memory/Data Layout",
+            "cwes" : ["188", "463", "467", "562", "587", "588", "590", "762", "763"],
+            "factors" : {
+                "TI" : "moderate",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "low"
+                },
+                "SSITH" : "relevant"
+            }
+        },
+        "RC" : {
+            "name" : "Resource Control",
+            "cwes" : ["400", "404", "415", "416", "672", "770", "771", "772", "789", "908", "909", "911"],
+            "factors" : {
+                "TI" : "moderate",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "low"
+                },
+                "SSITH" : "relevant"
+            }
+        },
+        "PM" : {
+            "name" : "Pointers misuse",
+            "cwes" : ["415", "416", "468", "476", "588", "690", "761", "825"],
+            "factors" : {
+                "TI" : "critical",
+                "AV" : "user",
+                "ENV" : {
+                    "BI" : "high",
+                    "LDX" : "high"
+                },
+                "SSITH" : "strongly"
+            }
+        },
+    },
 
     "informationLeakage" : {
         "IE" : {
