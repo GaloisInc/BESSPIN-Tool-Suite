@@ -71,7 +71,7 @@ void main_fett(void);
 void prvMainTask (void *pvParameters);
 void startNetwork(void);
 char *getCurrTime(void);
-uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len);
+uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len, canid_t *can_id, uint8_t *msg_buf);
 int16_t min(int16_t a, int16_t b);
 int16_t max(int16_t a, int16_t b);
 
@@ -340,11 +340,9 @@ static void prvSensorTask(void *pvParameters)
     (void)pvParameters;
 
     int returnval;
-    uint32_t ulIPAddress;
     Socket_t xClientSocket;
     struct freertos_sockaddr xDestinationAddress;
 
-    FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     // Broadcast address
     xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
     xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_TX_PORT);
@@ -518,6 +516,17 @@ static void prvCanRxTask(void *pvParameters)
     struct freertos_sockaddr xBindAddress;
     struct freertos_sockaddr xClient;
     size_t msg_len;
+    canid_t can_id;
+    uint32_t request_id;
+
+    /* Socket for responding to requests */
+    Socket_t xClientSocket;
+    struct freertos_sockaddr xDestinationAddress;
+    xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
+    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_TX_PORT);
+    xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
+    configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
+    /*  End of the socket for respondnig to requests */
 
     FreeRTOS_printf(("%s Starting prvCanRxTask\r\n", getCurrTime()));
 
@@ -542,12 +551,27 @@ static void prvCanRxTask(void *pvParameters)
 
     for (;;)
     {
-        uint8_t res = process_j1939(xListeningSocket, &xClient, &msg_len);
+        uint8_t res = process_j1939(xListeningSocket, &xClient, &msg_len, &can_id, (uint8_t*)&request_id);
         if (res == SUCCESS)
         {
             FreeRTOS_inet_ntoa(xClient.sin_addr, cBuffer);
-            FreeRTOS_printf(("%s (prvCanRxTask) recv_can_message %lu bytes from %s:%u\r\n",
-                             getCurrTime(), msg_len, cBuffer, FreeRTOS_ntohs(xClient.sin_port)));
+            FreeRTOS_printf(("%s (prvCanRxTask) recv_can_message ID: %#X, %lu bytes, from %s:%u\r\n",
+                            getCurrTime(), can_id, msg_len, cBuffer, FreeRTOS_ntohs(xClient.sin_port)));
+            switch (can_id)
+            {
+                case CAN_ID_HEARTBEAT_REQ:
+                    // received data are in network endian, simply copy over as we do not need to process them
+                    FreeRTOS_printf(("%s (prvCanRxTask) Replying to heartbeat #%u\r\n", getCurrTime(), FreeRTOS_ntohl(request_id)));
+                    res = send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_HEARTBEAT_ACK,
+                        (void *)&request_id, BYTE_LENGTH_HEARTBEAT_ACK);
+                    if ( res != SUCCESS)
+                    {
+                        FreeRTOS_printf(("%s (prvCanRxTask) Replying to heartbeat failed with %u\r\n", getCurrTime(), res));
+                    }
+                    break;
+            default:
+                break;
+            }
         }
         else
         {
@@ -556,17 +580,22 @@ static void prvCanRxTask(void *pvParameters)
     }
 }
 
-uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len)
+uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len, canid_t *can_id, uint8_t *msg_buf)
 {
     char msg[64];
 
     /* Receive a message that can overflow the msg buffer */
-    // TODO: make sure it can receive CAN ID as well as the message contents
-    uint8_t res = recv_can_message(xListeningSocket, xClient, msg, msg_len);
-    if (res == SUCCESS)
-    {
-        /* Copy message over to a persistent buffer */
-        memcpy(j1939_rx_buf, msg, *msg_len);
+    uint8_t res = recv_can_message(xListeningSocket, xClient, can_id, msg, msg_len);
+    if (res == SUCCESS) {
+        /* Check CAN ID */
+        if (*can_id == PGN_BAM)
+        {
+            /* Copy message over to a persistent buffer */
+            memcpy(j1939_rx_buf, msg, *msg_len);
+        } else {
+            /* All other messages are pass-through */
+            memcpy(msg_buf, msg, min(sizeof(uint32_t), *msg_len));
+        }
     }
     return res;
 }

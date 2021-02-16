@@ -28,7 +28,8 @@ typedef enum {
   INVALID_LEN = 4,
   INVALID_ID = 5,
   ERR_RECV = 6,
-  EMPTY_RECV = 7
+  EMPTY_RECV = 7,
+  ERR_SEND = 8
 } j1939_status;
 
 /**
@@ -90,11 +91,12 @@ void *bam_can_frames_to_data(can_frame *packets);
 /**
  * send message over socket as can frames, using J1939 BAM if message length is
  * greater than 8 bytes
+ * @param pgn_or_id - if message_len <= 8 it is interpreted as CAN_ID, otherwise as PGN
  * @returns error code
  */
 uint8_t send_can_message(cyberphys_socket_t socket,
                          cyberphys_sockaddr_t *dstaddr,
-                         uint32_t pgn,
+                         uint32_t pgn_or_id,
                          void *message,
                          size_t message_len);
 
@@ -104,6 +106,7 @@ uint8_t send_can_message(cyberphys_socket_t socket,
   */
 uint8_t recv_can_message(cyberphys_socket_t socket,
                          cyberphys_sockaddr_t *srcaddr,
+                         canid_t *can_id,
                          void *rmessage,
                          size_t *rmessage_len);
 
