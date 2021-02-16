@@ -33,7 +33,15 @@ class qemuTarget (commonTarget):
                 qemuCommand = getSetting('pathToCustomQemu')
             else:
                 qemuCommand = f"qemu-system-riscv64"
-            qemuCommand += f" -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)}"
+            bios = None
+            if (getSetting('osImageExtraElf',targetId=self.targetId)):
+                kernel = getSetting('osImageExtraElf',targetId=self.targetId)
+                bios = getSetting('osImageElf',targetId=self.targetId)
+            else:
+                kernel=getSetting('osImageElf',targetId=self.targetId)
+            qemuCommand += f" -nographic -machine virt -m 4G -kernel {kernel}"
+            if (bios):
+                qemuCommand += f" -bios {bios}"
             if (isEqSetting('binarySource', 'SRI-Cambridge')):
                 imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'common', f"disk-image-cheri{getSetting('SRI-Cambridge-imageVariantSuffix')}.img.zst")
                 imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
