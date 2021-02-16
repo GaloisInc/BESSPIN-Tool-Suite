@@ -29,8 +29,11 @@ class qemuTarget (commonTarget):
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
         timeout = self.parseBootTimeoutDict (timeoutDict)
         if (self.osImage in ['debian', 'FreeBSD']):
-
-            qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)}"
+            if (isEnabled('useCustomQemu')):
+                qemuCommand = getSetting('pathToCustomQemu')
+            else:
+                qemuCommand = f"qemu-system-riscv64"
+            qemuCommand += f" -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)}"
             qemuCommand += f" -device virtio-net-device,netdev=usernet"
             qemuCommand += f" -netdev tap,id=usernet,ifname={getSetting('tapAdaptor',targetId=self.targetId)},script=no,downscript=no"
             if (self.osImage=='debian'):
