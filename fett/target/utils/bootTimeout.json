@@ -59,7 +59,7 @@
         "else": { "timeout" : { "boot" : 540 } }
       }
     },
-    "qemu": { "timeout" : { "boot" : 120 } },
+    "qemu": { "timeout" : { "boot" : 360 } },
     "awsf1": {
       "name": "sourceVariant",
       "temporal": { "timeout" : { "boot" : 1000 } },
