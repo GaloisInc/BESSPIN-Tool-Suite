@@ -78,10 +78,6 @@ def startFett (targetId=None):
 
     # Check settings for evaluateSecurityTests on qemu
     if (isEqSetting('mode', 'evaluateSecurityTests') and (target=='qemu')):
-        if isEnabled('useCustomScoring'):
-            warnAndLog("Cannot use <useCustomScoring> with "
-                       f"<{target}>.  Ignoring setting.")
-            setSetting('useCustomScoring', False)
         if ((osImage=='FreeRTOS') and
             not isEqSetting('cross-compiler', 'GCC')):
             warnAndLog("<cross-compiler> setting "
