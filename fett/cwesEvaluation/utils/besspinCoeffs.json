@@ -110,7 +110,7 @@
                 },
                 "SSITH" : "strongly"
             }
-        },
+        }
     },
 
     "informationLeakage" : {
