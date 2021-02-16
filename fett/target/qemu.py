@@ -33,7 +33,15 @@ class qemuTarget (commonTarget):
         else:
             qemuCommand = f"qemu-system-riscv{self.xlen}"
         if (self.osImage in ['debian', 'FreeBSD']):
-            qemuCommand += f" -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)}"
+            bios = None
+            if (getSetting('osImageExtraElf',targetId=self.targetId)):
+                kernel = getSetting('osImageExtraElf',targetId=self.targetId)
+                bios = getSetting('osImageElf',targetId=self.targetId)
+            else:
+                kernel = getSetting('osImageElf',targetId=self.targetId)
+            qemuCommand += f" -nographic -machine virt -m 4G -kernel {kernel}"
+            if (bios):
+                qemuCommand += f" -bios {bios}"
             if (self.binarySource=='SRI-Cambridge'):
                 imageSourcePath = os.path.join(getSetting('binaryRepoDir'), self.binarySource, 'osImages', 'common',
                     f"disk-image-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=self.targetId)}.img.zst")
