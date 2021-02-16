@@ -444,7 +444,12 @@ def crossCompileUnix(directory,extraString=''):
     envLinux.append(f"SOURCE_VARIANT={getSetting('sourceVariant')}")
     logging.debug(f"going to make using {envLinux}")
     if (isEqSetting('binarySource','SRI-Cambridge')):
-        dockerToolchainImage = 'cambridge-toolchain'
+        if (isEnabled('useCustomCompiling') and
+            isEnabledDict('customizedCompiling','useCustomMakefile')
+	    ):
+            dockerToolchainImage = None
+        else:
+            dockerToolchainImage = 'cambridge-toolchain'
     elif (isEqSetting('binarySource','LMCO')):
         dockerToolchainImage = 'galoisinc/besspin:gfe-gcc83'
     else:
