@@ -103,6 +103,15 @@
             "condition" : "useCustomProcessor"
         },
         {
+            "name" : "useCustomQemu",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomQemu",
+            "type" : "filePath",
+            "condition" : "useCustomQemu"
+        },
+        {
             "name" : "binarySource",
             "type" : "string",
             "choices" : [ "GFE", "LMCO", "Michigan", "MIT", "SRI-Cambridge" ]
