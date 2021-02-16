@@ -57,6 +57,7 @@ class qemuTarget (commonTarget):
                 # As mentioned in #864, this device prevents FreeBSD from booting on <Debian 10 Buster, kernel 4.19> for some reason.
                 # Ticket #333 is still open, and it covers this entropy/rng situation.
                 qemuCommand += " -device virtio-rng-device"
+            print(f"qemuCommand {qemuCommand}")
 
             try:
                 self.ttyProcess = pexpect.spawn(qemuCommand,logfile=self.fTtyOut,timeout=timeout)
