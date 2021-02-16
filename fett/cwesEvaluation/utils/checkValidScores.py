@@ -45,7 +45,7 @@ def checkValidScores ():
         items = line.split(',')
         if (len(items) != 3):
             logAndExit (f"Unrecognized entry <{line}> in <{cweExceptionsFile}>.",exitCode=EXIT.Dev_Bug)
-        cwesExceptions[items[0]].addException(*items[1:])
+        cwesExceptions[items[0].replace('-','_')].addException(*items[1:])
     
     #error Count:
     errCount = 0
