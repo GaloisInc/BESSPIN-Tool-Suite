@@ -39,7 +39,7 @@ class EXIT (enum.Enum):
     def __str__ (self): #to replace '_' by ' ' when printing
         return f"{self.name.replace('_',' ')}"
 
-def exitFett (exitCode):
+def exitFett (exitCode, preSetup=False):
     def inExit_logAndExit (message,exc=None):
         if (exc): #empty message
             message += f"\n{formatExc(exc)}."
@@ -91,8 +91,13 @@ def exitFett (exitCode):
                     )
         printAndLog("Sent termination message to the SQS queue.")
 
-    exitPeacefully(getSetting('trash'))
-    printAndLog(f"End of FETT! [Exit code {exitCode.value}:{exitCode}]")
+    exitMsg = f"End of FETT! [Exit code {exitCode.value}:{exitCode}]"
+    if (preSetup): 
+        print(exitMsg)
+    else: #Default, but should not use these until the trash and the logging setup is complete
+        exitPeacefully(getSetting('trash'))
+        printAndLog(exitMsg)
+        
     os._exit(exitCode.value)
 
 def exitOnInterrupt (xSig,xFrame):
