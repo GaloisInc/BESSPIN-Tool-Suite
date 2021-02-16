@@ -341,8 +341,8 @@ class commonTarget():
                 tempPrompt = "\r\n#"
             # vcu118 freebsd would be already logged in if onlySsh
             if (self.target=='qemu'):
-                self.runCommand("root",endsWith="\r\n#",overrideShutdown=True)
-                self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
+                self.runCommand ("root",endsWith=tempPrompt,overrideShutdown=True)
+                self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith=tempPrompt)
             elif (not self.onlySsh):
                 if ((self.binarySource!="SRI-Cambridge") or (self.restartMode and (self.target=='awsf1'))):
                     self.runCommand ("root",endsWith='Password:',overrideShutdown=True)
