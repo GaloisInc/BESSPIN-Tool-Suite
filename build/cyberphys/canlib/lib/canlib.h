@@ -1,7 +1,7 @@
 /**
 * Cyberphys CAN Frames Specification
 * Project: SSITH CyberPhysical Demonstrator
-* Name: can_info.py
+* Name: canlib.py
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
 * Date: 17 February 2021
