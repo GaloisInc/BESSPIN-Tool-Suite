@@ -172,9 +172,12 @@ def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
     if (drawLine):
         message = ' ' + '-'*(sum(widthCols)+2) + ' '
     elif (drawSeparation):
-        message = '|' + '-'*widthCols[0] + '|' + '-'*widthCols[1] + '|' + '-'*widthCols[2] + '|'
+        message = '|' + '|'.join(['-'*widthCol for widthCol in widthCols]) + '|'
+    elif (len(elements) == len(widthCols)):
+        message = ''.join([centralize(str(element),widthCol) for element,widthCol in zip(elements,widthCols)]) + '|'
     else:
-        message = centralize(elements[0],widthCols[0]) + centralize(str(elements[1]),widthCols[1]) + centralize(elements[2],widthCols[2]) + '|'
+        printAndLog(f"tabulate_row: The faulty row is <{elements}>.",doPrint=False)
+        logAndExit("tabulate_row: Length mismatch between <elements> and <widhCols>.",exitCode=EXIT.Dev_Bug)
     return (message)
 
 @decorate.debugWrap
