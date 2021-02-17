@@ -1,3 +1,14 @@
+/**
+* Cyberphys CAN Frames Specification
+* Project: SSITH CyberPhysical Demonstrator
+* Name: can_info.py
+* Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+* Michal Podhradsky <mpodhradsky@galois.com>
+* Date: 17 February 2021
+* This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
+* Version hash: f50e0a68352312d07b0ce23fc3a46a33
+*/
+
 #ifndef CANLIB_H
 #define CANLIB_H
 
@@ -122,7 +133,7 @@
 #define BYTE_LENGTH_MUSIC_STATE 1
 
 // heartbeat_req (uint32_t)
-// Sender: FETT Target Tool
+// Sender: Admin PC
 // Receiver: All
 // Bounds/Range: N/A
 // J1939 compatible: No
@@ -133,12 +144,12 @@
 
 // heartbeat_ack (uint32_t)
 // Sender: All
-// Receiver: FETT Target Tool
+// Receiver: Admin PC
 // Bounds/Range: N/A
 // J1939 compatible: No
 // Description: 
-//	Heartbeat acknowledgement with number matching a heartbeat_req in network byte order
+//	First 4 bytes are the sender ID (last 4 bytes of the MAC) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
 #define CAN_ID_HEARTBEAT_ACK 0XAABEA225
-#define BYTE_LENGTH_HEARTBEAT_ACK 4
+#define BYTE_LENGTH_HEARTBEAT_ACK 8
 
 #endif

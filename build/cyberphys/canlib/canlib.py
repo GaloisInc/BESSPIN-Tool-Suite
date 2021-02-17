@@ -1,37 +1,62 @@
-#! /usr/bin/env python3
-import pandas as pd
+"""Cyberphys CAN Frames Specification
+Project: SSITH CyberPhysical Demonstrator
+Name: can_info.py
+Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+Michal Podhradsky <mpodhradsky@galois.com>
+Date: 17 February 2021
+This file was created by make_can_spec.py
+Version hash: f50e0a68352312d07b0ce23fc3a46a33
+"""
 
-specs_filename = "can_specification.csv"
-specdf = pd.read_csv(specs_filename, keep_default_na=False)
+# Name: gear (uint8_t) Units: 
+# Description: selected gear
+CAN_ID_GEAR: int = 0XAAF01000
 
-header_filename = "lib/canlib.h"
-with open(header_filename, "w") as f: 
-    f.write("#ifndef CANLIB_H\n") 
-    f.write("#define CANLIB_H\n") 
-    for _, row in specdf.iterrows():
-        print(f"Processing row: {row}")
-        field_name = row["Field Name"].split()[0].lower()
-        field_type = row["Field Name"].split()[1].replace('(','').replace(')','')
-        can_id = row["CAN ID"]
-        f.write("\n")
-        f.write(f"// {row['Field Name']}\n")
-        f.write(f"// Sender: {row['Sender']}\n")
-        f.write(f"// Receiver: {row['Receiver']}\n")
-        if row["Bounds/Range"] != '':
-            f.write(f"// Bounds/Range: {row['Bounds/Range']}\n")
-        if row["Units"] != '':
-            f.write(f"// Units: {row['Units']}\n")
-        if row["J1939?"] != '':
-            f.write(f"// J1939 compatible: {row['J1939?']}\n")
-        else:
-            f.write(f"// J1939 compatible: NO\n")
-        if row["Field Description"] != '':
-            f.write("// Description: \n")
-            f.write('//\t' + row['Field Description'].replace('\n','\n//\t') + "\n")
-        f.write(f"#define CAN_ID_{field_name.upper()} {can_id}\n")
-        f.write(f"#define BYTE_LENGTH_{field_name.upper()} {row['Byte Length']}\n")
-        if row['PGN'] != '':
-            f.write(f"#define PGN_{field_name.upper()} {row['PGN']}\n")
+# Name: throttle_input (uint8_t) Units: 
+# Description: Throttle input state
+CAN_ID_THROTTLE_INPUT: int = 0XAAF01A00
 
-    f.write("\n#endif")
-    
+# Name: brake_input (uint8_t) Units: 
+# Description: Brake input state
+CAN_ID_BRAKE_INPUT: int = 0XAAF01B00
+
+# Name: steering_input (int8_t) Units: 
+# Description: Steering input state
+CAN_ID_STEERING_INPUT: int = 0XAAF01D00
+
+# Name: fuel (uint8_t) Units: %
+# Description: Percentage of fuel remaining
+CAN_ID_FUEL: int = 0XAAFEAA00
+
+# Name: car_x (float) Units: m
+# Description: infotainment position of car to display x coordinate
+CAN_ID_CAR_X: int = 0XAAFEAAC1
+
+# Name: car_y (float) Units: m
+# Description: infotainment position of car to display y coordinate
+CAN_ID_CAR_Y: int = 0XAAFEADF6
+
+# Name: car_z (float) Units: m
+# Description: infotainment position of car to display z coordinate
+CAN_ID_CAR_Z: int = 0XAAFEAABF
+
+# Name: car_r (float) Units: m
+# Description: infotainment position of car to display r rotation
+CAN_ID_CAR_R: int = 0XAACDAD11
+
+# Name: button_pressed (uint8_t) Units: 
+# Description: Button pressed on infotainment screen.0x01 Station 1 0x02 Station 2 0x03 station 3  0x10 volume down  0x11 volume up
+CAN_ID_BUTTON_PRESSED: int = 0XAAFECA00
+
+# Name: music_state (uint8_t) Units: 
+# Description: Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
+CAN_ID_MUSIC_STATE: int = 0XAA2FEEF2
+
+# Name: heartbeat_req (uint32_t) Units: 
+# Description: Heartbeat request with request number in network byte order
+CAN_ID_HEARTBEAT_REQ: int = 0XAABEA737
+
+# Name: heartbeat_ack (uint32_t) Units: 
+# Description: First 4 bytes are the sender ID (last 4 bytes of the MAC) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
+CAN_ID_HEARTBEAT_ACK: int = 0XAABEA225
+
