@@ -145,7 +145,7 @@ NumericErrors_Test : Numeric_Weakness ?
 [ TEST_194 => CWE_194 || CWE_681 ]
 [ TEST_195 => CWE_195 || CWE_681 ]
 [ TEST_196 => CWE_196 || CWE_681 ]
-[ TEST_197 => CWE_197 ]
+[ TEST_197 => CWE_197 || CWE_681 ]
 [ TEST_234 => CWE_234 ]
 [ TEST_369 => CWE_369 ]
 [ TEST_456 => CWE_456 ]
