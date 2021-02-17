@@ -366,6 +366,11 @@
             "val" : "fett/cwesEvaluation/utils/cweTestTemplateFreeRTOS.c"
         },
         {
+            "name" : "besspinCoeffs",
+            "type" : "filePath",
+            "val" : "fett/cwesEvaluation/utils/besspinCoeffs.json"
+        },
+        {
             "name" : "uartDevicesSavedMap",
             "type" : "filePath",
             "val" : "fett/target/utils/uartDevicesMap.json",

@@ -160,7 +160,8 @@ def tabulate(elements):
     return table
 
 @decorate.debugWrap
-def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
+def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False,
+                customSeparations=None,horizSeparator='-'):
     def centralize (msg, width):
         if (len(msg)>width):
             return '|' + msg[:width]
@@ -170,9 +171,13 @@ def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
         return '|' + ' '*leadingSpaces + msg + ' '*laggingSpaces
 
     if (drawLine):
-        message = ' ' + '-'*(sum(widthCols)+2) + ' '
+        message = ' ' + '-'*(sum(widthCols)+len(widthCols)-1) + ' '
     elif (drawSeparation):
-        message = '|' + '|'.join(['-'*widthCol for widthCol in widthCols]) + '|'
+        if (customSeparations is None):
+            customSeparations = [True for col in widthCols]
+        elif (len(customSeparations) != len(widthCols)):
+            logAndExit("tabulate_row: Invalid <customSeparations>.",exitCode=EXIT.Dev_Bug)
+        message = '|' + '|'.join([(horizSeparator if sep else ' ')*width for width,sep in zip(widthCols,customSeparations)]) + '|'
     elif (len(elements) == len(widthCols)):
         message = ''.join([centralize(str(element),widthCol) for element,widthCol in zip(elements,widthCols)]) + '|'
     else:
