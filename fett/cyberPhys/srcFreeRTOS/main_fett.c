@@ -42,7 +42,7 @@
 #define CAN_RX_TASK_PRIORITY tskIDLE_PRIORITY + 3
 #define INFOTASK_PRIORITY tskIDLE_PRIORITY + 1
 
-#define CAN_RX_PORT (5001UL)
+#define CAN_RX_PORT (5002UL)
 #define CAN_TX_PORT (5002UL)
 
 #define SENSOR_LOOP_DELAY_MS pdMS_TO_TICKS(50)
@@ -518,6 +518,7 @@ static void prvCanRxTask(void *pvParameters)
     size_t msg_len;
     canid_t can_id;
     uint32_t request_id;
+    uint32_t target_id;
 
     /* Socket for responding to requests */
     Socket_t xClientSocket;
@@ -549,6 +550,10 @@ static void prvCanRxTask(void *pvParameters)
     FreeRTOS_inet_ntoa(xBindAddress.sin_addr, cBuffer);
     FreeRTOS_printf(("%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
 
+    /* Set target ID */
+    const uint8_t *mac = FreeRTOS_GetMACAddress();
+    memcpy(&target_id, mac+2, sizeof(uint32_t));
+
     for (;;)
     {
         uint8_t res = process_j1939(xListeningSocket, &xClient, &msg_len, &can_id, (uint8_t*)&request_id);
@@ -560,10 +565,14 @@ static void prvCanRxTask(void *pvParameters)
             switch (can_id)
             {
                 case CAN_ID_HEARTBEAT_REQ:
-                    // received data are in network endian, simply copy over as we do not need to process them
+                    /* received data are in network endian, simply copy over as we do not need to process them */
                     FreeRTOS_printf(("%s (prvCanRxTask) Replying to heartbeat #%u\r\n", getCurrTime(), FreeRTOS_ntohl(request_id)));
+                    /* Copy target ID*/
+                    memcpy(&cBuffer[0], &target_id, sizeof(uint32_t));
+                    /* Copy request ID */
+                    memcpy(&cBuffer[4], &request_id, sizeof(uint32_t));
                     res = send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_HEARTBEAT_ACK,
-                        (void *)&request_id, BYTE_LENGTH_HEARTBEAT_ACK);
+                        (void *)cBuffer, BYTE_LENGTH_HEARTBEAT_ACK);
                     if ( res != SUCCESS)
                     {
                         FreeRTOS_printf(("%s (prvCanRxTask) Replying to heartbeat failed with %u\r\n", getCurrTime(), res));
