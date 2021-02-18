@@ -21,13 +21,13 @@ class UDPBus(BusABC):
     CAN_MIN_BYTES = 4 + 1 + 1  # sending an empty frame doesn't make sense, min 6 bytes per frame
     CAN_MAX_BYTES = 64 + 4 + 1  # 64 bytes of DATA, 4 bytes of ID, 1 byte od DLC
 
-    def __init__(self, bind_port):
+    def __init__(self, bind_ip, bind_port):
         self.port = bind_port
         super(UDPBus, self).__init__(channel="dummy")
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self._sock.bind(("", self.port))
+        self._sock.bind((bind_ip, self.port))
 
     def send(self, msg, tx_ip, tx_port, timeout=None):
         a_id = struct.pack('<I', msg.arbitration_id)
@@ -64,7 +64,7 @@ CAN_ID_HEARTBEAT_REQ = 0XAABEA737
 CAN_ID_HEARTBEAT_ACK = 0XAABEA225
 BYTE_LENGTH_HEARTBEAT_REQ = 4
 
-bus = UDPBus(BIND_PORT)
+bus = UDPBus("",BIND_PORT)
 bus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
 value = 0
 while(1):

@@ -148,7 +148,7 @@
 // Bounds/Range: N/A
 // J1939 compatible: No
 // Description: 
-//	First 4 bytes are the sender ID (last 4 bytes of the MAC) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
+//	First 4 bytes are the sender ID (sender IP address) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
 #define CAN_ID_HEARTBEAT_ACK 0XAABEA225
 #define BYTE_LENGTH_HEARTBEAT_ACK 8
 

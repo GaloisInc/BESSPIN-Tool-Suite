@@ -19,6 +19,11 @@
             "val" : "cyberPhys.ini"
         },
         {
+            "name" : "cyberPhysCanbusPort",
+            "type" : "int",
+            "val" : "5002"
+        },
+        {
             "name" : "commPortHost",
             "type" : "int",
             "min" : 1024,
@@ -41,6 +46,11 @@
             "name" : "vcu118NetMaskTarget",
             "type" : "ipAddress",
             "val" : "255.255.255.0"
+        },
+        {
+            "name" : "vcu118BroadcastIp",
+            "type" : "ipAddress",
+            "val" : "10.88.88.255"
         },
         {
             "name" : "vcu118MacAddrTarget",

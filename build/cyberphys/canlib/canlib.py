@@ -57,6 +57,6 @@ CAN_ID_MUSIC_STATE: int = 0XAA2FEEF2
 CAN_ID_HEARTBEAT_REQ: int = 0XAABEA737
 
 # Name: heartbeat_ack (uint32_t) Units: 
-# Description: First 4 bytes are the sender ID (last 4 bytes of the MAC) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
+# Description: First 4 bytes are the sender ID (sender IP address) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
 CAN_ID_HEARTBEAT_ACK: int = 0XAABEA225
 

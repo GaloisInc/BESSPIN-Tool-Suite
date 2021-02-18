@@ -551,8 +551,7 @@ static void prvCanRxTask(void *pvParameters)
     FreeRTOS_printf(("%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
 
     /* Set target ID */
-    const uint8_t *mac = FreeRTOS_GetMACAddress();
-    memcpy(&target_id, mac+2, sizeof(uint32_t));
+    memcpy(&target_id, FreeRTOS_GetIPAddress(), sizeof(uint32_t));
 
     for (;;)
     {
