@@ -58,7 +58,7 @@ class qemuTarget (commonTarget):
                 # As mentioned in #864, this device prevents FreeBSD from booting on <Debian 10 Buster, kernel 4.19> for some reason.
                 # Ticket #333 is still open, and it covers this entropy/rng situation.
                 qemuCommand += " -device virtio-rng-device"
-
+            printAndLog(f"{self.targetIdInfo}boot: The qemu command is: <{qemuCommand}>.", doPrint=False)
             try:
                 self.ttyProcess = pexpect.spawn(qemuCommand,logfile=self.fTtyOut,timeout=timeout)
                 self.process = self.ttyProcess
@@ -67,6 +67,7 @@ class qemuTarget (commonTarget):
                 self.terminateAndExit(f"boot: Failed to spwan the qemu process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
         elif (self.osImage=='FreeRTOS'):
             qemuCommand += " -nographic -machine sifive_e -kernel " + getSetting('osImageElf',targetId=self.targetId)
+            printAndLog(f"{self.targetIdInfo}boot: The qemu command is: <{qemuCommand}>.", doPrint=False)
             try:
                 self.process = pexpect.spawn(qemuCommand,timeout=timeout,logfile=self.fTtyOut)
             except Exception as exc:
