@@ -449,12 +449,18 @@ def crossCompileUnix(directory,extraString=''):
     envLinux.append(f"LINKER={getSetting('linker').upper()}")
     envLinux.append(f"BIN_SOURCE={getSetting('binarySource').replace('-','_')}")
     envLinux.append(f"SOURCE_VARIANT={getSetting('sourceVariant')}")
+    if (isEnabled('useCustomCompiling') and
+        isEnabledDict('customizedCompiling','useCustomClang')
+        ):
+        envLinux.append(f"CLANG={getSettingDict('customizedCompiling','pathToCustomClang')}")
+    if (isEnabled('useCustomCompiling') and
+        isEnabledDict('customizedCompiling','useCustomSysroot')
+        ):
+        envLinux.append(f"SYSROOT={getSettingDict('customizedCompiling','pathToCustomSysroot')}")
     logging.debug(f"going to make using {envLinux}")
     if (isEqSetting('binarySource','SRI-Cambridge')):
-        if (isEnabled('useCustomCompiling') and
-            isEnabledDict('customizedCompiling','useCustomMakefile')
-	    ):
-            warnAndLog("cross-compile: Will not use the docker toolchain while <useCustomMakefile> is enabled.")
+        if (isEnabled('useCustomCompiling')):
+            warnAndLog("cross-compile: Will not use the docker toolchain while <useCustomCompiling> is enabled.")
             dockerToolchainImage = None
         else:
             dockerToolchainImage = 'cambridge-toolchain'
