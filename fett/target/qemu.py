@@ -120,6 +120,10 @@ class qemuTarget (commonTarget):
         else:
             printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         super().interact()
+
+    @decorate.debugWrap
+    def getGdbOutput(self):
+        return "" #currently we don't run Qemu through GDB, so there is nothing to return
 #--- END OF CLASS qemuTarget------------------------------
 
 @decorate.debugWrap
