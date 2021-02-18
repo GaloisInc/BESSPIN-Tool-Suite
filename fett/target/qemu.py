@@ -34,12 +34,13 @@ class qemuTarget (commonTarget):
             qemuCommand = f"qemu-system-riscv{self.xlen}"
         if (self.osImage in ['debian', 'FreeBSD']):
             qemuCommand += f" -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)}"
-            if (isEqSetting('binarySource', 'SRI-Cambridge')):
-                imageSourcePath = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource'), 'osImages', 'common', f"disk-image-cheri{getSetting('SRI-Cambridge-imageVariantSuffix')}.img.zst")
-                imageFile = os.path.join(getSetting('osImagesDir'), f"{getSetting('osImage')}.img")
-                print(f"(Info)~ Extracting {imageSourcePath}")
+            if (self.binarySource=='SRI-Cambridge'):
+                imageSourcePath = os.path.join(getSetting('binaryRepoDir'), self.binarySource, 'osImages', 'common',
+                    f"disk-image-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=self.targetId)}.img.zst")
+                imageFile = os.path.join(getSetting('osImagesDir',targetId=self.targetId), f"{self.osImage}.img")
+                printAndLog(f"{self.targetIdInfo}Extracting {imageSourcePath}",doPrint=(not self.targetId))
                 zstdDecompress(imageSourcePath, imageFile)
-                print(f"(Info)~ Extracted as {imageFile}")
+                printAndLog(f"{self.targetIdInfo}Extracted as {imageFile}",doPrint=(not self.targetId))
                 qemuCommand += f" -drive if=none,file={imageFile},id=drv,format=raw -device virtio-blk-device,drive=drv"
             qemuCommand += f" -device virtio-net-device,netdev=usernet"
             qemuCommand += f" -netdev tap,id=usernet,ifname={getSetting('tapAdaptor',targetId=self.targetId)},script=no,downscript=no"
