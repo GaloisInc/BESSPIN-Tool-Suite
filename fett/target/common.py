@@ -482,7 +482,7 @@ class commonTarget():
             self.terminateAndExit(
                 f"<update root password> is not implemented for <{self.osImage}> on <{self.target}>.",
                 exitCode=EXIT.Implementation)
-        printAndLog(f"{self.targetIdInfo}root password has been changed successfully!",doPrint=False)
+        printAndLog(f"{self.targetIdInfo}root password has been changed successfully to <{self.rootPassword}>.")
 
     @decorate.debugWrap
     @decorate.timeWrap
