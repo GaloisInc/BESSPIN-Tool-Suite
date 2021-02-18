@@ -447,6 +447,7 @@ def crossCompileUnix(directory,extraString=''):
         if (isEnabled('useCustomCompiling') and
             isEnabledDict('customizedCompiling','useCustomMakefile')
 	    ):
+            warnAndLog("cross-compile: Will not use the docker toolchain while <useCustomMakefile> is enabled.")
             dockerToolchainImage = None
         else:
             dockerToolchainImage = 'cambridge-toolchain'
