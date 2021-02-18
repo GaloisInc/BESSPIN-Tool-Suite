@@ -59,7 +59,11 @@
         "else": { "timeout" : { "boot" : 540 } }
       }
     },
-    "qemu": { "timeout" : { "boot" : 120 } },
+    "qemu": {
+      "name" : "binarySource",
+      "SRI-Cambridge" : { "timeout" : { "boot" : 360 } },
+      "else" : { "timeout" : { "boot" : 120 } }
+    },
     "awsf1": {
       "name": "sourceVariant",
       "temporal": { "timeout" : { "boot" : 1000 } },
