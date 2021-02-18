@@ -275,6 +275,24 @@
             "name" : "pathToCustomMakefile",
             "type" : "filePath",
             "condition" : "useCustomMakefile"
+        },
+        {
+            "name" : "useCustomClang",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomClang",
+            "type" : "filePath",
+            "condition" : "useCustomClang"
+        },
+        {
+            "name" : "useCustomSysroot",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomSysroot",
+            "type" : "dirPath",
+            "condition" : "useCustomSysroot"
         }
     ],
 
