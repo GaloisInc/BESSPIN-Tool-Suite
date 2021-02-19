@@ -30,7 +30,7 @@ with open(specs_filename, "r") as f:
 # date and file info
 today = date.today()
 
-outfilename_py: str = "canlib.py"
+outfilename_py: str = "python/canspecs.py"
 file_header_py: str = f"""\"\"\"Cyberphys CAN Frames Specification
 Project: SSITH CyberPhysical Demonstrator
 Name: {outfilename_py}
@@ -42,8 +42,8 @@ Version hash: {specs_md5.hexdigest()}
 \"\"\"\n\n"""
 
 
-outfilename_h: str = "lib/canlib.h"
-file_header_h: str = f"""/**
+outfilename_h: str = "lib/canspecs.h"
+file_header_h: str = f"""/*
 * Cyberphys CAN Frames Specification
 * Project: SSITH CyberPhysical Demonstrator
 * Name: {outfilename_py}
@@ -103,12 +103,12 @@ with open(outfilename_py, 'w') as f:
     for _, row in specdf.iterrows():
         f.write(produce_can_py(row))
 
-with open(outfilename_h, "w") as f: 
+with open(outfilename_h, "w") as f:
     f.write(file_header_h)
-    f.write("#ifndef CANLIB_H\n") 
-    f.write("#define CANLIB_H\n") 
+    f.write("#ifndef CANSPECS_H\n")
+    f.write("#define CANSPECS_H\n")
     for _, row in specdf.iterrows():
         f.write(produce_can_h(row))
     f.write("\n#endif\n")
-    
+
 print("Done!")

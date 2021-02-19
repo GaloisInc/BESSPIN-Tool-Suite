@@ -8,8 +8,7 @@
 #ifndef j1939_h
 #define j1939_h
 
-#include "can.h"
-#include "cyberphys.h"
+#include "canlib.h"
 #include <stdio.h>
 
 #define PGN_BAM 60416
@@ -94,8 +93,8 @@ void *bam_can_frames_to_data(can_frame *packets);
  * @param pgn_or_id - if message_len <= 8 it is interpreted as CAN_ID, otherwise as PGN
  * @returns error code
  */
-uint8_t send_can_message(cyberphys_socket_t socket,
-                         cyberphys_sockaddr_t *dstaddr,
+uint8_t send_can_message(canlib_socket_t socket,
+                         canlib_sockaddr_t *dstaddr,
                          uint32_t pgn_or_id,
                          void *message,
                          size_t message_len);
@@ -104,8 +103,8 @@ uint8_t send_can_message(cyberphys_socket_t socket,
   * reconstruct a message from can frames sent using send_can_message
   * @returns error code
   */
-uint8_t recv_can_message(cyberphys_socket_t socket,
-                         cyberphys_sockaddr_t *srcaddr,
+uint8_t recv_can_message(canlib_socket_t socket,
+                         canlib_sockaddr_t *srcaddr,
                          canid_t *can_id,
                          void *rmessage,
                          size_t *rmessage_len);

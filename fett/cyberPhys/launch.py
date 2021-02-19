@@ -7,16 +7,12 @@ from fett.base.utils.misc import *
 import fett.target.launch
 import fett.cyberPhys.interactive
 import fett.cyberPhys.run
-import fett.cyberPhys.canlib
 from fett.base.threadControl import ftQueueUtils
 import threading, queue, pexpect
 
 # Import for CAN bus
-import struct
-import socket
-import select
-import time
-from can import BusABC, Message
+from fett.cyberPhys.canlib import UDPBus, Message
+from fett.cyberPhys.canspecs import CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -39,6 +35,10 @@ def startCyberPhys():
         # Start the watchdogs
         allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
 
+        # Start the heartbeat watchdog
+        #allThreads += runThreadPerTarget(heartBeatWatchDog,
+        #                addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
+
         # Pipe the UART
         if (isEnabled('pipeTheUart')):
             runThreadPerTarget(startUartPiping)
@@ -56,10 +56,6 @@ def startCyberPhys():
 
         # Start the watch on the watchdogs [+ interactive shell]
         ftQueueUtils("cyberPhysMain:queue",exitQueue,'get') #block until receiving an error or termination
-
-        # Start the heartbeat watchdog
-        allThreads += runThreadPerTarget(heartBeatWatchDog,
-                        addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
     
         # Terminating all threads
         for targetId in range(1,getSetting('nTargets')+1):
@@ -211,72 +207,22 @@ def stopTtyLogging(targetId):
     getSetting('ttyLogger',targetId=targetId).stop()
     setSetting('isTtyLogging',False,targetId=targetId)
 
-class UDPBus(BusABC):
-    """
-    Enable basic communication over UDP
-
-    The bus is bound to a particular ADDR and PORT upon creation,
-    and can receive data only from that addr/port.
-
-    The bus can send data to any address/port.
-    """
-    CAN_MIN_BYTES = 4 + 1 + 1  # sending an empty frame doesn't make sense, min 6 bytes per frame
-    CAN_MAX_BYTES = 64 + 4 + 1  # 64 bytes of DATA, 4 bytes of ID, 1 byte od DLC
-
-    def __init__(self, bind_ip, bind_port):
-        super(UDPBus, self).__init__(channel="dummy")
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self._sock.bind((bind_ip, bind_port))
-
-    def send(self, msg, tx_ip, tx_port, timeout=None):
-        a_id = struct.pack('<I', msg.arbitration_id)
-        byte_msg = bytearray(a_id)
-        byte_msg.append(msg.dlc)
-        byte_msg += bytearray([msg.data[i] for i in range(0, msg.dlc)])
-        if timeout:
-            print("Warning: ignoring timeout {}".format(timeout))
-        self._sock.sendto(byte_msg, (tx_ip, tx_port))
-
-    def _recv_internal(self, timeout):
-        ready = select.select([self._sock], [], [], timeout)
-        if ready[0]:
-            rx_data, sender_addr = self._sock.recvfrom(UDPBus.CAN_MAX_BYTES)
-            print("Info: received {} bytes from {}".format(len(rx_data), sender_addr))
-            if len(rx_data) < UDPBus.CAN_MIN_BYTES:
-                print("Warning: received only {} bytes, ignoring.".format(len(rx_data)))
-            else:
-                s = bytearray(rx_data[0:4])
-                arb_id = struct.unpack('<I', s)[0]
-                dlc = rx_data[4]
-                if dlc == len(rx_data[5:]):
-                    data = rx_data[5:]
-                    msg = Message(timestamp=time.time(),
-                                arbitration_id=arb_id,
-                                dlc=dlc,
-                                data=data)
-                    return msg, False
-                else:
-                    print("Warning: DLC ({}) and the length of data ({}) don't match, ignoring.".format(dlc,len(rx_data)))
-        return None, False
-
 @decorate.debugWrap
 @decorate.timeWrap
 def heartBeatWatchDog():
     """
     Sends heartbeat requests and listens to responses.
     """
-    canbus = UDPBus(getSetting('vcu118IpHost'),getSetting('cyberPhysCanbusPort'))
-    canbus.set_filters([{"can_id": canlib.CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
+    canbus = UDPBus("",getSetting('cyberPhysCanbusPort'))
+    canbus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
     cnt = 0
 
     while(True):
         cnt += 1
-        heartbeat_req = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_REQ,
+        heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
                                     is_extended_id=True,
-                                    data=[cnt.to_bytes(4, byteorder = 'big')])
-        canbus.send(heartbeat_req, getSetting('vcu118BroadcastIp'),getSetting('cyberPhysCanbusPort'))
+                                    data=list(cnt.to_bytes(4, byteorder = 'big')))
+        canbus.send(heartbeat_req, getSetting('vcu118BroadcastIp'), getSetting('cyberPhysCanbusPort'))
         printAndLog (f"FETT <heartBeatWatchDog mode> sending message")
 
         # Assume one second window to receive watchdog responses
@@ -284,6 +230,7 @@ def heartBeatWatchDog():
         responses = []
         while (time.time() < endOfWait) and (len(responses) < getSetting('nTargets')):
             heartbeat_ack = canbus.recv(timeout=0.1)
-            print(f"RX: {heartbeat_ack}")
-            responses.append(heartbeat_ack)
-        printAndLog("Got {len(responses)} acks")
+            if heartbeat_ack:
+                print(f"RX: {heartbeat_ack}")
+                responses.append(heartbeat_ack)
+        time.sleep(1)

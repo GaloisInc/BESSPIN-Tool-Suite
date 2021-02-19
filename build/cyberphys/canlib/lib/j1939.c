@@ -16,8 +16,7 @@
  */
 
 #include "j1939.h"
-#include "can.h"
-#include "cyberphys.h"
+#include "canlib.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,7 +73,7 @@ uint8_t packet_bam(can_frame *cframe, uint16_t nbytes, uint32_t pgn)
     /* BAM has a fixed PGN */
     if ((pgn & 0xC0000) != 0)
         return INVALID_PGN;
-    cframe->can_id = id_from_pgn(PGN_BAM);
+    cframe->can_id = canlib_htonl(id_from_pgn(PGN_BAM));
 
     /* dlc is always 8 */
     cframe->can_dlc = 8;
@@ -98,7 +97,7 @@ uint8_t packet_bam(can_frame *cframe, uint16_t nbytes, uint32_t pgn)
 uint8_t packet_dt(can_frame *cframe, uint8_t sequence_idx, void *data,
                   uint8_t dlen)
 {
-    cframe->can_id = id_from_pgn(PGN_DT);
+    cframe->can_id = canlib_htonl(id_from_pgn(PGN_DT));
     cframe->can_dlc = dlen + 1;
     struct dt_data *dt = (struct dt_data *)cframe->data;
 
@@ -142,7 +141,7 @@ can_frame *data_to_bam_can_frames(uint32_t pgn, void *data, size_t dlen,
     *npackets = rnpackets;
 
     /* first packet is the CAN.BAM packet */
-    can_frame *packets = (can_frame *)cyberphys_malloc(sizeof(can_frame) * rnpackets);
+    can_frame *packets = (can_frame *)canlib_malloc(sizeof(can_frame) * rnpackets);
     packet_bam(&packets[0], dlen, pgn);
 
     /* put data in the CAN.DT packets */
@@ -165,7 +164,7 @@ void *bam_can_frames_to_data(can_frame *packets)
     params_bam(&packets[0], &rpgn, &nbytes, &npackets);
 
     /* data to return */
-    void *data = cyberphys_malloc(nbytes);
+    void *data = canlib_malloc(nbytes);
 
     /* copy over the data from CAN.DT */
     uint8_t ll, i, sidx, slen;
@@ -181,7 +180,7 @@ void *bam_can_frames_to_data(can_frame *packets)
     return data;
 }
 
-uint8_t send_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *dstaddr, uint32_t pgn_or_id,
+uint8_t send_can_message(canlib_socket_t socket, canlib_sockaddr_t *dstaddr, uint32_t pgn_or_id,
                          void *message, size_t message_len)
 {
     int32_t res = 0;
@@ -190,7 +189,7 @@ uint8_t send_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *dstadd
     if (message_len <= 8)
     { /* message fits in a single packet */
         can_frame frame;
-        frame.can_id = pgn_or_id;
+        frame.can_id = canlib_htonl(pgn_or_id);
         frame.can_dlc = message_len;
         memset(frame.data, 0, sizeof(frame.data));
         memcpy(frame.data, message, message_len);
@@ -207,7 +206,7 @@ uint8_t send_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *dstadd
         // Note this probably wont work properly with the last packet!
         res = canframe_sendto(socket, packets, sizeof(can_frame) * (np + 1), 0,
                         dstaddr, sizeof(*dstaddr));
-        cyberphys_free(packets);
+        canlib_free(packets);
     }
     if (res > 0) {
         /* Positive number means at least some bytes were sent */
@@ -219,7 +218,7 @@ uint8_t send_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *dstadd
     }
 }
 
-uint8_t recv_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *srcaddr, canid_t *can_id,
+uint8_t recv_can_message(canlib_socket_t socket, canlib_sockaddr_t *srcaddr, canid_t *can_id,
                          void *rmessage, size_t *rmessage_len)
 {
     int32_t nbytes;
@@ -243,6 +242,9 @@ uint8_t recv_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *srcadd
         return ERR_RECV;
     }
     frame = (can_frame *)&buffer[0];
+
+    /* Swap to host byte order */
+    frame->can_id = canlib_ntohl(frame->can_id);
 
     if (nbytes <= (int32_t)sizeof(can_frame))
     { /* extract data field from single can frame */
@@ -275,7 +277,7 @@ uint8_t recv_can_message(cyberphys_socket_t socket, cyberphys_sockaddr_t *srcadd
             *rmessage_len = rnbytes;
             printf("(recv_can_message) rmessage_len: %lu\r\n", *rmessage_len);
             memcpy(rmessage, (void *)rmsg, *rmessage_len);
-            cyberphys_free(rmsg);
+            canlib_free(rmsg);
             return SUCCESS;
         }
         else

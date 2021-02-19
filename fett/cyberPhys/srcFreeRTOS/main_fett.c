@@ -16,6 +16,7 @@
 #include "iic.h"
 
 /* Canlib */
+#include "canspecs.h"
 #include "canlib.h"
 #include "j1939.h"
 
@@ -413,7 +414,7 @@ static void prvSensorTask(void *pvParameters)
         }
 
         /* Send gear */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&tmp_gear, sizeof(tmp_gear)) != SUCCESS)
+        if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_GEAR, (void *)&tmp_gear, sizeof(tmp_gear)) != SUCCESS)
         {
             FreeRTOS_printf(("%s (prvSensorTask) send gear failed\r\n", getCurrTime()));
         }
@@ -427,7 +428,7 @@ static void prvSensorTask(void *pvParameters)
         tmp_var = (uint8_t)tmp_throttle;
 
         /* Send throttle */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_THROTTLE_INPUT), (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_THROTTLE_INPUT, (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
         {
             FreeRTOS_printf(("%s (prvSensorTask) send throttle failed\r\n", getCurrTime()));
         }
@@ -441,7 +442,7 @@ static void prvSensorTask(void *pvParameters)
         tmp_var = (uint8_t)tmp_brake;
 
         /* Send brake */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_BRAKE_INPUT), (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_BRAKE_INPUT, (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
         {
             FreeRTOS_printf(("%s (prvSensorTask) send brake failed\r\n", getCurrTime()));
         }
@@ -457,7 +458,7 @@ static void prvSensorTask(void *pvParameters)
         if (camera_ok)
         {
             /* Steering assist */
-            if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_STEERING_INPUT), (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
+            if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_STEERING_INPUT, (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
             {
                 FreeRTOS_printf(("%s (prvSensorTask) send steering_assist failed\r\n", getCurrTime()));
             }
@@ -551,16 +552,13 @@ static void prvCanRxTask(void *pvParameters)
     FreeRTOS_printf(("%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
 
     /* Set target ID */
-    memcpy(&target_id, FreeRTOS_GetIPAddress(), sizeof(uint32_t));
+    target_id = FreeRTOS_GetIPAddress();
 
     for (;;)
     {
         uint8_t res = process_j1939(xListeningSocket, &xClient, &msg_len, &can_id, (uint8_t*)&request_id);
         if (res == SUCCESS)
         {
-            FreeRTOS_inet_ntoa(xClient.sin_addr, cBuffer);
-            FreeRTOS_printf(("%s (prvCanRxTask) recv_can_message ID: %#X, %lu bytes, from %s:%u\r\n",
-                            getCurrTime(), can_id, msg_len, cBuffer, FreeRTOS_ntohs(xClient.sin_port)));
             switch (can_id)
             {
                 case CAN_ID_HEARTBEAT_REQ:
