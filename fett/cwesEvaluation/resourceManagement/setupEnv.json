@@ -25,7 +25,8 @@
                     "cweText" : "Use After Free"
                 },
                 "test_400" : {
-                    "cweText" : "Uncontrolled Resource Consumption"
+                    "cweText" : "Uncontrolled Resource Consumption",
+                    "multitaskingRestriction" : "notOnFreeBSD"
                 },
                 "test_404" : {
                     "cweText" : "Improper Resource Shutdown or Release"
@@ -125,7 +126,8 @@
                     "FreeRTOS" : 2
                 },
                 "test_770" : {
-                    "cweText" : "Allocation of Resources Without Limits or Throttling"
+                    "cweText" : "Allocation of Resources Without Limits or Throttling",
+                    "multitaskingRestriction" : "notOnFreeBSD"
                 },
                 "test_771" : {
                     "cweText" : "Missing Reference to Active Allocated Resource"
@@ -134,7 +136,8 @@
                     "cweText" : "Missing Release of Resource after Effective Lifetime"
                 },
                 "test_789" : {
-                    "cweText" : "Uncontrolled Memory Allocation"
+                    "cweText" : "Uncontrolled Memory Allocation",
+                    "multitaskingRestriction" : "notOnFreeBSD"
                 },
                 "test_825" : {
                     "cweText" : "Expired Pointer Dereference",
@@ -153,6 +156,11 @@
                     "FreeRTOS" : 2
                 }
             }
+        },
+        {
+            "name" : "supportsMultitasking",
+            "type" : "boolean",
+            "val"  : true
         },
         {
             "name" : "mapTestsToCwes",
@@ -212,7 +220,8 @@
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
                             "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
                         }
-                    }
+                    },
+                    "multitaskingRestriction" : "notOnFreeBSD"
                 },
                 "test_rlr_stackExhaust" : {
                     "unix" : 1,
@@ -228,7 +237,8 @@
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
                             "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
                         }
-                    }
+                    },
+                    "multitaskingRestriction" : "notOnFreeBSD"
                 },
                 "test_rlr_noRelease" : {
                     "unix" : 1,

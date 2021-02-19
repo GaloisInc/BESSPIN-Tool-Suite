@@ -427,16 +427,17 @@ def cleanDirectory (xDir,endsWith='.o'):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def crossCompileUnix(directory,extraString=''):
+def crossCompileUnix(directory,extraString='',overrideBinarySource=None):
+    binarySource = overrideBinarySource if overrideBinarySource else getSetting('binarySource')
     if (len(glob.glob(os.path.join(directory,"*.c"))) == 0):
         return #there is nothing to compile
-    if (isEqSetting('binarySource','SRI-Cambridge')):
+    if (binarySource == 'SRI-Cambridge'):
         if (not isEqSetting('cross-compiler','Clang')):
-            warnAndLog (f"Compiling using <{getSetting('cross-compiler')}> for <{getSetting('binarySource')}> is not supported."
+            warnAndLog (f"Compiling using <{getSetting('cross-compiler')}> for <{binarySource}> is not supported."
                 " Compiling using <Clang> instead.")
             setSetting('cross-compiler','Clang')
         if (not isEqSetting('linker','LLD')):
-            warnAndLog (f"Linking using <{getSetting('linker')}> for <{getSetting('binarySource')}> is not supported."
+            warnAndLog (f"Linking using <{getSetting('linker')}> for <{binarySource}> is not supported."
                 " Linking using <LLD> instead.")
             setSetting('linker','LLD')
 
@@ -452,7 +453,7 @@ def crossCompileUnix(directory,extraString=''):
     envLinux.append(f"TARGET={getSetting('target').upper()}")
     envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
     envLinux.append(f"LINKER={getSetting('linker').upper()}")
-    envLinux.append(f"BIN_SOURCE={getSetting('binarySource').replace('-','_')}")
+    envLinux.append(f"BIN_SOURCE={binarySource.replace('-','_')}")
     envLinux.append(f"SOURCE_VARIANT={getSetting('sourceVariant')}")
     if (isEnabled('useCustomCompiling') and
         isEnabledDict('customizedCompiling','useCustomClang')
@@ -463,13 +464,13 @@ def crossCompileUnix(directory,extraString=''):
         ):
         envLinux.append(f"SYSROOT={getSettingDict('customizedCompiling','pathToCustomSysroot')}")
     logging.debug(f"going to make using {envLinux}")
-    if (isEqSetting('binarySource','SRI-Cambridge')):
+    if (binarySource == 'SRI-Cambridge'):
         if (isEnabled('useCustomCompiling')):
             warnAndLog("cross-compile: Will not use the docker toolchain while <useCustomCompiling> is enabled.")
             dockerToolchainImage = None
         else:
             dockerToolchainImage = 'cambridge-toolchain'
-    elif (isEqSetting('binarySource','LMCO')):
+    elif (binarySource == 'LMCO'):
         dockerToolchainImage = 'galoisinc/besspin:gfe-gcc83'
     else:
         dockerToolchainImage = None

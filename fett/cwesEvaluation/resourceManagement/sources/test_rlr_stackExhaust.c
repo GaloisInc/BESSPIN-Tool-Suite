@@ -34,9 +34,11 @@ static int func2 (void);
 
 // --------------- Debian && FreeBSD test ---------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
     int main(void);
 
     int main() {
+        unbufferStdout();
         srand(RM_SEED); //RM_SEED is written in fett/cwesEvaluation/build.py
         return callRandFunc();
     }

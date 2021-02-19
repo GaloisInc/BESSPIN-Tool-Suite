@@ -468,6 +468,25 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             if (not checkCustomScorerFunction()):
                 logAndExit(f"loadSecurityEvaluationConfiguration: <{getSettingDict('customizedScoring','pathToCustomFunction')}> has to be a valid scoring script.",exitCode=EXIT.Configuration)
 
+        if (isEnabled('runUnixMultitaskingTests') and
+            (getSetting('osImage') in ['debian', 'FreeBSD'])):
+            # Check that scoring options requiring GDB are disabled
+            if (not isEqSettingDict('customizedScoring', ['gdbKeywords'], [])):
+                logAndExit("loadSecurityEvaluationConfiguration: <gdbKeywords> "
+                           "custom scoring option is incompatable with "
+                           "<runUnixMultitaskingTests>.  Please disable one "
+                           "of these options.")
+            if (not isEqSettingDict('customizedScoring', ['funcCheckpoints'], [])):
+                logAndExit("loadSecurityEvaluationConfiguration: <funcCheckpoints> "
+                           "custom scoring option is incompatable with "
+                           "<runUnixMultitaskingTests>.  Please disable one "
+                           "of these options.")
+            if (not isEqSettingDict('customizedScoring', ['memAddress'], -1)):
+                logAndExit("loadSecurityEvaluationConfiguration: <memAddress> "
+                           "custom scoring option is incompatable with "
+                           "<runUnixMultitaskingTests>.  Please disable one "
+                           "of these options.")
+
     # Load custom compiling options if enabled
     if (isEnabled('useCustomCompiling')):
         customizedCompilingDict = dict()

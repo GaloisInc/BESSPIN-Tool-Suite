@@ -10,6 +10,7 @@ import fett.cwesEvaluation.informationLeakage.vulClassTester
 import fett.cwesEvaluation.numericErrors.vulClassTester
 import fett.cwesEvaluation.hardwareSoC.vulClassTester
 import fett.cwesEvaluation.injection.vulClassTester
+from fett.cwesEvaluation.multitasking.multitasking import *
 
 cweTests = {
     "bufferErrors" :
@@ -41,6 +42,24 @@ def executeTest(target, vulClass, binTest, logDir):
 
 @decorate.debugWrap
 @decorate.timeWrap
+def checkMultitaskingScores(sequentialScores, multitaskingScores):
+    mismatches = []
+    for cwe, score in sequentialScores.items():
+        try:
+            if multitaskingScores[cwe] != score:
+                mismatches.append(cwe)
+        except KeyError:
+            # Not all tests run in multitasking mode
+            pass
+    return mismatches
+
+@decorate.debugWrap
+@decorate.timeWrap
+def supportsMultitasking(vulClass):
+    return (isEnabled('runUnixMultitaskingTests') and
+            doesSettingExistDict(vulClass, 'supportsMultitasking') and
+            isEnabledDict(vulClass, 'supportsMultitasking'))
+
 def runTests(target, sendFiles=False, timeout=30): #executes the app
     if isEqSetting('osImage', 'FreeRTOS'):
         test, vulClass, _, logFile = getSetting("currentTest")
@@ -84,13 +103,43 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             target.sendTar(timeout=timeout)
 
         # Batch tests by vulnerability class
+        scores = {}
+        multitaskingTests = []
         for vulClass, tests in getSetting("enabledCwesEvaluations").items():
             logsDir = os.path.join(baseLogDir, vulClass)
             mkdir(logsDir)
             for test in tests:
                 executeTest(target, vulClass, test, logsDir)
+                if (supportsMultitasking(vulClass)):
+                    multitaskingTest = cweTests[vulClass](target).testToMultitaskingObj(test)
+                    if multitaskingTest:
+                        multitaskingTests.append(multitaskingTest)
+            scores[vulClass] = scoreTests(vulClass, logsDir)
 
-            scoreTests(vulClass, logsDir)
+        if multitaskingTests:
+            setSetting("runningMultitaskingTests", True)
+            logDir = os.path.join(baseLogDir, "multitasking")
+            mkdir(logDir)
+            multitaskingRunner(target).runMultitaskingTests(multitaskingTests, logDir)
+
+            mismatches = []
+            numMultitaskingScores = 0
+            for vulClass in getSetting("enabledCwesEvaluations").keys():
+                if supportsMultitasking(vulClass):
+                    multitaskingScores = score(os.path.join(logDir, vulClass), vulClass)
+                    mismatches += checkMultitaskingScores(
+                            scores[vulClass],
+                            multitaskingScores)
+                    numMultitaskingScores += len(multitaskingScores)
+            numPassed = numMultitaskingScores - len(mismatches)
+            percentPassed = (numPassed / numMultitaskingScores) * 100
+            printAndLog(f"{numPassed}/{numMultitaskingScores} multitasking "
+                        f"tests scored as expected ({percentPassed:.1f}%).")
+            if mismatches:
+                printAndLog(f"The following tests scored differently in "
+                            "multitasking and sequential execution: "
+                            f"{', '.join(mismatches)}.")
+            setSetting("runningMultitaskingTests", False)
 
     else:
         target.terminateAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",

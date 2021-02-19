@@ -54,7 +54,15 @@ def scoreAllTests(logs):
 
     # Append ret with the CWEs scores based on funcTests
     for test, funcTests in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
-        if (not isTestEnabled(VULCLASS,test)):
+        if ((not isTestEnabled(VULCLASS,test)) or
+            (doesSettingExist("runningMultitaskingTests") and
+             isEnabled("runningMultitaskingTests") and
+             doesSettingExistDict(
+                 VULCLASS, ["testsInfo", test, "multitaskingRestriction"]) and
+             isEqSettingDict(
+                 VULCLASS,
+                 ["testsInfo", test, "multitaskingRestriction"],
+                 f"notOn{getSetting('osImage')}"))):
             continue
         listScores = []
         scoreDetails = []

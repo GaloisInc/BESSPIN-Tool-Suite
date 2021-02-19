@@ -7,6 +7,7 @@ class testgenTargetCompatibilityLayer:
     def __init__(self, target):
         self.objTarget = target
         self.osImage = getSetting("osImage")
+        self.redirectOp = "&>" if isEqSetting('osImage', 'debian') else '> &'
 
     def __getattr__ (self,attr):
         return getattr(self.objTarget,attr)

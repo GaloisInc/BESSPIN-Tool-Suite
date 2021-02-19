@@ -35,9 +35,11 @@ static void sizeofPtr (void);
 
 // --------------- Debian && FreeBSD test ---------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
     int main(void);
 
     int main() {
+        unbufferStdout();
         sizeofPtr();
         printf("\n<END-OF-MAIN>\n");
         return 0;

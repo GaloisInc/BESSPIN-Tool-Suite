@@ -140,6 +140,9 @@ def scoreTests(vulClass, logsDir):
 
     fScoresReport.close()
 
+    # Return dictionary mapping from CWE -> score
+    return {row[0] : row[1] for row in rows}
+
 @decorate.debugWrap
 def tabulate(elements):
     table = []
