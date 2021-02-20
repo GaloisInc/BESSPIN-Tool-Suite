@@ -33,7 +33,9 @@ char char_for_dimension(canid_t dimension_id);
 float *position_for_dimension(infotainment_state *the_state, canid_t dimension_id);
 
 /**
- * Receives a CAN frame sent to the specified port.
+ * Receives a CAN frame sent to the specified port. In the returned frame, the CAN ID
+ * is in host byte order.
+ * 
  * @param port The port on which to receive.
  * @param buffer The buffer in which to receive the CAN frame.
  * @param buffer_len The length of the CAN frame buffer.
@@ -52,7 +54,9 @@ can_frame *receive_frame(int port, uint8_t *buffer, int buffer_len,
 void set_broadcast_address(char *address);
 
 /**
- * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces.
+ * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces. It is assumed
+ * that the CAN ID field in the frame is in host byte order.
+ * 
  * @param from_port The port to broadcast from.
  * @param to_port The port to broadcast to.
  * @param frame The CAN frame to broadcast.
