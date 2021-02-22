@@ -552,7 +552,7 @@ static void prvCanRxTask(void *pvParameters)
     FreeRTOS_printf(("%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
 
     /* Set target ID */
-    target_id = FreeRTOS_GetIPAddress();
+    target_id = FreeRTOS_htonl(FreeRTOS_GetIPAddress());
 
     for (;;)
     {
@@ -564,9 +564,9 @@ static void prvCanRxTask(void *pvParameters)
                 case CAN_ID_HEARTBEAT_REQ:
                     /* received data are in network endian, simply copy over as we do not need to process them */
                     FreeRTOS_printf(("%s (prvCanRxTask) Replying to heartbeat #%u\r\n", getCurrTime(), FreeRTOS_ntohl(request_id)));
-                    /* Copy target ID*/
+                    /* Copy target ID (stored in network byte order) */
                     memcpy(&cBuffer[0], &target_id, sizeof(uint32_t));
-                    /* Copy request ID */
+                    /* Copy request ID (already in network byte order) */
                     memcpy(&cBuffer[4], &request_id, sizeof(uint32_t));
                     res = send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_HEARTBEAT_ACK,
                         (void *)cBuffer, BYTE_LENGTH_HEARTBEAT_ACK);
