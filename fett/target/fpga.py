@@ -255,7 +255,8 @@ class fpgaTarget(object):
             # Re-connect
             self.gdbConnect()
             if (self.processor=='bluespec_p3'):
-                self.setUnixBluespecP3()
+                self.seqGdbCommands(bluespecExtraUnixCommands)
+                time.sleep(2)
 
             if ((not isRepeated) and (self.osImage=='FreeRTOS')):
                 if (self.procFlavor=='bluespec'):
