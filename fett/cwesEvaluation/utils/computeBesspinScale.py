@@ -57,8 +57,10 @@ def computeBesspinScale():
                 cScore = []
                 for cwe in cData["cwes"]:
                     if (cwe not in normalizedScores[vulClass]):
-                        raise Exception(f"CWE-{cwe} score not found for <{category}> in <{vulClass}>.")
+                        raise Exception(f"CWE-{cwe} score not found.")
                     cScore.append(normalizedScores[vulClass][cwe])
+                if (len(cScore) == 0):
+                    raise Exception(f"No CWEs scores are found.")
                 besspinCoeffs[vulClass][category]["S(C)"] = sum(cScore) / len(cScore)
             except Exception as exc:
                 errorAndLog(f"computeBesspinScale: Failed to compute <S({category})> in <{vulClass}>.",exc=exc)
