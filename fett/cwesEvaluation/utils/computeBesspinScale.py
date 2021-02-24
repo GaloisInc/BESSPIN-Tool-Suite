@@ -8,7 +8,8 @@ normalizingScoresTable = {
     SCORES.MED : 1/3,
     SCORES.LOW : 2/3,
     SCORES.NONE : 1.0,
-    SCORES.DETECTED : 1.0
+    SCORES.DETECTED : 1.0,
+    SCORES.NOT_IMPLEMENTED : None #Intentionally a non-numerical value to cause errors if goes unnoticed
 }
 
 besspinCoeffsFactors = {
@@ -58,6 +59,8 @@ def computeBesspinScale():
                 for cwe in cData["cwes"]:
                     if (cwe not in normalizedScores[vulClass]):
                         raise Exception(f"CWE-{cwe} score not found.")
+                    if (normalizedScores[vulClass][cwe] is None): #skip it
+                        continue
                     cScore.append(normalizedScores[vulClass][cwe])
                 if (len(cScore) == 0):
                     raise Exception(f"No CWEs scores are found.")
