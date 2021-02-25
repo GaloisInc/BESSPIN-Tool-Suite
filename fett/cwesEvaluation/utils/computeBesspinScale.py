@@ -31,12 +31,12 @@ maxBeta = 1.0
 
 @decorate.debugWrap
 def isVulClassException(vulClass):
-    if (vulClass in vulClassesExceptions):
-        for xSetting,excValues in vulClassesExceptions[vulClass].items():
-            if (getSetting(xSetting) not in excValues):
-                break
-        return True
-    return False
+    if (vulClass not in vulClassesExceptions):
+        return False
+    for xSetting,excValues in vulClassesExceptions[vulClass].items():
+        if (getSetting(xSetting) not in excValues):
+            return False
+    return True #passed all checks
 
 @decorate.debugWrap
 def computeBesspinScale():
