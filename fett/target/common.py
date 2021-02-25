@@ -1262,7 +1262,7 @@ class commonTarget():
             self.enableSshOnRoot()
 
         portPart = '' if (not self.sshHostPort) else f" -p {self.sshHostPort}"
-        sshCommand = f"ssh{portPart} {userName}@{self.ipTarget}"
+        sshCommand = f"env -u SSH_AUTH_SOCK ssh{portPart} {userName}@{self.ipTarget}"
         sshPassword = self.rootPassword  if (userName=='root') else self.userPassword
         #Need to clear the ECDSA key first in case it is not the first time
         if (not self.sshECDSAkeyWasUpdated):
