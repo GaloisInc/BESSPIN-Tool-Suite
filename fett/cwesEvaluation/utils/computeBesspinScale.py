@@ -124,6 +124,8 @@ def computeBesspinScale():
         return
     # Check that the computed B is legit (i.e. all vulClasses were executed)
     for vulClass,vulClassesScore in vulClassesScores.items():
+        if (isVulClassException(vulClass)):
+            continue
         if ("S(V)" not in vulClassesScore):
             warnAndLog(f"computeBesspinScale: The BESSPIN Scale won't be computed since <S({vulClass})> is missing.")
             B = -1
