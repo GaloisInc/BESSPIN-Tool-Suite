@@ -18,7 +18,10 @@ def prepareOsImage (targetId=None):
 
     # setup os image and extra images
     if isEqSetting('binarySource', 'SRI-Cambridge',targetId=targetId):
-        osImageElf = os.path.join(osImagesDir,f"bbl-cheri.elf")
+        if isEqSetting('target', 'qemu', targetId=targetId):
+            osImageElf = os.path.join(osImagesDir,f"bbl-riscv64cheri-virt-fw_jump.bin")
+        else:
+            osImageElf = os.path.join(osImagesDir,f"bbl-cheri.elf")
         setSetting('osImageElf',osImageElf,targetId=targetId)
         imageVariantSuffix = '' if (isEqSetting('sourceVariant','default',targetId=targetId)) else f"-{getSetting('sourceVariant',targetId=targetId)}"
         setSetting('SRI-Cambridge-imageVariantSuffix',imageVariantSuffix,targetId=targetId)
@@ -333,8 +336,12 @@ def selectImagePaths(targetId=None):
                 printAndLog(f"Could not find image for <{getSetting('osImage',targetId=targetId)}> in nix environment. Falling back to binary repo.", doPrint=False)
         baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource',targetId=targetId), 'osImages', imageType)
         if isEqSetting('binarySource', 'SRI-Cambridge',targetId=targetId):
-            imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), 
-                os.path.join(baseDir, f"kernel-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=targetId)}.elf")]
+            if isEqSetting('target', 'qemu', targetId=targetId):
+                imagePaths = [os.path.join(baseDir, f"bbl-riscv64cheri-virt-fw_jump.bin"),
+                    os.path.join(baseDir, f"kernel-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=targetId)}.elf")]
+            else:
+                imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"),
+                    os.path.join(baseDir, f"kernel-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=targetId)}.elf")]
         else:
             imagePaths = [os.path.join(baseDir, f"{getSetting('osImage',targetId=targetId)}.elf")]
         return imagePaths
@@ -442,9 +449,21 @@ def crossCompileUnix(directory,extraString=''):
     envLinux.append(f"LINKER={getSetting('linker').upper()}")
     envLinux.append(f"BIN_SOURCE={getSetting('binarySource').replace('-','_')}")
     envLinux.append(f"SOURCE_VARIANT={getSetting('sourceVariant')}")
+    if (isEnabled('useCustomCompiling') and
+        isEnabledDict('customizedCompiling','useCustomClang')
+        ):
+        envLinux.append(f"CLANG={getSettingDict('customizedCompiling','pathToCustomClang')}")
+    if (isEnabled('useCustomCompiling') and
+        isEnabledDict('customizedCompiling','useCustomSysroot')
+        ):
+        envLinux.append(f"SYSROOT={getSettingDict('customizedCompiling','pathToCustomSysroot')}")
     logging.debug(f"going to make using {envLinux}")
     if (isEqSetting('binarySource','SRI-Cambridge')):
-        dockerToolchainImage = 'cambridge-toolchain'
+        if (isEnabled('useCustomCompiling')):
+            warnAndLog("cross-compile: Will not use the docker toolchain while <useCustomCompiling> is enabled.")
+            dockerToolchainImage = None
+        else:
+            dockerToolchainImage = 'cambridge-toolchain'
     elif (isEqSetting('binarySource','LMCO')):
         dockerToolchainImage = 'galoisinc/besspin:gfe-gcc83'
     else:

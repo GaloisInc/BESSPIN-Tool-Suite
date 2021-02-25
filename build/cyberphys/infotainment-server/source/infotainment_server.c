@@ -92,6 +92,11 @@ int main_loop(void) {
             
             case CAN_ID_BUTTON_PRESSED:
                 handle_button_press(frame);
+                break;
+
+            case CAN_ID_HEARTBEAT_REQ:
+                broadcast_heartbeat_ack(frame);
+                break;
         }
 
         // broadcast the new state; we always broadcast the current music state
@@ -123,6 +128,7 @@ bool is_relevant(canid_t can_id) {
         case CAN_ID_CAR_Y:
         case CAN_ID_CAR_Z:
         case CAN_ID_CAR_R:
+        case CAN_ID_HEARTBEAT_REQ:
             result = true;
     }
 
@@ -134,17 +140,21 @@ bool update_position(can_frame *frame) {
     assert(frame->can_id == CAN_ID_CAR_X || frame->can_id == CAN_ID_CAR_Y ||
            frame->can_id == CAN_ID_CAR_Z || frame->can_id == CAN_ID_CAR_R);
 
-    // interpret the payload as a float
-    float *position = (float *) frame->data;
+    // copy the payload into a float and fix its byte order; this is done
+    // instead of a simple cast to (float *) for alignment reasons
+    float position;
+    memcpy(&position, &frame->data[0], sizeof(float));
+    position = iu_ntohf(position);
+
     float *old_position = position_for_dimension(&the_state, frame->can_id);    
     char dimension = char_for_dimension(frame->can_id);
     bool changed = false;
 
-    if (*old_position == *position) {
+    if (*old_position == position) {
         debug("%c position update (%f) results in no change\n", 
-              dimension, *position);
+              dimension, position);
     } else {
-        *old_position = *position;
+        *old_position = position;
         changed = true;
         debug("updated %c position to %f\n", dimension, *old_position);
     }
@@ -271,10 +281,28 @@ void broadcast_position(canid_t can_id) {
 
     // BYTE_LENGTH_CAR_X is the same as Y and Z
     can_frame frame = { .can_id = can_id, .can_dlc = BYTE_LENGTH_CAR_X };
-    memcpy(&frame.data[0], position, sizeof(float));
+    float network_position = iu_htonf(*position);
+    memcpy(&frame.data[0], &network_position, sizeof(float));
 
     debug("broadcasting new %c position: %f\n", dimension, *position);
     broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
+}
+
+void broadcast_heartbeat_ack(can_frame *frame) {
+    assert(frame->can_id == CAN_ID_HEARTBEAT_REQ);
+
+    can_frame ack = { .can_id = CAN_ID_HEARTBEAT_ACK, 
+                      .can_dlc = BYTE_LENGTH_HEARTBEAT_ACK };
+
+    // just copy the data, which must be in the right byte order already,
+    // from the heartbeat request
+    memcpy(&ack.data[0], &frame->data[0], sizeof(uint32_t));
+
+    // but we still need the right byte order to output debug info
+    uint32_t *heartbeat_id = (uint32_t *) &ack.data[0];
+    debug("broadcasting response to heartbeat request %ju\n", 
+          (uintmax_t) ntohl(*heartbeat_id));
+    broadcast_frame(RECEIVE_PORT, SEND_PORT, &ack);
 }
 
 void stop(void) {

@@ -21,6 +21,7 @@ commonDefaults = {
     ('gdbDebug',('No',)),
     ('useCustomHwTarget',('No',)),
     ('useCustomTargetIp',('No',)),
+    ('useCustomQemu',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',)),
     ('productionTargetIp',('172.31.30.56',))

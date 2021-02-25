@@ -49,6 +49,12 @@ int main_loop(void) {
     // zero out the buffer
     memset(&message, 0, MESSAGE_BUFFER_SIZE);
 
+    // send a heartbeat
+    send_heartbeat_req(1);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              1);
+
     // send enough frames to initialize the infotainment system to a known state;
     // we expect one response for each frame we send, including the position 
     // setting (which we expect to always be a change from the initial position
@@ -79,6 +85,12 @@ int main_loop(void) {
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_R, 1.0f);
+
+    // send a heartbeat
+    send_heartbeat_req(16);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              16);
 
     for (int i = 0; i < MAX_VOLUME + 2; i++) {
         // lower the volume to 0 no matter what it started at; this also tests
@@ -116,6 +128,12 @@ int main_loop(void) {
     }
     assert_music_state(frame, 1, 1, MAX_VOLUME);
 
+    // send a heartbeat
+    send_heartbeat_req(256);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              256);
+
     // test station 2 (station 1 was already tested)
     send_button_press(BUTTON_STATION_2);
     frame = receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
@@ -141,6 +159,12 @@ int main_loop(void) {
                           &receive_address, &receive_address_len);
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_Z, 1.1f);
+
+    // send a heartbeat
+    send_heartbeat_req(65536);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              65536);
 
     // send position updates back to 0.0 for all coordinates so we can run
     // the tests again without restarting the server
@@ -168,6 +192,12 @@ int main_loop(void) {
     print_frame(frame);
     assert_position(frame, CAN_ID_CAR_R, 0.0f);
 
+    // send a heartbeat
+    send_heartbeat_req(2147483648);
+    print_heartbeat_ack_frame(receive_frame(SEND_PORT, message, MESSAGE_BUFFER_SIZE,
+                                            &receive_address, &receive_address_len),
+                              2147483648);
+
     debug("\n\nTESTS SUCCESSFUL\n");
     return 0;
 }
@@ -181,8 +211,9 @@ void assert_music_state(can_frame *frame, int play, int station, int volume) {
 
 void assert_position(can_frame *frame, canid_t dimension_id, float position) {
     assert(frame->can_id == dimension_id);
-    float *frame_position = (float *) frame->data;
-    assert(*frame_position == position);
+    float frame_position;
+    memcpy(&frame_position, &frame->data[0], sizeof(float));
+    assert(iu_ntohf(frame_position) == position);
 }
 
 void print_frame(can_frame *frame) {
@@ -213,11 +244,14 @@ void print_position_frame(can_frame *frame) {
     assert(frame->can_id == CAN_ID_CAR_X || frame->can_id == CAN_ID_CAR_Y ||
            frame->can_id == CAN_ID_CAR_Z || frame->can_id == CAN_ID_CAR_R);
 
-    // interpret the payload as a float
-    float *position = (float *) frame->data;
+    // copy the payload into a float and fix its byte order; this is done
+    // instead of a simple cast to (float *) for alignment reasons
+    float position;
+    memcpy(&position, &frame->data[0], sizeof(float));
+    position = iu_ntohf(position);
 
     debug("%c-position CAN frame received: %f\n", 
-          char_for_dimension(frame->can_id), *position);
+          char_for_dimension(frame->can_id), position);
 }
 
 void print_music_state_frame(can_frame *frame) {
@@ -227,6 +261,22 @@ void print_music_state_frame(can_frame *frame) {
     debug("music state CAN frame received: raw = %d, playing = %d, station = %d, volume = %d\n",
           frame->data[0], play(frame->data[0]), 
           station(frame->data[0]), volume(frame->data[0]));
+}
+
+void print_heartbeat_ack_frame(can_frame *frame, uint32_t expected_number) {
+    // make sure the frame is an appropriate type
+    assert(frame->can_id == CAN_ID_HEARTBEAT_ACK);
+
+    uint32_t *number = (uint32_t *) &frame->data[0];
+    uint32_t reordered_number = ntohl(*number);
+
+    if (expected_number == reordered_number) {
+        debug("heartbeat ack CAN frame received with expected number %ju\n", 
+              (uintmax_t) reordered_number);
+    } else {
+        error("heartbeat ack CAN frame received with unexpected number %ju\n",
+              (uintmax_t) reordered_number);
+    }
 }
 
 void send_button_press(uint8_t button) {
@@ -244,11 +294,23 @@ void send_coordinate(canid_t dimension_id, float coordinate) {
            dimension_id == CAN_ID_CAR_Z || dimension_id == CAN_ID_CAR_R);
 
     can_frame frame = { .can_id = dimension_id, .can_dlc = BYTE_LENGTH_CAR_X };
-    float *buffer = (float *) frame.data;
-    *buffer = coordinate;
+    float network_coordinate = iu_htonf(coordinate);
+    memcpy(&frame.data[0], &network_coordinate, sizeof(float));
     
     debug("broadcasting %c-coordinate update (%f)\n", 
           char_for_dimension(dimension_id), coordinate);
+    broadcast_frame(SEND_PORT, RECEIVE_PORT, &frame);
+}
+
+void send_heartbeat_req(uint32_t number) {
+    can_frame frame = { .can_id = CAN_ID_HEARTBEAT_REQ,
+                        .can_dlc = BYTE_LENGTH_HEARTBEAT_REQ };
+
+    // copy in the number in the correct byte order
+    uint32_t *number_in_frame = (uint32_t *) &frame.data[0];
+    *number_in_frame = htonl(number);
+
+    debug("broadcasting heartbeat request number %ju\n", (uintmax_t) number);
     broadcast_frame(SEND_PORT, RECEIVE_PORT, &frame);
 }
 

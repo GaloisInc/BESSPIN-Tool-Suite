@@ -5,6 +5,11 @@
 
     "injection" : [
         {
+            "name" : "classSpecificMake",
+            "type" : "bool",
+            "val"  : 1
+        },
+        {
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {

@@ -58,10 +58,6 @@ def buildCwesEvaluation():
 
         fillerCfile = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','utils','fillerMainFreeRTOS.c')
 
-    if (isEqSetting('binarySource','LMCO') and isEqSetting('osImage','debian') and ('injection' in getSetting("vulClasses"))):
-        warnAndLog(f"<injection> tests will be skipped. Please check ticket #963 for more details.")
-        getSetting("vulClasses").remove('injection')
-
     # Copy tests over
     enabledCwesEvaluations = defaultdict(list)
     isThereAnythingToRun = False
@@ -182,6 +178,10 @@ def buildCwesEvaluation():
                                 'utils',
                                 'defaultEnvUnix.mk'),
                     vulClassDir)
+            if vulClass == "injection":
+                # Copy unix injection helpers over
+                cp(sourcesDir, vulClassDir, "inj_unix_helpers.*")
+
 
         #Set the list of enabled tests
         setSetting('enabledCwesEvaluations', enabledCwesEvaluations)

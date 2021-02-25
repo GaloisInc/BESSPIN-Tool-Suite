@@ -46,7 +46,9 @@ ifeq ($(BIN_SOURCE),SRI_Cambridge)
 else
 	SYSROOT_FreeBSD := $(FETT_GFE_FREEBSD_SYSROOT)
 endif
-CC_CLANG := clang -target ${PREFIX_$(OS_IMAGE)} --sysroot=${SYSROOT_$(OS_IMAGE)}
+CLANG ?= clang
+SYSROOT ?= $(SYSROOT_$(OS_IMAGE))
+CC_CLANG := $(CLANG) -target ${PREFIX_$(OS_IMAGE)} --sysroot=$(SYSROOT)
 
 LD_GCC_GCC := $(CC_GCC)
 LD_CLANG_GCC := $(LD_GCC_GCC)

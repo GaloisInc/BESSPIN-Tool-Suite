@@ -69,13 +69,13 @@ def runFreeRTOSCwesEvaluation():
                 target.shutdown()
 
                 #Log the GDB log
-                if (isEnabled('useCustomScoring')):
+                if (isEnabled('useCustomScoring') and target.hasGdbAccess()):
                     logFile.write("\n\n~~~GDB LOGGING~~~\n")
                     gdbLines = '\n'.join(target.gdbOutLines)
                     logFile.write(gdbLines[gdbLines.find("Continuing."):]) # only the useful output
                     logFile.write("\n~~~~~~~~~~~~~~~~~\n")
 
-                if not isEqSetting('target', 'qemu'):
+                if (target.hasGdbAccess()):
                     logging.debug(f"\n~~~GDB LOGGING -- {testName}~~~\n")
                     logging.debug('\n'.join(ftReadLines(target.fGdbOut.name))) # The whole thing for debug
                     logging.debug("\n~~~~~~~~~~~~~~~~~")
