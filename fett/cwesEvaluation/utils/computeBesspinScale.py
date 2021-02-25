@@ -20,9 +20,23 @@ besspinCoeffsFactors = {
     "SSITH" : {"strongly" : 1.0, "relevant" : 2/3, "somewhat" : 1/3}
 }
 
+vulClassesExceptions = {
+    "PPAC" : { "osImage" : ["FreeRTOS"], "target" : ["vcu118", "qemu", "awsf1"] },
+    "injection" : { "osImage" : ["FreeRTOS"], "target" : ["qemu"] }
+}
+
 # SANITY LIMITS
 minBeta = 1/81 #1/(3^4)
 maxBeta = 1.0
+
+@decorate.debugWrap
+def isVulClassException(vulClass):
+    if (vulClass in vulClassesExceptions):
+        for xSetting,excValues in vulClassesExceptions[vulClass].items():
+            if (getSetting(xSetting) not in excValues):
+                break
+        return True
+    return False
 
 @decorate.debugWrap
 def computeBesspinScale():
@@ -50,6 +64,8 @@ def computeBesspinScale():
     B_SigSigBS = 0 # B numerator
     B_SigSigB = 0 # B denominator
     for vulClass in getSetting("vulClasses"):
+        if (isVulClassException(vulClass)):
+            continue
         vulClassesScores[vulClass]["sigma(beta(C))"] = 0
         vulClassesScores[vulClass]["sigma(beta(C)*S(C))"] = 0
         for category,cData in besspinCoeffs[vulClass].items():
@@ -131,6 +147,8 @@ def tabulate(besspinCoeffs, vulClassesScores, B):
     # Add column Headers
     rows.append([["Vul. Class","Category","C(S)","V(S)"]])
     for vulClass in getSetting("vulClasses"):
+        if (isVulClassException(vulClass)):
+            continue
         vRows = []
         for category,cData in besspinCoeffs[vulClass].items():
             vRows.append(["",cData["name"],disp(cData["S(C)"]),""])
