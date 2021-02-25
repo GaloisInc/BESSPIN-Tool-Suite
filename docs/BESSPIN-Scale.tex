@@ -45,20 +45,22 @@
 %\usepackage{refcount}
 \usepackage{relsize}
 
+\usepackage{cleveref}
+
 \begin{document}
 \maketitle
 
 \section{Introduction}
 
-The BESSPIN scale is the security figure of merit that is used to evaluate the SSITH hardware. As any security metric, it is more subjective than empirical, but more structured than qualitative. Since the SSITH program fundamentally relies on the MITRE CWEs enumeration to determine the various weaknesses against which it works on protecting, the BESSPIN scale is inspired by the structure of CWSS. Nevertheless, to make it more intuitive and more relevant to SSITH, we designed our own metrics and rules.
+The BESSPIN score is the security figure of merit that is used to evaluate the SSITH hardware. As any security metric, it is more subjective than empirical, but more structured than qualitative. Since the SSITH program fundamentally relies on MITRE CWEs to determine the various weaknesses targeted by SSITH protections, the BESSPIN scale is inspired by the structure of CWSS. To make it more intuitive and more relevant to SSITH, we designed our own metrics and rules.
 
-The scale is represented by a percentage, where 0\% means there is no protection against any SSITH CWEs, while an ideal SSITH processor is 100\%-SSITH on the BESSPIN scale. 
+The scale is represented by a percentage, where 0\% means there is no protection against any SSITH CWEs, and 100\% means that the processor protects against all SSITH CWEs. 
 
 \section{Formulation}
 
-To compute the BESSPIN scale, $\mathcal{B}$, for a given processor, we need the individual CWEs tests scores, which we group then into weakness categories. We use a structurally similar method to CWSS in combining these categories scores to obtain a separate score per vulnerability class, and the overall BESSPIN scale.
+To compute the BESSPIN scale, $\mathcal{B}$, for a given processor, we group the individual CWE test scores into weakness categories. We use a structurally similar method to CWSS in combining the category scores to obtain a separate score per vulnerability class, and the overall BESSPIN scale.
 
-The SSITH CWEs, $\mathcal{S}$, is the set of all CWEs in the SSITH program picked from the MITRE CWEs. $\mathcal{S}$ is divided into a set of vulnerability classes (see Section~\ref{sec:classes}). Each class, $\mathcal{V} \subset \mathcal{S}$, is also a set of CWEs. Each class is decomposed into some weakness categories or concepts. A category of weaknesses, $\mathcal{C} \subset \mathcal{V}$, is the set of CWEs whose descriptions intersect with its definition; A CWE can belong to more than a single category. The class and SSITH CWEs can thus be written as:
+The SSITH CWE set, $\mathcal{S}$, includes all CWEs in the SSITH program picked from the MITRE CWEs. $\mathcal{S}$ is divided into a set of vulnerability classes (see \Cref{sec:classes}). Each class, $\mathcal{V} \subset \mathcal{S}$, is also a set of CWEs. Each class is decomposed into some weakness categories or concepts. A category of weaknesses, $\mathcal{C} \subset \mathcal{V}$, is the set of CWEs whose descriptions intersect with the category definition; a CWE can belong to more than a single category. The class and SSITH CWEs can thus be written as:
 \begin{equation}
     \begin{array}{c}
         \mathcal{V} = \{ cwe : cwe \in \mathcal{C} \ \wedge \ \mathcal{C} \in \mathcal{V} \} \\
@@ -66,18 +68,18 @@ The SSITH CWEs, $\mathcal{S}$, is the set of all CWEs in the SSITH program picke
     \end{array}
 \end{equation}
 
-The BESSPIN security evaluation tool assigns each CWE a score value, $score_{cwe}$, from the {\scshape SCORES} enum object in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/cwesEvaluation/scoreTests.py}{scoreTests.py}. Any value conveying a failure of any kind would disqualify the computation of the scale. This leaves us with the following acceptable scores: {\scshape none}, {\scshape detected}, {\scshape low}, {\scshape med}, and {\scshape high}. As explained in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/docs/evaluateSecurityTestsMode.md}{the security evaluation document}, {\scshape high} means the weakness is critical and leads to the lowest score on the BESSPIN scale, and either {\scshape none} or {\scshape detected} denotes the best score. For the sake of the scale, the CWE score can thus be normalized as follows:
+The BESSPIN security evaluation tool assigns each CWE a score value, $score_{cwe}$, from the {\scshape scores} enum object in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/cwesEvaluation/scoreTests.py}{scoreTests.py}. Any value conveying a failure of any kind would disqualify the computation of the scale. This leaves us with the following acceptable scores: {\scshape none}, {\scshape detected}, {\scshape low}, {\scshape med}, and {\scshape high}. As explained in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/docs/evaluateSecurityTestsMode.md}{the security evaluation document}, {\scshape high} means the weakness is critical and leads to the lowest score on the BESSPIN scale, and either {\scshape none} or {\scshape detected} denotes the best score. For the sake of the scale, the CWE score can thus be normalized as follows:
 \begin{equation}
 \begin{array}{rl}
 \mathbf{S}(cwe) = \\ 
       0, &   score_{cwe} = \text{{\scshape high}} \\
-      0.33, & score_{cwe} = \text{{\scshape med}} \\
-      0.67, & score_{cwe} = \text{{\scshape low}} \\
+      \nicefrac{1}{3}, & score_{cwe} = \text{{\scshape med}} \\
+      \nicefrac{2}{3}, & score_{cwe} = \text{{\scshape low}} \\
       1, &    score_{cwe} = \text{{\scshape none} or {\scshape detected}}
 \end{array}
 \end{equation}
 
-The score of a category of weaknesses is the arithmetic average of the scores of its CWEs:
+The score of a category of weaknesses is the arithmetic mean of the scores of its CWEs:
 \begin{equation}
     \mathbf{S}(\mathcal{C}) = \overline{\mathbf{S}(cwe)}, \ \ cwe \in \mathcal{C}
 \end{equation}
@@ -90,18 +92,18 @@ The BESSPIN coefficient, $\beta(\mathcal{C})$, is a measure that reflects the im
     \times \mathbf{SSITH}(\mathcal{C})
 \end{equation}
 
-where each of the factors can take the values $0.33$, $0.67$, and $1$:
+where each of the factors can take the values \nicefrac{1}{3}, \nicefrac{2}{3}, and $1$:
 \begin{itemize}
-    \item $\mathbf{TI}(\mathcal{C})$: As defined by CWSS, the technical impact (TI) is the potential result that can be produced by the weakness, assuming that the weakness can be successfully reached and exploited. This is also related to the possible acquired privilege (AP). It can take the values: $1$ for critical, $0.67$ for moderate, and $0.33$ for limited.
-    \item $\mathbf{AV}(\mathcal{C})$: The access vector (AV) identifies the channel through which an attacker must communicate to reach the functionality that contains the weakness. It can take the values: $1$ for user mode, network, or application, $0.67$ for supervisor mode, i.e. operating system, and $0.33$ for machine mode, i.e. hardware access.
+    \item $\mathbf{TI}(\mathcal{C})$: As defined by CWSS, the technical impact (TI) is the potential result that can be produced by the weakness, assuming that the weakness can be successfully reached and exploited. This is also related to the possible acquired privilege (AP). It can take the values: $1$ for critical, \nicefrac{2}{3} for moderate, and \nicefrac{1}{3} for limited.
+    \item $\mathbf{AV}(\mathcal{C})$: The access vector (AV) identifies the channel through which an attacker must communicate to reach the functionality that contains the weakness. It can take the values: $1$ for user mode, network, or application, \nicefrac{2}{3} for supervisor mode, i.e. operating system, and \nicefrac{1}{3} for machine mode, i.e. hardware access.
     \item $\mathbf{ENV}(\mathcal{C})$: The environmental metric group for the BESSPIN scale constitutes of two concepts:
     \begin{equation}
         \mathbf{ENV}(\mathcal{C}) = \mathbf{BI}(\mathcal{C}) + \mathbf{LDX}(\mathcal{C})
     \end{equation}
-    1. The Business Impact (BI) is the potential impact to the business or mission if the weakness can be successfully exploited. 2. The Likelihood of the weakness to be Discovered and eXploited (LDX). 
+    The Business Impact (BI) is the potential impact to the business or mission if the weakness can be successfully exploited, and LDX is the Likelihood of the weakness to be Discovered and eXploited. 
     
-    To reduce the subjectivity of the evaluation, we limit each of these concepts to two scores only; either $0.5$ for high or $0.17$ for low. The summation of the two scores will thus be limited to the same three values as all other factors.
-    \item $\mathbf{SSITH}(\mathcal{C})$: The SSITH factor is a measure of how relevant the weakness category $\mathcal{C}$ is to the SSITH program. It can take the values: $1$ for strongly relevant, $0.67$ for relevant, and $0.33$ for somewhat relevant. 
+    To reduce the subjectivity of the evaluation, we limit each of these concepts to two scores; \nicefrac{1}{2} for high and \nicefrac{1}{6} for low. The summation of the two scores will thus be limited to the same three values as all other factors.
+    \item $\mathbf{SSITH}(\mathcal{C})$: The SSITH factor is a measure of how relevant the weakness category $\mathcal{C}$ is to the SSITH program. It can take the values: $1$ for strongly relevant, \nicefrac{2}{3} for relevant, and \nicefrac{1}{3} for somewhat relevant. 
 \end{itemize} 
 
 We can thus compute the BESSPIN scale for a particular vulnerability class, $\mathbf{S}(\mathcal{V})$:
@@ -216,12 +218,12 @@ Numeric Errors allow exploitation of improper calculation or conversion of numbe
 \begin{enumerate}
     \item \textbf{Improper Hardware Design:} Mistakes in hardware design leading to faults, disclosing sensitive information, or leading to complete system breaches. 
     \begin{itemize}
-        \item Covered by CWEs: 1037, 1209, 1221, 1224, 1231, 1233, 1234, 1239, 1242, 1243, 1245, 1246, 1251, 1253, 1256, 1257, 1259, 1260, 1261, 1264, 1270, 1271, 1274, 1276, 1277, 1280, 1281, 1282, and 1283.
+        \item Covered by CWEs: 1037, 1209, 1221, 1222, 1224, 1231, 1233, 1234, 1239, 1242, 1243, 1245, 1246, 1251, 1253, 1256, 1257, 1259, 1260, 1261, 1264, 1270, 1271, 1274, 1276, 1277, 1280, 1281, 1282, and 1283.
     \end{itemize}
     
     \item \textbf{Mishandling Permissions and Boundaries:} The SoC does not handle permissions and boundaries in a proper way which may lead to disclosing sensitive information, or privilege escalation.
     \begin{itemize}
-        \item Covered by CWEs: 1189, 1193, 1220, 1223, 1234, 1251, 1252, 1257, 1259, 1260, 1262, 1268, 1273, 1274, 1276, 1280, 1282, and 1283. 
+        \item Covered by CWEs: 1189, 1193, 1220, 1222, 1223, 1234, 1251, 1252, 1257, 1259, 1260, 1262, 1268, 1273, 1274, 1276, 1280, 1282, and 1283. 
     \end{itemize}
     
     \item \textbf{Vulnerable Transitions:} During power or state transition, some assumptions made by the SoC design might not hold, which could be exploited to access sensitive data or alter the SoC operation.  
