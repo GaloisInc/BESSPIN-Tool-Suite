@@ -58,6 +58,11 @@ def computeBesspinScale():
                 cScore = []
                 for cwe in cData["cwes"]:
                     if (cwe not in normalizedScores[vulClass]):
+                        cweInfo = getSettingDict(vulClass,["testsInfo",f"test_{cwe}"])
+                        if (("besspinScaleException" in cweInfo) and (getSetting("osImage") in cweInfo["besspinScaleException"])):
+                            printAndLog(f"computeBesspinScale: CWE-{cwe} not found, but it is an exception. Skipping.",
+                                doPrint=False)
+                            continue
                         raise Exception(f"CWE-{cwe} score not found.")
                     if (normalizedScores[vulClass][cwe] is None): #skip it
                         continue
