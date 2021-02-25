@@ -31,7 +31,9 @@ class SCORES (enum.Enum):
     INF = 10
 
     def __str__ (self): #to replace '_' by '-' when printing
-        if (self.name in ["NOT_IMPLEMENTED","NOT_APPLICABLE"]):
+        if (self.name == "NOT_IMPLEMENTED"):
+            return "NoImpl"
+        elif (self.name == "NOT_APPLICABLE"):
             return "N/A"
         else:
             return "%s" % self.name.replace('_','-')
@@ -72,11 +74,14 @@ class SCORES (enum.Enum):
             'NONE' : SCORES.NONE,
             'DETECTED' : SCORES.DETECTED,
             'NA' : SCORES.NOT_APPLICABLE,
+            'NoImpl' : SCORES.NOT_IMPLEMENTED,
             'UNKNOWN' : SCORES.UNKNOWN
         }
         if (strScore not in mapToScores):
             logAndExit(f"toScore: The string <{strScore}> is not mapped to any score.",exitCode=EXIT.Dev_Bug)
-        if (set(mapToScores.keys()) != set(getSetting('cwesAssessments'))):
+        cwesAssessmentsSet = set(getSetting('cwesAssessments'))
+        cwesAssessmentsSet.add('NoImpl') #Add the exception (known divergence)
+        if (set(mapToScores.keys()) != cwesAssessmentsSet):
             logAndExit(f"toScore: The mapping in this function has to match the <cwesAssessments> allowed strings",
                 exitCode=EXIT.Dev_Bug) #This should prevent both structures from diverging
         return mapToScores[strScore]
