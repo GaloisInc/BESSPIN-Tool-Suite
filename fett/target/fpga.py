@@ -103,6 +103,7 @@ class fpgaTarget(object):
                     time.sleep(1) #wait for the function to print "Completed" on the screen
                     printAndLog(f"{self.targetIdInfo}Failed to boot {self.processor}. "
                         f"Trying again ({self.bluespec_p3BootAttemptsIdx+2}/{self.bluespec_p3BootAttemptsMax})...")
+                    self.bluespec_p3BootAttemptsIdx += 1
                     self.fpgaTearDown(isReload=True,stage=failStage.uart)
                     self.stopShowingTime = common.showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout)
                     return self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
