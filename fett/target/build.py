@@ -196,6 +196,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         printAndLog (f"{targetInfo}Cross-compiling...",doPrint=doPrint)
         envVars = extraEnvVars
         envVars.append(f"XLEN={getSetting('xlen',targetId=targetId)}")
+        envVars.append(f"PROC_LEVEL={getSetting('procLevel',targetId=targetId)}")
         envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
         if isEqSetting('target','qemu',targetId=targetId):
             envVars.append(f"PROJ_NAME=main_fett")
