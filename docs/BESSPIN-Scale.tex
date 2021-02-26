@@ -130,7 +130,7 @@ Similarly, we can compute the BESSPIN scale for a given processor:
 \label{sec:classes}
 
 \subsection{Buffer Errors}
-Buffer Errors allow inappropriate read and/or write access to locations within memory associated with variables, data structures, or internal program data. Inappropriate access to memory is exploited to subvert the normal hardware operations creating security vulnerability in the hardware.
+Buffer errors allow inappropriate read and/or write access to locations within memory associated with variables, data structures, or internal program data. Inappropriate access to memory is exploited to subvert the normal hardware operations creating security vulnerability in the hardware.
 \begin{enumerate}
     \item \textbf{Boundary Error:} The software accesses through an array a memory location that is outside the boundaries of that array.
     \begin{itemize}
@@ -177,7 +177,7 @@ Resource management weaknesses allow improper use of the hardware resources that
 \end{enumerate}    
 
 \subsection{Information Leakage}
-Information leakage is the exposure of parties to information which they are not intended to see. Beyond leaking sensitive data, this can include revealing information that enables subsequent attacks. Information can be leaked by directly sending data to unauthorized parties, or through side or covert channels that indirectly allow parties to learn something about otherwise secret data. It is divided to the following weakness categories:
+Information leakage is the exposure of information to parties that are not authorized or intended to access it. Beyond leaking sensitive data, this can include revealing information that enables subsequent attacks. Information can be leaked by directly sending data to unauthorized parties, or through side or covert channels that indirectly allow parties to learn something about otherwise secret data. 
 \begin{enumerate}
     \item \textbf{Information Exposure:} Data was \textit{intentionally} disclosed to actors, but the data contained information that should not have been made available to those actors.
     \begin{itemize}
@@ -196,7 +196,7 @@ Information leakage is the exposure of parties to information which they are not
 \end{enumerate}   
 
 \subsection{Numeric Errors}
-Numeric Errors allow exploitation of improper calculation or conversion of numbers and numeric types. Improper/incorrect calculations can allow subversion of security critical operational decisions and/or resource management.
+Numeric errors allow exploitation of improper calculation or conversion of numbers and numeric types. Improper/incorrect calculations can allow subversion of security critical operational decisions and/or resource management.
 \begin{enumerate}
     \item \textbf{Range/Domain Errors:} The software produces a faulty result due to range or domain violations.
     \begin{itemize}
@@ -215,13 +215,14 @@ Numeric Errors allow exploitation of improper calculation or conversion of numbe
 \end{enumerate} 
 
 \subsection{Hardware/SoC}
+Hardware/SoC weaknesses encompass several potential issues in the design of a piece of hardware.
 \begin{enumerate}
-    \item \textbf{Improper Hardware Design:} Mistakes in hardware design leading to faults, disclosing sensitive information, or leading to complete system breaches. 
+    \item \textbf{Improper Hardware Design:} Mistakes in hardware design leading to faults, disclosure of sensitive information, or complete system breaches. 
     \begin{itemize}
         \item Covered by CWEs: 1037, 1209, 1221, 1222, 1224, 1231, 1233, 1234, 1239, 1242, 1243, 1245, 1246, 1251, 1253, 1256, 1257, 1259, 1260, 1261, 1264, 1270, 1271, 1274, 1276, 1277, 1280, 1281, 1282, and 1283.
     \end{itemize}
     
-    \item \textbf{Mishandling Permissions and Boundaries:} The SoC does not handle permissions and boundaries in a proper way which may lead to disclosing sensitive information, or privilege escalation.
+    \item \textbf{Mishandling Permissions and Boundaries:} The SoC does not handle permissions and boundaries in a proper way, which may lead to either disclosure of sensitive information or privilege escalation.
     \begin{itemize}
         \item Covered by CWEs: 1189, 1193, 1220, 1222, 1223, 1234, 1251, 1252, 1257, 1259, 1260, 1262, 1268, 1273, 1274, 1276, 1280, 1282, and 1283. 
     \end{itemize}
@@ -231,19 +232,19 @@ Numeric Errors allow exploitation of improper calculation or conversion of numbe
         \item Covered by CWEs: 1193, 1221, 1223, 1232, 1239, 1243, 1264, 1271, 1272, and 1280. 
     \end{itemize}
     
-    \item \textbf{DoS and Side Channels:} This category is focused on the weaknesses that lead to resources exhaustion leading to DoS, or discrepancies that might be exploited by a side channel attack. 
+    \item \textbf{DoS and Side Channels:} Weaknesses that lead to resource exhaustion and resulting denial of service, or discrepancies that might be exploited by a side channel attack. 
     \begin{itemize}
         \item Covered by CWEs: 208, 385, 920, 1050, 1246, and 1254. 
     \end{itemize}
     
-    \item \textbf{Crypto and Security Elements:} Improper design of cryptography systems or making the wrong security assumptions is often deterimental to the security. This category also concerns with the design and operation of any security elements in the SoC, such as secure boot.
+    \item \textbf{Crypto and Security Elements:} Improper design of cryptographic systems, and incorrect security assumptions, that are detrimental to security. This category is also concerned with the design and operation of any security elements in the SoC, such as secure boot.
     \begin{itemize}
         \item Covered by CWEs: 1037, 1231, 1233, 1240, 1241, 1243, 1259, 1262, 1270, 1273, 1277, 1279, 1282, and 1283. 
     \end{itemize}
 \end{enumerate} 
 
 \subsection{Injection}
-The injection class represents architectural weaknesses that allow information from a less trusted domain to replace information in a more trusted domain in violation of an explicit or implied policy. Use of the injected information in the context of the more trusted domain could be detrimental to system operation or security.
+Injection weaknesses are architectural weaknesses that allow information from a less trusted domain to replace information in a more trusted domain in violation of an explicit or implied policy. Use of the injected information in the context of the more trusted domain could be detrimental to system operation or security.
 \begin{enumerate}
     \item \textbf{Trust Untrusted Data:} Untrusted data is accessed as trusted data.
     \begin{itemize}
@@ -253,6 +254,6 @@ The injection class represents architectural weaknesses that allow information f
 
 
 \section{BESSPIN Coefficient Values}
-\href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/docs/BESSPIN-Coeffs.md}{The BESSPIN coefficients document} has the factors values used to compute the BESSPIN coefficients for each weakness category. They were evaluated by the BESSPIN team and DARPA.
+\href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/docs/BESSPIN-Coeffs.md}{The BESSPIN coefficients document} contains all values used to compute the BESSPIN coefficients for each weakness category. They were evaluated by the BESSPIN team and DARPA.
 
 \end{document}
