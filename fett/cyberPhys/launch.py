@@ -208,7 +208,6 @@ def stopTtyLogging(targetId):
     setSetting('isTtyLogging',False,targetId=targetId)
 
 @decorate.debugWrap
-@decorate.timeWrap
 def heartBeatWatchDog():
     """
     Sends heartbeat requests and listens to responses.
