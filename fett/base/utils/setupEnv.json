@@ -375,6 +375,12 @@
             "type" : "filePath",
             "val" : "fett/target/utils/uartDevicesMap.json",
             "ignore" : true
+        },
+        {
+            "name" : "vcu118NetbootTransferPace",
+            "_unit" : "seconds / MB",
+            "type" : "int",
+            "val" : 5
         }
     ]
 }
