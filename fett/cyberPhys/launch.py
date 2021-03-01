@@ -10,10 +10,6 @@ import fett.cyberPhys.run
 from fett.base.threadControl import ftQueueUtils
 import threading, queue, pexpect
 
-# Import for CAN bus
-from fett.cyberPhys.canlib import UDPBus, Message
-from fett.cyberPhys.canspecs import CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
-
 @decorate.debugWrap
 @decorate.timeWrap
 def startCyberPhys():
@@ -31,13 +27,13 @@ def startCyberPhys():
         setSetting('cyberPhysQueue',exitQueue)
         for targetId in range(1,getSetting('nTargets')+1):
             setSetting('watchdogQueue',queue.Queue(maxsize=1),targetId=targetId)
+            setSetting('watchdogHeartbeatQueue', queue.Queue(maxsize=1), targetId=targetId)
 
         # Start the watchdogs
         allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
 
         # Start the heartbeat watchdog
-        #allThreads += runThreadPerTarget(heartBeatWatchDog,
-        #                addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
+        allThreads += runThreadPerTarget(fett.cyberPhys.run.watchdogHeartbeat=True)
 
         # Pipe the UART
         if (isEnabled('pipeTheUart')):
@@ -207,30 +203,3 @@ def stopTtyLogging(targetId):
     getSetting('ttyLogger',targetId=targetId).stop()
     setSetting('isTtyLogging',False,targetId=targetId)
 
-@decorate.debugWrap
-@decorate.timeWrap
-def heartBeatWatchDog():
-    """
-    Sends heartbeat requests and listens to responses.
-    """
-    canbus = UDPBus("",getSetting('cyberPhysCanbusPort'))
-    canbus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
-    cnt = 0
-
-    while(True):
-        cnt += 1
-        heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
-                                    is_extended_id=True,
-                                    data=list(cnt.to_bytes(4, byteorder = 'big')))
-        canbus.send(heartbeat_req, getSetting('vcu118BroadcastIp'), getSetting('cyberPhysCanbusPort'))
-        printAndLog (f"FETT <heartBeatWatchDog mode> sending message")
-
-        # Assume one second window to receive watchdog responses
-        endOfWait = time.time() + 1.0
-        responses = []
-        while (time.time() < endOfWait) and (len(responses) < getSetting('nTargets')):
-            heartbeat_ack = canbus.recv(timeout=0.1)
-            if heartbeat_ack:
-                print(f"RX: {heartbeat_ack}")
-                responses.append(heartbeat_ack)
-        time.sleep(1)
