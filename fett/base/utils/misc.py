@@ -391,8 +391,8 @@ def touch(filepath, mode=0o666, permissive=True):
         logAndExit(f"touch: Error touching file {filepath}", exc=exc)
 
 def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
+    fJson = ftOpenFile(jsonFile, 'r')
     try:
-        fJson = open(jsonFile, 'r')
         jsonData = json.load(fJson)
         fJson.close()
     except Exception as exc:
@@ -402,8 +402,8 @@ def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
     return jsonData
 
 def safeDumpJsonFile(jsonData, jsonFile):
+    fJson = ftOpenFile(jsonFile, 'w')
     try:
-        fJson = open(jsonFile, 'w')
         json.dump(jsonData, fJson)
         fJson.close()
     except Exception as exc:
@@ -412,10 +412,10 @@ def safeDumpJsonFile(jsonData, jsonFile):
                    exitCode=EXIT.Files_and_paths)
 
 def safeLoadIniFile (iniFile):
+    fConfig = ftOpenFile(iniFile, 'r')
     xConfig = configparser.ConfigParser()
     try:
         xConfig.optionxform = str # Hack it to be case sensitive
-        fConfig = open(iniFile,'r')
         xConfig.read_file(fConfig)
         fConfig.close()
     except Exception as exc:
@@ -423,8 +423,8 @@ def safeLoadIniFile (iniFile):
     return xConfig
 
 def safeDumpIniFile(xConfig, iniFile):
+    fConfig = ftOpenFile(iniFile, 'w')
     try:
-        fConfig = open(iniFile, 'w')
         xConfig.write(fConfig,space_around_delimiters=True)
         fConfig.close()
     except Exception as exc:
