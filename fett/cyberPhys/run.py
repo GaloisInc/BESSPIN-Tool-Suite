@@ -48,6 +48,10 @@ def watchdog(targetId):
     " 3. Is able to exit
     """
     listenQueue = getSetting('watchdogQueue',targetId=targetId)
+
+    # queue that heartbeat responses will come from
+    wHeartbeatQueue = getSetting('watchdogHeartbeatQueue', targetId=targetId)
+
     while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
         def handleError(errorString):
             """
@@ -65,6 +69,13 @@ def watchdog(targetId):
             else:
                 errorAndLog(f"<target{targetId}>: {errorString}!")
                 return True
+
+        # responses
+        responses = []
+        while not wHeartbeatQueue.empty():
+            responses.append(wHeartbeatQueue.get())
+        #printAndLog(f"<targetId {targetId}> Watchdog {responses}")
+        # TODO: NOTE: check for heartbeat failure here
 
         # Check process
         if not isTargetAlive(targetId) and handleError("Target is not alive"):
