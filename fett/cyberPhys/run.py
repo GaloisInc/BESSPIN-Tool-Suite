@@ -112,7 +112,7 @@ def isTargetAlive(targetId):
 @decorate.timeWrap
 def watchdogHeartbeat(targetId):
     # store the relevant target info
-    _ip = getSetting('vcu118BroadcastIp')
+    ip_addr = getSetting('vcu118BroadcastIp')
     port = getSetting('cyberPhysCanbusPort')
     s_fails = 0
     count = 0
@@ -140,8 +140,7 @@ def watchdogHeartbeat(targetId):
         heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
                                     is_extended_id=True,
                                     data=list(count.to_bytes(4, byteorder = 'big')))
-        # FIXME: wrong send interface?
-        canbus.send(heartbeat_req)
+        canbus.send(heartbeat_req, ip_addr, port)
         printAndLog (f"<targetId: {targetId}>: FETT <heartBeatWatchDog mode> sending message")
 
         #  Assume one second window to receive watchdog responses
