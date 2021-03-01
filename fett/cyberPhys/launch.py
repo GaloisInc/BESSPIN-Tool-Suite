@@ -56,6 +56,7 @@ def startCyberPhys():
         # Terminating all threads
         for targetId in range(1,getSetting('nTargets')+1):
             ftQueueUtils(f"target{targetId}:watchdog:queue",getSetting('watchdogQueue',targetId=targetId),'put')
+            ftQueueUtils(f"target{targetId}:watchdogHeartbeat:queue",getSetting('watchdogHeartbeatQueue',targetId=targetId),'put')
         if (isEnabled('interactiveShell')):
             ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
 
