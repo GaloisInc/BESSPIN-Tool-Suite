@@ -89,7 +89,7 @@
             "name" : "Resource Control",
             "cwes" : ["400", "404", "415", "416", "672", "770", "771", "772", "789", "908", "909", "911"],
             "factors" : {
-                "TI" : "moderate",
+                "TI" : "critical",
                 "AV" : "user",
                 "ENV" : {
                     "BI" : "high",

@@ -12,7 +12,7 @@ To generate, please use [this utility](../build/besspinCoeffsList.py).
 |PPAC|Accountability|limited|user|low|low|somewhat|
 ||||||||
 |Resource Management|Memory/Data Layout|moderate|user|high|low|relevant|
-|Resource Management|Resource Control|moderate|user|high|low|relevant|
+|Resource Management|Resource Control|critical|user|high|low|relevant|
 |Resource Management|Pointers misuse|critical|user|high|high|strongly|
 ||||||||
 |Information Leakage|Information Exposure|critical|user|high|high|relevant|
