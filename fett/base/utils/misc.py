@@ -516,10 +516,10 @@ def ftOpenFile (filePath,mode,exitOnFileError=True):
         modeName = 'read'
     else:
         logAndExit (f"openFile: Unrecognized requested mode=<{mode}>.",exitCode=EXIT.Dev_Bug)
-
+    trash = getSetting('trash') #do not use getSetting within a try/except
     try:
         xFile = open(filePath,mode)
-        getSetting('trash').throwFile(xFile)
+        trash.throwFile(xFile)
         return xFile
     except Exception as exc:
         errMsg = f"Failed to open <{filePath}> to {modeName}."
