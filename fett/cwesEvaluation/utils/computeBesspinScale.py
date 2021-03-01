@@ -2,6 +2,7 @@
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, tabulate_row
+from math import isclose
 
 normalizingScoresTable = {
     SCORES.HIGH : 0.0,
@@ -98,7 +99,8 @@ def computeBesspinScale():
                 ldx = besspinCoeffsFactors["LDX"][cData["factors"]["ENV"]["LDX"]]
                 ssith = besspinCoeffsFactors["SSITH"][cData["factors"]["SSITH"]]
                 beta = ti*av*(bi+ldx)*ssith
-                if ((beta<minBeta) or (beta>maxBeta)):
+                if ( ((beta<minBeta) and (not isclose(beta,minBeta))) 
+                    or ((beta>maxBeta) and (not isclose(beta,maxBeta))) ): #give an exception for float math imprecisions
                     raise Exception(f"Value <{beta}> out of range [{minBeta}-{maxBeta}].")
             except Exception as exc:
                 errorAndLog(f"computeBesspinScale: Failed to compute <Beta({category})> in <{vulClass}>.",exc=exc)
