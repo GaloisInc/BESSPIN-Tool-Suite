@@ -52,7 +52,7 @@
 
 \section{Introduction}
 
-The BESSPIN score is the security figure of merit that is used to evaluate the SSITH hardware. As any security metric, it is more subjective than empirical, but more structured than qualitative. Since the SSITH program fundamentally relies on MITRE CWEs to determine the various weaknesses targeted by SSITH protections, the BESSPIN scale is inspired by the structure of CWSS. To make it more intuitive and more relevant to SSITH, we designed our own metrics and rules.
+The BESSPIN score is the security figure of merit that is used to evaluate the SSITH hardware. As any security metric, it is more subjective than empirical, but more structured than qualitative. Since the SSITH program fundamentally relies on MITRE CWEs to determine the various weaknesses targeted by SSITH protections, the BESSPIN scale is inspired by the structure of \href{https://cwe.mitre.org/cwss/cwss_v1.0.1.html}{CWSS} (MITRE's Common Weakness Scoring System). To make it more intuitive and more relevant to SSITH, we designed our own metrics and rules.
 
 The scale is represented by a percentage, where 0\% means there is no protection against any SSITH CWEs, and 100\% means that the processor protects against all SSITH CWEs. 
 
@@ -68,7 +68,7 @@ The SSITH CWE set, $\mathcal{S}$, includes all CWEs in the SSITH program picked 
     \end{array}
 \end{equation}
 
-The BESSPIN security evaluation tool assigns each CWE a score value, $score_{cwe}$, from the {\scshape scores} enum object in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/cwesEvaluation/scoreTests.py}{scoreTests.py}. Any value conveying a failure of any kind would disqualify the computation of the scale. This leaves us with the following acceptable scores: {\scshape none}, {\scshape detected}, {\scshape low}, {\scshape med}, and {\scshape high}. As explained in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/docs/evaluateSecurityTestsMode.md}{the security evaluation document}, {\scshape high} means the weakness is critical and leads to the lowest score on the BESSPIN scale, and either {\scshape none} or {\scshape detected} denotes the best score. For the sake of the scale, the CWE score can thus be normalized as follows:
+The BESSPIN security evaluation tool assigns each CWE a score value, $score_{cwe}$, from the {\scshape scores} enum object in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/fett/cwesEvaluation/scoreTests.py}{scoreTests.py}. Any value conveying a failure of any kind would disqualify the computation of the scale. A failure means that the test did run as expected, or the scorer was unable to score it properly. This leaves us with the following acceptable scores: {\scshape none}, {\scshape detected}, {\scshape low}, {\scshape med}, and {\scshape high}. As explained in \href{https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/blob/develop/docs/evaluateSecurityTestsMode.md}{the security evaluation document}, {\scshape high} means the weakness is critical and leads to the lowest score on the BESSPIN scale, and either {\scshape none} or {\scshape detected} denotes the best score. For the sake of the scale, the CWE score can thus be normalized as follows:
 \begin{equation}
 \begin{array}{rl}
 \mathbf{S}(cwe) = \\ 
