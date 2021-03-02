@@ -513,10 +513,7 @@ class commonTarget():
     def createUser (self):
         printAndLog (f"{self.targetIdInfo}Creating a user...",doPrint=(not self.targetId))
         if (self.osImage=='debian'):
-            self.runCommand (f"useradd -m {self.userName}")
-            self.runCommand (f"passwd {self.userName}",endsWith="New password:")
-            self.runCommand (self.userPassword,endsWith="Retype new password:")
-            self.runCommand (self.userPassword,expectedContents='password updated successfully')
+            self.runCommand (f"useradd -m {self.userName} && echo \"{self.userName}:{self.userPassword}\" | chpasswd")
             self.runCommand (f"usermod --shell /bin/bash {self.userName}")
             self.runCommand(f"echo \"PS1=\'\${{debian_chroot:+(\$debian_chroot)}}\\u@\\h:\\w\$ \'\" >> /home/{self.userName}/.bashrc")
         elif (self.osImage=='FreeBSD'):
