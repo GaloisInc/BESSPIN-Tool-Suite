@@ -381,7 +381,7 @@
             "name" : "vcu118NetbootTransferPace",
             "_unit" : "seconds / MB",
             "type" : "int",
-            "val" : 5
+            "val" : 6
         }
     ]
 }
