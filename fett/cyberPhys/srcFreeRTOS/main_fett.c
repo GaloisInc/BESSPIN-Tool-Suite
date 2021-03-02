@@ -386,7 +386,7 @@ static void prvSensorTask(void *pvParameters)
             vTaskDelay(pdMS_TO_TICKS(100));
             err_cnt++;
             if (err_cnt >= IIC_RESET_ERROR_THRESHOLD) {
-                FreeRTOS_printf(("%s (prvSensorTask) err_cnt == 5, reseting!\r\n", getCurrTime()));
+                FreeRTOS_printf(("%s (prvSensorTask) err_cnt == %i, reseting!\r\n", getCurrTime(), err_cnt));
                 iic0_master_reset();
                 err_cnt = 0;
             }
