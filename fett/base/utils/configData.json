@@ -223,6 +223,11 @@
         {
             "name" : "runUnixMultitaskingTests",
             "type" : "boolean"
+        },
+        {
+            "name" : "instancesPerTestPart",
+            "type" : "int",
+            "min"  : 1
         }
     ],
 

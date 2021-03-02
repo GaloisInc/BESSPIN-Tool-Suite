@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "inj_unix_helpers.h"
+#include "unbufferStdout.h"
 #endif  // !testgenOnFreeRTOS
 
 #include "testsParameters.h"
@@ -145,8 +146,8 @@ static void stdin_test(const void** expected_ret_ptr) {
     uintptr_t buf[2];
 
     // Leak buffer address and offset
-    printf("<buffer address %p>\n", &buf[0]);
-    printf("<LEAKED>\n");
+    fprintf(stderr, "<buffer address %p>\n", &buf[0]);
+    fprintf(stderr, "<LEAKED>\n");
 
     // First read into buffer should place EBREAK in buf[0]
     write_buf(buf, expected_ret_ptr);
@@ -156,7 +157,7 @@ static void stdin_test(const void** expected_ret_ptr) {
     write_buf(buf, expected_ret_ptr);
 
     // Print before returning so that scoring can differentiate between
-    // segfaults occuring in the return, and segfaults occuring due to the
+    // segfaults occurring in the return, and segfaults occurring due to the
     // previous out of bounds writes.
     printf("<RETURNING>\n");
 
@@ -192,6 +193,7 @@ int main(void) {
     message_buffer_test(&ret_ptr);
 #endif  // !testgenOnQEMU
 #else  // !testgenOnFreeRTOS
+    unbufferStdout();
     stdin_test(&ret_ptr);
 #endif  // !testgenOnFreeRTOS
 ret_location:

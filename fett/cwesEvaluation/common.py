@@ -42,7 +42,7 @@ def executeTest(target, vulClass, binTest, logDir):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def checkMultitaskingScores(vulClass, multitaskingScores):
+def checkMultitaskingScores(vulClass, multitaskingScores, instance):
     results = []
     for cwe, score in getSettingDict("cweScores", vulClass).items():
         if hasMultitaskingException(vulClass, ["testsInfo", f"test_{cwe}"]):
@@ -52,6 +52,7 @@ def checkMultitaskingScores(vulClass, multitaskingScores):
             multitaskingScore = multitaskingScores[cwe]
             results.append((prettyVulClass(vulClass),
                             f"TEST-{cwe}",
+                            str(instance),
                             score,
                             multitaskingScore,
                             "PASS" if multitaskingScore == score else "FAIL"))
@@ -130,18 +131,25 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             mkdir(logsDir)
             multitaskingRunner(target).runMultitaskingTests(multitaskingTests, logsDir)
 
-            table = [("Vul. Class", "TEST", "Seq. Score", "Multi. Score", "Result")]
+            table = [("Vul. Class", "TEST", "Instance", "Seq. Score", "Multi. Score", "Result")]
             numMultitaskingScores = 0
             for vulClass in getSetting("enabledCwesEvaluations").keys():
                 if supportsMultitasking(vulClass):
-                    multitaskingScores = scoreTests(vulClass,
-                                                    os.path.join(logsDir,
-                                                                 vulClass))
-                    table += checkMultitaskingScores(vulClass,
-                                                       multitaskingScores)
-                    numMultitaskingScores += len(multitaskingScores)
+                    for instance in range(1, getSetting('instancesPerTestPart')+1):
+                        printAndLog(f"Scoring instance {instance} of "
+                                    f"multitasking {prettyVulClass(vulClass)} "
+                                    "tests.")
+                        multitaskingScores = scoreTests(
+                                vulClass,
+                                 os.path.join(logsDir,
+                                              vulClass,
+                                              f"instance-{instance}"))
+                        table += checkMultitaskingScores(vulClass,
+                                                         multitaskingScores,
+                                                         instance)
+                        numMultitaskingScores += len(multitaskingScores)
             printAndLogMultitaskingTable(table)
-            numPassed = len([r for r in table[1:] if r[4] == "PASS"])
+            numPassed = len([r for r in table[1:] if r[5] == "PASS"])
             percentPassed = (numPassed / numMultitaskingScores) * 100
             printAndLog(f"{numPassed}/{numMultitaskingScores} multitasking "
                         f"tests scored as expected ({percentPassed:.1f}%).")

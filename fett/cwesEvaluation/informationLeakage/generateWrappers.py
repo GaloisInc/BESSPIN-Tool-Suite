@@ -32,6 +32,7 @@ def generateWrappers():
     stores       = dirnames(os.path.join(src, "stores", "*.c"))
     interpreters = dirnames(os.path.join(src, "interpreters", "*.c"))
 
+    isUnix = getSetting('osImage') in ['debian', 'FreeBSD']
     for t in tests:
         for s in stores:
             for i in interpreters:
@@ -48,8 +49,12 @@ def generateWrappers():
                     enabledBins.append(fileName.replace(".c",".riscv"))
                     fd = ftOpenFile(os.path.join(src, fileName), "w")
                     fd.write('#include <stdio.h>\n')
+                    if isUnix:
+                        fd.write('#include "unbufferStdout.h"\n')
                     fd.write('int main()\n')
                     fd.write('{\n')
+                    if isUnix:
+                        fd.write('\tunbufferStdout();\n')
                     fd.write('\treturn test_main();\n')
                     fd.write('}\n')
                     fd.close()

@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <limits.h>
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
+#endif
+
 // Test 369 only has a single Part, so no special treatment is required
 // here for multi-part running on FreeRTOS or Debian
 
@@ -26,6 +30,9 @@ static int32_t data[10] = {100, 110, 120, 130, 140, 150, 160, 170, 180, 190};
 
 int main (void)
 {
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+  unbufferStdout();
+#endif
   int32_t res;
   printf ("TEST 369 PART P01\n");
 

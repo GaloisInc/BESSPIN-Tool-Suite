@@ -7,6 +7,10 @@
 #include <stdint.h>
 #include <limits.h>
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
+#endif
+
 // Test 197 only has a single Part, so no special treatment is required
 // here for multi-part running on FreeRTOS or Debian
 
@@ -17,6 +21,9 @@ int main (void)
   int32_t i;
   int16_t s;
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+  unbufferStdout();
+#endif
   printf ("TEST 197 PART P01\n");
 
   printf ("msg is %s\n", msg);

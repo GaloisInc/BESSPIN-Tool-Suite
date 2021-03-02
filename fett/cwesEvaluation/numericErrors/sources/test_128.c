@@ -10,6 +10,8 @@
 
 #if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
 #include "FreeRTOS.h"
+#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
 #endif
 
 // Test 128 only has a single Part, so no special treatment is required
@@ -21,6 +23,9 @@ int main(void) {
   int *ptr_1;
   int *ptr_2;
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+  unbufferStdout();
+#endif
   printf ("TEST 128 PART P01\n");
 
   printf ("Size of size_t is %d\n", sizeof(size_t));

@@ -5,6 +5,11 @@
 
     "bufferErrors" : [
         {
+            "name" : "supportsMultitasking",
+            "type" : "boolean",
+            "val"  : true
+        },
+        {
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {

@@ -8,6 +8,7 @@
 #else  // !testgenOnFreeRTOS
 #include <stdlib.h>
 #include "inj_unix_helpers.h"
+#include "unbufferStdout.h"
 #endif  // !testgenOnFreeRTOS
 
 typedef union {
@@ -92,8 +93,8 @@ void stdin_test(void) {
     int_fn_union data = { .fn = benign };
 
     // Leak malicious address.
-    printf("<malicious address %p>\n", &malicious);
-    printf("<LEAKED>\n");
+    fprintf(stderr, "<malicious address %p>\n", &malicious);
+    fprintf(stderr, "<LEAKED>\n");
 
     // Take a number over stdin and store in data.num (thus overwriting data.fn
     // without triggering a const error).
@@ -115,6 +116,7 @@ int main(void) {
     message_buffer_test();
 #endif
 #else
+    unbufferStdout();
     stdin_test();
 #endif
     return 0;

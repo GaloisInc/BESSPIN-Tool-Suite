@@ -9,6 +9,7 @@
 #else // !testgenOnFreeRTOS
 #include <stdlib.h>
 #include "inj_unix_helpers.h"
+#include "unbufferStdout.h"
 #endif
 
 // Number of elements in untrusted1.
@@ -311,7 +312,7 @@ static void debian_test() {
     *trusted = 0;
 
     // Get first increment
-    printf("<READY FOR INPUT>\n");
+    fprintf(stderr, "<READY FOR INPUT>\n");
     if (!get_buffer_increment(untrusted1, UNTRUSTED1_SIZE)) {
         // From this point on don't free on errors because untrusted1 and
         // trusted overlap.
@@ -361,6 +362,7 @@ int main(void) {
     rtos_test();
 #endif  // !testgenOnQEMU
 #else  // !testgenOnFreeRTOS
+    unbufferStdout();
 #ifdef testgenOnFreeBSD
     // Not implemented for FreeBSD due to jemalloc not placing metadata
     // directly before returned pointers

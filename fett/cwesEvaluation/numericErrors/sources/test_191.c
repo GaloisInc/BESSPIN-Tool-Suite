@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
+#endif
+
 // Test 191 only has a single Part, so no special treatment is required
 // here for multi-part running on FreeRTOS or Debian
 
@@ -56,6 +60,9 @@ void decode_and_print (packet *y)
 }
 
 int main(void) {
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+  unbufferStdout();
+#endif
   printf ("TEST 191 PART P01\n");
 
   // This test case inspired by CVE-2004-1002 which is cited on
