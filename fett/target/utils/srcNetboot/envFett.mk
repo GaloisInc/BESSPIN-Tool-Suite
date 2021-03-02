@@ -11,9 +11,9 @@ FREERTOS_SRC += $(FREERTOS_IP_SRC)
 
 ifeq ($(PROC_LEVEL),p3)
 	configCPU_CLOCK_HZ=25000000
-	configMTIME_HZ=250000
-else
-	configCPU_CLOCK_HZ=100000000
+	ifeq ($(PROC_FLAVOR),bluespec)
+		configMTIME_HZ=250000
+	endif
 endif
 
 OPT = -O2
