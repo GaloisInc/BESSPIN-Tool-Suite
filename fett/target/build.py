@@ -197,6 +197,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         envVars = extraEnvVars
         envVars.append(f"XLEN={getSetting('xlen',targetId=targetId)}")
         envVars.append(f"PROC_LEVEL={getSetting('procLevel',targetId=targetId)}")
+        envVars.append(f"PROC_FLAVOR={getSetting('procFlavor',targetId=targetId)}")
         envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
         if isEqSetting('target','qemu',targetId=targetId):
             envVars.append(f"PROJ_NAME=main_fett")
@@ -386,12 +387,12 @@ def importImage(targetId=None):
                 warnAndLog(f"<importImage>: Netboot is not needed in flash modes.",doPrint=False)
                 setSetting('elfLoader','JTAG',targetId=targetId)
             else:
-                if (isEqSetting('procLevel','p3',targetId=targetId)):
+                if (isEqSetting('processor','bluespec_p3',targetId=targetId)):
                     if (isEnabled('useCustomProcessor',targetId=targetId) or (not isEqSetting('binarySource','GFE',targetId=targetId))):
-                        warnAndLog(f"<importImage>: Using netboot on P3 is not currently supported on GFE bitstreams. "
+                        warnAndLog(f"<importImage>: Using netboot on GFE <bluespec_p3> is not currently supported. "
                             "Please use JTAG if booting fails.")
                     else:
-                        logAndExit(f"<importImage>: Netboot is currently not supported on P3. Please use JTAG.", exitCode=EXIT.Configuration)
+                        logAndExit(f"<importImage>: Netboot is currently not supported on <bluespec_p3>. Please use JTAG.", exitCode=EXIT.Configuration)
                 netbootBuildDir = os.path.join(getSetting('osImagesDir',targetId=targetId),'buildNetbootElf')
                 netbootElf = os.path.join(netbootBuildDir,f"FreeRTOS.elf")
                 setSetting("netbootElf",netbootElf,targetId=targetId)
