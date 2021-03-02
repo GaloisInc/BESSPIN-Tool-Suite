@@ -400,7 +400,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         if (vulClass in ['bufferErrors']): #prior to loadConfigSection
             xConfig.set(vulClass,'runAllTests','Yes')
             printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <runAllTests> for <{vulClass}>",doPrint=False)
-        if (vulClass in ['PPAC', 'hardwareSoC']): #prior to load ConfigSection
+        if (vulClass in ['hardwareSoC']): #prior to load ConfigSection
             xConfig.set(vulClass,'useSelfAssessment','Yes')
             printAndLog(f"loadSecurityEvaluationConfiguration: Always enabling <useSelfAssessment> for <{vulClass}>",doPrint=False)
         loadConfigSection(xConfig, vulClass, configData, vulClass, 
