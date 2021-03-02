@@ -475,17 +475,20 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
                 logAndExit("loadSecurityEvaluationConfiguration: <gdbKeywords> "
                            "custom scoring option is incompatable with "
                            "<runUnixMultitaskingTests>.  Please disable one "
-                           "of these options.")
+                           "of these options.",
+                           exitCode=EXIT.Configuration)
             if (not isEqSettingDict('customizedScoring', ['funcCheckpoints'], [])):
                 logAndExit("loadSecurityEvaluationConfiguration: <funcCheckpoints> "
                            "custom scoring option is incompatable with "
                            "<runUnixMultitaskingTests>.  Please disable one "
-                           "of these options.")
+                           "of these options.",
+                           exitCode=EXIT.Configuration)
             if (not isEqSettingDict('customizedScoring', ['memAddress'], -1)):
                 logAndExit("loadSecurityEvaluationConfiguration: <memAddress> "
                            "custom scoring option is incompatable with "
                            "<runUnixMultitaskingTests>.  Please disable one "
-                           "of these options.")
+                           "of these options.",
+                           exitCode=EXIT.Configuration)
 
     # Load custom compiling options if enabled
     if (isEnabled('useCustomCompiling')):
@@ -493,6 +496,9 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
         setSetting('customizedCompiling',customizedCompilingDict)
         loadConfigSection(xConfig, 'customizedCompiling', configData, 'customizedCompiling', 
                 setSettingsToSectDict='customizedCompiling')
+
+    # CWEs evaluation never starts out running multitasking tests
+    setSetting("runningMultitaskingTests", False)
 
 @decorate.debugWrap
 def checkCustomScorerFunction():

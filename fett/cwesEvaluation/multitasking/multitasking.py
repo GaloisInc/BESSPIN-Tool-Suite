@@ -6,6 +6,11 @@ from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 # Name of the file to synchronize the test processes on
 LOCK_FILE = "multitask.lock"
 
+def hasMultitaskingException(vulClass, envSection):
+    exceptions = envSection + ["multitaskingExceptions"]
+    return (doesSettingExistDict(vulClass, exceptions) and
+            getSetting('osImage') in getSettingDict(vulClass, exceptions))
+
 class multitaskingPart:
     """ A multiatskingPart is a single test part to run as a process """
     def __init__(self, logHeader, logFooter, command):
@@ -54,14 +59,11 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
                 logDirs[test.vulClass] = os.path.join(logDir, test.vulClass)
                 mkdir(logDirs[test.vulClass])
 
-
-        # Remove multitasking lock file
-        unredirectedOutput += self.typCommand(f"rm {LOCK_FILE}")
-
-        # Wait for all running jobs to finish
-        _, textBack, wasTimeout, _ = self.runCommand(f"wait {self.redirectOp} wait.log",
+        # Remove multitasking lock file and wait for all running jobs to finish
+        _, textBack, wasTimeout, _ = self.runCommand(f"rm {LOCK_FILE} && "
+                                                     f"wait {self.redirectOp} wait.log",
                                                      exitOnError=False,
-                                                     timeout=240)
+                                                     timeout=max(60, 6*numProcs))
         unredirectedOutput += textBack
         if wasTimeout:
             # Kill any running backgrounded jobs
@@ -111,10 +113,15 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
                             # coincidentally present in timestamps, memory
                             # values, etc.
                             outLog += line
-                            outLog == "\n"
+                            outLog += "\n"
                 outLog += part.logFooter
                 iLog += 1
-            testName = test.parts[0].command.split('.')[1][1:]
+            try:
+                testName = test.parts[0].command.split('.')[1][1:]
+            except Exception as exc:
+                logAndExit("<multitasking> Failed to extract test name.",
+                           exc=exc,
+                           exitCode=EXIT.Dev_Bug)
             fileName = os.path.join(logDirs[test.vulClass], f'{testName}.log')
             logFile = ftOpenFile(fileName, 'w')
             logFile.write(outLog)

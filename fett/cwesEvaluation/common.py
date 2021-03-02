@@ -10,7 +10,7 @@ import fett.cwesEvaluation.informationLeakage.vulClassTester
 import fett.cwesEvaluation.numericErrors.vulClassTester
 import fett.cwesEvaluation.hardwareSoC.vulClassTester
 import fett.cwesEvaluation.injection.vulClassTester
-from fett.cwesEvaluation.multitasking.multitasking import *
+from fett.cwesEvaluation.multitasking.multitasking import multitaskingRunner
 
 cweTests = {
     "bufferErrors" :

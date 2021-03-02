@@ -4,7 +4,7 @@ This file has the custom resourceManagement methods to run tests on qemu|fpga.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 from fett.cwesEvaluation.resourceManagement import cweTests
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
-from fett.cwesEvaluation.multitasking.multitasking import *
+from fett.cwesEvaluation.multitasking.multitasking import hasMultitaskingException, multitaskingPart, multitaskingTest
 
 from fett.base.utils.misc import *
 
@@ -79,15 +79,8 @@ class vulClassTester(testgenTargetCompatibilityLayer):
 
     def testToMultitaskingObj(self, binTest):
         testName, testsInfoSection = self.getTestNameAndInfoSection(binTest)
-        if (doesSettingExistDict(self.vulClass,
-                                 [testsInfoSection,
-                                  testName,
-                                  "multitaskingRestriction"]) and
-            isEqSettingDict(self.vulClass,
-                            [testsInfoSection,
-                              testName,
-                              "multitaskingRestriction"],
-                            f"notOn{getSetting('osImage')}")):
+        if (hasMultitaskingException(self.vulClass,
+                                     [testsInfoSection, testName])):
             # Test is disabled for multitasking on this OS
             return None
         parts = []

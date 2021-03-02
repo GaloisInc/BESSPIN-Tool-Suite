@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -28,6 +29,7 @@ int main(int argc, char **argv) {
 
     // Exec
     execv(argv[1], argv + 1);
+    printf("Exec failed with errno <%d>\n", errno);
     fail_if(true, "Failed to exec");
 
     return 1;

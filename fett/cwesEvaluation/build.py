@@ -153,7 +153,7 @@ def buildCwesEvaluation():
 
         if (not isEqSetting('osImage', 'FreeRTOS')):
             # copy build files over
-            copyUnixBuildFiles(vulClassDir, vulClass)
+            copyUnixBuildFiles(vulClassDir, vulClass, True)
             if vulClass == "injection":
                 # Copy unix injection helpers over
                 cp(sourcesDir, vulClassDir, "inj_unix_helpers.*")
@@ -204,7 +204,7 @@ def buildCwesEvaluation():
                             'sources'),
                multitaskingDir,
                '*')
-            copyUnixBuildFiles(multitaskingDir, None)
+            copyUnixBuildFiles(multitaskingDir, None, False)
             crossCompileUnix(multitaskingDir,
                              extraString="multitasking utility",
                              overrideBinarySource=
@@ -216,36 +216,41 @@ def buildCwesEvaluation():
     return isThereAnythingToRun
 
 @decorate.debugWrap
-@decorate.timeWrap
-def copyUnixBuildFiles(dest, vulClass):
-    if (vulClass and
-        doesSettingExistDict(vulClass, "classSpecificMake") and
-        isEnabledDict(vulClass, "classSpecificMake")):
-        cp(os.path.join(getSetting('repoDir'),
-                        'fett',
-                        'cwesEvaluation',
-                        vulClass,
-                        'Makefile.xcompileDir'),
-           os.path.join(dest, 'Makefile'))
-    else:
+def copyUnixBuildFiles(dest, vulClass, checkClassSpecificMake):
+    # copy makefile over
+    if (isEnabled('useCustomCompiling') and
+        isEnabledDict('customizedCompiling','useCustomMakefile')):
+        cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
+            os.path.join(vulClassDir, 'Makefile'))
+    else: # Use default environment
+        if (checkClassSpecificMake and
+            doesSettingExistDict(vulClass, "classSpecificMake") and
+            isEnabledDict(vulClass, "classSpecificMake")):
+            cp(os.path.join(getSetting('repoDir'),
+                            'fett',
+                            'cwesEvaluation',
+                            vulClass,
+                            'Makefile.xcompileDir'),
+               os.path.join(dest, 'Makefile'))
+        else:
+            cp(os.path.join(getSetting('repoDir'),
+                            'fett',
+                            'target',
+                            'utils',
+                            'Makefile.xcompileDir'),
+               os.path.join(dest, 'Makefile'))
         cp(os.path.join(getSetting('repoDir'),
                         'fett',
                         'target',
                         'utils',
-                        'Makefile.xcompileDir'),
-           os.path.join(dest, 'Makefile'))
-    cp(os.path.join(getSetting('repoDir'),
-                    'fett',
-                    'target',
-                    'utils',
-                    'defaultEnvUnix.mk'),
-        dest)
-    cp(os.path.join(getSetting('repoDir'),
-                    'fett',
-                    'cwesEvaluation',
-                    'utils',
-                    'unbufferStdout.h'),
-        dest)
+                        'defaultEnvUnix.mk'),
+            dest)
+        cp(os.path.join(getSetting('repoDir'),
+                        'fett',
+                        'cwesEvaluation',
+                        'utils',
+                        'unbufferStdout.h'),
+            dest)
 
 @decorate.debugWrap
 @decorate.timeWrap

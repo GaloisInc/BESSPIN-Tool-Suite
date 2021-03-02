@@ -8,6 +8,11 @@
 
     "resourceManagement" : [
         {
+            "name" : "supportsMultitasking",
+            "type" : "boolean",
+            "val"  : true
+        },
+        {
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {
@@ -26,7 +31,7 @@
                 },
                 "test_400" : {
                     "cweText" : "Uncontrolled Resource Consumption",
-                    "multitaskingRestriction" : "notOnFreeBSD"
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_404" : {
                     "cweText" : "Improper Resource Shutdown or Release"
@@ -127,7 +132,7 @@
                 },
                 "test_770" : {
                     "cweText" : "Allocation of Resources Without Limits or Throttling",
-                    "multitaskingRestriction" : "notOnFreeBSD"
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_771" : {
                     "cweText" : "Missing Reference to Active Allocated Resource"
@@ -137,7 +142,7 @@
                 },
                 "test_789" : {
                     "cweText" : "Uncontrolled Memory Allocation",
-                    "multitaskingRestriction" : "notOnFreeBSD"
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_825" : {
                     "cweText" : "Expired Pointer Dereference",
@@ -156,11 +161,6 @@
                     "FreeRTOS" : 2
                 }
             }
-        },
-        {
-            "name" : "supportsMultitasking",
-            "type" : "boolean",
-            "val"  : true
         },
         {
             "name" : "mapTestsToCwes",
@@ -221,7 +221,7 @@
                             "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
                         }
                     },
-                    "multitaskingRestriction" : "notOnFreeBSD"
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_rlr_stackExhaust" : {
                     "unix" : 1,
@@ -238,7 +238,7 @@
                             "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
                         }
                     },
-                    "multitaskingRestriction" : "notOnFreeBSD"
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_rlr_noRelease" : {
                     "unix" : 1,
