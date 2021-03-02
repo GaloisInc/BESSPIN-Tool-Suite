@@ -107,7 +107,6 @@ def isTargetAlive(targetId):
 
     return True
 
-
 @decorate.debugWrap
 @decorate.timeWrap
 def watchdogHeartbeat(targetId):
@@ -168,4 +167,3 @@ def watchdogHeartbeat(targetId):
     # this state should not be entered -- put in cyberphys main queue to exit main thread
     fett.cyberPhys.launch.ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
     return
-
