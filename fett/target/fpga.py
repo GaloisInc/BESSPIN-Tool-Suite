@@ -93,7 +93,7 @@ class fpgaTarget(object):
 
         self.gdbProgStart(elfPath,elfLoadTimeout) #releasing the openocd lock happens here
         
-        if ((self.processor=='bluespec_p3') and (self.target=='vcu118')):
+        if ((self.processor=='bluespec_p3') and (self.target=='vcu118') and (self.elfLoader=='JTAG')):
             _,wasTimeout,_ = self.expectFromTarget("bbl loader", f"attempt to boot {self.processor}",
                 exitOnError=False, timeout=15, issueInterrupt=False,
                 suppressWarnings=True, sshRetry=False)
