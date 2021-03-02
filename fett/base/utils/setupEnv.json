@@ -169,6 +169,9 @@
                     },
                     "chisel_p2" : {
                         "debian" : "firesim"
+                    },
+                    "chisel_p3" : {
+                        "debian" : "notOnAWS"
                     }
                 },
                 "Michigan" : {
@@ -185,6 +188,9 @@
                 "SRI-Cambridge" : {
                     "bluespec_p2" : {
                         "FreeBSD" : "connectal"
+                    },
+                    "bluespec_p3" : {
+                        "FreeBSD" : "notOnAWS"
                     }
                 }
             }
