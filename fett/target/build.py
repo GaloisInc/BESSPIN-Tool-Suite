@@ -386,8 +386,11 @@ def importImage(targetId=None):
                 warnAndLog(f"<importImage>: Netboot is not needed in flash modes.",doPrint=False)
                 setSetting('elfLoader','JTAG',targetId=targetId)
             elif (isEqSetting('procLevel','p3',targetId=targetId)):
-                warnAndLog(f"<importImage>: Netboot is currently not supported on P3. Falling back to JTAG.")
-                setSetting('elfLoader','JTAG',targetId=targetId)
+                if (isEnabled('useCustomProcessor',targetId=targetId) or (not isEqSetting('binarySource','GFE',targetId=targetId))):
+                    warnAndLog(f"<importImage>: Using netboot on P3 is not currently supported on GFE bitstreams. "
+                        "Please use JTAG if booting fails.")
+                else:
+                    logAndExit(f"<importImage>: Netboot is currently not supported on P3. Please use JTAG.", exitCode=EXIT.Configuration)
             else:
                 netbootBuildDir = os.path.join(getSetting('osImagesDir',targetId=targetId),'buildNetbootElf')
                 netbootElf = os.path.join(netbootBuildDir,f"FreeRTOS.elf")
