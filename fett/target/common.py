@@ -569,14 +569,20 @@ class commonTarget():
 
 
     @decorate.debugWrap
-    def getDefaultEndWith (self):
+    def getDefaultEndWith (self,userName=None):
+        if (not self.userCreated):
+            isRoot = True
+        elif (userName is None):
+            isRoot = self.isCurrentUserRoot
+        else:
+            isRoot = (userName != self.userName)
         if (self.osImage=='debian'):
-            if (self.isCurrentUserRoot):
+            if (isRoot):
                 return ":~#"
             else:
                 return ":~\$"
         elif (self.osImage=='FreeBSD'):
-            if (self.isCurrentUserRoot):
+            if (isRoot):
                 if (self.target=='awsf1'):
                     return ":~ #"
                 else:
@@ -584,7 +590,7 @@ class commonTarget():
             else:
                 return ":~ \$"
         elif (self.osImage=='busybox'):
-            if (self.isCurrentUserRoot):
+            if (isRoot):
                 return "~ #"
             else:
                 return "\$"
