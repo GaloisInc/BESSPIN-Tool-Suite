@@ -62,7 +62,7 @@ def main(xArgs):
         # Table Header
         fDoc.write(
             "| Vulnerability Class | Weakness Category | TI | AV | BI | LDX |\n"
-            "|-|-|-|-|-|-|-|\n"
+            "|-|-|-|-|-|-|\n"
         )
 
         for vulClass in vulClasses:
@@ -77,7 +77,7 @@ def main(xArgs):
                     '|\n'
                 )
             # Class separator
-            fDoc.write("||||||||\n")
+            fDoc.write("|||||||\n")
 
         fDoc.close()
     except Exception as exc:
