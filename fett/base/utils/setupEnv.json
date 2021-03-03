@@ -358,12 +358,17 @@
         {
             "name" : "cwesAssessments",
             "type" : "stringsList",
-            "val" : "[HIGH, MED, LOW, NONE, NA, UNKNOWN]"
+            "val" : "[HIGH, MED, LOW, NONE, DETECTED, NA, UNKNOWN]"
         },
         {
             "name" : "cweTestTemplateFreeRTOS",
             "type" : "filePath",
             "val" : "fett/cwesEvaluation/utils/cweTestTemplateFreeRTOS.c"
+        },
+        {
+            "name" : "besspinCoeffs",
+            "type" : "filePath",
+            "val" : "fett/cwesEvaluation/utils/besspinCoeffs.json"
         },
         {
             "name" : "uartDevicesSavedMap",

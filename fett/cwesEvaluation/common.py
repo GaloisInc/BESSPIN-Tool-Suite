@@ -4,19 +4,12 @@ from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import scoreTests
 
 import fett.cwesEvaluation.bufferErrors.vulClassTester
-import fett.cwesEvaluation.bufferErrors.cweScores
 import fett.cwesEvaluation.PPAC.vulClassTester
-import fett.cwesEvaluation.PPAC.cweScores
 import fett.cwesEvaluation.resourceManagement.vulClassTester
-import fett.cwesEvaluation.resourceManagement.cweScores
 import fett.cwesEvaluation.informationLeakage.vulClassTester
-import fett.cwesEvaluation.informationLeakage.cweScores
 import fett.cwesEvaluation.numericErrors.vulClassTester
-import fett.cwesEvaluation.numericErrors.cweScores
 import fett.cwesEvaluation.hardwareSoC.vulClassTester
-import fett.cwesEvaluation.hardwareSoC.cweScores
 import fett.cwesEvaluation.injection.vulClassTester
-import fett.cwesEvaluation.injection.cweScores
 
 cweTests = {
     "bufferErrors" :
@@ -35,23 +28,6 @@ cweTests = {
         fett.cwesEvaluation.injection.vulClassTester.vulClassTester,
 }
 
-cweScores = {
-    "bufferErrors" :
-        fett.cwesEvaluation.bufferErrors.cweScores,
-    "PPAC" :
-        fett.cwesEvaluation.PPAC.cweScores,
-    "resourceManagement" :
-        fett.cwesEvaluation.resourceManagement.cweScores,
-    "informationLeakage" :
-        fett.cwesEvaluation.informationLeakage.cweScores,
-    "numericErrors" :
-        fett.cwesEvaluation.numericErrors.cweScores,
-    "hardwareSoC" :
-        fett.cwesEvaluation.hardwareSoC.cweScores,
-    "injection" :
-        fett.cwesEvaluation.injection.cweScores
-}
-
 @decorate.debugWrap
 @decorate.timeWrap
 def executeTest(target, vulClass, binTest, logDir):
@@ -62,14 +38,6 @@ def executeTest(target, vulClass, binTest, logDir):
     logFile = ftOpenFile(logFileName, 'w')
     logFile.write(outLog)
     logFile.close()
-
-@decorate.debugWrap
-@decorate.timeWrap
-def score(testLogDir, vulClass):
-    module = cweScores[vulClass]
-
-    csvPath = os.path.join(testLogDir, "scores.csv")
-    scoreTests(module, csvPath, testLogDir)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -117,12 +85,12 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
 
         # Batch tests by vulnerability class
         for vulClass, tests in getSetting("enabledCwesEvaluations").items():
-            logDir = os.path.join(baseLogDir, vulClass)
-            mkdir(logDir)
+            logsDir = os.path.join(baseLogDir, vulClass)
+            mkdir(logsDir)
             for test in tests:
-                executeTest(target, vulClass, test, logDir)
+                executeTest(target, vulClass, test, logsDir)
 
-            score(logDir, vulClass)
+            scoreTests(vulClass, logsDir)
 
     else:
         target.terminateAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",

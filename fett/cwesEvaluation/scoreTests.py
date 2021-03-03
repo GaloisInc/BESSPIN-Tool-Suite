@@ -8,14 +8,11 @@ scoring the CWEs
 - SCALE: NONE (no weakness) -> LOW ->MED -> HIGH
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
-import os
-import glob
-import sys
+import os, glob, sys
 from importlib.machinery import SourceFileLoader
-import enum
-import re
-
+import enum, re
 from fett.base.utils.misc import *
+import fett.base.config
 
 class SCORES (enum.Enum):
     NINF = -10
@@ -34,7 +31,9 @@ class SCORES (enum.Enum):
     INF = 10
 
     def __str__ (self): #to replace '_' by '-' when printing
-        if (self.name in ["NOT_IMPLEMENTED","NOT_APPLICABLE"]):
+        if (self.name == "NOT_IMPLEMENTED"):
+            return "NoImpl"
+        elif (self.name == "NOT_APPLICABLE"):
             return "N/A"
         else:
             return "%s" % self.name.replace('_','-')
@@ -73,19 +72,26 @@ class SCORES (enum.Enum):
             'MED' : SCORES.MED,
             'LOW' : SCORES.LOW,
             'NONE' : SCORES.NONE,
+            'DETECTED' : SCORES.DETECTED,
             'NA' : SCORES.NOT_APPLICABLE,
+            'NoImpl' : SCORES.NOT_IMPLEMENTED,
             'UNKNOWN' : SCORES.UNKNOWN
         }
         if (strScore not in mapToScores):
             logAndExit(f"toScore: The string <{strScore}> is not mapped to any score.",exitCode=EXIT.Dev_Bug)
-        if (set(mapToScores.keys()) != set(getSetting('cwesAssessments'))):
+        cwesAssessmentsSet = set(getSetting('cwesAssessments'))
+        cwesAssessmentsSet.add('NoImpl') #Add the exception (known divergence)
+        if (set(mapToScores.keys()) != cwesAssessmentsSet):
             logAndExit(f"toScore: The mapping in this function has to match the <cwesAssessments> allowed strings",
                 exitCode=EXIT.Dev_Bug) #This should prevent both structures from diverging
         return mapToScores[strScore]
 
 @decorate.debugWrap
-def scoreTests(scorerModule, csvPath, logsDir):
+def scoreTests(vulClass, logsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
+    csvPath = os.path.join(logsDir, "scores.csv")
+    iniPath = os.path.join(logsDir, f"{vulClass}.ini")
+    scoresDict = getSettingDict("cweScores",vulClass)
     fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
         setSetting("reportFile", fScoresReport)
@@ -97,21 +103,37 @@ def scoreTests(scorerModule, csvPath, logsDir):
 
     # Get all the log files
     logs = [(os.path.basename(f).split('.')[0], f) for f in sorted(glob.glob(os.path.join(logsDir, '*.log')))]
+    scorerModulePath = os.path.join(getSetting("repoDir"),"fett","cwesEvaluation",vulClass,"cweScores.py")
+    try:
+        scorerModule = SourceFileLoader("cweScores",scorerModulePath).load_module()
+    except Exception as exc:
+        logAndExit(f"Failed to load the <cweScores> module for <{vulClass}>.",exc=exc,exitCode=EXIT.Dev_Bug)
     rows = sorted(scorerModule.scoreAllTests(logs))
     if (len(rows) < 1): #nothing to score
         warnAndLog("<scoreTests>: There are no logs to score.")
     else:
-        # output a csv file
+        # output a csv file + ini file + store the scores in the dict
+        fcsv = ftOpenFile(csvPath, "w")
+        xConfig = configparser.ConfigParser()
+        xConfig.optionxform = str # Hack it to be case sensitive
+        xConfig.add_section(fett.base.config.CWES_SELF_ASSESSMENT_SECTION)
+        if (vulClass not in ["bufferErrors", "informationLeakage"]):
+            xConfig.add_section(fett.base.config.CWES_ENABLED_TESTS_SECTION)
         try:
-            fcsv = ftOpenFile(csvPath, "w")
             for row in rows:
-                fcsv.write(f"{'-'.join(row[0].split('-')[1:])},{row[1]},{row[1].value},\"{row[2]}\"\n")
+                cweName = f"{'-'.join(row[0].split('-')[1:])}"
+                cweNameD = cweName.replace('-','_')
+                scoresDict[cweNameD] = row[1]
+                xConfig.set(fett.base.config.CWES_SELF_ASSESSMENT_SECTION,f"assessment_{cweNameD}",f"{row[1]}")
+                if (vulClass not in ["bufferErrors", "informationLeakage"]):
+                    xConfig.set(fett.base.config.CWES_ENABLED_TESTS_SECTION,f"test_{cweNameD}",'No') #already tested
+                fcsv.write(f"{cweName},{row[1]},{row[1].value},\"{row[2]}\"\n")
             fcsv.close()
         except Exception as exc:
-            logAndExit(f"<scoreTests> Failed to generate the csv output "
-                       f"file <{csvPath}>.",
+            logAndExit(f"<scoreTests> Failed to generate the needed files and outputs for <{vulClass}> scores.",
                        exc=exc,
                        exitCode=EXIT.Files_and_paths)
+        safeDumpIniFile(xConfig,iniPath)
         # Build table for scoring
         for row in tabulate(rows):
             printAndLog(row, tee=fScoresReport)
@@ -143,7 +165,8 @@ def tabulate(elements):
     return table
 
 @decorate.debugWrap
-def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
+def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False,
+                customSeparations=None,horizSeparator='-'):
     def centralize (msg, width):
         if (len(msg)>width):
             return '|' + msg[:width]
@@ -153,11 +176,18 @@ def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False):
         return '|' + ' '*leadingSpaces + msg + ' '*laggingSpaces
 
     if (drawLine):
-        message = ' ' + '-'*(sum(widthCols)+2) + ' '
+        message = ' ' + '-'*(sum(widthCols)+len(widthCols)-1) + ' '
     elif (drawSeparation):
-        message = '|' + '-'*widthCols[0] + '|' + '-'*widthCols[1] + '|' + '-'*widthCols[2] + '|'
+        if (customSeparations is None):
+            customSeparations = [True for col in widthCols]
+        elif (len(customSeparations) != len(widthCols)):
+            logAndExit("tabulate_row: Invalid <customSeparations>.",exitCode=EXIT.Dev_Bug)
+        message = '|' + '|'.join([(horizSeparator if sep else ' ')*width for width,sep in zip(widthCols,customSeparations)]) + '|'
+    elif (len(elements) == len(widthCols)):
+        message = ''.join([centralize(str(element),widthCol) for element,widthCol in zip(elements,widthCols)]) + '|'
     else:
-        message = centralize(elements[0],widthCols[0]) + centralize(str(elements[1]),widthCols[1]) + centralize(elements[2],widthCols[2]) + '|'
+        printAndLog(f"tabulate_row: The faulty row is <{elements}>.",doPrint=False)
+        logAndExit("tabulate_row: Length mismatch between <elements> and <widhCols>.",exitCode=EXIT.Dev_Bug)
     return (message)
 
 @decorate.debugWrap

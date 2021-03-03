@@ -5,7 +5,7 @@ Misc required functions for fett.py
 
 import logging, enum, traceback, atexit
 import os, shutil, glob, subprocess, pathlib
-import tarfile, sys, json, re, getpass, time
+import tarfile, sys, json, re, getpass, time, configparser
 import crypt, hashlib
 import zstandard
 
@@ -391,8 +391,8 @@ def touch(filepath, mode=0o666, permissive=True):
         logAndExit(f"touch: Error touching file {filepath}", exc=exc)
 
 def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
+    fJson = ftOpenFile(jsonFile, 'r')
     try:
-        fJson = open(jsonFile, 'r')
         jsonData = json.load(fJson)
         fJson.close()
     except Exception as exc:
@@ -402,14 +402,34 @@ def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
     return jsonData
 
 def safeDumpJsonFile(jsonData, jsonFile):
+    fJson = ftOpenFile(jsonFile, 'w')
     try:
-        fJson = open(jsonFile, 'w')
         json.dump(jsonData, fJson)
         fJson.close()
     except Exception as exc:
         logAndExit(f"Failed to dump json <{jsonData}> to file <{jsonFile}>",
                    exc=exc,
                    exitCode=EXIT.Files_and_paths)
+
+def safeLoadIniFile (iniFile):
+    fConfig = ftOpenFile(iniFile, 'r')
+    xConfig = configparser.ConfigParser()
+    try:
+        xConfig.optionxform = str # Hack it to be case sensitive
+        xConfig.read_file(fConfig)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to read configuration file <{iniFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
+    return xConfig
+
+def safeDumpIniFile(xConfig, iniFile):
+    fConfig = ftOpenFile(iniFile, 'w')
+    try:
+        xConfig.write(fConfig,space_around_delimiters=True)
+        fConfig.close()
+    except Exception as exc:
+        logAndExit(f"Failed to dump config data <{xConfig}> to file <{iniFile}>",
+                   exc=exc, exitCode=EXIT.Files_and_paths)
 
 @decorate.debugWrap
 def make (argsList,dirPath,dockerToolchainImage=None,dockerExtraMounts={},targetId=None, buildDir=None):
@@ -496,10 +516,10 @@ def ftOpenFile (filePath,mode,exitOnFileError=True):
         modeName = 'read'
     else:
         logAndExit (f"openFile: Unrecognized requested mode=<{mode}>.",exitCode=EXIT.Dev_Bug)
-
+    trash = getSetting('trash') #do not use getSetting within a try/except
     try:
         xFile = open(filePath,mode)
-        getSetting('trash').throwFile(xFile)
+        trash.throwFile(xFile)
         return xFile
     except Exception as exc:
         errMsg = f"Failed to open <{filePath}> to {modeName}."

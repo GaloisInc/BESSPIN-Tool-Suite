@@ -35,10 +35,22 @@
                     "cweText" : "Improper Removal of Sensitive Information Before Storage or Transfer"
                 },
                 "test_226" : {
-                    "cweText" : "Sensitive Information Uncleared in Resource Before Release for Reuse"
+                    "cweText" : "Sensitive Information Uncleared in Resource Before Release for Reuse",
+                    "gfeScoringExceptions" : [
+                        {
+                            "osImage" : "FreeBSD",
+                            "score" : "MED" 
+                        }
+                    ]
                 },
                 "test_244" : {
-                    "cweText" : "Improper Clearing of Heap Memory Before Release ('Heap Inspection')"
+                    "cweText" : "Improper Clearing of Heap Memory Before Release ('Heap Inspection')",
+                    "gfeScoringExceptions" : [
+                        {
+                            "osImage" : "FreeBSD",
+                            "score" : "NONE" 
+                        }
+                    ]
                 },
                 "test_524" : {
                     "cweText" : "Use of Cache Containing Sensitive Information"
