@@ -61,7 +61,7 @@ def main(xArgs):
 
         # Table Header
         fDoc.write(
-            "| Vulnerability Class | Weakness Category | TI | AV | BI | LDX | SSITH |\n"
+            "| Vulnerability Class | Weakness Category | TI | AV | BI | LDX |\n"
             "|-|-|-|-|-|-|-|\n"
         )
 
@@ -74,7 +74,6 @@ def main(xArgs):
                     f'|{cData["factors"]["AV"]}'
                     f'|{cData["factors"]["ENV"]["BI"]}'
                     f'|{cData["factors"]["ENV"]["LDX"]}'
-                    f'|{cData["factors"]["SSITH"]}'
                     '|\n'
                 )
             # Class separator

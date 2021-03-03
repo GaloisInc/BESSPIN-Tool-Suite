@@ -84,12 +84,11 @@ The score of a category of weaknesses is the arithmetic mean of the scores of it
     \mathbf{S}(\mathcal{C}) = \overline{\mathbf{S}(cwe)}, \ \ cwe \in \mathcal{C}
 \end{equation}
 
-The BESSPIN coefficient, $\beta(\mathcal{C})$, is a measure that reflects the importance of a category of CWEs, $\mathcal{C}$, and its relevance to the SSITH program. It is formalized as: 
+The BESSPIN coefficient, $\beta(\mathcal{C})$, is a measure that reflects the importance of a category of CWEs, $\mathcal{C}$. It is formalized as: 
 \begin{equation}
     \beta(\mathcal{C}) = \mathbf{TI}(\mathcal{C}) 
     \times \mathbf{AV}(\mathcal{C}) 
-    \times \mathbf{ENV}(\mathcal{C}) 
-    \times \mathbf{SSITH}(\mathcal{C})
+    \times \mathbf{ENV}(\mathcal{C})
 \end{equation}
 
 where each of the factors can take the values \nicefrac{1}{3}, \nicefrac{2}{3}, and $1$:
@@ -103,7 +102,6 @@ where each of the factors can take the values \nicefrac{1}{3}, \nicefrac{2}{3}, 
     The Business Impact (BI) is the potential impact to the business or mission if the weakness can be successfully exploited, and LDX is the Likelihood of the weakness to be Discovered and eXploited. 
     
     To reduce the subjectivity of the evaluation, we limit each of these concepts to two scores; \nicefrac{1}{2} for high and \nicefrac{1}{6} for low. The summation of the two scores will thus be limited to the same three values as all other factors.
-    \item $\mathbf{SSITH}(\mathcal{C})$: The SSITH factor is a measure of how relevant the weakness category $\mathcal{C}$ is to the SSITH program. It can take the values: $1$ for strongly relevant, \nicefrac{2}{3} for relevant, and \nicefrac{1}{3} for somewhat relevant. 
 \end{itemize} 
 
 We can thus compute the BESSPIN scale for a particular vulnerability class, $\mathbf{S}(\mathcal{V})$:

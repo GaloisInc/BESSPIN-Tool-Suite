@@ -10,8 +10,6 @@
     "_ENV_BI_values" : "high, low",
     "_ENV_LDX" : "The Likelihood of the weakness to be Discovered and eXploited",
     "_ENV_LDX_values" : "high, low",
-    "_SSITH" : "The SSITH factor is a measure of how relevant the weakness category C is to the SSITH program.",
-    "_SSITH_values" : "strongly, relevant, somewhat",
 
     "bufferErrors" : {
         "BE" : {
@@ -23,8 +21,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "high"
-                },
-                "SSITH" : "strongly"
+                }
             }
         },
         "ISH" : {
@@ -36,8 +33,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "high"
-                },
-                "SSITH" : "strongly"
+                }
             }
         }
     },
@@ -52,8 +48,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "low"
-                },
-                "SSITH" : "somewhat"
+                }
             }
         },
         "ACC" : {
@@ -65,8 +60,7 @@
                 "ENV" : {
                     "BI" : "low",
                     "LDX" : "low"
-                },
-                "SSITH" : "somewhat"
+                }
             }
         }
     },
@@ -81,8 +75,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "low"
-                },
-                "SSITH" : "relevant"
+                }
             }
         },
         "RC" : {
@@ -94,8 +87,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "low"
-                },
-                "SSITH" : "relevant"
+                }
             }
         },
         "PM" : {
@@ -107,8 +99,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "high"
-                },
-                "SSITH" : "strongly"
+                }
             }
         }
     },
@@ -123,8 +114,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "high"
-                },
-                "SSITH" : "relevant"
+                }
             }
         },
         "OD" : {
@@ -136,8 +126,7 @@
                 "ENV" : {
                     "BI" : "low",
                     "LDX" : "low"
-                },
-                "SSITH" : "somewhat"
+                }
             }
         },
         "IS" : {
@@ -149,8 +138,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "high"
-                },
-                "SSITH" : "strongly"
+                }
             }
         }
     },
@@ -165,8 +153,7 @@
                 "ENV" : {
                     "BI" : "low",
                     "LDX" : "high"
-                },
-                "SSITH" : "somewhat"
+                }
             }
         },
         "TE" : {
@@ -178,8 +165,7 @@
                 "ENV" : {
                     "BI" : "low",
                     "LDX" : "high"
-                },
-                "SSITH" : "relevant"
+                }
             }
         },
         "VE" : {
@@ -191,8 +177,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "high"
-                },
-                "SSITH" : "strongly"
+                }
             }
         }
     },
@@ -207,8 +192,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "low"
-                },
-                "SSITH" : "relevant"
+                }
             }
         },
         "MPB" : {
@@ -220,8 +204,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "low"
-                },
-                "SSITH" : "somewhat"
+                }
             }
         },
         "VT" : {
@@ -233,8 +216,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "low"
-                },
-                "SSITH" : "somewhat"
+                }
             }
         },
         "DSC" : {
@@ -246,8 +228,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "low"
-                },
-                "SSITH" : "somewhat"
+                }
             }
         },
         "CSE" : {
@@ -259,8 +240,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "low"
-                },
-                "SSITH" : "somewhat"
+                }
             }
         }
     },
@@ -275,8 +255,7 @@
                 "ENV" : {
                     "BI" : "high",
                     "LDX" : "high"
-                },
-                "SSITH" : "strongly"
+                }
             }
         }
     }

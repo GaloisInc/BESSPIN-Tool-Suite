@@ -18,7 +18,6 @@ besspinCoeffsFactors = {
     "AV" : {"user" : 1.0, "supervisor" : 2/3, "machine" : 1/3},
     "BI" : {"high" : 0.5, "low" : 1/6},
     "LDX" : {"high" : 0.5, "low" : 1/6},
-    "SSITH" : {"strongly" : 1.0, "relevant" : 2/3, "somewhat" : 1/3}
 }
 
 vulClassesExceptions = {
@@ -27,7 +26,7 @@ vulClassesExceptions = {
 }
 
 # SANITY LIMITS
-minBeta = 1/81 #1/(3^4)
+minBeta = 1/27 #1/(3^3)
 maxBeta = 1.0
 
 @decorate.debugWrap
@@ -97,8 +96,7 @@ def computeBesspinScale():
                 av = besspinCoeffsFactors["AV"][cData["factors"]["AV"]]
                 bi = besspinCoeffsFactors["BI"][cData["factors"]["ENV"]["BI"]]
                 ldx = besspinCoeffsFactors["LDX"][cData["factors"]["ENV"]["LDX"]]
-                ssith = besspinCoeffsFactors["SSITH"][cData["factors"]["SSITH"]]
-                beta = ti*av*(bi+ldx)*ssith
+                beta = ti*av*(bi+ldx)
                 if ( ((beta<minBeta) and (not isclose(beta,minBeta))) 
                     or ((beta>maxBeta) and (not isclose(beta,maxBeta))) ): #give an exception for float math imprecisions
                     raise Exception(f"Value <{beta}> out of range [{minBeta}-{maxBeta}].")
