@@ -9,7 +9,7 @@ An access vulnerability can allow inappropriate control of the authorizing polic
 
 ## Testing ## 
 
-This Vulnerability Class will be only self-assessed. Three created CWE concepts are introduced that enumarate the SSITH-relevant concepts from the NIST list.
+Three created CWE concepts are introduced that enumarate the SSITH-relevant concepts from the NIST list.
 
 ## Notes on P1s ##
 
@@ -21,7 +21,7 @@ Given that for P1s, SSITH only supports FreeRTOS (and neither safeRTOS nor secur
     - Users control
     - Standard filesystem
 
-PPAC assessment will be restrained for UNIX systems.
+PPAC tests and assessments will be restrained for UNIX systems.
 
 ------------------
 
@@ -47,7 +47,10 @@ Reliance on OS and software authentication. The hardware solely relies on the OS
 **Related CWEs**
 - [CWE-284](https://cwe.mitre.org/data/definitions/284.html).   
 - [CWE-287](https://cwe.mitre.org/data/definitions/287.html).   
-- [CWE-288](https://cwe.mitre.org/data/definitions/288.html).    
+- [CWE-288](https://cwe.mitre.org/data/definitions/288.html).   
+
+**Test**   
+The test attempts to login as a user on SSH using the user's password, then attempts to switch user to `root` using the root's password. This behavior is allowed on the OS by default. A `HIGH` score is assigned if the test was able to `su` to `root`, and a `LOW` score is granted if only the non-`root` logging in was permitted. 
 
 ------------------
 
