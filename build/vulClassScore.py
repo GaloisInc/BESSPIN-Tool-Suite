@@ -58,7 +58,9 @@ def main(xArgs):
         setSetting("vulClasses",[xArgs.vulClass])
         scoreTests (xArgs.vulClass, os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass))
     checkValidScores()
-    computeBesspinScale()
+
+    if (not xArgs.disableBesspinScale):
+        computeBesspinScale()
 
 if __name__ == '__main__':
     # Reading the bash arguments
@@ -66,6 +68,7 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-c', '--configFile', help='Overwrites the default config file: ./config.ini')
     xArgParser.add_argument ('-v', '--vulClass', help='Single vulnerability class to score. Default is <all>',default="all")
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
+    xArgParser.add_argument ('-nbs', '--disableBesspinScale', help='Disable BESSPING Scale.', action='store_true')
 
     xArgs = xArgParser.parse_args()
     main(xArgs)
