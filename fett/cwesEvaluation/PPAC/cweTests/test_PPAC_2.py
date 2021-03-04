@@ -13,7 +13,13 @@ def test_PPAC_2(xTarget):
         xTarget.createUser()
 
     if (xTarget.osImage=="FreeBSD"):
-        xTarget.runCommand('sed -i "" "s/.*pam_group.*//" /etc/pam.d/su')
+        retLog += "Removing <pam_group> from pam.d/su...\n"
+        isSuccess,textBack,_,_ = xTarget.runCommand('sed -i "" "s/.*pam_group.*//" /etc/pam.d/su',
+            erroneousContents=["sed:"],exitOnError=False,suppressErrors=True)
+        if (not isSuccess):
+            retLog += textBack
+            retLog += "<INVALID> Failed to modify /etc/pam.d/su\n"
+            return retLog
 
     isCalledWithinSsh = xTarget.isSshConn
     if (isCalledWithinSsh): #already is connected through SSH, exit and re-connect
@@ -30,12 +36,7 @@ def test_PPAC_2(xTarget):
 
     retLog += "\n<USER-GRANTED> Logged in using password only!\n"
 
-    shellRoot = xTarget.getDefaultEndWith(userName='root')
-    shellUser = xTarget.getDefaultEndWith(userName=xTarget.userName)
-    if ((not isinstance(shellRoot,str)) or (not isinstance(shellUser,str))):
-        retLog += "<INVALID> BUG in the test; expecting strings for <shellRoot> and <shellUser>.\n"
-        return retLog
-    shellRoot = shellRoot.replace('~',f"/home/{xTarget.userName}")
+    shellRoot, shellUser = xTarget.getShells()
 
     _, textBack, _, idxEndsWith = xTarget.runCommand("su root",endsWith=['Password:', shellRoot, shellUser],exitOnError=False,suppressErrors=True)
     retLog += textBack
@@ -55,6 +56,7 @@ def test_PPAC_2(xTarget):
     else: #command failed for some weird reason
         retLog += "\n<INVALID> Failed to execute <su root>.\n"
 
+    xTarget.closeSshConn()
     if (isCalledWithinSsh):
         xTarget.openSshConn()
 
