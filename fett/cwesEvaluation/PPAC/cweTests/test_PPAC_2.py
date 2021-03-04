@@ -12,6 +12,9 @@ def test_PPAC_2(xTarget):
         retLog += "Creating User...\n"
         xTarget.createUser()
 
+    if (xTarget.osImage=="FreeBSD"):
+        xTarget.runCommand('sed -i "" "s/.*pam_group.*//" /etc/pam.d/su')
+
     isCalledWithinSsh = xTarget.isSshConn
     if (isCalledWithinSsh): #already is connected through SSH, exit and re-connect
         xTarget.killSshConn()
