@@ -26,4 +26,12 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         
         return outLog
 
+    def getShells(self):
+        shellRoot = self.getDefaultEndWith(userName='root')
+        shellUser = self.getDefaultEndWith(userName=self.userName)
+        if ((not isinstance(shellRoot,str)) or (not isinstance(shellUser,str))):
+            self.terminateAndExit(f"Expected strings for <shellRoot> and <shellUser>",exitCode=EXIT.Dev_Bug)
+        shellRoot = shellRoot.replace('~',f"/home/{self.userName}")
+        return (shellRoot,shellUser)
+
 
