@@ -10,7 +10,7 @@ import fett.cwesEvaluation.informationLeakage.vulClassTester
 import fett.cwesEvaluation.numericErrors.vulClassTester
 import fett.cwesEvaluation.hardwareSoC.vulClassTester
 import fett.cwesEvaluation.injection.vulClassTester
-from fett.cwesEvaluation.multitasking.multitasking import multitaskingRunner
+from fett.cwesEvaluation.multitasking.multitasking import hasMultitaskingException, multitaskingRunner
 
 cweTests = {
     "bufferErrors" :
@@ -42,15 +42,20 @@ def executeTest(target, vulClass, binTest, logDir):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def checkMultitaskingScores(sequentialScores, multitaskingScores):
+def checkMultitaskingScores(vulClass, multitaskingScores):
     mismatches = []
-    for cwe, score in sequentialScores.items():
+    for cwe, score in getSettingDict("cweScores", vulClass).items():
+        if hasMultitaskingException(vulClass, ["testsInfo", f"test_{cwe}"]):
+            # Test doesn't run in multitasking mode
+            continue
         try:
             if multitaskingScores[cwe] != score:
                 mismatches.append(cwe)
-        except KeyError:
-            # Not all tests run in multitasking mode
-            pass
+        except Exception as exc:
+            logAndExit("<checkMultitaskingScores> Failed to check "
+                       f"multitasking score for CWE <{cwe}>.",
+                       exc=exc,
+                       exitCode=EXIT.Dev_Bug)
     return mismatches
 
 @decorate.debugWrap
@@ -128,9 +133,8 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                     multitaskingScores = scoreTests(vulClass,
                                                     os.path.join(logsDir,
                                                                  vulClass))
-                    mismatches += checkMultitaskingScores(
-                            getSettingDict('cweScores', vulClass),
-                            multitaskingScores)
+                    mismatches += checkMultitaskingScores(vulClass,
+                                                          multitaskingScores)
                     numMultitaskingScores += len(multitaskingScores)
             numPassed = numMultitaskingScores - len(mismatches)
             percentPassed = (numPassed / numMultitaskingScores) * 100
