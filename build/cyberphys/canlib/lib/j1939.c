@@ -272,7 +272,7 @@ uint8_t recv_can_message(canlib_socket_t socket, canlib_sockaddr_t *srcaddr, can
 
             /* get bam nbytes, data */
             params_bam(frame, &rpgn, &rnbytes, &rnpackets);
-            printf("(recv_can_message) Got: rpgn: %#X, rnbytes: %u, rnpackets: %u\r\n", rpgn, rnbytes, rnpackets);
+            printf("(recv_can_message) Got: rpgn: %u, rnbytes: %u, rnpackets: %u\r\n", rpgn, rnbytes, rnpackets);
             void *rmsg = (void *)bam_can_frames_to_data((can_frame *)buffer);
             *rmessage_len = rnbytes;
             printf("(recv_can_message) rmessage_len: %lu\r\n", *rmessage_len);

