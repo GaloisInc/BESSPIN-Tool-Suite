@@ -31,13 +31,18 @@ def startCyberPhys():
         setSetting('cyberPhysQueue',exitQueue)
         for targetId in range(1,getSetting('nTargets')+1):
             setSetting('watchdogQueue',queue.Queue(maxsize=1),targetId=targetId)
+            # queue from heartbeat thread -> watchdog thread
+            setSetting('watchdogHeartbeatQueue',queue.Queue(),targetId=targetId)
+
+        # queue used to stop the heartbeat thread
+        setSetting('heartbeatQueue', queue.Queue(maxsize=1))
 
         # Start the watchdogs
         allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
 
         # Start the heartbeat watchdog
-        #allThreads += runThreadPerTarget(heartBeatWatchDog,
-        #                addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
+        allThreads += runThreadPerTarget(heartBeatWatchDog,
+                        addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
 
         # Pipe the UART
         if (isEnabled('pipeTheUart')):
@@ -60,6 +65,7 @@ def startCyberPhys():
         # Terminating all threads
         for targetId in range(1,getSetting('nTargets')+1):
             ftQueueUtils(f"target{targetId}:watchdog:queue",getSetting('watchdogQueue',targetId=targetId),'put')
+        ftQueueUtils(f"target{targetId}:heartbeat:queue",getSetting('heartbeatQueue'),'put')
         if (isEnabled('interactiveShell')):
             ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
 
@@ -212,11 +218,17 @@ def heartBeatWatchDog():
     """
     Sends heartbeat requests and listens to responses.
     """
+    listenQueue = getSetting('heartbeatQueue')
     canbus = UDPBus("",getSetting('cyberPhysCanbusPort'))
     canbus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
     cnt = 0
 
-    while(True):
+    # get queues from settings
+    watchdog_queues = {}
+    for targetId in range(1,getSetting('nTargets')+1):
+        watchdog_queues[targetId] = getSetting('watchdogHeartbeatQueue', targetId=targetId)
+
+    while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
         cnt += 1
         heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
                                     is_extended_id=True,
@@ -232,4 +244,18 @@ def heartBeatWatchDog():
             if heartbeat_ack:
                 print(f"RX: {heartbeat_ack}")
                 responses.append(heartbeat_ack)
+
+        # send the messages to the queues
+        # NOTE: no filtering is done; the watchdogs
+        # must determine if the responses are relevant
+        for _, q in watchdog_queues.items():
+            for m in responses[::-1]:
+                q.put(m)
         time.sleep(1)
+
+    # Will send an item to the queue anyway; If we're here because of error:
+    #   Yes: So this will exit the main thread
+    #   No: So the item in the queue will not be read
+    ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
+
+    return
