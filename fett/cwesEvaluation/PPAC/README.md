@@ -38,6 +38,9 @@ Missing authorization in privileged resource access.
 - [CWE-862](https://cwe.mitre.org/data/definitions/862.html).  
 - [CWE-863](https://cwe.mitre.org/data/definitions/863.html).  
 
+**Test**    
+The test replaces `/etc/pam.d/su` with a promiscuous stack. Then, from a non-`root` SSH session, the test tries to `su` to `root`. Success would be considered a `HIGH` score.
+
 ------------------
 
 ### CWE-PPAC-2 ###
@@ -49,8 +52,8 @@ Reliance on OS and software authentication. The hardware solely relies on the OS
 - [CWE-287](https://cwe.mitre.org/data/definitions/287.html).   
 - [CWE-288](https://cwe.mitre.org/data/definitions/288.html).   
 
-**Test**   
-The test attempts to login as a user on SSH using the user's password, then attempts to switch user to `root` using the root's password. This behavior is allowed on the OS by default. A `HIGH` score is assigned if the test was able to `su` to `root`, and a `LOW` score is granted if only the non-`root` logging in was permitted. 
+**Test**    
+The test attempts to login as a user on SSH using the user's password, then attempts to switch user to `root` using the `root`'s password. This behavior is allowed on the OS by default. A `HIGH` score is assigned if the test was able to `su` to `root`, and a `LOW` score is granted if only the non-`root` logging in was permitted. 
 
 ------------------
 

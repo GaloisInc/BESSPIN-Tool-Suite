@@ -9,6 +9,11 @@ from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 VULCLASS = "PPAC"
 
 scoreVectors = {
+    "test_PPAC_1" : [
+        (SCORES.CALL_ERR, ["<INVALID>"]),
+        (SCORES.HIGH, ["<ROOT-GRANTED>"]),
+        (SCORES.NONE, ["<ROOT-DENIED>"])
+    ],
     "test_PPAC_2" : [
         (SCORES.CALL_ERR, ["<INVALID>"]),
         (SCORES.HIGH, ["<ROOT-GRANTED>"]),
