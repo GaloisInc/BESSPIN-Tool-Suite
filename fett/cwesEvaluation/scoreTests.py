@@ -91,7 +91,11 @@ def scoreTests(vulClass, logsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     csvPath = os.path.join(logsDir, "scores.csv")
     iniPath = os.path.join(logsDir, f"{vulClass}.ini")
-    scoresDict = getSettingDict("cweScores",vulClass)
+    if isEnabled("runningMultitaskingTests"):
+        # Don't clobber previous score results
+        scoresDict = {}
+    else:
+        scoresDict = getSettingDict("cweScores",vulClass)
     fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
         setSetting("reportFile", fScoresReport)
@@ -141,7 +145,7 @@ def scoreTests(vulClass, logsDir):
     fScoresReport.close()
 
     # Return dictionary mapping from CWE -> score
-    return {row[0] : row[1] for row in rows}
+    return scoresDict
 
 @decorate.debugWrap
 def tabulate(elements):

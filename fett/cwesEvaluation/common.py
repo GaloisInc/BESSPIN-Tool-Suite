@@ -103,7 +103,6 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             target.sendTar(timeout=timeout)
 
         # Batch tests by vulnerability class
-        scores = {}
         multitaskingTests = []
         for vulClass, tests in getSetting("enabledCwesEvaluations").items():
             logsDir = os.path.join(baseLogDir, vulClass)
@@ -114,21 +113,23 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                     multitaskingTest = cweTests[vulClass](target).testToMultitaskingObj(test)
                     if multitaskingTest:
                         multitaskingTests.append(multitaskingTest)
-            scores[vulClass] = scoreTests(vulClass, logsDir)
+            scoreTests(vulClass, logsDir)
 
         if multitaskingTests:
             setSetting("runningMultitaskingTests", True)
-            logDir = os.path.join(baseLogDir, "multitasking")
-            mkdir(logDir)
-            multitaskingRunner(target).runMultitaskingTests(multitaskingTests, logDir)
+            logsDir = os.path.join(baseLogDir, "multitasking")
+            mkdir(logsDir)
+            multitaskingRunner(target).runMultitaskingTests(multitaskingTests, logsDir)
 
             mismatches = []
             numMultitaskingScores = 0
             for vulClass in getSetting("enabledCwesEvaluations").keys():
                 if supportsMultitasking(vulClass):
-                    multitaskingScores = score(os.path.join(logDir, vulClass), vulClass)
+                    multitaskingScores = scoreTests(vulClass,
+                                                    os.path.join(logsDir,
+                                                                 vulClass))
                     mismatches += checkMultitaskingScores(
-                            scores[vulClass],
+                            getSettingDict('cweScores', vulClass),
                             multitaskingScores)
                     numMultitaskingScores += len(multitaskingScores)
             numPassed = numMultitaskingScores - len(mismatches)
