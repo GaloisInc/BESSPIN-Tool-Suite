@@ -64,4 +64,7 @@ Security exceptions are not logged. When the hardware throws a security exceptio
 **Related CWEs**
 - [CWE-284](https://cwe.mitre.org/data/definitions/284.html).   
 
+**Test**    
+The test executes a C file that causes a segfault, then checks whether it was logged into a privileged location.
+
 ------------------
