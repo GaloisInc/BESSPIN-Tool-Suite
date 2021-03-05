@@ -214,8 +214,8 @@ def setSettingDict (setting, hierarchy, val, targetId=None):
             setSettingDict(setting, hierarchy, newDict) #This can be called with an empty hierarchy, then it will just return
 
 @decorate.debugWrap
-def isEnabled(setting, targetId=None):
-    val = getSetting(setting, targetId=targetId)
+def isEnabled(setting, targetId=None, default=None):
+    val = getSetting(setting, targetId=targetId, default=default)
     if (isinstance(val,bool)):
         return val
     else:
