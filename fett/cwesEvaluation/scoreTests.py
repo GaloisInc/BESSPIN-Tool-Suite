@@ -262,3 +262,11 @@ def adjustToCustomScore (lines,defaultScore):
         return customScore 
     else:
         return defaultScore
+
+def prettyVulClass(vulClass):
+    caps = list(filter(lambda c: c.isupper(), vulClass))
+    iFirstCap = vulClass.find(caps[0]) if(caps) else -1
+    if (iFirstCap<=0):
+        return vulClass[0].upper() + vulClass[1:]
+    else:
+        return vulClass[0].upper() + vulClass[1:iFirstCap] + ' ' + vulClass[iFirstCap:]

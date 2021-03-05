@@ -1,7 +1,7 @@
 import pexpect
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.scoreTests import scoreTests
+from fett.cwesEvaluation.scoreTests import scoreTests, prettyVulClass
 
 import fett.cwesEvaluation.bufferErrors.vulClassTester
 import fett.cwesEvaluation.PPAC.vulClassTester
@@ -10,7 +10,7 @@ import fett.cwesEvaluation.informationLeakage.vulClassTester
 import fett.cwesEvaluation.numericErrors.vulClassTester
 import fett.cwesEvaluation.hardwareSoC.vulClassTester
 import fett.cwesEvaluation.injection.vulClassTester
-from fett.cwesEvaluation.multitasking.multitasking import hasMultitaskingException, multitaskingRunner
+from fett.cwesEvaluation.multitasking.multitasking import hasMultitaskingException, multitaskingRunner, printAndLogMultitaskingTable
 
 cweTests = {
     "bufferErrors" :
@@ -43,20 +43,24 @@ def executeTest(target, vulClass, binTest, logDir):
 @decorate.debugWrap
 @decorate.timeWrap
 def checkMultitaskingScores(vulClass, multitaskingScores):
-    mismatches = []
+    results = []
     for cwe, score in getSettingDict("cweScores", vulClass).items():
         if hasMultitaskingException(vulClass, ["testsInfo", f"test_{cwe}"]):
             # Test doesn't run in multitasking mode
             continue
         try:
-            if multitaskingScores[cwe] != score:
-                mismatches.append(cwe)
+            multitaskingScore = multitaskingScores[cwe]
+            results.append((prettyVulClass(vulClass),
+                            f"TEST-{cwe}",
+                            score,
+                            multitaskingScore,
+                            "PASS" if multitaskingScore == score else "FAIL"))
         except Exception as exc:
             logAndExit("<checkMultitaskingScores> Failed to check "
                        f"multitasking score for CWE <{cwe}>.",
                        exc=exc,
                        exitCode=EXIT.Dev_Bug)
-    return mismatches
+    return results
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -126,24 +130,21 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             mkdir(logsDir)
             multitaskingRunner(target).runMultitaskingTests(multitaskingTests, logsDir)
 
-            mismatches = []
+            table = [("Vul. Class", "TEST", "Seq. Score", "Multi. Score", "Result")]
             numMultitaskingScores = 0
             for vulClass in getSetting("enabledCwesEvaluations").keys():
                 if supportsMultitasking(vulClass):
                     multitaskingScores = scoreTests(vulClass,
                                                     os.path.join(logsDir,
                                                                  vulClass))
-                    mismatches += checkMultitaskingScores(vulClass,
-                                                          multitaskingScores)
+                    table += checkMultitaskingScores(vulClass,
+                                                       multitaskingScores)
                     numMultitaskingScores += len(multitaskingScores)
-            numPassed = numMultitaskingScores - len(mismatches)
+            printAndLogMultitaskingTable(table)
+            numPassed = len([r for r in table[1:] if r[4] == "PASS"])
             percentPassed = (numPassed / numMultitaskingScores) * 100
             printAndLog(f"{numPassed}/{numMultitaskingScores} multitasking "
                         f"tests scored as expected ({percentPassed:.1f}%).")
-            if mismatches:
-                printAndLog(f"The following tests scored differently in "
-                            "multitasking and sequential execution: "
-                            f"{', '.join(mismatches)}.")
             setSetting("runningMultitaskingTests", False)
 
     else:

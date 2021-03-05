@@ -2,6 +2,7 @@ import re
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from fett.cwesEvaluation.scoreTests import tabulate_row
 
 # Name of the file to synchronize the test processes on
 LOCK_FILE = "multitask.lock"
@@ -10,6 +11,25 @@ def hasMultitaskingException(vulClass, envSection):
     exceptions = envSection + ["multitaskingExceptions"]
     return (doesSettingExistDict(vulClass, exceptions) and
             getSetting('osImage') in getSettingDict(vulClass, exceptions))
+
+def printAndLogMultitaskingTable(table):
+    widths = [ (len(r[0]), len(r[1]), len(r[2]), len(r[3]), len(r[4])) for r in table]
+    widthCols = [ 2 + max([w[i] for w in widths]) for i in range(5) ]
+
+    fScoresReport = ftOpenFile(os.path.join(getSetting("workDir"), "scoreReport.log"), 'a')
+
+    # Draw first line
+    printAndLog(tabulate_row([], widthCols, drawLine=True), tee=fScoresReport)
+
+    for row in table:
+        # Draw row
+        printAndLog(tabulate_row(row, widthCols), tee=fScoresReport)
+
+        # Draw line
+        printAndLog(tabulate_row([], widthCols, drawSeparation=True),
+                    tee=fScoresReport)
+
+    fScoresReport.close()
 
 class multitaskingPart:
     """ A multiatskingPart is a single test part to run as a process """
