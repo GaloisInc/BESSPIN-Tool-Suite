@@ -1,7 +1,7 @@
 # Computes the BESSPIN Scale
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.scoreTests import SCORES, tabulate_row
+from fett.cwesEvaluation.scoreTests import SCORES, tabulate_row, prettyVulClass
 from math import isclose
 
 normalizingScoresTable = {
@@ -193,11 +193,3 @@ def tabulate(besspinCoeffs, vulClassesScores, B):
 
 def disp(val):
     return f"{100*val:.2f}%"
-
-def prettyVulClass(vulClass):
-    caps = list(filter(lambda c: c.isupper(), vulClass))
-    iFirstCap = vulClass.find(caps[0]) if(caps) else -1
-    if (iFirstCap<=0):
-        return vulClass[0].upper() + vulClass[1:]
-    else:
-        return vulClass[0].upper() + vulClass[1:iFirstCap] + ' ' + vulClass[iFirstCap:]

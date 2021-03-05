@@ -51,6 +51,7 @@ void main() {
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
 #include <stdlib.h>
+#include "unbufferStdout.h"
 
 struct testStruct {
     int a;
@@ -74,6 +75,7 @@ void struct_pointer_cast_of_void_pointer(void) {
 }
 
 int main(int argc, char *argv[]) {
+    unbufferStdout();
     int option;
     if (argc > 1) { //be safe
         option = atoi(argv[1]);

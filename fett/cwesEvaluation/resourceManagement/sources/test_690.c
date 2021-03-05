@@ -81,8 +81,10 @@ void main() {
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
 
 int main(int argc, char *argv[]) {
+    unbufferStdout();
     char dest[5];
     char test_str [] = "test";
     char *str = &test_str[0];

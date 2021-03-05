@@ -91,7 +91,11 @@ def scoreTests(vulClass, logsDir):
     reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
     csvPath = os.path.join(logsDir, "scores.csv")
     iniPath = os.path.join(logsDir, f"{vulClass}.ini")
-    scoresDict = getSettingDict("cweScores",vulClass)
+    if isEnabled("runningMultitaskingTests"):
+        # Don't clobber previous score results
+        scoresDict = {}
+    else:
+        scoresDict = getSettingDict("cweScores",vulClass)
     fScoresReport = ftOpenFile(reportFileName, 'a')
     try:
         setSetting("reportFile", fScoresReport)
@@ -139,6 +143,9 @@ def scoreTests(vulClass, logsDir):
             printAndLog(row, tee=fScoresReport)
 
     fScoresReport.close()
+
+    # Return dictionary mapping from CWE -> score
+    return scoresDict
 
 @decorate.debugWrap
 def tabulate(elements):
@@ -255,3 +262,11 @@ def adjustToCustomScore (lines,defaultScore):
         return customScore 
     else:
         return defaultScore
+
+def prettyVulClass(vulClass):
+    caps = list(filter(lambda c: c.isupper(), vulClass))
+    iFirstCap = vulClass.find(caps[0]) if(caps) else -1
+    if (iFirstCap<=0):
+        return vulClass[0].upper() + vulClass[1:]
+    else:
+        return vulClass[0].upper() + vulClass[1:iFirstCap] + ' ' + vulClass[iFirstCap:]

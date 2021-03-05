@@ -41,9 +41,11 @@ static void uninitString (void);
 
 // --------------- Debian && FreeBSD test ---------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
     int main(int argc, char *argv[]);
 
     int main(int argc, char *argv[]) {
+        unbufferStdout();
         int option;
         int *pRet;
         if (argc > 1) { //be safe

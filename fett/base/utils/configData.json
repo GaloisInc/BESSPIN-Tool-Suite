@@ -219,6 +219,10 @@
             "name" : "FreeRTOStimeout",
             "type" : "int",
             "min" : 0
+        },
+        {
+            "name" : "runUnixMultitaskingTests",
+            "type" : "boolean"
         }
     ],
 

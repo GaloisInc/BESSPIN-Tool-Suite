@@ -37,7 +37,8 @@ commonDefaultsCWEs = {
     ('useCustomScoring',('No',)),
     ('useCustomCompiling',('No',)),
     ('FreeRTOStimeout',(10,)),
-    ('runAllTests',('Yes',))
+    ('runAllTests',('Yes',)),
+    ('runMultitaskingTests',('Yes',))
 }
 
 unixDefaultsCWEs = commonDefaultsCWEs.union({

@@ -10,6 +10,7 @@ from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTe
 from fett.cwesEvaluation.common import isTestEnabled
 from collections import defaultdict
 from copy import deepcopy
+from fett.cwesEvaluation.multitasking.multitasking import hasMultitaskingException
 
 VULCLASS = "resourceManagement"
 
@@ -54,7 +55,9 @@ def scoreAllTests(logs):
 
     # Append ret with the CWEs scores based on funcTests
     for test, funcTests in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
-        if (not isTestEnabled(VULCLASS,test)):
+        if ((not isTestEnabled(VULCLASS,test)) or
+            (isEnabled("runningMultitaskingTests") and
+             hasMultitaskingException(VULCLASS, ["testsInfo", test]))):
             continue
         listScores = []
         scoreDetails = []

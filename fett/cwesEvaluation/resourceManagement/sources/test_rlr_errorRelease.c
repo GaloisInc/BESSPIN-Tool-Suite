@@ -46,9 +46,11 @@ static void errorRelease (int i);
 
 // --------------- Debian && FreeBSD test ---------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
     int main(void);
 
     int main() {
+        unbufferStdout();
         int i;
         srand(RM_SEED); //RM_SEED is written in fett/cwesEvaluation/build.py
         for (i=0;i<N_CALLS;i++) {

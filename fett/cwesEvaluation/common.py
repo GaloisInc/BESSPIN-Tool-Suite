@@ -1,7 +1,7 @@
 import pexpect
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.scoreTests import scoreTests
+from fett.cwesEvaluation.scoreTests import scoreTests, prettyVulClass
 
 import fett.cwesEvaluation.bufferErrors.vulClassTester
 import fett.cwesEvaluation.PPAC.vulClassTester
@@ -10,6 +10,7 @@ import fett.cwesEvaluation.informationLeakage.vulClassTester
 import fett.cwesEvaluation.numericErrors.vulClassTester
 import fett.cwesEvaluation.hardwareSoC.vulClassTester
 import fett.cwesEvaluation.injection.vulClassTester
+from fett.cwesEvaluation.multitasking.multitasking import hasMultitaskingException, multitaskingRunner, printAndLogMultitaskingTable
 
 cweTests = {
     "bufferErrors" :
@@ -41,6 +42,33 @@ def executeTest(target, vulClass, binTest, logDir):
 
 @decorate.debugWrap
 @decorate.timeWrap
+def checkMultitaskingScores(vulClass, multitaskingScores):
+    results = []
+    for cwe, score in getSettingDict("cweScores", vulClass).items():
+        if hasMultitaskingException(vulClass, ["testsInfo", f"test_{cwe}"]):
+            # Test doesn't run in multitasking mode
+            continue
+        try:
+            multitaskingScore = multitaskingScores[cwe]
+            results.append((prettyVulClass(vulClass),
+                            f"TEST-{cwe}",
+                            score,
+                            multitaskingScore,
+                            "PASS" if multitaskingScore == score else "FAIL"))
+        except Exception as exc:
+            logAndExit("<checkMultitaskingScores> Failed to check "
+                       f"multitasking score for CWE <{cwe}>.",
+                       exc=exc,
+                       exitCode=EXIT.Dev_Bug)
+    return results
+
+@decorate.debugWrap
+@decorate.timeWrap
+def supportsMultitasking(vulClass):
+    return (isEnabled('runUnixMultitaskingTests') and
+            doesSettingExistDict(vulClass, 'supportsMultitasking') and
+            isEnabledDict(vulClass, 'supportsMultitasking'))
+
 def runTests(target, sendFiles=False, timeout=30): #executes the app
     if isEqSetting('osImage', 'FreeRTOS'):
         test, vulClass, _, logFile = getSetting("currentTest")
@@ -84,13 +112,40 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             target.sendTar(timeout=timeout)
 
         # Batch tests by vulnerability class
+        multitaskingTests = []
         for vulClass, tests in getSetting("enabledCwesEvaluations").items():
             logsDir = os.path.join(baseLogDir, vulClass)
             mkdir(logsDir)
             for test in tests:
                 executeTest(target, vulClass, test, logsDir)
-
+                if (supportsMultitasking(vulClass)):
+                    multitaskingTest = cweTests[vulClass](target).testToMultitaskingObj(test)
+                    if multitaskingTest:
+                        multitaskingTests.append(multitaskingTest)
             scoreTests(vulClass, logsDir)
+
+        if multitaskingTests:
+            setSetting("runningMultitaskingTests", True)
+            logsDir = os.path.join(baseLogDir, "multitasking")
+            mkdir(logsDir)
+            multitaskingRunner(target).runMultitaskingTests(multitaskingTests, logsDir)
+
+            table = [("Vul. Class", "TEST", "Seq. Score", "Multi. Score", "Result")]
+            numMultitaskingScores = 0
+            for vulClass in getSetting("enabledCwesEvaluations").keys():
+                if supportsMultitasking(vulClass):
+                    multitaskingScores = scoreTests(vulClass,
+                                                    os.path.join(logsDir,
+                                                                 vulClass))
+                    table += checkMultitaskingScores(vulClass,
+                                                       multitaskingScores)
+                    numMultitaskingScores += len(multitaskingScores)
+            printAndLogMultitaskingTable(table)
+            numPassed = len([r for r in table[1:] if r[4] == "PASS"])
+            percentPassed = (numPassed / numMultitaskingScores) * 100
+            printAndLog(f"{numPassed}/{numMultitaskingScores} multitasking "
+                        f"tests scored as expected ({percentPassed:.1f}%).")
+            setSetting("runningMultitaskingTests", False)
 
     else:
         target.terminateAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",
