@@ -16,7 +16,18 @@
                     "cweText" : "Reliance on OS and software authentication"
                 },
                 "test_PPAC_3" : {
-                    "cweText" : "Security exceptions are not logged to a privileged location"
+                    "cweText" : "Security exceptions are not logged to a privileged location",
+                    "hasCFile" : true,
+                    "gfeScoringExceptions" : [
+                        {
+                            "osImage" : "debian",
+                            "score" : "NONE" 
+                        },
+                        {
+                            "osImage" : "FreeBSD",
+                            "score" : "NONE" 
+                        }
+                    ]
                 }
             }
         }

@@ -19,6 +19,11 @@ scoreVectors = {
         (SCORES.HIGH, ["<ROOT-GRANTED>"]),
         (SCORES.LOW, ["<ROOT-DENIED>", "<USER-GRANTED>"]),
         (SCORES.NONE, ["<USER-DENIED>"])
+    ],
+    "test_PPAC_3" : [
+        (SCORES.CALL_ERR, ["<INVALID>"]),
+        (SCORES.HIGH, ["<PUB>"]),
+        (SCORES.NONE, ["<LOG>:<PRIV>", "<OWNER>:<PRIV>", "<GROUP>:<PRIV>", "<PERM>:<PRIV>"])
     ]
 }
 

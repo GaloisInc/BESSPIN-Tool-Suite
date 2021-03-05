@@ -142,7 +142,7 @@ def buildCwesEvaluation():
                     vIsThereAnythingToRun = True
                     if (not isEnabledDict(vulClass,'useSelfAssessment')): #No need to boot for self-assessment
                         isThereAReasonToBoot = True
-                        if (vulClass != "PPAC"):
+                        if ((vulClass != "PPAC") or ("hasCFile" in tests[test])):
                             cp (os.path.join(sourcesDir, f"{test}.c"), vulClassDir)
                     enabledCwesEvaluations[vulClass].append(f"{test}.riscv")
                 else:
