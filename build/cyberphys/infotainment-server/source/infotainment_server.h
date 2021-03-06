@@ -11,8 +11,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "infotainment_defs.h"
 #include "canlib.h"
+#include "infotainment_defs.h"
 
 /**
  * The size of the message receive buffer.
