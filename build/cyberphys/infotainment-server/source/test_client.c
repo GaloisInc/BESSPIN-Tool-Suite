@@ -263,15 +263,17 @@ void print_heartbeat_ack_frame(can_frame *frame, uint32_t expected_number) {
     // make sure the frame is an appropriate type
     assert(frame->can_id == CAN_ID_HEARTBEAT_ACK);
 
-    uint32_t *number = (uint32_t *) &frame->data[0];
+    struct in_addr remote_address;
+    memcpy(&remote_address.s_addr, &frame->data[0], sizeof(remote_address.s_addr));
+    uint32_t *number = (uint32_t *) &frame->data[4];
     uint32_t reordered_number = ntohl(*number);
 
     if (expected_number == reordered_number) {
-        debug("heartbeat ack CAN frame received with expected number %ju\n", 
-              (uintmax_t) reordered_number);
+        debug("heartbeat ack CAN frame received from %s with expected number %ju\n", 
+              inet_ntoa(remote_address), (uintmax_t) reordered_number);
     } else {
-        error("heartbeat ack CAN frame received with unexpected number %ju\n",
-              (uintmax_t) reordered_number);
+        error("heartbeat ack CAN frame received from %s with unexpected number %ju\n",
+              inet_ntoa(remote_address), (uintmax_t) reordered_number);
     }
 }
 
