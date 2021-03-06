@@ -125,13 +125,21 @@ def prepareFreeRTOS(targetId=None):
 
     #build it
     fett.target.build.freeRTOSBuildChecks(targetId=targetId,freertosFork="classic")
+    buildDir = getSetting('buildDir',targetId=targetId)
 
     #copy the C files, .mk files, and any directory
-    copyDir(os.path.join(getSetting('repoDir'),'fett','cyberPhys','srcFreeRTOS'),getSetting('buildDir',targetId=targetId),copyContents=True)
-    copyDir(os.path.join(getSetting('repoDir'),'build','cyberphys','canlib'),getSetting('buildDir',targetId=targetId),copyContents=True)
+    copyDir(os.path.join(getSetting('repoDir'),'fett','cyberPhys','srcFreeRTOS'),buildDir,copyContents=True)
+    copyDir(os.path.join(getSetting('repoDir'),'build','cyberphys','canlib'),buildDir,copyContents=True)
+
+    configHfile = ftOpenFile (os.path.join(buildDir,'fettFreeRTOSConfig.h'),'a')
+    canPort = getSetting('cyberPhysCanbusPort')
+    try:
+        configHfile.write(f"#define CAN_PORT ({canPort}UL)\n")
+    except Exception as exc:
+        logAndExit(f"Failed to populate <fettFreeRTOSConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+    configHfile.close()
 
     fett.target.build.prepareFreeRTOSNetworkParameters(targetId=targetId)
-    buildDir = getSetting('buildDir',targetId=targetId)
     fett.target.build.buildFreeRTOS(targetId=targetId, buildDir=buildDir)
 
     cp(os.path.join(buildDir,'FreeRTOS.elf'), getSetting('osImageElf',targetId=targetId))

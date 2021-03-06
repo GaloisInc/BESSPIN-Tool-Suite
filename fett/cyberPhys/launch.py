@@ -10,10 +10,6 @@ import fett.cyberPhys.run
 from fett.base.threadControl import ftQueueUtils
 import threading, queue, pexpect
 
-# Import for CAN bus
-from fett.cyberPhys.canlib import UDPBus, Message
-from fett.cyberPhys.canspecs import CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
-
 @decorate.debugWrap
 @decorate.timeWrap
 def startCyberPhys():
@@ -41,7 +37,7 @@ def startCyberPhys():
         allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
 
         # Start the heartbeat watchdog
-        allThreads += runThreadPerTarget(heartBeatWatchDog,
+        allThreads += runThreadPerTarget(fett.cyberPhys.run.heartBeatListener,
                         addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
 
         # Pipe the UART
@@ -68,8 +64,6 @@ def startCyberPhys():
         ftQueueUtils(f"target{targetId}:heartbeat:queue",getSetting('heartbeatQueue'),'put')
         if (isEnabled('interactiveShell')):
             ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
-
-        # TODO: Create a listener thread that reads CAN messages from a socket
 
         # Waiting for all threads to terminate
         for xThread in allThreads:
@@ -213,49 +207,3 @@ def stopTtyLogging(targetId):
     getSetting('ttyLogger',targetId=targetId).stop()
     setSetting('isTtyLogging',False,targetId=targetId)
 
-@decorate.debugWrap
-def heartBeatWatchDog():
-    """
-    Sends heartbeat requests and listens to responses.
-    """
-    listenQueue = getSetting('heartbeatQueue')
-    canbus = UDPBus("",getSetting('cyberPhysCanbusPort'))
-    canbus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
-    cnt = 0
-
-    # get queues from settings
-    watchdog_queues = {}
-    for targetId in range(1,getSetting('nTargets')+1):
-        watchdog_queues[targetId] = getSetting('watchdogHeartbeatQueue', targetId=targetId)
-
-    while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
-        cnt += 1
-        heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
-                                    is_extended_id=True,
-                                    data=list(cnt.to_bytes(4, byteorder = 'big')))
-        canbus.send(heartbeat_req, getSetting('vcu118BroadcastIp'), getSetting('cyberPhysCanbusPort'))
-        printAndLog (f"FETT <heartBeatWatchDog mode> sending message")
-
-        # Assume one second window to receive watchdog responses
-        endOfWait = time.time() + 1.0
-        responses = []
-        while (time.time() < endOfWait) and (len(responses) < getSetting('nTargets')):
-            heartbeat_ack = canbus.recv(timeout=0.1)
-            if heartbeat_ack:
-                print(f"RX: {heartbeat_ack}")
-                responses.append(heartbeat_ack)
-
-        # send the messages to the queues
-        # NOTE: no filtering is done; the watchdogs
-        # must determine if the responses are relevant
-        for _, q in watchdog_queues.items():
-            for m in responses[::-1]:
-                q.put(m)
-        time.sleep(1)
-
-    # Will send an item to the queue anyway; If we're here because of error:
-    #   Yes: So this will exit the main thread
-    #   No: So the item in the queue will not be read
-    ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
-
-    return

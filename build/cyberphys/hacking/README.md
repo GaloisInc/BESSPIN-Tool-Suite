@@ -10,3 +10,11 @@ cd hello-world; make clean; make linux; cd ..
 
 ## Hack FreeRTOS
 
+**TODO**
+
+```
+openocd --command "set _CHIPNAME riscv_1; gdb_port 3004; telnet_port 3005; adapter usb location 1-4.4.4.4" -f fett/target/utils/openocd_vcu118.cfg
+
+minicom -D /dev/ttyUSB10 -b 115200
+
+```

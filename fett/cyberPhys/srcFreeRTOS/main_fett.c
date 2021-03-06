@@ -22,6 +22,7 @@
 
 /* FETT config */
 #include "fettFreeRTOSConfig.h"
+#include "fettFreeRTOSIPConfig.h"
 
 #if !(BSP_USE_IIC0)
 #error "One or more peripherals are nor present, this test cannot be run"
@@ -42,9 +43,6 @@
 #define SENSORTASK_PRIORITY tskIDLE_PRIORITY + 4
 #define CAN_RX_TASK_PRIORITY tskIDLE_PRIORITY + 3
 #define INFOTASK_PRIORITY tskIDLE_PRIORITY + 1
-
-#define CAN_RX_PORT (5002UL)
-#define CAN_TX_PORT (5002UL)
 
 #define SENSOR_LOOP_DELAY_MS pdMS_TO_TICKS(50)
 
@@ -352,7 +350,7 @@ static void prvSensorTask(void *pvParameters)
 
     // Broadcast address
     xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_TX_PORT);
+    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_PORT);
 
     FreeRTOS_printf(("%s Starting prvSensorTask\r\n", getCurrTime()));
 
@@ -392,7 +390,7 @@ static void prvSensorTask(void *pvParameters)
             vTaskDelay(pdMS_TO_TICKS(100));
             err_cnt++;
             if (err_cnt >= IIC_RESET_ERROR_THRESHOLD) {
-                FreeRTOS_printf(("%s (prvSensorTask) err_cnt == %i, reseting!\r\n", getCurrTime(), err_cnt));
+                FreeRTOS_printf(("%s (prvSensorTask) err_cnt == %i, resetting!\r\n", getCurrTime(), err_cnt));
                 iic0_master_reset();
                 err_cnt = 0;
             }
@@ -538,7 +536,7 @@ static void prvCanRxTask(void *pvParameters)
     Socket_t xClientSocket;
     struct freertos_sockaddr xDestinationAddress;
     xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_TX_PORT);
+    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_PORT);
     xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
     configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
     /*  End of the socket for respondnig to requests */
@@ -556,13 +554,13 @@ static void prvCanRxTask(void *pvParameters)
 	after the network is up, so the IP address is valid here. */
     FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     xBindAddress.sin_addr = ulIPAddress;
-    xBindAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_RX_PORT);
+    xBindAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_PORT);
 
     /* Bind the socket to the port that the client task will send to. */
     FreeRTOS_bind(xListeningSocket, &xBindAddress, sizeof(xBindAddress));
 
     FreeRTOS_inet_ntoa(xBindAddress.sin_addr, cBuffer);
-    FreeRTOS_printf(("%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
+    FreeRTOS_printf(("%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_PORT));
 
     /* Set target ID */
     target_id = FreeRTOS_htonl(FreeRTOS_GetIPAddress());

@@ -2,7 +2,7 @@
 
 #FETT includes
 WERROR =
-CFLAGS += -DFETT_APPS -DipconfigUSE_DHCP=0
+CFLAGS += -DFETT_APPS
 INCLUDES += -I$(INC_FETT_APPS)
 
 # main_netboot specific additions

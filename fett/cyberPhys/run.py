@@ -9,6 +9,11 @@ import fett.target.launch
 
 from fett.cyberPhys import otaserver, infotainmentserver
 
+# Import for CAN bus
+from fett.cyberPhys.canlib import UDPBus, Message
+from fett.cyberPhys.canspecs import CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
+
+
 @decorate.debugWrap
 @decorate.timeWrap
 def runCyberPhys(xTarget):
@@ -75,7 +80,7 @@ def watchdog(targetId):
         while not wHeartbeatQueue.empty():
             responses.append(wHeartbeatQueue.get())
         #printAndLog(f"<targetId {targetId}> Watchdog {responses}")
-        # TODO: NOTE: check for heartbeat failure here
+        # TODO: check for heartbeat failure here, will be fixed later
 
         # Check process
         if not isTargetAlive(targetId) and handleError("Target is not alive"):
@@ -108,7 +113,74 @@ def isTargetAlive(targetId):
     if osImage in ['debian', 'FreeBSD']:
         if not otaserver.isServiceRunning(xTarget):
             printAndLog(f"{xTarget.targetIdInfo}ota server didn't respond.")
+            # NOTE: this code is commented out now, need to test OTA more before re-enabling or deleting
+            # this code for good
             # otaserver.restart(xTarget)
             # return otaserver.isServiceRunning(xTarget)
 
     return True
+
+@decorate.debugWrap
+def heartBeatListener():
+    """
+    Sends heartbeat requests and listens to responses.
+    The responses are then sent to each target's watchdog
+    This is a workaround because we can bind to the same port only once.
+    """
+    listenQueue = getSetting('heartbeatQueue')
+    canbusPort = getSetting('cyberPhysCanbusPort')
+    try:
+        canbus = UDPBus("",canbusPort)
+    except Exception as exc:
+        logAndExit(f"Failed to instantiate <UDPBus> with port {canbusPort}.",exc=exc,exitCode=EXIT.Run)
+    try:
+        canbus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
+    except Exception as exc:
+        logAndExit(f"Failed to set canbus filters.",exc=exc,exitCode=EXIT.Run)
+
+    # get queues from settings
+    cnt = 0
+    watchdog_queues = {}
+    for targetId in range(1,getSetting('nTargets')+1):
+        watchdog_queues[targetId] = getSetting('watchdogHeartbeatQueue', targetId=targetId)
+
+    # Hearbeat request settings
+    vcu118BroadcastIp = getSetting('vcu118BroadcastIp')
+    cyberPhysCanbusPort = getSetting('cyberPhysCanbusPort')
+
+    while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
+        cnt += 1
+        heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
+                                    is_extended_id=True,
+                                    data=list(cnt.to_bytes(4, byteorder = 'big')))
+        try:
+            canbus.send(heartbeat_req, vcu118BroadcastIp, cyberPhysCanbusPort)
+        except Exception as exc:
+            logAndExit(f"Failed to send heartbeat request to {vcu118BroadcastIp}:{cyberPhysCanbusPort}",exc=exc,exitCode=EXIT.Run)
+        printAndLog (f"FETT <heartBeatWatchDog mode> sending request", doPrint=False)
+
+        # Assume one second window to receive watchdog responses
+        endOfWait = time.time() + 1.0
+        responses = []
+        while (time.time() < endOfWait) and (len(responses) < getSetting('nTargets')):
+            try:
+                heartbeat_ack = canbus.recv(timeout=0.1)
+            except Exception as exc:
+                logAndExit(f"Failed to receive on cabus.",exc=exc,exitCode=EXIT.Run)
+            if heartbeat_ack:
+                responses.append(heartbeat_ack)
+
+        # send the messages to the queues
+        # NOTE: no filtering is done; the watchdogs
+        # must determine if the responses are relevant
+        for _, q in watchdog_queues.items():
+            for m in responses[::-1]:
+                q.put(m)
+        time.sleep(1)
+
+    # Will send an item to the queue anyway; If we're here because of error:
+    #   Yes: So this will exit the main thread
+    #   No: So the item in the queue will not be read
+    fett.cyberPhys.launch.ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
+
+    return

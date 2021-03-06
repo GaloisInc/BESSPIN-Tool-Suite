@@ -76,8 +76,7 @@ class fpgaTarget(object):
             getSetting('openocdLock').acquire()
             openocdExtraCmds = (f"set _CHIPNAME riscv{self.targetSuffix}; gdb_port {self.gdbPort}; "
                 f"telnet_port {self.openocdPort}{self.getOpenocdCustomCfg(isReload=isReload)}")
-            # TODO: remove once note needed (useful for single-board manual debugging)
-            printAndLog(f"{self.targetIdInfo} openocdExtraCmds = {openocdExtraCmds}")
+            printAndLog(f"{self.targetIdInfo} openocdExtraCmds = {openocdExtraCmds}",doPrint=False)
             try:
                 self.openocdProcess = pexpect.spawn(
                     f"openocd --command '{openocdExtraCmds}' -f {openocdCfg}",

@@ -557,7 +557,7 @@ def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
         try:
             bitstreamSize = os.path.getsize(getSetting('bitAndProbefiles',targetId=targetId)[0])/(1024*1024)
             datafileSize = os.path.getsize(extraFile)/(1024*1024)
-            timeout = int(1.15*(250*sqrt(bitstreamSize) + 200*sqrt(datafileSize) - 850))*1.5
+            timeout = int(1.725*(250*sqrt(bitstreamSize) + 200*sqrt(datafileSize) - 850))
             logging.debug(f"{targetInfo}programVcu118: Will use flash timeout of <{timeout}>.")
         except Exception as exc:
             timeout = 2400 #fallout value
