@@ -18,13 +18,14 @@
 #include <sys/types.h> 
 #include <sys/socket.h> 
 
-#include "can.h"
+#include "canspecs.h"
 #include "canlib.h"
 #include "infotainment_defs.h"
 #include "infotainment_debug.h"
 #include "infotainment_utils.h"
 
 static char *broadcast_address = DEFAULT_BROADCAST_ADDRESS;
+static struct in_addr local_address = { .s_addr = 0 };
 
 int udp_socket(int listen_port) {
     static int socketfd = -1;
@@ -73,6 +74,12 @@ int udp_socket(int listen_port) {
             // this is not fatal but does mean a hack that tries to listen
             // on the same port won't work
             debug("warning: unable to set port reuse mode\n");
+        }
+        if (setsockopt(socketfd, IPPROTO_IP, IP_PKTINFO, 
+                       &(int){1}, sizeof(int)) < 0) {
+            // this is not fatal but does mean we won't be able to get the
+            // ip address an incoming packet was sent to
+            debug("warning: unable to set packet info mode\n");
         }
         // bind the socket to the port
         if (bind(socketfd, 
@@ -204,6 +211,15 @@ int broadcast_frame(int from_port, int to_port, can_frame *frame) {
                   sizeof(struct sockaddr_in));
 }
 
+void broadcast_noop() {
+    // broadcast a no-op CAN frame to trigger an address detection
+    can_frame nop = { .can_id = CAN_ID_NO_OPERATION, 
+                      .can_dlc = BYTE_LENGTH_NO_OPERATION };
+
+    debug("broadcasting no-op to trigger address detection\n");
+    broadcast_frame(RECEIVE_PORT, SEND_PORT, &nop);
+}
+
 bool is_our_address(int port, struct sockaddr_in *check_address) {
     bool result = false;
     struct ifaddrs *addresses, *addr;
@@ -220,6 +236,13 @@ bool is_our_address(int port, struct sockaddr_in *check_address) {
             continue;
         }
         struct sockaddr_in *our_address = (struct sockaddr_in *) addr->ifa_addr;
+        bool match = (our_address->sin_addr.s_addr - 
+                      check_address->sin_addr.s_addr) == 0;
+        if (match && local_address.s_addr == 0) {
+            // our local address hadn't been set yet, but here it is
+            local_address.s_addr = our_address->sin_addr.s_addr;
+            debug("local IP address detected as %s\n", inet_ntoa(local_address));
+        }
         result = result || ((our_address->sin_addr.s_addr - 
                              check_address->sin_addr.s_addr) == 0);
     }

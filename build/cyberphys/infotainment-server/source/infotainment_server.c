@@ -18,7 +18,7 @@
 #include <sys/types.h> 
 #include <sys/socket.h> 
 
-#include "can.h"
+#include "canspecs.h"
 #include "canlib.h"
 
 #include "infotainment_defs.h"
@@ -62,6 +62,9 @@ int main_loop(void) {
 
     debug("socket number is %d\n", udp_socket(RECEIVE_PORT));
     
+    // broadcast a no-op so we detect the local address
+    broadcast_noop();
+
     while (the_state.T == RUNNING) {
         // zero out the buffer
         memset(&message, 0, MESSAGE_BUFFER_SIZE);

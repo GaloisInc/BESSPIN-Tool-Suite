@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "can.h"
+#include "canspecs.h"
 #include "infotainment_defs.h"
 
 /**
