@@ -29,7 +29,7 @@
 #include <sys/types.h> 
 #include <sys/socket.h> 
 
-#include "can.h"
+#include "canspecs.h"
 #include "canlib.h"
 
 #include "infotainment_defs.h"
