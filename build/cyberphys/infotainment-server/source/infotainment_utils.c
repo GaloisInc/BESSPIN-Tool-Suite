@@ -75,7 +75,7 @@ int udp_socket(int listen_port) {
             // on the same port won't work
             debug("warning: unable to set port reuse mode\n");
         }
-        
+
         // bind the socket to the port
         if (bind(socketfd, 
                  (struct sockaddr *) &listen_address, 
@@ -242,8 +242,7 @@ bool is_our_address(int port, struct sockaddr_in *check_address) {
             local_address.s_addr = our_address->sin_addr.s_addr;
             debug("local IP address detected as %s\n", inet_ntoa(local_address));
         }
-        result = result || ((our_address->sin_addr.s_addr - 
-                             check_address->sin_addr.s_addr) == 0);
+        result = result || match;
     }
 
     freeifaddrs(addresses);
