@@ -18,8 +18,8 @@
 #include <sys/types.h> 
 #include <sys/socket.h> 
 
-#include "canspecs.h"
 #include "canlib.h"
+#include "canspecs.h"
 
 #include "infotainment_defs.h"
 #include "infotainment_debug.h"
