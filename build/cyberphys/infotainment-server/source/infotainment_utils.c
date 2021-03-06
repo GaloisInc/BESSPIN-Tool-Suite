@@ -195,6 +195,10 @@ void set_broadcast_address(char *address) {
     broadcast_address = address;
 }
 
+struct in_addr *get_local_address() {
+    return &local_address;
+}
+
 int broadcast_frame(int from_port, int to_port, can_frame *frame) {
     int result = 0;
 
