@@ -75,12 +75,7 @@ int udp_socket(int listen_port) {
             // on the same port won't work
             debug("warning: unable to set port reuse mode\n");
         }
-        if (setsockopt(socketfd, IPPROTO_IP, IP_PKTINFO, 
-                       &(int){1}, sizeof(int)) < 0) {
-            // this is not fatal but does mean we won't be able to get the
-            // ip address an incoming packet was sent to
-            debug("warning: unable to set packet info mode\n");
-        }
+        
         // bind the socket to the port
         if (bind(socketfd, 
                  (struct sockaddr *) &listen_address, 
