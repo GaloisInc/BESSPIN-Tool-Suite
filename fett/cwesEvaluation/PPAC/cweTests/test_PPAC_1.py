@@ -20,6 +20,8 @@ def test_PPAC_1(xTarget):
         retLog += "<INVALID> Failed to modify /etc/pam.d/su\n"
         return retLog
 
+    resetPamdSu = "cp /tmp/su.bak /etc/pam.d/su"
+
     isCalledWithinSsh = xTarget.isSshConn
     if (isCalledWithinSsh): #already is connected through SSH, exit and re-connect
         xTarget.killSshConn()
@@ -28,6 +30,7 @@ def test_PPAC_1(xTarget):
     retSsh = xTarget.openSshConn(userName=xTarget.userName,endsWith=xTarget.getDefaultEndWith(userName=xTarget.userName))
     if (not retSsh):
         retLog += "<INVALID> Failed to establish SSH connection.\n"
+        xTarget.runCommand(resetPamdSu)
         return retLog
 
     shellRoot, shellUser = xTarget.getShells()
@@ -51,7 +54,7 @@ def test_PPAC_1(xTarget):
         xTarget.openSshConn()
 
     # reset pam.d/su
-    xTarget.runCommand("cp /tmp/su.bak /etc/pam.d/su",erroneousContents=["cp:"],
+    xTarget.runCommand(resetPamdSu,erroneousContents=["cp:"],
         exitOnError=False,suppressErrors=True)
 
     return retLog
