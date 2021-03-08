@@ -398,7 +398,7 @@ def importImage(targetId=None):
                 setSetting("netbootElf",netbootElf,targetId=targetId)
                 mkdir(netbootBuildDir)
                 copyDir(os.path.join(getSetting('repoDir'),'fett','target','utils','srcNetboot'),netbootBuildDir,copyContents=True)
-                freeRTOSBuildChecks(targetId=targetId,freertosFork="classic")
+                freeRTOSBuildChecks(targetId=targetId,freertosFork="upstream")
                 prepareFreeRTOSNetworkParameters(targetId=targetId, buildDir=netbootBuildDir)
                 #Write the bianry source for team specific codes
                 configHfile = ftOpenFile (os.path.join(netbootBuildDir,'fettUserConfig.h'),'a')

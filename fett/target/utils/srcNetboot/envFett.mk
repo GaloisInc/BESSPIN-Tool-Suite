@@ -1,7 +1,6 @@
 # This file has the necessary includes to compile Fett netboot
 
 #FETT includes
-WERROR =
 CFLAGS += -DFETT_APPS
 INCLUDES += -I$(INC_FETT_APPS)
 

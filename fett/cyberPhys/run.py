@@ -78,7 +78,7 @@ def watchdog(targetId):
         # responses
         responses = []
         while not wHeartbeatQueue.empty():
-            responses.append(wHeartbeatQueue.get())
+            responses.append(ftQueueUtils(f"watchDogHeartbeatQueue{targetId}",wHeartbeatQueue,'get'))
         #printAndLog(f"<targetId {targetId}> Watchdog {responses}")
         # TODO: check for heartbeat failure here, will be fixed later
 
