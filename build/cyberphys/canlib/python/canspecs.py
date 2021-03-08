@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: python/canspecs.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 05 March 2021
+Date: 08 March 2021
 This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
 Version hash: f50e0a68352312d07b0ce23fc3a46a33
 """
@@ -59,8 +59,4 @@ CAN_ID_HEARTBEAT_REQ: int = 0XAABEA737
 # Name: heartbeat_ack (uint32_t) Units: 
 # Description: First 4 bytes are the sender ID (sender IP address) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
 CAN_ID_HEARTBEAT_ACK: int = 0XAABEA225
-
-# Name: no_operation (uint8_t) Units: 
-# Description: CAN message used to detect the infotainment server local IP address
-CAN_ID_NO_OPERATION: int = 0XAA47ADD7
 

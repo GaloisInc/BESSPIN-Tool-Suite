@@ -210,15 +210,6 @@ int broadcast_frame(int from_port, int to_port, can_frame *frame) {
                   sizeof(struct sockaddr_in));
 }
 
-void broadcast_noop() {
-    // broadcast a no-op CAN frame to trigger an address detection
-    can_frame nop = { .can_id = CAN_ID_NO_OPERATION, 
-                      .can_dlc = BYTE_LENGTH_NO_OPERATION };
-
-    debug("broadcasting no-op to trigger address detection\n");
-    broadcast_frame(RECEIVE_PORT, SEND_PORT, &nop);
-}
-
 bool is_our_address(int port, struct sockaddr_in *check_address) {
     bool result = false;
     struct ifaddrs *addresses, *addr;

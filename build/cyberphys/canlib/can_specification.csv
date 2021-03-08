@@ -12,4 +12,3 @@ CAN ID,Type,Field Name,Sender,Receiver,Bounds/Range,Byte Length,Units,J1939?,PGN
 0XAA2FEEF2,uint8_t,music_state (uint8_t),Infotainment Server,Infotainment Thin Client,N/A,1,,No,,Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
 0XAABEA737,uint32_t,heartbeat_req (uint32_t),Admin PC,All,N/A,4,,No,,Heartbeat request with request number in network byte order
 0XAABEA225,uint32_t,heartbeat_ack (uint32_t),All,Admin PC,N/A,8,,No,,First 4 bytes are the sender ID (sender IP address) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
-0XAA47ADD7,fixed,no_operation (uint8_t),Infotainment Server,Infotainment Server,N/A,1,,No,,CAN message used to detect the infotainment server local IP address
