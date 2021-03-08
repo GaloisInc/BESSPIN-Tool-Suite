@@ -1295,7 +1295,7 @@ class commonTarget():
             retYes = self.runCommand("yes",endsWith=passwordPrompt+blockedIpResponse+[pexpect.EOF],
                         timeout=timeout,exitOnError=False,issueInterrupt=False)
             if (retYes[3] not in [0,1]): #No password prompt
-                returnFail(f"openSshConn: Unexpected outcome when responding <yes> to the ssh process.",
+                return returnFail(f"openSshConn: Unexpected outcome when responding <yes> to the ssh process.",
                     returnSpecial=(specialTest and (retYes[3] in [2,3,4,5])))
         elif (retExpect[2] in [2,3,4,6]): #the ip was blocked or connection refused
             return returnFail(f"openSshConn: Unexpected response when spawning the ssh process.",returnSpecial=specialTest)
