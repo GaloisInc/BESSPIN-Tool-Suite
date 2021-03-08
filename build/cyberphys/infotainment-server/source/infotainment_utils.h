@@ -68,12 +68,6 @@ struct in_addr *get_local_address();
 int broadcast_frame(int from_port, int to_port, can_frame *frame);
 
 /**
- * Broadcasts a no-op CAN frame on all IPv4 interfaces. This is used to
- * trigger detection of the local IP address.
- */
-void broadcast_noop();
-
-/**
  * Checks to see if the specified address is one of the addresses for the
  * socket created on the specified port.
  * @param port The port of the socket to check.

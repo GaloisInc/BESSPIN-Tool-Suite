@@ -4,7 +4,7 @@
 * Name: python/canspecs.py
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 05 March 2021
+* Date: 08 March 2021
 * This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
 * Version hash: f50e0a68352312d07b0ce23fc3a46a33
 */
@@ -151,15 +151,5 @@
 //	First 4 bytes are the sender ID (sender IP address) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
 #define CAN_ID_HEARTBEAT_ACK 0XAABEA225
 #define BYTE_LENGTH_HEARTBEAT_ACK 8
-
-// no_operation (uint8_t)
-// Sender: Infotainment Server
-// Receiver: Infotainment Server
-// Bounds/Range: N/A
-// J1939 compatible: No
-// Description: 
-//	CAN message used to detect the infotainment server local IP address
-#define CAN_ID_NO_OPERATION 0XAA47ADD7
-#define BYTE_LENGTH_NO_OPERATION 1
 
 #endif
