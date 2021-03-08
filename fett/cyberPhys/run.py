@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
-""" 
+"""
 The main file for running cyberPhys
 """
 
 from fett.base.utils.misc import *
 import fett.cyberPhys.launch
 import fett.target.launch
-
+from fett.base.threadControl import ftQueueUtils
 from fett.cyberPhys import otaserver, infotainmentserver
 
 # Import for CAN bus
@@ -60,7 +60,7 @@ def watchdog(targetId):
     while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
         def handleError(errorString):
             """
-            Either resets the target and returns False so the loop continues, 
+            Either resets the target and returns False so the loop continues,
             OR returns True and break the loop
             """
             if (isEnabled('interactiveShell')):
@@ -68,7 +68,7 @@ def watchdog(targetId):
             if (isEnabled('resetOnWatchdog')):
                 warnAndLog(f"<target{targetId}>: {errorString}! Resetting...")
                 # Here we should reset
-                fett.target.launch.resetTarget(getSetting('targetObj',targetId=targetId)) 
+                fett.target.launch.resetTarget(getSetting('targetObj',targetId=targetId))
                 printAndLog("Please press Enter to return to the interactive shell...")
                 return False
             else:
@@ -93,7 +93,7 @@ def watchdog(targetId):
     # Will send an item to the queue anyway; If we're here because of error:
     #   Yes: So this will exit the main thread
     #   No: So the item in the queue will not be read
-    fett.cyberPhys.launch.ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
+    ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
 
     return
 
@@ -150,10 +150,10 @@ def heartBeatListener():
 
     while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
         cnt += 1
-        heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
+        try:
+            heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
                                     is_extended_id=True,
                                     data=list(cnt.to_bytes(4, byteorder = 'big')))
-        try:
             canbus.send(heartbeat_req, vcu118BroadcastIp, cyberPhysCanbusPort)
         except Exception as exc:
             logAndExit(f"Failed to send heartbeat request to {vcu118BroadcastIp}:{cyberPhysCanbusPort}",exc=exc,exitCode=EXIT.Run)
@@ -163,17 +163,17 @@ def heartBeatListener():
         endOfWait = time.time() + 1.0
         responses = []
         while (time.time() < endOfWait) and (len(responses) < getSetting('nTargets')):
-            try:
-                heartbeat_ack = canbus.recv(timeout=0.1)
-            except Exception as exc:
-                logAndExit(f"Failed to receive on cabus.",exc=exc,exitCode=EXIT.Run)
+            heartbeat_ack = canbus.recv(timeout=0.1)
             if heartbeat_ack:
                 responses.append(heartbeat_ack)
+
+        if (len(responses) < getSetting('nTargets')):
+            logAndExit(f"Failed to receive on cabus.",exc=exc,exitCode=EXIT.Run)
 
         # send the messages to the queues
         # NOTE: no filtering is done; the watchdogs
         # must determine if the responses are relevant
-        for _, q in watchdog_queues.items():
+        for q in watchdog_queues.values():
             for m in responses[::-1]:
                 q.put(m)
         time.sleep(1)
@@ -181,6 +181,6 @@ def heartBeatListener():
     # Will send an item to the queue anyway; If we're here because of error:
     #   Yes: So this will exit the main thread
     #   No: So the item in the queue will not be read
-    fett.cyberPhys.launch.ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
+    ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
 
     return

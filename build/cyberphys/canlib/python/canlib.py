@@ -1,3 +1,4 @@
+
 import struct
 import socket
 import select
@@ -29,27 +30,26 @@ class UDPBus(BusABC):
         byte_msg.append(msg.dlc)
         byte_msg += bytearray([msg.data[i] for i in range(0, msg.dlc)])
         if timeout:
-            print("Warning: ignoring timeout {}".format(timeout))
+            print("UDPBus Warning: timeout is ignored during send()")
         self._sock.sendto(byte_msg, (tx_ip, tx_port))
 
     def _recv_internal(self, timeout):
         ready = select.select([self._sock], [], [], timeout)
         if ready[0]:
-            rx_data, sender_addr = self._sock.recvfrom(UDPBus.CAN_MAX_BYTES)
-            #print("Info: received {} bytes from {}".format(len(rx_data), sender_addr))
+            rx_data, _ = self._sock.recvfrom(UDPBus.CAN_MAX_BYTES)
             if len(rx_data) < UDPBus.CAN_MIN_BYTES:
-                print("Warning: received only {} bytes, ignoring.".format(len(rx_data)))
+                print("UDPBus Warning: received only {} bytes, ignoring.".format(len(rx_data)))
             else:
                 s = bytearray(rx_data[0:4])
                 arb_id = struct.unpack('!I', s)[0]
                 dlc = rx_data[4]
-                if dlc == len(rx_data[5:]):
-                    data = rx_data[5:]
+                data = rx_data[5:]
+                if dlc == len(data):
                     msg = Message(timestamp=time.time(),
                                 arbitration_id=arb_id,
                                 dlc=dlc,
                                 data=data)
                     return msg, False
                 else:
-                    print("Warning: DLC ({}) and the length of data ({}) don't match, ignoring.".format(dlc,len(rx_data)))
+                    print("UDPBus Warning: DLC ({}) and the length of data ({}) don't match, ignoring.".format(dlc,len(rx_data)))
         return None, False

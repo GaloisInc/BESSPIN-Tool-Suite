@@ -111,4 +111,4 @@ with open(outfilename_h, "w") as f:
         f.write(produce_can_h(row))
     f.write("\n#endif\n")
 
-print("Done!")
+print("Generating CANlib done!")
