@@ -2,7 +2,7 @@
 
 include defaultEnvUnix.mk
 
-TARGETS := $(patsubst ./%.c, ./%.riscv, $(wildcard ./test_inj_*.c))
+TARGETS := $(patsubst ./%.c, ./%.riscv, $(wildcard ./test_INJ_*.c))
 
 all: $(TARGETS)
 

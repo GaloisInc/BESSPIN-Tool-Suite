@@ -51,8 +51,10 @@ void main() {
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "unbufferStdout.h"
 
 int example_bad_scaled(int i) {
+  unbufferStdout();
   int intArray[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
   int *intPointer = intArray;
   // Usually programming mistake.

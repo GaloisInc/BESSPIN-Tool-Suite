@@ -33,7 +33,9 @@ char char_for_dimension(canid_t dimension_id);
 float *position_for_dimension(infotainment_state *the_state, canid_t dimension_id);
 
 /**
- * Receives a CAN frame sent to the specified port.
+ * Receives a CAN frame sent to the specified port. In the returned frame, the CAN ID
+ * is in host byte order.
+ * 
  * @param port The port on which to receive.
  * @param buffer The buffer in which to receive the CAN frame.
  * @param buffer_len The length of the CAN frame buffer.
@@ -58,6 +60,9 @@ struct in_addr *get_local_address();
 
 /**
  * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces.
+ * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces. It is assumed
+ * that the CAN ID field in the frame is in host byte order.
+ *
  * @param from_port The port to broadcast from.
  * @param to_port The port to broadcast to.
  * @param frame The CAN frame to broadcast.
@@ -75,3 +80,17 @@ int broadcast_frame(int from_port, int to_port, can_frame *frame);
  * @return true if the address is one of our addresses, false otherwise.
  */
 bool is_our_address(int port, struct sockaddr_in *address);
+
+/**
+ * Converts a float from network byte order to local byte order.
+ * @param val The float value to convert.
+ * @return the converted float value.
+ */
+float iu_ntohf(float val);
+
+/**
+ * Converts a float from local byte order to network byte order.
+ * @param val The float value to convert.
+ * @return the converted float value.
+ */
+float iu_htonf(float val);

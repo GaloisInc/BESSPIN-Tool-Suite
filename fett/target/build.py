@@ -18,7 +18,10 @@ def prepareOsImage (targetId=None):
 
     # setup os image and extra images
     if isEqSetting('binarySource', 'SRI-Cambridge',targetId=targetId):
-        osImageElf = os.path.join(osImagesDir,f"bbl-cheri.elf")
+        if isEqSetting('target', 'qemu', targetId=targetId):
+            osImageElf = os.path.join(osImagesDir,f"bbl-riscv64cheri-virt-fw_jump.bin")
+        else:
+            osImageElf = os.path.join(osImagesDir,f"bbl-cheri.elf")
         setSetting('osImageElf',osImageElf,targetId=targetId)
         imageVariantSuffix = '' if (isEqSetting('sourceVariant','default',targetId=targetId)) else f"-{getSetting('sourceVariant',targetId=targetId)}"
         setSetting('SRI-Cambridge-imageVariantSuffix',imageVariantSuffix,targetId=targetId)
@@ -193,6 +196,8 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         printAndLog (f"{targetInfo}Cross-compiling...",doPrint=doPrint)
         envVars = extraEnvVars
         envVars.append(f"XLEN={getSetting('xlen',targetId=targetId)}")
+        envVars.append(f"PROC_LEVEL={getSetting('procLevel',targetId=targetId)}")
+        envVars.append(f"PROC_FLAVOR={getSetting('procFlavor',targetId=targetId)}")
         envVars.append(f"USE_CLANG={'yes' if (isEqSetting('cross-compiler','Clang')) else 'no'}")
         if isEqSetting('target','qemu',targetId=targetId):
             envVars.append(f"PROJ_NAME=main_fett")
@@ -333,8 +338,12 @@ def selectImagePaths(targetId=None):
                 printAndLog(f"Could not find image for <{getSetting('osImage',targetId=targetId)}> in nix environment. Falling back to binary repo.", doPrint=False)
         baseDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource',targetId=targetId), 'osImages', imageType)
         if isEqSetting('binarySource', 'SRI-Cambridge',targetId=targetId):
-            imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"), 
-                os.path.join(baseDir, f"kernel-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=targetId)}.elf")]
+            if isEqSetting('target', 'qemu', targetId=targetId):
+                imagePaths = [os.path.join(baseDir, f"bbl-riscv64cheri-virt-fw_jump.bin"),
+                    os.path.join(baseDir, f"kernel-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=targetId)}.elf")]
+            else:
+                imagePaths = [os.path.join(baseDir, f"bbl-cheri.elf"),
+                    os.path.join(baseDir, f"kernel-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=targetId)}.elf")]
         else:
             imagePaths = [os.path.join(baseDir, f"{getSetting('osImage',targetId=targetId)}.elf")]
         return imagePaths
@@ -377,10 +386,13 @@ def importImage(targetId=None):
             if (getSetting('vcu118Mode',targetId=targetId) in ["flashBoot", "flashProgramAndBoot"]):
                 warnAndLog(f"<importImage>: Netboot is not needed in flash modes.",doPrint=False)
                 setSetting('elfLoader','JTAG',targetId=targetId)
-            elif (isEqSetting('procLevel','p3',targetId=targetId)):
-                warnAndLog(f"<importImage>: Netboot is currently not supported on P3. Falling back to JTAG.")
-                setSetting('elfLoader','JTAG',targetId=targetId)
             else:
+                if (isEqSetting('processor','bluespec_p3',targetId=targetId)):
+                    if (isEnabled('useCustomProcessor',targetId=targetId) or (not isEqSetting('binarySource','GFE',targetId=targetId))):
+                        warnAndLog(f"<importImage>: Using netboot on GFE <bluespec_p3> is not currently supported. "
+                            "Please use JTAG if booting fails.")
+                    else:
+                        logAndExit(f"<importImage>: Netboot is currently not supported on <bluespec_p3>. Please use JTAG.", exitCode=EXIT.Configuration)
                 netbootBuildDir = os.path.join(getSetting('osImagesDir',targetId=targetId),'buildNetbootElf')
                 netbootElf = os.path.join(netbootBuildDir,f"FreeRTOS.elf")
                 setSetting("netbootElf",netbootElf,targetId=targetId)
@@ -415,16 +427,17 @@ def cleanDirectory (xDir,endsWith='.o'):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def crossCompileUnix(directory,extraString=''):
+def crossCompileUnix(directory,extraString='',overrideBinarySource=None):
+    binarySource = overrideBinarySource if overrideBinarySource else getSetting('binarySource')
     if (len(glob.glob(os.path.join(directory,"*.c"))) == 0):
         return #there is nothing to compile
-    if (isEqSetting('binarySource','SRI-Cambridge')):
+    if (binarySource == 'SRI-Cambridge'):
         if (not isEqSetting('cross-compiler','Clang')):
-            warnAndLog (f"Compiling using <{getSetting('cross-compiler')}> for <{getSetting('binarySource')}> is not supported."
+            warnAndLog (f"Compiling using <{getSetting('cross-compiler')}> for <{binarySource}> is not supported."
                 " Compiling using <Clang> instead.")
             setSetting('cross-compiler','Clang')
         if (not isEqSetting('linker','LLD')):
-            warnAndLog (f"Linking using <{getSetting('linker')}> for <{getSetting('binarySource')}> is not supported."
+            warnAndLog (f"Linking using <{getSetting('linker')}> for <{binarySource}> is not supported."
                 " Linking using <LLD> instead.")
             setSetting('linker','LLD')
 
@@ -440,12 +453,24 @@ def crossCompileUnix(directory,extraString=''):
     envLinux.append(f"TARGET={getSetting('target').upper()}")
     envLinux.append(f"COMPILER={getSetting('cross-compiler').upper()}")
     envLinux.append(f"LINKER={getSetting('linker').upper()}")
-    envLinux.append(f"BIN_SOURCE={getSetting('binarySource').replace('-','_')}")
+    envLinux.append(f"BIN_SOURCE={binarySource.replace('-','_')}")
     envLinux.append(f"SOURCE_VARIANT={getSetting('sourceVariant')}")
+    if (isEnabled('useCustomCompiling') and
+        isEnabledDict('customizedCompiling','useCustomClang')
+        ):
+        envLinux.append(f"CLANG={getSettingDict('customizedCompiling','pathToCustomClang')}")
+    if (isEnabled('useCustomCompiling') and
+        isEnabledDict('customizedCompiling','useCustomSysroot')
+        ):
+        envLinux.append(f"SYSROOT={getSettingDict('customizedCompiling','pathToCustomSysroot')}")
     logging.debug(f"going to make using {envLinux}")
-    if (isEqSetting('binarySource','SRI-Cambridge')):
-        dockerToolchainImage = 'cambridge-toolchain'
-    elif (isEqSetting('binarySource','LMCO')):
+    if (binarySource == 'SRI-Cambridge'):
+        if (isEnabled('useCustomCompiling')):
+            warnAndLog("cross-compile: Will not use the docker toolchain while <useCustomCompiling> is enabled.")
+            dockerToolchainImage = None
+        else:
+            dockerToolchainImage = 'cambridge-toolchain'
+    elif (binarySource == 'LMCO'):
         dockerToolchainImage = 'galoisinc/besspin:gfe-gcc83'
     else:
         dockerToolchainImage = None

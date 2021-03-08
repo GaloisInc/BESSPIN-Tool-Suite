@@ -341,8 +341,8 @@ class commonTarget():
                 tempPrompt = "\r\n#"
             # vcu118 freebsd would be already logged in if onlySsh
             if (self.target=='qemu'):
-                self.runCommand("root",endsWith="\r\n#",overrideShutdown=True)
-                self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith="\r\n#")
+                self.runCommand ("root",endsWith=tempPrompt,overrideShutdown=True)
+                self.runCommand (f"echo \"{self.rootPassword}\" | pw usermod root -h 0",erroneousContents="pw:",endsWith=tempPrompt)
             elif (not self.onlySsh):
                 if ((self.binarySource!="SRI-Cambridge") or (self.restartMode and (self.target=='awsf1'))):
                     self.runCommand ("root",endsWith='Password:',overrideShutdown=True)
@@ -482,7 +482,7 @@ class commonTarget():
             self.terminateAndExit(
                 f"<update root password> is not implemented for <{self.osImage}> on <{self.target}>.",
                 exitCode=EXIT.Implementation)
-        printAndLog(f"{self.targetIdInfo}root password has been changed successfully!",doPrint=False)
+        printAndLog(f"{self.targetIdInfo}root password has been changed successfully to <{self.rootPassword}>.")
 
     @decorate.debugWrap
     @decorate.timeWrap
@@ -1262,7 +1262,7 @@ class commonTarget():
             self.enableSshOnRoot()
 
         portPart = '' if (not self.sshHostPort) else f" -p {self.sshHostPort}"
-        sshCommand = f"ssh{portPart} {userName}@{self.ipTarget}"
+        sshCommand = f"env -u SSH_AUTH_SOCK ssh{portPart} {userName}@{self.ipTarget}"
         sshPassword = self.rootPassword  if (userName=='root') else self.userPassword
         #Need to clear the ECDSA key first in case it is not the first time
         if (not self.sshECDSAkeyWasUpdated):

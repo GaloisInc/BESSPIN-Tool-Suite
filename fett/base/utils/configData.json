@@ -103,6 +103,15 @@
             "condition" : "useCustomProcessor"
         },
         {
+            "name" : "useCustomQemu",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomQemu",
+            "type" : "filePath",
+            "condition" : "useCustomQemu"
+        },
+        {
             "name" : "binarySource",
             "type" : "string",
             "choices" : [ "GFE", "LMCO", "Michigan", "MIT", "SRI-Cambridge" ]
@@ -210,6 +219,10 @@
             "name" : "FreeRTOStimeout",
             "type" : "int",
             "min" : 0
+        },
+        {
+            "name" : "runUnixMultitaskingTests",
+            "type" : "boolean"
         }
     ],
 
@@ -266,6 +279,24 @@
             "name" : "pathToCustomMakefile",
             "type" : "filePath",
             "condition" : "useCustomMakefile"
+        },
+        {
+            "name" : "useCustomClang",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomClang",
+            "type" : "filePath",
+            "condition" : "useCustomClang"
+        },
+        {
+            "name" : "useCustomSysroot",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomSysroot",
+            "type" : "dirPath",
+            "condition" : "useCustomSysroot"
         }
     ],
 

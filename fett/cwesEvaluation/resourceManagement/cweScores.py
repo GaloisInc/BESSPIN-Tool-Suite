@@ -7,9 +7,10 @@ from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 from fett.cwesEvaluation.resourceManagement.customCweScores import *
 from fett.cwesEvaluation.resourceManagement.customCweScores.helpers import regPartitionTest, regPartitionTestFreeRTOS
 from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests, overallScore, doKeywordsExistInText
-import fett.cwesEvaluation.common
+from fett.cwesEvaluation.common import isTestEnabled
 from collections import defaultdict
 from copy import deepcopy
+from fett.cwesEvaluation.multitasking.multitasking import hasMultitaskingException
 
 VULCLASS = "resourceManagement"
 
@@ -54,7 +55,9 @@ def scoreAllTests(logs):
 
     # Append ret with the CWEs scores based on funcTests
     for test, funcTests in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
-        if (not fett.cwesEvaluation.common.isTestEnabled(VULCLASS,test)):
+        if ((not isTestEnabled(VULCLASS,test)) or
+            (isEnabled("runningMultitaskingTests") and
+             hasMultitaskingException(VULCLASS, ["testsInfo", test]))):
             continue
         listScores = []
         scoreDetails = []

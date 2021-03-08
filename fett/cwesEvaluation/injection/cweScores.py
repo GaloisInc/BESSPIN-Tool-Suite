@@ -20,7 +20,7 @@ def scoreAllTests(logs):
     # Score the log files
     for name, log in logs:
         logLines = ftReadLines(log)
-        if name == 'test_inj_1':
+        if name == 'test_INJ_1':
             scoreInfo = scoreInj1Test(logLines, name)
         else:
             scoreInfo = scoreControlFlowTest(logLines, name)
@@ -28,7 +28,7 @@ def scoreAllTests(logs):
     return ret
 
 def getTestNumAndInfo(testName):
-    testNum = testName[5:].upper().replace("_", "-")
+    testNum = testName.split("test_")[1].replace("_", "-")
     info = getSettingDict(VULCLASS, ["testsInfo", testName, "cweText"])
     return (testNum, info)
 

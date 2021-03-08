@@ -8,7 +8,8 @@ import configparser, json, os, re
 import base64
 from fett.base.utils.misc import *
 from importlib.machinery import SourceFileLoader
-from fett.cwesEvaluation.scoreTests import SCORES
+import fett.cwesEvaluation.scoreTests
+SCORES = fett.cwesEvaluation.scoreTests.SCORES
 
 COMMON_SECTIONS = ['functionality', 'common', 'applications', 'build']
 TARGET_SECTION = 'target'
@@ -18,38 +19,18 @@ CYBERPHYS_SECTION = 'cyberPhys'
 CWES_ENABLED_TESTS_SECTION = "enabledTests"
 CWES_SELF_ASSESSMENT_SECTION = "selfAssessment"
 
-def loadJsonFile (jsonFile):
-    try:
-        fJson = open(jsonFile,'r')
-        jsonData = json.load(fJson)
-        fJson.close()
-    except Exception as exc:
-        logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
-    return jsonData
-
-def loadIniFile (iniFile):
-    xConfig = configparser.ConfigParser()
-    try:
-        xConfig.optionxform = str # Hack it to be case sensitive
-        fConfig = open(iniFile,'r')
-        xConfig.read_file(fConfig)
-        fConfig.close()
-    except Exception as exc:
-        logAndExit(f"Failed to read configuration file <{iniFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
-    return xConfig
-
 @decorate.debugWrap
 def loadConfiguration(configFile):
     #loading dev setup environment
-    setupEnvData = loadJsonFile(getSetting('setupEnvFile'))
+    setupEnvData = safeLoadJsonFile(getSetting('setupEnvFile'))
     loadConfigSection(None,None,setupEnvData,'setupEnv',setup=True)
 
     #loading the configuration file
-    xConfig = loadIniFile(configFile)
+    xConfig = safeLoadIniFile(configFile)
 
     #loading the configuration parameters data
     configDataFile = getSetting('jsonDataFile')
-    configData = loadJsonFile(configDataFile)
+    configData = safeLoadJsonFile(configDataFile)
 
     # Here we should read the options and such
     for xSection in COMMON_SECTIONS:
@@ -358,11 +339,11 @@ def genProdConfig(configFileSerialized, configFile):
 
     #loading the template configuration file (the repo's default)
     templateConfigPath = os.path.join(getSetting('repoDir'),'config.ini')
-    xConfig = loadIniFile(templateConfigPath)
+    xConfig = safeLoadIniFile(templateConfigPath)
 
     # loading the production template
     prodTemplatePath = os.path.join(getSetting('repoDir'),'fett','base','utils','productionTemplate.json')
-    prodSettings = loadJsonFile(prodTemplatePath)
+    prodSettings = safeLoadJsonFile(prodTemplatePath)
 
     # deserialize the input
     try:
@@ -408,6 +389,9 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
     else: #use default
         configCWEsParentPath = os.path.join(getSetting('repoDir'),'configSecurityTests')
 
+    #Create a dict for the scores
+    setSetting("cweScores",{vulClass:{} for vulClass in getSetting('vulClasses')})
+
     # load vulClass configs
     for vulClass in getSetting('vulClasses'): #load settings per vulClass
         vulClassDict = dict()
@@ -433,7 +417,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             # the `runAllTests` setting _before_ proceeding and checking the `test_*` setting.
 
         # Load selected tests + custom scores
-        configCWEs = loadIniFile(configCWEsPath)
+        configCWEs = safeLoadIniFile(configCWEsPath)
 
         sectionNames = []
         if (vulClass not in ['bufferErrors']):
@@ -469,7 +453,7 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             setSettingDict(vulClass,'selfAssessment',dictSelfAssessmentCWEs)
 
         # Load custom dev options (setupEnv.json)
-        setupEnvData = loadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',vulClass,'setupEnv.json'))
+        setupEnvData = safeLoadJsonFile(os.path.join(getSetting('repoDir'),'fett','cwesEvaluation',vulClass,'setupEnv.json'))
         loadConfigSection(None,None,setupEnvData,vulClass,setup=True,setSettingsToSectDict=vulClass)
 
     # Load custom scoring options if enabled
@@ -484,12 +468,37 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             if (not checkCustomScorerFunction()):
                 logAndExit(f"loadSecurityEvaluationConfiguration: <{getSettingDict('customizedScoring','pathToCustomFunction')}> has to be a valid scoring script.",exitCode=EXIT.Configuration)
 
+        if (isEnabled('runUnixMultitaskingTests') and
+            (getSetting('osImage') in ['debian', 'FreeBSD'])):
+            # Check that scoring options requiring GDB are disabled
+            if (not isEqSettingDict('customizedScoring', ['gdbKeywords'], [])):
+                logAndExit("loadSecurityEvaluationConfiguration: <gdbKeywords> "
+                           "custom scoring option is incompatable with "
+                           "<runUnixMultitaskingTests>.  Please disable one "
+                           "of these options.",
+                           exitCode=EXIT.Configuration)
+            if (not isEqSettingDict('customizedScoring', ['funcCheckpoints'], [])):
+                logAndExit("loadSecurityEvaluationConfiguration: <funcCheckpoints> "
+                           "custom scoring option is incompatable with "
+                           "<runUnixMultitaskingTests>.  Please disable one "
+                           "of these options.",
+                           exitCode=EXIT.Configuration)
+            if (not isEqSettingDict('customizedScoring', ['memAddress'], -1)):
+                logAndExit("loadSecurityEvaluationConfiguration: <memAddress> "
+                           "custom scoring option is incompatable with "
+                           "<runUnixMultitaskingTests>.  Please disable one "
+                           "of these options.",
+                           exitCode=EXIT.Configuration)
+
     # Load custom compiling options if enabled
     if (isEnabled('useCustomCompiling')):
         customizedCompilingDict = dict()
         setSetting('customizedCompiling',customizedCompilingDict)
         loadConfigSection(xConfig, 'customizedCompiling', configData, 'customizedCompiling', 
                 setSettingsToSectDict='customizedCompiling')
+
+    # CWEs evaluation never starts out running multitasking tests
+    setSetting("runningMultitaskingTests", False)
 
 @decorate.debugWrap
 def checkCustomScorerFunction():
@@ -529,7 +538,7 @@ def loadCyberPhysConfiguration (configData):
         cyberPhysConfigFile = getSetting('pathToCustomCyberPhysConfig')
     else:
         cyberPhysConfigFile = getSetting('cyberPhysDefaultConfigFile')
-    xConfig = loadIniFile(cyberPhysConfigFile)
+    xConfig = safeLoadIniFile(cyberPhysConfigFile)
 
     for iTarget in range(1,getSetting('nTargets')+1):
         iTargetDict = dict()

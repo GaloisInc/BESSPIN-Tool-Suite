@@ -211,8 +211,9 @@ void assert_music_state(can_frame *frame, int play, int station, int volume) {
 
 void assert_position(can_frame *frame, canid_t dimension_id, float position) {
     assert(frame->can_id == dimension_id);
-    float *frame_position = (float *) frame->data;
-    assert(*frame_position == position);
+    float frame_position;
+    memcpy(&frame_position, &frame->data[0], sizeof(float));
+    assert(iu_ntohf(frame_position) == position);
 }
 
 void print_frame(can_frame *frame) {
@@ -243,11 +244,14 @@ void print_position_frame(can_frame *frame) {
     assert(frame->can_id == CAN_ID_CAR_X || frame->can_id == CAN_ID_CAR_Y ||
            frame->can_id == CAN_ID_CAR_Z || frame->can_id == CAN_ID_CAR_R);
 
-    // interpret the payload as a float
-    float *position = (float *) frame->data;
+    // copy the payload into a float and fix its byte order; this is done
+    // instead of a simple cast to (float *) for alignment reasons
+    float position;
+    memcpy(&position, &frame->data[0], sizeof(float));
+    position = iu_ntohf(position);
 
     debug("%c-position CAN frame received: %f\n", 
-          char_for_dimension(frame->can_id), *position);
+          char_for_dimension(frame->can_id), position);
 }
 
 void print_music_state_frame(can_frame *frame) {
@@ -292,8 +296,8 @@ void send_coordinate(canid_t dimension_id, float coordinate) {
            dimension_id == CAN_ID_CAR_Z || dimension_id == CAN_ID_CAR_R);
 
     can_frame frame = { .can_id = dimension_id, .can_dlc = BYTE_LENGTH_CAR_X };
-    float *buffer = (float *) frame.data;
-    *buffer = coordinate;
+    float network_coordinate = iu_htonf(coordinate);
+    memcpy(&frame.data[0], &network_coordinate, sizeof(float));
     
     debug("broadcasting %c-coordinate update (%f)\n", 
           char_for_dimension(dimension_id), coordinate);

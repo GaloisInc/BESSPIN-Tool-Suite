@@ -180,6 +180,9 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
             result = NULL;
             continue;
         }
+        
+        // adjust the byte order of the CAN ID to host byte order
+        result->can_id = ntohl(result->can_id);
     }
 
     return result;
@@ -195,17 +198,22 @@ struct in_addr *get_local_address() {
 }
 
 int broadcast_frame(int from_port, int to_port, can_frame *frame) {
-    int result = 0;
-
     struct sockaddr_in broadcast_addr;
     memset(&broadcast_addr, 0, sizeof(struct sockaddr_in));
     broadcast_addr.sin_family = AF_INET;
     broadcast_addr.sin_port = htons(to_port);
     broadcast_addr.sin_addr.s_addr = inet_addr(broadcast_address);
 
+    // copy the CAN frame into the local variable to modify it for
+    // network byte order
+    can_frame frame_to_send;
+    memcpy(&frame_to_send, frame, sizeof(can_frame));
+    frame_to_send.can_id = htonl(frame->can_id);
+
     debug("sending frame to broadcast address %s:%d\n",
         inet_ntoa(broadcast_addr.sin_addr), to_port);
-    return sendto(udp_socket(from_port), frame, 5 + frame->can_dlc, 0, // no flags
+    return sendto(udp_socket(from_port), &frame_to_send, 
+                  5 + frame_to_send.can_dlc, 0, // no flags
                   (struct sockaddr *) &broadcast_addr, 
                   sizeof(struct sockaddr_in));
 }
@@ -253,4 +261,28 @@ bool is_our_address(int port, struct sockaddr_in *check_address) {
     }
 
     return result;
+}
+
+float iu_ntohf(float val) {
+    union {
+        uint32_t i;
+        float f;
+    } conv;
+
+    conv.f = val;
+    conv.i = ntohl(conv.i);
+
+    return conv.f;
+}
+
+float iu_htonf(float val) {
+    union {
+        uint32_t i;
+        float f;
+    } conv;
+
+    conv.f = val;
+    conv.i = htonl(conv.i);
+
+    return conv.f;
 }

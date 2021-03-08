@@ -179,6 +179,9 @@
                     },
                     "chisel_p2" : {
                         "debian" : "firesim"
+                    },
+                    "chisel_p3" : {
+                        "debian" : "notOnAWS"
                     }
                 },
                 "Michigan" : {
@@ -195,6 +198,9 @@
                 "SRI-Cambridge" : {
                     "bluespec_p2" : {
                         "FreeBSD" : "connectal"
+                    },
+                    "bluespec_p3" : {
+                        "FreeBSD" : "notOnAWS"
                     }
                 }
             }
@@ -368,7 +374,7 @@
         {
             "name" : "cwesAssessments",
             "type" : "stringsList",
-            "val" : "[HIGH, MED, LOW, NONE, NA, UNKNOWN]"
+            "val" : "[HIGH, MED, LOW, NONE, DETECTED, NA, UNKNOWN]"
         },
         {
             "name" : "cweTestTemplateFreeRTOS",
@@ -376,10 +382,21 @@
             "val" : "fett/cwesEvaluation/utils/cweTestTemplateFreeRTOS.c"
         },
         {
+            "name" : "besspinCoeffs",
+            "type" : "filePath",
+            "val" : "fett/cwesEvaluation/utils/besspinCoeffs.json"
+        },
+        {
             "name" : "uartDevicesSavedMap",
             "type" : "filePath",
             "val" : "fett/target/utils/uartDevicesMap.json",
             "ignore" : true
+        },
+        {
+            "name" : "vcu118NetbootTransferPace",
+            "_unit" : "seconds / MB",
+            "type" : "int",
+            "val" : 6
         }
     ]
 }

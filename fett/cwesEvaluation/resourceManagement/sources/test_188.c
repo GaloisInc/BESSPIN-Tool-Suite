@@ -77,6 +77,7 @@ void main() {
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
 #include <stdlib.h>
+#include "unbufferStdout.h"
 
 /** aligned on 32-bit boundaries.*/
 void
@@ -107,6 +108,7 @@ example_three_bytes_in_front() {
 }
 
 int main(int argc, char *argv[]) {
+    unbufferStdout();
     int option;
     if (argc > 1) { //be safe
         option = atoi(argv[1]);

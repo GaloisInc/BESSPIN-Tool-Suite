@@ -2,7 +2,7 @@ import glob
 import os
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.common import score
+from fett.cwesEvaluation.scoreTests import scoreTests
 from fett.target import awsf1, vcu118
 import fett.target.launch
 
@@ -69,20 +69,19 @@ def runFreeRTOSCwesEvaluation():
                 target.shutdown()
 
                 #Log the GDB log
-                if (isEnabled('useCustomScoring')):
+                if (isEnabled('useCustomScoring') and target.hasGdbAccess()):
                     logFile.write("\n\n~~~GDB LOGGING~~~\n")
                     gdbLines = '\n'.join(target.gdbOutLines)
                     logFile.write(gdbLines[gdbLines.find("Continuing."):]) # only the useful output
                     logFile.write("\n~~~~~~~~~~~~~~~~~\n")
 
-                if not isEqSetting('target', 'qemu'):
+                if (target.hasGdbAccess()):
                     logging.debug(f"\n~~~GDB LOGGING -- {testName}~~~\n")
                     logging.debug('\n'.join(ftReadLines(target.fGdbOut.name))) # The whole thing for debug
                     logging.debug("\n~~~~~~~~~~~~~~~~~")
 
             logFile.close()
         # Score the tests
-        score(os.path.join(getSetting("cwesEvaluationLogs"), vulClass),
-              vulClass)
+        scoreTests(vulClass, logsDir)
 
 

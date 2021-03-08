@@ -37,6 +37,7 @@ void main() {
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
 
 void regular_test(int const *ptr) {
   int x = 5;
@@ -60,6 +61,7 @@ void malicious_test_write(int *ptr) {
 }
 
 int main(int argc, char *argv[]) {
+  unbufferStdout();
   int option;
   int *ptr;
   int *ptr1=NULL;

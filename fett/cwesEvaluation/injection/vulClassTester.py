@@ -149,11 +149,11 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         outLog = "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
         outLog += f"\n<OSIMAGE={getSetting('osImage')}>\n"
 
-        if testName == "test_inj_1":
+        if testName == "test_INJ_1":
             textBack, isTimeout = self.executeInj1Test(binTest)
-        elif testName == "test_inj_2":
+        elif testName == "test_INJ_2":
             textBack, isTimeout = self.executeInj2Test(binTest)
-        elif testName == "test_inj_3":
+        elif testName == "test_INJ_3":
             textBack, isTimeout = self.executeInj3Test(binTest)
         else:
             self.terminateAndExit(f"<executeTest> Unknown test <{testName}>.",

@@ -90,6 +90,7 @@ void main() {
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
 
 void
 print_array(int *tab, int n) {
@@ -111,7 +112,7 @@ print_array(int *tab, int n) {
 
 int main(int argc, char *argv[])
 {
-  
+  unbufferStdout();
   int *b;
   int *c;
 

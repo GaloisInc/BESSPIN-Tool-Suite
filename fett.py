@@ -67,12 +67,12 @@ def main (xArgs):
             shutil.rmtree(workDir)
         except Exception as exc:
             print(f"(Error)~  Failed to delete <{workDir}>.\n{formatExc(exc)}.")
-            exitFett(EXIT.Configuration)
+            exitFett(EXIT.Configuration, preSetup=True)
     try:
         os.mkdir(workDir)
     except Exception as exc:
         print(f"(Error)~  Failed to create the working directory <{workDir}>.\n{formatExc(exc)}.")
-        exitFett(EXIT.Files_and_paths)
+        exitFett(EXIT.Files_and_paths, preSetup=True)
 
     # Check log file
     if (xArgs.logFile):
@@ -84,7 +84,7 @@ def main (xArgs):
         fLog.close()
     except Exception as exc:
         print(f"(Error)~  Failed to create the log file <{logFile}>.\n{formatExc(exc)}.")
-        exitFett(EXIT.Files_and_paths)
+        exitFett(EXIT.Files_and_paths, preSetup=True)
 
     # Entrypoint
     if(xArgs.entrypoint is None):
@@ -94,12 +94,16 @@ def main (xArgs):
     if(xArgs.jobId):
         if(not(re.match("^[A-Za-z0-9-_+.]+$", xArgs.jobId))):
             print("(Error)~  Provided jobId contained invalid character(s). It must match regex '[A-Za-z0-9-_+.]'")
-            exitFett(EXIT.Files_and_paths)
+            exitFett(EXIT.Files_and_paths, preSetup=True)
 
     # setup the logging
     logLevel = logging.DEBUG if (xArgs.debug) else logging.INFO 
     logging.basicConfig(filename=logFile,filemode='w',format='%(asctime)s: (%(levelname)s)~  %(message)s',datefmt='%I:%M:%S %p',level=logLevel)
     printAndLog(f"Welcome to FETT!")
+
+    #Prepare the peaceful exit
+    setSetting('trash',trashCanObj())
+    atexit.register(exitPeacefully,getSetting('trash'))
 
     # Store critical settings
     setSetting('repoDir', repoDir)
@@ -122,10 +126,6 @@ def main (xArgs):
         configFile = os.path.join(repoDir,'config.ini')
         printAndLog(f"Using the default configuration in <{configFile}>.")
     setSetting('configFile', configFile)
-
-    #Prepare the peaceful exit
-    setSetting('trash',trashCanObj())
-    atexit.register(exitPeacefully,getSetting('trash'))
 
     #Load the config file(s)
     loadConfiguration(configFile)

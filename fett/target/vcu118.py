@@ -64,6 +64,12 @@ class vcu118Target (fpgaTarget, commonTarget):
                 listenPort = self.findPort(portUse='netboot')
                 printAndLog(f"{self.targetIdInfo}boot: netboot port is <{listenPort}>.")
                 try:
+                    binSize = os.path.getsize(self.osImageElf)/(1024*1024)
+                except Exception as exc:
+                    self.terminateAndExit (f"boot: Failed to compute <{self.osImageElf}> size.",exc=exc,exitCode=EXIT.Run)
+                netbootTimeout = int(binSize * getSetting("vcu118NetbootTransferPace"))
+                printAndLog(f"{self.targetIdInfo}: Netboot timeout is set to <{netbootTimeout} seconds>.",doPrint=False)
+                try:
                     #Need to divert the tftpy logging. Otherwise, in case of debug (`-d`), our logging will get smothered.
                     logging.getLogger('tftpy').propagate = False
                     logging.getLogger('tftpy').addHandler(logging.FileHandler(os.path.join(getSetting('workDir'),'tftpy.log'),'w'))
@@ -78,7 +84,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     printAndLog (f"Started TFTP server on port {listenPort}.",doPrint=False)
                     time.sleep(1)
                     self.sendToTarget(f"boot -p {listenPort} {self.ipHost} {basename}\r\n")
-                    self.expectFromTarget("Finished receiving","Netbooting",timeout=timeout,overrideShutdown=True)
+                    self.expectFromTarget("Finished receiving","Netbooting",timeout=netbootTimeout,overrideShutdown=True)
 
             self.expectFromTarget(endsWith,"Booting",timeout=timeout,overrideShutdown=True)
 
