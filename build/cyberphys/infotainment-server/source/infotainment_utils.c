@@ -18,13 +18,14 @@
 #include <sys/types.h> 
 #include <sys/socket.h> 
 
-#include "can.h"
 #include "canlib.h"
+#include "canspecs.h"
 #include "infotainment_defs.h"
 #include "infotainment_debug.h"
 #include "infotainment_utils.h"
 
 static char *broadcast_address = DEFAULT_BROADCAST_ADDRESS;
+static struct in_addr local_address = { .s_addr = 0 };
 
 int udp_socket(int listen_port) {
     static int socketfd = -1;
@@ -74,6 +75,7 @@ int udp_socket(int listen_port) {
             // on the same port won't work
             debug("warning: unable to set port reuse mode\n");
         }
+
         // bind the socket to the port
         if (bind(socketfd, 
                  (struct sockaddr *) &listen_address, 
@@ -188,6 +190,10 @@ void set_broadcast_address(char *address) {
     broadcast_address = address;
 }
 
+struct in_addr *get_local_address() {
+    return &local_address;
+}
+
 int broadcast_frame(int from_port, int to_port, can_frame *frame) {
     int result = 0;
 
@@ -220,8 +226,14 @@ bool is_our_address(int port, struct sockaddr_in *check_address) {
             continue;
         }
         struct sockaddr_in *our_address = (struct sockaddr_in *) addr->ifa_addr;
-        result = result || ((our_address->sin_addr.s_addr - 
-                             check_address->sin_addr.s_addr) == 0);
+        bool match = (our_address->sin_addr.s_addr - 
+                      check_address->sin_addr.s_addr) == 0;
+        if (match && local_address.s_addr == 0) {
+            // our local address hadn't been set yet, but here it is
+            local_address.s_addr = our_address->sin_addr.s_addr;
+            debug("local IP address detected as %s\n", inet_ntoa(local_address));
+        }
+        result = result || match;
     }
 
     freeifaddrs(addresses);

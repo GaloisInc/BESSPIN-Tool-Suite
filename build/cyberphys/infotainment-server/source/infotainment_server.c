@@ -18,8 +18,8 @@
 #include <sys/types.h> 
 #include <sys/socket.h> 
 
-#include "can.h"
 #include "canlib.h"
+#include "canspecs.h"
 
 #include "infotainment_defs.h"
 #include "infotainment_debug.h"
@@ -289,9 +289,12 @@ void broadcast_heartbeat_ack(can_frame *frame) {
     can_frame ack = { .can_id = CAN_ID_HEARTBEAT_ACK, 
                       .can_dlc = BYTE_LENGTH_HEARTBEAT_ACK };
 
-    // just copy the data, which must be in the right byte order already,
+    // copy our local address into the first 4 bytes of the response
+    memcpy(&ack.data[0], &get_local_address()->s_addr, sizeof(uint32_t));
+
+    // then copy the data, which must be in the right byte order already,
     // from the heartbeat request
-    memcpy(&ack.data[0], &frame->data[0], sizeof(uint32_t));
+    memcpy(&ack.data[4], &frame->data[0], sizeof(uint32_t));
 
     // but we still need the right byte order to output debug info
     uint32_t *heartbeat_id = (uint32_t *) &ack.data[0];
