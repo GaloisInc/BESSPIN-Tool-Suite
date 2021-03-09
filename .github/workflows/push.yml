@@ -29,7 +29,6 @@ jobs:
           ssh-add <(echo "${{ secrets.SSH_PRIVATE_KEY }}")
           . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
           nix-shell --command "./ci/fett-ci.py runOnPush -ep OnPrem -art push-${{ github.sha }}"
-        continue-on-error: true
         env:
           HOME: /home/besspinuser
       - if: always()
