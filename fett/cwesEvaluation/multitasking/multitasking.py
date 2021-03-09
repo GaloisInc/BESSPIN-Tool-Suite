@@ -6,6 +6,7 @@ from fett.cwesEvaluation.scoreTests import tabulate_row
 
 # Name of the file to synchronize the test processes on
 LOCK_FILE = "multitask.lock"
+SCRIPT_FILE = "multitask.sh"
 
 def hasMultitaskingException(vulClass, envSection):
     exceptions = envSection + ["multitaskingExceptions"]
@@ -76,22 +77,7 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
                 for part in test.parts:
                     command = (f"./multitask.riscv {numProcs} {part.command} "
                                f"{self.redirectOp} multitask-{iLog}.log &")
-                    _, textBack, wasTimeout, _ = self.runCommand(command)
-                    # Strip " ^H" from output
-                    textBack = textBack.replace(' \x08', "")
-                    if wasTimeout or command not in textBack:
-                        # In addition to checking for timeouts, the tool must
-                        # also check that the command was properly executed.
-                        # When the target is overloaded it sometimes drops
-                        # characters sent over pexpect.  These dropped
-                        # characters are easy to detect as they are also absent
-                        # from the command text that the shell prints out.
-                        logAndExit("<multitasking>  Cannot spawn additional "
-                                   "processes: target has become unresponsive.  "
-                                   "Reduce the number of enabled tests and/or "
-                                   "reduce <instancesPerTestPart>.",
-                                   exitCode=EXIT.Run)
-                    unredirectedOutput += textBack
+                    self.typCommand(f'echo "{command}" >> {SCRIPT_FILE}')
                     iLog += 1
                 if test.vulClass not in logDirs:
                     logDirs[test.vulClass] = os.path.join(logDir, test.vulClass)
@@ -102,10 +88,15 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
 
 
         # Remove multitasking lock file and wait for all running jobs to finish
-        _, textBack, wasTimeout, _ = self.runCommand(f"rm {LOCK_FILE} && "
-                                                     f"wait {self.redirectOp} wait.log",
+        self.typCommand(f'echo "rm {LOCK_FILE}" >> {SCRIPT_FILE}')
+        self.typCommand(f'echo "wait {self.redirectOp} wait.log" >> {SCRIPT_FILE}')
+        print(self.typCommand(f'cat {SCRIPT_FILE}'))
+
+        # Source the script file so that we capture any shell output
+        _, textBack, wasTimeout, _ = self.runCommand(f"source {SCRIPT_FILE}",
                                                      exitOnError=False,
                                                      timeout=max(60, 6*numProcs))
+
         unredirectedOutput += textBack
         if wasTimeout:
             # Kill any running backgrounded jobs
