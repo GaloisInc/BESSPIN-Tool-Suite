@@ -16,7 +16,7 @@ jobs:
       - name: Remove lock file if it exists to prevent git fetch failures
         run: find .git -name index.lock -print -exec rm -f {} +
         continue-on-error: true
-      - run: sudo apt install -y git-lfs
+      - run: sudo apt install -y --no-install-recommends git-lfs docker.io
       - uses: actions/checkout@v2
         with:
           submodules: recursive

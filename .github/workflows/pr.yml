@@ -10,7 +10,7 @@ defaults:
 
 jobs:
   DevPR:
-    runs-on: docker-fpga
+    runs-on: fpga-5
     # This works if the self hosted runners are already logged in
     container:
       image: "artifactory.galois.com:5008/fett-target:ci"
@@ -23,19 +23,26 @@ jobs:
       - name: Remove lock file if it exists to prevent git fetch failures
         run: find .git -name index.lock -print -exec rm -f {} +
         continue-on-error: true
-      - run: sudo apt install -y git-lfs
+      - run: sudo apt install -y --no-install-recommends git-lfs docker.io
       - uses: actions/checkout@v2
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
       - run: |
+          cid="$(cat /proc/self/cgroup | grep pids | head -1 | cut -d/ -f3)"
+          docker network connect eth0fpga "$cid"
+          ip link set eth1 down && ip link set eth1 name eth0fpga && ip link set eth0fpga address 88:53:48:41:56:45 && ip link set eth0fpga up
+          docker network connect bridge "$cid"
+          docker network ls
+          docker inspect "$cid"
           export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
           . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
           eval "$(ssh-agent -s)"
           ssh-add <(echo "${{ secrets.SSH_PRIVATE_KEY }}")
           . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
           nix-shell --command "./ci/fett-ci.py runDevPR -ep OnPrem -art devPR-${{ github.sha }} -i ${{ matrix.cfg }}"
+          docker network disconnect eth0fpga "$cid"
         env:
           HOME: /home/besspinuser
       - if: always()
