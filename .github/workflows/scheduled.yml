@@ -10,9 +10,17 @@ on:
     branches:
       - "actions/*"
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   Periodic:
     runs-on: docker-fpga
+    # This works if the self hosted runners are already logged in
+    container:
+      image: "artifactory.galois.com:5008/fett-target:ci"
+      options: "-u root"
     strategy:
       fail-fast: false
       matrix:
@@ -20,21 +28,28 @@ jobs:
     steps:
       - run: |
           if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
-          echo "::set-env name=ref::$ref"
+          echo "ref=$ref" >> $GITHUB_ENV
 
       - name: Remove lock file if it exists to prevent git fetch failures
         run: find .git -name index.lock -print -exec rm -f {} +
         continue-on-error: true
+      - run: sudo apt install -y git-lfs
       - uses: actions/checkout@v2
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
           ref: ${{ env.ref }}
-      - uses: ./.github/action
-        with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runPeriodic -ep OnPrem -art periodic-${{ github.sha }} -i ${{ matrix.cfg }}
+      - run: |
+          export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
+          . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
+          eval "$(ssh-agent -s)"
+          ssh-add <(echo "${{ secrets.SSH_PRIVATE_KEY }}")
+          . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
+          nix-shell --command "./ci/fett-ci.py runPeriodic -ep OnPrem -art periodic-${{ github.sha }} -i ${{ matrix.cfg }}
+        continue-on-error: true
+        env:
+          HOME: /home/besspinuser
       - if: always()
         uses: actions/upload-artifact@v2
         with:
@@ -44,6 +59,10 @@ jobs:
   Release:
     if: "!always()"
     runs-on: docker-fpga
+    # This works if the self hosted runners are already logged in
+    container:
+      image: "artifactory.galois.com:5008/fett-target:ci"
+      options: "-u root"
     strategy:
       fail-fast: false
       matrix:
@@ -51,7 +70,7 @@ jobs:
     steps:
       - run: |
           if [[ "${{ github.event_name }}" == "schedule" ]]; then ref=develop; else ref="${{ github.ref }}"; fi
-          echo "::set-env name=ref::$ref"
+          echo "ref=$ref" >> $GITHUB_ENV
 
       - name: Remove lock file if it exists to prevent git fetch failures
         run: find .git -name index.lock -print -exec rm -f {} +
@@ -62,10 +81,16 @@ jobs:
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
           ref: ${{ env.ref }}
-      - uses: ./.github/action
-        with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runRelease -ep OnPrem -art release-${{ github.sha }} -i ${{ matrix.cfg }}
+      - run: |
+          export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
+          . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
+          eval "$(ssh-agent -s)"
+          ssh-add <(echo "${{ secrets.SSH_PRIVATE_KEY }}")
+          . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
+          nix-shell --command "./ci/fett-ci.py runRelease -ep OnPrem -art release-${{ github.sha }} -i ${{ matrix.cfg }}
+        continue-on-error: true
+        env:
+          HOME: /home/besspinuser
       - if: always()
         uses: actions/upload-artifact@v2
         with:

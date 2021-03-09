@@ -4,27 +4,41 @@ on:
     branches:
       - develop
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   DevPR:
     runs-on: docker-fpga
+    # This works if the self hosted runners are already logged in
+    container:
+      image: "artifactory.galois.com:5008/fett-target:ci"
+      options: "-u root"
     strategy:
       fail-fast: false
       matrix:
         cfg: [1, 2, 3, 4]
-
     steps:
       - name: Remove lock file if it exists to prevent git fetch failures
         run: find .git -name index.lock -print -exec rm -f {} +
         continue-on-error: true
+      - run: sudo apt install -y git-lfs
       - uses: actions/checkout@v2
         with:
           submodules: recursive
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           lfs: true
-      - uses: ./.github/action
-        with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          run: nix-shell --command "./ci/fett-ci.py runDevPR -ep OnPrem -art devPR-${{ github.sha }} -i ${{ matrix.cfg }}"
+      - run: |
+          export PATH=/opt/Xilinx/Vivado/2019.1/bin:/opt/Xilinx/Vivado_Lab/2019.1/bin:$PATH
+          . /opt/Xilinx/Vivado_Lab/2019.1/settings64.sh
+          eval "$(ssh-agent -s)"
+          ssh-add <(echo "${{ secrets.SSH_PRIVATE_KEY }}")
+          . /home/besspinuser/.nix-profile/etc/profile.d/nix.sh
+          nix-shell --command "./ci/fett-ci.py runDevPR -ep OnPrem -art devPR-${{ github.sha }} -i ${{ matrix.cfg }}"
+        continue-on-error: true
+        env:
+          HOME: /home/besspinuser
       - if: always()
         uses: actions/upload-artifact@v2
         with:
