@@ -16,11 +16,13 @@
 #include "iic.h"
 
 /* Canlib */
+#include "canspecs.h"
 #include "canlib.h"
 #include "j1939.h"
 
 /* FETT config */
 #include "fettFreeRTOSConfig.h"
+#include "fettFreeRTOSIPConfig.h"
 
 #if !(BSP_USE_IIC0)
 #error "One or more peripherals are nor present, this test cannot be run"
@@ -41,9 +43,6 @@
 #define SENSORTASK_PRIORITY tskIDLE_PRIORITY + 4
 #define CAN_RX_TASK_PRIORITY tskIDLE_PRIORITY + 3
 #define INFOTASK_PRIORITY tskIDLE_PRIORITY + 1
-
-#define CAN_RX_PORT (5001UL)
-#define CAN_TX_PORT (5002UL)
 
 #define SENSOR_LOOP_DELAY_MS pdMS_TO_TICKS(50)
 
@@ -71,7 +70,7 @@ void main_fett(void);
 void prvMainTask (void *pvParameters);
 void startNetwork(void);
 char *getCurrTime(void);
-uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len);
+uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len, canid_t *can_id, uint8_t *msg_buf);
 int16_t min(int16_t a, int16_t b);
 int16_t max(int16_t a, int16_t b);
 
@@ -82,7 +81,7 @@ SemaphoreHandle_t data_mutex;
 TaskHandle_t xMainTask = NULL;
 
 /* CAN rx buffer */
-uint8_t j1939_rx_buf[0x64] __attribute__((aligned(64)));
+uint8_t j1939_rx_buf[0x100] __attribute__((aligned(64)));
 
 /* Stereing assist config */
 bool camera_ok;
@@ -100,6 +99,9 @@ int16_t brake_max;
 int16_t throttle_raw;
 uint8_t gear_raw;
 int16_t brake_raw;
+
+/* Transmission status */
+bool transmission_ok;
 
 /* Final values */
 uint8_t throttle;
@@ -259,12 +261,13 @@ void prvMainTask (void *pvParameters) {
 
     funcReturn = xTaskNotifyWait(0xffffffffUL, 0xffffffffUL, &recvNotification, pdMS_TO_TICKS(60000)); //it should take less than 15s
     if (funcReturn != pdPASS) {
-        FreeRTOS_printf (("%s (Error)~  prvMainTask: Failed to receive a notification.\n", getCurrTime()));
+        FreeRTOS_printf (("%s (Error)~  prvMainTask: Failed to receive a notification.\r\n", getCurrTime()));
         vTaskDelete(NULL);
     } else if (recvNotification != NOTIFY_SUCCESS_NTK) {
-        FreeRTOS_printf (("%s (Error)~  prvMainTask: Unexpected notification value <%08x>.\n", getCurrTime(),recvNotification));
+        FreeRTOS_printf (("%s (Error)~  prvMainTask: Unexpected notification value <%08x>.\r\n", getCurrTime(),recvNotification));
         vTaskDelete(NULL);
     } else {
+        FreeRTOS_printf(("%s <NTK-READY>\r\n",getCurrTime()));
         // For compliance with FETT tool
         FreeRTOS_printf(("<NTK-READY>\r\n"));
     }
@@ -276,14 +279,17 @@ void prvMainTask (void *pvParameters) {
     /* Camera is not connected, don't use */
     camera_ok = FALSE;
 
+    /* Transmission is OK */
+    transmission_ok = TRUE;
+
     /* Create the tasks */
     funcReturn = xTaskCreate(prvInfoTask, "prvInfoTask", INFOTASK_STACK_SIZE, NULL, INFOTASK_PRIORITY, NULL);
     funcReturn &= xTaskCreate(prvSensorTask, "prvSensorTask", SENSORTASK_STACK_SIZE, NULL, SENSORTASK_PRIORITY, NULL);
     funcReturn &= xTaskCreate(prvCanRxTask, "prvCanRxTask", CAN_RX_STACK_SIZE, NULL, CAN_RX_TASK_PRIORITY, NULL);
     if (funcReturn == pdPASS) {
-        FreeRTOS_printf (("%s (Info)~  prvMainTask: Created all app tasks successfully.\n", getCurrTime()));
+        FreeRTOS_printf (("%s (Info)~  prvMainTask: Created all app tasks successfully.\r\n", getCurrTime()));
     } else {
-        FreeRTOS_printf (("%s (Error)~  prvMainTask: Failed to create the app tasks.\n", getCurrTime()));
+        FreeRTOS_printf (("%s (Error)~  prvMainTask: Failed to create the app tasks.\r\n", getCurrTime()));
     }
 
     vTaskDelete(NULL);
@@ -311,10 +317,16 @@ static void prvInfoTask(void *pvParameters)
             local_gear = gear;
             xSemaphoreGive(data_mutex);
         }
+        /* Sensor info */
         FreeRTOS_printf(("%s (prvInfoTask:raw) throttle: %d, brake: %d\r\n", getCurrTime(), local_throttle_raw, local_brake_raw));
-        FreeRTOS_printf(("%s (prvInfoTask:scaled) Gear: %#x, throttle: %u, brake: %u\r\n", getCurrTime(), local_gear, local_throttle, local_brake));
+        FreeRTOS_printf(("%s (prvInfoTask:scaled) Gear: %c, throttle: %u, brake: %u\r\n", getCurrTime(), local_gear, local_throttle, local_brake));
         FreeRTOS_printf(("%s (prvInfoTask:hz) prvSensorTask: %u[Hz]\r\n", getCurrTime(), hz_sensor_task - hz_sensor_task_old));
         hz_sensor_task_old = hz_sensor_task;
+
+        /* IIC bus info */
+#if IIC0_PRINT_STATS
+        iic0_print_stats();
+#endif
 
         if (camera_ok)
         {
@@ -333,14 +345,12 @@ static void prvSensorTask(void *pvParameters)
     (void)pvParameters;
 
     int returnval;
-    uint32_t ulIPAddress;
     Socket_t xClientSocket;
     struct freertos_sockaddr xDestinationAddress;
 
-    FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     // Broadcast address
     xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
-    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_TX_PORT);
+    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_PORT);
 
     FreeRTOS_printf(("%s Starting prvSensorTask\r\n", getCurrTime()));
 
@@ -369,40 +379,53 @@ static void prvSensorTask(void *pvParameters)
     brake_min = BRAKE_MIN;
     brake_max = BRAKE_MAX;
 
+    int err_cnt = 0;
+
     for (;;)
     {
-        hz_sensor_task++;
-
         returnval = iic_receive(&Iic0, TEENSY_I2C_ADDRESS, data, 5);
         vTaskDelay(pdMS_TO_TICKS(1));
         if (returnval < 1) {
             FreeRTOS_printf(("%s (prvSensorTask) iic_receive error: %i\r\n", getCurrTime(), returnval));
             vTaskDelay(pdMS_TO_TICKS(100));
+            err_cnt++;
+            if (err_cnt >= IIC_RESET_ERROR_THRESHOLD) {
+                FreeRTOS_printf(("%s (prvSensorTask) err_cnt == %i, resetting!\r\n", getCurrTime(), err_cnt));
+                iic0_master_reset();
+                err_cnt = 0;
+            }
             continue;
         }
 
-        // data[4] = gear
-        switch (data[4])
+        /* Is transmission OK? */
+        if (transmission_ok)
         {
-        case 0x28:
-            tmp_gear = 'P';
-            break;
-        case 0x27:
-            tmp_gear = 'R';
-            break;
-        case 0x26:
+            // data[4] = gear
+            switch (data[4])
+            {
+            case 0x28:
+                tmp_gear = 'P';
+                break;
+            case 0x27:
+                tmp_gear = 'R';
+                break;
+            case 0x26:
+                tmp_gear = 'N';
+                break;
+            case 0x25:
+                tmp_gear = 'D';
+                break;
+            default:
+                FreeRTOS_printf(("%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), data[4]));
+                break;
+            }
+        } else {
+            /* Default to neutral */
             tmp_gear = 'N';
-            break;
-        case 0x25:
-            tmp_gear = 'D';
-            break;
-        default:
-            FreeRTOS_printf(("%s (prvSensorTask) unknown gear value: %c\r\n", getCurrTime(), data[4]));
-            break;
         }
 
         /* Send gear */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_GEAR), (void *)&tmp_gear, sizeof(tmp_gear)) != SUCCESS)
+        if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_GEAR, (void *)&tmp_gear, sizeof(tmp_gear)) != SUCCESS)
         {
             FreeRTOS_printf(("%s (prvSensorTask) send gear failed\r\n", getCurrTime()));
         }
@@ -416,7 +439,7 @@ static void prvSensorTask(void *pvParameters)
         tmp_var = (uint8_t)tmp_throttle;
 
         /* Send throttle */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_THROTTLE_INPUT), (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_THROTTLE_INPUT, (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
         {
             FreeRTOS_printf(("%s (prvSensorTask) send throttle failed\r\n", getCurrTime()));
         }
@@ -430,7 +453,7 @@ static void prvSensorTask(void *pvParameters)
         tmp_var = (uint8_t)tmp_brake;
 
         /* Send brake */
-        if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_BRAKE_INPUT), (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_BRAKE_INPUT, (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
         {
             FreeRTOS_printf(("%s (prvSensorTask) send brake failed\r\n", getCurrTime()));
         }
@@ -446,12 +469,14 @@ static void prvSensorTask(void *pvParameters)
         if (camera_ok)
         {
             /* Steering assist */
-            if (send_can_message(xClientSocket, &xDestinationAddress, pgn_from_id(CAN_ID_STEERING_INPUT), (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
+            if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_STEERING_INPUT, (void *)&steering_assist, sizeof(steering_assist)) != SUCCESS)
             {
                 FreeRTOS_printf(("%s (prvSensorTask) send steering_assist failed\r\n", getCurrTime()));
             }
         }
 
+        /* Increment only *after* a successful run */
+        hz_sensor_task++;
         vTaskDelay(SENSOR_LOOP_DELAY_MS);
     }
 }
@@ -471,24 +496,24 @@ void vApplicationIPNetworkEventHook(eIPCallbackEvent_t eNetworkEvent)
         server. */
         FreeRTOS_GetAddressConfiguration(&ulIPAddress, &ulNetMask, &ulGatewayAddress, &ulDNSServerAddress);
         FreeRTOS_inet_ntoa(ulIPAddress, cBuffer);
-        FreeRTOS_printf(("\r\n\r\n%s ECIU: IP Address: %s\r\n", getCurrTime(), cBuffer));
+        FreeRTOS_printf(("\r\n\r\n%s IP Address: %s\r\n", getCurrTime(), cBuffer));
 
         FreeRTOS_inet_ntoa(ulNetMask, cBuffer);
-        FreeRTOS_printf(("%s ECU: Subnet Mask: %s\r\n", getCurrTime(), cBuffer));
+        FreeRTOS_printf(("%s Subnet Mask: %s\r\n", getCurrTime(), cBuffer));
 
         FreeRTOS_inet_ntoa(ulGatewayAddress, cBuffer);
-        FreeRTOS_printf(("%s ECU: Gateway Address: %s\r\n", getCurrTime(), cBuffer));
+        FreeRTOS_printf(("%s Gateway Address: %s\r\n", getCurrTime(), cBuffer));
 
         FreeRTOS_inet_ntoa(ulDNSServerAddress, cBuffer);
-        FreeRTOS_printf(("%s ECU: DNS Server Address: %s\r\n\r\n\r\n", getCurrTime(), cBuffer));
+        FreeRTOS_printf(("%s DNS Server Address: %s\r\n\r\n\r\n", getCurrTime(), cBuffer));
 
         // notify main
         if (xMainTask == NULL) {
-            FreeRTOS_printf(("%s (Error)~  NtkHook: Unable to get the handle of <prvMainTask>.\n", getCurrTime()));
+            FreeRTOS_printf(("%s (Error)~  NtkHook: Unable to get the handle of <prvMainTask>.\r\n", getCurrTime()));
         }
         funcReturn = xTaskNotify( xMainTask, NOTIFY_SUCCESS_NTK ,eSetBits);
         if (funcReturn != pdPASS) {
-            FreeRTOS_printf(("%s (Error)~  NtkHook: Failed to notify <prvMainTask>!\n", getCurrTime()));
+            FreeRTOS_printf(("%s (Error)~  NtkHook: Failed to notify <prvMainTask>!\r\n", getCurrTime()));
         }
     }
 }
@@ -503,6 +528,18 @@ static void prvCanRxTask(void *pvParameters)
     struct freertos_sockaddr xBindAddress;
     struct freertos_sockaddr xClient;
     size_t msg_len;
+    canid_t can_id;
+    uint32_t request_id;
+    uint32_t target_id;
+
+    /* Socket for responding to requests */
+    Socket_t xClientSocket;
+    struct freertos_sockaddr xDestinationAddress;
+    xDestinationAddress.sin_addr = FreeRTOS_inet_addr(CYBERPHYS_BROADCAST_ADDR);
+    xDestinationAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_PORT);
+    xClientSocket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP);
+    configASSERT(xClientSocket != FREERTOS_INVALID_SOCKET);
+    /*  End of the socket for respondnig to requests */
 
     FreeRTOS_printf(("%s Starting prvCanRxTask\r\n", getCurrTime()));
 
@@ -517,22 +554,41 @@ static void prvCanRxTask(void *pvParameters)
 	after the network is up, so the IP address is valid here. */
     FreeRTOS_GetAddressConfiguration(&ulIPAddress, NULL, NULL, NULL);
     xBindAddress.sin_addr = ulIPAddress;
-    xBindAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_RX_PORT);
+    xBindAddress.sin_port = FreeRTOS_htons((uint16_t)CAN_PORT);
 
     /* Bind the socket to the port that the client task will send to. */
     FreeRTOS_bind(xListeningSocket, &xBindAddress, sizeof(xBindAddress));
 
     FreeRTOS_inet_ntoa(xBindAddress.sin_addr, cBuffer);
-    FreeRTOS_printf(("%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_RX_PORT));
+    FreeRTOS_printf(("%s (prvCanRxTask) bound to addr %s:%u\r\n", getCurrTime(), cBuffer, (uint16_t)CAN_PORT));
+
+    /* Set target ID */
+    target_id = FreeRTOS_htonl(FreeRTOS_GetIPAddress());
 
     for (;;)
     {
-        uint8_t res = process_j1939(xListeningSocket, &xClient, &msg_len);
+        uint8_t res = process_j1939(xListeningSocket, &xClient, &msg_len, &can_id, (uint8_t*)&request_id);
         if (res == SUCCESS)
         {
-            FreeRTOS_inet_ntoa(xClient.sin_addr, cBuffer);
-            FreeRTOS_printf(("%s (prvCanRxTask) recv_can_message %lu bytes from %s:%u\r\n",
-                             getCurrTime(), msg_len, cBuffer, FreeRTOS_ntohs(xClient.sin_port)));
+            switch (can_id)
+            {
+                case CAN_ID_HEARTBEAT_REQ:
+                    /* received data are in network endian, simply copy over as we do not need to process them */
+                    FreeRTOS_printf(("%s (prvCanRxTask) Replying to heartbeat #%u\r\n", getCurrTime(), FreeRTOS_ntohl(request_id)));
+                    /* Copy target ID (stored in network byte order) */
+                    memcpy(&cBuffer[0], &target_id, sizeof(uint32_t));
+                    /* Copy request ID (already in network byte order) */
+                    memcpy(&cBuffer[4], &request_id, sizeof(uint32_t));
+                    res = send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_HEARTBEAT_ACK,
+                        (void *)cBuffer, BYTE_LENGTH_HEARTBEAT_ACK);
+                    if ( res != SUCCESS)
+                    {
+                        FreeRTOS_printf(("%s (prvCanRxTask) Replying to heartbeat failed with %u\r\n", getCurrTime(), res));
+                    }
+                    break;
+            default:
+                break;
+            }
         }
         else
         {
@@ -541,16 +597,22 @@ static void prvCanRxTask(void *pvParameters)
     }
 }
 
-uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len)
+uint8_t process_j1939(Socket_t xListeningSocket, struct freertos_sockaddr *xClient, size_t *msg_len, canid_t *can_id, uint8_t *msg_buf)
 {
-    char msg[64];
+    char msg[100];
 
     /* Receive a message that can overflow the msg buffer */
-    uint8_t res = recv_can_message(xListeningSocket, xClient, msg, msg_len);
-    if (res == SUCCESS)
-    {
-        /* Copy message over to a persistent buffer */
-        memcpy(j1939_rx_buf, msg, *msg_len);
+    uint8_t res = recv_can_message(xListeningSocket, xClient, can_id, msg, msg_len);
+    if (res == SUCCESS) {
+        /* Check CAN ID */
+        if (*can_id == PGN_BAM)
+        {
+            /* Copy message over to a persistent buffer */
+            memcpy(j1939_rx_buf, msg, *msg_len);
+        } else {
+            /* All other messages are pass-through */
+            memcpy(msg_buf, msg, min(sizeof(uint32_t), *msg_len));
+        }
     }
     return res;
 }

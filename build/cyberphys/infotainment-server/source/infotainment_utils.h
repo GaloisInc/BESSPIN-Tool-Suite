@@ -54,9 +54,15 @@ can_frame *receive_frame(int port, uint8_t *buffer, int buffer_len,
 void set_broadcast_address(char *address);
 
 /**
+ * @return a pointer to the local address as a struct in_addr.
+ */
+struct in_addr *get_local_address();
+
+/**
+ * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces.
  * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces. It is assumed
  * that the CAN ID field in the frame is in host byte order.
- * 
+ *
  * @param from_port The port to broadcast from.
  * @param to_port The port to broadcast to.
  * @param frame The CAN frame to broadcast.
