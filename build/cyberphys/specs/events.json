@@ -1,0 +1,158 @@
+{
+    "uid": 2,
+    "elements": [
+        {
+            "type": "com.galois.besspin.lando.ssl.ast.RawEvents",
+            "uid": 1,
+            "name": "CYBERPHYS_EVENTS",
+            "events": [
+                {
+                    "id": "CYBERPHYS_PROVISIONED",
+                    "text": "All CyberPhys components have been provisioned.",
+                    "comments": [
+                        {
+                            "text": "Events triggering software behavior on the CyberPhys demonstrator."
+                        }
+                    ]
+                },
+                {
+                    "id": "COMPONENT_PROVISIONED",
+                    "text": "The component is provisioned and ready to go.",
+                    "comments": [
+                        {
+                            "text": "///////////////////////////////////"
+                        },
+                        {
+                            "text": ""
+                        },
+                        {
+                            "text": "Component events"
+                        },
+                        {
+                            "text": ""
+                        },
+                        {
+                            "text": "Valid for ECU SW, Infotainment Thin Client, Infotainment Server SW,"
+                        },
+                        {
+                            "text": "BeamNG, Ignition, Security Mux, Hacker UI, FETT Tool"
+                        },
+                        {
+                            "text": ""
+                        },
+                        {
+                            "text": "///////////////////////////////////"
+                        }
+                    ]
+                },
+                {
+                    "id": "COMPONENT_ERROR",
+                    "text": "The component has become unresponsive.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "BEAMNG_RESET",
+                    "text": "Reset the BeamNG simulator to a known initial state; Fuel is set to a low value, corresponding to a few minutes of driving.",
+                    "comments": [
+                        {
+                            "text": "///////////////////////////////////"
+                        },
+                        {
+                            "text": ""
+                        },
+                        {
+                            "text": "END of component events"
+                        },
+                        {
+                            "text": ""
+                        },
+                        {
+                            "text": "///////////////////////////////////"
+                        }
+                    ]
+                },
+                {
+                    "id": "BEAMNG_START_DRIVING",
+                    "text": "Start driving; Fuel is consumed during the drive.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "BEAMNG_EMPTY_TANK",
+                    "text": "The fuel tank is empty, and the allowed driving time has elapsed.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "HACK_DEPLOYED",
+                    "text": "A hack against one of the subsystems (ECU/Infotainment) was initiated.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "SECURITY_MUX_SECURE_INFOTAINMENT",
+                    "text": "Secure infotainment mode has been activated.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "SECURITY_MUX_SECURE_ECU",
+                    "text": "Secure ECU mode has been activated.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "SECURITY_MUX_BASELINE",
+                    "text": "Baseline (no security) mode has been activated.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "ECU_SENSOR_READ_ERROR",
+                    "text": "One or more of the ECU sensors has become unresponsive.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "ECU_BRAKE_POSITION_SENT",
+                    "text": "A brake position was sent to the simulator PC.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "ECU_THROTTLE_POSITION_SENT",
+                    "text": "A throttle position was sent to the simulator PC.",
+                    "comments": [
+                    ]
+                },
+                {
+                    "id": "ECU_SHIFTER_GEAR_SENT",
+                    "text": "A gear position was sent to the simulator PC.",
+                    "comments": [
+                    ]
+                }
+            ],
+            "comments": [
+                {
+                    "text": "See the voting system scenarios as an example:"
+                },
+                {
+                    "text": "https://github.com/GaloisInc/BESSPIN-Voting-System-Demonstrator-2019/blob/master/specs/lando/sbb/events.lando"
+                }
+            ]
+        }
+    ],
+    "relationShips": {
+        "_inheritRelations": [
+        ],
+        "_containsRelations": [
+        ],
+        "_implicitContainsRelations": [
+        ],
+        "_clientRelations": [
+        ]
+    },
+    "comments": [
+    ]
+}

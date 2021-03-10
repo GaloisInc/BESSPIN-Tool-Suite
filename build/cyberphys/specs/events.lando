@@ -1,0 +1,61 @@
+// See the voting system scenarios as an example:
+// https://github.com/GaloisInc/BESSPIN-Voting-System-Demonstrator-2019/blob/master/specs/lando/sbb/events.lando
+events CYBERPHYS_EVENTS
+//Events triggering software behavior on the CyberPhys demonstrator.
+
+CYBERPHYS_PROVISIONED
+All CyberPhys components have been provisioned.
+
+/////////////////////////////////////
+//
+// Component events
+//
+// Valid for ECU SW, Infotainment Thin Client, Infotainment Server SW,
+// BeamNG, Ignition, Security Mux, Hacker UI, FETT Tool
+//
+/////////////////////////////////////
+COMPONENT_PROVISIONED
+The component is provisioned and ready to go.
+
+COMPONENT_ERROR
+The component has become unresponsive. 
+
+/////////////////////////////////////
+//
+// END of component events
+//
+/////////////////////////////////////
+
+BEAMNG_RESET
+Reset the BeamNG simulator to a known initial state; Fuel is set to a low value,
+corresponding to a few minutes of driving.
+
+BEAMNG_START_DRIVING
+Start driving; Fuel is consumed during the drive.
+
+BEAMNG_EMPTY_TANK
+The fuel tank is empty, and the allowed driving time has elapsed.
+
+HACK_DEPLOYED
+A hack against one of the subsystems (ECU/Infotainment) was initiated.
+
+SECURITY_MUX_SECURE_INFOTAINMENT
+Secure infotainment mode has been activated.
+
+SECURITY_MUX_SECURE_ECU
+Secure ECU mode has been activated.
+
+SECURITY_MUX_BASELINE
+Baseline (no security) mode has been activated.
+
+ECU_SENSOR_READ_ERROR
+One or more of the ECU sensors has become unresponsive.
+
+ECU_BRAKE_POSITION_SENT
+A brake position was sent to the simulator PC.  
+
+ECU_THROTTLE_POSITION_SENT
+A throttle position was sent to the simulator PC.
+
+ECU_SHIFTER_GEAR_SENT
+A gear position was sent to the simulator PC.

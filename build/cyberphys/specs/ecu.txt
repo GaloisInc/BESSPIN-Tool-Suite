@@ -1,0 +1,13 @@
+@startuml
+participant Shifter order 10
+participant ThrottePedal order 20
+participant ECU order 30
+participant PC order 40
+
+Shifter -> ECU: i2c gear position
+ThrottePedal -> ECU: i2c throttle position
+
+ECU -> PC: CAN_ID_THROTTLE
+ECU -> PC: CAN_ID_GEAR
+
+@enduml
