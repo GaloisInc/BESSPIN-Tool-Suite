@@ -1,7 +1,7 @@
 import pexpect
 
 from fett.base.utils.misc import *
-from fett.cwesEvaluation.scoreTests import scoreTests, prettyVulClass
+from fett.cwesEvaluation.scoreTests import scoreTests, prettyVulClass, tabulate
 
 import fett.cwesEvaluation.bufferErrors.vulClassTester
 import fett.cwesEvaluation.PPAC.vulClassTester
@@ -10,7 +10,7 @@ import fett.cwesEvaluation.informationLeakage.vulClassTester
 import fett.cwesEvaluation.numericErrors.vulClassTester
 import fett.cwesEvaluation.hardwareSoC.vulClassTester
 import fett.cwesEvaluation.injection.vulClassTester
-from fett.cwesEvaluation.multitasking.multitasking import hasMultitaskingException, multitaskingRunner, printAndLogMultitaskingTable
+from fett.cwesEvaluation.multitasking.multitasking import hasMultitaskingException, multitaskingRunner, logMultitaskingTable
 
 cweTests = {
     "bufferErrors" :
@@ -42,7 +42,7 @@ def executeTest(target, vulClass, binTest, logDir):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def checkMultitaskingScores(vulClass, multitaskingScores):
+def checkMultitaskingScores(vulClass, multitaskingScores, instance, multitaskingPasses):
     results = []
     for cwe, score in getSettingDict("cweScores", vulClass).items():
         if hasMultitaskingException(vulClass, ["testsInfo", f"test_{cwe}"]):
@@ -50,17 +50,57 @@ def checkMultitaskingScores(vulClass, multitaskingScores):
             continue
         try:
             multitaskingScore = multitaskingScores[cwe]
+            if vulClass in ['bufferErrors', 'informationLeakage']:
+                testName = f"CWE-{cwe}"
+            else:
+                testName = f"TEST-{cwe}"
+            if multitaskingScore == score:
+                multitaskingPasses[testName] = multitaskingPasses.get(testName, 0) + 1
+                scoreText = "PASS"
+            else:
+                scoreText = "FAIL"
             results.append((prettyVulClass(vulClass),
-                            f"TEST-{cwe}",
+                            testName,
+                            str(instance),
                             score,
                             multitaskingScore,
-                            "PASS" if multitaskingScore == score else "FAIL"))
+                            scoreText))
         except Exception as exc:
             logAndExit("<checkMultitaskingScores> Failed to check "
                        f"multitasking score for CWE <{cwe}>.",
                        exc=exc,
                        exitCode=EXIT.Dev_Bug)
     return results
+
+@decorate.debugWrap
+def appendMultitaskingColumn(vulClass, rows, multitaskingPasses):
+    for row in rows:
+        testNameParts = row[0].split("-")
+        testName = f"test_{'_'.join(testNameParts[1:])}"
+        if (supportsMultitasking(vulClass) and
+            not hasMultitaskingException(vulClass, ["testsInfo", testName])):
+            try:
+                percentPassed = (multitaskingPasses[row[0]] / getSetting("instancesPerTestPart")) * 100
+            except Exception as exc:
+                logAndExit("<appendMultitaskingColumn> Failed to find "
+                           f"multitasking score for <{row[0]}>.",
+                           exc=exc,
+                           exitCode=EXIT.Dev_Bug)
+            row.append(f"{percentPassed:.1f}%")
+        else:
+            row.append("N/A")
+
+@decorate.debugWrap
+def printTable(vulClass, table):
+    rows = tabulate(table,
+                    vulClass,
+                    prettyVulClass(vulClass),
+                    getSetting("runningMultitaskingTests"))
+    reportFilePath = os.path.join(getSetting("workDir"), "scoreReport.log")
+    fScoresReport = ftOpenFile(reportFilePath, 'a')
+    for row in rows:
+        printAndLog(row, tee=fScoresReport)
+    fScoresReport.close()
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -112,6 +152,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             target.sendTar(timeout=timeout)
 
         # Batch tests by vulnerability class
+        sequentialTables = {}
         multitaskingTests = []
         for vulClass, tests in getSetting("enabledCwesEvaluations").items():
             logsDir = os.path.join(baseLogDir, vulClass)
@@ -122,7 +163,8 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
                     multitaskingTest = cweTests[vulClass](target).testToMultitaskingObj(test)
                     if multitaskingTest:
                         multitaskingTests.append(multitaskingTest)
-            scoreTests(vulClass, logsDir)
+            _, table = scoreTests(vulClass, logsDir, prettyVulClass(vulClass), doPrint=False)
+            sequentialTables[vulClass] = table
 
         if multitaskingTests:
             setSetting("runningMultitaskingTests", True)
@@ -130,22 +172,40 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
             mkdir(logsDir)
             multitaskingRunner(target).runMultitaskingTests(multitaskingTests, logsDir)
 
-            table = [("Vul. Class", "TEST", "Seq. Score", "Multi. Score", "Result")]
+            table = [("Vul. Class", "TEST", "Instance", "Seq. Score", "Multi. Score", "Result")]
             numMultitaskingScores = 0
+            multitaskingPasses = {}
             for vulClass in getSetting("enabledCwesEvaluations").keys():
                 if supportsMultitasking(vulClass):
-                    multitaskingScores = scoreTests(vulClass,
-                                                    os.path.join(logsDir,
-                                                                 vulClass))
-                    table += checkMultitaskingScores(vulClass,
-                                                       multitaskingScores)
-                    numMultitaskingScores += len(multitaskingScores)
-            printAndLogMultitaskingTable(table)
-            numPassed = len([r for r in table[1:] if r[4] == "PASS"])
+                    for instance in range(1, getSetting('instancesPerTestPart')+1):
+                        multitaskingScores, _ = scoreTests(
+                                vulClass,
+                                os.path.join(logsDir,
+                                             vulClass,
+                                             f"instance-{instance}"),
+                                f'{prettyVulClass(vulClass)} multitasking '
+                                f'instance {instance}',
+                                doPrint=False,
+                                reportFileName="multitaskingScoreReport.log")
+                        table += checkMultitaskingScores(vulClass,
+                                                         multitaskingScores,
+                                                         instance,
+                                                         multitaskingPasses)
+                        numMultitaskingScores += len(multitaskingScores)
+            logMultitaskingTable(table)
+
+            for vulClass, table in sequentialTables.items():
+                appendMultitaskingColumn(vulClass, table, multitaskingPasses)
+                printTable(vulClass, table)
+
+            numPassed = sum(multitaskingPasses.values())
             percentPassed = (numPassed / numMultitaskingScores) * 100
             printAndLog(f"{numPassed}/{numMultitaskingScores} multitasking "
                         f"tests scored as expected ({percentPassed:.1f}%).")
             setSetting("runningMultitaskingTests", False)
+        else:
+            for vulClass, table in sequentialTables.items():
+                printTable(vulClass, table)
 
     else:
         target.terminateAndExit(f"<runTests> not implemented for <{getSetting('osImage')}>",

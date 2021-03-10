@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
+#endif
+
 // Test 192 only has a single Part, so no special treatment is required
 // here for multi-part running on FreeRTOS or Debian
 
@@ -32,6 +36,9 @@ int main (void) {
   int16_t s;
   uint32_t sz;
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+  unbufferStdout();
+#endif
   printf ("TEST 192 PART P01\n");
 
   i = GetUntrustedInt();

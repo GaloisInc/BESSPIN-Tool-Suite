@@ -10,7 +10,9 @@ static void storeSecret(secretLocInfo_t * secretInfo);
         return;
     }
 #else
+#include "unbufferStdout.h"
     int main() {
+        unbufferStdout();
         noClearMallocTest();
         return 0;
     }

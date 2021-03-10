@@ -6,6 +6,9 @@ import glob, os
 import re
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from fett.cwesEvaluation.multitasking.multitasking import multitaskingPart, multitaskingTest
+
+INFO_OUTPUT_FILE = "info-output.txt"
 
 class vulClassTester(testgenTargetCompatibilityLayer):
     def __init__(self, target):
@@ -22,4 +25,15 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         if (isEnabledDict(self.vulClass,'useSelfAssessment')):
             return "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
 
-        return self.typCommand(f"./{binTest}")
+        textBack = self.typCommand(f"./{binTest} {self.redirectOp} {INFO_OUTPUT_FILE}")
+        outLog = self.typCommand(f"cat {INFO_OUTPUT_FILE}")
+        outLog += textBack
+        return outLog
+
+    def testToMultitaskingObj(self, binTest):
+        return multitaskingTest(
+                self.vulClass,
+                "",
+                [multitaskingPart("", "", f"./{binTest}")])
+
+

@@ -48,8 +48,12 @@ def generateWrappers():
                     enabledBins.append(fileName.replace(".c",".riscv"))
                     fd = ftOpenFile(os.path.join(src, fileName), "w")
                     fd.write('#include <stdio.h>\n')
+                    if isEnabled('isUnix'):
+                        fd.write('#include "unbufferStdout.h"\n')
                     fd.write('int main()\n')
                     fd.write('{\n')
+                    if isEnabled('isUnix'):
+                        fd.write('\tunbufferStdout();\n')
                     fd.write('\treturn test_main();\n')
                     fd.write('}\n')
                     fd.close()

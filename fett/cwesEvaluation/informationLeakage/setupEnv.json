@@ -5,6 +5,11 @@
 
     "informationLeakage" : [
         {
+            "name" : "supportsMultitasking",
+            "type" : "boolean",
+            "val"  : true
+        },
+        {
             "name" : "classSpecificMake",
             "type" : "bool",
             "val"  : 1

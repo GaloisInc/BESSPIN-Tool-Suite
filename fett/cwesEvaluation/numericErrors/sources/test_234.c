@@ -77,8 +77,9 @@ int main()
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
-
+#include "unbufferStdout.h"
 int main (int argc, char *argv[]) {
+  unbufferStdout();
   int testpart;
   if (argc > 1) {
     testpart = atoi(argv[1]);

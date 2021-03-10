@@ -7,7 +7,9 @@
         return;
     }
 #else
+#include "unbufferStdout.h"
     int main() {
+        unbufferStdout();
         noClearReallocTest(EXPAND);
         return 0;
     }
