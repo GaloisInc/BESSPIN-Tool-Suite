@@ -87,8 +87,8 @@ class SCORES (enum.Enum):
         return mapToScores[strScore]
 
 @decorate.debugWrap
-def scoreTests(vulClass, logsDir):
-    reportFileName = os.path.join(getSetting("workDir"), "scoreReport.log")
+def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreReport.log"):
+    reportFilePath = os.path.join(getSetting("workDir"), reportFileName)
     csvPath = os.path.join(logsDir, "scores.csv")
     iniPath = os.path.join(logsDir, f"{vulClass}.ini")
     if isEnabled("runningMultitaskingTests"):
@@ -96,14 +96,7 @@ def scoreTests(vulClass, logsDir):
         scoresDict = {}
     else:
         scoresDict = getSettingDict("cweScores",vulClass)
-    fScoresReport = ftOpenFile(reportFileName, 'a')
-    try:
-        setSetting("reportFile", fScoresReport)
-    except Exception as exc:
-        logAndExit("<scoreTests>: Failed to open the report file "
-                   f"<{reportFileName}> to append.",
-                   exitCode=EXIT.Files_and_paths,
-                   exc=exc)
+    fScoresReport = ftOpenFile(reportFilePath, 'a')
 
     # Get all the log files
     logs = [(os.path.basename(f).split('.')[0], f) for f in sorted(glob.glob(os.path.join(logsDir, '*.log')))]
@@ -139,28 +132,40 @@ def scoreTests(vulClass, logsDir):
                        exitCode=EXIT.Files_and_paths)
         safeDumpIniFile(xConfig,iniPath)
         # Build table for scoring
-        for row in tabulate(rows):
-            printAndLog(row, tee=fScoresReport)
+        for row in tabulate(rows, vulClass, title, False):
+            printAndLog(row, tee=fScoresReport, doPrint=doPrint)
 
     fScoresReport.close()
 
-    # Return dictionary mapping from CWE -> score
-    return scoresDict
+    # Return dictionary mapping from CWE -> score, as well as rows of table
+    return (scoresDict, rows)
 
 @decorate.debugWrap
-def tabulate(elements):
+def tabulate(elements, vulClass, title, hasMultitaskScores):
     table = []
-    widths = [ (len(e[0]), len(e[1]), len(e[2])) for e in elements ]
-    widthCols = [ 2 + max([w[i] for w in widths]) for i in range(0,3) ]
 
-    # Draw Column Headers
+    headers = ["TEST","Score","Notes"]
+    if hasMultitaskScores:
+        headers.append("Multitasking Score")
+
+    # fullElements contains the headers as well so that the width computation
+    # takes header width into account
+    fullElements= [headers] + elements
+
+    if hasMultitaskScores:
+        widths = [ (len(e[0]), len(e[1]), len(e[2]), len(e[3])) for e in fullElements]
+    else:
+        widths = [ (len(e[0]), len(e[1]), len(e[2])) for e in fullElements ]
+    widthCols = [ 2 + max([w[i] for w in widths]) for i in range(len(widths[0]))]
+
+    # Draw title header
     table.append(tabulate_row([],widthCols,drawLine=True))
-    table.append(tabulate_row(["TEST","Score","Notes"],widthCols))
+    table.append(tabulate_row([title], [sum(widthCols) + len(widths[0]) - 1]))
     table.append(tabulate_row([],widthCols,drawLine=True))
 
     # Draw each result
     firstRow = True
-    for row in elements:
+    for row in fullElements:
         if (not firstRow):
             table.append(tabulate_row([],widthCols,drawSeparation=True))
         else:

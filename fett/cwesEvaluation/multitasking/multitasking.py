@@ -13,22 +13,28 @@ def hasMultitaskingException(vulClass, envSection):
     return (doesSettingExistDict(vulClass, exceptions) and
             getSetting('osImage') in getSettingDict(vulClass, exceptions))
 
-def printAndLogMultitaskingTable(table):
+def logMultitaskingTable(table):
     widths = [ (len(r[0]), len(r[1]), len(r[2]), len(r[3]), len(r[4]), len(r[5])) for r in table]
     widthCols = [ 2 + max([w[i] for w in widths]) for i in range(6) ]
 
-    fScoresReport = ftOpenFile(os.path.join(getSetting("workDir"), "scoreReport.log"), 'a')
+    fScoresReport = ftOpenFile(os.path.join(getSetting("workDir"),
+                               "multitaskingScoreReport.log"), 'a')
 
     # Draw first line
-    printAndLog(tabulate_row([], widthCols, drawLine=True), tee=fScoresReport)
+    printAndLog(tabulate_row([], widthCols, drawLine=True),
+                tee=fScoresReport,
+                doPrint=False)
 
     for row in table:
         # Draw row
-        printAndLog(tabulate_row(row, widthCols), tee=fScoresReport)
+        printAndLog(tabulate_row(row, widthCols),
+                    tee=fScoresReport,
+                    doPrint=False)
 
         # Draw line
         printAndLog(tabulate_row([], widthCols, drawSeparation=True),
-                    tee=fScoresReport)
+                    tee=fScoresReport,
+                    doPrint=False)
 
     fScoresReport.close()
 
@@ -68,7 +74,7 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
         # Create the multitasking lock file
         self.typCommand(f"touch {LOCK_FILE}")
 
-        printAndLog(f"Running {numProcs} processes in parallel.")
+        printAndLog(f"Generating multitasking script...")
         unredirectedOutput = ""
         iLog = 0
         logDirs = {}
@@ -90,13 +96,12 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
         # Remove multitasking lock file and wait for all running jobs to finish
         self.typCommand(f'echo "rm {LOCK_FILE}" >> {SCRIPT_FILE}')
         self.typCommand(f'echo "wait {self.redirectOp} wait.log" >> {SCRIPT_FILE}')
-        print(self.typCommand(f'cat {SCRIPT_FILE}'))
 
         # Source the script file so that we capture any shell output
+        printAndLog(f"Running {numProcs} processes in parallel...")
         _, textBack, wasTimeout, _ = self.runCommand(f"source {SCRIPT_FILE}",
                                                      exitOnError=False,
                                                      timeout=max(60, 6*numProcs))
-
         unredirectedOutput += textBack
         if wasTimeout:
             # Kill any running backgrounded jobs
