@@ -1,0 +1,14 @@
+const Config = {
+    BUTTON_STATION_1: 0x01,
+    BUTTON_STATION_2: 0x02,
+    BUTTON_STATION_3: 0x03,
+    BUTTON_VOLUME_DOWN: 0x10,
+    BUTTON_VOLUME_UP: 0x11,
+    PAUSE_PLAY_MASK: 1, // 0b1
+    STATION_MASK: 6 ,// 0b110
+    VOLUME_MASK: 248 // 0b11111000
+}
+
+export {
+    Config
+}

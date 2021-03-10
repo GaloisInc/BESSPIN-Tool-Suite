@@ -1,0 +1,164 @@
+system BESSPIN Cyber Physical Demonstrator (CyberPhys)
+    Car-like cyber physical demonstrator of SSITH secure hardware, SW architecture specification.
+
+indexing
+    owner: Steven Osborn <steven@freeandfair.us>
+    contributors: Jesse Applegate <applejes@gmail.com>
+                  Kristofer Dobelstein <kris.dobelstein@agilehardwarenwllc.com>
+                  Joe Kiniry <kiniry@galois.com>
+                  Priyam Shah  <priyam.chetan.shah@gmail.com>
+                  Parker Southwick <parkeresouthwick@gmail.com>
+                  Daniel M. Zimmerman <dmz@galois.com>
+                  Michal Podhradsky <mpodhradsky@galois.com>
+    copyright: (C) 2020 Galois
+    license: TBD
+
+
+relation CyberPhys contains ECU
+
+subsystem ECU
+    Subsystem containing a state machine responsible for the control of various electronic vehicle subsystems.
+
+relation ECU contains Secure ECU
+relation ECU contains Baseline ECU
+
+component ECU SW
+    The transmission shifter gear must be park, reverse, neutral, or drive.
+    What is the transmission shifter gear?
+    What is the brake pedal position?
+    What is the throttle pedal position?
+    Send Heartbeat ACK!
+    ECU SW periodically sends brake/throttle/gear position to Security Mux.
+
+component Secure ECU
+    Instance of ECU SW running on secure hardware.
+
+relation Secure ECU inherit ECU SW
+
+component Baseline ECU
+    Instance of ECU SW running on baseline hardware.
+
+relation Baseline ECU inherit ECU SW
+
+relation CyberPhys contains Infotainment
+
+subsystem Infotainment
+    Provides vehicle information and entertainment.
+
+relation Infotainment contains Secure Infotainment Server
+relation Infotainment contains Baseline Infotainment Server
+relation Infotainment contains Infotainment Thin Client
+
+component Infotainment Thin Client
+    What is selected feature?
+    Selected feature is Vehicle Position or Vehicle Info.
+    What is Vehicle Info?
+    What is Vehicle Position?
+    Thin Client asks Infotainment Server for data to display.
+    Send Heartbeat ACK!
+
+component Infotainment Server SW
+    Respond to data query!
+    A response contains vehicle information, music selection state, and map position data.
+    Send Heartbeat ACK!
+
+component Secure Infotainment Server
+    Instance of Infotainment Server SW running on secure hardware.
+
+relation Secure Infotainment Server inherit Infotainment Server SW
+
+component Baseline Infotainment Server
+    Instance of Infotainment Server SW running on baseline hardware.
+
+relation Baseline Infotainment Server inherit Infotainment Server SW
+
+relation CyberPhys contains Simulator PC
+
+subsystem Simulator PC
+    Windows Desktop PC with a powerful graphics card.
+    Runs Ignition, BeamNG and Security Mux.
+    Interacts with the speedometer and the steering wheel subsystems.
+    Displays the simulation output on the Display subsystem.
+
+relation Simulator PC contains BeamNG
+relation Simulator PC contains Ignition
+relation Simulator PC contains Security Mux
+relation Simulator PC contains Instrument Cluster
+relation Simulator PC contains SimPCDisplay
+
+// Controls BeamNG simulation
+component Ignition
+    Start simulation!
+    Stop simulation!
+    Restart simulation!
+    Is steering wheel assembly connected?
+    Are you receiving data from the pedals?
+    Are you receiving transmission shifter data?
+    Turn the wheel given a strength and direction!
+    Strength is a float between 0 and 1.
+    Direction is clockwise or counterclockwise.
+    What is the state of BeamNG?
+    BeamNG state is either Stopped or Running.
+    Is a component alive?
+    The component to query is: Security Mux, Instrument Cluster
+    Display a message on SimPCDisplay.
+
+component BeamNG
+    This component is the actual BeamNG.drive car simulator.
+    This component is controlled by Ignition.
+
+component SimPCDisplay
+    Display video from BeamNG!
+
+component Security Mux
+    What is the current security mode?
+    Relay ECU data to Ignition based on the security mode!
+    Relay Infotainment response to Infotainment Thin Client based on the security mode!
+    The security mode is Secure ECU, Secure Infotainment, or Baseline.
+    Select Secure ECU, Secure Infotainment, or Baseline mode.
+
+component Instrument Cluster
+    Vehicle speed must be non-negative.
+    Display vehicle speed!
+
+relation CyberPhys contains Admin PC
+
+subsystem Admin PC
+    A Linux desktop PC that ensures the CyberPhys system is alive and operational. 
+    Runs FETT-target and uses SSH connections and watchdogs to monitor other subsystems.
+
+relation Admin PC contains FETT Tool
+
+component FETT Tool
+    Provision component!
+    Is a provisioned component alive?
+    FreeRTOS component that can be provisioned is: Baseline ECU 1, Baseline ECU 2, Secure ECU.
+    Linux/BSD component that can be provisioned is: Baseline Infotainment Server 1, Baseline Infotainment Server 2, Secure Infotainment Server.
+    Is a non-provisioned component alive?
+    The non-provisioned components are: Infotainment Thin Client, Hacker UI, Ignition, BeamNG.
+    FETT tool implements a watchdog for each component.
+    FETT tool monitors components for errors.
+    If monitored components become unresponsive, they are reprovisioned if possible.
+    FETT tools logs message and errors in a system log.
+    Ask Ignition to display a message!
+    FETT tools can display error/system messages on SimPCDisplay.
+
+relation CyberPhys contains Hacker Kiosk
+
+subsystem Hacker Kiosk
+    A subsystem that shows the audience information about the system status and allows hacks to be launched.
+
+relation Hacker Kiosk contains Hacker UI
+
+// Browser based UI to display what is happening.
+component Hacker UI
+    Display simulation status!
+    Simulation status can be hacked or secure. 
+    Select hack!
+    Which hack is selected?
+    ECU Hack can be ECU Lane Keep Assist, ECU Brakes, ECU Throttle, ECU Transmission Shifter.
+    Infotainment Hack can be Infotainment Position Exfiltration, Infotainment Music Disruption.
+    Display selected hack!
+    Deploy hack!
+    Display hack process! 
+    Send Heartbeat ACK!

@@ -1,0 +1,60 @@
+// TODO: needs revision
+subsystem Simulator
+
+component Virtual Accelerator 
+	What is selected Accelerator ECU?
+	ECU type is either Reference or SSITH. 
+	What is the Normalized Accelerator Position reported by the selected ECU?
+	Accelerator position must be between 0 and 1. 
+
+component Virtual Brake
+	What is selected Brake ECU?
+	ECU type is either Reference or SSITH.
+	What is the Normalized Brake Position reported by the selected ECU?
+	Brake position must be between 0 and 1. 
+
+component Virtual Steering Wheel
+	What is selected Steering ECU?
+	ECU type is either Reference or SSITH.
+	What is the Normalized Steering Wheel Position reported by the selected ECU?
+	Steering wheel position must be between 0 and plus or minus 1080 degrees. 
+
+component Virtual Transmission 
+	What is the selected Transmission ECU?
+	ECU type is either Reference or SSITH. 
+	What is the Gear reported by the selected ECU?
+	The gears set for the Virtual Transmission can only by Park, Reverse, Neutral, Drive.
+
+component Virtual Car
+	What is Virtual Accelerator Position?
+	What is Virtual Brake Position?
+	What is Virtual Steering Wheel Position?
+	What is selected Virtual Transmission Gear?
+	Is there a collision with Virtual Environment?
+	Set velocity and acceleration!
+	Magnitude of velocity must be between 0 and maximum possible velocity of Virtual Car. 
+	Report Collision to selected Steering Wheel ECU, Airbag ECU, and Destruction HUD! 
+
+component Virtual Environment 
+	Spawn Obstacles! 
+	Obstacles are pedestrians, vehicles, buildings, traffic signals, and traffic signs. 
+	What are current positions of Virtual Obstacles?
+	Set velocity and acceleration of Virtual Obstacles!
+	Magnitude of velocity of Virtual Obstacles must be between 0 and maximum possible velocity of Virtual Obstacles.
+	Report number of people collided with, number of cars colllided with, and current number of stationary items collided with to Destruction HUD!
+
+component Overlay Text
+	What virtual system is currently being attacked? 
+	The virtual systems attacked must be Steering, Pedals, Transmission, or Infotainment. 
+	Is SSITH processor the selected ECU?
+
+Destruction HUD client Software Simulator
+Steering Wheel ECU client Software Simulator
+Airbag ECU client Software Simulator
+Instrument Cluster client Virtual Car
+Virtual Car client Virtual Steering Wheel
+Virtual Car client Virtual Accelerator
+Virtual Car client Virtual Brake
+Virtual Car client Virtual Transmission
+
+
