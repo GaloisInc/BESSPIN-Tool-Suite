@@ -51,7 +51,7 @@ def prepareOsImage (targetId=None):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def freeRTOSBuildChecks(targetId=None,freertosFork="10"):
+def freeRTOSBuildChecks(targetId=None,freertosFork="classic"):
     """
     Check FreeRTOS build parameters and set settings appropriately
     """
