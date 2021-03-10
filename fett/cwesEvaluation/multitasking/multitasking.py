@@ -101,8 +101,11 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
         script.close()
         self.sendFile(multitaskingDir, SCRIPT_FILE)
 
-        # Source the script file so that we capture any shell output
         printAndLog(f"Running {numProcs} processes in parallel...")
+        # The `wait` command in the script doesn't output anything when running
+        # in a subshell, so `source` the script instead of executing it to run
+        # the commands directly in the main shell where `wait` output can be
+        # captured.
         _, textBack, wasTimeout, _ = self.runCommand(f"source {SCRIPT_FILE}",
                                                      exitOnError=False,
                                                      timeout=max(60, 6*numProcs))
