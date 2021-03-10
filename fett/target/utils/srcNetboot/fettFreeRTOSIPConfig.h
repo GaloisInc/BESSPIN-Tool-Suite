@@ -7,6 +7,8 @@
 #define ipconfigUSE_DHCP 0
 #define ipconfigUSE_DNS 0
 
+#define ipconfigHAS_DEBUG_PRINTF    0
+#define ipconfigHAS_PRINTF    1
 
 /* Network configuration
 - These options gets filled up during the run
