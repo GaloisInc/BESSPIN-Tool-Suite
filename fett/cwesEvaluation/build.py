@@ -125,7 +125,7 @@ def buildCwesEvaluation():
                     isThereAReasonToBoot = True
                     enabledCwesEvaluations[vulClass] = enabledBins
         else:
-            if (isEnabledDict(vulClass,'useSelfAssessment')):
+            if ((vulClass=="PPAC") or isEnabledDict(vulClass,'useSelfAssessment')):
                 tests = getSettingDict(vulClass,["testsInfo"])
             else: #all C files in sources
                 cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
@@ -141,8 +141,9 @@ def buildCwesEvaluation():
                 if (isTestEnabled(vulClass,test)):
                     vIsThereAnythingToRun = True
                     if (not isEnabledDict(vulClass,'useSelfAssessment')): #No need to boot for self-assessment
-                        isThereAReasonToBoot = True 
-                        cp (os.path.join(sourcesDir, f"{test}.c"), vulClassDir)
+                        isThereAReasonToBoot = True
+                        if ((vulClass != "PPAC") or ("hasCFile" in tests[test])):
+                            cp (os.path.join(sourcesDir, f"{test}.c"), vulClassDir)
                     enabledCwesEvaluations[vulClass].append(f"{test}.riscv")
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{test}>. It is not enabled.",doPrint=False)
