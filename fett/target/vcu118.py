@@ -464,7 +464,7 @@ class vcu118Target (fpgaTarget, commonTarget):
     @decorate.debugWrap
     @decorate.timeWrap
     def buildSmokeElfForUartSearch(self,hwId):
-        freeRTOSBuildChecks(targetId=self.targetId)
+        freeRTOSBuildChecks(targetId=self.targetId,freertosFork="classic")
         if (not doesSettingExist('buildDir',targetId=self.targetId)): #In case of busybox for instance
             buildDir = os.path.join(getSetting('workDir'), f'build{self.targetSuffix}')
             mkdir(buildDir)
