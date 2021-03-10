@@ -146,7 +146,7 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
 
     headers = ["TEST","Score","Notes"]
     if hasMultitaskScores:
-        headers.append("Multitasking Score")
+        headers.append("Multitasking Pass")
 
     # fullElements contains the headers as well so that the width computation
     # takes header width into account

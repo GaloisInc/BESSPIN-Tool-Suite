@@ -75,15 +75,17 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
         self.typCommand(f"touch {LOCK_FILE}")
 
         printAndLog(f"Generating multitasking script...")
+        multitaskingDir = os.path.join(getSetting('buildDir'), 'multitasking')
+        script = ftOpenFile(os.path.join(multitaskingDir, SCRIPT_FILE), 'w')
         unredirectedOutput = ""
         iLog = 0
         logDirs = {}
         for instance in range(numInstances):
             for test in tests:
                 for part in test.parts:
-                    command = (f"./multitask.riscv {numProcs} {part.command} "
-                               f"{self.redirectOp} multitask-{iLog}.log &")
-                    self.typCommand(f'echo "{command}" >> {SCRIPT_FILE}')
+                    script.write(
+                            f"./multitask.riscv {numProcs} {part.command} "
+                            f"{self.redirectOp} multitask-{iLog}.log &\n")
                     iLog += 1
                 if test.vulClass not in logDirs:
                     logDirs[test.vulClass] = os.path.join(logDir, test.vulClass)
@@ -94,8 +96,10 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
 
 
         # Remove multitasking lock file and wait for all running jobs to finish
-        self.typCommand(f'echo "rm {LOCK_FILE}" >> {SCRIPT_FILE}')
-        self.typCommand(f'echo "wait {self.redirectOp} wait.log" >> {SCRIPT_FILE}')
+        script.write(f"rm {LOCK_FILE}\n")
+        script.write(f"wait {self.redirectOp} wait.log\n")
+        script.close()
+        self.sendFile(multitaskingDir, SCRIPT_FILE)
 
         # Source the script file so that we capture any shell output
         printAndLog(f"Running {numProcs} processes in parallel...")
