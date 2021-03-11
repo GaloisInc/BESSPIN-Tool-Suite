@@ -106,9 +106,10 @@ class multitaskingRunner(testgenTargetCompatibilityLayer):
         # in a subshell, so `source` the script instead of executing it to run
         # the commands directly in the main shell where `wait` output can be
         # captured.
+        timePerProc = 9 if isEqSetting('processor', 'bluespec_p3') else 6
         _, textBack, wasTimeout, _ = self.runCommand(f"source {SCRIPT_FILE}",
                                                      exitOnError=False,
-                                                     timeout=max(60, 6*numProcs))
+                                                     timeout=max(60, timePerProc*numProcs))
         unredirectedOutput += textBack
         if wasTimeout:
             # Kill any running backgrounded jobs
