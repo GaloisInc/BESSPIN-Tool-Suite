@@ -875,6 +875,8 @@ class commonTarget():
         printAndLog ("runApp: Starting the application stack...")
         if (sendFiles):
             #send any needed files to target
+            if (self.procLevel=='p3'):
+                timeout *= 4
             self.sendTar(timeout=timeout)
 
         # assign modules
