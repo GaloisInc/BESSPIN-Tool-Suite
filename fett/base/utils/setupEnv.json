@@ -251,16 +251,6 @@
             "val" : "filesToSend.tar"
         },
         {
-            "name" : "FreeRTOSforkName_10",
-            "type" : "string",
-            "val" : "FreeRTOS-10.0.1"
-        },
-        {
-            "name" : "FreeRTOSforkName_upstream",
-            "type" : "string",
-            "val" : "FreeRTOS-mirror"
-        },
-        {
             "name" : "FreeRTOSforkName_classic",
             "type" : "string",
             "val" : "FreeRTOS"
@@ -273,7 +263,7 @@
         {
             "name" : "FreeRTOSprojNameQemu",
             "type" : "string",
-            "val" : "FreeRTOS/Demo/RISC-V-Qemu-sifive_e-FreedomStudio_Galois"
+            "val" : "FreeRTOS/Demo/RISC-V_Galois_P1/Qemu-sifive_e-FreedomStudio"
         },
         {
             "name" : "binaryRepoDir",

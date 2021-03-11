@@ -35,7 +35,7 @@ def buildCwesEvaluation():
                                 f"{getSetting('osImage')}.asm"))
         setSetting('sendTarballToTarget', False)
 
-        freeRTOSBuildChecks()
+        freeRTOSBuildChecks(freertosFork="classic")
 
         if (isEqSetting('binarySource','LMCO')):
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','utils','lmcoMiscFreeRTOS.c'),

@@ -25,6 +25,8 @@
 /* Debugging and logging flags for the TCP sources */
 #if( FETT_DEBUG == 1 )
     #define ipconfigHAS_DEBUG_PRINTF 1
+#else
+    #define ipconfigHAS_DEBUG_PRINTF    0
 #endif
 #define ipconfigHAS_PRINTF 1
 

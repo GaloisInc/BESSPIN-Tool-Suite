@@ -1,6 +1,3 @@
-[submodule "FreeRTOS-10.0.1"]
-	path = FreeRTOS-10.0.1
-	url = git@github.com:DARPA-SSITH-Demonstrators/FreeRTOS-10.0.1.git
 [submodule "SSITH-FETT-Environment"]
 	path = SSITH-FETT-Environment
 	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Environment.git
@@ -10,9 +7,6 @@
 [submodule "SSITH-FETT-Binaries"]
 	path = SSITH-FETT-Binaries
 	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Binaries.git
-[submodule "FreeRTOS-mirror"]
-	path = FreeRTOS-mirror
-	url = git@github.com:GaloisInc/FreeRTOS-mirror.git
 [submodule "FreeRTOS"]
 	path = FreeRTOS
 	url = git@github.com:GaloisInc/FreeRTOS.git
