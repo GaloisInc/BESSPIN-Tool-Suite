@@ -821,7 +821,7 @@ class commonTarget():
             sendFromHost.daemon = True
             getSetting('trash').throwThread(sendFromHost,f"nc sending <{pathToFile}/{xFile}> from host")
             listenOnTarget.start()
-            time.sleep(1)
+            time.sleep(5)
             sendFromHost.start()
             listenOnTarget.join(timeout=timeout+5) #arbitrarily set timeout
             #check sending
