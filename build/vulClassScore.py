@@ -12,7 +12,7 @@ def main(xArgs):
     sys.path.insert(0, repoDir)
     from fett.base.utils.misc import trashCanObj, exitPeacefully, setSetting, getSetting, exitFett, EXIT
     from fett.base.config import loadConfiguration
-    from fett.cwesEvaluation.scoreTests import scoreTests
+    from fett.cwesEvaluation.scoreTests import scoreTests, prettyVulClass
     from fett.cwesEvaluation.utils.checkValidScores import checkValidScores
     from fett.cwesEvaluation.utils.computeBesspinScale import computeBesspinScale
 
@@ -53,10 +53,10 @@ def main(xArgs):
 
     if (xArgs.vulClass == "all"):
         for vulClass in getSetting("vulClasses"): 
-            scoreTests (vulClass, os.path.join(getSetting('cwesEvaluationLogs'),vulClass))
+            scoreTests (vulClass, os.path.join(getSetting('cwesEvaluationLogs'),vulClass),prettyVulClass(vulClass))
     else:
         setSetting("vulClasses",[xArgs.vulClass])
-        scoreTests (xArgs.vulClass, os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass))
+        scoreTests (xArgs.vulClass, os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass),prettyVulClass(vulClass))
     checkValidScores()
 
     if (not xArgs.disableBesspinScale):
