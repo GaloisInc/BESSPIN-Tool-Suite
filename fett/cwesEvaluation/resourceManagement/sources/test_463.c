@@ -5,7 +5,7 @@
 #include <sys/types.h>
 
 #define STR_SIZE_MIN 1
-#define STR_SIZE_MAX 80 //More than that and FreeBSD AWS puts the 2nd pointer very far away
+#define STR_SIZE_MAX 80 //More than that and FreeBSD puts the 2nd pointer very far away
 #define SECRET_SIZE 4 //chosen arbitrarily -->  4*sizeof(int) = 16 bytes (the golden keyword is 16*'A')
 
 #if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
