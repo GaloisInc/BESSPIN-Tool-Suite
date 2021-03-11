@@ -42,4 +42,4 @@ Once you are happy with your resulting binary, modify your `config.ini` file so 
 
 ## FreeRTOS versions
 
-The FETT bug bounty in the summer of 2020 was using FreeRTOS-10.0.1 in order to include some known vulnerabilities in the FreeRTOS kernel and network stack. However, the current tool version uses a more recent FreeRTOS version. In order to build a binary identical to the one used in the bug bounty, please use an older release of the tool.
+The FETT bug bounty in the summer of 2020 was using FreeRTOS-10.0.1 in order to include some known vulnerabilities in the FreeRTOS kernel and network stack. However, the current tool version uses a more recent FreeRTOS version. In order to build a binary identical to the one used in the bug bounty, please use an older release of the tool. In particular, [V3.13](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/releases/tag/v3.13-ami-0c7a133b9c07d8682) was the last one used in the bug bounty, and [V4.1](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/releases/tag/v4.1-ami-01da26a5a7972c4b8) is the last version that uses FreeRTOS-10.0.1 for the binaries builds.
