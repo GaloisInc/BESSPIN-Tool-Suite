@@ -58,6 +58,9 @@ def checkMultitaskingScores(vulClass, multitaskingScores, instance, multitasking
                 multitaskingPasses[testName] = multitaskingPasses.get(testName, 0) + 1
                 scoreText = "PASS"
             else:
+                if testName not in multitaskingPasses:
+                    # Record that the test ran but did not pass.
+                    multitaskingPasses[testName] = 0
                 scoreText = "FAIL"
             results.append((prettyVulClass(vulClass),
                             testName,
