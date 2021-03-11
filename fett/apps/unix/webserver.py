@@ -47,6 +47,8 @@ def install (target):
         target.runCommand("install nginx.sh /usr/local/etc/rc.d/nginx", erroneousContents="install:",tee=appLog)
         # connectal and vcu118 FreeBSD are slow with these commands. Easier to just bump it up for all
         nginxTimeout = 120
+        if (target.procLevel=='p3'):
+            nginxTimeout *= 4
         target.runCommand("service nginx enable", erroneousContents="nginx does not exist",tee=appLog, timeout=nginxTimeout)
         target.runCommand("service nginx start", erroneousContents=["failed"], tee=appLog, timeout=nginxTimeout)
     else:
