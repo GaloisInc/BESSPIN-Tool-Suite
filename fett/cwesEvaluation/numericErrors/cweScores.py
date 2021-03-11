@@ -106,7 +106,7 @@ def scoreTestPart(logLines, testNum, testPart):
         scoreMatch = re.match(rf"^SCORE:{testNum}:{testPart}:(?P<relevantString>[\w\s<>]+)$",line)
         if (scoreMatch is not None):
             keyword = scoreMatch.group('relevantString')
-            if (keyword in ['TEST FAILED', 'TOP SECRET STUFF', 'SEGFAULT']):
+            if (keyword in ['TEST FAILED', 'TOP SECRET STUFF', 'TOPSECRET STUFF', 'SEGFAULT']):
                 newScore = SCORES.HIGH
             elif (keyword in ['TEST PASSED', '<ABORT>']): ## SSITH CPU exception prevented a vulnerability
                 newScore = SCORES.NONE
