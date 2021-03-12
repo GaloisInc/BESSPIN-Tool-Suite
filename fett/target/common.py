@@ -1323,7 +1323,8 @@ class commonTarget():
         if (self.osImage not in ['FreeBSD','debian']):
             self.terminateAndExit(f"<closeSshConn> is not implemented for <{self.osImage}>.",exitCode=EXIT.Dev_Bug)
         if (self.isSshConn and (self.sshProcess is not None)):
-            self.runCommand("exit",endsWith=pexpect.EOF,suppressErrors=True,timeout=timeout,exitOnError=False)
+            self.runCommand("exit", endsWith=pexpect.EOF, timeout=timeout,
+                suppressErrors=True, exitOnError=False, issueInterrupt=False)
         try:
             self.fSshOut.close()
         except Exception as exc:
