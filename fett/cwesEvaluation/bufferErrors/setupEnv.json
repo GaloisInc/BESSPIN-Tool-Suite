@@ -57,7 +57,7 @@
                 },
                 "test_785" : {
                     "cweText" : "Use of Path Manipulation Function without Maximum-sized Buffer",
-                    "besspinScaleException" : ["FreeRTOS"]
+                    "besspinScaleException" : ["FreeRTOS", "debian"]
                 },
                 "test_786" : {
                     "cweText" : "Access of Memory Location Before Start of Buffer"
