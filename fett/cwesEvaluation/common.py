@@ -110,7 +110,8 @@ def printTable(vulClass, table):
 def supportsMultitasking(vulClass):
     return (isEnabled('runUnixMultitaskingTests') and
             doesSettingExistDict(vulClass, 'supportsMultitasking') and
-            isEnabledDict(vulClass, 'supportsMultitasking'))
+            isEnabledDict(vulClass, 'supportsMultitasking') and
+            not isEnabledDict(vulClass, 'useSelfAssessment'))
 
 def runTests(target, sendFiles=False, timeout=30): #executes the app
     if isEqSetting('osImage', 'FreeRTOS'):
