@@ -56,7 +56,7 @@ def main(xArgs):
             scoreTests (vulClass, os.path.join(getSetting('cwesEvaluationLogs'),vulClass),prettyVulClass(vulClass))
     else:
         setSetting("vulClasses",[xArgs.vulClass])
-        scoreTests (xArgs.vulClass, os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass),prettyVulClass(vulClass))
+        scoreTests (xArgs.vulClass, os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass),prettyVulClass(xArgs.vulClass))
     checkValidScores()
 
     if (not xArgs.disableBesspinScale):
