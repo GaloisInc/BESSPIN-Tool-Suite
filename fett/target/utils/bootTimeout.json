@@ -18,7 +18,11 @@
           "p2" : { "timeout" : { "elfLoad" : 900, "boot" : 300 } },
           "p3" : { "timeout" : { "elfLoad" : 900, "boot" : 1000 } }
         },
-        "else": { "timeout" : { "boot" : 500 } }
+        "netboot": {
+          "name" : "procLevel",
+          "p2" : { "timeout" : { "boot" : 500 } },
+          "p3" : { "timeout" : { "boot" : 800 } }
+        }
       }
     },
     "qemu": { "timeout" : { "boot" : 200 } },
