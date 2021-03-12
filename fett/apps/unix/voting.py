@@ -81,7 +81,10 @@ def install (target):
 
     target.runCommand("echo \"Starting BVRS CGI Handler...\"",tee=appLog)
 
-    serviceTimeout = 240 if (isEqSetting('procLevel','p3')) else 120
+    serviceTimeout = 120
+    if (target.procLevel=='p3'):
+        serviceTimeout *= 4
+
     if isEqSetting('osImage', 'debian'):
         target.runCommand("install bvrs.service /lib/systemd/system/bvrs.service", erroneousContents="install:", tee=appLog)
         target.runCommand("systemctl enable bvrs.service", timeout=serviceTimeout, tee=appLog)
