@@ -1282,8 +1282,7 @@ class commonTarget():
         except Exception as exc:
             return returnFail(f"openSshConn: Failed to spawn an Ssh connection.",exc=exc)
 
-        if (not self.onlySsh):
-            self.genStdinEntropy(endsWith=self.getAllEndsWith())
+        self.genStdinEntropy(endsWith=self.getAllEndsWith())
 
         self.isSshConn = True
         self.process = self.sshProcess
@@ -1361,7 +1360,7 @@ class commonTarget():
 
     @decorate.debugWrap
     def genStdinEntropy (self,endsWith=None):
-        if not self.hasHardwareRNG():
+        if ((not self.hasHardwareRNG()) and (not self.onlySsh)):
             lenText = 240 # Please do not use a larger string. there might be a UART buffer issue on firesim, should be resolved soon
             alphabet = string.ascii_letters + string.digits + ' '
             randText = ''.join(random.choice(alphabet) for i in range(lenText))
