@@ -35,6 +35,9 @@ def executeTest(target, vulClass, binTest, logDir):
     testName = binTest.split('.')[0]
     printAndLog(f"Executing {testName}...", doPrint=(not isEnabledDict(vulClass,'useSelfAssessment')))
     outLog = cweTests[vulClass](target).executeTest(binTest)
+    if ('\x1b' in outLog): #Something bad has happened
+        warnAndLog("Encountered <ESC>. Will send a keyboard interrupt to be safe.",doPrint=False)
+        outLog += target.keyboardInterrupt() #To re-adjust pexpect order
     logFileName = os.path.join(logDir, f'{testName}.log')
     logFile = ftOpenFile(logFileName, 'w')
     logFile.write(outLog)
