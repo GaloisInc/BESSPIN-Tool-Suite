@@ -77,8 +77,10 @@ void main() {
 
 #elif (defined(testgenOnFreeBSD) || defined(testgenOnDebian))
 
+#include "unbufferStdout.h"
 
 int main(int argc, char *argv[]) {
+    unbufferStdout();
     char src[4] = "Test";
     int option;
     if (argc > 1) { //be safe

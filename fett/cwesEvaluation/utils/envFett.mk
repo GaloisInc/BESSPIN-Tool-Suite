@@ -2,6 +2,7 @@
 # Some classes will have their own files
 
 CFLAGS += -DFETT_APPS -DtestgenOnFreeRTOS
+WERROR = 
 ifeq ($(BSP),qemu)
 	CFLAGS += -DtestgenQEMU
 	APP_SRC = main.c \

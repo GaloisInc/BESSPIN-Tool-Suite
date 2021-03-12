@@ -8,6 +8,11 @@
 
     "resourceManagement" : [
         {
+            "name" : "supportsMultitasking",
+            "type" : "boolean",
+            "val"  : true
+        },
+        {
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {
@@ -22,12 +27,11 @@
                     "FreeRTOS" : 2
                 },
                 "test_416" : {
-                    "cweText" : "Use After Free",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
+                    "cweText" : "Use After Free"
                 },
                 "test_400" : {
-                    "cweText" : "Uncontrolled Resource Consumption"
+                    "cweText" : "Uncontrolled Resource Consumption",
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_404" : {
                     "cweText" : "Improper Resource Shutdown or Release"
@@ -127,20 +131,18 @@
                     "FreeRTOS" : 2
                 },
                 "test_770" : {
-                    "cweText" : "Allocation of Resources Without Limits or Throttling"
+                    "cweText" : "Allocation of Resources Without Limits or Throttling",
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_771" : {
-                    "cweText" : "Missing Reference to Active Allocated Resource",
-                    "unix" : 1,
-                    "FreeRTOS" : 5
+                    "cweText" : "Missing Reference to Active Allocated Resource"
                 },
                 "test_772" : {
-                    "cweText" : "Missing Release of Resource after Effective Lifetime",
-                    "unix" : "method",
-                    "FreeRTOS" : 2
+                    "cweText" : "Missing Release of Resource after Effective Lifetime"
                 },
                 "test_789" : {
-                    "cweText" : "Uncontrolled Memory Allocation"
+                    "cweText" : "Uncontrolled Memory Allocation",
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_825" : {
                     "cweText" : "Expired Pointer Dereference",
@@ -218,7 +220,8 @@
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
                             "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
                         }
-                    }
+                    },
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_rlr_stackExhaust" : {
                     "unix" : 1,
@@ -234,7 +237,8 @@
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
                             "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
                         }
-                    }
+                    },
+                    "multitaskingExceptions" : ["FreeBSD"]
                 },
                 "test_rlr_noRelease" : {
                     "unix" : 1,

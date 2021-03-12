@@ -28,9 +28,28 @@ class qemuTarget (commonTarget):
     def boot (self,endsWith="login:",timeoutDict={"boot":90}): #no need to use targetObj as we'll never boot in non-reboot mode
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
         timeout = self.parseBootTimeoutDict (timeoutDict)
+        if (isEnabled('useCustomQemu')):
+            qemuCommand = getSetting('pathToCustomQemu')
+        else:
+            qemuCommand = f"qemu-system-riscv{self.xlen}"
         if (self.osImage in ['debian', 'FreeBSD']):
-
-            qemuCommand  = f"qemu-system-riscv64 -nographic -machine virt -m 4G -kernel {getSetting('osImageElf',targetId=self.targetId)}"
+            bios = None
+            if (getSetting('osImageExtraElf',targetId=self.targetId)):
+                kernel = getSetting('osImageExtraElf',targetId=self.targetId)
+                bios = getSetting('osImageElf',targetId=self.targetId)
+            else:
+                kernel = getSetting('osImageElf',targetId=self.targetId)
+            qemuCommand += f" -nographic -machine virt -m 4G -kernel {kernel}"
+            if (bios):
+                qemuCommand += f" -bios {bios}"
+            if (self.binarySource=='SRI-Cambridge'):
+                imageSourcePath = os.path.join(getSetting('binaryRepoDir'), self.binarySource, 'osImages', 'common',
+                    f"disk-image-cheri{getSetting('SRI-Cambridge-imageVariantSuffix',targetId=self.targetId)}.img.zst")
+                imageFile = os.path.join(getSetting('osImagesDir',targetId=self.targetId), f"{self.osImage}.img")
+                printAndLog(f"{self.targetIdInfo}Extracting {imageSourcePath}",doPrint=(not self.targetId))
+                zstdDecompress(imageSourcePath, imageFile)
+                printAndLog(f"{self.targetIdInfo}Extracted as {imageFile}",doPrint=(not self.targetId))
+                qemuCommand += f" -drive if=none,file={imageFile},id=drv,format=raw -device virtio-blk-device,drive=drv"
             qemuCommand += f" -device virtio-net-device,netdev=usernet"
             qemuCommand += f" -netdev tap,id=usernet,ifname={getSetting('tapAdaptor',targetId=self.targetId)},script=no,downscript=no"
             if (self.osImage=='debian'):
@@ -39,7 +58,7 @@ class qemuTarget (commonTarget):
                 # As mentioned in #864, this device prevents FreeBSD from booting on <Debian 10 Buster, kernel 4.19> for some reason.
                 # Ticket #333 is still open, and it covers this entropy/rng situation.
                 qemuCommand += " -device virtio-rng-device"
-
+            printAndLog(f"{self.targetIdInfo}boot: The qemu command is: <{qemuCommand}>.", doPrint=False)
             try:
                 self.ttyProcess = pexpect.spawn(qemuCommand,logfile=self.fTtyOut,timeout=timeout)
                 self.process = self.ttyProcess
@@ -47,7 +66,8 @@ class qemuTarget (commonTarget):
             except Exception as exc:
                 self.terminateAndExit(f"boot: Failed to spwan the qemu process.",overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
         elif (self.osImage=='FreeRTOS'):
-            qemuCommand = "qemu-system-riscv32 -nographic -machine sifive_e -kernel " + getSetting('osImageElf',targetId=self.targetId)
+            qemuCommand += " -nographic -machine sifive_e -kernel " + getSetting('osImageElf',targetId=self.targetId)
+            printAndLog(f"{self.targetIdInfo}boot: The qemu command is: <{qemuCommand}>.", doPrint=False)
             try:
                 self.process = pexpect.spawn(qemuCommand,timeout=timeout,logfile=self.fTtyOut)
             except Exception as exc:
@@ -100,6 +120,10 @@ class qemuTarget (commonTarget):
         else:
             printAndLog (f"Entering interactive mode. Root password: \'{self.rootPassword}\'. Press \"Ctrl + E\" to exit.")
         super().interact()
+
+    @decorate.debugWrap
+    def getGdbOutput(self):
+        return "" #currently we don't run Qemu through GDB, so there is nothing to return
 #--- END OF CLASS qemuTarget------------------------------
 
 @decorate.debugWrap

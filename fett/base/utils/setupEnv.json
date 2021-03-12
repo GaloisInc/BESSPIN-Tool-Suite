@@ -19,6 +19,11 @@
             "val" : "cyberPhys.ini"
         },
         {
+            "name" : "cyberPhysCanbusPort",
+            "type" : "int",
+            "val" : "5002"
+        },
+        {
             "name" : "commPortHost",
             "type" : "int",
             "min" : 1024,
@@ -41,6 +46,11 @@
             "name" : "vcu118NetMaskTarget",
             "type" : "ipAddress",
             "val" : "255.255.255.0"
+        },
+        {
+            "name" : "vcu118BroadcastIp",
+            "type" : "ipAddress",
+            "val" : "10.88.88.255"
         },
         {
             "name" : "vcu118MacAddrTarget",
@@ -169,6 +179,9 @@
                     },
                     "chisel_p2" : {
                         "debian" : "firesim"
+                    },
+                    "chisel_p3" : {
+                        "debian" : "notOnAWS"
                     }
                 },
                 "Michigan" : {
@@ -185,6 +198,9 @@
                 "SRI-Cambridge" : {
                     "bluespec_p2" : {
                         "FreeBSD" : "connectal"
+                    },
+                    "bluespec_p3" : {
+                        "FreeBSD" : "notOnAWS"
                     }
                 }
             }
@@ -235,16 +251,6 @@
             "val" : "filesToSend.tar"
         },
         {
-            "name" : "FreeRTOSforkName_10",
-            "type" : "string",
-            "val" : "FreeRTOS-10.0.1"
-        },
-        {
-            "name" : "FreeRTOSforkName_upstream",
-            "type" : "string",
-            "val" : "FreeRTOS-mirror"
-        },
-        {
             "name" : "FreeRTOSforkName_classic",
             "type" : "string",
             "val" : "FreeRTOS"
@@ -257,7 +263,7 @@
         {
             "name" : "FreeRTOSprojNameQemu",
             "type" : "string",
-            "val" : "FreeRTOS/Demo/RISC-V-Qemu-sifive_e-FreedomStudio_Galois"
+            "val" : "FreeRTOS/Demo/RISC-V_Galois_P1/Qemu-sifive_e-FreedomStudio"
         },
         {
             "name" : "binaryRepoDir",
@@ -358,7 +364,7 @@
         {
             "name" : "cwesAssessments",
             "type" : "stringsList",
-            "val" : "[HIGH, MED, LOW, NONE, NA, UNKNOWN]"
+            "val" : "[HIGH, MED, LOW, NONE, DETECTED, NA, UNKNOWN]"
         },
         {
             "name" : "cweTestTemplateFreeRTOS",
@@ -366,10 +372,21 @@
             "val" : "fett/cwesEvaluation/utils/cweTestTemplateFreeRTOS.c"
         },
         {
+            "name" : "besspinCoeffs",
+            "type" : "filePath",
+            "val" : "fett/cwesEvaluation/utils/besspinCoeffs.json"
+        },
+        {
             "name" : "uartDevicesSavedMap",
             "type" : "filePath",
             "val" : "fett/target/utils/uartDevicesMap.json",
             "ignore" : true
+        },
+        {
+            "name" : "vcu118NetbootTransferPace",
+            "_unit" : "seconds / MB",
+            "type" : "int",
+            "val" : 6
         }
     ]
 }

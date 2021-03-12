@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
+#endif
+
 // Test 196 only has a single Part, so no special treatment is required
 // here for multi-part running on FreeRTOS or Debian
 
@@ -47,6 +51,9 @@ int main (void)
 {
   uint32_t d;
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+  unbufferStdout();
+#endif
   printf ("TEST 196 PART P01\n");
 
   // A few cases that should work OK first

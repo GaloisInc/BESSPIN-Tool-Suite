@@ -83,7 +83,7 @@ def prepareFreeRTOS():
     if (not isEnabled('buildApps')): #just fetch the image
         fett.target.build.importImage()
     else: #build it
-        fett.target.build.freeRTOSBuildChecks()
+        fett.target.build.freeRTOSBuildChecks(freertosFork="classic")
 
         #copy the C files, .mk files, and any directory
         copyDir(os.path.join(getSetting('repoDir'),'fett','apps','freertos','srcMain'),getSetting('buildDir'),copyContents=True)

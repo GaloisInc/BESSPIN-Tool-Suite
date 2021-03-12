@@ -89,6 +89,7 @@ void main() {
 }
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
 
 int contains_char_valid(char c) {
     char *str;
@@ -141,6 +142,7 @@ int contains_char_malicious(char c) {
 }
 
 int main(int argc, char *argv[]) {
+    unbufferStdout();
     int option;
     if (argc > 1) { //be safe
         option = atoi(argv[1]);

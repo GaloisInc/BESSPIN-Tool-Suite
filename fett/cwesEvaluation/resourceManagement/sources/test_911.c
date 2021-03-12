@@ -107,8 +107,10 @@ void main() {
 }
 
 #elif (defined(testgenOnFreeBSD) || defined(testgenOnDebian))
+#include "unbufferStdout.h"
 
 int main(int argc, char *argv[]) {
+    unbufferStdout();
     int option;
     if (argc > 1) { //be safe
         option = atoi(argv[1]);

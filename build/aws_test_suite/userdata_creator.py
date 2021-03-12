@@ -125,7 +125,7 @@ class UserdataCreator:
                     git fetch;\n"""
                 + (f"git checkout {branch};\n" if branch else "")
                 + """git pull; 
-                    git submodule update; 
+                    git submodule update --init --recursive; 
                     cd SSITH-FETT-Binaries;\n"""
                 + (
                     f"git fetch; git checkout {binaries_branch}; git pull\n"

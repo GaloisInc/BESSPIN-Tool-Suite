@@ -15,6 +15,7 @@ from fett.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
 from fett.cwesEvaluation.common import runTests
 from fett.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
 from fett.cwesEvaluation.utils.checkValidScores import checkValidScores
+from fett.cwesEvaluation.utils.computeBesspinScale import computeBesspinScale
 from fett.cyberPhys.build import buildCyberPhys
 from fett.cyberPhys.run import runCyberPhys
 import fett.cyberPhys.launch
@@ -52,14 +53,13 @@ def startFett (targetId=None):
         elif (pvAWS in ['awsteria']):
             logAndExit(f"<{pvAWS}> PV is not yet implemented.",exitCode=EXIT.Implementation)
         setSetting('pvAWS',pvAWS,targetId=targetId)
-        # Some not implemented scoring features
-        if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring')):
-            if (pvAWS != 'firesim'):
-                for listOption in ['gdbKeywords','funcCheckpoints']:
-                    if (len(getSettingDict('customizedScoring',listOption))>0):
-                        warnAndLog(f"customizedScoring: <{listOption}> is not implemented for <{pvAWS}> targets.")
-                if (getSettingDict('customizedScoring','memAddress')>=0):
-                    warnAndLog(f"customizedScoring: <memAddress> is not implemented for <{pvAWS}> targets.")
+    # Some not implemented scoring features on qemu
+    if (isEqSetting('mode','evaluateSecurityTests') and isEnabled('useCustomScoring') and (target=='qemu')):
+        for listOption in ['gdbKeywords','funcCheckpoints']:
+            if (len(getSettingDict('customizedScoring',listOption))>0):
+                warnAndLog(f"customizedScoring: <{listOption}> is not implemented on qemu.")
+        if (getSettingDict('customizedScoring','memAddress')>=0):
+            warnAndLog(f"customizedScoring: <memAddress> is not implemented on qemus.")
     # check the source variant
     if (sourceVariant!='default'): # check the variants compatibility
         if ((sourceVariant in ['purecap','temporal']) and (binarySource!='SRI-Cambridge')):
@@ -78,10 +78,6 @@ def startFett (targetId=None):
 
     # Check settings for evaluateSecurityTests on qemu
     if (isEqSetting('mode', 'evaluateSecurityTests') and (target=='qemu')):
-        if isEnabled('useCustomScoring'):
-            warnAndLog("Cannot use <useCustomScoring> with "
-                       f"<{target}>.  Ignoring setting.")
-            setSetting('useCustomScoring', False)
         if ((osImage=='FreeRTOS') and
             not isEqSetting('cross-compiler', 'GCC')):
             warnAndLog("<cross-compiler> setting "
@@ -268,6 +264,7 @@ def endFett (xTarget,isDeadProcess=False):
         printAndLog(f"Artifacts tarball uploaded to S3.")
     elif (isEqSetting('mode', 'evaluateSecurityTests')):
         checkValidScores()
+        computeBesspinScale()
 
 """ This resets the target without changing the .img + without deployment tests """
 @decorate.debugWrap

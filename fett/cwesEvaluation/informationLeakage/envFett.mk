@@ -16,6 +16,7 @@ $(info VARIANT_SRC=$(VARIANT_SRC))
 $(info GENERIC_SRC=$(GENERIC_SRC))
 
 CFLAGS += -DFETT_APPS -DtestgenOnFreeRTOS
+WERROR = 
 
 ifeq ($(BSP),qemu)
 	CFLAGS += -DtestgenQEMU

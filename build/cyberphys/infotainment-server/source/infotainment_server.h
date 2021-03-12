@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "can.h"
+#include "canlib.h"
 #include "infotainment_defs.h"
 
 /**
@@ -85,6 +85,12 @@ void broadcast_music_state();
  * CAN_ID_CAR_Z.
  */
 void broadcast_position(canid_t can_id);
+
+/**
+ * Broadcast an acknoweledgement to the specified heartbeat request.
+ * @param frame The request CAN frame. Must have ID CAN_ID_HEARTBEAT_REQ.
+ */
+void broadcast_heartbeat_ack(can_frame *frame);
 
 /**
  * Stop the server (typically from a Ctrl-C handler).

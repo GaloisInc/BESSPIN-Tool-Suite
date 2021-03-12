@@ -55,9 +55,11 @@ static void usePostRelease (int i, int isSource);
 
 // --------------- Debian && FreeBSD test ---------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
     int main(int argc, char *argv[]);
 
     int main(int argc, char *argv[]) {
+        unbufferStdout();
         int i, option, isSource;
         srand(RM_SEED); //RM_SEED is written in fett/cwesEvaluation/build.py
         if (argc > 1) { //be safe

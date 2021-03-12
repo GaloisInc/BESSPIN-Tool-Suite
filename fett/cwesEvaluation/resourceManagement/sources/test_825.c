@@ -100,6 +100,7 @@ void main() {
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
 
 static SubStr *
 SubStr_new(char* s, unsigned int l)
@@ -145,6 +146,7 @@ void test_free_no_longer_valid(char *str, char *dest) {
 }
 
 int main(int argc, char *argv[]) {
+    unbufferStdout();
     char dest[5];
     char test_str [] = "test";
     char *str = &test_str[0];

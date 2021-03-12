@@ -5,7 +5,7 @@
 #include <sys/types.h>
 
 #define STR_SIZE_MIN 1
-#define STR_SIZE_MAX 100 //Arbitrary value
+#define STR_SIZE_MAX 80 //More than that and FreeBSD puts the 2nd pointer very far away
 #define SECRET_SIZE 4 //chosen arbitrarily -->  4*sizeof(int) = 16 bytes (the golden keyword is 16*'A')
 
 #if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
@@ -42,9 +42,11 @@ static void deleteStrSentinel (short testPart);
 
 // --------------- Debian && FreeBSD test ---------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
     int main(int argc, char *argv[]);
 
     int main(int argc, char *argv[]) {
+        unbufferStdout();
         int option;
         if (argc > 1) { //be safe
             option = atoi(argv[1]);

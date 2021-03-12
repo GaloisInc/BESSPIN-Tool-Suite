@@ -5,17 +5,52 @@
 
     "injection" : [
         {
+            "name" : "classSpecificMake",
+            "type" : "bool",
+            "val"  : 1
+        },
+        {
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {
-                "test_inj_1" : {
-                    "cweText" : "Untrusted Data Accessed as Machine Language Instructions"
+                "test_INJ_1" : {
+                    "cweText" : "Untrusted Data Accessed as Machine Language Instructions",
+                    "gfeScoringExceptions" : [
+                        {
+                            "osImage" : "FreeRTOS",
+                            "score" : "NoImpl" 
+                        },
+                        {
+                            "osImage" : "debian",
+                            "score" : "NONE" 
+                        },
+                        {
+                            "osImage" : "FreeBSD",
+                            "score" : "NONE" 
+                        }
+                    ]
                 },
-                "test_inj_2" : {
-                    "cweText" : "Untrusted Data Accessed as Heap Metadata"
+                "test_INJ_2" : {
+                    "cweText" : "Untrusted Data Accessed as Heap Metadata",
+                    "gfeScoringExceptions" : [
+                        {
+                            "osImage" : "FreeRTOS",
+                            "score" : "NoImpl" 
+                        },
+                        {
+                            "osImage" : "FreeBSD",
+                            "score" : "NoImpl" 
+                        }
+                    ]
                 },
-                "test_inj_3" : {
-                    "cweText" : "Untrusted Data Accessed as Trusted Data"
+                "test_INJ_3" : {
+                    "cweText" : "Untrusted Data Accessed as Trusted Data",
+                    "gfeScoringExceptions" : [
+                        {
+                            "osImage" : "FreeRTOS",
+                            "score" : "NoImpl" 
+                        }
+                    ]
                 }
             }
         }

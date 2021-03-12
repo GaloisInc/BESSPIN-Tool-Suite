@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "can.h"
+#include "canspecs.h"
 #include "infotainment_defs.h"
 
 /**
@@ -63,6 +63,14 @@ void print_position_frame(can_frame *frame);
 void print_music_state_frame(can_frame *frame);
 
 /**
+ * Print a received heartbeat ack CAN frame to the console, checking
+ * whether its number matches the expected number.
+ * @param frame The CAN frame. Must have ID CAN_ID_HEARTBEAT_ACK.
+ * @param expected_number The expected number.
+ */
+void print_heartbeat_ack_frame(can_frame *frame, uint32_t expected_number);
+
+/**
  * Send a button press for the specified button.
  * @param button The button code.
  */
@@ -75,5 +83,11 @@ void send_button_press(uint8_t button);
  * @param coordinate The coordinate to send.
  */
 void send_coordinate(canid_t dimension_id, float coordinate);
+
+/**
+ * Send a heartbeat request with the specified request number.
+ * @param number The number.
+ */
+void send_heartbeat_req(uint32_t number);
 
 #endif // __TEST_CLIENT_H__

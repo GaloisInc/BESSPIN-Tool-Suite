@@ -5,6 +5,11 @@
 
     "numericErrors" : [
         {
+            "name" : "supportsMultitasking",
+            "type" : "boolean",
+            "val"  : true
+        },
+        {
             "name" : "testsInfo",
             "type" : "dict",
             "val" : {
@@ -53,6 +58,15 @@
                 "test_824" : {
                     "cweText" : "Access of Uninitialized Pointer"
                 }
+            }
+        },
+        {
+            "name" : "mapTestsToCwes",
+            "type" : "dict",
+            "val" : {
+                "test_681" : [
+                    "test_192", "test_194", "test_195", "test_196", "test_197"
+                ]
             }
         }
     ]

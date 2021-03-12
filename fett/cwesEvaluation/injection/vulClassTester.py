@@ -9,6 +9,8 @@ from fett.cwesEvaluation.compat import testgenTargetCompatibilityLayer
 
 from fett.base.utils.misc import *
 
+INJ_OUTPUT_FILE = "inj-output.txt"
+
 ###############################################################################
 #### INJ-1 Constants
 ###############################################################################
@@ -58,8 +60,10 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         Execute binTest until it prints <LEAKED>, then extract the address
         identified by leakId
         """
+        # Information is leaked over stderr.  Redirect all other output to a
+        # file to prevent interleaving with kmesg/shell output.
         _, leakTextBack, isTimeout, _ = self.runCommand(
-                f"./{binTest}",
+                f"./{binTest} > {INJ_OUTPUT_FILE}",
                 endsWith="<LEAKED>",
                 exitOnError=False,
                 suppressErrors=True)
@@ -85,10 +89,11 @@ class vulClassTester(testgenTargetCompatibilityLayer):
             return (leakTextBack, isTimeout)
 
         _, injectionTextBack, isTimeout, _ = self.runCommand(
-                f"0\n{EBREAK_OPCODE}\n{returnPointerOffset}\n{address}\n",
+                f"0\n{EBREAK_OPCODE}\n{returnPointerOffset}\n{address}",
                 exitOnError=False,
                 suppressErrors=True)
-        return (leakTextBack + injectionTextBack), isTimeout
+        testStdout = self.typCommand(f"cat {INJ_OUTPUT_FILE}")
+        return (leakTextBack + testStdout + injectionTextBack), isTimeout
 
     def executeInj1Test(self, binTest):
         textBack = ""
@@ -108,21 +113,23 @@ class vulClassTester(testgenTargetCompatibilityLayer):
                     "Inj-2 test is not implemented on FreeBSD\n",
                     False)
         _, leakTextBack, isTimeout, _ = self.runCommand(
-                f"./{binTest}",
+                f"./{binTest} > {INJ_OUTPUT_FILE}",
                 endsWith="<READY FOR INPUT>",
                 exitOnError=False,
                 suppressErrors=True)
         if isTimeout:
-            return (leakTextBack, isTimeout)
+            testStdout = self.typCommand(f"cat {INJ_OUTPUT_FILE}")
+            return (testStdout + leakTextBack, isTimeout)
 
         _, injectionTextBack, isTimeout, _ = self.runCommand(
                 f"{BLOCK_SIZE_OFFSET}\n"
                 f"{UNTRUSTED2_BYTES_INCREASE}\n"
                 f"{TRUSTED_OVERWRITE_INDEX}\n"
-                "1\n",
+                "1",
                 exitOnError=False,
                 suppressErrors=True)
-        return (leakTextBack + injectionTextBack), isTimeout
+        testStdout = self.typCommand(f"cat {INJ_OUTPUT_FILE}")
+        return (leakTextBack + testStdout + injectionTextBack), isTimeout
 
     def executeInj3Test(self, binTest):
         leakTextBack, isTimeout, address = self.executeUpToLeak(binTest,
@@ -134,7 +141,8 @@ class vulClassTester(testgenTargetCompatibilityLayer):
                 address,
                 exitOnError=False,
                 suppressErrors=True)
-        return (leakTextBack + injectionTextBack), isTimeout
+        testStdout = self.typCommand(f"cat {INJ_OUTPUT_FILE}")
+        return (leakTextBack + testStdout + injectionTextBack), isTimeout
 
     def executeTest (self,binTest):
         outLog = ''
@@ -149,11 +157,11 @@ class vulClassTester(testgenTargetCompatibilityLayer):
         outLog = "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
         outLog += f"\n<OSIMAGE={getSetting('osImage')}>\n"
 
-        if testName == "test_inj_1":
+        if testName == "test_INJ_1":
             textBack, isTimeout = self.executeInj1Test(binTest)
-        elif testName == "test_inj_2":
+        elif testName == "test_INJ_2":
             textBack, isTimeout = self.executeInj2Test(binTest)
-        elif testName == "test_inj_3":
+        elif testName == "test_INJ_3":
             textBack, isTimeout = self.executeInj3Test(binTest)
         else:
             self.terminateAndExit(f"<executeTest> Unknown test <{testName}>.",

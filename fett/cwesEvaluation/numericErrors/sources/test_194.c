@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#include "unbufferStdout.h"
+#endif
+
 // Test 194 only has a single Part, so no special treatment is required
 // here for multi-part running on FreeRTOS or Debian
 
@@ -21,6 +25,9 @@ int main(void)
   uint64_t addr;
   int32_t index;
 
+#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+  unbufferStdout();
+#endif
   printf ("TEST 194 PART P01\n");
 
   // Case 1 - No sign extension owing to explicit cast

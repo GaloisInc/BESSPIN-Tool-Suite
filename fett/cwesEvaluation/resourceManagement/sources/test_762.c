@@ -61,6 +61,7 @@ void main() {
 //---------------- Debian && FreeBSD test ------------------------------------------------------
 #elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
 
+#include "unbufferStdout.h"
 
 void
 array_allocated_globally(void){
@@ -78,6 +79,7 @@ wrong_memory_free(void){
 }
 
 int main(int argc, char *argv[]) {
+    unbufferStdout();
     int option;
     if (argc > 1) { //be safe
         option = atoi(argv[1]);

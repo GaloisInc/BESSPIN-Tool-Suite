@@ -60,6 +60,11 @@
             "choices" : [ "qemu", "awsf1", "vcu118" ]
         },
         {
+            "name" : "vcu118Mode",
+            "type" : "string",
+            "choices" : [ "nonPersistent", "flashProgramAndBoot", "flashBoot" ]
+        },
+        {
             "name" : "processor",
             "type" : "string",
             "choices" : [ "bluespec_p1", "chisel_p1", "bluespec_p2", "chisel_p2", "bluespec_p3", "chisel_p3" ]
@@ -96,6 +101,15 @@
             "name" : "pathToCustomProcessorSource",
             "type" : "dirPath",
             "condition" : "useCustomProcessor"
+        },
+        {
+            "name" : "useCustomQemu",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomQemu",
+            "type" : "filePath",
+            "condition" : "useCustomQemu"
         },
         {
             "name" : "binarySource",
@@ -205,6 +219,15 @@
             "name" : "FreeRTOStimeout",
             "type" : "int",
             "min" : 0
+        },
+        {
+            "name" : "runUnixMultitaskingTests",
+            "type" : "boolean"
+        },
+        {
+            "name" : "instancesPerTestPart",
+            "type" : "int",
+            "min"  : 1
         }
     ],
 
@@ -261,6 +284,24 @@
             "name" : "pathToCustomMakefile",
             "type" : "filePath",
             "condition" : "useCustomMakefile"
+        },
+        {
+            "name" : "useCustomClang",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomClang",
+            "type" : "filePath",
+            "condition" : "useCustomClang"
+        },
+        {
+            "name" : "useCustomSysroot",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomSysroot",
+            "type" : "dirPath",
+            "condition" : "useCustomSysroot"
         }
     ],
 

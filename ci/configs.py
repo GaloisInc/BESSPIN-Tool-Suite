@@ -21,6 +21,7 @@ commonDefaults = {
     ('gdbDebug',('No',)),
     ('useCustomHwTarget',('No',)),
     ('useCustomTargetIp',('No',)),
+    ('useCustomQemu',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',)),
     ('productionTargetIp',('172.31.30.56',))
@@ -36,7 +37,9 @@ commonDefaultsCWEs = {
     ('useCustomScoring',('No',)),
     ('useCustomCompiling',('No',)),
     ('FreeRTOStimeout',(10,)),
-    ('runAllTests',('Yes',))
+    ('runAllTests',('Yes',)),
+    ('runUnixMultitaskingTests',('Yes',)),
+    ('instancesPerTestPart',(1,))
 }
 
 unixDefaultsCWEs = commonDefaultsCWEs.union({

@@ -7,7 +7,7 @@
         "JTAG": { 
           "name" : "procLevel",
           "p2" : { "timeout" : { "elfLoad" : 650, "boot" : 660 } },
-          "p3" : { "timeout" : { "elfLoad" : 700, "boot" : 500 } }
+          "p3" : { "timeout" : { "elfLoad" : 700, "boot" : 700 } }
         },
         "else": { "timeout" : { "boot" : 660 } }
       },
@@ -18,7 +18,11 @@
           "p2" : { "timeout" : { "elfLoad" : 900, "boot" : 300 } },
           "p3" : { "timeout" : { "elfLoad" : 900, "boot" : 1000 } }
         },
-        "else": { "timeout" : { "boot" : 500 } }
+        "netboot": {
+          "name" : "procLevel",
+          "p2" : { "timeout" : { "boot" : 500 } },
+          "p3" : { "timeout" : { "boot" : 800 } }
+        }
       }
     },
     "qemu": { "timeout" : { "boot" : 200 } },
@@ -45,9 +49,9 @@
         "JTAG": {
           "name" : "procLevel",
           "p2" : { "timeout" : { "elfLoad" : 1800, "boot" : 550 } },
-          "p3" : { "timeout" : { "elfLoad" : 1800, "boot" : 600 } }
+          "p3" : { "timeout" : { "elfLoad" : 1800, "boot" : 900 } }
         },
-        "else": { "timeout" : { "boot" : 800 } }
+        "else": { "timeout" : { "boot" : 900 } }
       },
       "chisel": {
         "name": "elfLoader",
@@ -56,10 +60,18 @@
           "p2" : { "timeout" : { "elfLoad" : 1500, "boot" : 300 } },
           "p3" : { "timeout" : { "elfLoad" : 1500, "boot" : 1700 } }
         },
-        "else": { "timeout" : { "boot" : 540 } }
+        "netboot": {
+          "name" : "procLevel",
+          "p2" : { "timeout" : { "boot" : 540 } },
+          "p3" : { "timeout" : { "boot" : 2100 } }
+        }
       }
     },
-    "qemu": { "timeout" : { "boot" : 120 } },
+    "qemu": {
+      "name" : "binarySource",
+      "SRI-Cambridge" : { "timeout" : { "boot" : 360 } },
+      "else" : { "timeout" : { "boot" : 120 } }
+    },
     "awsf1": {
       "name": "sourceVariant",
       "temporal": { "timeout" : { "boot" : 1000 } },

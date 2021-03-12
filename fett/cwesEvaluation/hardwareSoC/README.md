@@ -1,6 +1,6 @@
 # Hardware Implementation / SoC #
 
-*Intro TBD*
+This class includes the CWEs related to SoC design and hardware implementation. It encompasses the weaknesses tangent to mistakes in hardware design, mishandling permissions and boundaries, vulnerable transitions, DoS, side channels, cryptography components, and various security elements.
 
 ------------------
 

@@ -336,6 +336,7 @@ Incorrect Conversion Between Numeric Types \[[CWE-681](https://cwe.mitre.org/dat
 - [CWE-194](https://cwe.mitre.org/data/definitions/194.html).
 - [CWE-195](https://cwe.mitre.org/data/definitions/195.html).
 - [CWE-196](https://cwe.mitre.org/data/definitions/196.html).
+- [CWE-197](https://cwe.mitre.org/data/definitions/197.html).
 
 **Notes:**
 This CWE is rather general, covering any "incorrect conversion" between numeric types. It is actually the parent of CWEs 192, 194, 195 and 196 in the CWE hierarchy. These CWEs cover more specific cases of numeric conversion errors, and are dealt with above. As such, no specific test case has been designed for CWE 681.

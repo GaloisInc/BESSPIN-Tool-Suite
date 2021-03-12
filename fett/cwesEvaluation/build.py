@@ -35,7 +35,7 @@ def buildCwesEvaluation():
                                 f"{getSetting('osImage')}.asm"))
         setSetting('sendTarballToTarget', False)
 
-        freeRTOSBuildChecks()
+        freeRTOSBuildChecks(freertosFork="classic")
 
         if (isEqSetting('binarySource','LMCO')):
             cp (os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','utils','lmcoMiscFreeRTOS.c'),
@@ -57,10 +57,6 @@ def buildCwesEvaluation():
                 getSetting("vulClasses").remove(vClass)
 
         fillerCfile = os.path.join(getSetting('repoDir'),'fett','cwesEvaluation','utils','fillerMainFreeRTOS.c')
-
-    if (isEqSetting('binarySource','LMCO') and isEqSetting('osImage','debian') and ('injection' in getSetting("vulClasses"))):
-        warnAndLog(f"<injection> tests will be skipped. Please check ticket #963 for more details.")
-        getSetting("vulClasses").remove('injection')
 
     # Copy tests over
     enabledCwesEvaluations = defaultdict(list)
@@ -129,7 +125,7 @@ def buildCwesEvaluation():
                     isThereAReasonToBoot = True
                     enabledCwesEvaluations[vulClass] = enabledBins
         else:
-            if (isEnabledDict(vulClass,'useSelfAssessment')):
+            if ((vulClass=="PPAC") or isEnabledDict(vulClass,'useSelfAssessment')):
                 tests = getSettingDict(vulClass,["testsInfo"])
             else: #all C files in sources
                 cp (os.path.join(sourcesDir,'envFett.mk'), vulClassDir)
@@ -145,8 +141,9 @@ def buildCwesEvaluation():
                 if (isTestEnabled(vulClass,test)):
                     vIsThereAnythingToRun = True
                     if (not isEnabledDict(vulClass,'useSelfAssessment')): #No need to boot for self-assessment
-                        isThereAReasonToBoot = True 
-                        cp (os.path.join(sourcesDir, f"{test}.c"), vulClassDir)
+                        isThereAReasonToBoot = True
+                        if ((vulClass != "PPAC") or ("hasCFile" in tests[test])):
+                            cp (os.path.join(sourcesDir, f"{test}.c"), vulClassDir)
                     enabledCwesEvaluations[vulClass].append(f"{test}.riscv")
                 else:
                     printAndLog(f"buildCwesEvaluation: Skipping <{vulClass}:{test}>. It is not enabled.",doPrint=False)
@@ -156,32 +153,12 @@ def buildCwesEvaluation():
             continue
 
         if (not isEqSetting('osImage', 'FreeRTOS')):
-            # copy makefile over
-            if (isEnabled('useCustomCompiling') and isEnabledDict('customizedCompiling','useCustomMakefile')):
-                cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
-                    os.path.join(vulClassDir, 'Makefile'))
-            else: # Use default environment
-                if (doesSettingExistDict(vulClass, "classSpecificMake") and
-                    isEnabledDict(vulClass, "classSpecificMake")):
-                    cp(os.path.join(getSetting('repoDir'),
-                                    'fett',
-                                    'cwesEvaluation',
-                                    vulClass,
-                                    'Makefile.xcompileDir'),
-                       os.path.join(vulClassDir, 'Makefile'))
-                else:
-                    cp(os.path.join(getSetting('repoDir'),
-                                    'fett',
-                                    'target',
-                                    'utils',
-                                    'Makefile.xcompileDir'),
-                       os.path.join(vulClassDir, 'Makefile'))
-                cp(os.path.join(getSetting('repoDir'),
-                                'fett',
-                                'target',
-                                'utils',
-                                'defaultEnvUnix.mk'),
-                    vulClassDir)
+            # copy build files over
+            copyUnixBuildFiles(vulClassDir, vulClass, True)
+            if vulClass == "injection":
+                # Copy unix injection helpers over
+                cp(sourcesDir, vulClassDir, "inj_unix_helpers.*")
+
 
         #Set the list of enabled tests
         setSetting('enabledCwesEvaluations', enabledCwesEvaluations)
@@ -216,8 +193,65 @@ def buildCwesEvaluation():
 
     if getSetting('osImage') in ['debian', 'FreeBSD']:
         setSetting('isThereAReasonToBoot',isThereAReasonToBoot) #This is set per class in FreeRTOS
+
+        if isEnabled("runUnixMultitaskingTests") and isThereAReasonToBoot:
+            # Build multitasking utility
+            multitaskingDir = os.path.join(buildDir, 'multitasking')
+            mkdir(multitaskingDir)
+            cp(os.path.join(getSetting('repoDir'),
+                            'fett',
+                            'cwesEvaluation',
+                            'multitasking',
+                            'sources'),
+               multitaskingDir,
+               '*')
+            copyUnixBuildFiles(multitaskingDir, None, False)
+            crossCompileUnix(multitaskingDir,
+                             extraString="multitasking utility",
+                             overrideBinarySource=
+                                    "GFE" if
+                                    isEqSetting("binarySource", "LMCO") else
+                                    None)
+
         buildTarball()
     return isThereAnythingToRun
+
+@decorate.debugWrap
+def copyUnixBuildFiles(dest, vulClass, checkClassSpecificMake):
+    # copy makefile over
+    if (isEnabled('useCustomCompiling') and
+        isEnabledDict('customizedCompiling','useCustomMakefile')):
+        cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
+            os.path.join(vulClassDir, 'Makefile'))
+    else: # Use default environment
+        if (checkClassSpecificMake and
+            doesSettingExistDict(vulClass, "classSpecificMake") and
+            isEnabledDict(vulClass, "classSpecificMake")):
+            cp(os.path.join(getSetting('repoDir'),
+                            'fett',
+                            'cwesEvaluation',
+                            vulClass,
+                            'Makefile.xcompileDir'),
+               os.path.join(dest, 'Makefile'))
+        else:
+            cp(os.path.join(getSetting('repoDir'),
+                            'fett',
+                            'target',
+                            'utils',
+                            'Makefile.xcompileDir'),
+               os.path.join(dest, 'Makefile'))
+        cp(os.path.join(getSetting('repoDir'),
+                        'fett',
+                        'target',
+                        'utils',
+                        'defaultEnvUnix.mk'),
+            dest)
+        cp(os.path.join(getSetting('repoDir'),
+                        'fett',
+                        'cwesEvaluation',
+                        'utils',
+                        'unbufferStdout.h'),
+            dest)
 
 @decorate.debugWrap
 @decorate.timeWrap

@@ -26,7 +26,8 @@ import re
 
 from fett.base.utils.misc import *
 from fett.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
-from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests
+from fett.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests, overallScore
+from fett.cwesEvaluation.common import isTestEnabled
 
 VULCLASS = "numericErrors"
 
@@ -57,28 +58,43 @@ def scoreAllTests(logs):
         return defaultSelfAssessmentScoreAllTests(VULCLASS, logs)
 
     scores = {}
+    ret = []
     for name, log in logs:
         testNum = name.split('_')[1]
-        scores[testNum] = {}
         logLines = ftReadLines(log)
         nPartsMatch = matchExprInLines(r'^<NUMPARTS=(?P<numParts>\d+)>$',logLines)
+        partsScores = []
         if (nPartsMatch is None):
             errorAndLog(f"Failed to score {name}.",doPrint=False)
-            scores[testNum][1] = SCORES.FAIL
+            partsScores.append(SCORES.FAIL)
+        else:
+            numParts = int(nPartsMatch.group('numParts'))
+
+            for thisPart in range(1, numParts + 1):
+                partLines = partitionLines (logLines,thisPart,testNum) #partitioning first make sure the scoring is done for this part only
+                thisScore = scoreTestPart(partLines, testNum, thisPart)
+                partsScores.append(adjustToCustomScore(partLines,thisScore))
+
+        ovrScore = overallScore(partsScores,f"TEST-{testNum}")
+        scores[name] = ovrScore[1]
+        ret.append(ovrScore)
+
+    # Append ret with the CWEs scores based on other CWEs
+    for test, depTests in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
+        testNum = test.split('_')[1]
+        if (not isTestEnabled(VULCLASS,test)):
             continue
-
-        numParts = int(nPartsMatch.group('numParts'))
-
-        for thisPart in range(1, numParts + 1):
-            partLines = partitionLines (logLines,thisPart,testNum) #partitioning first make sure the scoring is done for this part only
-            thisScore = scoreTestPart(partLines, testNum, thisPart)
-            scores[testNum][thisPart] = adjustToCustomScore(partLines,thisScore)
-
-
-    ret = []
-    for testNum in scores:
-        xScores = scores[testNum].values()
-        ret.append([f"TEST-{testNum}", SCORES.minScore(xScores),', '.join([str(x) for x in xScores])])
+        listScores = []
+        scoreDetails = []
+        for depTest in depTests:
+            if (depTest in scores):
+                score = scores[depTest]
+            else:
+                warnAndLog(f"scoreAllTests-{VULCLASS}: Missing score for <{depTest}>.")
+                score = SCORES.FAIL
+            scoreDetails.append(f"{depTest.split('_')[-1]}:{score}")
+            listScores.append(score)
+        ret.append(overallScore(listScores,f"TEST-{testNum}",scoreString=', '.join(scoreDetails)))
     return ret
 
 @decorate.debugWrap
@@ -90,7 +106,7 @@ def scoreTestPart(logLines, testNum, testPart):
         scoreMatch = re.match(rf"^SCORE:{testNum}:{testPart}:(?P<relevantString>[\w\s<>]+)$",line)
         if (scoreMatch is not None):
             keyword = scoreMatch.group('relevantString')
-            if (keyword in ['TEST FAILED', 'TOP SECRET STUFF', 'SEGFAULT']):
+            if (keyword in ['TEST FAILED', 'TOP SECRET STUFF', 'TOPSECRET STUFF', 'SEGFAULT']):
                 newScore = SCORES.HIGH
             elif (keyword in ['TEST PASSED', '<ABORT>']): ## SSITH CPU exception prevented a vulnerability
                 newScore = SCORES.NONE

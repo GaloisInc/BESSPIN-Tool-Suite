@@ -27,9 +27,18 @@ def startCyberPhys():
         setSetting('cyberPhysQueue',exitQueue)
         for targetId in range(1,getSetting('nTargets')+1):
             setSetting('watchdogQueue',queue.Queue(maxsize=1),targetId=targetId)
+            # queue from heartbeat thread -> watchdog thread
+            setSetting('watchdogHeartbeatQueue',queue.Queue(),targetId=targetId)
+
+        # queue used to stop the heartbeat thread
+        setSetting('heartbeatQueue', queue.Queue(maxsize=1))
 
         # Start the watchdogs
         allThreads = runThreadPerTarget(fett.cyberPhys.run.watchdog,onlyStart=True)
+
+        # Start the heartbeat watchdog
+        allThreads += runThreadPerTarget(fett.cyberPhys.run.heartBeatListener,
+                        addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
 
         # Pipe the UART
         if (isEnabled('pipeTheUart')):
@@ -52,6 +61,7 @@ def startCyberPhys():
         # Terminating all threads
         for targetId in range(1,getSetting('nTargets')+1):
             ftQueueUtils(f"target{targetId}:watchdog:queue",getSetting('watchdogQueue',targetId=targetId),'put')
+        ftQueueUtils(f"target{targetId}:heartbeat:queue",getSetting('heartbeatQueue'),'put')
         if (isEnabled('interactiveShell')):
             ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
 
@@ -197,5 +207,3 @@ def stopTtyLogging(targetId):
     getSetting('ttyLogger',targetId=targetId).stop()
     setSetting('isTtyLogging',False,targetId=targetId)
 
-
-    

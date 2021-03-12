@@ -43,6 +43,12 @@ class fpgaTarget(object):
             printAndLog(f"{self.targetIdInfo}fpgaTarget: openocd telnet port is <{self.openocdPort}>.",
                 doPrint=not (isEqSetting('mode', 'evaluateSecurityTests') and (self.osImage=='FreeRTOS')))
 
+        if ( (self.target=='vcu118') and
+            (getSetting('vcu118Mode',targetId=self.targetId) in ["flashBoot", "flashProgramAndBoot"]) ):
+            self.flashMode = True
+        else:
+            self.flashMode = False
+
         self.readGdbOutputUnix = 0 #beginning of file
 
     @decorate.debugWrap
@@ -52,7 +58,7 @@ class fpgaTarget(object):
     @decorate.debugWrap
     @decorate.timeWrap
     def fpgaStart (self, elfPath, elfLoadTimeout=15, isReload=False):      
-        if (self.target == 'vcu118'):
+        if (self.target=='vcu118'):
             time.sleep(3) 
             # After programming the fpga, the OS needs a moment to release the resource to be used by openocd.
             # I am suspecting a mistake by Vivado in terminating while still using the USB adaptor (CWE-672 ;)).
@@ -70,6 +76,7 @@ class fpgaTarget(object):
             getSetting('openocdLock').acquire()
             openocdExtraCmds = (f"set _CHIPNAME riscv{self.targetSuffix}; gdb_port {self.gdbPort}; "
                 f"telnet_port {self.openocdPort}{self.getOpenocdCustomCfg(isReload=isReload)}")
+            printAndLog(f"{self.targetIdInfo} openocdExtraCmds = {openocdExtraCmds}",doPrint=False)
             try:
                 self.openocdProcess = pexpect.spawn(
                     f"openocd --command '{openocdExtraCmds}' -f {openocdCfg}",
@@ -87,7 +94,7 @@ class fpgaTarget(object):
 
         self.gdbProgStart(elfPath,elfLoadTimeout) #releasing the openocd lock happens here
         
-        if ((self.processor=='bluespec_p3') and (self.target=='vcu118')):
+        if ((self.processor=='bluespec_p3') and (self.target=='vcu118') and (self.elfLoader=='JTAG')):
             _,wasTimeout,_ = self.expectFromTarget("bbl loader", f"attempt to boot {self.processor}",
                 exitOnError=False, timeout=15, issueInterrupt=False,
                 suppressWarnings=True, sshRetry=False)
@@ -97,6 +104,7 @@ class fpgaTarget(object):
                     time.sleep(1) #wait for the function to print "Completed" on the screen
                     printAndLog(f"{self.targetIdInfo}Failed to boot {self.processor}. "
                         f"Trying again ({self.bluespec_p3BootAttemptsIdx+2}/{self.bluespec_p3BootAttemptsMax})...")
+                    self.bluespec_p3BootAttemptsIdx += 1
                     self.fpgaTearDown(isReload=True,stage=failStage.uart)
                     self.stopShowingTime = common.showElapsedTime (getSetting('trash'),estimatedTime=self.sumTimeout)
                     return self.fpgaStart(elfPath, elfLoadTimeout=elfLoadTimeout)
@@ -150,10 +158,10 @@ class fpgaTarget(object):
             if (self.useOpenocd() and mainProg):
                 getSetting('openocdLock').release()
 
-            self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
-
-            if (self.processor=='bluespec_p3'):
-                time.sleep(3) # Bluespec_p3 needs time here before being able to properly continue.
+            if (not self.flashMode): #No need to load when flash
+                self.gdbLoad (elfLoadTimeout=elfLoadTimeout)
+                if (self.processor=='bluespec_p3'):
+                    time.sleep(3) # Bluespec_p3 needs time here before being able to properly continue.
         elif (self.useOpenocd() and mainProg):
             getSetting('openocdLock').release()
             self.terminateAndExit(f"{self.targetIdInfo}gdbProgStart: Releasing the openocd lock is not "
@@ -230,30 +238,38 @@ class fpgaTarget(object):
         else:
             time.sleep(1)
 
-        if (self.processor=='bluespec_p3'):
-            self.setUnixBluespecP3()
+        bluespecExtraUnixCommands = ["set $a0 = 0", "set $a1 = 0x70000020"]
 
-        # detach from gdb
-        self.gdbDetach()
+        if (self.flashMode and (self.procFlavor=='bluespec') and (self.xlen==64)): 
+            #For bluespec_p2 and bluespec_p3, we need to explicitly instruct the fpga to execute the beginning of the flash
+            t0pcSetCommands = ["set $t0 = 0x44000000", "p $pc = 0x44000000"]
+            self.seqGdbCommands(bluespecExtraUnixCommands + t0pcSetCommands, sleepTime=0.5)
+            self.continueGdb()
+            self.interruptGdb()
+            self.seqGdbCommands(t0pcSetCommands, sleepTime=0.5)
+        elif (self.processor=='bluespec_p3'): #Already done in flash mode
+            self.seqGdbCommands(bluespecExtraUnixCommands)
+            time.sleep(2)
 
-        # Re-connect
-        self.gdbConnect()
+        if (not self.flashMode): #No need in case of flash
+            # detach from gdb
+            self.gdbDetach()
+            # Re-connect
+            self.gdbConnect()
+            if (self.processor=='bluespec_p3'):
+                self.seqGdbCommands(bluespecExtraUnixCommands)
+                time.sleep(2)
 
-        if (self.processor=='bluespec_p3'):
-            self.setUnixBluespecP3()
-
-        if ((not isRepeated) and (self.osImage=='FreeRTOS')):
-            if (self.procFlavor=='bluespec'):
-                self.softReset(isRepeated=True)
+            if ((not isRepeated) and (self.osImage=='FreeRTOS')):
+                if (self.procFlavor=='bluespec'):
+                    self.softReset(isRepeated=True)
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def setUnixBluespecP3 (self):
-        # required to boot unix on bluespec_p3
-        self.runCommandGdb("set $a0 = 0")
-        time.sleep(1)
-        self.runCommandGdb("set $a1 = 0x70000020")
-        time.sleep(3)
+    def seqGdbCommands (self, commands, sleepTime=1):
+        for command in commands:
+            self.runCommandGdb(command)
+            time.sleep(sleepTime)
 
     @decorate.debugWrap
     @decorate.timeWrap
