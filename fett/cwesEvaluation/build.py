@@ -194,7 +194,7 @@ def buildCwesEvaluation():
     if getSetting('osImage') in ['debian', 'FreeBSD']:
         setSetting('isThereAReasonToBoot',isThereAReasonToBoot) #This is set per class in FreeRTOS
 
-        if isEnabled("runUnixMultitaskingTests"):
+        if isEnabled("runUnixMultitaskingTests") and isThereAReasonToBoot:
             # Build multitasking utility
             multitaskingDir = os.path.join(buildDir, 'multitasking')
             mkdir(multitaskingDir)
