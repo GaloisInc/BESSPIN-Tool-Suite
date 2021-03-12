@@ -16,8 +16,11 @@ class vulClassTester(testgenTargetCompatibilityLayer):
     def executeTest (self,binTest):
         outLog = ''
         testName = binTest.split('.')[0]
-        
+
         outLog += "\n" + '*'*30 + f" {testName.upper().replace('_',' ')} " + '*'*30 + "\n\n"
+
+        if (isEnabledDict(self.vulClass,'useSelfAssessment')):
+            return outLog
 
         if (hasattr(cweTests,testName)):
             outLog += getattr(getattr(cweTests,testName),testName)(self)
