@@ -33,6 +33,8 @@ def test_468 (logLines):
             partsScores[1] = SCORES.FAIL
         if (doesKeywordExist(partsLines[2],"<WRONG_OFFSET>")):
             partsScores[2] = SCORES.HIGH
+        elif (doesKeywordExist(partsLines[2], "<GDB-SIGTRAP>")):
+            partsScores[2] = SCORES.HIGH
         else:
             partsScores[2] = SCORES.FAIL
 
