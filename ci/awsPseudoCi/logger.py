@@ -53,10 +53,10 @@ def format_exc(exc):
 
 
 class Logger:
-    def __init__(self, log_fname="aws-test-suite.log", results_fname="results.txt"):
+    def __init__(self, log_fname="aws-pseudo-ci.log", results_fname="results.txt"):
         """
         Global logger setup
-        :param log_fname: Output log filename, defaults to 'aws-test-suite.log'
+        :param log_fname: Output log filename, defaults to 'aws-pseudo-suite.log'
         :type log_fname: str, optional
         :param level: Output information level, defaults to 'info'
         :type level: str, optional
