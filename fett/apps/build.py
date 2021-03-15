@@ -299,7 +299,7 @@ def getSourceDir (app):
 
 @decorate.debugWrap
 def getAppDir(app):
-    return os.path.join(getSetting('repoDir'),'build', app)
+    return os.path.join(getSetting('repoDir'),'fett','apps','assets',app)
 
 @decorate.debugWrap
 def getBinDir(app,targetId=None):
