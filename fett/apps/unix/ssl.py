@@ -3,11 +3,10 @@ import random
 import subprocess
 from fett.base.utils.misc import *
 
-def gen_cert(name, key_path, cert_path):
+def gen_cert(name, key_path, cert_path, ca_path):
     key_name = os.path.join(key_path, f"{name}.key")
     csr_name = os.path.join(key_path, f"{name}.csr")
     crt_name = os.path.join(cert_path, f"{name}.crt")
-    ca_path = os.path.join(getSetting('repoDir'), 'apps', 'ssl')
     ca_key = os.path.join(ca_path, "fettCA.key")
     ca_pem = os.path.join(ca_path, "fettCA.pem")
     serial = os.path.join(cert_path, f"{name}.srl")
