@@ -57,7 +57,7 @@ class InstanceManager:
 
     @debug_wrap
     @log_assertion_fails
-    def run_all_instances(self, config=None):
+    def run_all_instances(self):
         """run all jobs at the same time
         TODO: support running and terminating jobs non-uniformly
         """
@@ -94,7 +94,7 @@ class InstanceManager:
             #   Therefore, we must check S3 to see if anything has happened
             #   We wait 5 s to keep polling down.
             time.sleep(5)
-            s3 = poll_s3(config, [x.id for x in running_instances])
+            s3 = poll_s3([x.id for x in running_instances])
 
             # Check for finished ID
             if s3 != []:
