@@ -4,7 +4,7 @@ Building apps
 """
 
 from fett.base.utils.misc import *
-from fett.base.utils.ssl import gen_cert
+from fett.apps.unix.ssl import gen_cert
 from fett.apps.freertos import freertos
 import fett.target.build
 import os
@@ -129,7 +129,8 @@ def copyWebserverFiles(tarName):
     """
     gen_cert("fett-webserver",
         os.path.join(getSetting('buildDir'), "keys"),
-        os.path.join(getSetting('buildDir'), "certs")
+        os.path.join(getSetting('buildDir'), "certs"),
+        getAppDir('ssl')
     )
 
     if isEqSetting('binarySource', 'SRI-Cambridge'):
@@ -179,7 +180,8 @@ def copyVotingFiles(tarName):
 
     gen_cert("fett-voting",
         os.path.join(getSetting('buildDir'), "keys"),
-        os.path.join(getSetting('buildDir'), "certs")
+        os.path.join(getSetting('buildDir'), "certs"),
+        getAppDir('ssl')
     )
 
     if isEqSetting('binarySource', 'SRI-Cambridge'):
@@ -299,7 +301,7 @@ def getSourceDir (app):
 
 @decorate.debugWrap
 def getAppDir(app):
-    return os.path.join(getSetting('repoDir'),'fett','apps','assets',app)
+    return os.path.join(getSetting('repoDir'),'fett','apps','unix','assets',app)
 
 @decorate.debugWrap
 def getBinDir(app,targetId=None):
