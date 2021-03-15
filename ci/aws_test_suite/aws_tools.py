@@ -9,6 +9,7 @@ import boto3
 import importlib.util
 
 from .logger import *
+import configs
 
 # +-----------------+
 # |  General Tools  |
@@ -203,7 +204,7 @@ def launch_instance(
 
 
 @debug_wrap
-def poll_s3(config, instance_ids):
+def poll_s3(instance_ids):
     """
     Poll AWS S3 for a file whose name is the instance id of any instance we are running.
 
@@ -212,23 +213,6 @@ def poll_s3(config, instance_ids):
     :return: instance id or None
     :rtype: str
     """
-
-    if config is not None:
-        moduleSpec = importlib.util.spec_from_file_location("configs", config)
-        configs = importlib.util.module_from_spec(moduleSpec)
-        moduleSpec.loader.exec_module(configs)
-    else:
-        # Get path to the repoDir
-        awsTestSuiteDir = os.path.abspath(os.path.dirname(__file__))
-        buildDir = os.path.abspath(os.path.join(awsTestSuiteDir, os.pardir))
-        repoDir = os.path.abspath(os.path.join(buildDir, os.pardir))
-
-        # Import Configs from $repoDir/ci/configs.py
-        moduleSpec = importlib.util.spec_from_file_location(
-            "configs", os.path.join(repoDir, "ci", "configs.py")
-        )
-        configs = importlib.util.module_from_spec(moduleSpec)
-        moduleSpec.loader.exec_module(configs)
 
     # Start Boto3 Client
     try:

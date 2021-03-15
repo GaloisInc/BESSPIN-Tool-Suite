@@ -3,9 +3,7 @@
 # Import modules
 import sys, os, time
 
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-
-from build.aws_test_suite import *
+from aws_test_suite import *
 
 import argparse, subprocess, shlex, json, hashlib
 from datetime import datetime
