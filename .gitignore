@@ -6,8 +6,8 @@ myCyberPhys.ini
 core
 *.mypy_cache/
 .DS_STORE
-.idea/
-.vscode/
+.idea
+.vscode
 fett/cwesEvaluation/*/*.als
 fett/cwesEvaluation/*/*.map
 fett/target/utils/uartDevicesMap.json
@@ -19,3 +19,10 @@ ci/aws-test-suite.log
 fett-ci.log
 aws-test-suite.log
 results.txt
+
+#CyberPhys
+*.elf
+*.asm
+*.o
+*.bin
+fett/cyberPhys/hacking/j1939hack/main.h
