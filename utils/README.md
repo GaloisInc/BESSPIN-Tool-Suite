@@ -14,7 +14,7 @@ This directory includes standalone utilities that are not part of the tool:
 
 - **`loadFreertosDiskImage.sh`:** Loads and mounts the FreeRTOS disk image in `workDir` to `/loopfs`.
 
-- **`ssithCwesList.py`:** This verifies that all moving parts containing the SSITH CWEs list are synchronized, so it requires the `csv` of the internal CWEs spreadsheet. Also, it generates the final document [ssithCWEsList.md ](../docs/ssithCWEsList.md )
+- **`ssithCwesList.py`:** This verifies that all moving parts containing the SSITH CWEs list are synchronized, so it requires the `csv` of the internal CWEs spreadsheet. Also, it generates the final document [ssithCWEsList.md ](../docs/cwesEvaluation/ssithCWEsList.md )
 
 - **`unloadFreertosDiskImage.sh`:** Unmounts and unloads what `loadFreertosDiskImage.sh` has done.
 
