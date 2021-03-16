@@ -40,7 +40,7 @@ def isVulClassException(vulClass):
 
 @decorate.debugWrap
 def computeBesspinScale():
-    """ Compute the BESSPIN scale following the document: $repo/docs/BESSPIN-Scale.pdf """
+    """ Compute the BESSPIN scale following the document: $repo/docs/cwesEvaluation/BESSPIN-Scale.pdf """
     # Will do the following:
     # 1. Compute the BESSPIN coefficients values (from ./besspinCoeffs.json)
     # 2. Compute the categories scores
