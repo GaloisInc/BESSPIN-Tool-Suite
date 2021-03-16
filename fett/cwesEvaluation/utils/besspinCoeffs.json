@@ -1,6 +1,6 @@
 {
     "_info" : "This file has the weakness categories and their assigned BESSPIN coefficient factors weights.",
-    "_moreInfo" : "Please check ../../../docs/BESSPIN-Scale.pdf",
+    "_moreInfo" : "Please check ../../../docs/cwesEvaluation/BESSPIN-Scale.pdf",
     "_TI" : "The Technical Impact is the potential result that can be produced by the weakness, assuming that the weakness can be successfully reached and exploited. This is also related to the possible acquired privilege (AP).",
     "_TI_values" : "critical, moderate, limited",
     "_AV" : "The Access Vector identifies the channel through which an attacker must communicate to reach the functionality that contains the weakness.",
