@@ -47,7 +47,7 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 
 After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access.
 
-See the instructions in [docs/createFettAMI.md](./docs/createFettAMI.md) to recreate the image manually.
+See the instructions in [createFettAMI.md](./docs/AWS/createFettAMI.md) to recreate the image manually.
 
 
 ## User Manual ##
