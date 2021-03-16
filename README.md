@@ -9,7 +9,7 @@ To clone the repo and start `the nix-shell`, please use:
 ```bash
 git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
 cd SSITH-FETT-Target
-./init_submodules.sh
+./utils/init_submodules.sh
 nix-shell
 ```
 
