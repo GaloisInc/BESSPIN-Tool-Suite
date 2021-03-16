@@ -2,7 +2,7 @@
 
 This directory includes standalone utilities that are not part of the tool:
 
-- **`besspinCoeffsList.py`:** Related to the BESSPIN Scale calculation. This utility checks the completeness of the BESSPIN coefficients JSON file, and generates the document [BESSPIN-Coeffs.md](../docs/BESSPIN-Coeffs.md). Please refer to [BESSPIN-Scale.pdf](../docs/BESSPIN-Scale.pdf) and [evaluateSecurityTestsMode.md](../docs/cwesEvaluation/evaluateSecurityTestsMode.md) for more details.
+- **`besspinCoeffsList.py`:** Related to the BESSPIN Scale calculation. This utility checks the completeness of the BESSPIN coefficients JSON file, and generates the document [BESSPIN-Coeffs.md](../docs/cwesEvaluation/BESSPIN-Coeffs.md). Please refer to [BESSPIN-Scale.pdf](../docs/BESSPIN-Scale.pdf) and [evaluateSecurityTestsMode.md](../docs/cwesEvaluation/evaluateSecurityTestsMode.md) for more details.
 
 - **`clearFiresimProcesses.sh`:** Kills all processes related to Firesim and clears the shared memory (used by Firesim). This comes handy during manual development and debugging.
 
