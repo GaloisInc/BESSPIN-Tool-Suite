@@ -226,6 +226,11 @@ def main(xArgs):
     buildDir = os.path.abspath(os.path.dirname(__file__))
     repoDir = os.path.abspath(os.path.join(buildDir,os.pardir))
 
+    # Import prettyVulClass
+    sys.path.insert(0, repoDir)
+    import fett.base.config #To resolve cyclic importing
+    from fett.cwesEvaluation.scoreTests import prettyVulClass
+
     # Load the google spreadsheet
     spreadsheetCWEs = loadFile(xArgs.csvFile,"csv")
     spreadsheetCWEs.checkSpreadsheetTotals()
@@ -284,13 +289,13 @@ def main(xArgs):
             "|-|-|\n"
         )
         for vulClass in vulClasses:
-            fReadme.write(f"| {vulClass} | {spreadsheetCWEs.getVulClassCount(vulClass)} |\n")
+            fReadme.write(f"| {prettyVulClass(vulClass)} | {spreadsheetCWEs.getVulClassCount(vulClass)} |\n")
 
         # CWEs list
         cwelink = "https://cwe.mitre.org/data/definitions/"
         for vulClass in vulClasses:
             fReadme.write(
-                f"## {vulClass}\n"
+                f"## {prettyVulClass(vulClass)}\n"
                 "---\n"
                 "| CWE | Description |\n"
                 "|-|-|\n"

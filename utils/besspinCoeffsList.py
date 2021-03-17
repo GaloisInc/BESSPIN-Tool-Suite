@@ -15,6 +15,11 @@ def main(xArgs):
     repoDir = os.path.abspath(os.path.join(buildDir,os.pardir))
     cwesEvaluationDir = os.path.join(repoDir,"fett","cwesEvaluation")
 
+    # Import prettyVulClass
+    sys.path.insert(0, repoDir)
+    import fett.base.config #To resolve cyclic importing
+    from fett.cwesEvaluation.scoreTests import prettyVulClass
+
     # Load the besspinCoeffs file
     besspinCoeffs = loadJsonFile(os.path.join(cwesEvaluationDir,"utils","besspinCoeffs.json"))
 
@@ -84,14 +89,6 @@ def main(xArgs):
         errorExit(f"Failed to generate the document <BESSPIN-Coeffs.md>.",exc=exc)
 
     print("Document generated!")
-
-def prettyVulClass(vulClass):
-    caps = list(filter(lambda c: c.isupper(), vulClass))
-    iFirstCap = vulClass.find(caps[0]) if(caps) else -1
-    if (iFirstCap<=0):
-        return vulClass[0].upper() + vulClass[1:]
-    else:
-        return vulClass[0].upper() + vulClass[1:iFirstCap] + ' ' + vulClass[iFirstCap:]
 
 def loadJsonFile (jsonFile):
     try:
