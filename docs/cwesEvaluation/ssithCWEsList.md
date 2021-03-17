@@ -7,14 +7,14 @@ To generate, please download a `.csv` version of the `Final List` sheet of the [
 ---
 | Vulnerability Classes | # of CWEs |
 |-|-|
-| bufferErrors | 21 |
+| Buffer Errors | 21 |
 | PPAC | 3 |
-| resourceManagement | 26 |
-| informationLeakage | 10 |
-| numericErrors | 15 |
-| hardwareSoC | 48 |
-| injection | 3 |
-## bufferErrors
+| Resource Management | 26 |
+| Information Leakage | 10 |
+| Numeric Errors | 15 |
+| Hardware SoC | 48 |
+| Injection | 3 |
+## Buffer Errors
 ---
 | CWE | Description |
 |-|-|
@@ -43,10 +43,10 @@ To generate, please download a `.csv` version of the `Final List` sheet of the [
 ---
 | CWE | Description |
 |-|-|
-| [CWE-PPAC-1](../fett/cwesEvaluation/PPAC/README.md) | Missing authorization in privileged resource access; Related to CWEs 284-285-288-668-669-862-863. |
-| [CWE-PPAC-2](../fett/cwesEvaluation/PPAC/README.md) | Reliance on OS and software authentication; Related to CWEs 284-287-288. |
-| [CWE-PPAC-3](../fett/cwesEvaluation/PPAC/README.md) | Security exceptions are not logged to a privileged location; Related to CWE-284. |
-## resourceManagement
+| [CWE-PPAC-1](../../fett/cwesEvaluation/PPAC/README.md) | Missing authorization in privileged resource access; Related to CWEs 284-285-288-668-669-862-863. |
+| [CWE-PPAC-2](../../fett/cwesEvaluation/PPAC/README.md) | Reliance on OS and software authentication; Related to CWEs 284-287-288. |
+| [CWE-PPAC-3](../../fett/cwesEvaluation/PPAC/README.md) | Security exceptions are not logged to a privileged location; Related to CWE-284. |
+## Resource Management
 ---
 | CWE | Description |
 |-|-|
@@ -76,7 +76,7 @@ To generate, please download a `.csv` version of the `Final List` sheet of the [
 | [CWE-908](https://cwe.mitre.org/data/definitions/908) | Use of Uninitialized Resource |
 | [CWE-909](https://cwe.mitre.org/data/definitions/909) | Missing Initialization of Resource |
 | [CWE-911](https://cwe.mitre.org/data/definitions/911) | Improper Update of Reference Count |
-## informationLeakage
+## Information Leakage
 ---
 | CWE | Description |
 |-|-|
@@ -90,7 +90,7 @@ To generate, please download a `.csv` version of the `Final List` sheet of the [
 | [CWE-226](https://cwe.mitre.org/data/definitions/226) | Sensitive Information Uncleared in Resource Before Release for Reuse |
 | [CWE-244](https://cwe.mitre.org/data/definitions/244) | Improper Clearing of Heap Memory Before Release ('Heap Inspection') |
 | [CWE-524](https://cwe.mitre.org/data/definitions/524) | Use of Cache Containing Sensitive Information |
-## numericErrors
+## Numeric Errors
 ---
 | CWE | Description |
 |-|-|
@@ -109,7 +109,7 @@ To generate, please download a `.csv` version of the `Final List` sheet of the [
 | [CWE-665](https://cwe.mitre.org/data/definitions/665) | Improper Initialization |
 | [CWE-681](https://cwe.mitre.org/data/definitions/681) | Incorrect Conversion between Numeric Types |
 | [CWE-824](https://cwe.mitre.org/data/definitions/824) | Access of Uninitialized Pointer |
-## hardwareSoC
+## Hardware SoC
 ---
 | CWE | Description |
 |-|-|
@@ -161,10 +161,10 @@ To generate, please download a `.csv` version of the `Final List` sheet of the [
 | [CWE-1281](https://cwe.mitre.org/data/definitions/1281) | Sequence of Processor Instructions Leads to Unexpected Behavior (Halt and Catch Fire) |
 | [CWE-1282](https://cwe.mitre.org/data/definitions/1282) | Assumed-Immutable Data Stored in Writable Memory |
 | [CWE-1283](https://cwe.mitre.org/data/definitions/1283) | Mutable Attestation or Measurement Reporting Data |
-## injection
+## Injection
 ---
 | CWE | Description |
 |-|-|
-| [CWE-INJ-1](../fett/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Machine Language Instructions |
-| [CWE-INJ-2](../fett/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Heap Metadata |
-| [CWE-INJ-3](../fett/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Trusted Data |
+| [CWE-INJ-1](../../fett/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Machine Language Instructions |
+| [CWE-INJ-2](../../fett/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Heap Metadata |
+| [CWE-INJ-3](../../fett/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Trusted Data |
