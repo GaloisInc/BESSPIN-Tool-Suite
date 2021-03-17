@@ -7,7 +7,7 @@ This is the documentation for running the tool in the `evaluateSecurityTests` mo
 A list of the classes in addition to the NIST CWEs mapped to each class are summarized in [ssithCWEsList.md](./ssithCWEsList.md).
 A class-specific description is provided in each vulnerability class [directory](../../fett/cwesEvaluation/).
 
-The philosophy of the platform and the methodology of the testing are explained in details in the [BESSPIN philosophy document](./besspinPhilosophy.md).
+The philosophy of the platform and the methodology of the testing are explained in details in the [BESSPIN philosophy document](./besspinPhilosophy.md). For details about this tool's mode from the point of view of methodology and details rather than functionality, please check [modes.md](../base/modes.md).
 
 ## Summary of Contents ##
 
@@ -29,14 +29,31 @@ The philosophy of the platform and the methodology of the testing are explained 
 
 ## Tool's Mode of Operation ##
 
-When the tool is configured to run in the `evaluateSecurityTests` mode, it runs the CWEs tests on the selected target/OS configuration. This also loads the configuration of the `evaluateSecurityTests` section, and optionally other sections. The configuration details are provided in [configuration.md](./configuration.md).
+When the tool is configured to run in the `evaluateSecurityTests` mode, it runs the CWEs tests on the selected target/OS. This also loads the configuration of the `evaluateSecurityTests` section, and optionally other sections. The configuration details are provided in [configuration.md](./configuration.md).
 
-*Here summarize what the tool will do*
+The tool's flow can abstractly summarized as follows:
+- Select the tests to run based on CWEs selection in the configuration.
+- Cross-compile the C files based on the configured compilation method.
+- Launch the OS on the selected target.
+- Execute the tests.
+- Collect the logs (tests' output in addition to kernel messages if any).
+- Score the logs based on the configured scoring details.
+
+The tool's outputs are:
+- Stdout: A table listing the score of each CWE grouped by vulnerability class, and a table with the BESSPIN scale details.
+- `scores.csv`: A `csv` file for each vulnerability class located in `${workDir}/cwesEvaluation/${vulClass}/`.
+- `scoreReport.log` (and `multitaskingScoreReport.log` if enabled): Log files containing the same tables printed on the stdout.
 
 ## Example ##
 
-*Run example with screenshots*
+The following screenshots are based on a run of the baseline Qemu Debian image, with all tests enabled, and with default compilation and scoring. 
 
+The following table is the information leakage score. It is of no surprise that the baseline emulation does not protect against any of these CWEs. Also note that the multitasking was running, and a `PASS` means that the score of the multitasking matches the score of the single test run.
 
+![fig:iexScreenshot](../.figures/cwesEvaluation-example-iex.png "IEX Screenshot") 
+
+The BESSPIN Scale table looks like the following. An all-CWEs run will get a single figure of merit where a value of 100% means an ideal SSITH processor. It might be counter-intuitive that the baseline emulation did not score 0%, but the basic Linux Debian enforces a few proper security practices, such as logging any supervisor message to a privileged location for example.
+
+![fig:besspinScaleScreenshot](../.figures/cwesEvaluation-example-besspinScale.png "BESSPIN Scale Screenshot") 
 
 
