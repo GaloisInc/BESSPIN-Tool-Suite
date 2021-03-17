@@ -150,4 +150,4 @@ Note that the AWS platform variant is determined based on the `binarySource`-`pr
 
 ## CWE Evaluation Mode (Testgen) ##
 
-Instructions for running the FETT tool in CWE evaluation mode can be found in [evaluateSecurityTestsMode.md](docs/cwesEvaluation/evaluateSecurityTestsMode.md).
+Instructions for running the FETT tool in CWE evaluation mode can be found in the [CWEs evaluation documentation](docs/cwesEvaluation/README.md).
