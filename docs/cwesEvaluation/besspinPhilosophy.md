@@ -2,7 +2,7 @@
 
 *This document is still under construction -- See ticket #1016, task#4*
 
-*The following part is copied from the old documentation*
+*The following part is copied as is from the old documentation*
 
 ## Tests and Scoring
 
