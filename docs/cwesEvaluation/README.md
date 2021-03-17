@@ -50,10 +50,10 @@ The following screenshots are based on a run of the baseline Qemu Debian image, 
 
 The following table is the information leakage score. It is of no surprise that the baseline emulation does not protect against any of these CWEs. Also note that the multitasking was running, and a `PASS` means that the score of the multitasking matches the score of the single test run.
 
-![fig:iexScreenshot](../.figures/cwesEvaluation-example-iex.png "IEX Screenshot") 
+<img src="../.figures/cwesEvaluation-example-iex.png" width=500 align=middle>
 
 The BESSPIN Scale table looks like the following. An all-CWEs run will get a single figure of merit where a value of 100% means an ideal SSITH processor. It might be counter-intuitive that the baseline emulation did not score 0%, but the basic Linux Debian enforces a few proper security practices, such as logging any supervisor message to a privileged location for example.
 
-![fig:besspinScaleScreenshot](../.figures/cwesEvaluation-example-besspinScale.png "BESSPIN Scale Screenshot") 
+<img src="../.figures/cwesEvaluation-example-besspinScale.png" width=700 align=middle>
 
 
