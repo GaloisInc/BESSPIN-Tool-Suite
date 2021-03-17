@@ -1,6 +1,11 @@
 # SSITH-FETT-Target
 The target platform for the SSITH FETT bug bounty exercise.
 
+**Disclaimer:** *This is a prototype beta software*, with support
+provided to SSITH TA-1 teams.  It does not currently implement all
+planned features, and will contain bugs both known and unknown.  If
+you encounter a problem or would like to request improvements, please
+contact Galois through documented support channels.
 
 ## Software Requirements and Setup
 
