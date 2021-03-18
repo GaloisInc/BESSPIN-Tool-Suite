@@ -4,7 +4,7 @@
 * Name: python/canspecs.py
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 17 March 2021
+* Date: 18 March 2021
 * This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
 * Version hash: f50e0a68352312d07b0ce23fc3a46a33
 */
@@ -157,7 +157,7 @@
 // Units: N/A
 // J1939 compatible: No
 //
-// Heartbeat request with request number in network byte order
+// Heartbeat request number (uint32_t)
 #define CAN_ID_HEARTBEAT_REQ 0XAABEA737
 #define BYTE_LENGTH_HEARTBEAT_REQ 4
 
@@ -169,32 +169,68 @@
 // Units: N/A
 // J1939 compatible: No
 //
-// First 4 bytes are the sender ID (sender IP address) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
+// Component ID / sender IP address (uint32_t) | heartbeat request number (uint32_t)
 #define CAN_ID_HEARTBEAT_ACK 0XAABEA225
 #define BYTE_LENGTH_HEARTBEAT_ACK 8
 
-// component_ready
+// cmd_component_ready
 // Type: uint32_t
 // Sender: All
-// Receiver: Admin PC
+// Receiver: All
 // Bounds/Range: N/A
 // Units: N/A
 // J1939 compatible: No
 //
-// Component ID (Sender IP)
-#define CAN_ID_COMPONENT_READY 0XAAFECB00
-#define BYTE_LENGTH_COMPONENT_READY 4
+// Component ID / sender IP address (uint32_t)
+#define CAN_ID_CMD_COMPONENT_READY 0XAAFEEB00
+#define BYTE_LENGTH_CMD_COMPONENT_READY 4
 
-// component_error
+// cmd_component_error
 // Type: [uint32_t]
 // Sender: All
-// Receiver: Admin PC
+// Receiver: All
 // Bounds/Range: N/A
 // Units: N/A
 // J1939 compatible: No
 //
-// Component ID (Sender IP) | Error type
-#define CAN_ID_COMPONENT_ERROR 0XAAFECC00
-#define BYTE_LENGTH_COMPONENT_ERROR 8
+// Component ID / sender IP address (uint32_t) | Error type (uint32_t)
+#define CAN_ID_CMD_COMPONENT_ERROR 0XAAFEEB01
+#define BYTE_LENGTH_CMD_COMPONENT_ERROR 8
+
+// cmd_active_scenario
+// Type: uint8_t
+// Sender: Hacker kiosk
+// Receiver: ignition
+// Bounds/Range: N/A
+// Units: N/A
+// J1939 compatible: No
+//
+// Scenario ID (uint8_t)
+#define CAN_ID_CMD_ACTIVE_SCENARIO 0XAAFEEB02
+#define BYTE_LENGTH_CMD_ACTIVE_SCENARIO 1
+
+// cmd_led_seq
+// Type: uint8_t
+// Sender: Hacker kiosk
+// Receiver: ignition
+// Bounds/Range: N/A
+// Units: N/A
+// J1939 compatible: No
+//
+// Led sequence ID (uint8_t)
+#define CAN_ID_CMD_LED_SEQ 0XAAFEEB03
+#define BYTE_LENGTH_CMD_LED_SEQ 1
+
+// cmd_restart
+// Type: uint32_t
+// Sender: Hacker kiosk
+// Receiver: All
+// Bounds/Range: N/A
+// Units: N/A
+// J1939 compatible: No
+//
+// Component ID / sender IP address (uint32_t)
+#define CAN_ID_CMD_RESTART 0XAAFEEB04
+#define BYTE_LENGTH_CMD_RESTART 4
 
 #endif

@@ -10,7 +10,10 @@ CAN ID,Type,Field Name,Sender,Receiver,Bounds/Range,Byte Length,Units,J1939?,PGN
 0XAACDAD11,float,car_r,ignition,Infotainment Thin Client,N/A,4,m,no,,infotainment position of car to display r rotation
 0XAAFECA00,uint8_t,button_pressed,Infotainment Thin Client,Infotainment Server,N/A,1,N/A,No,,Button pressed on infotainment screen.0x01 Station 1 0x02 Station 2 0x03 station 3  0x10 volume down  0x11 volume up
 0XAA2FEEF2,uint8_t,music_state,Infotainment Server,Infotainment Thin Client,N/A,1,N/A,No,,Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
-0XAABEA737,uint32_t,heartbeat_req,Admin PC,All,N/A,4,N/A,No,,Heartbeat request with request number in network byte order
-0XAABEA225,[uint32_t],heartbeat_ack,All,Admin PC,N/A,8,N/A,No,,First 4 bytes are the sender ID (sender IP address) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
-0XAAFECB00,uint32_t,component_ready,All,Admin PC,N/A,4,N/A,No,,Component ID (Sender IP)
-0XAAFECC00,[uint32_t],component_error,All,Admin PC,N/A,8,N/A,No,,Component ID (Sender IP) | Error type
+0XAABEA737,uint32_t,heartbeat_req,Admin PC,All,N/A,4,N/A,No,,Heartbeat request number (uint32_t)
+0XAABEA225,[uint32_t],heartbeat_ack,All,Admin PC,N/A,8,N/A,No,,Component ID / sender IP address (uint32_t) | heartbeat request number (uint32_t)
+0XAAFEEB00,uint32_t,cmd_component_ready,All,All,N/A,4,N/A,No,,Component ID / sender IP address (uint32_t)
+0XAAFEEB01,[uint32_t],cmd_component_error,All,All,N/A,8,N/A,No,,Component ID / sender IP address (uint32_t) | Error type (uint32_t)
+0XAAFEEB02,uint8_t,cmd_active_scenario,Hacker kiosk,ignition,N/A,1,N/A,No,,Scenario ID (uint8_t)
+0XAAFEEB03,uint8_t,cmd_led_seq,Hacker kiosk,ignition,N/A,1,N/A,No,,Led sequence ID (uint8_t)
+0XAAFEEB04,uint32_t,cmd_restart,Hacker kiosk,All,N/A,4,N/A,No,,Component ID / sender IP address (uint32_t)

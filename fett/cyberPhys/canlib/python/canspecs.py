@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: python/canspecs.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 17 March 2021
+Date: 18 March 2021
 This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
 Version hash: f50e0a68352312d07b0ce23fc3a46a33
 """
@@ -77,24 +77,42 @@ CAN_ID_MUSIC_STATE: int = 0XAA2FEEF2
 # Name: heartbeat_req
 # Units: N/A
 # Type: uint32_t
-# Description: Heartbeat request with request number in network byte order
+# Description: Heartbeat request number (uint32_t)
 CAN_ID_HEARTBEAT_REQ: int = 0XAABEA737
 
 # Name: heartbeat_ack
 # Units: N/A
 # Type: [uint32_t]
-# Description: First 4 bytes are the sender ID (sender IP address) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
+# Description: Component ID / sender IP address (uint32_t) | heartbeat request number (uint32_t)
 CAN_ID_HEARTBEAT_ACK: int = 0XAABEA225
 
-# Name: component_ready
+# Name: cmd_component_ready
 # Units: N/A
 # Type: uint32_t
-# Description: Component ID (Sender IP)
-CAN_ID_COMPONENT_READY: int = 0XAAFECB00
+# Description: Component ID / sender IP address (uint32_t)
+CAN_ID_CMD_COMPONENT_READY: int = 0XAAFEEB00
 
-# Name: component_error
+# Name: cmd_component_error
 # Units: N/A
 # Type: [uint32_t]
-# Description: Component ID (Sender IP) | Error type
-CAN_ID_COMPONENT_ERROR: int = 0XAAFECC00
+# Description: Component ID / sender IP address (uint32_t) | Error type (uint32_t)
+CAN_ID_CMD_COMPONENT_ERROR: int = 0XAAFEEB01
+
+# Name: cmd_active_scenario
+# Units: N/A
+# Type: uint8_t
+# Description: Scenario ID (uint8_t)
+CAN_ID_CMD_ACTIVE_SCENARIO: int = 0XAAFEEB02
+
+# Name: cmd_led_seq
+# Units: N/A
+# Type: uint8_t
+# Description: Led sequence ID (uint8_t)
+CAN_ID_CMD_LED_SEQ: int = 0XAAFEEB03
+
+# Name: cmd_restart
+# Units: N/A
+# Type: uint32_t
+# Description: Component ID / sender IP address (uint32_t)
+CAN_ID_CMD_RESTART: int = 0XAAFEEB04
 
