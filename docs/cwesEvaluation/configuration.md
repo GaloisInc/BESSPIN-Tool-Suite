@@ -1,57 +1,54 @@
 # Configuration of the CWEs Evaluation Mode #
 
-*This document is still under construction*
+When `mode` is set to `evaluateSecurityTests` in the `functionality` section, the following sections are loaded:    
+- `target`: The target's settings as explained in [targets.md](../base/targets.md).
+- `common`: The common settings as explained in [configuration.md](../base/configuration.md).
+- `build`: The compiler/linker settings as explained in [configuration.md](../base/configuration.md). These could be ignored as explained in the [`customizedCompiling` section](#customize-compiling).
+- `evaluateSecurityTests`: The main settings for controlling this mode ([details](#main-mode-settings)).
+- `customizedScoring`: Loaded if `useCustomScoring` is enabled ([details](#customize-scoring)).
+- `customizedCompiling`: Loaded if `useCustomCompiling` is enabled ([details](#customize-compiling)).
+- `${vulClass}`: Each vulnerability class has a section for its specific settings ([details](#vulnerability-classes)).
 
-All the needed configuration is done using the main `fett` configuration. When the tool is configured
-to run in the `evaluateSecurityTests` mode, the `evaluateSecurityTests` section in the configuration file is loaded. The parameters in this section are:
+Additionally, The directory [configSecurityTests](../../configSecurityTests) contains an INI file for each vulnerability class. These control the selective CWEs testing and the self-assessment modes ([details](#vulnerability-classes)). Also, please note that the utility [configCWEs.py](../../utils/configCWEs.py) can be used to manipulate these files in a convenient way. 
+
+Moreover, some of the SSITH TA-1 teams require specific and known compiling and scoring customization. These are briefly summarized at the [end of this document](#ssith-ta-1-teams).
+
+
+## Main Mode Settings
+
+The parameters of this section are:
   - `vulClasses`: A list of the vunerability classes to be executed, contained by square brackets and comma
-    separated. Choose among the NIST list: *bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors*. The names follow [attachment 3 of the
-    SSITH BAA](https://www.ntsc.org/assets/uploads/HR001117S0023.pdf). When a `$vulClass` is included, its configuration section is loaded as well. Please note that the classes *codeInjection* and *cryptoErrors* are yet to be implemented.
-  - `useCustomCWEsConfigsPath`: If disabled, then the `.ini` files in [./configSecurityTests](./configSecurityTests) will be used by default, which we reference as `${CWEsConfigs}` in the rest of this document.
+    separated. Choose among the [SSITH CWEs list](./ssithCWEsList.md): *bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors, hardwareSoC, injection*. When a `${vulClass}` is included, its configuration section is loaded as well ([details](#vulnerability-classes )).
+  - `useCustomCWEsConfigsPath`: If enabled, then instead of loading --if needed-- the vulnerability classes INI files from [configSecurityTests](../../configSecurityTests), the tool will look for these INI files inside `pathToCustomCWEsConfigs`. We refer to the chosen path for the INI files as `${CWEsConfigs}` from this point onwards.
   - `pathToCustomCWEsConfigs`: The path containing the CWEs config files in case `useCustomCWEsConfigsPath` is enabled.
-  - `useCustomScoring`: Configure the scoring methods as instructed in
-    the parameters in the `[customizedScoring]` section.  More
-    details are in the scoring section in this document.
-  - `useCustomCompiling`: Configure the compilation flow as instructed
-    in the parameters in the `[customizedCompiling]` section.  More
-    details are in the compiling section in this document.
-  - `FreeRTOStimeout`: How long to wait for a FreeRTOS non-interactive test to terminate.
+  - `useCustomScoring`: Configure the scoring methods as instructed by 
+    the parameters in the [`customizedScoring` section](#customize-scoring).
+  - `useCustomCompiling`: Configure the tests compilation as instructed
+    by the parameters in the [`customizedCompiling` section](#customize-compiling).
+  - `FreeRTOStimeout`: How long to wait for a FreeRTOS test to terminate before interrupting it and labeling it as timeout.
+  - `runUnixMultitaskingTests`: If enabled, the tool will re-run supported test parts in parallel and score them against the sequential test run. It will report a score as the percentage of CWE scores that matched between both runs. You can limit the number of processes spawned by limiting the number of enabled tests or the number of instances per part configured by the value of `instancesPerTestPart`. The multitasking tests only support buffer errors, resource management, information leakage, and numeric errors classes. Please note that this option only affects Unix OSes and is ignored for FreeRTOS.
+  - `instancesPerTestPart`: The number of instances of each test part to be spawned as separate processes when running multitasking tests.
 
 
-Regarding each vulnerability class section, it is worth mentioning that:
-  - `useSelfAssessment`: If enabled, then instead of running tests for this class, the scores will be loaded from the `.ini` configuration files in `${CWEsConfigs}`. This is useful in calculating the security figure of merit (TBD), especially in case of incremental runs. 
-  - `runAllTests`: Either run all the existing tests to this class, or
-    use the customized `${CWEsConfigs}/$vulClass.ini` to choose which ones to run.  Note that
-    you can use the utility [configSecurityTests/configCWEs.py](./configSecurityTests/configCWEs.py)
-    to configure the desired `$vulClass.ini` automatically.  This
-    utility can be used to enable, disable, or toggle all or selected
-    CWE tests. Note that is non-applicable to buffer errors. For `bufferErrors`, customizing which tests to run is done using `useCustomErrorModel` instead. More details are provided in [constrainBufferErrors.md](./constrainBufferErrors.md). 
-  - `test_<parameterName>`: Any parameter that starts with the prefix
-    `test_` is a test related parameter.
-  - `randomizeParameters`: If this is enabled, then all the tests
-    related parameters values are ignored for this vulnerability
-    class, and the tests will use randomized values instead. [Not yet implemented]
+## Customize Scoring
 
-
-## Customize Results Scoring
-
-FETT has a default scoring mechanism that varies depending on the
-class, test, or even the OS on which the test is being run.  However,
+The tool has a default scoring mechanism that varies depending on the
+class, test, or even the OS on which the test is being run.  
 if the `useCustomScoring` setting is switched on, the
 `[customizedScoring]` section can be configured to do any of the
 following:
 - Score based on a certain set of user-defined keywords on
   STDOUT.  Fill `stdoutKeywords` accordingly.
 - Score based on a certain set of user-defined keywords on the output
-  of GDB.  Fill `gdbKeywords` accordingly.  These can include signals
+  of GDB (not compatible with QEMU). Fill `gdbKeywords` accordingly.  These can include signals
   such as SIGTRAP or SEGFAULT.
 - Score based on a certain set of checkpoints.  These checkpoints could
   be system functions, methods, interrupts, or exceptions.  Fill
-  `funcCheckpoints` accordingly.
+  `funcCheckpoints` accordingly. (Please note that more than a single checkpoint might cause issues depending on the platform limitations).
 - Score based on the value of a specific memory location.  Use
   `memAddress` to specify the address, and `memResetValue` with a
-  reset value that mean no-violation, and then `memViolationValues`
-  with the list of violating values. `[*]` may used as the wild value
+  reset value that means no-violation, and then `memViolationValues`
+  with the list of violating values. `[*]` may be used as the wild value
   for the violation values list, and thus any value not equal to
   `memResetValue` would be considered as a violation detection.
 - Score based on a user-defined python module.  This is chosen by
@@ -59,41 +56,78 @@ following:
   to the python file.  This path will be loaded as a module, then the
   function `main` will be called with two arguments: 1. the list of
   lines from the log files of the test under investigation, 2. the
-  python Enum object `SCORES`.
+  python Enum object `SCORES` (defined in [scoreTests.py](../../fett/cwesEvaluation/scoreTests.py) and explained in [besspinPhilosophy.md](./besspinPhilosophy.md)).
 
-## Scoring for non-GFE CPUs
+
+## Customize Compiling
+
+The tool has a default compilation flow that is configured using the 
+`compiler` and `linker` options in the `build` section. However, if the
+`useCustomCompiling` setting is switched on, the
+`customizedCompiling` section can be configured to to do any of the
+following:
+- Cross-compile using a user-defined Makefile.
+This is chosen by switching
+  `useCustomMakefile` on, and setting the `pathToCustomMakefile` to
+  the user Makefile.
+  * The file will be copied into the tests directory, renamed to
+    `Makefile`, and run using the default `make`.
+  * For Unix, the makefile will be passed the following variables
+  `OS_IMAGE` (`Debian` or `FreeBSD`), `TARGET` (`QEMU`, `VCU118`, or `AWSF1`), `COMPILER` (`GCC` or `CLANG`), `LINKER` (`GCC` or `LLD`), `BIN_SOURCE` (with underscores instead of hyphens), and `SOURCE_VARIANT`.
+  * For Unix, the output of the Makefile should be binaries with the
+    same tests names with the suffix `.riscv`.  For example,
+    `test_128.riscv`.
+  * For FreeRTOS, the Makefile will be passed the following variables:
+    `XLEN` (32 or 64), `PROC_LEVEL` (`p1`, `p2`, or `p3`), `PROC_FLAVOR` (`chisel` or `bluespec`), `PROG=main_fett`, `USE_CLANG` (`yes` if the compiler is Clang), `SYSROOT_DIR` (if the compiler is Clang), `INC_FETT_APPS=/path/to/tests`,
+    `BSP` (the value of `target`), `RAMDISK_NUM_SECTORS`.  
+  * For FreeRTOS, the output of the makefile should always be
+    `FreeRTOS.elf`, and they should be copied to `$workDir/osImages/`.
+  * Note that the information leakage tests require a more involved Makefile. So in case this is really needed to change, please inspect the [information leakage specific Makefile](../../fett/cwesEvaluation/informationLeakage/Makefile.xcompileDir).
+  * Note that the FreeRTOS compiling is quite involved as the tool compiles using the main [Makefile of the Galois demo](../../FreeRTOS/FreeRTOS/Demo/RISC-V_Galois_P1/Makefile) of the classic FreeRTOS fork.
+- Use custom Clang binary with an optional custom Clang sysroot. Enable `useCustomClang` and set `pathToCustomClang` to the custom binary path. Similarly, enable `useCustomSysroot` and set `pathToCustomSysroot` to the desired sysroot path.
+
+
+## Vulnerability Classes 
+
+In each vulnerability class section, two settings can be configured:
+  1. `useSelfAssessment`: If enabled, then instead of running tests for this class, the scores will be loaded from the corresponding INI configuration file in `${CWEsConfigs}`. This is useful in calculating the BESSPIN Scale; especially in case of incremental runs. In the `selfAssessment` section in the INI file in `${CWEsConfigs}`, you may assign any values out of *HIGH, MED, LOW, NONE, DETECTED, NA, UNKNOWN*.
+  2. `runAllTests`: Either run all the existing tests for this class, or
+    use the customized INI file in `${CWEsConfigs}` to choose which ones to run.
+    Please note that you can use the utility [configCWEs.py](../../utils/configCWEs.py)
+    to configure the desired INI file in a more convenient way.  This
+    utility can be used to enable, disable, or toggle all or selected
+    CWE tests. Note that is non-applicable to buffer errors. For `bufferErrors`, customizing which tests to run is done using the custom error model instead. 
+
+The classes buffer errros, resource management, and information leakage require the generation of some random values. Each of those classes have the following options:
+  - `useSeed`: Whether to use a specific seed versus a random one.
+  - `seed`: The seed for the random generation if `useSeed` is enabled.
+
+The buffer errors class has the following additional parameters:
+  - `useCustomErrorModel`: As explained in [constrainBufferErrors.md](./constrainBufferErrors.md), enable this option to use the error model in `pathToCustomErrorModel` rather than the default error model. 
+  - `pathToCustomErrorModel`: The path to the error model when `useCustomErrorModel` is enabled.
+  - `numericTypes`: List the numeric types the generated tests should use. You may choose `[ints, floats]` or either one of them (within brackets).
+  - `nTests`: The number of random tests generated.  Must be at least 40 for FreeRTOS and at least 100 for debian and FreeBSD.
+  - `useCachedInstances`: Enable to use a cache of all possible enumerations of the builtin buffer errors model, rather than generating the enumerations from scratch. Enabling this option will save 10's of minutes of runtime of the buffer errors tool with no impact on the tool's randomness.  The only reason to disable this option is if you have modified the builtin error model definition. Disabling this option will re-generate the cache file, allowing you to safely re-enable this option after a single run with a new model definition. Please note that this option only applies to the builtin error model and has no effect if `useCustomErrorModel` is enabled.
+  - `nSkip`: Before generating `nTests` tests, generate and throw away `nSkip` tests.
+  - `heapSize`: Maximum heap size.
+  - `stackSize`: Maximum stack size.
+  - `useExtraTests`: Enable to use the C files in `extraSources` as additional tests to run.
+  - `csvFile`: tabulates the generated tests info and results in `${workDir}/cwesEvaluation/bufferErrors/bufferErrors.csv`.
+
+
+## SSITH TA-1 Teams
+
+### Scoring
 
 These are the special known instructions:   
 - LMCO P1: Add `exception_handler` to `funcCheckpoints`.
 - LMCO P2: Add `Illegal` to `stdoutKeywords`.
 - SRI-Cambridge P2: Add `security exception` and `Signal 34` to `stdoutKeywords`.
 
-## Customize Tests Compiling
 
-FETT has a default compilation path that is configured using the 
-`compiler` and `linker` options in the `[build]` section. However, if the
-`useCustomCompiling` setting is switched on, the
-`[customizedCompiling]` section can be configured to cross-compile using a user-defined Makefile.
-This is chosen by switching
-  `useCustomMakefile` on, and setting the `pathToCustomMakefile` to
-  the user Makefile.
-  * The file will be copied into the tests directory, renamed to
-    `Makefile`, and run using the default `make`.
-  * For Linux, the makefile will be passed the following variables
-  `OS_IMAGE`, `TARGET`, `COMPILER`, `LINKER`, and `BIN_SOURCE`.
-  * For Linux, the output of the makefile should be binaries with the
-    same tests names with the suffix `.riscv`.  For example,
-    `test_307.riscv`.
-  * For FreeRTOS, the makefile will be passed the following variables:
-    `XLEN`, `PROG=main_fett`, `USE_CLANG`, `INC_FETT_APPS=/path/to/tests`,
-    `BSP`, `RAMDISK_NUM_SECTORS`.  
-  * For FreeRTOS, the output of the makefile should always be
-    `FreeRTOS.elf`, and they should be copied to `$workDir/osImages/`.
+## Compiling
 
-
-## Compiling for non-GFE CPUs
-
-SRI-Cambridge, LMCO P2, and Michigan targets require the use of non-default toolchains. The use of these toolchains, via Docker images, is integrated in the tool. Currently, the tool assumes that you have the Docker service running and the needed images available. To ensure that on a CentOS machine, do the following:
+SRI-Cambridge, LMCO P2, and Michigan targets require the use of non-default toolchains. The use of these toolchains, via Docker images, is integrated in the tool. Currently, the tool assumes that you have the Docker service running and the needed images available. To ensure that on a CentOS machine, please do the following:
   - Install docker ([instructions source](https://docs.docker.com/engine/install/centos/#install-using-the-repository)):
     ```
     sudo yum install -y yum-utils
