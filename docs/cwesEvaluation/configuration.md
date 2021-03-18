@@ -125,7 +125,7 @@ These are the special known instructions:
 - SRI-Cambridge P2: Add `security exception` and `Signal 34` to `stdoutKeywords`.
 
 
-## Compiling
+### Compiling
 
 SRI-Cambridge, LMCO P2, and Michigan targets require the use of non-default toolchains. The use of these toolchains, via Docker images, is integrated in the tool. Currently, the tool assumes that you have the Docker service running and the needed images available. To ensure that on a CentOS machine, please do the following:
   - Install docker ([instructions source](https://docs.docker.com/engine/install/centos/#install-using-the-repository)):
