@@ -37,7 +37,7 @@ Name: {outfilename_py}
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
 Date: {today.strftime("%d %B %Y")}
-This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
+This file was created by SSITH-FETT-Target/fett/cyberPhys/canlib/make_can_spec.py
 Version hash: {specs_md5.hexdigest()}
 \"\"\"\n\n"""
 
@@ -50,7 +50,7 @@ file_header_h: str = f"""/*
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
 * Date: {today.strftime("%d %B %Y")}
-* This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
+* This file was created by SSITH-FETT-Target/fett/cyberPhys/canlib/make_can_spec.py
 * Version hash: {specs_md5.hexdigest()}
 */\n\n"""
 
