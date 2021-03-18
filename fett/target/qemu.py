@@ -28,8 +28,8 @@ class qemuTarget (commonTarget):
     def boot (self,endsWith="login:",timeoutDict={"boot":90}): #no need to use targetObj as we'll never boot in non-reboot mode
         self.fTtyOut = ftOpenFile(os.path.join(getSetting('workDir'),f'tty{self.targetSuffix}.out'),'ab') #has to be bytes, if we use a filter, interact() does not work (pexpect bug)
         timeout = self.parseBootTimeoutDict (timeoutDict)
-        if (isEnabled('useCustomQemu')):
-            qemuCommand = getSetting('pathToCustomQemu')
+        if (isEnabled('useCustomQemu',targetId=self.targetId)):
+            qemuCommand = getSetting('pathToCustomQemu',targetId=self.targetId)
         else:
             qemuCommand = f"qemu-system-riscv{self.xlen}"
         if (self.osImage in ['debian', 'FreeBSD']):
