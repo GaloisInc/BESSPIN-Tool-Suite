@@ -1,0 +1,169 @@
+@startuml
+[*] --> Boot
+state Boot {
+    Boot: Initialize components
+    state "Ignition starting" as IgnitionUp
+    [*] --> IgnitionUp: SimPC powered up
+    IgnitionUp: Start BeamNG
+    IgnitionUp: Start Ignition
+    IgnitionUp: Load Device Drivers
+    IgnitionUp: Start FaceCandy boards
+
+    state "Ignition Ready" as IgnitionReady
+    IgnitionUp --> IgnitionReady: Send COMPONENT_READY
+    IgnitionReady: Ready to simulate and\nreceive CAN messages
+    
+    ||
+    state "FETT tool booting" as FettToolUp
+    FettToolUp: init network
+    FettToolUp: start nix shell
+    [*] --> FettToolUp: AdminPC powered up
+
+    state "FETT tool boot targets" as FettToolBootTargets
+    FettToolUp --> FettToolBootTargets
+    FettToolBootTargets: load from flash
+    FettToolBootTargets: start services
+
+    state "FETT tool targets ready" as FettToolTargetsReady
+    FettToolBootTargets -> FettToolTargetsReady
+    FettToolTargetsReady: targets respond to ping
+    FettToolTargetsReady: targets respond to HEARTBET_REQ
+
+    state "FETT tool ready" as FettToolReady
+    FettToolReady: to manage targets
+    FettToolTargetsReady --> FettToolReady: Send COMPONENT_READY
+
+    ||
+    state "Infotainment Thin Client booting" as InfotainmentClientUp
+    InfotainmentClientUp: boot linux
+    InfotainmentClientUp: boot Infotainment Client app
+    [*] --> InfotainmentClientUp: RaspPi powered up
+    state "Infotainment Thin Client ready" as InfotainmentClientReady
+    InfotainmentClientUp --> InfotainmentClientReady: Send COMPONENT_READY
+    InfotainmentClientReady: to display position and play music
+
+    ||
+    state "Hacker Kiosk booting" as HackerKioskUp
+    HackerKioskUp: boot linux
+    HackerKioskUp: boot hacker kiosk app
+    [*] --> HackerKioskUp: Hacker Kiosk powered up
+    state "Hacker Kiosk ready" as HackerKioskReady
+    HackerKioskReady: to play scenarios
+    HackerKioskUp --> HackerKioskReady: Send COMPONENT_READY?
+
+
+} 
+
+Boot --> Shutdown: Failed
+Shutdown: Shutdown the components
+Shutdown: Power off devices
+
+Boot --> RunScenarios: Succeeded
+state "Run Scenarios " as RunScenarios {
+    state "Scenario Reset" as ScenarioReset {
+        ScenarioReset: Reset Ignition
+        ScenarioReset: Reset Targets
+    }
+
+    ScenarioReset --> ScenariosReady: Reset complete
+
+    state "Scenario ready" as ScenariosReady
+    ScenariosReady: run in Demo mode?
+    ScenariosReady --> ScenariosReady: wait for users
+
+
+    state "Baseline" as ScenarioBaseline {
+        state "Scenario Intro" as ScenarioIntro {
+        ScenarioIntro: Driver: get faimilar with the controls
+        ScenarioIntro: Hacker: intro to SSITH
+        }
+
+        ScenariosReady --> ScenarioIntro: Baseline Selected
+
+        state "Hack OTA server" as HackOTA {
+            HackOTA: Driver: drives to te airport
+            HackOTA: Hacker: explain OTA hack
+        }
+
+        ScenarioIntro --> HackOTA: Users got through the intro content/slides
+        state "OTA exploited" as ExploitedOTA
+        ExploitedOTA: signing with an empty key
+        HackOTA --> ExploitedOTA: Exploit vulnerability in OTA
+
+        state "Hack Infotainment" as HackInfotainment {
+            HackInfotainment: Driver: drives
+            HackInfotainment: Hacker chooses infotainment hacks
+        }
+
+        ExploitedOTA --> HackInfotainment: Explain infotainment hacks
+
+        state "Upload Binary to s hacked OTA server" as UploadBinary {
+            UploadBinary: receives and runs an arbitrary binary
+        }
+
+        HackInfotainment -> HackInfotainment: Hacker selects hacks to run
+
+        HackInfotainment -left-> UploadBinary: upload infotainment hack
+
+        state "Hack Critical Systems" as HackCritical {
+            HackCritical: Driver: attempts to drive despite hacks
+            HackCritical: Hacker: choose critical systems hack
+        }
+
+        HackInfotainment --> HackCritical: Next slide\nExplain critical systems hacks
+
+        HackCritical -left-> UploadBinary: upload critical systems hack
+
+        HackCritical -> HackCritical: Hacker selects hacks to run
+
+        state "Scenario Done" as BaselineDone
+        BaselineDone: closing remarks
+        HackCritical --> BaselineDone: Next slide
+
+        ' TODO: uncomment later
+        'BaselineDone -> ScenarioReset
+    }
+/'
+    state "Protected Critical Systems" as ScenarioProtectedCritical {
+        ScenariosReady --> IntroduceSSITH: Protected Critical Systems Selected
+
+        state "Introduce SSITH" as IntroduceSSITH {
+            IntroduceSSITH: Explain SSITH protection
+        }
+
+        state "Hack Critical Systems" as HackCriticalSSITH {
+            HackCriticalSSITH: Driver: attempts to drive despite hacks
+            HackCriticalSSITH: Hacker: choose critical systems hack
+        }
+
+        IntroduceSSITH --> HackCriticalSSITH: Hack OTA server
+    }
+'/
+    
+
+
+
+
+    ||
+    state "FETT tool monitoring" as FettToolMonitor
+    FettToolMonitor: ping
+    FettToolMonitor: heartbeat requests
+    FettToolMonitor -> FettToolMonitor: No errors
+
+    state "FETT tool reset target" as FettToolResetTarget {
+        FettToolResetTarget: restart services
+        FettToolResetTarget: reboot OS
+    }
+    FettToolMonitor --> FettToolResetTarget: Component Error Detected\nSend COMPONENT_ERROR
+
+    
+    FettToolResetTarget --> FettToolMonitor: Target reset OK\nSend COMPONENT_READY?
+    FettToolResetTarget --> [*]: Target reset failed.\nTerminate
+}
+
+RunScenarios --> Shutdown: Shutdown requested
+Shutdown --> [*]
+
+
+
+@enduml
