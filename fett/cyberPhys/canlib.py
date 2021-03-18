@@ -1,1 +1,1 @@
-../../build/cyberphys/canlib/python/canlib.py
+canlib/python/canlib.py

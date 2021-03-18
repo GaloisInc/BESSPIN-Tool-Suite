@@ -51,7 +51,7 @@ def main(xArgs):
 
     # Generate the document
     try:
-        fDoc = open(os.path.join(repoDir,"docs","BESSPIN-Coeffs.md"),"w")
+        fDoc = open(os.path.join(repoDir,"docs","cwesEvaluation","BESSPIN-Coeffs.md"),"w")
         # Intro
         fDoc.write(
             "# BESSPIN Coefficients Values\n"

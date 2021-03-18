@@ -266,7 +266,7 @@ def main(xArgs):
 
     # Generate the README
     try:
-        fReadme = open(os.path.join(repoDir,"docs","ssithCWEsList.md"),"w")
+        fReadme = open(os.path.join(repoDir,"docs","cwesEvaluation","ssithCWEsList.md"),"w")
         # Intro
         fReadme.write(
             "# SSITH CWEs List\n"
@@ -302,7 +302,7 @@ def main(xArgs):
                     link = f"{cwelink}{xCwe.id}"
                 except: #custom CWE
                     name = xCwe.id.replace('_','-')
-                    link = f"../fett/cwesEvaluation/{vulClass}/README.md"
+                    link = f"../../fett/cwesEvaluation/{vulClass}/README.md"
                 fReadme.write(f"| [CWE-{name}]({link}) | {xCwe.description} |\n")
 
         fReadme.close()

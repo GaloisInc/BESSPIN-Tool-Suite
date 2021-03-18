@@ -9,7 +9,7 @@ To clone the repo and start `the nix-shell`, please use:
 ```bash
 git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
 cd SSITH-FETT-Target
-./init_submodules.sh
+./utils/init_submodules.sh
 nix-shell
 ```
 
@@ -47,7 +47,7 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 
 After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access.
 
-See the instructions in [docs/createFettAMI.md](./docs/createFettAMI.md) to recreate the image manually.
+See the instructions in [createFettAMI.md](./docs/AWS/createFettAMI.md) to recreate the image manually.
 
 
 ## User Manual ##
@@ -145,4 +145,4 @@ Note that the AWS platform variant is determined based on the `binarySource`-`pr
 
 ## CWE Evaluation Mode (Testgen) ##
 
-Instructions for running the FETT tool in CWE evaluation mode can be found here: [docs/evaluateSecurityTestsMode.md](docs/evaluateSecurityTestsMode.md).
+Instructions for running the FETT tool in CWE evaluation mode can be found in [evaluateSecurityTestsMode.md](docs/cwesEvaluation/evaluateSecurityTestsMode.md).

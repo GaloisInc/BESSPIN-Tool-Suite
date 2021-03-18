@@ -3,15 +3,13 @@
 # Import modules
 import sys, os, time
 
-sys.path.insert(1, os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-
-from build.aws_test_suite import *
+from awsPseudoCi import *
 
 import argparse, subprocess, shlex, json, hashlib
 from datetime import datetime
 
 
-h = "[AWS Testing CI] : "
+h = "[AWS Pseudo CI] : "
 
 
 def get_ami_from_ci_json():
@@ -62,10 +60,10 @@ def main(args):
     ciDir = os.path.abspath(os.path.dirname(__file__))
     repoDir = os.path.abspath(os.path.join(ciDir, os.pardir))
 
-    log.info(f"{h}Welcome to the AWS testing app!")
+    log.info(f"{h}Welcome to the AWS pseudo CI!")
 
     # log arguments to main()
-    log.debug(f"aws-testing-ci.py started with arguments { args }")
+    log.debug(f"aws-pseudo-ci.py started with arguments { args }")
 
     # Check in envs, otherwise error
     a = AWSCredentials.from_env_vars()
