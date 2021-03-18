@@ -31,7 +31,7 @@ The philosophy of the platform and the methodology of the testing are explained 
 
 When the tool is configured to run in the `evaluateSecurityTests` mode, it runs the CWEs tests on the selected target/OS. This also loads the configuration of the `evaluateSecurityTests` section, and optionally other sections. The configuration details are provided in [configuration.md](./configuration.md).
 
-The tool's flow can abstractly summarized as follows:
+The tool's flow can abstractly be summarized as follows:
 - Select the tests to run based on CWEs selection in the configuration.
 - Cross-compile the C files based on the configured compilation method.
 - Launch the OS on the selected target.
