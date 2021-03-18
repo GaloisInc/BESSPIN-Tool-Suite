@@ -17,15 +17,15 @@ The configuration(s) is loaded in [config.py](../../fett/base/config.py) and the
 
 This document has explanations for each parameter, either by defining them or linking to the document that has the definitions.
 
-## Functionality ##
+## [functionality] ##
 
 The tool's functionality has a single parameter: `mode`. The document [modes.md](./modes.md) explains each mode, and links to all other documentation and resources about each of them.
 
-## cyberPhys ##
+## [cyberPhys] ##
 
 This section is only loaded in the `cyberPhys` mode. Please refer to [cyberPhys/configuration.md](../cyberPhys/configuration.md) for details about each parameter. 
 
-## target ##
+## [target] ##
 
 This section determines the backend details of the tool's run. In `cyberPhys` mode, this section is not loaded from the main configuration INI file, but a separate `target` section per target is loaded from the additional `cyberPhys` INI file. Please refer to [cyberPhys/configuration.md](../cyberPhys/configuration.md) for more details.
 
