@@ -14,6 +14,12 @@ import threading, queue, pexpect
 @decorate.timeWrap
 def startCyberPhys():
     printAndLog (f"Launching FETT <cyberPhys mode>...")
+
+    # Sanitize the conflicting interactive settings
+    if ((isEnabled('openConsole') or isEnabled('gdbDebug')) and (getSetting('nTargets')>1)):
+        logAndExit(f"Debugging using <openConsole> and <gdbDebug> is not compatible with <cyberphys> mode "
+            f"when <nTargets> is larger than 1.",exitCode=EXIT.Configuration)
+
     # start/prepareEnv/Launch
     runThreadPerTarget(fett.target.launch.startFett)
     printAndLog (f"FETT <cyberPhys mode> is launched!")
