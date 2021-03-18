@@ -1,0 +1,51 @@
+@startuml
+state "FETT tool start up" as FettToolUp
+FettToolUp: init network
+FettToolUp: start nix shell
+[*] --> FettToolUp: AdminPC powered up
+
+state "FETT tool boot targets" as FettToolBootTargets
+FettToolUp --> FettToolBootTargets: FETT tool booted
+FettToolBootTargets: load from flash
+FettToolBootTargets: start services
+
+state "FETT tool ready" as FettToolReady
+FettToolBootTargets --> FettToolBooted: All targets booted
+
+state "FETT Tool Boot Error" as FettToolBootError
+FettToolBootError: attempts to reboot target(s)
+
+FettToolBootTargets --> FettToolBootError: Target(s) failed to boot
+state "FETT tool booted" as FettToolBooted
+FettToolBooted: All targets booted successfully
+FettToolBootError --> FettToolBooted: Target(s) reboot successfull
+FettToolBootError --> FettToolTerminate: Target(s) reboot failed
+
+FettToolBooted --> FettToolReady: Send CMD_COMPONENT_READY(FETT_TOOL)
+
+state "FETT Tool Target Error" as FettToolTargetError
+FettToolTargetError: OS boot error
+FettToolTargetError: network error
+FettToolTargetError: application error
+
+FettToolTargetError --> FettToolRestartTarget: Attempt to restart
+
+state "FETT tool terminate" as FettToolTerminate
+FettToolTerminate: Orderly shutdown
+
+FettToolReady: targets respond to ping
+FettToolReady: targets respond to HEARTBET_REQ
+
+FettToolReady --> FettToolTargetError: Target failed\nSend CMD_COMPONENT_ERROR(TARGET_ID)
+
+state "FETT tool restart target" as FettToolRestartTarget
+FettToolRestartTarget: Reboot FreeRTOS
+FettToolRestartTarget: Restart application
+FettToolReady --> FettToolRestartTarget: Received CMD_RESTART_COMPONENT(TARGET_ID)
+
+FettToolRestartTarget --> FettToolReady: Restart successfull\nSend CMD_COMPONENT_READY(TARGET_ID)
+FettToolRestartTarget --> FettToolTerminate: Restart failed
+
+FettToolTerminate --> [*]: Send CMD_COMPONENT_ERROR(FETT_TOOL|TERMINATED)
+
+@enduml

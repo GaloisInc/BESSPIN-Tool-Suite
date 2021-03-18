@@ -1,0 +1,43 @@
+@startuml
+state "Ignition start up" as IgnitionUp
+IgnitionUp: Start BeamNG
+IgnitionUp: Load Device Drivers
+IgnitionUp: Connect to FaceCandy boards
+[*] --> IgnitionUp: SimPC powered up
+
+IgnitionUp --> IgnitionReady: Success\nSend CMD_COMPONENT_READY(IGNITION)
+state "Ignition Ready" as IgnitionReady
+IgnitionReady: BeamNG up
+IgnitionReady: HUD/Dashboard up
+IgnitionReady: Steering wheel up
+IgnitionReady: CAN_mux up
+
+state "Switch CAN network" as SwitchCanNetwork
+IgnitionReady --> SwitchCanNetwork: Received CMD_ACTIVE_SCENARIO(SCENARIO_ID)
+SwitchCanNetwork: Update active CAN network
+SwitchCanNetwork --> IgnitionTerminate: CAN switch failed
+
+IgnitionReady --> ChangeLedSequence: Received CMD_LED_SEQ(SEQ_ID)
+state "Change LED sequence" as ChangeLedSequence
+ChangeLedSequence: change LED sequence through LED manager
+
+ChangeLedSequence --> IgnitionReady: LED sequence changed
+
+IgnitionReady --> RestartBeamNg: Received CMD_RESTART(BEAM_NG) 
+state "Restart BeamNG" as RestartBeamNg
+RestartBeamNg: car to start location
+RestartBeamNg --> IgnitionReady: Car restarted
+RestartBeamNg --> IgnitionTerminate: Restart failed
+
+SwitchCanNetwork --> IgnitionReady: Active CAN selected
+
+IgnitionUp --> IgnitionTerminate: Failed\n
+
+state "Ignition terminate" as IgnitionTerminate
+IgnitionTerminate: Orderly shutdown
+
+IgnitionReady --> IgnitionTerminate: Sub-Component failed
+
+IgnitionTerminate --> [*]: Send CMD_COMPONENT_ERROR(IGNITION|TERMINATED)
+
+@enduml
