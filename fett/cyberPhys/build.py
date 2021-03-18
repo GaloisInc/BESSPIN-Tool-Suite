@@ -139,6 +139,15 @@ def prepareFreeRTOS(targetId=None):
         logAndExit(f"Failed to populate <fettFreeRTOSConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
     configHfile.close()
 
+    configHfile = ftOpenFile (os.path.join(buildDir,'fettFreeRTOSIPConfig.h'),'a')
+    try:
+        configHfile.write(f"#define ipconfigUSE_DHCP 0\n")
+        configHfile.write(f"#define ipconfigHAS_PRINTF 1\n")
+        configHfile.write(f"#define ipconfigHAS_DEBUG_PRINTF 0\n")
+    except Exception as exc:
+        logAndExit(f"Failed to populate <fettFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+    configHfile.close()
+
     fett.target.build.prepareFreeRTOSNetworkParameters(targetId=targetId)
     fett.target.build.buildFreeRTOS(targetId=targetId, buildDir=buildDir)
 
