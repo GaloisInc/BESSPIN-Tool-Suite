@@ -8,6 +8,8 @@ This directory includes standalone utilities that are not part of the tool:
 
 - [clearNetworkSetup.sh](./clearNetworkSetup.sh): Clears/resets the network configuration performed by the tool. For AWS, it deletes the `tap` adaptor, the production IP, and flushes the iptables. For qemu, it flushes the iptables and deletes any leftover tap adaptors.
 
+- [configCWEs.py](./configCWEs.py): Enables/disables/toggles a particular(all) CWE(s) in a specific INI file in vulnerability classes INI files. Please refer to [configuration.md](../docs/cwesEvaluation/configuration.md) for more details. 
+
 - [fetchProdLogs.py](./fetchProdLogs.py): Selectively downloads the FETT bug bounty production logs and artifacts. Please use `./fetchProdLogs.py -h` for a detailed usage.
 
 - [init_submodules.sh](./init_submodules.sh): Initializes and fetches the submodules recursively.
