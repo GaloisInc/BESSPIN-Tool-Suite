@@ -72,7 +72,8 @@ ResourceManagement_Test ?
     RLR_test_stackExhaust
     RLR_test_noRelease
     RLR_test_errorRelease
-    RLR_test_usePostRelease
+    RLR_test_heapUsePostRelease
+    RLR_test_stackUsePostRelease
     RI_test_uninitStack
     RI_test_uninitHeap
 
@@ -95,7 +96,8 @@ ResourceManagement_Test ?
   [ RLR_test_stackExhaust => CWE_400 || CWE_770 || CWE_789 ]
   [ RLR_test_noRelease => CWE_400 || CWE_404 || CWE_771 || CWE_772 ]
   [ RLR_test_errorRelease => CWE_400 || CWE_404 || CWE_771 || CWE_772 ]
-  [ RLR_test_usePostRelease => CWE_404 || CWE_416 || CWE_672 ]
+  [ RLR_test_heapUsePostRelease => CWE_404 || CWE_416 || CWE_672 ]
+  [ RLR_test_stackUsePostRelease => CWE_404 || CWE_672 ]
   [ RI_test_uninitStack => CWE_908 || CWE_909 ]
   [ RI_test_uninitHeap => CWE_908 || CWE_909 ]
 

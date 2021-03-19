@@ -50,6 +50,11 @@ BufferErrors_Test : BufferErrors_Weakness ?
                                            SizeComputation_None &&
                                            !Access_Read_After_Write) ]
 
+  Fixed_Length_Buffer ?
+  [ Fixed_Length_Buffer => (Location_Stack &&
+                            SizeComputation_None &&
+                            !BufferIndexScheme_PathManipulation) ]
+
   or CWE
     CWE_118
     CWE_119

@@ -9,7 +9,8 @@ from besspin.cwesEvaluation.multitasking.multitasking import multitaskingPart, m
 from besspin.base.utils.misc import *
 
 ## All tests are assumed to have 1 part except for the following:
-partCount = {"test_456" : 3,
+partCount = {"test_128" : 2,
+             "test_456" : 3,
              "test_457" : 2,
              "test_665" : 2,
              "test_824" : 2}

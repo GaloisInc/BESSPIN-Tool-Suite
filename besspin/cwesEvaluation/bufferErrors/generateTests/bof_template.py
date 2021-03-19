@@ -216,6 +216,9 @@ class BofTestGen:
         # parameter `N` as in bytes, rather than as elements of the buffer.
         incorrect_malloc = (bof_instance.SizeComputation ==
                             "SizeComputation_IncorrectMallocCall")
+        # `static_alloc` is True if the C test should use statically sized
+        # stack buffers instead of dynamically allocating them.
+        static_alloc = bof_instance.Fixed_Length_Buffer
         # How far from the buffer the error should occur
         mag   = MAGNITUDE[bof_instance.Magnitude]
         # `magRange` is `mag` as a Range object
@@ -375,17 +378,34 @@ class BofTestGen:
         def chooseN():
             """
             Chooses the value of `N`.  `N` is the size of buffer.  If
-            `incorrect_malloc` is set, then this depends on `buf_type` and `N`
-            is in bytes.  Otherwise, `N` is in elements of `buf_type`.
+            `incorrect_malloc` or `static_alloc` is set, then this depends on
+            `buf_type`.  If `incorrect_malloc` is set, then `N` is in bytes.
+            Otherwise, `N` is in elements of `buf_type`.
             """
-            if incorrect_malloc:
+            if incorrect_malloc or static_alloc:
                 def bindBufType(buf_type):
-                    # Choose an `N` that is large enough to hold at least one
-                    # `buf_type` element, but small enough to satisfy the data
-                    # range.
-                    minN = incorrectMallocMinN(buf_type)
-                    return Range(max(minN, dataRange.lo), dataRange.hi)
+                    if incorrect_malloc:
+                        # Choose an `N` that is large enough to hold at least
+                        # one `buf_type` element, but small enough to satisfy
+                        # the data range.
+                        minN = incorrectMallocMinN(buf_type)
+                        return Range(max(minN, dataRange.lo), dataRange.hi)
+                    else:
+                        maxN = memBound // sizeof(buf_type)
+                        return Range(dataRange.lo, min(maxN, dataRange.hi))
+
                 return Dep('buf_type', bindBufType)
+            return dataRange
+
+        def chooseN2():
+            """
+            Chooses the value of `N2`.  `N2` is the size of `buf2`.
+            """
+            if static_alloc:
+                def bindBufType2(buf_type2):
+                    maxN = memBound // sizeof(buf_type2)
+                    return Range(dataRange.lo, min(maxN, dataRange.hi))
+                return Dep('buf_type2', bindBufType2)
             return dataRange
 
         # Excursion_Continuous => CONTINUOUS
@@ -400,7 +420,7 @@ class BofTestGen:
             # otherwise in elements of `buf_type`.
             'N'                : chooseN(),
             # Size of `buf2` in number of elements.
-            'N2'               : dataRange,
+            'N2'               : chooseN2(),
 
             # Starting index of out-of-bounds loop (step 4)
             'idx0'             : Dep('N', chooseIdx0),
@@ -469,7 +489,11 @@ class BofTestGen:
             # Variable holding the size of `buf`
             'buf_size'        : Name("buf_size", 3, 15),
             # Variable holding the number of bytes to allocate in heap tests
-            'alloc_bytes'     : Name("alloc_bytes", 3, 15)
+            'alloc_bytes'     : Name("alloc_bytes", 3, 15),
+            # Whether stack buffers should be static or dynamically allocated
+            'alloc_type'      : (Choice('STATIC_ALLOC') if
+                                 static_alloc else
+                                 Choice('DYNAMIC_ALLOC'))
         }
 
     def genInstance(self, rnd, drop=False):
