@@ -43,3 +43,33 @@ The document [targets.md](./targets.md) has detailed explanation of the supporte
 - `target`: The backend of the target. The tool supports `qemu`, `vcu118`, and `awsf1`. The document [targets.md](./targets.md) has more details.
 
 - `vcu118Mode`: Applicable iff the target is set to `vcu118`. Whether to choose the `nonPersistent` memory for programming the bitstream and loading the FPGA, or use the flash. `flashProgramAndBoot` is for initializing the FPGA, so the tool will program the flash first, then boot from it. Please note that this step would require the power recycling of the VCU118 board after programming and before booting. The last option, `flashBoot` is for booting directly from the FPGA flash memory. This assumes that the FPGA was programmed with the correct bitstream and operating system binary. If you need to change either, please use `flashProgramAndBoot` for your changes to take effect on the hardware.
+
+- `processor`: The SSITH program supported the use of two different HDLs/styles to design the processors: BSV (by Bluespec) and Chisel; the tool describes this as *the processor flavor*. Also, throughout the program phases, the teams were designing: `P1`: a 32-bit microcontroller, `P2`: a 64-bit processor that can support Unix, `P3`: a 64-bit processor that supports OoO execution. The tool describes this as *the processor level*. Regarding the configuration, the `processor` setting should be in `{chisel|bluespec_p1|p2|p3}`.
+
+- `osImage`: The operating system to be used. The program supports three OSes: Linux Debian, FreeBSD, and FreeRTOS. The tool also supports Linux Busybox for the sake of debugging and smoke testing since it is as light as Linux can get. The allowed values are thus: `debian`, `FreeBSD`, `FreeRTOS`, and `busybox`. The document [OSes.md](./OSes.md) has more details about the OSes building, compatibility with targets and processors, assumptions, etc.
+
+- `freertosFatFs`: The backend of the FAT filesystem for FreeRTOS. Choices are: `ramdisk`, `dosblk`, `sdcard`, and `default`. The default option is RAM disk for VCU118 and DOS block on AWS F1. Note that FAT filesystem is only applicable to the bug bounty modes. Also, since this affects the building of FreeRTOS, this setting has meaningful effects only on the `test` mode when `buildApps` in the `[application]` section is enabled. The RAM disk option is compatible with any backend whilst the DOS block is only compatible with AWS F1, and the SD card is only compatible with VCU118.
+
+- `elfLoader`: This is only applicable to VCU118 (the parameter name is old and non-ideal, ticket #473 should address this). There are two options to load the OS binary into the FPGA on VCU118: the first one is through JTAG using GDB load, which is the `JTAG` option. The second option is a workaround to speed up the binary loading since JTAG loading takes some time for large binaries. We use a FreeRTOS program that starts a TFTP client. This way, the large binary is uploaded using UDP, which is faster than JTAG. After completing the upload, the FreeRTOS program replaces itself and jumps to the first instruction of the uploaded OS booting sequence. We call this option `netboot`.
+
+- `useCustomOsImage`: By default, the tool retrieves the binary of the chosen OS from its own resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details). Enabling this setting allows the user to provide their own OS binary.
+
+- `pathToCustomOsImage`: The path to the custom OS binary in case `useCustomOsImage` is enabled.
+
+- `useCustomProcessor`: By default, the tool retrieves the bitstreams or any required binaries such as the probe files for VCU118, or the kernel modules for AWS F1, from its own resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details). Enabling this setting allows the user to provide their bitstream and binaries.
+
+- `pathToCustomProcessorSource`: The path to a directory containing all needed processor resources in case `useCustomProcessor` is enabled. For more details about the needed files names and directory structure, please refer to `SSITH-FETT-Binaries`, the LFS repo, and compare.
+
+- `useCustomQemu`: By default, the tool uses `qemu-system-riscv64`, built in Nix, to run the QEMU targets. Enable this setting to use your own binary.
+
+- `pathToCustomQemu`: The path to the qemu binary in case `useCustomQemu` is enabled.
+
+- `useCustomHwTarget`: This is introduced for many-board systems, where many VCU118 boards are connected to the same host. This setting can be enabled so that you can specify a particular HW target to use. When this is disabled, the tool uses the HW targets in whichever order Vivado `get_hw_targets` command returns them.
+
+- `customHwTarget`: The HW target to use in case `useCustomHwTarget` is enabled.
+
+- `useCustomTargetIp`: This is only applicable to VCU118. By default, the tool assigns the targets IP in unity increments from the host IP (which is specified by `vcu118IpHost` in [setupEnv.json](../../fett/base/utils/setupEnv.json)).
+
+- `customTargetIp`: The target IP to use in case `useCustomTargetIp` is enabled. Please consider the subnet of the host's IP and any additional network configuration that might be needed based on this choice.
+
+
