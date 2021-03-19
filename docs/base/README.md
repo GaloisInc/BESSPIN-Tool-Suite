@@ -8,4 +8,4 @@ This directory has a collection of markdown documents that are related to the to
 
 - [targets.md](./targets.md): The supported targets (backends).
 
-- [OSs.md](./OSs.md): The supported operating systems.
+- [OSes.md](./OSes.md): The supported operating systems.

@@ -48,7 +48,7 @@ class commonTarget():
         self.restartMode = False
         self.isSshRootEnabled = ((self.osImage=='FreeBSD') and (self.target=='vcu118'))
 
-        # all OSs settings
+        # all OSes settings
         self.ipTarget = None
         self.ipHost = None
         self.portTarget = getSetting('commPortTarget')
