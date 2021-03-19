@@ -105,7 +105,7 @@ Some useful configuration options:
     emulation, or `qemu` for [QEMU](https://www.qemu.org/) emulation.
 - `processor`: One of the GFE processors or the TA-1 teams processors.
 - `osImage`: The operating system on which the tests will run.  The
-    SSITH OSs are either [FreeRTOS](https://www.freertos.org/),
+    SSITH OSes are either [FreeRTOS](https://www.freertos.org/),
     [FreeBSD](https://www.freebsd.org/), or [Linux Debian](https://www.debian.org/),
     or [Busybox](https://busybox.net/about.html).
 - `useCustomOsImage`: If disabled, Nix (if image is available) or FETT-Binaries images will be used.
