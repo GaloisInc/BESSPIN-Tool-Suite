@@ -73,3 +73,45 @@ The document [targets.md](./targets.md) has detailed explanation of the supporte
 - `customTargetIp`: The target IP to use in case `useCustomTargetIp` is enabled. Please consider the subnet of the host's IP and any additional network configuration that might be needed based on this choice.
 
 
+## [common] ##
+
+This section is loaded in all modes.
+
+- `openConsole`: If suitable to other options/exceptions, instead of terminating the target after performing the configured tasks, the tool returns an console for Unix, or shows the UART output for FreeRTOS while letting it run.
+
+- `gdbDebug`: If `openConsole` is enabled, enable `gdbDebug` so that the tool's GDB process detaches from the OpenOCD connection and provides instructions of how to connect a GDB process to the target. Note that this is not applicable to QEMU targets.
+
+- `useCustomCredentials`: For Unix targets, in case there is a need for creating a non-root user (as in the bug bounty modes for example), which credentials the tool should use? By default, the user name is `researcher` and the password is `fett_2020`.
+
+- `userName`: The user name in case `useCustomCredentials` is enabled. Note that it must be 1-14 characters long, and may consist only of ASCII alphanumeric characters.
+
+- `userPasswordHash`: The output of `crypt(3)` in SHA-512 of the user password in case `useCustomCredentials` is enabled. You can use `mkpasswd -m sha-512 ${PASSWORD}` on Debian (and other) to generate that.
+
+- `rootUserAccess`: For Unix targets, in case there is a need to create a non-root user (as in the bug bounty modes for example), whether that user should have root access via passwordless `su`.
+
+- `productionTargetIp`: The IP address on AWS to which to bind the FPGA via a 1:1 NAT. Please refer to [remoteCommunicationWithTarget.md](../AWS/remoteCommunicationWithTarget.md) for more details.
+
+
+## [applications] ##
+
+This section is only relevant for `test` mode. It has a single boolean parameter: `buildApps`,for whether to build the application binaries and the FreeRTOS binary, or fetch them from the tool's resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details).
+
+
+## [build] ##
+
+This configures the compiler/linker options for any cross-compilation happening, whether it's compiling the FreeRTOS kernel, or a CWE test C file. Not all combinations are allowed and compatible with all settings. The tool issues warning and errors in those cases.
+
+Note that for CWEs, there is a way to customize the compiling beyond this section limitation in some aspects. Please refer to [cwesEvaluation/configuration.md](../cwesEvaluation/configuration.md) for more details.
+
+The two settings are:
+
+- `cross-compiler`: Either GCC or Clang. Both are built in the Nix package manager, and we actually mean the RISC-V 64-bit (multilib) cross-complation.
+
+- `linker`: Either GCC or LLD.
+
+## [evaluateSecurityTests] and The Rest ##
+
+This section and all subsequent sections are related to the `evaluateSecurityTests` mode, and are explained in details in [cwesEvaluation/configuration.md](../cwesEvaluation/configuration.md).
+
+
+
