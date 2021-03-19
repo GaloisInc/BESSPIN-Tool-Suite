@@ -21,3 +21,5 @@ The parameters of this section are:
 ## The cyberPhys Extra Targets INI File
 
 In the list of the loaded configuration sections, the `target` section was absent. This is because the tool allows each cyberPhys target to have different settings (with some limits). This extra configuration is provided in an extra file. A suitable template can be found in the default file [cyberPhys.ini](../../cyberPhys.ini). It is already populated with an INI `DEFAULT` section, and empty targets section. If `nTargets` is set to `N`, then this file has to have `N` sections from `target1` to `target${N}`. Naturally, any missing setting from the `target${x}` section will be assigned the value from the `DEFAULT` section. The target's settings are explained in [targets.md](../base/targets.md).
+
+It is worth mentioning that some settings are unmixable, i.e. they have to have consistent values across all targets. These settings are: `useCustomTargetIp`, `useCustomHwTarget`, and `vcu118Mode`. Please refer to [base/configuration.md](../base/configuration.md) and [targets.md](../base/targets.md) for more information about these settings.
