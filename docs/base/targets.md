@@ -30,7 +30,7 @@ Note that the name of the ethernet adaptor connected to the VCU118 might change 
 
 The SSITH GFE SoC, a block diagram of which is shown below, is designed to run in emulation on a Xilinx VCU118 Virtex UltraScale+ FPGA development board. The VCU118 was chosen for its high programmable logic capacity, as the SSITH modifications to the RISC-V processors must be able to run within the GFE SoC despite having (in some cases significant) additional logic; it is also one of the few high-end Xilinx development boards that does not have an ARM processor on-board, because it was deemed important to ensure that the only general-purpose processor within the GFE would be the emulated RISC-V processor.
 
-<img src="../.figures/gfe-diagram.png" width=500 align=middle>
+<img src="../.figures/gfe-diagram.png" width=700 align=middle>
 
 The VCU118 includes 4 GB of RAM, a 128MB flash memory, an Ethernet interface, several general I/O interfaces, and a PCIe interface, enabling the SSITH GFE SoCs to act as full-fledged, albeit slow (the emulated CPUs run at approximately 100MHz), computing systems. In addition to allowing the execution of *bare metal* RISC-V binaries with no operating system, the two 32-bit microcontroller versions of the SoC support the FreeRTOS operating system; the four 64-bit versions of the SoC support the Linux and FreeBSD operating systems as well.
 
@@ -39,6 +39,44 @@ The VCU118 includes 4 GB of RAM, a 128MB flash memory, an Ethernet interface, se
 - The files needed are the bit file, and if not used in flash mode, then a probe file is needed too.
 - The tool resets the ethernet adaptor, then programs the FPGA with the bit file (more details about the VCU118 modes are in [configuration.md](./configuration.md)). 
 - The tool then connects to the target uing openOCD, then starts a GDB session that remotely connects to the target through openOCD. After that, the binary is loaded and the execution is *continued*. The main TTY uses the USB connection to the UART chip on the VCU118 board.
+
+### Manual Run ###
+
+Here we explain how to run an OS on the VCU118 outside of the tool for any reason. It is worth mentioning that running the tool while enabling `openConsole` and `gdbDebug` can provide what is desired without doing it manually, more information is in [configuration.md](./configuration.md).
+
+You need 3 separate terminal windows/tabs/panes for: OpenOCD, GDB, and TTY.
+
+1. Connect a minicom to the UART. This means you have to know which `/dev/tty` is the one connected to the UART chip of the VCU118 board. The `vcu118UartSettings` in [setupEnv.json](../../fett/base/utils/setupEnv.json) has some properties that help distinguishing which one. Also, if you have used the tool on the machine before, the `uartDevicesSavedMap` (a git ignored file whose path is stored in [setupEnv.json](../../fett/base/utils/setupEnv.json)) will have the serial number of the device mapped with the HW ID. Assuming it is `/dev/ttyUSB${X}`, you can use `minicom` (or any similar serial communication tool) as follows:
+
+```bash
+    minicom -D /dev/ttyUSB${X} -b 115200
+```
+
+Also, note that depending on the OS, and the minicom settings, new lines on minicom might not get printed well in a user friendly way. You can use `ctrl-A o` -> `Screen and Keyboard` -> `T` -> Save setup as default. This will make sure minicom inserts an extra new line and thus you do not need to have `\r\n` for every print in the program. This is very useful for FreeRTOS targets. 
+
+2. Open an openOCD connection. The simplest way would be to use the tool's existing configuration [openocd_vcu118.cfg](../../fett/target/utils/openocd_vcu118.cfg) as follows:
+
+```bash
+    openocd --command "set _CHIPNAME riscv; gdb_port ${PORT}" -f /path/to/openocd_vcu118.cfg
+```
+
+3. Open GDB with the OS binary
+
+```bash
+    riscv64-unknown-elf-gdb /path/to/binary
+```
+
+In the GDB shell, first, you need to connect to the target, reset, then load the file and continue (or do something else):
+
+```bash
+    target remote localhost:${PORT}
+    set *(0x6fff0000)=1
+    disconnect
+    target remote localhost:${PORT}
+    load
+    c
+```
+
 
 ## AWSF1 ##
 
@@ -69,15 +107,55 @@ Additionally, since the SSITH program has several hardware designs, a one-size-f
 ### Tool Flow ###
 
 - Firesim:
-  - The files needed are the kernel modules `nbd.ko` and `xdma.ko`, the main firesim binary `FireSim-f1`, the network switch binary `witch0`, and the libraries `libdwarf.so.1` and `libelf.so.1`. The document [buildFireSimBinaries.md](../AWS/buildFireSimBinaries.md) has the instructions of how to build these files.
+  - The files needed are the kernel modules `nbd.ko` and `xdma.ko`, the main Firesim binary `FireSim-f1`, the network switch binary `witch0`, and the libraries `libdwarf.so.1` and `libelf.so.1`. The document [buildFireSimBinaries.md](../AWS/buildFireSimBinaries.md) has the instructions of how to build these files.
   - The processor design has to be used to produce/synthesize the AWS bitstream, the AFI.
   - The tool starts with gathering these files and info, then prepares the disk image, clears the shared memory, removes and re-installs the kernel related modules, configure the tap adaptor and iptables, then flashes the FPGA with the AFI.
+  - In bug bounty modes (and if `gdbDebug` is disabled), the tool executes the binary directly. Otherwise, the tool executes the binary with a debug flag, connects to the target uing openOCD, then starts a GDB session that remotely connects to the target through openOCD. After that, the binary is loaded and the execution is *continued*.
 
 - Connectal:
-  - The files needed are are the kernel modules `pcieportal.ko` and `portalmem.ko`, and the main connectal binary `ssith_aws_fpga`. The document [buildConnectalBinaries.md](../AWS/buildConnectalBinaries.md) has the instructions of how to build these files. 
+  - The files needed are are the kernel modules `pcieportal.ko` and `portalmem.ko`, and the main Connectal binary `ssith_aws_fpga`. The document [buildConnectalBinaries.md](../AWS/buildConnectalBinaries.md) has the instructions of how to build these files. 
   - The processor design has to be used to produce/synthesize the AWS bitstream, the AFI.
   - The tool starts with gathering these files and info, then prepares the disk image, configures the tap adaptor and iptables, removes the kernel modules, flashes the FPGA with the AFI, then removes and re-installs the kernel modules.
+  - In bug bounty modes (and if `gdbDebug` is disabled), the tool executes the binary directly. Otherwise, the tool executes the binary with a debug flag, then starts a GDB session that remotely connects to the target. After that, the binary is loaded and the execution is *continued*.
+  
+Note that the main TTY is the process that started from the binary execution.
 
-For both, the tool either executes the binary and connects to the target uing openOCD, then starts a GDB session that remotely connects to the target through openOCD. After that, the binary is loaded and the execution is *continued*. That sequence happens in the CWEs mode, but in the bug bounty modes, the tool executes the binary directly without GDB.  
-Either way, the main TTY is the process that started from the binary execution.
+
+### Manual Run ###
+
+Here we explain how to run an OS on the AWS F1 outside of the tool for any reason. It is worth mentioning that running the tool while enabling `openConsole` and `gdbDebug` can provide what is desired without doing it manually, more information is in [configuration.md](./configuration.md).
+
+You need 3 separate terminal windows/tabs/panes for Firesim for: OpenOCD, GDB, and main process. For Connectal, only 2 are needed (no OpenOCD).
+
+1. Execute the Firesim or the Connectal command. These commands are lengthy as they have a lot of variables that have to be defined. The easiest way to get an example would be to configure the tool, and run it in debug mode (with the `-d` flag). Then look for `firesimCommand` or `connectal command` in `${workDir}/fett.log`.
+
+- For Firesim, the following flag should be added:
+```bash
+    +debug_enable
+``` 
+
+- For Connectal, the following should be added:
+```bash
+    --gdb-port ${PORT} --start-halted
+```
+
+2. Firesim only: Open an openOCD connection. The simplest way would be to use the tool's existing configuration [openocd_firesim.cfg](../../fett/target/utils/openocd_firesim.cfg) as follows:
+
+```bash
+    openocd --command "gdb_port ${PORT}" -f /path/to/openocd_firesim.cfg
+```
+
+3. Open GDB with the OS binary
+
+```bash
+    riscv64-unknown-elf-gdb /path/to/binary
+```
+
+In the GDB shell, first, you need to connect to the target, set the `$pc` if Firesim, then continue (or do something else):
+
+```bash
+    target remote localhost:${PORT}
+    set $pc=0xC0000000 # FIRESIM ONLY!
+    c
+```
 
