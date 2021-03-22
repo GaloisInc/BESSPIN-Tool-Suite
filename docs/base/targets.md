@@ -17,6 +17,29 @@ For Unix OSes, we need to have a network access to the Qemu target. The tool cre
 
 It is worth mentioning that currently, the tool's default FreeBSD does not have an entropy source. Ticket #333 is open to resolve this. On the other hand, Debian seems to use `virtio-rng-device` properly without any extra setup.
 
+
+## VCU118 ##
+
+### Setup ###
+
+A GFE SoC on a Xilinx VCU118 FPGA should be accessible, in addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
+
+Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to another. Please review the [FPGA host network configuration setup instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md) for more details about the adaptors and IP settings. In case you intend to use a different setup, please change [setupEnv.json](fett/base/utils/setupEnv.json) accordingly.
+
+### Design ###
+
+The SSITH GFE SoC, a block diagram of which is shown below, is designed to run in emulation on a Xilinx VCU118 Virtex UltraScale+ FPGA development board. The VCU118 was chosen for its high programmable logic capacity, as the SSITH modifications to the RISC-V processors must be able to run within the GFE SoC despite having (in some cases significant) additional logic; it is also one of the few high-end Xilinx development boards that does not have an ARM processor on-board, because it was deemed important to ensure that the only general-purpose processor within the GFE would be the emulated RISC-V processor.
+
+<img src="../.figures/gfe-diagram.png" width=500 align=middle>
+
+The VCU118 includes 4 GB of RAM, a 128MB flash memory, an Ethernet interface, several general I/O interfaces, and a PCIe interface, enabling the SSITH GFE SoCs to act as full-fledged, albeit slow (the emulated CPUs run at approximately 100MHz), computing systems. In addition to allowing the execution of *bare metal* RISC-V binaries with no operating system, the two 32-bit microcontroller versions of the SoC support the FreeRTOS operating system; the four 64-bit versions of the SoC support the Linux and FreeBSD operating systems as well.
+
+### Tool Flow ###
+
+- The files needed are the bit file, and if not used in flash mode, then a probe file is needed too.
+- The tool resets the ethernet adaptor, then programs the FPGA with the bit file (more details about the VCU118 modes are in [configuration.md](./configuration.md)). 
+- The tool then connects to the target uing openOCD, then starts a GDB session that remotely connects to the target through openOCD. After that, the binary is loaded and the execution is *continued*. The main TTY uses the USB connection to the UART chip on the VCU118 board.
+
 ## AWSF1 ##
 
 ### Setup ###
@@ -33,7 +56,7 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 
 The document [createFettAMI.md](../docs/AWS/createFettAMI.md) has the complete instructions to recreate the image manually.
 
-### Sources ###
+### Design ###
 
 We use the term *CloudGFE* to denote the AWS EC2 F1 FPGA programmed with a SSITH processor, in addition to its peripherals including a UART interface, an Ethernet adaptor, and a filesystem. 
 
@@ -43,7 +66,7 @@ In particular, five main peripherals were needed: a UART, an Ethernet adaptor, a
 
 Additionally, since the SSITH program has several hardware designs, a one-size-fits-all approach was impractical given time constraints. Therefore, we designed two separate approaches for the two flavors of CPUs in the program. The first is based on the [Berkeley FireSim hardware simulation framework](https://fires.im/), where the peripherals are emulated partly on the host side and partly on the target side. Specifically, the processor interacts through PCIe using a special type of message passing. On the target side, there are components that translate the drivers' data and these messages. On the host side, the FireSim binaries do the same for the host drivers. The second approach uses the [Connectal framework](https://www.connectal.org/) in combination with the exclusive use of Virtio, where the entirety of the peripheral emulation is done in software.
 
-### Usage ###
+### Tool Flow ###
 
 - Firesim:
   - The files needed are the kernel modules `nbd.ko` and `xdma.ko`, the main firesim binary `FireSim-f1`, the network switch binary `witch0`, and the libraries `libdwarf.so.1` and `libelf.so.1`. The document [buildFireSimBinaries.md](../AWS/buildFireSimBinaries.md) has the instructions of how to build these files.
@@ -54,4 +77,7 @@ Additionally, since the SSITH program has several hardware designs, a one-size-f
   - The files needed are are the kernel modules `pcieportal.ko` and `portalmem.ko`, and the main connectal binary `ssith_aws_fpga`. The document [buildConnectalBinaries.md](../AWS/buildConnectalBinaries.md) has the instructions of how to build these files. 
   - The processor design has to be used to produce/synthesize the AWS bitstream, the AFI.
   - The tool starts with gathering these files and info, then prepares the disk image, configures the tap adaptor and iptables, removes the kernel modules, flashes the FPGA with the AFI, then removes and re-installs the kernel modules.
+
+For both, the tool either executes the binary and connects to the target uing openOCD, then starts a GDB session that remotely connects to the target through openOCD. After that, the binary is loaded and the execution is *continued*. That sequence happens in the CWEs mode, but in the bug bounty modes, the tool executes the binary directly without GDB.  
+Either way, the main TTY is the process that started from the binary execution.
 
