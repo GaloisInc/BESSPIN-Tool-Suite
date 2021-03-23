@@ -2,6 +2,8 @@
 
 Each mode is already explained in its designated directory's readme, and thus this document will focus on implementation details rather than the functionality or other resources.
 
+---
+
 ## `mode = evaluateSecurityTests` ##
 
 This the mode of running the CWEs evaluation tests. The [CWEs readme](../cwesEvaluation/README.md) has more details about the functionality and the configuration. The tool's flow is as follows:
@@ -39,6 +41,8 @@ Note that for each vulnerability class, the `scoreTests` function will be called
 
 Similar to FreeRTOS, for each vulnerability class, the `scoreTests` function will be called before proceeding to the next class. This scores the logs and displays the results table on the screen. 
 
+---
+
 ## `mode = test` ##
 
 The `test` mode is one of the two modes of the bug bounty. The [bug bounty readme](../bugBounty2020/README.md) has more details about the functionality and the configuration. The tool's flow is as follows:
@@ -55,6 +59,8 @@ The `test` mode is one of the two modes of the bug bounty. The [bug bounty readm
     - Unix-AWS-only: Collect the remote logs that were logged using `rsyslog` on the host.
     - Shuts down the OS, and tears down all relevant processes.
 - `endFett` returns, and the tool exits.
+
+---
 
 ## `mode = production` ## 
 
@@ -102,6 +108,7 @@ When the portal receives the message without sending the termination message, it
 
 If a failure occurs during any of the steps, the tool exits in an emergency mode during which it collects all the present artifacts, and remote logs (`rsyslog`) if any, then sends an SQS message signaling failure to the protal
 
+---
 
 ## `mode = cyberPhys` ##
 
@@ -146,6 +153,8 @@ In case a watchdog detects a problem, and the `resetOnWatchdog` setting is enabl
 - Calls `runCyberPhys` to start the needed applications.
 
 If a problem is detected, and `resetOnWatchdog` is not enabled, all targets will be shutdown and the tool will exit; similar to exitting the shell.
+
+---
 
 ## Miscellaneous ##
 

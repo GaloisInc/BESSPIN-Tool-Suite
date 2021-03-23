@@ -2,6 +2,8 @@
 
 In this document, we provide some details about the supported OSes.
 
+---
+
 ## Busybox ##
 
 [Busybox](https://busybox.net/downloads/BusyBox.html) combines tiny versions of many common UNIX utilities into a single small executable. It provides minimalist replacements for most of the utilities you usually find in GNU coreutils, util-linux, etc. The utilities in BusyBox generally have fewer options than their full-featured GNU cousins; however, the options that are included provide the expected functionality and behave very much like their GNU counterparts. 
@@ -9,6 +11,8 @@ In this document, we provide some details about the supported OSes.
 The binaries are built in the Nix package manager. There are two images: `$FETT_GFE_BUSYBOX_VCU118` and `$FETT_GFE_BUSYBOX_QEMU`. 
 
 Because how light it is, Busybox is just used in the tool for smoke testing processors, network, or core target functions. It is not used for running any of the supported modes. It boots, then shuts down right away. 
+
+---
 
 ## Debian ##
 
@@ -19,6 +23,8 @@ Debian is built in the Nix package manager. [The images document](../../SSITH-FE
 - `$FETT_GFE_DEBIAN_FIRESIM`: The baseline Debian image for Fireim.
 - `$FETT_GFE_DEBIAN_ROOTFS_FIRESIM`: The rootfs disk image for Firesim.
 
+---
+
 ## FreeBSD ##
 
 FreeBSD is built in the Nix package manager. [The images document](../../SSITH-FETT-Environment/IMAGES.md) provides a high-level description of the build steps. The following binaries are provided in the nix-shell:
@@ -28,6 +34,8 @@ FreeBSD is built in the Nix package manager. [The images document](../../SSITH-F
 - `$FETT_GFE_FREEBSD_DEBUG_QEMU`: The baseline FreeBSD image for QEMU with kernel debug.
 - `$FETT_GFE_FREEBSD_CONNECTAL`: The baseline FreeBSD image for Connectal.
 - `$FETT_GFE_FREEBSD_ROOTFS_CONNECTAL`: The rootfs disk image for Connectal.
+
+---
 
 ## FreeRTOS ##
 
