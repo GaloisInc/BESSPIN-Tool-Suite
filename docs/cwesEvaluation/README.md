@@ -9,6 +9,12 @@ A class-specific description is provided in each vulnerability class [directory]
 
 The philosophy of the platform and the methodology of the testing are explained in details in the [BESSPIN philosophy document](./besspinPhilosophy.md). For details about this tool's mode from the point of view of methodology and details rather than functionality, please check [modes.md](../base/modes.md).
 
+The figure below is an overview of the tool when running in the CWEs evaluation mode.
+
+<img src="../.figures/cwes-evaluation-diagram.png" width=500 align=middle>
+
+The tool selects the tests to run based on the configuration, it cross-compiles them, runs them on the selected OS and backend, then scores the outpu, and displays the results.
+
 ## Summary of Contents ##
 
 - [BESSPIN-Coeffs.md](./BESSPIN-Coeffs.md): The values of the BESSPIN coefficients. This document is automatically generated based on the values in the [JSON file](../../fett/cwesEvaluation/utils/besspinCoeffs.json). More explanation can be found in the BESSPIN Scale document (next).
