@@ -44,7 +44,19 @@ FettToolRestartTarget: Restart application
 FettToolReady --> FettToolRestartTarget: Received CMD_RESTART_COMPONENT(TARGET_ID)
 
 FettToolRestartTarget --> FettToolReady: Restart successfull\nSend CMD_COMPONENT_READY(TARGET_ID)
-FettToolRestartTarget --> FettToolTerminate: Restart failed
+FettToolRestartTarget --> FettToolRecoverableFailiure: Restart failed.
+
+state "FETT tool check if failiure is recoverable" as FettToolRecoverableFailiure
+FettToolRecoverableFailiure: Is degraded mode possible?
+
+FettToolRecoverableFailiure --> FettToolTerminate: Not possible
+
+FettToolRecoverableFailiure --> FettToolDegradedModeInit: Possible
+state "FETT tool init degraded mode" as FettToolDegradedModeInit
+FettToolDegradedModeInit: limited number of scenarios
+' TODO: properly mark DEGRADED state of operations
+
+FettToolDegradedModeInit --> FettToolReady: Send CMD_SCENARIO_NOT_AVAILABLE(SCENARIO_ID)
 
 FettToolTerminate --> [*]: Send CMD_COMPONENT_ERROR(FETT_TOOL|TERMINATED)
 
