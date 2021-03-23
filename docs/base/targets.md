@@ -111,6 +111,8 @@ Additionally, since the SSITH program has several hardware designs, a one-size-f
 
 ### Tool Flow ###
 
+Note that the AWS platform variant (Firesim vs Connectal) is determined based on the `binarySource`-`processor`-`osImage` selection. The mapping can be found in [setupEnv.json](../../fett/base/utils/setupEnv.json).
+
 - Firesim:
   - The files needed are the kernel modules `nbd.ko` and `xdma.ko`, the main Firesim binary `FireSim-f1`, the network switch binary `witch0`, and the libraries `libdwarf.so.1` and `libelf.so.1`. The document [buildFireSimBinaries.md](../AWS/buildFireSimBinaries.md) has the instructions of how to build these files.
   - The processor design has to be used to produce/synthesize the AWS bitstream, the AFI.
