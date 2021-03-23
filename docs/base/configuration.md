@@ -4,6 +4,8 @@ The needed configuration is done using [INI
 file](https://en.wikipedia.org/wiki/INI_file) configuration. The
 default file is [config.ini](../../config.ini).
 
+---
+
 ## Overview ##
 
 [config.ini](./config.ini) is commented with brief descriptions of
@@ -17,13 +19,19 @@ The configuration(s) is loaded in [config.py](../../fett/base/config.py) and the
 
 This document has explanations for each parameter, either by defining them or linking to the document that has the definitions.
 
+---
+
 ## [functionality] ##
 
 The tool's functionality has a single parameter: `mode`. The document [modes.md](./modes.md) explains each mode, and links to all other documentation and resources about each of them.
 
+---
+
 ## [cyberPhys] ##
 
 This section is only loaded in the `cyberPhys` mode. Please refer to [cyberPhys/configuration.md](../cyberPhys/configuration.md) for details about each parameter. 
+
+---
 
 ## [target] ##
 
@@ -72,6 +80,7 @@ The document [targets.md](./targets.md) has detailed explanation of the supporte
 
 - `customTargetIp`: The target IP to use in case `useCustomTargetIp` is enabled. Please consider the subnet of the host's IP and any additional network configuration that might be needed based on this choice.
 
+---
 
 ## [common] ##
 
@@ -91,11 +100,13 @@ This section is loaded in all modes.
 
 - `productionTargetIp`: The IP address on AWS to which to bind the FPGA via a 1:1 NAT. Please refer to [remoteCommunicationWithTarget.md](../AWS/remoteCommunicationWithTarget.md) for more details.
 
+---
 
 ## [applications] ##
 
 This section is only relevant for `test` mode. It has a single boolean parameter: `buildApps`,for whether to build the application binaries and the FreeRTOS binary, or fetch them from the tool's resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details).
 
+---
 
 ## [build] ##
 
@@ -108,6 +119,8 @@ The two settings are:
 - `cross-compiler`: Either GCC or Clang. Both are built in the Nix package manager, and we actually mean the RISC-V 64-bit (multilib) cross-complation.
 
 - `linker`: Either GCC or LLD.
+
+---
 
 ## [evaluateSecurityTests] and The Rest ##
 

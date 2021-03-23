@@ -2,12 +2,15 @@
 
 In this document, we explain in more details the different supported targets/backends and their setup requirements.
 
+---
+
 ## Implementation ##
 
 The target base class is `commonTarget` and is defined in [common.py](../../fett/target/common.py). This class implements the methods that are shared among all types of backends, and depends on defining the lower level methods in backend-specific classes. There is also an `fpgaTarget` class (defined in [fpga.py](../../fett/target/fpga.py)) that has the methods related to having an FPGA, like openining an OpenOCD connection, and starting a GDB process. 
 
 For any target choice, which are `vcu118`, `qemu`, `awsf1`, there is a class that defines the lowest level methods. The `vcu118Target` class, for instance, inherits both `fpgaTarget` and `commonTaret`. While `qemuTarget` only inherits `commonTarget`.
 
+---
 
 ## QEMU ##
 
@@ -17,6 +20,7 @@ For Unix OSes, we need to have a network access to the Qemu target. The tool cre
 
 It is worth mentioning that currently, the tool's default FreeBSD does not have an entropy source. Ticket #333 is open to resolve this. On the other hand, Debian seems to use `virtio-rng-device` properly without any extra setup.
 
+---
 
 ## VCU118 ##
 
@@ -77,6 +81,7 @@ In the GDB shell, first, you need to connect to the target, reset, then load the
     c
 ```
 
+---
 
 ## AWSF1 ##
 
