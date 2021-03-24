@@ -26,7 +26,7 @@ IsInSelfDriveMode -[#red]-> SwitchToSelfDrive: No
 state "Switch to self-drive mode" as SwitchToSelfDrive
 SwitchToSelfDrive -[#red]-> RestartScenario1
 SwitchToSelfDrive: Demo mode switch
-RestartScenario1 -[#red]-> IgnitionReady: Restart timeouts
+RestartScenario1 -[#red]-> IgnitionReady: Restart all timeouts
 IsInSelfDriveMode -[#red]-> IgnitionReady: Yes\nReset C&C timeout
 IgnitionReady -[#red]-> ScenarioTimeout: Scenario timeout expired
 ScenarioTimeout -[#red]-> RestartScenario1
@@ -42,10 +42,10 @@ state "C&C Message Processed" as CacMsgProcessed
 
 CacMsgProcessed -[#blue]-> IgnitionReady
 
-state "Switch demo mode" as SwitchDemoMode
-ProcessCacMsg -[#blue]-> SwitchDemoMode: Rx CMD_SET_DRIVING_MODE(MODE_ID)
-SwitchDemoMode: set mode to MODE_ID
-SwitchDemoMode -[#blue]-> CacMsgProcessed: Driving mode updated
+'state "Switch demo mode" as SwitchDemoMode
+'ProcessCacMsg -[#blue]-> SwitchDemoMode: Rx CMD_SET_DRIVING_MODE(MODE_ID)
+'SwitchDemoMode: set mode to MODE_ID
+'SwitchDemoMode -[#blue]-> CacMsgProcessed: Driving mode updated
 
 state "Switch CAN network" as SwitchCanNetwork
 ProcessCacMsg -[#blue]-> SwitchCanNetwork: Rx CMD_ACTIVE_SCENARIO(SCENARIO_ID)
@@ -72,13 +72,23 @@ IgnitionReady -[#green]-> ProcessCanMsg: Received CAN message
 CanMsgProcessed -[#green]-> IgnitionReady
 
 state "Infotainment Button Pressed" as InfotainmentButtonPressed
-ProcessCanMsg -[#green]-> InfotainmentButtonPressed: Rx BUTTON_PRESSED
-InfotainmentButtonPressed -[#green]-> CanMsgProcessed: Forward BUTTON_PRESSED msg\nto all Infotainment servers
+ProcessCanMsg -[#green,dashed]-> InfotainmentButtonPressed: Rx BUTTON_PRESSED\n(Thin Client Network)
+
+state TestDemoMode <<choice>>
+InfotainmentButtonPressed -[#green]-> TestDemoMode: In demo mode?
+TestDemoMode -[#green]-> Wakeup: Yes
+state "Wake Up" as Wakeup
+Wakeup -[#red]-> RestartScenario1: Switch to manual mode\nand restart scenario
+Wakeup: switch to manual driving mode
+TestDemoMode -[#green]-> ForwardMessage: No
+state "Forward Message" as ForwardMessage
+
+ForwardMessage -[#green]-> CanMsgProcessed: Forward BUTTON_PRESSED msg\nto all Infotainment servers
 InfotainmentButtonPressed: NOTE: Always
 
 state "Infotainment State Updated" as InfotainmentStateUpdated
-ProcessCanMsg -[#green]-> InfotainmentStateUpdated: Rx MUSIC_STATE
-InfotainmentStateUpdated -[#green]-> CanMsgProcessed: Forward MUSIC_STATE msg\nto active Thin Client
+ProcessCanMsg -[#green]-> InfotainmentStateUpdated: Rx INFOTAINMENT_STATE
+InfotainmentStateUpdated -[#green,dashed]-> CanMsgProcessed: Forward INFOTAINMENT_STATE msg\nto Thin Client\n(Thin Client Network)
 InfotainmentStateUpdated: NOTE: Always
 
 
