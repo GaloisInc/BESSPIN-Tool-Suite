@@ -28,7 +28,7 @@ It is worth mentioning that currently, the tool's default FreeBSD does not have 
 
 A GFE SoC on a Xilinx VCU118 FPGA should be accessible, in addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
 
-Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to another. Please review the [FPGA host network configuration setup instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md) for more details about the adaptors and IP settings. In case you intend to use a different setup, please change [setupEnv.json](fett/base/utils/setupEnv.json) accordingly.
+Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to another. Please review the [FPGA host network configuration setup instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md) for more details about the adaptors and IP settings. In case you intend to use a different setup, please change [setupEnv.json](../../fett/base/utils/setupEnv.json) accordingly.
 
 ### Design ###
 
@@ -42,7 +42,7 @@ The VCU118 includes 4 GB of RAM, a 128MB flash memory, an Ethernet interface, se
 
 - The files needed are the bit file, and if not used in flash mode, then a probe file is needed too.
 - The tool resets the ethernet adaptor, then programs the FPGA with the bit file (more details about the VCU118 modes are in [configuration.md](./configuration.md)). 
-- The tool then connects to the target uing openOCD, then starts a GDB session that remotely connects to the target through openOCD. After that, the binary is loaded and the execution is *continued*. The main TTY uses the USB connection to the UART chip on the VCU118 board.
+- The tool then connects to the target using openOCD, then starts a GDB session that remotely connects to the target through openOCD. After that, the binary is loaded and the execution is *continued*. The main TTY uses the USB connection to the UART chip on the VCU118 board.
 
 ### Manual Run ###
 
@@ -97,7 +97,7 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 * [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) with the environment pre-populated at `/nix/store`
 * [Cloudwatch](https://aws.amazon.com/cloudwatch/)
 
-The document [createFettAMI.md](../docs/AWS/createFettAMI.md) has the complete instructions to recreate the image manually.
+The document [createFettAMI.md](../AWS/createFettAMI.md) has the complete instructions to recreate the image manually.
 
 ### Design ###
 
@@ -114,7 +114,7 @@ Additionally, since the SSITH program has several hardware designs, a one-size-f
 Note that the AWS platform variant (Firesim vs Connectal) is determined based on the `binarySource`-`processor`-`osImage` selection. The mapping can be found in [setupEnv.json](../../fett/base/utils/setupEnv.json).
 
 - Firesim:
-  - The files needed are the kernel modules `nbd.ko` and `xdma.ko`, the main Firesim binary `FireSim-f1`, the network switch binary `witch0`, and the libraries `libdwarf.so.1` and `libelf.so.1`. The document [buildFireSimBinaries.md](../AWS/buildFireSimBinaries.md) has the instructions of how to build these files.
+  - The files needed are the kernel modules `nbd.ko` and `xdma.ko`, the main Firesim binary `FireSim-f1`, the network switch binary `switch0`, and the libraries `libdwarf.so.1` and `libelf.so.1`. The document [buildFireSimBinaries.md](../AWS/buildFireSimBinaries.md) has the instructions of how to build these files.
   - The processor design has to be used to produce/synthesize the AWS bitstream, the AFI.
   - The tool starts with gathering these files and info, then prepares the disk image, clears the shared memory, removes and re-installs the kernel related modules, configure the tap adaptor and iptables, then flashes the FPGA with the AFI.
   - In bug bounty modes (and if `gdbDebug` is disabled), the tool executes the binary directly. Otherwise, the tool executes the binary with a debug flag, connects to the target uing openOCD, then starts a GDB session that remotely connects to the target through openOCD. After that, the binary is loaded and the execution is *continued*.

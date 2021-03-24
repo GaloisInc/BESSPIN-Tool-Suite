@@ -39,7 +39,7 @@ Note that for each vulnerability class, the `scoreTests` function will be called
     - The tool sends the tests binaries to the target.
     - The tests are executed and the log files are generated.
 
-Similar to FreeRTOS, for each vulnerability class, the `scoreTests` function will be called before proceeding to the next class. This scores the logs and displays the results table on the screen. 
+Similar to FreeRTOS, for each vulnerability class, the `scoreTests` function will be called before proceeding to the next class. However, for Unix, it only scores the logs, but the results table are displayed in the end of all classes.
 
 ---
 
