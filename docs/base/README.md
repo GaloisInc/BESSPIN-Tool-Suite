@@ -2,7 +2,7 @@
 
 This directory has a collection of markdown documents that are related to the tool's core functionality.
 
-- [configuration.md](./configuration): Details about the INI file(s).
+- [configuration.md](./configuration.md): Details about the INI file(s).
 
 - [modes.md](./modes.md): Explanation of the different functionality modes.
 

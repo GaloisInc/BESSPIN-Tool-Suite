@@ -8,7 +8,7 @@ default file is [config.ini](../../config.ini).
 
 ## Overview ##
 
-[config.ini](./config.ini) is commented with brief descriptions of
+[config.ini](../../config.ini) is commented with brief descriptions of
 the meaning of every parameter and the possible values/types. Please note the following:
   - Keep the comments on separate lines from values. Order of
     parameters does not matter.
@@ -50,9 +50,9 @@ The document [targets.md](./targets.md) has detailed explanation of the supporte
 
 - `target`: The backend of the target. The tool supports `qemu`, `vcu118`, and `awsf1`. The document [targets.md](./targets.md) has more details.
 
-- `vcu118Mode`: Applicable iff the target is set to `vcu118`. Whether to choose the `nonPersistent` memory for programming the bitstream and loading the FPGA, or use the flash. `flashProgramAndBoot` is for initializing the FPGA, so the tool will program the flash first, then boot from it. Please note that this step would require the power recycling of the VCU118 board after programming and before booting. The last option, `flashBoot` is for booting directly from the FPGA flash memory. This assumes that the FPGA was programmed with the correct bitstream and operating system binary. If you need to change either, please use `flashProgramAndBoot` for your changes to take effect on the hardware.
+- `vcu118Mode`: Applicable iff the target is set to `vcu118`. Whether to choose the `nonPersistent` memory for programming the bitstream and loading the FPGA, or use the flash. `flashProgramAndBoot` is for initializing the FPGA, so the tool will program the flash first, then boot from it. Please note that this step would require the power cycling of the VCU118 board after programming and before booting. The last option, `flashBoot` is for booting directly from the FPGA flash memory. This assumes that the FPGA was programmed with the correct bitstream and operating system binary. If you need to change either, please use `flashProgramAndBoot` for your changes to take effect on the hardware.
 
-- `processor`: The SSITH program supported the use of two different HDLs/styles to design the processors: BSV (by Bluespec) and Chisel; the tool describes this as *the processor flavor*. Also, throughout the program phases, the teams were designing: `P1`: a 32-bit microcontroller, `P2`: a 64-bit processor that can support Unix, `P3`: a 64-bit processor that supports OoO execution. The tool describes this as *the processor level*. Regarding the configuration, the `processor` setting should be in `{chisel|bluespec_p1|p2|p3}`.
+- `processor`: The SSITH program supported the use of two different HDLs/styles to design the processors: BSV (by Bluespec) and Chisel; the tool describes this as *the processor flavor*. Also, throughout the program phases, the teams were designing: `P1`: a 32-bit microcontroller, `P2`: a 64-bit processor that can support Unix, `P3`: a 64-bit processor that supports OoO execution. The tool describes this as *the processor level*. Regarding the configuration, the `processor` setting should be in `{chisel|bluespec}_{p1|p2|p3}`.
 
 - `osImage`: The operating system to be used. The program supports three OSes: Linux Debian, FreeBSD, and FreeRTOS. The tool also supports Linux Busybox for the sake of debugging and smoke testing since it is as light as Linux can get. The allowed values are thus: `debian`, `FreeBSD`, `FreeRTOS`, and `busybox`. The document [OSes.md](./OSes.md) has more details about the OSes building, compatibility with targets and processors, assumptions, etc.
 

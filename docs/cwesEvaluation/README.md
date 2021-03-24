@@ -13,7 +13,7 @@ The figure below is an overview of the tool when running in the CWEs evaluation 
 
 <img src="../.figures/cwes-evaluation-diagram.png" width=500 align=middle>
 
-The tool selects the tests to run based on the configuration, it cross-compiles them, runs them on the selected OS and backend, then scores the outpu, and displays the results.
+The tool selects the tests to run based on the configuration, it cross-compiles them, runs them on the selected OS and backend, then scores the output, and displays the results.
 
 ## Summary of Contents ##
 

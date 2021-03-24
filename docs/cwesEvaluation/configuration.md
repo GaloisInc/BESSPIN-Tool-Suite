@@ -98,7 +98,7 @@ In each vulnerability class section, two settings can be configured:
     utility can be used to enable, disable, or toggle all or selected
     CWE tests. Note that is non-applicable to buffer errors. For `bufferErrors`, customizing which tests to run is done using the custom error model instead. 
 
-The classes buffer errros, resource management, and information leakage require the generation of some random values. Each of those classes have the following options:
+The classes buffer errors, resource management, and information leakage require the generation of some random values. Each of those classes have the following options:
   - `useSeed`: Whether to use a specific seed versus a random one.
   - `seed`: The seed for the random generation if `useSeed` is enabled.
 
