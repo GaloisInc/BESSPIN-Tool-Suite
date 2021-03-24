@@ -54,7 +54,8 @@ FettToolRecoverableFailiure --> FettToolTerminate: Not possible
 FettToolRecoverableFailiure --> FettToolDegradedModeInit: Possible
 state "FETT tool init degraded mode" as FettToolDegradedModeInit
 FettToolDegradedModeInit: limited number of scenarios
-' TODO: properly mark DEGRADED state of operations
+note top of FettToolDegradedModeInit: properly mark DEGRADED state of operations?
+note top of FettToolDegradedModeInit: TODO: elaborate on DEGRADED mode
 
 FettToolDegradedModeInit --> FettToolReady: Send CMD_SCENARIO_NOT_AVAILABLE(SCENARIO_ID)
 
