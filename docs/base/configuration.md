@@ -44,7 +44,7 @@ The document [targets.md](./targets.md) has detailed explanation of the supporte
   - `LMCO`: Lockheed Martin Corporation.
   - `Michigan`: University of Michigan.
   - `MIT`: Massachusetts Institute of Technology.
-  - `SRI-Cambridge`: The CHERI work by Stanford Research Institute and University of Cambridge.
+  - `SRI-Cambridge`: The CHERI work by SRI International and University of Cambridge.
 
 - `sourceVariant`: We introduced this parameter to distinguish between the different *flavors* of the CHERI processors, but it seems a solid parameter to have for future compatibilities as it provides a flexible distinction between processors if they came from the same team and flavor/level (coming up). Currently, this is only compatible with the `SRI-Cambridge` choice for `binarySource`. The acceptable values are `default`, `purecap`, and `temporal`. Please refer to the [CHERI wesbite](https://www.cl.cam.ac.uk/research/security/ctsrd/cheri/) for more details. 
 
@@ -124,7 +124,4 @@ The two settings are:
 
 ## [evaluateSecurityTests] and The Rest ##
 
-This section and all subsequent sections are related to the `evaluateSecurityTests` mode, and are explained in details in [cwesEvaluation/configuration.md](../cwesEvaluation/configuration.md).
-
-
-
+This section and all subsequent sections are related to the `evaluateSecurityTests` mode, and are explained in detail in [cwesEvaluation/configuration.md](../cwesEvaluation/configuration.md).

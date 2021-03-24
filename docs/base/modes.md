@@ -10,7 +10,7 @@ This the mode of running the CWEs evaluation tests. The [CWEs readme](../cwesEva
 - `fett.py` loads the configuration and calls `startFett`.
 - `startFett` calls `prepareEnv` which:
     - Unix-only: Verify the environment setup, and perform any additional setup or programming it needs to prepare the target for launching.
-    - Calls `buildCwesEvaluation` which will collect (or generate if needed) the test sources and other artifacts based on the tests selection and configuration.
+    - Calls `buildCwesEvaluation` which collects (or generate if needed) the test sources and other artifacts based on the tests selection and configuration.
 - There are two separate flows here based on the OS. FreeRTOS is very special as the kernel is compiled along with the test (or even the test part), so the tool's launch sequence will have to be done for each test part, whereas for Unix OSes, this has to be done only once. Please see [FreeRTOS](#freertos) and [Unix](#unix) below.
 - `startFett` returns, and `endFett` is called, which does the following:
     - Unix-only: Shuts down the OS, and tears down all relevant processes.
@@ -22,10 +22,10 @@ This the mode of running the CWEs evaluation tests. The [CWEs readme](../cwesEva
 
 As mentioned above, `prepareEnv` will skip all environment preparation steps, and will just return. `startFett` will thus call `runFreeRTOSCwesEvaluation` and returns directly afterwards. For each test part, `runFreeRTOSCwesEvaluation` will:
 - Re-prepare the environment. For example, for Firesim, this will mean removing and re-installing the kernel modules, re-configuring the tap adaptor, and re-flashing the AFI.
-- Calls `launchFett`, which will:
+- Calls `launchFett`, which:
     - Builds a FreeRTOS binary with the current test part.
     - Loads the binary and starts the OS.
-    - Waits for the test to terminates, or times out (check `FreeRTOStimeout` in [cwesEvaluation/configuration.md](../cwesEvaluation/configuration.md)).
+    - Waits for the test to terminate, or times out (check `FreeRTOStimeout` in [cwesEvaluation/configuration.md](../cwesEvaluation/configuration.md)).
 - Tears down the relevant processes.
 - Collect any GDB logs if applicable.
 
@@ -71,7 +71,7 @@ The `production` mode is one of the two modes of the bug bounty. The [bug bounty
 - `startFett` calls `startUartPiping` that pipes the target's TTY to a TCP port.
 - `startFett` returns.
 - The tool sends an SQS message to the portal to signal successful deployment.
-- The tool waits indefinitely for either of the following:
+- The tool waits indefinitely for any of the following:
     - Receive a `termination` message (through S3) from the portal [this would continue the normal operation].
     - Receive a `reset` message [See [Reset Button](#reset-button)].
     - The main Firesim/Connectal process seems dead. [See [Dead Process](#dead-process)].
@@ -106,7 +106,7 @@ When the portal receives the message without sending the termination message, it
 
 ### Failures ###
 
-If a failure occurs during any of the steps, the tool exits in an emergency mode during which it collects all the present artifacts, and remote logs (`rsyslog`) if any, then sends an SQS message signaling failure to the protal
+If a failure occurs during any of the steps, the tool exits in an emergency mode during which it collects all the present artifacts, and remote logs (`rsyslog`) if any, then sends an SQS message signaling failure to the portal.
 
 ---
 

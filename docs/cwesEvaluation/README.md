@@ -4,16 +4,16 @@ This is the documentation for running the tool in the `evaluateSecurityTests` mo
 
 ## Overview
 
-A list of the classes in addition to the NIST CWEs mapped to each class are summarized in [ssithCWEsList.md](./ssithCWEsList.md).
+A list of the vulnerability classes, and the NIST CWEs mapped to each class, appears in [ssithCWEsList.md](./ssithCWEsList.md).
 A class-specific description is provided in each vulnerability class [directory](../../fett/cwesEvaluation/).
 
-The philosophy of the platform and the methodology of the testing are explained in details in the [BESSPIN philosophy document](./besspinPhilosophy.md). For details about this tool's mode from the point of view of methodology and details rather than functionality, please check [modes.md](../base/modes.md).
+The philosophy of the platform and the methodology of the testing are explained in detail in the [BESSPIN philosophy document](./besspinPhilosophy.md). For details about this tool's mode from the point of view of methodology and details rather than functionality, please check [modes.md](../base/modes.md).
 
 The figure below is an overview of the tool when running in the CWEs evaluation mode.
 
 <img src="../.figures/cwes-evaluation-diagram.png" width=500 align=middle>
 
-The tool selects the tests to run based on the configuration, it cross-compiles them, runs them on the selected OS and backend, then scores the output, and displays the results.
+The tool selects the tests to run based on the configuration; it cross-compiles them, runs them on the selected OS and backend, then scores the output, and displays the results.
 
 ## Summary of Contents ##
 

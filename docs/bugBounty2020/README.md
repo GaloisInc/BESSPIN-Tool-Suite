@@ -1,6 +1,6 @@
 # DARPA FETT Bug Bounty 2020 #
 
-DARPA has held the Finding Exploits to Thwart Tampering ([FETT](https://fett.darpa.mil/)) bug bounty in summer 2020. This directory has the related documents and instructions.
+DARPA held the Finding Exploits to Thwart Tampering ([FETT](https://fett.darpa.mil/)) bug bounty in summer 2020. This directory has the related documents and instructions.
 
 The following paper was written about the details of the bug bounty and with a focus on the tool: *Daniel M. Zimmerman, Joseph R. Kiniry, Ramy N. Tadros, and Dylan Hand, “FETT: Deploying RISC-V Systems-on-Chip to the Cloud for Security Research,” GOMACTech 2021, Virtual, Mar. 2021.* This document should be updated with a link to the manuscript when the paper is published.
 
