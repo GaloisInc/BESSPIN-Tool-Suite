@@ -19,6 +19,22 @@ IgnitionReady: HUD/Dashboard up
 IgnitionReady: Steering wheel up
 IgnitionReady: CAN_mux up
 
+state "Is in self-drive mode?" as IsInSelfDriveMode
+IgnitionReady -[#red]-> IsInSelfDriveMode: No C&C msg received within Timeout
+IsInSelfDriveMode: Demo mode check
+IsInSelfDriveMode -[#red]-> SwitchToSelfDrive: No
+state "Switch to self-drive mode" as SwitchToSelfDrive
+SwitchToSelfDrive -[#red]-> RestartScenario1
+SwitchToSelfDrive: Demo mode switch
+RestartScenario1 -[#red]-> IgnitionReady: Restart timeouts
+IsInSelfDriveMode -[#red]-> IgnitionReady: Yes\nReset C&C timeout
+IgnitionReady -[#red]-> ScenarioTimeout: Scenario timeout expired
+ScenarioTimeout -[#red]-> RestartScenario1
+ScenarioTimeout: scenario ran too long
+
+state "Restart Scenario" as RestartScenario1
+RestartScenario1: in demo mode start immediatelt\n(no Enter is needed)
+
 IgnitionReady -[#blue]-> ProcessCacMsg: Received C&C message
 state "Process C&C Message" as ProcessCacMsg
 
@@ -26,10 +42,15 @@ state "C&C Message Processed" as CacMsgProcessed
 
 CacMsgProcessed -[#blue]-> IgnitionReady
 
+state "Switch demo mode" as SwitchDemoMode
+ProcessCacMsg -[#blue]-> SwitchDemoMode: Rx CMD_SET_DRIVING_MODE(MODE_ID)
+SwitchDemoMode: set mode to MODE_ID
+SwitchDemoMode -[#blue]-> CacMsgProcessed: Driving mode updated
+
 state "Switch CAN network" as SwitchCanNetwork
 ProcessCacMsg -[#blue]-> SwitchCanNetwork: Rx CMD_ACTIVE_SCENARIO(SCENARIO_ID)
-SwitchCanNetwork: Update active CAN network
-SwitchCanNetwork --> IgnitionTerminate: CAN switch failed
+SwitchCanNetwork: Decides which ECU/Infotainment server are active
+' SwitchCanNetwork --> IgnitionTerminate: CAN switch failed
 SwitchCanNetwork -[#blue]-> CacMsgProcessed: Active CAN selected
 
 ProcessCacMsg -[#blue]-> ChangeLedSequence: Rx CMD_HACK_ACTIVE(HACK_ID)
@@ -40,40 +61,55 @@ ChangeLedSequence -[#blue]-> CacMsgProcessed: LED sequence changed
 
 ProcessCacMsg -[#blue]-> RestartScenario: Rx CMD_RESTART(BEAM_NG_SCENARIO)
 state "Restart Scenario" as RestartScenario
-RestartScenario: car to start location
+RestartScenario: in demo mode start immediatelt\n(no Enter is needed)
 RestartScenario -[#blue]-> CacMsgProcessed: Scenario restarted
-RestartScenario --> IgnitionTerminate: Restart failed
+'RestartScenario --> IgnitionTerminate: Restart failed
 
 ' CAN messages
+note top of ProcessCanMsg : How to handle hacking in demo mode?
 state "Process CAN message" as ProcessCanMsg
 IgnitionReady -[#green]-> ProcessCanMsg: Received CAN message
 CanMsgProcessed -[#green]-> IgnitionReady
 
+state "Infotainment Button Pressed" as InfotainmentButtonPressed
+ProcessCanMsg -[#green]-> InfotainmentButtonPressed: Rx BUTTON_PRESSED
+InfotainmentButtonPressed -[#green]-> CanMsgProcessed: Forward BUTTON_PRESSED msg\nto all Infotainment servers
+InfotainmentButtonPressed: NOTE: Always
+
+state "Infotainment State Updated" as InfotainmentStateUpdated
+ProcessCanMsg -[#green]-> InfotainmentStateUpdated: Rx MUSIC_STATE
+InfotainmentStateUpdated -[#green]-> CanMsgProcessed: Forward MUSIC_STATE msg\nto active Thin Client
+InfotainmentStateUpdated: NOTE: Always
+
+
 state "Update Gear value" as UpdateGear
 ProcessCanMsg -[#green]-> UpdateGear: Rx GEAR
 UpdateGear -[#green]-> CanMsgProcessed: Gear value updated
+UpdateGear: NOTE: Only in manual mode
 
 state "Update Throttle input" as ThrottleInput
 ProcessCanMsg -[#green]-> ThrottleInput: Rx THROTTLE_INPUT
 ThrottleInput -[#green]-> CanMsgProcessed: Throttle value updated
+ThrottleInput: NOTE: Only in manual mode
 
 state "Update Brake input" as BrakeInput
 ProcessCanMsg -[#green]-> BrakeInput: Rx BRAKE_INPUT
 BrakeInput -[#green]-> CanMsgProcessed: Brake value updated
+BrakeInput: NOTE: Only in manual mode
 
 state "Update Steering input" as SteeringInput
 SteeringInput: LKAS
 ProcessCanMsg -[#green]-> SteeringInput: Rx STEERING_INPUT
 SteeringInput -[#green]-> CanMsgProcessed: Steering value updated
-
+SteeringInput: NOTE: Only in manual mode
 
 IgnitionUp --> IgnitionTerminate: Startup Failed\n
 
 state "Ignition terminate" as IgnitionTerminate
 IgnitionTerminate: Orderly shutdown
 
-IgnitionReady --> IgnitionTerminate: Sub-Component failed
+IgnitionReady -> IgnitionTerminate: Sub-Component failed
 
-IgnitionTerminate --> [*]: Send CMD_COMPONENT_ERROR(IGNITION|TERMINATED)
+IgnitionTerminate -> [*]: Send CMD_COMPONENT_ERROR(IGNITION|TERMINATED)
 
 @enduml
