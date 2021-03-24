@@ -79,4 +79,17 @@ state "Protected Critical Systems Scenario" as ScenarioCritical {
 
 KioskTerminate --> [*]: Send CMD_COMPONENT_ERROR(KIOSK|TERMINATED)
 
+'@startuml
+'state "Hacker Kiosk Start up" as HackerKioskUp
+'state "Hacker Kiosk Ready" as HackerKioskReady
+'HackerKioskUp: boot OS
+'HackerKioskUp: connect to the network
+'HackerKioskUp: start Kiosk UI app
+'HackerKioskReady: wait for user
+'[*] --> HackerKioskUp: Hacker Kiosk powered up
+'HackerKioskUp -[#blue]-> HackerKioskReady: Success\nSend CMD_COMPONENT_READY(HACKER_KIOSK)
+'@enduml
+
+
+
 @enduml

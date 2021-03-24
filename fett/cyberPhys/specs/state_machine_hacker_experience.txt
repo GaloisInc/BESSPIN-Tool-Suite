@@ -1,0 +1,26 @@
+@startuml
+
+
+state "Hacker Kiosk Welcome Screen" as HackerKioskWelcomeScreen
+
+HackerKioskWelcomeScreen: wait for user
+HackerKioskWelcomeScreen: show welcome screen
+
+[*] --> HackerKioskWelcomeScreen: Hacker Kiosk starts
+
+note left of HackerKioskWelcomeScreen: How to handle Demo mode?
+
+HackerKioskWelcomeScreen --> HackerKioskIntro: User pressed Start/Enter
+
+HackerKioskIntro --> HackTheCar: Read introduction
+
+HackTheCar: Hack the car
+
+HackTheCar --> IntroduceSSITH
+
+IntroduceSSITH --> Conclusion
+
+Conclusion --> HackerKioskWelcomeScreen
+
+
+@enduml
