@@ -18,9 +18,9 @@ Because how light it is, Busybox is just used in the tool for smoke testing proc
 
 Debian is built in the Nix package manager. [The images document](../../SSITH-FETT-Environment/IMAGES.md) provides a high-level description of the build steps. The following binaries are provided in the nix-shell:
 - `$FETT_GFE_DEBIAN_VCU118`: The baseline Debian image for VCU118.
-- `$FETT_GFE_DEBIAN_VCU118_NO_RSYSLOG`: The baseline Debian image for VCU118 with the `rsyslog` service not running. In the `cyberPhys` mode, if the OS is left running for very long time, the service might cause problems because of limited memory. 
+- `$FETT_GFE_DEBIAN_VCU118_NO_RSYSLOG`: The baseline Debian image for VCU118 with the `rsyslog` service not running. In the `cyberPhys` mode, this service causes problems by consuming all the limited disk space. 
 - `$FETT_GFE_DEBIAN_QEMU`: The baseline Debian image for QEMU.
-- `$FETT_GFE_DEBIAN_FIRESIM`: The baseline Debian image for Fireim.
+- `$FETT_GFE_DEBIAN_FIRESIM`: The baseline Debian image for Firesim.
 - `$FETT_GFE_DEBIAN_ROOTFS_FIRESIM`: The rootfs disk image for Firesim.
 
 ---
@@ -41,4 +41,4 @@ FreeBSD is built in the Nix package manager. [The images document](../../SSITH-F
 
 FreeRTOS is built through the tool itself. We use the Galois project [Makefile](../../FreeRTOS/FreeRTOS/Demo/RISC-V_Galois_P1/Makefile) with additional `.mk` and additional environment variables during the `make` execution. The building is mainly performed by the `buildFreeRTOS` function in [build.py](../../fett/target/build.py). Also, some additional headers are specifically defined and generated in the tool. 
 
-Unfortunately, building the FreeRTOS is an involved process, and the easiest thing is to to just use the tool for it. Some future work will permit the user to write their own C file(s) and provide their `.mk` files and the tool will leverage its capabilities to make it happen. 
+Unfortunately, building the FreeRTOS is an involved process, and the easiest thing is to just use the tool for it. Some future work will permit the user to write their own C file(s) and provide their `.mk` files and the tool will leverage its capabilities to make it happen. 

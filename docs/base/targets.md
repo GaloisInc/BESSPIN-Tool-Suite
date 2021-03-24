@@ -8,7 +8,7 @@ In this document, we explain in more details the different supported targets/bac
 
 The target base class is `commonTarget` and is defined in [common.py](../../fett/target/common.py). This class implements the methods that are shared among all types of backends, and depends on defining the lower level methods in backend-specific classes. There is also an `fpgaTarget` class (defined in [fpga.py](../../fett/target/fpga.py)) that has the methods related to having an FPGA, like openining an OpenOCD connection, and starting a GDB process. 
 
-For any target choice, which are `vcu118`, `qemu`, `awsf1`, there is a class that defines the lowest level methods. The `vcu118Target` class, for instance, inherits both `fpgaTarget` and `commonTaret`. While `qemuTarget` only inherits `commonTarget`.
+For any target choice, which are `vcu118`, `qemu`, `awsf1`, there is a class that defines the lowest level methods. The `vcu118Target` class, for instance, inherits both `fpgaTarget` and `commonTarget`. While `qemuTarget` only inherits `commonTarget`.
 
 ---
 
@@ -26,7 +26,7 @@ It is worth mentioning that currently, the tool's default FreeBSD does not have 
 
 ### Setup ###
 
-A GFE SoC on a Xilinx VCU118 FPGA should be accessible, in addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
+A Xilinx VCU118 FPGA should be accessible, in addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
 
 Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to another. Please review the [FPGA host network configuration setup instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md) for more details about the adaptors and IP settings. In case you intend to use a different setup, please change [setupEnv.json](../../fett/base/utils/setupEnv.json) accordingly.
 
