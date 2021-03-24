@@ -32,6 +32,29 @@ cweTests = {
 @decorate.debugWrap
 @decorate.timeWrap
 def executeTest(target, vulClass, binTest, logDir):
+    """
+    Run a CWE test on a Unix OS.
+
+    ARGUMENTS:
+    ----------
+    target : commonTarget
+        Target to run the test on.
+
+    vulClass : String
+        Vulnerability class that the test belongs to.
+
+    binTest : String
+        Binary test file to execute.
+
+    logDir : String
+        Directory to write test output log tile to.
+
+    SIDE-EFFECTS:
+    -------------
+        - Writes test output to <{logDir}/{testName}.log>, where <testName> is
+          <binTest> with the ".riscv" extension removed.
+        - Executes <binTest> on <target>.
+    """
     testName = binTest.split('.')[0]
     printAndLog(f"Executing {testName}...", doPrint=(not isEnabledDict(vulClass,'useSelfAssessment')))
     outLog = cweTests[vulClass](target).executeTest(binTest)
@@ -46,6 +69,47 @@ def executeTest(target, vulClass, binTest, logDir):
 @decorate.debugWrap
 @decorate.timeWrap
 def checkMultitaskingScores(vulClass, multitaskingScores, instance, multitaskingPasses):
+    """
+    Check whether multitasking CWE scores match scores from the sequential test
+    run.
+
+    ARGUMENTS:
+    ----------
+        vulClass : String
+            The vulnerability class to check scores for.
+
+        multitaskingScores : Dict of String to SCORES enum
+            A mapping from CWE number to scores to check against the sequential
+            test run.
+
+        instance: Int
+            The instance number of the multitasking test run the scores in
+            <multitaskingScores> correspond to.
+
+        multitaskingPasses : Dict of String to Int
+            A mapping from test name to the number of instances of that test in
+            multitasking runs that matched the score from the sequential run.
+            Callers should pass the same <multitaskingPasses> dictionary in for
+            each call to <checkMultitaskingScores>.
+
+    SIDE-EFFECTS:
+    -------------
+        - Modifies <multitaskingPasses> with additional score results by
+          either incrementing existing values, or inserting new dictionary
+          entries.
+
+    RETURNS:
+    --------
+        A list of tuples of (String, String, String, SCORES, SCORES, String).
+        Each element of this list represents a multitasking score for an
+        instance of a CWE test. In order, the elements of each tuple are:
+            0. Pretty formatted vulnerability class name.
+            1. Test name.
+            2. Instance number (as a String).
+            3. Sequential score.
+            4. Multitasking score.
+            5. Score text (either "PASS" or "FAIL").
+    """
     results = []
     for cwe, score in getSettingDict("cweScores", vulClass).items():
         if hasMultitaskingException(vulClass, ["testsInfo", f"test_{cwe}"]):
@@ -80,6 +144,31 @@ def checkMultitaskingScores(vulClass, multitaskingScores, instance, multitasking
 
 @decorate.debugWrap
 def appendMultitaskingColumn(vulClass, rows, multitaskingPasses):
+    """
+    Append a column containing multitasking scores to a table.
+
+    ARGUMENTS:
+    ----------
+        vulClass : String
+            The vulnerability class this table contains scores for.
+
+        rows : List of List of String
+            The rows of the table to modify.  Each element represents a row,
+            and each element of each row represents a cell in that row.  The
+            only requirement is that element 0 of each row be a CWE test name.
+
+        multitaskingPasses : Dict of String to Int
+            A mapping from test name to the number of instances of that test in
+            multitasking runs that matched the score from the sequential run.
+            Can be obtained from <checkMultitaskingScores>.
+
+    SIDE-EFFECTS:
+    -------------
+        - Appends an additional String representing the percentage of
+          multitasking tests that passed to the end of each element of <rows>.
+          If the test  does not run under multitasking, this function appends
+          "N/A" to the row.
+    """
     for row in rows:
         testNameParts = row[0].split("-")
         testName = f"test_{'_'.join(testNameParts[1:])}"
@@ -98,6 +187,23 @@ def appendMultitaskingColumn(vulClass, rows, multitaskingPasses):
 
 @decorate.debugWrap
 def printTable(vulClass, table):
+    """
+    Print a score table to the screen, and also log it to disk.
+
+    ARGUMENTS:
+    ----------
+        vulClass : String
+            The vulnerability class this table contains scores for.
+
+        table : List of List of String
+            The table to print and log.  Each element represents a row,
+            and each element of each row represents a cell in that row.
+
+    SIDE-EFFECTS:
+    -------------
+        - Pretty prints <table> to the screen.
+        - Appends pretty printed <table> to <${workDir}/scoreReport.log>.
+    """
     rows = tabulate(table,
                     vulClass,
                     prettyVulClass(vulClass),
@@ -111,12 +217,50 @@ def printTable(vulClass, table):
 @decorate.debugWrap
 @decorate.timeWrap
 def supportsMultitasking(vulClass):
+    """
+    Return whether or not <vulClass> supports multitasking tests.
+
+    ARGUMENTS:
+    ----------
+        vulClass : String
+            The vulnerability class to check multitasking support for.
+
+    RETURNS:
+    --------
+        A boolean representing whether <vulClass> supports multitasking tests.
+    """
     return (isEnabled('runUnixMultitaskingTests') and
             doesSettingExistDict(vulClass, 'supportsMultitasking') and
             isEnabledDict(vulClass, 'supportsMultitasking') and
             not isEnabledDict(vulClass, 'useSelfAssessment'))
 
 def runTests(target, sendFiles=False, timeout=30): #executes the app
+    """
+    Run and score the CWE tests.  Also runs multitasking tests if
+    ${runUnixMultitaskingTests} is enabled.
+
+    ARGUMENTS:
+    ----------
+        target : commonTarget
+            Target to run the tests on.
+
+        sendFiles : Bool
+            Whether to send ${tarballName} to <target> before executing tests.
+
+        timeout : Int
+            Timeout to use when sending ${tarballName}.  Ignored if <sendFiles>
+            is <False>.
+
+    SIDE-EFFECTS:
+    -------------
+        - Executes CWE test binaries on <target>.
+        - If <sendFiles> is <True>, sends ${tarballName} to <target>.
+        - Writes test output logs and score CSVs to ${logDir}.
+        - Prints score tables to terminal.
+        - Writes score report to <${workDir}/scoreReport.log>.
+        - Writes multitasking score report to
+          <${workDir}/multitaskingScoreReport.log>.
+    """
     if isEqSetting('osImage', 'FreeRTOS'):
         test, vulClass, _, logFile = getSetting("currentTest")
         if (isEnabledDict(vulClass,'useSelfAssessment')):
@@ -220,6 +364,21 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
 
 @decorate.debugWrap
 def isTestEnabled(vulClass, testName):
+    """
+    Return whether or not a test is enabled.
+
+    ARGUMENTS:
+    ----------
+        vulClass : String
+            Vulnerability class the test belongs to.
+
+        testName : String
+            Name of the test.
+
+    RETURNS:
+    --------
+        A boolean representing whether <testName> from <vulClass> is enabled.
+    """
     if (getSettingDict(vulClass,'runAllTests')):
         return True
     else:

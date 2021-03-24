@@ -11,6 +11,7 @@ import besspin.base.config
 VUL_CLASSES = ["bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC", "injection"]
 
 class SCORES (enum.Enum):
+    """ An enum representing the possible score values for a CWE test. """
     NINF = -10
     NOT_APPLICABLE = -4
     NOT_IMPLEMENTED = -3
@@ -24,6 +25,13 @@ class SCORES (enum.Enum):
     INF = 10
 
     def __str__ (self): #to replace '_' by '-' when printing
+        """
+        Convert this SCORE to a String.
+
+        RETURNS:
+        --------
+            A string representation of this score.
+        """
         if (self.name == "NOT_IMPLEMENTED"):
             return "NoImpl"
         elif (self.name == "NOT_APPLICABLE"):
@@ -32,19 +40,64 @@ class SCORES (enum.Enum):
             return "%s" % self.name.replace('_','-')
 
     def __lt__(self, other):
+        """
+        Less than operator.
+
+        ARGUMENTS:
+        ----------
+            other : SCORE
+                Score to compare against.
+
+        RETURNS:
+        --------
+            True iff the integer value of <self> is less than the integer value
+            of <other>.
+        """
         if (str(self.__class__) == str(other.__class__)):
             return self.value < other.value
         logAndExit (f"SCORES: __lt__ not implemented for inputs of type {type(self)} and {type(other)}.",exitCode=EXIT.Dev_Bug)
 
     def __gt__(self, other):
+        """
+        Greater than operator.
+
+        ARGUMENTS:
+        ----------
+            other : SCORE
+                Score to compare against.
+
+        RETURNS:
+        --------
+            True iff the integer value of <self> is greater than the integer
+            value of <other>.
+        """
         if (str(self.__class__) == str(other.__class__)):
             return self.value > other.value
         logAndExit (f"SCORES: __lt__ not implemented for inputs of type {type(self)} and {type(other)}.",exitCode=EXIT.Dev_Bug)
 
     def __len__(self):
+        """
+        Get the length of this SCORE.
+
+        RETURNS:
+        --------
+            The length of the string representation of this score.
+        """
         return len(str(self))
 
     def minScore (scoreList): #Note that no need for 'self' here; it's used as a function
+        """
+        Get the lowest score in a list of scores.
+
+        ARGUMENTS:
+        ----------
+            scoreList : List of SCORES
+                List of scores to find the minimum of.
+
+        RETURNS:
+        --------
+            The lowest SCORES object in <scoreList>.
+        """
         minScore = SCORES.INF
         for xScore in scoreList:
             if (xScore < minScore):
@@ -52,6 +105,18 @@ class SCORES (enum.Enum):
         return minScore
 
     def avgScore (scoreList): #Always floors
+        """
+        Return the floor of the average of a list of scores.
+
+        ARGUMENTS:
+        ----------
+            scoreList : List of SCORES
+                List of scores to compute the average over.
+
+        RETURNS:
+        --------
+            The lowest SCORES object in <scoreList>.
+        """
         sumScores = 0
         for xScore in scoreList:
             sumScores += xScore.value
@@ -59,10 +124,61 @@ class SCORES (enum.Enum):
         return SCORES(avgValue)
 
     def toScore (strScore):
+        """
+        Convert a string representation of a score to a SCORES object.
+
+        ARGUMENTS:
+        ----------
+            strScore : String
+                String to convert to a SCORES object.
+
+        RETURNS:
+        --------
+            A SCORES object corresponding to <strScore>.
+        """
         return SCORES[getSettingDict('cwesAssessments',[strScore])]
 
 @decorate.debugWrap
 def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreReport.log"):
+    """
+    Score all test logs in a given directory.
+
+    ARGUMENTS:
+    ----------
+        vulClass : String
+            Vulnerability class to score.
+
+        logsDir : String
+            Directory of log files to score.
+
+        title : String
+            Title to use for score output table.
+
+        doPrint : Boolean
+            Whether to print score results to the screen.
+
+        reportFileName : String
+            File to append score tables to.
+
+    SIDE-EFFECTS:
+    -------------
+        - Appends score tables to ${workDir}/<reportFileName>.
+        - Writes CSV score file to <logsDir>/scores.csv.
+        - Writes INI config file to <logsDir>/<vulClass>.ini.
+        - If ${runningMultitaskingTests} is disabled, stores scores in
+          ${cweScores}[<vulClass>].  These scores are a dictionary from CWE
+          name to SCORES object.
+        - If <doPrint> is <True>, prints a score table to the screen.
+
+    RETURNS:
+    --------
+        A tuple of (Dictionary of String to SCORES, List of String).  In order,
+        the elements of this tuple are:
+            0. A mapping from CWE names to SCORES the tests for those CWEs
+               received.
+            1. The cells of the score table.  Each element represents a row,
+               and each element of each row represents a cell in that row.
+    """
     reportFilePath = os.path.join(getSetting("workDir"), reportFileName)
     csvPath = os.path.join(logsDir, "scores.csv")
     iniPath = os.path.join(logsDir, f"{vulClass}.ini")
@@ -117,6 +233,29 @@ def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreRepo
 
 @decorate.debugWrap
 def tabulate(elements, vulClass, title, hasMultitaskScores):
+    """
+    Render a two dimensional list as an ASCII table.
+
+    ARGUMENTS:
+    ----------
+        elements : List of List of String
+            The rows of the table to render.  Each element represents a row,
+            and each element of each row represents a cell in that row.
+
+        vulClass : String
+            The vulnerability class the scores in this table belong to.
+
+        title : String
+            The title to add to the top of the table.
+
+        hasMultitaskScores : Boolean
+            Whether or not the <elements> contains a column at the end
+            consisting of multitasking scores.
+
+    RETURNS:
+    --------
+        A list of strings where each element represents one line in the output.
+    """
     table = []
 
     headers = ["TEST","Score","Notes"]
@@ -154,6 +293,43 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
 @decorate.debugWrap
 def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False,
                 customSeparations=None,horizSeparator='-'):
+    """
+    Render a line in an ASCII table.
+
+    ARGUMENTS:
+    ----------
+        elements : List of String
+            A single row of a table.  Each element represents a cell in the
+            row.  This argument is ignored if either <drawLine> or
+            <drawSeparation> is True.  Otherwise, <elements> must contain the
+            same number of elements as <widthCols>.
+
+        widthCols : List of Int
+            The width in characters of each cell in the ASCII representation of
+            the table.
+
+        drawLine : Boolean
+            Whether to render a line consisting solely of "-".
+
+        drawSeparation : Booean
+            Whether to draw a separator line, such as between rows.  This has
+            no effect if <drawLine> is True.
+
+        customSeparations : Optional List of Boolean
+            If <drawSeparation> is True, this parameter controls whether to
+            draw <horizSeparator> for each column in the row.  The list should
+            be the same length as <widthCols>.  Passing <None> for this
+            parameter is equivalent to passing a list consisting of <True> for
+            every element.
+
+        horizSeparator : String
+            If <drawSeparation> is True, this parameter specifies the character
+            to use when drawing the horizontal separator.
+
+    RETURNS:
+    --------
+        A string rendering of <elements>.
+    """
     def centralize (msg, width):
         if (len(msg)>width):
             return '|' + msg[:width]
@@ -179,7 +355,22 @@ def tabulate_row(elements,widthCols,drawLine=False,drawSeparation=False,
 
 @decorate.debugWrap
 def customScorePart (lines): #should return: NINF (for PASS), DETECTED, or NONE (for prevented)
-    
+    """
+    Score a test part as specified in the ${customizedScoring} config section.
+    If ${customizedScoring}[${useCustomFunction}] is enabled, the custom
+    scoring function will be used and all other custom scoring options will be
+    ignored.  Otherwise, the score will be computed using the other settings in
+    ${customizedScoring}.
+
+    ARGUMENTS:
+    ----------
+        lines : List of String
+            Output from running the test part.
+
+    RETURNS:
+    --------
+        A SCORES instance representing the custom score.
+    """
     #checking custom function -- it overrides the other options.
     if (isEnabledDict('customizedScoring','useCustomFunction')): #use custom function
         customScorerFuncOut = os.path.join(getSetting('workDir'),'customScorerFunction.out')
@@ -233,6 +424,27 @@ def customScorePart (lines): #should return: NINF (for PASS), DETECTED, or NONE 
 
 @decorate.debugWrap
 def adjustToCustomScore (lines,defaultScore):
+    """
+    If ${useCustomScoring} is enabled, this function custom scores a test and
+    returns the lower score between the custom and default score.  If
+    ${useCustomScoring} is disabled, this function returns the default score.
+
+    ARGUMENTS:
+    ----------
+        lines : List of String
+            Log output from the test.
+
+        defaultScore : SCORES
+            Default test score.
+
+    RETURNS:
+    --------
+        If ${useCustomScoring} is enabled:
+            - Returns whichever is lower between the custom score and
+              <defaultScore>.
+        Else:
+            - Returns <defaultScore>.
+    """
     if (not isEnabled('useCustomScoring')):
         return defaultScore
     customScore = customScorePart(lines)
@@ -244,6 +456,18 @@ def adjustToCustomScore (lines,defaultScore):
         return defaultScore
 
 def prettyVulClass(vulClass):
+    """
+    Pretty format a vulnerability class string.
+
+    ARGUMENTS:
+    ----------
+        vulClass : String
+            Vulnerability class to pretty format.
+
+    RETURNS:
+    --------
+        A pretty formatted representation of <vulClass>.
+    """
     caps = list(filter(lambda c: c.isupper(), vulClass))
     iFirstCap = vulClass.find(caps[0]) if(caps) else -1
     if (iFirstCap<=0):

@@ -9,6 +9,33 @@ import besspin.target.launch
 @decorate.debugWrap
 @decorate.timeWrap
 def runFreeRTOSCwesEvaluation():
+    """
+    Run the CWEs evaluation on FreeRTOS.  This function will run all enabled
+    tests and score the results.
+
+    SIDE-EFFECTS:
+    -------------
+        - Compiles CWE tests.
+        - Executes CWE test binaries on <target>.
+        - For each enabled test, sets ${isThereAReasonToBoot} based on whether
+          the test's vulnerability class has ${useSelfAssessment} enabled.
+        - For each test part, sets ${currentTest} to a tuple of type
+          (String, String, Int, String).  In order, these elements are:
+            0. The test's C file.
+            1. The vulnerability class the test belongs to.
+            2. The part of the test to execute.
+            3. The log file to write test output to.
+        - If running on <awsf1> or <vcu118>, flashes the FPGA between each test
+          part run.
+        - Boots FreeRTOS on the target for each test part run.
+        - If ${useCustomScoring} is enabled or the target has GDB access,
+          this function reads GDB output and appends it to the test logs.
+        - Writes test output logs and score CSVs to ${logDir}.
+        - Prints score tables to terminal.
+        - Writes score report to <${workDir}/scoreReport.log>.
+        - Writes multitasking score report to
+          <${workDir}/multitaskingScoreReport.log>.
+    """
     printAndLog (f"Launching BESSPIN <{getSetting('mode')} mode>...")
     baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
     mkdir(baseLogDir, addToSettings="cwesEvaluationLogs")
