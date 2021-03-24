@@ -13,7 +13,7 @@ the meaning of every parameter and the possible values/types. Please note the fo
   - Keep the comments on separate lines from values. Order of
     parameters does not matter.
   - Section headers are required and they are between square brackets.
-  - Parameters names and string values are treated as case sensitive. The only exception is boolean parameters; you can use 0/1, False/True, Yes/No [all case insensitive].
+  - Parameter names and string values are treated as case sensitive. The only exception is boolean parameters; you can use 0/1, False/True, Yes/No [all case insensitive].
 
 The configuration(s) is loaded in [config.py](../../fett/base/config.py) and the dictionary of the sections, parameter names, supported data types, value ranges and choices, and conditions are listed in [configData.json](../../fett/base/utils/configData.json).
 
