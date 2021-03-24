@@ -32,7 +32,7 @@ Note that the name of the ethernet adaptor connected to the VCU118 might change 
 
 ### Design ###
 
-The SSITH GFE SoC, a block diagram of which is shown below, is designed to run in emulation on a Xilinx VCU118 Virtex UltraScale+ FPGA development board. The VCU118 was chosen for its high programmable logic capacity, as the SSITH modifications to the RISC-V processors must be able to run within the GFE SoC despite having (in some cases significant) additional logic; it is also one of the few high-end Xilinx development boards that does not have an ARM processor on-board, because it was deemed important to ensure that the only general-purpose processor within the GFE would be the emulated RISC-V processor.
+The SSITH GFE SoC, a block diagram of which is shown below, is designed to run in emulation on a Xilinx VCU118 Virtex UltraScale+ FPGA development board. The VCU118 was chosen for its high programmable logic capacity, as the SSITH modifications to the RISC-V processors must be able to run within the GFE SoC despite having (in some cases significant) additional logic.
 
 <img src="../.figures/gfe-diagram.png" width=700 align=middle>
 
