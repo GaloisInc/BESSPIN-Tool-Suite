@@ -1,0 +1,23 @@
+@startuml
+== Get stack address ==
+hack.py -> Server: Send malicious filename
+Server -> hack.py: Leak stack address
+
+== Change secret key ==
+hack.py -> Server: Send malicious payload as filename
+Server -> hack.py: Filename set (and secret key has changed)
+
+== Regular operation ==
+hack.py -> Server: Send real filename
+Server -> hack.py: Filename set
+
+hack.py -> Server: Send file
+Server -> hack.py: File uploaded
+
+hack.py -> Server: Send signature
+Server -> hack.py: Signature uploaded, respond if validation passed
+
+== Run file if validation passed ==
+
+
+@enduml
