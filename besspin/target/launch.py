@@ -16,6 +16,7 @@ from besspin.cwesEvaluation.common import runTests
 from besspin.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation
 from besspin.cwesEvaluation.utils.checkValidScores import checkValidScores
 from besspin.cwesEvaluation.utils.computeBesspinScale import computeBesspinScale
+from besspin.cwesEvaluation.utils.computeNaiveCWEsTally import computeNaiveCWEsTally
 from besspin.cyberPhys.build import buildCyberPhys
 from besspin.cyberPhys.run import runCyberPhys
 import besspin.cyberPhys.launch
@@ -264,7 +265,10 @@ def endBesspin (xTarget,isDeadProcess=False):
         printAndLog(f"Artifacts tarball uploaded to S3.")
     elif (isEqSetting('mode', 'evaluateSecurityTests')):
         checkValidScores()
-        computeBesspinScale()
+        if (isEnabled('computeNaiveCWEsTally')):
+            computeNaiveCWEsTally()
+        if (isEnabled('computeBesspinScale')):
+            computeBesspinScale()
 
 """ This resets the target without changing the .img + without deployment tests """
 @decorate.debugWrap

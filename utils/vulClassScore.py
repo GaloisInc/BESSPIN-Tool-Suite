@@ -15,6 +15,7 @@ def main(xArgs):
     from besspin.cwesEvaluation.scoreTests import scoreTests, prettyVulClass
     from besspin.cwesEvaluation.utils.checkValidScores import checkValidScores
     from besspin.cwesEvaluation.utils.computeBesspinScale import computeBesspinScale
+    from besspin.cwesEvaluation.utils.computeNaiveCWEsTally import computeNaiveCWEsTally
 
     logFile = os.path.join(workDir,'vulClassScore.log')
     try:
@@ -59,7 +60,9 @@ def main(xArgs):
         scoreTests (xArgs.vulClass, os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass),prettyVulClass(xArgs.vulClass))
     checkValidScores()
 
-    if (not xArgs.disableBesspinScale):
+    if (isEnabled('computeNaiveCWEsTally')):
+        computeNaiveCWEsTally()
+    if (isEnabled('computeBesspinScale')):
         computeBesspinScale()
 
 if __name__ == '__main__':
@@ -68,7 +71,6 @@ if __name__ == '__main__':
     xArgParser.add_argument ('-c', '--configFile', help='Overwrites the default config file: ./config.ini')
     xArgParser.add_argument ('-v', '--vulClass', help='Single vulnerability class to score. Default is <all>',default="all")
     xArgParser.add_argument ('-d', '--debug', help='Enable debugging mode.', action='store_true')
-    xArgParser.add_argument ('-nbs', '--disableBesspinScale', help='Disable BESSPING Scale.', action='store_true')
 
     xArgs = xArgParser.parse_args()
     main(xArgs)

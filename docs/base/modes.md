@@ -15,7 +15,8 @@ This the mode of running the CWEs evaluation tests. The [CWEs readme](../cwesEva
 - `startBesspin` returns, and `endBesspin` is called, which does the following:
     - Unix-only: Shuts down the OS, and tears down all relevant processes.
     - GFE-mode-only: Checks that the scores are valid, i.e., the scores are as expected when the tests run on a baseline non-secure processor.
-    - The BESSPIN scale is computed. In case not all of the tests have run, partial categories scores are returned. More details are in the [BESSPIN Scale document](../cwesEvaluation/BESSPIN-Scale.pdf).
+    - If enabled, the naïve CWEs tally score is calculated. In case not all of the tests have run, only the classes with a full set of tests are reported. More details are in the [BESSPIN philosophy document](../cwesEvaluation/besspinPhilosophy.md).
+    - If enabled, the BESSPIN scale is computed. In case not all of the tests have run, partial categories scores are returned. More details are in the [BESSPIN Scale document](../cwesEvaluation/BESSPIN-Scale.pdf).
 - `endBesspin` returns, and the tool exits.
 
 ### FreeRTOS ###
