@@ -1,12 +1,6 @@
 #! /usr/bin/env python3
 """  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 scoring the CWEs
-- UNKNOWN: One of the following:
-    -- FAIL: the test did not run or could not be parsed or any other weird error.
-    -- CALL-ERR: call error to the sys call or module needed for that test
-    -- DoS: The test is denied though didn't breach yet. Impractical hardware.
-- SCALE: NONE (no weakness) -> LOW ->MED -> HIGH
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 import os, glob, sys
 from importlib.machinery import SourceFileLoader
@@ -16,11 +10,10 @@ import fett.base.config
 
 class SCORES (enum.Enum):
     NINF = -10
-    NOT_APPLICABLE = -7
-    NOT_IMPLEMENTED = -6
-    UNKNOWN = -5
-    INVALID = -4
-    FAIL = -3
+    NOT_APPLICABLE = -5
+    NOT_IMPLEMENTED = -4
+    INVALID = -3
+    FAIL = -2
     CALL_ERR = -1
     HIGH = 0
     MED = 1
