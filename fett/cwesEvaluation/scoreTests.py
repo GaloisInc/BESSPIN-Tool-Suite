@@ -65,25 +65,7 @@ class SCORES (enum.Enum):
         return SCORES(avgValue)
 
     def toScore (strScore):
-        # Let's be explicit and use a hardcoded 1:1 mapping
-        mapToScores = {
-            'HIGH' : SCORES.HIGH,
-            'MED' : SCORES.MED,
-            'LOW' : SCORES.LOW,
-            'NONE' : SCORES.NONE,
-            'DETECTED' : SCORES.DETECTED,
-            'NA' : SCORES.NOT_APPLICABLE,
-            'NoImpl' : SCORES.NOT_IMPLEMENTED,
-            'UNKNOWN' : SCORES.UNKNOWN
-        }
-        if (strScore not in mapToScores):
-            logAndExit(f"toScore: The string <{strScore}> is not mapped to any score.",exitCode=EXIT.Dev_Bug)
-        cwesAssessmentsSet = set(getSetting('cwesAssessments'))
-        cwesAssessmentsSet.add('NoImpl') #Add the exception (known divergence)
-        if (set(mapToScores.keys()) != cwesAssessmentsSet):
-            logAndExit(f"toScore: The mapping in this function has to match the <cwesAssessments> allowed strings",
-                exitCode=EXIT.Dev_Bug) #This should prevent both structures from diverging
-        return mapToScores[strScore]
+        return SCORES[getSettingDict('cwesAssessments',[strScore])]
 
 @decorate.debugWrap
 def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreReport.log"):

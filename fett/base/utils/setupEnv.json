@@ -363,8 +363,17 @@
         },
         {
             "name" : "cwesAssessments",
-            "type" : "stringsList",
-            "val" : "[HIGH, MED, LOW, NONE, DETECTED, NA, UNKNOWN]"
+            "type" : "dict",
+            "val" : {
+                "HIGH" : "HIGH",
+                "MED" : "MED",
+                "LOW" : "LOW",
+                "NONE" : "NONE",
+                "DETECTED" : "DETECTED",
+                "NA" : "NOT_APPLICABLE",
+                "NoImpl" : "NOT_IMPLEMENTED",
+                "UNKNOWN" : "UNKNOWN"
+            }
         },
         {
             "name" : "cweTestTemplateFreeRTOS",
