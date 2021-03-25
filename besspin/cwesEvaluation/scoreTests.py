@@ -8,6 +8,8 @@ import enum, re
 from besspin.base.utils.misc import *
 import besspin.base.config
 
+VUL_CLASSES = ["bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC", "injection"]
+
 class SCORES (enum.Enum):
     NINF = -10
     NOT_APPLICABLE = -4
