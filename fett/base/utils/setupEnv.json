@@ -371,8 +371,7 @@
                 "NONE" : "NONE",
                 "DETECTED" : "DETECTED",
                 "NA" : "NOT_APPLICABLE",
-                "NoImpl" : "NOT_IMPLEMENTED",
-                "UNKNOWN" : "UNKNOWN"
+                "NoImpl" : "NOT_IMPLEMENTED"
             }
         },
         {

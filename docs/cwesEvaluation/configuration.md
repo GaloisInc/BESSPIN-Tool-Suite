@@ -90,7 +90,7 @@ This is chosen by switching
 ## Vulnerability Classes 
 
 In each vulnerability class section, two settings can be configured:
-  1. `useSelfAssessment`: If enabled, then instead of running tests for this class, the scores will be loaded from the corresponding INI configuration file in `${CWEsConfigs}`. This is useful in calculating the BESSPIN Scale; especially in case of incremental runs. In the `selfAssessment` section in the INI file in `${CWEsConfigs}`, you may assign any values out of *HIGH, MED, LOW, NONE, DETECTED, NA, UNKNOWN*.
+  1. `useSelfAssessment`: If enabled, then instead of running tests for this class, the scores will be loaded from the corresponding INI configuration file in `${CWEsConfigs}`. This is useful in calculating the BESSPIN Scale; especially in case of incremental runs. In the `selfAssessment` section in the INI file in `${CWEsConfigs}`, you may assign any values out of *HIGH, MED, LOW, NONE, DETECTED, NA*.
   2. `runAllTests`: Either run all the existing tests for this class, or
     use the customized INI file in `${CWEsConfigs}` to choose which ones to run.
     Please note that you can use the utility [configCWEs.py](../../utils/configCWEs.py)
