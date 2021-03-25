@@ -216,6 +216,14 @@
             "type" : "boolean"
         },
         {
+            "name" : "computeNaiveCWEsTally",
+            "type" : "boolean"
+        },
+        {
+            "name" : "computeBesspinScale",
+            "type" : "boolean"
+        },
+        {
             "name" : "FreeRTOStimeout",
             "type" : "int",
             "min" : 0
