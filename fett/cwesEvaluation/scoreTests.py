@@ -21,7 +21,6 @@ class SCORES (enum.Enum):
     UNKNOWN = -5
     INVALID = -4
     FAIL = -3
-    DOS = -2
     CALL_ERR = -1
     HIGH = 0
     MED = 1
