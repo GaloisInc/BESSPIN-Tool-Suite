@@ -70,25 +70,25 @@ def computeBesspinScale():
         vulClassesScores[vulClass]["sigma(beta(C)*S(C))"] = 0
         for category,cData in besspinCoeffs[vulClass].items():
             # category score
-            try:
-                cScore = []
-                for cwe in cData["cwes"]:
-                    if (cwe not in normalizedScores[vulClass]):
-                        cweInfo = getSettingDict(vulClass,["testsInfo",f"test_{cwe}"])
-                        if (("besspinScaleException" in cweInfo) and (getSetting("osImage") in cweInfo["besspinScaleException"])):
-                            printAndLog(f"computeBesspinScale: CWE-{cwe} not found, but it is an exception. Skipping.",
-                                doPrint=False)
-                            continue
-                        raise Exception(f"CWE-{cwe} score not found.")
-                    if (normalizedScores[vulClass][cwe] is None): #skip it
+            cScore = []
+            for cwe in cData["cwes"]:
+                if (cwe not in normalizedScores[vulClass]):
+                    cweInfo = getSettingDict(vulClass,["testsInfo",f"test_{cwe}"])
+                    if (("besspinScaleException" in cweInfo) and (getSetting("osImage") in cweInfo["besspinScaleException"])):
+                        printAndLog(f"computeBesspinScale: CWE-{cwe} not found, but it is an exception. Skipping.",
+                            doPrint=False)
                         continue
-                    cScore.append(normalizedScores[vulClass][cwe])
-                if (len(cScore) == 0):
-                    raise Exception(f"No CWEs scores are found.")
-                besspinCoeffs[vulClass][category]["S(C)"] = sum(cScore) / len(cScore)
-            except Exception as exc:
-                errorAndLog(f"computeBesspinScale: Failed to compute <S({category})> in <{vulClass}>.",exc=exc)
+                    errorAndLog(f"computeBesspinScale: Failed to compute <S({category})> in <{vulClass}>. "
+                        f"CWE-{cwe} score not found.")
+                    return
+                if (normalizedScores[vulClass][cwe] is None): #skip it
+                    continue
+                cScore.append(normalizedScores[vulClass][cwe])
+            if (len(cScore) == 0):
+                errorAndLog(f"computeBesspinScale: Failed to compute <S({category})> in <{vulClass}>. "
+                    f"No CWEs scores are found.")
                 return
+            besspinCoeffs[vulClass][category]["S(C)"] = sum(cScore) / len(cScore)
 
             # category besspin coefficient (beta)
             try:
