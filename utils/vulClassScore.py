@@ -10,7 +10,7 @@ def main(xArgs):
 
     # Let's do this ugly workaround to have this utility use the tool, but not to be part of the tool
     sys.path.insert(0, repoDir)
-    from besspin.base.utils.misc import trashCanObj, exitPeacefully, setSetting, getSetting, exitBesspin, EXIT
+    from besspin.base.utils.misc import trashCanObj, exitPeacefully, setSetting, getSetting, isEnabled, exitBesspin, EXIT
     from besspin.base.config import loadConfiguration
     from besspin.cwesEvaluation.scoreTests import scoreTests, prettyVulClass
     from besspin.cwesEvaluation.utils.checkValidScores import checkValidScores
