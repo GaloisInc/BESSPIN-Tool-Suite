@@ -446,10 +446,12 @@ def loadSecurityEvaluationConfiguration (xConfig,configData):
             for xAssessment in configCWEs.options(CWES_SELF_ASSESSMENT_SECTION):
                 if (xAssessment.startswith("assessment_")):
                     dictSelfAssessmentCWEs[xAssessment] = configCWEs.get(CWES_SELF_ASSESSMENT_SECTION,xAssessment)
-                    if (dictSelfAssessmentCWEs[xAssessment] not in getSetting('cwesAssessments')):
+                    legalValues = list(getSetting('cwesAssessments').keys())
+                    legalValues.remove("NoImpl") #special case: NoImpl is for internal use only
+                    if (dictSelfAssessmentCWEs[xAssessment] not in legalValues):
                         logAndExit(f"ValueError in reading <{configCWEsPath}>. Illegal value for <{xAssessment}> "
                             f"in section [{CWES_SELF_ASSESSMENT_SECTION}]. Value has to be in "
-                            f"[{','.join(getSetting('cwesAssessments'))}]", exitCode = EXIT.Configuration)
+                            f"[{','.join(legalValues)}]", exitCode = EXIT.Configuration)
             setSettingDict(vulClass,'selfAssessment',dictSelfAssessmentCWEs)
 
         # Load custom dev options (setupEnv.json)
