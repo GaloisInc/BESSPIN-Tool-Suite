@@ -1,7 +1,7 @@
 # Computes the BESSPIN Scale
 
 from besspin.base.utils.misc import *
-from besspin.cwesEvaluation.scoreTests import SCORES, tabulate_row, prettyVulClass
+from besspin.cwesEvaluation.scoreTests import VUL_CLASSES, SCORES, tabulate_row, prettyVulClass
 from math import isclose
 
 normalizingScoresTable = {
@@ -60,7 +60,7 @@ def computeBesspinScale():
 
     # Computations
     besspinCoeffs = safeLoadJsonFile(getSetting('besspinCoeffs'))
-    vulClassesScores = {vulClass:{} for vulClass in besspinCoeffs.keys() if not vulClass.startswith('_')}
+    vulClassesScores = {vulClass:{} for vulClass in VUL_CLASSES}
     B_SigSigBS = 0 # B numerator
     B_SigSigB = 0 # B denominator
     for vulClass in getSetting("vulClasses"):
