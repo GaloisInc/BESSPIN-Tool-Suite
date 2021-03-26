@@ -4,7 +4,7 @@
 * Name: python/canspecs.py
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 18 March 2021
+* Date: 26 March 2021
 * This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
 * Version hash: f50e0a68352312d07b0ce23fc3a46a33
 */
@@ -15,7 +15,7 @@
 // gear
 // Type: uint8_t
 // Sender: ECU
-// Receiver: ignition
+// Receiver: Ignition
 // Bounds/Range: P, R, N, D
 // Units: N/A
 // J1939 compatible: YES
@@ -28,7 +28,7 @@
 // throttle_input
 // Type: uint8_t
 // Sender: ECU
-// Receiver: ignition
+// Receiver: Ignition
 // Bounds/Range: 0/100
 // Units: %
 // J1939 compatible: YES
@@ -41,7 +41,7 @@
 // brake_input
 // Type: uint8_t
 // Sender: ECU
-// Receiver: ignition
+// Receiver: Ignition
 // Bounds/Range: 0/100
 // Units: %
 // J1939 compatible: YES
@@ -54,7 +54,7 @@
 // steering_input
 // Type: int8_t
 // Sender: ECU
-// Receiver: ignition
+// Receiver: Ignition
 // Bounds/Range: -100..100
 // Units: N/A
 // J1939 compatible: YES
@@ -66,7 +66,7 @@
 
 // fuel
 // Type: uint8_t
-// Sender: ignition
+// Sender: Ignition
 // Receiver: Infotainment Thin Client
 // Bounds/Range: 0/100
 // Units: %
@@ -79,7 +79,7 @@
 
 // car_x
 // Type: float
-// Sender: ignition
+// Sender: Ignition
 // Receiver: Infotainment Thin Client
 // Bounds/Range: N/A
 // Units: m
@@ -91,7 +91,7 @@
 
 // car_y
 // Type: float
-// Sender: ignition
+// Sender: Ignition
 // Receiver: Infotainment Thin Client
 // Bounds/Range: N/A
 // Units: m
@@ -103,7 +103,7 @@
 
 // car_z
 // Type: float
-// Sender: ignition
+// Sender: Ignition
 // Receiver: Infotainment Thin Client
 // Bounds/Range: N/A
 // Units: m
@@ -115,7 +115,7 @@
 
 // car_r
 // Type: float
-// Sender: ignition
+// Sender: Ignition
 // Receiver: Infotainment Thin Client
 // Bounds/Range: N/A
 // Units: m
@@ -137,7 +137,7 @@
 #define CAN_ID_BUTTON_PRESSED 0XAAFECA00
 #define BYTE_LENGTH_BUTTON_PRESSED 1
 
-// music_state
+// infotainment_state
 // Type: uint8_t
 // Sender: Infotainment Server
 // Receiver: Infotainment Thin Client
@@ -146,12 +146,12 @@
 // J1939 compatible: No
 //
 // Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
-#define CAN_ID_MUSIC_STATE 0XAA2FEEF2
-#define BYTE_LENGTH_MUSIC_STATE 1
+#define CAN_ID_INFOTAINMENT_STATE 0XAA2FEEF2
+#define BYTE_LENGTH_INFOTAINMENT_STATE 1
 
 // heartbeat_req
 // Type: uint32_t
-// Sender: Admin PC
+// Sender: FETT Tool
 // Receiver: All
 // Bounds/Range: N/A
 // Units: N/A
@@ -164,7 +164,7 @@
 // heartbeat_ack
 // Type: [uint32_t]
 // Sender: All
-// Receiver: Admin PC
+// Receiver: FETT Tool
 // Bounds/Range: N/A
 // Units: N/A
 // J1939 compatible: No
@@ -200,7 +200,7 @@
 // cmd_active_scenario
 // Type: uint8_t
 // Sender: Hacker kiosk
-// Receiver: ignition
+// Receiver: Ignition
 // Bounds/Range: N/A
 // Units: N/A
 // J1939 compatible: No
@@ -209,17 +209,17 @@
 #define CAN_ID_CMD_ACTIVE_SCENARIO 0XAAFEEB02
 #define BYTE_LENGTH_CMD_ACTIVE_SCENARIO 1
 
-// cmd_led_seq
+// cmd_hack_active
 // Type: uint8_t
 // Sender: Hacker kiosk
-// Receiver: ignition
+// Receiver: Ignition
 // Bounds/Range: N/A
 // Units: N/A
 // J1939 compatible: No
 //
-// Led sequence ID (uint8_t)
-#define CAN_ID_CMD_LED_SEQ 0XAAFEEB03
-#define BYTE_LENGTH_CMD_LED_SEQ 1
+// Hack ID (uint8_t)
+#define CAN_ID_CMD_HACK_ACTIVE 0XAAFEEB03
+#define BYTE_LENGTH_CMD_HACK_ACTIVE 1
 
 // cmd_restart
 // Type: uint32_t
@@ -232,5 +232,17 @@
 // Component ID / sender IP address (uint32_t)
 #define CAN_ID_CMD_RESTART 0XAAFEEB04
 #define BYTE_LENGTH_CMD_RESTART 4
+
+// cmd_scenario_not_available
+// Type: uint8_t
+// Sender: FETT Tool
+// Receiver: Hacker kiosk
+// Bounds/Range: N/A
+// Units: N/A
+// J1939 compatible: No
+//
+// Scenario ID (uint8_t)
+#define CAN_ID_CMD_SCENARIO_NOT_AVAILABLE 0XAAFEEB05
+#define BYTE_LENGTH_CMD_SCENARIO_NOT_AVAILABLE 1
 
 #endif

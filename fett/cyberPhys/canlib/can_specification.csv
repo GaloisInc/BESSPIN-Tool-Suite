@@ -8,7 +8,7 @@ CAN ID,Type,Field Name,Sender,Receiver,Bounds/Range,Byte Length,Units,J1939?,PGN
 0XAAFEADF6,float,car_y,Ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display y coordinate,
 0XAAFEAABF,float,car_z,Ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display z coordinate,
 0XAACDAD11,float,car_r,Ignition,Infotainment Thin Client,N/A,4,m,no,,infotainment position of car to display r rotation,
-0XAAFECA00,uint8_t,button_pressed,Infotainment Thin Client,Infotainment Server,N/A,1,N/A,No,,Button pressed on infotainment screen.0x01 Station 1 0x02 Station 2 0x03 station 3  0x10 volume down  0x11 volume up,
+0XAAFECA00,uint8_t,button_pressed,Infotainment Thin Client,Infotainment Server,N/A,1,N/A,No,,Button pressed on infotainment screen.0x01 Station 1 0x02 Station 2 0x03 station 3  0x10 volume down  0x11 volume up,Separate network
 0XAA2FEEF2,uint8_t,infotainment_state,Infotainment Server,Infotainment Thin Client,N/A,1,N/A,No,,Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume,
 0XAABEA737,uint32_t,heartbeat_req,FETT Tool,All,N/A,4,N/A,No,,Heartbeat request number (uint32_t),
 0XAABEA225,[uint32_t],heartbeat_ack,All,FETT Tool,N/A,8,N/A,No,,Component ID / sender IP address (uint32_t) | heartbeat request number (uint32_t),
