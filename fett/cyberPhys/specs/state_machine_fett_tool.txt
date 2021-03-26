@@ -23,6 +23,8 @@ FettToolBootError --> FettToolTerminate: Target(s) reboot failed
 
 FettToolBooted --> FettToolReady: Send CMD_COMPONENT_READY(FETT_TOOL)
 
+FettToolReady --> FettToolReady: Periodically\nsend CMD_COMPONENT_READY(FETT_TOOL)
+
 state "FETT Tool Target Error" as FettToolTargetError
 FettToolTargetError: OS boot error
 FettToolTargetError: network error

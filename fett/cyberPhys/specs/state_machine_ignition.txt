@@ -12,7 +12,8 @@ IgnitionLedInitFailed: Log error and continue
 
 IgnitionLedInitFailed --> IgnitionReady: Send CMD_COMPONENT_ERROR(FADECANDY|NONCRITICAL)\nSend CMD_COMPONENT_READY(IGNITION)
 
-IgnitionUp --> IgnitionReady: Success\nSend CMD_COMPONENT_READY(IGNITION)
+IgnitionUp -[#blue]-> IgnitionReady: Success\nSend CMD_COMPONENT_READY(IGNITION)
+note left of IgnitionReady: Periodically\nsend CMD_COMPONENT_READY(IGNITION)
 state "Ignition Ready" as IgnitionReady
 IgnitionReady: BeamNG up
 IgnitionReady: HUD/Dashboard up
