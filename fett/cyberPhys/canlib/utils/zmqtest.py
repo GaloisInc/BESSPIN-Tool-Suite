@@ -4,7 +4,7 @@
 # 2) python3 ./zmqtest.py
 #
 from can import Message
-from canlib import CommandBus
+from canlib import TcpBus
 
 def main():
     IP_ADMIN_PC = "127.0.0.1:5555"
@@ -14,9 +14,9 @@ def main():
 
 
     nodes = [IP_ADMIN_PC, IP_SIM_PC, IP_HACKER_KIOSK, IP_INFOTAINMENT_THIN_CLIENT]
-    admin_pc = CommandBus(IP_ADMIN_PC, nodes)
-    kiosk = CommandBus(IP_HACKER_KIOSK, nodes)
-    sim_pc = CommandBus(IP_SIM_PC, nodes)
+    admin_pc = TcpBus(IP_ADMIN_PC, nodes)
+    kiosk = TcpBus(IP_HACKER_KIOSK, nodes)
+    sim_pc = TcpBus(IP_SIM_PC, nodes)
     
     
     tx = Message(arbitration_id=0XAAFEEB04, dlc=1,data=b'x')
