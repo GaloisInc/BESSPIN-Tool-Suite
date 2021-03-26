@@ -52,7 +52,7 @@ The testing philosophy is that for each CWE or a set of CWEs, the malicious code
 to implement the CWE model. In more practical terms, the tool creates a scenario where an instance of a particular CWE 
 occurs. The tests do not necessarily build a complete exploit model, but a test rather exhibits a glance of the weakness type it enumerates, without implementing a fully unquestionable exploit.
 
-Besspin tool-suite objective is to evaluate whether weaknesses exist, but does not make any assumptions or statements on how exploitable these weaknesses are. 
+Besspin tool-suite's objective is to evaluate whether weaknesses exist, but it does not make any assumptions or statements on how exploitable these weaknesses are. 
 
 Each test runs on top of an OS-backend pair, and the related output gets recorded in a separate report file per test. This report contains the stdout/stderr of the target plus any kernel messages, in addition to some tool specific comments and GDB logs if applicable. 
 
@@ -76,7 +76,7 @@ Each vulnerability class has a README in [cwesEvaluation/](../../fett/cwesEvalua
 
 It is worth mentioning that the tool, the tests, the scoring mechanisms, etc. were developed using a non-secure baseline
 designs.  All our *good scoring* mechanisms were based on our understanding of the philosophy of the TA-1 teams work and their
-reports, and they were designed based on the developers imagination and speculation.  Enhancements and modifications are expected as the tool-suite is run on more processors with various secure features. 
+reports, and they were designed based on the developers' imagination and speculation.  Enhancements and modifications are expected as the tool-suite is run on more processors with various secure features. 
 
 
 ### OS vs CPU ###
