@@ -64,13 +64,14 @@ The scoring system, as well the Besspin Scale, are inspired from the common weak
 
 1. `NOT_APPLICABLE` (`NA`): This CWE is not applicable to this OS-backend combination.
 2. `NOT-IMPLEMENTED` (`NoImpl`): One or more tests are not yet implemented for this OS-backend pair.
-3. `INVALID`, `FAIL`, `CALL-ERR`: Any of these means that something went wrong with either the test or the scoring.
-4. `HIGH`: High weakness revealed by the test. This means no security. The non-secure baseline GFE scores `HIGH` on the vast majority of tests.
-5. `MED`
-6. `LOW`
-7. `DETECTED`: The test ran to completion, and the weakness exists. However, the processor was able to detect that a
+3. `CALL-ERR`: The test encountered a known runtime error. For example, the difference between two pointer values is not as expected, or a memory allocation has failed, or an API call returned an erroneous code.
+4. `FAIL`: Scoring has failed. This is probably due to a fatal unexpected error in the test, such as the test not starting, or it generated an empty log.
+5. `HIGH`: High weakness revealed by the test. This means no security. The non-secure baseline GFE scores `HIGH` on the vast majority of tests.
+6. `MED`
+7. `LOW`
+8. `DETECTED`: The test ran to completion, and the weakness exists. However, the processor was able to detect that a
       violation occurred. This is a perfect score.
-8. `NONE`: This is the best achievable score. The weakness type does not exist.
+9. `NONE`: This is the best achievable score. The weakness type does not exist.
 
 Each vulnerability class has a README in [cwesEvaluation/](../../fett/cwesEvaluation/) with more details about the testing methodology and the scoring. 
 
