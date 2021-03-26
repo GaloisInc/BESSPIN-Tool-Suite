@@ -69,9 +69,8 @@ The scoring system, as well the Besspin Scale, are inspired from the common weak
 5. `HIGH`: High weakness revealed by the test. This means no security. The non-secure baseline GFE scores `HIGH` on the vast majority of tests.
 6. `MED`
 7. `LOW`
-8. `DETECTED`: The test ran to completion, and the weakness exists. However, the processor was able to detect that a
-      violation occurred. This is a perfect score.
-9. `NONE`: This is the best achievable score. The weakness type does not exist.
+8. `DETECTED`: The processor was able to detect that a violation had occurred. In such case, the test scores `DETECTED` whether the test has run to completion or was interrupted mid-run. This reflects a perfect score.
+9. `NONE`: This is another perfect score; The weakness type does not exist.
 
 Each vulnerability class has a README in [cwesEvaluation/](../../fett/cwesEvaluation/) with more details about the testing methodology and the scoring. 
 
