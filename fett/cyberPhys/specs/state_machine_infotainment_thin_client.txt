@@ -21,6 +21,8 @@ ClientReady: UI running
 
 ClientUp -[#blue]-> ClientReady: Success\nSend CMD_COMPONENT_READY(THIN_CLIENT)
 
+ClientReady -[#blue]-> ClientReady: Periodically\nsend CMD_COMPONENT_READY(THIN_CLIENT)
+
 ClientUp --> [*]: Failed to initialize\nNo way to send messages yet\nSimply terminate
 
 ClientReady --> ProcessButtonPress: Button pressed
