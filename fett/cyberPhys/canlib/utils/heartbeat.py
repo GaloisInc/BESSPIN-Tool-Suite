@@ -9,7 +9,7 @@ BIND_PORT = 5002
 TX_PORT = 5001
 TX_IP = "10.88.88.255" # Broadcasst
 
-class UDPBus(BusABC):
+class UdpBus(BusABC):
     """
     Enable basic communication over UDP
 
@@ -23,7 +23,7 @@ class UDPBus(BusABC):
 
     def __init__(self, bind_ip, bind_port):
         self.port = bind_port
-        super(UDPBus, self).__init__(channel="dummy")
+        super(UdpBus, self).__init__(channel="dummy")
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -41,9 +41,9 @@ class UDPBus(BusABC):
     def _recv_internal(self, timeout):
         ready = select.select([self._sock], [], [], timeout)
         if ready[0]:
-            rx_data, sender_addr = self._sock.recvfrom(UDPBus.CAN_MAX_BYTES)
+            rx_data, sender_addr = self._sock.recvfrom(UdpBus.CAN_MAX_BYTES)
             print("Info: received {} bytes from {}".format(len(rx_data), sender_addr))
-            if len(rx_data) < UDPBus.CAN_MIN_BYTES:
+            if len(rx_data) < UdpBus.CAN_MIN_BYTES:
                 print("Warning: received only {} bytes, ignoring.".format(len(rx_data)))
             else:
                 s = bytearray(rx_data[0:4])
@@ -64,7 +64,7 @@ CAN_ID_HEARTBEAT_REQ = 0XAABEA737
 CAN_ID_HEARTBEAT_ACK = 0XAABEA225
 BYTE_LENGTH_HEARTBEAT_REQ = 4
 
-bus = UDPBus("",BIND_PORT)
+bus = UdpBus("",BIND_PORT)
 bus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
 value = 0
 while(1):

@@ -43,7 +43,7 @@ def test_udp_bus():
     """
     # simple loopback test
     msg_send = Message(arbitration_id=234, data=b'12', is_extended_id=True)
-    udpb = ccan.UDPBus(4505, "")
+    udpb = ccan.UdpBus(4505, "")
     udpb.send(msg_send)
     msg = udpb.recv()
     # not all message fields are expected to be equivalent

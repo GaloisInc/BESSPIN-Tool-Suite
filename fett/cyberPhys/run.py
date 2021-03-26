@@ -10,7 +10,7 @@ from fett.base.threadControl import ftQueueUtils
 from fett.cyberPhys import otaserver, infotainmentserver
 
 # Import for CAN bus
-from fett.cyberPhys.canlib import UDPBus, Message
+from fett.cyberPhys.canlib import UdpBus, Message
 from fett.cyberPhys.canspecs import CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
 
 import struct
@@ -138,9 +138,9 @@ def heartBeatListener():
     listenQueue = getSetting('heartbeatQueue')
     canbusPort = getSetting('cyberPhysCanbusPort')
     try:
-        canbus = UDPBus("",canbusPort)
+        canbus = UdpBus("",canbusPort)
     except Exception as exc:
-        logAndExit(f"<heartBeatListener> Failed to instantiate <UDPBus> with port {canbusPort}.",exc=exc,exitCode=EXIT.Run)
+        logAndExit(f"<heartBeatListener> Failed to instantiate <UdpBus> with port {canbusPort}.",exc=exc,exitCode=EXIT.Run)
     try:
         canbus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
     except Exception as exc:

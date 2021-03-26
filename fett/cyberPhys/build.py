@@ -129,7 +129,7 @@ def prepareFreeRTOS(targetId=None):
 
     #copy the C files, .mk files, and any directory
     copyDir(os.path.join(getSetting('repoDir'),'fett','cyberPhys','srcFreeRTOS'),buildDir,copyContents=True)
-    copyDir(os.path.join(getSetting('repoDir'),'build','cyberphys','canlib'),buildDir,copyContents=True)
+    copyDir(os.path.join(getSetting('repoDir'),'fett','cyberPhys','canlib'),buildDir,copyContents=True)
 
     configHfile = ftOpenFile (os.path.join(buildDir,'fettFreeRTOSConfig.h'),'a')
     canPort = getSetting('cyberPhysCanbusPort')
