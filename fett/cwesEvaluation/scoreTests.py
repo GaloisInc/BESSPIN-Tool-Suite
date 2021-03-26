@@ -10,9 +10,8 @@ import fett.base.config
 
 class SCORES (enum.Enum):
     NINF = -10
-    NOT_APPLICABLE = -5
-    NOT_IMPLEMENTED = -4
-    INVALID = -3
+    NOT_APPLICABLE = -4
+    NOT_IMPLEMENTED = -3
     FAIL = -2
     CALL_ERR = -1
     HIGH = 0
