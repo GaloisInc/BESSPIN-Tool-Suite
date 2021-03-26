@@ -51,9 +51,7 @@ def scoreLog(logFile, lookfor):
     #First, get the triage decision
     logSymbol = triage(logFile,lookfor)
     if (logSymbol == 'INVALID'):
-        return (SCORES.INVALID, logSymbol)
-    elif (logSymbol == 'ERR'):
-        thisScore = SCORES.CALL_ERR
+        return (SCORES.CALL_ERR, logSymbol)
     elif (logSymbol in ['COMPLETED', 'TIMED OUT']):
         thisScore = SCORES.HIGH
     elif (logSymbol == 'TRAPPED'):

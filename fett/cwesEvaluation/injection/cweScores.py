@@ -40,7 +40,7 @@ def scoreInj1TestPart(logLines, testNum, info):
         # Test did not run
         score = SCORES.FAIL
     elif "<INVALID>" in logLines or "<RETURNING>" not in logLines:
-        score = SCORES.INVALID
+        score = SCORES.CALL_ERR
     elif ("Segmentation fault" in logLines or
           "<END_INJECTION_TEST>" in logLines):
         # This is the expected result on unix, as the OS should detect the
@@ -96,7 +96,7 @@ def scoreControlFlowTest(logLines, testName):
         # Test did not run
         score = SCORES.FAIL
     elif "<INVALID>" in logLines:
-        score = SCORES.INVALID
+        score = SCORES.CALL_ERR
     elif "<EXECUTING_BENIGN_CODE>" in logLines:
         score = SCORES.NONE
     else:

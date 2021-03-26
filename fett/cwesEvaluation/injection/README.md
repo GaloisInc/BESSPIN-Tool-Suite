@@ -80,7 +80,7 @@ example:
   overwrite the return pointer.  The test accomplishes this by comparing the
   value to be overwritten with the address of the `ret_location` label, which
   is the expected value of the return pointer.  If these values do not match
-  then the test will score INVALID, indicating that the offset between the
+  then the test will score CALL-ERR, indicating that the offset between the
   start of the buffer and the return pointer is incorrect.  FETT re-runs the
   test with different offsets and only scores the test for which it correctly
   locates the stored return pointer.

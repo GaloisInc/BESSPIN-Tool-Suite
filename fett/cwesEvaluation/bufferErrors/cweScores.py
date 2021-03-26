@@ -23,18 +23,18 @@ def score(testScores):
     - Both 'timeout' and 'completed' are not so good, as they indicate the overrun was NOT caught, but
     might have altered control flow (in the timeout case).
 
-    - 'Invalid' means, due to platform issues, a test was generated that can
+    - 'call-error' means, due to platform issues, a test was generated that can
     not accurately witness a buffer overrun weakness (e.g., the test requires
     more memory than the platform has available).
     """
     s = 0 # Number 's'uccessful (uncaught)
-    i = 0 # Invalid
+    i = 0 # call-error (invalid)
     e = 0 # err: FAIL/CALL-ERR (something went wrong with parsing -- no overall score reported)
     validScores = []
     for testScore in testScores:
-        if (testScore == SCORES.INVALID):
+        if (testScore == SCORES.CALL_ERR):
             i += 1
-        elif (testScore in [SCORES.FAIL, SCORES.CALL_ERR]): #FAIL/CALL-ERR 
+        elif (testScore == SCORES.FAIL): #FAIL/CALL-ERR 
             e += 1
         else:
             validScores.append(testScore)
@@ -47,7 +47,7 @@ def score(testScores):
     failPart = f'{e} failed tests' if (e > 0) else ''
     notes = ', '.join([part for part in [uncaughtPart, invPart, failPart] if part])
     if (t == 0): #all failed or invalid
-        ovrScore = SCORES.INVALID if e == 0 else SCORES.FAIL
+        ovrScore = SCORES.CALL_ERR if e == 0 else SCORES.FAIL
     elif (s == 0): #all are DETECTED/NONE
         ovrScore = SCORES.avgScore(validScores)
     else: #partial score
