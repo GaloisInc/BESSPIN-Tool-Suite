@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: python/canspecs.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 18 March 2021
+Date: 26 March 2021
 This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
 Version hash: f50e0a68352312d07b0ce23fc3a46a33
 """
@@ -68,11 +68,11 @@ CAN_ID_CAR_R: int = 0XAACDAD11
 # Description: Button pressed on infotainment screen.0x01 Station 1 0x02 Station 2 0x03 station 3  0x10 volume down  0x11 volume up
 CAN_ID_BUTTON_PRESSED: int = 0XAAFECA00
 
-# Name: music_state
+# Name: infotainment_state
 # Units: N/A
 # Type: uint8_t
 # Description: Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
-CAN_ID_MUSIC_STATE: int = 0XAA2FEEF2
+CAN_ID_INFOTAINMENT_STATE: int = 0XAA2FEEF2
 
 # Name: heartbeat_req
 # Units: N/A
@@ -104,15 +104,21 @@ CAN_ID_CMD_COMPONENT_ERROR: int = 0XAAFEEB01
 # Description: Scenario ID (uint8_t)
 CAN_ID_CMD_ACTIVE_SCENARIO: int = 0XAAFEEB02
 
-# Name: cmd_led_seq
+# Name: cmd_hack_active
 # Units: N/A
 # Type: uint8_t
-# Description: Led sequence ID (uint8_t)
-CAN_ID_CMD_LED_SEQ: int = 0XAAFEEB03
+# Description: Hack ID (uint8_t)
+CAN_ID_CMD_HACK_ACTIVE: int = 0XAAFEEB03
 
 # Name: cmd_restart
 # Units: N/A
 # Type: uint32_t
 # Description: Component ID / sender IP address (uint32_t)
 CAN_ID_CMD_RESTART: int = 0XAAFEEB04
+
+# Name: cmd_scenario_not_available
+# Units: N/A
+# Type: uint8_t
+# Description: Scenario ID (uint8_t)
+CAN_ID_CMD_SCENARIO_NOT_AVAILABLE: int = 0XAAFEEB05
 
