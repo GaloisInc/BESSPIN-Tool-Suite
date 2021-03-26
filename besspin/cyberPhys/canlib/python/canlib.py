@@ -4,9 +4,19 @@ import socket
 import select
 import time
 import zmq
+import typing as typ
 from can import BusABC, Message
 
+# custom types for can bus
+CanDataType = typ.Union[bytes, str]
+NetworkListType = typ.Union[typ.Sequence[str], None, bool]
+
+# custom error(s)
+class InvalidCanMessageError(Exception):
+    pass
+
 class CanConstants():
+    DEST_BROADCAST = "<broadcast>"
     CAN_MIN_BYTES = 4 + 1 + 1  # sending an empty frame doesn't make sense, min 6 bytes per frame
     CAN_MAX_BYTES = 64 + 4 + 1  # 64 bytes of DATA, 4 bytes of ID, 1 byte od DLC
     COMMAND_ID_PREFIX =  [0xAA, 0xFE, 0xEB] # CAN ID signifying a command message
@@ -95,40 +105,101 @@ class UDPBus(BusABC):
 
     The bus can send data to any address/port.
     """
+    @staticmethod
+    def check_network_list(net_list: NetworkListType) -> NetworkListType:
+        """determine if a list of ips is a valid blacklist/whitelist. If valid, return it.
+        Else, raise a value error
+        :param net_list: list
+        :return network list
+        """
+        try:
+            if net_list:
+                [socket.inet_aton(s) for s in net_list]
+        except Exception:
+            raise ValueError
+        return net_list
 
-    def __init__(self, bind_ip, bind_port):
+    def __init__(self, port: int,
+                 ip: str,
+                 whitelist: NetworkListType = None,
+                 blacklist: NetworkListType = None,
+                 do_bind: bool = True):
+        """
+        :param port: port to send / receive can messages
+        :param ip: ip to bind udp socket
+        :param whitelist: None or list of ips to accept
+        :param blacklist: None or list of ips to reject
+        """
+        self.ip = self.DEST_BROADCAST
+        self.port = port
+        self._whitelist = self.check_network_list(whitelist)
+        self._blacklist = self.check_network_list(blacklist)
         super(UDPBus, self).__init__(channel="dummy")
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self._sock.bind((bind_ip, bind_port))
+        if do_bind:
+            self._sock.bind((ip, self.port))
 
-    def send(self, msg, tx_ip, tx_port, timeout=None):
-        a_id = struct.pack('!I', msg.arbitration_id)
-        byte_msg = bytearray(a_id)
-        byte_msg.append(msg.dlc)
-        byte_msg += bytearray([msg.data[i] for i in range(0, msg.dlc)])
+    def send(self, msg, timeout=None, tx_ip=self.ip, tx_port=self.port):
+        try:
+            if msg.dlc < 1:
+                raise InvalidCanMessageError
+            a_id = struct.pack('!I', msg.arbitration_id)
+            byte_msg = bytearray(a_id)
+            byte_msg.append(msg.dlc)
+            byte_msg += bytearray([msg.data[i] for i in range(0, msg.dlc)])
+        except Exception:
+            raise InvalidCanMessageError(f"msg -- id {msg.arbitration_id}, dlc {msg.dlc}, data {msg.data}")
         if timeout:
-            print("UDPBus Warning: timeout is ignored during send()")
+            print("UDPBus Warning ignoring timeout of {} [s]".format(timeout))
         self._sock.sendto(byte_msg, (tx_ip, tx_port))
 
     def _recv_internal(self, timeout):
         ready = select.select([self._sock], [], [], timeout)
         if ready[0]:
-            rx_data, _ = self._sock.recvfrom(CanConstants.CAN_MAX_BYTES)
+            rx_data, (sender_addr, _) = self._sock.recvfrom(CanConstants.CAN_MAX_BYTES)
+            # ignore received data following whitelist, blacklist policy
+            if self.whitelist:
+                if sender_addr not in self.whitelist:
+                    return None, False
+            if self.blacklist:
+                if sender_addr in self.blacklist:
+                    return None, False
             if len(rx_data) < CanConstants.CAN_MIN_BYTES:
-                print("UDPBus Warning: received only {} bytes, ignoring.".format(len(rx_data)))
+                can_logger.warning("received only {} bytes, ignoring.".format(
+                    len(rx_data)))
             else:
                 s = bytearray(rx_data[0:4])
                 arb_id = struct.unpack('!I', s)[0]
                 dlc = rx_data[4]
-                data = rx_data[5:]
-                if dlc == len(data):
+                if dlc == len(rx_data[5:]):
+                    data = rx_data[5:]
                     msg = Message(timestamp=time.time(),
-                                arbitration_id=arb_id,
-                                dlc=dlc,
-                                data=data)
+                                  arbitration_id=arb_id,
+                                  dlc=dlc,
+                                  data=data)
                     return msg, False
                 else:
-                    print("UDPBus Warning: DLC ({}) and the length of data ({}) don't match, ignoring.".format(dlc,len(rx_data)))
+                    print(f"UDPBus Warning: DLC ({dlc}) and the length of data\
+                            ({len(rx_data)}) don't match, ignoring.")
         return None, False
+
+    def shutdown(self):
+        self._sock.close()
+
+    @property
+    def whitelist(self):
+        return self._whitelist
+
+    @whitelist.setter
+    def whitelist(self, wl: NetworkListType):
+        self._whitelist = self.check_network_list(wl)
+
+    @property
+    def blacklist(self):
+        return self._blacklist
+
+    @blacklist.setter
+    def blacklist(self, bl: NetworkListType):
+        self._blacklist = self.check_network_list(bl)

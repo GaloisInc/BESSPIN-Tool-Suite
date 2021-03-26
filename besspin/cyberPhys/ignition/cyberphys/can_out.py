@@ -2,7 +2,7 @@
 from .component import ComponentPoller
 from .can import CanMultiverse
 import cyberphys.config as config
-from . import canlib
+from . import canspecs
 
 import struct
 import math
@@ -29,9 +29,9 @@ class CanOutPoller(ComponentPoller):
             pos = self._location[0]
 
             # Send position X, Y 
-            self._network.send(canlib.CAN_ID_CAR_X,  struct.pack("f", pos[0]))
-            self._network.send(canlib.CAN_ID_CAR_Y,  struct.pack("f", pos[1]))
-            self._network.send(canlib.CAN_ID_CAR_Z,  struct.pack("f", pos[2]))
+            self._network.send(canspecs.CAN_ID_CAR_X,  struct.pack("f", pos[0]))
+            self._network.send(canspecs.CAN_ID_CAR_Y,  struct.pack("f", pos[1]))
+            self._network.send(canspecs.CAN_ID_CAR_Z,  struct.pack("f", pos[2]))
 
             # Convert from unit circle coords to heading
             x = self._location[1][0]
@@ -41,7 +41,7 @@ class CanOutPoller(ComponentPoller):
                 heading = heading + 360
 
             # Send direction (heading)
-            self._network.send(canlib.CAN_ID_CAR_R, struct.pack("f", heading))
+            self._network.send(canspecs.CAN_ID_CAR_R, struct.pack("f", heading))
 
     @recv_topic("beamng-vehicle")
     def _(self, msg, t):
