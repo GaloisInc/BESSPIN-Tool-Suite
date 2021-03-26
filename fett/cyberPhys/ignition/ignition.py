@@ -37,7 +37,7 @@ import signal
 import argparse
 
 # Project libs
-from cyberphys import speedometer, can, config, simulator, logger, mux, can_out, infotainment
+from cyberphyslib.demonstrator import speedometer, can, config, simulator, logger, mux, can_out, infotainment
 
 SSITH_ENABLED = False
 BUFFER_SIZE = 1024
