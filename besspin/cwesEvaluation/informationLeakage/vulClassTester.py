@@ -5,12 +5,12 @@ This file has the custom informationLeakage methods to run tests on qemu|fpga.
 import glob, os
 import re
 from besspin.base.utils.misc import *
-from besspin.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from besspin.cwesEvaluation.compat import cwesEvaluationCompatibilityLayer
 from besspin.cwesEvaluation.multitasking.multitasking import multitaskingPart, multitaskingTest
 
 INFO_OUTPUT_FILE = "info-output.txt"
 
-class vulClassTester(testgenTargetCompatibilityLayer):
+class vulClassTester(cwesEvaluationCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
         self.vulClass = "informationLeakage"

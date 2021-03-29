@@ -4,12 +4,12 @@ This file has the custom bufferError methods to run tests on qemu|fpga.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 from besspin.base.utils.misc import *
-from besspin.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from besspin.cwesEvaluation.compat import cwesEvaluationCompatibilityLayer
 from besspin.cwesEvaluation.multitasking.multitasking import multitaskingPart, multitaskingTest
 
 BOF_OUTPUT_FILE = "bof-output.txt"
 
-class vulClassTester(testgenTargetCompatibilityLayer):
+class vulClassTester(cwesEvaluationCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
         self.vulClass = "bufferErrors"

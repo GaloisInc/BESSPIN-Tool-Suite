@@ -1,8 +1,8 @@
 from besspin.base.utils.misc import *
 
-class testgenTargetCompatibilityLayer:
+class cwesEvaluationCompatibilityLayer:
     """
-    This class wraps a BESSPIN and presents a testgen target interface
+    This class wraps a target object and presents a cwesEvaluation interface layer
     """
     def __init__(self, target):
         self.objTarget = target

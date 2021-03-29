@@ -3,14 +3,14 @@
 This file has the custom resourceManagement methods to run tests on qemu|fpga.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 from besspin.cwesEvaluation.resourceManagement import cweTests
-from besspin.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from besspin.cwesEvaluation.compat import cwesEvaluationCompatibilityLayer
 from besspin.cwesEvaluation.multitasking.multitasking import hasMultitaskingException, multitaskingPart, multitaskingTest
 
 from besspin.base.utils.misc import *
 
 RM_OUTPUT_FILE = "rm-output.txt"
 
-class vulClassTester(testgenTargetCompatibilityLayer):
+class vulClassTester(cwesEvaluationCompatibilityLayer):
     PART_FOOTER = "-"*60 + "\n\n\n"
 
     def __init__(self, target):
