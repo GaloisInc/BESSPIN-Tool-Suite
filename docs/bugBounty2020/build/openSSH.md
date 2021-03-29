@@ -24,7 +24,7 @@ The OpenSSH project includes a client `ssh`, a server `sshd` , the `scp` and `sf
 
 #### Environment Setup
 
-1. Enter the FETT Nix environment.
+1. Enter the BESSPIN Nix environment.
 2. Setup `CROSS_PREFIX`, dependent on whether FreeBSD or Debian target
 
 ```bash
@@ -57,8 +57,8 @@ $ STRIP=llvm-strip
 ```
 You will also need to define the variable `SYSROOT`, which is the path
 of the sysroot that your toolchain uses. If you were building for
-FreeBSD with the LLVM toolchain in the FETT Nix environment, you would
-set this to `$FETT_GFE_FREEBSD_SYSROOT`. If you using a GNU toolchain
+FreeBSD with the LLVM toolchain in the BESSPIN Nix environment, you would
+set this to `$BESSPIN_GFE_FREEBSD_SYSROOT`. If you using a GNU toolchain
 for linking, then you can use `$(${CROSS_PREFIX}-gcc -print-sysroot)`.
 
 #### Build Zlib v1.2.11
@@ -113,7 +113,7 @@ $ ./configure --prefix=${BUILD_DIR}/openssh-riscv --with-privsep-path=${BUILD_DI
 
 If you are building for debian, you may have to run the following command.
 ```bash
-# FETT environment sysroot doesn't have <utmp.h>, so BTMP has to be disabled in config.h
+# BESSPIN environment sysroot doesn't have <utmp.h>, so BTMP has to be disabled in config.h
 $ sed 's/#define USE_BTMP .*/\/\* #define USE_BTMP 1 \*\//' -i config.h
 
 ```

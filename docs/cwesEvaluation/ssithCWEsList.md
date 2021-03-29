@@ -43,9 +43,9 @@ To generate, please download a `.csv` version of the `Final List` sheet of the [
 ---
 | CWE | Description |
 |-|-|
-| [CWE-PPAC-1](../../fett/cwesEvaluation/PPAC/README.md) | Missing authorization in privileged resource access; Related to CWEs 284-285-288-668-669-862-863. |
-| [CWE-PPAC-2](../../fett/cwesEvaluation/PPAC/README.md) | Reliance on OS and software authentication; Related to CWEs 284-287-288. |
-| [CWE-PPAC-3](../../fett/cwesEvaluation/PPAC/README.md) | Security exceptions are not logged to a privileged location; Related to CWE-284. |
+| [CWE-PPAC-1](../../besspin/cwesEvaluation/PPAC/README.md) | Missing authorization in privileged resource access; Related to CWEs 284-285-288-668-669-862-863. |
+| [CWE-PPAC-2](../../besspin/cwesEvaluation/PPAC/README.md) | Reliance on OS and software authentication; Related to CWEs 284-287-288. |
+| [CWE-PPAC-3](../../besspin/cwesEvaluation/PPAC/README.md) | Security exceptions are not logged to a privileged location; Related to CWE-284. |
 ## Resource Management
 ---
 | CWE | Description |
@@ -165,6 +165,6 @@ To generate, please download a `.csv` version of the `Final List` sheet of the [
 ---
 | CWE | Description |
 |-|-|
-| [CWE-INJ-1](../../fett/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Machine Language Instructions |
-| [CWE-INJ-2](../../fett/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Heap Metadata |
-| [CWE-INJ-3](../../fett/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Trusted Data |
+| [CWE-INJ-1](../../besspin/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Machine Language Instructions |
+| [CWE-INJ-2](../../besspin/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Heap Metadata |
+| [CWE-INJ-3](../../besspin/cwesEvaluation/injection/README.md) | Untrusted Data Accessed as Trusted Data |

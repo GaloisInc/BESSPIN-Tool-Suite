@@ -56,7 +56,7 @@ following:
   to the python file.  This path will be loaded as a module, then the
   function `main` will be called with two arguments: 1. the list of
   lines from the log files of the test under investigation, 2. the
-  python Enum object `SCORES` (defined in [scoreTests.py](../../fett/cwesEvaluation/scoreTests.py) and explained in [besspinPhilosophy.md](./besspinPhilosophy.md)).
+  python Enum object `SCORES` (defined in [scoreTests.py](../../besspin/cwesEvaluation/scoreTests.py) and explained in [besspinPhilosophy.md](./besspinPhilosophy.md)).
 
 
 ## Customize Compiling
@@ -78,11 +78,11 @@ This is chosen by switching
     same tests names with the suffix `.riscv`.  For example,
     `test_128.riscv`.
   * For FreeRTOS, the Makefile will be passed the following variables:
-    `XLEN` (32 or 64), `PROC_LEVEL` (`p1`, `p2`, or `p3`), `PROC_FLAVOR` (`chisel` or `bluespec`), `PROG=main_fett`, `USE_CLANG` (`yes` if the compiler is Clang), `SYSROOT_DIR` (if the compiler is Clang), `INC_FETT_APPS=/path/to/tests`,
+    `XLEN` (32 or 64), `PROC_LEVEL` (`p1`, `p2`, or `p3`), `PROC_FLAVOR` (`chisel` or `bluespec`), `PROG=main_besspin`, `USE_CLANG` (`yes` if the compiler is Clang), `SYSROOT_DIR` (if the compiler is Clang), `INC_BESSPIN_TOOL_SUITE=/path/to/tests`,
     `BSP` (the value of `target`), `RAMDISK_NUM_SECTORS`.  
   * For FreeRTOS, the output of the makefile should always be
     `FreeRTOS.elf`, and they should be copied to `$workDir/osImages/`.
-  * Note that the information leakage tests require a more involved Makefile. So in case this is really needed to change, please inspect the [information leakage specific Makefile](../../fett/cwesEvaluation/informationLeakage/Makefile.xcompileDir).
+  * Note that the information leakage tests require a more involved Makefile. So in case this is really needed to change, please inspect the [information leakage specific Makefile](../../besspin/cwesEvaluation/informationLeakage/Makefile.xcompileDir).
   * Note that the FreeRTOS compiling is quite involved as the tool compiles using the main [Makefile of the Galois demo](../../FreeRTOS/FreeRTOS/Demo/RISC-V_Galois_P1/Makefile) of the classic FreeRTOS fork.
 - Use custom Clang binary with an optional custom Clang sysroot. Enable `useCustomClang` and set `pathToCustomClang` to the custom binary path. Similarly, enable `useCustomSysroot` and set `pathToCustomSysroot` to the desired sysroot path.
 

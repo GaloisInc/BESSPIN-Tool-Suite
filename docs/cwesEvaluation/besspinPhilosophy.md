@@ -19,7 +19,7 @@ The scoring system is inspired from the common vulnerability scoring
 system
 ([CVSS](https://en.wikipedia.org/w/index.php?title=Common_Vulnerability_Scoring_System&oldid=815384991)).
 The scores levels are following the python Enum object `SCORES` defined
-[here](./fett/cwesEvaluation/scoreTests.py/scoreTests.py).  The levels are (from *bad* to
+[here](./besspin/cwesEvaluation/scoreTests.py/scoreTests.py).  The levels are (from *bad* to
 *good*):
   1. `NOT-IMPLEMENTED`: this test is not implemented for this OS.
   2. `UNKNOWN`, `INVALID`, `FAIL`: All of these mean that something

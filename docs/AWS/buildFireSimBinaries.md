@@ -1,8 +1,8 @@
 # Building Firesim Binaries on an F1 Instance #
 
 This document details the process of building important Firesim binaries used
-by `fett.py` to run on AWS PV-FireSim.
-The binaries are stored in the SSITH-FETT-Binaries repository.
+by `besspin.py` to run on AWS PV-FireSim.
+The binaries are stored in the BESSPIN-LFS repository.
 A short description of each binary follows.
 
 * `nbd.ko` - Network block device kernel driver.  Used for mounting qcow2

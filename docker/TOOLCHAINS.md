@@ -1,7 +1,7 @@
 # Toolchain Guide
 
 This document outlines the infrastructure provided to cross-build applications for
-the FETT targets. Toolchains are provided in Docker images, where programs can be
+the BESSPINs. Toolchains are provided in Docker images, where programs can be
 cross-compiled, transferred, and run on the target hardware.
 
 ## Toolchain Docker Images

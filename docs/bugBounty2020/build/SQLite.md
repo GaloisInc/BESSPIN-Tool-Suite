@@ -4,12 +4,12 @@
 
 ### Dependencies
 
-- `tclsh` (e.g. `apt install tcl`) (should be available in the FETT Nix environment)
-- `libpthread`, `libdl` (should be available in the FETT Nix environment)
+- `tclsh` (e.g. `apt install tcl`) (should be available in the BESSPIN Nix environment)
+- `libpthread`, `libdl` (should be available in the BESSPIN Nix environment)
 
 ### Build Steps
 
-0. We'll assume the working directory is $ROOT and that the user is in a FETT Nix environment (e.g. `nix-shell $SSITH-FETT-Target/shell.nix`)
+0. We'll assume the working directory is $ROOT and that the user is in a BESSPIN Nix environment (e.g. `nix-shell $BESSPIN-Tool-Suite/shell.nix`)
 1. Fetch and unpack the source tarball from
    `https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=version-3.22.0`, e.g.
    ```

@@ -14,7 +14,7 @@ We ignore the following dependencies.
 
 It seems nginx [does not officially support cross-compilation](https://forum.nginx.org/read.php?2,279437,279441#msg-279441), so these steps are adapted from [this](http://tiebing.blogspot.com/2014/09/cross-compile-nginx-for-arm.html) blog post.
 
-1. Enter a FETT nix shell and set `$BUILD_DIR` to the working directory.
+1. Enter a BESSPIN nix shell and set `$BUILD_DIR` to the working directory.
 ```
 $ BUILD_DIR=`pwd`
 ```
@@ -79,7 +79,7 @@ FreeBSD. Instead we apply the changes from
 [here](https://github.com/CTSRD-CHERI/nginx/commit/7346e0c792ab6608546a8f8cf55c6a505a70c2b9),
 which allow the configure checks to pass when cross compiling. We assume that zlib 1.2.11 and OpenSSL 1.0.2 are already installed in `$ZLIB_DIR` and `$OPENSSL_DIR`, respectively. Directions for cross compiling both libraries can be found in the [build instructions for OpenSSH](./OpenSSH.md).
 
-1. Enter a FETT nix shell and set `$BUILD_DIR` to the working directory.
+1. Enter a BESSPIN nix shell and set `$BUILD_DIR` to the working directory.
 ```
 $ BUILD_DIR=`pwd`
 ```
@@ -100,9 +100,9 @@ $ patch -p1 <path/to/0001-Pass-configure-checks-when-cross-compiling.patch
 
 4. Set the variable `SYSROOT` to the location of the sysroot for your
    FreeBSD RISC-V toolchain. If you are using the toolchain in the
-   FETT environment, then the following will work:
+   BESSPIN environment, then the following will work:
  ```
-$ SYSROOT=$FETT_GFE_FREEBSD_SYSROOT
+$ SYSROOT=$BESSPIN_GFE_FREEBSD_SYSROOT
 ```
   Set `CFLAGS` and `LDFLAGS`:
 ```

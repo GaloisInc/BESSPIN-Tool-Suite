@@ -1,1 +1,1 @@
-SSITH-FETT-Environment/shell.nix
+BESSPIN-Environment/shell.nix

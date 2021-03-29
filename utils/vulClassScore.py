@@ -10,11 +10,11 @@ def main(xArgs):
 
     # Let's do this ugly workaround to have this utility use the tool, but not to be part of the tool
     sys.path.insert(0, repoDir)
-    from fett.base.utils.misc import trashCanObj, exitPeacefully, setSetting, getSetting, exitFett, EXIT
-    from fett.base.config import loadConfiguration
-    from fett.cwesEvaluation.scoreTests import scoreTests, prettyVulClass
-    from fett.cwesEvaluation.utils.checkValidScores import checkValidScores
-    from fett.cwesEvaluation.utils.computeBesspinScale import computeBesspinScale
+    from besspin.base.utils.misc import trashCanObj, exitPeacefully, setSetting, getSetting, exitBesspin, EXIT
+    from besspin.base.config import loadConfiguration
+    from besspin.cwesEvaluation.scoreTests import scoreTests, prettyVulClass
+    from besspin.cwesEvaluation.utils.checkValidScores import checkValidScores
+    from besspin.cwesEvaluation.utils.computeBesspinScale import computeBesspinScale
 
     logFile = os.path.join(workDir,'vulClassScore.log')
     try:
@@ -22,7 +22,7 @@ def main(xArgs):
         fLog.close()
     except Exception as exc:
         print(f"(Error)~  Failed to create the log file <{logFile}>.\n{formatExc(exc)}.")
-        exitFett(EXIT.Files_and_paths)
+        exitBesspin(EXIT.Files_and_paths)
     logLevel = logging.DEBUG if (xArgs.debug) else logging.INFO 
     logging.basicConfig(filename=logFile,filemode='w',format='%(asctime)s: (%(levelname)s)~  %(message)s',datefmt='%I:%M:%S %p',level=logLevel)
 
@@ -36,7 +36,7 @@ def main(xArgs):
     setSetting('cwesEvaluationLogs',os.path.join(workDir,'cwesEvaluationLogs'))
 
     # Load all configuration and setup settings
-    setupEnvFile = os.path.join(repoDir,'fett','base','utils','setupEnv.json')
+    setupEnvFile = os.path.join(repoDir,'besspin','base','utils','setupEnv.json')
     setSetting('setupEnvFile', setupEnvFile)
     if (xArgs.configFile):
         configFile = os.path.abspath(xArgs.configFile)
@@ -49,7 +49,7 @@ def main(xArgs):
 
     if (getSetting('mode') != 'evaluateSecurityTests'):
         print(f"(Error)~  This utility is only for <evaluateSecurityTests> mode.")
-        exitFett(EXIT.Configuration)
+        exitBesspin(EXIT.Configuration)
 
     if (xArgs.vulClass == "all"):
         for vulClass in getSetting("vulClasses"): 
