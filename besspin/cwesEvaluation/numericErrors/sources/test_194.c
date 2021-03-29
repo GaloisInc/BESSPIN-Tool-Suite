@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#if (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
 #endif
 
@@ -25,7 +25,7 @@ int main(void)
   uint64_t addr;
   int32_t index;
 
-#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#if (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
   unbufferStdout();
 #endif
   printf ("TEST 194 PART P01\n");

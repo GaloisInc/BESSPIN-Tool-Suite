@@ -15,7 +15,7 @@
 #include "riscv_counters.h"
 #endif
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
 #endif
 

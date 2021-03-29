@@ -1,7 +1,7 @@
 /*
 Test_521: Weak Password Requirements
 */
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 #include "testgenFreeRTOS.h"
 
 TaskHandle_t xMainTask = NULL;
@@ -13,7 +13,7 @@ void main(void) {
     printf("<NOT-IMPLEMENTED> This test is not implemented yet for FreeRTOS.\n");
 }
 
-#elif defined(testgenOnDebian) || defined(testgenOnFreeBSD)
+#elif defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD)
 
 #define THIS_TEST "521"
 #define PAM_PREFIX "pam_"
@@ -28,7 +28,7 @@ void main(void) {
 #include <string.h>
 #include <unistd.h>
 
-#ifdef testgenOnDebian
+#ifdef BESSPIN_DEBIAN
 #include <security/pam_misc.h>
 #include <security/pam_ext.h>
 static struct pam_conv conv = { misc_conv, NULL };

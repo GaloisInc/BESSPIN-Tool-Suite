@@ -11,8 +11,8 @@ typedef struct SubString {
     unsigned int  len;
 } SubStr;
 
-#ifdef testgenOnFreeRTOS
-#if (defined(testgenFPGA))
+#ifdef BESSPIN_FREERTOS
+#if (defined(BESSPIN_FPGA))
   #include "FreeRTOS.h"
   #define MALLOC(size) pvPortMalloc(size)
   #define FREE(ptr)   vPortFree(ptr)
@@ -47,7 +47,7 @@ void test_double_free(char *str, char *dest) {
   if (r != NULL) {
     strcpy(dest, r->str); // REGULAR
     printf("\n<REGULAR_PASSED> Copied string: %s\n", dest);
-    #if (defined(testgenFPGA))
+    #if (defined(BESSPIN_FPGA))
         FREE(r);
     #else
         free(r);
@@ -57,7 +57,7 @@ void test_double_free(char *str, char *dest) {
     exit(EXIT_FAILURE);
   }
   // pointer being freed was not allocated
-  #if (defined(testgenFPGA))
+  #if (defined(BESSPIN_FPGA))
         FREE(r);
     #else
         free(r);
@@ -69,7 +69,7 @@ void test_free_no_longer_valid(char *str, char *dest) {
   if (r != NULL) {
     strcpy(dest, r->str); // REGULAR
     printf("\n<REGULAR_PASSED> Copied string: %s\n", dest);
-    #if (defined(testgenFPGA))
+    #if (defined(BESSPIN_FPGA))
         FREE(r);
     #else
         free(r);
@@ -99,7 +99,7 @@ void main() {
 }
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
 
 static SubStr *

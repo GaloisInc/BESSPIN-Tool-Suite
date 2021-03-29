@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#ifdef testgenOnUnix 
+#ifdef BESSPIN_UNIX 
     #define FIXED_ADDR_DATA 0x15000
     #define FIXED_ADDR_FUNC 0x2000020000
 #else
@@ -16,7 +16,7 @@ static int jumpToFixedAddr (void);
 static void copyToFixedAddr (void); 
 
 // --------------- FreeRTOS Test ---------------
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #define NUM_OF_TEST_PARTS 2
 
     void main() {
@@ -39,7 +39,7 @@ static void copyToFixedAddr (void);
     }
 
 // --------------- Debian && FreeBSD test ---------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
     int main(int argc, char *argv[]);
 
@@ -69,7 +69,7 @@ static void copyToFixedAddr (void);
         return 0;
     }
 
-#endif //ifdef testgenOnFreeRTOS
+#endif //ifdef BESSPIN_FREERTOS
 
 int testegenTestFunc () { 
     return 0xbb;

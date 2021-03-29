@@ -8,7 +8,7 @@ Test_307: Improper Restriction of Excessive Authentication Attempts
     nAllowedAuthAttempts: number of allowed auth attempts before blocking
 */
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 //---------------- FreeRTOS test ------------------------------------------------------
 
     #include "testgenFreeRTOS.h"
@@ -238,7 +238,7 @@ Test_307: Improper Restriction of Excessive Authentication Attempts
     }
 
 //---------------- Debian test ------------------------------------------------------
-#elif defined(testgenOnDebian)
+#elif defined(BESSPIN_DEBIAN)
     #define THIS_TEST "307"
     #define PAM_PREFIX "pam_"
     #define MY_CONFIG PAM_PREFIX THIS_TEST
@@ -301,7 +301,7 @@ Test_307: Improper Restriction of Excessive Authentication Attempts
         return 0;
     }
 
-#elif defined(testgenOnFreeBSD)
+#elif defined(BESSPIN_FREEBSD)
 
     #define THIS_TEST "307"
 

@@ -56,7 +56,7 @@ test_pass();
 void
 test_fail();
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 #define IEX_TESTGEN
 #endif
 
@@ -66,7 +66,7 @@ test_fail();
 #define TEST_MAIN int main(int argc, char **argv)
 #endif
 
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
+#if defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA)
 #include "FreeRTOS.h"
 #define test_malloc pvPortMalloc
 #define test_free   vPortFree

@@ -2,16 +2,16 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 #include <FreeRTOS.h>
 #include <message_buffer.h>
 #include <task.h>
-#else  // !testgenOnFreeRTOS
+#else  // !BESSPIN_FREERTOS
 #include <stdlib.h>
 #include <time.h>
 #include "inj_unix_helpers.h"
 #include "unbufferStdout.h"
-#endif  // !testgenOnFreeRTOS
+#endif  // !BESSPIN_FREERTOS
 
 #include "testsParameters.h"
 
@@ -31,7 +31,7 @@ static bool is_return_pointer(uintptr_t* ptr, const void** expected_ret) {
     return true;
 }
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 
 // FreeRTOS test has 8 parts (will try offsets 1 through 8)
 #define NUM_OF_TEST_PARTS 8
@@ -105,7 +105,7 @@ static void message_buffer_test(const void** ret_ptr) {
     printf("<RETURNING>\n");
 }
 
-#else  // !testgenOnFreeRTOS
+#else  // !BESSPIN_FREERTOS
 
 // Read a uintptr_t from stdin
 // Read two values from stdin, the first is an index, and the second is a
@@ -161,7 +161,7 @@ static void stdin_test(const void** expected_ret_ptr) {
     // previous out of bounds writes.
     printf("<RETURNING>\n");
 
-#ifdef testgenOnDebian
+#ifdef BESSPIN_DEBIAN
     // Short sleep to ensure previous print completes and does not interleave
     // with kmesg segfault message.  Use nanosleep syscall instead of sleep for
     // bare metal support.
@@ -178,24 +178,24 @@ static void stdin_test(const void** expected_ret_ptr) {
     // Return should jump into buf.  Debian and FreeBSD should detect execution
     // of non-executable memory and raise a segmentation fault.
 }
-#endif  // !testgenOnFreeRTOS
+#endif  // !BESSPIN_FREERTOS
 
 int main(void) {
     printf("<BEGIN_INJECTION_TEST>\n");
     const void* ret_ptr = &&ret_location;
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     printf("\n<OFFSET %d>\n", RET_PTR_OFFSET);
-#ifdef testgenQEMU
+#ifdef BESSPIN_QEMU
     // Not implemented for QEMU due to issues with FreeRTOS tasks on QEMU.
     printf("<QEMU_NOT_IMPLEMENTED>\n");
     printf("FreeRTOS INJ-1 test is not implemented on QEMU.\n");
 #else  // !testgenOnQEMU
     message_buffer_test(&ret_ptr);
 #endif  // !testgenOnQEMU
-#else  // !testgenOnFreeRTOS
+#else  // !BESSPIN_FREERTOS
     unbufferStdout();
     stdin_test(&ret_ptr);
-#endif  // !testgenOnFreeRTOS
+#endif  // !BESSPIN_FREERTOS
 ret_location:
     if (ret_ptr != &&ret_location) {
         // Overwrote the local variable `ret_ptr`, not the actual return

@@ -4,14 +4,14 @@
 static unsigned char * storeSecret(secretLocInfo_t * secretInfo, reallocSize_t option);
 
 // Define a _manual_ realloc for FreeRTOS because heap_4 does not define a realloc
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
+#if defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA)
     #define test_realloc(ptr, size, oldSize) manualRealloc(ptr, size, oldSize)
     static void *manualRealloc(void *ptr, size_t size, size_t oldSize);
 #else
     #define test_realloc(ptr, size, oldSize) realloc(ptr,size) 
 #endif
 
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
+#if defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA)
     static void *manualRealloc(void *ptr, size_t size, size_t oldSize) {
         void *pReturn;
 

@@ -1,7 +1,7 @@
 /* Test noClearReallocExpand */
 #include "noClearRealloc.h"
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     void main() {
         noClearReallocTest(EXPAND);
         return;

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenQEMU))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_QEMU))
     #define MALLOC_SIZE_MAX 0x008F 
     #define MALLOC_SIZE_MIN 0x0000
 #else
@@ -14,7 +14,7 @@
 #define N_CALLS 50
 #define PERCENT_ERROR 5 //Err only once in 5 calls
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
     #include "FreeRTOS.h"
     #define MALLOC pvPortMalloc
     #define FREE vPortFree
@@ -26,7 +26,7 @@
 static void errorRelease (int i);
 
 // --------------- FreeRTOS Test ---------------
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #define NUM_OF_TEST_PARTS 1
 
     void main() {
@@ -45,7 +45,7 @@ static void errorRelease (int i);
     }
 
 // --------------- Debian && FreeBSD test ---------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
     int main(void);
 
@@ -60,7 +60,7 @@ static void errorRelease (int i);
         return 0;
     }
 
-#endif //ifdef testgenOnFreeRTOS
+#endif //ifdef BESSPIN_FREERTOS
 
 static void errorRelease (int i) {
     char * p;

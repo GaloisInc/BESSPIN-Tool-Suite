@@ -6,9 +6,9 @@
 #define SUCCESS (1)
 #define FAILURE (0)
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 
-#if (defined(testgenFPGA))
+#if (defined(BESSPIN_FPGA))
     #include "FreeRTOS.h"
     #define MALLOC pvPortMalloc
     #define FREE vPortFree
@@ -88,7 +88,7 @@ void main() {
   return;
 }
 //---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
 
 int contains_char_valid(char c) {

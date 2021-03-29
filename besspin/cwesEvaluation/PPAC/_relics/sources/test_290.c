@@ -8,7 +8,7 @@ Test_290: Authentication Bypass by Spoofing
 NONE
 */
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 //---------------- FreeRTOS test ------------------------------------------------------
 
     #include "testgenFreeRTOS.h"
@@ -124,7 +124,7 @@ NONE
     } //vTask290
 
 //---------------- Debian and FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 
     #define THIS_TEST "290"
 

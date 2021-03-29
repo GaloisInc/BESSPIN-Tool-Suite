@@ -1,10 +1,10 @@
 # This file has the necessary includes to run Besspin on FreeRTOS in cwesEvaluation Mode. Default file
 # Some classes will have their own files
 
-CFLAGS += -DBESSPIN_TOOL_SUITE -DtestgenOnFreeRTOS
+CFLAGS += -DBESSPIN_TOOL_SUITE -DBESSPIN_FREERTOS
 WERROR = 
 ifeq ($(BSP),qemu)
-	CFLAGS += -DtestgenQEMU
+	CFLAGS += -DBESSPIN_QEMU
 	APP_SRC = main.c \
 		$(wildcard $(INC_BESSPIN_TOOL_SUITE)/*.c)
 	VPATH += \
@@ -13,7 +13,7 @@ ifeq ($(BSP),qemu)
 		$(INC_BESSPIN_TOOL_SUITE) \
 	APP_INCLUDES += -I$(INC_BESSPIN_TOOL_SUITE)
 else
-	CFLAGS += -DtestgenFPGA
+	CFLAGS += -DBESSPIN_FPGA
 	DEMO_SRC = main.c \
 		$(wildcard $(INC_BESSPIN_TOOL_SUITE)/*.c)
 	INCLUDES += -I$(INC_BESSPIN_TOOL_SUITE)

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #define EXIT_FAILURE 1
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 
 #include "FreeRTOS.h"
 #define MALLOC pvPortMalloc
@@ -54,7 +54,7 @@ double_free_str_int(int in) {
 
 // ----------------- FreeRTOS Test ----------
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 
 #define NUM_OF_TEST_PARTS 2
 
@@ -75,7 +75,7 @@ void main() {
 
 // ----------------- FreeBSD & Debian Test ------------
 
-#elif (defined(testgenOnFreeBSD) || defined(testgenOnDebian))
+#elif (defined(BESSPIN_FREEBSD) || defined(BESSPIN_DEBIAN))
 
 #include "unbufferStdout.h"
 

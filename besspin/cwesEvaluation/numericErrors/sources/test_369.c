@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <limits.h>
 
-#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#if (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
 #endif
 
@@ -30,7 +30,7 @@ static int32_t data[10] = {100, 110, 120, 130, 140, 150, 160, 170, 180, 190};
 
 int main (void)
 {
-#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#if (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
   unbufferStdout();
 #endif
   int32_t res;

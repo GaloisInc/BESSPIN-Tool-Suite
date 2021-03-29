@@ -8,7 +8,7 @@
 
 #include "testsParameters.h"
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
 #endif
 
@@ -55,7 +55,7 @@ void p02()
   char *str1;
   printf ("TEST 665 PART P02\n");
 
-  #if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+  #if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
     str1 = (char *) pvPortMalloc (20);
   #else
     str1 = (char *) malloc (20);
@@ -82,7 +82,7 @@ void p02()
   printf ("SCORE:665:2:TEST FAILED\n");
 }
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 //---------------- FreeRTOS test ------------------------------------------------------
 
 int main()
@@ -99,7 +99,7 @@ int main()
 }
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
 
 int main (int argc, char *argv[]) {
@@ -122,4 +122,4 @@ int main (int argc, char *argv[]) {
   return 0;
 }
 
-#endif //end of ifdef testgenOnFreeRTOS
+#endif //end of ifdef BESSPIN_FREERTOS

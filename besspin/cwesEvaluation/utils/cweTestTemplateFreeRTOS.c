@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 
-#ifdef testgenFPGA
+#ifdef BESSPIN_FPGA
     #include <FreeRTOS.h>
     #include <task.h>
 
@@ -20,7 +20,7 @@ void main_besspin (void)
 {
     printf (">>>Beginning of Besspin<<<\n");
 
-    #ifdef testgenFPGA
+    #ifdef BESSPIN_FPGA
         // Execute tests within a task to accommodate for security features that gets enabled with the scheduler
         BaseType_t funcReturn = xTaskCreate(vMain,
                                             "main:vMain",
@@ -35,7 +35,7 @@ void main_besspin (void)
         } else {
             printf ("<INVALID>\n(ERROR)~ main_besspin: Failed to create vMain task.\n");
         }
-    #elif testgenQEMU
+    #elif BESSPIN_QEMU
         main_TEST_NAME ();
 
         printf (">>>End of Besspin<<<\n");
@@ -44,7 +44,7 @@ void main_besspin (void)
     return;    
 }
 
-#ifdef testgenFPGA
+#ifdef BESSPIN_FPGA
     //This is the entry point task
     void vMain (void *pvParameters) {
         (void) pvParameters;

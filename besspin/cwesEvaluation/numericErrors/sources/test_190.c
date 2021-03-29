@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#if (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
 #endif
 
@@ -31,7 +31,7 @@ int arithmetic_mean (int a, int b)
 int main(void) {
   int r;
 
-#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#if (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
   unbufferStdout();
 #endif
   printf ("TEST 190 PART P01\n");

@@ -119,7 +119,7 @@ initialize_secret()
 #endif
 }
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 void
 test_not_implemented()
 {
@@ -175,4 +175,4 @@ test_fail()
     test_end();
 }
 
-#endif //testgenOnFreeRTOS
+#endif //BESSPIN_FREERTOS

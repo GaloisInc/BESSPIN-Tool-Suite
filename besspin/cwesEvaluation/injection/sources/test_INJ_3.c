@@ -1,15 +1,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 #include <FreeRTOS.h>
 #include <message_buffer.h>
 #include <task.h>
-#else  // !testgenOnFreeRTOS
+#else  // !BESSPIN_FREERTOS
 #include <stdlib.h>
 #include "inj_unix_helpers.h"
 #include "unbufferStdout.h"
-#endif  // !testgenOnFreeRTOS
+#endif  // !BESSPIN_FREERTOS
 
 typedef union {
     uintptr_t num;
@@ -24,7 +24,7 @@ void malicious(void) {
     printf("<EXECUTING_MALICIOUS_CODE>\n");
 };
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 void injector(void* params) {
     // Send malicious address as integer.
     MessageBufferHandle_t *msg_buf = (MessageBufferHandle_t*) params;
@@ -87,7 +87,7 @@ void message_buffer_test(void) {
 
     data.fn();
 }
-#else  // !testgenOnFreeRTOS
+#else  // !BESSPIN_FREERTOS
 void stdin_test(void) {
     // Set function pointer to benign function.
     int_fn_union data = { .fn = benign };
@@ -103,12 +103,12 @@ void stdin_test(void) {
     // Execute injected function pointer.
     data.fn();
 }
-#endif  // !testgenOnFreeRTOS
+#endif  // !BESSPIN_FREERTOS
 
 int main(void) {
     printf("<BEGIN_INJECTION_TEST>\n");
-#ifdef testgenOnFreeRTOS
-#ifdef testgenQEMU
+#ifdef BESSPIN_FREERTOS
+#ifdef BESSPIN_QEMU
     // Not implemented for QEMU due to issues with FreeRTOS tasks on QEMU.
     printf("<QEMU_NOT_IMPLEMENTED>\n");
     printf("FreeRTOS INJ-3 test is not implemented on QEMU.\n");
