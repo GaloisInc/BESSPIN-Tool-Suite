@@ -15,6 +15,8 @@ The figure below is an overview of the tool when running in the CWEs evaluation 
 
 The tool selects the tests to run based on the configuration; it cross-compiles them, runs them on the selected OS and backend, then scores the output, and displays the results.
 
+Please note that this part of the tool-suite was originally called `testgen`; which might be useful in understanding parts of the git's history.
+
 ## Summary of Contents ##
 
 - [BESSPIN-Coeffs.md](./BESSPIN-Coeffs.md): The values of the BESSPIN coefficients. This document is automatically generated based on the values in the [JSON file](../../besspin/cwesEvaluation/utils/besspinCoeffs.json). More explanation can be found in the BESSPIN Scale document (next).
