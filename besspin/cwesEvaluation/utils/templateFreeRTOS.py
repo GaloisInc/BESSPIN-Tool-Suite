@@ -1,5 +1,5 @@
 """  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-This file generates the C template of "main_testgen.c" for FreeRTOS
+This file generates the C template of "main_besspin.c" for FreeRTOS
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 
 import sys, os
@@ -31,7 +31,7 @@ def templateFreeRTOS(testsDir):
     #Load the template 
     testTemplate = ftReadLines(getSetting("cweTestTemplateFreeRTOS"),splitLines=False)
 
-    #For each file: rename main + Generating the main_testgen wrapper
+    #For each file: rename main + Generating the main_besspin wrapper
     for srcTest in sorted(os.listdir(testsDir)):
         if (srcTest.endswith(".c")):
             testName = srcTest.split('.')[0]
