@@ -46,6 +46,3 @@ else
 	INCLUDES += -I$(INC_BESSPIN_TOOL_SUITE)
 endif
 
-ifeq ($(BSP),awsf1)
-	CFLAGS += -DBESSPIN_AWS
-endif
