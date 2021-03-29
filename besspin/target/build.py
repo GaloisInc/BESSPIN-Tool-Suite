@@ -60,7 +60,7 @@ def freeRTOSBuildChecks(targetId=None,freertosFork="classic"):
         forkDir = os.path.join(getSetting('repoDir'),getSetting(f'FreeRTOSforkName_{freertosFork}'))
         setSetting('FreeRTOSforkDir',forkDir)
         if (not os.path.isdir(getSetting('FreeRTOSforkDir'))):
-            logAndExit (f"Failed to find the FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}>. Please use <git submodule update --init>.",exitCode=EXIT.Environment)
+            logAndExit (f"Failed to find the FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}>. Please use <git submodule update --init --recursive>.",exitCode=EXIT.Environment)
         if (len(os.listdir(getSetting('FreeRTOSforkDir'))) == 0):
             logAndExit (f"The FreeRTOS fork at <{getSetting('FreeRTOSforkDir')}> is empty. Please use <git submodule update>.",exitCode=EXIT.Environment)
 
