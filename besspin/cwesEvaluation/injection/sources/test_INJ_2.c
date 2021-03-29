@@ -358,9 +358,9 @@ int main(void) {
     // Not implemented for QEMU due to issues with FreeRTOS tasks on QEMU.
     printf("<QEMU_NOT_IMPLEMENTED>\n");
     printf("FreeRTOS INJ-2 test is not implemented on QEMU.\n");
-#else  // !testgenOnQEMU
+#else  // !BESSPIN_QEMU
     rtos_test();
-#endif  // !testgenOnQEMU
+#endif  // !BESSPIN_QEMU
 #else  // !BESSPIN_FREERTOS
     unbufferStdout();
 #ifdef BESSPIN_FREEBSD
