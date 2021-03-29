@@ -3,14 +3,14 @@
 This file has the custom PPAC methods to run tests on qemu|fpga.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 import sys, os
-from besspin.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from besspin.cwesEvaluation.compat import cwesEvaluationCompatibilityLayer
 from besspin.cwesEvaluation.PPAC import cweTests
 from importlib.machinery import SourceFileLoader
 import threading
 
 from besspin.base.utils.misc import *
 
-class vulClassTester(testgenTargetCompatibilityLayer):
+class vulClassTester(cwesEvaluationCompatibilityLayer):
     def __init__ (self,settings):
         super().__init__(settings)
         return

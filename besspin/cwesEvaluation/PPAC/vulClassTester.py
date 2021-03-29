@@ -2,12 +2,12 @@
 """  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 This file has the custom PPAC methods to for runTests
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
-from besspin.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from besspin.cwesEvaluation.compat import cwesEvaluationCompatibilityLayer
 
 from besspin.base.utils.misc import *
 from besspin.cwesEvaluation.PPAC import cweTests
 
-class vulClassTester(testgenTargetCompatibilityLayer):
+class vulClassTester(cwesEvaluationCompatibilityLayer):
     def __init__ (self,target):
         super().__init__(target)
         self.vulClass = "PPAC"

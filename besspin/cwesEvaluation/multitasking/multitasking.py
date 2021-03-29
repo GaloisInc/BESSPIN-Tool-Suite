@@ -1,7 +1,7 @@
 import re
 
 from besspin.base.utils.misc import *
-from besspin.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from besspin.cwesEvaluation.compat import cwesEvaluationCompatibilityLayer
 from besspin.cwesEvaluation.scoreTests import tabulate_row
 
 # Name of the file to synchronize the test processes on
@@ -62,7 +62,7 @@ class multitaskingTest:
         # List of multatskingParts
         self.parts = parts
 
-class multitaskingRunner(testgenTargetCompatibilityLayer):
+class multitaskingRunner(cwesEvaluationCompatibilityLayer):
     def runMultitaskingTests(self, tests, logDir):
         # Count number of processes to spawn
         numProcs = 0

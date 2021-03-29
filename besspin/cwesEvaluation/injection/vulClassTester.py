@@ -5,7 +5,7 @@ This file has the custom resourceManagement methods to run tests on qemu|fpga.
 
 import re
 
-from besspin.cwesEvaluation.compat import testgenTargetCompatibilityLayer
+from besspin.cwesEvaluation.compat import cwesEvaluationCompatibilityLayer
 
 from besspin.base.utils.misc import *
 
@@ -49,7 +49,7 @@ UNTRUSTED2_BYTES_INCREASE = 32
 # puts it exactly on top of `trusted`.
 TRUSTED_OVERWRITE_INDEX = 10
 
-class vulClassTester(testgenTargetCompatibilityLayer):
+class vulClassTester(cwesEvaluationCompatibilityLayer):
     def __init__(self, target):
         super().__init__(target)
         self.vulClass = "injection"
