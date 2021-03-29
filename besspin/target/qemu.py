@@ -75,7 +75,7 @@ class qemuTarget (commonTarget):
                     overrideShutdown=True,exc=exc,exitCode=EXIT.Run)
             time.sleep(1)
             textBack,wasTimeout,idxReturn = self.expectFromTarget(endsWith,"Booting",timeout=timeout,exitOnError=False,overrideShutdown=True)
-            if (idxReturn==1): #No "">>> End Of Testgen <<<", but qemu aborted without a timeout
+            if (idxReturn==1): #No "">>> End Of Besspin <<<", but qemu aborted without a timeout
                 self.fTtyOut.write (b"\n<QEMU ABORTED>\n")
             else:
                 self.fTtyOut.write (b"\n") #because the last expect does not include an end of line
