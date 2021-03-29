@@ -18,10 +18,10 @@ nAllowedInteractions
 
     //from extraSources
     extern uint8_t getServicePermission (const char * xActor);
-    #if TESTGEN_TEST_PART == 2
+    #if BESSPIN_TEST_PART == 2
         extern SemaphoreHandle_t getSemphrHandle (const char * xActor);
     #endif
-    #if TESTGEN_TEST_PART == 3
+    #if BESSPIN_TEST_PART == 3
         extern struct actorSemphrPair * requestsLL;
     #endif
 
@@ -145,7 +145,7 @@ nAllowedInteractions
                 onPrintf ("<DENIED> [target-server-%d]: Service request denied for <%s>\n",iSubPart,subjectCN);
             }
 
-            #if TESTGEN_TEST_PART == 2
+            #if BESSPIN_TEST_PART == 2
                 if (iSubPart==nAllowedInteractions-1) { //before the breaching subpart
                     SemaphoreHandle_t xSemphr = getSemphrHandle (subjectCN);
                     if (xSemphr == NULL) {
@@ -162,7 +162,7 @@ nAllowedInteractions
                 }
             #endif //part-2
 
-            #if TESTGEN_TEST_PART == 3
+            #if BESSPIN_TEST_PART == 3
                 if (iSubPart==nAllowedInteractions-1) { //before the breaching subpart
                     if (requestsLL == NULL) {
                         onPrintf ("<DENIED> [target-server-%d]: Failed to get the structure pointer.\n",iSubPart);

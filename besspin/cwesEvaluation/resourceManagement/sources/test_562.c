@@ -74,16 +74,16 @@ void main() {
   int *b;
   int *c;
   printf("\n<OSIMAGE=FreeRTOS>\n");
-#if TESTGEN_TEST_PART == 1
+#if BESSPIN_TEST_PART == 1
   printf("\n---Part01: fill_array.---\n");
   b = fill_array(5);
   print_array(b, 5);
-#elif TESTGEN_TEST_PART == 2
+#elif BESSPIN_TEST_PART == 2
   printf("\n---Part02: fill_array_with_malloc.---\n");
   c = fill_array_with_malloc(5);
   print_array_correct(c, 5);
 #else
-  printf("SCORE:562:%d:TEST ERROR\n", TESTGEN_TEST_PART);
+  printf("SCORE:562:%d:TEST ERROR\n", BESSPIN_TEST_PART);
 #endif
   return;
 }

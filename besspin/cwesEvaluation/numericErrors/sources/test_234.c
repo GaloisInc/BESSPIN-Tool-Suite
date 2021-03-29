@@ -67,7 +67,7 @@ void do_p1 ()
 
 int main()
 {
-#if TESTGEN_TEST_PART == 1
+#if BESSPIN_TEST_PART == 1
   do_p1();
 #else
   printf ("SCORE:234:1:TEST ERROR\n");

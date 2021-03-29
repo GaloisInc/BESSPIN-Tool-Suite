@@ -94,14 +94,14 @@ unknown_implicit_reference_count(){
 #define NUM_OF_TEST_PARTS 2
 void main() {
     printf("\n<OSIMAGE=FreeRTOS>\n");
-    #if TESTGEN_TEST_PART == 1
+    #if BESSPIN_TEST_PART == 1
         printf("\n---Part01: correct_implicit_reference_count.---\n");
         correct_implicit_reference_count();
-    #elif TESTGEN_TEST_PART == 2
+    #elif BESSPIN_TEST_PART == 2
         printf("\n---Part02: unknown_implicit_reference_count.---\n");
         unknown_implicit_reference_count();
     #else
-        printf("SCORE:911:%d:TEST ERROR\n", TESTGEN_TEST_PART);
+        printf("SCORE:911:%d:TEST ERROR\n", BESSPIN_TEST_PART);
     #endif
     return;
 }

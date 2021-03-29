@@ -25,14 +25,14 @@ static void deleteStrSentinel (short testPart);
 
     void main() {
         printf("\n<OSIMAGE=FreeRTOS>\n");
-        #if TESTGEN_TEST_PART == 1
+        #if BESSPIN_TEST_PART == 1
             printf("\n---Part01: Delete sentinel and printf---\n");
-            deleteStrSentinel(TESTGEN_TEST_PART);
-        #elif TESTGEN_TEST_PART == 2
+            deleteStrSentinel(BESSPIN_TEST_PART);
+        #elif BESSPIN_TEST_PART == 2
             printf("\n---Part02: Out-of-bound memset---\n");
-            deleteStrSentinel(TESTGEN_TEST_PART);
+            deleteStrSentinel(BESSPIN_TEST_PART);
         #else
-            printf("\n<INVALID> Part[%d] not in [1,%d].\n",TESTGEN_TEST_PART,NUM_OF_TEST_PARTS);
+            printf("\n<INVALID> Part[%d] not in [1,%d].\n",BESSPIN_TEST_PART,NUM_OF_TEST_PARTS);
             return;
         #endif
 

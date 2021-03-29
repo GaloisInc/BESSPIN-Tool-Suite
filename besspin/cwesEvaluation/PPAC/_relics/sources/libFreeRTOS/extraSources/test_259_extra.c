@@ -12,7 +12,7 @@ usersList: A list of users.
 pwList: A list of passwords.
 */
 
-#if (TESTGEN_TEST_PART == 1) //remove the whole file in part 2
+#if (BESSPIN_TEST_PART == 1) //remove the whole file in part 2
     #define USERS_LIST_LENGTH 3 //has to be >=2
 
     static char usersList[USERS_LIST_LENGTH][SUBJECT_CN_BUF_SIZE] = {"Yoda", "Yaddle", "Baby Yoda"}; 

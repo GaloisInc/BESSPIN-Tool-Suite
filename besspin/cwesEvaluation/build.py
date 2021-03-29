@@ -290,7 +290,7 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
         cp (os.path.join(vTestsDir,testFile), buildDir)
 
     fPars = ftOpenFile(os.path.join(buildDir,'testsParameters.h'),'a')
-    fPars.write(f"\n#define TESTGEN_TEST_PART {part}\n")
+    fPars.write(f"\n#define BESSPIN_TEST_PART {part}\n")
     fPars.close()
 
     # Build

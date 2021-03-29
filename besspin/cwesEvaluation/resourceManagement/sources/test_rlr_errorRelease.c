@@ -33,13 +33,13 @@ static void errorRelease (int i);
         int i;
         printf("\n<OSIMAGE=FreeRTOS>\n");
         srand(RM_SEED); //RM_SEED is written in besspin/cwesEvaluation/build.py
-        #if TESTGEN_TEST_PART == 1
+        #if BESSPIN_TEST_PART == 1
             for (i=0;i<N_CALLS;i++) {
                 errorRelease(i);
             }
             printf("\n<END-OF-MAIN>\n");
         #else
-            printf("\n<INVALID> Part[%d] not in [1,%d].\n",TESTGEN_TEST_PART,NUM_OF_TEST_PARTS);
+            printf("\n<INVALID> Part[%d] not in [1,%d].\n",BESSPIN_TEST_PART,NUM_OF_TEST_PARTS);
         #endif
         return;
     }

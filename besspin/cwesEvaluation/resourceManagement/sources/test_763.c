@@ -39,14 +39,14 @@ void wrong_address_assignment(void){
 }
 void main() {
     printf("\n<OSIMAGE=FreeRTOS>\n");
-#if TESTGEN_TEST_PART == 1
+#if BESSPIN_TEST_PART == 1
     printf("\n---Part01: wrong_shift_address_assignment.---\n");
         wrong_shift_address_assignment();
-#elif TESTGEN_TEST_PART == 2
+#elif BESSPIN_TEST_PART == 2
     printf("\n---Part02: wrong_address_assignment.---\n");
         wrong_address_assignment();
 #else
-    printf("SCORE:763:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+    printf("SCORE:763:%d:TEST ERROR\n",BESSPIN_TEST_PART);
 #endif
 
     return;

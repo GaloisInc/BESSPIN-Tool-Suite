@@ -18,10 +18,10 @@ NONE
     //from extraSources
     extern uint8_t getServicePermission (const char * xActor);
     extern void dumpLogContents (void);
-    #if TESTGEN_TEST_PART == 3
+    #if BESSPIN_TEST_PART == 3
         extern char usersList[1][SUBJECT_CN_BUF_SIZE];
     #endif
-    #if TESTGEN_TEST_PART == 4
+    #if BESSPIN_TEST_PART == 4
         extern QueueHandle_t logQueue; 
     #endif
 
@@ -135,7 +135,7 @@ NONE
         }
         subjectCN[xBytesReceived] = '\0'; //add the null termination
 
-        #if TESTGEN_TEST_PART == 3 //add yourself to the list
+        #if BESSPIN_TEST_PART == 3 //add yourself to the list
             if (usersList == NULL) {
                 onPrintf ("<DENIED> [target-server]: Failed to get the structure pointer.\n");
             } else {
@@ -152,7 +152,7 @@ NONE
             onPrintf ("<DENIED> [target-server]: Service request denied for <%s>\n",subjectCN);
         }
 
-        #if TESTGEN_TEST_PART == 4 //attempt to delete traces
+        #if BESSPIN_TEST_PART == 4 //attempt to delete traces
             if (logQueue == NULL) {
                 onPrintf ("<DENIED> [target-server]: Failed to get the log queue handle.\n");
             } else {

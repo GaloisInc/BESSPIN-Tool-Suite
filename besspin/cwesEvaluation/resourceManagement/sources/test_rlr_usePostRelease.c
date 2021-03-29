@@ -35,14 +35,14 @@ static void usePostRelease (int i, int isSource);
         int isSource;
         printf("\n<OSIMAGE=FreeRTOS>\n");
         srand(RM_SEED); //RM_SEED is written in besspin/cwesEvaluation/build.py
-        #if TESTGEN_TEST_PART == 1
+        #if BESSPIN_TEST_PART == 1
             printf("\n---Part01: Use as <source>.---\n");
             isSource = 1;
-        #elif TESTGEN_TEST_PART == 2
+        #elif BESSPIN_TEST_PART == 2
             printf("\n---Part02: Use as <destination>.---\n");
             isSource = 0;
         #else
-            printf("\n<INVALID> Part[%d] not in [1,%d].\n",TESTGEN_TEST_PART,NUM_OF_TEST_PARTS);
+            printf("\n<INVALID> Part[%d] not in [1,%d].\n",BESSPIN_TEST_PART,NUM_OF_TEST_PARTS);
             return;
         #endif
 

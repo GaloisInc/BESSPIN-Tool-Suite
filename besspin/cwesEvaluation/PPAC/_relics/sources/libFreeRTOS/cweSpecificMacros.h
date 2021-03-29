@@ -20,7 +20,7 @@ testgen macros that change from a test to another
     #define SUBJECT_CN_BUF_SIZE 20
 #elif TESTNUM == 287
     #define USE_TLS_OVER_TCP 
-    #if (TESTGEN_TEST_PART == 1) || (TESTGEN_TEST_PART == 2)
+    #if (BESSPIN_TEST_PART == 1) || (BESSPIN_TEST_PART == 2)
         #define doVERIFY_CLIENT_CERT //verifies the client certificate too (target is the server)
         #define doFETCH_SUBJECT_CN
     #else //part 3
@@ -65,7 +65,7 @@ testgen macros that change from a test to another
     #define PW_SIZE 32
 #elif TESTNUM == 259
     #define USE_TLS_OVER_TCP
-    #if (TESTGEN_TEST_PART == 1)
+    #if (BESSPIN_TEST_PART == 1)
         #define doVERIFY_CLIENT_CERT
         #define doFETCH_RECV_MSG
         #define doFETCH_SUBJECT_CN

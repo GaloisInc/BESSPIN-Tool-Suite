@@ -17,7 +17,7 @@ struct actorSemphrPair {
 };
 
 //The linked-list beginning
-#if TESTGEN_TEST_PART == 3
+#if BESSPIN_TEST_PART == 3
     struct actorSemphrPair * requestsLL = NULL;
 #else
     static struct actorSemphrPair * requestsLL = NULL;
@@ -25,7 +25,7 @@ struct actorSemphrPair {
 
 //functions declarations
 uint8_t getServicePermission (const char * xActor);
-#if TESTGEN_TEST_PART == 2
+#if BESSPIN_TEST_PART == 2
     SemaphoreHandle_t getSemphrHandle (const char * xActor);
 #else
     static SemaphoreHandle_t getSemphrHandle (const char * xActor);
@@ -81,7 +81,7 @@ static SemaphoreHandle_t createPairForActor (const char * xActor) {
 }
 
 // This function fetches the semaphore handle for a certain actor
-#if TESTGEN_TEST_PART == 2
+#if BESSPIN_TEST_PART == 2
     SemaphoreHandle_t getSemphrHandle (const char * xActor)
 #else
     static SemaphoreHandle_t getSemphrHandle (const char * xActor)

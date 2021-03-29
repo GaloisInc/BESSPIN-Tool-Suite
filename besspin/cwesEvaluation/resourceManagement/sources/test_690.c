@@ -67,14 +67,14 @@ void main() {
     char test_str [] = "test";
     char *str = &test_str[0];
     printf("\n<OSIMAGE=FreeRTOS>\n");
-    #if TESTGEN_TEST_PART == 1
+    #if BESSPIN_TEST_PART == 1
         printf("\n---Part01: test_regular.---\n");
         test_regular(str, dest);
-    #elif TESTGEN_TEST_PART == 2
+    #elif BESSPIN_TEST_PART == 2
         printf("\n---Part02: test_malicious.---\n");
         test_malicious(str, dest);
     #else
-        printf("SCORE:690:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+        printf("SCORE:690:%d:TEST ERROR\n",BESSPIN_TEST_PART);
     #endif
   return;
 }

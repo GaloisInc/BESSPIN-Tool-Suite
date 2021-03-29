@@ -33,14 +33,14 @@ int example_bad_scaled(int i) {
 
 void main() {
     printf("\n<OSIMAGE=FreeRTOS>\n");
-    #if TESTGEN_TEST_PART == 1
+    #if BESSPIN_TEST_PART == 1
         printf("\n---Part01: example_good_scaled.---\n");
         example_good_scaled(4);
-    #elif TESTGEN_TEST_PART == 2
+    #elif BESSPIN_TEST_PART == 2
         printf("\n---Part02: example_bad_scaled.---\n");
         example_bad_scaled(4);
     #else
-        printf("SCORE:468:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+        printf("SCORE:468:%d:TEST ERROR\n",BESSPIN_TEST_PART);
     #endif
   //printf("<INVALID> This test is not implemented yet.\n");
   return;

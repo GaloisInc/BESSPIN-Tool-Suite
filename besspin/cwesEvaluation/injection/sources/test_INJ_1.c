@@ -36,7 +36,7 @@ static bool is_return_pointer(uintptr_t* ptr, const void** expected_ret) {
 // FreeRTOS test has 8 parts (will try offsets 1 through 8)
 #define NUM_OF_TEST_PARTS 8
 
-#define RET_PTR_OFFSET TESTGEN_TEST_PART
+#define RET_PTR_OFFSET BESSPIN_TEST_PART
 
 typedef struct {
     uintptr_t* buf;

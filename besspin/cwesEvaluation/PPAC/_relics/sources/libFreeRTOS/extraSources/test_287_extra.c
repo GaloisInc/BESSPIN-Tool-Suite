@@ -12,7 +12,7 @@ usersList: A list of strings. Protected and defined here pre-test.
 */
 #define USERS_LIST_LENGTH 3 //has to be >=2
 
-#if (TESTGEN_TEST_PART == 1) || (TESTGEN_TEST_PART == 3)
+#if (BESSPIN_TEST_PART == 1) || (BESSPIN_TEST_PART == 3)
     static char usersList[USERS_LIST_LENGTH][SUBJECT_CN_BUF_SIZE] = {"Yoda", "Jedi Order CLNT", "Baby Yoda"}; 
 #else //part 2
     static char usersList[USERS_LIST_LENGTH][SUBJECT_CN_BUF_SIZE] = {"Yoda", "Galois", "Baby Yoda"}; 

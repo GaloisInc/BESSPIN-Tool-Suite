@@ -18,7 +18,7 @@ NONE
     static void vTask259 (void *pvParameters);
     void main_test_259 (void);
 
-    #if (TESTGEN_TEST_PART == 1)
+    #if (BESSPIN_TEST_PART == 1)
         //Extra functions needed
         uint8_t getServicePermission (const char * xActor, const char * xPW);
     #endif
@@ -71,7 +71,7 @@ NONE
         }
 
         //-------------------------------- PART01: INBOUND ------------------------------------------
-        #if (TESTGEN_TEST_PART == 1)
+        #if (BESSPIN_TEST_PART == 1)
             // ------------------------------- INIT WOLFSSL SERVER  -------------------------------------
             funcReturn = xTaskCreate(vInitServerWolfSSL, "taskTest:initServerWolfSSL", configMINIMAL_STACK_SIZE * STACKSIZEMUL, NULL, xMainPriority, NULL);
             if (funcReturn != pdPASS) {

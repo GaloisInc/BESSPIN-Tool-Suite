@@ -21,16 +21,16 @@ static void copyToFixedAddr (void);
 
     void main() {
         printf("\n<OSIMAGE=FreeRTOS>\n");
-        #if TESTGEN_TEST_PART == 1
+        #if BESSPIN_TEST_PART == 1
             printf("\n---Part01: Just copy---\n");
             copyToFixedAddr();
-        #elif TESTGEN_TEST_PART == 2
+        #elif BESSPIN_TEST_PART == 2
             printf("\n---Part02: Jump to fixed address---\n");
             int retVal;
             retVal = jumpToFixedAddr();
             printf("<RETVAL=0x%X>\n",retVal);
         #else
-            printf("\n<INVALID> Part[%d] not in [1,%d].\n",TESTGEN_TEST_PART,NUM_OF_TEST_PARTS);
+            printf("\n<INVALID> Part[%d] not in [1,%d].\n",BESSPIN_TEST_PART,NUM_OF_TEST_PARTS);
             return;
         #endif
 

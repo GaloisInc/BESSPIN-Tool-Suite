@@ -17,13 +17,13 @@ pwList: A list of passwords.
 
 static char usersList[USERS_LIST_LENGTH][SUBJECT_CN_BUF_SIZE] = {"Yoda", "Jedi Order CLNT", "Baby Yoda"}; 
 
-#if (TESTGEN_TEST_PART == 1) //use the sha256 hashes of the passwords
+#if (BESSPIN_TEST_PART == 1) //use the sha256 hashes of the passwords
     static char pwList[USERS_LIST_LENGTH][2*SHA256_DIGEST_LENGTH+1] = {
         "e0dfbee7c045cf16c7628c4c66135cd725c17beb16909a8936611daf89867fb3", 
         "eeb7f2db116eda31c4a8a1bbbd4debdb90ed4f5211a7c10e280f474dd5bb44ff", 
         "364973cfe93db396bb20075f2a5d8969be07fc7920203ab7f238a2c5267f01e2"}; 
     extern int wc_Sha256Hash(const byte* data, word32 len, byte *out);
-#elif (TESTGEN_TEST_PART == 2) //base64 Encoding
+#elif (BESSPIN_TEST_PART == 2) //base64 Encoding
     static char pwList[USERS_LIST_LENGTH][PW_SIZE] = {
         "amVkaU1hc3RlcjEyMw==",
         "am95QFdvcmtfMTk5OQ==",
@@ -42,7 +42,7 @@ uint8_t getServicePermission (const char * xActor, const char * inPW) {
     onPrintf ("\t>>>>>> [getServicePermission]: Received request for <%s> with pw <%s>.\n",xActor,inPW);
 
     //process the password
-    #if (TESTGEN_TEST_PART == 1) //get the sha256 value
+    #if (BESSPIN_TEST_PART == 1) //get the sha256 value
         byte hash[SHA256_DIGEST_LENGTH];
         char xPW[2*SHA256_DIGEST_LENGTH+1]; //every byte is represented by 2 chars + null termination
         int funcReturn = wc_Sha256Hash((byte *) inPW, strlen(inPW), hash);
@@ -56,7 +56,7 @@ uint8_t getServicePermission (const char * xActor, const char * inPW) {
             sprintf(xPW + (i * 2), "%02x", hash[i]);
         }
         xPW[2*SHA256_DIGEST_LENGTH] = 0;
-    #elif (TESTGEN_TEST_PART == 2) //get the encoded value
+    #elif (BESSPIN_TEST_PART == 2) //get the encoded value
         word32 xPWlen = 1 + 4*((2+strlen(inPW))/3); //+1 for the extra new line
         char * xPW = (char *) pvPortMalloc(xPWlen);
         if (xPW == NULL) {

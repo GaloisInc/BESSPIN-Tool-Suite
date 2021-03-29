@@ -10,7 +10,7 @@ This group of tests provoke or exploit C language `undefined behavior` such as u
 
 Several tests here are "multi-part" in that they run several test cases which are (logically) grouped according to a single CWE and a single program binary. To ensure that all parts get a chance to run, even in the face of an earlier part being aborted by the OS or CPU, these tests use the test harness's support for "multi-part" tests on both FreeRTOS and POSIX platforms.
 
-* On FreeRTOS, each test that has more than one part includes `testsParameters.h` and defines a C macro `NUM_OF_TEST_PARTS` to define the number of times that each test is to be run. The implementation of the `main()` function for FreeRTOS then tests the preprocessor macro `TESTGEN_TEST_PART` to see which part of the test to run on each invocation.
+* On FreeRTOS, each test that has more than one part includes `testsParameters.h` and defines a C macro `NUM_OF_TEST_PARTS` to define the number of times that each test is to be run. The implementation of the `main()` function for FreeRTOS then tests the preprocessor macro `BESSPIN_TEST_PART` to see which part of the test to run on each invocation.
 
 * On Debian (and other POSIX-like platforms), a custom script (in `scripts/vulClassTester.py`) maps the test name to its number of parts, then runs the test the right number of times from the Shell, passing the test part to be run as the first (and only) command-line argument of the test. This is picked up in the Debian version of `main()` using C's standard `argv[]` processing.
 
