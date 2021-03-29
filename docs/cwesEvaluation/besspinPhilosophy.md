@@ -60,7 +60,7 @@ Each test runs on top of an OS-backend pair, and the related output gets recorde
 
 ## Scoring ##
 
-The scoring system, as well the Besspin Scale, are inspired from the common weakness scoring system ([CWSS](https://cwe.mitre.org/cwss/cwss_v1.0.1.html)). The scoring is performed in the end of a vulnerability class run (see [modes.md](../base/modes.md) for mode details) by parsing each test's report. The possible score values are detailed below (see the Python Enum object `SCORES` defined in [scoreTests.py](../../fett/cwesEvaluation/scoreTests.py)). Please note that `HIGH` is the worst security score, and `NONE` is the best.  
+The scoring system, as well the Besspin Scale, are inspired from the common weakness scoring system ([CWSS](https://cwe.mitre.org/cwss/cwss_v1.0.1.html)). The scoring is performed in the end of a vulnerability class run (see [modes.md](../base/modes.md) for mode details) by parsing each test's report. The possible score values are detailed below (see the Python Enum object `SCORES` defined in [scoreTests.py](../../besspin/cwesEvaluation/scoreTests.py)). Please note that `HIGH` is the worst security score, and `NONE` is the best.  
 
 1. `NOT_APPLICABLE` (`NA`): This CWE is not applicable to this OS-backend combination.
 2. `NOT-IMPLEMENTED` (`NoImpl`): One or more tests are not yet implemented for this OS-backend pair.
@@ -72,7 +72,7 @@ The scoring system, as well the Besspin Scale, are inspired from the common weak
 8. `DETECTED`: The processor was able to detect that a violation had occurred. In such case, the test scores `DETECTED` whether the test has run to completion or was interrupted mid-run. This reflects a perfect score.
 9. `NONE`: This is another perfect score; The weakness type does not exist.
 
-Each vulnerability class has a README in [cwesEvaluation/](../../fett/cwesEvaluation/) with more details about the testing methodology and the scoring. 
+Each vulnerability class has a README in [cwesEvaluation/](../../besspin/cwesEvaluation/) with more details about the testing methodology and the scoring. 
 
 It is worth mentioning that the tool, the tests, the scoring mechanisms, etc. were developed using a non-secure baseline
 designs.  All our *good scoring* mechanisms were based on our understanding of the philosophy of the TA-1 teams work and their

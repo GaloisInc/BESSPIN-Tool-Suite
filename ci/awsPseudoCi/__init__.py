@@ -1,5 +1,5 @@
 """
-FETT CI Library
+BESSPIN CI Library
 """
 from .logger import log
 from .aws_config import *

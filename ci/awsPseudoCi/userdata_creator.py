@@ -2,14 +2,14 @@
 
 AWS Test Suite uses the ec2 user data to describe work to be accomplished by the launched
 instances. UserDataCreator generates and writes valid userdata from a job description of
-a FETT-Target job.
+a BESSPIN job.
 """
 from .aws_tools import *
 from .logger import *
 
 
 class UserdataCreator:
-    """Create FETT Target userdata file to define workload on AWS instances"""
+    """Create BESSPIN userdata file to define workload on AWS instances"""
 
     def __init__(self, userdata=None):
         """
@@ -43,7 +43,7 @@ class UserdataCreator:
         runMode="fett",
     ):
         """
-        Add userdata to start with FETT Target at specific branch and binaries branch
+        Add userdata to start with BESSPIN at specific branch and binaries branch
 
         :param credentials: AWS credentials.
         :type credentials: AWSCredentials
@@ -51,13 +51,13 @@ class UserdataCreator:
         :param name: Job name
         :type name: str
 
-        :param index: FETT Target index
+        :param index: BESSPIN index
         :type index: int
 
-        :param branch: What branch of SSITH-FETT-Target to run on AWS instances, defaults to 'master'
+        :param branch: What branch of BESSPIN-Tool-Suite to run on AWS instances, defaults to 'master'
         :type branch: str, optional
 
-        :param binaries_branch: What branch of SSITH-FETT-Binaries to run on AWS instances, defaults to 'master'
+        :param binaries_branch: What branch of BESSPIN-LFS to run on AWS instances, defaults to 'master'
         :type binaries_branch: str, optional
 
         :param key_path: Path of the SSH public key, defaults to '~/.ssh/id_rsa.pub'
@@ -79,8 +79,8 @@ class UserdataCreator:
             f'export AWS_SECRET_ACCESS_KEY="{credentials.secret_key_access}"',
             f'export AWS_SESSION_TOKEN="{credentials.session_token}"',
             "EOL",
-            f"""runuser -l centos -c 'echo "{ branch if branch else "None" }" >> /home/centos/SSITH-FETT-Target/branches'""",
-            f"""runuser -l centos -c 'echo "{ binaries_branch if binaries_branch else "None" }" >> /home/centos/SSITH-FETT-Target/branches'""",
+            f"""runuser -l centos -c 'echo "{ branch if branch else "None" }" >> /home/centos/BESSPIN-Tool-Suite/branches'""",
+            f"""runuser -l centos -c 'echo "{ binaries_branch if binaries_branch else "None" }" >> /home/centos/BESSPIN-Tool-Suite/branches'""",
         ]
 
         # If either branch is specified, we need to get a SSH key - best solution so far
@@ -118,15 +118,15 @@ class UserdataCreator:
         if branch or binaries_branch:
             userdata_specific = [
                 f"""runuser -l centos -c 'ssh-agent bash -c "ssh-add /home/centos/.ssh/id_rsa; 
-                    cd /home/centos/SSITH-FETT-Target/; 
-                    cd SSITH-FETT-Binaries; 
+                    cd /home/centos/BESSPIN-Tool-Suite/; 
+                    cd BESSPIN-LFS; 
                     git stash; 
                     cd ..;
                     git fetch;\n"""
                 + (f"git checkout {branch};\n" if branch else "")
                 + """git pull; 
                     git submodule update --init --recursive; 
-                    cd SSITH-FETT-Binaries;\n"""
+                    cd BESSPIN-LFS;\n"""
                 + (
                     f"git fetch; git checkout {binaries_branch}; git pull\n"
                     if binaries_branch
@@ -137,8 +137,8 @@ class UserdataCreator:
             ]
 
         userdata_specific.append(
-            f"""runuser -l centos -c 'cd /home/centos/SSITH-FETT-Target; 
-                nix-shell --command "ci/fett-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)} -m {runMode}"' """
+            f"""runuser -l centos -c 'cd /home/centos/BESSPIN-Tool-Suite; 
+                nix-shell --command "ci/besspin-ci.py -ep AWSTesting runDevPR -job {name} -i {str(index)} -m {runMode}"' """
         )
 
         userdata += userdata_specific
@@ -197,7 +197,7 @@ class UserdataCreator:
     @staticmethod
     @debug_wrap
     def indicator_filepath():
-        return "/home/centos/fett_userdata_complete"
+        return "/home/centos/besspin_userdata_complete"
 
     @property
     def userdata(self):

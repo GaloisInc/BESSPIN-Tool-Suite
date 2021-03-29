@@ -15,7 +15,7 @@
 
 1. Make sure to select a location (top right corner) where you have a capacity for F1 instances. Please note that the smallest F1 which is `f1.2xlarge` consumes 8 vCPUs.
 2. Select Launch instance -> Launch Instance
-3. Select "My AMIs", and select the most recent `fett-target-centos-mmddyy` AMI image.
+3. Select "My AMIs", and select the most recent `besspin-centos-mmddyy` AMI image.
 4. From the "Filter By" menu, select "FPGA Instances" and choose the f1.2xlarge option (the smallest), then press "Next: Configure Instance Details"
 5. For Galois internals, from the Network dropdown, select the "elew-firesim" network, from the Subnet, select the us-west-2a subnet, then click "Next: Storage". For anyone else, please make sure your network settings are configured so that you can ssh to the instance.
 6. The storage should default to a 150GB SSD and a 470GB NVME SSD. Click "Next: Tags"
@@ -28,7 +28,7 @@
 1. Find the IP in the running instances dashboard of the AWS EC2 Console
 2. Recommended: Add this to a `~/.ssh/config` file: (alternatively, use `ssh -i <.pem-file> centos@<ip>`)
 ```
-Host fett-fpga
+Host besspin-fpga
         HostName <ip>
         IdentityFile <.pem-file>
         User centos

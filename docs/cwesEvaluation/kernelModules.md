@@ -38,7 +38,7 @@ printk(KERN_INFO "<REGNAME> value = <%lx>\n", tmp);
 The current debian image does not support custom kernel modules. The branch `debian-w-loadable-kmod` has the debian kernel configuration that support it. So make sure your nix-shell builds that image first. The configuration was created by enabling the load and exit for modules using the configuration wizard:
 ```bash
 cd ${GFE}/bootmem/build-linux
-make KCONFIG_CONFIG=${SSITH-FETT-Target}/SSITH-FETT-Environment/nix/gfe/debian-linux.config ARCH=riscv menuconfig
+make KCONFIG_CONFIG=${BESSPIN-Tool-Suite}/BESSPIN-Environment/nix/gfe/debian-linux.config ARCH=riscv menuconfig
 ```
 
 Note that the image created by that branch does not boot on vcu118 due to rcu stalling. Still not solved yet.
@@ -54,7 +54,7 @@ git clone git@gitlab-ext.galois.com:ssith/riscv-linux.git
 cd riscv-linux
 git checkout 333e6ab0dd399fe5f668ac038a2cebd7be3e25b3
 touch .scmversion #This is crucial to avoid the dirty notation that would lead to kernel version mismatch
-cp ${SSITH-FETT-Target}/SSITH-FETT-Environment/nix/gfe/debian-linux.config nix-debian.config
+cp ${BESSPIN-Tool-Suite}/BESSPIN-Environment/nix/gfe/debian-linux.config nix-debian.config
 make ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- KCONFIG_CONFIG=./nix-debian.config modules_prepare
 
 cd $WRKDIR

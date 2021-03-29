@@ -1,11 +1,11 @@
 [submodule "SSITH-FETT-Environment"]
-	path = SSITH-FETT-Environment
+	path = BESSPIN-Environment
 	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Environment.git
 [submodule "SSITH-FETT-Voting"]
-	path = SSITH-FETT-Voting
+	path = BESSPIN-Voter-Registration
 	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Voting.git
 [submodule "SSITH-FETT-Binaries"]
-	path = SSITH-FETT-Binaries
+	path = BESSPIN-LFS
 	url = git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Binaries.git
 [submodule "FreeRTOS"]
 	path = FreeRTOS

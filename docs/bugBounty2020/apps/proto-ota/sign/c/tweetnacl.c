@@ -678,7 +678,7 @@ sv scalarbase(gf p[4],const u8 *s)
   scalarmult(p,q,s);
 }
 
-//  DARPA FETT project adds this function to derive a signing keypair
+//  DARPA BESSPIN project adds this function to derive a signing keypair
 //  from a given array of 32 bytes "raw_sk". This can be used to derive
 //  a keypair from a derivation function (such as the SHA256 hash of
 //  some pass-phrase).

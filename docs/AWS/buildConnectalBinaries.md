@@ -1,12 +1,12 @@
-# `Connectal` binaries for Fett Target
+# `Connectal` binaries for Besspin
 
-# `ssith-aws-fpga` for Fett Target
+# `ssith-aws-fpga` for Besspin
 
-This procedure describes how to build the [ssith-aws-fpga](https://github.com/acceleratedtech/ssith-aws-fpga) project for FPGA on the FETT AMI. The build process is identical to the README presented on the project repo, but the build environment setup is different.
+This procedure describes how to build the [ssith-aws-fpga](https://github.com/acceleratedtech/ssith-aws-fpga) project for FPGA on the BESSPIN AMI. The build process is identical to the README presented on the project repo, but the build environment setup is different.
 
 ## Procedure
 
-1. Create a Nix shell that uses the pinned packages in [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment).
+1. Create a Nix shell that uses the pinned packages in [BESSPIN-Environment](https://github.com/GaloisInc/BESSPIN-Environment).
 
    **shell.nix**
 
@@ -14,7 +14,7 @@ This procedure describes how to build the [ssith-aws-fpga](https://github.com/ac
    {}:
    
    let
-     pkgs = import /path/to/ssith-fett-environment/pinned-pkgs.nix {};
+     pkgs = import /path/to/ssith-besspin-environment/pinned-pkgs.nix {};
      inherit (pkgs) mkShell;
    in mkShell {
      buildInputs = with pkgs; [
@@ -42,7 +42,7 @@ This procedure describes how to build the [ssith-aws-fpga](https://github.com/ac
    make
    ```
 
-# Kernel modules for Fett Target
+# Kernel modules for Besspin
 
 This describes how to build the `portalmem.ko` and `pcieportal.ko` using [ssith-aws-fpga](https://github.com/acceleratedtech/ssith-aws-fpga) project. 
 

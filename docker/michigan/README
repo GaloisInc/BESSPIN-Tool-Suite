@@ -30,4 +30,4 @@ Steps for building apps are detailed below.
 
     Note that the tools on this image will encrypt binaries with a
     different key than the one required to run code on the Michigan
-    FETT instances.
+    BESSPIN instances.

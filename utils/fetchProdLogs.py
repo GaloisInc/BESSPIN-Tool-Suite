@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
 
 """
---- fetchProdLogs.py is a utility to fetch logs from FETT production.
+--- fetchProdLogs.py is a utility to fetch logs from BESSPIN production.
 --- usage: fetchProdLogs.py [-h] [-g GREPFILTER] [-ts STARTTIME] [-tf ENDTIME]
                         [-o OUTPUTDIRECTORY] [-x] [-v]
 
-Fetch FETT logs from production
+Fetch BESSPIN logs from production
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -27,8 +27,8 @@ optional arguments:
 import sys, os, traceback, shutil, signal, glob
 import boto3, botocore, argparse, datetime, tarfile
 
-prodBucket = 'master-ssith-fett-target-researcher-artifacts'
-artifactsPath = 'fett-target/production/artifacts'
+prodBucket = 'master-ssith-besspin-researcher-artifacts'
+artifactsPath = 'besspin/production/artifacts'
 
 def formatExc (exc):
     """ format the exception for printing """
@@ -191,7 +191,7 @@ def main(xArgs):
 
 if __name__ == '__main__':
     # Reading the bash arguments
-    xArgParser = argparse.ArgumentParser (description='Fetch FETT logs from production')
+    xArgParser = argparse.ArgumentParser (description='Fetch BESSPIN logs from production')
     xArgParser.add_argument ('-g', '--grepFilter', help='Download the tarballs containing the search string.')
     xArgParser.add_argument ('-ts', '--startTime', help='Download the tarballs created after start time (timestamp or yyyy-mm-dd).')
     xArgParser.add_argument ('-tf', '--endTime', help='Download the tarballs created before end time (timestamp or yyyy-mm-dd).')

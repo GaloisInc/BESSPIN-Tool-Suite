@@ -13,12 +13,12 @@ vulClasses = [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage
 def main(xArgs):
     buildDir = os.path.abspath(os.path.dirname(__file__))
     repoDir = os.path.abspath(os.path.join(buildDir,os.pardir))
-    cwesEvaluationDir = os.path.join(repoDir,"fett","cwesEvaluation")
+    cwesEvaluationDir = os.path.join(repoDir,"besspin","cwesEvaluation")
 
     # Import prettyVulClass
     sys.path.insert(0, repoDir)
-    import fett.base.config #To resolve cyclic importing
-    from fett.cwesEvaluation.scoreTests import prettyVulClass
+    import besspin.base.config #To resolve cyclic importing
+    from besspin.cwesEvaluation.scoreTests import prettyVulClass
 
     # Load the besspinCoeffs file
     besspinCoeffs = loadJsonFile(os.path.join(cwesEvaluationDir,"utils","besspinCoeffs.json"))

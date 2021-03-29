@@ -17,6 +17,6 @@ signfile/ada/verifyfile.adb - Host-based program to verify the signature of a gi
 
 ## Dependencies
 
-The C version for Linux needs mbedtls installed and built in the same directory as SSITH-FETT-Target
+The C version for Linux needs mbedtls installed and built in the same directory as BESSPIN-Tool-Suite
 
 The Ada version needs the SPARKNaCl library installed somewhere - see the GPR file.

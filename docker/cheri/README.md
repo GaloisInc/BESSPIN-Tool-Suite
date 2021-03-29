@@ -14,10 +14,10 @@ sudo apt update
 sudo apt install -y git-all
 sudo apt install -y git-lfs
 sudo apt install -y awscli
-git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
-cd SSITH-FETT-Target
+git clone git@github.com:GaloisInc/BESSPIN-Tool-Suite.git
+cd BESSPIN-Tool-Suite
 git submodule update --init
-cd SSITH-FETT-Binaries
+cd BESSPIN-LFS
 git lfs pull
 sudo apt install -y \
     apt-transport-https \
@@ -44,7 +44,7 @@ git config --global user.email <yourEmail>
 
 Now let's create the docker image:
 ```
-cd ~/SSITH-FETT-Target/docker/cheri/
+cd ~/BESSPIN-Tool-Suite/docker/cheri/
 ./copy-files.sh
 sudo docker build --tag cambridge-toolchain .
 ```

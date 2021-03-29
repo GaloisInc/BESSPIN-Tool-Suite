@@ -10,7 +10,7 @@ The buffer errors tool uses a clafer model to define a set of program
 constraints and specifies a mapping from CWEs to constraints.  You may force
 the setting of of specific constraints by providing your own custom error
 model.  To do so, create a copy of the builtin model
-(`fett/cwesEvaluation/bufferErrors/bufferErrors.cfr`) and list the constraints
+(`besspin/cwesEvaluation/bufferErrors/bufferErrors.cfr`) and list the constraints
 you would like to set at the end of the `BufferErrors_Test` section.  Do not
 directly edit the builtin model definition.
 
@@ -38,8 +38,8 @@ Say you would like to constrain the tool to only generate indexed array
 buffer errors in the stack with a magnitude of close and only using integer
 types.  Here are the steps you would take to accomplish this:
 
-1. Make a copy of `fett/cwesEvaluation/bufferErrors/bufferErrors.cfr`.  Do not
-   directly edit `fett/cwesEvaluation/bufferErrors/bufferErrors.cfr`.
+1. Make a copy of `besspin/cwesEvaluation/bufferErrors/bufferErrors.cfr`.  Do not
+   directly edit `besspin/cwesEvaluation/bufferErrors/bufferErrors.cfr`.
 2. Add the following lines to the bottom of your error model:
 ```
   [BufferIndexScheme_IndexArray]
@@ -142,4 +142,4 @@ BufferErrors_Test : BufferErrors_Weakness ?
   * Set `useCustomErrorModel` to `Yes`
   * Set `pathToCustomErrorModel` to your error model file
   * Set `numericTypes` to `[ints]`
-4. Run Fett
+4. Run Besspin

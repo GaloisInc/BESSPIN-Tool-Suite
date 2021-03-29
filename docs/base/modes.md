@@ -7,22 +7,22 @@ Each mode is already explained in its designated directory's readme, and thus th
 ## `mode = evaluateSecurityTests` ##
 
 This the mode of running the CWEs evaluation tests. The [CWEs readme](../cwesEvaluation/README.md) has more details about the functionality and the configuration. The tool's flow is as follows:
-- `fett.py` loads the configuration and calls `startFett`.
-- `startFett` calls `prepareEnv` which:
+- `besspin.py` loads the configuration and calls `startBesspin`.
+- `startBesspin` calls `prepareEnv` which:
     - Unix-only: Verify the environment setup, and perform any additional setup or programming it needs to prepare the target for launching.
     - Calls `buildCwesEvaluation` which collects (or generate if needed) the test sources and other artifacts based on the tests selection and configuration.
 - There are two separate flows here based on the OS. FreeRTOS is very special as the kernel is compiled along with the test (or even the test part), so the tool's launch sequence will have to be done for each test part, whereas for Unix OSes, this has to be done only once. Please see [FreeRTOS](#freertos) and [Unix](#unix) below.
-- `startFett` returns, and `endFett` is called, which does the following:
+- `startBesspin` returns, and `endBesspin` is called, which does the following:
     - Unix-only: Shuts down the OS, and tears down all relevant processes.
     - GFE-mode-only: Checks that the scores are valid, i.e., the scores are as expected when the tests run on a baseline non-secure processor.
     - The BESSPIN scale is computed. In case not all of the tests have run, partial categories scores are returned. More details are in the [BESSPIN Scale document](../cwesEvaluation/BESSPIN-Scale.pdf).
-- `endFett` returns, and the tool exits.
+- `endBesspin` returns, and the tool exits.
 
 ### FreeRTOS ###
 
-As mentioned above, `prepareEnv` will skip all environment preparation steps, and will just return. `startFett` will thus call `runFreeRTOSCwesEvaluation` and returns directly afterwards. For each test part, `runFreeRTOSCwesEvaluation` will:
+As mentioned above, `prepareEnv` will skip all environment preparation steps, and will just return. `startBesspin` will thus call `runFreeRTOSCwesEvaluation` and returns directly afterwards. For each test part, `runFreeRTOSCwesEvaluation` will:
 - Re-prepare the environment. For example, for Firesim, this will mean removing and re-installing the kernel modules, re-configuring the tap adaptor, and re-flashing the AFI.
-- Calls `launchFett`, which:
+- Calls `launchBesspin`, which:
     - Builds a FreeRTOS binary with the current test part.
     - Loads the binary and starts the OS.
     - Waits for the test to terminate, or times out (check `FreeRTOStimeout` in [cwesEvaluation/configuration.md](../cwesEvaluation/configuration.md)).
@@ -34,7 +34,7 @@ Note that for each vulnerability class, the `scoreTests` function will be called
 ### Unix ###
 
 - `prepareEnv` will also call `crossCompileUnix` for each vulnerability class to cross-compile any needed C files.
-- `startFett` calls `launchFett` which:
+- `startBesspin` calls `launchBesspin` which:
     - Boots the OS on the target.
     - The tool sends the tests binaries to the target.
     - The tests are executed and the log files are generated.
@@ -46,49 +46,49 @@ Similar to FreeRTOS, for each vulnerability class, the `scoreTests` function wil
 ## `mode = test` ##
 
 The `test` mode is one of the two modes of the bug bounty. The [bug bounty readme](../bugBounty2020/README.md) has more details about the functionality and the configuration. The tool's flow is as follows:
-- `fett.py` loads the configuration and calls `startFett`.
-- `startFett` calls `prepareEnv` to verify the environment setup, and perform any additional setup or programming it needs to prepare the target for launching.
-- `startFett` calls `launchFett` which does the following:
+- `besspin.py` loads the configuration and calls `startBesspin`.
+- `startBesspin` calls `prepareEnv` to verify the environment setup, and perform any additional setup or programming it needs to prepare the target for launching.
+- `startBesspin` calls `launchBesspin` which does the following:
     - Boots the OS on the target.
     - Unix-only: The root password is changed.
     - Unix-only: A non-root user is created.
     - Apps are set and deployment tests are run.
     - Unix-only: The user password is changed and it is given root access (if configured to do so).
-- `startFett` returns, and `endFett` is called, which does the following:
+- `startBesspin` returns, and `endBesspin` is called, which does the following:
     - Unix-only: Collects all relevant kernel logs.
     - Unix-AWS-only: Collect the remote logs that were logged using `rsyslog` on the host.
     - Shuts down the OS, and tears down all relevant processes.
-- `endFett` returns, and the tool exits.
+- `endBesspin` returns, and the tool exits.
 
 ---
 
 ## `mode = production` ## 
 
 The `production` mode is one of the two modes of the bug bounty. The [bug bounty readme](../bugBounty2020/README.md) has more details about the functionality and the configuration. The `production` mode works only with the `awsf1` mode. The tool's flow is as follows:
-- `fett.py` loads the configuration and calls `startFett`.
-- `startFett` calls `prepareEnv` to verify the environment setup, and perform any additional setup or programming it needs to prepare the target for launching.
-- `startFett` calls `launchFett` exactly as in the `test` mode described above.
-- `startFett` calls `startUartPiping` that pipes the target's TTY to a TCP port.
-- `startFett` returns.
+- `besspin.py` loads the configuration and calls `startBesspin`.
+- `startBesspin` calls `prepareEnv` to verify the environment setup, and perform any additional setup or programming it needs to prepare the target for launching.
+- `startBesspin` calls `launchBesspin` exactly as in the `test` mode described above.
+- `startBesspin` calls `startUartPiping` that pipes the target's TTY to a TCP port.
+- `startBesspin` returns.
 - The tool sends an SQS message to the portal to signal successful deployment.
 - The tool waits indefinitely for any of the following:
     - Receive a `termination` message (through S3) from the portal [this would continue the normal operation].
     - Receive a `reset` message [See [Reset Button](#reset-button)].
     - The main Firesim/Connectal process seems dead. [See [Dead Process](#dead-process)].
-- `endFett` is called, which does the following:
+- `endBesspin` is called, which does the following:
     - Calls `endUartPiping` to get back the control of the TTY.
     - Unix-only: Collects all relevant kernel logs.
     - Unix-only: Collect the remote logs that were logged using `rsyslog` on the host.
     - Shuts down the OS, and tears down all relevant processes.
     - Uploads all the relevant artifacts and collected logs to an S3 bucket.
-- `endFett` returns.
+- `endBesspin` returns.
 - The tool sends an SQS message to the portal to signal successful exit. The portal can thus terminate the host.
 - The tool exits.
 
 
 ### Reset Button ###
 
-When `fett.py` receives a `reset` message:
+When `besspin.py` receives a `reset` message:
 - Calls `resetTarget` which:
     - Calls `endUartPiping` to get back the control of the TTY.
     - Tears down the relevant processes and clears relevant data.
@@ -100,7 +100,7 @@ When `fett.py` receives a `reset` message:
 
 ### Dead Process ###
 
-When `fett.py` detects that the Firesim/Connectal process is not alive anymore while waiting for portal messages, it will call `endFett` as usual, but skips the kernel logs collection and the proper shutting down. 
+When `besspin.py` detects that the Firesim/Connectal process is not alive anymore while waiting for portal messages, it will call `endBesspin` as usual, but skips the kernel logs collection and the proper shutting down. 
 
 When the portal receives the message without sending the termination message, it will know that something went wrong. So it will terminate the host, and report on the researcher's dashboard that the instance is dead. 
 
@@ -113,18 +113,18 @@ If a failure occurs during any of the steps, the tool exits in an emergency mode
 ## `mode = cyberPhys` ##
 
 The tool's flow is as follows:
-- `fett.py` loads the configuration and calls `startCyberPhys` which:
-    - For each target, it starts a `startFett` thread that:
+- `besspin.py` loads the configuration and calls `startCyberPhys` which:
+    - For each target, it starts a `startBesspin` thread that:
         - Calls `prepareEnv` to verify the environment setup, and perform any additional setup or programming it needs to prepare the target for launching.
-        - Calls `launchFett` which:
+        - Calls `launchBesspin` which:
             - Boots the OS on the target.
             - Calls `runCyberPhys` which sets up and starts all the needed application, e.g. infotainment server.
-    - Waits for all `startFett` threads to finish.
+    - Waits for all `startBesspin` threads to finish.
     - If the interactive shell is enabled, the tool will go to the interactive mode. See [below](#interactive-shell).
     - Waits for all threads to finish.
-- When `startCyberPhys` returns, `fett.py` calls `endCyberPhys` which:
+- When `startCyberPhys` returns, `besspin.py` calls `endCyberPhys` which:
     - Runs a thread per target to end TTY piping if it was being piped. And waits for them to finish.
-    - Runs an `endFett` thread per target which shuts down the OS and tears down any relevant process. And waits for all of them to finish.
+    - Runs an `endBesspin` thread per target which shuts down the OS and tears down any relevant process. And waits for all of them to finish.
 - When `endCyberPhys` returns, the tool exits.
 
 ### Interactive Shell ###

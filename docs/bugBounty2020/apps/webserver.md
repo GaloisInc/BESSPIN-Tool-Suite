@@ -1,6 +1,6 @@
-# SSITH-FETT-Target Nginx smoke tests
+# BESSPIN-Tool-Suite Nginx smoke tests
 
-This document describes the smoke tests run on deployment for the FETT Nginx
+This document describes the smoke tests run on deployment for the BESSPIN Nginx
 webserver app. The tests are derived from the requirements for the application,
 outlined in the Lando specification. 
 
