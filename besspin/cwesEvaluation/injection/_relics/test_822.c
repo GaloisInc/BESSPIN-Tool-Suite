@@ -71,14 +71,14 @@ do_malicious_modification(char *ptr) {
 
 void main() {
     printf("\n<OSIMAGE=FreeRTOS>\n");
-   #if TESTGEN_TEST_PART == 1
+   #if BESSPIN_TEST_PART == 1
      printf("\n---Part01: regular_read.---\n");
      compare(&Y[0]);
-   #elif TESTGEN_TEST_PART == 2
+   #elif BESSPIN_TEST_PART == 2
      printf("\n---Part02: do_malicious_modification.---\n");
      do_malicious_modification(&Y[0]);
     #else
-     printf("SCORE:822:%d:TEST ERROR\n", TESTGEN_TEST_PART);
+     printf("SCORE:822:%d:TEST ERROR\n", BESSPIN_TEST_PART);
     #endif
   return;
 }

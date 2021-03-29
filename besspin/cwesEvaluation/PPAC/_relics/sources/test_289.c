@@ -129,7 +129,7 @@ NONE
         }
         subjectCN[xBytesReceived] = '\0'; //add the null termination
 
-        #if (TESTGEN_TEST_PART == 3) //create a task to do that
+        #if (BESSPIN_TEST_PART == 3) //create a task to do that
             funcReturn = xTaskCreate(vBypassTheForce, "taskTest:bypassTheForce", configMINIMAL_STACK_SIZE * STACKSIZEMUL, (void *) &subjectCN, xMainPriority, NULL);
             if (funcReturn != pdPASS) {
                 onPrintf ("<INVALID> [target-server] Failed to create <taskTest:bypassTheForce>. [ret=%d].\n",funcReturn);

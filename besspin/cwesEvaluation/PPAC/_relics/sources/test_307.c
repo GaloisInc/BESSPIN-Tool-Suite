@@ -59,7 +59,7 @@ Test_307: Improper Restriction of Excessive Authentication Attempts
         uint8_t iSubPart;
         const char subPartNames[3][4] = {"1", "N", "N+1"};
         
-        #if TESTGEN_TEST_PART==1
+        #if BESSPIN_TEST_PART==1
         //--------------------------------------------------------------------------------------------
         onPrintf ("\n\n--------------------Part01: Host is client and target is server--------------------\n\n");
         for (iSubPart=0; iSubPart<3; iSubPart++) {
@@ -148,7 +148,7 @@ Test_307: Improper Restriction of Excessive Authentication Attempts
             vTaskDelay (pdMS_TO_TICKS(1000)); //1 second -- take a breather
         } //for iSubPart (3 times)
 
-        #elif TESTGEN_TEST_PART==2
+        #elif BESSPIN_TEST_PART==2
         //--------------------------------------------------------------------------------------------
         onPrintf ("\n\n--------------------Part02: Host is server and target is client--------------------\n\n");
         uint8_t actualNAttempts[3] = {1, nAllowedAuthAttempts, nAllowedAuthAttempts+1};

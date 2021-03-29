@@ -55,20 +55,20 @@ example_input_args_in_front_on_stack(char x, char y) {
 
 void main() {
     printf("\n<OSIMAGE=FreeRTOS>\n");
-#if TESTGEN_TEST_PART == 1
+#if BESSPIN_TEST_PART == 1
     printf("\n---Part01: example_byte_in_front.---\n");
     example_byte_in_front();
-#elif TESTGEN_TEST_PART == 2
+#elif BESSPIN_TEST_PART == 2
     printf("---Part02: example_byte_past.---\n");
     example_byte_past();
-#elif TESTGEN_TEST_PART == 3
+#elif BESSPIN_TEST_PART == 3
     printf("---Part03: example_input_args_past_on_stack.---\n");
     example_input_args_past_on_stack('A', 'B');
-#elif TESTGEN_TEST_PART == 4
+#elif BESSPIN_TEST_PART == 4
     printf("---Part04: example_input_args_past_on_stack.---\n");
     example_input_args_in_front_on_stack('A', 'B');
 #else
-    printf("SCORE:188:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+    printf("SCORE:188:%d:TEST ERROR\n",BESSPIN_TEST_PART);
 #endif
     return;
 }

@@ -24,11 +24,11 @@ static void sizeofPtr (void);
 
     void main() {
         printf("\n<OSIMAGE=FreeRTOS>\n");
-        #if TESTGEN_TEST_PART == 1
+        #if BESSPIN_TEST_PART == 1
             sizeofPtr();
             printf("\n<END-OF-MAIN>\n");
         #else
-            printf("\n<INVALID> Part[%d] not in [1,%d].\n",TESTGEN_TEST_PART,NUM_OF_TEST_PARTS);
+            printf("\n<INVALID> Part[%d] not in [1,%d].\n",BESSPIN_TEST_PART,NUM_OF_TEST_PARTS);
         #endif
         return;
     }

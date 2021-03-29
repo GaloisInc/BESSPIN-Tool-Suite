@@ -86,14 +86,14 @@ void p02()
 
 int main()
 {
-#if TESTGEN_TEST_PART == 1
+#if BESSPIN_TEST_PART == 1
   setup_data();
   p01();
-#elif TESTGEN_TEST_PART == 2 
+#elif BESSPIN_TEST_PART == 2 
   setup_leaks();
   p02();
 #else
-  printf ("SCORE:824:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+  printf ("SCORE:824:%d:TEST ERROR\n",BESSPIN_TEST_PART);
 #endif
   return 0;
 }

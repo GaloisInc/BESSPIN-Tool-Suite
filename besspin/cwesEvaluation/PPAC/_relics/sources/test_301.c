@@ -24,16 +24,16 @@ NONE
     extern void printKey (const char * keyName, const byte * key, const word32 keySz);
     extern void loadDHparams (void);
     extern void freeDHparams (void);
-    #if (TESTGEN_TEST_PART == 1) || (TESTGEN_TEST_PART == 2)    
+    #if (BESSPIN_TEST_PART == 1) || (BESSPIN_TEST_PART == 2)    
         extern void genDHKeyPair (byte * pubKey, word32 * pubSz, byte * privKey, word32 * privSz, char iConn);
         extern void genDHSecret (const byte * privKey, word32 privSz, const byte * pubHost, word32 pubHostSz, char iConn);
-    #elif (TESTGEN_TEST_PART == 3)
+    #elif (BESSPIN_TEST_PART == 3)
         extern void respondToDHChallenge (const byte * chalKey, word32 chalSz, byte * respKey, word32 * respSz, char iConn);
         extern void createDHChallenge (byte * chalKey, word32 * chalSz, char iConn);
         extern uint8_t getServicePermission (const byte * chalKey, word32 chalSz, const byte * recvAns, word32 recvAnsSz, char iConn);
     #endif
 
-    #if (TESTGEN_TEST_PART == 2)
+    #if (BESSPIN_TEST_PART == 2)
         extern byte respTarget[KEY_SIZE], privTarget[KEY_SIZE];
         extern word32 respTargetSz, privTargetSz;
     #endif
@@ -176,28 +176,28 @@ NONE
 
         if (notificationToSend == NOTIFY_CONNECTED) {
             // ----------- Print the received value ------------
-            #if (TESTGEN_TEST_PART == 1) || (TESTGEN_TEST_PART == 2)
+            #if (BESSPIN_TEST_PART == 1) || (BESSPIN_TEST_PART == 2)
                 char keyName[] = "TARGET-RECV-X-PUB-KEY";
                 sprintf (keyName,"TARGET-RECV-%c-PUB-KEY",iConn);
-            #elif (TESTGEN_TEST_PART == 3)
+            #elif (BESSPIN_TEST_PART == 3)
                 char keyName[] = "TARGET-RECV-X-CHALLENGE";
                 sprintf (keyName,"TARGET-RECV-%c-CHALLENGE",iConn);
             #endif
             printKey (keyName, rxBuffer, (word32) nBytes);
 
-            #if (TESTGEN_TEST_PART == 1)
+            #if (BESSPIN_TEST_PART == 1)
                 // ----------- Generate key pair (i.e. secret + partial key) ------------
                 byte respTarget[KEY_SIZE], privTarget[KEY_SIZE];
                 word32 respTargetSz, privTargetSz;
                 genDHKeyPair (respTarget, &respTargetSz, privTarget, &privTargetSz, iConn);
-            #elif (TESTGEN_TEST_PART == 3)
+            #elif (BESSPIN_TEST_PART == 3)
                 // ----------- Generate the response to the received challenge ------------
                 byte respTarget[KEY_SIZE];
                 word32 respTargetSz;
                 respondToDHChallenge (rxBuffer, (word32) nBytes, respTarget, &respTargetSz, iConn);
             #endif
 
-            #if (TESTGEN_TEST_PART == 1) || (TESTGEN_TEST_PART == 2)
+            #if (BESSPIN_TEST_PART == 1) || (BESSPIN_TEST_PART == 2)
                 // Generate the secret from the received partial key
                 genDHSecret (privTarget, privTargetSz, rxBuffer, (word32) nBytes, iConn);
             #endif
@@ -224,7 +224,7 @@ NONE
             onPrintf ("\t[%c]>>>>>> [communicateTCP]: Sent [%d Bytes].\n",iConn,nTotalSent);
         } //was recv successful
 
-        #if (TESTGEN_TEST_PART == 3) //do the other exchange
+        #if (BESSPIN_TEST_PART == 3) //do the other exchange
             // ----------- Create a challenge ------------
             byte chalTarget[KEY_SIZE];
             word32 chalTargetSz;

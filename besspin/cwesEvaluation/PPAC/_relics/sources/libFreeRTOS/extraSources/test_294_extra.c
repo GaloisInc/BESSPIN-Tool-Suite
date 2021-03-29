@@ -12,7 +12,7 @@ ipList: A list of IPs. Protected and defined here pre-test.
 */
 #define IPS_LIST_LENGTH 3 //has to be >=2
 
-#if (TESTGEN_TEST_PART == 1)
+#if (BESSPIN_TEST_PART == 1)
     static char ipsList[IPS_LIST_LENGTH][IP_NAME_SIZE] = {"192.168.23.2", "10.88.88.1", "10.11.5.5"}; 
 #else //part 2
     static char ipsList[IPS_LIST_LENGTH][IP_NAME_SIZE] = {"192.168.23.2", SPOOFING_IP, "10.11.5.5"}; 

@@ -88,12 +88,12 @@ void p02()
 int main()
 {
   do_secret_stuff();
-#if TESTGEN_TEST_PART == 1
+#if BESSPIN_TEST_PART == 1
   p01();
-#elif TESTGEN_TEST_PART == 2
+#elif BESSPIN_TEST_PART == 2
   p02();
 #else
-  printf ("SCORE:665:%d:TEST ERROR\n", TESTGEN_TEST_PART);
+  printf ("SCORE:665:%d:TEST ERROR\n", BESSPIN_TEST_PART);
 #endif
   return 0;
 }

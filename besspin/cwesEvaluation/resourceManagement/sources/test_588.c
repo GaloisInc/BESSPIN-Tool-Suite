@@ -35,14 +35,14 @@ void struct_pointer_cast_of_void_pointer() {
 void main() {
 
     printf("\n<OSIMAGE=FreeRTOS>\n");
-    #if TESTGEN_TEST_PART == 1
+    #if BESSPIN_TEST_PART == 1
         printf("\n---Part01: struct_pointer_cast_of_scalar_pointer.---\n");
         struct_pointer_cast_of_scalar_pointer();
-    #elif TESTGEN_TEST_PART == 2
+    #elif BESSPIN_TEST_PART == 2
         printf("\n---Part02: struct_pointer_cast_of_void_pointer.---\n");
         struct_pointer_cast_of_void_pointer();
     #else
-        printf("SCORE:588:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+        printf("SCORE:588:%d:TEST ERROR\n",BESSPIN_TEST_PART);
     #endif
   return;
 }

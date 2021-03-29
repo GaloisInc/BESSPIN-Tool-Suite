@@ -15,9 +15,9 @@ log: A queue of loggingItems. Protected and defined here.
 #define USERS_LIST_LENGTH 3 //has to be >=2
 #define LOG_QUEUE_LENGTH 3
 
-#if (TESTGEN_TEST_PART == 2) || (TESTGEN_TEST_PART == 4)
+#if (BESSPIN_TEST_PART == 2) || (BESSPIN_TEST_PART == 4)
     static char usersList[USERS_LIST_LENGTH][SUBJECT_CN_BUF_SIZE] = {"Yoda", "Jedi Order CLNT", "Baby Yoda"}; 
-#elif TESTGEN_TEST_PART == 3
+#elif BESSPIN_TEST_PART == 3
     char usersList[USERS_LIST_LENGTH][SUBJECT_CN_BUF_SIZE] = {"Yoda", "Galois", "Baby Yoda"}; 
 #else //part 1
     static char usersList[USERS_LIST_LENGTH][SUBJECT_CN_BUF_SIZE] = {"Yoda", "Galois", "Baby Yoda"}; 
@@ -30,7 +30,7 @@ struct logItem {
 };
 
 // The log
-#if TESTGEN_TEST_PART == 4
+#if BESSPIN_TEST_PART == 4
     QueueHandle_t logQueue = NULL;
 #else
     static QueueHandle_t logQueue = NULL;

@@ -70,20 +70,20 @@ int contains_char_valid(char c) {
 
 void main() {
     printf("\n<OSIMAGE=FreeRTOS>\n");
-    #if TESTGEN_TEST_PART == 1
+    #if BESSPIN_TEST_PART == 1
         printf("\n---Part01: contains_char_valid_success.---\n");
         contains_char_valid('S');
-    #elif TESTGEN_TEST_PART == 2
+    #elif BESSPIN_TEST_PART == 2
         printf("\n---Part02: contains_char_valid_failure.---\n");
         contains_char_valid('T');
-    #elif TESTGEN_TEST_PART == 3
+    #elif BESSPIN_TEST_PART == 3
         printf("\n---Part03: contains_char_malicious_success.---\n");
         contains_char_malicious('S');
-    #elif TESTGEN_TEST_PART == 4
+    #elif BESSPIN_TEST_PART == 4
         printf("\n---Part04: contains_char_malicious_success.---\n");
         contains_char_malicious('G');
     #else
-        printf("SCORE:761:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+        printf("SCORE:761:%d:TEST ERROR\n",BESSPIN_TEST_PART);
     #endif
   return;
 }

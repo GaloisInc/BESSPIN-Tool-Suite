@@ -60,15 +60,15 @@ double_free_str_int(int in) {
 
 void main() {
     printf("\n<OSIMAGE=FreeRTOS>\n");
-    #if TESTGEN_TEST_PART == 1
+    #if BESSPIN_TEST_PART == 1
         printf("\n---Part01: double_free.---\n");
         char src[4] = "Test";
         double_free(&src[0]);
-    #elif TESTGEN_TEST_PART == 2
+    #elif BESSPIN_TEST_PART == 2
         printf("\n---Part02: double_free_str_int.---\n");
         double_free_str_int(5);
     #else
-        printf("SCORE:415:%d:TEST ERROR\n", TESTGEN_TEST_PART);
+        printf("SCORE:415:%d:TEST ERROR\n", BESSPIN_TEST_PART);
     #endif
     return;
 }

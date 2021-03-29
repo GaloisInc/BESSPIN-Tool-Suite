@@ -18,10 +18,10 @@ void freeDHparams (void);
 static DhKey globalKey;
 static RNG rng;
 
-#if (TESTGEN_TEST_PART == 1) || (TESTGEN_TEST_PART == 2)
+#if (BESSPIN_TEST_PART == 1) || (BESSPIN_TEST_PART == 2)
     void genDHKeyPair (byte * pubKey, word32 * pubSz, byte * privKey, word32 * privSz, char iConn);
     void genDHSecret (const byte * privKey, word32 privSz, const byte * pubHost, word32 pubHostSz, char iConn); 
-#elif (TESTGEN_TEST_PART == 3)
+#elif (BESSPIN_TEST_PART == 3)
     void respondToDHChallenge (const byte * chalKey, word32 chalSz, byte * respKey, word32 * respSz, char iConn);
     void createDHChallenge (byte * chalKey, word32 * chalSz, char iConn);
     uint8_t getServicePermission (const byte * chalKey, word32 chalSz, const byte * recvAns, word32 recvAnsSz, char iConn);
@@ -29,7 +29,7 @@ static RNG rng;
     extern int GeneratePrivate(DhKey* key, RNG* rng, byte* priv, word32* privSz);
 #endif
 
-#if (TESTGEN_TEST_PART == 2)
+#if (BESSPIN_TEST_PART == 2)
     byte respTarget[KEY_SIZE], privTarget[KEY_SIZE];
     word32 respTargetSz, privTargetSz;
 #endif
@@ -59,7 +59,7 @@ void loadDHparams (void) {
         prEXIT(2);
     }   
 
-    #if (TESTGEN_TEST_PART == 2) //same key-pair
+    #if (BESSPIN_TEST_PART == 2) //same key-pair
         genDHKeyPair (respTarget, &respTargetSz, privTarget, &privTargetSz, 'S');
     #endif
 
@@ -88,7 +88,7 @@ void printKey (const char * keyName, const byte * key, const word32 keySz) {
     return;
 }
 
-#if (TESTGEN_TEST_PART == 1) || (TESTGEN_TEST_PART == 2)
+#if (BESSPIN_TEST_PART == 1) || (BESSPIN_TEST_PART == 2)
     //generate a key-pair
     void genDHKeyPair (byte * pubKey, word32 * pubSz, byte * privKey, word32 * privSz, char iConn) {
         onPrintf ("[genDHKeyPair-%c]: Generating keys.\n",iConn);
@@ -131,7 +131,7 @@ void printKey (const char * keyName, const byte * key, const word32 keySz) {
 
         return;
     }
-#elif (TESTGEN_TEST_PART == 3)
+#elif (BESSPIN_TEST_PART == 3)
     //completes a challenge
     void respondToDHChallenge (const byte * chalKey, word32 chalSz, byte * respKey, word32 * respSz, char iConn) {
         onPrintf ("[respondToDHChallenge-%c]: Generating the challenge response.\n",iConn);

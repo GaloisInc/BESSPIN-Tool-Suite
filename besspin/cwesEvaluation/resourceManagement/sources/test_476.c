@@ -23,14 +23,14 @@ void malicious_test_write(int *ptr) {
 void main() {
     int *p=NULL;
     printf("\n<OSIMAGE=FreeRTOS>\n");
-    #if TESTGEN_TEST_PART == 1
+    #if BESSPIN_TEST_PART == 1
         printf("\n---Part01: malicious_test_read.---\n");
         malicious_test_read(p);
-    #elif TESTGEN_TEST_PART == 2
+    #elif BESSPIN_TEST_PART == 2
         printf("\n---Part02: malicious_test_write.---\n");
         malicious_test_write(p);
     #else
-        printf("SCORE:476:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+        printf("SCORE:476:%d:TEST ERROR\n",BESSPIN_TEST_PART);
     #endif
   return;
 }

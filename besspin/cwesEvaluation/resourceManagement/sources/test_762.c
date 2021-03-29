@@ -43,17 +43,17 @@ wrong_memory_free(void){
 
 void main() {
   printf("\n<OSIMAGE=FreeRTOS>\n");
-    #if TESTGEN_TEST_PART == 1
+    #if BESSPIN_TEST_PART == 1
         printf("\n---Part01: correct_memory_free.---\n");
         correct_memory_free();
-    #elif TESTGEN_TEST_PART == 2
+    #elif BESSPIN_TEST_PART == 2
         printf("\n---Part02: wrong_memory_free.---\n");
         wrong_memory_free();
-    #elif TESTGEN_TEST_PART == 3
+    #elif BESSPIN_TEST_PART == 3
         printf("\n---Part03: array_allocated_globally.---\n");
         array_allocated_globally();
     #else
-        printf("SCORE:762:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+        printf("SCORE:762:%d:TEST ERROR\n",BESSPIN_TEST_PART);
     #endif
   return;
 }

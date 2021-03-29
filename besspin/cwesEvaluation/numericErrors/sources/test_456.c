@@ -146,14 +146,14 @@ void p03()
 
 int main()
 {
-#if TESTGEN_TEST_PART == 1
+#if BESSPIN_TEST_PART == 1
   p01();
-#elif TESTGEN_TEST_PART == 2
+#elif BESSPIN_TEST_PART == 2
   p02();
-#elif TESTGEN_TEST_PART == 3
+#elif BESSPIN_TEST_PART == 3
   p03();
 #else
-  printf ("SCORE:456:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+  printf ("SCORE:456:%d:TEST ERROR\n",BESSPIN_TEST_PART);
 #endif
   return 0;
 }

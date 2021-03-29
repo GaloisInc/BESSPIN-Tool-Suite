@@ -15,13 +15,13 @@ tasksBlackList: A list of strings. Protected and defined here pre-test.
 #define USERS_LIST_LENGTH 3 //has to be >=2
 #define TASKS_LIST_LENGTH 3 //has to be >=2
 
-#if (TESTGEN_TEST_PART == 1) || (TESTGEN_TEST_PART == 3) 
+#if (BESSPIN_TEST_PART == 1) || (BESSPIN_TEST_PART == 3) 
     static char usersList[USERS_LIST_LENGTH][SUBJECT_CN_BUF_SIZE] = {"SSITH Lord", "Darth Vader", "Sheev Palpatine"}; 
 #else //part 2
     static char usersList[USERS_LIST_LENGTH][SUBJECT_CN_BUF_SIZE] = {"SSITH Lord", "Jedi Order Clnt", "Sheev Palpatine"};
 #endif
 
-#if (TESTGEN_TEST_PART == 1) || (TESTGEN_TEST_PART == 2) 
+#if (BESSPIN_TEST_PART == 1) || (BESSPIN_TEST_PART == 2) 
     static char tasksList[TASKS_LIST_LENGTH][TASK_NAME_SIZE] = {"vKillYoda", "Viva Darth Sidious", "Destroy The Force"}; 
 #else //part 3
     static char tasksList[TASKS_LIST_LENGTH][TASK_NAME_SIZE] = {"vKillYoda", "main:task289", "Destroy The Force"};
