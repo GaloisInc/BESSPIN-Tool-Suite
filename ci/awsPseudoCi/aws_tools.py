@@ -111,7 +111,7 @@ def launch_instance(
     Creates an EC2 instance
 
     Convenience handling of boto3.create_instances -- allows the AMI, VPC and security to be referred to by name, rather
-    than id. Also, defaults to values typically used during FETT development, only requiring the AMI name. Keyword
+    than id. Also, defaults to values typically used during BESSPIN development, only requiring the AMI name. Keyword
     arguments are passed directly to launch_instances call for extensibility.
 
     :param image_id: AMI ID

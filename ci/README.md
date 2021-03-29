@@ -1,4 +1,4 @@
-# CI for SSITH-FETT-Target
+# CI for BESSPIN-Tool-Suite
 
 ## Regular CI
 
@@ -33,7 +33,7 @@ Flavors:
 ### Setup
 
 - Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-- If you will specify a SSITH-FETT-Target branch (`-b`) or a SSITH-FETT-Binaries branch (`-bb`), create an SSH key (default named `~/.ssh/id_rsa`) and grant it access to your github and gitlab-ext accounts.
+- If you will specify a BESSPIN-Tool-Suite branch (`-b`) or a BESSPIN-LFS branch (`-bb`), create an SSH key (default named `~/.ssh/id_rsa`) and grant it access to your github and gitlab-ext accounts.
 
 ### Usage
 

@@ -1,4 +1,4 @@
-# SSITH-FETT-Target smoke tests
+# BESSPIN-Tool-Suite smoke tests
 Smoke testing is a type of software testing that determines whether 
 the deployed build is stable or not. Smoke tests are a minimal set 
 of tests run on each build and serves for quickly checking the major 
@@ -7,7 +7,7 @@ functions.
 ## Smoke tests for SQlite database
 The SQlite smoke tests provided in ``database.py``file, are developed 
 to verify requirements described in ``database_requirements.lando`` document 
-and they are part of `FETT` platform testing service.
+and they are part of `BESSPIN` platform testing service.
 
 The following workflow has been implemented:
 * create a database instance called `test.db`

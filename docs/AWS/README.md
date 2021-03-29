@@ -10,8 +10,8 @@ This directory includes the following:
 
 - [createEC2Instance.md](./createEC2Instance.md): How to launch an F1 instance to be able to run the tool in `awsf1` mode.
 
-- [createFettAMI.md](./createFettAMI.md): Steps to create the tool's AMI from the generic FPGA dev AWS AMI.
+- [createBesspinAMI.md](./createBesspinAMI.md): Steps to create the tool's AMI from the generic FPGA dev AWS AMI.
 
-- [createFettAMI.md](./createFettAMI.md): Steps to update the tool's AMI for a release.
+- [createBesspinAMI.md](./createBesspinAMI.md): Steps to update the tool's AMI for a release.
 
 - [remoteCommunicationWithTarget.md](./remoteCommunicationWithTarget.md): How to communicate with the FPGA target from a different AWS instance (other than the host) or even a different computer given that the networking is properly handled.

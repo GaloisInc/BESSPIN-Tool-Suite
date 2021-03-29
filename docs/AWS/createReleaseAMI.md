@@ -1,8 +1,8 @@
-# Updating FETT Target AMI for a release
+# Updating BESSPIN AMI for a release
 
 ## Overview
 
-This guide outlines how to updated an existing FETT-Target AMI for a newer release.
+This guide outlines how to updated an existing BESSPIN AMI for a newer release.
 
 ## Procedure
 
@@ -10,26 +10,26 @@ This guide outlines how to updated an existing FETT-Target AMI for a newer relea
 
 2. Get the hash of the master's tip. Let's say "1234567xxxxxxxxxxxxx".
 
-3. Launch any instance (we often use c4.xlarge) with the most recent `fett-target-centos-mmddyy-zzzzzzz` AMI.
+3. Launch any instance (we often use c4.xlarge) with the most recent `besspin-centos-mmddyy-zzzzzzz` AMI.
 
 4. Figure out your SSH keys situation to be able to `git pull`. Either by creating a new key and adding it to your github account, or by forwarding your keys from somewhere.
 
 5. Update the tool's checkout:
 ```
-cd ~/SSITH-FETT-Target
-cd SSITH-FETT-Binaries
+cd ~/BESSPIN-Tool-Suite
+cd BESSPIN-LFS
 git stash
 cd ..
 git pull #this is assuming that we're on master (as we should)
 git log -1 #check visually that the master's tip is correct
 git submodule update
-cd SSITH-FETT-Binaries
+cd BESSPIN-LFS
 git lfs pull
 ```
 
 6. Nix update:
 ```
-cd ~/SSITH-FETT-Target
+cd ~/BESSPIN-Tool-Suite
 nix-shell
 nix-shell$ nix-collect-garbage
 nix-shell$ exit
@@ -38,7 +38,7 @@ nix-shell$ history -c
 nix-shell$ exit
 ```
 
-7. Clear your data (as explained in `FettAMI.md` step 13)
+7. Clear your data (as explained in `BesspinAMI.md` step 13)
 ```
 rm /home/centos/.gitconfig #you didn't need to put there anything anyway
 rm ~/.ssh/*
@@ -50,8 +50,8 @@ history -c
     - EC2 dashboard --> instances --> Stop your instance
     - Wait for it to show `stopped`
     - right click (or actions) --> Image --> Create Image
-    - Name the AMI: `fett-target-centos-mmddyy-1234567` where `1234567` are the first 7 chars from the master's tip.
-    - AMI description: `FETT AMI 1234567xxxxxxxxxxxxx`
+    - Name the AMI: `besspin-centos-mmddyy-1234567` where `1234567` are the first 7 chars from the master's tip.
+    - AMI description: `BESSPIN AMI 1234567xxxxxxxxxxxxx`
 
 9. Test the AMI:
     - Use the `aws-testing-ci` utility to test the AMI.

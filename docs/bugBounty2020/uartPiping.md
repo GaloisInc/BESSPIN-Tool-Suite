@@ -2,7 +2,7 @@
 
 ## Overview
 
-In production, FETT currently pipes the direct UART connection with the FPGA to **TCP port 8278**. Please note that this port is the configurable option `uartFwdPort` in `fett/base/utils/setupEnv.json`.
+In production, BESSPIN currently pipes the direct UART connection with the FPGA to **TCP port 8278**. Please note that this port is the configurable option `uartFwdPort` in `besspin/base/utils/setupEnv.json`.
 
 ## Usage manual
 

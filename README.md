@@ -1,4 +1,4 @@
-# SSITH-FETT-Target #
+# BESSPIN-Tool-Suite #
 
 The core tool of the BESSPIN Framework.
 
@@ -33,8 +33,8 @@ The different OSes are detailed in [OSes.md](./docs/base/OSes.md), while the dif
 To clone the repo and start `the nix-shell`, please use:
 
 ```bash
-git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
-cd SSITH-FETT-Target
+git clone git@github.com:GaloisInc/BESSPIN-Tool-Suite.git
+cd BESSPIN-Tool-Suite
 ./utils/init_submodules.sh
 nix-shell
 ```
@@ -50,9 +50,9 @@ Also, a more radical approach would be to remove all password requirements for a
 ${USER} ALL=(ALL) NOPASSWD:ALL
 ```
 
-Alternatively, there is a docker container that has the Nix store populated, and is ready to go. The resources needed to build the docker container are currently in [the docker-tools repo](https://gitlab-ext.galois.com/ssith/docker-tools/-/tree/develop/fett_target), but ticket #1046 should fix that by getting the built up to date, and the instructions local to this repo. The docker image is `artifactory.galois.com:5008/fett-target:ci`, and requires Galois artifactory access to fetch. The recommended command to start the image is:
+Alternatively, there is a docker container that has the Nix store populated, and is ready to go. The resources needed to build the docker container are currently in [the docker-tools repo](https://gitlab-ext.galois.com/ssith/docker-tools/-/tree/develop/fett_target), but ticket #1046 should fix that by getting the built up to date, and the instructions local to this repo. The docker image is `artifactory.galois.com:5008/besspin:ci`, and requires Galois artifactory access to fetch. The recommended command to start the image is:
 ```bash
-    sudo docker run -it --privileged=true --network host -v /path/to/SSITH-FETT-Target:/home/besspinuser/SSITH-FETT-Target artifactory.galois.com:5008/fett-target:ci
+    sudo docker run -it --privileged=true --network host -v /path/to/BESSPIN-Tool-Suite:/home/besspinuser/BESSPIN-Tool-Suite artifactory.galois.com:5008/besspin:ci
 ```
 
 ---
@@ -61,11 +61,11 @@ Alternatively, there is a docker container that has the Nix store populated, and
 
 To run the tool, use the following:
 ```
-usage: fett.py [-h] [-c CONFIGFILE | -cjson CONFIGFILESERIALIZED]
+usage: besspin.py [-h] [-c CONFIGFILE | -cjson CONFIGFILESERIALIZED]
                [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
                [-ep {devHost,ciOnPrem,ciAWS,awsProd,awsDev}] [-job JOBID]
 
-FETT (Finding Exploits to Thwart Tampering)
+BESSPIN (Balancing Evaluation of System Security Properties with Industrial Needs)
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -77,7 +77,7 @@ optional arguments:
   -w WORKINGDIRECTORY, --workingDirectory WORKINGDIRECTORY
                         Overwrites the default working directory: ./workDir/
   -l LOGFILE, --logFile LOGFILE
-                        Overwrites the default logFile: ./${workDir}/fett.log
+                        Overwrites the default logFile: ./${workDir}/besspin.log
   -d, --debug           Enable debugging mode.
   -ep {devHost,ciOnPrem,ciAWS,awsProd,awsDev}, --entrypoint {devHost,ciOnPrem,ciAWS,awsProd,awsDev}
                         The entrypoint
@@ -89,16 +89,16 @@ Configuration is explained in detail in [configuration.md](./docs/base/configura
 
 If the tool is executed manually, there is no need to provide an entrypoint (will be assigned `devHost` by default), or a job ID. These are for when the tool is executed in batch test mode and CI.
 
-The debug mode will dramatically increase the size of the log file (`./${workDir}/fett.log` by default), so please use it only if needed.
+The debug mode will dramatically increase the size of the log file (`./${workDir}/besspin.log` by default), so please use it only if needed.
 
 ---
 
 ## Submodules ##
 
 The tool has the following submodules:
-- [SSITH-FETT-Environment](./SSITH-FETT-Environment): The Nix shell source codes for the required packages and binaries. More details about Nix are in [nix.md](./docs/base/nix.md).
-- [SSITH-FETT-Voting](./SSITH-FETT-Voting): As detailed [here](./docs/bugBounty2020/), a voting registration system was one of the applications in the attack surface for the Unix targets of the bug bounty. This submodule has documentation, build instructions, source codes, design files, etc.
-- [SSITH-FETT-Binaries](./SSITH-FETT-Binaries): This is the Git LFS repo that contains many resources the tool needs for certain configurations, like OS binaries, FPGA bitstreams, AWS AFI IDs, application pre-built binaries, etc.
+- [BESSPIN-Environment](./BESSPIN-Environment): The Nix shell source codes for the required packages and binaries. More details about Nix are in [nix.md](./docs/base/nix.md).
+- [BESSPIN-Voter-Registration](./BESSPIN-Voter-Registration): As detailed [here](./docs/bugBounty2020/), a voting registration system was one of the applications in the attack surface for the Unix targets of the bug bounty. This submodule has documentation, build instructions, source codes, design files, etc.
+- [BESSPIN-LFS](./BESSPIN-LFS): This is the Git LFS repo that contains many resources the tool needs for certain configurations, like OS binaries, FPGA bitstreams, AWS AFI IDs, application pre-built binaries, etc.
 - [FreeRTOS](./FreeRTOS): The Galois fork of the classic FreeRTOS repo. This is used for building the FreeRTOS binaries since each CWE test and each application needs to be cross-built alongside the FreeRTOS kernel in a single binary. 
 
 ---
@@ -106,9 +106,9 @@ The tool has the following submodules:
 ## Developer Starter Kit ##
 
 - The target classes structure is briefly explained in [targets.md](./docs/base/targets.md). This should be the starting point to add a new OS or a new backend to the tool.
-- There are many functions that are used throughout the tool and can help with integration. These functions are defined inside `fett/base/utils/misc.py`. It would be useful to look at this file prior to any development work on this codebase. Especially `printAndLog`, `warnAndLog`, `errorAndLog`, `logAndExit`, `getSetting`, `ftOpenFile`, `make`.
-- To add a configuration option, you have to update the json dictionary in `fett/base/utils/configData.json`.
-- To add/change a system setting, you have to update the json dictionary in `fett/base/utils/setupEnv.json`.
+- There are many functions that are used throughout the tool and can help with integration. These functions are defined inside `besspin/base/utils/misc.py`. It would be useful to look at this file prior to any development work on this codebase. Especially `printAndLog`, `warnAndLog`, `errorAndLog`, `logAndExit`, `getSetting`, `ftOpenFile`, `make`.
+- To add a configuration option, you have to update the json dictionary in `besspin/base/utils/configData.json`.
+- To add/change a system setting, you have to update the json dictionary in `besspin/base/utils/setupEnv.json`.
 - The directories structure is:
   - `apps`: Bug bounty specific.
   - `base`: The core functionality (ex. target)

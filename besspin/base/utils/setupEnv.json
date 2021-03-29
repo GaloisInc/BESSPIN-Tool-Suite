@@ -1,0 +1,400 @@
+{
+    "_usage" : "This json file has the environment setup that is not to be changed per run.",
+    "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
+    "_paths" : "Paths here are assumed to be relative to the repo source dir.",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, ipAddress, dict, macAddress",
+    "_choices" : "a list of acceptable choices. Use for int or str",
+    "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
+    "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
+
+    "setupEnv" : [
+        {
+            "name" : "jsonDataFile",
+            "type" : "filePath",
+            "val" : "besspin/base/utils/configData.json"
+        },
+        {
+            "name" : "cyberPhysDefaultConfigFile",
+            "type" : "filePath",
+            "val" : "cyberPhys.ini"
+        },
+        {
+            "name" : "cyberPhysCanbusPort",
+            "type" : "int",
+            "val" : "5002"
+        },
+        {
+            "name" : "commPortHost",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "commPortTarget",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 1234
+        },
+        {
+            "name" : "vcu118IpHost",
+            "type" : "ipAddress",
+            "val" : "10.88.88.1"
+        },
+        {
+            "name" : "vcu118NetMaskTarget",
+            "type" : "ipAddress",
+            "val" : "255.255.255.0"
+        },
+        {
+            "name" : "vcu118BroadcastIp",
+            "type" : "ipAddress",
+            "val" : "10.88.88.255"
+        },
+        {
+            "name" : "vcu118MacAddrTarget",
+            "type" : "macAddress", 
+            "val" : "00:0a:35:04:db:77"
+        },
+        {
+            "name" : "vcu118EthAdaptorName",
+            "type" : "string",
+            "val" : "eth0fpga"
+        },
+        {
+            "name" : "vcu118EthAdaptorMacAddress",
+            "type" : "macAddress",
+            "val" : "88:53:48:41:56:45"
+        },
+        {
+            "name" : "awsf1IpTarget",
+            "type" : "ipAddress",
+            "val" : "172.16.0.2"
+        },
+        {
+            "name" : "awsf1IpHost",
+            "type" : "ipAddress",
+            "val" : "172.16.0.1"
+        },
+        {
+            "name" : "awsf1TapAdaptorName",
+            "type" : "string",
+            "val" : "tap0"
+        },
+        {
+            "name" : "awsf1TapAdaptorMacAddress",
+            "type" : "macAddress",
+            "val" : "8e:6b:35:04:00:00"
+        },
+        {
+            "name" : "awsf1NetMaskTarget",
+            "type" : "ipAddress",
+            "val" : "255.255.255.0"
+        },
+        {
+            "name" : "awsf1MacAddrTarget",
+            "type" : "macAddress",
+            "val" : "00:12:6D:00:00:02"
+        },
+        {
+            "name" : "HTTPPortTarget",
+            "type" : "int",
+            "min" : 80,
+            "max" : 443,
+            "val" : 81
+        },
+        {
+            "name" : "HTTPSPortTarget",
+            "type" : "int",
+            "min" : 0,
+            "max" : 1023,
+            "val" : 444
+        },
+        {
+            "name" : "VotingHTTPPortTarget",
+            "type" : "int",
+            "min" : 80,
+            "max" : 443,
+            "val" : 80
+        },
+        {
+            "name" : "VotingHTTPSPortTarget",
+            "type" : "int",
+            "min" : 0,
+            "max" : 1023,
+            "val" : 443
+        },
+        {
+            "name" : "TFTPPortTarget",
+            "type" : "int",
+            "min" : 69,
+            "max" : 69,
+            "val" : 69
+        },
+        {
+            "name" : "OTAMaxSignedPayloadSize",
+            "type" : "int",
+            "min" : 65536,
+            "max" : 65536,
+            "val" : 65536
+        },
+        {
+            "name" : "besspinMatrix",
+            "type" : "dict",
+            "val" : {
+                "GFE" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    },
+                    "bluespec_p1" : {
+                        "FreeRTOS" : "notOnAWS"
+                    },
+                    "chisel_p2" : {
+                        "debian" : "firesim",
+                        "FreeBSD" : "notOnAWS",
+                        "busybox" : "notOnAWS",
+                        "FreeRTOS" : "notOnAWS"
+                    },
+                    "bluespec_p2" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "connectal",
+                        "busybox" : "notOnAWS",
+                        "FreeRTOS" : "notOnAWS"
+                    },
+                    "chisel_p3" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "notOnAWS",
+                        "busybox" : "notOnAWS"
+                    },
+                    "bluespec_p3" : {
+                        "debian" : "notOnAWS",
+                        "FreeBSD" : "notOnAWS",
+                        "busybox" : "notOnAWS"
+                    }
+                },
+                "LMCO" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    },
+                    "chisel_p2" : {
+                        "debian" : "firesim"
+                    },
+                    "chisel_p3" : {
+                        "debian" : "notOnAWS"
+                    }
+                },
+                "Michigan" : {
+                    "chisel_p1" : {
+                        "FreeRTOS" : "firesim"
+                    }
+                },
+                "MIT" : {
+                    "bluespec_p2" : {
+                        "busybox" : "connectal",
+                        "debian" : "connectal"
+                    }
+                },
+                "SRI-Cambridge" : {
+                    "bluespec_p2" : {
+                        "FreeBSD" : "connectal"
+                    },
+                    "bluespec_p3" : {
+                        "FreeBSD" : "notOnAWS"
+                    }
+                }
+            }
+        },
+        {
+            "name" : "nixEnv",
+            "type" : "dict",
+            "val" : {
+                "debian" : {
+                    "vcu118" : "BESSPIN_GFE_DEBIAN_VCU118",
+                    "qemu" : "BESSPIN_GFE_DEBIAN_QEMU",
+                    "firesim" :  "BESSPIN_GFE_DEBIAN_FIRESIM"
+                },
+                "debian-rootfs" : {
+                    "qemu" : "BESSPIN_GFE_DEBIAN_ROOTFS_QEMU",
+                    "firesim" : "BESSPIN_GFE_DEBIAN_ROOTFS_FIRESIM"
+                },
+                "FreeBSD" : {
+                    "vcu118" : "BESSPIN_GFE_FREEBSD_VCU118",
+                    "qemu" : "BESSPIN_GFE_FREEBSD_QEMU",
+                    "firesim" :  "BESSPIN_GFE_FREEBSD_FIRESIM",
+                    "connectal" : "BESSPIN_GFE_FREEBSD_CONNECTAL"
+                },
+                "busybox" : {
+                    "vcu118" : "BESSPIN_GFE_BUSYBOX_VCU118",
+                    "firesim" :  "BESSPIN_GFE_BUSYBOX_FIRESIM"
+                },
+                "FreeRTOS" : {
+                    "clang-sysroot" : {
+                        "32" : "RISCV32_CLANG_BAREMETAL_SYSROOT",
+                        "64" : "RISCV64_CLANG_BAREMETAL_SYSROOT"
+                    },
+                    "vcu118" : "BESSPIN_GFE_FREERTOS_VCU118",
+                    "firesim" :  "BESSPIN_GFE_FREERTOS_FIRESIM"
+                },
+                "gfeTestingScripts" : "BESSPIN_GFE_SCRIPT_DIR",
+                "gfeBitfileDir" : "BESSPIN_GFE_BITFILE_DIR"
+            }
+        },
+        {
+            "name" : "addEntropyDebianPath",
+            "type" : "filePath",
+            "val" : "besspin/target/utils/addEntropyDebian.riscv"
+        },
+        {
+            "name" : "tarballName",
+            "type" : "string",
+            "val" : "filesToSend.tar"
+        },
+        {
+            "name" : "FreeRTOSforkName_classic",
+            "type" : "string",
+            "val" : "FreeRTOS"
+        },
+        {
+            "name" : "FreeRTOSprojNameNonQemu",
+            "type" : "string",
+            "val" : "FreeRTOS/Demo/RISC-V_Galois_P1"
+        },
+        {
+            "name" : "FreeRTOSprojNameQemu",
+            "type" : "string",
+            "val" : "FreeRTOS/Demo/RISC-V_Galois_P1/Qemu-sifive_e-FreedomStudio"
+        },
+        {
+            "name" : "binaryRepoDir",
+            "type" : "dirPath",
+            "val" : "BESSPIN-LFS"
+        },
+        {
+            "name" : "freertosAssets",
+            "type" : "dict",
+            "val" : {
+                "path" : "besspin/apps/freertos/assets",
+                "otaHtml" : "ota.htm",
+                "StopHtml" : "stop.htm",
+                "assets" : ["index.htm", "ota.htm", "glogo.png"]
+            }
+        },
+        {
+            "name" : "freertosRamdiskNumSectors",
+            "type" : "int",
+            "val"  : 32768
+        },
+        {
+            "name" : "webserverLogs",
+            "type" : "dict",
+            "val"  : {
+                "root" : "/usr/local/nginx/logs",
+                "cheriRoot" : "/besspin/nginx/logs",
+                "logs" : ["error.log", "access.log"]
+
+            }
+        },
+        {
+            "name" : "michiganInfo",
+            "type" : "dict",
+            "val"  : {
+                "httpPort" : 9443,
+                "curlTestPath" : "help",
+                "lynxTestQueries" : [
+                    "query?avg(recenttravel)%20where%20(zipcode==48103%20&&%20reqo2==1)",
+                    "query?avg(recovered) where (zipcode == 48105)"
+                ]
+            }
+        },
+        {
+            "name" : "rsyslogPort",
+            "type" : "int",
+            "val" : 514
+        },
+        {
+            "name" : "uartFwdPort",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 65535,
+            "val" : 8278
+        },
+        {
+            "name" : "portsRangeStart",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 10000,
+            "val" : 3000
+        },
+        {
+            "name" : "portsRangeEnd",
+            "type" : "int",
+            "min" : 1024,
+            "max" : 10000,
+            "val" : 6000
+        },
+        {
+            "name" : "vivadoCmd",
+            "type" : "string",
+            "val" : "vivado_lab"
+        },
+        {
+            "name" : "tclSourceDir",
+            "type" : "dirPath",
+            "val" : "besspin/target/utils/tcl"
+        },
+        {
+            "name" : "vcu118UartSettings",
+            "type" : "dict",
+            "val" : {
+                "timeout" : 1,
+                "baudrate" : 115200,
+                "parity" : "NONE",
+                "stopbits" : 2,
+                "bytesize" : 8,
+                "vid" : 4292,
+                "pid" : 60016
+            }
+        },
+        {
+            "name" : "OtaServerPortTarget",
+            "type" : "int",
+            "val" : 5050
+        },
+        {
+            "name" : "cwesAssessments",
+            "type" : "dict",
+            "val" : {
+                "HIGH" : "HIGH",
+                "MED" : "MED",
+                "LOW" : "LOW",
+                "NONE" : "NONE",
+                "DETECTED" : "DETECTED",
+                "NA" : "NOT_APPLICABLE",
+                "NoImpl" : "NOT_IMPLEMENTED"
+            }
+        },
+        {
+            "name" : "cweTestTemplateFreeRTOS",
+            "type" : "filePath",
+            "val" : "besspin/cwesEvaluation/utils/cweTestTemplateFreeRTOS.c"
+        },
+        {
+            "name" : "besspinCoeffs",
+            "type" : "filePath",
+            "val" : "besspin/cwesEvaluation/utils/besspinCoeffs.json"
+        },
+        {
+            "name" : "uartDevicesSavedMap",
+            "type" : "filePath",
+            "val" : "besspin/target/utils/uartDevicesMap.json",
+            "ignore" : true
+        },
+        {
+            "name" : "vcu118NetbootTransferPace",
+            "_unit" : "seconds / MB",
+            "type" : "int",
+            "val" : 6
+        }
+    ]
+}

@@ -6,7 +6,7 @@ In this document, we explain in more details the different supported targets/bac
 
 ## Implementation ##
 
-The target base class is `commonTarget` and is defined in [common.py](../../fett/target/common.py). This class implements the methods that are shared among all types of backends, and depends on defining the lower level methods in backend-specific classes. There is also an `fpgaTarget` class (defined in [fpga.py](../../fett/target/fpga.py)) that has the methods related to having an FPGA, like openining an OpenOCD connection, and starting a GDB process. 
+The target base class is `commonTarget` and is defined in [common.py](../../besspin/target/common.py). This class implements the methods that are shared among all types of backends, and depends on defining the lower level methods in backend-specific classes. There is also an `fpgaTarget` class (defined in [fpga.py](../../besspin/target/fpga.py)) that has the methods related to having an FPGA, like openining an OpenOCD connection, and starting a GDB process. 
 
 For any target choice, which are `vcu118`, `qemu`, `awsf1`, there is a class that defines the lowest level methods. The `vcu118Target` class, for instance, inherits both `fpgaTarget` and `commonTarget`. While `qemuTarget` only inherits `commonTarget`.
 
@@ -28,7 +28,7 @@ It is worth mentioning that currently, the tool's default FreeBSD does not have 
 
 A Xilinx VCU118 FPGA should be accessible, in addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
 
-Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to another. Please review the [FPGA host network configuration setup instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md) for more details about the adaptors and IP settings. In case you intend to use a different setup, please change [setupEnv.json](../../fett/base/utils/setupEnv.json) accordingly.
+Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to another. Please review the [FPGA host network configuration setup instructions](https://github.com/GaloisInc/SSITH-BESSPIN-Docs/blob/develop/CI-CD/HostNetworkSetup.md) for more details about the adaptors and IP settings. In case you intend to use a different setup, please change [setupEnv.json](../../besspin/base/utils/setupEnv.json) accordingly.
 
 ### Design ###
 
@@ -50,7 +50,7 @@ Here we explain how to run an OS on the VCU118 outside of the tool for any reaso
 
 You need 3 separate terminal windows/tabs/panes for: OpenOCD, GDB, and TTY.
 
-1. Connect a minicom to the UART. This means you have to know which `/dev/tty` is the one connected to the UART chip of the VCU118 board. The `vcu118UartSettings` in [setupEnv.json](../../fett/base/utils/setupEnv.json) has some properties that help distinguishing which one. Also, if you have used the tool on the machine before, the `uartDevicesSavedMap` (a git ignored file whose path is stored in [setupEnv.json](../../fett/base/utils/setupEnv.json)) will have the serial number of the device mapped with the HW ID. Assuming it is `/dev/ttyUSB${X}`, you can use `minicom` (or any similar serial communication tool) as follows:
+1. Connect a minicom to the UART. This means you have to know which `/dev/tty` is the one connected to the UART chip of the VCU118 board. The `vcu118UartSettings` in [setupEnv.json](../../besspin/base/utils/setupEnv.json) has some properties that help distinguishing which one. Also, if you have used the tool on the machine before, the `uartDevicesSavedMap` (a git ignored file whose path is stored in [setupEnv.json](../../besspin/base/utils/setupEnv.json)) will have the serial number of the device mapped with the HW ID. Assuming it is `/dev/ttyUSB${X}`, you can use `minicom` (or any similar serial communication tool) as follows:
 
 ```bash
     minicom -D /dev/ttyUSB${X} -b 115200
@@ -58,7 +58,7 @@ You need 3 separate terminal windows/tabs/panes for: OpenOCD, GDB, and TTY.
 
 Also, note that depending on the OS, and the minicom settings, new lines on minicom might not get printed well in a user friendly way. You can use `ctrl-A o` -> `Screen and Keyboard` -> `T` -> Save setup as default. This will make sure minicom inserts an extra new line and thus you do not need to have `\r\n` for every print in the program. This is very useful for FreeRTOS targets. 
 
-2. Open an openOCD connection. The simplest way would be to use the tool's existing configuration [openocd_vcu118.cfg](../../fett/target/utils/openocd_vcu118.cfg) as follows:
+2. Open an openOCD connection. The simplest way would be to use the tool's existing configuration [openocd_vcu118.cfg](../../besspin/target/utils/openocd_vcu118.cfg) as follows:
 
 ```bash
     openocd --command "set _CHIPNAME riscv; gdb_port ${PORT}" -f /path/to/openocd_vcu118.cfg
@@ -94,10 +94,10 @@ The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e2
 * An updated version of Git, required by the nix shell installation
 * Git LFS, needed by the binaries repo.
 * [The Nix Package Manager](https://nixos.org/nix/)
-* [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) with the environment pre-populated at `/nix/store`
+* [BESSPIN-Environment](https://github.com/GaloisInc/BESSPIN-Environment) with the environment pre-populated at `/nix/store`
 * [Cloudwatch](https://aws.amazon.com/cloudwatch/)
 
-The document [createFettAMI.md](../AWS/createFettAMI.md) has the complete instructions to recreate the image manually.
+The document [createBesspinAMI.md](../AWS/createBesspinAMI.md) has the complete instructions to recreate the image manually.
 
 ### Design ###
 
@@ -111,7 +111,7 @@ Additionally, since the SSITH program has several hardware designs, a one-size-f
 
 ### Tool Flow ###
 
-Note that the AWS platform variant (Firesim vs Connectal) is determined based on the `binarySource`-`processor`-`osImage` selection. The mapping can be found in [setupEnv.json](../../fett/base/utils/setupEnv.json).
+Note that the AWS platform variant (Firesim vs Connectal) is determined based on the `binarySource`-`processor`-`osImage` selection. The mapping can be found in [setupEnv.json](../../besspin/base/utils/setupEnv.json).
 
 - Firesim:
   - The files needed are the kernel modules `nbd.ko` and `xdma.ko`, the main Firesim binary `FireSim-f1`, the network switch binary `switch0`, and the libraries `libdwarf.so.1` and `libelf.so.1`. The document [buildFireSimBinaries.md](../AWS/buildFireSimBinaries.md) has the instructions of how to build these files.
@@ -134,7 +134,7 @@ Here we explain how to run an OS on the AWS F1 outside of the tool for any reaso
 
 You need 3 separate terminal windows/tabs/panes for Firesim for: OpenOCD, GDB, and main process. For Connectal, only 2 are needed (no OpenOCD).
 
-1. Execute the Firesim or the Connectal command. These commands are lengthy as they have a lot of variables that have to be defined. The easiest way to get an example would be to configure the tool, and run it in debug mode (with the `-d` flag). Then look for `firesimCommand` or `connectal command` in `${workDir}/fett.log`.
+1. Execute the Firesim or the Connectal command. These commands are lengthy as they have a lot of variables that have to be defined. The easiest way to get an example would be to configure the tool, and run it in debug mode (with the `-d` flag). Then look for `firesimCommand` or `connectal command` in `${workDir}/besspin.log`.
 
 - For Firesim, the following flag should be added:
 ```bash
@@ -146,7 +146,7 @@ You need 3 separate terminal windows/tabs/panes for Firesim for: OpenOCD, GDB, a
     --gdb-port ${PORT} --start-halted
 ```
 
-2. Firesim only: Open an openOCD connection. The simplest way would be to use the tool's existing configuration [openocd_firesim.cfg](../../fett/target/utils/openocd_firesim.cfg) as follows:
+2. Firesim only: Open an openOCD connection. The simplest way would be to use the tool's existing configuration [openocd_firesim.cfg](../../besspin/target/utils/openocd_firesim.cfg) as follows:
 
 ```bash
     openocd --command "gdb_port ${PORT}" -f /path/to/openocd_firesim.cfg

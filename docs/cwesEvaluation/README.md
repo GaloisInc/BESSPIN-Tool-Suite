@@ -5,7 +5,7 @@ This is the documentation for running the tool in the `evaluateSecurityTests` mo
 ## Overview
 
 A list of the vulnerability classes, and the NIST CWEs mapped to each class, appears in [ssithCWEsList.md](./ssithCWEsList.md).
-A class-specific description is provided in each vulnerability class [directory](../../fett/cwesEvaluation/).
+A class-specific description is provided in each vulnerability class [directory](../../besspin/cwesEvaluation/).
 
 The philosophy of the platform and the methodology of the testing are explained in detail in the [BESSPIN philosophy document](./besspinPhilosophy.md). For details about this tool's mode from the point of view of methodology and details rather than functionality, please check [modes.md](../base/modes.md).
 
@@ -17,7 +17,7 @@ The tool selects the tests to run based on the configuration; it cross-compiles 
 
 ## Summary of Contents ##
 
-- [BESSPIN-Coeffs.md](./BESSPIN-Coeffs.md): The values of the BESSPIN coefficients. This document is automatically generated based on the values in the [JSON file](../../fett/cwesEvaluation/utils/besspinCoeffs.json). More explanation can be found in the BESSPIN Scale document (next).
+- [BESSPIN-Coeffs.md](./BESSPIN-Coeffs.md): The values of the BESSPIN coefficients. This document is automatically generated based on the values in the [JSON file](../../besspin/cwesEvaluation/utils/besspinCoeffs.json). More explanation can be found in the BESSPIN Scale document (next).
 
 - [BESSPIN-Scale.pdf](./BESSPIN-Scale.pdf): White paper explaining the BESSPIN Scale, which is the security figure of merit.
 

@@ -20,14 +20,14 @@ def get_ami_from_ci_json():
     try:
         with open("/tmp/awsCiInfo.json", "r") as f:
             aws_ci_info = json.load(f)
-        return aws_ci_info["fettTargetAMI"]
+        return aws_ci_info["besspinAMI"]
     except Exception as exc:
-        log.error("Failed to get Fett AMI from /tmp/awsCiInfo.json.", exc=exc)
+        log.error("Failed to get Besspin AMI from /tmp/awsCiInfo.json.", exc=exc)
 
 
 def collect_run_names(repoDir, runMode):
     """
-    Run fett-ci.py as a dryrun to generate a list of targets in their corresponding indexes to be run remotely
+    Run besspin-ci.py as a dryrun to generate a list of targets in their corresponding indexes to be run remotely
 
     :return: List of ini files to run
     :rtype: list
@@ -37,7 +37,7 @@ def collect_run_names(repoDir, runMode):
         str(
             subprocess.check_output(
                 shlex.split(
-                    str(os.path.join(repoDir, "ci", "fett-ci.py"))
+                    str(os.path.join(repoDir, "ci", "besspin-ci.py"))
                     + f" -X -ep AWS runDevPR -job 420 -m {runMode}"
                 )
             )
@@ -73,7 +73,7 @@ def main(args):
 
     log.info(f"{h}AWSCredentials gathered!")
 
-    # Get list of all targets for fett-ci.py
+    # Get list of all targets for besspin-ci.py
     log.info(f"{h}Gathering run targets.")
     r = collect_run_names(repoDir, args.runMode)
 
@@ -95,7 +95,7 @@ def main(args):
     else:
         indices_to_run = list(range(len(r)))
 
-    # Get the AMI, either from args, or by using getFettTargetAMI()
+    # Get the AMI, either from args, or by using getBesspinAMI()
     if args.ami:
         ami = args.ami
     else:
@@ -160,20 +160,20 @@ if __name__ == "__main__":
         "-a",
         "--ami",
         type=str,
-        help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'. If left empty, defaults to the most recent tagged AMI in SSITH-FETT-Target.",
+        help="AWS AMI ID to use, i.e. 'ami-xxxxxxxxxxxxxxxxxx'. If left empty, defaults to the most recent tagged AMI in BESSPIN-Tool-Suite.",
     )
     parser.add_argument(
         "-b",
         "--branch",
         type=str,
-        help="The branch of FETT-Target to check out on the AWS instance, and run tests on. Defaults to whatever is "
+        help="The branch of BESSPIN to check out on the AWS instance, and run tests on. Defaults to whatever is "
         "present on AMI",
     )
     parser.add_argument(
         "-bb",
         "--binaries-branch",
         type=str,
-        help="The branch of FETT-Bineries to check out on the AWS instance, and run tests on. Defaults to whatever is "
+        help="The branch of BESSPIN-Bineries to check out on the AWS instance, and run tests on. Defaults to whatever is "
         "present on AMI",
     )
     parser.add_argument(

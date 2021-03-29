@@ -1,0 +1,415 @@
+{
+    "_usage" : "This json file has the besspin parameters. This is the guide to check that the configuration file is legal.",
+    "_name" : "The option name.",
+    "_type" : "int (or integer), str (or string), bool (or boolean), filePath, dirPath, hex, hexPairsList, hexList",
+    "_type_cont" : "stringsList, ipAddress, macAddress, dict",
+    "_choices" : "a list of acceptable choices. Use for int or str",
+    "_min" : "minimum accepted value. Use for int or float. Ignored when used with choices.",
+    "_max" : "maximum accepted value. Use for int or float. Ignored when used with choices.",
+    "_condition" : "If present, only check the value validity if the option in the condition is True.",
+    "_size" : "only for hex. Number of hex characters (if less, it will be padded by zeros)",
+    "_wildValue" : "only for hexList. If present, this value means something special.",
+    "_exception" : "only for hexList. If present, this option's value is not legal",
+
+    "functionality" : [
+        {
+            "name" : "mode",
+            "type" : "string",
+            "choices" : [ "test", "production", "evaluateSecurityTests", "cyberPhys" ]
+        }
+    ],
+
+    "cyberPhys" : [
+        {
+            "name" : "nTargets",
+            "type" : "int",
+            "min" : 1,
+            "max" : 10
+        },
+        {
+            "name" : "interactiveShell",
+            "type" : "bool"
+        },
+        {
+            "name" : "resetOnWatchdog",
+            "type" : "bool"
+        },
+        {
+            "name" : "programBitfileOnReset",
+            "type" : "bool"
+        },
+        {
+            "name" : "pipeTheUart",
+            "type" : "bool"
+        },
+        {
+            "name" : "useCustomCyberPhysConfig",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomCyberPhysConfig",
+            "type" : "filePath",
+            "condition" : "useCustomCyberPhysConfig"
+        }
+    ],
+
+    "target" : [
+        {
+            "name" : "target",
+            "type" : "string",
+            "choices" : [ "qemu", "awsf1", "vcu118" ]
+        },
+        {
+            "name" : "vcu118Mode",
+            "type" : "string",
+            "choices" : [ "nonPersistent", "flashProgramAndBoot", "flashBoot" ]
+        },
+        {
+            "name" : "processor",
+            "type" : "string",
+            "choices" : [ "bluespec_p1", "chisel_p1", "bluespec_p2", "chisel_p2", "bluespec_p3", "chisel_p3" ]
+        },
+        {
+            "name" : "osImage",
+            "type" : "string",
+            "choices" : [ "debian", "FreeRTOS", "FreeBSD", "busybox" ]
+        },
+        {
+            "name" : "freertosFatFs",
+            "type" : "string",
+            "choices" : [ "default", "ramdisk", "dosblk", "sdcard" ]
+        },
+        {
+            "name" : "elfLoader",
+            "type" : "string",
+            "choices" : [ "JTAG", "netboot" ]
+        },
+        {
+            "name" : "useCustomOsImage",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomOsImage",
+            "type" : "filePath",
+            "condition" : "useCustomOsImage"
+        },
+        {
+            "name" : "useCustomProcessor",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomProcessorSource",
+            "type" : "dirPath",
+            "condition" : "useCustomProcessor"
+        },
+        {
+            "name" : "useCustomQemu",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomQemu",
+            "type" : "filePath",
+            "condition" : "useCustomQemu"
+        },
+        {
+            "name" : "binarySource",
+            "type" : "string",
+            "choices" : [ "GFE", "LMCO", "Michigan", "MIT", "SRI-Cambridge" ]
+        },
+        {
+            "name" : "sourceVariant",
+            "type" : "string",
+            "choices" : [ "default", "purecap", "temporal" ]
+        },
+        {
+            "name" : "useCustomHwTarget",
+            "type" : "boolean"
+        },
+        {
+            "name" : "customHwTarget",
+            "type" : "string",
+            "condition" : "useCustomHwTarget"
+        },
+        {
+            "name" : "useCustomTargetIp",
+            "type" : "boolean"
+        },
+        {
+            "name" : "customTargetIp",
+            "type" : "ipAddress",
+            "condition" : "useCustomTargetIp"
+        }
+    ],
+
+    "common" : [
+        {
+            "name" : "openConsole",
+            "type" : "bool"
+        },
+        {
+            "name" : "gdbDebug",
+            "type" : "bool"
+        },
+        {
+            "name" : "userName",
+            "type" : "string"
+        },
+        {
+            "name" : "userPasswordHash",
+            "type" : "string"
+        },
+        {
+            "name" : "useCustomCredentials",
+            "type" : "boolean"
+        },
+        {
+            "name": "rootUserAccess",
+            "type": "boolean"
+        },
+        {
+            "name": "productionTargetIp",
+            "type": "ipAddress"
+        }
+    ],
+
+    "applications" : [
+        {
+            "name" : "buildApps",
+            "type" : "boolean"
+        }
+    ],
+
+    "build" : [
+        {
+            "name" : "cross-compiler",
+            "type" : "string",
+            "choices" : [ "GCC", "Clang" ]
+        },
+        {
+            "name" : "linker",
+            "type" : "string",
+            "choices" : [ "GCC", "LLD" ]
+        }
+    ],
+
+    "evaluateSecurityTests" : [
+        {
+            "name" : "vulClasses",
+            "type" : "stringsList",
+            "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC", "injection" ]
+        },
+        {
+            "name" : "useCustomCWEsConfigsPath",
+            "type" : "boolean"
+        },
+        {
+            "name" : "pathToCustomCWEsConfigs",
+            "type" : "dirPath",
+            "condition" : "useCustomCWEsConfigsPath"
+        },
+        {
+            "name" : "useCustomScoring",
+            "type" : "boolean"
+        },
+        {
+            "name" : "useCustomCompiling",
+            "type" : "boolean"
+        },
+        {
+            "name" : "FreeRTOStimeout",
+            "type" : "int",
+            "min" : 0
+        },
+        {
+            "name" : "runUnixMultitaskingTests",
+            "type" : "boolean"
+        },
+        {
+            "name" : "instancesPerTestPart",
+            "type" : "int",
+            "min"  : 1
+        }
+    ],
+
+    "customizedScoring" : [
+        {
+            "name" : "stdoutKeywords",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "gdbKeywords",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "funcCheckpoints",
+            "type" : "stringsList"
+        },
+        {
+            "name" : "memAddress",
+            "type" : "hex",
+            "size" : 8,
+            "min" : -1
+        },
+        {
+            "name" : "memResetValue",
+            "type" : "hex",
+            "size" : 8,
+            "min" : 0
+        },
+        {
+            "name" : "memViolationValues",
+            "type" : "hexList",
+            "size" : 8,
+            "min" : 0,
+            "wildValue" : "*",
+            "exception" : "memResetValue"
+        },
+        {
+            "name" : "useCustomFunction",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomFunction",
+            "type" : "filePath",
+            "condition" : "useCustomFunction"
+        }
+    ],
+
+    "customizedCompiling" : [
+        {
+            "name" : "useCustomMakefile",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomMakefile",
+            "type" : "filePath",
+            "condition" : "useCustomMakefile"
+        },
+        {
+            "name" : "useCustomClang",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomClang",
+            "type" : "filePath",
+            "condition" : "useCustomClang"
+        },
+        {
+            "name" : "useCustomSysroot",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomSysroot",
+            "type" : "dirPath",
+            "condition" : "useCustomSysroot"
+        }
+    ],
+
+    "commonVulClassesParameters" : [
+        {
+            "name" : "runAllTests",
+            "type" : "bool"
+        },
+        {
+            "name" : "useSelfAssessment",
+            "type" : "bool"
+        }
+    ],
+
+    "bufferErrors": [
+        {
+            "name" : "nTests",
+            "type" : "int",
+            "min" : 1
+        },
+        {
+            "name" : "nSkip",
+            "type" : "int",
+            "min" : 0
+        },
+        {
+            "name" : "heapSize",
+            "type" : "string"
+        },
+        {
+            "name" : "stackSize",
+            "type" : "string"
+        },
+        {
+            "name" : "useExtraTests",
+            "type" : "bool"
+        },
+        {
+            "name" : "extraSources",
+            "type" : "string"
+        },
+        {
+            "name" : "csvFile",
+            "type" : "bool"
+        },
+        {
+            "name" : "useCachedInstances",
+            "type" : "bool"
+        },
+        {
+            "name" : "useCustomErrorModel",
+            "type" : "bool"
+        },
+        {
+            "name" : "pathToCustomErrorModel",
+            "type" : "filePath",
+            "condition" : "useCustomErrorModel"
+        },
+        {
+            "name" : "numericTypes",
+            "type" : "stringsList",
+            "choices" : [ "ints", "floats" ]
+        },
+        {
+            "name" : "useSeed",
+            "type" : "bool"
+        },
+        {
+            "name" : "seed",
+            "type" : "int"
+        }
+    ],
+
+    "PPAC": [
+    ],
+
+    "resourceManagement": [
+        {
+            "name" : "useSeed",
+            "type" : "bool"
+        },
+        {
+            "name" : "seed",
+            "type" : "int",
+            "min" : 0,
+            "max" : 4294967295
+        }
+    ],
+
+    "informationLeakage": [
+        {
+            "name" : "useSeed",
+            "type" : "bool"
+        },
+        {
+            "name" : "seed",
+            "type" : "int",
+            "min" : 0,
+            "max" : 4294967295
+        }
+    ],
+    
+    "numericErrors": [
+    ],
+
+    "hardwareSoC": [
+    ],
+
+    "injection": [
+    ]
+}

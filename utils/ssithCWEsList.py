@@ -228,8 +228,8 @@ def main(xArgs):
 
     # Import prettyVulClass
     sys.path.insert(0, repoDir)
-    import fett.base.config #To resolve cyclic importing
-    from fett.cwesEvaluation.scoreTests import prettyVulClass
+    import besspin.base.config #To resolve cyclic importing
+    from besspin.cwesEvaluation.scoreTests import prettyVulClass
 
     # Load the google spreadsheet
     spreadsheetCWEs = loadFile(xArgs.csvFile,"csv")
@@ -245,7 +245,7 @@ def main(xArgs):
         assessConfigCWEs.addVulClass(vulClass,vConfig,"assessment")
 
     # Load the setupEnv files
-    cwesEvaluationDir = os.path.join(repoDir,"fett","cwesEvaluation")
+    cwesEvaluationDir = os.path.join(repoDir,"besspin","cwesEvaluation")
     setupEnvCWEs = cwesDictJSON("setupEnv")
     for vulClass in vulClasses:
         vJson = loadFile(os.path.join(cwesEvaluationDir,vulClass, "setupEnv.json"),"json")
@@ -307,7 +307,7 @@ def main(xArgs):
                     link = f"{cwelink}{xCwe.id}"
                 except: #custom CWE
                     name = xCwe.id.replace('_','-')
-                    link = f"../../fett/cwesEvaluation/{vulClass}/README.md"
+                    link = f"../../besspin/cwesEvaluation/{vulClass}/README.md"
                 fReadme.write(f"| [CWE-{name}]({link}) | {xCwe.description} |\n")
 
         fReadme.close()

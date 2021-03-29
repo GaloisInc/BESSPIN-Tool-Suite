@@ -15,7 +15,7 @@ the meaning of every parameter and the possible values/types. Please note the fo
   - Section headers are required and they are between square brackets.
   - Parameter names and string values are treated as case sensitive. The only exception is boolean parameters; you can use 0/1, False/True, Yes/No [all case insensitive].
 
-The configuration(s) is loaded in [config.py](../../fett/base/config.py) and the dictionary of the sections, parameter names, supported data types, value ranges and choices, and conditions are listed in [configData.json](../../fett/base/utils/configData.json).
+The configuration(s) is loaded in [config.py](../../besspin/base/config.py) and the dictionary of the sections, parameter names, supported data types, value ranges and choices, and conditions are listed in [configData.json](../../besspin/base/utils/configData.json).
 
 This document has explanations for each parameter, either by defining them or linking to the document that has the definitions.
 
@@ -66,7 +66,7 @@ The document [targets.md](./targets.md) has detailed explanation of the supporte
 
 - `useCustomProcessor`: By default, the tool retrieves the bitstreams or any required binaries such as the probe files for VCU118, or the kernel modules for AWS F1, from its own resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details). Enabling this setting allows the user to provide their bitstream and binaries.
 
-- `pathToCustomProcessorSource`: The path to a directory containing all needed processor resources in case `useCustomProcessor` is enabled. For more details about the needed files names and directory structure, please refer to `SSITH-FETT-Binaries`, the LFS repo, and compare.
+- `pathToCustomProcessorSource`: The path to a directory containing all needed processor resources in case `useCustomProcessor` is enabled. For more details about the needed files names and directory structure, please refer to `BESSPIN-LFS`, the LFS repo, and compare.
 
 - `useCustomQemu`: By default, the tool uses `qemu-system-riscv64`, built in Nix, to run the QEMU targets. Enable this setting to use your own binary.
 
@@ -76,7 +76,7 @@ The document [targets.md](./targets.md) has detailed explanation of the supporte
 
 - `customHwTarget`: The HW target to use in case `useCustomHwTarget` is enabled.
 
-- `useCustomTargetIp`: This is only applicable to VCU118. By default, the tool assigns the targets IP in unity increments from the host IP (which is specified by `vcu118IpHost` in [setupEnv.json](../../fett/base/utils/setupEnv.json)).
+- `useCustomTargetIp`: This is only applicable to VCU118. By default, the tool assigns the targets IP in unity increments from the host IP (which is specified by `vcu118IpHost` in [setupEnv.json](../../besspin/base/utils/setupEnv.json)).
 
 - `customTargetIp`: The target IP to use in case `useCustomTargetIp` is enabled. Please consider the subnet of the host's IP and any additional network configuration that might be needed based on this choice.
 
@@ -90,7 +90,7 @@ This section is loaded in all modes.
 
 - `gdbDebug`: If `openConsole` is enabled, enable `gdbDebug` so that the tool's GDB process detaches from the OpenOCD connection and provides instructions of how to connect a GDB process to the target. Note that this is not applicable to QEMU targets.
 
-- `useCustomCredentials`: For Unix targets, in case there is a need for creating a non-root user (as in the bug bounty modes for example), which credentials the tool should use? By default, the user name is `researcher` and the password is `fett_2020`.
+- `useCustomCredentials`: For Unix targets, in case there is a need for creating a non-root user (as in the bug bounty modes for example), which credentials the tool should use? By default, the user name is `researcher` and the password is `besspin_2020`.
 
 - `userName`: The user name in case `useCustomCredentials` is enabled. Note that it must be 1-14 characters long, and may consist only of ASCII alphanumeric characters.
 
