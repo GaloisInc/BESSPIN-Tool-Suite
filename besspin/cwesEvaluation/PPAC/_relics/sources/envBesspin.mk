@@ -1,6 +1,6 @@
 # This file has the necessary includes to run Besspin on FreeRTOS in cwesEvaluation Mode for PPAC
 
-CFLAGS += -DBESSPIN_TOOL_SUITE -DBESSPIN_AWS -DtestgenOnFreeRTOS -DtestgenFPGA
+CFLAGS += -DBESSPIN_TOOL_SUITE -DtestgenOnFreeRTOS -DtestgenFPGA
 
 WOLFSSL_SOURCE_DIR = $(FREERTOS_PLUS_SOURCE_DIR)/WolfSSL
 WOLFSSL_SRC = $(WOLFSSL_SOURCE_DIR)/src/ssl.c \
