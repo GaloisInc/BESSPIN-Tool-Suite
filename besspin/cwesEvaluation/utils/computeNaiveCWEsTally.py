@@ -1,8 +1,8 @@
 # Computes the naive CWEs tally scores and table
 
-from fett.base.utils.misc import *
-from fett.cwesEvaluation.scoreTests import VUL_CLASSES, SCORES, tabulate_row, prettyVulClass
-from fett.cwesEvaluation.utils.computeBesspinScale import isVulClassException, disp
+from besspin.base.utils.misc import *
+from besspin.cwesEvaluation.scoreTests import VUL_CLASSES, SCORES, tabulate_row, prettyVulClass
+from besspin.cwesEvaluation.utils.computeBesspinScale import isVulClassException, disp
 
 def toValue(score):
     return int(score in [SCORES.NONE, SCORES.DETECTED])
