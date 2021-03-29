@@ -5,14 +5,11 @@ ifeq ($(BIN_SOURCE),SRI_Cambridge)
 else
 	ARCH_ABI := -march=rv64imafdc -mabi=lp64d
 endif
-BESSPIN_DEFS := -DbesspinOnLinux -DbesspinOn$(OS_IMAGE) -DbesspinOn$(TARGET) 
-BESSPIN_DEFS += -DtestgenOnUnix -DtestgenOn$(OS_IMAGE) -Dtestgen$(TARGET)
-ifeq ($(TARGET),VCU118)
-	BESSPIN_DEFS += -DtestgenFPGA -DbesspinOnFPGA #for backward compatibility
+BESSPIN_DEFS += -DtestgenOnUnix -DtestgenOn$(OS_IMAGE)
+ifeq ($(TARGET),QEMU)
+	BESSPIN_DEFS += -DtestgenQEMU
 else
-ifeq ($(TARGET),AWSF1)
-	BESSPIN_DEFS += -DtestgenAWS -DbesspinOnAWS #for backward compatibility
-endif
+	BESSPIN_DEFS += -DtestgenFPGA -Dtestgen$(TARGET)
 endif
 
 CFLAGS := $(ARCH_ABI) -Wall -O0 $(BESSPIN_DEFS)
