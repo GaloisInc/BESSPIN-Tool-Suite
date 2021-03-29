@@ -44,7 +44,7 @@ def computeNaiveCWEsTally():
             vTally += toValue(scoresDict[vulClass][cwe])
             vCwesCount += 1 #Should not use len(vCwes) because some CWEs are exempt
 
-        if (vCwesCount==0): #To avoid division by zero in what comes, and also this renders the 
+        if (vCwesCount==0): #To avoid division by zero in what comes
             errorAndLog(f"computeNaiveCWEsTally: Failed to compute the tally! No CWEs found in <{vulClass}>.")
             return
         ovrTally += vTally
