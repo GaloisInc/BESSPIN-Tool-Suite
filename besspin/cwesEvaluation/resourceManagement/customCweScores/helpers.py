@@ -51,7 +51,7 @@ def partitionLines (lines,start,end,testNum=None,doPrintWarnings=True):
         #     iEnd = iLine
         #     return lines[iStart:iEnd+1]
         # if("Error" in line):
-        #     lines += ">>>End of Testgen<<<"
+        #     lines += ">>>End of Besspin<<<"
         #     return lines[iStart:iEnd+1]
         if (startFound):
             if (isinstance(end,str)): #only one string

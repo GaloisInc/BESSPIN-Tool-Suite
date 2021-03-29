@@ -132,7 +132,7 @@ def runTests(target, sendFiles=False, timeout=30): #executes the app
 
             if idxReturn == 1:
                 if isEqSetting('target', 'qemu'):
-                    # No ">>> End Of Testgen <<<", but qemu aborted without a
+                    # No ">>> End Of Besspin <<<", but qemu aborted without a
                     # timeout
                     logFile.write(target.readFromTarget())
                     logFile.write("\n<QEMU ABORTED>\n")
