@@ -5,11 +5,11 @@ ifeq ($(BIN_SOURCE),SRI_Cambridge)
 else
 	ARCH_ABI := -march=rv64imafdc -mabi=lp64d
 endif
-BESSPIN_DEFS += -DtestgenOnUnix -DtestgenOn$(OS_IMAGE)
+BESSPIN_DEFS += -DBESSPIN_UNIX -DtestgenOn$(OS_IMAGE)
 ifeq ($(TARGET),QEMU)
-	BESSPIN_DEFS += -DtestgenQEMU
+	BESSPIN_DEFS += -DBESSPIN_QEMU
 else
-	BESSPIN_DEFS += -DtestgenFPGA -Dtestgen$(TARGET)
+	BESSPIN_DEFS += -DBESSPIN_FPGA -Dtestgen$(TARGET)
 endif
 
 CFLAGS := $(ARCH_ABI) -Wall -O0 $(BESSPIN_DEFS)

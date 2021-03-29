@@ -8,7 +8,7 @@ Test_301: Reflection Attack in an Authentication Protocol
 NONE
 */
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 //---------------- FreeRTOS test ------------------------------------------------------
 
     #include "testgenFreeRTOS.h"
@@ -312,7 +312,7 @@ NONE
 
 
 //---------------- Debian and FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 
     #define THIS_TEST "301"
 

@@ -9,7 +9,7 @@
 struct function_result *
 set_env(struct smessage *msg)
 {
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     test_not_implemented();
 #endif
     struct function_result *res = NULL;

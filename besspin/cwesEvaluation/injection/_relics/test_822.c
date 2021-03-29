@@ -61,11 +61,11 @@ do_malicious_modification(char *ptr) {
     return;
 }
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
 #endif
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 // ----------------- FreeRTOS Test ----------
 #define NUM_OF_TEST_PARTS 2
 
@@ -84,7 +84,7 @@ void main() {
 }
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 
 #include <stdlib.h>
 

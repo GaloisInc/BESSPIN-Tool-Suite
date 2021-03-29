@@ -8,7 +8,7 @@ Test_288: Authentication Bypass Using an Alternate Path or Channel
 NONE
 */
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 //---------------- FreeRTOS test ------------------------------------------------------
 
     #include "testgenFreeRTOS.h"
@@ -298,7 +298,7 @@ NONE
 
 
 //---------------- Debian test ------------------------------------------------------
-#elif defined(testgenOnDebian)
+#elif defined(BESSPIN_DEBIAN)
     #define THIS_TEST "288"
 
     #define PAM_PREFIX "pam_"
@@ -429,7 +429,7 @@ NONE
         return 0;
     }
 
-#elif defined(testgenOnFreeBSD)
+#elif defined(BESSPIN_FREEBSD)
 
     #define THIS_TEST "288"
     #define PAM_PREFIX "pam_"

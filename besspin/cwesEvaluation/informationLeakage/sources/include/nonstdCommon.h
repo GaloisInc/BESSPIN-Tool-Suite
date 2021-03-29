@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenQEMU))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_QEMU))
     #define MALLOC_BLOCK_SIZE_MAX 0x004F //Maximum allocatable size in FreeRTOS qemu is 0x8F
     #define MALLOC_BLOCK_SIZE_MIN 0x0020 //A block of 32 bytes
 #else
@@ -20,7 +20,7 @@
 #define MIN_SECRET_VALUE 0x02 //Avoid zero and one
 #define N_MATCHES_TO_COUNT 4 //Have to find the byte value 4 times to avoid unfortunate coincidences
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #include "FreeRTOS.h"
     #include "task.h"
     #define EXIT puts(">>>End of Besspin<<<\n"); vTaskDelete(NULL)   
@@ -28,7 +28,7 @@
     #define EXIT exit(1)
 #endif
 
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
+#if defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA)
     #define test_malloc pvPortMalloc
     #define test_free   vPortFree
 #else
@@ -49,7 +49,7 @@ typedef struct secretLocInfo_ {
 } secretLocInfo_t;
 
 /* main declaration */
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     void main_besspin(void);
 #else
     int main(void);

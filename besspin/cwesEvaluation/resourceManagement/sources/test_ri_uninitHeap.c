@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
     #include "FreeRTOS.h"
     #define MALLOC pvPortMalloc
     #define FREE vPortFree
@@ -17,7 +17,7 @@ static int *useUninit (bool x);
 static void uninitString (void);
 
 // --------------- FreeRTOS Test ---------------
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #define NUM_OF_TEST_PARTS 2
 
     void main() {
@@ -40,7 +40,7 @@ static void uninitString (void);
     }
 
 // --------------- Debian && FreeBSD test ---------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
     int main(int argc, char *argv[]);
 
@@ -72,7 +72,7 @@ static void uninitString (void);
         return 0;
     }
 
-#endif //ifdef testgenOnFreeRTOS
+#endif //ifdef BESSPIN_FREERTOS
 
 // This function returns a non-unitialized int
 static int *useUninit (bool x) {

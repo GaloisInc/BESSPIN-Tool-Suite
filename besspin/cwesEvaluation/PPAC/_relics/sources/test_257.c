@@ -8,7 +8,7 @@ Test_257: Authentication Bypass by Spoofing
 NONE
 */
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 //---------------- FreeRTOS test ------------------------------------------------------
 
     #include "testgenFreeRTOS.h"
@@ -210,10 +210,10 @@ NONE
 
 
 //---------------- Debian and FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include <sys/types.h>
 #include <security/pam_appl.h>
-#ifdef testgenOnDebian
+#ifdef BESSPIN_DEBIAN
     #include <security/pam_misc.h>
 #else //FreeBSD
     #include <security/openpam.h>

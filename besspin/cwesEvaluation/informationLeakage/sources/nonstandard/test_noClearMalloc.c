@@ -4,7 +4,7 @@
 static void noClearMallocTest(void);
 static void storeSecret(secretLocInfo_t * secretInfo);
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     void main() {
         noClearMallocTest();
         return;

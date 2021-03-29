@@ -8,7 +8,7 @@ Test_799: Improper Control of Interaction Frequency
 nAllowedInteractions
 */
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 //---------------- FreeRTOS test ------------------------------------------------------
 
     #include "testgenFreeRTOS.h"
@@ -200,7 +200,7 @@ nAllowedInteractions
 
 
 //---------------- Debian test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 
     #define THIS_TEST "799"
 
@@ -227,7 +227,7 @@ nAllowedInteractions
     #include <string.h>
     #include <unistd.h>
 
-    #ifdef testgenOnDebian
+    #ifdef BESSPIN_DEBIAN
         #include <security/pam_misc.h>
         static struct pam_conv conv = { misc_conv, NULL };
     #else //FreeBSD
@@ -359,7 +359,7 @@ nAllowedInteractions
                 printf (">>> User queue opened successfully.\n");
             }
 
-            #ifdef testgenOnDebian
+            #ifdef BESSPIN_DEBIAN
                 //adding the username to the listfile
                 FILE * fTestUsers = fopen ("/etc/test799users","a");
                 fprintf(fTestUsers, "%s\n", reqUserName);
@@ -499,7 +499,7 @@ nAllowedInteractions
             printf ("<INVALID> Failed to start PAM. (pamReturn=%d).\n",pamReturn);
         }
 
-        #ifdef testgenOnDebian
+        #ifdef BESSPIN_DEBIAN
             pamReturn = pam_open_session(pamh, 0);
             if (pamReturn == PAM_SUCCESS) {
                 printf ("<GRANTED> Session opened.\n");

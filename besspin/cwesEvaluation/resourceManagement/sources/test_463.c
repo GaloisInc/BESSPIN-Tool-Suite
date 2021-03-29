@@ -8,7 +8,7 @@
 #define STR_SIZE_MAX 80 //More than that and FreeBSD puts the 2nd pointer very far away
 #define SECRET_SIZE 4 //chosen arbitrarily -->  4*sizeof(int) = 16 bytes (the golden keyword is 16*'A')
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
     #include "FreeRTOS.h"
     #define MALLOC pvPortMalloc
     #define FREE vPortFree
@@ -20,7 +20,7 @@
 static void deleteStrSentinel (short testPart); 
 
 // --------------- FreeRTOS Test ---------------
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #define NUM_OF_TEST_PARTS 2
 
     void main() {
@@ -41,7 +41,7 @@ static void deleteStrSentinel (short testPart);
     }
 
 // --------------- Debian && FreeBSD test ---------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
     int main(int argc, char *argv[]);
 
@@ -69,7 +69,7 @@ static void deleteStrSentinel (short testPart);
         return 0;
     }
 
-#endif //ifdef testgenOnFreeRTOS
+#endif //ifdef BESSPIN_FREERTOS
 
 static void deleteStrSentinel (short testPart) {
     char * pTargetStr;

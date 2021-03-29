@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 
 #include "FreeRTOS.h"
 #define MALLOC pvPortMalloc
@@ -89,7 +89,7 @@ unknown_implicit_reference_count(){
 
 // ----------------- FreeRTOS Test ----------
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 
 #define NUM_OF_TEST_PARTS 2
 void main() {
@@ -106,7 +106,7 @@ void main() {
     return;
 }
 
-#elif (defined(testgenOnFreeBSD) || defined(testgenOnDebian))
+#elif (defined(BESSPIN_FREEBSD) || defined(BESSPIN_DEBIAN))
 #include "unbufferStdout.h"
 
 int main(int argc, char *argv[]) {

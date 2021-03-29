@@ -7,7 +7,7 @@
 #define MALLOC_SIZE_MAX 0x00FF
 #define MALLOC_SIZE_MIN 0x0000
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
     #include "FreeRTOS.h"
     #define MALLOC pvPortMalloc
     #define FREE vPortFree
@@ -19,7 +19,7 @@
 static void sizeofPtr (void); 
 
 // --------------- FreeRTOS Test ---------------
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #define NUM_OF_TEST_PARTS 1
 
     void main() {
@@ -34,7 +34,7 @@ static void sizeofPtr (void);
     }
 
 // --------------- Debian && FreeBSD test ---------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
     int main(void);
 
@@ -45,7 +45,7 @@ static void sizeofPtr (void);
         return 0;
     }
 
-#endif //ifdef testgenOnFreeRTOS
+#endif //ifdef BESSPIN_FREERTOS
 
 static void sizeofPtr() {
     long unsigned int xInt, *pInt;

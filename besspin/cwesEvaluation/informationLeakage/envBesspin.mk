@@ -15,11 +15,11 @@ $(info VARIANT_NAMES=$(VARIANT_NAMES))
 $(info VARIANT_SRC=$(VARIANT_SRC))
 $(info GENERIC_SRC=$(GENERIC_SRC))
 
-CFLAGS += -DBESSPIN_TOOL_SUITE -DtestgenOnFreeRTOS
+CFLAGS += -DBESSPIN_TOOL_SUITE -DBESSPIN_FREERTOS
 WERROR = 
 
 ifeq ($(BSP),qemu)
-	CFLAGS += -DtestgenQEMU
+	CFLAGS += -DBESSPIN_QEMU
 	APP_SRC = main.c $(VARIANT_SRC) $(GENERIC_SRC)
 
 	APP_INCLUDES += -I$(INC_BESSPIN_TOOL_SUITE)/informationLeakage/include
@@ -38,7 +38,7 @@ ifeq ($(BSP),qemu)
 		$(INC_BESSPIN_TOOL_SUITE)/informationLeakage/tests \
 		$(INC_BESSPIN_TOOL_SUITE)/informationLeakage/nonstd_utils
 else
-	CFLAGS += -DtestgenFPGA
+	CFLAGS += -DBESSPIN_FPGA
 	DEMO_SRC = main.c $(VARIANT_SRC) $(GENERIC_SRC)
 
 	INCLUDES += -I$(INC_BESSPIN_TOOL_SUITE)/informationLeakage/include

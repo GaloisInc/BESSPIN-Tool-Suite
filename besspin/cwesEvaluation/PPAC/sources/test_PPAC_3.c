@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #error "This test does not support FreeRTOS"
 #endif
 

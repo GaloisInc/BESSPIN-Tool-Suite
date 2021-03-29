@@ -4,7 +4,7 @@
 
 #define MAX_SIZE 100
 int a[MAX_SIZE]; //Global var
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
     #define MALLOC pvPortMalloc
     #define FREE vPortFree
@@ -20,7 +20,7 @@ correct_memory_free(void){
     
     printf("\n<MEMORY_FREE_CORRECTLY>\n");
 }
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 
 // ----------------- FreeRTOS Test ----------
 #define NUM_OF_TEST_PARTS 3
@@ -59,7 +59,7 @@ void main() {
 }
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 
 #include "unbufferStdout.h"
 

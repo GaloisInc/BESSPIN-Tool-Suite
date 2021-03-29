@@ -8,7 +8,7 @@ Test_284: Improper Access Control
 NONE
 */
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 //---------------- FreeRTOS test ------------------------------------------------------
 
     #include "testgenFreeRTOS.h"
@@ -188,7 +188,7 @@ NONE
     } //vTask284
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 
     #define THIS_TEST "284"
 
@@ -205,7 +205,7 @@ NONE
     #include <string.h>
     #include <unistd.h>
 
-    #ifdef testgenOnDebian
+    #ifdef BESSPIN_DEBIAN
         #include <security/pam_misc.h>
         static struct pam_conv conv = { misc_conv, NULL };
     #else //FreeBSD

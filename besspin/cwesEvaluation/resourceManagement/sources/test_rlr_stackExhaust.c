@@ -17,7 +17,7 @@ static int func1 (void);
 static int func2 (void);
 
 // --------------- FreeRTOS Test ---------------
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #define NUM_OF_TEST_PARTS 1
 
     void main() {
@@ -33,7 +33,7 @@ static int func2 (void);
     }
 
 // --------------- Debian && FreeBSD test ---------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
     int main(void);
 
@@ -43,7 +43,7 @@ static int func2 (void);
         return callRandFunc();
     }
 
-#endif //ifdef testgenOnFreeRTOS
+#endif //ifdef BESSPIN_FREERTOS
 
 static int callRandFunc() {
     unsigned int whichFuncToCall;

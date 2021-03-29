@@ -15,7 +15,7 @@
 #include "riscv_counters.h"
 #endif
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
 #endif
 
@@ -60,7 +60,7 @@
 #include<stdlib.h>
 #endif
 
-#if defined(PATH_MANIPULATION_ACCESS) && !defined(testgenOnFreeRTOS) && !defined(BIN_SOURCE_LMCO)
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(BESSPIN_FREERTOS) && !defined(BIN_SOURCE_LMCO)
 // Required for realpath
 #include <limits.h>
 #include <stdlib.h>
@@ -111,7 +111,7 @@ size_t mock_get_message_size(void) {{
   // Misinterpret the result of `mock_get_message_size` as a size in bytes,
   // rather than the number of elements of type `buf_type` the message has.
   size_t {alloc_bytes} = SIZE(char, mock_get_message_size(), {memmax});
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
+#if defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA)
   return pvPortMalloc({alloc_bytes});
 #else
   return malloc({alloc_bytes});
@@ -159,15 +159,15 @@ void test_buffer_overflow(void)
     {buf_type}* {buf_name} = allocate_message_buf();
 #else  // !INCORRECT_MALLOC_CALL
     size_t {alloc_bytes} = sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax});
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
+#if defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA)
     {buf_type}* {buf_name} = pvPortMalloc({alloc_bytes});
 #else
     {buf_type}* {buf_name} = malloc({alloc_bytes});
-#endif  // defined(testgenOnFreeRTOS) && defined(testgenFPGA)
+#endif  // defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA)
 #endif  // INCORRECT_MALLOC_CALL
     if ({buf_name} == NULL) {{
             printf("TEST INVALID. <malloc>\r\n");
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
             printf("<xPortGetFreeHeapSize() = %x>\r\n", xPortGetFreeHeapSize());
 #endif
             fflush(stdout);
@@ -294,7 +294,7 @@ void test_buffer_overflow(void)
 
 #if defined(PATH_MANIPULATION_ACCESS) && !defined(BIN_SOURCE_LMCO)
 void test_path_manipulation(void) {{
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     printf("TEST INVALID.  <not on FreeRTOS>\r\n");
     fflush(stdout);
 #else
@@ -355,7 +355,7 @@ void test_path_manipulation(void) {{
 #ifdef JMP
     longjmp(env, 2);
 #endif
-#endif // !testgenOnFreeRTOS
+#endif // !BESSPIN_FREERTOS
 }};
 #endif  // PATH_MANIPULATION_ACCESS && !BIN_SOURCE_LMCO
 

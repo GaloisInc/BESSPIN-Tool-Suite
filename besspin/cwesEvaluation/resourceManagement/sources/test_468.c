@@ -1,8 +1,8 @@
 #include "testsParameters.h"
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 
-#if (defined(testgenFPGA))
+#if (defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
 #endif
 // ----------------- FreeRTOS Test ----------
@@ -47,7 +47,7 @@ void main() {
 }
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 
 #include <stdio.h>
 #include <stdlib.h>

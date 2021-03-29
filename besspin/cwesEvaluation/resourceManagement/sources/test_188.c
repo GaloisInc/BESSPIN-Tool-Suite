@@ -45,9 +45,9 @@ example_input_args_in_front_on_stack(char x, char y) {
     }
 }
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 
-#if (defined(testgenFPGA))
+#if (defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
 #endif
 // ----------------- FreeRTOS Test ----------
@@ -74,7 +74,7 @@ void main() {
 }
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 
 #include <stdlib.h>
 #include "unbufferStdout.h"

@@ -8,9 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
 #endif
 
@@ -23,7 +23,7 @@ int main(void) {
   int *ptr_1;
   int *ptr_2;
 
-#if (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#if (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
   unbufferStdout();
 #endif
   printf ("TEST 128 PART P01\n");
@@ -48,7 +48,7 @@ int main(void) {
   // First, let's try a case that should work fine
   s = 1024 * sizeof(int);
   printf ("Going to malloc %u bytes\n", s);
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
   ptr_1 = (int *) pvPortMalloc (s);
 #else
   ptr_1 = (int *) malloc (s);
@@ -76,7 +76,7 @@ int main(void) {
 
   // Possibly attempt to malloc(0). Some implementations of malloc()
   // will check and fail here.
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
   ptr_2 = (int *) pvPortMalloc (s);
 #else
   ptr_2 = (int *) malloc (s);

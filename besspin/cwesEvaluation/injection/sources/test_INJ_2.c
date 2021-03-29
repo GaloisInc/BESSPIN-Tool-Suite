@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 #include <FreeRTOS.h>
 #include <message_buffer.h>
 #include <task.h>
-#else // !testgenOnFreeRTOS
+#else // !BESSPIN_FREERTOS
 #include <stdlib.h>
 #include "inj_unix_helpers.h"
 #include "unbufferStdout.h"
@@ -27,7 +27,7 @@
 // pvPortMalloc on FreeRTOS.
 #define BLOCK_HEADER_BYTES 16
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 
 /*
  * Each pvPortMalloc allocation has this header placed in front of the returned
@@ -250,8 +250,8 @@ static void rtos_test() {
     // Don't free untrusted2 or trusted as they are overlapping memory regions.
 }
 
-#endif  // testgenOnFreeRTOS
-#ifdef testgenOnDebian
+#endif  // BESSPIN_FREERTOS
+#ifdef BESSPIN_DEBIAN
 
 static bool get_buffer_increment(int64_t* untrusted, int64_t untrusted_size) {
     // Read index
@@ -349,29 +349,29 @@ static void debian_test() {
 
     // Don't free untrusted2 or trusted as they are overlapping memory regions.
 }
-#endif  // testgenOnDebian
+#endif  // BESSPIN_DEBIAN
 
 int main(void) {
     printf("<BEGIN_INJECTION_TEST>\n");
-#ifdef testgenOnFreeRTOS
-#ifdef testgenQEMU
+#ifdef BESSPIN_FREERTOS
+#ifdef BESSPIN_QEMU
     // Not implemented for QEMU due to issues with FreeRTOS tasks on QEMU.
     printf("<QEMU_NOT_IMPLEMENTED>\n");
     printf("FreeRTOS INJ-2 test is not implemented on QEMU.\n");
 #else  // !testgenOnQEMU
     rtos_test();
 #endif  // !testgenOnQEMU
-#else  // !testgenOnFreeRTOS
+#else  // !BESSPIN_FREERTOS
     unbufferStdout();
-#ifdef testgenOnFreeBSD
+#ifdef BESSPIN_FREEBSD
     // Not implemented for FreeBSD due to jemalloc not placing metadata
     // directly before returned pointers
     printf("<FREEBSD_NOT_IMPLEMENTED>\n");
     printf("INJ-2 test is not implemented on FreeBSD\n");
-#else   // !testgenOnFreeBSD
+#else   // !BESSPIN_FREEBSD
     debian_test();
 #endif  // !testgeonOnFreeBSD
-#endif  // !testgenOnFreeRTOS
+#endif  // !BESSPIN_FREERTOS
 
     return 0;
 }
