@@ -56,11 +56,8 @@ test_pass();
 void
 test_fail();
 
-#ifdef BESSPIN_FREERTOS
-#define IEX_TESTGEN
-#endif
 
-#ifdef IEX_TESTGEN
+#ifdef BESSPIN_FREERTOS
 #define TEST_MAIN  int test_main()
 #else
 #define TEST_MAIN int main(int argc, char **argv)
