@@ -12,8 +12,7 @@ Use:
     Currently used:
       - canlib.h in C version of the canlib
       - canlib.py in:
-        - SSITH-FETT-Target/fett/cyberPhys/canlib.py
-        - SSITH-Cyberphys/scripts/cyberphys/canlib.py
+        - SSITH-FETT-Target/fett/cyberPhys/cyberphyslib/canlib/canspecs.py
 """
 import pandas as pd
 import re
