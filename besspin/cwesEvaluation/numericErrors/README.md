@@ -239,6 +239,7 @@ A particular problem occurs when a multiplication operator is applied to compute
   - Prevent the wrap-around in the unsigned multiplication operator.
   - Prevent the attempt to `malloc(0)` bytes.
   - Prevent use of the pointer returned from the call to `malloc(0)`
+- p02: Identical to p01, but computes the allocation size using a `uint8_t` rather than a `size_t`, and allocates buffers of type `uint16_t` rather than `int`.
 
 ### TEST-190 ###
 Integer Overflow \[[CWE-190](https://cwe.mitre.org/data/definitions/190.html)\].

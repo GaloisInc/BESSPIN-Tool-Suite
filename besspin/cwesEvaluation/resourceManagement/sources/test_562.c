@@ -6,8 +6,10 @@
 #if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
 #define MALLOC pvPortMalloc
+#define FREE vPortFree
 #else
 #define MALLOC malloc
+#define FREE free
 #endif
 
 /** Address of stack memory associated with local variable 'a' returned */
@@ -17,7 +19,12 @@ fill_array(int n) {
   for (int i = 0; i < n; i++) {
     a[i] = i;
   }
-  return a;
+  // Have to store as a local pointer `p` and return `p` because the compiler
+  // will transform `return a` to `return NULL`, even with optimizations
+  // disabled.  This is a legal transformation after all since `return a` is
+  // undefined behavior.
+  int *p = a;
+  return p;
 }
 
 int*
@@ -36,25 +43,26 @@ fill_array_with_malloc(int n)
   return a;
 }
 
-// ----------------- FreeRTOS Test ----------
-#ifdef BESSPIN_FREERTOS
-
-#define NUM_OF_TEST_PARTS 2
-
+// Allocate array on the stack in a function call.
 void
-print_array(int *tab, int n) {
-  int k = 0;
+stack_test(int n) {
+  printf("\n<BEGIN_STACK_TEST>\n");
+  int *tab = fill_array(n);
+  if (!tab) {
+    // Compiler replaced fill_array return with `return NULL`.
+    printf("\n<INVALID>\n");
+    exit(1);
+  }
   for (int i = 0; i < n; i++) {
     printf("%d ", tab[i]); // prints the array
-    if (tab[i] == i) {
-      k = k + 1;
-    }
   }
-  printf("\n<DEREFERENCE-VIOLATION>\n");
+  printf("\n<DEREFERENCE_VIOLATION>\n");
 }
 
+// Allocate array on the heap.  Should experience no errors.
 void
-print_array_correct(int *tab, int n) {
+heap_test(int n) {
+  int *tab = fill_array_with_malloc(n);
   int k = 0;
   for (int i = 0; i < n; i++) {
     printf("%d ", tab[i]); // prints the array
@@ -62,6 +70,7 @@ print_array_correct(int *tab, int n) {
       k = k + 1;
     }
   }
+  FREE(tab);
   if (k == n) {
     printf("\n<VALID_ARRAY_CONTENT>\n");
   } else {
@@ -69,6 +78,10 @@ print_array_correct(int *tab, int n) {
   }
 }
 
+// ----------------- FreeRTOS Test ----------
+#ifdef BESSPIN_FREERTOS
+
+#define NUM_OF_TEST_PARTS 2
 
 void main() {
   int *b;
@@ -76,12 +89,10 @@ void main() {
   printf("\n<OSIMAGE=FreeRTOS>\n");
 #if BESSPIN_TEST_PART == 1
   printf("\n---Part01: fill_array.---\n");
-  b = fill_array(5);
-  print_array(b, 5);
+  stack_test(5);
 #elif BESSPIN_TEST_PART == 2
   printf("\n---Part02: fill_array_with_malloc.---\n");
-  c = fill_array_with_malloc(5);
-  print_array_correct(c, 5);
+  heap_test(5);
 #else
   printf("SCORE:562:%d:TEST ERROR\n", BESSPIN_TEST_PART);
 #endif
@@ -92,29 +103,9 @@ void main() {
 #elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
 
-void
-print_array(int *tab, int n) {
-  printf("\n<print_array>\n");
-  int k = 0;
-  for (int i = 0; i < n; i++) {
-    printf("%d ", tab[i]); // prints the array
-    if (tab[i] == i) {
-      k = k + 1;
-    }
-  }
-
-  if (k == n) {
-    printf("\n<VALID_ARRAY_CONTENT>\n");
-  } else {
-    printf("\n<NOT_VALID_ARRAY_CONTENT>\n");
-  }
-}
-
 int main(int argc, char *argv[])
 {
   unbufferStdout();
-  int *b;
-  int *c;
 
   int option;
   if (argc > 1) { //be safe
@@ -123,21 +114,17 @@ int main(int argc, char *argv[])
       option = -1;
   }
   switch(option) {
-      case 1 :
-          printf("\n<fill_array>\n");
-          b = fill_array(5);
-          print_array(b, 5);
-          break;
-      case 2 :
-          // no free here
-          printf("\n<fill_array_with_malloc>\n");
-          c = fill_array_with_malloc(5);
-          print_array(c, 5);
-          free(c);
-          break;
-      default :
-          printf("SCORE:562:%d:TEST ERROR\n",option);
-          return 1;
+    case 1 :
+      printf("\n<fill_array>\n");
+      stack_test(5);
+      break;
+    case 2 :
+      printf("\n<fill_array_with_malloc>\n");
+      heap_test(5);
+      break;
+    default :
+      printf("SCORE:562:%d:TEST ERROR\n",option);
+      return 1;
   }  
   return 0;
 }

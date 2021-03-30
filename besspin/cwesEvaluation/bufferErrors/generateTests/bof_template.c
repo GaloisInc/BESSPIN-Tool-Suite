@@ -37,6 +37,8 @@
 
 #define {fun_bof_return}
 
+// ALLOC_TYPE = (STATIC_ALLOC, DYNAMIC_ALLOC)
+#define {alloc_type}
 
 // (MEMCPY, LOOP)
 #define {buf_cpy}
@@ -151,8 +153,19 @@ void test_buffer_overflow(void)
 #ifdef STACK
     // Cleared via memset so that we can do error checking
     // without wiping OS structures (ie if we overflowed into bss)
+#ifdef STATIC_ALLOC
+    if ({N} > SIZE({buf_type}, {N}, {memmax})) {{
+        // Template generator should ensure this never happens, but double check
+        // to be safe.
+        printf("TEST INVALID. <N too large for static allocation>\r\n");
+        return;
+    }}
+    {buf_type} {buf_name}[{N}];
+    memset({buf_name}, 0, sizeof({buf_type})*{N});
+#else  // DYNAMIC_ALLOC
     {buf_type} {buf_name}[SIZE({buf_type},{buf_size},{memmax})];
     memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
+#endif  // STATIC_ALLOC
 
 #else //HEAP
 #ifdef INCORRECT_MALLOC_CALL
@@ -180,9 +193,19 @@ void test_buffer_overflow(void)
 
 #ifdef STACK
 #ifdef BUF2_PRESENT
+#ifdef STATIC_ALLOC
+    if ({N2} > SIZE({buf_type2}, {N2}, {memmax})) {{
+        // Template generator should ensure this never happens, but double check
+        // to be safe.
+        printf("TEST INVALID. <N2 too large for static allocation>\r\n");
+        return;
+    }}
+    {buf_type2} {buf_name2}[{N2}];
+    memset({buf_name2}, 0, sizeof({buf_type2})*{N2});
+#else  // DYNAMIC_ALLOC
     {buf_type2} {buf_name2}[SIZE({buf_type2},{N2},{memmax})];
-    memset({buf_name}, 0, sizeof({buf_type})*SIZE({buf_type},{buf_size},{memmax}));
-
+    memset({buf_name2}, 0, sizeof({buf_type2})*SIZE({buf_type2},{N2},{memmax}));
+#endif  //STATIC_ALLOC
 #endif//BUF2_PRESENT
 #endif//STACK
 

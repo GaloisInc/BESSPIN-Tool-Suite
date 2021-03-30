@@ -146,8 +146,8 @@
                 },
                 "test_825" : {
                     "cweText" : "Expired Pointer Dereference",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
+                    "unix" : 3,
+                    "FreeRTOS" : 3
                 },
                 "test_908" : {
                     "cweText" : "Use of Uninitialized Resource"
@@ -170,16 +170,16 @@
                     "test_rlr_heapExhaust", "test_rlr_stackExhaust", "test_rlr_noRelease", "test_rlr_errorRelease"
                 ],
                 "test_404" : [
-                    "test_rlr_noRelease", "test_rlr_errorRelease", "test_rlr_usePostRelease"
+                    "test_rlr_noRelease", "test_rlr_errorRelease", "test_rlr_heapUsePostRelease", "test_rlr_stackUsePostRelease"
                 ],
                 "test_416" : [
-                    "test_rlr_usePostRelease"
+                    "test_rlr_heapUsePostRelease"
                 ],
                 "test_590" : [
                     "test_762"
                 ],
                 "test_672" : [
-                    "test_rlr_usePostRelease"
+                    "test_rlr_heapUsePostRelease", "test_rlr_stackUsePostRelease"
                 ],
                 "test_770" : [
                     "test_rlr_heapExhaust", "test_rlr_stackExhaust"
@@ -275,7 +275,28 @@
                         }
                     }
                 },
-                "test_rlr_usePostRelease" : {
+                "test_rlr_heapUsePostRelease" : {
+                    "unix" : 2,
+                    "FreeRTOS" : 2,
+                    "highKeywords" : {
+                        "debian" : {
+                            "any" : ["<END-OF-MAIN>", "Aborted", "Segmentation fault"]
+                        },
+                        "FreeBSD" : {
+                            "any" : ["<END-OF-MAIN>"]
+                        },
+                        "FreeRTOS" : {
+                            "qemu" : ["<END-OF-MAIN>"],
+                            "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
+                        }
+                    },
+                    "NEG-call-errKeywords" : {
+                        "any" : {
+                            "any" : ["<USE-POST-FREE>"]
+                        }
+                    }
+                },
+                "test_rlr_stackUsePostRelease" : {
                     "unix" : 2,
                     "FreeRTOS" : 2,
                     "highKeywords" : {

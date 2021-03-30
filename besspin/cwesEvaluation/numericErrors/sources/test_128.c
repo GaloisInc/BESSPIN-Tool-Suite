@@ -2,30 +2,43 @@
 // cited in the SEI's CERT C Coding Standard
 // Rule MEM07-C
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "testsParameters.h"
+
 #if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
-#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
-#include "unbufferStdout.h"
+#define FREE vPortFree
+#define MALLOC pvPortMalloc
+#else
+#define FREE free
+#define MALLOC malloc
 #endif
 
-// Test 128 only has a single Part, so no special treatment is required
-// here for multi-part running on FreeRTOS or Debian
+#define NUM_OF_TEST_PARTS 2
 
-int main(void) {
+void check_test_error(bool error, int part) {
+  if (error) {
+    printf("SCORE:128:%d:TEST ERROR\n", part);
+    exit(1);
+  }
+}
+
+/**
+ * Overflow a size_t input to malloc to allocate a 0 byte buffer and overrun
+ * the buffer
+ */
+void test_size_t(void) {
   size_t s;
   size_t l;
   int *ptr_1;
   int *ptr_2;
 
-#if (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
-  unbufferStdout();
-#endif
   printf ("TEST 128 PART P01\n");
 
   printf ("Size of size_t is %d\n", sizeof(size_t));
@@ -48,17 +61,12 @@ int main(void) {
   // First, let's try a case that should work fine
   s = 1024 * sizeof(int);
   printf ("Going to malloc %u bytes\n", s);
-#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
-  ptr_1 = (int *) pvPortMalloc (s);
-#else
-  ptr_1 = (int *) malloc (s);
-#endif
-  if (ptr_1 != NULL)
-    for (size_t j = 0; j < 1024; j++)
-      ptr_1 [j] = 0;
-  else
-    printf ("SCORE:128:1:TEST ERROR\n");
-
+  ptr_1 = (int *) MALLOC(s);
+  check_test_error(!ptr_1, 1);
+  for (size_t j = 0; j < 1024; j++) {
+    ptr_1 [j] = 0;
+  }
+  FREE(ptr_1);
   printf ("Alloc and init of 1024 ints successful\n");
 
   // Second, a case that is contrived to fail
@@ -76,24 +84,98 @@ int main(void) {
 
   // Possibly attempt to malloc(0). Some implementations of malloc()
   // will check and fail here.
-#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
-  ptr_2 = (int *) pvPortMalloc (s);
-#else
-  ptr_2 = (int *) malloc (s);
-#endif
+  ptr_2 = (int *) MALLOC(s);
+
   // A SSITH CPU might spot the problem above and halt the program here.
   // To PASS this test, a SSITH CPU should prevent the malloc(0)
   // and print "<ABORT>" on stdout via whatever exception handling mechanism
   // is appropriate for that CPU and OS.
 
-  if (ptr_2 != NULL)
-    for (size_t j = 0; j < 16; j++) // Limit to first 16 bytes to ensure termination
-      ptr_2 [j] = 0;
-  else
-    printf ("SCORE:128:1:TEST ERROR\n");
+  check_test_error(!ptr_2, 1);
+  for (size_t j = 0; j < 16; j++) {
+    // Limit to first 16 elements to ensure termination
+    ptr_2 [j] = 0;
+  }
+  FREE(ptr_2);
 
   // If still executing at this point, then we consider the test to be a FAIL
   printf ("SCORE:128:1:TEST FAILED\n");
+}
+
+/**
+ * Overflow a uint8_t input to malloc to allocate a 0 byte buffer and overrun
+ * the buffer
+ */
+void test_uint8_t(void) {
+  // Number of elements in first buffer
+  const int ELEMENTS_1 = 64;
+  const int ELEMENTS_2 = 128;
+
+  printf ("TEST 128 PART P02\n");
+
+  // Perform an allocation that should work (128 bytes)
+  uint8_t size_1 = ELEMENTS_1 * sizeof(uint16_t);
+  printf("Going to malloc %u bytes\n", (unsigned int) size_1);
+  uint16_t *ptr_1 = (uint16_t*) MALLOC(size_1);
+  check_test_error(!ptr_1, 2);
+  for (int i = 0; i < ELEMENTS_1; ++i) {
+    ptr_1[i] = 0;
+  }
+  FREE(ptr_1);
+  printf("Alloc and init of %d uint16_ts successful\n", ELEMENTS_1);
+
+  // Overflow size_2 and malloc(0)
+  uint8_t size_2 = ELEMENTS_2 * sizeof(uint16_t);  // Overflows to 0
+  printf("Going to malloc %u bytes\n", (unsigned int) size_2);
+  uint16_t *ptr_2 = (uint16_t*) MALLOC(size_2);
+  check_test_error(!ptr_2, 2);
+  for (int i = 0; i < 16; ++i) {
+    // Limit to first 16 elements to avoid segfault
+    ptr_2[i] = 0;
+  }
+  FREE(ptr_2);
+  // If still executing at this point, then we consider the test to be a FAIL
+  printf ("SCORE:128:2:TEST FAILED\n");
+}
+#ifdef BESSPIN_FREERTOS
+//---------------- FreeRTOS test ------------------------------------------------------
+
+int main()
+{
+#if BESSPIN_TEST_PART == 1
+  test_size_t();
+#elif BESSPIN_TEST_PART == 2
+  test_uint8_t();
+#else
+  printf ("SCORE:456:%d:TEST ERROR\n",BESSPIN_TEST_PART);
+#endif
+  return 0;
+}
+
+//---------------- Debian && FreeBSD test ------------------------------------------------------
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
+#include "unbufferStdout.h"
+
+int main(int argc, char **argv) {
+  unbufferStdout();
+  int testpart;
+  if (argc > 1) {
+    testpart = atoi(argv[1]);
+  } else {
+    testpart = 0;
+  }
+
+  switch (testpart) {
+    case 1:
+      test_size_t();
+      break;
+    case 2:
+      test_uint8_t();
+      break;
+    default:
+      check_test_error(true, testpart);
+  }
 
   return 0;
 }
+#endif

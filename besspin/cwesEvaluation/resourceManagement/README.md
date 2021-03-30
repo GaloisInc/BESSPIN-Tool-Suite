@@ -211,20 +211,25 @@ Expired Pointer Dereference \[[CWE-825](https://cwe.mitre.org/data/definitions/8
   memory that was previously valid, but is no longer valid.
 
 **FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
+- Parts 1 and 2 implemented through the use of `pvPortMalloc`/`pvPortFree`.
+- Part 3 implemented through use of an expired stack pointer.
 
 **Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of a ``free`` operation as
-  follows. 
-- The  `test_double_free` function shows freeing a pointer variable
-  more than once.
-- The `test_free_no_longer_valid` function shows freeing a pointer
-  after copying a string value into destination array using the
-  `strcpy` function. This pointer is later incorrectly used in the
-  `printf` function. When freeing pointers, be sure to set them to
-  `NULL` once they are freed. 
-- The utilization of multiple or complex data structures may lower the
-  usefulness of this strategy. 
+- Parts 1 and 2 of the test demonstrates the consequences of a ``free``
+operation as follows. 
+    - The  `test_double_free` function shows freeing a pointer variable
+      more than once.
+    - The `test_free_no_longer_valid` function shows freeing a pointer
+      after copying a string value into destination array using the
+      `strcpy` function. This pointer is later incorrectly used in the
+      `printf` function. When freeing pointers, be sure to set them to
+      `NULL` once they are freed. 
+    - The utilization of multiple or complex data structures may lower the
+      usefulness of this strategy. 
+- Part 3 of the test demonstrates use of an expired stack pointer in
+  `test_stack_invalid`.  It calls `SubStr_new_stack`, which returns a pointer
+  to a stack allocated variable.  Then, it dereferences this pointer in a
+  `printf` function call.
 
 
 ### TEST-911 ###
@@ -476,10 +481,13 @@ The source file is `test_rlr_noRelease.c`. The test calls a `noRelease` function
 
 The source file is `test_rlr_errorRelease.c`. The test calls a `errorRelease` function 50 times. This function allocates a random number of bytes, then randomly (with 20\% probability) calls `abort()` before freeing the memory.
 
-### TEST - USE POST RELEASE ###
+### TEST - HEAP USE POST RELEASE ###
 
-The source file is `test_rlr_usePostRelease.c`. The test calls a `usePostRelease` function 50 times. This function allocates a random number of bytes for two pointers, then free one, and after that, it allocates random number of bytes for three extra pointers, then randomly (with 20\% probability) decides to use the freed pointer with `memcpy` either as source in part 1, or as destination in part 2. In the end, it frees all the allocated memory.
+The source file is `test_rlr_heapUsePostRelease.c`. The test calls a `usePostRelease` function 50 times. This function allocates a random number of bytes for two pointers, then free one, and after that, it allocates random number of bytes for three extra pointers, then randomly (with 20\% probability) decides to use the freed pointer with `memcpy` either as source in part 1, or as destination in part 2. In the end, it frees all the allocated memory.
 
+### TEST - STACK USE POST RELEASE ###
+
+The source file is `test_rlr_stackUsePostRelease.c`. The test calls a `usePostRelease` function 50 times. This function calls `stackAlloc`, which allocates a random number of bytes on the stack and returns a pointer `pMain`.  Therefore, `pMain` references memory that has been released in the return from `stackAlloc`.  `usePostRelease` then allocates an array of the same size as `pMain` called `aSecond` in its stack frame.  It also allocates three additional stack buffers of random size.  Randomly (with 20\% probability), the test decides to use `pMain` with `memcpy` either as a source in part 1, or as a destination in part 2.
 
 ## RI (Resources Initialization) ##
 
