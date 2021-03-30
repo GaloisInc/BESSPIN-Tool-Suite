@@ -11,7 +11,7 @@
 
 #include "testsParameters.h"
 
-#if (defined(testgenOnFreeRTOS) && defined(testgenFPGA))
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
 #include "FreeRTOS.h"
 #define FREE vPortFree
 #define MALLOC pvPortMalloc
@@ -137,23 +137,23 @@ void test_uint8_t(void) {
   // If still executing at this point, then we consider the test to be a FAIL
   printf ("SCORE:128:2:TEST FAILED\n");
 }
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 //---------------- FreeRTOS test ------------------------------------------------------
 
 int main()
 {
-#if TESTGEN_TEST_PART == 1
+#if BESSPIN_TEST_PART == 1
   test_size_t();
-#elif TESTGEN_TEST_PART == 2
+#elif BESSPIN_TEST_PART == 2
   test_uint8_t();
 #else
-  printf ("SCORE:456:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+  printf ("SCORE:456:%d:TEST ERROR\n",BESSPIN_TEST_PART);
 #endif
   return 0;
 }
 
 //---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
 
 int main(int argc, char **argv) {

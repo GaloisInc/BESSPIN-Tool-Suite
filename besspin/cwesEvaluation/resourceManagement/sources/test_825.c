@@ -6,7 +6,7 @@
 #define EXIT_FAILURE 1
 #define NUM_OF_TEST_PARTS 3
 
-#if defined(testgenOnFreeRTOS) && defined(testgenFPGA)
+#if defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA)
   #include "FreeRTOS.h"
   #define MALLOC(size) pvPortMalloc(size)
   #define FREE(ptr)   vPortFree(ptr)
@@ -91,7 +91,7 @@ void test_stack_invalid(char *str) {
   printf("\n<POINTER_USED_IMPROPERLY>\n");
 }
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
 
 // ----------------- FreeRTOS Test ----------
 
@@ -100,17 +100,17 @@ void main() {
   char test_str [] = "test";
   char *str = &test_str[0];
   printf("\n<OSIMAGE=FreeRTOS>\n");
-#if TESTGEN_TEST_PART == 1
+#if BESSPIN_TEST_PART == 1
   printf("\n---Part01: test_double_free.---\n");
   test_double_free(str, dest);
-#elif TESTGEN_TEST_PART == 2
+#elif BESSPIN_TEST_PART == 2
   printf("\n---Part02: test_free_no_longer_valid.---\n");
   test_free_no_longer_valid(str, dest);
-#elif TESTGEN_TEST_PART == 3
+#elif BESSPIN_TEST_PART == 3
   printf("\n---Part03: test_stack_invalid.---\n");
   test_stack_invalid(str);
 #else
-  printf("SCORE:825:%d:TEST ERROR\n",TESTGEN_TEST_PART);
+  printf("SCORE:825:%d:TEST ERROR\n",BESSPIN_TEST_PART);
 #endif
   return;
 }

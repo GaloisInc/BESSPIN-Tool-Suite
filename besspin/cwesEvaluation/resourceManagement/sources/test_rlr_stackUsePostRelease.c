@@ -4,7 +4,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #define ALLOC_SIZE_MAX 0x004F
     #define ALLOC_SIZE_MIN 0x0000
 #else
@@ -18,7 +18,7 @@
 static void usePostRelease (int i, int isSource);
 
 // --------------- FreeRTOS Test ---------------
-#ifdef testgenOnFreeRTOS
+#ifdef BESSPIN_FREERTOS
     #define NUM_OF_TEST_PARTS 2
 
     void main() {
@@ -26,14 +26,14 @@ static void usePostRelease (int i, int isSource);
         int isSource;
         printf("\n<OSIMAGE=FreeRTOS>\n");
         srand(RM_SEED); //RM_SEED is written in besspin/cwesEvaluation/build.py
-        #if TESTGEN_TEST_PART == 1
+        #if BESSPIN_TEST_PART == 1
             printf("\n---Part01: Use as <source>.---\n");
             isSource = 1;
-        #elif TESTGEN_TEST_PART == 2
+        #elif BESSPIN_TEST_PART == 2
             printf("\n---Part02: Use as <destination>.---\n");
             isSource = 0;
         #else
-            printf("\n<INVALID> Part[%d] not in [1,%d].\n",TESTGEN_TEST_PART,NUM_OF_TEST_PARTS);
+            printf("\n<INVALID> Part[%d] not in [1,%d].\n",BESSPIN_TEST_PART,NUM_OF_TEST_PARTS);
             return;
         #endif
 
@@ -45,7 +45,7 @@ static void usePostRelease (int i, int isSource);
     }
 
 // --------------- Debian && FreeBSD test ---------------
-#elif (defined(testgenOnDebian) || defined(testgenOnFreeBSD))
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
 #include "unbufferStdout.h"
     int main(int argc, char *argv[]);
 
@@ -78,7 +78,7 @@ static void usePostRelease (int i, int isSource);
         return 0;
     }
 
-#endif //ifdef testgenOnFreeRTOS
+#endif //ifdef BESSPIN_FREERTOS
 
 static char* stackAlloc(size_t elements) {
     char buf[elements];

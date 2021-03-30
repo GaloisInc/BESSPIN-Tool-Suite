@@ -155,7 +155,7 @@ void test_buffer_overflow(void)
     // without wiping OS structures (ie if we overflowed into bss)
 #ifdef STATIC_ALLOC
     if ({N} > SIZE({buf_type}, {N}, {memmax})) {{
-        // Tempate generator should ensure this never happens, but double check
+        // Template generator should ensure this never happens, but double check
         // to be safe.
         printf("TEST INVALID. <N too large for static allocation>\r\n");
         return;
@@ -195,7 +195,7 @@ void test_buffer_overflow(void)
 #ifdef BUF2_PRESENT
 #ifdef STATIC_ALLOC
     if ({N2} > SIZE({buf_type2}, {N2}, {memmax})) {{
-        // Tempate generator should ensure this never happens, but double check
+        // Template generator should ensure this never happens, but double check
         // to be safe.
         printf("TEST INVALID. <N2 too large for static allocation>\r\n");
         return;
