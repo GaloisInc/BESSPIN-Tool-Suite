@@ -77,18 +77,24 @@ def watchdog(targetId):
                 errorAndLog(f"<target{targetId}>: {errorString}!")
                 return True
 
-        # responses
         responses = []
         while not wHeartbeatQueue.empty():
             responses.append(ftQueueUtils(f"watchDogHeartbeatQueue{targetId}",wHeartbeatQueue,'get'))
 
-        targetIp = getSetting('customTargetIp',targetId=targetId)
-        msgs = [msg for msg in responses if str(ipaddress.IPv4Address(struct.unpack('<I', msg.data[0:4])[0])) == targetIp]
-        if msgs:
-            msg = msgs[0]
-            printAndLog(f"<target{targetId}>: Heartbeat received, {msg.timestamp}s, reqID: {int.from_bytes(msg.data[4:8],'big')}")
-        else:
-            printAndLog(f"<target{targetId}>: Heartbeat missed")
+        xTarget = getSetting('targetObj',targetId=targetId)
+        targetIp = xTarget.ipTarget
+
+        try:
+            msgs = [msg for msg in responses if str(ipaddress.IPv4Address(struct.unpack('<I', msg.data[0:4])[0])) == targetIp]
+            if msgs:
+                msg = msgs[0]
+                printAndLog(f"<target{targetId}>: Heartbeat received, {msg.timestamp}s, \
+                    reqID: {int.from_bytes(msg.data[4:8],'big')}",doPrint=False)
+            else:
+                warnAndLog(f"<target{targetId}>: Heartbeat missed",doPrint=False)
+                # TODO: do something more here
+        except Exception as exc:
+            warnAndLog(f"<target{targetId}> Exception occured processing hearbeat response: {exc}") 
 
         # Check process
         if not isTargetAlive(targetId) and handleError("Target is not alive"):
@@ -136,9 +142,11 @@ def heartBeatListener():
     This is a workaround because we can bind to the same port only once.
     """
     listenQueue = getSetting('heartbeatQueue')
-    canbusPort = getSetting('cyberPhysCanbusPort')
+    vcu118BroadcastIp = getSetting('vcu118BroadcastIp')
+    cyberPhysCanbusPort = getSetting('cyberPhysCanbusPort')
+
     try:
-        canbus = UdpBus("",canbusPort)
+        canbus = UdpBus(ip=vcu118BroadcastIp,port=cyberPhysCanbusPort)
     except Exception as exc:
         logAndExit(f"<heartBeatListener> Failed to instantiate <UdpBus> with port {canbusPort}.",exc=exc,exitCode=EXIT.Run)
     try:
@@ -152,17 +160,13 @@ def heartBeatListener():
     for targetId in range(1,getSetting('nTargets')+1):
         watchdog_queues[targetId] = getSetting('watchdogHeartbeatQueue', targetId=targetId)
 
-    # Hearbeat request settings
-    vcu118BroadcastIp = getSetting('vcu118BroadcastIp')
-    cyberPhysCanbusPort = getSetting('cyberPhysCanbusPort')
-
     while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
         cnt += 1
         try:
             heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
                                     is_extended_id=True,
                                     data=list(cnt.to_bytes(4, byteorder = 'big')))
-            canbus.send(heartbeat_req, vcu118BroadcastIp, cyberPhysCanbusPort)
+            canbus.send(heartbeat_req)
         except Exception as exc:
             logAndExit(f"<heartBeatListener> Failed to send heartbeat request to \
                 {vcu118BroadcastIp}:{cyberPhysCanbusPort}",exc=exc,exitCode=EXIT.Run)
@@ -177,13 +181,17 @@ def heartBeatListener():
                 responses.append(heartbeat_ack)
 
         if (len(responses) < getSetting('nTargets')):
-            printAndLog(f"<heartBeatListener> Failed to receive on canbus.", doPrint=False)
+            warnAndLog(f"<heartBeatListener> Failed to receive on canbus.", doPrint=False)
 
         for q in watchdog_queues.values():
             for msg in responses[::-1]:
-                # Push only responses to the current request
-                if msg.dlc == 8 and int.from_bytes(msg.data[4:8], "big") == cnt:
-                    q.put(msg)
+                try:
+                    # Push only responses to the current request
+                    if msg.dlc == 8 and int.from_bytes(msg.data[4:8], "big") == cnt:
+                        q.put(msg)
+                except Exception as exc:
+                    warnAndLog(f"<heartBeatListener> Exception occured processing hearbeat response: {exc}")
+
         time.sleep(1.0) # TODO: make the timeout a variable
 
     # Will send an item to the queue anyway; If we're here because of error:
