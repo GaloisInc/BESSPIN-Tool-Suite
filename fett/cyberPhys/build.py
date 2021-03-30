@@ -156,4 +156,4 @@ def prepareFreeRTOS(targetId=None):
 
 @decorate.debugWrap
 def getCyberphysAppDir(app):
-    return os.path.join(getSetting('repoDir'),'build','cyberphys', app)
+    return os.path.join(getSetting('repoDir'),'fett','cyberPhys', app)

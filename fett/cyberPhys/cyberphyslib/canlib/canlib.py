@@ -59,7 +59,7 @@ class TcpBus(BusABC):
         byte_msg.append(msg.dlc)
         byte_msg += bytearray([msg.data[i] for i in range(0, msg.dlc)])
         if timeout:
-            print("<{self.__class__.__name__}> Warning: timeout is ignored during send()")
+            print(f"<{self.__class__.__name__}> Warning: ignoring timeout of {timeout} [s] during send()")
         self.publisher.send(byte_msg)
 
     def _recv_internal(self, timeout):
@@ -73,10 +73,10 @@ class TcpBus(BusABC):
             if subscriber in events and events[subscriber] == zmq.POLLIN:
                 rx_data = subscriber.recv_multipart(flags=zmq.NOBLOCK)[0]
                 if len(rx_data) < CanConstants.CAN_MIN_BYTES:
-                    print("<{self.__class__.__name__}> Warning: received only {} bytes, ignoring.".format(len(rx_data)))
+                    print(f"<{self.__class__.__name__}> Warning: received only {len(rx_data)} bytes, ignoring.")
                 elif len(rx_data) > CanConstants.CAN_MAX_BYTES:
-                    print("<{self.__class__.__name__}> Warning: received {} bytes which is more than'\
-                    'CAN_MAX_BYTES({CanConstants.CAN_MAX_BYTES}), ignoring.".format(len(rx_data)))
+                    print(f"<{self.__class__.__name__}> Warning: received {len(rx_data)} bytes which is more than'\
+                    'CAN_MAX_BYTES({CanConstants.CAN_MAX_BYTES}), ignoring.")
                 else:
                     s = bytearray(rx_data[0:4])
                     arb_id = struct.unpack('!I', s)[0]
@@ -153,7 +153,7 @@ class UdpBus(BusABC):
         except Exception:
             raise InvalidCanMessageError(f"msg -- id {msg.arbitration_id}, dlc {msg.dlc}, data {msg.data}")
         if timeout:
-            print("<{self.__class__.__name__}> Warning ignoring timeout of {} [s]".format(timeout))
+            print(f"<{self.__class__.__name__}> Warning: ignoring timeout of {timeout} [s] during send()")
         self._sock.sendto(byte_msg, (tx_ip, tx_port))
 
     def _recv_internal(self, timeout):
