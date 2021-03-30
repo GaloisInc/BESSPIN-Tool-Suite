@@ -30,7 +30,7 @@ import serial
 import serial.tools.list_ports
 from time import sleep
 from .component import ComponentPoller
-import cyberphys.config as config
+import cyberphyslib.demonstrator.config as config
 from .logger import speedo_logger
 
 # Calibration constant that converts meters per second to mph

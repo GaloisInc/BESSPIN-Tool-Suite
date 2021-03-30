@@ -1,8 +1,8 @@
 
 from .component import ComponentPoller
 from .can import CanMultiverse
-import cyberphys.config as config
-from . import canspecs
+import cyberphyslib.demonstrator.config as config
+import cyberphyslib.canlib.canspecs as canspecs
 
 import struct
 import math

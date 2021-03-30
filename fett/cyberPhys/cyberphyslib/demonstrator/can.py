@@ -17,6 +17,8 @@ from can import Message
 from .component import ThreadExiting
 
 # TODO: @ethanlew import canlib/python/canlib.py properly
+from cyberphyslib.canlib import CanDataType, UdpBus
+
 
 class CanListener(metaclass=ABCMeta):
     """
@@ -114,13 +116,13 @@ class CanUdpNetwork(CanNetwork):
     Implements the CanNetwork interface for the UDPBus of python can
     """
     def __init__(self, name: str, port: int, ip: str,
-                 whitelist: NetworkListType = None,
-                 blacklist: NetworkListType = None,
+                 whitelist= None,
+                 blacklist= None,
                  do_bind: bool = True):
         super().__init__(name)
         self.port = port
         self.ip = ip
-        self.bus = UDPBus(self.port, self.ip,
+        self.bus = UdpBus(self.port, self.ip,
                           whitelist=whitelist, blacklist=blacklist, do_bind=do_bind)
 
     def send(self, can_id: int, data: CanDataType):

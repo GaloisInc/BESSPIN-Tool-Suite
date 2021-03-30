@@ -6,13 +6,14 @@ Date: 21 January 2021
 
 Infotainment Server Prototype with Keyboard Stub
 """
-from cyberphys import can, config, component, canspecs
+from cyberphyslib.canlib import canspecs
+from cyberphyslib.demonstrator import can, config, component
 import struct
 import time
 import pygame
 
 
-net = can.CanUdpNetwork("infosim", config.INFO_PORT, "127.0.0.1")
+net = can.CanUdpNetwork("infosim", config.INFO_UI_PORT, "127.0.0.1")
 cid = None
 pkt = None
 
