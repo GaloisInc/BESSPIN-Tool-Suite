@@ -9,7 +9,7 @@ Utility to send a CAN packet over UDP to the cyberphys vehicle network
 '''
 import socket
 
-from cyberphys import can, config
+from cyberphyslib.demonstrator import can, config
 import argparse
 
 

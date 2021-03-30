@@ -37,7 +37,7 @@ import signal
 import argparse
 
 # Project libs
-from cyberphys import speedometer, can, config, simulator, logger, mux, can_out, infotainment
+from cyberphyslib.demonstrator import speedometer, can, config, simulator, logger, mux, can_out, infotainment
 
 SSITH_ENABLED = False
 BUFFER_SIZE = 1024
@@ -176,6 +176,8 @@ try:
     can_multiverse.start()
     info_net.start()
     location_poller.start()
+    imux._info_out.start()
+    imux._info_in.start()
 
     # loop while component threads are used
     while True:
