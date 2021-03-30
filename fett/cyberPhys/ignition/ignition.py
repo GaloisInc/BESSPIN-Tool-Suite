@@ -176,6 +176,8 @@ try:
     can_multiverse.start()
     info_net.start()
     location_poller.start()
+    imux._info_out.start()
+    imux._info_in.start()
 
     # loop while component threads are used
     while True:

@@ -7,11 +7,8 @@ Date: 28 August 2020
 
 Dumps all CAN traffic on CyberPhys network to stdout
 '''
-import sys
-import time
-import socket
 import argparse
-from cyberphys import can, config
+from cyberphyslib.demonstrator import can, config
 
 import logging
 # make CAN module less noisy

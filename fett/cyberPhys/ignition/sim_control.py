@@ -7,10 +7,9 @@ Date: 01 October 2020
 
 Interactive Script to Show Simulator Service Control
 """
-import cyberphys.simulator as simulator
-import cyberphys.component as component
-import cyberphys.config as config
-import cyberphys.message as message
+import cyberphyslib.demonstrator.simulator as simulator
+import cyberphyslib.demonstrator.component as component
+import cyberphyslib.demonstrator.message as message
 
 import time
 import logging

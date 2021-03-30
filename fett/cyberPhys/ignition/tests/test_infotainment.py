@@ -6,8 +6,7 @@ Date: 21 January 2021
 
 Tests for the cyberphys BeamNG sim component
 """
-import time
-import cyberphys.infotainment as cinfo
+import cyberphyslib.demonstrator.infotainment as cinfo
 
 
 def test_sim():
