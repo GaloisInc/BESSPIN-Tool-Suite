@@ -65,6 +65,10 @@ def startBesspin (targetId=None):
     if (sourceVariant!='default'): # check the variants compatibility
         if ((sourceVariant in ['purecap','temporal']) and (binarySource!='SRI-Cambridge')):
             logAndExit(f"<{sourceVariant}> variant is not compatible with <{binarySource}>.",exitCode=EXIT.Configuration)
+        if ( (sourceVariant in ['combo-100','combo-015-017-100-101-103']) 
+                and ( not ((binarySource=='LMCO') and (target=='vcu118') and (processor=='chisel_p2')) ) ):
+            logAndExit(f"<{sourceVariant}> variant is not compatible with <{binarySource}/{processor}/{target}>.",
+                exitCode=EXIT.Configuration)
 
     #qemu on Busybox
     if ((osImage=='busybox') and (target=='qemu')):
