@@ -46,7 +46,7 @@ The document [targets.md](./targets.md) has detailed explanation of the supporte
   - `MIT`: Massachusetts Institute of Technology.
   - `SRI-Cambridge`: The CHERI work by SRI International and University of Cambridge.
 
-- `sourceVariant`: We introduced this parameter to distinguish between the different *flavors* of the CHERI processors, but it seems a solid parameter to have for future compatibilities as it provides a flexible distinction between processors if they came from the same team and flavor/level (coming up). Currently, this is only compatible with the `SRI-Cambridge` choice for `binarySource`. The acceptable values are `default`, `purecap`, and `temporal`. Please refer to the [CHERI wesbite](https://www.cl.cam.ac.uk/research/security/ctsrd/cheri/) for more details. 
+- `sourceVariant`: This parameter serves in distinguishing between different *flavors* or *designs* when happen to exist for the same binarySource-processor for any reason. For `SRI-Cambridge`, the acceptable values are `default`, `purecap`, and `temporal`. Please refer to the [CHERI wesbite](https://www.cl.cam.ac.uk/research/security/ctsrd/cheri/) for more details. For `LMCO`, the acceptable value for non-vcu118 P2/3 targets and all P1s is `default`, while for vcu118 P2/3 targets, the acceptable values are `combo-100` and `combo-015-017-100-101-103`; the values reflect which HARD pipelines are implemented in the bitstream.
 
 - `target`: The backend of the target. The tool supports `qemu`, `vcu118`, and `awsf1`. The document [targets.md](./targets.md) has more details.
 
