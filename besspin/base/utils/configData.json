@@ -119,7 +119,7 @@
         {
             "name" : "sourceVariant",
             "type" : "string",
-            "choices" : [ "default", "purecap", "temporal" ]
+            "choices" : [ "default", "purecap", "temporal", "combo-100", "combo-015-017-100-101-103" ]
         },
         {
             "name" : "useCustomHwTarget",
