@@ -518,13 +518,6 @@ def flashFpgas(agfi,doPrint=True):
     for sn in range(numFpgas):
         flashFpga(agfi, sn)
 
-def getAgfiId(jsonFile):
-    keyName = 'agfi_id'
-    contents = safeLoadJsonFile(jsonFile)
-    if keyName not in contents:
-        logAndExit(f"<awsf1.getAgfiJson>: unable to find key <agfi_id> in {jsonFile}")
-    return contents[keyName]
-
 def getAgfiSettings(jsonFile):
     contents = safeLoadJsonFile(jsonFile)
     return contents
