@@ -4,7 +4,7 @@ Name: ../cyberphyslib/canlib/canspecs.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
 Date: 30 March 2021
-This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
+This file was created by BESSPIN-Tool-Suite/build/cyberphys/canlib/make_can_spec.py
 Version hash: f50e0a68352312d07b0ce23fc3a46a33
 """
 

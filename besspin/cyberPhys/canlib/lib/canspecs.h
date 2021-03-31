@@ -5,7 +5,7 @@
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
 * Date: 30 March 2021
-* This file was created by SSITH-FETT-Target/build/cyberphys/canlib/make_can_spec.py
+* This file was created by BESSPIN-Tool-Suite/build/cyberphys/canlib/make_can_spec.py
 * Version hash: f50e0a68352312d07b0ce23fc3a46a33
 */
 
@@ -151,7 +151,7 @@
 
 // heartbeat_req
 // Type: uint32_t
-// Sender: FETT Tool
+// Sender: BESSPIN Tool
 // Receiver: All
 // Bounds/Range: N/A
 // Units: N/A
@@ -164,7 +164,7 @@
 // heartbeat_ack
 // Type: [uint32_t]
 // Sender: All
-// Receiver: FETT Tool
+// Receiver: BESSPIN Tool
 // Bounds/Range: N/A
 // Units: N/A
 // J1939 compatible: No
@@ -235,7 +235,7 @@
 
 // cmd_scenario_not_available
 // Type: uint8_t
-// Sender: FETT Tool
+// Sender: BESSPIN Tool
 // Receiver: Hacker kiosk
 // Bounds/Range: N/A
 // Units: N/A

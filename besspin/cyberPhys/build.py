@@ -142,13 +142,13 @@ def prepareFreeRTOS(targetId=None):
     besspin.target.build.prepareFreeRTOSNetworkParameters(targetId=targetId)
     besspin.target.build.buildFreeRTOS(targetId=targetId, buildDir=buildDir)
 
-    configHfile = ftOpenFile (os.path.join(buildDir,'fettFreeRTOSIPConfig.h'),'a')
+    configHfile = ftOpenFile (os.path.join(buildDir,'besspinFreeRTOSIPConfig.h'),'a')
     try:
         configHfile.write(f"#define ipconfigUSE_DHCP 0\n")
         configHfile.write(f"#define ipconfigHAS_PRINTF 1\n")
         configHfile.write(f"#define ipconfigHAS_DEBUG_PRINTF 0\n")
     except Exception as exc:
-        logAndExit(f"Failed to populate <fettFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+        logAndExit(f"Failed to populate <besspinFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
     configHfile.close()
 
     cp(os.path.join(buildDir,'FreeRTOS.elf'), getSetting('osImageElf',targetId=targetId))

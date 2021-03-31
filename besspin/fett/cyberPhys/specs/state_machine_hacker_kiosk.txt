@@ -10,7 +10,7 @@ KioskUp --> KioskWait
 
 ' TODO: add a timeout to the wait?
 state "Wait for components" as KioskWait
-KioskWait: Wait for CMD_COMPONENT_READY(FETT_TOOl)
+KioskWait: Wait for CMD_COMPONENT_READY(BESSPIN_TOOl)
 KioskWait: Wait for CMD_COMPONENT_READY(IGNITION)
 
 ' TODO: handle error conditions
