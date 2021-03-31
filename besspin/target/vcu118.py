@@ -748,23 +748,31 @@ def waitForTargetsAndUser (targetId=None):
 
 @decorate.debugWrap
 def selectBitAndProbeFiles (targetId=None):
-    bitfileName = "soc_" + getSetting('processor',targetId=targetId) + ".bit"
-    probfileName = "soc_" + getSetting('processor',targetId=targetId) + ".ltx"
+    binarySource = getSetting('binarySource',targetId=targetId)
+    processor = getSetting('processor',targetId=targetId)
+    sourceVariant = getSetting('sourceVariant',targetId=targetId)
+
+    if ((binarySource=='LMCO') and (sourceVariant!='default')):
+        suffix = f"-{sourceVariant}"
+    else:
+        suffix = ''
+    bitfileName = f"soc_{processor}{suffix}.bit"
+    probfileName = f"soc_{processor}{suffix}.ltx"
 
     if getSetting('useCustomProcessor',targetId=targetId):
         bitfileDir = getSetting('pathToCustomProcessorSource',targetId=targetId)
     else:
         useNix = False
         # If source is GFE, we check the nix environment for latest bitfiles
-        if getSetting('binarySource',targetId=targetId) == 'GFE':
+        if (binarySource == 'GFE'):
             envBitfileDir = getSettingDict('nixEnv', ['gfeBitfileDir'])
             if envBitfileDir in os.environ:
                 bitfileDir = os.environ[envBitfileDir]
                 useNix = True
             else:
-                printAndLog(f"Could not find bitfileDir for <{getSetting('processor',targetId=targetId)}> in nix environment. Falling back to binary repo.", doPrint=False)
+                printAndLog(f"Could not find bitfileDir for <{processor}> in nix environment. Falling back to binary repo.", doPrint=False)
         if (not useNix): #use binaries repo
-            bitfileDir = os.path.join(getSetting('binaryRepoDir'), getSetting('binarySource',targetId=targetId), 'bitfiles', 'vcu118')
+            bitfileDir = os.path.join(getSetting('binaryRepoDir'), binarySource, 'bitfiles', 'vcu118')
     
     return (os.path.join(bitfileDir, bitfileName),os.path.join(bitfileDir, probfileName))
 
