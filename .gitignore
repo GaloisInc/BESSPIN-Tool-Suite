@@ -8,19 +8,19 @@ core
 .DS_STORE
 .idea
 .vscode
-fett/cwesEvaluation/*/*.als
-fett/cwesEvaluation/*/*.map
-fett/target/utils/uartDevicesMap.json
+besspin/cwesEvaluation/*/*.als
+besspin/cwesEvaluation/*/*.map
+besspin/target/utils/uartDevicesMap.json
 
 # CI Gitignores
 aws-pseudo-ci.log
 results.txt
 userdata.txt
-fett-ci.log
+besspin-ci.log
 
 #CyberPhys
 *.elf
 *.asm
 *.o
 *.bin
-fett/cyberPhys/hacking/j1939hack/main.h
+besspin/cyberPhys/hacking/j1939hack/main.h
