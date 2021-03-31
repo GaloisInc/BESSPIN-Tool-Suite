@@ -61,14 +61,16 @@ def startBesspin (targetId=None):
                 warnAndLog(f"customizedScoring: <{listOption}> is not implemented on qemu.")
         if (getSettingDict('customizedScoring','memAddress')>=0):
             warnAndLog(f"customizedScoring: <memAddress> is not implemented on qemus.")
-    # check the source variant
-    if (sourceVariant!='default'): # check the variants compatibility
-        if ((sourceVariant in ['purecap','temporal']) and (binarySource!='SRI-Cambridge')):
-            logAndExit(f"<{sourceVariant}> variant is not compatible with <{binarySource}>.",exitCode=EXIT.Configuration)
-        if ( (sourceVariant in ['combo-100','combo-015-017-100-101-103']) 
-                and ( not ((binarySource=='LMCO') and (target=='vcu118') and (processor=='chisel_p2')) ) ):
-            logAndExit(f"<{sourceVariant}> variant is not compatible with <{binarySource}/{processor}/{target}>.",
-                exitCode=EXIT.Configuration)
+    # check the variants compatibility
+    if ((sourceVariant in ['purecap','temporal']) and (binarySource!='SRI-Cambridge')):
+        logAndExit(f"<{sourceVariant}> variant is not compatible with <{binarySource}>.",exitCode=EXIT.Configuration)
+    if ( (sourceVariant in ['combo-100','combo-015-017-100-101-103']) 
+            and ( not ((binarySource=='LMCO') and (target=='vcu118') and (processor=='chisel_p2')) ) ):
+        logAndExit(f"<{sourceVariant}> variant is not compatible with <{binarySource}/{processor}/{target}>.",
+            exitCode=EXIT.Configuration)
+    if ((sourceVariant=='default') and (binarySource=='LMCO') and (target=='vcu118') and (processor=='chisel_p2')):
+        logAndExit(f"<sourceVariant> has to be explicitly defined for <LMCO/chisel_p2/vcu118>.",
+            exitCode=EXIT.Configuration)
 
     #qemu on Busybox
     if ((osImage=='busybox') and (target=='qemu')):
