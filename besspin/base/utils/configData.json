@@ -189,6 +189,11 @@
             "name" : "linker",
             "type" : "string",
             "choices" : [ "GCC", "LLD" ]
+        },
+        {
+            "name" : "gccDebian",
+            "type" : "string",
+            "choices" : [ "default", "linux9.2", "bareMetal8.3", "bareMetal9.2" ]
         }
     ],
 
