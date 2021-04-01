@@ -70,12 +70,11 @@ class InstanceSelector:
     def chooseInstance(self):
         numSelected = sum(self.conceptCounts.values())
         if (not isEqSetting('osImage', 'FreeRTOS') and
-            not isEqSetting('binarySource', 'LMCO') and
+            not (isEnabled('useCustomCompiling') and (getSettingDict('customizedCompiling','gccDebian') in ['bareMetal8.3', 'bareMetal9.2'])) and
             not isEnabledDict("bufferErrors", "useCustomErrorModel") and
             numSelected < 0.05 * getSettingDict('bufferErrors', 'nTests')):
             # Force selection of a small number of CWE_785 tests on Unix
-            # platforms (except LMCO due to realpath not being available when
-            # building for bare metal)
+            # platforms (except when building using bare metal as realpath is not available)
             (instance, tg) = self.rnd.choice(self.pathManipulationPairs)
             self.conceptCounts[instanceToConcept(instance)] += 1
             return tg

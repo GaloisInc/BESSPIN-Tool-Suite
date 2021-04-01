@@ -1,6 +1,6 @@
 //CWE:707
 #include <stdlib.h>
-#if !(defined(BESSPIN_FREERTOS) || defined(BIN_SOURCE_LMCO))
+#if !(defined(BESSPIN_FREERTOS) || defined(BESSPIN_BARE_METAL))
 #include <setjmp.h>
 #endif
 #include <string.h>
@@ -15,7 +15,7 @@
 This tests CWE-707 by issuing requests for negative offsets.
 */
 
-#if !(defined(BESSPIN_FREERTOS) || defined(BIN_SOURCE_LMCO))
+#if !(defined(BESSPIN_FREERTOS) || defined(BESSPIN_BARE_METAL))
 sigjmp_buf point;
 static void handler(int sig, siginfo_t*dc, void *ddc)
 {
@@ -25,7 +25,7 @@ static void handler(int sig, siginfo_t*dc, void *ddc)
 
 TEST_MAIN
 {
-#if !(defined(BESSPIN_FREERTOS) || defined(BIN_SOURCE_LMCO))
+#if !(defined(BESSPIN_FREERTOS) || defined(BESSPIN_BARE_METAL))
     struct sigaction sa;
     struct sigaction sa_old_segv;
     struct sigaction sa_old_bus;
@@ -56,7 +56,7 @@ TEST_MAIN
     // explicitly to do the wrong thing ;).)
     for (int i = 0; i >= -1*(int)STORE_SIZE; i--) {
         for (int k = 0; k >= (-2)*bound; k--) {
-#if !(defined(BESSPIN_FREERTOS) || defined(BIN_SOURCE_LMCO))
+#if !(defined(BESSPIN_FREERTOS) || defined(BESSPIN_BARE_METAL))
             if (setjmp(point) != 0) { continue; }
 #endif
             // Flush cache if there is one
@@ -71,13 +71,13 @@ TEST_MAIN
             get_msg(0, build_uaddr(i,k), &msg);
             smsg        = interpret_cmd(&msg);
 
-#if !(defined(BESSPIN_FREERTOS) || defined(BIN_SOURCE_LMCO))
+#if !(defined(BESSPIN_FREERTOS) || defined(BESSPIN_BARE_METAL))
             sigaction(SIGSEGV, &sa, NULL);
             sigaction(SIGBUS, &sa, NULL);
 #endif
             // Do the lookup
             fres = run_command(smsg);
-#if !(defined(BESSPIN_FREERTOS) || defined(BIN_SOURCE_LMCO))
+#if !(defined(BESSPIN_FREERTOS) || defined(BESSPIN_BARE_METAL))
             sigaction(SIGSEGV, &sa_old_segv, NULL);
             sigaction(SIGBUS, &sa_old_bus, NULL);
 #endif

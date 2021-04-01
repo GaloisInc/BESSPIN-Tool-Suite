@@ -62,7 +62,7 @@
 #include<stdlib.h>
 #endif
 
-#if defined(PATH_MANIPULATION_ACCESS) && !defined(BESSPIN_FREERTOS) && !defined(BIN_SOURCE_LMCO)
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(BESSPIN_FREERTOS) && !defined(BESSPIN_BARE_METAL)
 // Required for realpath
 #include <limits.h>
 #include <stdlib.h>
@@ -315,7 +315,7 @@ void test_buffer_overflow(void)
 #endif//JMP
 }}
 
-#if defined(PATH_MANIPULATION_ACCESS) && !defined(BIN_SOURCE_LMCO)
+#if defined(PATH_MANIPULATION_ACCESS) && !defined(BESSPIN_BARE_METAL)
 void test_path_manipulation(void) {{
 #ifdef BESSPIN_FREERTOS
     printf("TEST INVALID.  <not on FreeRTOS>\r\n");
@@ -380,7 +380,7 @@ void test_path_manipulation(void) {{
 #endif
 #endif // !BESSPIN_FREERTOS
 }};
-#endif  // PATH_MANIPULATION_ACCESS && !BIN_SOURCE_LMCO
+#endif  // PATH_MANIPULATION_ACCESS && !BESSPIN_BARE_METAL
 
 /*
  * Main Function
@@ -399,7 +399,7 @@ int main()
 #endif
 
 #ifdef PATH_MANIPULATION_ACCESS
-#ifdef BIN_SOURCE_LMCO
+#ifdef BESSPIN_BARE_METAL
     printf("TEST INVALID. <No realpath on bare metal>\r\n");
     fflush(stdout);
 #else
