@@ -11,7 +11,9 @@ These weaknesses can be quite subtle. The
 [description](https://samate.nist.gov/BF/Classes/IEXModel.html) on NIST's bugs
 framework page is a useful starting point for learning more.
 
-This directory has all the tests to evaluate information leakage vulnerabilities. The [testgen progress spreadsheet](https://docs.google.com/spreadsheets/d/1CNLjQN4VRd9_hAgm4UTgeuvEYDbKerKS5G_X0KlsMgA/edit?usp=sharing) logs the progress of which tests are implemented on which OS, and which system calls/modules should be supported.
+For more details about the scoring approach, please refer to [the Bessping philosophy docuemnt](../../../docs/cwesEvaluation/besspinPhilosophy.md).
+
+---
 
 ## Test Methodology
 
@@ -47,6 +49,8 @@ in the above components. For example:
   
 * CWE-524 describes weaknesses due to incorrect cache implementations, which may
   be understood as weaknesses in the data store (module 2).
+
+---
   
 ## Scoring Approach ##
 
@@ -54,7 +58,11 @@ Each test is scored by checking if the test driver is able to learn a secret val
 the test is scored 'HIGH'; otherwise there is no weakness at the test is scored 'NONE'. 
 
 Scores are grouped by CWE; the CWE score is the average of the related tests' scores.
-  
+
+See [the Bessping philosophy document](../../../docs/cwesEvaluation/besspinPhilosophy.md) for more details.
+
+---
+
 ## App (Test) Structure
 
 The sources for the app live in the following directories:
@@ -78,8 +86,7 @@ It is thus a violation if data from -1 ever escapes to the calling process, or
 (assuming the calling process is domain 0), if any data from domain != 0 escapes
 to the calling process.
 
-### Initial States
-TBD
+---
 
 ## Building a test instance
 
@@ -130,9 +137,13 @@ $ ./cache
 TEST FAILED.
 ```
 
+---
+
 ## Adding a test
 
 You can easily add `nonstandard tests` as explained in the end of this document.
+
+---
  
 ## Implemented Components
 
@@ -240,6 +251,8 @@ When compiled with a weakness, the request is not sanitized, meaning that the
 user can append its own tag to the request, which will shadow the
 system-appended tag.
 
+---
+
 ## Tests
 
 The components described above have weaknesses. Each weakness is witnessed by
@@ -305,6 +318,8 @@ This test sends a request to read sysconfig. The request pre-empts the
 implementation's tagging scheme to trick the system into performing a system
 read rather than an unprivileged read.
 
+---
+
 ## Nonstandard Tests
 
 In addition to the tests structure explained above, there are also a few of nonstandard tests that are standalone. These tests are enumerated as follows:
@@ -316,3 +331,5 @@ This test dynamically allocates a chunk in the memory, then fills it with a cert
 ### TEST - NoClearRealloc
 
 Similar to the previous test, this test is related to the improper clearing of heap memory before release. The difference is that this test is mainly concerned with the use of `realloc`. After using `realloc`, the developer loses the reference to the initial pointer and is unable to clear it. Which means that any sensitive information would remain inaccessible in the heap waiting to be exploited by a heap inspection attack. This test has two parts: a shrinking `realloc`, and an expansion `realloc`.
+
+---
