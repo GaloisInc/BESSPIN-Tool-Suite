@@ -435,18 +435,16 @@ def crossCompileUnix(directory,extraString='',overrideBareMetal=False):
         return #there is nothing to compile
     if (binarySource == 'SRI-Cambridge'):
         if (not isEqSetting('cross-compiler','Clang')):
-            warnAndLog (f"Compiling using <{getSetting('cross-compiler')}> for <{binarySource}> is not supported."
-                " Compiling using <Clang> instead.")
-            setSetting('cross-compiler','Clang')
+            logAndExit (f"Compiling using <{getSetting('cross-compiler')}> for <{binarySource}> is not supported.",
+                exitCode=EXIT.Configuration)
         if (not isEqSetting('linker','LLD')):
-            warnAndLog (f"Linking using <{getSetting('linker')}> for <{binarySource}> is not supported."
-                " Linking using <LLD> instead.")
-            setSetting('linker','LLD')
+            logAndExit (f"Linking using <{getSetting('linker')}> for <{binarySource}> is not supported.",
+                exitCode=EXIT.Configuration)
 
     #cross-compiling sanity checks
     if ((not isEqSetting('cross-compiler','Clang')) and isEqSetting('linker','LLD')):
-        warnAndLog (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} is not supported. Linking using <GCC> instead.")
-        setSetting('linker','GCC')
+        logAndExit (f"Linking using <{getSetting('linker')}> while cross-compiling with <{getSetting('cross-compiler')} "
+            f"is not supported.", exitCode=EXIT.Configuration)
 
     printAndLog (f"Cross-compiling {extraString}...")
     envLinux = []
@@ -468,11 +466,20 @@ def crossCompileUnix(directory,extraString='',overrideBareMetal=False):
             and (getSettingDict('customizedCompiling','gccDebian') in ['bareMetal8.3', 'bareMetal9.2']) 
             and (not overrideBareMetal)
         ):
-        envLinux.append(f"BARE_METAL=Yes")
+        if (not (
+                isEqSetting('osImage','debian') 
+                and isEqSetting('cross-compiler','GCC') 
+                and isEqSetting('linker','GCC')
+                )
+            ):
+            logAndExit(f"Using bare-metal compilers is only allowed for Debian with both <cross-compiler> "
+                f"and <linker> set to GCC.",exitCode=EXIT.Configuration)
+        envLinux.append(f"BESSPIN_BARE_METAL=Yes")
     logging.debug(f"going to make using {envLinux}")
     if (binarySource == 'SRI-Cambridge'):
         if (isEnabled('useCustomCompiling')):
-            warnAndLog("cross-compile: Will not use the docker toolchain while <useCustomCompiling> is enabled.")
+            warnAndLog("cross-compile: Will not use the docker toolchain while <useCustomCompiling> is enabled "
+                f"for <SRI-Cambridge> per their request.")
             dockerToolchainImage = None
         else:
             dockerToolchainImage = 'cambridge-toolchain'
