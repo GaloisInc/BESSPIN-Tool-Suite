@@ -88,6 +88,8 @@ This is chosen by switching
   * Note that the FreeRTOS compiling is quite involved as the tool compiles using the main [Makefile of the Galois demo](../../FreeRTOS/FreeRTOS/Demo/RISC-V_Galois_P1/Makefile) of the classic FreeRTOS fork.
 - Use custom Clang binary with an optional custom Clang sysroot. Enable `useCustomClang` and set `pathToCustomClang` to the custom binary path. Similarly, enable `useCustomSysroot` and set `pathToCustomSysroot` to the desired sysroot path.
 
+- `gccDebian`: Either `default`, `linux9.2`, `bareMetal8.3`, or `bareMetal9.2`. This is only applicable when `osImage=debian` and when either the compiler or linker is GCC. The `default` option is `linux9.2` which refers to `riscv64-unknown-linux-gnu-gcc` v9.2 which is built in Nix and available in the nix-shell. The `bareMetal9.2` refers to `riscv64-unknown-elf-gcc` v9.2 and is also available in nix. Regarding `bareMetal8.3`, it refers to `riscv64-unknown-elf-gcc` v8.3, and it is available within the public docker container `galoisinc/besspin:gfe-gcc83`. The CWEs tests which use POSIX calls or anything linux specific have macros to execute that in a different manner when the bare metal compilers are chosen. 
+
 
 ## Vulnerability Classes 
 
@@ -129,7 +131,7 @@ These are the special known instructions:
 
 ### Compiling
 
-SRI-Cambridge and Michigan targets require the use of non-default toolchains, also when `gccDebian` is set to `bareMetal8.3` (see [base/configuration.md](../base/configuration.md) for more details). The use of these toolchains, via Docker images, is integrated in the tool. Currently, the tool assumes that you have the Docker service running and the needed images available. To ensure that on a CentOS machine, please do the following:
+SRI-Cambridge and Michigan targets require the use of non-default toolchains, also when `gccDebian` is set to `bareMetal8.3` (see [above](#customize-compiling)). The use of these toolchains, via Docker images, is integrated in the tool. Currently, the tool assumes that you have the Docker service running and the needed images available. To ensure that on a CentOS machine, please do the following:
   - Install docker ([instructions source](https://docs.docker.com/engine/install/centos/#install-using-the-repository)):
     ```
     sudo yum install -y yum-utils
