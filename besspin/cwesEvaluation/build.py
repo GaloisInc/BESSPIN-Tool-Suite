@@ -208,10 +208,7 @@ def buildCwesEvaluation():
             copyUnixBuildFiles(multitaskingDir, None, False)
             crossCompileUnix(multitaskingDir,
                              extraString="multitasking utility",
-                             overrideBinarySource=
-                                    "GFE" if
-                                    isEqSetting("binarySource", "LMCO") else
-                                    None)
+                             overrideBareMetal=True)
 
         buildTarball()
     return isThereAnythingToRun

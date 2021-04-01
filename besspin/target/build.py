@@ -427,7 +427,7 @@ def cleanDirectory (xDir,endsWith='.o'):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def crossCompileUnix(directory,extraString='',overrideBinarySource=None):
+def crossCompileUnix(directory,extraString='',overrideBareMetal=False):
     if (not isEqSetting('mode','evaluateSecurityTests')): # <useCustomCompiling> is an evaluateSecurityTests option
         logAndExit(f"<crossCompileUnix> is not implemented for the <{getSetting('mode')}> mode.",exitCode=EXIT.Dev_Bug)
     binarySource = overrideBinarySource if overrideBinarySource else getSetting('binarySource')
@@ -464,6 +464,11 @@ def crossCompileUnix(directory,extraString='',overrideBinarySource=None):
         isEnabledDict('customizedCompiling','useCustomSysroot')
         ):
         envLinux.append(f"SYSROOT={getSettingDict('customizedCompiling','pathToCustomSysroot')}")
+    if (    isEnabled('useCustomCompiling') 
+            and (getSettingDict('customizedCompiling','gccDebian') in ['bareMetal8.3', 'bareMetal9.2']) 
+            and (not overrideBareMetal)
+        ):
+        envLinux.append(f"BARE_METAL=Yes")
     logging.debug(f"going to make using {envLinux}")
     if (binarySource == 'SRI-Cambridge'):
         if (isEnabled('useCustomCompiling')):
@@ -471,7 +476,10 @@ def crossCompileUnix(directory,extraString='',overrideBinarySource=None):
             dockerToolchainImage = None
         else:
             dockerToolchainImage = 'cambridge-toolchain'
-    elif (binarySource == 'LMCO'):
+    elif (  isEnabled('useCustomCompiling')
+            and isEqSettingDict('customizedCompiling','gccDebian','bareMetal8.3') 
+            and (not overrideBareMetal)
+        ):
         dockerToolchainImage = 'galoisinc/besspin:gfe-gcc83'
     else:
         dockerToolchainImage = None
