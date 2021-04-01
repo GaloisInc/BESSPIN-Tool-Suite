@@ -103,7 +103,7 @@ class ThreadExiting(threading.Thread):
     thread are decomposed into poller initialization, polling iteration, and deinitialization.
     This permits the thread to stop gracefully, attending to resources used."""
     def __init__(self, name, *args, sample_frequency=60, **kwargs):
-        super().__init__(name=name, *args, **kwargs)
+        super().__init__(name=name, *args, daemon=True, **kwargs)
         self.stop_evt = threading.Event()
         self.poller_start_time = None
         self.polling_thread = None
@@ -257,6 +257,7 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
                 ports) == 1, f"outgoing port numbers must all be the same for {self.__class__.__name__} (got {ports})"
 
             self._out_sock = self._zmq_context.socket(zmq.PUB)
+            #self._out_sock.setsockopt(zmq.LINGER, -1)
             self._out_sock.bind(f"tcp://*:{list(self._out_ports)[0][0]}")
 
         for port, topic in self._in_ports:

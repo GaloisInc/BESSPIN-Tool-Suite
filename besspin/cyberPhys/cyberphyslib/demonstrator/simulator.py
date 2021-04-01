@@ -36,6 +36,9 @@ class BeamNgStatus(enum.Enum):
     SENSOR_END = enum.auto()
     ERROR = enum.auto()
     OS_ERROR = enum.auto()
+    RESTART_FINISHED = enum.auto()
+    RESTART_FAILED = enum.auto()
+    RESTART_INVALID = enum.auto()
 
 
 class BeamNgCommand(enum.Enum):
@@ -45,13 +48,9 @@ class BeamNgCommand(enum.Enum):
     STOP = enum.auto()
     TOGGLE_PAUSE = enum.auto()
     REQUEST_STATE = enum.auto()
-
-
-class BeamNgState(enum.Enum):
-    """BeamNG Scenario State"""
-    SCENARIO_RUNNING = enum.auto()
-    SCENARIO_PAUSED = enum.auto()
-    SCENARIO_STOPPED = enum.auto()
+    WAIT_READY = enum.auto()
+    ENABLE_AUTOPILOT = enum.auto()
+    DISABLE_AUTOPILOT = enum.auto()
 
 
 def requires_running_scenario(func):
@@ -64,7 +63,7 @@ def requires_running_scenario(func):
 
 
 class Sim(component.ComponentPoller):
-    beamng_process_name = (pathlib.Path(config.BEAMNG_PATH) / "Bin64" / "BeamNG.research.x64.exe").resolve()
+    beamng_process_name = "BeamNG.research.x64.exe"
     @staticmethod
     def is_running_beamng():
         """returns whether BeamNG process is running"""
@@ -108,6 +107,7 @@ class Sim(component.ComponentPoller):
         self.color = [0.,]*3
         self.control = {}
         self.control_evt = True
+        self._start_finished = False
 
         # record whether sim is paused or not
         self._is_paused = False
@@ -146,26 +146,28 @@ class Sim(component.ComponentPoller):
 
         try:
             # Start BeamNG and enter the main loop
-            assert not self.stopped
+            assert not self.polling_thread.stopped
             self._beamng_session = self._beamng_context.open(launch=True)
             self._beamng_session.hide_hud()
 
             # Load and start the scenario
-            assert not self.stopped
+            assert not self.polling_thread.stopped
             self._beamng_session.load_scenario(self._scenario)
             self._beamng_session.set_relative_camera((-0.3, -.5, 0.95))
             self._beamng_session.start_scenario()
 
-            assert not self.stopped
+            assert not self.polling_thread.stopped
             self._beamng_session.resume()
 
             assert self._vehicle.skt
+
+            self._start_finished = True
         except Exception as exc:
             logger.sim_logger.error(f"Failed to create BeamNG session and load scenario <{exc}>")
 
     def on_poll_poll(self, t):
         """simulator mainloop"""
-        while not self.stopped:
+        while not self.polling_thread.stopped:
             try:
                 if (self._vehicle is not None) and (self._vehicle.skt):
                     if self.control_evt and self.control != {}:
@@ -187,18 +189,12 @@ class Sim(component.ComponentPoller):
     def on_poll_exit(self) -> None:
         """beamNG exit method"""
         logger.sim_logger.info(f"{self.__class__.__name__} Exit Signal Received. This might take a while...")
+        self.kill_beamng()
         if self._beamng_session is not None:
             self._beamng_session.close()
-        if self._beamng_context is not None:
-            self._beamng_context.kill_beamng()
-        #self.kill_beamng()
-        #is_in_loop = True
-        #while self._beamng_session is None and (self._beamng_context is not None or self._beamng_session is not None):
-        #    if is_in_loop:
-        #        logger.sim_logger.info(f"{self.__class__.__name__} Waiting for BeamNG context to terminate...")
-        #        is_in_loop = False
-        #    continue
-        #self.stop_poller()
+
+    def exit(self):
+        super(Sim, self).exit()
 
     ########## can receive ###########
     def control_process(self, name, data, bounds=(0.0, 1.0)):
@@ -236,35 +232,60 @@ class Sim(component.ComponentPoller):
     @recv_topic("beamng-commands")
     def _(self, msg, t):
         print(f"Received BeamNG Command {msg}")
+        if msg not in [r[1] for r, _ in self.recv_methods.items() if len(r) == 2]:
+            self.send_message(message.Message(BeamNgStatus.ERROR), 'beamng-events')
 
     @recv_topic("beamng-commands", BeamNgCommand.RESTART)
     def _(self, t):
-        self._beamng_session.restart_scenario()
+        """restart the scenario"""
+        try:
+            if self._start_finished:
+                self._beamng_session.restart_scenario()
+            else:
+                self.send_message(message.Message(BeamNgStatus.RESTART_INVALID), 'beamng-events')
+                return
+        except Exception as exc:
+            self.send_message(message.Message(BeamNgStatus.RESTART_FAILED), 'beamng-events')
+            return
+        self.send_message(message.Message(BeamNgStatus.RESTART_FINISHED), 'beamng-events')
 
-    @recv_topic("beamng-commands", BeamNgCommand.STOP)
+    @recv_topic("beamng-commands", BeamNgCommand.WAIT_READY)
     def _(self, t):
-        self._beamng_session.stop_scenario()
-
-    @recv_topic("beamng-commands", BeamNgCommand.START)
-    def _(self, t):
-        self.start_session()
+        """wait until the service has finished booting"""
+        while not self._start_finished:
+            time.sleep(1.0)
+        self.send_message(message.Message(BeamNgStatus.READY), 'beamng-events')
 
     @recv_topic("beamng-commands", BeamNgCommand.TOGGLE_PAUSE)
     def _(self, t):
-        if self._is_paused:
-            self._beamng_session.resume()
-        else:
-            self._beamng_session.pause()
-        self._is_paused = not self._is_paused
-
-    @recv_topic("beamng-commands", BeamNgCommand.REQUEST_STATE)
-    def _(self, t):
-        """state can be inferred from _beamng_session"""
-        if self._beamng_session is not None and self._beamng_session.scenario is not None:
+        """pause the simulator"""
+        if self._start_finished:
             if self._is_paused:
-                state = BeamNgState.SCENARIO_PAUSED
+                self._beamng_session.resume()
             else:
-                state = BeamNgState.SCENARIO_RUNNING
+                self._beamng_session.pause()
+            self._is_paused = not self._is_paused
+            self.send_message(message.Message(BeamNgStatus.READY), 'beamng-events')
         else:
-            state = BeamNgState.SCENARIO_STOPPED
-        self.send_message(message.Message(state), 'beamng-state')
+            self.send_message(message.Message(BeamNgStatus.ERROR), 'beamng-events')
+
+    @recv_topic("beamng-commands", BeamNgCommand.ENABLE_AUTOPILOT)
+    def _(self, t):
+        if self._start_finished:
+            try:
+                self._vehicle.ai_set_mode('span')
+            except:
+                # TODO: FIXME address error cases
+                pass
+        self.send_message(message.Message(BeamNgStatus.READY), 'beamng-events')
+
+    @recv_topic("beamng-commands", BeamNgCommand.DISABLE_AUTOPILOT)
+    def _(self, t):
+        """disable the autopilot"""
+        if self._start_finished:
+            try:
+                self._vehicle.ai_set_mode('disabled')
+            except:
+                # TODO: FIXME address error cases
+                pass
+        self.send_message(message.Message(BeamNgStatus.READY), 'beamng-events')
