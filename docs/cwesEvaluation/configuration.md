@@ -125,7 +125,7 @@ The buffer errors class has the following additional parameters:
 
 These are the special known instructions:   
 - LMCO P1: Add `exception_handler` to `funcCheckpoints`.
-- LMCO P2: Add `Illegal` to `stdoutKeywords`.
+- LMCO P2: Add `SSITH HARD` to `stdoutKeywords`.
 - SRI-Cambridge P2: Add `security exception` and `Signal 34` to `stdoutKeywords`.
 
 
