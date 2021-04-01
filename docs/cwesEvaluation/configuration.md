@@ -129,7 +129,7 @@ These are the special known instructions:
 
 ### Compiling
 
-SRI-Cambridge, LMCO P2, and Michigan targets require the use of non-default toolchains. The use of these toolchains, via Docker images, is integrated in the tool. Currently, the tool assumes that you have the Docker service running and the needed images available. To ensure that on a CentOS machine, please do the following:
+SRI-Cambridge and Michigan targets require the use of non-default toolchains, also when `gccDebian` is set to `bareMetal8.3` (see [base/configuration.md](../base/configuration.md) for more details). The use of these toolchains, via Docker images, is integrated in the tool. Currently, the tool assumes that you have the Docker service running and the needed images available. To ensure that on a CentOS machine, please do the following:
   - Install docker ([instructions source](https://docs.docker.com/engine/install/centos/#install-using-the-repository)):
     ```
     sudo yum install -y yum-utils
@@ -157,4 +157,4 @@ SRI-Cambridge, LMCO P2, and Michigan targets require the use of non-default tool
     sudo docker load -i michigan-toolchain.tar.gz
     ```
 
-- Note that for LMCO P2, the Docker image (`galoisinc/besspin:gfe-gcc83`) is public on DockerHub, so there is no need to load it. However, the first run that uses it will take considerable extra time due to downloading and unpacking.
+- Note that for `bareMetal8.3` (i.e. `riscv64-unknown-elf-gcc` v8.3), the Docker image (`galoisinc/besspin:gfe-gcc83`) is public on DockerHub, so there is no need to load it. However, the first run that uses it will take considerable extra time due to downloading and unpacking.
