@@ -259,10 +259,10 @@
                     "FreeRTOS" : 1,
                     "highKeywords" : {
                         "debian" : {
-                            "any" : ["Aborted"]
+                            "any" : ["Aborted", "Segmentation fault"]
                         },
                         "FreeBSD" : {
-                            "any" : ["Abort"]
+                            "any" : ["Abort", "Segmentation fault"]
                         },
                         "FreeRTOS" : {
                             "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
