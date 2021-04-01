@@ -75,7 +75,12 @@ static void errorRelease (int i) {
         printf("<%d>: <NO-ERROR>.\n",i);
     } else { //cause an error here
         printf("<%d>: <CAUSE-ERROR>.\n",i);
-        abort();
+        #if (defined(BESSPIN_BARE_METAL) && defined(BESSPIN_DEBIAN))
+            int * pInt = NULL;
+            printf("iDereference = <%d>!\n",*pInt); //This should cause a segfault
+        #else
+            abort();
+        #endif
     }
     FREE(p);
 
