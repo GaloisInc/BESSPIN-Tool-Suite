@@ -16,11 +16,11 @@ from besspin.base.utils import aws
 _settings = dict()
 
 # hardcoded URLs -- needed for emergency reporting
-_settings['awsProdSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-besspinportal-InstanceStatusQueue-1H71N09IEKG3F.fifo'
-_settings['awsProdS3Bucket'] = 'master-ssith-besspin-researcher-artifacts'
+_settings['awsProdSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/065510690417/master-fettportal-InstanceStatusQueue-1H71N09IEKG3F.fifo'
+_settings['awsProdS3Bucket'] = 'master-ssith-fett-target-researcher-artifacts'
 
-_settings['awsDevSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/363527286999/develop-besspinportal-InstanceStatusQueue-1DQ91T9W5DFZ1.fifo'
-_settings['awsDevS3Bucket'] = 'develop-ssith-besspin-researcher-artifacts'
+_settings['awsDevSqsQueueTX'] = 'https://sqs.us-west-2.amazonaws.com/363527286999/develop-fettportal-InstanceStatusQueue-1DQ91T9W5DFZ1.fifo'
+_settings['awsDevS3Bucket'] = 'develop-ssith-fett-target-researcher-artifacts'
 
 class EXIT (enum.Enum):
     Success = 0
