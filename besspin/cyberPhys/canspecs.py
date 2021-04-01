@@ -1,1 +1,0 @@
-canlib/python/canspecs.py

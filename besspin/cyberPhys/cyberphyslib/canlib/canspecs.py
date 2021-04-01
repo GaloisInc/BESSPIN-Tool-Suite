@@ -3,8 +3,8 @@ Project: SSITH CyberPhysical Demonstrator
 Name: ../cyberphyslib/canlib/canspecs.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 30 March 2021
-This file was created by BESSPIN-Tool-Suite/build/cyberphys/canlib/make_can_spec.py
+Date: 01 April 2021
+This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 Version hash: f50e0a68352312d07b0ce23fc3a46a33
 """
 
@@ -121,4 +121,10 @@ CAN_ID_CMD_RESTART: int = 0XAAFEEB04
 # Type: uint8_t
 # Description: Scenario ID (uint8_t)
 CAN_ID_CMD_SCENARIO_NOT_AVAILABLE: int = 0XAAFEEB05
+
+# Name: cmd_scenario_available
+# Units: N/A
+# Type: uint8_t
+# Description: Scenario ID (uint8_t)
+CAN_ID_CMD_SCENARIO_AVAILABLE: int = 0XAAFEEB06
 

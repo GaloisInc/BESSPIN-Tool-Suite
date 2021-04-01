@@ -113,7 +113,7 @@ class CanUdpNetwork(CanNetwork):
     """
     UDP Can Bus Implementation of Can Network
 
-    Implements the CanNetwork interface for the UDPBus of python can
+    Implements the CanNetwork interface for the UdpBus of python can
     """
     def __init__(self, name: str, port: int, ip: str,
                  whitelist= None,

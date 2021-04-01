@@ -37,7 +37,7 @@ Version hash: {specs_md5.hexdigest()}
 \"\"\"\n\n"""
 
 
-outfilename_h: str = "c/canspecs.h"
+outfilename_h: str = "lib/canspecs.h"
 file_header_h: str = f"""/*
 * Cyberphys CAN Frames Specification
 * Project: SSITH CyberPhysical Demonstrator

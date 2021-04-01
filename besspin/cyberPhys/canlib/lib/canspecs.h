@@ -4,8 +4,8 @@
 * Name: ../cyberphyslib/canlib/canspecs.py
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 30 March 2021
-* This file was created by BESSPIN-Tool-Suite/build/cyberphys/canlib/make_can_spec.py
+* Date: 01 April 2021
+* This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 * Version hash: f50e0a68352312d07b0ce23fc3a46a33
 */
 
@@ -244,5 +244,17 @@
 // Scenario ID (uint8_t)
 #define CAN_ID_CMD_SCENARIO_NOT_AVAILABLE 0XAAFEEB05
 #define BYTE_LENGTH_CMD_SCENARIO_NOT_AVAILABLE 1
+
+// cmd_scenario_available
+// Type: uint8_t
+// Sender: BESSPIN Tool
+// Receiver: Hacker kiosk
+// Bounds/Range: N/A
+// Units: N/A
+// J1939 compatible: No
+//
+// Scenario ID (uint8_t)
+#define CAN_ID_CMD_SCENARIO_AVAILABLE 0XAAFEEB06
+#define BYTE_LENGTH_CMD_SCENARIO_AVAILABLE 1
 
 #endif
