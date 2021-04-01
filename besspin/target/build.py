@@ -430,7 +430,7 @@ def cleanDirectory (xDir,endsWith='.o'):
 def crossCompileUnix(directory,extraString='',overrideBareMetal=False):
     if (not isEqSetting('mode','evaluateSecurityTests')): # <useCustomCompiling> is an evaluateSecurityTests option
         logAndExit(f"<crossCompileUnix> is not implemented for the <{getSetting('mode')}> mode.",exitCode=EXIT.Dev_Bug)
-    binarySource = overrideBinarySource if overrideBinarySource else getSetting('binarySource')
+    binarySource = getSetting('binarySource')
     if (len(glob.glob(os.path.join(directory,"*.c"))) == 0):
         return #there is nothing to compile
     if (binarySource == 'SRI-Cambridge'):
