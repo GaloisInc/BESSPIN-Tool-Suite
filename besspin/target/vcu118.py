@@ -33,7 +33,7 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.freertosNtkRetriesMax = 3
         self.freertosNtkRetriesIdx = 0
         #Reloading till the network is up
-        self.debianNtkRetriesMax = 1
+        self.debianNtkRetriesMax = 3
         self.debianNtkRetriesIdx = 0
         #Reloading till the fpga starts
         self.fpgaStartRetriesMax = 3
