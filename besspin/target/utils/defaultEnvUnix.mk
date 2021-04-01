@@ -17,9 +17,10 @@ ifeq ($(BIN_SOURCE),SRI_Cambridge)
 else
 	PREFIX_FREEBSD := riscv64-unknown-freebsd12.1
 endif
-ifeq ($(BIN_SOURCE),LMCO)
-	#In the docker image, this is v8.3.0
+BESSPIN_BARE_METAL ?= No
+ifeq ($(BESSPIN_BARE_METAL),Yes)
 	PREFIX_DEBIAN := riscv64-unknown-elf
+	CFLAGS += -DBESSPIN_BARE_METAL
 else
 	PREFIX_DEBIAN := riscv64-unknown-linux-gnu
 endif
