@@ -428,6 +428,8 @@ def cleanDirectory (xDir,endsWith='.o'):
 @decorate.debugWrap
 @decorate.timeWrap
 def crossCompileUnix(directory,extraString='',overrideBinarySource=None):
+    if (not isEqSetting('mode','evaluateSecurityTests')): # <useCustomCompiling> is an evaluateSecurityTests option
+        logAndExit(f"<crossCompileUnix> is not implemented for the <{getSetting('mode')}> mode.",exitCode=EXIT.Dev_Bug)
     binarySource = overrideBinarySource if overrideBinarySource else getSetting('binarySource')
     if (len(glob.glob(os.path.join(directory,"*.c"))) == 0):
         return #there is nothing to compile
