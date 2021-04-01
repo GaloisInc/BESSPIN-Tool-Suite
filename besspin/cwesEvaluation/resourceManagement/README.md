@@ -6,27 +6,14 @@ resources.  This includes improper access to hardware resources such
 as memory, CPU, and communication and/or preventing valid users from
 gaining access to these resources.
 
-This directory has all the tests to evaluate resource management
-vulnerabilities. 
-The [testgen progress spreadsheet](https://docs.google.com/spreadsheets/d/1CNLjQN4VRd9_hAgm4UTgeuvEYDbKerKS5G_X0KlsMgA/edit?usp=sharing) 
-logs the progress of which tests are implemented on which OS, and
-which system calls/modules should be supported.
+For more details about the scoring approach, please refer to [the Bessping philosophy docuemnt](../../../docs/cwesEvaluation/besspinPhilosophy.md).
 
-Note that each CWE has one test associated with it, however, a certain
-test could be testing other CWEs as well.  In other words, to claim
-that a processor does not have a certain CWE means that it passes all
-the tests that are relevant to the CWE in question.
-
-## Scoring Approach ##
-
-Each test attempts to show the existence of a weakness, and then reports what happens. If the processor reacts to the attempt by blocking it or detecting it, then they score `NONE` or `DETECTED` respectively. If they do not react, and the test runs to completion, then the score is `HIGH` conveying the existence of the weakness related to this test.   
-In case of multi-part tests, the overall test score is the minimum score achieved among this test's parts.   
+---
 
 ## MAL (Memory Allocation and Deallocation Bugs) ##
 
 The software improperly deallocates allocated memory or uses an object
-after its lifetime.
-\[[more](https://samate.nist.gov/BF/Classes/MAL.html)\]
+after its lifetime \[[more](https://samate.nist.gov/BF/Classes/MAL.html)\].
 
 Related CWEs:
 
@@ -46,12 +33,6 @@ Double Free \[[CWE-415](https://cwe.mitre.org/data/definitions/415.html)\].
 - The product calls `free()` twice on the same memory address, 
   potentially leading to modification of unexpected memory locations.
 
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
-- The test demonstrates the consequences of double `free`. 
-
 
 ### TEST-562 ###
 
@@ -65,20 +46,15 @@ Return of Stack Variable Address \[[CWE-562](https://cwe.mitre.org/data/definiti
 
 **Notes:**
 - A function returns the address of a stack variable, which will cause
-  unintended program behavior, typically in the form of a program crash.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
+  unintended program behavior, typically in the form of a program crash. 
 - The test demonstrates the consequences of address stack allocation. 
-- The `fill_array` function shows an address of stack memory
-  associated with local variable `a` returned. This will lead to the
-  program crash caused when attempting to print elements.
-- The `fill_array_with_malloc` is recommended way of allocating memory
+  - The `fill_array` function shows an address of stack memory
+    associated with local variable `a` returned. This will lead to the
+    program crash caused when attempting to print elements.
+  - The `fill_array_with_malloc` is recommended way of allocating memory
   on the stack.
 
-### TEST-590 ###
+### CWE-590 ###
 
 Free of Memory not on the Heap \[[CWE-590](https://cwe.mitre.org/data/definitions/590.html)\].
 
@@ -99,36 +75,31 @@ Free of Pointer not at Start of Buffer
 - The application calls `free()` on a pointer to a memory resource
   that was allocated on the heap, but the pointer is not at the start
   of the buffer.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
 - The test demonstrates the consequences of a `free` operation call
   in the middle of a character search algorithm.
-- The `contains_char_malicious` function dynamically allocates a
-  buffer to hold a string and then searches for a specific character.
-  After completing the search, the programmer attempts to release the
-  allocated memory and returns `SUCCESS` or `FAILURE` to the caller
-- Note: if the character is not at the beginning of the string, or if
-  it is not in the string at all, then the pointer will not be at the
-  start of the buffer when the programmer frees it and it will result
-  with the exception.
-- The `contains_char_valid` function shows that instead of freeing the
-  pointer in the middle of the buffer, the programmer can use an
-  indexing pointer to step through the memory or abstract the memory
-  calculations by using array indexing.  There are four scenarios
-  considered in the test example:
-  - Providing an existing character in the `contains_char_valid`
-    operation will result with success.
-  - Providing a non-existing character in the `contains_char_valid`
-    will result with a failure but the program will not crash
-    abruptly.
-  - Providing an existing character in the `contains_char_malicious`
-    operation will result with success.
-  - Providing a non-existing character in the
-    `contains_char_malicious` will result with a failure and program
-    will crash abruptly.
+  - The `contains_char_malicious` function dynamically allocates a
+    buffer to hold a string and then searches for a specific character.
+    After completing the search, the programmer attempts to release the
+    allocated memory and returns `SUCCESS` or `FAILURE` to the caller
+  - Note: if the character is not at the beginning of the string, or if
+    it is not in the string at all, then the pointer will not be at the
+    start of the buffer when the programmer frees it and it will result
+    with the exception.
+  - The `contains_char_valid` function shows that instead of freeing the
+    pointer in the middle of the buffer, the programmer can use an
+    indexing pointer to step through the memory or abstract the memory
+    calculations by using array indexing.  There are four scenarios
+    considered in the test example:
+    - Providing an existing character in the `contains_char_valid`
+      operation will result with success.
+    - Providing a non-existing character in the `contains_char_valid`
+      will result with a failure but the program will not crash
+      abruptly.
+    - Providing an existing character in the `contains_char_malicious`
+      operation will result with success.
+    - Providing a non-existing character in the
+      `contains_char_malicious` will result with a failure and program
+      will crash abruptly.
  
 ### TEST-762 ###
 
@@ -144,22 +115,17 @@ Mismatched Memory Management Routines \[[CWE-762](https://cwe.mitre.org/data/def
 - The application attempts to return a memory resource to the system,
   but it calls a release function that is not compatible with the function 
   that was originally used to allocate that resource.  
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
 - The test demonstrates the consequences of a ``free`` operation as
   follows. 
-- The  `array_allocated_globally` function: The array is allocated globally, 
-  as part of the `data segment` of memory and the programmer attempts to call 
-  `free()` on the array. The `free()` function can realize memory on the Heap 
-  memory segment only.
-- The `correct_memory_free` function shows proper way of freeing 
-  memory located by the `malloc` function on the Heap memory segment.
-- The `wrong_memory_free` function: The array `b` is allocated 
-  automatically on the `stack` as a local variable and the programmer 
-  attempts to call `free()` on the array.
+  - The  `array_allocated_globally` function: The array is allocated globally, 
+    as part of the `data segment` of memory and the programmer attempts to call 
+    `free()` on the array. The `free()` function can realize memory on the Heap 
+    memory segment only.
+  - The `correct_memory_free` function shows proper way of freeing 
+    memory located by the `malloc` function on the Heap memory segment.
+  - The `wrong_memory_free` function: The array `b` is allocated 
+    automatically on the `stack` as a local variable and the programmer 
+    attempts to call `free()` on the array.
      
 ### TEST-763 ###
 
@@ -176,20 +142,15 @@ Release of Invalid Pointer or Reference \[[CWE-763](https://cwe.mitre.org/data/d
   but calls the wrong release function or calls the appropriate release 
   function incorrectly. Usually the program does not release or 
   incorrectly releases a resource before it is made available for re-use. 
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc/vPortFree`.
-
-**Linux Debian and FreeBSD:** 
 - The test demonstrates the consequences of a ``free`` operation as
   follows. 
-- The  `wrong_shift_address_assignment`: The `free()` has been provided 
-  a pointer to `x` in the middle of the allocated memory block.
-  This means that, the function `free()` has no idea where the block
-  starts or ends, therefore throwing an error.
-- The `wrong_address_assignment` function shows wrong address assignment 
-  to the pointer, which leads to error saying that p no longer points 
-  to dynamically allocated memory. Hence it is incorrect to call `free()` 
+  - The  `wrong_shift_address_assignment`: The `free()` has been provided 
+    a pointer to `x` in the middle of the allocated memory block.
+    This means that, the function `free()` has no idea where the block
+    starts or ends, therefore throwing an error.
+  - The `wrong_address_assignment` function shows wrong address assignment 
+    to the pointer, which leads to error saying that p no longer points 
+    to dynamically allocated memory. Hence it is incorrect to call `free()` 
   with it. 
 
 
@@ -209,13 +170,7 @@ Expired Pointer Dereference \[[CWE-825](https://cwe.mitre.org/data/definitions/8
 **Notes:**
 - The program dereferences a pointer that contains a location for
   memory that was previously valid, but is no longer valid.
-
-**FreeRTOS:**
-- Parts 1 and 2 implemented through the use of `pvPortMalloc`/`pvPortFree`.
-- Part 3 implemented through use of an expired stack pointer.
-
-**Linux Debian and FreeBSD:** 
-- Parts 1 and 2 of the test demonstrates the consequences of a ``free``
+- The test parts 1 and 2 of the test demonstrates the consequences of a ``free``
 operation as follows. 
     - The  `test_double_free` function shows freeing a pointer variable
       more than once.
@@ -226,7 +181,7 @@ operation as follows.
       `NULL` once they are freed. 
     - The utilization of multiple or complex data structures may lower the
       usefulness of this strategy. 
-- Part 3 of the test demonstrates use of an expired stack pointer in
+- The test part 3 of the test demonstrates use of an expired stack pointer in
   `test_stack_invalid`.  It calls `SubStr_new_stack`, which returns a pointer
   to a stack allocated variable.  Then, it dereferences this pointer in a
   `printf` function call.
@@ -244,33 +199,29 @@ Improper Update of Reference Count \[[CWE-911](https://cwe.mitre.org/data/defini
 **Notes:**
 - The software uses a reference count to manage a resource, 
   but it does not update or incorrectly updates the reference count.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
 - There are two tests showing the implicit reference count 
   in context of UAF `use-after-free` legacy c code.
-- The `correct_implicit_reference_count` function shows 
-  how `UAF` errors are tackled by the implicit pointer coupled 
-  with the reference counters.
-- The `unknown_implicit_reference_count` function shows the practical 
-  hurdles in precise reference counting. There are two problems.
-  The first one is that the `chunk` is declared as an ordinary array, 
-  the compiler cannot provide any information with regard to the existence 
-  of a pointer inside at runtime. 
-  The second practical problem can be described as follows: 
-  When `ptrC->data` is set to 1, the previously stored pointer, 
-  `ptrC->next`, is simultaneously overwritten by the same value.
-  From programmer's prospective we need to decrease reference count, 
-  but from the compiler's view point it is just the store of the integer type, 
-  so additional analysis is needed. 
+  - The `correct_implicit_reference_count` function shows 
+    how `UAF` errors are tackled by the implicit pointer coupled 
+    with the reference counters.
+  - The `unknown_implicit_reference_count` function shows the practical 
+    hurdles in precise reference counting. There are two problems:
+      - The first one is that the `chunk` is declared as an ordinary array, 
+      the compiler cannot provide any information with regard to the existence 
+      of a pointer inside at runtime. 
+      - The second practical problem is when `ptrC->data` is set to 1, the previously stored pointer, 
+      `ptrC->next`, is simultaneously overwritten by the same value. 
+      From programmer's prospective we need to decrease reference count, 
+      but from the compiler's view point it is just the store of the integer type, 
+      so additional analysis is needed. 
   
+---
 
 ## PTR (NULL or Incorrect Pointer Dereference Class) ##
 
 The software improperly dereferences incorrect or null
-pointer. \[[more](https://samate.nist.gov/BF/Classes/PTR.html)\].
+pointer \[[more](https://samate.nist.gov/BF/Classes/PTR.html)\].
+
 Related CWEs:
 
 ### TEST-188 ###
@@ -286,27 +237,21 @@ Reliance on Data or Memory Layout \[[CWE-188](https://cwe.mitre.org/data/definit
 
 **Notes:**
 - The software makes invalid assumptions about how protocol data 
-  or memory is organized at a lower level, resulting in unintended program behavior.  
-
-**FreeRTOS:**
-- Implemented.
-
-**Linux Debian and FreeBSD:** 
+  or memory is organized at a lower level, resulting in unintended program behavior.   
 - The test demonstrates the consequences of a calculating an offset relative to another 
   field to pick out a specific piece of data on the stack memory segment. 
-   
-- The `example_byte_past` function: In this example the memory address of variable `e` 
-  is derived by adding 1 to the address of variable `d`. This derived address is then used 
-  to assign the value `e` to the variable `e`. Here, variable `e` may not be one byte past `d` and 
-  it depends of the protocol implementation.
-- The `example_byte_in_front` function: The similar explanation like in the previous example
-  except that the variable `b` may be one byte in front of `a`. 
-- The `example_three_bytes_past` function: In this example variable `h` 
-  may be three bytes past the variable `g`.
-- The `example_three_bytes_in_front` function: In this example variable `v` 
-  may be three bytes in front of the variable `u`.
-- The `example_input_args_past_on_stack` function: The similar as previous example related to the 
-  byte past, except that arguments are considered on the stack.
+  - The `example_byte_past` function: In this example the memory address of variable `e` 
+    is derived by adding 1 to the address of variable `d`. This derived address is then used 
+    to assign the value `e` to the variable `e`. Here, variable `e` may not be one byte past `d` and 
+    it depends of the protocol implementation.
+  - The `example_byte_in_front` function: The similar explanation like in the previous example
+    except that the variable `b` may be one byte in front of `a`. 
+  - The `example_three_bytes_past` function: In this example variable `h` 
+    may be three bytes past the variable `g`.
+  - The `example_three_bytes_in_front` function: In this example variable `v` 
+    may be three bytes in front of the variable `u`.
+  - The `example_input_args_past_on_stack` function: The similar as previous example related to the 
+    byte past, except that arguments are considered on the stack.
 
 
 ### TEST-468 ###
@@ -320,28 +265,22 @@ Free of Pointer not at Start of Buffer
  
 **Notes:**
 - In C, one may often accidentally refer to the wrong memory due to
-  the semantics of when math operations are implicitly scaled.
-
-**FreeRTOS:**
-- Implemented.
-
-**Linux Debian and FreeBSD:** 
-Pointer arithmetic in C is automatically scaled according to the size
-of the data type.  For example, if the type of `p` is `T*` and `sizeof(T)
-== 4`, then the expression `p+1` adds 4 bytes to `p`.
-
+  the semantics of when math operations are implicitly scaled. Pointer arithmetic is 
+  automatically scaled according to the size of the data type. 
+  For example, if the type of `p` is `T*` and `sizeof(T)== 4`, 
+  then the expression `p+1` adds 4 bytes to `p`.
 - The test demonstrates the consequences of a correctly scaled and
   incorrectly scaled pointers in two functions.
-- The `example_bad_scaled` shows pointer arithmetic where it appears
-  likely that the programmer has forgotten that the offset is
-  automatically scaled.  Recommendation: Cast to the correct type
-  before using pointer arithmetic. For example, if the type of `p` is
-  `int*` but it really points to an array of type `double[]` then use
-  the syntax `(double*)p + k` to get a pointer to the `k`'th element
-  of the array.
-- The `example_good_scaled` function shows  how to use the array
-  subscript operator rather than pointer arithmetic. For example,
-  replace `*(p+k)` with `p[k]`. 
+  - The `example_bad_scaled` shows pointer arithmetic where it appears
+    likely that the programmer has forgotten that the offset is
+    automatically scaled.  Recommendation: Cast to the correct type
+    before using pointer arithmetic. For example, if the type of `p` is
+    `int*` but it really points to an array of type `double[]` then use
+    the syntax `(double*)p + k` to get a pointer to the `k`'th element
+    of the array.
+  - The `example_good_scaled` function shows  how to use the array
+    subscript operator rather than pointer arithmetic. For example,
+    replace `*(p+k)` with `p[k]`. 
 
 
 ### TEST-476 ###
@@ -356,22 +295,17 @@ of the data type.  For example, if the type of `p` is `T*` and `sizeof(T)
 - A `NULL` pointer dereference occurs when the application
   dereferences a pointer that it expects to be valid, but is `NULL`,
   typically causing a crash or exit.
-
-**FreeRTOS:**
-- Implemented.
-
-**Linux Debian and FreeBSD:** 
 - The test demonstrates the consequences of a read and write operation
   when the application dereferences a `NULL` pointer trying to read
   from, or assign to it.
-- The `regular_test` function shows valid pointer dereference. 
-- The `malicious_test_read` function shows an example of `NULL` pointer
-  trying to read it.
-- The `malicious_test_write` function shows an example of `NULL` pointer
-  trying to write it.
-- This weakness results in a fact that the processor was able to
-  detect the violation and it also prevented the test from continuing
-  with the breach.
+  - The `regular_test` function shows valid pointer dereference. 
+  - The `malicious_test_read` function shows an example of `NULL` pointer
+    trying to read it.
+  - The `malicious_test_write` function shows an example of `NULL` pointer
+    trying to write it.
+  - This weakness results in a fact that the processor was able to
+    detect the violation and it also prevented the test from continuing
+    with the breach.
 
 ### TEST-588 ###
 
@@ -387,22 +321,16 @@ Attempt to Access Child of a Non-structure Pointer
 **Notes:**
 - Casting a non-structure type to a structure type and accessing a field 
   can lead to memory access errors or data corruption.
-
-**FreeRTOS:**
-- Implemented.
-
-**Linux Debian and FreeBSD:** 
 - The test demonstrates the consequences of a casting  operation
   when the  void pointer and scalar pointer are cast as structure pointer.
- 
-- The `struct_pointer_cast_of_void_pointer` function: 
-  The void pointer `vp`, is cast as a struct pointer. 
-  The result is an exception `EXP-BAD_ACCESS` signal 
-  handled by the emulated try catch block.
-- The `struct_pointer_cast_of_scalar_pointer` function: 
-  In this test, the pointer `p` of type integer is cast as a pointer of type struct. 
-  The result is an exception `EXP-BAD_ACCESS` signal 
-  handled by the emulated try catch block.
+  - The `struct_pointer_cast_of_void_pointer` function: 
+    The void pointer `vp`, is cast as a struct pointer. 
+    The result is an exception `EXP-BAD_ACCESS` signal 
+    handled by the emulated try catch block.
+  - The `struct_pointer_cast_of_scalar_pointer` function: 
+    In this test, the pointer `p` of type integer is cast as a pointer of type struct. 
+    The result is an exception `EXP-BAD_ACCESS` signal 
+    handled by the emulated try catch block.
 
 
 ### TEST-690 ###
@@ -419,26 +347,24 @@ Unchecked Return Value to `NULL` Pointer Dereference
 - The product does not check for an error after calling a function
   that can return with a `NULL` pointer if the function fails, which
   leads to a resultant `NULL` pointer dereference.
-
-**FreeRTOS:**
-- Implemented through the use of `pvPortMalloc`/`pvPortFree`.
-
-**Linux Debian and FreeBSD:** 
 - The test demonstrates the consequences of a `strcpy` operation
   when the application copying from a `NULL` pointer and non `NULL`
   pointer source.
-- The `test_regular` function shows a valid pointed by source
-  (including the `NULL` character) to the character array destination.
-- The `test_malicious` function will fail due to `NULL` pointer
-  de-referencing.
-- While unchecked return value are not limited to returns of `NULL`
-  pointer, function return `NULL` to indicate an error status.  When
-  this error condition is not checked, a `NULL` pointer dereference
-  can occur.
+  - The `test_regular` function shows a valid pointed by source
+    (including the `NULL` character) to the character array destination.
+  - The `test_malicious` function will fail due to `NULL` pointer
+    de-referencing.
+  - While unchecked return value are not limited to returns of `NULL`
+    pointer, function return `NULL` to indicate an error status.  When
+    this error condition is not checked, a `NULL` pointer dereference
+    can occur.
+
+---
 
 ## RLR (Resources Limits and Releasing) ##
 
-This is a custom sub-class that we use to group some of the interleaved CWEs. The sources of this sub-class have the prefix `test_rlr_`. 
+This is a custom sub-class that we use to group some of the interleaved CWEs. 
+The sources of this sub-class have the prefix `test_rlr_`. 
 
 **CWEs**
 
@@ -489,9 +415,12 @@ The source file is `test_rlr_heapUsePostRelease.c`. The test calls a `usePostRel
 
 The source file is `test_rlr_stackUsePostRelease.c`. The test calls a `usePostRelease` function 50 times. This function calls `stackAlloc`, which allocates a random number of bytes on the stack and returns a pointer `pMain`.  Therefore, `pMain` references memory that has been released in the return from `stackAlloc`.  `usePostRelease` then allocates an array of the same size as `pMain` called `aSecond` in its stack frame.  It also allocates three additional stack buffers of random size.  Randomly (with 20\% probability), the test decides to use `pMain` with `memcpy` either as a source in part 1, or as a destination in part 2.
 
+---
+
 ## RI (Resources Initialization) ##
 
-This is a custom sub-class that we use to group some of the interleaved CWEs. The sources of this sub-class have the prefix `test_ri_`. 
+This is a custom sub-class that we use to group some of the interleaved CWEs. 
+The sources of this sub-class have the prefix `test_ri_`. 
 
 **CWEs**
 
@@ -510,6 +439,7 @@ The source file is `test_ri_uninitStack.c`. The test has two parts: p1. Return a
 
 The source file is `test_ri_uninitHeap.c`. The test has two parts: p1. Return a pointer to an integer that was never initialized. p2. Allocates a string with a certain length, and then `strcpy` to it a shorter string, leaving the rest of bytes uninitialized. Then, it accesses the characters that are beyong the `NULL` byte. Both of the test parts demonstrate instances of information leaking from the heap.
 
+---
 
 ## Miscellaneous ##
 
@@ -535,4 +465,6 @@ Assignment of a Fixed Address to a Pointer
 \[[CWE-587](https://cwe.mitre.org/data/definitions/587.html)\].
 
 The test assigns a fixed address to a pointer, then there are two parts: p1. It copies data over to that address. p2. Attemps to execute the code starting at that address. Note that the tests do not successfully *hack* the processors as this requires some reverse engineering, the C file has some examples on how to do that if needed.
+
+---
 
