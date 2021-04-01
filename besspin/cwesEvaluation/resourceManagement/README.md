@@ -6,7 +6,7 @@ resources.  This includes improper access to hardware resources such
 as memory, CPU, and communication and/or preventing valid users from
 gaining access to these resources.
 
-For more details about the scoring approach, please refer to [the Bessping philosophy docuemnt](../../../docs/cwesEvaluation/besspinPhilosophy.md).
+For more details about the scoring approach, please refer to [the Bessping philosophy document](../../../docs/cwesEvaluation/besspinPhilosophy.md).
 
 ---
 
