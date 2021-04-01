@@ -51,6 +51,7 @@ class InfotainmentUi(ComponentPoller):
     @recv_can(CAN_ID_BUTTON_PRESSED, "B")
     def _(self, data):
         # forward to the other network
+        print(f"BUTTON PRESS {data}")
         self._network.send(CAN_ID_BUTTON_PRESSED, struct.pack("B", data[0]))
 
 

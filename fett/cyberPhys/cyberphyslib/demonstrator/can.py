@@ -7,14 +7,11 @@ Date: 26 August 2020
 CAN Packet encoder / decoder
 """
 import abc
-import struct
-import socket
-import time
-import select
 import typing as typ
+import enum
 from abc import ABCMeta, abstractmethod
 from can import Message
-from .component import ThreadExiting
+from .component import ThreadExiting, Component
 
 # TODO: @ethanlew import canlib/python/canlib.py properly
 from cyberphyslib.canlib import CanDataType, UdpBus
@@ -193,3 +190,48 @@ class CanMultiverse(CanNetwork):
     @property
     def networks(self):
         return {n.name: n for n in self._networks}
+
+
+import cyberphyslib.demonstrator.message as message
+import cyberphyslib.demonstrator.config as config
+
+
+class CanMultiverseStatus(enum.IntEnum):
+    READY = enum.auto()
+    ERROR = enum.auto()
+
+
+class CanMultiverseComponent(Component):
+    def __init__(self, ip_addr=None):
+        super().__init__("canm", [(5050, "canm-commands")], [(5051, "canm-events")])
+        sip = config.SIM_IP if not ip_addr else ip_addr
+        can_ssith_info = CanUdpNetwork("secure_infotainment", config.CAN_PORT, sip)
+        can_ssith_ecu = CanUdpNetwork("secure_ecu", config.CAN_PORT, sip)
+        can_base = CanUdpNetwork("base", config.CAN_PORT, sip)
+        networks = [can_base, can_ssith_ecu, can_ssith_info]
+
+        can_ssith_info.whitelist = config.SSITH_INFO_WHITELIST
+        can_ssith_ecu.whitelist = config.SSITH_ECU_WHITELIST
+        can_base.whitelist = config.BASE_WHITELIST
+        can_ssith_info.blacklist = config.SSITH_INFO_BLACKLIST
+        can_ssith_ecu.blacklist = config.SSITH_ECU_BLACKLIST
+        can_base.blacklist = config.BASE_BLACKLIST
+
+        # create can network multiverse (mux)
+        self._can_multiverse = CanMultiverse("multiverse", networks, default_network="base")
+
+    def on_start(self):
+        self._can_multiverse.start()
+
+    def on_exit(self):
+        self._can_multiverse.exit()
+
+    # TODO: FIXME
+    @recv_topic("canm-commands")
+    def _(self, msg, t):
+        if msg in CanMultiverseStatus:
+            print("Received Message")
+            #self._can_multiverse.select(msg.value)
+            #self.send_message(message.Message(CanMultiverseStatus.READY), "canm-events")
+        else:
+            self.send_message(message.Message(CanMultiverseStatus.ERROR), "canm-events")
