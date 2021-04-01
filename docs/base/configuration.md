@@ -120,8 +120,6 @@ The two settings are:
 
 - `linker`: Either GCC or LLD.
 
-- `gccDebian`: Either `default`, `linux9.2`, `bareMetal8.3`, or `bareMetal9.2`. This is only applicable when `osImage=debian` and when either the compiler or linker is GCC. The `default` option is `linux9.2` which refers to `riscv64-unknown-linux-gnu-gcc` v9.2 which is built in Nix and available in the nix-shell. The `bareMetal9.2` refers to `riscv64-unknown-elf-gcc` v9.2 and is also available in nix. Regarding `bareMetal8.3`, it refers to `riscv64-unknown-elf-gcc` v8.3, and it is available within the public docker container `galoisinc/besspin:gfe-gcc83`. The CWEs tests which use POSIX calls or anything linux specific have macros to execute that in a different manner when the bare metal compilers are chosen. 
-
 ---
 
 ## [evaluateSecurityTests] and The Rest ##
