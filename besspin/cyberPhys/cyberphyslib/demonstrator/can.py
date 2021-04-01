@@ -13,133 +13,11 @@ import time
 import select
 import typing as typ
 from abc import ABCMeta, abstractmethod
-from can import BusABC, Message
-from .logger import can_logger
+from can import Message
 from .component import ThreadExiting
 
-
-# custom types for can bus
-CanDataType = typ.Union[bytes, str]
-NetworkListType = typ.Union[typ.Sequence[str], None, bool]
-
-
-# custom error(s)
-class InvalidCanMessageError(Exception):
-    pass
-
-
-class UDPBus(BusABC):
-    """
-    Enable basic communication over UDP
-
-    The bus is bound to a particular ADDR and PORT upon creation,
-    and can receive data only from that addr/port.
-
-    The bus can send data to any address/port.
-    """
-    DEST_BROADCAST = "<broadcast>"
-    CAN_MIN_BYTES = 4 + 1 + 1  # sending an empty frame doesn't make sense, min 6 bytes per frame
-    CAN_MAX_BYTES = 64 + 4 + 1  # 64 bytes of DATA, 4 bytes of ID, 1 byte od DLC
-
-    @staticmethod
-    def check_network_list(net_list: NetworkListType) -> NetworkListType:
-        """determine if a list of ips is a valid blacklist/whitelist. If valid, return it.
-        Else, raise a value error
-        :param net_list: list
-        :return network list
-        """
-        try:
-            if net_list:
-                [socket.inet_aton(s) for s in net_list]
-        except Exception:
-            raise ValueError
-        return net_list
-
-    def __init__(self, port: int,
-                 ip: str,
-                 whitelist: NetworkListType = None,
-                 blacklist: NetworkListType = None,
-                 do_bind: bool = True):
-        """
-        :param port: port to send / receive can messages
-        :param ip: ip to bind udp socket
-        :param whitelist: None or list of ips to accept
-        :param blacklist: None or list of ips to reject
-        """
-        self.ip = self.DEST_BROADCAST
-        self.port = port
-        self._whitelist = self.check_network_list(whitelist)
-        self._blacklist = self.check_network_list(blacklist)
-        super(UDPBus, self).__init__(channel="dummy")
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        if do_bind:
-            self._sock.bind((ip, self.port))
-
-    def send(self, msg: Message, timeout=None):
-        try:
-            if msg.dlc < 1:
-                raise InvalidCanMessageError
-            a_id = struct.pack('!I', msg.arbitration_id)
-            byte_msg = bytearray(a_id)
-            byte_msg.append(msg.dlc)
-            byte_msg += bytearray([msg.data[i] for i in range(0, msg.dlc)])
-        except Exception:
-            raise InvalidCanMessageError(f"msg -- id {msg.arbitration_id}, dlc {msg.dlc}, data {msg.data}")
-        if timeout:
-            can_logger.warning("ignoring timeout {}".format(timeout))
-        self._sock.sendto(byte_msg, (self.ip, self.port))
-
-    def _recv_internal(self, timeout):
-        ready = select.select([self._sock], [], [], timeout)
-        if ready[0]:
-            rx_data, (sender_addr, port) = self._sock.recvfrom(UDPBus.CAN_MAX_BYTES)
-            # ignore received data following whitelist, blacklist policy
-            if self.whitelist:
-                if sender_addr not in self.whitelist:
-                    return None, False
-            if self.blacklist:
-                if sender_addr in self.blacklist:
-                    return None, False
-            if len(rx_data) < UDPBus.CAN_MIN_BYTES:
-                can_logger.warning("received only {} bytes, ignoring.".format(
-                    len(rx_data)))
-            else:
-                s = bytearray(rx_data[0:4])
-                arb_id = struct.unpack('!I', s)[0]
-                dlc = rx_data[4]
-                if dlc == len(rx_data[5:]):
-                    data = rx_data[5:]
-                    msg = Message(timestamp=time.time(),
-                                  arbitration_id=arb_id,
-                                  dlc=dlc,
-                                  data=data)
-                    return msg, False
-                else:
-                    can_logger.warning(
-                        "DLC ({}) and the length of data ({}) don't match, ignoring."
-                        .format(dlc, len(rx_data)))
-        return None, False
-
-    def shutdown(self):
-        self._sock.close()
-
-    @property
-    def whitelist(self):
-        return self._whitelist
-
-    @whitelist.setter
-    def whitelist(self, wl: NetworkListType):
-        self._whitelist = self.check_network_list(wl)
-
-    @property
-    def blacklist(self):
-        return self._blacklist
-
-    @blacklist.setter
-    def blacklist(self, bl: NetworkListType):
-        self._blacklist = self.check_network_list(bl)
+# TODO: @ethanlew import canlib/python/canlib.py properly
+from cyberphyslib.canlib import CanDataType, UdpBus
 
 
 class CanListener(metaclass=ABCMeta):
@@ -235,16 +113,16 @@ class CanUdpNetwork(CanNetwork):
     """
     UDP Can Bus Implementation of Can Network
 
-    Implements the CanNetwork interface for the UDPBus of python can
+    Implements the CanNetwork interface for the UdpBus of python can
     """
     def __init__(self, name: str, port: int, ip: str,
-                 whitelist: NetworkListType = None,
-                 blacklist: NetworkListType = None,
+                 whitelist= None,
+                 blacklist= None,
                  do_bind: bool = True):
         super().__init__(name)
         self.port = port
         self.ip = ip
-        self.bus = UDPBus(self.port, self.ip,
+        self.bus = UdpBus(self.port, self.ip,
                           whitelist=whitelist, blacklist=blacklist, do_bind=do_bind)
 
     def send(self, can_id: int, data: CanDataType):

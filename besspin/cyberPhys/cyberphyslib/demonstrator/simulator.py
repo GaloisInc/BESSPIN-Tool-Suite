@@ -19,7 +19,8 @@ import psutil
 import time
 import os
 import pathlib
-from cyberphys import config, component, message, logger, canlib
+from cyberphyslib.demonstrator import config, component, message, logger
+import cyberphyslib.canlib.canspecs as canspecs
 
 from beamngpy import BeamNGpy, Scenario, Vehicle
 from beamngpy.sensors import Electrics, GForces
@@ -205,25 +206,25 @@ class Sim(component.ComponentPoller):
         self.control[name] = data
         self.control_evt = True
 
-    @recv_can(canlib.CAN_ID_STEERING_INPUT, "!b")
+    @recv_can(canspecs.CAN_ID_STEERING_INPUT, "!b")
     def _(self, data):
         """steering -1.0, 1.0"""
         data = (float(data[0])/100.0,)
         return self.control_process("steering", data, bounds=(-1.0, 1.0))
 
-    @recv_can(canlib.CAN_ID_THROTTLE_INPUT, "!B")
+    @recv_can(canspecs.CAN_ID_THROTTLE_INPUT, "!B")
     def _(self, data):
         """throttle [0..100] -> 0.0, 1.0"""
         data = (float(data[0])/100.0,)
         return self.control_process("throttle", data)
 
-    @recv_can(canlib.CAN_ID_BRAKE_INPUT, "!B")
+    @recv_can(canspecs.CAN_ID_BRAKE_INPUT, "!B")
     def _(self, data):
         """brake [0..100] -> 0.0, 1.0"""
         data = (float(data[0])/100.0,)
         return self.control_process("brake", data)
 
-    @recv_can(canlib.CAN_ID_GEAR, "!c")
+    @recv_can(canspecs.CAN_ID_GEAR, "!c")
     def _(self, data):
         """gear [P, R, N, D] -> -1, 5"""
         val, = data

@@ -20,7 +20,8 @@ P1 Emulation
         2. accept can packets of BeamNG data
         3. read stub peripherals for gear, throttle, and brake
 """
-from cyberphys import can, config, component, canlib
+from cyberphyslib.demonstrator import can, config, component
+from cyberphyslib.canlib import canspecs
 import struct
 import time
 import pygame
@@ -82,10 +83,10 @@ class ECUPrototypeBase(component.ComponentPoller):
     """
     Base Class for ECU Prototype -- implement recv and on_poll methods for action/reaction
     """
-    packet_out_descr = {"steer": canlib.CAN_ID_STEERING_INPUT,
-                        "throttle": canlib.CAN_ID_THROTTLE_INPUT,
-                        "brake": canlib.CAN_ID_BRAKE_INPUT,
-                        "gear": canlib.CAN_ID_GEAR}
+    packet_out_descr = {"steer": canspecs.CAN_ID_STEERING_INPUT,
+                        "throttle": canspecs.CAN_ID_THROTTLE_INPUT,
+                        "brake": canspecs.CAN_ID_BRAKE_INPUT,
+                        "gear": canspecs.CAN_ID_GEAR}
     packet_in_descr = {}
 
     @staticmethod

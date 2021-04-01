@@ -1,14 +1,21 @@
-CAN ID,Type,Field Name,Sender,Receiver,Bounds/Range,Byte Length,Units,J1939?,PGN,Field Description
-0XAAF01000,uint8_t,gear (uint8_t),ECU,ignition,"P, R, N, D",1,,YES,122890,selected gear
-0XAAF01A00,uint8_t,throttle_input (uint8_t),ECU,ignition,0/100,1,,YES,122932,Throttle input state
-0XAAF01B00,uint8_t,brake_input (uint8_t),ECU,ignition,0/100,1,,YES,122934,Brake input state
-0XAAF01D00,int8_t,steering_input (int8_t),ECU,ignition,-100..100,1,,YES,122938,Steering input state
-0XAAFEAA00,uint8_t,fuel (uint8_t),ignition,Infotainment Thin Client,0/100,1,%,YES,130552,Percentage of fuel remaining
-0XAAFEAAC1,fixed,car_x (float),ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display x coordinate
-0XAAFEADF6,fixed,car_y (float),ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display y coordinate
-0XAAFEAABF,fixed,car_z (float),ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display z coordinate
-0XAACDAD11,fixed,car_r (float),ignition,Infotainment Thin Client,N/A,4,m,no,,infotainment position of car to display r rotation
-0XAAFECA00,uint8_t,button_pressed (uint8_t),Infotainment Thin Client,Infotainment Server,N/A,1,,No,,Button pressed on infotainment screen.0x01 Station 1 0x02 Station 2 0x03 station 3  0x10 volume down  0x11 volume up
-0XAA2FEEF2,uint8_t,music_state (uint8_t),Infotainment Server,Infotainment Thin Client,N/A,1,,No,,Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume
-0XAABEA737,uint32_t,heartbeat_req (uint32_t),Admin PC,All,N/A,4,,No,,Heartbeat request with request number in network byte order
-0XAABEA225,uint32_t,heartbeat_ack (uint32_t),All,Admin PC,N/A,8,,No,,First 4 bytes are the sender ID (sender IP address) | Heartbeat acknowledgment with number matching a heartbeat_req in network byte order
+CAN ID,Type,Field Name,Sender,Receiver,Bounds/Range,Byte Length,Units,J1939?,PGN,Field Description,Notes
+0XAAF01000,uint8_t,gear,ECU,Ignition,"P, R, N, D",1,N/A,YES,122890,selected gear,
+0XAAF01A00,uint8_t,throttle_input,ECU,Ignition,0/100,1,%,YES,122932,Throttle input state,
+0XAAF01B00,uint8_t,brake_input,ECU,Ignition,0/100,1,%,YES,122934,Brake input state,
+0XAAF01D00,int8_t,steering_input,ECU,Ignition,-100..100,1,N/A,YES,122938,Steering input state,
+0XAAFEAA00,uint8_t,fuel,Ignition,Infotainment Thin Client,0/100,1,%,YES,130552,Percentage of fuel remaining,
+0XAAFEAAC1,float,car_x,Ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display x coordinate,
+0XAAFEADF6,float,car_y,Ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display y coordinate,
+0XAAFEAABF,float,car_z,Ignition,Infotainment Thin Client,N/A,4,m,No,,infotainment position of car to display z coordinate,
+0XAACDAD11,float,car_r,Ignition,Infotainment Thin Client,N/A,4,m,no,,infotainment position of car to display r rotation,
+0XAAFECA00,uint8_t,button_pressed,Infotainment Thin Client,Infotainment Server,N/A,1,N/A,No,,Button pressed on infotainment screen.0x01 Station 1 0x02 Station 2 0x03 station 3  0x10 volume down  0x11 volume up,Separate network
+0XAA2FEEF2,uint8_t,infotainment_state,Infotainment Server,Infotainment Thin Client,N/A,1,N/A,No,,Bit 0 music pause/play bit 1-2: music station  bit 3-7 volume,
+0XAABEA737,uint32_t,heartbeat_req,BESSPIN Tool,All,N/A,4,N/A,No,,Heartbeat request number (uint32_t),
+0XAABEA225,[uint32_t],heartbeat_ack,All,BESSPIN Tool,N/A,8,N/A,No,,Component ID / sender IP address (uint32_t) | heartbeat request number (uint32_t),
+0XAAFEEB00,uint32_t,cmd_component_ready,All,All,N/A,4,N/A,No,,Component ID / sender IP address (uint32_t),
+0XAAFEEB01,[uint32_t],cmd_component_error,All,All,N/A,8,N/A,No,,Component ID / sender IP address (uint32_t) | Error type (uint32_t),
+0XAAFEEB02,uint8_t,cmd_active_scenario,Hacker kiosk,Ignition,N/A,1,N/A,No,,Scenario ID (uint8_t),
+0XAAFEEB03,uint8_t,cmd_hack_active,Hacker kiosk,Ignition,N/A,1,N/A,No,,Hack ID (uint8_t),
+0XAAFEEB04,uint32_t,cmd_restart,Hacker kiosk,All,N/A,4,N/A,No,,Component ID / sender IP address (uint32_t),
+0XAAFEEB05,uint8_t,cmd_scenario_not_available,BESSPIN Tool,Hacker kiosk,N/A,1,N/A,No,,Scenario ID (uint8_t),For degraded BESSPIN tool mode
+0XAAFEEB06,uint8_t,cmd_scenario_available,BESSPIN Tool,Hacker kiosk,N/A,1,N/A,No,,Scenario ID (uint8_t),

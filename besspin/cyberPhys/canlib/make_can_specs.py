@@ -9,11 +9,6 @@ Generates canlib.{py,h} from can_specification.csv
 Use:
     ./make_canlib.py
     use the header/canlib files as needed
-    Currently used:
-      - canlib.h in C version of the canlib
-      - canlib.py in:
-        - BESSPIN-Tool-Suite/besspin/cyberPhys/canlib.py
-        - SSITH-Cyberphys/scripts/cyberphys/canlib.py
 """
 import pandas as pd
 import re
@@ -30,7 +25,7 @@ with open(specs_filename, "r") as f:
 # date and file info
 today = date.today()
 
-outfilename_py: str = "python/canspecs.py"
+outfilename_py: str = "../cyberphyslib/canlib/canspecs.py"
 file_header_py: str = f"""\"\"\"Cyberphys CAN Frames Specification
 Project: SSITH CyberPhysical Demonstrator
 Name: {outfilename_py}
@@ -66,18 +61,20 @@ def produce_can_py(can_entry):
     fdescr: str = str(can_entry["Field Description"])
     fdescr = fdescr if isinstance(fdescr, str) else "<N/A>"
 
-    fvname = re.split("^(.*)\s\(.*\)$", fname)[1]
-    var_name =  "CAN_ID_" + fvname.upper().replace(" -", "").replace(" ", "_")
-    py_str = f"# Name: {fname} Units: {units}\n"\
+    var_name =  "CAN_ID_" + fname.upper().replace(" -", "").replace(" ", "_")
+    py_str = f"# Name: {fname}\n"\
+             f"# Units: {units}\n"\
+             f"# Type: {can_entry['Type']}\n"\
              f"# Description: {' '.join(fdescr.splitlines())}\n"\
              f"{var_name}: int = {cid}\n\n"
     return py_str
 
 def produce_can_h(can_entry):
-    field_name = can_entry["Field Name"].split()[0].lower()
+    field_name = can_entry["Field Name"].lower()
     can_id = can_entry["CAN ID"]
     py_str = "\n"
     py_str += f"// {can_entry['Field Name']}\n"
+    py_str += f"// Type: {can_entry['Type']}\n"
     py_str += f"// Sender: {can_entry['Sender']}\n"
     py_str += f"// Receiver: {can_entry['Receiver']}\n"
     if can_entry["Bounds/Range"] != '':
@@ -89,8 +86,8 @@ def produce_can_h(can_entry):
     else:
         py_str += f"// J1939 compatible: NO\n"
     if can_entry["Field Description"] != '':
-        py_str += "// Description: \n"
-        py_str += '//\t' + can_entry['Field Description'].replace('\n','\n//\t') + "\n"
+        py_str += "//\n"
+        py_str += '// ' + can_entry['Field Description'].replace('\n','\n//\t') + "\n"
     py_str += f"#define CAN_ID_{field_name.upper()} {can_id}\n"
     py_str += f"#define BYTE_LENGTH_{field_name.upper()} {can_entry['Byte Length']}\n"
     if can_entry['PGN'] != '':

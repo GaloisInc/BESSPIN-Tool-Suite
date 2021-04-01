@@ -18,7 +18,7 @@ BIND_PORT = 5002
 TX_PORT = 5001
 TX_IP = "10.88.88.2"
 
-class UDPBus(BusABC):
+class UdpBus(BusABC):
     """
     Enable basic communication over UDP
 
@@ -32,7 +32,7 @@ class UDPBus(BusABC):
 
     def __init__(self, bind_port):
         self.port = bind_port
-        super(UDPBus, self).__init__(channel="dummy")
+        super(UdpBus, self).__init__(channel="dummy")
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -50,9 +50,9 @@ class UDPBus(BusABC):
     def _recv_internal(self, timeout):
         ready = select.select([self._sock], [], [], timeout)
         if ready[0]:
-            rx_data, sender_addr = self._sock.recvfrom(UDPBus.CAN_MAX_BYTES)
+            rx_data, sender_addr = self._sock.recvfrom(UdpBus.CAN_MAX_BYTES)
             print("Info: received {} bytes from {}".format(len(rx_data), sender_addr))
-            if len(rx_data) < UDPBus.CAN_MIN_BYTES:
+            if len(rx_data) < UdpBus.CAN_MIN_BYTES:
                 print("Warning: received only {} bytes, ignoring.".format(len(rx_data)))
             else:
                 s = bytearray(rx_data[0:4])
@@ -70,7 +70,7 @@ class UDPBus(BusABC):
         return None, False
 
 
-# bus = UDPBus(BIND_PORT)
+# bus = UdpBus(BIND_PORT)
 #
 # # send a message
 # message = Message(arbitration_id=0XAAFEEE00, is_extended_id=True,
@@ -119,7 +119,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.lines.append(line)
             self.ys.append([])
 
-        self.bus = UDPBus(BIND_PORT)
+        self.bus = UdpBus(BIND_PORT)
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_data)

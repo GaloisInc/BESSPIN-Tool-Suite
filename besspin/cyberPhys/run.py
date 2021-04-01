@@ -10,9 +10,10 @@ from besspin.base.threadControl import ftQueueUtils
 from besspin.cyberPhys import otaserver, infotainmentserver
 
 # Import for CAN bus
-from besspin.cyberPhys.canlib import UDPBus, Message
-from besspin.cyberPhys.canspecs import CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
+from besspin.cyberPhys.cyberphyslib.canlib import UdpBus, Message, CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
 
+import struct
+import ipaddress
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -75,12 +76,24 @@ def watchdog(targetId):
                 errorAndLog(f"<target{targetId}>: {errorString}!")
                 return True
 
-        # responses
         responses = []
         while not wHeartbeatQueue.empty():
             responses.append(ftQueueUtils(f"watchDogHeartbeatQueue{targetId}",wHeartbeatQueue,'get'))
-        #printAndLog(f"<targetId {targetId}> Watchdog {responses}")
-        # TODO: check for heartbeat failure here, will be fixed later
+
+        xTarget = getSetting('targetObj',targetId=targetId)
+        targetIp = xTarget.ipTarget
+
+        try:
+            msgs = [msg for msg in responses if str(ipaddress.IPv4Address(struct.unpack('<I', msg.data[0:4])[0])) == targetIp]
+            if msgs:
+                msg = msgs[0]
+                printAndLog(f"<target{targetId}>: Heartbeat received, {msg.timestamp}s, \
+                    reqID: {int.from_bytes(msg.data[4:8],'big')}",doPrint=False)
+            else:
+                warnAndLog(f"<target{targetId}>: Heartbeat missed",doPrint=False)
+                # TODO: do something more here
+        except Exception as exc:
+            warnAndLog(f"<target{targetId}> Exception occured processing hearbeat response: {exc}") 
 
         # Check process
         if not isTargetAlive(targetId) and handleError("Target is not alive"):
@@ -88,7 +101,7 @@ def watchdog(targetId):
             appLog.close()
             break
 
-        time.sleep(1)
+        time.sleep(0.5) # TODO: make the timeout configurable
 
     # Will send an item to the queue anyway; If we're here because of error:
     #   Yes: So this will exit the main thread
@@ -128,15 +141,17 @@ def heartBeatListener():
     This is a workaround because we can bind to the same port only once.
     """
     listenQueue = getSetting('heartbeatQueue')
-    canbusPort = getSetting('cyberPhysCanbusPort')
+    vcu118BroadcastIp = getSetting('vcu118BroadcastIp')
+    cyberPhysCanbusPort = getSetting('cyberPhysCanbusPort')
+
     try:
-        canbus = UDPBus("",canbusPort)
+        canbus = UdpBus(ip=vcu118BroadcastIp,port=cyberPhysCanbusPort)
     except Exception as exc:
-        logAndExit(f"Failed to instantiate <UDPBus> with port {canbusPort}.",exc=exc,exitCode=EXIT.Run)
+        logAndExit(f"<heartBeatListener> Failed to instantiate <UdpBus> with port {canbusPort}.",exc=exc,exitCode=EXIT.Run)
     try:
         canbus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
     except Exception as exc:
-        logAndExit(f"Failed to set canbus filters.",exc=exc,exitCode=EXIT.Run)
+        logAndExit(f"<heartBeatListener> Failed to set canbus filters.",exc=exc,exitCode=EXIT.Run)
 
     # get queues from settings
     cnt = 0
@@ -144,39 +159,39 @@ def heartBeatListener():
     for targetId in range(1,getSetting('nTargets')+1):
         watchdog_queues[targetId] = getSetting('watchdogHeartbeatQueue', targetId=targetId)
 
-    # Hearbeat request settings
-    vcu118BroadcastIp = getSetting('vcu118BroadcastIp')
-    cyberPhysCanbusPort = getSetting('cyberPhysCanbusPort')
-
     while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
         cnt += 1
         try:
             heartbeat_req = Message(arbitration_id=CAN_ID_HEARTBEAT_REQ,
                                     is_extended_id=True,
                                     data=list(cnt.to_bytes(4, byteorder = 'big')))
-            canbus.send(heartbeat_req, vcu118BroadcastIp, cyberPhysCanbusPort)
+            canbus.send(heartbeat_req)
         except Exception as exc:
-            logAndExit(f"Failed to send heartbeat request to {vcu118BroadcastIp}:{cyberPhysCanbusPort}",exc=exc,exitCode=EXIT.Run)
-        printAndLog (f"BESSPIN <heartBeatWatchDog mode> sending request", doPrint=False)
+            logAndExit(f"<heartBeatListener> Failed to send heartbeat request to \
+                {vcu118BroadcastIp}:{cyberPhysCanbusPort}",exc=exc,exitCode=EXIT.Run)
+        printAndLog (f"<heartBeatListener> Sending request", doPrint=False)
 
         # Assume one second window to receive watchdog responses
-        endOfWait = time.time() + 1.0
+        endOfWait = time.time() + 1.0 # TODO: make the timeout a variable
         responses = []
-        while (time.time() < endOfWait) and (len(responses) < getSetting('nTargets')):
-            heartbeat_ack = canbus.recv(timeout=0.1)
+        while (time.time() < endOfWait): #and (len(responses) < getSetting('nTargets')):
+            heartbeat_ack = canbus.recv(timeout=1.0) # TODO: make the timeout a variable
             if heartbeat_ack:
                 responses.append(heartbeat_ack)
 
         if (len(responses) < getSetting('nTargets')):
-            logAndExit(f"Failed to receive on cabus.",exc=exc,exitCode=EXIT.Run)
+            warnAndLog(f"<heartBeatListener> Failed to receive on canbus.", doPrint=False)
 
-        # send the messages to the queues
-        # NOTE: no filtering is done; the watchdogs
-        # must determine if the responses are relevant
         for q in watchdog_queues.values():
-            for m in responses[::-1]:
-                q.put(m)
-        time.sleep(1)
+            for msg in responses[::-1]:
+                try:
+                    # Push only responses to the current request
+                    if msg.dlc == 8 and int.from_bytes(msg.data[4:8], "big") == cnt:
+                        q.put(msg)
+                except Exception as exc:
+                    warnAndLog(f"<heartBeatListener> Exception occured processing hearbeat response: {exc}")
+
+        time.sleep(1.0) # TODO: make the timeout a variable
 
     # Will send an item to the queue anyway; If we're here because of error:
     #   Yes: So this will exit the main thread

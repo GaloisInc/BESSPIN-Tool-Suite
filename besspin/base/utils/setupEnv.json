@@ -197,7 +197,8 @@
                 },
                 "SRI-Cambridge" : {
                     "bluespec_p2" : {
-                        "FreeBSD" : "connectal"
+                        "FreeBSD" : "connectal",
+                        "FreeRTOS" : "notOnAWS"
                     },
                     "bluespec_p3" : {
                         "FreeBSD" : "notOnAWS"

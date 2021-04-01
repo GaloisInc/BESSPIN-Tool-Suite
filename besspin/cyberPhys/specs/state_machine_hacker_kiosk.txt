@@ -1,0 +1,95 @@
+@startuml
+
+state "Hacker Kiosk start up" as KioskUp
+KioskUp: boot OS
+KioskUp: connect to network
+KioskUp: start kiosk webpage
+[*] --> KioskUp: Kiosk powered up
+
+KioskUp --> KioskWait
+
+' TODO: add a timeout to the wait?
+state "Wait for components" as KioskWait
+KioskWait: Wait for CMD_COMPONENT_READY(BESSPIN_TOOl)
+KioskWait: Wait for CMD_COMPONENT_READY(IGNITION)
+
+' TODO: handle error conditions
+KioskWait --> KioskReady: Success\nSend CMD_COMPONENT_READY(KIOSK)\nSend CMD_LED_SEQ(BOOT)
+state "Hacker kiosk ready" as KioskReady
+KioskReady: welcome page
+
+
+state "Baseline Scenario" as ScenarioBaseline {
+    state "Scenario intro" as ScenarioBaselineIntro
+    ' ScenarioBaselineIntro: Driver: get faimilar with the controls
+    ScenarioBaselineIntro: Hacker: intro to SSITH
+    KioskReady --> ScenarioBaselineIntro: hacker arrived\nSend CMD_ACTIVE_SCENARIO(BASELINE)
+
+    state "Explain OTA server hack" as ScenarioBaselineExplainOtaHack {
+        ' ScenarioBaselineExplainOtaHack: Driver: drives to te airport
+        ScenarioBaselineExplainOtaHack: Hacker: explain OTA hack
+    }
+
+    ScenarioBaselineIntro --> ScenarioBaselineExplainOtaHack: Hacker clicks though the intro slides
+    ScenarioBaselineExplainOtaHack --> ScenarioBaselineHackedOTA: Hacker clicks in "Hack OTA update server"\nSend CMD_LED_SEQ(OTA_HACK)
+    state "OTA server hacked" as ScenarioBaselineHackedOTA
+    ScenarioBaselineHackedOTA: signing key erased
+
+    state "Hack infotainment" as ScenarioBaselineHackInfotainment
+    ScenarioBaselineHackInfotainment: show available infotainment hacks
+
+    ScenarioBaselineHackedOTA --> ScenarioBaselineHackInfotainment: Explain infotainment hacks to hacker
+
+    state "Upload Infotainment Hack" as ScenarioBaselineUploadInfotainmentHack
+    ScenarioBaselineUploadInfotainmentHack: upload specific binary
+    ScenarioBaselineHackInfotainment --> ScenarioBaselineUploadInfotainmentHack: Hacker: Choose a hack to upload
+
+    state "Infotainment hack uploaded" as ScenarioBaselineInfotainmentHackUploaded
+    ScenarioBaselineUploadInfotainmentHack --> ScenarioBaselineInfotainmentHackUploaded: Send CMD_LED_SEQ(OTA_HACK)
+    ScenarioBaselineInfotainmentHackUploaded -left-> ScenarioBaselineHackInfotainment: Return to the hack selection screen
+    ScenarioBaselineInfotainmentHackUploaded: Binary uploaded
+    
+
+    state "Hack critical systems" as ScenarioBaselineHackCriticalSystems
+    ScenarioBaselineHackInfotainment --> ScenarioBaselineHackCriticalSystems: Hacker: Clicks on next slide
+    ScenarioBaselineHackCriticalSystems: explain hacking critical systems
+
+    state "Upload Critical Systtems Hack" as ScenarioBaselineUploadCriticalSystemsHack
+    ScenarioBaselineUploadCriticalSystemsHack: Binary uploaded
+    ScenarioBaselineHackCriticalSystems --> ScenarioBaselineUploadCriticalSystemsHack: Hacker: Choose a hack to upload
+
+    state "Critical systems hack uploaded" as ScenarioBaselineCriticalSystemsHackUploaded
+    ScenarioBaselineCriticalSystemsHackUploaded: Binary uploaded
+    ScenarioBaselineUploadCriticalSystemsHack --> ScenarioBaselineCriticalSystemsHackUploaded: Send CMD_LED_SEQ(???)
+
+    ScenarioBaselineCriticalSystemsHackUploaded --> ScenarioBaselineHackInfotainment: Return to the hack selection screen
+
+
+    state "Hack Critical Systems" as ScenarioBaselineHackCriticalSystems
+    ScenarioBaselineHackCriticalSystems --> ScenarioBaselineEndOfScenario: Hacker: Clicks on next slide
+    state "Scenario Done" as ScenarioBaselineEndOfScenario
+}
+
+state "Protected Critical Systems Scenario" as ScenarioCritical {
+    state "Introduce SSITH" as IntroSSITH
+    IntroSSITH: Note: new set of FPGAs was selected
+
+    ScenarioBaselineEndOfScenario --> IntroSSITH: Send CMD_ACTIVE_SCENARIO(CRITICAL_SYSTEMS)\nSend CMD_LED_SEQ(SSITH_CRITICAL)
+}
+
+KioskTerminate --> [*]: Send CMD_COMPONENT_ERROR(KIOSK|TERMINATED)
+
+'@startuml
+'state "Hacker Kiosk Start up" as HackerKioskUp
+'state "Hacker Kiosk Ready" as HackerKioskReady
+'HackerKioskUp: boot OS
+'HackerKioskUp: connect to the network
+'HackerKioskUp: start Kiosk UI app
+'HackerKioskReady: wait for user
+'[*] --> HackerKioskUp: Hacker Kiosk powered up
+'HackerKioskUp -[#blue]-> HackerKioskReady: Success\nSend CMD_COMPONENT_READY(HACKER_KIOSK)
+'@enduml
+
+
+
+@enduml

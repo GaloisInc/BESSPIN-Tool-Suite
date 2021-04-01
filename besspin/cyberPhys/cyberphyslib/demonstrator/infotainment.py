@@ -22,11 +22,12 @@ import pathlib
 import struct
 import typing as typ
 
-import cyberphys.config as config
-from cyberphys.component import ComponentPoller
-from cyberphys.logger import info_logger
-from cyberphys.can import CanNetwork
-from cyberphys import canlib
+import cyberphyslib.demonstrator.config as config
+from cyberphyslib.demonstrator.component import ComponentPoller
+from cyberphyslib.demonstrator.logger import info_logger
+from cyberphyslib.demonstrator.can import CanNetwork
+from cyberphyslib.canlib.canspecs import *
+import cyberphyslib.canlib.canspecs as canspecs
 
 from pygame import mixer
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, AudioSession
@@ -108,7 +109,7 @@ class InfotainmentPlayer(ComponentPoller):
         else:
             raise RuntimeError(f"audio session doesn't exist!")
 
-    @recv_can(canlib.CAN_ID_INFOTAINMENT_STATE, "B")
+    @recv_can(canspecs.CAN_ID_INFOTAINMENT_STATE, "B")
     def _(self, data):
         """respond to the infotainment button press"""
         # decode the incoming value
@@ -136,19 +137,19 @@ class InfotainmentPlayer(ComponentPoller):
                 self._sound.stop()
             self._set_volume(0.0)
 
-    @recv_can(canlib.CAN_ID_CAR_X, "f")
+    @recv_can(canspecs.CAN_ID_CAR_X, "f")
     def _(self, data):
-        self._network.send(canlib.CAN_ID_CAR_X, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("f", data[0]))
 
-    @recv_can(canlib.CAN_ID_CAR_Y, "f")
+    @recv_can(canspecs.CAN_ID_CAR_Y, "f")
     def _(self, data):
-        self._network.send(canlib.CAN_ID_CAR_Y, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack("f", data[0]))
 
-    @recv_can(canlib.CAN_ID_CAR_Z, "f")
+    @recv_can(canspecs.CAN_ID_CAR_Z, "f")
     def _(self, data):
-        self._network.send(canlib.CAN_ID_CAR_Z, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack("f", data[0]))
 
-    @recv_can(canlib.CAN_ID_CAR_R, "f")
+    @recv_can(canspecs.CAN_ID_CAR_R, "f")
     def _(self, data):
-        self._network.send(canlib.CAN_ID_CAR_R, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_R, struct.pack("f", data[0]))
 

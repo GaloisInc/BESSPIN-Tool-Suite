@@ -7,9 +7,9 @@ Date: 06 January 2021
 Tests for the cyberphys speedometer component
 """
 import time
-import cyberphys.speedometer as cspeed
-import cyberphys.component as ccomp
-import cyberphys.config as cconf
+import cyberphyslib.demonstrator.speedometer as cspeed
+import cyberphyslib.demonstrator.component as ccomp
+import cyberphyslib.demonstrator.config as cconf
 
 
 def test_speedo():

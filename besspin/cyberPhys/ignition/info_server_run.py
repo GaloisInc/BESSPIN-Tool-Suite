@@ -16,14 +16,14 @@ Usage:
     python info_server_run.py
 """
 import struct, time
-from cyberphys import can, canlib, infotainment
+from cyberphyslib.demonstratorcyberphys import can, canspecs, infotainment
 
 
 class DumpListener(can.CanListener):
     """dump listener is to see what comes out of the infotainment server (IS)"""
     def recv(self, id: int, data_len: int, data: bytes):
         name =  None
-        for n, v in canlib.__dict__.items():
+        for n, v in canspecs.__dict__.items():
             if id == v:
                 name = n
                 break
@@ -45,26 +45,26 @@ can_net_out.start()
 
 # simulate can_out.py
 pos = (0.0, 0.0, 0.0)
-can_net_out.send(canlib.CAN_ID_CAR_X, struct.pack("f", pos[0]))
-can_net_out.send(canlib.CAN_ID_CAR_Y, struct.pack("f", pos[0]))
-can_net_out.send(canlib.CAN_ID_CAR_Z, struct.pack("f", pos[0]))
+can_net_out.send(canspecs.CAN_ID_CAR_X, struct.pack("f", pos[0]))
+can_net_out.send(canspecs.CAN_ID_CAR_Y, struct.pack("f", pos[0]))
+can_net_out.send(canspecs.CAN_ID_CAR_Z, struct.pack("f", pos[0]))
 
 # simulate UI -- change stations
-can_net_out.send(canlib.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x01))
+can_net_out.send(canspecs.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x01))
 time.sleep(1)
-can_net_out.send(canlib.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x02))
+can_net_out.send(canspecs.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x02))
 time.sleep(1)
-can_net_out.send(canlib.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x03))
+can_net_out.send(canspecs.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x03))
 time.sleep(1)
 
 # turn music volume down
 for _ in range(20):
-    can_net_out.send(canlib.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x10))
+    can_net_out.send(canspecs.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x10))
     time.sleep(0.1)
 
 # turn music volume up
 for _ in range(20):
-    can_net_out.send(canlib.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x11))
+    can_net_out.send(canspecs.CAN_ID_BUTTON_PRESSED, struct.pack("B", 0x11))
     time.sleep(0.1)
 
 # terminate the threads

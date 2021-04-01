@@ -1,0 +1,45 @@
+@startuml
+
+[*] --> RestartScenario: BeamNg starts in manual mode
+
+RestartScenario: Restart scenario
+
+RestartScenario --> WelcomeScreen: Display welcome screen
+
+state ModeChoice <<choice>>
+WelcomeScreen --> ModeChoice: Which mode are we in?
+
+state "Manul mode" as ManualMode {
+    state "Manual Init" as ManualInit
+
+    ManualInit --> WelcomeScreen: Timeout elapsed
+
+    ManualInit --> ManualDrive: Driver pressed a button to dismiss welcome screen
+    state "Manual Drive" as ManualDrive
+    ManualDrive: Drive the car
+
+    ManualDrive --> ScenarioComplete: Reached the airport
+    ScenarioComplete: Show victory screen
+
+    ManualDrive --> ReachedWaypoint: Reached a waypoint
+
+    ReachedWaypoint --> ManualDrive: Update current waypoint
+
+    ScenarioComplete --> RestartScenario: Short timeout
+}
+
+state "Demo mode" as DemoMode {
+    state "Demo Init" as DemoInit
+    DemoInit -> DemoDrive: automatically dismiss welcome screen
+
+    state "Demo Drive" as DemoDrive
+    DemoDrive: Roam randomly through the map
+
+    DemoDrive -> RestartScenario: Timeout elapsed    
+}
+
+ModeChoice --> ManualInit: Manual mode
+
+ModeChoice --> DemoInit: Demo mode
+
+@enduml

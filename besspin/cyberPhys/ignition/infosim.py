@@ -6,13 +6,14 @@ Date: 21 January 2021
 
 Infotainment Server Prototype with Keyboard Stub
 """
-from cyberphys import can, config, component, canlib
+from cyberphyslib.canlib import canspecs
+from cyberphyslib.demonstrator import can, config, component
 import struct
 import time
 import pygame
 
 
-net = can.CanUdpNetwork("infosim", config.INFO_PORT, "127.0.0.1")
+net = can.CanUdpNetwork("infosim", config.INFO_UI_PORT, "127.0.0.1")
 cid = None
 pkt = None
 
@@ -23,7 +24,7 @@ class InfoPrototypeBase(component.ComponentPoller):
     @staticmethod
     def send_button_press(val: int):
         global cid, pkt
-        cid = canlib.CAN_ID_BUTTON_PRESSED
+        cid = canspecs.CAN_ID_BUTTON_PRESSED
         pkt = struct.pack("i", val)
         return net.send(cid, pkt)
 
