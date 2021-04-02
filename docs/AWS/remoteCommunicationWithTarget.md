@@ -17,7 +17,7 @@ sudo ip tuntap del mode tap dev tap0
 
 3. For BESSPIN's `.ini` config file, add your second IP:
 ```
->>> productionTargetIp = 192.168.0.IP
+>>> remoteTargetIp = 192.168.0.IP
 ```
 
 4. Run the tool in any open ended mode (`openConsole` or `fettProduction`).

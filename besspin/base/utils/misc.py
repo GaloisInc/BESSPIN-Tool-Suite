@@ -87,7 +87,7 @@ def exitBesspin (exitCode, preSetup=False):
                     inExit_GetSetting('prodJobId'), f"{inExit_GetSetting('prodJobId')}-TERM",
                     reason='besspin-production-termination',
                     hostIp=aws.getInstanceIp(inExit_logAndExit),
-                    fpgaIp=inExit_GetSetting('productionTargetIp')
+                    fpgaIp=inExit_GetSetting('remoteTargetIp')
                     )
         printAndLog("Sent termination message to the SQS queue.")
 

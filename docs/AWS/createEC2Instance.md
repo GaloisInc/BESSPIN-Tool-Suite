@@ -50,7 +50,7 @@ subnet (as explained in [remoteCommunicationWithTarget.md](./remoteCommunication
 2. Click "Networking" -> "Manage IP Addresses".
 3. Click "Assign new IP".
 4. Click "Yes, Update".  This will automatically generate a secondary IP.
-5. Set `productionTargetIp` in the configuration file to the IP you just generated.
+5. Set `remoteTargetIp` in the configuration file to the IP you just generated.
 
 The tool will configure the target to be reachable at the secondary IP address from
 the subnet the F1 instance is running on. However, the reachability of the

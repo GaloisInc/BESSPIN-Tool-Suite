@@ -24,7 +24,7 @@ commonDefaults = {
     ('useCustomQemu',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',)),
-    ('productionTargetIp',('172.31.30.56',))
+    ('remoteTargetIp',('172.31.30.56',))
 }
 
 commonDefaultsFETT = {

@@ -96,7 +96,7 @@ This section is loaded in all modes.
 
 - `rootUserAccess`: For Unix targets, in case there is a need to create a non-root user (as in the bug bounty modes for example), whether that user should have root access via passwordless `su`.
 
-- `productionTargetIp`: The IP address on AWS to which to bind the FPGA via a 1:1 NAT. Please refer to [remoteCommunicationWithTarget.md](../AWS/remoteCommunicationWithTarget.md) for more details.
+- `remoteTargetIp`: The IP address on AWS to which to bind the FPGA via a 1:1 NAT. Please refer to [remoteCommunicationWithTarget.md](../AWS/remoteCommunicationWithTarget.md) for more details.
 
 ---
 
