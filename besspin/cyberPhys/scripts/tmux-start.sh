@@ -13,7 +13,7 @@ if [ $? != 0 ]
     tmux split-window -h -t $SESSIONNAME
     tmux send-keys -t $SESSIONNAME "bash" C-m
     tmux send-keys -t $SESSIONNAME 'nix-shell' C-m
-    tmux send-keys -t $SESSIONNAME './besspin.py -d -c build/cyberphys/configs/config-cyberphys.ini' C-m
+    tmux send-keys -t $SESSIONNAME './besspin.py -d -c besspin/cyberPhys/configs/config-cyberphys.ini' C-m
 fi
 
 tmux attach -t $SESSIONNAME
