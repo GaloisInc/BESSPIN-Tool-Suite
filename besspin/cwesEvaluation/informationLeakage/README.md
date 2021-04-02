@@ -11,7 +11,7 @@ These weaknesses can be quite subtle. The
 [description](https://samate.nist.gov/BF/Classes/IEXModel.html) on NIST's bugs
 framework page is a useful starting point for learning more.
 
-For more details about the scoring approach, please refer to [the Bessping philosophy docuemnt](../../../docs/cwesEvaluation/besspinPhilosophy.md).
+For more details about the scoring approach, please refer to [the Besspin philosophy document](../../../docs/cwesEvaluation/besspinPhilosophy.md).
 
 ---
 
@@ -59,7 +59,7 @@ the test is scored 'HIGH'; otherwise there is no weakness at the test is scored 
 
 Scores are grouped by CWE; the CWE score is the average of the related tests' scores.
 
-See [the Bessping philosophy document](../../../docs/cwesEvaluation/besspinPhilosophy.md) for more details.
+See [the Besspin philosophy document](../../../docs/cwesEvaluation/besspinPhilosophy.md) for more details.
 
 ---
 
