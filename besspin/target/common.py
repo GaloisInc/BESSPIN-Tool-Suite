@@ -871,8 +871,8 @@ class commonTarget():
 
     @decorate.debugWrap
     @decorate.timeWrap
-    def runApp (self,sendFiles=False,timeout=60): #executes the app
-        printAndLog ("runApp: Starting the application stack...")
+    def runFettApps (self,sendFiles=False,timeout=60): #executes the app
+        printAndLog ("runFettApps: Starting the application stack...")
         if (sendFiles):
             #send any needed files to target
             if (self.procLevel=='p3'):
@@ -888,7 +888,7 @@ class commonTarget():
                 self.appModules.remove(webserver)
                 self.appModules.remove(voting) #hosted by the webserver
         else:
-            self.terminateAndExit(f"<runApp> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
+            self.terminateAndExit(f"<runFettApps> is not implemented for <{self.osImage}>.",exitCode=EXIT.Implementation)
 
         # The appLog will be the file object flying around for logging into app.out
         appLog = ftOpenFile(os.path.join(getSetting('workDir'),'app.out'), 'a')
@@ -911,7 +911,7 @@ class commonTarget():
             appLog.flush()
 
         appLog.close()
-        logging.info (f"runApp: The application stack is deployed successfully!\n")
+        logging.info (f"runFettApps: The application stack is deployed successfully!\n")
         return
 
     @decorate.debugWrap
