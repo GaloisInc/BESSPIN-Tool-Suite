@@ -7,7 +7,9 @@ Date: 05 January 2021
 
 usage: ignition.py [-h] [--can-apply-lists | --no-can-apply-lists]
                    [--can-select-keystroke-mux | --no-can-select-keystroke-mux]
-                   [--use-speedo | --no-use-speedo] [--can-ip CAN_IP]
+                   [--use-speedo | --no-use-speedo]
+                   [--use-led-manager | --no-use-led-manager]
+                   [--can-ip CAN_IP]
 
 Demonstrator Simulation Application
 
@@ -27,6 +29,12 @@ optional arguments:
                         speedometer is unconnected)
   --no-use-speedo       [NOT] Use the speedometer component (turn off when the
                         speedometer is unconnected)
+  --use-led-manager
+                        Use the LED manager (turn off when the LED hardware
+                        isn't connected)
+  --no-use-led-manager
+                        [NOT] Use the LED manager (turn off when the LED
+                        hardware isn't connected)
   --can-ip CAN_IP       Use argument ip instead of SIM_IP in cyberphys.config
 """
 
@@ -37,7 +45,8 @@ import signal
 import argparse
 
 # Project libs
-from cyberphyslib.demonstrator import speedometer, can, config, simulator, logger, mux, can_out, infotainment
+from cyberphyslib.demonstrator import (can, config, simulator,
+                       logger, mux, infotainment, can_out)
 
 SSITH_ENABLED = False
 BUFFER_SIZE = 1024
@@ -50,7 +59,7 @@ NO_BEAMNG = 20
 def attempt_force_quit():
     """look for BeamNG component threads and attempt to exit them"""
     logger.root_logger.warning("attempting a force quit from ignition")
-    attempt_threads = ["can_multiverse", "speedo", "beamng_sim", "info_net", "location_poller"]
+    attempt_threads = ["can_multiverse", "speedo", "beamng_sim", "ledm", "info_net", "location_poller"]
 
     def force_exit_component(component):
         # send signal to resources (exit) and force exit (_exit)
@@ -103,6 +112,8 @@ add_bool_grp(parser, "can-select-keystroke-mux", default=True, help="Create a 'k
                                                   f"CAN network (use ctrl+f7 to change active network)")
 add_bool_grp(parser, "use-speedo", default=True, help="Use the speedometer component (turn off when the "
                                                   f"speedometer is unconnected)")
+add_bool_grp(parser, "use-led-manager", default=True, help="Use the LED manager (turn off when the LED hardware "
+                                                               f"isn't connected)")
 parser.add_argument("--can-ip", type=str, help="Use argument ip instead of SIM_IP in cyberphys.config")
 args = parser.parse_args()
 
@@ -120,9 +131,18 @@ beamng_sim = simulator.Sim()
 # If this code fails it should log the reason and the thread will exit,
 # but will not cause the whole simulation to tank.
 if args.use_speedo:
+    import cyberphys.speedometer as speedometer
     speedo = speedometer.Speedo()
 else:
     logger.speedo_logger.info(f"Not using speedometer as disabled by input argument")
+
+# start the LED manager
+if args.use_led_manager:
+    import cyberphys.leds_manage as leds_manage
+    # TODO: hard-coded path
+    ledmanager = leds_manage.LedManagerComponent.from_csv("../cyberphyslib/demonstrator/utils/led_strings_comprehensive_tuple_colors.csv")
+else:
+    logger.led_manage_logger.info(f"Not using LED manager as disabled by input argument")
 
 # Start-up the SSITH / Baseline CAN networks
 sip = config.SIM_IP if not args.can_ip else args.can_ip
@@ -174,10 +194,10 @@ try:
     if args.use_speedo:
         speedo.start()
     can_multiverse.start()
+    if args.use_led_manager:
+        ledmanager.start()
     info_net.start()
     location_poller.start()
-    imux._info_out.start()
-    imux._info_in.start()
 
     # loop while component threads are used
     while True:

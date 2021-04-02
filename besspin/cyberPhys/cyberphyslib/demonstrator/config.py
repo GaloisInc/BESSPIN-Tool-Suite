@@ -84,3 +84,7 @@ BEAMNG_ITALY_SPAWNPOINTS = {'village_mountain':
                                 {'pos': (-690.403564, -1338.64136, 140.215942), 'rot': (0.0, -0.0, 85.01954390247003)},
                             'castle_town':
                                 {'pos': (-969.635193, 953.628723, 392.483368), 'rot': (0.0, -0.0, 74.9999865878277)}}
+
+
+# LED Management Configuration
+LED_MANAGEMENT_INPUT = [(5007, "pattern-request")]
