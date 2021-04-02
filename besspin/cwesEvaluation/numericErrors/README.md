@@ -30,7 +30,7 @@ In the face of undefined behavior and possibly aborts, it is difficult to write 
 |TEST PASSED       |NONE         |
 |TEST ERROR        |CALL-ERR     |
 
-For more details about the scoring approach, please refer to [the Bessping philosophy document](../../../docs/cwesEvaluation/besspinPhilosophy.md).
+For more details about the scoring approach, please refer to [the Besspin philosophy document](../../../docs/cwesEvaluation/besspinPhilosophy.md).
 
 ---
 
@@ -82,10 +82,10 @@ Access of Uninitialized Pointer \[[CWE-824](https://cwe.mitre.org/data/definitio
 Failure to Handle Missing Parameter \[[CWE-234](https://cwe.mitre.org/data/definitions/234.html)\].
 
 **Notes:**
-MITRE website shows 2 examples of this problem in C. The first shows a simple case of calling a function with the wrong number of parameters. This is legal in K&R C, but has been illegal in C90 onwards, so this case has not been implemented here, since it is rejected by both GCC and clang.
+The MITRE website shows 2 examples of this problem in C. The first shows a simple case of calling a function with the wrong number of parameters. This is legal in K&R C, but has been illegal in C90 onwards, so this case has not been implemented here, since it is rejected by both GCC and clang.
 
 **Test Parts:**
-- p01: A `varargs` function is declared that expects exactly four arguments. It is then calls with just 3 arguments, returning an undefined result. This code is adapted from the second example on the CWE page linked above. If the result of the function is successfully printed, then this is scored as `TEST FAILED`.
+- p01: A `varargs` function is declared that expects exactly four arguments. It is then called with just 3 arguments, returning an undefined result. This code is adapted from the second example on the CWE page linked above. If the result of the function is successfully printed, then this is scored as `TEST FAILED`.
 
 ---
 

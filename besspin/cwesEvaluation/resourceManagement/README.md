@@ -6,7 +6,7 @@ resources.  This includes improper access to hardware resources such
 as memory, CPU, and communication and/or preventing valid users from
 gaining access to these resources.
 
-For more details about the scoring approach, please refer to [the Bessping philosophy document](../../../docs/cwesEvaluation/besspinPhilosophy.md).
+For more details about the scoring approach, please refer to [the Besspin philosophy document](../../../docs/cwesEvaluation/besspinPhilosophy.md).
 
 ---
 
@@ -51,8 +51,8 @@ Return of Stack Variable Address \[[CWE-562](https://cwe.mitre.org/data/definiti
   - The `fill_array` function shows an address of stack memory
     associated with local variable `a` returned. This will lead to the
     program crash caused when attempting to print elements.
-  - The `fill_array_with_malloc` is recommended way of allocating memory
-  on the stack.
+  - The `fill_array_with_malloc` is recommended way of allocating memory 
+    on the stack.
 
 ### CWE-590 ###
 
@@ -151,7 +151,7 @@ Release of Invalid Pointer or Reference \[[CWE-763](https://cwe.mitre.org/data/d
   - The `wrong_address_assignment` function shows wrong address assignment 
     to the pointer, which leads to error saying that p no longer points 
     to dynamically allocated memory. Hence it is incorrect to call `free()` 
-  with it. 
+    with it. 
 
 
 ### TEST-825 ###
