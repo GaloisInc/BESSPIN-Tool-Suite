@@ -5,7 +5,7 @@ Building any binaries or images for cyberPhys
 
 from besspin.base.utils.misc import *
 import besspin.target.build
-from besspin.apps.build import cpFilesToBuildDir, getBinDir, buildDirPathTuple
+from besspin.fett.build import cpFilesToBuildDir, getBinDir, buildDirPathTuple
 import functools
 
 @decorate.debugWrap

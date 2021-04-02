@@ -12,11 +12,11 @@ import string, re
 import socket, errno, pty, termios, psutil
 from collections import Iterable
 
-from besspin.apps.unix import database
-from besspin.apps.unix import webserver
-from besspin.apps.unix import voting
-from besspin.apps.freertos import freertos
-from besspin.apps.unix import ssh
+from besspin.fett.unix import database
+from besspin.fett.unix import webserver
+from besspin.fett.unix import voting
+from besspin.fett.freertos import freertos
+from besspin.fett.unix import ssh
 
 
 

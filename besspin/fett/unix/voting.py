@@ -4,8 +4,8 @@ This is executed after loading the app on the target to execute this app
 """
 
 from besspin.base.utils.misc import *
-from besspin.apps.unix.webserver import curlTest
-from besspin.apps.unix.database import sqliteCmd
+from besspin.fett.unix.webserver import curlTest
+from besspin.fett.unix.database import sqliteCmd
 import string, secrets, crypt, base64
 import json, os
 

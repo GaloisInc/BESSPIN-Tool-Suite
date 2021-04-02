@@ -10,7 +10,7 @@ from besspin.target import vcu118
 from besspin.target import qemu
 from besspin.target import awsf1
 from besspin.base.utils.aws import uploadToS3
-from besspin.apps.build import buildApps
+from besspin.fett.build import buildApps
 from besspin.cwesEvaluation.build import buildCwesEvaluation, buildFreeRTOSTest
 from besspin.cwesEvaluation.common import runTests
 from besspin.cwesEvaluation.freeRTOS import runFreeRTOSCwesEvaluation

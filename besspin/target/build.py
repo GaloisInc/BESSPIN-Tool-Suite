@@ -5,7 +5,7 @@ Building OS images any other needed files
 
 import os, re, glob, ipaddress
 from besspin.base.utils.misc import *
-import besspin.apps.build
+import besspin.fett.build
 import besspin.cyberPhys.build
 
 @decorate.debugWrap
@@ -35,7 +35,7 @@ def prepareOsImage (targetId=None):
 
     if(isEqSetting('osImage','FreeRTOS',targetId=targetId)):
         if (getSetting('mode') in ['test', 'production']):
-            besspin.apps.build.prepareFreeRTOS()
+            besspin.fett.build.prepareFreeRTOS()
         elif (isEqSetting('mode','cyberPhys')):
             besspin.cyberPhys.build.prepareFreeRTOS(targetId=targetId)
     elif(isEqSetting('osImage','debian',targetId=targetId)):
