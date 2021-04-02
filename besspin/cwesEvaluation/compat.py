@@ -26,7 +26,7 @@ class cwesEvaluationCompatibilityLayer:
         return
 
     def executeTest (self,binTest):
-        if (self.vulClass not in ["PPAC", "hardwareSoC"]):
+        if (self.vulClass not in ["hardwareSoC"]): #list of exceptions
             self.terminateAndExit (f"<executeTest> is not implemented for <{self.vulClass}>.",exitCode=EXIT.Dev_Bug)
         
         outLog = ''
