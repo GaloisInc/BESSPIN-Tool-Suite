@@ -14,5 +14,5 @@
     "userPasswordHash" : "COND-REQUIRED-SETTING",
     "rootUserAccess" : "Yes",
     "buildApps" : "No",
-    "productionTargetIp" : "REQUIRED-SETTING"
+    "remoteTargetIp" : "REQUIRED-SETTING"
 }

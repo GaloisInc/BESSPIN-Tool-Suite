@@ -342,8 +342,8 @@ def configTapAdaptor():
         'natSetup' : [
             # Enable ipv4 forwarding
             ['sysctl', '-w', 'net.ipv4.ip_forward=1'],
-            # Add productionTargetIp to main adaptor
-            ['ip', 'addr', 'add', getSetting('productionTargetIp'), 'dev',
+            # Add remoteTargetIp to main adaptor
+            ['ip', 'addr', 'add', getSetting('remoteTargetIp'), 'dev',
              getSetting('awsf1MainAdaptorName')],
             # Reject mainIP:uartFwdPort if coming from FPGA
             ['iptables',
@@ -354,36 +354,36 @@ def configTapAdaptor():
              '-d', getSetting('awsf1MainAdaptorIP'),
              '-s', getSetting('awsf1IpTarget'),
              '-j', 'REJECT'],
-            # Route incoming to productionTargetIp:uartFwdPort to mainIP
+            # Route incoming to remoteTargetIp:uartFwdPort to mainIP
             ['iptables',
              '-t', 'nat',
              '-A', 'PREROUTING',
              '-i', getSetting('awsf1MainAdaptorName'),
              '-p', 'tcp',
              '--dport', str(getSetting('uartFwdPort')),
-             '-d', getSetting('productionTargetIp'),
+             '-d', getSetting('remoteTargetIp'),
              '-j', 'DNAT',
              '--to-destination', getSetting('awsf1MainAdaptorIP')],
-            # Route packets from FPGA to productionTargetIp
+            # Route packets from FPGA to remoteTargetIp
             ['iptables',
              '-t', 'nat',
              '-A', 'POSTROUTING',
              '-o', getSetting('awsf1MainAdaptorName'),
              '-s', getSetting('awsf1IpTarget'),
              '-j', 'SNAT',
-             '--to-source', getSetting('productionTargetIp')],
-            # Route packets from productionTargetIp to FPGA
+             '--to-source', getSetting('remoteTargetIp')],
+            # Route packets from remoteTargetIp to FPGA
             ['iptables',
              '-t', 'nat',
              '-A', 'PREROUTING',
              '-i', getSetting('awsf1MainAdaptorName'),
-             '-d', getSetting('productionTargetIp'),
+             '-d', getSetting('remoteTargetIp'),
              '-j', 'DNAT',
              '--to-destination', getSetting('awsf1IpTarget')],
-            # Allow forwarding from productionTargetIp
+            # Allow forwarding from remoteTargetIp
             ['iptables',
              '-A', 'FORWARD',
-             '-s', getSetting('productionTargetIp'),
+             '-s', getSetting('remoteTargetIp'),
              '-j', 'ACCEPT'],
             # Allow forwarding to FPGA
             ['iptables',

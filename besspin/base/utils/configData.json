@@ -162,7 +162,7 @@
             "type": "boolean"
         },
         {
-            "name": "productionTargetIp",
+            "name": "remoteTargetIp",
             "type": "ipAddress"
         }
     ],
