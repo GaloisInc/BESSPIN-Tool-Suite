@@ -74,7 +74,7 @@ def exitBesspin (exitCode, preSetup=False):
         exitCode = EXIT.Unspecified
     
     # notify portal if in production mode -- cannot rely on getSetting because it calls logAndExit
-    if (inExit_GetSetting('mode') == 'production'):
+    if (inExit_GetSetting('mode') == 'fettProduction'):
         if (exitCode != EXIT.Success): # ERRONEOUS STATE!! -- emergency upload
             collectRemoteLogging (inExit_logAndExit,inExit_GetSetting,inExit_sudoShellCommand) #Maybe we have some remote logs
             tarballPath = tarArtifacts (inExit_logAndExit,inExit_GetSetting)

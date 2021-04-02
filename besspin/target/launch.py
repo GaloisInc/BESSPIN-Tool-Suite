@@ -34,7 +34,7 @@ def startBesspin (targetId=None):
     sourceVariant = getSetting('sourceVariant',targetId=targetId)
 
     # ------- Global/Misc sanity checks
-    if (isEqSetting('mode','production') and isEnabled('openConsole')):
+    if (isEqSetting('mode','fettProduction') and isEnabled('openConsole')):
         logAndExit(f"<openConsole> is not compatible with production mode.",exitCode=EXIT.Configuration)
 
     # --------   binarySource-Processor-osImage-PV Matrix --------
@@ -117,7 +117,7 @@ def startBesspin (targetId=None):
     # launch besspin
     xTarget = launchBesspin(targetId=targetId)
 
-    if (getSetting('mode') in ['test', 'production']):
+    if (getSetting('mode') in ['fettTest', 'fettProduction']):
         mkdir (os.path.join(getSetting('workDir'),'extraArtifacts'),addToSettings='extraArtifactsPath')
         
         # Start on-line logging
@@ -129,7 +129,7 @@ def startBesspin (targetId=None):
         setSetting('isTtyLogging',False,targetId=targetId)
 
     # Pipe UART to the network
-    if (isEqSetting('mode','production')):
+    if (isEqSetting('mode','fettProduction')):
         awsf1.startUartPiping(xTarget) # Shoud not execute any command after piping start
 
     return xTarget
@@ -144,7 +144,7 @@ def prepareEnv (targetId=None):
     target = getSetting('target',targetId=targetId)
 
     # cannot buildApps on awsf1
-    if (isEnabled('buildApps') and (target=='awsf1') and isEqSetting('mode','production')):
+    if (isEnabled('buildApps') and (target=='awsf1') and isEqSetting('mode','fettProduction')):
         warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <production> mode. This will be switched off.")
         setSetting('buildApps',False)
 
@@ -217,12 +217,12 @@ def launchBesspin (targetId=None):
     xTarget.start()
     if (isEnabled('isUnix',targetId=targetId) and (xTarget.osHasBooted)):
         if ((getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']) #don't do it for busybox
-                and (   (getSetting('mode') in ['test', 'production'])
+                and (   (getSetting('mode') in ['fettTest', 'fettProduction'])
                         or isEqSetting('binarySource','SRI-Cambridge',targetId=targetId) #Have to change pw if SRI-Cambridge
                     )
             ): #no need to change pw in evaluation mode
             xTarget.changeRootPassword()
-        if (getSetting('mode') in ['test', 'production']):
+        if (getSetting('mode') in ['fettTest', 'fettProduction']):
             xTarget.createUser()
     if (isEnabled('runApp',targetId=targetId)):
         if isEqSetting('mode', 'evaluateSecurityTests'):
@@ -234,11 +234,11 @@ def launchBesspin (targetId=None):
                 sendTimeout *= 2
             runTests(xTarget, sendFiles=isEnabled('sendTarballToTarget'), 
                 timeout=sendTimeout)
-        elif (getSetting('mode') in ['test', 'production']):
+        elif (getSetting('mode') in ['fettTest', 'fettProduction']):
             xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget',targetId=targetId))
         else:
             runCyberPhys(xTarget)
-    if (getSetting('mode') in ['test', 'production']):
+    if (getSetting('mode') in ['fettTest', 'fettProduction']):
         if (isEnabled('isUnix',targetId=targetId) and isEnabled("useCustomCredentials")):
             xTarget.changeUserPassword()
         if isEnabled('isUnix',targetId=targetId) and isEnabled("rootUserAccess"):
@@ -249,10 +249,10 @@ def launchBesspin (targetId=None):
 """ This is the teardown function """
 @decorate.debugWrap
 def endBesspin (xTarget,isDeadProcess=False):
-    if (isEqSetting('mode','production')):
+    if (isEqSetting('mode','fettProduction')):
         awsf1.endUartPiping(xTarget)
 
-    if (getSetting('mode') in ['test', 'production']):
+    if (getSetting('mode') in ['fettTest', 'fettProduction']):
         if (isEnabled('runApp') and (not isDeadProcess)): #Cannot collect local logs if deadProcess
             xTarget.collectLogs()
 
@@ -264,7 +264,7 @@ def endBesspin (xTarget,isDeadProcess=False):
         if (xTarget.osHasBooted):
             xTarget.shutdown()
     
-    if (isEqSetting('mode','production')):
+    if (isEqSetting('mode','fettProduction')):
         tarballPath = tarArtifacts (logAndExit,getSetting)
         uploadToS3(getSetting(f'{getSetting("besspinEntrypoint")}S3Bucket'), logAndExit, 
                         tarballPath, 'besspin/production/artifacts/')
@@ -281,7 +281,7 @@ def endBesspin (xTarget,isDeadProcess=False):
 @decorate.timeWrap
 def resetTarget (curTarget):
     targetId = curTarget.targetId
-    if ((isEqSetting('mode','production') and (not isEqSetting('target','awsf1')))
+    if ((isEqSetting('mode','fettProduction') and (not isEqSetting('target','awsf1')))
             or (not isEqSetting('mode','cyberPhys'))):
         logAndExit(f"<resetTarget> is not compatible with <{getSetting('target',targetId=targetId)}> target"
             f" in <{getSetting('mode')}> mode.")
@@ -291,7 +291,7 @@ def resetTarget (curTarget):
     collectLogs can err in any step, no need for crazy error handling, especially that we rsyslog them anyway.
     """
     printAndLog("resetTarget: tearing down the current target...",doPrint=(not isEqSetting('mode','cyberPhys')))
-    if (isEqSetting('mode','production')):
+    if (isEqSetting('mode','fettProduction')):
         awsf1.endUartPiping(curTarget)
     elif (isEqSetting('mode','cyberPhys')):
         besspin.cyberPhys.launch.endUartPiping(targetId)
@@ -304,7 +304,7 @@ def resetTarget (curTarget):
 
     printAndLog("resetTarget: Re-preparing the environment...",doPrint=(not isEqSetting('mode','cyberPhys')))
     # Reload the FPGA
-    if (isEqSetting('mode','production')): #The AWS resetting need to be tested/adjusted if desired on cyberPhys
+    if (isEqSetting('mode','fettProduction')): #The AWS resetting need to be tested/adjusted if desired on cyberPhys
         if (isEqSetting('pvAWS','firesim')):
             awsf1.removeKernelModules()
             awsf1.installKernelModules()
@@ -342,7 +342,7 @@ def resetTarget (curTarget):
     newTarget.userCreated = userCreated
 
     newTarget.start()
-    if (isEqSetting('mode','production')):
+    if (isEqSetting('mode','fettProduction')):
         awsf1.startUartPiping(newTarget)
     elif (isEqSetting('mode','cyberPhys')):
         if (isEnabled('pipeTheUart')):
@@ -352,7 +352,7 @@ def resetTarget (curTarget):
 
     if ((getSetting('target',targetId=targetId) in ['vcu118', 'qemu']) #We currently do not use a separate .img file
             and (isEnabled('isUnix',targetId=targetId)) 
-            and (getSetting('mode') in ['test', 'production'])):
+            and (getSetting('mode') in ['fettTest', 'fettProduction'])):
         newTarget.createUser()
         if (getSetting('osImage',targetId=targetId) in ['debian','FreeBSD']):
             newTarget.changeRootPassword()
