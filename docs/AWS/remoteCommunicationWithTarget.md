@@ -20,7 +20,7 @@ sudo ip tuntap del mode tap dev tap0
 >>> productionTargetIp = 192.168.0.IP
 ```
 
-4. Run the tool in any open ended mode (`openConsole` or `production`).
+4. Run the tool in any open ended mode (`openConsole` or `fettProduction`).
 
 5. Create another instance `i-2` in the same VPC and same subnet as `i-1`. Use any AMI, any instance type. It's easier to just use the BESSPIN AMI on a `t2.micro`. 
 
