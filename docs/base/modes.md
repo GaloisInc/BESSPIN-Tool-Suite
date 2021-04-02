@@ -44,9 +44,9 @@ Similar to FreeRTOS, for each vulnerability class, the `scoreTests` function wil
 
 ---
 
-## `mode = test` ##
+## `mode = fettTest` ##
 
-The `test` mode is one of the two modes of the bug bounty. The [bug bounty readme](../bugBounty2020/README.md) has more details about the functionality and the configuration. The tool's flow is as follows:
+The `fettTest` mode is one of the two modes of the bug bounty. The [bug bounty readme](../bugBounty2020/README.md) has more details about the functionality and the configuration. The tool's flow is as follows:
 - `besspin.py` loads the configuration and calls `startBesspin`.
 - `startBesspin` calls `prepareEnv` to verify the environment setup, and perform any additional setup or programming it needs to prepare the target for launching.
 - `startBesspin` calls `launchBesspin` which does the following:
@@ -63,12 +63,12 @@ The `test` mode is one of the two modes of the bug bounty. The [bug bounty readm
 
 ---
 
-## `mode = production` ## 
+## `mode = fettProduction` ## 
 
-The `production` mode is one of the two modes of the bug bounty. The [bug bounty readme](../bugBounty2020/README.md) has more details about the functionality and the configuration. The `production` mode works only with the `awsf1` mode. The tool's flow is as follows:
+The `fettProduction` mode is one of the two modes of the bug bounty. The [bug bounty readme](../bugBounty2020/README.md) has more details about the functionality and the configuration. The `fettProduction` mode works only with the `awsf1` mode. The tool's flow is as follows:
 - `besspin.py` loads the configuration and calls `startBesspin`.
 - `startBesspin` calls `prepareEnv` to verify the environment setup, and perform any additional setup or programming it needs to prepare the target for launching.
-- `startBesspin` calls `launchBesspin` exactly as in the `test` mode described above.
+- `startBesspin` calls `launchBesspin` exactly as in the `fettTest` mode described above.
 - `startBesspin` calls `startUartPiping` that pipes the target's TTY to a TCP port.
 - `startBesspin` returns.
 - The tool sends an SQS message to the portal to signal successful deployment.

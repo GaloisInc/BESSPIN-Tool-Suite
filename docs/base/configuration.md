@@ -56,7 +56,7 @@ The document [targets.md](./targets.md) has detailed explanation of the supporte
 
 - `osImage`: The operating system to be used. The program supports three OSes: Linux Debian, FreeBSD, and FreeRTOS. The tool also supports Linux Busybox for the sake of debugging and smoke testing since it is as light as Linux can get. The allowed values are thus: `debian`, `FreeBSD`, `FreeRTOS`, and `busybox`. The document [OSes.md](./OSes.md) has more details about the OSes building, compatibility with targets and processors, assumptions, etc.
 
-- `freertosFatFs`: The backend of the FAT filesystem for FreeRTOS. Choices are: `ramdisk`, `dosblk`, `sdcard`, and `default`. The default option is RAM disk for VCU118 and DOS block on AWS F1. Note that FAT filesystem is only applicable to the bug bounty modes. Also, since this affects the building of FreeRTOS, this setting has meaningful effects only on the `test` mode when `buildApps` in the `[application]` section is enabled. The RAM disk option is compatible with any backend whilst the DOS block is only compatible with AWS F1, and the SD card is only compatible with VCU118.
+- `freertosFatFs`: The backend of the FAT filesystem for FreeRTOS. Choices are: `ramdisk`, `dosblk`, `sdcard`, and `default`. The default option is RAM disk for VCU118 and DOS block on AWS F1. Note that FAT filesystem is only applicable to the bug bounty modes. Also, since this affects the building of FreeRTOS, this setting has meaningful effects only on the `fettTest` mode when `buildApps` in the `[application]` section is enabled. The RAM disk option is compatible with any backend whilst the DOS block is only compatible with AWS F1, and the SD card is only compatible with VCU118.
 
 - `elfLoader`: This is only applicable to VCU118 (the parameter name is old and non-ideal, ticket #473 should address this). There are two options to load the OS binary into the FPGA on VCU118: the first one is through JTAG using GDB load, which is the `JTAG` option. The second option is a workaround to speed up the binary loading since JTAG loading takes some time for large binaries. We use a FreeRTOS program that starts a TFTP client. This way, the large binary is uploaded using UDP, which is faster than JTAG. After completing the upload, the FreeRTOS program replaces itself and jumps to the first instruction of the uploaded OS booting sequence. We call this option `netboot`.
 
@@ -104,7 +104,7 @@ This section is loaded in all modes.
 
 ## [applications] ##
 
-This section is only relevant for `test` mode. It has a single boolean parameter: `buildApps`,for whether to build the application binaries and the FreeRTOS binary, or fetch them from the tool's resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details).
+This section is only relevant for `fettTest` mode. It has a single boolean parameter: `buildApps`,for whether to build the application binaries and the FreeRTOS binary, or fetch them from the tool's resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details).
 
 ---
 
