@@ -91,7 +91,7 @@ def freeRTOSBuildChecks(targetId=None,freertosFork="classic"):
             setSetting('linker','LLD')
 
         # FatFs
-        if (isEqSetting('mode','fettTest')): #targeId is None for test mode (the only mode that uses SDCard+buildApps)
+        if (isEqSetting('mode','fettTest')):
             if (isEqSetting('freertosFatFs','default')):
                 if (isEqSetting('target','awsf1')):
                     setSetting('freertosFatFs','dosblk')
@@ -205,8 +205,8 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
             envVars.append(f"PROG=main_besspin")
         envVars.append(f"BSP={getSetting('target',targetId=targetId)}")
         if (isEqSetting('mode','fettTest')):
-            envVars.append(f"FATFS={getSetting('freertosFatFs',targetId=targetId).upper()}")
-            if isEqSetting('freertosFatFs','ramdisk',targetId=targetId):
+            envVars.append(f"FATFS={getSetting('freertosFatFs').upper()}")
+            if isEqSetting('freertosFatFs','ramdisk'):
                 envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")
 
         if isEqSetting('binarySource', 'Michigan',targetId=targetId):
