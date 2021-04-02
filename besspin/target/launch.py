@@ -35,7 +35,7 @@ def startBesspin (targetId=None):
 
     # ------- Global/Misc sanity checks
     if (isEqSetting('mode','fettProduction') and isEnabled('openConsole')):
-        logAndExit(f"<openConsole> is not compatible with production mode.",exitCode=EXIT.Configuration)
+        logAndExit(f"<openConsole> is not compatible with <fettProduction> mode.",exitCode=EXIT.Configuration)
 
     # --------   binarySource-Processor-osImage-PV Matrix --------
     # Check that the processor is provided by this team
@@ -145,7 +145,7 @@ def prepareEnv (targetId=None):
 
     # cannot buildApps on awsf1
     if (isEnabled('buildApps') and (target=='awsf1') and isEqSetting('mode','fettProduction')):
-        warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <production> mode. This will be switched off.")
+        warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <fettProduction> mode. This will be switched off.")
         setSetting('buildApps',False)
 
     # config sanity checks for building apps
@@ -158,7 +158,7 @@ def prepareEnv (targetId=None):
                 logAndExit("Running in <evaluateSecurityTests> mode, but no tests are enabled.",exitCode=EXIT.Nothing_to_do)
         elif isEqSetting("mode", "cyberPhys"):
             buildCyberPhys(targetId=targetId)
-        else:
+        elif (getSetting("mode") in ["fettTest", "fettProduction"]):
             buildApps ()
     elif (osImage=='busybox'):
         printAndLog(f"{targetInfo}<busybox> is only used for smoke testing the target/network. No applications are supported.")
@@ -236,7 +236,7 @@ def launchBesspin (targetId=None):
                 timeout=sendTimeout)
         elif (getSetting('mode') in ['fettTest', 'fettProduction']):
             xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget',targetId=targetId))
-        else:
+        elif (isEqSetting('mode','cyberPhys')):
             runCyberPhys(xTarget)
     if (getSetting('mode') in ['fettTest', 'fettProduction']):
         if (isEnabled('isUnix',targetId=targetId) and isEnabled("useCustomCredentials")):
