@@ -28,7 +28,7 @@ commonDefaults = {
 }
 
 commonDefaultsFETT = {
-    ('mode',('test',))
+    ('mode',('fettTest',))
 }
 
 commonDefaultsCWEs = {
