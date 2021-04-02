@@ -10,12 +10,12 @@ Cyberphys Demonstrator Configuration Variables
 CAN_PORT = 5002
 INFO_UI_PORT = 5013
 
-SIM_IP = "10.88.88.4" # Sim PC IP
+SIM_IP = "127.0.0.1" # Sim PC IP
 
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
 # See cyberPhys-test.ini for IP allocation
-# Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
+# Also see https://github.com/DARPA-SSITH-Demonstrators/SSITH-CyberPhys/issues/225
 BASE_WHITELIST = ["10.88.88.11", "10.88.88.12"] # Scenario 1: Baseline ECU + Baseline Infotainment
 SSITH_INFO_WHITELIST = ["10.88.88.21", "10.88.88.22"] # Scenario 2: Baseline ECU + Secure Infotainment
 SSITH_ECU_WHITELIST = ["10.88.88.31", "10.88.88.32"] # Scenario 3: Secure ECU + Baseline Infotainment
@@ -84,3 +84,7 @@ BEAMNG_ITALY_SPAWNPOINTS = {'village_mountain':
                                 {'pos': (-690.403564, -1338.64136, 140.215942), 'rot': (0.0, -0.0, 85.01954390247003)},
                             'castle_town':
                                 {'pos': (-969.635193, 953.628723, 392.483368), 'rot': (0.0, -0.0, 74.9999865878277)}}
+
+
+# LED Management Configuration
+LED_MANAGEMENT_INPUT = [(5007, "pattern-request")]
