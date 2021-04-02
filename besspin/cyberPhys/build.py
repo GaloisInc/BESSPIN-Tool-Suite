@@ -90,26 +90,16 @@ def copyInfotainmentServerFiles(tarName, targetId=None):
 @decorate.debugWrap
 @decorate.timeWrap
 def buildOtaUpdateServer(tarName, targetId=None):
-    if (isEnabled('buildApps')):
-        # Build server
-        logAndExit (f"Building from source is not supported for the OTA update server application",
-                   exitCode=EXIT.Configuration)
-    else:
-        tarFiles = copyOtaUpdateserverFiles(tarName,targetId=targetId)
-        #Create the tarball here to be sent to target
-        tar (tarName, tarFiles)
+    tarFiles = copyOtaUpdateserverFiles(tarName,targetId=targetId)
+    #Create the tarball here to be sent to target
+    tar (tarName, tarFiles)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def buildInfotainmentServer(tarName, targetId=None):
-    if (isEnabled('buildApps')):
-        # Build server
-        logAndExit(f"Building from source is not supported for the infotainment server application",
-                   exitCode=EXIT.Configuration)
-    else:
-        tarFiles = copyInfotainmentServerFiles(tarName, targetId=targetId)
-        # create the tarball here to be sent to target
-        tar(tarName, tarFiles)
+    tarFiles = copyInfotainmentServerFiles(tarName, targetId=targetId)
+    # create the tarball here to be sent to target
+    tar(tarName, tarFiles)
 
 @decorate.debugWrap
 @decorate.timeWrap

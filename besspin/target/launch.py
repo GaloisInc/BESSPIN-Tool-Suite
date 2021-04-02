@@ -143,11 +143,6 @@ def prepareEnv (targetId=None):
     osImage = getSetting('osImage',targetId=targetId)
     target = getSetting('target',targetId=targetId)
 
-    # cannot buildApps on awsf1
-    if (isEnabled('buildApps') and (target=='awsf1') and isEqSetting('mode','fettProduction')):
-        warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <fettProduction> mode. This will be switched off.")
-        setSetting('buildApps',False)
-
     # config sanity checks for building artifacts
     if (osImage in ['FreeRTOS', 'debian', 'FreeBSD']):
         setSetting('bootTest',False,targetId=targetId)
