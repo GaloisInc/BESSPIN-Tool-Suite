@@ -18,12 +18,34 @@ from besspin.cwesEvaluation.bufferErrors.count import bfparams
 @decorate.debugWrap
 def buildCwesEvaluation():
     """
-    Cross compile enabled CWE tests.
+    Prepares the tests for CWEs evaluation.  Specifically, this function:
+
+        - On Unix, copies cross compiles enabled C tests if needed.
+        - On FreeRTOS, copies and generates supporting C test files without
+          cross compiling.
+        - Generates tests when needed.
 
     SIDE-EFFECTS:
     -------------
         - Copies enabled test C and build files to <${workDir}/build>.
-        - Cross compiles enabled test files.
+        - If information leakage tests are enabled and not running in
+          self-assessment mode, this function generates the information leakage
+          test wrappers.
+        - If buffer errors tests are enabled and not running in self-assessment
+          mode, this function generates buffer errors tests.
+        - Generates <testsParameters.h> header file for each enabled
+          vulnerability class.
+        - On Unix:
+            - Cross compiles enabled test files for which self assessment is
+              disabled.
+            - Cross compiles multitasking utility if
+              ${runUnixMultitaskingTests} is enabled and if any tests were
+              cross compiled.
+        - On FreeRTOS:
+            - Generates ${buildDir}/besspinUserConfig.h header file.
+            - Generates <main> wrappers for the tests.
+            - Sets ${osImageElf}, ${osImageExtraElf}, and ${osImageAsm}
+              to point to the corresponding FreeRTOS files.
 
     RETURNS:
     --------
@@ -337,7 +359,7 @@ def buildFreeRTOSTest(test, vulClass, part, testLogFile):
 
         part : Int
             Test part to build.  Passed to test as the #define directive
-            <TESTGEN_TEST_PART>.
+            <BESSPIN_TEST_PART>.
 
         testLogFile : String
             Unused by this function.  It exists as a parameter to enable calling

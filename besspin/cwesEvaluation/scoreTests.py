@@ -11,7 +11,11 @@ import besspin.base.config
 VUL_CLASSES = ["bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC", "injection"]
 
 class SCORES (enum.Enum):
-    """ An enum representing the possible score values for a CWE test. """
+    """
+    An enum representing the possible score values for a CWE test.
+    See ${repo}/docs/cwesEvaluation/besspinPhilosophy.md for an explanation of
+    each score.
+    """
     NINF = -10
     NOT_APPLICABLE = -4
     NOT_IMPLEMENTED = -3
@@ -426,7 +430,7 @@ def customScorePart (lines): #should return: NINF (for PASS), DETECTED, or NONE 
 def adjustToCustomScore (lines,defaultScore):
     """
     If ${useCustomScoring} is enabled, this function custom scores a test and
-    returns the lower score between the custom and default score.  If
+    returns the better score between the custom and default score.  If
     ${useCustomScoring} is disabled, this function returns the default score.
 
     ARGUMENTS:
@@ -440,7 +444,7 @@ def adjustToCustomScore (lines,defaultScore):
     RETURNS:
     --------
         If ${useCustomScoring} is enabled:
-            - Returns whichever is lower between the custom score and
+            - Returns whichever is better between the custom score and
               <defaultScore>.
         Else:
             - Returns <defaultScore>.

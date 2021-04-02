@@ -33,8 +33,6 @@ def runFreeRTOSCwesEvaluation():
         - Writes test output logs and score CSVs to ${logDir}.
         - Prints score tables to terminal.
         - Writes score report to <${workDir}/scoreReport.log>.
-        - Writes multitasking score report to
-          <${workDir}/multitaskingScoreReport.log>.
     """
     printAndLog (f"Launching BESSPIN <{getSetting('mode')} mode>...")
     baseLogDir = os.path.join(getSetting('workDir'), 'cwesEvaluationLogs')
