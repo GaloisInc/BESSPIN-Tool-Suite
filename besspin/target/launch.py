@@ -150,7 +150,7 @@ def prepareEnv (targetId=None):
 
     # config sanity checks for building artifacts
     if (osImage in ['FreeRTOS', 'debian', 'FreeBSD']):
-        setSetting('runApp',True,targetId=targetId)
+        setSetting('bootTest',False,targetId=targetId)
 
         if isEqSetting("mode", "evaluateSecurityTests"):
             isThereAnythingToRun = buildCwesEvaluation()
@@ -162,7 +162,7 @@ def prepareEnv (targetId=None):
             buildApps ()
     elif (osImage=='busybox'):
         printAndLog(f"{targetInfo}<busybox> is only used for smoke testing the target/network. No applications are supported.")
-        setSetting('runApp',False,targetId=targetId)
+        setSetting('bootTest',True,targetId=targetId)
         if (isEqSetting("mode", "evaluateSecurityTests")):
             setSetting("isThereAReasonToBoot",True) #boot to test
     else:
@@ -224,7 +224,7 @@ def launchBesspin (targetId=None):
             xTarget.changeRootPassword()
         if (getSetting('mode') in ['fettTest', 'fettProduction']):
             xTarget.createUser()
-    if (isEnabled('runApp',targetId=targetId)):
+    if (not isEnabled('bootTest',targetId=targetId)): #actual run
         if isEqSetting('mode', 'evaluateSecurityTests'):
             sendTimeout = 20*len(getSetting('vulClasses'))
             if (('bufferErrors' in getSetting('vulClasses')) and (getSettingDict('bufferErrors','nTests')>100)):
@@ -253,7 +253,7 @@ def endBesspin (xTarget,isDeadProcess=False):
         awsf1.endUartPiping(xTarget)
 
     if (getSetting('mode') in ['fettTest', 'fettProduction']):
-        if (isEnabled('runApp') and (not isDeadProcess)): #Cannot collect local logs if deadProcess
+        if ((not isEnabled('bootTest')) and (not isDeadProcess)): #Cannot collect local logs if deadProcess
             xTarget.collectLogs()
 
         if ((getSetting('osImage') in ['debian', 'FreeBSD']) and (isEqSetting('target','awsf1'))): 
@@ -361,7 +361,7 @@ def resetTarget (curTarget):
             if (isEnabled("rootUserAccess")):
                 newTarget.enableRootUserAccess()
 
-    if (isEqSetting('mode','cyberPhys') and isEnabled('runApp',targetId=targetId)):
+    if (isEqSetting('mode','cyberPhys') and (not isEnabled('bootTest',targetId=targetId))):
         runCyberPhys(newTarget)
 
     return newTarget
