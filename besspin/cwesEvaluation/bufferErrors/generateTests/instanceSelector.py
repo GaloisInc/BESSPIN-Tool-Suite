@@ -16,6 +16,11 @@ def instanceToConcept(instance):
             instance.Boundary,
             instance.Location)
 
+def compilingBareMetal():
+    return (isEnabled('useCustomCompiling') and
+            (getSettingDict('customizedCompiling','gccDebian') in
+             ['bareMetal8.3', 'bareMetal9.2']))
+
 def getQuota(instance):
     """
     Given an instance, returns the quota for the concept it belongs to.
@@ -44,6 +49,18 @@ def getQuota(instance):
         # computation. This increases the number of CWE-130, CWE-131, and
         # CWE-680 tests.
         return baseQuota // 4
+    if (compilingBareMetal() and
+        (instance.Magnitude == "Magnitude_Far" or
+         instance.DataSize == "DataSize_Huge")):
+        # Decrease the number of Magnitude_Far and DataSize_Huge tests when
+        # compiling for bare metal.  These two types of tests are likely to be
+        # caught by the OS (for example, Magnitude_Far has a ~50% detection
+        # rate on Debian).  Usually these are down weighted by the presence of
+        # path manipulation tests which use small buffers with errors very
+        # close to the end of the buffer, but since those tests are disabled
+        # when building for bare metal we must manually down weight these
+        # parameters.
+        return baseQuota // 2
     if (instance.Location == "Location_Stack" and
         instance.Magnitude == "Magnitude_Far"):
         # Decrease number of tests with errors that are far from stack
@@ -70,7 +87,7 @@ class InstanceSelector:
     def chooseInstance(self):
         numSelected = sum(self.conceptCounts.values())
         if (not isEqSetting('osImage', 'FreeRTOS') and
-            not (isEnabled('useCustomCompiling') and (getSettingDict('customizedCompiling','gccDebian') in ['bareMetal8.3', 'bareMetal9.2'])) and
+            not compilingBareMetal() and
             not isEnabledDict("bufferErrors", "useCustomErrorModel") and
             numSelected < 0.05 * getSettingDict('bufferErrors', 'nTests')):
             # Force selection of a small number of CWE_785 tests on Unix
