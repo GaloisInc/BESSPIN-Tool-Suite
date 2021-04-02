@@ -172,7 +172,7 @@
         }
     ],
 
-    "applications" : [
+    "fett" : [
         {
             "name" : "buildApps",
             "type" : "boolean"

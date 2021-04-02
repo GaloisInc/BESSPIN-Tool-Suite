@@ -52,8 +52,9 @@ There are two modes that run very similarly: `fettTest` and `fettProduction`. Th
 When `mode` is set to `fettTest` or `fettProduction` in the `functionality` section, the following sections are loaded:    
 - `target`: The target's settings as explained in [targets.md](../base/targets.md).
 - `common`: The common settings as explained in [configuration.md](../base/configuration.md).
-- `applications`: Explained in [configuration.md](../base/configuration.md). Only valid in `fettTest` mode. 
 - `build`: The compiler/linker settings as explained in [configuration.md](../base/configuration.md). Only valid in `fettTest` mode when `buildApps` is enabled.
+- `fett`: This is only loaded in the bug bounty modes, it has the following parameters:
+    - `buildApps`: Only valid in `fettTest` mode. It is a boolean for whether to build the application binaries and the FreeRTOS binary, or fetch them from the tool's resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details).
 
 
 ## Example ## 

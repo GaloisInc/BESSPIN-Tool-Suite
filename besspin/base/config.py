@@ -11,10 +11,11 @@ from importlib.machinery import SourceFileLoader
 import besspin.cwesEvaluation.scoreTests
 SCORES = besspin.cwesEvaluation.scoreTests.SCORES
 
-COMMON_SECTIONS = ['functionality', 'common', 'applications', 'build']
+COMMON_SECTIONS = ['functionality', 'common', 'build']
 TARGET_SECTION = 'target'
 CWES_SECTION = 'evaluateSecurityTests'
 CYBERPHYS_SECTION = 'cyberPhys'
+FETT_SECTION = 'fett'
 
 CWES_ENABLED_TESTS_SECTION = "enabledTests"
 CWES_SELF_ASSESSMENT_SECTION = "selfAssessment"
@@ -55,6 +56,10 @@ def loadConfiguration(configFile):
     # Load evaluateSecurityTests related sections
     if isEqSetting("mode", "evaluateSecurityTests"):
         loadSecurityEvaluationConfiguration(xConfig,configData)
+
+    # Load FETT related section
+    if (getSetting("mode") in ["fettTest", "fettProduction"]):
+        loadConfigSection(xConfig,FETT_SECTION,configData,FETT_SECTION)
 
     if isEnabled('useCustomCredentials'):
         # Check username is legal

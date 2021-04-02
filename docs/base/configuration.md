@@ -102,9 +102,9 @@ This section is loaded in all modes.
 
 ---
 
-## [applications] ##
+## [fett] ##
 
-This section is only relevant for `fettTest` mode. It has a single boolean parameter: `buildApps`,for whether to build the application binaries and the FreeRTOS binary, or fetch them from the tool's resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details).
+This section is only loaded in the bug bounty modes (`fettTest` and `fettProduction`). Please refer to [bugBounty2020/README.md](../bugBounty2020/README.md) for details about each parameter. 
 
 ---
 
