@@ -17,6 +17,41 @@ from besspin.cwesEvaluation.bufferErrors.count import bfparams
 
 @decorate.debugWrap
 def buildCwesEvaluation():
+    """
+    Prepares the tests for CWEs evaluation.  Specifically, this function:
+
+        - On Unix, copies cross compiles enabled C tests if needed.
+        - On FreeRTOS, copies and generates supporting C test files without
+          cross compiling.
+        - Generates tests when needed.
+
+    SIDE-EFFECTS:
+    -------------
+        - Copies enabled test C and build files to <${workDir}/build>.
+        - If information leakage tests are enabled and not running in
+          self-assessment mode, this function generates the information leakage
+          test wrappers.
+        - If buffer errors tests are enabled and not running in self-assessment
+          mode, this function generates buffer errors tests.
+        - Generates <testsParameters.h> header file for each enabled
+          vulnerability class.
+        - On Unix:
+            - Cross compiles enabled test files for which self assessment is
+              disabled.
+            - Cross compiles multitasking utility if
+              ${runUnixMultitaskingTests} is enabled and if any tests were
+              cross compiled.
+        - On FreeRTOS:
+            - Generates ${buildDir}/besspinUserConfig.h header file.
+            - Generates <main> wrappers for the tests.
+            - Sets ${osImageElf}, ${osImageExtraElf}, and ${osImageAsm}
+              to point to the corresponding FreeRTOS files.
+
+    RETURNS:
+    --------
+        Boolean.  Whether there are any tests to run.
+    """
+
     # Create build directory
     buildDir = os.path.join(getSetting('workDir'), 'build')
     mkdir(buildDir, addToSettings="buildDir")
@@ -215,11 +250,37 @@ def buildCwesEvaluation():
 
 @decorate.debugWrap
 def copyUnixBuildFiles(dest, vulClass, checkClassSpecificMake):
+    """
+    Copy Unix build files (Makefile, defaultEnvUnix.mk, and unbufferStdout.h)
+    to a build directory.
+
+    ARGUMENTS:
+    ----------
+    dest : String
+        Directory to copy build files into.
+
+    vulClass : Optional String
+        Vulnerability class being built.  May be <None> iff
+        <checkClassSpecificMake> is <False>.
+
+    checkClassSpecificMake : Boolean
+        If True, check the setting ${vulClass}[<classSpecificMake>] to
+        determine whether the vulnerability class has a special Makefile.  If
+        False, ignore this setting and use the default Makefile.
+
+    SIDE-EFFECTS:
+    -------------
+        - If using custom compiling, copies
+          <${customizedCompiling}[${pathToCustomMakefile}]> to
+          <dest>.  Otherwise, copies Makefile for <vulClass>, as
+          well as <${repoDir}/besspin/target/utils/defaultEnvUnix.mk> and
+          <${repoDir}/besspin/cwesEvaluation/utils/unbufferStdout.h> to <dest>.
+    """
     # copy makefile over
     if (isEnabled('useCustomCompiling') and
         isEnabledDict('customizedCompiling','useCustomMakefile')):
         cp (getSettingDict('customizedCompiling','pathToCustomMakefile'),
-            os.path.join(vulClassDir, 'Makefile'))
+            os.path.join(dest, 'Makefile'))
     else: # Use default environment
         if (checkClassSpecificMake and
             doesSettingExistDict(vulClass, "classSpecificMake") and
@@ -253,6 +314,18 @@ def copyUnixBuildFiles(dest, vulClass, checkClassSpecificMake):
 @decorate.debugWrap
 @decorate.timeWrap
 def buildTarball():
+    """
+    Build a tarball containing the compiled CWE tests.
+
+    SIDE-EFFECTS:
+    -------------
+        - If there are no compiled binaries:
+            - Sets ${sendTarballToTarget} to <False>.
+        - Else:
+            - Writes a tarball containing the compiled CWE tests to
+              <${buildDir}/${tarballName}>.
+            - Sets ${sendTarballToTarget} to <True>.
+    """
     fileList = [(os.path.basename(f), f) for f in
                 glob.glob(os.path.join(getSetting('buildDir'),
                                        "*",
@@ -273,6 +346,32 @@ def buildTarball():
 @decorate.debugWrap
 @decorate.timeWrap
 def buildFreeRTOSTest(test, vulClass, part, testLogFile):
+    """
+    Cross compile a CWE test for FreeRTOS.
+
+    ARGUMENTS:
+    ----------
+        test : String
+            Test C file to compile.
+
+        vulClass : String
+            Vulnerability class <test> belongs to.
+
+        part : Int
+            Test part to build.  Passed to test as the #define directive
+            <BESSPIN_TEST_PART>.
+
+        testLogFile : String
+            Unused by this function.  It exists as a parameter to enable calling
+            this function with the argument <*getSetting('currentTest')>.
+
+    SIDE-EFFECTS:
+    -------------
+        - Copies test build files to ${buildDir}/<vulClass>
+        - Cross compiles part <part> of <test> belonging to <vulClass>.
+        - Removes intermediate build artificats (such as .o files) from
+          ${buildDir}.
+    """
     if (part==0):
         logging.debug(f"buildFreeRTOSTest: <{test}> is called with [part=0]. Skipping the build.")
         return
