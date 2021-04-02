@@ -14,6 +14,10 @@ import os
 """
 @decorate.debugWrap
 def buildApps ():
+    # cannot buildApps in fettProduction mode
+    if (isEnabled('buildApps') and isEqSetting('mode','fettProduction')):
+        logAndExit (f"It is not allowed to <buildApps> in <fettProduction> mode.",exitCode=EXIT.Configuration)
+
     # create the build directory
     buildDir = os.path.join(getSetting('workDir'),'build')
     mkdir(buildDir,addToSettings='buildDir')
@@ -313,7 +317,10 @@ def cpFilesToBuildDir (sourceDir, pattern=None, targetId=None):
     # If no pattern is specified, look for "*.c" files if we're building,
     # otherwise *.riscv
     if pattern is None:
-        pattern = "*.c" if isEnabled('buildApps') else "*.riscv"
+        if ((getSetting('mode') in ['fettTest', 'fettProduction']) and isEnabled('buildApps')):
+            pattern = "*.c"
+        else:
+            pattern = "*.riscv"
     cp (sourceDir,getSetting('buildDir',targetId=targetId),pattern=pattern)
 
 @decorate.debugWrap
