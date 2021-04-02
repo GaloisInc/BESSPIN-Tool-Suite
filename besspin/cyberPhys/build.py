@@ -131,16 +131,13 @@ def prepareFreeRTOS(targetId=None):
     copyDir(os.path.join(getSetting('repoDir'),'besspin','cyberPhys','srcFreeRTOS'),buildDir,copyContents=True)
     copyDir(os.path.join(getSetting('repoDir'),'besspin','cyberPhys','canlib'),buildDir,copyContents=True)
 
-    configHfile = ftOpenFile (os.path.join(buildDir,'besspinFreeRTOSConfig.h'),'a')
     canPort = getSetting('cyberPhysCanbusPort')
+    configHfile = ftOpenFile (os.path.join(buildDir,'besspinFreeRTOSConfig.h'),'a')
     try:
         configHfile.write(f"#define CAN_PORT ({canPort}UL)\n")
     except Exception as exc:
         logAndExit(f"Failed to populate <besspinFreeRTOSConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
     configHfile.close()
-
-    besspin.target.build.prepareFreeRTOSNetworkParameters(targetId=targetId)
-    besspin.target.build.buildFreeRTOS(targetId=targetId, buildDir=buildDir)
 
     configHfile = ftOpenFile (os.path.join(buildDir,'besspinFreeRTOSIPConfig.h'),'a')
     try:
@@ -150,6 +147,9 @@ def prepareFreeRTOS(targetId=None):
     except Exception as exc:
         logAndExit(f"Failed to populate <besspinFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
     configHfile.close()
+
+    besspin.target.build.prepareFreeRTOSNetworkParameters(targetId=targetId)
+    besspin.target.build.buildFreeRTOS(targetId=targetId, buildDir=buildDir)
 
     cp(os.path.join(buildDir,'FreeRTOS.elf'), getSetting('osImageElf',targetId=targetId))
     return
