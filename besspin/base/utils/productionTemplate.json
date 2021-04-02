@@ -1,5 +1,5 @@
 {
-    "mode" : "production",
+    "mode" : "fettProduction",
     "binarySource" : "REQUIRED-SETTING",
     "sourceVariant" : "default",
     "target" : "awsf1",

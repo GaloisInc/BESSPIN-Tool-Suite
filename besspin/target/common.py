@@ -86,7 +86,7 @@ class commonTarget():
 
         self.appModules = []
 
-        if (getSetting('mode') in ['test', 'production']): #Bugbounty app stack
+        if (getSetting('mode') in ['fettTest', 'fettProduction']): #Bugbounty app stack
             self.httpPortTarget  = getSetting('HTTPPortTarget')
             self.httpsPortTarget = getSetting('HTTPSPortTarget')
             self.votingHttpPortTarget  = getSetting('VotingHTTPPortTarget')
@@ -1213,7 +1213,7 @@ class commonTarget():
             if (self.onlySsh):
                 self.closeSshConn()
         elif (self.osImage=='FreeRTOS'):
-            if (getSetting('mode') in ['test', 'production']):
+            if (getSetting('mode') in ['fettTest', 'fettProduction']):
                 freertos.terminateAppStack(self)
         else:
             self.terminateAndExit(f"terminateTarget: not implemented for <{self.osImage}> on <{self.target}>.",exitCode=EXIT.Implementation)

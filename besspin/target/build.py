@@ -34,7 +34,7 @@ def prepareOsImage (targetId=None):
 
 
     if(isEqSetting('osImage','FreeRTOS',targetId=targetId)):
-        if (getSetting('mode') in ['test', 'production']):
+        if (getSetting('mode') in ['fettTest', 'fettProduction']):
             besspin.fett.build.prepareFreeRTOS()
         elif (isEqSetting('mode','cyberPhys')):
             besspin.cyberPhys.build.prepareFreeRTOS(targetId=targetId)
@@ -91,7 +91,7 @@ def freeRTOSBuildChecks(targetId=None,freertosFork="classic"):
             setSetting('linker','LLD')
 
         # FatFs
-        if (isEqSetting('mode','test')): #targeId is None for test mode (the only mode that uses SDCard+buildApps)
+        if (isEqSetting('mode','fettTest')): #targeId is None for test mode (the only mode that uses SDCard+buildApps)
             if (isEqSetting('freertosFatFs','default')):
                 if (isEqSetting('target','awsf1')):
                     setSetting('freertosFatFs','dosblk')
@@ -204,7 +204,7 @@ def buildFreeRTOS(doPrint=True, extraEnvVars=[], targetId=None, buildDir=None):
         else:
             envVars.append(f"PROG=main_besspin")
         envVars.append(f"BSP={getSetting('target',targetId=targetId)}")
-        if (isEqSetting('mode','test')):
+        if (isEqSetting('mode','fettTest')):
             envVars.append(f"FATFS={getSetting('freertosFatFs',targetId=targetId).upper()}")
             if isEqSetting('freertosFatFs','ramdisk',targetId=targetId):
                 envVars.append(f"RAMDISK_NUM_SECTORS={getSetting('freertosRamdiskNumSectors')}")

@@ -15,7 +15,7 @@
         {
             "name" : "mode",
             "type" : "string",
-            "choices" : [ "test", "production", "evaluateSecurityTests", "cyberPhys" ]
+            "choices" : [ "fettTest", "fettProduction", "evaluateSecurityTests", "cyberPhys" ]
         }
     ],
 
