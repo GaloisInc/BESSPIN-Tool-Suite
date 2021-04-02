@@ -30,7 +30,7 @@ def runCyberPhys(xTarget):
     elif (xTarget.osImage in ['debian', 'FreeBSD']):
         xTarget.appModules = [otaserver, infotainmentserver]
     else:
-        xTarget.terminateAndExit(f"{xTarget.targetIdInfo}<runApp> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
+        xTarget.terminateAndExit(f"{xTarget.targetIdInfo}<runCyberPhys> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
 
     # The appLog will be the file object flying around for logging into app.out
     appLog = ftOpenFile(os.path.join(getSetting('workDir'),f"app{xTarget.targetSuffix}.out"), 'a')

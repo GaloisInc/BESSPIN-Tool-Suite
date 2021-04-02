@@ -148,7 +148,7 @@ def prepareEnv (targetId=None):
         warnAndLog (f"It is not allowed to <buildApps> on <AWS> in <fettProduction> mode. This will be switched off.")
         setSetting('buildApps',False)
 
-    # config sanity checks for building apps
+    # config sanity checks for building artifacts
     if (osImage in ['FreeRTOS', 'debian', 'FreeBSD']):
         setSetting('runApp',True,targetId=targetId)
 
@@ -235,7 +235,7 @@ def launchBesspin (targetId=None):
             runTests(xTarget, sendFiles=isEnabled('sendTarballToTarget'), 
                 timeout=sendTimeout)
         elif (getSetting('mode') in ['fettTest', 'fettProduction']):
-            xTarget.runApp(sendFiles=isEnabled('sendTarballToTarget',targetId=targetId))
+            xTarget.runFettApps(sendFiles=isEnabled('sendTarballToTarget',targetId=targetId))
         elif (isEqSetting('mode','cyberPhys')):
             runCyberPhys(xTarget)
     if (getSetting('mode') in ['fettTest', 'fettProduction']):
