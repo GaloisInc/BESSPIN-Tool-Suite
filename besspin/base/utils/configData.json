@@ -75,11 +75,6 @@
             "choices" : [ "debian", "FreeRTOS", "FreeBSD", "busybox" ]
         },
         {
-            "name" : "freertosFatFs",
-            "type" : "string",
-            "choices" : [ "default", "ramdisk", "dosblk", "sdcard" ]
-        },
-        {
             "name" : "elfLoader",
             "type" : "string",
             "choices" : [ "JTAG", "netboot" ]
@@ -176,6 +171,11 @@
         {
             "name" : "buildApps",
             "type" : "boolean"
+        },
+        {
+            "name" : "freertosFatFs",
+            "type" : "string",
+            "choices" : [ "default", "ramdisk", "dosblk", "sdcard" ]
         }
     ],
 

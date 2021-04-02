@@ -55,6 +55,7 @@ When `mode` is set to `fettTest` or `fettProduction` in the `functionality` sect
 - `build`: The compiler/linker settings as explained in [configuration.md](../base/configuration.md). Only valid in `fettTest` mode when `buildApps` is enabled.
 - `fett`: This is only loaded in the bug bounty modes, it has the following parameters:
     - `buildApps`: Only valid in `fettTest` mode. It is a boolean for whether to build the application binaries and the FreeRTOS binary, or fetch them from the tool's resources: the binaries LFS checkout, or the Nix package manager (see [nix.md](./nix.md) for more details).
+    - `freertosFatFs`: The backend of the FAT filesystem for FreeRTOS. Choices are: `ramdisk`, `dosblk`, `sdcard`, and `default`. The default option is RAM disk for VCU118 and DOS block on AWS F1. Note that since this affects the building of FreeRTOS, this setting has meaningful effects only on the `fettTest` mode when `buildApps` section is enabled. The RAM disk option is compatible with any backend whilst the DOS block is only compatible with AWS F1, and the SD card is only compatible with VCU118.
 
 
 ## Example ## 
