@@ -4,7 +4,7 @@ This is executed after loading the app on the target to execute FreeRTOS app
 """
 
 from besspin.base.utils.misc import *
-from besspin.apps.freertos import michigan
+from besspin.fett.freertos import michigan
 import tftpy, os, re
 import logging
 import subprocess

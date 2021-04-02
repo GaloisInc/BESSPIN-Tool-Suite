@@ -4,8 +4,8 @@ Building apps
 """
 
 from besspin.base.utils.misc import *
-from besspin.apps.unix.ssl import gen_cert
-from besspin.apps.freertos import freertos
+from besspin.fett.unix.ssl import gen_cert
+from besspin.fett.freertos import freertos
 import besspin.target.build
 import os
 
