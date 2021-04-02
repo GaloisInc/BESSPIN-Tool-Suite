@@ -184,7 +184,7 @@ def deploymentTest(target):
         # alone here
         printAndLog("Going for LMCO SCAPY Test",doPrint=True,tee=getSetting('appLog'))
         try:
-            subprocess.run(['sudo',sys.executable,os.path.join(getSetting('repoDir'),'besspin','apps','freertos','sudoScapy.py'),'+'.join(sys.path),hostIP,targetIP,str(TFTPPort)], stdout=getSetting('appLog'),stderr=getSetting('appLog'), timeout=10, check=True, shell=False)
+            subprocess.run(['sudo',sys.executable,os.path.join(getSetting('repoDir'),'besspin','fett','freertos','sudoScapy.py'),'+'.join(sys.path),hostIP,targetIP,str(TFTPPort)], stdout=getSetting('appLog'),stderr=getSetting('appLog'), timeout=10, check=True, shell=False)
         except Exception as exc:
             target.terminateAndExit(f"Failed to send the malicious packets using <sudoScapy.py>",exc=exc,exitCode=EXIT.Run)
 

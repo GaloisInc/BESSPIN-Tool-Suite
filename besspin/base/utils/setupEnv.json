@@ -275,7 +275,7 @@
             "name" : "freertosAssets",
             "type" : "dict",
             "val" : {
-                "path" : "besspin/apps/freertos/assets",
+                "path" : "besspin/fett/freertos/assets",
                 "otaHtml" : "ota.htm",
                 "StopHtml" : "stop.htm",
                 "assets" : ["index.htm", "ota.htm", "glogo.png"]

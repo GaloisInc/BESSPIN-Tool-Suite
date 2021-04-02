@@ -86,7 +86,7 @@ def prepareFreeRTOS():
         besspin.target.build.freeRTOSBuildChecks(freertosFork="classic")
 
         #copy the C files, .mk files, and any directory
-        copyDir(os.path.join(getSetting('repoDir'),'besspin','apps','freertos','srcMain'),getSetting('buildDir'),copyContents=True)
+        copyDir(os.path.join(getSetting('repoDir'),'besspin','fett','freertos','srcMain'),getSetting('buildDir'),copyContents=True)
 
         #Include the relevant user configuration parameters
         #This is a list of tuples: (settingName,macroName)
@@ -297,11 +297,11 @@ def buildEnclaves(tarName):
 
 @decorate.debugWrap
 def getSourceDir (app):
-    return os.path.join(getSetting('repoDir'),'besspin','apps',app)
+    return os.path.join(getSetting('repoDir'),'besspin','fett',app)
 
 @decorate.debugWrap
 def getAppDir(app):
-    return os.path.join(getSetting('repoDir'),'besspin','apps','unix','assets',app)
+    return os.path.join(getSetting('repoDir'),'besspin','fett','unix','assets',app)
 
 @decorate.debugWrap
 def getBinDir(app,targetId=None):
