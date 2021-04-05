@@ -23,6 +23,7 @@ scoreVectors = {
     "test_PPAC_3" : [
         (SCORES.CALL_ERR, ["<INVALID>"]),
         (SCORES.HIGH, ["<PUB>"]),
+        (SCORES.HIGH, ["<NO-LOG>"]),
         (SCORES.NONE, ["<LOG>:<PRIV>", "<OWNER>:<PRIV>", "<GROUP>:<PRIV>", "<PERM>:<PRIV>"])
     ]
 }
