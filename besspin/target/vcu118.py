@@ -32,6 +32,9 @@ class vcu118Target (fpgaTarget, commonTarget):
         #Reloading till the network is up
         self.freertosNtkRetriesMax = 3
         self.freertosNtkRetriesIdx = 0
+        #Reloading till the network is up
+        self.debianNtkRetriesMax = 3
+        self.debianNtkRetriesIdx = 0
         #Reloading till the fpga starts
         self.fpgaStartRetriesMax = 3
         self.fpgaStartRetriesIdx = 0
@@ -117,14 +120,19 @@ class vcu118Target (fpgaTarget, commonTarget):
             self.runCommand ("echo \"auto eth0\" > /etc/network/interfaces")
             self.runCommand ("echo \"iface eth0 inet static\" >> /etc/network/interfaces")
             self.runCommand (f"echo \"address {self.ipTarget}/24\" >> /etc/network/interfaces")
-            self.runCommand(f"ip route add default via {self.ipHost}")
             self.runCommand(f"ip link set dev eth0 address {self.macTarget}")
+            isSuccess = False
             # In case the TI ethernet chip doesn't come up, retry
-            outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],exitOnError=False)
-            isSuccess, _, _, _ = outCmd
-            if not isSuccess:
-                self.runCommand ("ifdown eth0",exitOnError=False)
-                outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'])
+            while ((not isSuccess) and (self.debianNtkRetriesIdx < self.debianNtkRetriesMax)):
+                if (self.debianNtkRetriesIdx > 0): #no need for it on the first try
+                    warnAndLog(f"{self.targetIdInfo}Network is not up on target. Trying again "
+                            f"({self.debianNtkRetriesIdx+1}/{self.debianNtkRetriesMax})...")
+                    self.runCommand ("ifdown eth0",exitOnError=False)
+                self.debianNtkRetriesIdx += 1
+                outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],exitOnError=False)
+                isSuccess, _, _, _ = outCmd
+            if (not isSuccess):
+                self.terminateAndExit(f"{self.targetIdInfo}Network is not up on target.",exitCode=EXIT.Network)
             self.runCommand(f"ip route add default via {self.ipHost}")
         elif (self.osImage=='busybox'):
             time.sleep(1)
