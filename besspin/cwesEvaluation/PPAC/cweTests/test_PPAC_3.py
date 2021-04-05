@@ -23,7 +23,10 @@ def test_PPAC_3(xTarget):
     retLog += textBack
     nMatch = re.search(r'<nOccurrences=(?P<nOccurrences>[\d]+)>',textBack)
     if ((not isSuccess) or (nMatch is None)):
-        retLog += f"<INVALID> Failed to grep </var/log/{logFile}>.\n"
+        if ("No such file or directory" in textBack):
+            retLog += f"<NO-LOG> Failed to find </var/log/{logFile}>.\n"
+        else:
+            retLog += f"<INVALID> Failed to grep </var/log/{logFile}>.\n"
         return retLog
     if (int(nMatch.group('nOccurrences')) < 1):
         retLog += "<LOG>:<PUB>\n"
