@@ -203,7 +203,7 @@ int main_loop(void) {
 }
 
 void assert_music_state(can_frame *frame, int play, int station, int volume) {
-    assert(frame->can_id == CAN_ID_MUSIC_STATE);
+    assert(frame->can_id == CAN_ID_INFOTAINMENT_STATE);
     assert(play(frame->data[0]) == play);
     assert(station(frame->data[0]) == station);
     assert(volume(frame->data[0]) == volume);
@@ -229,7 +229,7 @@ void print_frame(can_frame *frame) {
                 print_position_frame(frame);
                 break;
         
-            case CAN_ID_MUSIC_STATE:
+            case CAN_ID_INFOTAINMENT_STATE:
                 print_music_state_frame(frame);
                 break;
 
@@ -256,7 +256,7 @@ void print_position_frame(can_frame *frame) {
 
 void print_music_state_frame(can_frame *frame) {
     // make sure the frame is an appropriate type
-    assert(frame->can_id == CAN_ID_MUSIC_STATE);
+    assert(frame->can_id == CAN_ID_INFOTAINMENT_STATE);
 
     debug("music state CAN frame received: raw = %d, playing = %d, station = %d, volume = %d\n",
           frame->data[0], play(frame->data[0]), 

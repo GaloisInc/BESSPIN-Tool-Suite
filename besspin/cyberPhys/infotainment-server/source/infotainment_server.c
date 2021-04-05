@@ -262,8 +262,8 @@ void broadcast_music_state() {
     }
 
     uint8_t data = music_state_packet(the_state);
-    can_frame frame = { .can_id = CAN_ID_MUSIC_STATE, 
-                        .can_dlc = BYTE_LENGTH_MUSIC_STATE };
+    can_frame frame = { .can_id = CAN_ID_INFOTAINMENT_STATE,
+                        .can_dlc = BYTE_LENGTH_INFOTAINMENT_STATE };
     frame.data[0] = data;
 
     debug("broadasting music state frame: playing %d, station %d, volume %d\n",
