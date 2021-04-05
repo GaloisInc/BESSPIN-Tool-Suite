@@ -50,7 +50,7 @@ Also, a more radical approach would be to remove all password requirements for a
 ${USER} ALL=(ALL) NOPASSWD:ALL
 ```
 
-Alternatively, there is a docker container that has the Nix store populated, and is ready to go. The resources needed to build the docker container are currently in [the docker-tools repo](https://gitlab-ext.galois.com/ssith/docker-tools/-/tree/develop/fett_target), but ticket #1046 should fix that by getting the built up to date, and the instructions local to this repo. The docker image is `artifactory.galois.com:5008/besspin:ci`, and requires Galois artifactory access to fetch. The recommended command to start the image is:
+Alternatively, there is a docker container that has the Nix store populated, and is ready to go. The resources needed to build the docker container are currently in [the docker directory](BESSPIN-Environment/docker/). The docker image is `artifactory.galois.com:5008/besspin:ci`, and requires Galois artifactory access to fetch. The recommended command to start the image is:
 ```bash
     sudo docker run -it --privileged=true --network host -v /path/to/BESSPIN-Tool-Suite:/home/besspinuser/BESSPIN-Tool-Suite artifactory.galois.com:5008/besspin:ci
 ```
