@@ -6,6 +6,7 @@ import zmq
 
 
 class Example(component.Component):
+    """example component for testing procedure"""
     def __init__(self):
         super().__init__("example", [(5050, 'example-commands')], [(5052, 'example-events')])
         print("CREATE EXAMPLE")
@@ -18,6 +19,15 @@ class Example(component.Component):
 
 
 class ComponentHandler:
+    """componentHandler manages ignition components,
+
+    1. create components
+    2. connect to components
+    3. communicate with components
+
+    TODO: logger
+    """
+    # map classes to keywords
     keywords = {'beamng': simulator.Sim, 'speedo': None, 'info': None, 'canm': can.CanMultiverseComponent, 'example': Example}
 
     def __init__(self):
@@ -27,11 +37,14 @@ class ComponentHandler:
         self._zmq_context = zmq.Context()
         self.name = "SERVICE"
 
-    def connect_component(self, porti, porto, component_name):
+    def connect_component(self, port_input, port_output, component_name):
+        """
+        TODO: accept component_cls instead of keyword
+        """
         out_sock = self._zmq_context.socket(zmq.PUB)
-        out_sock.bind(f"tcp://*:{porto}")
+        out_sock.bind(f"tcp://*:{port_output}")
 
-        self._events_entry[component_name] = (porti, component_name)
+        self._events_entry[component_name] = (port_input, component_name)
         self._command_entry[component_name] = out_sock
 
     def disconnect_component(self, component_name):
@@ -41,31 +54,31 @@ class ComponentHandler:
             del self._command_entry[component_name]
             del self._events_entry[component_name]
 
-    def start_component(self, kw):
-        if kw not in self.keywords.keys():
-            print(f"{kw} is not in ({set(self._services.keys())}) started services")
+    def start_component(self, keyword):
+        if keyword not in self.keywords.keys():
+            print(f"{keyword} is not in ({set(self._services.keys())}) started services")
             return
         else:
-            print(f"Launching Service {kw}...")
-            comp: component.Component = self.keywords[kw]()
+            print(f"Launching Service {keyword}...")
+            comp: component.Component = self.keywords[keyword]()
             ctopic, etopic = f"{comp.name}-commands", f"{comp.name}-events"
             porto = {t:p for p, t in comp._in_ports}.get(ctopic, None)
             porti = {t:p for p, t in comp._out_ports}.get(etopic, None)
-            self.connect_component(porti, porto, kw)
+            self.connect_component(porti, porto, keyword)
             comp.start()
-            self._services[kw] = comp
+            self._services[keyword] = comp
 
-    def stop_component(self, kw):
-        if kw not in self._services:
-            print(f"{kw} is not in ({set(self._services.keys())}) started services")
+    def stop_component(self, keyword):
+        if keyword not in self._services:
+            print(f"{keyword} is not in ({set(self._services.keys())}) started services")
             return
         else:
-            print(f"closing down {kw}...")
-            self._services[kw].exit()
-            self._services[kw].join()
-            del self._services[kw]
+            print(f"closing down {keyword}...")
+            self._services[keyword].exit()
+            self._services[keyword].join()
+            del self._services[keyword]
 
-    def message_component(self, kw, msg, do_receive=True):
+    def message_component(self, component_kw, message, do_receive=True):
         # TODO: FIXME: add a timeout
         import threading
         ret = None
@@ -80,7 +93,7 @@ class ComponentHandler:
             ret = mss
 
         if do_receive:
-            porti, topic = self._events_entry[kw]
+            porti, topic = self._events_entry[component_kw]
             context = zmq.Context()
             sn = context.socket(zmq.SUB)
             sn.connect(f"tcp://127.0.0.1:{porti}")
@@ -88,10 +101,10 @@ class ComponentHandler:
             recv = threading.Thread(target=_recv_ack, args=(sn,), daemon=True)
             recv.start()
 
-        self._command_entry[kw].send_string(f"{kw}-commands", zmq.SNDMORE)
-        self._command_entry[kw].send_pyobj(Envelope.serialize(Envelope(self,
-                                                                       Message(msg),
-                                                                    level=MessageLevel.NORMAL)))
+        self._command_entry[component_kw].send_string(f"{component_kw}-commands", zmq.SNDMORE)
+        self._command_entry[component_kw].send_pyobj(Envelope.serialize(Envelope(self,
+                                                                                 Message(message),
+                                                                                 level=MessageLevel.NORMAL)))
         if do_receive:
             recv.join()
             context.term()
