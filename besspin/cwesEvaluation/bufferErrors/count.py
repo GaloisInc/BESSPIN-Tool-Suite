@@ -23,6 +23,29 @@ CWE_680_INT_OVERFLOW_LOOKFOR = [
         ]
 
 def triage(filepath,lookfor):
+    """
+    Look for keywords in a log file and return a symbol representing the
+    highest priority keyword found.
+
+    ARGUMENTS:
+    ----------
+        filepath : Path
+            Path to the log file to triage.
+
+        lookfor : List of Tuple of (String, List of String)
+            A mapping from symbols to keywords.  Each element of the list
+            represents one such mapping.  In order, the elements of each tuple
+            in the list are:
+                0.  A symbol.
+                1.  A list of keywords that map to the symbol.
+            Order of this list matters.  Elements earlier in the list are
+            considered higher priority.
+
+    RETURNS:
+    --------
+        A String.  The first symbol in <lookfor> to match a keyword in
+        <filepath>.
+    """
     if not filepath.is_file():
         logAndExit(f"<bufferErrors.count.triage> <{filepath}> is not a file",
                    exitCode=EXIT.Files_and_paths)
@@ -48,6 +71,29 @@ def triage(filepath,lookfor):
         return 'FAIL'
 
 def scoreLog(logFile, lookfor):
+    """
+    Score a buffer errors test log.
+
+    ARGUMENTS:
+    ----------
+        logFile : Path
+            Path to the log file to score.
+
+        lookfor : List of Tuple of (String, List of String)
+            A mapping from symbols to keywords.  Each element of the list
+            represents one such mapping.  In order, the elements of each tuple
+            in the list are:
+                0.  A symbol.
+                1.  A list of keywords that map to the symbol.
+            Order of this list matters.  Elements earlier in the list are
+            considered higher priority.
+
+    RETURNS:
+    --------
+        A tuple of (SCORES, String) where each element of the tuple is:
+            0.  The score the test received.
+            1.  The first symbol in <lookfor> to match a keyword in <filepath>.
+    """
     #First, get the triage decision
     logSymbol = triage(logFile,lookfor)
     if (logSymbol == 'INVALID'):
@@ -61,6 +107,19 @@ def scoreLog(logFile, lookfor):
     return (adjustToCustomScore(ftReadLines(logFile), thisScore), logSymbol)
 
 def bfparams(filepath):
+    """
+    Get the assigned parameters for a test.
+
+    ARGUMENTS:
+    ----------
+        filepath : Path
+            The generated C file to extract parameters from.
+
+    RETURNS:
+    --------
+        A dictionary from String to Any.  Contains the parameters from the
+        bof_instance this test was generated from.
+    """
     # we might want template parameters too...
     # maybe even compiler flags
     if not filepath.is_file():
@@ -78,6 +137,19 @@ def bfparams(filepath):
     return {}
 
 def test_ord(t):
+    """
+    Given a row in a buffer errors score table, return the number of the test
+    the row corresponds to.
+
+    ARGUMENTS:
+    ----------
+        t : Dictionary from String to Any
+            A row in a buffer errors score table.
+
+    RETURNS:
+    --------
+        An integer.  The instance number for the test <t> corresponds to.
+    """
     try:
         return int(t['TestNumber'])
     except:
@@ -85,11 +157,34 @@ def test_ord(t):
 
 def scoreCWE680(path, lookfor, cwes):
     """
-    Special scoring function for CWE 680.  In addition to the usual inputs to
-    scoreLog, this function takes an additional parameter `cwes` of the list of
-    CWEs that the generated test stresses.  This function also returns an extra
-    tuple value of the actual CWEs that were tested, which may differ from
-    `cwes` if the processor detected the integer overflow portion of the test.
+    Special scoring function for CWE 680.
+
+    ARGUMENTS:
+    ----------
+        path : Path
+            Path to the log file to score.
+
+        lookfor : List of Tuple of (String, List of String)
+            A mapping from symbols to keywords.  Each element of the list
+            represents one such mapping.  In order, the elements of each tuple
+            in the list are:
+                0.  A symbol.
+                1.  A list of keywords that map to the symbol.
+            Order of this list matters.  Elements earlier in the list are
+            considered higher priority.
+
+        cwes : List of String
+            The CWES the generated test stressed.
+
+    RETURNS:
+    --------
+        A tuple of (SCORES, String, List of String) where each element of the
+        tuple is:
+            0.  The score the test received.
+            1.  The first symbol in <lookfor> to match a keyword in <filepath>.
+            2.  The CWEs that were tested in practice.  If a processor detects
+                the integer overflow from CWE-680 this list will differ from
+                <cwes>.
     """
     # Check whether size overflow was detected
     int_overflow = triage(path, CWE_680_INT_OVERFLOW_LOOKFOR + lookfor)
@@ -110,6 +205,37 @@ def scoreCWE680(path, lookfor, cwes):
 
 
 def tabulate(logs,lookfor):
+    """
+    Score buffer errors logs.
+
+    ARGUMENTS:
+    ----------
+        logs : List of Tuple of (String, String).
+            The logs to score.  Each element of the list is a tuple with
+            elements:
+                0.  The name of the test.
+                1.  The path to the log file to score.
+
+        lookfor : List of Tuple of (String, List of String)
+            A mapping from symbols to keywords.  Each element of the list
+            represents one such mapping.  In order, the elements of each tuple
+            in the list are:
+                0.  A symbol.
+                1.  A list of keywords that map to the symbol.
+            Order of this list matters.  Elements earlier in the list are
+            considered higher priority.
+
+    SIDE-EFFECTS:
+    -------------
+        - If ${bufferErrors}[${csvFile}] is enabled, writes the CSV file
+          containing the scores to
+          <${cwesEvaluationLogs}/bufferErrors/bufferErrors.csv>.
+
+    RETURNS:
+    --------
+        A list of Dictionary of String to Any.  The list contains scores and
+        test parameters for each log in <logs>.
+    """
     if (len(logs)==0):
         warnAndLog('<bufferErrors.count.tabulate> No log files found!')
 
@@ -141,6 +267,20 @@ def tabulate(logs,lookfor):
     return rows
 
 def writeCSV(rows):
+    """
+    Convert and write a score table (such as the output from <tabulate>) as a
+    CSV file.
+
+    ARGUMENTS:
+    ----------
+        rows : A list of Dictionary of String to Any
+            A score table.
+
+    SIDE-EFFECTS:
+    -------------
+        - Writes a CSV file containing <rows> to
+          <${cwesEvaluationLogs}/bufferErrors/bufferErrors.csv>.
+    """
     csvOut = ftOpenFile(os.path.join(getSetting('cwesEvaluationLogs'),
                                      'bufferErrors',
                                      'bufferErrors.csv'),
@@ -154,6 +294,18 @@ def writeCSV(rows):
     csvOut.close()
 
 def fixup(v):
+    """
+    Pretty format a score table element.
+
+    ARGUMENTS:
+    ----------
+        v : (List of String) or Boolean or SCORES or String
+            Value to pretty format.
+
+    RETURNS:
+    --------
+        A pretty formatted String representation of <v>.
+    """
     if type(v) == list:
         vals = ','.join(v)
         return f"\"[{vals}]\""
