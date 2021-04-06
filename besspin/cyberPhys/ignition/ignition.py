@@ -191,13 +191,13 @@ if args.can_select_keystroke_mux:
 try:
     # start the components
     beamng_sim.start()
-    if args.use_speedo:
-        speedo.start()
-    can_multiverse.start()
-    if args.use_led_manager:
-        ledmanager.start()
-    info_net.start()
-    location_poller.start()
+    #if args.use_speedo:
+    #    speedo.start()
+    #can_multiverse.start()
+    #if args.use_led_manager:
+    #    ledmanager.start()
+    #info_net.start()
+    #location_poller.start()
 
     # loop while component threads are used
     while True:

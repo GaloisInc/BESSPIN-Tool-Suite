@@ -26,7 +26,7 @@ SSITH_ECU_BLACKLIST = False
 BASE_BLACKLIST = False
 
 # for zeromq comms (localhost)
-BEAMNG_PORT = 5014
+BEAMNG_SIM_PORT = 5014
 DIRECTOR_PORT = 5015
 SPEEDO_PORT = 5016
 LED_MANAGE_PORT = 5017
@@ -49,12 +49,12 @@ BEAMNG_PATH=r"C:\BeamNG.research"
 BEAMNG_USER_PATH=None
 BEAMNG_OUTGAUGE_PORT = 4445 # Outgauge emulation
 
-BEAMNG_COMPONENT_ELECTRIC = (BEAMNG_PORT, 'sensor-electric')
-BEAMNG_COMPONENT_GFORCE   = (BEAMNG_PORT, 'sensor-gforce')
-BEAMNG_COMPONENT_EVENTS   = (BEAMNG_PORT, 'beamng-events')
-BEAMNG_COMPONENT_STATE    = (BEAMNG_PORT, 'beamng-state')
-BEAMNG_COMPONENT_VEHICLE  = (BEAMNG_PORT, 'beamng-vehicle')
-BEAMNG_COMPONENT_SENSORS  = (BEAMNG_PORT, "beamng-sensors")
+BEAMNG_COMPONENT_ELECTRIC = (BEAMNG_SIM_PORT, 'sensor-electric')
+BEAMNG_COMPONENT_GFORCE   = (BEAMNG_SIM_PORT, 'sensor-gforce')
+BEAMNG_COMPONENT_EVENTS   = (BEAMNG_SIM_PORT, 'beamng-events')
+BEAMNG_COMPONENT_STATE    = (BEAMNG_SIM_PORT, 'beamng-state')
+BEAMNG_COMPONENT_VEHICLE  = (BEAMNG_SIM_PORT, 'beamng-vehicle')
+BEAMNG_COMPONENT_SENSORS  = (BEAMNG_SIM_PORT, "beamng-sensors")
 
 # BeamNG service communication info
 BEAMNG_COMPONENT_OUTPUT = [BEAMNG_COMPONENT_ELECTRIC,
@@ -93,5 +93,3 @@ BEAMNG_ITALY_SPAWNPOINTS = {'village_mountain':
                                 {'pos': (-690.403564, -1338.64136, 140.215942), 'rot': (0.0, -0.0, 85.01954390247003)},
                             'castle_town':
                                 {'pos': (-969.635193, 953.628723, 392.483368), 'rot': (0.0, -0.0, 74.9999865878277)}}
-
-

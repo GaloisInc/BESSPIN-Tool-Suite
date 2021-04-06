@@ -204,24 +204,11 @@ class CanMultiverseStatus(enum.IntEnum):
 
 
 class CanMultiverseComponent(Component):
-    def __init__(self, ip_addr=None, apply_lists = True):
+    def __init__(self, can_multiverse: CanMultiverse, ip_addr=None, apply_lists = True):
         super().__init__("canm", [(config.DIRECTOR_PORT, "canm-commands")], [(config.CANM_PORT, "canm-events")])
-        sip = config.SIM_IP if not ip_addr else ip_addr
-        can_ssith_info = CanUdpNetwork("secure_infotainment", config.CAN_PORT, sip)
-        can_ssith_ecu = CanUdpNetwork("secure_ecu", config.CAN_PORT, sip)
-        can_base = CanUdpNetwork("base", config.CAN_PORT, sip)
-        networks = [can_base, can_ssith_ecu, can_ssith_info]
-
-        if False:
-            can_ssith_info.whitelist = config.SSITH_INFO_WHITELIST
-            can_ssith_ecu.whitelist = config.SSITH_ECU_WHITELIST
-            can_base.whitelist = config.BASE_WHITELIST
-            can_ssith_info.blacklist = config.SSITH_INFO_BLACKLIST
-            can_ssith_ecu.blacklist = config.SSITH_ECU_BLACKLIST
-            can_base.blacklist = config.BASE_BLACKLIST
 
         # create can network multiverse (mux)
-        self._can_multiverse = CanMultiverse("multiverse", networks, default_network="base")
+        self._can_multiverse = can_multiverse
 
     def on_start(self):
         self._can_multiverse.start()

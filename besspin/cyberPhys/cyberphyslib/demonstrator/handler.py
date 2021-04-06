@@ -16,20 +16,24 @@ import zmq
 
 class SubSocket:
     """zmq SUB recv thread context manager"""
-    def __init__(self, resource, topic):
+    def __init__(self, resource, topic, timeout=60000):
         self.resource = resource
         self.topic = topic
         self.recv = None
         self.ret = None
+        self.timeout = timeout
 
     def start(self):
         def _recv_ack(sn):
-            topic = sn.recv_string()
-            recv: bytes = sn.recv_pyobj()
-            env: Envelope = Envelope.deserialize(recv)
-            mss = env.message
-            sn.close()
-            self.ret = mss
+            poller = zmq.Poller()
+            poller.register(sn, flags=zmq.POLLIN)
+            if poller.poll(timeout=self.timeout):
+                topic = sn.recv_string()
+                recv: bytes = sn.recv_pyobj()
+                env: Envelope = Envelope.deserialize(recv)
+                mss = env.message
+                sn.close()
+                self.ret = mss
 
         self.context = zmq.Context()
         self.recv_socket: zmq.Socket = self.context.socket(zmq.SUB)
@@ -76,16 +80,19 @@ class ComponentHandler:
         self._events_entry = {}
         self._zmq_context = zmq.Context()
         self.name = "SERVICE"
+        self.out_sock = None
 
     def connect_component(self, port_input, port_output, component_name):
         """
         TODO: accept component_cls instead of keyword
         """
-        out_sock = self._zmq_context.socket(zmq.PUB)
-        out_sock.bind(f"tcp://*:{port_output}")
+        # TODO: weird
+        if not self.out_sock:
+            self.out_sock = self._zmq_context.socket(zmq.PUB)
+            self.out_sock.bind(f"tcp://*:{port_output}")
 
         self._events_entry[component_name] = (port_input, component_name)
-        self._command_entry[component_name] = out_sock
+        self._command_entry[component_name] = self.out_sock
 
     def disconnect_component(self, component_name):
         if component_name in self._events_entry and component_name in self._command_entry:
@@ -94,18 +101,22 @@ class ComponentHandler:
             del self._command_entry[component_name]
             del self._events_entry[component_name]
 
-    def start_component(self, component_cls):
-        comp: component.Component = component_cls()
+    def start_component(self, comp: component.Component, wait=True):
         keyword = comp.name
         ctopic, etopic = f"{comp.name}-commands", f"{comp.name}-events"
         porto = {t: p for p, t in comp._in_ports}.get(ctopic, None)
         porti = {t: p for p, t in comp._out_ports}.get(etopic, None)
         print(f"Launching Service {keyword}...")
-        with SubSocketManager(f"tcp://127.0.0.1:{porti}", etopic) as ssock:
+        if wait:
+            with SubSocketManager(f"tcp://127.0.0.1:{porti}", etopic) as ssock:
+                self.connect_component(porti, porto, keyword)
+                comp.start()
+                self._services[keyword] = comp
+                return ssock.recv_message()
+        else:
             self.connect_component(porti, porto, keyword)
             comp.start()
             self._services[keyword] = comp
-            return ssock.recv_message()
 
     def stop_component(self, keyword):
         if keyword not in self._services:

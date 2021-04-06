@@ -17,9 +17,12 @@ import pandas as pd
 import numpy as np
 import enum
 import serial, serial.tools.list_ports_windows
+import pathlib
+import os
 
 from .component import ComponentPoller
 from .logger import led_manage_logger
+from .message import Message
 from cyberphyslib.demonstrator.leds import LedString
 import cyberphyslib.demonstrator.leds as cled
 import cyberphyslib.demonstrator.config as cconf
@@ -48,6 +51,11 @@ led_pattern_csv_names = {
     "all off": LedPatterns.ALL_OFF,
     "all on": LedPatterns.ALL_ON
 }
+
+
+class LedManagerStatus(enum.IntEnum):
+    READY = enum.auto()
+    ERROR = enum.auto()
 
 
 class LedManagerComponent(ComponentPoller):
@@ -137,8 +145,14 @@ class LedManagerComponent(ComponentPoller):
             led_strs += [cled.LedString(row["name"], hd, LedPatterns.NOMINAL, row["length"])]
         return cls(led_strs)
 
+    @classmethod
+    def for_ignition(cls):
+        led_string_filepath = pathlib.Path(os.path.realpath(__file__)).parent / "utils" / \
+                           "led_strings_comprehensive_tuple_colors.csv"
+        return cls.from_csv(led_string_filepath)
+
     def __init__(self, led_strings: typ.Sequence[LedString]):
-        super().__init__("led-manager", [(cconf.LED_MANAGE_PORT, "ledm-commands")],
+        super().__init__("ledm", [(cconf.DIRECTOR_PORT, "ledm-commands")],
                          [(cconf.LED_MANAGE_PORT, "ledm-events")],
                          sample_frequency=1 / self.regular_update_rate)
         self.client = opc.Client(self.opc_address)
@@ -146,6 +160,13 @@ class LedManagerComponent(ComponentPoller):
 
     def system_startup(self):
         """system startup procedure required to turn on LEDs without persistent pixels"""
+
+        # check whether we can connect to the OPC server
+        if not self.client.can_connect():
+            # error has occurred
+            self.send_message(Message(LedManagerStatus.ERROR), "ledm-events")
+        # TODO: check that the number of relays is correct?
+
         # turn off all relays
         self.turn_off_relays()
 
@@ -174,6 +195,8 @@ class LedManagerComponent(ComponentPoller):
         self.turn_off_relays()
         time.sleep(self.system_time_delay_short)
         self.turn_on_relays(self.relay_time_delay_short)
+
+        self.send_message(Message(LedManagerStatus.READY), "ledm-events")
 
     def test_device(self):
         """call this to test the device -- requires a running server"""

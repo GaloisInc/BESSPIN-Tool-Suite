@@ -7,6 +7,7 @@ Date: 06 January 2021
 Tests for cyberphys base component object type
 """
 import cyberphyslib.demonstrator.component as ccomp
+import time
 
 
 class ExampleTestComponent(ccomp.Component):

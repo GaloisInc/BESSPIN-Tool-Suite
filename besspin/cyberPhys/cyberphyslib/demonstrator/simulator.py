@@ -18,7 +18,6 @@ import functools
 import psutil
 import time
 import os
-import pathlib
 from cyberphyslib.demonstrator import config, component, message, logger
 import cyberphyslib.canlib.canspecs as canspecs
 
@@ -162,8 +161,11 @@ class Sim(component.ComponentPoller):
             assert self._vehicle.skt
 
             self._start_finished = True
+            self.send_message(message.Message(BeamNgStatus.READY), 'beamng-events')
         except Exception as exc:
             logger.sim_logger.error(f"Failed to create BeamNG session and load scenario <{exc}>")
+            self.send_message(message.Message(BeamNgStatus.OS_ERROR), 'beamng-events')
+            self.kill_beamng()
 
     def on_poll_poll(self, t):
         """simulator mainloop"""
