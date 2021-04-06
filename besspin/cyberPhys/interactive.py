@@ -87,6 +87,16 @@ class cyberPhysShell(cmd.Cmd):
     def emptyline(self): #to avoid repeating the last command on <enter>
         return
 
+    def do_restart(self,inp):
+        """restart TARGET_ID
+        starts|stops piping the target with the chosen ID"""
+        if (len(inp.split(' '))>1):
+            print(self.do_restart.__doc__)
+            return
+        targetId = inp
+        # Restart here?
+        return
+
     def do_ip(self,inp):
         """ip
         Displays the IPs of the running targets"""
