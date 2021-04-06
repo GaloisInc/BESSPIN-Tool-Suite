@@ -10,7 +10,8 @@ Cyberphys Demonstrator Configuration Variables
 CAN_PORT = 5002
 INFO_UI_PORT = 5013
 
-SIM_IP = "192.168.0.231" # Sim PC IP
+# TODO: FIXME: ELEW
+SIM_IP = "127.0.0.1" # Sim PC IP
 
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
@@ -23,6 +24,14 @@ SSITH_ECU_WHITELIST = ["10.88.88.31", "10.88.88.32"] # Scenario 3: Secure ECU + 
 SSITH_INFO_BLACKLIST = False
 SSITH_ECU_BLACKLIST = False
 BASE_BLACKLIST = False
+
+# for zeromq comms (localhost)
+BEAMNG_PORT = 5014
+DIRECTOR_PORT = 5015
+SPEEDO_PORT = 5016
+LED_MANAGE_PORT = 5017
+CANM_PORT =  5018
+INFO_PROXY_PORT = 5019
 
 LOCATION_POLL_HZ = 10
 
@@ -40,12 +49,12 @@ BEAMNG_PATH=r"C:\BeamNG.research"
 BEAMNG_USER_PATH=None
 BEAMNG_OUTGAUGE_PORT = 4445 # Outgauge emulation
 
-BEAMNG_COMPONENT_ELECTRIC = (5006, 'sensor-electric')
-BEAMNG_COMPONENT_GFORCE   = (5006, 'sensor-gforce')
-BEAMNG_COMPONENT_EVENTS   = (5006, 'beamng-events')
-BEAMNG_COMPONENT_STATE    = (5006, 'beamng-state')
-BEAMNG_COMPONENT_VEHICLE  = (5006, 'beamng-vehicle')
-BEAMNG_COMPONENT_SENSORS  = (5006, "beamng-sensors")
+BEAMNG_COMPONENT_ELECTRIC = (BEAMNG_PORT, 'sensor-electric')
+BEAMNG_COMPONENT_GFORCE   = (BEAMNG_PORT, 'sensor-gforce')
+BEAMNG_COMPONENT_EVENTS   = (BEAMNG_PORT, 'beamng-events')
+BEAMNG_COMPONENT_STATE    = (BEAMNG_PORT, 'beamng-state')
+BEAMNG_COMPONENT_VEHICLE  = (BEAMNG_PORT, 'beamng-vehicle')
+BEAMNG_COMPONENT_SENSORS  = (BEAMNG_PORT, "beamng-sensors")
 
 # BeamNG service communication info
 BEAMNG_COMPONENT_OUTPUT = [BEAMNG_COMPONENT_ELECTRIC,
@@ -56,7 +65,7 @@ BEAMNG_COMPONENT_OUTPUT = [BEAMNG_COMPONENT_ELECTRIC,
                            BEAMNG_COMPONENT_SENSORS
                           ]
 
-BEAMNG_COMPONENT_INPUT = [(5005, 'beamng-commands')]
+BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands')]
 
 # keyword arguments to pass to Vehicle when creating a vehicle for the sim scenario
 BEAMNG_VEHICLE_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk854t_A.pc'}
@@ -86,5 +95,3 @@ BEAMNG_ITALY_SPAWNPOINTS = {'village_mountain':
                                 {'pos': (-969.635193, 953.628723, 392.483368), 'rot': (0.0, -0.0, 74.9999865878277)}}
 
 
-# LED Management Configuration
-LED_MANAGEMENT_INPUT = [(5007, "pattern-request")]

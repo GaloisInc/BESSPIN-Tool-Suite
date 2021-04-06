@@ -23,8 +23,8 @@ import struct
 
 class ComponentStatus(enum.Enum):
     """component states and commands"""
-    EXIT = enum.auto()
-    METHOD = enum.auto()
+    READY = enum.auto()
+    ERROR = enum.auto()
 
 
 class ComponentPollerStatus(enum.Enum):
@@ -168,6 +168,9 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         self._unbound = False
         self._ready = False
 
+        # bind here so startup messages can be received
+        self.bind()
+
     def send_message(self, message: Message, topic: str, level=MessageLevel.NORMAL) -> None:
         """send message over pub/sub network
         """
@@ -232,7 +235,6 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
 
     def run(self) -> None:
         """component mainloop"""
-        self.bind()
         self._ready = True
         recvr = self.get_receiver()
         self.on_start()

@@ -28,10 +28,17 @@ functionality:
 import struct
 import serial
 import serial.tools.list_ports
+import enum
 from time import sleep
-from .component import ComponentPoller
+from .component import ComponentPoller, Message
 import cyberphyslib.demonstrator.config as config
 from .logger import speedo_logger
+
+
+class SpeedoStatus(enum.Enum):
+    """BeamNgComponent Statuses"""
+    READY = enum.auto()
+    ERROR_NO_SPEEDO = enum.auto()
 
 # Calibration constant that converts meters per second to mph
 METER_PER_SEC_TO_MPH = 2.23694
@@ -73,15 +80,17 @@ class Speedo(ComponentPoller):
                 "M1" : 2}
 
     def __init__(self):
-        super().__init__("speedo", [config.BEAMNG_COMPONENT_SENSORS], [], sample_frequency=60.0)
+        super().__init__("speedo", [config.BEAMNG_COMPONENT_SENSORS, (config.DIRECTOR_PORT, "speedo-commands")],
+                         [(config.SPEEDO_PORT, "speedo-events")], sample_frequency=60.0)
         self._send_types = (*((float,) * 3), char, *((uchar,) * 4), *((bool,) * 5))
         self._sensor_electrics = None
         self._teensy_ser = None
-        self.setup_serial()
 
     def on_start(self):
         speedo_logger.info("Starting speedometer thread.")
+        self.setup_serial()
         self.start_poller()
+        self.send_message(Message(SpeedoStatus.READY), "speedo-events")
 
     def setup_serial(self):
         """find teensy and create a serial session"""
@@ -97,6 +106,7 @@ class Speedo(ComponentPoller):
 
         if not speedometer_com_port:
             speedo_logger.error('USB speedometer not found.')
+            self.send_message(Message(SpeedoStatus.ERROR_NO_SPEEDO), "speedo-events")
             return
 
         # try to create a serial port object for the interface with the
@@ -111,6 +121,7 @@ class Speedo(ComponentPoller):
         except:
             speedo_logger.error(f'Unable to connect to USB speedometer via'
                          f'{speedometer_com_port}.')
+            self.send_message(Message(SpeedoStatus.ERROR_NO_SPEEDO), "speedo-events")
 
     def on_poll_poll(self, t):
         """collect relevant electrics data and send to teensy"""

@@ -20,9 +20,9 @@ import serial, serial.tools.list_ports_windows
 
 from .component import ComponentPoller
 from .logger import led_manage_logger
-from cyberphys.leds import LedString
-import cyberphys.leds as cled
-import cyberphys.config as cconf
+from cyberphyslib.demonstrator.leds import LedString
+import cyberphyslib.demonstrator.leds as cled
+import cyberphyslib.demonstrator.config as cconf
 
 
 class LedPatterns(enum.IntEnum):
@@ -138,7 +138,8 @@ class LedManagerComponent(ComponentPoller):
         return cls(led_strs)
 
     def __init__(self, led_strings: typ.Sequence[LedString]):
-        super().__init__("led-manager", cconf.LED_MANAGEMENT_INPUT, [],
+        super().__init__("led-manager", [(cconf.LED_MANAGE_PORT, "ledm-commands")],
+                         [(cconf.LED_MANAGE_PORT, "ledm-events")],
                          sample_frequency=1 / self.regular_update_rate)
         self.client = opc.Client(self.opc_address)
         self.led_strings = led_strings
