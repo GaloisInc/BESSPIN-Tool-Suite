@@ -107,6 +107,8 @@ class Sim(component.ComponentPoller):
         self.control = {}
         self.control_evt = True
         self._start_finished = False
+        self._enable_autopilot = False
+        self._disable_autopilot = False
 
         # record whether sim is paused or not
         self._is_paused = False
@@ -144,6 +146,7 @@ class Sim(component.ComponentPoller):
         self._scenario.make(self._beamng_context)
 
         try:
+
             # Start BeamNG and enter the main loop
             assert not self.polling_thread.stopped
             self._beamng_session = self._beamng_context.open(launch=True)
@@ -171,11 +174,21 @@ class Sim(component.ComponentPoller):
         """simulator mainloop"""
         while not self.polling_thread.stopped:
             try:
+                # handle autopilit request
+                if self._enable_autopilot:
+                    self._vehicle.ai_set_mode('span')
+                    self._enable_autopilot = False
+                elif self._disable_autopilot:
+                    self._vehicle.ai_set_mode('disable')
+                    self._disable_autopilot = False
+
+                # handle vehicle control event
                 if (self._vehicle is not None) and (self._vehicle.skt):
                     if self.control_evt and self.control != {}:
                         self._vehicle.control(**self.control)
                         self.control_evt = False
                         self.control = {}
+
                 self.sensor_output = self._beamng_session.poll_sensors(self._vehicle)
                 self.send_message(message.Message(self.sensor_output["electrics"]),
                                 "beamng-sensors")
@@ -274,20 +287,12 @@ class Sim(component.ComponentPoller):
     @recv_topic("beamng-commands", BeamNgCommand.ENABLE_AUTOPILOT)
     def _(self, t):
         if self._start_finished:
-            try:
-                self._vehicle.ai_set_mode('span')
-            except:
-                # TODO: FIXME address error cases
-                pass
+            self._enable_autopilot = True
         self.send_message(message.Message(BeamNgStatus.READY), 'beamng-events')
 
     @recv_topic("beamng-commands", BeamNgCommand.DISABLE_AUTOPILOT)
     def _(self, t):
         """disable the autopilot"""
         if self._start_finished:
-            try:
-                self._vehicle.ai_set_mode('disabled')
-            except:
-                # TODO: FIXME address error cases
-                pass
+            self._disable_autopilot = True
         self.send_message(message.Message(BeamNgStatus.READY), 'beamng-events')

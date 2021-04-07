@@ -7,6 +7,8 @@ Python 3.8.3
 O/S: Windows 10
 
 Manage the demonstrator program flow
+
+TODO: add more docstrings
 """
 from cyberphyslib.demonstrator import component
 from cyberphyslib.demonstrator.message import Envelope, MessageLevel, Message
@@ -130,30 +132,9 @@ class ComponentHandler:
             del self._services[keyword]
 
     def message_component(self, component_kw, message, do_receive=True):
-        # TODO: FIXME: add a timeout
-        #import threading
-        #ret = None
-
-        #def _recv_ack(sn):
-        #    nonlocal ret
-        #    _ = sn.recv_string()
-        #    recv: bytes = sn.recv_pyobj()
-        #    env: Envelope = Envelope.deserialize(recv)
-        #    mss = env.message
-        #    sn.close()
-        #    ret = mss
-
-        #if do_receive:
-        #    porti, topic = self._events_entry[component_kw]
-        #    context = zmq.Context()
-        #    sn = context.socket(zmq.SUB)
-        #    sn.connect(f"tcp://127.0.0.1:{porti}")
-        #    sn.setsockopt_string(zmq.SUBSCRIBE, f"{topic}-events")
-        #    recv = threading.Thread(target=_recv_ack, args=(sn,), daemon=True)
-        #    recv.start()
         if do_receive:
             porti, topic = self._events_entry[component_kw]
-            with SubSocketManager(f"tcp://127.0.0.1:{porti}", f"{component_kw}-commands") as sub_sock:
+            with SubSocketManager(f"tcp://127.0.0.1:{porti}", f"{component_kw}-events") as sub_sock:
 
                 self._command_entry[component_kw].send_string(f"{component_kw}-commands", zmq.SNDMORE)
                 self._command_entry[component_kw].send_pyobj(Envelope.serialize(Envelope(self,
@@ -165,11 +146,6 @@ class ComponentHandler:
             self._command_entry[component_kw].send_pyobj(Envelope.serialize(Envelope(self,
                                                                                      Message(message),
                                                                                      level=MessageLevel.NORMAL)))
-
-        #if do_receive:
-        #    recv.join()
-        #    context.term()
-        #    return ret
 
     def exit(self):
         for _, v in self._command_entry.items():

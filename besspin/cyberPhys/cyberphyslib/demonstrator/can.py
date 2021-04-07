@@ -217,12 +217,10 @@ class CanMultiverseComponent(Component):
     def on_exit(self):
         self._can_multiverse.exit()
 
-    # TODO: FIXME
     @recv_topic("canm-commands")
     def _(self, msg, t):
-        if msg in CanMultiverseStatus:
-            print("Received Message")
-            #self._can_multiverse.select(msg.value)
-            #self.send_message(message.Message(CanMultiverseStatus.READY), "canm-events")
+        if msg._msg in self._can_multiverse.networks:
+            self._can_multiverse.select(msg._msg)
+            self.send_message(message.Message(CanMultiverseStatus.READY), "canm-events")
         else:
             self.send_message(message.Message(CanMultiverseStatus.ERROR), "canm-events")
