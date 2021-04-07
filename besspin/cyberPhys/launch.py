@@ -207,6 +207,7 @@ def startTtyLogging(targetId):
 
 @decorate.debugWrap
 def stopTtyLogging(targetId):
+    xTarget = getSetting('targetObj',targetId=targetId)
     if (not isEnabled('isTtyLogging',targetId=targetId)):
         warnAndLog(f"{xTarget.targetIdInfo}stopTtyLogging: The TTY was not being logged!",doPrint=False)
         return

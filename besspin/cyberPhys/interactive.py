@@ -6,6 +6,7 @@ The main file for the cyberPhys interactive shell
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
 import cmd, os, threading, io
+import zmq
 
 
 @decorate.debugWrap
@@ -53,6 +54,11 @@ class cyberPhysShell(cmd.Cmd):
         else: #print the commands we want
             commands = [xCmd.split('do_')[-1] for xCmd in dir(self) if xCmd.startswith('do_')]
     """
+    def __init__(self):
+        super(cyberPhysShell, self).__init__()
+        self.ctx = zmq.Context.instance()
+        self.publisher = self.ctx.socket(zmq.PUB)
+        self.publisher.bind("tcp://*:5556")
 
     @staticmethod
     def getTargetMember (targetId,memberName):
@@ -94,7 +100,10 @@ class cyberPhysShell(cmd.Cmd):
             print(self.do_restart.__doc__)
             return
         targetId = inp
-        # Restart here?
+        assert (int(targetId) in range(1,getSetting('nTargets')+1)), "validating target ID"
+        targetId = int(targetId)
+        printAndLog(f"Request reseting target {targetId}")
+        self.publisher.send(targetId.to_bytes(1,byteorder='big'))
         return
 
     def do_ip(self,inp):

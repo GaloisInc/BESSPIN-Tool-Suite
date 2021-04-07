@@ -14,6 +14,7 @@ from besspin.cyberPhys.cyberphyslib.canlib import UdpBus, Message, CAN_ID_HEARTB
 
 import struct
 import ipaddress
+import zmq
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -58,6 +59,11 @@ def watchdog(targetId):
     # queue that heartbeat responses will come from
     wHeartbeatQueue = getSetting('watchdogHeartbeatQueue', targetId=targetId)
 
+    ctx = zmq.Context.instance()
+    subscriber = ctx.socket(zmq.SUB)
+    subscriber.connect("tcp://localhost:5556")
+    subscriber.setsockopt(zmq.SUBSCRIBE,b'') # Subscribe to everyting for now
+
     while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
         def handleError(errorString):
             """
@@ -96,6 +102,15 @@ def watchdog(targetId):
             warnAndLog(f"<target{targetId}> Exception occured processing hearbeat response: {exc}") 
 
         # Check process
+        try:
+            rx_data = subscriber.recv_multipart(flags=zmq.NOBLOCK)[0]
+            if rx_data:
+                printAndLog(f"<target{targetId}>: received msg {rx_data}")
+                if int.from_bytes(rx_data, byteorder='big') == targetId:
+                    handleError("Reset requested.")
+        except Exception as e:
+            printAndLog(f"<target{targetId}>: no data {e}",doPrint=False)
+
         if not isTargetAlive(targetId) and handleError("Target is not alive"):
             appLog = getSetting('appLog',targetId=targetId)
             appLog.close()
@@ -141,13 +156,15 @@ def heartBeatListener():
     This is a workaround because we can bind to the same port only once.
     """
     listenQueue = getSetting('heartbeatQueue')
-    vcu118BroadcastIp = getSetting('vcu118BroadcastIp')
+    # Hardcoded targetId=1 because there is always at least one target
+    xTarget = getSetting('targetObj', targetId=1)
+    broadcastIp = xTarget.ipBroadcast
     cyberPhysCanbusPort = getSetting('cyberPhysCanbusPort')
 
     try:
-        canbus = UdpBus(ip=vcu118BroadcastIp,port=cyberPhysCanbusPort)
+        canbus = UdpBus(ip=broadcastIp,port=cyberPhysCanbusPort)
     except Exception as exc:
-        logAndExit(f"<heartBeatListener> Failed to instantiate <UdpBus> with port {canbusPort}.",exc=exc,exitCode=EXIT.Run)
+        logAndExit(f"<heartBeatListener> Failed to instantiate <UdpBus> with {broadcastIp}:{cyberPhysCanbusPort}.",exc=exc,exitCode=EXIT.Run)
     try:
         canbus.set_filters([{"can_id": CAN_ID_HEARTBEAT_ACK, "can_mask": 0XFFFFFFFF, "extended": True}])
     except Exception as exc:
@@ -168,7 +185,7 @@ def heartBeatListener():
             canbus.send(heartbeat_req)
         except Exception as exc:
             logAndExit(f"<heartBeatListener> Failed to send heartbeat request to \
-                {vcu118BroadcastIp}:{cyberPhysCanbusPort}",exc=exc,exitCode=EXIT.Run)
+                {broadcastIp}:{cyberPhysCanbusPort}",exc=exc,exitCode=EXIT.Run)
         printAndLog (f"<heartBeatListener> Sending request", doPrint=False)
 
         # Assume one second window to receive watchdog responses

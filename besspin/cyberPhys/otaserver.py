@@ -36,7 +36,7 @@ def install (xTarget):
 @decorate.debugWrap
 @decorate.timeWrap
 def isServiceRunning (xTarget):
-    otaserver_port = getSetting('OtaServerPortTarget')
+    otaserver_port = getSetting('cyberPhysOtaServerPort')
     url = f"http://{xTarget.ipTarget}:{otaserver_port}"
     try:
         resp = requests.get(url)

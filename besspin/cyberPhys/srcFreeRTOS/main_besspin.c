@@ -250,14 +250,14 @@ void prvMainTask (void *pvParameters) {
     uint8_t dummy = 1;
     // Give the sensor time to power up
     vTaskDelay(SENSOR_POWER_UP_DELAY_MS);
-    int res = iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &dummy, 1);
-    if (res == 1) {
-        FreeRTOS_printf(("%s (Info)~ prvMainTask: iic_transmit OK\r\n", getCurrTime()));
-    } else {
-        FreeRTOS_printf(("%s (Error)~ prvMainTask: iic_transmit failed with %d. Terminating...\r\n", getCurrTime(), res));
-        // Triggers an exception
-        configASSERT(false);
-    }
+    // int res = iic_transmit(&Iic0, TEENSY_I2C_ADDRESS, &dummy, 1);
+    // if (res == 1) {
+    //     FreeRTOS_printf(("%s (Info)~ prvMainTask: iic_transmit OK\r\n", getCurrTime()));
+    // } else {
+    //     FreeRTOS_printf(("%s (Error)~ prvMainTask: iic_transmit failed with %d. Terminating...\r\n", getCurrTime(), res));
+    //     // Triggers an exception
+    //     configASSERT(false);
+    // }
 
     funcReturn = xTaskNotifyWait(0xffffffffUL, 0xffffffffUL, &recvNotification, pdMS_TO_TICKS(60000)); //it should take less than 15s
     if (funcReturn != pdPASS) {
