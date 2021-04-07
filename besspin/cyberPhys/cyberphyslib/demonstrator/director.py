@@ -108,8 +108,8 @@ class IgnitionDirector:
 
         # startup infotainment proxy
         self.proxy = infotain.InfotainmentProxy(self.info_net, self.can_multiverse)
-        self._handler.start_component(self.proxy._info_out, wait=False)
-        self._handler.start_component(self.proxy._info_in, wait=False)
+        self._handler.start_component(self.proxy.info_ui, wait=False)
+        self._handler.start_component(self.proxy.info_player, wait=False)
 
         # startup the speedometer
         msg = self._handler.start_component(speedo.Speedo())
