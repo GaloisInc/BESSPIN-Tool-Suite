@@ -49,6 +49,7 @@ class IgnitionDirector:
         {'trigger': 'ready_can', 'source': 'ready', 'dest': 'can'},
         {'trigger': 'timeout_restart', 'source': 'timeout', 'dest': 'restart'},
         {'trigger': 'restart_finished', 'source': 'restart', 'dest': 'ready'},
+        {'trigger': 'restart_failed', 'source': 'restart', 'dest': 'terminate'},
         {'trigger': 'can_finished', 'source': 'can', 'dest': 'ready'},
         {'trigger': 'self_drive_end', 'source': 'self_drive', 'dest': 'restart'},
         {'trigger': 'cc_msg_finished', 'source': 'cc_msg', 'dest': 'ready'},
@@ -65,11 +66,11 @@ class IgnitionDirector:
         self.startup_enter()
 
     def terminate_enter(self):
-        print("TERMINATION ENTERED!")
+        ignition_logger.debug("Termination State: Enter")
         self._handler.exit()
 
     def noncrit_failure_enter(self):
-        print("noncrit enter")
+        ignition_logger.debug("Noncritical Failure State: Enter")
 
     def startup_enter(self):
         ignition_logger.debug("Startup State: Enter")
@@ -140,12 +141,12 @@ class IgnitionDirector:
         ignition_logger.debug("Restart state: enter")
         msg = self._handler.message_component("beamng", simulator.BeamNgCommand.RESTART, do_receive=True)
         if msg != simulator.BeamNgStatus.RESTART_FINISHED:
-            print("RESTART FAILED")
+            ignition_logger.warning(f"BeamNG restart failed ({n_resets})!")
             if n_resets >= 0:
                 self.restart_enter(n_resets=n_resets - 1)
             else:
-                # TODO?
-                print("TERMINATE")
+                ignition_logger.warning(f"BeamNG restart failed! Terminating...")
+                self.restart_failed()
         self.restart_finished()
 
 

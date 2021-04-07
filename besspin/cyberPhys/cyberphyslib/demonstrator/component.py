@@ -259,7 +259,6 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
                 ports) == 1, f"outgoing port numbers must all be the same for {self.__class__.__name__} (got {ports})"
 
             self._out_sock = self._zmq_context.socket(zmq.PUB)
-            #self._out_sock.setsockopt(zmq.LINGER, -1)
             self._out_sock.bind(f"tcp://*:{list(self._out_ports)[0][0]}")
 
         for port, topic in self._in_ports:

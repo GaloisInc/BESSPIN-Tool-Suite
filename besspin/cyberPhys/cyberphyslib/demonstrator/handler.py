@@ -10,6 +10,7 @@ Manage the demonstrator program flow
 """
 from cyberphyslib.demonstrator import component
 from cyberphyslib.demonstrator.message import Envelope, MessageLevel, Message
+from cyberphyslib.demonstrator.logger import ignition_logger
 import threading
 import zmq
 
@@ -106,7 +107,7 @@ class ComponentHandler:
         ctopic, etopic = f"{comp.name}-commands", f"{comp.name}-events"
         porto = {t: p for p, t in comp._in_ports}.get(ctopic, None)
         porti = {t: p for p, t in comp._out_ports}.get(etopic, None)
-        print(f"Launching Service {keyword}...")
+        ignition_logger.info(f"Handler: Launching Service {keyword}...")
         if wait:
             with SubSocketManager(f"tcp://127.0.0.1:{porti}", etopic) as ssock:
                 self.connect_component(porti, porto, keyword)
@@ -120,10 +121,10 @@ class ComponentHandler:
 
     def stop_component(self, keyword):
         if keyword not in self._services:
-            print(f"{keyword} is not in ({set(self._services.keys())}) started services")
+            ignition_logger.info(f"Handler: {keyword} is not in ({set(self._services.keys())}) started services")
             return
         else:
-            print(f"closing down {keyword}...")
+            ignition_logger.info(f"Handler: closing down {keyword}...")
             self._services[keyword].exit()
             self._services[keyword].join()
             del self._services[keyword]
@@ -179,5 +180,5 @@ class ComponentHandler:
 
         # cast to list as _services will change in size
         for name in list(self._services.keys()):
-            print("Termination signal received!")
+            ignition_logger.info("Handler: Termination signal received!")
             self.stop_component(name)

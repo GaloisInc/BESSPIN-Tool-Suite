@@ -47,7 +47,6 @@ def test_speedo():
     for i in range(10):
         time.sleep(0.1)
         state["fuel"] = i
-        state["wheelspeed"] = float(i)*10.0
         stub.send_message(ccomp.Message(state), "beamng-sensors")
     speedo.exit()
     stub.exit()
