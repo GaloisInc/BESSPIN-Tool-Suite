@@ -15,8 +15,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src"),
+    packages=setuptools.find_packages(exclude=['tests*']),
     python_requires=">=3.6",
     include_package_data=True
 )
