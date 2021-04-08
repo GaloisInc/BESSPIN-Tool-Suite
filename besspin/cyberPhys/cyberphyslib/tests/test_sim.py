@@ -22,7 +22,7 @@ def test_sim():
         <None>
     """
     # simple start / stop
-    csim.Sim.
+    csim.Sim.kill_beamng(1)
     handler = ComponentHandler()
     msg = handler.start_component(csim.Sim())
     assert msg == csim.BeamNgStatus.READY

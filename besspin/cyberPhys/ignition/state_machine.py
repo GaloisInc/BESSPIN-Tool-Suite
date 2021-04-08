@@ -7,6 +7,8 @@ import cyberphyslib.demonstrator.speedometer as cpspeedo
 
 
 dir = cpdir.IgnitionDirector()
+dir.draw_graph("test.png")
+dir.run()
 
 #handler = cphand.ComponentHandler()
 #handler.start_component(cpspeedo.Speedo)
@@ -16,5 +18,5 @@ dir = cpdir.IgnitionDirector()
 
 #c = cpsim.Sim()
 #c.start()
-while True:
-    pass
+#while True:
+#    pass

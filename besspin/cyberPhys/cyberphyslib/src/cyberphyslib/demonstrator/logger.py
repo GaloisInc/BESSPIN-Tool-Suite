@@ -12,6 +12,7 @@ import logging.config
 
 # load utils/logging.conf
 logging_filepath = pathlib.Path(os.path.realpath(__file__)).parent / "utils" / "logging.conf"
+print(logging_filepath)
 logging.config.fileConfig(logging_filepath)
 
 # create logger objects
