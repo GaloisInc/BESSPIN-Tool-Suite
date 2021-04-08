@@ -147,12 +147,18 @@ class ThreadExiting(threading.Thread):
 
 
 class Component(ThreadExiting, metaclass=ComponentMeta):
-    def __init__(self, name: str, in_descr: typ.List[typ.Tuple], out_descr: typ.List[typ.Tuple], *args, **kwargs):
+    def __init__(self, name: str,
+                 in_descr: typ.List[typ.Tuple],
+                 out_descr: typ.List[typ.Tuple],
+                 *args,
+                 ip_addr='127.0.0.1' ,
+                 **kwargs):
         """
         :param in_descr: port description tuple (elements are of the form (port number, topic name))
         :param out_descr: port description tuple (elements are of the form (port number, topic name))
         """
         super(Component, self).__init__(name, *args, **kwargs)
+        self.ip_addr = ip_addr
 
         self._in_ports: typ.Set[typ.Tuple] = set(in_descr)
         self._out_ports: typ.Set[typ.Tuple] = set(out_descr)
@@ -263,7 +269,7 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
 
         for port, topic in self._in_ports:
             in_sock = self._zmq_context.socket(zmq.SUB)
-            in_sock.connect(f"tcp://127.0.0.1:{port}")
+            in_sock.connect(f"tcp://{self.ip_addr}:{port}")
             in_sock.setsockopt_string(zmq.SUBSCRIBE, topic)
             self._in_socks.append(in_sock)
 

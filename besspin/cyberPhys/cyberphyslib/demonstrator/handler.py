@@ -77,13 +77,14 @@ class ComponentHandler:
 
     TODO: logger
     """
-    def __init__(self):
+    def __init__(self, ip_addr = "127.0.0.1"):
         self._services = {}
         self._command_entry = {}
         self._events_entry = {}
         self._zmq_context = zmq.Context()
         self.name = "SERVICE"
         self.out_sock = None
+        self.ip_addr = ip_addr
 
     def connect_component(self, port_input, port_output, component_name):
         """
@@ -111,7 +112,7 @@ class ComponentHandler:
         porti = {t: p for p, t in comp._out_ports}.get(etopic, None)
         ignition_logger.info(f"Handler: Launching Service {keyword}...")
         if wait:
-            with SubSocketManager(f"tcp://127.0.0.1:{porti}", etopic) as ssock:
+            with SubSocketManager(f"tcp://{self.ip_addr}:{porti}", etopic) as ssock:
                 self.connect_component(porti, porto, keyword)
                 comp.start()
                 self._services[keyword] = comp
@@ -134,7 +135,7 @@ class ComponentHandler:
     def message_component(self, component_kw, message, do_receive=True):
         if do_receive:
             porti, topic = self._events_entry[component_kw]
-            with SubSocketManager(f"tcp://127.0.0.1:{porti}", f"{component_kw}-events") as sub_sock:
+            with SubSocketManager(f"tcp://{self.ip_addr}:{porti}", f"{component_kw}-events") as sub_sock:
 
                 self._command_entry[component_kw].send_string(f"{component_kw}-commands", zmq.SNDMORE)
                 self._command_entry[component_kw].send_pyobj(Envelope.serialize(Envelope(self,
@@ -158,3 +159,8 @@ class ComponentHandler:
         for name in list(self._services.keys()):
             ignition_logger.info("Handler: Termination signal received!")
             self.stop_component(name)
+
+
+    @property
+    def components(self):
+        return [s for _, s in self._services.items()]

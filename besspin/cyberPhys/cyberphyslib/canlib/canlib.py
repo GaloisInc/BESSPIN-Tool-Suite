@@ -28,7 +28,7 @@ class TcpBus(BusABC):
     For guaranteed 'fake multicast' Publish/Subscribe communication
     """
 
-    def __init__(self, host_ip_addr: str, subscriber_ip_addrs: str):
+    def __init__(self, host_ip_addr: str, subscriber_ip_addrs: typ.Sequence[str]):
         super(TcpBus, self).__init__(channel="dummy")
         self.context = zmq.Context()
         self.publisher_addr = "tcp://" + host_ip_addr

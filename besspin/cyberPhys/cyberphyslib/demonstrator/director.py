@@ -14,12 +14,16 @@ import cyberphyslib.demonstrator.speedometer as speedo
 import cyberphyslib.demonstrator.leds_manage as ledm
 import cyberphyslib.demonstrator.infotainment as infotain
 import cyberphyslib.demonstrator.config as cconf
+import cyberphyslib.canlib as canlib
+
 from cyberphyslib.demonstrator.handler import ComponentHandler
 from cyberphyslib.demonstrator.logger import ignition_logger
 
 #import transitions
 from transitions.extensions import GraphMachine as Machine
 from transitions import State
+
+import time
 
 
 class IgnitionDirector:
@@ -61,6 +65,13 @@ class IgnitionDirector:
         self.info_net = None
         self.proxy = None
 
+        # TODO: FIXME: these aren't realistic values
+        # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
+        self.cc_ip_addr = "127.0.0.1:5030"
+        self.cc_subscribers = ["127.0.0.1:5030"]
+        self.scenario_timeout = 3 * 60 # (s) 3 minutes
+        self.cc_timeout = 20 # 20 seconds
+
         self._handler = ComponentHandler()
         self.machine = Machine(self, states=self.states, transitions=self.transitions, initial='startup')
         self.startup_enter()
@@ -73,6 +84,12 @@ class IgnitionDirector:
         ignition_logger.debug("Noncritical Failure State: Enter")
 
     def startup_enter(self):
+        def register_components():
+            # register call of the components to the CAN multiverse network
+            for c in self._handler.components:
+                if c.name != "canm":
+                    self.can_multiverse.register(c)
+
         ignition_logger.debug("Startup State: Enter")
 
         sip = cconf.SIM_IP
@@ -81,14 +98,16 @@ class IgnitionDirector:
         can_base = ccan.CanUdpNetwork("base", cconf.CAN_PORT, sip)
         networks = [can_base, can_ssith_ecu, can_ssith_info]
 
-        can_ssith_info.whitelist = cconf.SSITH_INFO_WHITELIST
-        can_ssith_ecu.whitelist = cconf.SSITH_ECU_WHITELIST
-        can_base.whitelist = cconf.BASE_WHITELIST
-        can_ssith_info.blacklist = cconf.SSITH_INFO_BLACKLIST
-        can_ssith_ecu.blacklist = cconf.SSITH_ECU_BLACKLIST
-        can_base.blacklist = cconf.BASE_BLACKLIST
+        # TODO: FIXME
+        # can_ssith_info.whitelist = cconf.SSITH_INFO_WHITELIST
+        # can_ssith_ecu.whitelist = cconf.SSITH_ECU_WHITELIST
+        # can_base.whitelist = cconf.BASE_WHITELIST
+        # can_ssith_info.blacklist = cconf.SSITH_INFO_BLACKLIST
+        # can_ssith_ecu.blacklist = cconf.SSITH_ECU_BLACKLIST
+        # can_base.blacklist = cconf.BASE_BLACKLIST
 
         # start the can networks
+        self.cc_bus = canlib.TcpBus(self.cc_ip_addr, self.cc_subscribers)
         self.can_multiverse = ccan.CanMultiverse("multiverse", networks, default_network="base")
         self.info_net = ccan.CanUdpNetwork("info-net", cconf.INFO_UI_PORT, sip)
 
@@ -114,18 +133,20 @@ class IgnitionDirector:
         # startup the speedometer
         msg = self._handler.start_component(speedo.Speedo())
         if msg != speedo.SpeedoStatus.READY:
-            #ignition_logger.debug(f"Speedometer service failed to start ({msg})")
-            #self.startup_component_failed()
-            #return
-            # FIXME: speedometer broken on my machine
-            pass
+            ignition_logger.debug(f"Speedometer service failed to start ({msg})")
+            self.startup_component_failed()
+            return
 
         # startup led manager
         msg = self._handler.start_component(ledm.LedManagerComponent.for_ignition())
         if msg != ledm.LedManagerStatus.READY:
             ignition_logger.debug(f"LED Manager service failed to start ({msg})")
+            register_components()
             self.startup_fadecandy_fail()
             return
+
+        # add everything to the can multiverse network
+        register_components()
 
         # otherwise successful
         self.startup_success()
@@ -133,9 +154,18 @@ class IgnitionDirector:
 
     def ready_enter(self):
         ignition_logger.debug("Ready state: enter")
-        # receive CAN and CC message
-        # start a timeout event
-        # c&c message event
+        scenario_start = time.time()
+        while((time.time() - scenario_start) < self.scenario_timeout):
+            cc_recv = self.cc_bus.recv(timeout=self.cc_timeout)
+            if cc_recv:
+                # process the cc_packet
+                pass
+            else:
+                # TODO: FIXME: check for self drive mode
+                self.ready_self_drive()
+                return
+            print(cc_recv)
+        self.ready_timeout()
 
     def restart_enter(self, n_resets=3):
         ignition_logger.debug("Restart state: enter")
@@ -149,17 +179,22 @@ class IgnitionDirector:
                 self.restart_failed()
         self.restart_finished()
 
-
     def noncrit_failure_enter(self):
-        ignition_logger.debug("Noncrit_failure: enter")
+        ignition_logger.debug("Noncrit_failure state: enter")
         ignition_logger.error("Ignition achieved a noncritical error. The LED manager failed to start. Continuing anyway...")
         self.noncrit_finished()
         return
 
     def self_drive_enter(self):
         msg = self._handler.message_component("beamng", simulator.BeamNgCommand.ENABLE_AUTOPILOT, do_receive=True)
-        # TODO: conditions to disable autopilot
+        # TODO: FIXME: conditions to disable autopilot
+        time.sleep(20.0)
+        msg = self._handler.message_component("beamng", simulator.BeamNgCommand.DISABLE_AUTOPILOT, do_receive=True)
         self.self_drive_end()
+
+    def timeout_enter(self):
+        ignition_logger.info("Timeout state: enter")
+        self.timeout_restart()
 
     def draw_graph(self, fname: str):
         """draw a fsm graphviz graph (for documentation, troubleshooting)

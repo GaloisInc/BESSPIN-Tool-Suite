@@ -246,7 +246,7 @@ class Sim(component.ComponentPoller):
     ########## register topic receive methods ##########
     @recv_topic("beamng-commands")
     def _(self, msg, t):
-        print(f"Received BeamNG Command {msg}")
+        logger.sim_logger.debug(f"Received BeamNG Command {msg}")
         if msg not in [r[1] for r, _ in self.recv_methods.items() if len(r) == 2]:
             self.send_message(message.Message(BeamNgStatus.ERROR), 'beamng-events')
 

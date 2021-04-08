@@ -184,7 +184,6 @@ class CanMultiverse(CanNetwork):
         ret = self._active_network.recv(timeout=timeout)
         if ret:
             cid, msg = ret
-            print(msg)
             for k, v in self._listeners.items():
                 v.recv(cid, msg.dlc, msg.data)
             return cid, msg
