@@ -206,7 +206,7 @@ def scoreCWE680(path, lookfor, cwes):
 
 def tabulate(logs,lookfor):
     """
-    Score buffer errors logs.
+    Score individual buffer errors logs.
 
     ARGUMENTS:
     ----------

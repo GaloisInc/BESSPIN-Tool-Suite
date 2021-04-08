@@ -16,6 +16,23 @@ VULCLASS = "bufferErrors"
 
 def score(testScores):
     """
+    Given a list of scores from individual test runs stressing the same CWE,
+    compute an overall score for the CWE.
+
+    ARGUMENTS:
+    ----------
+        testScores : List of SCORES
+            A list of scores from individual test runs.
+
+    RETURNS:
+    --------
+        A tuple of (SCORES, String), where each element is:
+            0.  The overall score for the CWE.
+            1.  Notes about the individual scores from <testScores>.
+    """
+    # Additional technical documentation for developers modifying this
+    # function:
+    """
     This could use some thought. We want to compute a score for a set of BOF tests.
 
     - A 'trap' is a 'good' result, meaning that the overflow was 'caught' in some way.
@@ -78,6 +95,24 @@ def score(testScores):
 
 
 def scoreByCWE(rows):
+    """
+    Given a score table containing scores for individual test runs (such as the
+    output from <count.tabulate>), this function aggregates scores into scores
+    for each CWE.
+
+    ARGUMENTS:
+    ----------
+        rows : List of Dictionary of String to Any.
+            Scores for individual test runs.
+
+    RETURNS:
+    --------
+        A List of List of [String, SCORES, String], where each element
+        represents a score for a CWE.  The elements of each sublist are:
+            0.  CWE name.
+            1.  Score for the CWE.
+            2.  Notes about the score.
+    """
     results = {}
     for row in rows:
         if 'CWE' in row:
@@ -97,6 +132,31 @@ def scoreByCWE(rows):
     return tab
 
 def scoreAllTests(logs):
+    """
+    Compute buffer errors CWE scores from individual test logs.
+
+    ARGUMENTS:
+    ----------
+        logs : List of Tuple of (String, String).
+            The logs to score.  Each element of the list is a tuple with
+            elements:
+                0.  The name of the test.
+                1.  The path to the log file to score.
+
+    SIDE-EFFECTS:
+    -------------
+        - If ${bufferErrors}[${csvFile}] is enabled, writes the CSV file
+          containing the scores to
+          <${cwesEvaluationLogs}/bufferErrors/bufferErrors.csv>.
+
+    RETURNS:
+    --------
+        A List of List of [String, SCORES, String], where each element
+        represents a score for a CWE.  The elements of each sublist are:
+            0.  CWE name.
+            1.  Score for the CWE.
+            2.  Notes about the score.
+    """
     if (isEnabledDict(VULCLASS,"useSelfAssessment")):
         return defaultSelfAssessmentScoreAllTests(VULCLASS, logs)
 
