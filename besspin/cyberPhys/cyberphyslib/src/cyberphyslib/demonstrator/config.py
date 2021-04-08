@@ -9,8 +9,7 @@ Cyberphys Demonstrator Configuration Variables
 
 CAN_PORT = 5002
 
-# TODO: FIXME: ELEW
-SIM_IP = "127.0.0.1" # Sim PC IP
+SIM_IP = "10.88.88.4" # Sim PC IP
 
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
