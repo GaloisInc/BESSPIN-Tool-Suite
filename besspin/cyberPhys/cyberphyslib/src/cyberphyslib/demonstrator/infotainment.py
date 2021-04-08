@@ -54,7 +54,8 @@ class InfotainmentPlayerStatus(enum.IntEnum):
 class InfotainmentUi(ccomp.ComponentPoller):
     """infotainment component that handles the infotainment ui net -> multiverse forwarding"""
     def __init__(self, can_network: CanNetwork):
-        super().__init__("infoui", [(config.DIRECTOR_PORT, 'infoui-commands')], [(config.INFO_UI_PORT, 'infoui-events')])
+        super().__init__("infoui", [(config.DIRECTOR_PORT, 'infoui-commands')], [(
+                                                                                 config.INFO_UI_PORT, 'infoui-events')])
         self._network = can_network
 
     def on_start(self):

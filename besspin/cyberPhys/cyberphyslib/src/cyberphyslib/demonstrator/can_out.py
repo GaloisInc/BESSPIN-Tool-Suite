@@ -29,9 +29,9 @@ class CanOutPoller(ComponentPoller):
             pos = self._location[0]
 
             # Send position X, Y 
-            self._network.send(canspecs.CAN_ID_CAR_X,  struct.pack("f", pos[0]))
-            self._network.send(canspecs.CAN_ID_CAR_Y,  struct.pack("f", pos[1]))
-            self._network.send(canspecs.CAN_ID_CAR_Z,  struct.pack("f", pos[2]))
+            self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("f", pos[0]))
+            self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack("f", pos[1]))
+            self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack("f", pos[2]))
 
             # Convert from unit circle coords to heading
             x = self._location[1][0]

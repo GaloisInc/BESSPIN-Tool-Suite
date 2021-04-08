@@ -123,7 +123,7 @@ class Sim(component.ComponentPoller):
         NOTE: mainloop is included here due to thread access conflicts in on_poll
         """
         bng_args = { "home": config.BEAMNG_PATH,
-                      "user": config.BEAMNG_USER_PATH }
+                      "user": config.BEAMNG_USER_PATH}
         self._beamng_context = BeamNGpy('localhost', config.BEAMNG_PORT, **bng_args)
 
 
@@ -195,7 +195,7 @@ class Sim(component.ComponentPoller):
 
                 self._vehicle.update_vehicle()
                 self._location = (tuple(self._vehicle.state["pos"]), tuple(self._vehicle.state["dir"]))
-                self.send_message(message.Message(self._location),"beamng-vehicle")
+                self.send_message(message.Message(self._location), "beamng-vehicle")
             except ConnectionAbortedError:
                 self.exit()
             except Exception as exc:

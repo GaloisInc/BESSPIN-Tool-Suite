@@ -1,0 +1,3 @@
+recursive-include src/cyberphyslib/demonstrator/utils *.csv
+recursive-include src/cyberphyslib/demonstrator/utils *.conf
+recursive-include src/cyberphyslib/demonstrator/utils *.json
