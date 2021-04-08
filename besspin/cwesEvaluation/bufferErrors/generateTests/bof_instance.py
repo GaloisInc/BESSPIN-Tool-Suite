@@ -1,20 +1,5 @@
 import sys
 
-class Attr():
-    """
-    A key/value pair representation
-    """
-
-    def __init__(self, attr, val):
-        self.attr = attr
-        self.val  = val
-
-    def __str__(self):
-        return f"[{self.attr} := {self.val}]"
-
-    def __repr__(self):
-        return str(self)
-
 class BofInstance():
     """
     Lightweight representation of a FMJSON instance (or configuration).
@@ -23,6 +8,19 @@ class BofInstance():
 
     # Initialize with fmjson files
     def __init__(self, model, inst):
+        """
+        Construct a BofInstance.
+
+        ARGUMENTS:
+        ----------
+            model : Dictionary from String to Any.
+                A parsed FMJSON representation of a buffer error model.
+
+            inst : Dictionary from String to Any.
+                A parsed FMJSON representation of a buffer error instance
+                satisfying the constraints in <model>.
+        """
+
         for v in inst:
             if v not in model['features']:
                 continue
@@ -50,5 +48,12 @@ class BofInstance():
                         setattr(self, x, v)
 
     def __str__(self):
+        """
+        Convert this BofInstance to a String.
+
+        RETURNS:
+        --------
+            A String representation of <self>.
+        """
         return str(vars(self))
 
