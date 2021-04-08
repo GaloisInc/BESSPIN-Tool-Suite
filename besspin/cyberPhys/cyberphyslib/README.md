@@ -11,6 +11,7 @@ python setup.py install
 
 Run the tests with
 ```
+cd tests
 pytest
 ```
 
