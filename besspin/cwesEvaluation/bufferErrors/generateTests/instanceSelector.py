@@ -11,12 +11,35 @@ def instanceToConcept(instance):
     Translates an instance to a concept consisting of a subset of the
     properties of the instance.  This subset has been selected to provide good
     coverage of the CWE clafer constraints.
+
+    ARGUMENTS:
+    ----------
+        instance : BofInstance
+            Instance to translate to a concept.
+
+    Returns:
+    --------
+        A tuple of (String, String, String).  In order, each element in this
+        tuple corresponds to the following settings from the buffer error
+        model:
+            0.  Access.
+            1.  Boundary.
+            2.  Location.
+        Throughout the documentation for this file, these tuples are referred
+        to as "concepts".
     """
     return (instance.Access,
             instance.Boundary,
             instance.Location)
 
 def compilingBareMetal():
+    """
+    Determine whether the tests will be built using a bare metal compiler.
+
+    RETURNS:
+    --------
+        True iff the tests will be built using a bare metal compiler.
+    """
     return (isEnabled('useCustomCompiling') and
             (getSettingDict('customizedCompiling','gccDebian') in
              ['bareMetal8.3', 'bareMetal9.2']))
@@ -24,6 +47,15 @@ def compilingBareMetal():
 def getQuota(instance):
     """
     Given an instance, returns the quota for the concept it belongs to.
+
+    ARGUMENTS:
+    ----------
+        instance : BofInstance
+            Instance to translate to a concept tuple and check the quota for.
+
+    RETURNS:
+    --------
+        An Integer.  The quota for the concept <instance> belongs to.
     """
     if instance.BufferIndexScheme == "BufferIndexScheme_PathManipulation":
         # Path manipulation test quotas are enforced by InstanceSelector, and
@@ -73,9 +105,24 @@ def getQuota(instance):
 class InstanceSelector:
     """
     This class selects test instances from a list of instances to produce a
-    set of generated tests with good coverage of the buffer errors concepts
+    set of generated tests with good coverage of the buffer errors concepts.
     """
     def __init__(self, instancePairs, rnd):
+        """
+        Construct an InstanceSelector.
+
+        ARGUMENTS:
+        ----------
+            instancePairs : List of Tuple of (BofInstance, BofTestGen)
+                A list of instances to select from.  Each element is a tuple
+                with the following elements:
+                    0.  A satisfying assignment for the constraints in the
+                        buffer errors model.
+                    1.  A BofTestGen to generate C tests from the BofInstance.
+
+            rnd : random.Random
+                Random object to use for selecting instances.
+        """
         nTests = getSettingDict('bufferErrors', 'nTests')
         self.conceptCounts = collections.defaultdict(int)
         self.instancePairs = instancePairs
@@ -85,6 +132,14 @@ class InstanceSelector:
         self.rnd = rnd
 
     def chooseInstance(self):
+        """
+        Choose a test instance satisfying the buffer errors test quotas.
+
+        RETURNS:
+        --------
+            A BofTestGen selected randomly from the set of instances satisfying
+            the buffer errors concept quotas.
+        """
         numSelected = sum(self.conceptCounts.values())
         if (not isEqSetting('osImage', 'FreeRTOS') and
             not compilingBareMetal() and
