@@ -5,6 +5,8 @@
  *
 */
 
+// TODO: Comment this?  If so, to what degree?
+
 // For fixed width integers
 #include <stdint.h>
 

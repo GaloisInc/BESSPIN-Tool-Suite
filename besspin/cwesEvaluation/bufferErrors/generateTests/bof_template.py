@@ -21,19 +21,45 @@ environment `env`, which is a dictionary mapping parameters to their values.
 
 class Dep:
     """
-    This class represents a dependency.  Its constructor takes two parameters:
-    x       : The parameter that this parameter depends on
-    makeGen : A function that takes `x` as input and returns another parameter
-              assignment class.
-
-    `getRand` returns `makeGen(x).getRand(rnd, env)` if `x` is bound in `env`,
-    otherwise it returns None.
+    This class represents a dependency.
     """
     def __init__(self, x, makeGen):
+        """
+        Construct a Dep.
+
+        ARGUMENTS:
+        ----------
+            x : String
+                The parameter that this parameter depends on.
+
+            makeGen : Function from Any to Parameter Assignment Class
+                A function that takes <x> as input and returns another
+                parameter assignment class.
+        """
         self.var = x
         self.makeGen = makeGen
 
     def getRand(self, rnd, env=None):
+        """
+        If the dependency is in the environment, calls <getRand> on the
+        Parameter Assignment Class returned by <self.makeGen>.
+
+        ARGUMENTS:
+        ----------
+            rnd : random.Random
+                Random object to use.
+
+            env : Dictionary from String to Any
+                The environment of variable assignments to lookup the
+                dependency in.  <env> is a keyword argument for consistency
+                with the other Parameter Assignment Classes, but <env> may not
+                be <None> when calling <getRand> on a <Dep>.
+
+        RETURNS:
+        --------
+            An Optional Any.  Returns <makeGen(env[self.var]).getRand(rnd, env)>
+            if <self.var> is bound in <env>, otherwise it returns None.
+        """
         if self.var in env:
             return self.makeGen(env[self.var]).getRand(rnd, env)
         else:
