@@ -9,6 +9,20 @@ from besspin.cwesEvaluation.bufferErrors.generateTests.bof_instance import *
 from besspin.cwesEvaluation.bufferErrors.generateTests.instanceSelector import *
 
 def parseBytes(sz):
+    """
+    Convert a size string (such as those used in a BESSPIN config file) to a
+    string.
+
+    ARGUMENTS:
+    ----------
+        sz : String
+            A string representation of an integer, optionally with the suffix
+            'K', 'M', or 'G' where K=1024, M=1024**2, and G=1024**3.
+
+    RETURNS:
+    --------
+        An Integer parsed from <sz>.
+    """
     try:
         if sz[-1] == 'K':
             return (1024*int(sz[:-1]))
@@ -23,6 +37,22 @@ def parseBytes(sz):
                    exitCode=EXIT.Configuration)
 
 def generateTests(outdir):
+    """
+    Generate buffer errors tests.
+
+    ARGUMENTS:
+    ----------
+        outdir : String
+            Directory to write generated C tests to.
+
+    SIDE-EFFECTS:
+    -------------
+        - Writes generated C tests to <outdir>.
+        - If ${bufferErrors}[${useCachedInstances}] and
+          ${bufferErrors}[${useCustomErrorModel}] are both disabled, caches
+          generated instances to the JSON file
+          <${repoDir}/besspin/cwesEvaluation/bufferErrors/CachedInstances.json>.
+    """
     # Check that nTests is large enough to avoid score instability
     minNTests = 40 if isEqSetting('osImage', 'FreeRTOS') else 100
     if getSettingDict('bufferErrors', 'nTests') < minNTests:
