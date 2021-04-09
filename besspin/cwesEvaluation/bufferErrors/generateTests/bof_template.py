@@ -66,56 +66,121 @@ class Dep:
             return None
 
 class Choice:
-    """
-    `Choice` represents a random choice between multiple values.  Its
-    constructor takes an arbitrary number of arguments, and a call to
-    `getRand` returns a random element from the constructors arguments.
-    """
+    """ Represents a random choice between multiple values. """
     def __init__(self, *vals):
+        """
+        Construct a Choice.
+
+        ARGUMENTS:
+        ----------
+            *vals : *Any
+                An arbitrary number of arguments representing the values to
+                choose from.
+        """
         self.vals = vals
 
     def getRand(self, rnd, env=None):
+        """
+        Get a random element from <self.vals>.
+
+        ARGUMENTS:
+        ----------
+            rnd : random.Random
+                Random object to use.
+
+            env : Optional Dictionary from String to Any
+                Unused.  Exists for consistency with other Parameter Assignment
+                Classes.
+
+        RETURNS:
+        --------
+            A random element from <self.vals>.
+        """
         return rnd.choice(self.vals)
 
 class Range:
-    """
-    `Range` represents a random choice from a range.  Its constructor takes two
-    parameters:
-    lo : The low end of the range (inclusive)
-    hi : The high end of the range (inclusive)
+    """ Represents a random choice from a range.  """
 
-    `getRand` returns a random integer from `lo` through `hi` inclusive.
-    """
     def __init__(self, lo, hi):
+        """
+        Construct a Range.
+
+        ARGUMENTS:
+        ----------
+            lo : Int
+                The low end of the range (inclusive).
+
+            hi : Int
+                The high end of the range (inclusive).
+        """
         self.lo = lo
         self.hi = hi
 
     def getRand(self, rnd, env=None):
+        """
+        Get a random integer in the range.
+
+        ARGUMENTS:
+        ----------
+            rnd : random.Random
+                Random object to use.
+
+            env : Optional Dictionary from String to Any
+                Unused.  Exists for consistency with other Parameter Assignment
+                Classes.
+
+        RETURNS:
+        --------
+            A random integer between <lo> and <hi> inclusive.
+        """
         return rnd.randint(self.lo, self.hi)
 
 class Name:
-    """
-    `Name` represents a variable name in the generated C program.  Its
-    constructor takes three parameters:
-    prefix : The string prefix for the variable's name
-    lo     : The minimum number of random characters to append to `prefix`
-    hi     : The maximum number of random characters to append to `prefix`
-
-    `getRand` returns a random variable name starting with `prefix` and ending
-    in some number (between `lo` and `hi`) of random letters from the alphabet.
-    `getRand` guarantees that it generates a unique name.  That is, even if
-    there are two `Name` classes with the same `prefix`, `getRand` is
-    guaranteed to produce different random strings for both.
-    """
+    """ Represents a variable name in the generated C program.  """
     seen = set([])
     alphabet = string.ascii_letters
 
     def __init__(self, prefix, lo, hi):
+        """
+        Construct a Name.
+
+        ARGUMENTS:
+        ----------
+            prefix : String
+                The prefix for the variable's name.
+
+            lo : Int
+                The minimum number of random characters to append to <prefix>.
+
+            hi : Int
+                The maximum number of random characters to append to <prefix>.
+        """
         self.prefix = prefix
         self.lo = lo
         self.hi = hi
 
     def getRand(self, rnd, env=None):
+        """
+        Generates a random variable name.  <getRand> guarantees that it
+        generates a unique name.  That is, even if there are two <Name> classes
+        with the same <prefix>, <getRand> is guaranteed to produce different
+        random strings for both.
+
+        ARGUMENTS:
+        ----------
+            rnd : random.Random
+                Random object to use.
+
+            env : Optional Dictionary from String to Any
+                Unused.  Exists for consistency with other Parameter Assignment
+                Classes.
+
+        RETURNS:
+        --------
+            A string.  A random variable name starting with <self.prefix> and
+            ending in some number (between <self.lo> and <self.hi>) of random
+            letters from the alphabet.
+        """
         while True:
             n = rnd.randint(self.lo, self.hi)
             suffix = "".join(rnd.choices(Name.alphabet, k=n))
@@ -129,7 +194,19 @@ class Name:
 ###############################################################################
 
 def sizeof(typ):
-    """ Given a C type name, returns the width of that type in bytes """
+    """
+    Given a C type name, returns the size of that type in bytes.
+
+    ARGUMENTS:
+    ----------
+        typ : String
+            A C type name.  Must be either a fixed width integer matching the
+            regular expression <u?int([0-9]{1,2}_t)>, "float", or "double".
+
+    RETURNS:
+    --------
+        The size of the C type <typ> in bytes.
+    """
     if typ == "float":
         return 4
     if typ == "double":
@@ -173,8 +250,19 @@ COMPUTE_SIZE = { 'SizeComputation_None' : 'NO_COMPUTE_SIZE',
 
 def DATASIZE(bound):
     """
-    Define possible C buffer sizes based on `stackSize` and `heapSize`
+    Define possible C buffer sizes based on <stackSize> and <heapSize>
     parameters from BESSPIN config.
+
+    ARGUMENTS:
+    ----------
+        bound : Number
+            Upper bound for C buffer sizes in bytes.
+
+    RETURNS:
+    --------
+        A Dictionary from String to Tuple of (Number, Number).  This dictionary
+        maps the strings 'DataSize_Little', 'DataSize_Some', and
+        'DataSize_Huge' to inclusive ranges of buffer sizes.
     """
     b = math.log(bound)/3.0
     return { 'DataSize_Little' : (1, math.ceil(math.exp(b))),
@@ -183,9 +271,22 @@ def DATASIZE(bound):
 
 def pickDataRange(attr, bound):
     """
-    Given a DataSize value from the clafer model `attr` and a memory bound from
-    the BESSPIN config `bound`, return a range of possible buffer sizes that
-    satisfies both constraints.
+    Compute a data range that satisfies the constraints from a buffer error
+    model instance as well as an additional upper bound (such as from the
+    BESSPIN config memory bounds).
+
+    ARGUMENTS:
+    ----------
+        attr : String
+            DataSize attribute constraint.  Must be one of 'DataSize_Little',
+            'DataSize_Some', or 'DataSize_Huge'.
+
+        bound : Number
+            Upper bound for the data range in bytes.
+
+    RETURNS:
+    --------
+        A Range satisfying <attr>, clamped above by <bound>.
     """
     sz = DATASIZE(bound)[attr]
     if sz[1] > bound:
@@ -196,6 +297,7 @@ def pickDataRange(attr, bound):
 ####  Test Generation
 ###############################################################################
 
+# TODO: Rename BofBESSPIN?
 class BofTestGen:
     """
     This class takes an instance from the BufferErrors clafer model, as well as
@@ -218,6 +320,20 @@ class BofTestGen:
     self.PARAMS dictionary.
     """
     def __init__(self, bof_instance, heapSize, stackSize):
+        """
+        Construct a BofTestGen.
+
+        ARGUMENTS:
+        ----------
+            bof_instance : BofInstance
+                Buffer errors model instance to generate a test from.
+
+            heapSize : Int
+                Maximum heap buffer size in bytes.
+
+            stackSize : Int
+                Maximum stack buffer size in bytes.
+        """
         self.bof_instance = bof_instance
         # The template file is essentially a long python f-string. This class
         # will fill in the values of this f-string using self.PARAMS
@@ -523,6 +639,24 @@ class BofTestGen:
         }
 
     def genInstance(self, rnd, drop=False):
+        """
+        Generate a buffer errors C test satisfying the constraints in this
+        BofTestGen instance.
+
+        ARGUMENTS:
+        ----------
+            rnd : random.Random
+                Random object to use.
+
+            drop : Boolean
+                Whether or not to return the generated C test.  Set to <False>
+                when skipping test instances.
+
+        RETURNS:
+        --------
+            If <drop> is <True>, returns <None>.  Else, returns a String
+            containing the generated C test.
+        """
         ## This is a little complicated, but since the number of params is low
         ## we can be less than smart about it.
 
