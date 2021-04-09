@@ -45,11 +45,33 @@ exclusions = ( #These are not checked: fPath-vulClass
 )
 
 class cwesDict:
+    """
+    This is the parent CWEs class. It contains the CWEs and their info for each vulClass
+    """
     def __init__(self, fPath):
+        """
+        ARGUMENTS:
+        ----------
+        fPath: String
+            Name of the source of the data held in this object
+        """
         self.fPath = fPath
         self._cwes = {vulClass : {} for vulClass in vulClasses}
 
     def compare (self, target, checkDescription=False):
+        """
+        Compares *this* CWEs info to the *target* CWEs info.
+            - Match: Will print on the screen CHECK!.
+            - Mismatch: Will err and exit.
+
+        ARGUMENTS:
+        ----------
+        target: cwesDict
+            The pointer to a cwesDict object to compare against.
+
+        checkDescription: Bool
+            Whether to check the CWE text descritpton
+        """
         for vulClass in vulClasses:
             if (f"{target.fPath}-{vulClass}" in exclusions):
                 continue
@@ -68,26 +90,66 @@ class cwesDict:
         print(f"CHECK: <{self.fPath}> matches <{target.fPath}>.")
 
     def getVulClassCount(self, vulClass):
+        """
+        Returns the number of CWEs in a vulClass
+        
+        ARGUMENTS:
+        ----------
+        vulClass: String
+        """
         return len(self._cwes[vulClass])
 
     def getCwesObjects(self, vulClass):
+        """
+        Returns a list of cwesDict objects belonging to vulClass
+        
+        ARGUMENTS:
+        ----------
+        vulClass: String
+        """
         return self._cwes[vulClass].values()
 
 class cwesDictCFR(cwesDict):
+    """
+    The class for CWEs dict imported from a Clafer vulClass file
+    """
     def __init__(self,fPath):
         super().__init__(fPath)
 
     def addVulClass(self,vulClass,vCfr):
+        """
+        Loads a vulClass CWEs for cwesDict from clafer
+
+        ARGUMENTS:
+        ----------
+        vulClass: String
+
+        vCfr: Dict
+            a dict loaded from a json representation of the children of "CWE" in the clafer source
+        """
         for xCwe in vCfr:
             cweNum = xCwe.split("CWE_")[-1]
             self._cwes[vulClass][cweNum] = cwe(vulClass,cweNum)
 
 
 class cwesDictJSON(cwesDict):
+    """
+    The class for CWEs dict imported from a json setupEnv file
+    """
     def __init__(self,fPath):
         super().__init__(fPath)
 
     def addVulClass(self,vulClass,vJson):
+        """
+        Loads a vulClass CWEs for cwesDict from json setupEnv
+
+        ARGUMENTS:
+        ----------
+        vulClass: String
+
+        vJson: Dict
+            a json Dict loaded from a setupEnv.json vulClass file
+        """
         vDict = vJson
         if (vulClass not in vDict):
             errorExit(f"Missing key <{vulClass}> in <{self.fPath}> for <{vulClass}>.")
@@ -113,6 +175,19 @@ class cwesDictINI(cwesDict):
         super().__init__(fPath)
 
     def addVulClass(self,vulClass,vConfig,sectionType):
+        """
+        Loads a vulClass CWEs for cwesDict from an INI file
+
+        ARGUMENTS:
+        ----------
+        vulClass: String
+
+        vConfig: configparser.ConfigParser
+            Of the vulClass ini file
+
+        sectionType: String
+            Either `enabledTests` or `selfAssessment`
+        """
         if (sectionType=="test"):
             configSection = "enabledTests"
         elif (sectionType=="assessment"):
@@ -137,12 +212,20 @@ class cwesDictCSV(cwesDict):
         self.loadedCount = {vulClass : 0 for vulClass in vulClasses} 
 
     def addCsvCwe(self,row):
+        """
+        Loads a row from the spreadsheet into the dictionary
+        """
         xCwe = csvRow(row)
         self._cwes[xCwe.vulClass][xCwe.id] = xCwe
         if (xCwe.doesHaveCwesList):
             self.loadedCount[xCwe.cwesListVulClass] = xCwe.cwesListCount
 
     def checkSpreadsheetTotals(self):
+        """
+        Checks the column with the totals fits the loaded CWEs
+            - Match: Will print on the screen CHECK!.
+            - Mismatch: Will err and exit.
+        """
         for vulClass in vulClasses:
             if (len(self._cwes[vulClass])==0):
                 errorExit(f"No CWES found for <{vulClass}> in {self.fPath}.")
@@ -155,12 +238,18 @@ class cwesDictCSV(cwesDict):
         print("CHECK: Spreadsheet totals.")
 
 class cwe:
+    """
+    Object CWE
+    """
     def __init__(self,vulClass,num):
         self.vulClass = vulClass
         self.id = num.replace('-','_').upper()
 
 class csvRow(cwe):
     def __init__(self, row):
+        """
+        Initialized the cwe object from a CSV row
+        """
         #Read the overall count list
         self.doesHaveCwesList = (row[cwesCsvHeaders["CWEs List"]] in cwesShortcuts)
         if (self.doesHaveCwesList):
@@ -179,6 +268,16 @@ def formatExc (exc):
         return '<Non-recognized Exception>'
 
 def errorExit(message,exc=None):
+    """ 
+    Report and error and exit
+    
+    ARGUMENTS:
+    ---------
+    message: String
+        The error message
+
+    exc: Exception
+    """
     if (exc):
         message += f"\n{formatExc(exc)}."
     print(f"(ERROR)~ {message}")
@@ -188,6 +287,20 @@ def errorExit(message,exc=None):
     exit(1)
 
 def loadCsvCwes(csvLines, fPath):
+    """
+    Loads the CWEs from the csv file
+    
+    ARGUMENTS:
+    ---------
+    csvLines: [String]
+        lines of the csv files
+    fPath:
+        The name of file path of the csv file (used as an ID)
+
+    RETURN:
+    -------
+    csvCwes: cwesDictCSV
+    """
     csvCwes = cwesDictCSV(fPath);
     for line in csvLines:
         items = line.split(',')
@@ -199,6 +312,25 @@ def loadCsvCwes(csvLines, fPath):
     return csvCwes
 
 def loadFile (fPath,fType):
+    """
+    Loads CWEs from a file. 
+    
+    ARGUMENTS:
+    ---------
+    fPath: String (file path)
+        The file path to the source of the CWEs
+
+    fType: String
+        The file type out of [json, csv, ini, cfr]
+
+    RETURN:
+    -------
+    Based on the value of fType:
+        case "json" : json object of that vulClass file
+        case "csv"  : cwesDict object -- ready to use
+        case "ini"  : configparser.ConfigParser object of that vulClass file
+        case "cfr"  : Dict based on the children of "CWE" loaded from the clafer file
+    """
     try:
         f = open(fPath, 'r')
         if (fType=="json"):
