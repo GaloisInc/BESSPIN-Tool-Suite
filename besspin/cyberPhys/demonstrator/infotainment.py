@@ -22,12 +22,12 @@ import pathlib
 import struct
 import typing as typ
 
-import cyberphyslib.demonstrator.config as config
-from cyberphyslib.demonstrator.component import ComponentPoller
-from cyberphyslib.demonstrator.logger import info_logger
-from cyberphyslib.demonstrator.can import CanNetwork
-from cyberphyslib.canlib.canspecs import *
-import cyberphyslib.canlib.canspecs as canspecs
+import demonstrator.config as config
+from demonstrator.component import ComponentPoller
+from demonstrator.logger import info_logger
+from demonstrator.can import CanNetwork
+from canlib.canspecs import *
+import canlib.canspecs as canspecs
 
 from pygame import mixer
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, AudioSession

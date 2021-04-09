@@ -15,9 +15,7 @@ import typing as typ
 from abc import ABCMeta, abstractmethod
 from can import Message
 from .component import ThreadExiting
-
-# TODO: @ethanlew import canlib/python/canlib.py properly
-from cyberphyslib.canlib import CanDataType, UdpBus
+from canlib import CanDataType, UdpBus
 
 
 class CanListener(metaclass=ABCMeta):

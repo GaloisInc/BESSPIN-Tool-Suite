@@ -19,8 +19,8 @@ import psutil
 import time
 import os
 import pathlib
-from cyberphyslib.demonstrator import config, component, message, logger
-import cyberphyslib.canlib.canspecs as canspecs
+from demonstrator import config, component, message, logger
+import canlib.canspecs as canspecs
 
 from beamngpy import BeamNGpy, Scenario, Vehicle
 from beamngpy.sensors import Electrics, GForces

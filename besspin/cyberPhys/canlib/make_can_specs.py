@@ -25,7 +25,7 @@ with open(specs_filename, "r") as f:
 # date and file info
 today = date.today()
 
-outfilename_py: str = "../cyberphyslib/canlib/canspecs.py"
+outfilename_py: str = "./canspecs.py"
 file_header_py: str = f"""\"\"\"Cyberphys CAN Frames Specification
 Project: SSITH CyberPhysical Demonstrator
 Name: {outfilename_py}

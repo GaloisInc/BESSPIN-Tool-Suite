@@ -8,7 +8,7 @@ Tests for cyberphys CAN objects
 """
 import socket
 import pytest
-import cyberphyslib.demonstrator.can as ccan
+import demonstrator.can as ccan
 from can import Message
 
 

@@ -178,8 +178,7 @@ class TtyLogger(threading.Thread):
     def run(self):
         while (not self.stopLogging.is_set()):
             try:
-                fetchedBytes = self.process.read_nonblocking(size=1024,timeout=1) #size is arbitrary; it wouldn't matter much
-                textBack = str(fetchedBytes,'utf-8')
+                self.process.read_nonblocking(size=1024,timeout=1) #size is arbitrary; it wouldn't matter much
             except pexpect.TIMEOUT:
                 continue
             except Exception as exc:

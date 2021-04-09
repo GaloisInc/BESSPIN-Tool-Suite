@@ -10,7 +10,7 @@ from besspin.base.threadControl import ftQueueUtils
 from besspin.cyberPhys import otaserver, infotainmentserver
 
 # Import for CAN bus
-from besspin.cyberPhys.cyberphyslib.canlib import UdpBus, Message, CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
+from besspin.cyberPhys.canlib import UdpBus, Message, CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
 
 import struct
 import ipaddress

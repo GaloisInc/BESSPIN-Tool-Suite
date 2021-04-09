@@ -89,7 +89,7 @@ class LedGame:
 
 
 import pandas as pd
-ledf = pd.read_csv("../cyberphyslib/demonstrator/utils/led_strings_comprehensive_tuple_colors.csv")
+ledf = pd.read_csv("../demonstrator/utils/led_strings_comprehensive_tuple_colors.csv")
 lstrings = []
 for idx, row in ledf.iterrows():
     hd = {}

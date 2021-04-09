@@ -6,8 +6,8 @@ Date: 21 January 2021
 
 Infotainment Server Prototype with Keyboard Stub
 """
-from cyberphyslib.canlib import canspecs
-from cyberphyslib.demonstrator import can, config, component
+from canlib import canspecs
+from demonstrator import can, config, component
 import struct
 import time
 import pygame

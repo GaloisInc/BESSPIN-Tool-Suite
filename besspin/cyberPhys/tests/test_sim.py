@@ -6,7 +6,7 @@ Date: 11 January 2021
 
 Tests for the cyberphys BeamNG sim component
 """
-import cyberphyslib.demonstrator.simulator as csim
+import demonstrator.simulator as csim
 
 
 def test_sim():

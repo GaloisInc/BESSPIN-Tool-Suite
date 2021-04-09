@@ -45,7 +45,7 @@ import signal
 import argparse
 
 # Project libs
-from cyberphyslib.demonstrator import (can, config, simulator,
+from demonstrator import (can, config, simulator,
                        logger, mux, infotainment, can_out)
 
 SSITH_ENABLED = False
@@ -140,7 +140,7 @@ else:
 if args.use_led_manager:
     import cyberphys.leds_manage as leds_manage
     # TODO: hard-coded path
-    ledmanager = leds_manage.LedManagerComponent.from_csv("../cyberphyslib/demonstrator/utils/led_strings_comprehensive_tuple_colors.csv")
+    ledmanager = leds_manage.LedManagerComponent.from_csv("../demonstrator/utils/led_strings_comprehensive_tuple_colors.csv")
 else:
     logger.led_manage_logger.info(f"Not using LED manager as disabled by input argument")
 
