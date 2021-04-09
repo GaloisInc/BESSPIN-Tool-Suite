@@ -8,7 +8,9 @@ import configparser
 
 
 def main (xArgs):
-	#reading configuration file
+	"""
+    Manipulate the chosen ini file (section: enabledTests or the custom one)
+    """
     xConfig = configparser.ConfigParser()
     try:
         xConfig.optionxform = str # Hack it to be case sensitive
