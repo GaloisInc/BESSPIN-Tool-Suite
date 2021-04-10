@@ -109,6 +109,7 @@ class Sim(component.ComponentPoller):
         self._start_finished = False
         self._enable_autopilot = False
         self._disable_autopilot = False
+        self._in_autopilot = False
 
         # record whether sim is paused or not
         self._is_paused = False
@@ -178,13 +179,16 @@ class Sim(component.ComponentPoller):
                 if self._enable_autopilot:
                     self._vehicle.ai_set_mode('span')
                     self._enable_autopilot = False
+                    self._in_autopilot = True
                 elif self._disable_autopilot:
                     self._vehicle.ai_set_mode('disable')
                     self._disable_autopilot = False
+                    self._in_autopilot = False
 
                 # handle vehicle control event
                 if (self._vehicle is not None) and (self._vehicle.skt):
-                    if self.control_evt and self.control != {}:
+                    # do not control vehicle if in autopilot
+                    if self.control_evt and self.control != {} and not self._in_autopilot:
                         self._vehicle.control(**self.control)
                         self.control_evt = False
                         self.control = {}

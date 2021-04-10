@@ -196,7 +196,7 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
             while not self.stopped:
                 for sn in self._in_socks:
                     if self.stopped:
-                        yield (f"{self.name}-command", ComponentStatus.EXIT, None)
+                        yield (f"{self.name}-command", Message(ComponentStatus.EXIT), None)
                     while  isinstance(sn, zmq.Socket) and sn.poll(1) == zmq.POLLIN:
                         topic = sn.recv_string(zmq.DONTWAIT)
                         recv: bytes = sn.recv_pyobj(zmq.DONTWAIT)
@@ -225,7 +225,8 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         rgy = self.recv_can_methods
         if id in rgy:
             fmt = rgy[id][0]
-            msg = struct.unpack(fmt, bytearray(data)[:data_len])
+            # use network order (!)
+            msg = struct.unpack("!" + fmt, bytearray(data)[:data_len])
             rgy[id][1](self, msg)
 
     @property

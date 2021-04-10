@@ -13,6 +13,7 @@ import cyberphyslib.demonstrator.simulator as simulator
 import cyberphyslib.demonstrator.speedometer as speedo
 import cyberphyslib.demonstrator.leds_manage as ledm
 import cyberphyslib.demonstrator.infotainment as infotain
+import cyberphyslib.demonstrator.can_out as ccout
 import cyberphyslib.demonstrator.config as cconf
 import cyberphyslib.canlib as canlib
 
@@ -35,7 +36,8 @@ class IgnitionDirector:
         input = {component_fail, fadecandy_fail, scenario_timeout, cc_msg, can_msg, self_drive}
         state = {startup, noncrit_failure, ready, terminate, self_drive, restart, timeout, cc_msg, can}
 
-    Two states whose transitions depend on input are startup and the ready state.
+    Two states whose transitions depend on input are startup and the ready state. Callbacks associated with this state
+    machine are responsible for identifying the appropriate inputs based on the component behavior.
     """
     # FSM description
     states=[State(name='startup', on_enter='startup_enter'),
@@ -72,7 +74,7 @@ class IgnitionDirector:
 
         {'trigger': 'next_state', 'source': 'timeout', 'dest': 'restart'},
         {'trigger': 'next_state', 'source': 'restart', 'dest': 'ready'},
-        #{'trigger': 'next_state', 'source': 'restart', 'dest': 'terminate'},
+        #{'trigger': 'next_state', 'source': 'restart', 'dest': 'terminate'}, # no known failure modes here
         {'trigger': 'next_state', 'source': 'can', 'dest': 'ready'},
         {'trigger': 'next_state', 'source': 'self_drive', 'dest': 'restart'},
         {'trigger': 'next_state', 'source': 'cc_msg', 'dest': 'ready'},
@@ -80,6 +82,7 @@ class IgnitionDirector:
     ]
 
     def __init__(self):
+        """ignition state machine"""
         self.can_multiverse = None
         self.info_net = None
         self.proxy = None
@@ -94,20 +97,28 @@ class IgnitionDirector:
         self._handler = ComponentHandler()
         self.machine = Machine(self, states=self.states, transitions=self.transitions, initial='startup', show_conditions=True)
 
+        # input space as class members
         self.input_fadecandy_fail = False
         self.input_component_fail = False
         self.input_can_msg = False
         self.input_cc_msg = False
         self.input_s_timeout = False
         self.input_self_drive = False
-        #self.startup_enter()
+
+        self.self_drive_mode = False
+
+        # TODO: FIXME
+        self.is_finished = False
 
     def run(self):
+        """start the state machine, and keep it transitioning until termination"""
         self.startup_enter()
-        while True:
+        while not self.is_finished:
+            # advance the state machine
             self.next_state()
 
     def default_input(self):
+        """input initialization"""
         self.input_fadecandy_fail = False
         self.input_component_fail = False
         self.input_can_msg = False
@@ -115,8 +126,17 @@ class IgnitionDirector:
         self.input_s_timeout = False
         self.input_self_drive = False
 
+    def draw_graph(self, fname: str):
+        """draw a fsm graphviz graph (for documentation, troubleshooting)
+
+        NOTE: you will need to install graphviz (with dot)
+        """
+        self.machine.get_graph().draw(fname, prog='dot')
+
+### STATE ENTRY CALLBACKS
     def terminate_enter(self):
         ignition_logger.debug("Termination State: Enter")
+        self.is_finished = True
         self._handler.exit()
 
     def noncrit_failure_enter(self):
@@ -159,19 +179,6 @@ class IgnitionDirector:
             self.input_component_fail = True
             return
 
-        # startup the multiverse
-        msg = self._handler.start_component(ccan.CanMultiverseComponent(self.can_multiverse))
-        if msg != ccan.CanMultiverseStatus.READY:
-            ignition_logger.debug(f"CAN multiverse service failed to start ({msg})")
-            self.input_fadecandy_fail = False
-            self.input_component_fail = True
-            return
-
-        # startup infotainment proxy
-        self.proxy = infotain.InfotainmentProxy(self.info_net, self.can_multiverse)
-        self._handler.start_component(self.proxy.info_ui, wait=False)
-        self._handler.start_component(self.proxy.info_player, wait=False)
-
         # startup the speedometer
         msg = self._handler.start_component(speedo.Speedo())
         if msg != speedo.SpeedoStatus.READY:
@@ -180,17 +187,43 @@ class IgnitionDirector:
             self.input_component_fail = True
             return
 
+        # startup the multiverse
+        msg = self._handler.start_component(ccan.CanMultiverseComponent(self.can_multiverse))
+        if msg != ccan.CanMultiverseStatus.READY:
+            ignition_logger.debug(f"CAN multiverse service failed to start ({msg})")
+            self.input_fadecandy_fail = False
+            self.input_component_fail = True
+            return
+
+        # startup the can location poller
+        msg = self._handler.start_component(ccout.CanOutPoller(self.can_multiverse))
+        if msg != ccout.CanOutStatus.READY:
+            ignition_logger.debug(f"Can Out Location service failed to start ({msg})")
+            self.input_fadecandy_fail = False
+            self.input_component_fail = True
+            return
+
+        # add everything to the can multiverse network
+        register_components()
+
+        # startup infotainment proxy
+        self.proxy = infotain.InfotainmentProxy(self.info_net, self.can_multiverse)
+        self._handler.start_component(self.proxy.info_ui, wait=False)
+        self._handler.start_component(self.proxy.info_player, wait=False)
+
+        # TODO: FIXME
+        self.info_net.start()
+
         # startup led manager
-        msg = self._handler.start_component(ledm.LedManagerComponent.for_ignition())
+        lm = ledm.LedManagerComponent.for_ignition()
+        msg = self._handler.start_component(lm)
         if msg != ledm.LedManagerStatus.READY:
             ignition_logger.debug(f"LED Manager service failed to start ({msg})")
             register_components()
             self.input_fadecandy_fail = True
             self.input_component_fail = False
+            self.can_multiverse.register(lm)
             return
-
-        # add everything to the can multiverse network
-        register_components()
 
         self.input_fadecandy_fail = False
         self.input_component_fail = False
@@ -199,6 +232,8 @@ class IgnitionDirector:
     def ready_enter(self):
         ignition_logger.debug("Ready state: enter")
         scenario_start = time.time()
+        if self.self_drive_mode:
+            msg = self._handler.message_component("beamng", simulator.BeamNgCommand.ENABLE_AUTOPILOT, do_receive=True)
         while((time.time() - scenario_start) < self.scenario_timeout):
             cc_recv = self.cc_bus.recv(timeout=self.cc_timeout)
             if cc_recv:
@@ -206,12 +241,13 @@ class IgnitionDirector:
                 self.input_cc_msg = True
                 # process the cc_packet
                 pass
-            else:
-                self.default_input()
-                self.input_self_drive = True
-                #self.ready_self_drive()
-                return
-
+            else: # CC timeout condition
+                if self.self_drive_mode: # do nothing if already in self drive mode
+                    pass
+                else:
+                    self.default_input()
+                    self.input_self_drive = True
+                    return
         self.default_input()
         self.input_s_timeout = True
 
@@ -234,22 +270,12 @@ class IgnitionDirector:
         return
 
     def self_drive_enter(self):
-        msg = self._handler.message_component("beamng", simulator.BeamNgCommand.ENABLE_AUTOPILOT, do_receive=True)
-        # TODO: FIXME: conditions to disable autopilot
-        time.sleep(20.0)
-        msg = self._handler.message_component("beamng", simulator.BeamNgCommand.DISABLE_AUTOPILOT, do_receive=True)
+        self.self_drive_mode = True
         self.default_input()
 
     def timeout_enter(self):
         ignition_logger.info("Timeout state: enter")
         self.default_input()
-
-    def draw_graph(self, fname: str):
-        """draw a fsm graphviz graph (for documentation, troubleshooting)
-
-        NOTE: you will need to install graphviz (with dot)
-        """
-        self.machine.get_graph().draw(fname, prog='dot')
 
 
 if __name__ == "__main__":

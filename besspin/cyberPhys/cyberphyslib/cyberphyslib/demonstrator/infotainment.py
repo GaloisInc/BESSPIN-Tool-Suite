@@ -64,7 +64,7 @@ class InfotainmentUi(ccomp.ComponentPoller):
     @recv_can(CAN_ID_BUTTON_PRESSED, "B")
     def _(self, data):
         # forward to the other network
-        self._network.send(CAN_ID_BUTTON_PRESSED, struct.pack("B", data[0]))
+        self._network.send(CAN_ID_BUTTON_PRESSED, struct.pack("!B", data[0]))
 
 
 class InfotainmentPlayer(ccomp.ComponentPoller):
@@ -159,17 +159,17 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
 
     @recv_can(canspecs.CAN_ID_CAR_X, "f")
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("!f", data[0]))
 
     @recv_can(canspecs.CAN_ID_CAR_Y, "f")
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack("!f", data[0]))
 
     @recv_can(canspecs.CAN_ID_CAR_Z, "f")
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack("!f", data[0]))
 
     @recv_can(canspecs.CAN_ID_CAR_R, "f")
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_R, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_R, struct.pack("!f", data[0]))
 
