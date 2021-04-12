@@ -91,6 +91,18 @@ def main(xArgs):
     print("Document generated!")
 
 def loadJsonFile (jsonFile):
+    """
+    Reads a json file and returns a dictionary with its data
+    
+    ARGUMENTS:
+    ----------
+    jsonFile: String
+        Path to a json file
+
+    RETURN:
+    -------
+    Dict
+    """
     try:
         fJson = open(jsonFile, 'r')
         jsonData = json.load(fJson)
@@ -100,13 +112,38 @@ def loadJsonFile (jsonFile):
     return jsonData
 
 def formatExc (exc):
-    """ format the exception for printing """
+    """ format the exception for printing 
+    
+    ARGUMENTS:
+    ----------
+    exc: Exception
+    
+    RETURN:
+    ------
+    String: Either the text desription of the Exception, or 
+                The <Non-recognized Exception> string.
+    """
     try:
         return f"<{exc.__class__.__name__}>: {exc}"
     except:
         return '<Non-recognized Exception>'
 
 def errorExit(message,exc=None):
+    """
+    Exits the utility and reports error
+
+    ARGUMENTS:
+    ----------
+    message: String
+        error message
+
+    exc: Exception
+
+    SIDE-EFFECTS:
+    -------------
+    - prints ERROR + error message + exception text if applicable
+    - exits with code 1
+    """
     if (exc):
         message += f"\n{formatExc(exc)}."
     print(f"(ERROR)~ {message}")
