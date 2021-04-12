@@ -248,7 +248,7 @@ class cwe:
 class csvRow(cwe):
     def __init__(self, row):
         """
-        Initialized the cwe object from a CSV row
+        Initialize the cwe object from a CSV row
         """
         #Read the overall count list
         self.doesHaveCwesList = (row[cwesCsvHeaders["CWEs List"]] in cwesShortcuts)
