@@ -1,7 +1,28 @@
 #! /usr/bin/env bash
 
-# copied from somewhere
+# Clears network setups
+#  ./clearNetworkSetup target [2ndIP]
+#  target: String in [aws, qemu]
+#  2ndIP: Only applicable when target==aws. The remoteTargetIp
+
+#  If target==aws:
+#     flushes all iptables and NAT rules
+#     deletes the tap adaptor <tap0>
+#     deletes the remoteTargetIp from main adaptor
+#  If target==qemu:
+#     flushes all iptables and NAT rules
+#     deletes any adaptor that starts with a 't' AND whose IP address starts with "172.16"
+
 is_ip() {
+    # copied from somewhere
+    # ARGUMENTS:
+    # ----------
+    # $1: String
+    #       An input IP address string
+    #
+    # RETURN:
+    # -------
+    # Integer (0/1): Whether the input string is a valid IP address (based on regex) 
     local ip=$1
  
     if expr "$ip" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
