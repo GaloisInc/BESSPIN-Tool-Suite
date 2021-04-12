@@ -31,13 +31,38 @@ prodBucket = 'master-ssith-besspin-researcher-artifacts'
 artifactsPath = 'besspin/production/artifacts'
 
 def formatExc (exc):
-    """ format the exception for printing """
+    """ format the exception for printing 
+    
+    ARGUMENTS:
+    ----------
+    exc: Exception
+    
+    RETURN:
+    ------
+    String: Either the text desription of the Exception, or 
+                The <Non-recognized Exception> string.
+    """
     try:
         return f"<{exc.__class__.__name__}>: {exc}"
     except:
         return '<Non-recognized Exception>'
 
 def errorExit(message,exc=None):
+    """
+    Exits the utility and reports error
+
+    ARGUMENTS:
+    ----------
+    message: String
+        error message
+
+    exc: Exception
+
+    SIDE-EFFECTS:
+    -------------
+    - prints ERROR + error message + exception text if applicable
+    - exits with code 1
+    """
     if (exc):
         message += f"\n{formatExc(exc)}."
     print(f"(ERROR)~ {message}")
@@ -47,6 +72,21 @@ def errorExit(message,exc=None):
     exit(1)
 
 def exitOnInterrupt (xSig,xFrame):
+    """
+    This function gets called if the utility catches a signal (2,5,6, or 15)
+
+    ARGUMENTS:
+    ----------
+    xSig: Integer
+        The caught signal number
+
+    xFrame: Signal Object Frame
+        Unused by the utility. Forced format by the signal package.
+
+    SIDE-EFFECTS:
+    -------------
+    - Calls the errorExit function to exit with an error. 
+    """
     signalNames = {2:'SIGINT', 15:'SIGTERM', 5:'SIGTRAP', 6:'SIGABRT'}
     if (xSig in signalNames):
         sigName = signalNames[xSig]
@@ -55,6 +95,18 @@ def exitOnInterrupt (xSig,xFrame):
     errorExit(f"Received <{sigName}>!")
 
 def parseTimeInput (argDatetime):
+    """
+    Naive parsing for the input time string (utility argument)
+
+    ARGUMENTS:
+    --------
+    argDatetime: Integer or String
+        The input time: either timestamp (Integer) or yyyy-mm-dd (String)
+
+    RETURN:
+    -------
+    datetime.datetime object with the chosen time
+    """
     def parseTimestamp(timestamp):
         try:
             return datetime.datetime.fromtimestamp(timestamp).replace(tzinfo=datetime.timezone.utc)
