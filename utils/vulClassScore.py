@@ -3,6 +3,12 @@
 import sys, os
 import argparse, atexit, logging
 
+"""
+This utility is intended to be used for debug. It runs the CWEs scoring; this is not a full run of Besspin.
+There is no guarantee that you did not change the configuration and the utility does not verify that the 
+work directory has the files that match the loaded configuration.
+"""
+
 def main(xArgs):
     buildDir = os.path.abspath(os.path.dirname(__file__))
     repoDir = os.path.abspath(os.path.join(buildDir,os.pardir))
