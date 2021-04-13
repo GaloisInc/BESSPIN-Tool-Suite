@@ -60,9 +60,9 @@ class CanMessage {
    */
   static fromFloat(id, float_val) {
     this._raw = Buffer.alloc(9);
-    this._raw.writeUInt32LE(id, 0); // id
+    this._raw.writeUInt32BE(id, 0); // id
     this._raw.writeUInt8(1, 4); // data length
-    this._raw.writeFloatLE(float_val, 5); // data
+    this._raw.writeFloatBE(float_val, 5); // data
     return new CanMessage(data);
   }
 
@@ -74,7 +74,7 @@ class CanMessage {
    */
   static fromChar(id, char_val) {
     let data = Buffer.alloc(6);
-    data.writeUInt32LE(id, 0); // id
+    data.writeUInt32BE(id, 0); // id
     data.writeUInt8(1, 4); // data length
     data.writeUInt8(char_val, 5); // data
     return new CanMessage(data);
