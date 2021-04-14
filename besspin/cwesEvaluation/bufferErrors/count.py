@@ -148,7 +148,7 @@ def test_ord(t):
 
     RETURNS:
     --------
-        An integer.  The instance number for the test <t> corresponds to.
+        An Integer.  The instance number for the test <t> corresponds to.
     """
     try:
         return int(t['TestNumber'])
@@ -182,9 +182,8 @@ def scoreCWE680(path, lookfor, cwes):
         tuple is:
             0.  The score the test received.
             1.  The first symbol in <lookfor> to match a keyword in <filepath>.
-            2.  The CWEs that were tested in practice.  If a processor detects
-                the integer overflow from CWE-680 this list will differ from
-                <cwes>.
+            2.  The CWEs that were tested.  If a processor detects the integer
+                overflow from CWE-680 this list will differ from <cwes>.
     """
     # Check whether size overflow was detected
     int_overflow = triage(path, CWE_680_INT_OVERFLOW_LOOKFOR + lookfor)
