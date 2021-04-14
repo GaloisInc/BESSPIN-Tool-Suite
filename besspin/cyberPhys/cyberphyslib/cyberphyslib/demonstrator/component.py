@@ -216,8 +216,8 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         rgy = self.recv_methods
         if (topic,) in rgy:
             rgy[(topic,)](self, msg, t)
-        if isinstance(msg._msg, collections.Hashable) and (topic, msg._msg) in rgy:
-            rgy[(topic, msg._msg)](self, t)
+        if isinstance(msg.message, collections.Hashable) and (topic, msg.message) in rgy:
+            rgy[(topic, msg.message)](self, t)
         self.on_recv(topic, msg, t)
 
     def recv(self, id: int, data_len: int, data: bytes):

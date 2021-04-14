@@ -57,7 +57,7 @@ class CanOutPoller(ComponentPoller):
     @recv_topic("beamng-vehicle")
     def _(self, msg, t):
         """Subscribe to sim service sensor electrics"""
-        self._location = msg._msg
+        self._location = msg.message
 
     def on_exit(self) -> None:
         self.stop_poller()        

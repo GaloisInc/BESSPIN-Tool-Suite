@@ -15,6 +15,7 @@ RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge f
 
 # See cyberPhys-test.ini for IP allocation
 # Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
+APPLY_LISTS = True
 BASE_WHITELIST = ["10.88.88.11", "10.88.88.12"] # Scenario 1: Baseline ECU + Baseline Infotainment
 SSITH_INFO_WHITELIST = ["10.88.88.21", "10.88.88.22"] # Scenario 2: Baseline ECU + Secure Infotainment
 SSITH_ECU_WHITELIST = ["10.88.88.31", "10.88.88.32"] # Scenario 3: Secure ECU + Baseline Infotainment
@@ -31,6 +32,7 @@ LED_MANAGE_PORT = 5017
 CANM_PORT =  5018
 INFO_PLAY_PORT = 5019
 INFO_UI_PORT = 5020
+LOCATION_PORT = 5021
 
 LOCATION_POLL_HZ = 10
 

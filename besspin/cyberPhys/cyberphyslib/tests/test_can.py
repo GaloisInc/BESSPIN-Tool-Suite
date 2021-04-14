@@ -54,12 +54,11 @@ def test_udp_bus():
 
     # attempt to send empty message -- defined to be invalid
     msg_empty = Message(arbitration_id=234, data=b'', is_extended_id=True)
-    # FIXME:TODO
+    # NOTE: canlib doesn't have this error handling
     #with pytest.raises(ccan.InvalidCanMessageError):
     #    udpb.send(msg_empty)
 
     #test address too big
-    # FIXME:TODO
     #msg_send = Message(arbitration_id=0xAAAAAAAAAA, data=b'12', is_extended_id=True)
     #with pytest.raises(ccan.InvalidCanMessageError):
     #    udpb.send(msg_send)

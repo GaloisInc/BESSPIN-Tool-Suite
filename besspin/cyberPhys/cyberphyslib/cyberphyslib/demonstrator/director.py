@@ -87,10 +87,8 @@ class IgnitionDirector:
         self.info_net = None
         self.proxy = None
 
-        # TODO: FIXME: these aren't realistic values
+        # TODO: FIXME: C&C network isn't implemented
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
-        self.cc_ip_addr = "127.0.0.1:5030"
-        self.cc_subscribers = ["127.0.0.1:5030"]
         self.scenario_timeout = 3 * 60 # (s) 3 minutes
         self.cc_timeout = 20 # 20 seconds
 
@@ -107,7 +105,6 @@ class IgnitionDirector:
 
         self.self_drive_mode = False
 
-        # TODO: FIXME
         self.is_finished = False
 
     def run(self):
@@ -137,6 +134,7 @@ class IgnitionDirector:
     def terminate_enter(self):
         ignition_logger.debug("Termination State: Enter")
         self.is_finished = True
+        self.info_net.exit()
         self._handler.exit()
 
     def noncrit_failure_enter(self):
@@ -158,16 +156,15 @@ class IgnitionDirector:
         can_base = ccan.CanUdpNetwork("base", cconf.CAN_PORT, sip)
         networks = [can_base, can_ssith_ecu, can_ssith_info]
 
-        # TODO: FIXME
-        # can_ssith_info.whitelist = cconf.SSITH_INFO_WHITELIST
-        # can_ssith_ecu.whitelist = cconf.SSITH_ECU_WHITELIST
-        # can_base.whitelist = cconf.BASE_WHITELIST
-        # can_ssith_info.blacklist = cconf.SSITH_INFO_BLACKLIST
-        # can_ssith_ecu.blacklist = cconf.SSITH_ECU_BLACKLIST
-        # can_base.blacklist = cconf.BASE_BLACKLIST
+        if cconf.APPLY_LISTS:
+            can_ssith_info.whitelist = cconf.SSITH_INFO_WHITELIST
+            can_ssith_ecu.whitelist = cconf.SSITH_ECU_WHITELIST
+            can_base.whitelist = cconf.BASE_WHITELIST
+            can_ssith_info.blacklist = cconf.SSITH_INFO_BLACKLIST
+            can_ssith_ecu.blacklist = cconf.SSITH_ECU_BLACKLIST
+            can_base.blacklist = cconf.BASE_BLACKLIST
 
         # start the can networks
-        self.cc_bus = canlib.TcpBus(self.cc_ip_addr, self.cc_subscribers)
         self.can_multiverse = ccan.CanMultiverse("multiverse", networks, default_network="base")
         self.info_net = ccan.CanUdpNetwork("info-net", cconf.INFO_UI_PORT, sip)
 
@@ -211,7 +208,7 @@ class IgnitionDirector:
         self._handler.start_component(self.proxy.info_ui, wait=False)
         self._handler.start_component(self.proxy.info_player, wait=False)
 
-        # TODO: FIXME
+        # TODO: FIXME: componentize this?
         self.info_net.start()
 
         # startup led manager
@@ -235,7 +232,8 @@ class IgnitionDirector:
         if self.self_drive_mode:
             msg = self._handler.message_component("beamng", simulator.BeamNgCommand.ENABLE_AUTOPILOT, do_receive=True)
         while((time.time() - scenario_start) < self.scenario_timeout):
-            cc_recv = self.cc_bus.recv(timeout=self.cc_timeout)
+            # TODO: FIXME this isn't implemented
+            cc_recv = False
             if cc_recv:
                 self.default_input()
                 self.input_cc_msg = True

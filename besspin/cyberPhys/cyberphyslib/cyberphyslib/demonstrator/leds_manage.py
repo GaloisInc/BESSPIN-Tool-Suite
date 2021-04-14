@@ -239,5 +239,4 @@ class LedManagerComponent(ComponentPoller):
     @recv_topic("pattern-request")
     def _(self, msg, t):
         """subscribe to requests to change the led pattern"""
-        # FIXME: referencing a protected attribute
-        self.update_pattern(msg._msg)
+        self.update_pattern(msg.message)

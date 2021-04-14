@@ -158,4 +158,4 @@ class Speedo(ComponentPoller):
     @recv_topic("beamng-sensors")
     def _(self, msg, t):
         """subscribe to sim service sensor electrics"""
-        self._sensor_electrics = msg._msg
+        self._sensor_electrics = msg.message

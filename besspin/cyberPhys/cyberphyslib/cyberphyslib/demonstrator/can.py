@@ -218,8 +218,8 @@ class CanMultiverseComponent(Component):
 
     @recv_topic("canm-commands")
     def _(self, msg, t):
-        if msg._msg in self._can_multiverse.networks:
-            self._can_multiverse.select(msg._msg)
+        if msg.message in self._can_multiverse.networks:
+            self._can_multiverse.select(msg.message)
             self.send_message(message.Message(CanMultiverseStatus.READY), "canm-events")
         else:
             self.send_message(message.Message(CanMultiverseStatus.ERROR), "canm-events")
