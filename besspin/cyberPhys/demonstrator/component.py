@@ -187,7 +187,7 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
             while not self.stopped:
                 for sn in self._in_socks:
                     if self.stopped:
-                        yield (f"{self.name}-command", ComponentStatus.EXIT, None)
+                        yield (f"{self.name}-command", Message(ComponentStatus.EXIT), None)
                     while  isinstance(sn, zmq.Socket) and sn.poll(1) == zmq.POLLIN:
                         topic = sn.recv_string(zmq.DONTWAIT)
                         recv: bytes = sn.recv_pyobj(zmq.DONTWAIT)

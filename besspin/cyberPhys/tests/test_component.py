@@ -7,74 +7,45 @@ Date: 06 January 2021
 Tests for cyberphys base component object type
 """
 import demonstrator.component as ccomp
-import time
+from relaymanager import RelayManager
 
+import time
 import serial, serial.tools.list_ports_posix
 
-class RelayManagerComponent(ccomp.Component):
-    """Relay control"""
-    ## Relay interface and control parameters
-    # Relays here are Amazon ASIN B01CN7E0RQ
-    relay_usb_product_id = "29987"  # note, this is a USB product ID, not a process ID
-    relay_baud = 9600
-    relay_on = b'\xA0\x01\x01\xA2'
-    relay_off = b'\xA0\x01\x00\xA1'
-    relay_delay = 0.1
+import canlib as ccan
 
-    def __init__(self, *args):
-        super(RelayManagerComponent, self).__init__(*args)
-
-    @staticmethod
-    def iterate_relays():
-        """iterator to fetch all usb relays"""
-        # get all connected serial devices
-        usb_devices = list(serial.tools.list_ports_posix.comports())
-
-        for usb_device in usb_devices:
-            if RelayManagerComponent.relay_usb_product_id in str(usb_device.pid):
-
-                usb_relay = serial.Serial(port=usb_device.device,
-                                          baudrate=RelayManagerComponent.relay_baud,
-                                          timeout=0.5)
-                yield usb_relay
-
-    @staticmethod
-    def turn_on_relays() -> None:
-        """turn on all led manager relays"""
-        for relay in RelayManagerComponent.iterate_relays():
-            print("Turn on USB relay at " + str(relay.port))
-            relay.flushInput()
-            relay.write(RelayManagerComponent.relay_on)
-
-    @staticmethod
-    def turn_off_relays() -> None:
-        """turn off all led manager relays"""
-        for relay in RelayManagerComponent.iterate_relays():
-            print("Turn off USB relay at " + str(relay.port))
-            relay.flushInput()
-            relay.write(RelayManagerComponent.relay_off)
-
-
-    @recv_topic("reset")
-    def _(self, msg, t):
-        """a topic level callback"""
-        print("Reset requested")
-        self.turn_on_relays()
-        time.sleep(self.relay_delay)
-        self.turn_off_relays()
-
+def test_tcpbus():
+    IP_ADMIN_PC = "127.0.0.1:5030"
+    IP_HACKER_KIOSK = "127.0.0.1:5557"
+    nodes = [IP_ADMIN_PC,IP_HACKER_KIOSK]
+    admin_pc = ccan.TcpBus(IP_ADMIN_PC, nodes)
+    kiosk = ccan.TcpBus(IP_HACKER_KIOSK, nodes)
+    tx = ccan.Message(arbitration_id=0XAAFEEB04, dlc=1, data=b'x')
+    admin_pc.send(tx)
+    msg = kiosk.recv(timeout=0.1)
+    print(f"KIOSK RX: {msg}")
+    admin_pc.send(tx)
+    msg = kiosk.recv(timeout=0.1)
+    print(f"KIOSK RX: {msg}")
+    kiosk.send(tx)
+    msg = admin_pc.recv(timeout=0.1)
+    print(f"ADMINPC RX: {msg}")
+    kiosk.send(tx)
+    msg = admin_pc.recv(timeout=0.1)
+    print(f"ADMINPC RX: {msg}")
+    print("Done!")
 
 
 def test_relay_manager():
-    master = ccomp.Component("master", [], [(44556, 'reset')])
-    slave = RelayManagerComponent("slave", [(44556, 'reset')], [])
+    master = ccomp.Component("master", [], [(44556, 'base-topic')])
+    slave = RelayManager("slave", [(44556, 'base-topic')], [])
     master.start()
     slave.start()
     while not master._ready:
         pass
     time.sleep(1.0)
     print("Ready!")
-    master.send_message(ccomp.Message(0xA), "reset")
+    master.send_message(ccomp.Message("RESET 0"), "base-topic")
     time.sleep(0.1)
     master.exit()
     slave.exit()
@@ -168,7 +139,7 @@ def test_component():
 class DummyComponent(ccomp.Component):
     """example component to test the topic callback system"""
     def __init__(self, *args):
-        super(DummyComponent, self).__init__(*args)
+        super().__init__(*args)
         print(print(f"{self.name} initialized"))
 
     @recv_topic("test-topic")
@@ -176,6 +147,11 @@ class DummyComponent(ccomp.Component):
         """a topic level callback"""
         print(f"{self.name} got message: {msg}")
 
+    @recv_topic("test-topic","RESET !c")
+    def _(self, data):
+        """a topic level callback with specified message"""
+        print(f"{self.name} Resetting target {data}!")
+        self.send_message(ccomp.Message("RESET DONE"), "test-topic")
 
 def test_multiple_components():
     """
@@ -186,38 +162,38 @@ def test_multiple_components():
     RELAY_MANAGER_PORT = 44001
     COMMANDER_PORT = 44002
     HEARTBEAT_MONITOR_PORT = 44003
-    N_TARGETS = 2
+    N_TARGETS = 6
     WATCHDOG_PORTS = [p+45000 for p in range(1,N_TARGETS+1)]
 
-    ALL_PORTS = WATCHDOG_PORTS + [RELAY_MANAGER_PORT] + [COMMANDER_PORT] + [HEARTBEAT_MONITOR_PORT]
+    ALL_PORTS = [RELAY_MANAGER_PORT] + [COMMANDER_PORT] + [HEARTBEAT_MONITOR_PORT] + WATCHDOG_PORTS
     print(ALL_PORTS)
 
     components = []
 
-    # # Connect it all together
-    # # relay_manager
-    # in_socks = [(p,'test-topic') for p in ALL_PORTS if p != RELAY_MANAGER_PORT]
-    # out_socks = [(RELAY_MANAGER_PORT, 'test-topic')]
-    # print(f"in_socks={in_socks}")
-    # print(f"out_socks={out_socks}")
-    # relay_manager = DummyComponent("relay-manager", in_socks, out_socks)
-    # components.append(relay_manager)
+    # Connect it all together
+    # relay_manager
+    in_socks = [(p,'test-topic') for p in ALL_PORTS if p != RELAY_MANAGER_PORT]
+    out_socks = [(RELAY_MANAGER_PORT, 'test-topic')]
+    print(f"in_socks={in_socks}")
+    print(f"out_socks={out_socks}")
+    relay_manager = DummyComponent("relay-manager", in_socks, out_socks)
+    components.append(relay_manager)
 
-    # # commander
-    # in_socks = [(p,'test-topic') for p in ALL_PORTS if p != COMMANDER_PORT]
-    # out_socks = [(COMMANDER_PORT, 'test-topic')]
-    # print(f"in_socks={in_socks}")
-    # print(f"out_socks={out_socks}")
-    # commander = DummyComponent("commander", in_socks, out_socks)
-    # components.append(commander)
+    # commander
+    in_socks = [(p,'test-topic') for p in ALL_PORTS if p != COMMANDER_PORT]
+    out_socks = [(COMMANDER_PORT, 'test-topic')]
+    print(f"in_socks={in_socks}")
+    print(f"out_socks={out_socks}")
+    commander = DummyComponent("commander", in_socks, out_socks)
+    components.append(commander)
 
-    # # heartbeat-monitor
-    # in_socks = [(p,'test-topic') for p in ALL_PORTS if p != HEARTBEAT_MONITOR_PORT]
-    # out_socks = [(HEARTBEAT_MONITOR_PORT, 'test-topic')]
-    # print(f"in_socks={in_socks}")
-    # print(f"out_socks={out_socks}")
-    # heartbeat_monitor = DummyComponent("heartbeat_monitor", in_socks, out_socks)
-    # components.append(heartbeat_monitor)
+    # heartbeat-monitor
+    in_socks = [(p,'test-topic') for p in ALL_PORTS if p != HEARTBEAT_MONITOR_PORT]
+    out_socks = [(HEARTBEAT_MONITOR_PORT, 'test-topic')]
+    print(f"in_socks={in_socks}")
+    print(f"out_socks={out_socks}")
+    heartbeat_monitor = DummyComponent("heartbeat_monitor", in_socks, out_socks)
+    components.append(heartbeat_monitor)
 
     # watchdogs
     wgs = []
@@ -233,16 +209,31 @@ def test_multiple_components():
     # start + init
     for c in components:
         c.start()
+        while not c._ready:
+            pass
+
+    time.sleep(1)
+    commander.send_message(ccomp.Message(1), "test-topic")
+    time.sleep(1)
     for wg in wgs:
         wg.start()
+        while not wg._ready:
+            pass
+    commander.send_message(ccomp.Message("RESET 1"), "test-topic")
 
+    time.sleep(1)
+    print("Tearing down!")
     # tear down
     for c in components:
+        print(f"Calling exit on {c.name}")
         c.exit()
     for wg in wgs:
         wg.exit()
 
     for c in components:
+        print(f"Calling join on {c.name}")
         c.join()
     for wg in wgs:
         wg.join()
+
+    print("Done")
