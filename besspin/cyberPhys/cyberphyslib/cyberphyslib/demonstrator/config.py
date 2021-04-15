@@ -8,6 +8,7 @@ Cyberphys Demonstrator Configuration Variables
 """
 
 CAN_PORT = 5002
+INFO_PORT = 5013
 
 SIM_IP = "10.88.88.4" # Sim PC IP
 
@@ -15,7 +16,7 @@ RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge f
 
 # See cyberPhys-test.ini for IP allocation
 # Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
-APPLY_LISTS = True
+APPLY_LISTS = False
 BASE_WHITELIST = ["10.88.88.11", "10.88.88.12"] # Scenario 1: Baseline ECU + Baseline Infotainment
 SSITH_INFO_WHITELIST = ["10.88.88.21", "10.88.88.22"] # Scenario 2: Baseline ECU + Secure Infotainment
 SSITH_ECU_WHITELIST = ["10.88.88.31", "10.88.88.32"] # Scenario 3: Secure ECU + Baseline Infotainment
@@ -31,8 +32,8 @@ SPEEDO_PORT = 5016
 LED_MANAGE_PORT = 5017
 CANM_PORT =  5018
 INFO_PLAY_PORT = 5019
-INFO_UI_PORT = 5020
 LOCATION_PORT = 5021
+INFO_UI_PORT = 5022
 
 LOCATION_POLL_HZ = 10
 
@@ -66,7 +67,7 @@ BEAMNG_COMPONENT_OUTPUT = [BEAMNG_COMPONENT_ELECTRIC,
                            BEAMNG_COMPONENT_SENSORS
                           ]
 
-BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands')]
+BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands'), (INFO_UI_PORT, 'infoui-beamng')]
 
 # keyword arguments to pass to Vehicle when creating a vehicle for the sim scenario
 BEAMNG_VEHICLE_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk854t_A.pc'}

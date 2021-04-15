@@ -226,7 +226,7 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         if id in rgy:
             fmt = rgy[id][0]
             # use network order (!)
-            msg = struct.unpack("!" + fmt, bytearray(data)[:data_len])
+            msg = struct.unpack(fmt, bytearray(data)[:data_len])
             rgy[id][1](self, msg)
 
     @property

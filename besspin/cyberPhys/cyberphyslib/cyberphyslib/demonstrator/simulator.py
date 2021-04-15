@@ -38,6 +38,8 @@ class BeamNgStatus(enum.Enum):
     RESTART_FINISHED = enum.auto()
     RESTART_FAILED = enum.auto()
     RESTART_INVALID = enum.auto()
+    IS_AUTOPILOT = enum.auto()
+    IS_MANUAL = enum.auto()
 
 
 class BeamNgCommand(enum.Enum):
@@ -50,6 +52,8 @@ class BeamNgCommand(enum.Enum):
     WAIT_READY = enum.auto()
     ENABLE_AUTOPILOT = enum.auto()
     DISABLE_AUTOPILOT = enum.auto()
+    UI_BUTTON_PRESSED = enum.auto()
+    AUTOPILOT_STATUS = enum.auto()
 
 
 def requires_running_scenario(func):
@@ -176,13 +180,18 @@ class Sim(component.ComponentPoller):
         while not self.polling_thread.stopped:
             try:
                 # handle autopilit request
+                # NOTE: restarts the scenario
                 if self._enable_autopilot:
+                    self._beamng_session.restart_scenario()
                     self._vehicle.ai_set_mode('span')
                     self._enable_autopilot = False
+                    self._disable_autopilot = False
                     self._in_autopilot = True
                 elif self._disable_autopilot:
-                    self._vehicle.ai_set_mode('disable')
+                    self._beamng_session.restart_scenario()
+                    self._vehicle.ai_set_mode('disabled')
                     self._disable_autopilot = False
+                    self._enable_autopilot = False
                     self._in_autopilot = False
 
                 # handle vehicle control event
@@ -300,3 +309,17 @@ class Sim(component.ComponentPoller):
         if self._start_finished:
             self._disable_autopilot = True
         self.send_message(message.Message(BeamNgStatus.READY), 'beamng-events')
+
+    @recv_topic("beamng-commands", BeamNgCommand.AUTOPILOT_STATUS)
+    def _(self, t):
+        """disable the autopilot"""
+        if self._in_autopilot:
+            self.send_message(message.Message(BeamNgStatus.IS_AUTOPILOT), 'beamng-events')
+        self.send_message(message.Message(BeamNgStatus.IS_MANUAL), 'beamng-events')
+
+    @recv_topic("infoui-beamng", BeamNgCommand.UI_BUTTON_PRESSED)
+    def _(self, t):
+        if self._start_finished:
+            if self._in_autopilot:
+                self._disable_autopilot = True
+                self._in_autopilot = None

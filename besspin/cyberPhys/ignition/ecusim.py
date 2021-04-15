@@ -74,7 +74,7 @@ def isclose(a: float, b: float, rel_tol=1e-09, abs_tol=0.0) -> bool:
 
 
 # models the CAN UDP facilities available on the ECU
-net = can.CanUdpNetwork("ecusim", config.CAN_PORT, "127.0.0.1")
+net = can.CanUdpNetwork("ecusim", config.CAN_PORT, config.SIM_IP)
 cid = None
 pkt = None
 

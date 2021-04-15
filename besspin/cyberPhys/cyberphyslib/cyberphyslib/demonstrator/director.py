@@ -95,6 +95,24 @@ class IgnitionDirector:
         self._handler = ComponentHandler()
         self.machine = Machine(self, states=self.states, transitions=self.transitions, initial='startup', show_conditions=True)
 
+        sip = cconf.SIM_IP
+        can_ssith_info = ccan.CanUdpNetwork("secure_infotainment", cconf.CAN_PORT, sip)
+        can_ssith_ecu = ccan.CanUdpNetwork("secure_ecu", cconf.CAN_PORT, sip)
+        can_base = ccan.CanUdpNetwork("base", cconf.CAN_PORT, sip)
+        networks = [can_base, can_ssith_ecu, can_ssith_info]
+
+        if cconf.APPLY_LISTS:
+            can_ssith_info.whitelist = cconf.SSITH_INFO_WHITELIST
+            can_ssith_ecu.whitelist = cconf.SSITH_ECU_WHITELIST
+            can_base.whitelist = cconf.BASE_WHITELIST
+            can_ssith_info.blacklist = cconf.SSITH_INFO_BLACKLIST
+            can_ssith_ecu.blacklist = cconf.SSITH_ECU_BLACKLIST
+            can_base.blacklist = cconf.BASE_BLACKLIST
+
+        # start the can networks
+        self.can_multiverse = ccan.CanMultiverse("multiverse", networks, default_network="base")
+        self.info_net = ccan.CanUdpNetwork("info-net", cconf.INFO_PORT, sip, blacklist=[cconf.SIM_IP])
+
         # input space as class members
         self.input_fadecandy_fail = False
         self.input_component_fail = False
@@ -103,16 +121,18 @@ class IgnitionDirector:
         self.input_s_timeout = False
         self.input_self_drive = False
 
-        self.self_drive_mode = False
-
         self.is_finished = False
 
     def run(self):
         """start the state machine, and keep it transitioning until termination"""
-        self.startup_enter()
-        while not self.is_finished:
-            # advance the state machine
-            self.next_state()
+        try:
+            self.startup_enter()
+            while not self.is_finished:
+                # advance the state machine
+                self.next_state()
+        except KeyboardInterrupt:
+            ignition_logger.info("Received keyboard interrupt. Terminating....")
+            self.terminate_enter()
 
     def default_input(self):
         """input initialization"""
@@ -134,8 +154,8 @@ class IgnitionDirector:
     def terminate_enter(self):
         ignition_logger.debug("Termination State: Enter")
         self.is_finished = True
-        self.info_net.exit()
         self._handler.exit()
+        self.info_net.exit()
 
     def noncrit_failure_enter(self):
         ignition_logger.debug("Noncritical Failure State: Enter")
@@ -149,24 +169,6 @@ class IgnitionDirector:
 
         ignition_logger.debug("Startup State: Enter")
         simulator.Sim.kill_beamng(1)
-
-        sip = cconf.SIM_IP
-        can_ssith_info = ccan.CanUdpNetwork("secure_infotainment", cconf.CAN_PORT, sip)
-        can_ssith_ecu = ccan.CanUdpNetwork("secure_ecu", cconf.CAN_PORT, sip)
-        can_base = ccan.CanUdpNetwork("base", cconf.CAN_PORT, sip)
-        networks = [can_base, can_ssith_ecu, can_ssith_info]
-
-        if cconf.APPLY_LISTS:
-            can_ssith_info.whitelist = cconf.SSITH_INFO_WHITELIST
-            can_ssith_ecu.whitelist = cconf.SSITH_ECU_WHITELIST
-            can_base.whitelist = cconf.BASE_WHITELIST
-            can_ssith_info.blacklist = cconf.SSITH_INFO_BLACKLIST
-            can_ssith_ecu.blacklist = cconf.SSITH_ECU_BLACKLIST
-            can_base.blacklist = cconf.BASE_BLACKLIST
-
-        # start the can networks
-        self.can_multiverse = ccan.CanMultiverse("multiverse", networks, default_network="base")
-        self.info_net = ccan.CanUdpNetwork("info-net", cconf.INFO_UI_PORT, sip)
 
         # startup beamng
         msg = self._handler.start_component(simulator.Sim())
@@ -204,9 +206,13 @@ class IgnitionDirector:
         register_components()
 
         # startup infotainment proxy
-        self.proxy = infotain.InfotainmentProxy(self.info_net, self.can_multiverse)
-        self._handler.start_component(self.proxy.info_ui, wait=False)
-        self._handler.start_component(self.proxy.info_player, wait=False)
+        #self.proxy = infotain.InfotainmentProxy(self.info_net, self.can_multiverse)
+        ui = infotain.InfotainmentUi(self.can_multiverse)
+        player = infotain.InfotainmentPlayer(self.info_net)
+        self._handler.start_component(ui, wait=False)
+        self._handler.start_component(player, wait=False)
+        self.info_net.register(ui)
+        self.can_multiverse.register(player)
 
         # TODO: FIXME: componentize this?
         self.info_net.start()
@@ -216,7 +222,6 @@ class IgnitionDirector:
         msg = self._handler.start_component(lm)
         if msg != ledm.LedManagerStatus.READY:
             ignition_logger.debug(f"LED Manager service failed to start ({msg})")
-            register_components()
             self.input_fadecandy_fail = True
             self.input_component_fail = False
             self.can_multiverse.register(lm)
@@ -226,13 +231,19 @@ class IgnitionDirector:
         self.input_component_fail = False
         return
 
+    @property
+    def self_drive_mode(self):
+        """self drive state exists in the sim service -- don't duplicate or invalidate this"""
+        # TODO: FIXME: ugly access
+        return self._handler._services["beamng"]._in_autopilot
+
     def ready_enter(self):
         ignition_logger.debug("Ready state: enter")
         scenario_start = time.time()
-        if self.self_drive_mode:
-            msg = self._handler.message_component("beamng", simulator.BeamNgCommand.ENABLE_AUTOPILOT, do_receive=True)
         while((time.time() - scenario_start) < self.scenario_timeout):
             # TODO: FIXME this isn't implemented
+            # Sleep for 30 seconds before entering self driving mode
+            time.sleep(30.0)
             cc_recv = False
             if cc_recv:
                 self.default_input()
@@ -251,15 +262,6 @@ class IgnitionDirector:
 
     def restart_enter(self, n_resets=3):
         ignition_logger.debug("Restart state: enter")
-        msg = self._handler.message_component("beamng", simulator.BeamNgCommand.RESTART, do_receive=True)
-        if msg != simulator.BeamNgStatus.RESTART_FINISHED:
-            ignition_logger.warning(f"BeamNG restart failed ({n_resets})!")
-            if n_resets >= 0:
-                self.restart_enter(n_resets=n_resets - 1)
-            else:
-                ignition_logger.warning(f"BeamNG restart failed! Terminating...")
-                return
-        self.default_input()
 
     def noncrit_failure_enter(self):
         ignition_logger.debug("Noncrit_failure state: enter")
@@ -268,14 +270,9 @@ class IgnitionDirector:
         return
 
     def self_drive_enter(self):
-        self.self_drive_mode = True
+        msg = self._handler.message_component("beamng", simulator.BeamNgCommand.ENABLE_AUTOPILOT, do_receive=True)
         self.default_input()
 
     def timeout_enter(self):
         ignition_logger.info("Timeout state: enter")
         self.default_input()
-
-
-if __name__ == "__main__":
-    fsm = IgnitionDirector()
-    fsm.draw_graph('state_diagram.png')

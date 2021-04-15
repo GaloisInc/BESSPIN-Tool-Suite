@@ -160,7 +160,6 @@ class ComponentHandler:
             ignition_logger.info("Handler: Termination signal received!")
             self.stop_component(name)
 
-
     @property
     def components(self):
         return [s for _, s in self._services.items()]
