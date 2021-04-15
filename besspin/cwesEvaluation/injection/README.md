@@ -127,7 +127,9 @@ example:
   4. The second value: The address of `buf`.
 - The return of `stdin_test` will then jump to `buf`, but the OS will detect
   execution of non-executable memory and raise a segmentation fault.
-  Therefore, the expected score on Unix is DETECTED.
+  This receives a score of HIGH because of the undetected stack pointer write,
+  which a more sophisticated attack could use to jump to executable memory
+  (such as libc).
 
 ------------------
 

@@ -52,10 +52,8 @@ def scoreLog(logFile, lookfor):
     logSymbol = triage(logFile,lookfor)
     if (logSymbol == 'INVALID'):
         return (SCORES.CALL_ERR, logSymbol)
-    elif (logSymbol in ['COMPLETED', 'TIMED OUT']):
+    elif (logSymbol in ['COMPLETED', 'TIMED OUT', 'TRAPPED']):
         thisScore = SCORES.HIGH
-    elif (logSymbol == 'TRAPPED'):
-        thisScore = SCORES.NONE
     else:
         thisScore = SCORES.FAIL
     return (adjustToCustomScore(ftReadLines(logFile), thisScore), logSymbol)

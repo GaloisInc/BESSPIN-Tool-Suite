@@ -41,10 +41,7 @@ def scoreInj1TestPart(logLines, testNum, info):
         score = SCORES.FAIL
     elif "<INVALID>" in logLines or "<RETURNING>" not in logLines:
         score = SCORES.CALL_ERR
-    elif ("Segmentation fault" in logLines or
-          "<END_INJECTION_TEST>" in logLines):
-        # This is the expected result on unix, as the OS should detect the
-        # attempt to execute from the stack and raise a segmentation fault.
+    elif ("<END_INJECTION_TEST>" in logLines):
         score = SCORES.NONE
     else:
         score = SCORES.HIGH

@@ -16,8 +16,9 @@ def test_476 (logLines):
                 partsScores[iPart] = SCORES.CALL_ERR
             elif (doesKeywordExist(partsLines[iPart],'<DEREFERENCE-VIOLATION>')):
                 partsScores[iPart] = SCORES.HIGH
-            elif (doesKeywordExist(partsLines[iPart],'Segmentation fault')):
-                partsScores[iPart] = SCORES.HIGH
+            elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') and
+                  iPart in [2, 3]):
+                partsScores[iPart] = SCORES.NONE
             elif (doesKeywordExist(partsLines[iPart],'<REGULAR>') and (iPart==1)):
                 partsScores[iPart] = SCORES.NONE
             else:

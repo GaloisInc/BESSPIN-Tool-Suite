@@ -19,14 +19,6 @@
                         {
                             "osImage" : "FreeRTOS",
                             "score" : "NoImpl" 
-                        },
-                        {
-                            "osImage" : "debian",
-                            "score" : "NONE" 
-                        },
-                        {
-                            "osImage" : "FreeBSD",
-                            "score" : "NONE" 
                         }
                     ]
                 },
