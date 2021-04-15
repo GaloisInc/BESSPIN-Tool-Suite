@@ -21,8 +21,9 @@ class CanOutPoller(ComponentPoller):
 
     """Polls vehicle location and broadcasts it via CAN at 10hz"""
     def __init__(self, network : CanMultiverse):
+        # FIXME: HACKY
         super().__init__("location", [config.BEAMNG_COMPONENT_VEHICLE, (config.DIRECTOR_PORT, "location-commands")],
-                         [(config.LOCATION_PORT, "location-events")],
+                         [(config.LOCATION_PORT + 20, "location-events")],
                          sample_frequency=config.LOCATION_POLL_HZ)
         self._location = None
         self._network = network
@@ -31,7 +32,7 @@ class CanOutPoller(ComponentPoller):
         can_logger.debug("Starting CanOutPoller Component")
         if not self.stopped:
             self.start_poller()
-        self.send_message(cmesg.Message(CanOutStatus.READY), "location-events")
+        self.send_reply(cmesg.Message(CanOutStatus.READY), "location-events")
 
     def on_poll_poll(self, t):
         """Get current vehicle location"""

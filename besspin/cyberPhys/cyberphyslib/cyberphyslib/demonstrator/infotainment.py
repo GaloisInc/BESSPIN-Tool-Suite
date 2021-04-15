@@ -55,11 +55,11 @@ class InfotainmentUi(ccomp.ComponentPoller):
     """infotainment component that handles the infotainment ui net -> multiverse forwarding"""
     def __init__(self, can_network: CanNetwork):
         super().__init__("infoui", [(config.DIRECTOR_PORT, 'infoui-commands')], [(config.INFO_UI_PORT, 'infoui-events'),
-                                                                                 (config.INFO_UI_PORT, 'infoui-beamng')])
+                                                                                 (config.INFO_UI_PORT+20, 'infoui-beamng')])
         self._network = can_network
 
     def on_start(self):
-        self.send_message(ccomp.Message(InfotainmentUiStatus.READY), "infoui-events")
+        self.send_reply(ccomp.Message(InfotainmentUiStatus.READY), "infoui-events")
 
     @recv_can(CAN_ID_BUTTON_PRESSED, "!B")
     def _(self, data):
@@ -104,7 +104,7 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         self.play_sound()
 
     def on_start(self):
-        self.send_message(ccomp.Message(InfotainmentPlayerStatus.READY), "infoplay-events")
+        self.send_reply(ccomp.Message(InfotainmentPlayerStatus.READY), "infoplay-events")
 
     def on_exit(self):
         if self._sound:

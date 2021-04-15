@@ -185,6 +185,17 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         self._out_sock.send_string(topic, zmq.SNDMORE)
         self._out_sock.send_pyobj(Envelope.serialize(Envelope(self, message, level=level)))
 
+    def send_reply(self, message: Message, topic: str, level=MessageLevel.NORMAL):
+        port = {t:p for p, t in self._out_ports}[topic]
+        context = zmq.Context()
+        socket = context.socket(zmq.PAIR)
+        # TODO: FIXME
+        socket.bind("tcp://*:%s" % port)
+        socket.send_string(topic, zmq.SNDMORE)
+        socket.send_pyobj(Envelope.serialize(Envelope(self, message, level=level)))
+        socket.close()
+        context.term()
+
     @coroutine
     def get_receiver(self):
         """create an iterable object that yields incoming messages"""
@@ -262,11 +273,16 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         if len(self.out_topics) > 0:
             # assert that all out port nums are the same
             ports = set([i for i, _ in self._out_ports])
-            assert len(
-                ports) == 1, f"outgoing port numbers must all be the same for {self.__class__.__name__} (got {ports})"
-
-            self._out_sock = self._zmq_context.socket(zmq.PUB)
-            self._out_sock.bind(f"tcp://*:{list(self._out_ports)[0][0]}")
+            #assert len(
+            #    ports) == 1, f"outgoing port numbers must all be the same for {self.__class__.__name__} (got {ports})"
+            ports = [p for p, t in self._out_ports if t != f"{self.name}-events"]
+            if len(ports) > 1:
+                raise RuntimeError
+            elif len(ports) == 1:
+                self._out_sock = self._zmq_context.socket(zmq.PUB)
+                self._out_sock.bind(f"tcp://*:{ports[0]}")
+            else:
+                pass
 
         for port, topic in self._in_ports:
             in_sock = self._zmq_context.socket(zmq.SUB)

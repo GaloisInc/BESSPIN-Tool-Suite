@@ -27,31 +27,50 @@ class SubSocket:
         self.timeout = timeout
 
     def start(self):
-        def _recv_ack(sn):
-            poller = zmq.Poller()
-            poller.register(sn, flags=zmq.POLLIN)
-            if poller.poll(timeout=self.timeout):
-                topic = sn.recv_string()
-                recv: bytes = sn.recv_pyobj()
-                env: Envelope = Envelope.deserialize(recv)
-                mss = env.message
-                sn.close()
-                self.ret = mss
-
-        self.context = zmq.Context()
-        self.recv_socket: zmq.Socket = self.context.socket(zmq.SUB)
-        self.recv_socket.connect(self.resource)
-        self.recv_socket.setsockopt_string(zmq.SUBSCRIBE, self.topic)
-        self.recv = threading.Thread(target=_recv_ack, args=(self.recv_socket,), daemon=True)
+        def _recv(resource, topic, evt):
+            context = zmq.Context()
+            socket = context.socket(zmq.PAIR)
+            socket.connect(resource)
+            evt.set()
+            socket.recv_string()
+            recv = socket.recv_pyobj()
+            env = Envelope.deserialize(recv)
+            mss = env.message
+            self.ret = mss
+            socket.close()
+            context.term()
+        ready = threading.Event()
+        self.recv = threading.Thread(target=_recv, args=(self.resource, self.topic, ready), daemon=True)
+        #import time
+        #while not ready.is_set():
+        #    time.sleep(0.1)
         self.recv.start()
+        #def _recv_ack(sn):
+        #    poller = zmq.Poller()
+        #    poller.register(sn, flags=zmq.POLLIN)
+        #    if poller.poll(timeout=self.timeout):
+        #        topic = sn.recv_string()
+        #        recv: bytes = sn.recv_pyobj()
+        #        env: Envelope = Envelope.deserialize(recv)
+        #        mss = env.message
+        #        sn.close()
+        #        self.ret = mss
+
+        #self.context = zmq.Context()
+        #self.recv_socket: zmq.Socket = self.context.socket(zmq.SUB)
+        #self.recv_socket.connect(self.resource)
+        #self.recv_socket.setsockopt_string(zmq.SUBSCRIBE, self.topic)
+        #self.recv = threading.Thread(target=_recv_ack, args=(self.recv_socket,), daemon=True)
+        #self.recv.start()
 
     def recv_message(self):
         self.recv.join()
         return self.ret
 
     def term(self):
-        self.recv_socket.close()
-        self.context.term()
+        #self.recv_socket.close()
+        #self.context.term()
+        pass
 
 
 class SubSocketManager:

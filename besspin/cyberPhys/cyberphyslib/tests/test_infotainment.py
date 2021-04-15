@@ -15,24 +15,24 @@ import struct
 import time
 
 
-def test_infotainment_ui():
-    """test the infotainment proxy service
-
-    operational tests:
-        1. start / stop
-    failure mode tests:
-        <None>
-    """
-    # simple start / stop
-    ui = cinfo.InfotainmentUi(None)
-    ui.start()
-    ui.exit()
-    ui.join()
-
-    player = cinfo.InfotainmentPlayer(None)
-    player.start()
-    player.exit()
-    player.join()
+#def test_infotainment_ui():
+#    """test the infotainment proxy service
+#
+#    operational tests:
+#        1. start / stop
+#    failure mode tests:
+#        <None>
+#    """
+#    # simple start / stop
+#    ui = cinfo.InfotainmentUi(None)
+#    ui.start()
+#    ui.exit()
+#    ui.join()
+#
+#    player = cinfo.InfotainmentPlayer(None)
+#    player.start()
+#    player.exit()
+#    player.join()
 
 
 def test_infotainment_player_handler():
@@ -52,7 +52,6 @@ def test_infotainment_player_handler():
     imux = cinfo.InfotainmentProxy(info_net, can_multiverse)
 
     # add the infotainment services
-    can_multiverse.register(imux.info_ui)
     can_multiverse.register(imux.info_player)
 
     # startup the can multiverse and the infotainment pieces
@@ -67,9 +66,9 @@ def test_infotainment_player_handler():
     assert msg == cinfo.InfotainmentPlayerStatus.READY
 
     # send button presses
-    can_multiverse.send(cspecs.CAN_ID_INFOTAINMENT_STATE, struct.pack("B", 0x3F))
+    can_multiverse.send(cspecs.CAN_ID_INFOTAINMENT_STATE, struct.pack("!B", 0x3F))
     time.sleep(5.0)
-    can_multiverse.send(cspecs.CAN_ID_INFOTAINMENT_STATE, struct.pack("B", 0x3B))
+    can_multiverse.send(cspecs.CAN_ID_INFOTAINMENT_STATE, struct.pack("!B", 0x3B))
     time.sleep(5.0)
 
     # TODO: test UI?

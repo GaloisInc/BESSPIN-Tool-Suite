@@ -8,9 +8,9 @@ Cyberphys Demonstrator Configuration Variables
 """
 
 CAN_PORT = 5002
-INFO_PORT = 5013
+INFO_PORT = 5020
 
-SIM_IP = "10.88.88.4" # Sim PC IP
+SIM_IP = "192.168.0.231" # Sim PC IP
 
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
@@ -53,7 +53,7 @@ BEAMNG_OUTGAUGE_PORT = 4445 # Outgauge emulation
 
 BEAMNG_COMPONENT_ELECTRIC = (BEAMNG_SIM_PORT, 'sensor-electric')
 BEAMNG_COMPONENT_GFORCE   = (BEAMNG_SIM_PORT, 'sensor-gforce')
-BEAMNG_COMPONENT_EVENTS   = (BEAMNG_SIM_PORT, 'beamng-events')
+BEAMNG_COMPONENT_EVENTS   = (BEAMNG_SIM_PORT+20, 'beamng-events')
 BEAMNG_COMPONENT_STATE    = (BEAMNG_SIM_PORT, 'beamng-state')
 BEAMNG_COMPONENT_VEHICLE  = (BEAMNG_SIM_PORT, 'beamng-vehicle')
 BEAMNG_COMPONENT_SENSORS  = (BEAMNG_SIM_PORT, "beamng-sensors")

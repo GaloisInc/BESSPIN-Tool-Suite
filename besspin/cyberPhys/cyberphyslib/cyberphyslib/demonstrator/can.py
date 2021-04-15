@@ -211,7 +211,7 @@ class CanMultiverseComponent(Component):
 
     def on_start(self):
         self._can_multiverse.start()
-        self.send_message(ccomp.Message(CanMultiverseStatus.READY), "canm-events")
+        self.send_reply(ccomp.Message(CanMultiverseStatus.READY), "canm-events")
 
     def on_exit(self):
         self._can_multiverse.exit()
@@ -220,6 +220,6 @@ class CanMultiverseComponent(Component):
     def _(self, msg, t):
         if msg.message in self._can_multiverse.networks:
             self._can_multiverse.select(msg.message)
-            self.send_message(message.Message(CanMultiverseStatus.READY), "canm-events")
+            self.send_reply(message.Message(CanMultiverseStatus.READY), "canm-events")
         else:
-            self.send_message(message.Message(CanMultiverseStatus.ERROR), "canm-events")
+            self.send_reply(message.Message(CanMultiverseStatus.ERROR), "canm-events")
