@@ -7,8 +7,34 @@ from besspin.base.utils.misc import *
 import besspin.target.launch
 import besspin.cyberPhys.interactive
 import besspin.cyberPhys.run
+import besspin.cyberPhys.relaymanager
+import besspin.cyberPhys.watchdog
 from besspin.base.threadControl import ftQueueUtils
 import threading, queue, pexpect
+
+@decorate.debugWrap
+@decorate.timeWrap
+def getComponentPorts(component_name: str, targetId=None) -> ([(int, str)], [(int, str)]):
+    """
+    Return a tuple (in_socks, out_socks) based on the component name
+    """
+    ports = getSetting('cyberPhysComponentPorts')
+    topic = getSetting('cyberPhysComponentBaseTopic')
+    if targetId:
+        # config depends on target ID
+        out_port = ports[component_name] + targetId
+    else:
+        # Not targetID bound
+        out_port = ports[component_name]
+    in_socks = [(p,topic) for p in ports.values() if p != out_port]
+    out_socks = [(out_port, topic)]
+    return in_socks, out_socks
+
+@decorate.debugWrap
+@decorate.timeWrap
+def get_target_ip(targetId) -> str:
+    xTarget = getSetting('targetObj',targetId=targetId)
+    return xTarget.ipTarget
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -24,6 +50,8 @@ def startCyberPhys():
     runThreadPerTarget(besspin.target.launch.startBesspin)
     printAndLog (f"BESSPIN <cyberPhys mode> is launched!")
 
+    components = []
+
     if (isEnabled('interactiveShell')):
         # - We need a way for communication between this (main thread) and the watchdog threads [and interacting thread].
         # - We'll use queues. Each queue should be used in one-way communication. So there is a main queue that is watched here.
@@ -32,7 +60,6 @@ def startCyberPhys():
         exitQueue = queue.Queue(maxsize=getSetting('nTargets')+int(isEnabled('interactiveShell')))
         setSetting('cyberPhysQueue',exitQueue)
         for targetId in range(1,getSetting('nTargets')+1):
-            setSetting('watchdogQueue',queue.Queue(maxsize=1),targetId=targetId)
             # queue from heartbeat thread -> watchdog thread
             setSetting('watchdogHeartbeatQueue',queue.Queue(),targetId=targetId)
 
@@ -40,10 +67,11 @@ def startCyberPhys():
         setSetting('heartbeatQueue', queue.Queue(maxsize=1))
 
         # Start the watchdogs
-        allThreads = runThreadPerTarget(besspin.cyberPhys.run.watchdog,onlyStart=True)
+        for targetId in range(1,getSetting('nTargets')+1):
+            components.append(besspin.cyberPhys.watchdog.Watchdog(targetId))
 
         # Start the heartbeat watchdog
-        allThreads += runThreadPerTarget(besspin.cyberPhys.run.heartBeatListener,
+        allThreads = runThreadPerTarget(besspin.cyberPhys.run.heartBeatListener,
                         addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
 
         # Pipe the UART
@@ -52,6 +80,16 @@ def startCyberPhys():
             printAndLog("You may access the UART using: <socat - TCP4:localhost:${port}> or <nc localhost ${port}>.")
         else: #log the output instead
             runThreadPerTarget(startTtyLogging)
+
+        # Start relay manager
+        in_socks, _ = getComponentPorts("relayManager")
+        components.append(
+            besspin.cyberPhys.relaymanager.RelayManager("relayManager", in_socks, []))
+
+        for c in components:
+            c.start()
+            while not c._ready:
+                pass
 
         # Create an interactor queue
         # Interactor can be terminated because of a watchdog reported error, or by the user
@@ -65,8 +103,6 @@ def startCyberPhys():
         ftQueueUtils("cyberPhysMain:queue",exitQueue,'get') #block until receiving an error or termination
     
         # Terminating all threads
-        for targetId in range(1,getSetting('nTargets')+1):
-            ftQueueUtils(f"target{targetId}:watchdog:queue",getSetting('watchdogQueue',targetId=targetId),'put')
         ftQueueUtils(f"target{targetId}:heartbeat:queue",getSetting('heartbeatQueue'),'put')
         if (isEnabled('interactiveShell')):
             ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
@@ -74,6 +110,11 @@ def startCyberPhys():
         # Waiting for all threads to terminate
         for xThread in allThreads:
             xThread.join()
+
+    # Terminate components
+    for c in components:
+        c.exit()
+        c.join()
 
     return
 

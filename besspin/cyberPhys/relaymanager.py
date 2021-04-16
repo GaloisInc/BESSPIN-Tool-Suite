@@ -57,4 +57,3 @@ class RelayManager(ccomp.Component):
         self.turn_on_relays()
         time.sleep(self.relay_delay)
         self.turn_off_relays()
-        print(f"{self.name} Reset finished")

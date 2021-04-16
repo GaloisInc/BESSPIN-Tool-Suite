@@ -1,13 +1,14 @@
 #! /usr/bin/env python3
-""" 
+"""
 The main file for the cyberPhys interactive shell
 """
 
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
-import cmd, os, threading, io
-import zmq
+import demonstrator.component as ccomp
 
+
+import cmd, os, threading, io
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -41,6 +42,7 @@ def interact():
     #Report that it is done
     besspin.cyberPhys.launch.ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
 
+
 class cyberPhysShell(cmd.Cmd):
     """cyberPhys interactive cmd shell"""
 
@@ -56,9 +58,20 @@ class cyberPhysShell(cmd.Cmd):
     """
     def __init__(self):
         super(cyberPhysShell, self).__init__()
-        self.ctx = zmq.Context.instance()
-        self.publisher = self.ctx.socket(zmq.PUB)
-        self.publisher.bind("tcp://*:5556")
+
+    def preloop(self):
+        self.name = "interactiveLoop"
+        _, out_socks = besspin.cyberPhys.launch.getComponentPorts(self.name)
+        self.sender = ccomp.Component(self.name, [], out_socks)
+        self.sender.start()
+        while not self.sender._ready:
+            pass
+        printAndLog(f"<{self.__class__.__name__}> Starting.")
+
+    def postloop(self):
+        self.sender.stop()
+        self.sender.join()
+        printAndLog(f"<{self.__class__.__name__}> Terminating.")
 
     @staticmethod
     def getTargetMember (targetId,memberName):
@@ -66,23 +79,24 @@ class cyberPhysShell(cmd.Cmd):
         if (hasattr(xTarget,memberName)):
             return getattr(xTarget,memberName)
         else:
-            return 'UNKNOWN' 
+            return 'UNKNOWN'
 
     def precmd(self, line):
         if (line != 'EOF'):
             line = line.lower() #commands are case insensitive
         logging.debug(f"cyberPhys <interactive>: {line}")
         return line
-    
+
     def do_exit(self,inp):
         """exit
         exits the cyberPhys interactive cmd shell and ends the program"""
+        self.sender.send_message(ccomp.Message(f"EXIT"), getSetting('cyberPhysComponentBaseTopic'))
         return True
 
     def do_quit(self,inp):
         """quit
         quits the cyberPhys interactive cmd shell and ends the program"""
-        return True
+        return self.do_exit(inp)
 
     def do_EOF(self,inp):
         """exit
@@ -95,15 +109,16 @@ class cyberPhysShell(cmd.Cmd):
 
     def do_restart(self,inp):
         """restart TARGET_ID
-        starts|stops piping the target with the chosen ID"""
-        if (len(inp.split(' '))>1):
+        restarts the target with the chosen ID"""
+        if (len(inp.split(' '))>1) or inp=='':
             print(self.do_restart.__doc__)
             return
         targetId = inp
-        assert (int(targetId) in range(1,getSetting('nTargets')+1)), "validating target ID"
+        # NOTE: ID=0 is Teensy
+        assert (int(targetId) in range(0,getSetting('nTargets')+1)), "validating target ID"
         targetId = int(targetId)
         printAndLog(f"Request reseting target {targetId}")
-        self.publisher.send(targetId.to_bytes(1,byteorder='big'))
+        self.sender.send_message(ccomp.Message(f"RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
         return
 
     def do_ip(self,inp):
@@ -144,7 +159,7 @@ class cyberPhysShell(cmd.Cmd):
             action, targetId = ['start', items[0]]
         else:
             action, targetId = items
-        
+
         try:
             assert (action in ['start', 'stop']), "validating piping action"
             assert (int(targetId) in range(1,getSetting('nTargets')+1)), "validating target ID"
@@ -159,10 +174,3 @@ class cyberPhysShell(cmd.Cmd):
         else:
             besspin.cyberPhys.launch.endUartPiping(targetId, doPrintWarning=True)
             besspin.cyberPhys.launch.startTtyLogging(targetId)
-
-        
-
-
-
-
-    

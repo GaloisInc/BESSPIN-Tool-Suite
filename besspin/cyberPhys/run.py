@@ -7,7 +7,7 @@ from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
 import besspin.target.launch
 from besspin.base.threadControl import ftQueueUtils
-from besspin.cyberPhys import otaserver, infotainmentserver
+from besspin.cyberPhys import otaserver, infotainmentserver, relaymanager
 
 # Import for CAN bus
 from besspin.cyberPhys.canlib import UdpBus, Message, CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
@@ -42,87 +42,6 @@ def runCyberPhys(xTarget):
     for appModule in xTarget.appModules:
         appModule.install(xTarget)
         appLog.flush()
-    return
-
-@decorate.debugWrap
-@decorate.timeWrap
-def watchdog(targetId):
-    """
-    This function keeps monitoring the target, and if it goes down, it resets it
-    " There are 3 things that we need to make sure while developing this:
-    " 1. Can watch
-    " 2. resets
-    " 3. Is able to exit
-    """
-    listenQueue = getSetting('watchdogQueue',targetId=targetId)
-
-    # queue that heartbeat responses will come from
-    wHeartbeatQueue = getSetting('watchdogHeartbeatQueue', targetId=targetId)
-
-    ctx = zmq.Context.instance()
-    subscriber = ctx.socket(zmq.SUB)
-    subscriber.connect("tcp://localhost:5556")
-    subscriber.setsockopt(zmq.SUBSCRIBE,b'') # Subscribe to everyting for now
-
-    while (listenQueue.empty()): #Main thread didn't exit yet, and watchdog no error
-        def handleError(errorString):
-            """
-            Either resets the target and returns False so the loop continues,
-            OR returns True and break the loop
-            """
-            if (isEnabled('interactiveShell')):
-                print("\n",flush=True)
-            if (isEnabled('resetOnWatchdog')):
-                warnAndLog(f"<target{targetId}>: {errorString}! Resetting...")
-                # Here we should reset
-                besspin.target.launch.resetTarget(getSetting('targetObj',targetId=targetId))
-                printAndLog("Please press Enter to return to the interactive shell...")
-                return False
-            else:
-                errorAndLog(f"<target{targetId}>: {errorString}!")
-                return True
-
-        responses = []
-        while not wHeartbeatQueue.empty():
-            responses.append(ftQueueUtils(f"watchDogHeartbeatQueue{targetId}",wHeartbeatQueue,'get'))
-
-        xTarget = getSetting('targetObj',targetId=targetId)
-        targetIp = xTarget.ipTarget
-
-        try:
-            msgs = [msg for msg in responses if str(ipaddress.IPv4Address(struct.unpack('<I', msg.data[0:4])[0])) == targetIp]
-            if msgs:
-                msg = msgs[0]
-                printAndLog(f"<target{targetId}>: Heartbeat received, {msg.timestamp}s, \
-                    reqID: {int.from_bytes(msg.data[4:8],'big')}",doPrint=False)
-            else:
-                warnAndLog(f"<target{targetId}>: Heartbeat missed",doPrint=False)
-                # TODO: do something more here
-        except Exception as exc:
-            warnAndLog(f"<target{targetId}> Exception occured processing hearbeat response: {exc}") 
-
-        # Check process
-        try:
-            rx_data = subscriber.recv_multipart(flags=zmq.NOBLOCK)[0]
-            if rx_data:
-                printAndLog(f"<target{targetId}>: received msg {rx_data}")
-                if int.from_bytes(rx_data, byteorder='big') == targetId:
-                    handleError("Reset requested.")
-        except Exception as e:
-            printAndLog(f"<target{targetId}>: no data {e}",doPrint=False)
-
-        if not isTargetAlive(targetId) and handleError("Target is not alive"):
-            appLog = getSetting('appLog',targetId=targetId)
-            appLog.close()
-            break
-
-        time.sleep(0.5) # TODO: make the timeout configurable
-
-    # Will send an item to the queue anyway; If we're here because of error:
-    #   Yes: So this will exit the main thread
-    #   No: So the item in the queue will not be read
-    ftQueueUtils("cyberPhysMain:queue", getSetting('cyberPhysQueue'), 'put')
-
     return
 
 @decorate.debugWrap
@@ -162,6 +81,7 @@ def heartBeatListener():
     cyberPhysCanbusPort = getSetting('cyberPhysCanbusPort')
 
     try:
+        printAndLog(f"<heartBeatListener> Starting CAN bus on {broadcastIp}:{cyberPhysCanbusPort}", doPrint=False)
         canbus = UdpBus(ip=broadcastIp,port=cyberPhysCanbusPort)
     except Exception as exc:
         logAndExit(f"<heartBeatListener> Failed to instantiate <UdpBus> with {broadcastIp}:{cyberPhysCanbusPort}.",exc=exc,exitCode=EXIT.Run)
@@ -185,7 +105,7 @@ def heartBeatListener():
             canbus.send(heartbeat_req)
         except Exception as exc:
             logAndExit(f"<heartBeatListener> Failed to send heartbeat request to \
-                {broadcastIp}:{cyberPhysCanbusPort}",exc=exc,exitCode=EXIT.Run)
+                {broadcastIp}:{cyberPhysCanbusPort} with exception {exc}",exc=exc,exitCode=EXIT.Run)
         printAndLog (f"<heartBeatListener> Sending request", doPrint=False)
 
         # Assume one second window to receive watchdog responses

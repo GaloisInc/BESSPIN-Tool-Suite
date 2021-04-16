@@ -443,6 +443,11 @@
             "name" : "cyberPhysComponentBaseTopic",
             "type" : "string",
             "val" : "base-topic"
+        },
+        {
+            "name" : "cyberPhysWatchdogFrequency",
+            "type" : "int",
+            "val" : 2
         }
     ]
 }
