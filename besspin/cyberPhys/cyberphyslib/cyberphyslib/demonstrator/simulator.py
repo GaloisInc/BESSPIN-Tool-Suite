@@ -188,13 +188,13 @@ class Sim(component.ComponentPoller):
                     self._enable_autopilot = False
                     self._disable_autopilot = False
                     self._in_autopilot = True
-                    self.restart_command()
+                    #self.restart_command()
                 elif self._disable_autopilot:
                     self._vehicle.ai_set_mode('disabled')
                     self._disable_autopilot = False
                     self._enable_autopilot = False
                     self._in_autopilot = False
-                    self.restart_command()
+                    #self.restart_command()
 
                 if self._restart_scenario:
                     self._restart_scenario = False
@@ -350,3 +350,4 @@ class Sim(component.ComponentPoller):
             if self._in_autopilot:
                 self._disable_autopilot = True
                 self._in_autopilot = None
+                self.restart_command()

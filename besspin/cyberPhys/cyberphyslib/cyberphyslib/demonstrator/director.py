@@ -17,6 +17,7 @@ import cyberphyslib.demonstrator.can_out as ccout
 import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
 import cyberphyslib.canlib as canlib
+import can as extcan
 
 from cyberphyslib.demonstrator.handler import ComponentHandler
 from cyberphyslib.demonstrator.logger import ignition_logger
@@ -26,6 +27,7 @@ from transitions.extensions import GraphMachine as Machine
 from transitions import State
 
 import time
+import struct
 
 
 class IgnitionDirector:
@@ -115,10 +117,10 @@ class IgnitionDirector:
         self.info_net = ccan.CanUdpNetwork("info-net", cconf.INFO_PORT, sip, blacklist=[cconf.SIM_IP])
 
         # C&C message bus
-        # TODO: FIXME: pull this out of a config
+        # TODO: FIXME: pull this out of a config -- address this after BESSPIN / canlib merge
         IP_ADMIN_PC = "127.0.0.1:5030"
         IP_CC_IGNITION = "127.0.0.1:5557"
-        nodes = [IP_ADMIN_PC]
+        nodes = [IP_ADMIN_PC, IP_CC_IGNITION]
         self.cc_recvr = canlib.TcpBus(IP_CC_IGNITION, nodes)
         self.cc_timeout = 30.0
 
@@ -160,8 +162,13 @@ class IgnitionDirector:
         """
         self.machine.get_graph().draw(fname, prog='dot')
 
+    def status_send(self, canid, argument):
+        msg = extcan.Message(arbitration_id=canid, dlc=1, data=struct.pack("!B", argument))
+        self.cc_recvr.send(msg)
+
 ### STATE ENTRY CALLBACKS
     def terminate_enter(self):
+        self.status_send(canlib.CAN_ID_CMD_COMPONENT_ERROR, 0x00)
         ignition_logger.debug("Termination State: Enter")
         self.is_finished = True
         self._handler.exit()
@@ -237,55 +244,57 @@ class IgnitionDirector:
         import struct
         id, data = msg.arbitration_id, msg.data
 
-        if id == canlib.CAN_ID_CMD_RESTART:
-            ignition_logger.debug(f"process cc: restart")
-            bsim: simulator.Sim = self._handler["beamng"]
-            bsim.restart_command()
+        try:
+            if id == canlib.CAN_ID_CMD_RESTART:
+                ignition_logger.debug(f"process cc: restart")
+                bsim: simulator.Sim = self._handler["beamng"]
+                bsim.restart_command()
 
-        elif id == canlib.CAN_ID_CMD_HACK_ACTIVE:
-            hack_idx = struct.unpack("!B")
-            ignition_logger.debug(f"process cc: set hack active {hack_idx}")
-            if self._noncrit:
-                ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
+            elif id == canlib.CAN_ID_CMD_HACK_ACTIVE:
+                hack_idx = struct.unpack("!B", msg.data)[0]
+                ignition_logger.debug(f"process cc: set hack active {hack_idx}")
+                if self._noncrit:
+                    ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
+                else:
+                    # TODO: FIXME: write test for this
+                    lm: ledm.LedManagerComponent = self._handler["ledm"]
+                    # NOTE: is this the agreed on decoding mechanism?
+                    lm.update_pattern(ledm.LedPatterns(hack_idx))
+
+            elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
+                # NOTE: this is not agreed on
+                nmap = {0: "base", 1: "secure_ecu", 2: "secure_infotainment"}
+                scen_idx = struct.unpack("!B", msg.data)[0]
+                ignition_logger.debug(f"process cc: active scenario {scen_idx}")
+                cm: ccan.CanMultiverseComponent = self._handler["canm"]
+                cm.select_network(nmap[scen_idx])
+
+            elif id == canlib.CAN_ID_CMD_COMPONENT_ERROR: # TODO: FIXME: should be CMD_SET_DRIVING_MODE
+                aut_idx = struct.unpack("!B", msg.data)[0]
+                ignition_logger.debug(f"process cc: set driving mode {aut_idx}")
+                # TODO: update canspecs to get this command?
+                bsim: simulator.Sim = self._handler["beamng"]
+                if aut_idx == 0:
+                    bsim.disable_autopilot_command()
+                else:
+                    bsim.enable_autopilot_command()
             else:
-                # TODO: FIXME: write test for this
-                lm: ledm.LedManagerComponent = self._handler["ledm"]
-                # NOTE: is this the agreed on decoding mechanism?
-                lm.update_pattern(ledm.LedPatterns(hack_idx))
-
-        elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
-            # NOTE: this is not agreed on
-            nmap = {0: "base", 1: "secure_ecu", 2: "secure_infotainment"}
-            scen_idx = struct.unpack("!B")
-            ignition_logger.debug(f"process cc: active scenario {scen_idx}")
-            cm: ccan.CanMultiverseComponent = self._handler["canm"]
-            cm.select_network(nmap[scen_idx])
-
-        elif id == canlib.CAN_ID_CMD_COMPONENT_ERROR: # TODO: FIXME: should be CMD_SET_DRIVING_MODE
-            aut_idx = struct.unpack("!B")
-            ignition_logger.debug(f"process cc: set driving mode {aut_idx}")
-            # TODO: update canspecs to get this command?
-            bsim: simulator.Sim = self._handler["beamng"]
-            if aut_idx == 0:
-                bsim.disable_autopilot_command()
-            else:
-                bsim.enable_autopilot_command()
-        else:
-            pass
+                pass
+        except Exception as exc:
+            ignition_logger.error(f"process cc: error with message {msg}: {exc}")
 
     def ready_enter(self):
         ignition_logger.debug("Ready state: enter")
+        self.status_send(canlib.CAN_ID_CMD_COMPONENT_READY, 0x00)
         scenario_start = time.time()
         while((time.time() - scenario_start) < self.scenario_timeout):
-            # TODO: FIXME this isn't implemented
-            # Sleep for 30 seconds before entering self driving mode
             cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
             if cc_recv:
                 self.default_input()
                 self.input_cc_msg = True
                 # process the cc_packet
                 self.process_cc(cc_recv)
-                pass
+                return
             else: # CC timeout condition
                 if self.self_drive_mode: # do nothing if already in self drive mode
                     pass
@@ -296,16 +305,21 @@ class IgnitionDirector:
         self.default_input()
         self.input_s_timeout = True
 
-    def restart_enter(self, n_resets=3):
+    def cc_msg_enter(self):
+        ignition_logger.debug("cc msg state: enter")
+        self.default_input()
+        return
+
+    def restart_enter(self):
         ignition_logger.debug("Restart state: enter")
         sim: simulator.Sim = self._handler["beamng"]
         msg = sim.restart_command()
         return
 
-
     def noncrit_failure_enter(self):
         ignition_logger.debug("Noncrit_failure state: enter")
         ignition_logger.error("Ignition achieved a noncritical error. The LED manager failed to start. Continuing anyway...")
+        self.status_send(canlib.CAN_ID_CMD_COMPONENT_ERROR, 0x01)
         self._noncrit = True
         self.default_input()
         return

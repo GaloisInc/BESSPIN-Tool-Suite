@@ -20,7 +20,7 @@ import serial, serial.tools.list_ports_windows
 import pathlib
 import os
 
-from .component import ComponentPoller
+from .component import ComponentPoller, ComponentStatus
 from .logger import led_manage_logger
 from .message import Message
 from cyberphyslib.demonstrator.leds import LedString
@@ -157,6 +157,7 @@ class LedManagerComponent(ComponentPoller):
                          sample_frequency=1 / self.regular_update_rate)
         self.client = opc.Client(self.opc_address)
         self.led_strings = led_strings
+        self._no_client = False
 
     def system_startup(self):
         """system startup procedure required to turn on LEDs without persistent pixels"""
@@ -165,6 +166,8 @@ class LedManagerComponent(ComponentPoller):
         if not self.client.can_connect():
             # error has occurred
             self.send_message(Message(LedManagerStatus.ERROR), "ledm-events")
+            self._no_client = True
+            return
         # TODO: check that the number of relays is correct?
 
         # turn off all relays
@@ -224,6 +227,11 @@ class LedManagerComponent(ComponentPoller):
     @property
     def pixel_array(self):
         return np.concatenate([l.pixel_array for l in self.led_strings])
+
+    def wait_ready_command(self):
+        while not self._start_finished and not self._no_client:
+            time.sleep(0.5)
+        return ComponentStatus.READY if not self._no_client else ComponentStatus.ERROR
 
 ### component relevant methods
     def on_start(self):
