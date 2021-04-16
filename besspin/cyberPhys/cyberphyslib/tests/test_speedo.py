@@ -56,5 +56,5 @@ def test_speedo():
 def test_speedo_handler():
     handler = ComponentHandler()
     msg = handler.start_component(cspeed.Speedo())
-    assert msg == cspeed.SpeedoStatus.READY
+    assert msg == ccomp.ComponentStatus.READY
     handler.exit()

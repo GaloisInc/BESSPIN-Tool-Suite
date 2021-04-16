@@ -223,3 +223,8 @@ class CanMultiverseComponent(Component):
             self.send_message(message.Message(CanMultiverseStatus.READY), "canm-events")
         else:
             self.send_message(message.Message(CanMultiverseStatus.ERROR), "canm-events")
+
+    def select_network(self, network):
+        """wait until the service has finished booting"""
+        self._can_multiverse.select(network)
+        return ccomp.ComponentStatus.READY

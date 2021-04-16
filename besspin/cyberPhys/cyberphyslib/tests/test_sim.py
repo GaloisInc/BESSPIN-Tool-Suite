@@ -7,6 +7,7 @@ Date: 11 January 2021
 Tests for the cyberphys BeamNG sim component
 """
 import cyberphyslib.demonstrator.simulator as csim
+import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.handler import ComponentHandler
 import time
 
@@ -25,18 +26,19 @@ def test_sim():
     csim.Sim.kill_beamng(1)
     handler = ComponentHandler()
     msg = handler.start_component(csim.Sim())
-    assert msg == csim.BeamNgStatus.READY
+    assert msg == ccomp.ComponentStatus.READY
 
     # enable / disable autopilot
     time.sleep(1.0)
-    msg = handler.message_component("beamng", csim.BeamNgCommand.ENABLE_AUTOPILOT)
+    sim: csim.Sim = handler["beamng"]
+    msg = sim.enable_autopilot_command()
     assert msg == csim.BeamNgStatus.READY
     time.sleep(3.0)
-    msg = handler.message_component("beamng", csim.BeamNgCommand.DISABLE_AUTOPILOT)
+    msg = sim.disable_autopilot_command()
     assert msg == csim.BeamNgStatus.READY
 
     # restart scenario
-    msg = handler.message_component("beamng", csim.BeamNgCommand.RESTART)
+    msg = sim.restart_command()
     assert msg == csim.BeamNgStatus.RESTART_FINISHED
     time.sleep(1.0)
 

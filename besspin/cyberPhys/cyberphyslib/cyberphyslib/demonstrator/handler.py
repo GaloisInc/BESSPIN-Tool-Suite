@@ -79,46 +79,15 @@ class ComponentHandler:
     """
     def __init__(self, ip_addr = "127.0.0.1"):
         self._services = {}
-        self._command_entry = {}
-        self._events_entry = {}
-        self._zmq_context = zmq.Context()
-        self.name = "SERVICE"
-        self.out_sock = None
-        self.ip_addr = ip_addr
-
-    def connect_component(self, port_input, port_output, component_name):
-        """
-        TODO: accept component_cls instead of keyword
-        """
-        # TODO: weird
-        if not self.out_sock:
-            self.out_sock = self._zmq_context.socket(zmq.PUB)
-            self.out_sock.bind(f"tcp://*:{port_output}")
-
-        self._events_entry[component_name] = (port_input, component_name)
-        self._command_entry[component_name] = self.out_sock
-
-    def disconnect_component(self, component_name):
-        if component_name in self._events_entry and component_name in self._command_entry:
-            v = self._command_entry[component_name]
-            v.close()
-            del self._command_entry[component_name]
-            del self._events_entry[component_name]
 
     def start_component(self, comp: component.Component, wait=True):
         keyword = comp.name
-        ctopic, etopic = f"{comp.name}-commands", f"{comp.name}-events"
-        porto = {t: p for p, t in comp._in_ports}.get(ctopic, None)
-        porti = {t: p for p, t in comp._out_ports}.get(etopic, None)
         ignition_logger.info(f"Handler: Launching Service {keyword}...")
         if wait:
-            with SubSocketManager(f"tcp://{self.ip_addr}:{porti}", etopic) as ssock:
-                self.connect_component(porti, porto, keyword)
-                comp.start()
-                self._services[keyword] = comp
-                return ssock.recv_message()
+            comp.start()
+            self._services[keyword] = comp
+            return comp.wait_ready_command()
         else:
-            self.connect_component(porti, porto, keyword)
             comp.start()
             self._services[keyword] = comp
 
@@ -132,29 +101,7 @@ class ComponentHandler:
             self._services[keyword].join()
             del self._services[keyword]
 
-    def message_component(self, component_kw, message, do_receive=True):
-        if do_receive:
-            porti, topic = self._events_entry[component_kw]
-            with SubSocketManager(f"tcp://{self.ip_addr}:{porti}", f"{component_kw}-events") as sub_sock:
-
-                self._command_entry[component_kw].send_string(f"{component_kw}-commands", zmq.SNDMORE)
-                self._command_entry[component_kw].send_pyobj(Envelope.serialize(Envelope(self,
-                                                                                         Message(message),
-                                                                                         level=MessageLevel.NORMAL)))
-                return sub_sock.recv_message()
-        else:
-            self._command_entry[component_kw].send_string(f"{component_kw}-commands", zmq.SNDMORE)
-            self._command_entry[component_kw].send_pyobj(Envelope.serialize(Envelope(self,
-                                                                                     Message(message),
-                                                                                     level=MessageLevel.NORMAL)))
-
     def exit(self):
-        for _, v in self._command_entry.items():
-            v.close()
-
-        if self._zmq_context is not None:
-            self._zmq_context.term()
-
         # cast to list as _services will change in size
         for name in list(self._services.keys()):
             ignition_logger.info("Handler: Termination signal received!")
@@ -163,3 +110,7 @@ class ComponentHandler:
     @property
     def components(self):
         return [s for _, s in self._services.items()]
+
+    def __getitem__(self, key):
+        return self._services[key]
+

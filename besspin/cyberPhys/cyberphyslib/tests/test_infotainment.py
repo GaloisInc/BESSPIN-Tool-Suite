@@ -8,6 +8,7 @@ Tests for the cyberphys BeamNG sim component
 """
 import cyberphyslib.demonstrator.infotainment as cinfo
 import cyberphyslib.demonstrator.can as ccan
+import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.canlib.canspecs as cspecs
 from cyberphyslib.demonstrator.handler import ComponentHandler
 
@@ -58,13 +59,13 @@ def test_infotainment_player_handler():
     # startup the can multiverse and the infotainment pieces
     handler = ComponentHandler()
     msg = handler.start_component(ccan.CanMultiverseComponent(can_multiverse))
-    assert msg == ccan.CanMultiverseStatus.READY
+    assert msg == ccomp.ComponentStatus.READY
 
     msg = handler.start_component(imux.info_ui)
-    assert msg == cinfo.InfotainmentUiStatus.READY
+    assert msg == ccomp.ComponentStatus.READY
 
     msg = handler.start_component(imux.info_player)
-    assert msg == cinfo.InfotainmentPlayerStatus.READY
+    assert msg == ccomp.ComponentStatus.READY
 
     # send button presses
     can_multiverse.send(cspecs.CAN_ID_INFOTAINMENT_STATE, struct.pack("B", 0x3F))

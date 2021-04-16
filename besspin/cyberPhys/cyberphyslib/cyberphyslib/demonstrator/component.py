@@ -173,6 +173,7 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         self._epoch = time.time()
         self._unbound = False
         self._ready = False
+        self._start_finished = False
 
         # bind here so startup messages can be received
         self.bind()
@@ -245,6 +246,7 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         self._ready = True
         recvr = self.get_receiver()
         self.on_start()
+        self._start_finished = True
         for topic, msg, t in recvr:
             self._process_recvs(topic, msg, t)
             if self.stopped:
@@ -305,6 +307,13 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
     @property
     def name(self):
         return self._name
+
+    def wait_ready_command(self):
+        """wait until the service has finished booting"""
+        import time
+        while not self._start_finished:
+            time.sleep(0.2)
+        return ComponentStatus.READY
 
 
 class ComponentPoller(Component):

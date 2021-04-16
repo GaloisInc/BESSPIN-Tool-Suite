@@ -7,6 +7,7 @@ Date: 08 April 2021
 Tests for the cyberphys can location poller
 """
 import cyberphyslib.demonstrator.can_out as ccout
+import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.handler import ComponentHandler
 import time
 
@@ -23,5 +24,5 @@ def test_canout():
     # TODO: conduct more tests
     handler = ComponentHandler()
     msg = handler.start_component(ccout.CanOutPoller(None))
-    assert msg == ccout.CanOutStatus.READY
+    assert msg == ccomp.ComponentStatus.READY
     handler.exit()

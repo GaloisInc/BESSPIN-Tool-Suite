@@ -9,6 +9,7 @@ Tests for cyberphys CAN objects
 import socket
 import pytest
 import cyberphyslib.demonstrator.can as ccan
+import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.handler import ComponentHandler
 from can import Message
 
@@ -164,7 +165,7 @@ def test_can_multiverse_component():
     t1, tm, csend, multiverse = _produce_example_multiverse()
     mult_comp = ccan.CanMultiverseComponent(multiverse)
     msg = handler.start_component(mult_comp)
-    assert msg == ccan.CanMultiverseStatus.READY
+    assert msg == ccomp.ComponentStatus.READY
 
     assert t1.did_receive == False
     assert tm.did_receive == False
@@ -172,8 +173,8 @@ def test_can_multiverse_component():
     time.sleep(1.0)
     assert t1.did_receive == False
     assert tm.did_receive == True
-    msg = handler.message_component("canm", "can1")
-    assert msg == ccan.CanMultiverseStatus.READY
+    msg = handler["canm"].select_network("can1")
+    assert msg == ccomp.ComponentStatus.READY
     csend.send(123, b'12')
     time.sleep(1.0)
     assert t1.did_receive == True

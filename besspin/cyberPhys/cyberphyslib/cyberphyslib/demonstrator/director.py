@@ -14,6 +14,7 @@ import cyberphyslib.demonstrator.speedometer as speedo
 import cyberphyslib.demonstrator.leds_manage as ledm
 import cyberphyslib.demonstrator.infotainment as infotain
 import cyberphyslib.demonstrator.can_out as ccout
+import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
 import cyberphyslib.canlib as canlib
 
@@ -157,9 +158,6 @@ class IgnitionDirector:
         self._handler.exit()
         self.info_net.exit()
 
-    def noncrit_failure_enter(self):
-        ignition_logger.debug("Noncritical Failure State: Enter")
-
     def startup_enter(self):
         def register_components():
             # register call of the components to the CAN multiverse network
@@ -167,50 +165,38 @@ class IgnitionDirector:
                 if c.name != "canm":
                     self.can_multiverse.register(c)
 
+        def start_component(comp):
+            msg = self._handler.start_component(comp)
+            if msg != ccomp.ComponentStatus.READY:
+                ignition_logger.debug(f"{comp.name} service failed to start ({msg})")
+                self.input_fadecandy_fail = False
+                self.input_component_fail = True
+                return False
+            return True
+
         ignition_logger.debug("Startup State: Enter")
         simulator.Sim.kill_beamng(1)
 
         # startup beamng
-        msg = self._handler.start_component(simulator.Sim())
-        if msg != simulator.BeamNgStatus.READY:
-            ignition_logger.debug(f"BeamNG Sim service failed to start ({msg})")
-            self.input_fadecandy_fail = False
-            self.input_component_fail = True
-            return
+        if not start_component(simulator.Sim()): return
 
         # startup the speedometer
-        msg = self._handler.start_component(speedo.Speedo())
-        if msg != speedo.SpeedoStatus.READY:
-            ignition_logger.debug(f"Speedometer service failed to start ({msg})")
-            self.input_fadecandy_fail = False
-            self.input_component_fail = True
-            return
+        if not start_component(speedo.Speedo()): return
 
         # startup the multiverse
-        msg = self._handler.start_component(ccan.CanMultiverseComponent(self.can_multiverse))
-        if msg != ccan.CanMultiverseStatus.READY:
-            ignition_logger.debug(f"CAN multiverse service failed to start ({msg})")
-            self.input_fadecandy_fail = False
-            self.input_component_fail = True
-            return
+        if not start_component(ccan.CanMultiverseComponent(self.can_multiverse)): return
 
         # startup the can location poller
-        msg = self._handler.start_component(ccout.CanOutPoller(self.can_multiverse))
-        if msg != ccout.CanOutStatus.READY:
-            ignition_logger.debug(f"Can Out Location service failed to start ({msg})")
-            self.input_fadecandy_fail = False
-            self.input_component_fail = True
-            return
+        if not start_component(ccout.CanOutPoller(self.can_multiverse)): return
 
         # add everything to the can multiverse network
         register_components()
 
         # startup infotainment proxy
-        #self.proxy = infotain.InfotainmentProxy(self.info_net, self.can_multiverse)
         ui = infotain.InfotainmentUi(self.can_multiverse)
         player = infotain.InfotainmentPlayer(self.info_net)
-        self._handler.start_component(ui, wait=False)
-        self._handler.start_component(player, wait=False)
+        if not start_component(ui): return
+        if not start_component(player): return
         self.info_net.register(ui)
         self.can_multiverse.register(player)
 
@@ -235,7 +221,7 @@ class IgnitionDirector:
     def self_drive_mode(self):
         """self drive state exists in the sim service -- don't duplicate or invalidate this"""
         # TODO: FIXME: ugly access
-        return self._handler._services["beamng"]._in_autopilot
+        return self._handler["beamng"]._in_autopilot
 
     def ready_enter(self):
         ignition_logger.debug("Ready state: enter")
@@ -270,7 +256,8 @@ class IgnitionDirector:
         return
 
     def self_drive_enter(self):
-        msg = self._handler.message_component("beamng", simulator.BeamNgCommand.ENABLE_AUTOPILOT, do_receive=True)
+        sim: simulator.Sim = self._handler["beamng"]
+        msg = sim.enable_autopilot_command()
         self.default_input()
 
     def timeout_enter(self):
