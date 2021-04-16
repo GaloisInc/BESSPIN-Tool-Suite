@@ -184,17 +184,17 @@ class Sim(component.ComponentPoller):
                 # handle autopilot request
                 # NOTE: restarts the scenario
                 if self._enable_autopilot:
-                    self._beamng_session.restart_scenario()
                     self._vehicle.ai_set_mode('span')
                     self._enable_autopilot = False
                     self._disable_autopilot = False
                     self._in_autopilot = True
+                    self.restart_command()
                 elif self._disable_autopilot:
-                    self._beamng_session.restart_scenario()
                     self._vehicle.ai_set_mode('disabled')
                     self._disable_autopilot = False
                     self._enable_autopilot = False
                     self._in_autopilot = False
+                    self.restart_command()
 
                 if self._restart_scenario:
                     self._restart_scenario = False

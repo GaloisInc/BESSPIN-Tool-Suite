@@ -248,6 +248,10 @@ class IgnitionDirector:
 
     def restart_enter(self, n_resets=3):
         ignition_logger.debug("Restart state: enter")
+        sim: simulator.Sim = self._handler["beamng"]
+        msg = sim.restart_command()
+        return
+
 
     def noncrit_failure_enter(self):
         ignition_logger.debug("Noncrit_failure state: enter")
