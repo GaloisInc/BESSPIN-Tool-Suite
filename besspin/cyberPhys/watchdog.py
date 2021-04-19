@@ -3,7 +3,7 @@
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
 from besspin.base.threadControl import ftQueueUtils
-import demonstrator.component as ccomp
+import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
 
 import struct
 import ipaddress

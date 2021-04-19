@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import demonstrator.component as ccomp
+import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
 import time
 
 import serial, serial.tools.list_ports_posix

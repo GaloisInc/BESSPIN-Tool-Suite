@@ -5,7 +5,7 @@ The main file for the cyberPhys interactive shell
 
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
-import demonstrator.component as ccomp
+import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
 
 
 import cmd, os, threading, io
