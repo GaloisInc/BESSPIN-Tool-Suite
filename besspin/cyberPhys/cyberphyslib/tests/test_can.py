@@ -8,13 +8,9 @@ Tests for cyberphys CAN objects
 """
 import socket
 import pytest
-<<<<<<< HEAD:besspin/cyberPhys/tests/test_can.py
-import demonstrator.can as ccan
-=======
 import cyberphyslib.demonstrator.can as ccan
 import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.handler import ComponentHandler
->>>>>>> origin/cyberphys/feature/ignition-state-machine:besspin/cyberPhys/ignition/tests/test_can.py
 from can import Message
 
 

@@ -1,14 +1,9 @@
 
 from .component import ComponentPoller
 from .can import CanMultiverse
-<<<<<<< HEAD:besspin/cyberPhys/demonstrator/can_out.py
-import demonstrator.config as config
-import canlib.canspecs as canspecs
-=======
 import cyberphyslib.demonstrator.config as config
 import cyberphyslib.canlib.canspecs as canspecs
 import cyberphyslib.demonstrator.message as cmesg
->>>>>>> origin/cyberphys/feature/ignition-state-machine:besspin/cyberPhys/cyberphyslib/demonstrator/can_out.py
 
 import struct
 import math

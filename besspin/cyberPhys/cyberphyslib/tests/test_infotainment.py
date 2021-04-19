@@ -6,12 +6,6 @@ Date: 21 January 2021
 
 Tests for the cyberphys BeamNG sim component
 """
-<<<<<<< HEAD
-import demonstrator.infotainment as cinfo
-
-
-def test_sim():
-=======
 import cyberphyslib.demonstrator.infotainment as cinfo
 import cyberphyslib.demonstrator.can as ccan
 import cyberphyslib.demonstrator.component as ccomp
@@ -23,7 +17,6 @@ import time
 
 
 def test_infotainment_ui():
->>>>>>> origin/cyberphys/feature/ignition-state-machine
     """test the infotainment proxy service
 
     operational tests:
@@ -32,12 +25,6 @@ def test_infotainment_ui():
         <None>
     """
     # simple start / stop
-<<<<<<< HEAD
-    sim = cinfo.InfotainmentUi(None)
-    sim.start()
-    sim.exit()
-    sim.join()
-=======
     ui = cinfo.InfotainmentUi(None)
     ui.start()
     ui.exit()
@@ -89,4 +76,3 @@ def test_infotainment_player_handler():
     # TODO: test UI?
 
     handler.exit()
->>>>>>> origin/cyberphys/feature/ignition-state-machine

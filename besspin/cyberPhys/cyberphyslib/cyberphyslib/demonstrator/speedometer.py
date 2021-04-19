@@ -30,13 +30,8 @@ import serial
 import serial.tools.list_ports
 import enum
 from time import sleep
-<<<<<<< HEAD:besspin/cyberPhys/demonstrator/speedometer.py
-from .component import ComponentPoller
-import demonstrator.config as config
-=======
 from .component import ComponentPoller, Message
 import cyberphyslib.demonstrator.config as config
->>>>>>> origin/cyberphys/feature/ignition-state-machine:besspin/cyberPhys/cyberphyslib/demonstrator/speedometer.py
 from .logger import speedo_logger
 
 

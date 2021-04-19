@@ -6,14 +6,10 @@ Date: 11 January 2021
 
 Tests for the cyberphys BeamNG sim component
 """
-<<<<<<< HEAD
-import demonstrator.simulator as csim
-=======
 import cyberphyslib.demonstrator.simulator as csim
 import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.handler import ComponentHandler
 import time
->>>>>>> origin/cyberphys/feature/ignition-state-machine
 
 
 def test_sim():
@@ -21,22 +17,12 @@ def test_sim():
 
     operational tests:
         1. start / stop
-<<<<<<< HEAD
-=======
         2. enable / disable autopilot test
         3. restart scenario
->>>>>>> origin/cyberphys/feature/ignition-state-machine
     failure mode tests:
         <None>
     """
     # simple start / stop
-<<<<<<< HEAD
-    sim = csim.Sim()
-    sim.start()
-    sim.exit()
-    sim.join()
-
-=======
     csim.Sim.kill_beamng(1)
     handler = ComponentHandler()
     msg = handler.start_component(csim.Sim())
@@ -57,4 +43,3 @@ def test_sim():
     time.sleep(1.0)
 
     handler.exit()
->>>>>>> origin/cyberphys/feature/ignition-state-machine

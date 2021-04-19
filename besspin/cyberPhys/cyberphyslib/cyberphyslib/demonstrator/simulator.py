@@ -18,14 +18,8 @@ import functools
 import psutil
 import time
 import os
-<<<<<<< HEAD:besspin/cyberPhys/demonstrator/simulator.py
-import pathlib
-from demonstrator import config, component, message, logger
-import canlib.canspecs as canspecs
-=======
 from cyberphyslib.demonstrator import config, component, message, logger
 import cyberphyslib.canlib.canspecs as canspecs
->>>>>>> origin/cyberphys/feature/ignition-state-machine:besspin/cyberPhys/cyberphyslib/demonstrator/simulator.py
 
 from beamngpy import BeamNGpy, Scenario, Vehicle
 from beamngpy.sensors import Electrics, GForces

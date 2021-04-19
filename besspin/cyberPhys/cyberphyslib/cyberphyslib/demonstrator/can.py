@@ -11,16 +11,11 @@ import typing as typ
 import enum
 from abc import ABCMeta, abstractmethod
 from can import Message
-<<<<<<< HEAD:besspin/cyberPhys/demonstrator/can.py
-from .component import ThreadExiting
-from canlib import CanDataType, UdpBus
-=======
 from .component import ThreadExiting, Component
 import cyberphyslib.demonstrator.component as ccomp
 
 # TODO: @ethanlew import canlib/python/canlib.py properly
 from cyberphyslib.canlib import CanDataType, UdpBus
->>>>>>> origin/cyberphys/feature/ignition-state-machine:besspin/cyberPhys/cyberphyslib/demonstrator/can.py
 
 
 class CanListener(metaclass=ABCMeta):

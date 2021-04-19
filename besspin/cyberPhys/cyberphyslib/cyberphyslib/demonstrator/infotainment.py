@@ -22,14 +22,6 @@ import pathlib
 import struct
 import typing as typ
 
-<<<<<<< HEAD:besspin/cyberPhys/demonstrator/infotainment.py
-import demonstrator.config as config
-from demonstrator.component import ComponentPoller
-from demonstrator.logger import info_logger
-from demonstrator.can import CanNetwork
-from canlib.canspecs import *
-import canlib.canspecs as canspecs
-=======
 import cyberphyslib.demonstrator.config as config
 import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.logger import info_logger
@@ -37,7 +29,6 @@ from cyberphyslib.demonstrator.can import CanNetwork
 from cyberphyslib.canlib.canspecs import *
 import cyberphyslib.canlib.canspecs as canspecs
 import enum
->>>>>>> origin/cyberphys/feature/ignition-state-machine:besspin/cyberPhys/cyberphyslib/demonstrator/infotainment.py
 
 from pygame import mixer
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, AudioSession
