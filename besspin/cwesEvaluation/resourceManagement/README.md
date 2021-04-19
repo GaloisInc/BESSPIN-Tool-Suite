@@ -306,6 +306,11 @@ Free of Pointer not at Start of Buffer
   - This weakness results in a fact that the processor was able to
     detect the violation and it also prevented the test from continuing
     with the breach.
+- A segmentation fault on Debian and FreeBSD will score NONE for this test.
+  This differers from the general scoring philosophy of scoring segmentation
+  faults as HIGH because Debian and FreeBSD will never map virtual memory
+  address 0x0 to a physical address.  Therefore the OS provides sufficient
+  protection to prevent an exploit solely based on a null pointer dereference.
 
 ### TEST-588 ###
 
