@@ -30,7 +30,7 @@ with open(ids_filename, "r") as f:
 # date and file info
 today = date.today()
 
-outfilename_py: str = "./canspecs.py"
+outfilename_py: str = "../cyberphyslib/cyberphyslib/canlib/canspecs.py"
 file_header_py: str = f"""\"\"\"Cyberphys CAN Frames Specification
 Project: SSITH CyberPhysical Demonstrator
 Name: {outfilename_py}
@@ -41,7 +41,7 @@ This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_sp
 Version hash: {specs_md5.hexdigest()}
 \"\"\"\n\n"""
 
-outfilename_ids_py: str = "./componentids.py"
+outfilename_ids_py: str = "../cyberphyslib/cyberphyslib/canlib/componentids.py"
 file_header_ids_py: str = f"""\"\"\"Cyberphys Component IDs
 Project: SSITH CyberPhysical Demonstrator
 Name: {outfilename_py}
