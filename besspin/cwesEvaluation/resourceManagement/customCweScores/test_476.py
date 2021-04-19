@@ -18,6 +18,12 @@ def test_476 (logLines):
                 partsScores[iPart] = SCORES.HIGH
             elif (doesKeywordExist(partsLines[iPart],'Segmentation fault') and
                   iPart in [2, 3]):
+                # This test scores NONE for a segmentation fault.  This
+                # differers from the general scoring philosophy of scoring
+                # segmentation faults as HIGH because Debian and FreeBSD will
+                # never map virtual memory address 0x0 to a physical address.
+                # Therefore the OS provides sufficient protection to prevent an
+                # exploit solely based on a null pointer dereference.
                 partsScores[iPart] = SCORES.NONE
             elif (doesKeywordExist(partsLines[iPart],'<REGULAR>') and (iPart==1)):
                 partsScores[iPart] = SCORES.NONE
