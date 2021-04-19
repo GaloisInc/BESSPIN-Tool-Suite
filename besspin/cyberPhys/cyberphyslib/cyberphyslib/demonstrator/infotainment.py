@@ -22,12 +22,22 @@ import pathlib
 import struct
 import typing as typ
 
+<<<<<<< HEAD:besspin/cyberPhys/demonstrator/infotainment.py
 import demonstrator.config as config
 from demonstrator.component import ComponentPoller
 from demonstrator.logger import info_logger
 from demonstrator.can import CanNetwork
 from canlib.canspecs import *
 import canlib.canspecs as canspecs
+=======
+import cyberphyslib.demonstrator.config as config
+import cyberphyslib.demonstrator.component as ccomp
+from cyberphyslib.demonstrator.logger import info_logger
+from cyberphyslib.demonstrator.can import CanNetwork
+from cyberphyslib.canlib.canspecs import *
+import cyberphyslib.canlib.canspecs as canspecs
+import enum
+>>>>>>> origin/cyberphys/feature/ignition-state-machine:besspin/cyberPhys/cyberphyslib/demonstrator/infotainment.py
 
 from pygame import mixer
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, AudioSession
@@ -36,25 +46,40 @@ from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, AudioSession
 class InfotainmentProxy:
     """infotainment proxy between infotainment ui net and the can multiverse"""
     def __init__(self, info_net: CanNetwork, multiverse: CanNetwork):
-        self._info_out = InfotainmentUi(multiverse)
-        info_net.register(self._info_out)
-        self._info_in = InfotainmentPlayer(info_net)
-        multiverse.register(self._info_in)
+        self.info_ui = InfotainmentUi(multiverse)
+        info_net.register(self.info_ui)
+        self.info_player = InfotainmentPlayer(info_net)
+        #multiverse.register(self.info_player)
 
 
-class InfotainmentUi(ComponentPoller):
+class InfotainmentUiStatus(enum.IntEnum):
+    READY = enum.auto()
+
+
+class InfotainmentPlayerStatus(enum.IntEnum):
+    READY = enum.auto()
+
+
+class InfotainmentUi(ccomp.ComponentPoller):
     """infotainment component that handles the infotainment ui net -> multiverse forwarding"""
     def __init__(self, can_network: CanNetwork):
-        super().__init__("infotainment-mux", [], [])
+        super().__init__("infoui", [(config.DIRECTOR_PORT, 'infoui-commands')], [(config.INFO_UI_PORT, 'infoui-events'),
+                                                                                 (config.INFO_UI_PORT, 'infoui-beamng')])
         self._network = can_network
 
-    @recv_can(CAN_ID_BUTTON_PRESSED, "B")
+    def on_start(self):
+        self.send_message(ccomp.Message(InfotainmentUiStatus.READY), "infoui-events")
+
+    @recv_can(CAN_ID_BUTTON_PRESSED, "!B")
     def _(self, data):
+        # alert simulator to turn off self driving mode
+        from cyberphyslib.demonstrator.simulator import BeamNgCommand
+        self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
         # forward to the other network
-        self._network.send(CAN_ID_BUTTON_PRESSED, struct.pack("B", data[0]))
+        self._network.send(CAN_ID_BUTTON_PRESSED, struct.pack("!B", data[0]))
 
 
-class InfotainmentPlayer(ComponentPoller):
+class InfotainmentPlayer(ccomp.ComponentPoller):
     """infotainment component that handles the multiverse -> ui net forwarding and music mixer"""
     stations = glob.glob(str(pathlib.Path(config.RADIO_SOUND_DIR) / r'bensound-*.mp3'))
 
@@ -79,12 +104,20 @@ class InfotainmentPlayer(ComponentPoller):
         return None
 
     def __init__(self, can_network: CanNetwork):
-        super().__init__("infotainment-player", [], [])
+        super().__init__("infoplay", [(config.DIRECTOR_PORT, 'infoplay-commands')], [(config.INFO_PLAY_PORT, 'infoplay-events')])
         self._network = can_network
         self._sidx: int = 0
         self._sound: typ.Union[mixer.Sound, None] = None
-        self._volume = 0.0
+        self._volume = 0.5
         self._set_volume()
+        self.play_sound()
+
+    def on_start(self):
+        self.send_message(ccomp.Message(InfotainmentPlayerStatus.READY), "infoplay-events")
+
+    def on_exit(self):
+        if self._sound:
+            self._sound.stop()
 
     def play_sound(self):
         """play sound file depending on station select"""
@@ -109,7 +142,7 @@ class InfotainmentPlayer(ComponentPoller):
         else:
             raise RuntimeError(f"audio session doesn't exist!")
 
-    @recv_can(canspecs.CAN_ID_INFOTAINMENT_STATE, "B")
+    @recv_can(canspecs.CAN_ID_INFOTAINMENT_STATE, "!B")
     def _(self, data):
         """respond to the infotainment button press"""
         # decode the incoming value
@@ -137,19 +170,19 @@ class InfotainmentPlayer(ComponentPoller):
                 self._sound.stop()
             self._set_volume(0.0)
 
-    @recv_can(canspecs.CAN_ID_CAR_X, "f")
+    @recv_can(canspecs.CAN_ID_CAR_X, "!f")
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("!f", data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_Y, "f")
+    @recv_can(canspecs.CAN_ID_CAR_Y, "!f")
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack("!f", data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_Z, "f")
+    @recv_can(canspecs.CAN_ID_CAR_Z, "!f")
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack("!f", data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_R, "f")
+    @recv_can(canspecs.CAN_ID_CAR_R, "!f")
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_R, struct.pack("f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_R, struct.pack("!f", data[0]))
 

@@ -7,15 +7,20 @@ Date: 26 August 2020
 CAN Packet encoder / decoder
 """
 import abc
-import struct
-import socket
-import time
-import select
 import typing as typ
+import enum
 from abc import ABCMeta, abstractmethod
 from can import Message
+<<<<<<< HEAD:besspin/cyberPhys/demonstrator/can.py
 from .component import ThreadExiting
 from canlib import CanDataType, UdpBus
+=======
+from .component import ThreadExiting, Component
+import cyberphyslib.demonstrator.component as ccomp
+
+# TODO: @ethanlew import canlib/python/canlib.py properly
+from cyberphyslib.canlib import CanDataType, UdpBus
+>>>>>>> origin/cyberphys/feature/ignition-state-machine:besspin/cyberPhys/cyberphyslib/demonstrator/can.py
 
 
 class CanListener(metaclass=ABCMeta):
@@ -191,3 +196,40 @@ class CanMultiverse(CanNetwork):
     @property
     def networks(self):
         return {n.name: n for n in self._networks}
+
+
+import cyberphyslib.demonstrator.message as message
+import cyberphyslib.demonstrator.config as config
+
+
+class CanMultiverseStatus(enum.IntEnum):
+    READY = enum.auto()
+    ERROR = enum.auto()
+
+
+class CanMultiverseComponent(Component):
+    def __init__(self, can_multiverse: CanMultiverse, ip_addr=None, apply_lists = True):
+        super().__init__("canm", [(config.DIRECTOR_PORT, "canm-commands")], [(config.CANM_PORT, "canm-events")])
+
+        # create can network multiverse (mux)
+        self._can_multiverse = can_multiverse
+
+    def on_start(self):
+        self._can_multiverse.start()
+        self.send_message(ccomp.Message(CanMultiverseStatus.READY), "canm-events")
+
+    def on_exit(self):
+        self._can_multiverse.exit()
+
+    @recv_topic("canm-commands")
+    def _(self, msg, t):
+        if msg.message in self._can_multiverse.networks:
+            self._can_multiverse.select(msg.message)
+            self.send_message(message.Message(CanMultiverseStatus.READY), "canm-events")
+        else:
+            self.send_message(message.Message(CanMultiverseStatus.ERROR), "canm-events")
+
+    def select_network(self, network):
+        """wait until the service has finished booting"""
+        self._can_multiverse.select(network)
+        return ccomp.ComponentStatus.READY

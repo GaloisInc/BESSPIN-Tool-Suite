@@ -23,8 +23,8 @@ import struct
 
 class ComponentStatus(enum.Enum):
     """component states and commands"""
-    EXIT = enum.auto()
-    METHOD = enum.auto()
+    READY = enum.auto()
+    ERROR = enum.auto()
 
 
 class ComponentPollerStatus(enum.Enum):
@@ -103,7 +103,7 @@ class ThreadExiting(threading.Thread):
     thread are decomposed into poller initialization, polling iteration, and deinitialization.
     This permits the thread to stop gracefully, attending to resources used."""
     def __init__(self, name, *args, sample_frequency=60, **kwargs):
-        super().__init__(name=name, *args, **kwargs)
+        super().__init__(name=name, *args, daemon=True, **kwargs)
         self.stop_evt = threading.Event()
         self.poller_start_time = None
         self.polling_thread = None
@@ -147,12 +147,18 @@ class ThreadExiting(threading.Thread):
 
 
 class Component(ThreadExiting, metaclass=ComponentMeta):
-    def __init__(self, name: str, in_descr: typ.List[typ.Tuple], out_descr: typ.List[typ.Tuple], *args, **kwargs):
+    def __init__(self, name: str,
+                 in_descr: typ.List[typ.Tuple],
+                 out_descr: typ.List[typ.Tuple],
+                 *args,
+                 ip_addr='127.0.0.1' ,
+                 **kwargs):
         """
         :param in_descr: port description tuple (elements are of the form (port number, topic name))
         :param out_descr: port description tuple (elements are of the form (port number, topic name))
         """
         super(Component, self).__init__(name, *args, **kwargs)
+        self.ip_addr = ip_addr
 
         self._in_ports: typ.Set[typ.Tuple] = set(in_descr)
         self._out_ports: typ.Set[typ.Tuple] = set(out_descr)
@@ -167,6 +173,10 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         self._epoch = time.time()
         self._unbound = False
         self._ready = False
+        self._start_finished = False
+
+        # bind here so startup messages can be received
+        self.bind()
 
     def send_message(self, message: Message, topic: str, level=MessageLevel.NORMAL) -> None:
         """send message over pub/sub network
@@ -207,8 +217,8 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         rgy = self.recv_methods
         if (topic,) in rgy:
             rgy[(topic,)](self, msg, t)
-        if isinstance(msg._msg, collections.Hashable) and (topic, msg._msg) in rgy:
-            rgy[(topic, msg._msg)](self, t)
+        if isinstance(msg.message, collections.Hashable) and (topic, msg.message) in rgy:
+            rgy[(topic, msg.message)](self, t)
         self.on_recv(topic, msg, t)
 
     def recv(self, id: int, data_len: int, data: bytes):
@@ -216,6 +226,7 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
         rgy = self.recv_can_methods
         if id in rgy:
             fmt = rgy[id][0]
+            # use network order (!)
             msg = struct.unpack(fmt, bytearray(data)[:data_len])
             rgy[id][1](self, msg)
 
@@ -232,10 +243,10 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
 
     def run(self) -> None:
         """component mainloop"""
-        self.bind()
         self._ready = True
         recvr = self.get_receiver()
         self.on_start()
+        self._start_finished = True
         for topic, msg, t in recvr:
             self._process_recvs(topic, msg, t)
             if self.stopped:
@@ -261,7 +272,7 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
 
         for port, topic in self._in_ports:
             in_sock = self._zmq_context.socket(zmq.SUB)
-            in_sock.connect(f"tcp://127.0.0.1:{port}")
+            in_sock.connect(f"tcp://{self.ip_addr}:{port}")
             in_sock.setsockopt_string(zmq.SUBSCRIBE, topic)
             self._in_socks.append(in_sock)
 
@@ -296,6 +307,13 @@ class Component(ThreadExiting, metaclass=ComponentMeta):
     @property
     def name(self):
         return self._name
+
+    def wait_ready_command(self):
+        """wait until the service has finished booting"""
+        import time
+        while not self._start_finished:
+            time.sleep(0.2)
+        return ComponentStatus.READY
 
 
 class ComponentPoller(Component):

@@ -21,6 +21,8 @@ sim_logger: logging.Logger = logging.getLogger("sim")
 speedo_logger: logging.Logger = logging.getLogger("speedo")
 info_logger: logging.Logger = logging.getLogger("info_mux")
 ssith_button_logger: logging.Logger = logging.getLogger("ssith-button")
+led_manage_logger: logging.Logger = logging.getLogger("led_manage")
+ignition_logger: logging.Logger = logging.getLogger("ignition")
 
 
 

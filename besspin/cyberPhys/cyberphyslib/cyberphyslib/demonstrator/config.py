@@ -8,7 +8,7 @@ Cyberphys Demonstrator Configuration Variables
 """
 
 CAN_PORT = 5002
-INFO_UI_PORT = 5013
+INFO_PORT = 5013
 
 SIM_IP = "10.88.88.4" # Sim PC IP
 
@@ -16,6 +16,7 @@ RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge f
 
 # See cyberPhys-test.ini for IP allocation
 # Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
+APPLY_LISTS = False
 BASE_WHITELIST = ["10.88.88.11", "10.88.88.12"] # Scenario 1: Baseline ECU + Baseline Infotainment
 SSITH_INFO_WHITELIST = ["10.88.88.21", "10.88.88.22"] # Scenario 2: Baseline ECU + Secure Infotainment
 SSITH_ECU_WHITELIST = ["10.88.88.31", "10.88.88.32"] # Scenario 3: Secure ECU + Baseline Infotainment
@@ -23,6 +24,16 @@ SSITH_ECU_WHITELIST = ["10.88.88.31", "10.88.88.32"] # Scenario 3: Secure ECU + 
 SSITH_INFO_BLACKLIST = False
 SSITH_ECU_BLACKLIST = False
 BASE_BLACKLIST = False
+
+# for zeromq comms (localhost)
+BEAMNG_SIM_PORT = 5014
+DIRECTOR_PORT = 5015
+SPEEDO_PORT = 5016
+LED_MANAGE_PORT = 5017
+CANM_PORT =  5018
+INFO_PLAY_PORT = 5019
+LOCATION_PORT = 5021
+INFO_UI_PORT = 5022
 
 LOCATION_POLL_HZ = 10
 
@@ -40,12 +51,12 @@ BEAMNG_PATH=r"C:\BeamNG.research"
 BEAMNG_USER_PATH=None
 BEAMNG_OUTGAUGE_PORT = 4445 # Outgauge emulation
 
-BEAMNG_COMPONENT_ELECTRIC = (5006, 'sensor-electric')
-BEAMNG_COMPONENT_GFORCE   = (5006, 'sensor-gforce')
-BEAMNG_COMPONENT_EVENTS   = (5006, 'beamng-events')
-BEAMNG_COMPONENT_STATE    = (5006, 'beamng-state')
-BEAMNG_COMPONENT_VEHICLE  = (5006, 'beamng-vehicle')
-BEAMNG_COMPONENT_SENSORS  = (5006, "beamng-sensors")
+BEAMNG_COMPONENT_ELECTRIC = (BEAMNG_SIM_PORT, 'sensor-electric')
+BEAMNG_COMPONENT_GFORCE   = (BEAMNG_SIM_PORT, 'sensor-gforce')
+BEAMNG_COMPONENT_EVENTS   = (BEAMNG_SIM_PORT, 'beamng-events')
+BEAMNG_COMPONENT_STATE    = (BEAMNG_SIM_PORT, 'beamng-state')
+BEAMNG_COMPONENT_VEHICLE  = (BEAMNG_SIM_PORT, 'beamng-vehicle')
+BEAMNG_COMPONENT_SENSORS  = (BEAMNG_SIM_PORT, "beamng-sensors")
 
 # BeamNG service communication info
 BEAMNG_COMPONENT_OUTPUT = [BEAMNG_COMPONENT_ELECTRIC,
@@ -56,7 +67,7 @@ BEAMNG_COMPONENT_OUTPUT = [BEAMNG_COMPONENT_ELECTRIC,
                            BEAMNG_COMPONENT_SENSORS
                           ]
 
-BEAMNG_COMPONENT_INPUT = [(5005, 'beamng-commands')]
+BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands'), (INFO_UI_PORT, 'infoui-beamng')]
 
 # keyword arguments to pass to Vehicle when creating a vehicle for the sim scenario
 BEAMNG_VEHICLE_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk854t_A.pc'}
@@ -84,7 +95,3 @@ BEAMNG_ITALY_SPAWNPOINTS = {'village_mountain':
                                 {'pos': (-690.403564, -1338.64136, 140.215942), 'rot': (0.0, -0.0, 85.01954390247003)},
                             'castle_town':
                                 {'pos': (-969.635193, 953.628723, 392.483368), 'rot': (0.0, -0.0, 74.9999865878277)}}
-
-
-# LED Management Configuration
-LED_MANAGEMENT_INPUT = [(5007, "pattern-request")]

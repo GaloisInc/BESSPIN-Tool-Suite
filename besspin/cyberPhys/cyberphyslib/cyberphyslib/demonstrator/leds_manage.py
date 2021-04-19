@@ -17,12 +17,15 @@ import pandas as pd
 import numpy as np
 import enum
 import serial, serial.tools.list_ports_windows
+import pathlib
+import os
 
-from .component import ComponentPoller
+from .component import ComponentPoller, ComponentStatus
 from .logger import led_manage_logger
-from cyberphys.leds import LedString
-import cyberphys.leds as cled
-import cyberphys.config as cconf
+from .message import Message
+from cyberphyslib.demonstrator.leds import LedString
+import cyberphyslib.demonstrator.leds as cled
+import cyberphyslib.demonstrator.config as cconf
 
 
 class LedPatterns(enum.IntEnum):
@@ -48,6 +51,11 @@ led_pattern_csv_names = {
     "all off": LedPatterns.ALL_OFF,
     "all on": LedPatterns.ALL_ON
 }
+
+
+class LedManagerStatus(enum.IntEnum):
+    READY = enum.auto()
+    ERROR = enum.auto()
 
 
 class LedManagerComponent(ComponentPoller):
@@ -137,14 +145,31 @@ class LedManagerComponent(ComponentPoller):
             led_strs += [cled.LedString(row["name"], hd, LedPatterns.NOMINAL, row["length"])]
         return cls(led_strs)
 
+    @classmethod
+    def for_ignition(cls):
+        led_string_filepath = pathlib.Path(os.path.realpath(__file__)).parent / "utils" / \
+                           "led_strings_comprehensive_tuple_colors.csv"
+        return cls.from_csv(led_string_filepath)
+
     def __init__(self, led_strings: typ.Sequence[LedString]):
-        super().__init__("led-manager", cconf.LED_MANAGEMENT_INPUT, [],
+        super().__init__("ledm", [(cconf.DIRECTOR_PORT, "ledm-commands")],
+                         [(cconf.LED_MANAGE_PORT, "ledm-events")],
                          sample_frequency=1 / self.regular_update_rate)
         self.client = opc.Client(self.opc_address)
         self.led_strings = led_strings
+        self._no_client = False
 
     def system_startup(self):
         """system startup procedure required to turn on LEDs without persistent pixels"""
+
+        # check whether we can connect to the OPC server
+        if not self.client.can_connect():
+            # error has occurred
+            self.send_message(Message(LedManagerStatus.ERROR), "ledm-events")
+            self._no_client = True
+            return
+        # TODO: check that the number of relays is correct?
+
         # turn off all relays
         self.turn_off_relays()
 
@@ -174,6 +199,8 @@ class LedManagerComponent(ComponentPoller):
         time.sleep(self.system_time_delay_short)
         self.turn_on_relays(self.relay_time_delay_short)
 
+        self.send_message(Message(LedManagerStatus.READY), "ledm-events")
+
     def test_device(self):
         """call this to test the device -- requires a running server"""
         self.system_startup()
@@ -201,6 +228,11 @@ class LedManagerComponent(ComponentPoller):
     def pixel_array(self):
         return np.concatenate([l.pixel_array for l in self.led_strings])
 
+    def wait_ready_command(self):
+        while not self._start_finished and not self._no_client:
+            time.sleep(0.5)
+        return ComponentStatus.READY if not self._no_client else ComponentStatus.ERROR
+
 ### component relevant methods
     def on_start(self):
         self.system_startup()
@@ -215,5 +247,4 @@ class LedManagerComponent(ComponentPoller):
     @recv_topic("pattern-request")
     def _(self, msg, t):
         """subscribe to requests to change the led pattern"""
-        # FIXME: referencing a protected attribute
-        self.update_pattern(msg._msg)
+        self.update_pattern(msg.message)

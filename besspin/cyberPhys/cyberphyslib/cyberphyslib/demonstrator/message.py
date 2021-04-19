@@ -60,6 +60,10 @@ class Message:
     def __repr__(self):
         return self.__str__()
 
+    @property
+    def message(self):
+        return self._msg
+
 
 class Envelope:
     """
