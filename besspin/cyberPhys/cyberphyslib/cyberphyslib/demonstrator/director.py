@@ -84,13 +84,22 @@ class IgnitionDirector:
         {'trigger': 'next_state', 'source': 'cc_msg', 'dest': 'restart'}
     ]
 
-    def __init__(self):
+    @classmethod
+    def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
+        """produce director from the Besspin environment setup file"""
+        # NOTE: should this be hard-coded?
+        # FIXME: what fields should I use from the setupEnv?
+        ip_admin = f"{net_conf.ip_AdminPc}:{net_conf.port_commander}"
+        ip_director = f"{net_conf.ip_SimPc}:{net_conf.port_interactiveManager}"
+        ip_sim = net_conf.ip_SimPc
+        return cls(ip_admin, ip_director, ip_sim)
+
+    def __init__(self, admin_addr, director_addr, sim_ip):
         """ignition state machine"""
         self.can_multiverse = None
         self.info_net = None
         self.proxy = None
 
-        # TODO: FIXME: C&C network isn't implemented
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
         self.scenario_timeout = 3 * 60 # (s) 3 minutes
         self.cc_timeout = 20 # 20 seconds
@@ -98,7 +107,7 @@ class IgnitionDirector:
         self._handler = ComponentHandler()
         self.machine = Machine(self, states=self.states, transitions=self.transitions, initial='startup', show_conditions=True)
 
-        sip = cconf.SIM_IP
+        sip = sim_ip
         can_ssith_info = ccan.CanUdpNetwork("secure_infotainment", cconf.CAN_PORT, sip)
         can_ssith_ecu = ccan.CanUdpNetwork("secure_ecu", cconf.CAN_PORT, sip)
         can_base = ccan.CanUdpNetwork("base", cconf.CAN_PORT, sip)
@@ -114,14 +123,11 @@ class IgnitionDirector:
 
         # start the can networks
         self.can_multiverse = ccan.CanMultiverse("multiverse", networks, default_network="base")
-        self.info_net = ccan.CanUdpNetwork("info-net", cconf.INFO_PORT, sip, blacklist=[cconf.SIM_IP])
+        self.info_net = ccan.CanUdpNetwork("info-net", cconf.INFO_PORT, sip, blacklist=[sim_ip])
 
         # C&C message bus
-        # TODO: FIXME: pull this out of a config -- address this after BESSPIN / canlib merge
-        IP_ADMIN_PC = "127.0.0.1:5030"
-        IP_CC_IGNITION = "127.0.0.1:5557"
-        nodes = [IP_ADMIN_PC, IP_CC_IGNITION]
-        self.cc_recvr = canlib.TcpBus(IP_CC_IGNITION, nodes)
+        nodes = [admin_addr, director_addr]
+        self.cc_recvr = canlib.TcpBus(director_addr, nodes)
         self.cc_timeout = 30.0
 
         # input space as class members
@@ -269,10 +275,9 @@ class IgnitionDirector:
                 cm: ccan.CanMultiverseComponent = self._handler["canm"]
                 cm.select_network(nmap[scen_idx])
 
-            elif id == canlib.CAN_ID_CMD_COMPONENT_ERROR: # TODO: FIXME: should be CMD_SET_DRIVING_MODE
+            elif id == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
                 aut_idx = struct.unpack("!B", msg.data)[0]
                 ignition_logger.debug(f"process cc: set driving mode {aut_idx}")
-                # TODO: update canspecs to get this command?
                 bsim: simulator.Sim = self._handler["beamng"]
                 if aut_idx == 0:
                     bsim.disable_autopilot_command()

@@ -7,23 +7,15 @@ Date: 01 January 2021
 Cyberphys Demonstrator Configuration Variables
 """
 
-CAN_PORT = 5002
-INFO_PORT = 5013
 
-SIM_IP = "10.88.88.4" # Sim PC IP
+CAN_PORT = 5002
+INFO_PORT = 5020
 
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
 # See cyberPhys-test.ini for IP allocation
 # Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
 APPLY_LISTS = False
-BASE_WHITELIST = ["10.88.88.11", "10.88.88.12"] # Scenario 1: Baseline ECU + Baseline Infotainment
-SSITH_INFO_WHITELIST = ["10.88.88.21", "10.88.88.22"] # Scenario 2: Baseline ECU + Secure Infotainment
-SSITH_ECU_WHITELIST = ["10.88.88.31", "10.88.88.32"] # Scenario 3: Secure ECU + Baseline Infotainment
-
-SSITH_INFO_BLACKLIST = False
-SSITH_ECU_BLACKLIST = False
-BASE_BLACKLIST = False
 
 # for zeromq comms (localhost)
 BEAMNG_SIM_PORT = 5014
@@ -95,3 +87,41 @@ BEAMNG_ITALY_SPAWNPOINTS = {'village_mountain':
                                 {'pos': (-690.403564, -1338.64136, 140.215942), 'rot': (0.0, -0.0, 85.01954390247003)},
                             'castle_town':
                                 {'pos': (-969.635193, 953.628723, 392.483368), 'rot': (0.0, -0.0, 74.9999865878277)}}
+
+
+class DemonstratorNetworkConfig:
+    """data class to store demonstrator network configuration"""
+
+    @classmethod
+    def from_setup_env(cls, fname: str):
+        """create instance from Besspin target setupEnv.json"""
+        import json, os
+        assert os.path.exists(fname)
+        with open(fname, "r") as f:
+            senv = json.load(f)
+            assert "setupCyberPhys" in senv
+            csenv = senv["setupCyberPhys"]
+            csenv = {d["name"]: d["val"] for d in csenv}
+        return cls(**csenv)
+
+    def __init__(self,
+                 cyberPhysWhitelists = None,
+                 cyberPhysBlacklists = None,
+                 cyberPhysNodes = None,
+                 cyberPhysComponentPorts = None,
+                 cyberPhysComponentBaseTopic = None,
+                 cyberPhysWatchdogFrequency = 2):
+
+        self.whitelists = cyberPhysWhitelists if cyberPhysWhitelists else {}
+        self.blacklists = cyberPhysBlacklists if cyberPhysBlacklists else {}
+        self.nodes = cyberPhysNodes if cyberPhysNodes else {}
+        self.component_ports = cyberPhysComponentPorts if cyberPhysComponentPorts else {}
+        self.base_topic = cyberPhysComponentBaseTopic if cyberPhysComponentBaseTopic else {}
+        self.watchdog_frequency = cyberPhysWatchdogFrequency
+
+        # create dynamic attributes for flat access (prefix with category)
+        # danger...
+        self.__dict__.update({f"ip_{k}": v for k, v in self.nodes.items()})
+        self.__dict__.update({f"wl_{k}": v for k, v in self.whitelists.items()})
+        self.__dict__.update({f"bl_{k}": v for k, v in self.blacklists.items()})
+        self.__dict__.update({f"port_{k}": v for k, v in self.component_ports.items()})

@@ -16,6 +16,7 @@ CAN ID,Type,Field Name,Sender,Receiver,Bounds/Range,Byte Length,Units,J1939?,PGN
 0XAAFEEB01,[uint32_t],cmd_component_error,All,All,N/A,8,N/A,No,,Component ID / sender IP address (uint32_t) | Error type (uint32_t),
 0XAAFEEB02,uint8_t,cmd_active_scenario,Hacker kiosk,Ignition,N/A,1,N/A,No,,Scenario ID (uint8_t),
 0XAAFEEB03,uint8_t,cmd_hack_active,Hacker kiosk,Ignition,N/A,1,N/A,No,,Hack ID (uint8_t),
+0XAAFEEB07,uint8_t,cmd_set_driving_mode,Hacker kiosk,Ignition,N/A,4,N/A,No,, Driving Mode Index (uint8_t),
 0XAAFEEB04,uint32_t,cmd_restart,Hacker kiosk,All,N/A,4,N/A,No,,Component ID / sender IP address (uint32_t),
 0XAAFEEB05,uint8_t,cmd_scenario_not_available,BESSPIN Tool,Hacker kiosk,N/A,1,N/A,No,,Scenario ID (uint8_t),For degraded BESSPIN tool mode
 0XAAFEEB06,uint8_t,cmd_scenario_available,BESSPIN Tool,Hacker kiosk,N/A,1,N/A,No,,Scenario ID (uint8_t),

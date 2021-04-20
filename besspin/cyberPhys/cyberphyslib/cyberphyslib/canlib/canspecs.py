@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 19 April 2021
+Date: 20 April 2021
 This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 Version hash: 956273597e1c80b771cde09098766c3a
 """
@@ -109,6 +109,12 @@ CAN_ID_CMD_ACTIVE_SCENARIO: int = 0XAAFEEB02
 # Type: uint8_t
 # Description: Hack ID (uint8_t)
 CAN_ID_CMD_HACK_ACTIVE: int = 0XAAFEEB03
+
+# Name: cmd_set_driving_mode
+# Units: N/A
+# Type: uint8_t
+# Description:  Driving Mode Index (uint8_t)
+CAN_ID_CMD_SET_DRIVING_MODE: int = 0XAAFEEB07
 
 # Name: cmd_restart
 # Units: N/A

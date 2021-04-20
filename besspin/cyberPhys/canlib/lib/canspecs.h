@@ -4,7 +4,7 @@
 * Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 19 April 2021
+* Date: 20 April 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 * Version hash: 956273597e1c80b771cde09098766c3a
 */
@@ -220,6 +220,18 @@
 // Hack ID (uint8_t)
 #define CAN_ID_CMD_HACK_ACTIVE 0XAAFEEB03
 #define BYTE_LENGTH_CMD_HACK_ACTIVE 1
+
+// cmd_set_driving_mode
+// Type: uint8_t
+// Sender: Hacker kiosk
+// Receiver: Ignition
+// Bounds/Range: N/A
+// Units: N/A
+// J1939 compatible: No
+//
+//  Driving Mode Index (uint8_t)
+#define CAN_ID_CMD_SET_DRIVING_MODE 0XAAFEEB07
+#define BYTE_LENGTH_CMD_SET_DRIVING_MODE 4
 
 // cmd_restart
 // Type: uint32_t
