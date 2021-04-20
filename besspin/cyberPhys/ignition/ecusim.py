@@ -20,8 +20,8 @@ P1 Emulation
         2. accept can packets of BeamNG data
         3. read stub peripherals for gear, throttle, and brake
 """
-from cyberphyslib.demonstrator import can, config, component
-from cyberphyslib.canlib import canspecs
+from demonstrator import can, config, component
+from canlib import canspecs
 import struct
 import time
 import pygame

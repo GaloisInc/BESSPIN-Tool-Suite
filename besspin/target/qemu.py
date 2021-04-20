@@ -20,6 +20,7 @@ class qemuTarget (commonTarget):
             self.ipHost = getSetting('qemuIpHost',targetId=self.targetId)
         else:
             self.ipHost = None
+        self.ipBroadcast = multicastFromHostIp(self.ipHost)
 
         return
 

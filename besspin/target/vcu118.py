@@ -24,6 +24,7 @@ class vcu118Target (fpgaTarget, commonTarget):
         self.osImageElf = getSetting('osImageElf',targetId=self.targetId)
 
         self.ipHost = getSetting('vcu118IpHost')
+        self.ipBroadcast = multicastFromHostIp(self.ipHost)
         self.ipTarget = getTargetIp(targetId=targetId)
         self.macTarget = getTargetMac(targetId=targetId)
 

@@ -6,6 +6,8 @@ After=syslog.target network.target
 Type=simple
 ExecStart=/usr/local/sbin/infotainment_server 10.88.88.255
 PrivateTmp=true
+Restart=on-failure
+RestartSec=60s
 
 [Install]
 WantedBy=multi-user.target
