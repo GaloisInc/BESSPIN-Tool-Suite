@@ -5,4 +5,5 @@ git submodule sync
 
 cd BESSPIN-LFS
 git-lfs pull
+./private.py --download
 cd ..
