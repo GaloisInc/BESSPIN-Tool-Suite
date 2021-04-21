@@ -86,20 +86,20 @@ class CanMessage {
 
   // Converts first four bytes of data to an uint32 value
   getUint32() {
-    let binary = new Uint8Array([this._raw[8], this._raw[7], this._raw[6], this._raw[5]]);
+    let binary = new Uint8Array([this._raw[5], this._raw[6], this._raw[7], this._raw[8]]);
     let dv = new DataView(binary.buffer);
     return dv.getUint32();
   }
 
   // Converts first four bytes of data to a float
   getFloat() {
-    let binary = new Uint8Array([this._raw[8], this._raw[7], this._raw[6], this._raw[5]]);
+    let binary = new Uint8Array([this._raw[5], this._raw[6], this._raw[7], this._raw[8]]);
     let dv = new DataView(binary.buffer);
     return dv.getFloat32(0);
   }
 
   _unpack_id(buffer) {
-    let binary = new Uint8Array([buffer[3], buffer[2], buffer[1], buffer[0]]);
+    let binary = new Uint8Array([buffer[0], buffer[1], buffer[2], buffer[3]]);
     let dv = new DataView(binary.buffer);
     return dv.getUint32();
   }
