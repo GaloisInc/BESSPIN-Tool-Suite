@@ -91,13 +91,34 @@ def produce_can_py(can_entry):
     fname =  can_entry["Field Name"]
     fdescr: str = str(can_entry["Field Description"])
     fdescr = fdescr if isinstance(fdescr, str) else "<N/A>"
+    canformat_raw = can_entry["Format"].split('|')
+    canformat = "!"
+    for entry in canformat_raw:
+        entry = entry.strip()
+        if entry == "uint8_t":
+            f = "B"
+        elif entry == "int8_t":
+            f = "b"
+        elif entry == "uint16_t":
+            f = "H"
+        elif entry == "int16_t":
+            f = "h"
+        elif entry == "uint32_t":
+            f = "I"
+        elif entry == "int32_t":
+            f = "i"
+        elif entry == "float":
+            f = "f"
+        canformat = canformat + f
 
     var_name =  "CAN_ID_" + fname.upper().replace(" -", "").replace(" ", "_")
+    format_name = "CAN_FORMAT_" + fname.upper().replace(" -", "").replace(" ", "_")
     return f"# Name: {fname}\n"\
            f"# Units: {units}\n"\
-           f"# Type: {can_entry['Type']}\n"\
+           f"# Type: {can_entry['Format']}\n"\
            f"# Description: {' '.join(fdescr.splitlines())}\n"\
-           f"{var_name}: int = {cid}\n\n"
+           f"{var_name}: int = {cid}\n"\
+           f"{format_name}: str = {canformat}\n\n"
 
 def produce_ids_py(entry):
     """generate code for a ID info entry (row of csv file)"""
@@ -112,7 +133,7 @@ def produce_can_h(can_entry):
     can_id = can_entry["CAN ID"]
     py_str = "\n"
     py_str += f"// {can_entry['Field Name']}\n"
-    py_str += f"// Type: {can_entry['Type']}\n"
+    py_str += f"// Type: {can_entry['Format']}\n"
     py_str += f"// Sender: {can_entry['Sender']}\n"
     py_str += f"// Receiver: {can_entry['Receiver']}\n"
     if can_entry["Bounds/Range"] != '':

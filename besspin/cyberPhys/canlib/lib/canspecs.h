@@ -4,7 +4,7 @@
 * Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 20 April 2021
+* Date: 21 April 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 * Version hash: 956273597e1c80b771cde09098766c3a
 */
@@ -162,7 +162,7 @@
 #define BYTE_LENGTH_HEARTBEAT_REQ 4
 
 // heartbeat_ack
-// Type: [uint32_t]
+// Type: uint32_t | uint32_t
 // Sender: All
 // Receiver: BESSPIN Tool
 // Bounds/Range: N/A
@@ -186,7 +186,7 @@
 #define BYTE_LENGTH_CMD_COMPONENT_READY 4
 
 // cmd_component_error
-// Type: [uint32_t]
+// Type: uint32_t | uint32_t
 // Sender: All
 // Receiver: All
 // Bounds/Range: N/A

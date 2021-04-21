@@ -4,7 +4,7 @@
 * Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 20 April 2021
+* Date: 21 April 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 * Version hash: 956273597e1c80b771cde09098766c3a
 */
