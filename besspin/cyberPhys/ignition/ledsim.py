@@ -1,6 +1,6 @@
 import pygame
 import numpy as np
-import cyberphys.leds as cled
+import cyberphyslib.demonstrator.leds as cled
 import typing as typ
 
 
@@ -89,7 +89,7 @@ class LedGame:
 
 
 import pandas as pd
-ledf = pd.read_csv("../demonstrator/utils/led_strings_comprehensive_tuple_colors.csv")
+ledf = pd.read_csv("../cyberphyslib/cyberphyslib/demonstrator/utils/led_strings_comprehensive_tuple_colors.csv")
 lstrings = []
 for idx, row in ledf.iterrows():
     hd = {}

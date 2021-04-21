@@ -20,12 +20,18 @@ P1 Emulation
         2. accept can packets of BeamNG data
         3. read stub peripherals for gear, throttle, and brake
 """
-from demonstrator import can, config, component
-from canlib import canspecs
+from cyberphyslib.demonstrator import can, component
+from cyberphyslib.canlib import canspecs
 import struct
 import time
 import pygame
 import enum
+
+
+class config:
+    """TODO: FIXME: patch for config changes"""
+    CAN_PORT = 5002
+    SIM_IP = "127.0.0.1"
 
 
 class T150Axes(enum.IntEnum):

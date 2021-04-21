@@ -7,9 +7,6 @@ Date: 01 January 2021
 Cyberphys Demonstrator Configuration Variables
 """
 
-
-INFO_PORT = 5020
-
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
 # See cyberPhys-test.ini for IP allocation
