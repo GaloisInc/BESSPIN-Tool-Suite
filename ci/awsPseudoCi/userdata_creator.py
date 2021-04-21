@@ -77,6 +77,7 @@ class UserdataCreator:
             f'export AWS_ACCESS_KEY_ID="{credentials.access_key_id}"',
             f'export AWS_SECRET_ACCESS_KEY="{credentials.secret_key_access}"',
             f'export AWS_SESSION_TOKEN="{credentials.session_token}"',
+            f'export API_KEY="{os.environ["API_KEY"]}"',
             "EOL",
             f"""runuser -l centos -c 'echo "{ branch if branch else "None" }" >> /home/centos/BESSPIN-Tool-Suite/branches'""",
             f"""runuser -l centos -c 'echo "{ binaries_branch if binaries_branch else "None" }" >> /home/centos/BESSPIN-Tool-Suite/branches'""",
@@ -132,7 +133,8 @@ class UserdataCreator:
                     else ""
                 )
                 + """git-lfs pull; 
-                    cd .. "'"""
+                    ./private.py --download;
+                    cd .. \n"'"""
             ]
 
         userdata_specific.append(
