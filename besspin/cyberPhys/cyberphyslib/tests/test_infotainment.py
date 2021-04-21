@@ -3,7 +3,6 @@ Project: SSITH CyberPhysical Demonstrator
 Name: test_infotainment.py
 Author: Ethan Lew
 Date: 21 January 2021
-
 Tests for the cyberphys BeamNG sim component
 """
 import cyberphyslib.demonstrator.infotainment as cinfo
@@ -18,7 +17,6 @@ import time
 
 def test_infotainment_ui():
     """test the infotainment proxy service
-
     operational tests:
         1. start / stop
     failure mode tests:
@@ -38,7 +36,6 @@ def test_infotainment_ui():
 
 def test_infotainment_player_handler():
     """test the infotainment services
-
     operational tests:
         1. send can button presses and listen to the results
     failure mode tests:
