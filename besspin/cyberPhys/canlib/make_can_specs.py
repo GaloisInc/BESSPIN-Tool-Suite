@@ -92,7 +92,7 @@ def produce_can_py(can_entry):
     fdescr: str = str(can_entry["Field Description"])
     fdescr = fdescr if isinstance(fdescr, str) else "<N/A>"
     canformat_raw = can_entry["Format"].split('|')
-    canformat = "!"
+    canformat = '"!'
     for entry in canformat_raw:
         entry = entry.strip()
         if entry == "uint8_t":
@@ -109,7 +109,7 @@ def produce_can_py(can_entry):
             f = "i"
         elif entry == "float":
             f = "f"
-        canformat = canformat + f
+        canformat = canformat + f + '"'
 
     var_name =  "CAN_ID_" + fname.upper().replace(" -", "").replace(" ", "_")
     format_name = "CAN_FORMAT_" + fname.upper().replace(" -", "").replace(" ", "_")

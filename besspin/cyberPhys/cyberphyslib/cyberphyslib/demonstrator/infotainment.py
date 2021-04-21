@@ -61,13 +61,13 @@ class InfotainmentUi(ccomp.ComponentPoller):
     def on_start(self):
         self.send_message(ccomp.Message(InfotainmentUiStatus.READY), "infoui-events")
 
-    @recv_can(CAN_ID_BUTTON_PRESSED, "!B")
+    @recv_can(canspecs.CAN_ID_BUTTON_PRESSED,canspecs.CAN_FORMAT_BUTTON_PRESSED)
     def _(self, data):
         # alert simulator to turn off self driving mode
         from cyberphyslib.demonstrator.simulator import BeamNgCommand
         self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
         # forward to the other network
-        self._network.send(CAN_ID_BUTTON_PRESSED, struct.pack("!B", data[0]))
+        self._network.send(canspecs.CAN_ID_BUTTON_PRESSED, struct.pack(canspecs.CAN_FORMAT_BUTTON_PRESSED, data[0]))
 
 
 class InfotainmentPlayer(ccomp.ComponentPoller):
@@ -133,7 +133,7 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         else:
             raise RuntimeError(f"audio session doesn't exist!")
 
-    @recv_can(canspecs.CAN_ID_INFOTAINMENT_STATE, "!B")
+    @recv_can(canspecs.CAN_ID_INFOTAINMENT_STATE, canspecs.CAN_FORMAT_INFOTAINMENT_STATE)
     def _(self, data):
         """respond to the infotainment button press"""
         # decode the incoming value
@@ -161,19 +161,19 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
                 self._sound.stop()
             self._set_volume(0.0)
 
-    @recv_can(canspecs.CAN_ID_CAR_X, "!f")
+    @recv_can(canspecs.CAN_ID_CAR_X, canspecs.CAN_FORMAT_CAR_X)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("!f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_X, struct.pack(canspecs.CAN_FORMAT_CAR_X, data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_Y, "!f")
+    @recv_can(canspecs.CAN_ID_CAR_Y, canspecs.CAN_FORMAT_CAR_Y)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack("!f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack(canspecs.CAN_FORMAT_CAR_Y, data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_Z, "!f")
+    @recv_can(canspecs.CAN_ID_CAR_Z, canspecs.CAN_FORMAT_CAR_Z)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack("!f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack(canspecs.CAN_FORMAT_CAR_Z, data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_R, "!f")
+    @recv_can(canspecs.CAN_ID_CAR_R, canspecs.CAN_FORMAT_CAR_R)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_R, struct.pack("!f", data[0]))
+        self._network.send(canspecs.CAN_ID_CAR_R, struct.pack(canspecs.CAN_FORMAT_CAR_R, data[0]))
 

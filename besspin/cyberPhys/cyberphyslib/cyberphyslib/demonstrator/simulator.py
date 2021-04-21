@@ -236,25 +236,25 @@ class Sim(component.ComponentPoller):
         self.control[name] = data
         self.control_evt = True
 
-    @recv_can(canspecs.CAN_ID_STEERING_INPUT, "!b")
+    @recv_can(canspecs.CAN_ID_STEERING_INPUT, canspecs.CAN_FORMAT_STEERING_INPUT)
     def _(self, data):
         """steering -1.0, 1.0"""
         data = (float(data[0])/100.0,)
         return self.control_process("steering", data, bounds=(-1.0, 1.0))
 
-    @recv_can(canspecs.CAN_ID_THROTTLE_INPUT, "!B")
+    @recv_can(canspecs.CAN_ID_THROTTLE_INPUT, canspecs.CAN_FORMAT_THROTTLE_INPUT)
     def _(self, data):
         """throttle [0..100] -> 0.0, 1.0"""
         data = (float(data[0])/100.0,)
         return self.control_process("throttle", data)
 
-    @recv_can(canspecs.CAN_ID_BRAKE_INPUT, "!B")
+    @recv_can(canspecs.CAN_ID_BRAKE_INPUT, canspecs.CAN_FORMAT_BRAKE_INPUT)
     def _(self, data):
         """brake [0..100] -> 0.0, 1.0"""
         data = (float(data[0])/100.0,)
         return self.control_process("brake", data)
 
-    @recv_can(canspecs.CAN_ID_GEAR, "!c")
+    @recv_can(canspecs.CAN_ID_GEAR, canspecs.CAN_FORMAT_GEAR)
     def _(self, data):
         """gear [P, R, N, D] -> -1, 5"""
         val, = data
