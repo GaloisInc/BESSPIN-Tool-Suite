@@ -60,9 +60,9 @@ class CanMessage {
    */
   static fromFloat(id, float_val) {
     this._raw = Buffer.alloc(9);
-    this._raw.writeUInt32LE(id, 0); // id
+    this._raw.writeUInt32BE(id, 0); // id
     this._raw.writeUInt8(1, 4); // data length
-    this._raw.writeFloatLE(float_val, 5); // data
+    this._raw.writeFloatBE(float_val, 5); // data
     return new CanMessage(data);
   }
 
@@ -74,7 +74,7 @@ class CanMessage {
    */
   static fromChar(id, char_val) {
     let data = Buffer.alloc(6);
-    data.writeUInt32LE(id, 0); // id
+    data.writeUInt32BE(id, 0); // id
     data.writeUInt8(1, 4); // data length
     data.writeUInt8(char_val, 5); // data
     return new CanMessage(data);
@@ -86,20 +86,20 @@ class CanMessage {
 
   // Converts first four bytes of data to an uint32 value
   getUint32() {
-    let binary = new Uint8Array([this._raw[8], this._raw[7], this._raw[6], this._raw[5]]);
+    let binary = new Uint8Array([this._raw[5], this._raw[6], this._raw[7], this._raw[8]]);
     let dv = new DataView(binary.buffer);
     return dv.getUint32();
   }
 
   // Converts first four bytes of data to a float
   getFloat() {
-    let binary = new Uint8Array([this._raw[8], this._raw[7], this._raw[6], this._raw[5]]);
+    let binary = new Uint8Array([this._raw[5], this._raw[6], this._raw[7], this._raw[8]]);
     let dv = new DataView(binary.buffer);
     return dv.getFloat32(0);
   }
 
   _unpack_id(buffer) {
-    let binary = new Uint8Array([buffer[3], buffer[2], buffer[1], buffer[0]]);
+    let binary = new Uint8Array([buffer[0], buffer[1], buffer[2], buffer[3]]);
     let dv = new DataView(binary.buffer);
     return dv.getUint32();
   }
