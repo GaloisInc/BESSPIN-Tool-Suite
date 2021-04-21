@@ -93,26 +93,33 @@ class IgnitionDirector:
         ip_director = f"{net_conf.ip_SimPc}:{net_conf.port_component_interactiveManager}"
         ip_sim = net_conf.ip_SimPc
         can_port = net_conf.port_network_canbusPort
-        return cls(ip_admin, ip_director, ip_sim, can_port,
+        info_port = net_conf.port_network_infotainmentUiPort
+        return cls(ip_admin, ip_director, ip_sim, can_port, info_port,
                    ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST,
                    ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST,
-                   base_whitelist=net_conf.wl_BASELINE)
+                   base_whitelist=net_conf.wl_BASELINE,
+                   apply_lists=cconf.APPLY_LISTS)
 
     def __init__(self,
                  admin_addr,
                  director_addr,
                  sim_ip,
                  can_port,
+                 info_port,
                  ssith_info_whitelist=False,
                  ssith_ecu_whitelist=False,
                  base_whitelist=False,
                  ssith_info_blacklist=False,
                  ssith_ecu_blacklist=False,
-                 base_blacklist=False):
+                 base_blacklist=False,
+                 apply_lists = True
+                 ):
         """ignition state machine"""
         self.can_multiverse = None
         self.info_net = None
         self.proxy = None
+        self.can_port = can_port
+        self.info_port = info_port
 
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
         self.scenario_timeout = 3 * 60 # (s) 3 minutes
@@ -127,7 +134,7 @@ class IgnitionDirector:
         can_base = ccan.CanUdpNetwork("base", can_port, sip)
         networks = [can_base, can_ssith_ecu, can_ssith_info]
 
-        if cconf.APPLY_LISTS:
+        if apply_lists:
             can_ssith_info.whitelist = ssith_info_whitelist
             can_ssith_ecu.whitelist = ssith_ecu_whitelist
             can_base.whitelist = base_whitelist
@@ -137,7 +144,7 @@ class IgnitionDirector:
 
         # start the can networks
         self.can_multiverse = ccan.CanMultiverse("multiverse", networks, default_network="base")
-        self.info_net = ccan.CanUdpNetwork("info-net", cconf.INFO_PORT, sip, blacklist=[sim_ip])
+        self.info_net = ccan.CanUdpNetwork("info-net", self.info_port, sip, blacklist=[sim_ip])
 
         # C&C message bus
         nodes = [admin_addr, director_addr]
