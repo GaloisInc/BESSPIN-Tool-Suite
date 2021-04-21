@@ -8,7 +8,6 @@ Cyberphys Demonstrator Configuration Variables
 """
 
 
-CAN_PORT = 5002
 INFO_PORT = 5020
 
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
@@ -95,20 +94,30 @@ class DemonstratorNetworkConfig:
     @classmethod
     def from_setup_env(cls, fname: str):
         """create instance from Besspin target setupEnv.json"""
-        import json, os
+        import json, os, re
         assert os.path.exists(fname)
         with open(fname, "r") as f:
             senv = json.load(f)
             assert "setupCyberPhys" in senv
             csenv = senv["setupCyberPhys"]
             csenv = {d["name"]: d["val"] for d in csenv}
-        return cls(**csenv)
+
+            # extract network ports and organize into a dict
+            network_ports = {"cyberphysNetworkPorts": {}}
+            for se in senv["setupEnv"]:
+                match = re.match("cyberPhys(.*)Port", se["name"])
+                if match:
+                    pname = match.group(1)[0].lower() + match.group(1)[1:] + "Port"
+                    network_ports["cyberphysNetworkPorts"][pname] = int(se["val"])
+
+        return cls(**{**csenv, **network_ports})
 
     def __init__(self,
                  cyberPhysWhitelists = None,
                  cyberPhysBlacklists = None,
                  cyberPhysNodes = None,
                  cyberPhysComponentPorts = None,
+                 cyberphysNetworkPorts = None,
                  cyberPhysComponentBaseTopic = None,
                  cyberPhysWatchdogFrequency = 2):
 
@@ -116,6 +125,7 @@ class DemonstratorNetworkConfig:
         self.blacklists = cyberPhysBlacklists if cyberPhysBlacklists else {}
         self.nodes = cyberPhysNodes if cyberPhysNodes else {}
         self.component_ports = cyberPhysComponentPorts if cyberPhysComponentPorts else {}
+        self.network_ports = cyberphysNetworkPorts if cyberphysNetworkPorts else {}
         self.base_topic = cyberPhysComponentBaseTopic if cyberPhysComponentBaseTopic else {}
         self.watchdog_frequency = cyberPhysWatchdogFrequency
 
@@ -124,4 +134,5 @@ class DemonstratorNetworkConfig:
         self.__dict__.update({f"ip_{k}": v for k, v in self.nodes.items()})
         self.__dict__.update({f"wl_{k}": v for k, v in self.whitelists.items()})
         self.__dict__.update({f"bl_{k}": v for k, v in self.blacklists.items()})
-        self.__dict__.update({f"port_{k}": v for k, v in self.component_ports.items()})
+        self.__dict__.update({f"port_component_{k}": v for k, v in self.component_ports.items()})
+        self.__dict__.update({f"port_network_{k}": v for k, v in self.network_ports.items()})

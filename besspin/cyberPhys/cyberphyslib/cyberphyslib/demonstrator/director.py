@@ -89,12 +89,26 @@ class IgnitionDirector:
         """produce director from the Besspin environment setup file"""
         # NOTE: should this be hard-coded?
         # FIXME: what fields should I use from the setupEnv?
-        ip_admin = f"{net_conf.ip_AdminPc}:{net_conf.port_commander}"
-        ip_director = f"{net_conf.ip_SimPc}:{net_conf.port_interactiveManager}"
+        ip_admin = f"{net_conf.ip_AdminPc}:{net_conf.port_component_commander}"
+        ip_director = f"{net_conf.ip_SimPc}:{net_conf.port_component_interactiveManager}"
         ip_sim = net_conf.ip_SimPc
-        return cls(ip_admin, ip_director, ip_sim)
+        can_port = net_conf.port_network_canbusPort
+        return cls(ip_admin, ip_director, ip_sim, can_port,
+                   ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST,
+                   ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST,
+                   base_whitelist=net_conf.wl_BASELINE)
 
-    def __init__(self, admin_addr, director_addr, sim_ip):
+    def __init__(self,
+                 admin_addr,
+                 director_addr,
+                 sim_ip,
+                 can_port,
+                 ssith_info_whitelist=False,
+                 ssith_ecu_whitelist=False,
+                 base_whitelist=False,
+                 ssith_info_blacklist=False,
+                 ssith_ecu_blacklist=False,
+                 base_blacklist=False):
         """ignition state machine"""
         self.can_multiverse = None
         self.info_net = None
@@ -108,18 +122,18 @@ class IgnitionDirector:
         self.machine = Machine(self, states=self.states, transitions=self.transitions, initial='startup', show_conditions=True)
 
         sip = sim_ip
-        can_ssith_info = ccan.CanUdpNetwork("secure_infotainment", cconf.CAN_PORT, sip)
-        can_ssith_ecu = ccan.CanUdpNetwork("secure_ecu", cconf.CAN_PORT, sip)
-        can_base = ccan.CanUdpNetwork("base", cconf.CAN_PORT, sip)
+        can_ssith_info = ccan.CanUdpNetwork("secure_infotainment", can_port, sip)
+        can_ssith_ecu = ccan.CanUdpNetwork("secure_ecu", can_port, sip)
+        can_base = ccan.CanUdpNetwork("base", can_port, sip)
         networks = [can_base, can_ssith_ecu, can_ssith_info]
 
         if cconf.APPLY_LISTS:
-            can_ssith_info.whitelist = cconf.SSITH_INFO_WHITELIST
-            can_ssith_ecu.whitelist = cconf.SSITH_ECU_WHITELIST
-            can_base.whitelist = cconf.BASE_WHITELIST
-            can_ssith_info.blacklist = cconf.SSITH_INFO_BLACKLIST
-            can_ssith_ecu.blacklist = cconf.SSITH_ECU_BLACKLIST
-            can_base.blacklist = cconf.BASE_BLACKLIST
+            can_ssith_info.whitelist = ssith_info_whitelist
+            can_ssith_ecu.whitelist = ssith_ecu_whitelist
+            can_base.whitelist = base_whitelist
+            can_ssith_info.blacklist = ssith_info_blacklist
+            can_ssith_ecu.blacklist = ssith_ecu_blacklist
+            can_base.blacklist = base_blacklist
 
         # start the can networks
         self.can_multiverse = ccan.CanMultiverse("multiverse", networks, default_network="base")
@@ -246,15 +260,19 @@ class IgnitionDirector:
         return self._handler["beamng"]._in_autopilot
 
     def process_cc(self, msg):
-        """process cc message"""
+        """process cc message
+        TODO: FIXME: @michal review this carefully -- not sure how compliant this is with the spec
+        """
         import struct
         id, data = msg.arbitration_id, msg.data
 
         try:
             if id == canlib.CAN_ID_CMD_RESTART:
                 ignition_logger.debug(f"process cc: restart")
-                bsim: simulator.Sim = self._handler["beamng"]
-                bsim.restart_command()
+                dev_id = struct.unpack("!I", msg.data)[0]
+                if dev_id == canlib.IGNITION:
+                    bsim: simulator.Sim = self._handler["beamng"]
+                    bsim.restart_command()
 
             elif id == canlib.CAN_ID_CMD_HACK_ACTIVE:
                 hack_idx = struct.unpack("!B", msg.data)[0]
