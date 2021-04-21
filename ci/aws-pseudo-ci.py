@@ -68,6 +68,10 @@ def main(args):
     # Check in envs, otherwise error
     a = AWSCredentials.from_env_vars()
 
+    # Check artifactory API_KEY
+    if ("API_KEY" not in os.environ):
+        log.error(f"<API_KEY> is unset! Won't be able to fetch private LFS resources.")
+
     # Make sure that the region and format are written in ~/.aws/config
     AWSConfig.check_write_aws_config()
 
