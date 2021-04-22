@@ -10,7 +10,7 @@ import besspin.cyberPhys.run
 import besspin.cyberPhys.relaymanager
 import besspin.cyberPhys.watchdog
 from besspin.base.threadControl import ftQueueUtils
-import threading, queue, pexpect
+import threading, queue, pexpect, time
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -88,7 +88,10 @@ def startCyberPhys():
 
         for c in components:
             c.start()
-            while not c._ready:
+            t = time.time()
+            # Timeout after 10 seconds
+            # TODO: needs more testing to determine if some smarter error detection is needed
+            while ((time.time() - t) < 10.0) and (not c._ready):
                 pass
 
         # Create an interactor queue
