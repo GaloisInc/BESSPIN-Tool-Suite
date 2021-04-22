@@ -300,7 +300,12 @@ As was suggested in #323, the permissions can be changed for the amazon FPGA man
 ```
 This causes the polling timeout on a system bus socket when using sudo with cloud-hook. More info can be found [here](https://bugs.launchpad.net/tripleo/+bug/1819461).
 
-13. Clear personal items and prepare image for AMI creation. 
+13. Install `python3` for the private binaries download:
+```bash
+  sudo yum install -y python3
+```
+
+14. Clear personal items and prepare image for AMI creation. 
 
     * remove git usernames if they are configured, clearing
 
@@ -326,9 +331,9 @@ This causes the polling timeout on a system bus socket when using sudo with clou
 
     Also, you may run `history -c` inside `nix-shell`.
 
-14. Go to `Instances` in the EC2 dashboard. Select your instance, and stop it and wait for it to shutdown. Then, `Image->Create Image`. The AMI will be created and ready for use shortly.
+15. Go to `Instances` in the EC2 dashboard. Select your instance, and stop it and wait for it to shutdown. Then, `Image->Create Image`. The AMI will be created and ready for use shortly.
 
-15. Go to `AMIs` in the EC2 dashboard. Select the new AMI and `Modify Image Permissions`. Add the production accounts to the AMI permissions. 
+16. Go to `AMIs` in the EC2 dashboard. Select the new AMI and `Modify Image Permissions`. Add the production accounts to the AMI permissions. 
 
-16. Copy the AMI to North Virginia, then add the production account to the permissions of the N. Virginia version too.
+17. Copy the AMI to North Virginia, then add the production account to the permissions of the N. Virginia version too.
 
