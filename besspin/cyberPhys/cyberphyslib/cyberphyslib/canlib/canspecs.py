@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 21 April 2021
+Date: 22 April 2021
 This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 Version hash: 956273597e1c80b771cde09098766c3a
 """
@@ -97,7 +97,7 @@ CAN_FORMAT_HEARTBEAT_REQ: str = "!I"
 # Type: uint32_t | uint32_t
 # Description: Component ID / sender IP address (uint32_t) | heartbeat request number (uint32_t)
 CAN_ID_HEARTBEAT_ACK: int = 0XAABEA225
-CAN_FORMAT_HEARTBEAT_ACK: str = "!I"I"
+CAN_FORMAT_HEARTBEAT_ACK: str = "!II"
 
 # Name: cmd_component_ready
 # Units: N/A
@@ -111,7 +111,7 @@ CAN_FORMAT_CMD_COMPONENT_READY: str = "!I"
 # Type: uint32_t | uint32_t
 # Description: Component ID / sender IP address (uint32_t) | Error type (uint32_t)
 CAN_ID_CMD_COMPONENT_ERROR: int = 0XAAFEEB01
-CAN_FORMAT_CMD_COMPONENT_ERROR: str = "!I"I"
+CAN_FORMAT_CMD_COMPONENT_ERROR: str = "!II"
 
 # Name: cmd_active_scenario
 # Units: N/A

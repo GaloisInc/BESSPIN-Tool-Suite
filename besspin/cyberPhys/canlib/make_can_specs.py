@@ -83,6 +83,16 @@ specdf = pd.read_csv(specs_filename, keep_default_na=False)
 # Open IDs
 component_ids = pd.read_csv(ids_filename, keep_default_na=False)
 
+can_format_dict = {
+    "uint8_t": "B",
+    "int8_t": "b",
+    "uint16_t": "H",
+    "int16_t": "h",
+    "uint32_t": "I",
+    "int32_t": "i",
+    "float": "f",
+    }
+
 def produce_can_py(can_entry):
     """generate code for a can info entry (row of csv file)"""
     cid = can_entry["CAN ID"]
@@ -95,21 +105,9 @@ def produce_can_py(can_entry):
     canformat = '"!'
     for entry in canformat_raw:
         entry = entry.strip()
-        if entry == "uint8_t":
-            f = "B"
-        elif entry == "int8_t":
-            f = "b"
-        elif entry == "uint16_t":
-            f = "H"
-        elif entry == "int16_t":
-            f = "h"
-        elif entry == "uint32_t":
-            f = "I"
-        elif entry == "int32_t":
-            f = "i"
-        elif entry == "float":
-            f = "f"
-        canformat = canformat + f + '"'
+        val = can_format_dict[entry]
+        canformat += val
+    canformat += "\""
 
     var_name =  "CAN_ID_" + fname.upper().replace(" -", "").replace(" ", "_")
     format_name = "CAN_FORMAT_" + fname.upper().replace(" -", "").replace(" ", "_")
