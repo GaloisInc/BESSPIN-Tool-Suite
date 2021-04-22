@@ -16,6 +16,7 @@ jobs:
       uses: srggrs/assign-one-project-github-action@1.2.0
       if: github.event.action == 'opened'
       with:
+        column_name : 'To Do'
         project: 'https://github.com/orgs/GaloisInc/projects/9'
   assign_to_repo_project:
     runs-on: ubuntu-latest
