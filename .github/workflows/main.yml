@@ -1,4 +1,4 @@
-name: Auto-assign issues to organization-level and repo projects
+name: Auto-assign issues to team-level and repo projects
 
 on:
   issues:
@@ -16,7 +16,7 @@ jobs:
       uses: srggrs/assign-one-project-github-action@1.2.0
       if: github.event.action == 'opened'
       with:
-        project: 'https://github.com/orgs/DARPA-SSITH-Demonstrators/projects/1'
+        project: 'https://github.com/orgs/GaloisInc/projects/9'
   assign_to_repo_project:
     runs-on: ubuntu-latest
     name: Assign to repo project
@@ -25,4 +25,4 @@ jobs:
       uses: srggrs/assign-one-project-github-action@1.2.0
       if: github.event.action == 'opened'
       with:      
-        project: 'https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Target/projects/1'
+        project: 'https://github.com/GaloisInc/BESSPIN-Tool-Suite/projects/1'
