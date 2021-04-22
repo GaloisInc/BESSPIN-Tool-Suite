@@ -276,13 +276,13 @@ class IgnitionDirector:
         try:
             if id == canlib.CAN_ID_CMD_RESTART:
                 ignition_logger.debug(f"process cc: restart")
-                dev_id = struct.unpack("!I", msg.data)[0]
+                dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
                 if dev_id == canlib.IGNITION:
                     bsim: simulator.Sim = self._handler["beamng"]
                     bsim.restart_command()
 
             elif id == canlib.CAN_ID_CMD_HACK_ACTIVE:
-                hack_idx = struct.unpack("!B", msg.data)[0]
+                hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
                 ignition_logger.debug(f"process cc: set hack active {hack_idx}")
                 if self._noncrit:
                     ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
@@ -295,13 +295,13 @@ class IgnitionDirector:
             elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
                 # NOTE: this is not agreed on
                 nmap = {0: "base", 1: "secure_ecu", 2: "secure_infotainment"}
-                scen_idx = struct.unpack("!B", msg.data)[0]
+                scen_idx = struct.unpack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, msg.data)[0]
                 ignition_logger.debug(f"process cc: active scenario {scen_idx}")
                 cm: ccan.CanMultiverseComponent = self._handler["canm"]
                 cm.select_network(nmap[scen_idx])
 
             elif id == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
-                aut_idx = struct.unpack("!B", msg.data)[0]
+                aut_idx = struct.unpack(canlib.CAN_FORMAT_CMD_SET_DRIVING_MODE, msg.data)[0]
                 ignition_logger.debug(f"process cc: set driving mode {aut_idx}")
                 bsim: simulator.Sim = self._handler["beamng"]
                 if aut_idx == 0:
@@ -315,7 +315,7 @@ class IgnitionDirector:
 
     def ready_enter(self):
         ignition_logger.debug("Ready state: enter")
-        self.status_send(canlib.CAN_ID_CMD_COMPONENT_READY, 0x00)
+        self.status_send(canlib.CAN_ID_CMD_COMPONENT_READY, canlib.ID_IGNITION)
         scenario_start = time.time()
         while((time.time() - scenario_start) < self.scenario_timeout):
             cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
@@ -349,7 +349,7 @@ class IgnitionDirector:
     def noncrit_failure_enter(self):
         ignition_logger.debug("Noncrit_failure state: enter")
         ignition_logger.error("Ignition achieved a noncritical error. The LED manager failed to start. Continuing anyway...")
-        self.status_send(canlib.CAN_ID_CMD_COMPONENT_ERROR, 0x01)
+        self.status_send(canlib.CAN_ID_CMD_COMPONENT_ERROR, canlib.ID_LED_COMPONENT)
         self._noncrit = True
         self.default_input()
         return

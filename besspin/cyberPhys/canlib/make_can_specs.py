@@ -120,7 +120,7 @@ def produce_can_py(can_entry):
 
 def produce_ids_py(entry):
     """generate code for a ID info entry (row of csv file)"""
-    component_name = entry["Component"]
+    component_name = "COMPONENT_ID_" + entry["Component"]
     component_id = entry["ID"]
     return f"{component_name} = {component_id}\n" 
 
