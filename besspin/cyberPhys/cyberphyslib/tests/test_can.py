@@ -9,6 +9,8 @@ Tests for cyberphys CAN objects
 import socket
 import pytest
 import cyberphyslib.demonstrator.can as ccan
+import cyberphyslib.demonstrator.component as ccomp
+from cyberphyslib.demonstrator.handler import ComponentHandler
 from can import Message
 
 
@@ -53,12 +55,11 @@ def test_udp_bus():
 
     # attempt to send empty message -- defined to be invalid
     msg_empty = Message(arbitration_id=234, data=b'', is_extended_id=True)
-    # FIXME:TODO
+    # NOTE: canlib doesn't have this error handling
     #with pytest.raises(ccan.InvalidCanMessageError):
     #    udpb.send(msg_empty)
 
     #test address too big
-    # FIXME:TODO
     #msg_send = Message(arbitration_id=0xAAAAAAAAAA, data=b'12', is_extended_id=True)
     #with pytest.raises(ccan.InvalidCanMessageError):
     #    udpb.send(msg_send)
@@ -106,14 +107,7 @@ def test_can_network():
         cnet.blacklist= [89, "invalid"]
 
 
-def test_can_multiverse():
-    """test the can network "multiverse" (mux)
-
-    operational tests:
-        1. send / receiver between a can network element and a
-            network managed by the Multiverse
-    """
-    # test that listeners in networks only receive if active
+def _produce_example_multiverse():
     t1 = ExampleTestListener("t1")
     tm = ExampleTestListener("tm")
     csend= ccan.CanUdpNetwork("cansend", 223, "")
@@ -125,6 +119,18 @@ def test_can_multiverse():
                                "can0")
 
     cmult.register(tm)
+    return t1, tm, csend, cmult
+
+
+def test_can_multiverse():
+    """test the can network "multiverse" (mux)
+
+    operational tests:
+        1. send / receiver between a can network element and a
+            network managed by the Multiverse
+    """
+    # test that listeners in networks only receive if active
+    t1, tm, csend, cmult = _produce_example_multiverse()
 
     assert t1.did_receive == False
     assert tm.did_receive == False
@@ -145,3 +151,33 @@ def test_can_multiverse():
         pass
     cmult.exit()
     cmult.join()
+
+
+def test_can_multiverse_component():
+    """test the can network "multiverse" (mux) component
+
+    operational tests:
+        1. send / receiver between a can network element and a
+            network managed by the Multiverse component
+    """
+    import time
+    handler = ComponentHandler()
+    t1, tm, csend, multiverse = _produce_example_multiverse()
+    mult_comp = ccan.CanMultiverseComponent(multiverse)
+    msg = handler.start_component(mult_comp)
+    assert msg == ccomp.ComponentStatus.READY
+
+    assert t1.did_receive == False
+    assert tm.did_receive == False
+    csend.send(123, b'12')
+    time.sleep(1.0)
+    assert t1.did_receive == False
+    assert tm.did_receive == True
+    msg = handler["canm"].select_network("can1")
+    assert msg == ccomp.ComponentStatus.READY
+    csend.send(123, b'12')
+    time.sleep(1.0)
+    assert t1.did_receive == True
+
+    handler.exit()
+

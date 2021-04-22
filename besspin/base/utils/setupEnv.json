@@ -24,6 +24,21 @@
             "val" : "5002"
         },
         {
+            "name" : "cyberPhysCommandPort",
+            "type" : "int",
+            "val" : "5041"
+        },
+        {
+            "name" : "cyberPhysOtaServerPort",
+            "type" : "int",
+            "val" : "5050"
+        },
+        {
+            "name" : "cyberPhysInfotainmentUiPort",
+            "type" : "int",
+            "val" : "5013"
+        },
+        {
             "name" : "commPortHost",
             "type" : "int",
             "min" : 1024,
@@ -358,11 +373,6 @@
             }
         },
         {
-            "name" : "OtaServerPortTarget",
-            "type" : "int",
-            "val" : 5050
-        },
-        {
             "name" : "cwesAssessments",
             "type" : "dict",
             "val" : {
@@ -396,6 +406,48 @@
             "_unit" : "seconds / MB",
             "type" : "int",
             "val" : 6
+        }
+    ],
+    "setupCyberPhys" : [
+        {
+            "name" : "cyberPhysWhitelists",
+            "type" : "dict",
+            "val" : {
+                "BASELINE" : ["10.88.88.11", "10.88.88.12"],
+                "SSITH_INFO_WHITELIST" : ["10.88.88.21", "10.88.88.22"],
+                "SSITH_ECU_WHITELIST" : ["10.88.88.31", "10.88.88.32"]
+            }
+        },
+        {
+            "name" : "cyberPhysNodes",
+            "type" : "dict",
+            "val" : {
+                "AdminPc" : "10.88.88.1",
+                "InfotainmentThinClient" : "10.88.88.2",
+                "HackerKiosk" : "10.88.88.3",
+                "SimPc" : "10.88.88.4"
+            }
+        },
+        {
+            "name" : "cyberPhysComponentPorts",
+            "type" : "dict",
+            "val" : {
+                "relayManager" : 44001,
+                "commander" : 44002,
+                "interactiveLoop" : 44003,
+                "interactiveManager" : 44004,
+                "watchdogBase" : 45000
+            }
+        },
+        {
+            "name" : "cyberPhysComponentBaseTopic",
+            "type" : "string",
+            "val" : "base-topic"
+        },
+        {
+            "name" : "cyberPhysWatchdogFrequency",
+            "type" : "int",
+            "val" : 2
         }
     ]
 }

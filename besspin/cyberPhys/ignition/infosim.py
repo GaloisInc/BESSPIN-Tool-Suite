@@ -7,10 +7,16 @@ Date: 21 January 2021
 Infotainment Server Prototype with Keyboard Stub
 """
 from cyberphyslib.canlib import canspecs
-from cyberphyslib.demonstrator import can, config, component
+from cyberphyslib.demonstrator import can, component
 import struct
 import time
 import pygame
+
+
+class config:
+    """TODO: FIXME: patch for config changes"""
+    INFO_UI_PORT = 5013
+    SIM_IP = "127.0.0.1"
 
 
 net = can.CanUdpNetwork("infosim", config.INFO_UI_PORT, "127.0.0.1")

@@ -10,6 +10,7 @@ import time
 import cyberphyslib.demonstrator.speedometer as cspeed
 import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
+from cyberphyslib.demonstrator.handler import ComponentHandler
 
 
 def test_speedo():
@@ -50,3 +51,10 @@ def test_speedo():
         stub.send_message(ccomp.Message(state), "beamng-sensors")
     speedo.exit()
     stub.exit()
+
+
+def test_speedo_handler():
+    handler = ComponentHandler()
+    msg = handler.start_component(cspeed.Speedo())
+    assert msg == ccomp.ComponentStatus.READY
+    handler.exit()

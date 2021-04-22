@@ -16,7 +16,8 @@ Usage:
     python info_server_run.py
 """
 import struct, time
-from cyberphyslib.demonstratorcyberphys import can, canspecs, infotainment
+from cyberphyslib.demonstrator import can, infotainment
+from cyberphyslib.canlib import canspecs
 
 
 class DumpListener(can.CanListener):

@@ -9,8 +9,13 @@ Utility to send a CAN packet over UDP to the cyberphys vehicle network
 '''
 import socket
 
-from cyberphyslib.demonstrator import can, config
+from cyberphyslib.demonstrator import can
 import argparse
+
+
+class config:
+    """TODO: FIXME: patch for config changes"""
+    CAN_PORT = 5002
 
 
 if __name__ == '__main__':

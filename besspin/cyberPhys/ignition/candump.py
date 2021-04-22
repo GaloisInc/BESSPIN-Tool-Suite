@@ -8,7 +8,7 @@ Date: 28 August 2020
 Dumps all CAN traffic on CyberPhys network to stdout
 '''
 import argparse
-from cyberphyslib.demonstrator import can, config
+from cyberphyslib.demonstrator import can
 
 import logging
 # make CAN module less noisy
@@ -16,6 +16,11 @@ logging.getLogger("can").setLevel(logging.WARNING)
 
 
 BUFFER_SIZE = 1024
+
+
+class config:
+    """TODO: FIXME: patch for config changes"""
+    CAN_PORT = 5002
 
 
 class DumpListener(can.CanListener):

@@ -705,3 +705,12 @@ def computeMd5ForFile (filepath):
     fIn.close()
     return md5Val
 
+@decorate.debugWrap
+def multicastFromHostIp(hostIp: str):
+    try:
+        hostIp = hostIp.split('.')
+        hostIp[-1] = 255
+        multicastIp = '.'.join([str(octet) for octet in hostIp])
+    except Exception as exc:
+        logAndExit(f"Failed to compute multicast IP from <{hostIp}>.", exc=exc, exitCode=EXIT.Unspecified)
+    return multicastIp

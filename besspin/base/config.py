@@ -47,6 +47,7 @@ def loadConfiguration(configFile):
       and let you chase why the tool is not doing what you are trying to instruct it to do.
     """
     if isEqSetting('mode','cyberPhys'):
+        loadConfigSection(None,None,setupEnvData,'setupCyberPhys',setup=True)
         loadConfigSection(xConfig,CYBERPHYS_SECTION,configData,CYBERPHYS_SECTION)
         loadCyberPhysConfiguration(configData)
     else: #load the one-target
