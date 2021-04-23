@@ -59,6 +59,7 @@ scored `PASS` for a given CWE test.  For example, if:
 * TEST-192 scored `DETECTED` in the sequential test run, and
 * TEST-192 scored `DETECTED` in 3 multitasking test runs and `HIGH` in 2
   multitasking runs,
+
 then the "Multitasking Pass" cell for TEST-192 would read `60%`.
 
 The tool also aggregates all multitasking scores across all tests and reports
