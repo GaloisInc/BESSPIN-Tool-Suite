@@ -4,7 +4,7 @@
 * Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 22 April 2021
+* Date: 23 April 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 * Version hash: 956273597e1c80b771cde09098766c3a
 */
@@ -21,6 +21,7 @@
 #define TARGET_4 0x24
 #define TARGET_5 0x25
 #define TARGET_6 0x26
+#define TEENSY  0x27
 #define IGNITION 0x30
 #define LED_COMPONENT 0x31
 #define HACKER_KIOSK 0x40

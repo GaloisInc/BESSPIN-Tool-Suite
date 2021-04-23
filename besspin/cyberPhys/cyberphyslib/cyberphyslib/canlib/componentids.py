@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 22 April 2021
+Date: 23 April 2021
 This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 Version hash: 956273597e1c80b771cde09098766c3a
 """
@@ -18,6 +18,7 @@ TARGET_3 = 0x23
 TARGET_4 = 0x24
 TARGET_5 = 0x25
 TARGET_6 = 0x26
+TEENSY =  0x27
 IGNITION = 0x30
 LED_COMPONENT = 0x31
 HACKER_KIOSK = 0x40

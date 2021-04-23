@@ -9,8 +9,20 @@ import besspin.cyberPhys.interactive
 import besspin.cyberPhys.run
 import besspin.cyberPhys.relaymanager
 import besspin.cyberPhys.watchdog
+import besspin.cyberPhys.commander
 from besspin.base.threadControl import ftQueueUtils
 import threading, queue, pexpect, time
+
+@decorate.debugWrap
+@decorate.timeWrap
+def getNetworkNodes(component_name: str) -> (str, [str]):
+    "Return a tuple (host_ip, [subcribers_ip])"
+    nodes = getSetting('cyberPhysNodes')
+    cmdport = getSetting('cyberPhysCommandPort')
+    host = nodes[component_name]
+    subscribers = [ f"{node}:{cmdport}" for node in nodes.values() if node != host]
+    host = f"{host}:{cmdport}"
+    return host, subscribers
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -85,6 +97,7 @@ def startCyberPhys():
         in_socks, _ = getComponentPorts("relayManager")
         components.append(
             besspin.cyberPhys.relaymanager.RelayManager("relayManager", in_socks, []))
+        components.append(besspin.cyberPhys.commander.Commander())
 
         for c in components:
             c.start()

@@ -37,8 +37,9 @@ class Watchdog(ccomp.ComponentPoller):
         """watchdog mainloop"""
         self.process_hearbeat()
         if not besspin.cyberPhys.run.watchdog.isTargetAlive(self.targetId):
-            printAndLog(f"<{self.name}> Target is not alive, stoping")
-            self.stop()
+            printAndLog(f"<{self.name}> Target is not alive, attempting reset...")
+            self.send_message(ccomp.Message(f"ERROR {self.targetId}"), getSetting('cyberPhysComponentBaseTopic'))
+            self.reset_target("Not alive")
 
     def process_hearbeat(self) -> bool:
         responses = []
@@ -61,11 +62,14 @@ class Watchdog(ccomp.ComponentPoller):
             return False
 
     def reset_target(self, errorString: str):
-        """Reset target and return true if the reset was successful"""
+        """Reset target
+        NOTE: this function ends with an error if besspin.target.launch.resetTarget()
+        is not successful. How to better handle errors during target reset?"""
         warnAndLog(f"<target{self.targetId}>: {errorString}! Resetting...")
         # Here we should reset
         besspin.target.launch.resetTarget(getSetting('targetObj',targetId=self.targetId))
         printAndLog("Please press Enter to return to the interactive shell...")
+        self.send_message(ccomp.Message(f"READY {self.targetId}"), getSetting('cyberPhysComponentBaseTopic'))
 
     @recv_topic("base-topic")
     def _(self, msg, t):
