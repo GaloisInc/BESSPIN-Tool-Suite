@@ -29,7 +29,7 @@ The multitasking tests spawn multiple test processes as follows:
    -  For each enabled test that supports multitasking:
       -  Spawn a test wrapper on the target that spin locks until
          the lock file is removed.  Once the lock file is removed,
-         execute the test part.
+         execute the test.
 -  Remove the lock file.
 -  Wait for tests to complete or time out.
 -  Score the test runs using the same scoring functions as the sequential run.
