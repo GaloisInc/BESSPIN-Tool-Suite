@@ -24,18 +24,16 @@ configuration file control the operation of the multitasking tests:
 
 The multitasking tests spawn multiple test processes as follows:
 
-1.  Create a lock file on the target.
-2.  Loop `instancesPerTestPart` times:
-    1.  For each enabled test from the sequential test run:
-        1.  If test is supported in multitasking mode:
-            1.  For each test part in the test:
-                1.  Spawn a test wrapper on the target that spin locks until
-                    the lock file is removed.  Once the lock file is removed,
-                    execute the test part.
-3.  Remove the lock file.
-4.  Wait for tests to complete or time out.
-5.  Score the test runs using the same scoring functions as the sequential run.
-6.  Compare test scores to sequential run (see Scoring Section for more).
+-  Create a lock file on the target.
+-  Loop `instancesPerTestPart` times:
+   -  For each enabled test that supports multitasking:
+      -  Spawn a test wrapper on the target that spin locks until
+         the lock file is removed.  Once the lock file is removed,
+         execute the test part.
+-  Remove the lock file.
+-  Wait for tests to complete or time out.
+-  Score the test runs using the same scoring functions as the sequential run.
+-  Compare test scores to sequential run (see Scoring Section for more).
 
 By wrapping each test part in a program that blocks until the lock file is
 removed, the tool stresses the ability of the processor to detect many
@@ -46,9 +44,9 @@ multitasking processes.
 ## Scoring ##
 
 The objective of the multitasking tests is to evaluate the processor's ability
-to concurrently run processes in a way that is consistent with it's behavior
+to concurrently run processes in a way that is consistent with its behavior
 when running a single process.  Therefore, the multitasking score reflects how
-similar the test scores were between the multitasking test runs and the
+similar the test scores are between the multitasking test runs and the
 sequential test runs.  When a test running in multitasking mode earns the same
 score as it did in the sequential run, it receives the multitasking score
 `PASS`.  Otherwise, it receives the score `FAIL`.  The tool aggregates these
