@@ -5,9 +5,9 @@ simultaneously, and to detect weaknesses that occur simultaneously.  The
 multitasking tests re-run the CWE test parts that are both enabled from the
 sequential run, and supported by the multitasking test runner.  It then reports
 a score as a percentage of CWE scores that matched between the sequential and
-multitasking runs.  The remainder of this README details how to configure the
-test, how the test works, the philosophy and algorithm behind scoring, and the
-supported platforms and vulnerability classes that the test operates over.
+multitasking runs.  This README details how to configure the test, how the test
+works, the philosophy and algorithm behind scoring, and the supported platforms
+and vulnerability classes that the test operates over.
 
 ## Configuration ##
 
@@ -54,14 +54,16 @@ score as it did in the sequential run, it receives the multitasking score
 `PASS`.  Otherwise, it receives the score `FAIL`.  The tool aggregates these
 scores and presents them in the "Multitasking Pass" column in the score report
 table.  This column presents the percentage of multitasking test runs that
-scored `PASS` for a given CWE test.  For example, if `instancesPerTestPart` is
-5, TEST-192 scored `DETECTED` in the sequential test run, and TEST-192 scored
-`DETECTED` in 3 multitasking test runs and `HIGH` in 2 multitasking runs, then
-the "Multitasking Pass" cell for TEST-192 read `60%`.
+scored `PASS` for a given CWE test.  For example, if:
+  * `instancesPerTestPart` is 5,
+  * TEST-192 scored `DETECTED` in the sequential test run, and
+  * TEST-192 scored `DETECTED` in 3 multitasking test runs and `HIGH` in 2
+    multitasking runs,
+then the "Multitasking Pass" cell for TEST-192 would read `60%`.
 
 The tool also aggregates all multitasking scores across all tests and reports
-it as a percentage at the end.  For example, if 100 multitasking tests ran, and
-80 scored `PASS`, you would see:
+it as a percentage.  For example, if 100 multitasking tests ran and 80 scored
+`PASS`, you would see:
 ```
 (Info)~  80/100 multitasking tests scored as expected (80.0%).
 ```
