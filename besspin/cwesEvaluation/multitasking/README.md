@@ -55,10 +55,10 @@ score as it did in the sequential run, it receives the multitasking score
 scores and presents them in the "Multitasking Pass" column in the score report
 table.  This column presents the percentage of multitasking test runs that
 scored `PASS` for a given CWE test.  For example, if:
-  * `instancesPerTestPart` is 5,
-  * TEST-192 scored `DETECTED` in the sequential test run, and
-  * TEST-192 scored `DETECTED` in 3 multitasking test runs and `HIGH` in 2
-    multitasking runs,
+* `instancesPerTestPart` is 5,
+* TEST-192 scored `DETECTED` in the sequential test run, and
+* TEST-192 scored `DETECTED` in 3 multitasking test runs and `HIGH` in 2
+  multitasking runs,
 then the "Multitasking Pass" cell for TEST-192 would read `60%`.
 
 The tool also aggregates all multitasking scores across all tests and reports
