@@ -6,6 +6,15 @@ import Hack03_Show from '@/components/Hack03_Show'
 import Hack04_Access from '@/components/Hack04_Access'
 import Hack05_InfoAttempt from '@/components/Hack05_InfoAttempt'
 import Hack06_InfoExploit from '@/components/Hack06_InfoExploit'
+import Hack07_CriticalAttempt from '@/components/Hack07_CriticalAttempt'
+import Hack08_CriticalExploit from '@/components/Hack08_CriticalExploit'
+import Hack09_Protect from '@/components/Hack09_Protect'
+import Hack10_ProtectInfoAttempt from '@/components/Hack10_ProtectInfoAttempt'
+import Hack11_ProtectInfoStop from '@/components/Hack11_ProtectInfoStop'
+import Hack12_ProtectCritical from '@/components/Hack12_ProtectCritical'
+import Hack13_ProtectCriticalStop from '@/components/Hack13_ProtectCriticalStop'
+import Hack14_Existential from '@/components/Hack14_Existential'
+import Hack15_Solution from '@/components/Hack15_Solution'
 
 Vue.use(Router)
 
