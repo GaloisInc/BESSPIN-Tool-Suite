@@ -6,8 +6,8 @@
 </template>
 
 <style scoped>
-  #hack09 {
-    background-image: url('/hack12_protectCriticalStop/hack13_protectCriticalStop_noBTN.png');
+  #hack13 {
+    background-image: url('/hack13_protectCriticalStop/hack13_protectCriticalStop_noBTN.png');
     height: 1920px;
     width: 1080px;
     text-align: center;
