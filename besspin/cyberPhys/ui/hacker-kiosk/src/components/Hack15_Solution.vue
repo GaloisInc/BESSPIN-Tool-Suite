@@ -1,23 +1,37 @@
 <template>
-  <div id="hack09">
-      <router-link class="hack09-btn img-btn" to="/hack10_protect_info_attempt" tag="button">
+  <div id="hack15">
+      <router-link class="hack15-btn img-btn" to="/hack02_intro" tag="button">
       </router-link>
   </div>
 </template>
 
 <style scoped>
-  #hack09 {
-    background-image: url('/hack09_protect/hack09_protect_noBTN.png');
+  #hack15 {
+    background-image: url('/hack15_solution/hack15_solution_noBTN.png');
     height: 1920px;
     width: 1080px;
     text-align: center;
+  }
+.hack15-btn {
+    background-image: url('/hack15_solution/hack15_solution_btn.png');
+    width: 716px;
+    height: 272px;
+    top: 1620px;
+    left: 300px;
+  }
+  .hack15-btn:active {
+    top: 1620px;
+    left: 300px;
+    width: 760px;
+    height: 320px;
+    background-image: url('/hack15_solution/hack15_solution_btnHIT.png');
   }
 </style>
 
 
 <script>
   export default {
-    name: 'Hack09_Protect',
+    name: 'Hack15_Solution',
     props: {
     },
     data() {

@@ -6,11 +6,25 @@
 </template>
 
 <style scoped>
-  #hack09 {
-    background-image: url('/hack14_existential/hack14_existential_noBTN.png');
+  #hack14 {
+    background-image: url('/hack14_existential/hack14_existential_outro_noBTN.png');
     height: 1920px;
     width: 1080px;
     text-align: center;
+  }
+  .hack14-btn {
+    background-image: url('/hack14_existential/hack14_existential_continue_btn.png');
+    width: 716px;
+    height: 272px;
+    top: 1620px;
+    left: 300px;
+  }
+  .hack14-btn:active {
+    top: 1620px;
+    left: 300px;
+    width: 760px;
+    height: 320px;
+    background-image: url('/hack14_existential/hack14_existential_continue_btnHIT.png');
   }
 </style>
 

@@ -12,6 +12,20 @@
     width: 1080px;
     text-align: center;
   }
+  .hack13-btn {
+    background-image: url('/hack13_protectCriticalStop/hack13_protectCriticalStop_continue_btn.png');
+    width: 716px;
+    height: 272px;
+    top: 1620px;
+    left: 300px;
+  }
+  .hack13-btn:active {
+    top: 1620px;
+    left: 300px;
+    width: 760px;
+    height: 320px;
+    background-image: url('/hack11_protectInfoStop/hack01_protectInfoStop_continue_btnHIT.png');
+  }
 </style>
 
 
