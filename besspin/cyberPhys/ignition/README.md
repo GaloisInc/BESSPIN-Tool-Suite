@@ -63,7 +63,7 @@ python ecusim.py
 ```
 
 ### CAN REPL
-C&C packets can be sent to ignition using a CAN packet REPL
+Install prompt-toolkit >= 3.0.18. C&C packets can be sent to ignition using a CAN packet REPL
 ```
 python canrepl.py -ip <MY_IP> -port 5002
 ```
