@@ -18,7 +18,7 @@ import functools
 import psutil
 import time
 import os
-from cyberphyslib.demonstrator import config, component, message, logger
+from cyberphyslib.demonstrator import config, component, message, logger, checkpoint
 import cyberphyslib.canlib.canspecs as canspecs
 
 from beamngpy import BeamNGpy, Scenario, Vehicle
@@ -60,13 +60,13 @@ def requires_running_scenario(func):
     """guard Sim methods that requires a running scenario (e.g. poll sensors)"""
     @functools.wraps(func)
     def inner(self, *args, **kwargs):
-        if self._beamng_session.skt is not None:
+        if self._beamng_context.skt is not None:
             return func(self, *args, **kwargs)
     return inner
 
 
 class Sim(component.ComponentPoller):
-    beamng_process_name = "BeamNG.research.x64.exe"
+    beamng_process_name = "BeamNG.tech.x64.exe"
     @staticmethod
     def is_running_beamng():
         """returns whether BeamNG process is running"""
@@ -100,15 +100,21 @@ class Sim(component.ComponentPoller):
         super().__init__("beamng", self.in_descr, self.out_descr, sample_frequency=120.0)
 
         self._beamng_context = None
-        self._beamng_session = None
+        self._beamng_context = None
         self._scenario = None
         self._vehicle = None
         self._location = None
         self._sensors = None
         self._scenario = None
         self.sensor_output = None
+
+        self.race = checkpoint.BeamNGRace.for_besspin()
+        self.check_manage = checkpoint.ScenarioCheckpointManager(config.SCENARIO_TIMEOUT, self.race.checkpoints)
+
         self.color = [0.,]*3
         self.control = {}
+
+        # flags to control the poller loop
         self.control_evt = True
         self._start_finished = False
         self._enable_autopilot = False
@@ -116,8 +122,6 @@ class Sim(component.ComponentPoller):
         self._in_autopilot = False
         self._restart_scenario  = False
         self.beamng_start_finished = False
-
-        # record whether sim is paused or not
         self._is_paused = False
 
     def on_start(self) -> None:
@@ -132,7 +136,7 @@ class Sim(component.ComponentPoller):
         bng_args = { "home": config.BEAMNG_PATH,
                       "user": config.BEAMNG_USER_PATH}
         self._beamng_context = BeamNGpy('localhost', config.BEAMNG_PORT, **bng_args)
-
+        self._beamng_context.open()
 
         self._scenario = Scenario('italy', 'SSITH',
                                   description='Drive protected.')
@@ -149,29 +153,35 @@ class Sim(component.ComponentPoller):
         self._scenario.add_vehicle(self._vehicle,
                                    **config.BEAMNG_ITALY_SPAWNPOINTS[config.BEAMNG_SCENARIO_SPAWNPOINT])
 
+        # add checkpoints for driver
+        positions = [(c[0], c[1], c[2]) for c in self.race.checkpoints[1:]]
+        scales = [(3.0, 3.0, 3.0)] * len(positions)
+        self._scenario.add_checkpoints(positions, scales)
+
         # Compile the scenario and place it in BeamNG's map folder
         self._scenario.make(self._beamng_context)
 
         try:
-
             # Start BeamNG and enter the main loop
             assert not self.polling_thread.stopped
-            self._beamng_session = self._beamng_context.open(launch=True)
-            self._beamng_session.hide_hud()
+            #self._beamng_context.hide_hud()
+
 
             # Load and start the scenario
             assert not self.polling_thread.stopped
-            self._beamng_session.load_scenario(self._scenario)
-            self._beamng_session.set_relative_camera((-0.3, -.5, 0.95))
-            self._beamng_session.start_scenario()
+            self._beamng_context.load_scenario(self._scenario)
+            self._beamng_context.set_relative_camera((-0.3, -.5, 0.95))
+            self._beamng_context.start_scenario()
 
             assert not self.polling_thread.stopped
-            self._beamng_session.resume()
+            self._beamng_context.resume()
 
             assert self._vehicle.skt
+            self._vehicle.connect(self._beamng_context)
 
             self.beamng_start_finished = True
             self.send_message(message.Message(BeamNgStatus.READY), 'beamng-events')
+            self.check_manage.start()
         except Exception as exc:
             logger.sim_logger.error(f"Failed to create BeamNG session and load scenario <{exc}>")
             self.send_message(message.Message(BeamNgStatus.OS_ERROR), 'beamng-events')
@@ -188,17 +198,20 @@ class Sim(component.ComponentPoller):
                     self._enable_autopilot = False
                     self._disable_autopilot = False
                     self._in_autopilot = True
-                    #self.restart_command()
+
                 elif self._disable_autopilot:
                     self._vehicle.ai_set_mode('disabled')
                     self._disable_autopilot = False
                     self._enable_autopilot = False
                     self._in_autopilot = False
-                    #self.restart_command()
 
                 if self._restart_scenario:
                     self._restart_scenario = False
-                    self._beamng_session.restart_scenario()
+                    self._beamng_context.restart_scenario()
+                    self._beamng_context.start_scenario()
+                    self._beamng_context.resume()
+                    #self._scenario.start()
+                    self.check_manage.start()
 
                 # handle vehicle control event
                 if (self._vehicle is not None) and (self._vehicle.skt):
@@ -208,15 +221,23 @@ class Sim(component.ComponentPoller):
                         self.control_evt = False
                         self.control = {}
 
-                self.sensor_output = self._beamng_session.poll_sensors(self._vehicle)
+                self.sensor_output = self._beamng_context.poll_sensors(self._vehicle)
                 self.send_message(message.Message(self.sensor_output["electrics"]),
                                 "beamng-sensors")
 
                 self._vehicle.update_vehicle()
                 self._location = (tuple(self._vehicle.state["pos"]), tuple(self._vehicle.state["dir"]))
                 self.send_message(message.Message(self._location), "beamng-vehicle")
+                if self.check_manage.get_offcourse_dist(self._location[0]) > 100.0:
+                    pass
+                    #print(self._vehicle, self.check_manage.get_time_checkpoint())
+                    #self._beamng_context.teleport_vehicle(self._vehicle,
+                    #                                      pos=list(self.check_manage.get_time_checkpoint().flatten()),
+                    #                                      rot=(0, 45, 0))
+
             except ConnectionAbortedError:
                 self.exit()
+
             except Exception as exc:
                 pass
 
@@ -224,8 +245,8 @@ class Sim(component.ComponentPoller):
         """beamNG exit method"""
         logger.sim_logger.info(f"{self.__class__.__name__} Exit Signal Received. This might take a while...")
         self.kill_beamng()
-        if self._beamng_session is not None:
-            self._beamng_session.close()
+        if self._beamng_context is not None:
+            self._beamng_context.close()
 
     def exit(self):
         super(Sim, self).exit()
@@ -284,9 +305,9 @@ class Sim(component.ComponentPoller):
         """pause the simulator"""
         if self._start_finished:
             if self._is_paused:
-                self._beamng_session.resume()
+                self._beamng_context.resume()
             else:
-                self._beamng_session.pause()
+                self._beamng_context.pause()
             self._is_paused = not self._is_paused
             return BeamNgStatus.READY
         else:

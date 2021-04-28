@@ -1,0 +1,744 @@
+{
+"defaultLaps":1,
+"pathnodes":[
+  {
+    "pos":[
+      -689.639,
+      -1338.7,
+      140.298
+    ],
+    "navRadiusScale":1,
+    "oldId":6,
+    "radius":0,
+    "name":"Pathnode 6",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -716.745,
+      -1342.33,
+      141.832
+    ],
+    "navRadiusScale":1,
+    "oldId":7,
+    "radius":0,
+    "name":"Pathnode 7",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -801.713,
+      -1389.75,
+      142.221
+    ],
+    "navRadiusScale":1,
+    "oldId":9,
+    "radius":0,
+    "name":"Pathnode 9",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -831.797,
+      -1355.91,
+      142.378
+    ],
+    "navRadiusScale":1,
+    "oldId":12,
+    "radius":0,
+    "name":"Pathnode 12",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -850.357,
+      -1399.2,
+      142.581
+    ],
+    "navRadiusScale":1,
+    "oldId":14,
+    "radius":0,
+    "name":"Pathnode 14",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -833.609,
+      -1441.68,
+      142.909
+    ],
+    "navRadiusScale":1,
+    "oldId":16,
+    "radius":0,
+    "name":"Pathnode 16",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -781.061,
+      -1494.9,
+      143.037
+    ],
+    "navRadiusScale":1,
+    "oldId":18,
+    "radius":0,
+    "name":"Pathnode 18",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -713.533,
+      -1586.37,
+      143.685
+    ],
+    "navRadiusScale":1,
+    "oldId":20,
+    "radius":0,
+    "name":"Pathnode 20",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -715.091,
+      -1700.71,
+      144.03
+    ],
+    "navRadiusScale":1,
+    "oldId":22,
+    "radius":0.498022,
+    "name":"Pathnode 22",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -833.294,
+      -1733.08,
+      142.561
+    ],
+    "navRadiusScale":1,
+    "oldId":24,
+    "radius":0,
+    "name":"Pathnode 24",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -932.268,
+      -1728.79,
+      142.651
+    ],
+    "navRadiusScale":1,
+    "oldId":26,
+    "radius":0,
+    "name":"Pathnode 26",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1024.69,
+      -1645.22,
+      154.473
+    ],
+    "navRadiusScale":1,
+    "oldId":28,
+    "radius":0,
+    "name":"Pathnode 28",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1189.35,
+      -1517.8,
+      169.015
+    ],
+    "navRadiusScale":1,
+    "oldId":30,
+    "radius":0,
+    "name":"Pathnode 30",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1417.52,
+      -1673.35,
+      174.486
+    ],
+    "navRadiusScale":1,
+    "oldId":32,
+    "radius":0,
+    "name":"Pathnode 32",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1675.17,
+      -1640.44,
+      173.416
+    ],
+    "navRadiusScale":1,
+    "oldId":34,
+    "radius":0,
+    "name":"Pathnode 34",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1825.9,
+      -1572.51,
+      169.433
+    ],
+    "navRadiusScale":1,
+    "oldId":40,
+    "radius":0,
+    "name":"Pathnode 40",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1717.89,
+      -1405.92,
+      157.078
+    ],
+    "navRadiusScale":1,
+    "oldId":42,
+    "radius":0,
+    "name":"Pathnode 42",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1790.71,
+      -1162.6,
+      143.767
+    ],
+    "navRadiusScale":1,
+    "oldId":44,
+    "radius":0,
+    "name":"Pathnode 44",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1733.66,
+      -944.825,
+      142.599
+    ],
+    "navRadiusScale":1,
+    "oldId":46,
+    "radius":0,
+    "name":"Pathnode 46",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1780.06,
+      -749.839,
+      155.85
+    ],
+    "navRadiusScale":1,
+    "oldId":48,
+    "radius":0,
+    "name":"Pathnode 48",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1871.75,
+      -538.064,
+      154.417
+    ],
+    "navRadiusScale":1,
+    "oldId":50,
+    "radius":0,
+    "name":"Pathnode 50",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1859.28,
+      -313.461,
+      150.629
+    ],
+    "navRadiusScale":1,
+    "oldId":52,
+    "radius":0,
+    "name":"Pathnode 52",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1894.48,
+      -52.4224,
+      148.695
+    ],
+    "navRadiusScale":1,
+    "oldId":54,
+    "radius":0,
+    "name":"Pathnode 54",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1730.68,
+      106.664,
+      148.528
+    ],
+    "navRadiusScale":1,
+    "oldId":56,
+    "radius":0,
+    "name":"Pathnode 56",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1579.19,
+      443.687,
+      148.523
+    ],
+    "navRadiusScale":1,
+    "oldId":58,
+    "radius":0,
+    "name":"Pathnode 58",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1583.51,
+      778.46,
+      151.268
+    ],
+    "navRadiusScale":1,
+    "oldId":60,
+    "radius":0,
+    "name":"Pathnode 60",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1697.15,
+      1003.24,
+      167.461
+    ],
+    "navRadiusScale":1,
+    "oldId":62,
+    "radius":0,
+    "name":"Pathnode 62",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1686.97,
+      1113.53,
+      171.232
+    ],
+    "navRadiusScale":1,
+    "oldId":64,
+    "radius":0,
+    "name":"Pathnode 64",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1627.25,
+      1290.23,
+      164.54
+    ],
+    "navRadiusScale":1,
+    "oldId":66,
+    "radius":0,
+    "name":"Pathnode 66",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1609.1,
+      1390.38,
+      162.174
+    ],
+    "navRadiusScale":1,
+    "oldId":68,
+    "radius":0,
+    "name":"Pathnode 68",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1588.72,
+      1457.62,
+      164.278
+    ],
+    "navRadiusScale":1,
+    "oldId":70,
+    "radius":0,
+    "name":"Pathnode 70",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1604.4,
+      1506.22,
+      163.417
+    ],
+    "navRadiusScale":1,
+    "oldId":72,
+    "radius":0,
+    "name":"Pathnode 72",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1577.57,
+      1536.84,
+      161.52
+    ],
+    "navRadiusScale":1,
+    "oldId":74,
+    "radius":0,
+    "name":"Pathnode 74",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1416.76,
+      1549.53,
+      157.226
+    ],
+    "navRadiusScale":1,
+    "oldId":76,
+    "radius":0,
+    "name":"Pathnode 76",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1244.67,
+      1580.62,
+      152.419
+    ],
+    "navRadiusScale":1,
+    "oldId":78,
+    "radius":0,
+    "name":"Pathnode 78",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1160.23,
+      1595.24,
+      152.422
+    ],
+    "navRadiusScale":1,
+    "oldId":80,
+    "radius":0,
+    "name":"Pathnode 80",
+    "mode":"manual"
+  },
+  {
+    "pos":[
+      -1052.73,
+      1614.55,
+      152.422
+    ],
+    "navRadiusScale":1,
+    "oldId":82,
+    "radius":0,
+    "name":"Pathnode 82",
+    "mode":"manual"
+  }
+],
+"startPositions":{},
+"defaultStartPosition":-1,
+"segments":[
+  {
+    "capsules":{},
+    "to":7,
+    "oldId":8,
+    "from":6,
+    "name":"Segment 8",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":9,
+    "oldId":10,
+    "from":7,
+    "name":"Segment 10",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":12,
+    "oldId":13,
+    "from":9,
+    "name":"Segment 13",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":14,
+    "oldId":15,
+    "from":12,
+    "name":"Segment 15",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":16,
+    "oldId":17,
+    "from":14,
+    "name":"Segment 17",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":18,
+    "oldId":19,
+    "from":16,
+    "name":"Segment 19",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":20,
+    "oldId":21,
+    "from":18,
+    "name":"Segment 21",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":22,
+    "oldId":23,
+    "from":20,
+    "name":"Segment 23",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":24,
+    "oldId":25,
+    "from":22,
+    "name":"Segment 25",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":26,
+    "oldId":27,
+    "from":24,
+    "name":"Segment 27",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":28,
+    "oldId":29,
+    "from":26,
+    "name":"Segment 29",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":30,
+    "oldId":31,
+    "from":28,
+    "name":"Segment 31",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":32,
+    "oldId":33,
+    "from":30,
+    "name":"Segment 33",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":34,
+    "oldId":35,
+    "from":32,
+    "name":"Segment 35",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":40,
+    "oldId":41,
+    "from":34,
+    "name":"Segment 41",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":42,
+    "oldId":43,
+    "from":40,
+    "name":"Segment 43",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":44,
+    "oldId":45,
+    "from":42,
+    "name":"Segment 45",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":46,
+    "oldId":47,
+    "from":44,
+    "name":"Segment 47",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":48,
+    "oldId":49,
+    "from":46,
+    "name":"Segment 49",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":50,
+    "oldId":51,
+    "from":48,
+    "name":"Segment 51",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":52,
+    "oldId":53,
+    "from":50,
+    "name":"Segment 53",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":54,
+    "oldId":55,
+    "from":52,
+    "name":"Segment 55",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":56,
+    "oldId":57,
+    "from":54,
+    "name":"Segment 57",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":58,
+    "oldId":59,
+    "from":56,
+    "name":"Segment 59",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":60,
+    "oldId":61,
+    "from":58,
+    "name":"Segment 61",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":62,
+    "oldId":63,
+    "from":60,
+    "name":"Segment 63",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":64,
+    "oldId":65,
+    "from":62,
+    "name":"Segment 65",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":66,
+    "oldId":67,
+    "from":64,
+    "name":"Segment 67",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":68,
+    "oldId":69,
+    "from":66,
+    "name":"Segment 69",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":70,
+    "oldId":71,
+    "from":68,
+    "name":"Segment 71",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":72,
+    "oldId":73,
+    "from":70,
+    "name":"Segment 73",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":74,
+    "oldId":75,
+    "from":72,
+    "name":"Segment 75",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":76,
+    "oldId":77,
+    "from":74,
+    "name":"Segment 77",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":78,
+    "oldId":79,
+    "from":76,
+    "name":"Segment 79",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":80,
+    "oldId":81,
+    "from":78,
+    "name":"Segment 81",
+    "mode":"waypoint"
+  },
+  {
+    "capsules":{},
+    "to":82,
+    "oldId":83,
+    "from":80,
+    "name":"Segment 83",
+    "mode":"waypoint"
+  }
+],
+"startNode":6,
+"name":"Path",
+"description":"Description"
+}
