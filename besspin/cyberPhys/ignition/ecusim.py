@@ -20,18 +20,33 @@ P1 Emulation
         2. accept can packets of BeamNG data
         3. read stub peripherals for gear, throttle, and brake
 """
-from cyberphyslib.demonstrator import can, component
+from cyberphyslib.demonstrator import can, component, config
+
 from cyberphyslib.canlib import canspecs
 import struct
 import time
 import pygame
 import enum
 
+import argparse
+import os, pathlib
+
+# ugh, this filepath access is sketchy and will complicate the deployment of ignition
+parser = argparse.ArgumentParser(description="ECU Simulator")
+parser.add_argument("-network-config", type=str, default="", help="Path to BESSPIN Target setupEnv.json")
+args = parser.parse_args()
+if args.network_config == "":
+    network_filepath = pathlib.Path(
+        os.path.realpath(__file__)).parent / ".." / ".." / "base" / "utils" / "setupEnv.json"
+else:
+    network_filepath = args.network_config
+assert os.path.exists(network_filepath), f"specified network config json ({network_filepath}) doesn't exist"
+dnc = config.DemonstratorNetworkConfig.from_setup_env(network_filepath)
 
 class config:
     """TODO: FIXME: patch for config changes"""
-    CAN_PORT = 5002
-    SIM_IP = "127.0.0.1"
+    CAN_PORT = dnc.network_ports['canbusPort']
+    SIM_IP = dnc.nodes['SimPc']
 
 
 class T150Axes(enum.IntEnum):
