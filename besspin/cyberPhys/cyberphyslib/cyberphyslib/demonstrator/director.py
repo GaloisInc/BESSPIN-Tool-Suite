@@ -122,7 +122,7 @@ class IgnitionDirector:
         self.info_port = info_port
 
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
-        self.scenario_timeout = 3 * 60 # (s) 3 minutes
+        self.scenario_timeout = cconf.SCENARIO_TIMEOUT
         self.cc_timeout = 20 # 20 seconds
 
         self._handler = ComponentHandler()
