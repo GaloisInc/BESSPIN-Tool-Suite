@@ -9,6 +9,8 @@ Cyberphys Demonstrator Configuration Variables
 
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
+SCENARIO_TIMEOUT = 5*60 # s
+
 # See cyberPhys-test.ini for IP allocation
 # Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
 APPLY_LISTS = False
@@ -25,7 +27,7 @@ INFO_UI_PORT = 5022
 
 LOCATION_POLL_HZ = 10
 
-BEAMNG_SETTINGS_PATH_RELATIVE = r"\BeamNG.drive\settings\\"
+BEAMNG_SETTINGS_PATH_RELATIVE = r"\BeamNG.tech\settings\\"
 
 BEAMNG_GAME_INI_FILE_NAME = r"game-settings.ini"
 BEAMNG_GAME_CS_FILE_NAME = r"game-settings.cs"
@@ -34,7 +36,7 @@ BEAMNG_CYBERPHYS_INI_FILE_NAME = r"game-settings_cyberphys.ini"
 BEAMNG_CYBERPHYS_CS_FILE_NAME = r"game-settings_cyberphys.cs"
 
 BEAMNG_PORT=64256
-BEAMNG_PATH=r"C:\BeamNG.research"
+BEAMNG_PATH=r"C:\BeamNG.tech"
 # Override this if you need to change your user path. User path with spaces are not supported.
 BEAMNG_USER_PATH=None
 BEAMNG_OUTGAUGE_PORT = 4445 # Outgauge emulation

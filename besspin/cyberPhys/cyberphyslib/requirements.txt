@@ -1,6 +1,6 @@
 transitions==0.8.7
 WMI == 1.5.1
-beamngpy == 1.18
+beamngpy == 1.19.1
 graphviz == 0.14.2
 keyboard == 0.13.5
 numpy == 1.19.2

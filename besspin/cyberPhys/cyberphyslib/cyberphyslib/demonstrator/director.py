@@ -56,11 +56,11 @@ class IgnitionDirector:
     transitions = [
         # startup logic
         { 'trigger': 'next_state', 'source': 'startup', 'dest': 'noncrit_failure',
-          'conditions': 'input_fadecandy_fail', 'unless': 'input_component_fail'},
+          'conditions': 'input_noncrit_fail', 'unless': 'input_component_fail'},
         { 'trigger': 'next_state', 'source': 'startup', 'dest': 'terminate',
           'conditions': 'input_component_fail' },
         { 'trigger': 'next_state', 'source': 'startup', 'dest': 'ready',
-          'unless': ['input_component_fail', 'input_fadecandy_fail'] },
+          'unless': ['input_component_fail', 'input_noncrit_fail'] },
         { 'trigger': 'next_state', 'source': 'noncrit_failure', 'dest': 'ready'},
 
         # ready logic
@@ -122,7 +122,7 @@ class IgnitionDirector:
         self.info_port = info_port
 
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
-        self.scenario_timeout = 3 * 60 # (s) 3 minutes
+        self.scenario_timeout = cconf.SCENARIO_TIMEOUT
         self.cc_timeout = 20 # 20 seconds
 
         self._handler = ComponentHandler()
@@ -152,7 +152,7 @@ class IgnitionDirector:
         self.cc_timeout = 30.0
 
         # input space as class members
-        self.input_fadecandy_fail = False
+        self.input_noncrit_fail = False
         self.input_component_fail = False
         self.input_can_msg = False
         self.input_cc_msg = False
@@ -175,7 +175,7 @@ class IgnitionDirector:
 
     def default_input(self):
         """input initialization"""
-        self.input_fadecandy_fail = False
+        self.input_noncrit_fail = False
         self.input_component_fail = False
         self.input_can_msg = False
         self.input_cc_msg = False
@@ -212,9 +212,18 @@ class IgnitionDirector:
             msg = self._handler.start_component(comp)
             if msg != ccomp.ComponentStatus.READY:
                 ignition_logger.debug(f"{comp.name} service failed to start ({msg})")
-                self.input_fadecandy_fail = False
+                self.input_noncrit_fail = False
                 self.input_component_fail = True
                 return False
+            return True
+
+        def start_noncrit_component(comp):
+            if not start_component(comp):
+                ignition_logger.debug(f"{comp.name} service failed to start")
+                self.input_noncrit_fail = True
+                self.input_component_fail = False
+                return False
+            self.can_multiverse.register(comp)
             return True
 
         ignition_logger.debug("Startup State: Enter")
@@ -222,9 +231,6 @@ class IgnitionDirector:
 
         # startup beamng
         if not start_component(simulator.Sim()): return
-
-        # startup the speedometer
-        if not start_component(speedo.Speedo()): return
 
         # startup the multiverse
         if not start_component(ccan.CanMultiverseComponent(self.can_multiverse)): return
@@ -247,17 +253,16 @@ class IgnitionDirector:
         self.info_net.start()
 
         # startup led manager
-        lm = ledm.LedManagerComponent.for_ignition()
-        msg = self._handler.start_component(lm)
-        if msg != ledm.LedManagerStatus.READY:
-            ignition_logger.debug(f"LED Manager service failed to start ({msg})")
-            self.input_fadecandy_fail = True
-            self.input_component_fail = False
-            self.can_multiverse.register(lm)
+        start_noncrit_component(ledm.LedManagerComponent.for_ignition())
+
+        # startup the speedometer
+        start_noncrit_component(speedo.Speedo())
+
+        # check if noncritical error occurred
+        if self.input_noncrit_fail:
             return
 
-        self.input_fadecandy_fail = False
-        self.input_component_fail = False
+        self.default_input()
         return
 
     @property
@@ -348,7 +353,7 @@ class IgnitionDirector:
 
     def noncrit_failure_enter(self):
         ignition_logger.debug("Noncrit_failure state: enter")
-        ignition_logger.error("Ignition achieved a noncritical error. The LED manager failed to start. Continuing anyway...")
+        ignition_logger.error("Ignition achieved a noncritical error. Continuing anyway...")
         self.status_send(canlib.CAN_ID_CMD_COMPONENT_ERROR, 0x01)
         self._noncrit = True
         self.default_input()
