@@ -12,6 +12,7 @@ The sub-directories with different licenses are listed below:
 | Sub-Directory | License |
 | ------------- | ------- |
 | [besspin/cwesEvaluation](./besspin/cwesEvaluation) | AGPLv3.0 |
+| [besspin/cyberPhys/hardware](./besspin/cyberPhys/hardware) | OHL-S 2.0 |
 
 
 The submodules licenses are listed below for convenience. Please note that some of them have submodules.
