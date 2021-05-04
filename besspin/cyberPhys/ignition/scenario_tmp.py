@@ -23,10 +23,13 @@ with BeamNGpy('localhost', 64256, home=r'C:\BeamNG.tech') as bmng:
     vehicle.connect(bmng)
     check_manage.start()
 
+    start = time.time()
+
     while True:
         time.sleep(1.0)
         vehicle.poll_sensors()
         location = (tuple(vehicle.state["pos"]), tuple(vehicle.state["dir"]))
-        if check_manage.get_offcourse_dist(location[0]) > 100.0:
-            print(vehicle, check_manage.get_time_checkpoint())
-            bmng.teleport_vehicle(vehicle, list(check_manage.get_time_checkpoint().flatten()))
+        print(f"TIME: {time.time() - start} LOCATION: {location}")
+        #if check_manage.get_offcourse_dist(location[0]) > 100.0:
+        #    print(vehicle, check_manage.get_time_checkpoint())
+        #    bmng.teleport_vehicle(vehicle, list(check_manage.get_time_checkpoint().flatten()))
