@@ -36,7 +36,7 @@ This guide outlines how to modify a FPGA Developer AMI to run both BESSPIN, Fire
    $ nix-env -i git-lfs
    ```
 
-4. As BESSPIN Environment is based on tool-suite, all of the relevant accesses need to be setup in order for the shell to function correctly. Provided that you have access to the correct repositories, it will help to setup SSH keys with [http://gitlab-ext.galois.com](https://docs.gitlab.com/ee/ssh/) and [www.github.com](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent). Also, tool-suite utilizes a binary cache that will need to be accessed. This is done by [following the tool-suite setup instructions](https://gitlab-ext.galois.com/ssith/tool-suite). The general steps are to create two files, a `nix.conf` configuration file and a `netrc` file with the relevant artifactory login credentials.
+4. As BESSPIN Environment is based on tool-suite, all of the relevant accesses need to be setup in order for the shell to function correctly. Provided that you have access to the correct repositories, it will help to setup SSH keys with [www.github.com](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent). Also, tool-suite utilizes a binary cache that will need to be accessed (Only for Galois partners; otherwise, it will still build, but will take time). This is done by [following the tool-suite setup instructions](https://gitlab-ext.galois.com/ssith/tool-suite). The general steps are to create two files, a `nix.conf` configuration file and a `netrc` file with the relevant artifactory login credentials.
 
    **/home/centos/.config/nix/nix.conf**
 
@@ -315,7 +315,7 @@ This causes the polling timeout on a system bus socket when using sudo with clou
 
     * **IF NOT USING BESSPIN, delete the contents of `/home/centos/.config/nix` as it contains your login credentials**
 
-    * **delete/deactivate the SSH keys associated with your GitHub/GitLab accounts**
+    * **delete/deactivate the SSH keys associated with your GitHub account**
 
     ```
     rm ~/.ssh/*

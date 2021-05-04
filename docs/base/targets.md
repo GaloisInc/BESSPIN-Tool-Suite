@@ -26,7 +26,7 @@ It is worth mentioning that currently, the tool's default FreeBSD does not have 
 
 ### Setup ###
 
-A Xilinx VCU118 FPGA should be accessible, in addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
+A Xilinx VCU118 FPGA should be accessible, in addition to executing all the [GFE setup instructions](https://https://github.com/GaloisInc/BESSPIN-GFE/tree/develop).   
 
 Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to another. Please review the [FPGA host network configuration setup instructions](https://github.com/GaloisInc/SSITH-BESSPIN-Docs/blob/develop/CI-CD/HostNetworkSetup.md) for more details about the adaptors and IP settings. In case you intend to use a different setup, please change [setupEnv.json](../../besspin/base/utils/setupEnv.json) accordingly.
 
