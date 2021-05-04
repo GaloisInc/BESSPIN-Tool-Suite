@@ -28,7 +28,7 @@ It is worth mentioning that currently, the tool's default FreeBSD does not have 
 
 A Xilinx VCU118 FPGA should be accessible, in addition to executing all the [GFE setup instructions](https://https://github.com/GaloisInc/BESSPIN-GFE/tree/develop).   
 
-Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to another. Please review the [FPGA host network configuration setup instructions](https://github.com/GaloisInc/SSITH-BESSPIN-Docs/blob/develop/CI-CD/HostNetworkSetup.md) for more details about the adaptors and IP settings. In case you intend to use a different setup, please change [setupEnv.json](../../besspin/base/utils/setupEnv.json) accordingly.
+Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to another. Please review the [FPGA host network configuration setup instructions](#network-setup) for more details about the adaptors and IP settings. In case you intend to use a different setup, please change [setupEnv.json](../../besspin/base/utils/setupEnv.json) accordingly.
 
 ### Design ###
 
@@ -43,6 +43,71 @@ The VCU118 includes 4 GB of RAM, a 128MB flash memory, an Ethernet interface, se
 - The files needed are the bit file, and if not used in flash mode, then a probe file is needed too.
 - The tool resets the ethernet adaptor, then programs the FPGA with the bit file (more details about the VCU118 modes are in [configuration.md](./configuration.md)). 
 - The tool then connects to the target using openOCD, then starts a GDB session that remotely connects to the target through openOCD. After that, the binary is loaded and the execution is *continued*. The main TTY uses the USB connection to the UART chip on the VCU118 board.
+
+### Network Setup ###
+
+The Linux and FreeRTOS tests expect the host PC to have a specific IP address.
+We recommend that you don't connect the VCU118 to your LAN, but instead create
+a separate one-cable network between the host and FPGA. These instructions show
+how to reproduce the network configuration used by Galois GFE hosts.
+
+We expected the host machine to have a network interface called `eth0fpga` which is
+connected to the FPGA and has a fixed IPv4 address of `10.88.88.1`. The FPGA then will have IP of `10.88.88.2`
+
+Because each host machine might have different default names for the ethernet adaptors, we need to rename the proper interface. The best way is to use `crontab` and a custom script.
+
+0. Make sure `macchanger` is installed:
+    ```
+    sudo apt install macchanger
+    ```
+
+1. In this case we have interface `enp2s0` connected to the FPGA. Change the   script accordingly for your machine:
+
+```
+#!/bin/bash
+OLDNAME=enp2s0
+NEWNAME=eth0fpga
+ip link set $OLDNAME down
+ip link set $OLDNAME name $NEWNAME
+ip link set $NEWNAME up
+macchanger -m 88:53:48:41:56:45 $NEWNAME
+ip addr add 10.88.88.1/24 dev $NEWNAME
+```
+
+and save it as `/opt/net_setup.sh`
+
+2. Make executable:
+    ```
+    sudo chmod +x /opt/net_setup.sh
+    ```
+
+3. Edit crontab with:
+    ```
+    sudo crontab -e
+    ```
+    andd add:
+    ```
+    @reboot /opt/net_setup.sh
+    ```
+
+4. Check that the command got saved:
+    ```
+    sudo crontab -l
+    # lists all cron jobs
+    ...
+    @reboot /opt/net_setup.sh
+    ...
+    ```
+
+5. Reboot your computer. You should now see something like:
+    ```
+    ip a
+    ...
+    4: eth0fpga: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+        link/ether 88:53:48:41:56:45 brd ff:ff:ff:ff:ff:ff
+        inet 10.88.88.1/24 scope global eth0fpga
+    ...
+    ```
 
 ### Manual Run ###
 
