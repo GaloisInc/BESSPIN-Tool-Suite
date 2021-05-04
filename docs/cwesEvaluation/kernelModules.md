@@ -50,7 +50,7 @@ I managed to compile kernel modules doing the following (in nix-shell):
 
 ```bash
 cd $WRKDIR
-git clone git@gitlab-ext.galois.com:ssith/riscv-linux.git
+git clone git@github.com/GaloisInc/BESSPIN-riscv-linux.git
 cd riscv-linux
 git checkout 333e6ab0dd399fe5f668ac038a2cebd7be3e25b3
 touch .scmversion #This is crucial to avoid the dirty notation that would lead to kernel version mismatch
