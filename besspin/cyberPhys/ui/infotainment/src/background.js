@@ -7,6 +7,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 import {CanListener, CanNetwork, CANID, CanMessage} from '../../common/can';
 import {Config} from '../../common/config';
 let can_net = new CanNetwork(5013);
+let dport = 5002;
 
 let car_loc = {
   x: 0,
@@ -35,20 +36,20 @@ ipcMain.on('can-loc-poll', (event) => {
 
 ipcMain.on('volume-inc', () => {
   console.debug("volume dec");
-  can_net.send(CanMessage.fromChar(CANID.CAN_ID_BUTTON_PRESSED,
-    Config.BUTTON_VOLUME_UP).buffer());
+  can_net.send_to_port(CanMessage.fromChar(CANID.CAN_ID_BUTTON_PRESSED,
+    Config.BUTTON_VOLUME_UP).buffer(), dport);
 })
 
 ipcMain.on('volume-dec', () => {
   console.debug("volume dec");
-  can_net.send(CanMessage.fromChar(CANID.CAN_ID_BUTTON_PRESSED,
-    Config.BUTTON_VOLUME_DOWN).buffer());
+  can_net.send_to_port(CanMessage.fromChar(CANID.CAN_ID_BUTTON_PRESSED,
+    Config.BUTTON_VOLUME_DOWN).buffer(), dport);
 })
 
 ipcMain.on('channel-selected', (_, station) => {
   console.debug("channel selected ", station);
-  can_net.send(CanMessage.fromChar(CANID.CAN_ID_BUTTON_PRESSED,
-    station).buffer());
+  can_net.send_to_port(CanMessage.fromChar(CANID.CAN_ID_BUTTON_PRESSED,
+    station).buffer(), dport);
 })
 
 
