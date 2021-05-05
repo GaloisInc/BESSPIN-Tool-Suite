@@ -718,8 +718,8 @@ def startRemoteLogging (target):
         target.runCommand("service syslogd restart")
         
         if (webserver in target.appModules):
-            nginxSrc = '/usr/local' if (not isEqSetting('binarySource','SRI-Cambridge')) else '/besspin'
-            nginxService = 'nginx' if (not isEqSetting('binarySource','SRI-Cambridge')) else 'besspin_nginx'
+            nginxSrc = '/usr/local' if (not isEqSetting('binarySource','SRI-Cambridge')) else '/fett'
+            nginxService = 'nginx' if (not isEqSetting('binarySource','SRI-Cambridge')) else 'fett_nginx'
 
             remoteLogsCommands = (f'access_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_access,'
             f'severity=info;\\nerror_log syslog:server={target.ipHost}:{getSetting("rsyslogPort")},tag=nginx_error,'

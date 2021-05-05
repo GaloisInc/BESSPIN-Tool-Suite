@@ -896,7 +896,7 @@ class commonTarget():
         setSetting("appLog",appLog)
 
         if (self.binarySource=='SRI-Cambridge'):
-            setSetting('sqliteBin','/besspin/bin/sqlite3')
+            setSetting('sqliteBin','/fett/bin/sqlite3')
         else:
             setSetting('sqliteBin','/usr/bin/sqlite')
 
@@ -1406,7 +1406,7 @@ class commonTarget():
             self.switchUser() #has to be executed on root
         # sshd_config location
         if (self.binarySource == 'SRI-Cambridge'):
-            sshdConfigPath = "/besspin/etc/sshd_config"
+            sshdConfigPath = "/fett/etc/sshd_config"
         else: #default
             sshdConfigPath = "/etc/ssh/sshd_config"
         self.runCommand (f"echo \"PermitRootLogin yes\" >> {sshdConfigPath}")
