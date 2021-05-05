@@ -163,11 +163,16 @@ class CanNetwork {
     
     }
 
-    // Send a CAN message over the network
+    // Send a CAN message over the network to our registered port 
     send(buffer) {
-      this.client.send(buffer, this.port, this.ip);
+      send_to_port(buffer, this.port);
     }
 
+    // send a CAN message over the network to a specified port
+    send_to_port(buffer, dport) {
+      this.client.send(buffer, dport, this.ip);
+    }
+    
     // Register a CanListener with the network
     register(listener) {
       console.info("Registering listener on port " + this.port);
