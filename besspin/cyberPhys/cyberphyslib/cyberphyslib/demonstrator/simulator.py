@@ -130,10 +130,20 @@ class Sim(component.ComponentPoller):
         """
         bng_args = { "home": config.BEAMNG_PATH,
                       "user": config.BEAMNG_USER_PATH}
+
+        # apply graphic settings if they are configured
+        if len(config.BEAMNG_GRAPHICS_SETTINGS) > 0:
+            beamng = BeamNGpy('localhost', config.BEAMNG_PORT, **bng_args)
+            with beamng as bng:
+                for setting, value in config.BEAMNG_GRAPHICS_SETTINGS.items():
+                    bng.change_setting(setting, value)
+                bng.apply_graphics_setting()
+
         self._beamng_context = BeamNGpy('localhost', config.BEAMNG_PORT, **bng_args)
+
         self._beamng_context.open()
 
-        self._scenario = Scenario('italy', 'SSITH',
+        self._scenario = Scenario(config.BEAMNG_SCENARIO_MAP, 'SSITH',
                                   description='Drive protected.')
         self._vehicle = Vehicle('ego_vehicle', licence='SSITH', **config.BEAMNG_VEHICLE_CONFIG,
                                 color='Red')
@@ -146,10 +156,11 @@ class Sim(component.ComponentPoller):
         self._vehicle.attach_sensor('electrics', electrics)
 
         self._scenario.add_vehicle(self._vehicle,
-                                   **config.BEAMNG_ITALY_SPAWNPOINTS[config.BEAMNG_SCENARIO_SPAWNPOINT])
+                                   **config.BEAMNG_SPAWNPOINTS[config.BEAMNG_SCENARIO_SPAWNPOINT])
 
         # Compile the scenario and place it in BeamNG's map folder
         self._scenario.make(self._beamng_context)
+
 
         try:
 
