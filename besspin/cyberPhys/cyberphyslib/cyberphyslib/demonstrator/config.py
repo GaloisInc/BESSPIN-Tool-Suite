@@ -9,7 +9,7 @@ Cyberphys Demonstrator Configuration Variables
 
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
-SCENARIO_TIMEOUT = 5*60 # s
+SCENARIO_TIMEOUT = 5000*60 # s
 
 # See cyberPhys-test.ini for IP allocation
 # Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
@@ -65,6 +65,9 @@ BEAMNG_VEHICLE_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk8
 # game settings for beamng
 BEAMNG_GRAPHICS_SETTINGS = {'GraphicDisplayModes': 'Fullscreen',
                             'GraphicDisplayResolutions': '1920 1080'}
+
+# relative pos of camera in car
+BEAMNG_CAMERA_POS = (-0.3230, 0.1408, 0.9500)
 
 # name of the beamng scenario map
 BEAMNG_SCENARIO_MAP = 'italy'

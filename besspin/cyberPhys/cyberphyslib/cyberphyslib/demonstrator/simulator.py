@@ -171,7 +171,7 @@ class Sim(component.ComponentPoller):
             # Load and start the scenario
             assert not self.polling_thread.stopped
             self._beamng_context.load_scenario(self._scenario)
-            self._beamng_context.set_relative_camera((-0.3, -.5, 0.95))
+            self._beamng_context.set_relative_camera(config.BEAMNG_CAMERA_POS)
             self._beamng_context.start_scenario()
 
             assert not self.polling_thread.stopped
@@ -267,7 +267,9 @@ class Sim(component.ComponentPoller):
     def _(self, data):
         """gear [P, R, N, D] -> -1, 5"""
         val, = data
-        gear_map = {b'P': 1, b'R': -1, b'N': 0, b'D': 2}
+        gear_map = {80: 1, 82: -1, 78: 0, 68: 2}
+        if val not in gear_map:
+            logger.sim_logger.error(f"received gear map value {val} cannot be decoded!")
         gear = gear_map.get(val, 0)
         return self.control_process("gear", (gear,), bounds=(-1, 5))
 
