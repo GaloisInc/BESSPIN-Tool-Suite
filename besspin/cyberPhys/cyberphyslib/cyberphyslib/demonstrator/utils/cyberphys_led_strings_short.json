@@ -1,0 +1,14 @@
+{
+    "listen": ["127.0.0.1", 7890],
+    "verbose": false,
+
+    "color": {"gamma": 2.5, "whitepoint": [1.0, 1.0, 1.0]},
+
+    "devices": [
+            {"type": "fadecandy", "serial": "EQPJMCXBEUGZZFUD", "map": [
+                                                                    [ 0, 0, 0, 64 ],
+                                                                    [ 0, 0, 64, 45 ],
+                                                                    [ 0, 0, 128, 64 ]
+                                                                    ]}
+    ]
+}
