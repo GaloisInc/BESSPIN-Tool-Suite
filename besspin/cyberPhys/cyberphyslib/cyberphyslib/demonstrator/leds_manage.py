@@ -19,6 +19,8 @@ import enum
 import serial, serial.tools.list_ports_windows
 import pathlib
 import os
+import subprocess
+import psutil
 
 from .component import ComponentPoller, ComponentStatus
 from .logger import led_manage_logger
@@ -159,6 +161,35 @@ class LedManagerComponent(ComponentPoller):
         self.led_strings = led_strings
         self._no_client = False
 
+    def prepare_call(self):
+        """prepare process call for fadecandy server OPC"""
+        base_path = pathlib.Path(os.path.realpath(__file__)).parent / "utils"
+        fadecandy_executable = "fcserver.exe"
+        fadecandy_json_cfg = "cyberphys_led_strings.json"
+        return [(base_path / fadecandy_executable).resolve(), (base_path / fadecandy_json_cfg).resolve()]
+
+    def start_opc(self):
+        """starts the fadecandy server OPC server"""
+        call = self.prepare_call()
+        led_manage_logger.debug(f'Starting Fadecandy PC Server process: {call}')
+        self.process = subprocess.Popen(call)
+
+    def kill_opc(self):
+        """kill the fadecandy server OPC process"""
+        # check if Fadecandy server is running
+        fadecandy_pid = None
+        for process in psutil.process_iter():
+            try:
+                if 'fcserver' in process.name():
+                    print("Fadecandy server is running as pid " + str(process.pid))
+                    fadecandy_pid = process.pid
+            except:
+                pass
+        # if it is running, shut it down and restart
+        if fadecandy_pid is not None:
+           print("Shutting down Fadecandy and opening in known configuration.")
+           os.kill(fadecandy_pid, 9)
+
     def system_startup(self):
         """system startup procedure required to turn on LEDs without persistent pixels"""
 
@@ -235,8 +266,12 @@ class LedManagerComponent(ComponentPoller):
 
 ### component relevant methods
     def on_start(self):
+        self.start_opc()
         self.system_startup()
         self.start_poller()
+
+    def on_exit(self):
+        self.kill_opc()
 
     def on_poll_poll(self, t):
         """LED Manager Component Mainloop"""
