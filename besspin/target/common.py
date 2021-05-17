@@ -1209,6 +1209,7 @@ class commonTarget():
                 endsWith = 'Power off'
             else:
                 endsWith = pexpect.EOF
+            timeout = 120 if (self.processor=='bluespec_p3') else 60
             self.runCommand(poweroffCommand[self.osImage],endsWith=endsWith,suppressErrors=True)
             if (self.onlySsh):
                 self.closeSshConn()
