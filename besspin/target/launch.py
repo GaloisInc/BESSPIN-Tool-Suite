@@ -264,7 +264,7 @@ def endBesspin (xTarget,isDeadProcess=False):
         uploadToS3(getSetting(f'{getSetting("besspinEntrypoint")}S3Bucket'), logAndExit, 
                         tarballPath, 'besspin/production/artifacts/')
         printAndLog(f"Artifacts tarball uploaded to S3.")
-    elif (isEqSetting('mode', 'evaluateSecurityTests')):
+    elif (isEqSetting('mode', 'evaluateSecurityTests') and (not isEnabled('bootTest'))):
         checkValidScores()
         if (isEnabled('computeNaiveCWEsTally')):
             computeNaiveCWEsTally()
