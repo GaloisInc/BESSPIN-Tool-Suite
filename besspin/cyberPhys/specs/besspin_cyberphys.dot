@@ -1,0 +1,44 @@
+// The Round Table
+digraph {
+	CyberPhys [label="BESSPIN Cyber Physical Demonstrator" shape=box]
+	ECU [label=ECU shape=ellipse]
+	"ECU SW" [label="ECU SW" shape=hexagon]
+	"Secure ECU" [label="Secure ECU" shape=hexagon]
+	"Baseline ECU" [label="Baseline ECU" shape=hexagon]
+	Infotainment [label=Infotainment shape=ellipse]
+	"Infotainment Thin Client" [label="Infotainment Thin Client" shape=hexagon]
+	"Infotainment Server SW" [label="Infotainment Server SW" shape=hexagon]
+	"Secure Infotainment Server" [label="Secure Infotainment Server" shape=hexagon]
+	"Baseline Infotainment Server" [label="Baseline Infotainment Server" shape=hexagon]
+	"Simulator PC" [label="Simulator PC" shape=ellipse]
+	Ignition [label=Ignition shape=hexagon]
+	BeamNG [label=BeamNG shape=hexagon]
+	SimPCDisplay [label=SimPCDisplay shape=hexagon]
+	"Security Mux" [label="Security Mux" shape=hexagon]
+	"Instrument Cluster" [label="Instrument Cluster" shape=hexagon]
+	"Admin PC" [label="Admin PC" shape=ellipse]
+	"BESSPIN Tool" [label="BESSPIN Tool" shape=hexagon]
+	"Hacker Kiosk" [label="Hacker Kiosk" shape=ellipse]
+	"Hacker UI" [label="Hacker UI" shape=hexagon]
+	CyberPhys -> ECU
+	ECU -> "Secure ECU"
+	ECU -> "Baseline ECU"
+	CyberPhys -> Infotainment
+	Infotainment -> "Secure Infotainment Server"
+	Infotainment -> "Baseline Infotainment Server"
+	Infotainment -> "Infotainment Thin Client"
+	CyberPhys -> "Simulator PC"
+	"Simulator PC" -> BeamNG
+	"Simulator PC" -> Ignition
+	"Simulator PC" -> "Security Mux"
+	"Simulator PC" -> "Instrument Cluster"
+	"Simulator PC" -> SimPCDisplay
+	CyberPhys -> "Admin PC"
+	"Admin PC" -> "BESSPIN Tool"
+	CyberPhys -> "Hacker Kiosk"
+	"Hacker Kiosk" -> "Hacker UI"
+	"ECU SW" -> "Secure ECU" [style=dotted]
+	"ECU SW" -> "Baseline ECU" [style=dotted]
+	"Infotainment Server SW" -> "Secure Infotainment Server" [style=dotted]
+	"Infotainment Server SW" -> "Baseline Infotainment Server" [style=dotted]
+}

@@ -1,4 +1,4 @@
-# CI for SSITH-FETT-Target
+# CI for BESSPIN-Tool-Suite
 
 ## Regular CI
 
@@ -28,12 +28,12 @@ Flavors:
 1. **unix:** Runs on machines tagged `docker-fpga`.
 2. **freertos:** Runs on machines tagges `docker-fpga-io`.
 
-## AWS Testing CI
+## AWS Pseudo CI
 
 ### Setup
 
 - Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-- If you will specify a SSITH-FETT-Target branch (`-b`) or a SSITH-FETT-Binaries branch (`-bb`), create an SSH key (default named `~/.ssh/id_rsa`) and grant it access to your github and gitlab-ext accounts.
+- If you will specify a BESSPIN-Tool-Suite branch (`-b`) or a BESSPIN-LFS branch (`-bb`), create an SSH key (default named `~/.ssh/id_rsa`) and grant it access to your github account.
 
 ### Usage
 
@@ -41,7 +41,7 @@ Flavors:
 
 2.
 ```bash
-usage: aws-testing-ci.py [-h] [-a AMI] [-b BRANCH] [-bb BINARIES_BRANCH] [-c CAP]
+usage: aws-pseudo-ci.py [-h] [-a AMI] [-b BRANCH] [-bb BINARIES_BRANCH] [-c CAP]
                          [-i [INSTANCE_INDICES [INSTANCE_INDICES ...]]]
                          [-k KEY_PATH] [-p PEM_KEY_NAME] [-n NAME] [-r RUNS]
                          [-m {fett,cwe,all}]
@@ -49,7 +49,7 @@ usage: aws-testing-ci.py [-h] [-a AMI] [-b BRANCH] [-bb BINARIES_BRANCH] [-c CAP
 
 ### Functioning
 
-AWS Testing CI uses the bucket described in [configs.py](configs.py) for both communication between instances and `aws-testing-ci.py` (within the S3 bucket, these will be under the prefix `communications/`) and for posting artifacts (logs) under the prefix `artifacts/`.
+AWS Pseudo CI uses the bucket described in [configs.py](configs.py) for both communication between instances and `aws-pseudo-ci.py` (within the S3 bucket, these will be under the prefix `communications/`) and for posting artifacts (logs) under the prefix `artifacts/`.
 
 ### Results
 
@@ -57,4 +57,4 @@ Results will be printed to screen, and put into the file `results.txt`.
 
 ### Logs 
 
-Logs will be writted to the file `aws-test-suite.log`, and contain very detailed information about the execution of `aws-testing-ci.py` 
+Logs will be writted to the file `aws-pseudo-ci.log`, and contain very detailed information about the execution of `aws-pseudo-ci.py` 

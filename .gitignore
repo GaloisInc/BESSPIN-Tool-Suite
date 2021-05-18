@@ -6,16 +6,21 @@ myCyberPhys.ini
 core
 *.mypy_cache/
 .DS_STORE
-.idea/
-.vscode/
-fett/cwesEvaluation/*/*.als
-fett/cwesEvaluation/*/*.map
-fett/target/utils/uartDevicesMap.json
+.idea
+.vscode
+besspin/cwesEvaluation/*/*.als
+besspin/cwesEvaluation/*/*.map
+besspin/target/utils/uartDevicesMap.json
 
 # CI Gitignores
-ci/userdata.txt
-ci/results.txt
-ci/aws-test-suite.log
-fett-ci.log
-aws-test-suite.log
+aws-pseudo-ci.log
 results.txt
+userdata.txt
+besspin-ci.log
+
+#CyberPhys
+*.elf
+*.asm
+*.o
+*.bin
+besspin/cyberPhys/hacking/j1939hack/main.h

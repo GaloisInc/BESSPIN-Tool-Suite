@@ -1,0 +1,19 @@
+@startuml
+
+
+actor Driver
+participant "ThinClient\n(Separate network)" as ThinClient
+participant Mux
+collections "Infotainment\nServer" as Server
+
+Driver --> ThinClient: presses button
+ThinClient -[#red]> Mux: CAN msg BUTTON_PRESSED
+Mux -[#green]> Server: Forward BUTTON_PRESSED
+Server -> Server: Update internal state
+Server -[#green]> Mux: CAN msg INFOTAINMENT_STATE
+Mux -> Mux: Filter only the server on the active network
+Mux -> Mux: Update music/volume state from active server
+Mux -[#red]> ThinClient: Forward INFOTAINMENT_STATE
+ThinClient --> Driver: displays respose
+
+@enduml

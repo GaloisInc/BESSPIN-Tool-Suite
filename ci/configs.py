@@ -1,15 +1,15 @@
 #! /usr/bin/env python3
 """
---- fett-ci.py is the CI entry to the FETT-Target program. 
+--- besspin-ci.py is the CI entry to the BESSPIN program. 
 --- This file provide the combinations of CI files generated.
 --- Every combination is represented as a set of tuples. 
     Each tuple represents one setting and its possible values.
     Each "values" should be a tuple. Please note that a 1-element tuple should be: ('element',)
 """
-backupFettAMI = { 'ImageId' : 'ami-07fc3f8f4525f1c94', 
+backupBesspinAMI = { 'ImageId' : 'ami-07fc3f8f4525f1c94', 
                 'CreationDate' : '2020-09-08T16:28:43.000Z',
                 'OwnerId' : '363527286999'} 
-# Please update occasionally. Used by ./utils.getFettTargetAMI() instead of erring.
+# Please update occasionally. Used by ./utils.getBesspinAMI() instead of erring.
 
 ciAWSqueue = 'https://sqs.us-west-2.amazonaws.com/845509001885/ssith-fett-target-ci-develop-pipeline-PipelineSQSQueue-1IOF3D3BU1MEP.fifo'
 ciAWSbucket = 'ssith-fett-target-ci-develop'
@@ -24,11 +24,11 @@ commonDefaults = {
     ('useCustomQemu',('No',)),
     ('useCustomOsImage',('No',)),
     ('useCustomProcessor',('No',)),
-    ('productionTargetIp',('172.31.30.56',))
+    ('remoteTargetIp',('172.31.30.56',))
 }
 
 commonDefaultsFETT = {
-    ('mode',('test',))
+    ('mode',('fettTest',))
 }
 
 commonDefaultsCWEs = {

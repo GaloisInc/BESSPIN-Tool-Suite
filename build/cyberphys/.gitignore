@@ -1,6 +1,0 @@
-*.elf
-*.asm
-*.o
-*.bin
-
-hacking/j1939hack/main.h

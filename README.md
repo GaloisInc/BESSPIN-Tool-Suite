@@ -1,64 +1,71 @@
-# SSITH-FETT-Target
-The target platform for the SSITH FETT bug bounty exercise.
+# BESSPIN-Tool-Suite #
 
+The core tool of the BESSPIN Framework.
+
+**Disclaimer:** *This is prototype beta software*, with support
+provided to SSITH TA-1 teams.  It does not currently implement all
+planned features, and contains bugs both known and unknown.  If
+you encounter a problem or would like to request improvements, please
+contact Galois through documented support channels.
+
+## Table of Contents ##
+
+- [Overview](#overview)
+- [Software Requirements and Setup](#software-requirements-and-setup)
+- [Usage](#usage)
+- [Submodules](#submodules)
+- [Developer Starter Kit](#developer-starter-kit)
+
+___
+
+## Overview ##
+
+The tool performs a few different *tasks* that all revolve around the same *function*. The motivation behind the core functionality, i.e. the *function*, is to run a *program* on a target-under-test (TUT) in a robust and reproducible manner, where the TUT can be of multiple different OSes running on several different processor architectures running on multiple different backends.
+
+In particular, the different *tasks* are called *modes*, and their different tool flows are described in detail in [modes.md](./docs/base/modes.md). The bug bounty modes have more details in [this directory](./docs/bugBounty2020/), the security evaluation mode is described in detail [here](./docs/cwesEvaluation/), and the cyberphysical demonstrator's documentation can be found [here](./docs/cyberPhys).
+
+The different OSes are detailed in [OSes.md](./docs/base/OSes.md), while the different processors are mentioned [here](./docs/base/configuration.md), and the different backends are explained in [targets.md](./docs/base/targets.md).
+
+---
 
 ## Software Requirements and Setup
 
 To clone the repo and start `the nix-shell`, please use:
 
 ```bash
-git clone git@github.com:DARPA-SSITH-Demonstrators/SSITH-FETT-Target.git
-cd SSITH-FETT-Target
-./init_submodules.sh
+git clone git@github.com:GaloisInc/BESSPIN-Tool-Suite.git
+cd BESSPIN-Tool-Suite
+./utils/init_submodules.sh
 nix-shell
 ```
 
-* For `nix-shell` issues, please check the instructions in [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment).   
+- The `nix-shell` is the interactive shell for the Nix package manager. Please refer to [nix.md](./docs/base/nix.md) for more setup details. Please note that Nix, per version 2.3.10, is only supported on Linux (i686, x86_64, aarch64) and macOS (x86_64). [Ticket #1051 is about running the tool out-of-nix.]
+- Each backend (target) has different system and setup requirements, these can be found in [targets.md](./docs/base/targets.md).
+- Sudo privileges: Some parts of the tool might need sudo privileges, especially for network setup and hardware drivers access. If you do not wish to be attentive to the tool, you may just allow any sudo member to execute a group of commands without password by adding the following to the sudoers file:
+```bash
+    %sudo ALL=NOPASSWD: /path/to/command [flags], /path/to/another/command [flags]
+```
+Also, a more radical approach would be to remove all password requirements for a certain user, `${USER}`. The following can be thus added to the sudoers file:
+```
+${USER} ALL=(ALL) NOPASSWD:ALL
+```
 
-* Regarding local `fpga` target:   
-    1. A GFE SoC on a Xilinx VCU118 FPGA should be accessible, in
-  addition to executing all the [GFE setup instructions](https://gitlab-ext.galois.com/ssith/gfe/tree/develop).   
-    2. Note that the name of the ethernet adaptor connected to the VCU118 might change from a system to
-      another. Please review the [FPGA host network configuration setup
-      instructions](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Docs/blob/develop/CI-CD/HostNetworkSetup.md)
-      for more details about the adaptors and IP settings. In case you
-      intend to use a different setup, please change
-      [setupEnv.json](fett/base/utils/setupEnv.json) accordingly.
+Alternatively, there is a docker container that has the Nix store populated, and is ready to go. The resources needed to build the docker container are currently in [the docker directory](https://github.com/GaloisInc/BESSPIN-Environment/tree/master/docker/). The docker image is `galoisinc/besspin:tool-suite`, and requires Galois artifactory access to fetch. The recommended command to start the image is:
+```bash
+    sudo docker run -it --privileged=true --network host -v /path/to/BESSPIN-Tool-Suite:/home/besspinuser/BESSPIN-Tool-Suite galoisinc/besspin:tool-suite
+```
 
-* Sudo privileges:
-  - Note that some parts of the tool might need sudo privileges, especially for network setup. If you do not wish to be attentive to the tool, you may just allow any sudo member to execute a group of commands without password by adding the following to the sudoers file:
-  ```bash
-    %sudo ALL=NOPASSWD: <path>/ip, <path>/sysctl, <path>/iptables, <path>/pkill, <path>/kill
-  ```
+---
 
-### AWS Setup
-
-To utilize its FireSim and Connectal integration, an AMI was made to run the FETT Target on a F1 instance. It hosts an environment that combines the requirements of the FireSim, Connectal, and FETT projects. The most recent AMI is referenced ID is in the newest release tag.
-
-#### Contents
-
-The image is based on the `FPGA Developer AMI - 1.6.0-40257ab5-6688-4c95-97d1-e251a40fd1fc-ami-0b1edf08d56c2da5c.4 (ami-02b792770bf83b668)` AMI. It runs CentOS 7 and is the AMI used for Firesim. It adds
-
-* An updated version of Git, required by the FETT Environment nix shell installation
-* Git LFS, needed by FETT Binaries
-* [The Nix Package Manager](https://nixos.org/nix/)
-* [SSITH-FETT-Environment](https://github.com/DARPA-SSITH-Demonstrators/SSITH-FETT-Environment) with the environment pre-populated at `/nix/store`
-* [Cloudwatch](https://aws.amazon.com/cloudwatch/)
-
-After launching, it is necessary to setup the git `name` and `email`, as well as register SSH keys with github and gitlab accounts that have the correct access.
-
-See the instructions in [docs/createFettAMI.md](./docs/createFettAMI.md) to recreate the image manually.
-
-
-## User Manual ##
+## Usage ##
 
 To run the tool, use the following:
 ```
-usage: fett.py [-h] [-c CONFIGFILE | -cjson CONFIGFILESERIALIZED]
+usage: besspin.py [-h] [-c CONFIGFILE | -cjson CONFIGFILESERIALIZED]
                [-w WORKINGDIRECTORY] [-l LOGFILE] [-d]
                [-ep {devHost,ciOnPrem,ciAWS,awsProd,awsDev}] [-job JOBID]
 
-FETT (Finding Exploits to Thwart Tampering)
+BESSPIN (Balancing Evaluation of System Security Properties with Industrial Needs)
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -70,7 +77,7 @@ optional arguments:
   -w WORKINGDIRECTORY, --workingDirectory WORKINGDIRECTORY
                         Overwrites the default working directory: ./workDir/
   -l LOGFILE, --logFile LOGFILE
-                        Overwrites the default logFile: ./${workDir}/fett.log
+                        Overwrites the default logFile: ./${workDir}/besspin.log
   -d, --debug           Enable debugging mode.
   -ep {devHost,ciOnPrem,ciAWS,awsProd,awsDev}, --entrypoint {devHost,ciOnPrem,ciAWS,awsProd,awsDev}
                         The entrypoint
@@ -78,71 +85,36 @@ optional arguments:
                         The job ID in production mode.
 ```
 
-All the needed configuration is done using the main [INI
-file](https://en.wikipedia.org/wiki/INI_file) configuration.  The
-default file is [config.ini](./config.ini).
+Configuration is explained in detail in [configuration.md](./docs/base/configuration.md). Although `-cjson` is an alternative option, it is strongly recommended to use an INI file as the document describes. The serialized option is specific to the production mode in bug bounty, and is intended to be used automatically by a cloud hook script on a host instantiated by the bug bounty website; more details can be found in [the bug bounty documentation](./docs/bugBounty2020/).
 
-[config.ini](./config.ini) is heavily commented with descriptions of
-the meaning of every parameter.  Please note that:
-  - Keep the comments on separate lines from values.  Order of
-    parameters does not matter.
-  - Section headers are required (Between square brackets).  The
-    `[functionality]` is the top-level section to configure the main
-    functionality. The `[target]` section is used in non-`cyberPhys` modes. 
-  - Parameters names are case sensitive.
-  - For boolean parameters, you can use 0/1, False/True, Yes/No [all
-  case insensitive].
+If the tool is executed manually, there is no need to provide an entrypoint (will be assigned `devHost` by default), or a job ID. These are for when the tool is executed in batch test mode and CI.
 
-Some useful configuration options:
-- `mode`: Choose either `test` for the testing flow, or `production` for leaving the apps switched on for researchers interactions, or `evaluateSecurityTests` for the BESSPIN CWEs evaluation tests, or `cyberPhys` for many-target mode.
-- `binarySource`: Choose the team's binary srouces from `['GFE', 'LMCO', 'Michigan', 'MIT', or 'SRI-Cambridge']`.
-- `target`: Choose either `awsf1` for the main FETT target, `vcu118` for Xilinx VCU118 hardware
-    emulation, or `qemu` for [QEMU](https://www.qemu.org/) emulation.
-- `processor`: One of the GFE processors or the TA-1 teams processors.
-- `osImage`: The operating system on which the tests will run.  The
-    SSITH OSs are either [FreeRTOS](https://www.freertos.org/),
-    [FreeBSD](https://www.freebsd.org/), or [Linux Debian](https://www.debian.org/),
-    or [Busybox](https://busybox.net/about.html).
-- `useCustomOsImage`: If disabled, Nix (if image is available) or FETT-Binaries images will be used.
-- `useCustomProcessor`: If disabled, Nix (if applicable) or FETT-Binaries bitfiles will be used. If enabled, a source directory has to be provided where the required files exist.
-- `openConsole`: returns an open console for Unix targets. For FreeRTOS, it shows the UART output while running.
-- `gdbDebug`: halts the run and leaves a port for remote GDB debugging.
-- `buildApps`: Cross-compile the apps in `test` mode.
+The debug mode will dramatically increase the size of the log file (`./${workDir}/besspin.log` by default), so please use it only if needed.
 
-Note that the AWS platform variant is determined based on the `binarySource`-`processor`-`osImage` choice. More information about these decisions can be found in [the cloudGFE TA-1 and GFE tracker spreadsheet](https://docs.google.com/spreadsheets/d/1J8MSDQS1X0V-wPHiNdCTgu7Pwf8GcgTy91kcn8u9mt0/edit#gid=0).
+---
 
+## Submodules ##
 
-## Developer Manual ##
+The tool has the following submodules:
+- [BESSPIN-Environment](./BESSPIN-Environment): The Nix shell source codes for the required packages and binaries. More details about Nix are in [nix.md](./docs/base/nix.md).
+- [BESSPIN-Voter-Registration](./BESSPIN-Voter-Registration): As detailed [here](./docs/bugBounty2020/), a voting registration system was one of the applications in the attack surface for the Unix targets of the bug bounty. This submodule has documentation, build instructions, source codes, design files, etc.
+- [BESSPIN-LFS](./BESSPIN-LFS): This is the Git LFS repo that contains many resources the tool needs for certain configurations, like OS binaries, FPGA bitstreams, AWS AFI IDs, application pre-built binaries, etc.
+- [FreeRTOS](./FreeRTOS): The Galois fork of the classic FreeRTOS repo. This is used for building the FreeRTOS binaries since each CWE test and each application needs to be cross-built alongside the FreeRTOS kernel in a single binary. 
 
-- To control which files to be transferred to target, edit the corresponding function inside `fett/apps/build.py`. You'd have to tar the files into a tar file named `os.path.join(getSetting('buildDir'),getSetting('tarballName'))`, and enable the setting for sending the files: `setSetting('sendTarballToTarget',True)`.
-- To execute, modify the function `runApp` inside `fett/apps/<appName>/run.py` to do whatever you want. 
-- The most important functions provided inside the `target` object which will be given by default to `runApp()`, is `runCommand`, `switchUser`, and `openSshConn` (all of which are defined inside `fett/target/common.py`.
-- There are other functions that can help you while coding whether the build or the execute functions for your experiments. These functions are defined inside `fett/base/utils/misc.py`:
-    - `printAndLog(message, doPrint=True)`
-    - `warnAndLog(message, doPrint=True, exc=None)`
-    - `errorAndLog(message, doPrint=True, exc=None)`
-    - `logAndExit(message, exc=None, exitCode=EXIT.Unspecified)`
-    - exitCodes are define in the object `EXIT`.
-    - `getSetting(setting)`: returns the value of `setting`.
-    - `setSetting(setting,val)`: sets the value of `setting`.
-    - `isEnabled(setting)`: returns the value of a boolean `setting`.
-    - `isEqSetting(setting,val)`: returns True if the setting's value is equal to `val`.
-    - `getSettingDict(setting,hierarchy)`: parses a setupEnv dictionary and returns the value.
-    - `mkdir(dirPath,addToSettings=None)`: makes a directory `dirPath`. If `addToSettings=STR`, then a setting called STR will be created and equal to this path.
-    - `cp(src,dest,pattern=None)`: copy (only files for now). If the `pattern=*.c` for example, it will expand the pattern before copying.
-    - `tar(tarFileName, filesList=[])`: Create a tar archive of the files in `filesList`. `filesList` is a list of either:
-      (1) file names, to be copied to the tar archive as-is. (2) `(dest name, file name)` pairs, i.e. `file name` will be copied to the archive as `dest name`. Useful for copying files from deeply nested trees.
-    - `renameFile(src,dest)`: To rename files.
-    - `copyDir(src,dest,renameDest=False,copyContents=False)`: Copy directory `src` to `dest`. If `renameDest` is enabled, the `src` becomes `dest` instead of its child. If `copyContents` is enabled, the `src` contents are copied to `dest`.
-    - `make(argsList,dirPath)`: makes a makefile inside dirPath. The `-C` flag is added in the function, you add any other flags to make.
-    - `ftOpenFile(filePath,mode)`: safely opens a file, and stores its handle in the trash can. You should still close it cleanly, but if the error handling is complicated, then don't worry about it, everything in the trash can object will be destroyed upon exit.
-    - `ftReadLines (filePath)`: Returns the contents in `filePath` as a list of strings
-    - `matchExprInLines (expr,lines)`: If you pass a regex `expr` and a list of strings, it returns the matched string.
+---
 
-- To add a configuration option, you have to update the json dictionary in `fett/base/utils/configData.json`.
-- To add/change a system setting, you have to update the json dictionary in `fett/base/utils/setupEnv.json`.
+## Developer Starter Kit ##
+
+- The target classes structure is briefly explained in [targets.md](./docs/base/targets.md). This should be the starting point to add a new OS or a new backend to the tool.
+- There are many functions that are used throughout the tool and can help with integration. These functions are defined inside `besspin/base/utils/misc.py`. It would be useful to look at this file prior to any development work on this codebase. Especially `printAndLog`, `warnAndLog`, `errorAndLog`, `logAndExit`, `getSetting`, `ftOpenFile`, `make`.
+- To add a configuration option, you have to update the json dictionary in `besspin/base/utils/configData.json`.
+- To add/change a system setting, you have to update the json dictionary in `besspin/base/utils/setupEnv.json`.
+- The directories structure is:
+  - `apps`: Bug bounty specific.
+  - `base`: The core functionality (ex. target)
+  - `cwesEvaluation`: Security evaluation specific.
+  - `cyberPhys`: Cyberphysical demonstrator functions.
+  - `target`: The backend classes in addition to the start/launch/end functions.
+- [modes.md](./docs/base/modes) has some low-level details about how the tool works in different modes. It's definitely a recommended read before development.
 
 
-## CWE Evaluation Mode (Testgen) ##
-
-Instructions for running the FETT tool in CWE evaluation mode can be found here: [docs/evaluateSecurityTestsMode.md](docs/evaluateSecurityTestsMode.md).

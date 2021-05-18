@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 """
---- fett-ci.py is the CI entry to the FETT-Target program. 
+--- besspin-ci.py is the CI entry to the BESSPIN program. 
 --- This files provides some utility functions
 """
 
@@ -38,17 +38,17 @@ def errorAndLog(message, doPrint=True, exc=None):
         logging.error(formatExc(exc))
 
 
-def exitFettCi(exitCode=-1, exc=None, message=None):
+def exitBesspinCi(exitCode=-1, exc=None, message=None):
     if message:
-        print(f"(Error)~  FETT-CI: {message}")
+        print(f"(Error)~  BESSPIN-CI: {message}")
     if exc:
         print(f"(Error)~  <{exc.__class__.__name__}>: {exc}")
     if exitCode == -1:
-        print(f"(FATAL)~  End of FETT-CI: <JOB-FAILURE>")
+        print(f"(FATAL)~  End of BESSPIN-CI: <JOB-FAILURE>")
     elif exitCode == 0:
-        print(f"(Info)~  End of FETT-CI: <JOB-SUCCESS>")
+        print(f"(Info)~  End of BESSPIN-CI: <JOB-SUCCESS>")
     else:
-        print(f"(Info)~  End of FETT-CI: <JOB-FAILURE>")
+        print(f"(Info)~  End of BESSPIN-CI: <JOB-FAILURE>")
     exit(exitCode)
 
 
@@ -58,7 +58,7 @@ def exitOnInterrupt(xSig, xFrame):
         sigName = signalNames[xSig]
     else:
         sigName = f"signal#{xSig}"
-    exitFettCi(message=f"Received <{sigName}>!")
+    exitBesspinCi(message=f"Received <{sigName}>!")
 
 
 def generateAllConfigs(baseRunType, flavor, runModes):
@@ -118,7 +118,7 @@ def generateConfigFile(repoDir, outDir, dictConfig, testMode):
         xConfig.read_file(fConfig)
         fConfig.close()
     except Exception as exc:
-        exitFettCi(
+        exitBesspinCi(
             message=f"Failed to read configuration file <{templateConfigPath}>.",
             exc=exc,
         )
@@ -137,11 +137,11 @@ def generateConfigFile(repoDir, outDir, dictConfig, testMode):
                 if (xSetting not in ['runAllTests', 'randomizeParameters']): #repeated settings
                     break
         if not wasSet:
-            exitFettCi(
+            exitBesspinCi(
                 message=f"Failed to find the setting <{xSetting}> in <{templateConfigPath}>."
             )
     if not fileName:
-        exitFettCi(message=f"Failed to find the key <name> in dictConfig.")
+        exitBesspinCi(message=f"Failed to find the key <name> in dictConfig.")
 
     # Creating the config file
     if testMode:
@@ -156,7 +156,7 @@ def generateConfigFile(repoDir, outDir, dictConfig, testMode):
         xConfig.write(fConfig)
         fConfig.close()
     except Exception as exc:
-        exitFettCi(
+        exitBesspinCi(
             message=f"Failed to write configuration file <{xConfigFilePath}>.", exc=exc
         )
 
@@ -194,15 +194,15 @@ def prepareArtifact(
     try:
         os.mkdir(artifactsPath)
     except Exception as exc:
-        exitFettCi(message=f"Failed to create <{artifactsPath}>.", exc=exc)
+        exitBesspinCi(message=f"Failed to create <{artifactsPath}>.", exc=exc)
 
-    # This is assuming fett-ci uses the default workDir and targetLogFile
+    # This is assuming besspin-ci uses the default workDir and targetLogFile
     # List all artifacts that generate a termination if they cannot be captured
     # This will run unless targetLogs=False, in which case we only add the non-
     #   essential logs.
     if targetLogs:
         workDir = os.path.join(repoDir, "workDir")
-        targetLogFile = os.path.join(workDir, "fett.log")
+        targetLogFile = os.path.join(workDir, "besspin.log")
         outFiles = glob.glob(os.path.join(workDir, "*.out"))
 
         listEssentialArtifacts = [configFile, targetLogFile] + outFiles
@@ -213,18 +213,18 @@ def prepareArtifact(
             listEssentialArtifacts.append(makeOutPath)
 
     # List all artifacts that are fine to ignore if they do not exist.
-    listArtifacts = [os.path.join(repoDir, "fett-ci.log")] #add fett-ci log file
+    listArtifacts = [os.path.join(repoDir, "besspin-ci.log")] #add besspin-ci log file
     if entrypoint in ["AWS", "AWSTesting"]:
         listArtifacts.append(os.path.join("/var", "log", "user-data.log"))
 
-    # Collect the essential artifacts, exit fett-ci if it cannot be gotten.
+    # Collect the essential artifacts, exit besspin-ci if it cannot be gotten.
     #   Only run this if we are collecting targetLogs
     if targetLogs:
         for xArtifact in listEssentialArtifacts:
             try:
                 shutil.copy2(xArtifact, artifactsPath)
             except Exception as exc:
-                exitFettCi(
+                exitBesspinCi(
                     message=f"Failed to copy <{xArtifact}> to <{artifactsPath}>.",
                     exc=exc,
                 )
@@ -234,7 +234,7 @@ def prepareArtifact(
             try:
                 shutil.copytree(cweLogsPath, os.path.join(artifactsPath,"cwesEvaluationLogs"))
             except Exception as exc:
-                exitFettCi(
+                exitBesspinCi(
                     message=f"Failed to copy <{cweLogsPath}> to <{artifactsPath}>.",
                     exc=exc,
                 )
@@ -260,7 +260,7 @@ def prepareArtifact(
         try:
             import importlib.util, tarfile
         except Exception as exc:
-            exitFettCi(message=f"Failed to <import importlib.util, tarfile>.", exc=exc)
+            exitBesspinCi(message=f"Failed to <import importlib.util, tarfile>.", exc=exc)
 
         # Tar the artifact folder
         tarFileName = f"{artifactsPath}.tar.gz"
@@ -269,12 +269,12 @@ def prepareArtifact(
             xFile.add(artifactsPath, arcname=None)
             xFile.close()
         except Exception as exc:
-            exitFettCi(message=f"tar: error creating {tarFileName}", exc=exc)
-        print(f"(Info)~  FETT-CI: Created <{tarFileName}> including all artifacts.")
+            exitBesspinCi(message=f"tar: error creating {tarFileName}", exc=exc)
+        print(f"(Info)~  BESSPIN-CI: Created <{tarFileName}> including all artifacts.")
 
         # import the shared module: aws.py
         moduleSpec = importlib.util.spec_from_file_location(
-            "aws", os.path.join(repoDir, "fett", "base", "utils", "aws.py")
+            "aws", os.path.join(repoDir, "besspin", "base", "utils", "aws.py")
         )
         awsModule = importlib.util.module_from_spec(moduleSpec)
         moduleSpec.loader.exec_module(awsModule)
@@ -282,40 +282,40 @@ def prepareArtifact(
         # Upload the folder to S3
         if entrypoint == "AWS":
             awsModule.uploadToS3(
-                ciAWSbucket, exitFettCi, tarFileName, os.path.join('fett-target','ci','artifacts',jobID),
+                ciAWSbucket, exitBesspinCi, tarFileName, os.path.join('besspin','ci','artifacts',jobID),
             )
         else:  # AWS Testing
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, tarFileName, os.path.join('artifacts',jobName),
+                ciAWSbucketTesting, exitBesspinCi, tarFileName, os.path.join('artifacts',jobName),
             )
-        print(f"(Info)~  FETT-CI: Artifacts tarball uploaded to S3.")
+        print(f"(Info)~  BESSPIN-CI: Artifacts tarball uploaded to S3.")
 
         # Send termination message to SQS
         jobStatus = "success" if (exitCode == 0) else "failure"
         if entrypoint == "AWS":
             awsModule.sendSQS(
                 ciAWSqueue,
-                exitFettCi,
+                exitBesspinCi,
                 jobStatus,
                 jobID,
                 nodeIndex,
-                reason="fett-target-ci-termination",
+                reason="besspin-ci-termination",
             )
-            print(f"(Info)~  FETT-CI: Termination message sent to SQS.")
+            print(f"(Info)~  BESSPIN-CI: Termination message sent to SQS.")
         else:  # AWS Testing
-            instance_id = awsModule.getInstanceId(exitFettCi)
+            instance_id = awsModule.getInstanceId(exitBesspinCi)
             resultFileName = os.path.join(repoDir, instance_id)
             with open(resultFileName, "w") as f:
                 f.write(jobStatus)
                 f.close()
 
             awsModule.uploadToS3(
-                ciAWSbucketTesting, exitFettCi, resultFileName, f"communication/",
+                ciAWSbucketTesting, exitBesspinCi, resultFileName, f"communication/",
             )
-            print(f"(Info)~  FETT-CI: Results uploaded to S3.")
+            print(f"(Info)~  BESSPIN-CI: Results uploaded to S3.")
 
 
-def getFettTargetAMI (repoDir):
+def getBesspinAMI (repoDir):
     """
     This functions tries to get the AMI using 4 different methods:
     1. (Recommended): Using boto3
@@ -328,8 +328,8 @@ def getFettTargetAMI (repoDir):
     try:
         import boto3
         ec2Client = boto3.client('ec2', region_name='us-west-2')
-        allOwnerImages = ec2Client.describe_images(Owners=[backupFettAMI['OwnerId']])
-        mostRecentAMI = backupFettAMI #Let's find newer AMIs
+        allOwnerImages = ec2Client.describe_images(Owners=[backupBesspinAMI['OwnerId']])
+        mostRecentAMI = backupBesspinAMI #Let's find newer AMIs
         for image in allOwnerImages['Images']:
             if (image['CreationDate'] > mostRecentAMI['CreationDate']):
                 mostRecentAMI = image
@@ -352,7 +352,7 @@ def getFettTargetAMI (repoDir):
             if (valVersion > maxVersion[0]):
                 maxVersion = (valVersion, xItems)
         if (maxVersion[0]==0):
-            raise Exception("getFettTargetAMI: Failed to find the newest version.")
+            raise Exception("getBesspinAMI: Failed to find the newest version.")
         return '-'.join(maxVersion[1][1:])
 
     #Fall back to using "pygit2"
@@ -372,8 +372,8 @@ def getFettTargetAMI (repoDir):
 
     #Last resort: the hardcoded value
     try:
-        return backupFettAMI['ImageId']
+        return backupBesspinAMI['ImageId']
     except Exception as exc:
         warnAndLog(message=f"Failed to get the hardcoded AMI ID.", exc=exc)
-        exitFettCi(message=f"Failed to find the AMI ID.")
+        exitBesspinCi(message=f"Failed to find the AMI ID.")
 
