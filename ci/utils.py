@@ -341,11 +341,13 @@ def getBesspinAMI (repoDir):
         maxVersion = (0, None)
         for ref in listRefs:
             if (source == "pygit2"):
-                if (not ref.startswith('refs/tags/v')):
+                if (not ref.startswith('refs/tags/besspin-v')):
                     continue
-                xRef = ref.split('refs/tags/v')[1] #throw away the first part
+                xRef = ref.split('refs/tags/besspin-v')[1] #throw away the first part
             elif (source == "shell"):
-                xRef = ref.split('v')[1]
+                if (not ref.startswith('besspin-v')):
+                    continue
+                xRef = ref.split('besspin-v')[1]
             xItems = xRef.split('-')
             xVersion = xItems[0].split('.')
             valVersion = 1000*int(xVersion[0]) + int(xVersion[1]) # so "3.10" --> 3,010
