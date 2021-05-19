@@ -23,9 +23,10 @@ class Watchdog(ccomp.ComponentPoller):
     3. reeset the target upon request
     """
     def __init__(self, targetId):
-        in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts('watchdogBase')
+        in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts('watchdogBase', targetId)
         name = f"watchdog{targetId}"
         f_Hz = getSetting('cyberPhysWatchdogFrequency')
+        printAndLog(f"Starting {name} wihh {in_socks} and {out_socks}", doPrint=False)
         super().__init__(name, in_socks, out_socks, sample_frequency=f_Hz)
 
         self.wHeartbeatQueue = getSetting('watchdogHeartbeatQueue', targetId=targetId)
