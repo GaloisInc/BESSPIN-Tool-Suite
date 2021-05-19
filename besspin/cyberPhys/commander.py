@@ -99,6 +99,7 @@ class Commander(ccomp.ComponentPoller):
 
     def on_poll_poll(self, t):
         """poll next state"""
+        # NOTE: You may want to check for termination so that you don't need to add a cycle at terminate.
         self.next_state()
 
     # TODO: handle sending component_id|error_code as required in message specs
