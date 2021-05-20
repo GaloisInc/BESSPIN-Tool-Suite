@@ -1,6 +1,9 @@
 .vscode
 .o
 a.out
+hacked_server
+hacked_server_linux
+hacked_server_freebsd
 infotainment_server
 infotainment_server_linux
 infotainment_server_freebsd
