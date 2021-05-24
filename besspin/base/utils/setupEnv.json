@@ -422,10 +422,10 @@
             "name" : "cyberPhysNodes",
             "type" : "dict",
             "val" : {
-                "AdminPc" : "192.168.0.231",
+                "AdminPc" : "10.88.88.1",
                 "InfotainmentThinClient" : "10.88.88.2",
                 "HackerKiosk" : "10.88.88.3",
-                "SimPc" : "192.168.0.231"
+                "SimPc" : "10.88.88.4"
             }
         },
         {

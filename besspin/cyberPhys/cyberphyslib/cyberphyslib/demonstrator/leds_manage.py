@@ -166,7 +166,8 @@ class LedManagerComponent(ComponentPoller):
         base_path = pathlib.Path(os.path.realpath(__file__)).parent / "utils"
         fadecandy_executable = "fcserver.exe"
         fadecandy_json_cfg = "cyberphys_led_strings.json"
-        return [(base_path / fadecandy_executable).resolve(), (base_path / fadecandy_json_cfg).resolve()]
+        return [str((base_path / fadecandy_executable).resolve()),
+                str((base_path / fadecandy_json_cfg).resolve())]
 
     def start_opc(self):
         """starts the fadecandy server OPC server"""
