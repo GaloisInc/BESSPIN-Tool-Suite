@@ -76,9 +76,7 @@ class Commander(ccomp.ComponentPoller):
         self.restart_failed = False
         self.degraded_mode_possible = False
         self.machine = Machine(self, states=self.states, transitions=self.transitions, initial='boot')
-        self.targets = []
-        for _ in range(1,getSetting('nTargets')+1):
-            self.targets.append("READY")
+        self.targets = ["READY"] * getSetting('nTargets')
         self.last_ready_msg = 0.0
 
         # C&C Network connection
@@ -190,4 +188,3 @@ class Commander(ccomp.ComponentPoller):
                 # Request a reset of the target
                 self.targets[targetId] = "RESET"
                 self.target_reset_requested = True
-
