@@ -64,7 +64,7 @@ class Commander(ccomp.ComponentPoller):
         canlib.TARGET_6: 6,
     }
 
-    target_list = [canlib.TEENSY, canlib.TARGET_1, canlib.TARGET_2, canlib.TARGET_3, canlib.TARGET_4, canlib.TARGET_5, canlib.TARGET_6]
+    target_list = [k for k in target_ids.keys()]
 
     def __init__(self):
         # input space as class members
@@ -89,13 +89,6 @@ class Commander(ccomp.ComponentPoller):
         name = "commander"
         in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts(name)
         super().__init__(name, in_socks, out_socks, sample_frequency=self.POLL_FREQ)
-
-    def draw_graph(self, fname: str):
-        """draw a fsm graphviz graph (for documentation, troubleshooting)
-
-        NOTE: you will need to install graphviz (with dot)
-        """
-        self.machine.get_graph().draw(fname, prog='dot')
 
     def on_poll_poll(self, t):
         """poll next state"""
@@ -180,13 +173,12 @@ class Commander(ccomp.ComponentPoller):
     def _(self, msg, t):
         """Filter received messages"""
         for targetId in range(1,getSetting('nTargets')+1):
+            printAndLog(f"<{self.__class__.__name__}> Received msg: {msg}",doPrint=False)
             if msg == f"READY {targetId}":
-                print(msg) # DEBUG
                 self.targets[targetId] = "READY"
                 self.restart_ok = True
                 self.send_component_ready(self.target_list[targetId])
             elif msg == f"ERROR {targetId}":
-                print(msg) # DEBUG
                 # Request a reset of the target
                 self.targets[targetId] = "RESET"
                 self.target_reset_requested = True
