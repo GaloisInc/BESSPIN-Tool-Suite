@@ -123,7 +123,7 @@ class IgnitionDirector:
 
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
         self.scenario_timeout = cconf.SCENARIO_TIMEOUT
-        self.cc_timeout = 20 # 20 seconds
+        self.cc_timeout = cconf.CC_TIMEOUT # 20 seconds
 
         self._handler = ComponentHandler()
         self.machine = Machine(self, states=self.states, transitions=self.transitions, initial='startup', show_conditions=True)
@@ -149,7 +149,6 @@ class IgnitionDirector:
         # C&C message bus
         nodes = [admin_addr, director_addr]
         self.cc_recvr = canlib.TcpBus(director_addr, nodes)
-        self.cc_timeout = 30.0
 
         # input space as class members
         self.input_noncrit_fail = False
