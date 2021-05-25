@@ -269,6 +269,8 @@ class LedManagerComponent(ComponentPoller):
     def on_start(self):
         self.start_opc()
         self.system_startup()
+        self.update_pattern(LedPatterns.NOMINAL)
+        self.update_leds()
         self.start_poller()
 
     def on_exit(self):
@@ -284,3 +286,4 @@ class LedManagerComponent(ComponentPoller):
     def _(self, msg, t):
         """subscribe to requests to change the led pattern"""
         self.update_pattern(msg.message)
+        self.update_leds()
