@@ -896,7 +896,7 @@ class commonTarget():
         setSetting("appLog",appLog)
 
         if (self.binarySource=='SRI-Cambridge'):
-            setSetting('sqliteBin','/besspin/bin/sqlite3')
+            setSetting('sqliteBin','/fett/bin/sqlite3')
         else:
             setSetting('sqliteBin','/usr/bin/sqlite')
 
@@ -1209,6 +1209,7 @@ class commonTarget():
                 endsWith = 'Power off'
             else:
                 endsWith = pexpect.EOF
+            timeout = 120 if (self.processor=='bluespec_p3') else 60
             self.runCommand(poweroffCommand[self.osImage],endsWith=endsWith,suppressErrors=True)
             if (self.onlySsh):
                 self.closeSshConn()
@@ -1406,7 +1407,7 @@ class commonTarget():
             self.switchUser() #has to be executed on root
         # sshd_config location
         if (self.binarySource == 'SRI-Cambridge'):
-            sshdConfigPath = "/besspin/etc/sshd_config"
+            sshdConfigPath = "/fett/etc/sshd_config"
         else: #default
             sshdConfigPath = "/etc/ssh/sshd_config"
         self.runCommand (f"echo \"PermitRootLogin yes\" >> {sshdConfigPath}")

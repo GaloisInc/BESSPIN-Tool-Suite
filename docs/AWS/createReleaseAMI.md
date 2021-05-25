@@ -68,10 +68,9 @@ On any machine, get the AMI ID, let's say `ami-xxxxxxxxxxxx`.
 ```
 git checkout master
 git pull
-git tag v3.N-ami-xxxxxxxxxxx
+git tag besspin-vX.X-ami-xxxxxxxxxxx
 git push --tags
 ```
-Note that `N` is the next point release.
 
 11. Copy the AMI to Virginia.
     - select the AMI --> right click --> copy AMI --> Destination reigion: N. Virginia --> Copy AMI

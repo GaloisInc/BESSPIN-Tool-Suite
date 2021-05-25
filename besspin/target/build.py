@@ -487,7 +487,7 @@ def crossCompileUnix(directory,extraString='',overrideBareMetal=False):
             and isEqSettingDict('customizedCompiling','gccDebian','bareMetal8.3') 
             and (not overrideBareMetal)
         ):
-        dockerToolchainImage = 'galoisinc/besspin:gfe-gcc83'
+        dockerToolchainImage = 'galoisinc/besspin:gcc83'
     else:
         dockerToolchainImage = None
     make (envLinux, directory,dockerToolchainImage=dockerToolchainImage)

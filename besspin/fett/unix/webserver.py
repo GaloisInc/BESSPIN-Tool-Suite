@@ -13,11 +13,11 @@ def install (target):
     appLog = getSetting('appLog')
 
     if isEqSetting('binarySource', 'SRI-Cambridge'):
-        target.runCommand("mkdir -p /besspin/nginx/etc/ssl/certs",tee=appLog)
-        target.runCommand("mkdir -p /besspin/nginx/etc/ssl/private",tee=appLog)
-        target.runCommand("cp -r certs/* /besspin/nginx/etc/ssl/certs",tee=appLog)
-        target.runCommand("cp -r keys/* /besspin/nginx/etc/ssl/private",tee=appLog)
-        target.runCommand("service besspin_nginx restart",tee=appLog)
+        target.runCommand("mkdir -p /fett/nginx/etc/ssl/certs",tee=appLog)
+        target.runCommand("mkdir -p /fett/nginx/etc/ssl/private",tee=appLog)
+        target.runCommand("cp -r certs/* /fett/nginx/etc/ssl/certs",tee=appLog)
+        target.runCommand("cp -r keys/* /fett/nginx/etc/ssl/private",tee=appLog)
+        target.runCommand("service fett_nginx restart",tee=appLog)
         return
     
     printAndLog("Installing nginx...",tee=appLog)

@@ -37,7 +37,7 @@ def add_official(target, dbfile):
 @decorate.timeWrap
 def install (target):
     if (isEqSetting('binarySource','SRI-Cambridge')):
-        prefix = "/besspin/var"
+        prefix = "/fett/var"
         # Add the voting password to the logs
         retCatPassword = target.runCommand("cat /root/bvrs-official-password")[1]
         passwordMatch = matchExprInLines (r"^(?P<b64Password>[A-Za-z0-9+/]{16})$",retCatPassword.splitlines())
@@ -144,7 +144,7 @@ def deploymentTest (target):
     sqlite = getSetting('sqliteBin')
     appLog = getSetting('appLog')    
     if (isEqSetting('binarySource','SRI-Cambridge')):
-      prefix = "/besspin/var"
+      prefix = "/fett/var"
     else:
       prefix = "/var"
     dbfile = f"{prefix}/www/data/bvrs.db"
