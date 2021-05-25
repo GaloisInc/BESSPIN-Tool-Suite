@@ -130,10 +130,20 @@ class Sim(component.ComponentPoller):
         """
         bng_args = { "home": config.BEAMNG_PATH,
                       "user": config.BEAMNG_USER_PATH}
+
+        # apply graphic settings if they are configured
+        if len(config.BEAMNG_GRAPHICS_SETTINGS) > 0:
+            beamng = BeamNGpy('localhost', config.BEAMNG_PORT, **bng_args)
+            with beamng as bng:
+                for setting, value in config.BEAMNG_GRAPHICS_SETTINGS.items():
+                    bng.change_setting(setting, value)
+                bng.apply_graphics_setting()
+
         self._beamng_context = BeamNGpy('localhost', config.BEAMNG_PORT, **bng_args)
+
         self._beamng_context.open()
 
-        self._scenario = Scenario('italy', 'SSITH',
+        self._scenario = Scenario(config.BEAMNG_SCENARIO_MAP, 'SSITH',
                                   description='Drive protected.')
         self._vehicle = Vehicle('ego_vehicle', licence='SSITH', **config.BEAMNG_VEHICLE_CONFIG,
                                 color='Red')
@@ -146,10 +156,11 @@ class Sim(component.ComponentPoller):
         self._vehicle.attach_sensor('electrics', electrics)
 
         self._scenario.add_vehicle(self._vehicle,
-                                   **config.BEAMNG_ITALY_SPAWNPOINTS[config.BEAMNG_SCENARIO_SPAWNPOINT])
+                                   **config.BEAMNG_SPAWNPOINTS[config.BEAMNG_SCENARIO_SPAWNPOINT])
 
         # Compile the scenario and place it in BeamNG's map folder
         self._scenario.make(self._beamng_context)
+
 
         try:
 
@@ -160,7 +171,7 @@ class Sim(component.ComponentPoller):
             # Load and start the scenario
             assert not self.polling_thread.stopped
             self._beamng_context.load_scenario(self._scenario)
-            self._beamng_context.set_relative_camera((-0.3, -.5, 0.95))
+            self._beamng_context.set_relative_camera(config.BEAMNG_CAMERA_POS)
             self._beamng_context.start_scenario()
 
             assert not self.polling_thread.stopped
@@ -256,7 +267,9 @@ class Sim(component.ComponentPoller):
     def _(self, data):
         """gear [P, R, N, D] -> -1, 5"""
         val, = data
-        gear_map = {b'P': 1, b'R': -1, b'N': 0, b'D': 2}
+        gear_map = {80: 1, 82: -1, 78: 0, 68: 2}
+        if val not in gear_map:
+            logger.sim_logger.error(f"received gear map value {val} cannot be decoded!")
         gear = gear_map.get(val, 0)
         return self.control_process("gear", (gear,), bounds=(-1, 5))
 
