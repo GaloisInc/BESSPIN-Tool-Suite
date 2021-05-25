@@ -5,9 +5,14 @@
     "color": {"gamma": 2.5, "whitepoint": [1.0, 1.0, 1.0]},
 
     "devices": [
-      {"type": "fadecandy", "serial": "RLWIVTCCUKGXPBMB", "map": [[ 0, 0, 0, 512 ]]},
-      {"type": "fadecandy", "serial": "FLIEDHDBKAITLVMT", "map": [[ 0, 512, 0, 512 ]]},
-      {"type": "fadecandy", "serial": "KSZNACLHCCAZFNAD", "map": [[ 0, 1024, 0, 512 ]]},
-      {"type": "fadecandy", "serial": "GEPXOKTRQYGBJXMT",	"map": [[ 0, 1536, 0, 512 ]]}
+        {"type": "fadecandy", "serial": "YGXFIUMMAOCTBTEX", "map": [[ 0, 0, 0, 512 ]]},
+        {"type": "fadecandy", "serial": "GEPXOKTRQYGBJXMT", "map": [[ 0, 512, 0, 384 ]]},
+        {"type": "fadecandy", "serial": "FJAGPHFVOCYHDRAP", "map": [[ 0, 896, 0, 192 ]]},
+        {"type": "fadecandy", "serial": "KSZNACLHCCAZFNAD", "map": [[ 0, 1088, 0, 256 ]]},        
+        {"type": "fadecandy", "serial": "RLWIVTCCUKGXPBMB", "map": [[ 0, 1344, 0, 256 ]]},
+        {"type": "fadecandy", "serial": "EQPJMCXBEUGZZFUD", "map": [[ 0, 1600, 0, 192 ]]},
+        {"type": "fadecandy", "serial": "QQRHOGXBGUUJHNSX", "map": [[ 0, 1792, 0, 128 ]]},
+        {"type": "fadecandy", "serial": "YMHTYEBDEWGJFXCH", "map": [[ 0, 1920, 0, 512 ]]},
+        {"type": "fadecandy", "serial": "DXEYXZSUUWGRPTEX", "map": [[ 0, 2432, 0, 512 ]]}        
     ]
 }
