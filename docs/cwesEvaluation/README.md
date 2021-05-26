@@ -33,6 +33,8 @@ Please note that this part of the tool-suite was originally called `testgen`; wh
 
 - [kernelModules.md](./constrainBufferErrors.md): How to cross-compile a kernel module for RISC-V Linux Debian. This flow has not been integrated with the tool, and there is no plan for doing that soon.
 
+- [poc-exploits](./poc-exploits): This directory has some proof-of-concept exploits to some of the SSITH vulnerability classes.
+
 - [ssithCWEsList.md](./ssithCWEsList.md): The full list of the CWEs and vulnerability classes supported by the SSITH program and the BESSPIN tool. This document is automatically generated based on a DARPA spreadsheet, and is compared against the various tool's parts using the [ssithCWEsList.py](../../utils/ssithCWEsList.py) utility.
 
 ## Tool's Mode of Operation ##

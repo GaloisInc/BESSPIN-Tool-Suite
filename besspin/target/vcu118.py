@@ -293,10 +293,10 @@ class vcu118Target (fpgaTarget, commonTarget):
                 objUartDevices = self.findUartDevices()
                 setSetting('vcu118UartDevices',objUartDevices)
                 if (isEqSetting('mode','cyberPhys')):
-                    if ((getSetting('nTargets') > len(objUartDevices.getAllUartDevices()))):
+                    if ((getSetting('nVcu118Targets') > len(objUartDevices.getAllUartDevices()))):
                         logAndExit(f"{self.targetIdInfo}setupUart: Number of UART devices "
-                            f"(={len(objUartDevices.getAllUartDevices())}) < < Number of targets "
-                            f"(={getSetting('nTargets')}).",exitCode=EXIT.Configuration)
+                            f"(={len(objUartDevices.getAllUartDevices())}) < Number of vcu118 targets "
+                            f"(={getSetting('nVcu118Targets')}).",exitCode=EXIT.Configuration)
 
             objUartDevices = getSetting('vcu118UartDevices')
             uartSNs = objUartDevices.getAllUartSNs()

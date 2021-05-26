@@ -1,5 +1,5 @@
 """  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-TEST-PPAC-2: Security exceptions are not logged. 
+TEST-PPAC-3: Security exceptions are not logged. 
         When the hardware throws a security exception, it does not report/log it to a privileged location.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # """
 from besspin.base.utils.misc import *

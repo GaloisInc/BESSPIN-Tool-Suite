@@ -18,9 +18,9 @@ class qemuTarget (commonTarget):
             self.ipTarget = None
         if (doesSettingExist('qemuIpHost',targetId=self.targetId)):
             self.ipHost = getSetting('qemuIpHost',targetId=self.targetId)
+            self.ipBroadcast = multicastFromHostIp(self.ipHost)
         else:
             self.ipHost = None
-        self.ipBroadcast = multicastFromHostIp(self.ipHost)
 
         return
 
