@@ -94,9 +94,9 @@ def startCyberPhys():
             runThreadPerTarget(startTtyLogging)
 
         # Start relay manager
-        in_socks, _ = getComponentPorts("relayManager")
+        in_socks, out_socks = getComponentPorts("relayManager")
         components.append(
-            besspin.cyberPhys.relaymanager.RelayManager("relayManager", in_socks, []))
+            besspin.cyberPhys.relaymanager.RelayManager("relayManager", in_socks, out_socks))
         components.append(besspin.cyberPhys.commander.Commander())
 
         for c in components:
