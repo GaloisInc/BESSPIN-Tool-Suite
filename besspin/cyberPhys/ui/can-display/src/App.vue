@@ -1,12 +1,6 @@
 <template>
   <div id="app">
-    <h1 id="title-status">All Systems Normal</h1>
-    <div id="ssith-status">
-      <h2>Status</h2>
-      <h1>NO SSITH HARDWARE PROTECTION</h1>
-    </div>
     <div id="can-legend">
-      <h2>Can Bus Codes</h2>
       <table>
         <tr><th>CAN ID</th><th>Description</th></tr>
         <tr><td>AA123453</td><td>Some Description of subsystem</td></tr>
@@ -42,6 +36,7 @@ export default {
 html, body {
     background-color: #222;
     overflow: hidden;
+    background-image: url('/canBus_normal.png');
 }
 #ssith-status {
   width: 600px;
@@ -49,9 +44,15 @@ html, body {
   top: 200px;
   left: 400px;
 }
+#console {
+  position: absolute;
+  top: 650px;
+  left: 550px;
+}
 #can-legend {
-  float: left;
-  margin-left: 30px;
+  left: 124px;
+  top: 380px;
+  position: absolute;
 }
 #can-legend th {
   padding: 0;
