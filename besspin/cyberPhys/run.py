@@ -33,6 +33,10 @@ def runCyberPhys(xTarget):
     else:
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}<runCyberPhys> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
 
+    # Enable SSH on root/riscv
+    if (xTarget.osImage=='debian'):
+        xTarget.enableSshOnRoot()
+
     # The appLog will be the file object flying around for logging into app.out
     appLog = ftOpenFile(os.path.join(getSetting('workDir'),f"app{xTarget.targetSuffix}.out"), 'a')
     appLog.write('-'*20 + "<BESSPIN-TOOL-SUITE-OUT>" + '-'*20 + '\n\n')
