@@ -51,25 +51,48 @@ class JoystickMonitorComponent(ComponentPoller):
     """
     update_rate = 2
 
-    def __init__(self, joy_name: str, window_length = 100, threshold=1E-2):
+    def __init__(self, joy_name: str, window_length = 50, threshold=1E-2):
         super().__init__("jmonitor", [(cconf.DIRECTOR_PORT, "jmonitor-commands")],
-                                       [(cconf.JMONITOR_PORT, "jmonitor-events")],
-                         sample_frequency= 1 / self.update_rate)
-        self.joystick = init_joystick(joy_name)
+                                       [(cconf.JMONITOR_PORT, "jmonitor-events"),
+                                        (cconf.JMONITOR_PORT, "jmonitor-beamng")],
+                         sample_frequency= self.update_rate)
         # TODO: log joy info
         self.maxlen = window_length
         self.window =  deque([], maxlen=window_length)
         self.threshold = threshold
+        self._no_joystick = True
+        self.joy_name = joy_name
+        self.joystick = None
 
     def on_start(self):
         """initialize pygame"""
         pygame.init()
+        self.start_poller()
+        try:
+            self.joystick = init_joystick(self.joy_name)
+            self._no_joystick = False
+        except Exception as exc:
+            self.joystick =  None
+            self._no_joystick = True
+
+    def wait_ready_command(self):
+        import time
+        while not self._start_finished:
+            time.sleep(0.5)
+        return ComponentStatus.READY if not self._no_joystick else ComponentStatus.ERROR
 
     def on_poll_poll(self, t):
         """fill up window of steering wheel observations"""
-        _ = pygame.event.get() # TODO: is this necessary?
-        ret = self.joystick.get_axis(T150Axes.STEERING_WHEEL)
-        self.window.append(ret)
+        edge = self.is_active
+        if self.joystick:
+            _ = pygame.event.get() # TODO: is this necessary?
+            ret = self.joystick.get_axis(T150Axes.STEERING_WHEEL)
+            self.window.append(ret)
+        if edge is not self.is_active:
+            if edge:
+                print("FALLING EDGE (inactive)")
+            else:
+                print("RISING EDGE (active)")
 
     @property
     def is_active(self):

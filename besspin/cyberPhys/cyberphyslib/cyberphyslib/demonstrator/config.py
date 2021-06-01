@@ -7,13 +7,17 @@ Date: 01 January 2021
 Cyberphys Demonstrator Configuration Variables
 """
 
+# directory of ignition stations
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
+# port timeouts
 SCENARIO_TIMEOUT = 5*60 # s
 CC_TIMEOUT = 60 # s
 
+# name of joystick for ignition to monitor
+JOYSTICK_NAME = 'Thrustmaster T150 Racing Wheel'
+
 # See cyberPhys-test.ini for IP allocation
-# Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
 APPLY_LISTS = False
 
 # for zeromq comms (localhost)
@@ -39,6 +43,7 @@ BEAMNG_CYBERPHYS_CS_FILE_NAME = r"game-settings_cyberphys.cs"
 
 BEAMNG_PORT=64256
 BEAMNG_PATH=r"C:\BeamNG.tech"
+
 # Override this if you need to change your user path. User path with spaces are not supported.
 BEAMNG_USER_PATH=None
 BEAMNG_OUTGAUGE_PORT = 4445 # Outgauge emulation

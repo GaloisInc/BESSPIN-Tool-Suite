@@ -16,6 +16,7 @@ import cyberphyslib.demonstrator.infotainment as infotain
 import cyberphyslib.demonstrator.can_out as ccout
 import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
+import cyberphyslib.demonstrator.joystick as cjoy
 import cyberphyslib.canlib as canlib
 import can as extcan
 
@@ -124,6 +125,8 @@ class IgnitionDirector:
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
         self.scenario_timeout = cconf.SCENARIO_TIMEOUT
         self.cc_timeout = cconf.CC_TIMEOUT # 20 seconds
+
+        self.joystick_name = cconf.JOYSTICK_NAME
 
         self._handler = ComponentHandler()
         self.machine = Machine(self, states=self.states, transitions=self.transitions, initial='startup', show_conditions=True)
@@ -257,6 +260,9 @@ class IgnitionDirector:
         # startup the speedometer
         start_noncrit_component(speedo.Speedo())
 
+        # startup the joystick monitor
+        start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
+
         # check if noncritical error occurred
         if self.input_noncrit_fail:
             return
@@ -330,12 +336,21 @@ class IgnitionDirector:
                 self.process_cc(cc_recv)
                 return
             else: # CC timeout condition
-                if self.self_drive_mode: # do nothing if already in self drive mode
+                # NOTE: if jmonitor has failed assume user input is present
+                activity = self._handler['jmonitor'].is_active
+
+                # if in self drive mode and activity has occurred, get out
+                if activity and self.self_drive_mode:
+                    self.default_input()
+                    self.input_self_drive = False
+                    return
+                elif self.self_drive_mode or activity: # do nothing if self drive mode or user activity
                     pass
                 else:
                     self.default_input()
                     self.input_self_drive = True
                     return
+
         self.default_input()
         self.input_s_timeout = True
 
