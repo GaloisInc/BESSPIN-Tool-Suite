@@ -4,17 +4,12 @@ The main file for running cyberPhys
 """
 
 from besspin.base.utils.misc import *
-import besspin.cyberPhys.launch
 import besspin.target.launch
 from besspin.base.threadControl import ftQueueUtils
-from besspin.cyberPhys import otaserver, infotainmentserver, relaymanager
+from besspin.cyberPhys import otaserver, infotainmentserver
 
 # Import for CAN bus
 from besspin.cyberPhys.cyberphyslib.cyberphyslib.canlib import UdpBus, Message, CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
-
-import struct
-import ipaddress
-import zmq
 
 @decorate.debugWrap
 @decorate.timeWrap

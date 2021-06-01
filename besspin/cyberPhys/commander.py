@@ -1,9 +1,11 @@
 #! /usr/bin/env python3
 
+from besspin import target
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
 import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
 import besspin.cyberPhys.cyberphyslib.cyberphyslib.canlib as canlib
+from besspin.cyberPhys import infotainmentserver
 
 import time
 import struct
@@ -30,7 +32,7 @@ class Commander(ccomp.ComponentPoller):
     POLL_FREQ = 1.0
     DEBUG = True
 
-    target_ids = {
+    targetIds = {
         canlib.TEENSY: 0,
         canlib.TARGET_1: 1,
         canlib.TARGET_2: 2,
@@ -40,7 +42,13 @@ class Commander(ccomp.ComponentPoller):
         canlib.TARGET_6: 6,
     }
 
-    target_list = [k for k in target_ids.keys()]
+    componentIds = {
+        canlib.INFOTAINMENT_SERVER_1: canlib.TARGET_4,
+        canlib.INFOTAINMENT_SERVER_2: canlib.TARGET_5,
+        canlib.INFOTAINMENT_SERVER_3: canlib.TARGET_6,
+        }
+
+    targetList = [k for k in targetIds.keys()]
 
     def __init__(self):
         # Communication with other components
@@ -124,36 +132,39 @@ class Commander(ccomp.ComponentPoller):
             #      'unless': 'degraded_mode_possible'},
             self.terminate_enter()
 
-    # TODO: handle sending component_id|error_code as required in message specs
+    # TODO: handle sending componentId|error_code as required in message specs
     # TODO: add `dlc` into canspecs.py
-    def send_component_error(self, component_id):
+    def sendComponentError(self, componentId):
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
             dlc=8,
-            data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, component_id, 0))
+            data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, componentId, 0))
         printAndLog(f"Commander sending {msg}",doPrint=True)
         self.cc_bus.send(msg)
 
-    def send_component_ready(self, component_id):
+    def sendComponentReady(self, componentId):
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
             dlc=4,
-            data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, component_id))
+            data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, componentId))
         #printAndLog(f"Commander sending {msg}",doPrint=False)
         self.cc_bus.send(msg)
 
-    def process_cc(self, msg):
-        """process cc message
+    def processCmdMsg(self, msg):
+        """process CMD message
         """
         cid, data = msg.arbitration_id, msg.data
 
         try:
             if cid == canlib.CAN_ID_CMD_RESTART:
                 dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, data)[0]
-                printAndLog(f"<{self.__class__.__name__}> dev_id: {dev_id}", doPrint=Commander.DEBUG)
-                if dev_id in self.target_ids:
-                    targetId = self.target_ids[dev_id]
+                printAndLog(f"<{self.__class__.__name__}> Reset dev_id: {dev_id}", doPrint=Commander.DEBUG)
+                if dev_id in self.targetIds:
+                    targetId = self.targetIds[dev_id]
                     printAndLog(f"<{self.__class__.__name__}> targetId: {targetId}", doPrint=Commander.DEBUG)
                     self.targets[targetId] = "RESET"
                     self.target_reset_requested = True
+                elif dev_id in self.componentIds:
+                    self.restartComponent(dev_id)
+
                     
         except Exception as exc:
             printAndLog(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
@@ -166,14 +177,32 @@ class Commander(ccomp.ComponentPoller):
         """
         # Periodically send CMD_COMPONENT_READY()
         if (time.time() - self.last_ready_msg) > self.READY_MSG_TIMEOUT:
-            self.send_component_ready(canlib.BESSPIN_TOOL)
+            self.sendComponentReady(canlib.BESSPIN_TOOL)
         
         # Check if there is a C&C restart request (single target)
         cc_recv = self.cc_bus.recv(timeout=self.CC_TIMEOUT)
         if cc_recv:
             print(cc_recv)
-            self.process_cc(cc_recv)
+            self.processCmdMsg(cc_recv)
     
+    def restartComponent(self, componentId):
+        """
+        Restart Besspin component
+        """
+        printAndLog(f"<{self.__class__.__name__}> Restarting component ID {componentId}")
+        # Infotainment reset for now
+        if componentId == canlib.INFOTAINMENT_SERVER_1 or\
+           componentId == canlib.INFOTAINMENT_SERVER_2 or\
+           componentId == canlib.INFOTAINMENT_SERVER_3:
+            devId = self.componentIds[componentId]
+            targetId = self.targetIds[devId]
+            printAndLog(f"<{self.__class__.__name__}> Restarting infotainment on target {targetId}")
+            xTarget = getSetting('targetObj',targetId=self.targetId)
+            xTarget.runCommand("/opt/kill_listeners.sh")
+            infotainmentserver.restart(targetId)
+        else:
+            printAndLog(f"<{self.__class__.__name__}> Unknown component ID {componentId}")
+
     def restart_target_enter(self):
         """
         Initiate target restart
@@ -200,7 +229,7 @@ class Commander(ccomp.ComponentPoller):
         NOTE: not sure how well this will fit the flow - maybe replace this
         with a call in __del__ function
         """
-        self.send_component_error(canlib.BESSPIN_TOOL)
+        self.sendComponentError(canlib.BESSPIN_TOOL)
         printAndLog(f"<{self.__class__.__name__}> Terminating...")
 
     @recv_topic("base-topic")
@@ -211,7 +240,7 @@ class Commander(ccomp.ComponentPoller):
             if msg == f"READY {targetId}":
                 self.targets[targetId] = "READY"
                 self.restart_ok = True
-                self.send_component_ready(self.target_list[targetId])
+                self.sendComponentReady(self.targetList[targetId])
             elif msg == f"ERROR {targetId}":
                 # Request a reset of the target
                 self.targets[targetId] = "RESET"
