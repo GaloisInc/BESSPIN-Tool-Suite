@@ -5,10 +5,12 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 import {CanListener, CanNetwork} from '../../common/can';
+import zmq, { socket } from 'zeromq';
 
 
 let canQueue= [];
 
+// UDP Network
 let can_net = new CanNetwork(5002);
 can_net.register( new CanListener( (msg) => {
   canQueue.push(msg);
@@ -24,6 +26,33 @@ ipcMain.on('can-poll', (event) => {
     // console.debug("No messages.");
   }
 })
+
+// ZMQ Network
+let zmq_sock = zmq.socket("pair");
+let zmq_address = "tcp://127.0.0.1:3333";
+zmq_sock.connect(zmq_address);
+
+let current_state = "";
+
+zmq_sock.on('message', (msg) => {
+  let decoded = JSON.parse(msg);
+  console.log("zmq message recieved: ", decoded);
+  if(decoded.type == "state-change" && current_state !== decoded.state) {
+    console.log('>>> state change old:', current_state, "new: ", decoded.state);
+    current_state = decoded.state;
+  }
+});
+
+ipcMain.on('state-poll', (event) => {
+  event.reply('state-change', current_state);
+});
+
+ipcMain.on('cmd-msg', (event, cmd_id) => {
+  console.log('event', cmd_id);
+  zmq_sock.send(JSON.stringify({type: 'cmd-msg', 'event': cmd_id}));
+});
+
+
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
