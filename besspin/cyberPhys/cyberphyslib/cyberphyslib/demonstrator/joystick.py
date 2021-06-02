@@ -13,7 +13,10 @@ import pygame
 from collections import deque
 import numpy as np
 from .component import ComponentPoller, ComponentStatus
+import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
+from cyberphyslib.demonstrator.logger import jmonitor_logger
+from cyberphyslib.demonstrator.simulator import BeamNgCommand
 
 
 class T150Axes(enum.IntEnum):
@@ -90,9 +93,11 @@ class JoystickMonitorComponent(ComponentPoller):
             self.window.append(ret)
         if edge is not self.is_active:
             if edge:
-                print("FALLING EDGE (inactive)")
+                jmonitor_logger.info("falling edge (transition inactive)")
+                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_INACTIVE), "jmonitor-beamng")
             else:
-                print("RISING EDGE (active)")
+                jmonitor_logger.info("rising edge (transition active)")
+                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_ACTIVE), "jmonitor-beamng")
 
     @property
     def is_active(self):

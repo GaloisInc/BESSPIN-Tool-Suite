@@ -27,6 +27,7 @@ import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.logger import info_logger
 from cyberphyslib.demonstrator.can import CanNetwork
 from cyberphyslib.canlib.canspecs import *
+from cyberphyslib.demonstrator.simulator import BeamNgCommand
 import cyberphyslib.canlib.canspecs as canspecs
 import enum
 
@@ -64,7 +65,6 @@ class InfotainmentUi(ccomp.ComponentPoller):
     @recv_can(canspecs.CAN_ID_BUTTON_PRESSED,canspecs.CAN_FORMAT_BUTTON_PRESSED)
     def _(self, data):
         # alert simulator to turn off self driving mode
-        from cyberphyslib.demonstrator.simulator import BeamNgCommand
         self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
         # forward to the other network
         self._network.send(canspecs.CAN_ID_BUTTON_PRESSED, struct.pack(canspecs.CAN_FORMAT_BUTTON_PRESSED, data[0]))

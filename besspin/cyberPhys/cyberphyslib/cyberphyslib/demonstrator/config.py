@@ -64,7 +64,9 @@ BEAMNG_COMPONENT_OUTPUT = [BEAMNG_COMPONENT_ELECTRIC,
                            BEAMNG_COMPONENT_SENSORS
                           ]
 
-BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands'), (INFO_UI_PORT, 'infoui-beamng')]
+BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands'),
+                          (INFO_UI_PORT, 'infoui-beamng'),
+                          (JMONITOR_PORT, 'jmonitor-beamng')]
 
 # keyword arguments to pass to Vehicle when creating a vehicle for the sim scenario
 BEAMNG_VEHICLE_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk854t_A.pc'}
