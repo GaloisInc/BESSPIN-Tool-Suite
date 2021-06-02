@@ -369,8 +369,10 @@ class Sim(component.ComponentPoller):
     def _(self, t):
         if self._start_finished:
             self.enable_autopilot_command()
+            self.restart_command()
 
     @recv_topic("jmonitor-beamng", BeamNgCommand.TRANSITION_ACTIVE)
     def _(self, t):
         if self._start_finished:
             self.disable_autopilot_command()
+            self.restart_command()

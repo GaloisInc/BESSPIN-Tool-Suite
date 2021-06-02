@@ -8,6 +8,7 @@ O/S: Windows 10
 
 User Inputs Activity Monitoring Component
 """
+import collections
 import enum
 import pygame
 from collections import deque
@@ -31,18 +32,15 @@ def init_joystick(joy_name: str) -> pygame.joystick.Joystick:
     pygame.init()
 
     joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
-    tm_joy = None
+    tm_joy = []
 
     for joy in joysticks:
         joy.init()
         if joy.get_name() == joy_name:
-            if tm_joy is None:
-                tm_joy = joy
-            else:
+            if not tm_joy:
                 jmonitor_logger.warning(f"More than one racing wheel '{joy_name}' is connected!")
-                return tm_joy
-
-    if tm_joy is None:
+            tm_joy.append(joy)
+    if not tm_joy:
         raise RuntimeError(f"No racing wheel '{joy_name}' is connected!")
     return tm_joy
 
@@ -62,7 +60,7 @@ class JoystickMonitorComponent(ComponentPoller):
                          sample_frequency= self.update_rate)
         # TODO: log joy info
         self.maxlen = window_length
-        self.window =  deque([], maxlen=window_length)
+        self.window = []
         self.threshold = threshold
         self._no_joystick = True
         self.joy_name = joy_name
@@ -75,6 +73,7 @@ class JoystickMonitorComponent(ComponentPoller):
         try:
             self.joystick = init_joystick(self.joy_name)
             self._no_joystick = False
+            self.window = [collections.deque([], maxlen=self.maxlen) for _ in range(len(self.joystick))]
         except Exception as exc:
             self.joystick =  None
             self._no_joystick = True
@@ -89,9 +88,10 @@ class JoystickMonitorComponent(ComponentPoller):
         """fill up window of steering wheel observations"""
         edge = self.is_active
         if self.joystick:
-            _ = pygame.event.get() # TODO: is this necessary?
-            ret = [self.joystick.get_axis(idx) for idx in range(self.joystick.get_numaxes())]
-            self.window.append(ret)
+            for idx, joy in enumerate(self.joystick):
+                _ = pygame.event.get() # TODO: is this necessary?
+                ret = [joy.get_axis(idx) for idx in range(joy.get_numaxes())]
+                self.window[idx].append(ret)
         if edge is not self.is_active:
             if edge:
                 jmonitor_logger.info("falling edge (transition inactive)")
@@ -103,12 +103,15 @@ class JoystickMonitorComponent(ComponentPoller):
     @property
     def is_active(self):
         """evaluate activity condition"""
-        if len(self.window) < self.maxlen:
+        if (np.array([len(win) for win in self.window]) < self.maxlen).all():
             return True
         else:
-            warr = np.array(self.window)
-            rge = np.max(warr, axis=0) - np.min(warr, axis=0)
-            return (rge > self.threshold).any()
+            for win in self.window:
+                warr = np.array(win)
+                rge = np.max(warr, axis=0) - np.min(warr, axis=0)
+                if (rge > self.threshold).any():
+                    return True
+            return False
 
     @property
     def is_inactive(self):
