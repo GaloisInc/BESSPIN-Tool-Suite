@@ -2,8 +2,19 @@
 """
 Simple CAN listener. Listens to CAN CMD messages,
 update the display when status changes.
-"""
 
+Exchange format:
+{
+    func: "name-of-the-function-to-be-called",
+    args: {"dictionary of arguments}
+    resp: {"dictionary of return vaues}
+    status: response status
+        200 -OK
+        500 - unexpected failure
+        501 - func not implemented
+}
+"""
+import signal
 import logging
 import zmq
 from enum import Enum
@@ -14,11 +25,15 @@ import cyberphyslib.canlib as ccan
 # make CAN module less noisy
 logging.getLogger("can").setLevel(logging.WARNING)
 
-class CanDisplay:
+class CanDisplay(threading.Thread):
     CMD_PORT = 5041
     ZMQ_PORT = 5091
 
     def __init__(self):
+        # Threading
+        super().__init__(name="CanDisplay", daemon=False)
+        self.stop_evt = threading.Event()
+
         # CMD network init
         self.can_port = CanDisplay.CMD_PORT
         self.host = f"10.88.88.5:{self.can_port}" # Can display
@@ -37,19 +52,49 @@ class CanDisplay:
         self.state = ccan.SCENARIO_BASELINE
 
         print(f"<{self.__class__.__name__}> Listening on CAN_PORT {self.can_port}, and ZMQ_PORT {self.zmq_port}")
+
+        self.cmd_thread = threading.Thread(target=self.cmdLoop, args=[], daemon=True)
     
+    def run(self):
+        self.cmd_thread.start()
+        while not self.stopped:
+            self.serve()
+    
+    def stop(self):
+        self.stop_evt.set()
+
+    @property
+    def stopped(self):
+        return self.stop_evt.is_set()
+    
+    def exit(self):
+        self.stop()
+        self.join()
+
     def serveScenarioStatus(self):
         """
         Reply to requests for update
         """
-        req = self.socket.recv_json()
-        res = self.state
-        print(f"<{self.__class__.__name__}> Got request {req}, responding with {res}")
-        self.socket.send_json(res)
+        return self.state
 
-    def serveLoop(self):
-        while True:
-            self.serveScenarioStatus()
+    def serve(self):
+        req = self.socket.recv_json()
+        print(f"<{self.__class__.__name__}> Got request {req}")
+        assert("func" in req and "args" in req)
+        func = req['func']
+        args = req['args']
+        resp = {}
+        resp['args'] = args
+        resp['func'] = func
+        resp['retval'] = {}
+        if func == "serveScenarioStatus":
+            resp['retval'] = self.serveScenarioStatus()
+            resp['status'] = 200 # OK
+        else:
+            resp['status'] = 501 # Not implemented
+        
+        print(f"<{self.__class__.__name__}> Responding with {resp}")
+        self.socket.send_json(resp)
 
     def cmdLoop(self):
         while True:
@@ -65,30 +110,25 @@ class CanDisplay:
 
         try:
             if cid == ccan.CAN_ID_CMD_ACTIVE_SCENARIO:
-                if msg.data == ccan.SCENARIO_BASELINE or\
-                   msg.data == ccan.SCENARIO_SECURE_ECU or\
-                   msg.data == ccan.SCENARIO_SECURE_INFOTAINMENT:
-                    self.state = msg.data
+                if data == ccan.SCENARIO_BASELINE or\
+                   data == ccan.SCENARIO_SECURE_ECU or\
+                   data == ccan.SCENARIO_SECURE_INFOTAINMENT:
+                    self.state = data
                 else:
-                    print(f"<{self.__class__.__name__}> Unknown scenario ID: {msg.data}")
+                    print(f"<{self.__class__.__name__}> Unknown scenario ID: {data}")
             elif cid == ccan.CAN_ID_CMD_HACK_ACTIVE:
-                self.state = msg.data
-                print(f"<{self.__class__.__name__}> Hack ID: {msg.data}")
-            else:
-                print(f"<{self.__class__.__name__}> {msg}")
+                self.state = data
+                print(f"<{self.__class__.__name__}> Hack ID: {data}")
 
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    listener.stop()
+
+signal.signal(signal.SIGINT, signal_handler)
+
 if __name__ == '__main__':
     listener = CanDisplay()
-
-    t1 = threading.Thread(target=listener.serveLoop, args=[])
-    t2 = threading.Thread(target=listener.cmdLoop, args=[])
-    
-    t1.start()
-    t2.start()
-
-    t1.join()
-    t2.join()
-    
+    listener.run()
