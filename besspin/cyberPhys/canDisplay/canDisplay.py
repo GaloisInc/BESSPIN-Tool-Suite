@@ -28,6 +28,7 @@ logging.getLogger("can").setLevel(logging.WARNING)
 class CanDisplay(threading.Thread):
     CMD_PORT = 5041
     ZMQ_PORT = 5091
+    ZMQ_POLL_TIMEOUT = 0.1
 
     def __init__(self):
         # Threading
@@ -49,24 +50,30 @@ class CanDisplay(threading.Thread):
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind(f"tcp://*:{self.zmq_port}")
 
+        self.poller = zmq.Poller()
+        self.poller.register(self.socket, zmq.POLLIN)
+
         self.state = ccan.SCENARIO_BASELINE
 
         print(f"<{self.__class__.__name__}> Listening on CAN_PORT {self.can_port}, and ZMQ_PORT {self.zmq_port}")
 
         self.cmd_thread = threading.Thread(target=self.cmdLoop, args=[], daemon=True)
-    
+
     def run(self):
         self.cmd_thread.start()
         while not self.stopped:
-            self.serve()
-    
+            msgs = dict(self.poller.poll(timeout=CanDisplay.ZMQ_POLL_TIMEOUT))
+            if self.socket in msgs and msgs[self.socket] == zmq.POLLIN:
+                # recv there
+                self.serve()
+
     def stop(self):
         self.stop_evt.set()
 
     @property
     def stopped(self):
         return self.stop_evt.is_set()
-    
+
     def exit(self):
         self.stop()
         self.join()
@@ -92,7 +99,7 @@ class CanDisplay(threading.Thread):
             resp['status'] = 200 # OK
         else:
             resp['status'] = 501 # Not implemented
-        
+
         print(f"<{self.__class__.__name__}> Responding with {resp}")
         self.socket.send_json(resp)
 
@@ -125,10 +132,10 @@ class CanDisplay(threading.Thread):
 
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
-    listener.stop()
+    listener.exit()
 
 signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == '__main__':
     listener = CanDisplay()
-    listener.run()
+    listener.start()
