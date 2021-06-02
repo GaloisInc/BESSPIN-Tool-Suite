@@ -1,7 +1,6 @@
 <template>
   <div id="hack05_info_attempt">
-      <router-link class="hack05-btn img-btn" to="/hack06_info_exploit" tag="button">
-      </router-link>
+    <button class="hack05-btn img-btn" @click="hackInfotainment()"></button>
   </div>
 </template>
 
@@ -28,6 +27,10 @@
 
 
 <script>
+
+  const electron = require('electron')
+  const ipc = electron.ipcRenderer;
+  
   export default {
     name: 'Hack05_InfoAttempt',
     props: {
@@ -38,8 +41,27 @@
       }
     },
     mounted() {
+      let poller = setInterval(() => { this.pollState() }, 3000);
+      let vm = this;
+      ipc.on('state-change',(event, state) => {
+        console.log('state change in render thread', state);
+        if(state == "hack-info-success") {
+          console.log('info hack successful, moving on');
+          console.log(vm);
+          vm.$router.push({ name: 'hack06_info_exploit' });
+          clearInterval(poller);
+        }
+      });
+
     },
     methods: {
+      pollState() {
+        ipc.send('state-poll', []);
+      },
+      hackInfotainment() {
+        ipc.send('cmd-msg', 'hack-info');
+        console.log("Send hack for infotainment");
+      }
     }
   };
 </script>
