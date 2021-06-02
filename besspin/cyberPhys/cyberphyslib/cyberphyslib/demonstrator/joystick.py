@@ -39,7 +39,8 @@ def init_joystick(joy_name: str) -> pygame.joystick.Joystick:
             if tm_joy is None:
                 tm_joy = joy
             else:
-                raise RuntimeError(f"More than one racing wheel '{joy_name}' is connected!")
+                jmonitor_logger.warning(f"More than one racing wheel '{joy_name}' is connected!")
+                return tm_joy
 
     if tm_joy is None:
         raise RuntimeError(f"No racing wheel '{joy_name}' is connected!")
@@ -89,7 +90,7 @@ class JoystickMonitorComponent(ComponentPoller):
         edge = self.is_active
         if self.joystick:
             _ = pygame.event.get() # TODO: is this necessary?
-            ret = self.joystick.get_axis(T150Axes.STEERING_WHEEL)
+            ret = [self.joystick.get_axis(idx) for idx in range(self.joystick.get_numaxes())]
             self.window.append(ret)
         if edge is not self.is_active:
             if edge:
@@ -106,8 +107,8 @@ class JoystickMonitorComponent(ComponentPoller):
             return True
         else:
             warr = np.array(self.window)
-            rge = max(warr) - min(warr)
-            return rge > self.threshold
+            rge = np.max(warr, axis=0) - np.min(warr, axis=0)
+            return (rge > self.threshold).any()
 
     @property
     def is_inactive(self):

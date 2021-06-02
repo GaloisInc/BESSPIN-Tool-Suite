@@ -15,7 +15,9 @@ SCENARIO_TIMEOUT = 5*60 # s
 CC_TIMEOUT = 60 # s
 
 # name of joystick for ignition to monitor
-JOYSTICK_NAME = 'Thrustmaster T150 Racing Wheel'
+JOYSTICK_NAME = 'FANATEC Podium Wheel Base DD1'
+# Uncomment for the thrustmaster t150 wheel
+# JOYSTICK_NAME = 'Thrustmaster T150 Racing Wheel'
 
 # See cyberPhys-test.ini for IP allocation
 APPLY_LISTS = False
