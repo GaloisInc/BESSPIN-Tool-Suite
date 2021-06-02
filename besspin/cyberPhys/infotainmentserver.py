@@ -38,6 +38,8 @@ def install (xTarget):
 @decorate.debugWrap
 @decorate.timeWrap
 def isServiceRunning (xTarget):
+    # TODO: query whether the service is running
+    #xTarget.runCommand("systemctl status infotainment-server.service", erroneousContents=["???"], tee=appLog)
     return True # not sure what to do here yet
 
 @decorate.debugWrap
