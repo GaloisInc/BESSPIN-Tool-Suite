@@ -7,7 +7,7 @@
 
 <style scoped>
   #hack02_intro {
-    background-image: url('/hack02_intro/hack02_intro_noBTN.png');
+    background-image: url('/hack02_intro/hack02_intro.png');
     height: 1920px;
     width: 1080px;
     text-align: center;

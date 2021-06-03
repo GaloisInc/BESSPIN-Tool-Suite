@@ -32,19 +32,17 @@ let zmq_sock = zmq.socket("pair");
 let zmq_address = "tcp://127.0.0.1:3333";
 zmq_sock.connect(zmq_address);
 
-let current_state = "";
+let zmqQueue = [];
 
 zmq_sock.on('message', (msg) => {
   let decoded = JSON.parse(msg);
   console.log("zmq message recieved: ", decoded);
-  if(decoded.type == "state-change" && current_state !== decoded.state) {
-    console.log('>>> state change old:', current_state, "new: ", decoded.state);
-    current_state = decoded.state;
-  }
+  zmqQueue.push(decoded);
 });
 
-ipcMain.on('state-poll', (event) => {
-  event.reply('state-change', current_state);
+ipcMain.on('zmq-poll', (event) => {
+  event.reply('zmq-results',  JSON.parse(JSON.stringify(zmqQueue)));
+  zmqQueue = [];
 });
 
 ipcMain.on('cmd-msg', (event, cmd_id) => {

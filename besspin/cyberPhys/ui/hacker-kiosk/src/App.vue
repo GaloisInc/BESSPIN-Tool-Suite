@@ -5,11 +5,13 @@
 </template>
 
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
   #app, body {
     overflow: hidden;
     margin: 0;
     padding: 0;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Roboto Mono', monospace;
+    color: #ddd;
     font-size: 1.2em;
   }
   .img-btn {

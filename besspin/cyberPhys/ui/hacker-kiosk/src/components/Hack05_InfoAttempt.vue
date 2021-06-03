@@ -6,7 +6,7 @@
 
 <style scoped>
   #hack05_info_attempt {
-    background-image: url('/hack05_infoAttempt/hack05_infoAttempt_noBTN.png');
+    background-image: url('/hack05_infoAttempt/hack05_infoAttempt.png');
     height: 1920px;
     width: 1080px;
     text-align: center;
@@ -41,22 +41,23 @@
       }
     },
     mounted() {
-      let poller = setInterval(() => { this.pollState() }, 3000);
+      setInterval(() => { this.pollState() }, 3000);
       let vm = this;
-      ipc.on('state-change',(event, state) => {
-        console.log('state change in render thread', state);
-        if(state == "hack-info-success") {
-          console.log('info hack successful, moving on');
-          console.log(vm);
-          vm.$router.push({ name: 'hack06_info_exploit' });
-          clearInterval(poller);
-        }
+      ipc.on('zmq-results',(event, q) => {
+        q.forEach(item => {
+          console.log("item", item);
+          //TODO: Handle Failure?
+          if(item.function == "hack-info" && item.retval == 200) {
+            vm.$router.push({ name: 'hack06_info_exploit' });
+            // clearInterval(poller);          
+          }
+        });
       });
 
     },
     methods: {
       pollState() {
-        ipc.send('state-poll', []);
+        ipc.send('zmq-poll', []);
       },
       hackInfotainment() {
         ipc.send('cmd-msg', 'hack-info');
