@@ -60,8 +60,8 @@ bool initialize(void) {
 }
 
 int main_loop(void) {
-    debug("socket numbers are %d (CAN) and %d (Kiosk)\n", 
-          udp_socket(RECEIVE_PORT_CAN), udp_socket(RECEIVE_PORT_KIOSK));
+    message("socket numbers are %d (CAN) and %d (Kiosk)\n", 
+            udp_socket(RECEIVE_PORT_CAN), udp_socket(RECEIVE_PORT_KIOSK));
     
     while (the_state.T == RUNNING) {
         // refresh the sockets in case one of them died
@@ -86,7 +86,7 @@ int main_loop(void) {
         }
     }
 
-    debug("stop signal received, cleaning up\n");
+    message("stop signal received, cleaning up\n");
     // close the UDP sockets in an orderly fashion since we're
     // no longer listening
     close(udp_socket(RECEIVE_PORT_CAN));
@@ -132,7 +132,7 @@ void receive_from_socket(int socketfd, int port) {
             if (port == RECEIVE_PORT_CAN) {
                 position_updated = update_position(frame);
             } else {
-                debug("position update frame from kiosk ignored\n");
+                message("position update frame from kiosk ignored\n");
             }
             break;
 
@@ -140,7 +140,7 @@ void receive_from_socket(int socketfd, int port) {
             if (port == RECEIVE_PORT_KIOSK) {
                 handle_button_press(frame);
             } else {
-                debug("button press from CAN ignored\n");
+                message("button press from CAN ignored\n");
             }
             break;
 
@@ -148,7 +148,7 @@ void receive_from_socket(int socketfd, int port) {
             if (port == RECEIVE_PORT_CAN) {
                 broadcast_heartbeat_ack(frame);
             } else {
-                debug("heartbeat req from kiosk ignored\n");
+                message("heartbeat req from kiosk ignored\n");
             }
             break;
     }
@@ -203,7 +203,7 @@ bool update_position(can_frame *frame) {
     } else {
         *old_position = position;
         changed = true;
-        debug("updated %c position to %f\n", dimension, *old_position);
+        message("updated %c position to %f\n", dimension, *old_position);
     }
 
     return changed;
@@ -219,28 +219,28 @@ bool handle_button_press(can_frame *frame) {
 
     switch (*payload) {
         case BUTTON_STATION_1:
-            debug("station 1 set\n");
+            message("station 1 set\n");
             changed = set_station(1);
             break;
         case BUTTON_STATION_2:
-            debug("station 2 set\n");
+            message("station 2 set\n");
             changed = set_station(2);
             break;
         case BUTTON_STATION_3:
-            debug("station 3 set\n");
+            message("station 3 set\n");
             changed = set_station(3);
             break;
         case BUTTON_VOLUME_DOWN:
-            debug("volume down pressed\n");
+            message("volume down pressed\n");
             changed = decrease_volume();
             break;
         case BUTTON_VOLUME_UP:
-            debug("volume up pressed\n");
+            message("volume up pressed\n");
             changed = increase_volume();
             break;
         default:
-            debug("invalid button press (%d) received, ignoring\n", 
-                  *payload);
+            message("invalid button press (%d) received, ignoring\n", 
+                    *payload);
     }
 
     return changed;
@@ -313,8 +313,8 @@ void broadcast_music_state() {
                         .can_dlc = BYTE_LENGTH_INFOTAINMENT_STATE };
     frame.data[0] = data;
 
-    debug("broadasting music state frame: playing %d, station %d, volume %d\n",
-          the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
+    message("broadasting music state frame: playing %d, station %d, volume %d\n",
+            the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
     broadcast_frame(RECEIVE_PORT_CAN, SEND_PORT_CAN, &frame);
 }
 
@@ -331,7 +331,7 @@ void broadcast_position(canid_t can_id) {
     float network_position = iu_htonf(*position);
     memcpy(&frame.data[0], &network_position, sizeof(float));
 
-    debug("broadcasting new %c position: %f\n", dimension, *position);
+    message("broadcasting new %c position: %f\n", dimension, *position);
     // must broadcast both to infotainment thin client and to kiosk
     broadcast_frame(RECEIVE_PORT_KIOSK, SEND_PORT_KIOSK, &frame);
     broadcast_frame(RECEIVE_PORT_CAN, SEND_PORT_CAN, &frame);
@@ -358,6 +358,6 @@ void broadcast_heartbeat_ack(can_frame *frame) {
 }
 
 void stop(void) {
-    debug("stopping state machine after current iteration\n");
+    message("stopping state machine after current iteration\n");
     the_state.T = STOP;
 }
