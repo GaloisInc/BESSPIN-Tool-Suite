@@ -298,7 +298,10 @@ class IgnitionDirector:
 
             elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
                 # NOTE: this is not agreed on
-                nmap = {0: "base", 1: "secure_ecu", 2: "secure_infotainment"}
+                nmap = {
+                    canlib.SCENARIO_BASELINE: "base",
+                    canlib.SCENARIO_SECURE_ECU: "secure_ecu",
+                    canlib.SCENARIO_SECURE_INFOTAINMENT: "secure_infotainment"}
                 scen_idx = struct.unpack("!B", msg.data)[0]
                 ignition_logger.debug(f"process cc: active scenario {scen_idx}")
                 cm: ccan.CanMultiverseComponent = self._handler["canm"]

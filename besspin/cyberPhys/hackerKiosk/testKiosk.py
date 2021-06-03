@@ -134,6 +134,20 @@ class TestHackerKiosk(cmd.Cmd):
         self.sendJson(req)
         return
 
+    def do_hack_active(self, inp):
+        """hack_active HACK_ID
+        send HACK_ACTIVE msg with  HACK_ID hack"""
+        ok, val = self.parseInput(inp)
+        if not ok:
+            print(self.do_restart.__doc__)
+            return
+        hack_id = val
+        req = {}
+        req['func'] = "sendHackActiveMsg"
+        req['args'] = {"hack_id": hack_id}
+        self.sendJson(req)
+        return
+
 if __name__ == '__main__':
     t = TestHackerKiosk()
     t.cmdloop()

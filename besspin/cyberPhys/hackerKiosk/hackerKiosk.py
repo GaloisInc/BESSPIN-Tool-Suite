@@ -59,7 +59,8 @@ class HackerKiosk(threading.Thread):
             "restartComponent": (self.restartComponent,True),
             "hackOta": (self.hackOta,False),
             "hackInfotainment": (self.hackInfotainment,True),
-            "hackEcu": (self.hackEcu,True)
+            "hackEcu": (self.hackEcu,True),
+            "sendHackActiveMsg": (self.sendHackActiveMsg, True)
         }
 
         self.cmd_thread = threading.Thread(target=self.cmdLoop, args=[], daemon=True)
@@ -168,6 +169,18 @@ class HackerKiosk(threading.Thread):
     def hackEcu(self, hack_id) -> str:
         print(f"hackEcu({hack_id})")
         return "TODO"
+
+    def sendHackActiveMsg(self,hack_id) -> str:
+        print(f"sendHackActiveMsg({hack_id})")
+        try:
+            msg = Message(arbitration_id=ccan.CAN_ID_CMD_HACK_ACTIVE,
+                        data=struct.pack(ccan.CAN_FORMAT_CMD_HACK_ACTIVE, hack_id))
+            self.canbus.send(msg)
+            return True
+        except Exception as exc:
+            print(f"<{self.__class__.__name__}> Error sending message: {msg}: {exc}")
+            return False
+
 
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')

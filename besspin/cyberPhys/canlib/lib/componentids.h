@@ -4,7 +4,7 @@
     * Name: lib/componentids.h
     * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
     * Michal Podhradsky <mpodhradsky@galois.com>
-    * Date: 02 June 2021
+    * Date: 03 June 2021
     * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
     */
 
@@ -12,7 +12,7 @@
 #define COMPONENT_IDS_H
 #define SCENARIO_BASELINE 0x11
 #define SCENARIO_SECURE_ECU 0x12
-#define SCENARIO_SECURE_INFOtAINMENT 0x13
+#define SCENARIO_SECURE_INFOTAINMENT 0x13
 #define BESSPIN_TOOL 0x20
 #define TARGET_1 0x21
 #define TARGET_2 0x22
