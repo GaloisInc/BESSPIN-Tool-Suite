@@ -18,6 +18,8 @@ LINUX_CC = riscv64-unknown-linux-gnu-gcc
 FREEBSD_CC = clang -target riscv64-unknown-freebsd12.1 --sysroot=$(BESSPIN_GFE_FREEBSD_SYSROOT)
 FREEBSD_FLAGS = -Wno-error=sign-compare -mno-relax -fuse-ld=lld
 ARCH_FLAGS = -march=rv64imafdc -mabi=lp64d
+DEBUG := 0
+DEBUG_FLAGS = -DINFOTAINMENT_DEBUG_FLAG=$(DEBUG)
 
 all: native linux freebsd
 
@@ -29,33 +31,33 @@ freebsd: infotainment_server_freebsd hacked_server_freebsd test_client_freebsd
 
 infotainment_server_native:
     # uses the local GCC, whatever it is
-	gcc -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server
+	gcc -I$(CANLIB) $(DEBUG_FLAGS) $(SERVER_SRCS) -o infotainment_server
 
 hacked_server_native:
     # uses the local GCC, whatever it is
-	gcc -I$(CANLIB) $(HACKED_SRCS) -o hacked_server
+	gcc -I$(CANLIB) $(DEBUG_FLAGS) $(HACKED_SRCS) -o hacked_server
 
 test_client_native:
     # uses the local GCC, whatever it is
-	gcc -I$(CANLIB) $(TEST_SRCS) -o test_client
+	gcc -I$(CANLIB) $(DEBUG_FLAGS) $(TEST_SRCS) -o test_client
 
 infotainment_server_linux:
-	$(LINUX_CC) $(ARCH_FLAGS) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_linux
+	$(LINUX_CC) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_linux
 
 hacked_server_linux:
-	$(LINUX_CC) $(ARCH_FLAGS) -I$(CANLIB) $(HACKED_SRCS) -o hacked_server_linux
+	$(LINUX_CC) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(HACKED_SRCS) -o hacked_server_linux
 
 test_client_linux:
-	$(LINUX_CC) $(ARCH_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_linux
+	$(LINUX_CC) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_linux
 	
 infotainment_server_freebsd:
-	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_freebsd
+	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_freebsd
 
 hacked_server_freebsd:
-	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) -I$(CANLIB) $(HACKED_SRCS) -o hacked_server_freebsd
+	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(HACKED_SRCS) -o hacked_server_freebsd
 
 test_client_freebsd:
-	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_freebsd
+	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_freebsd
 	
 besspin_binaries: linux freebsd
 	cp infotainment_server_linux hacked_server_linux ../../../BESSPIN-LFS/GFE/appsBinaries/infotainment-server/debian/infotainment_server

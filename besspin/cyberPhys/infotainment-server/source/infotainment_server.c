@@ -60,7 +60,7 @@ int main_loop(void) {
     uint8_t message[MESSAGE_BUFFER_SIZE];
     can_frame *frame;
 
-    debug("socket number is %d\n", udp_socket(RECEIVE_PORT));
+    message("socket number is %d\n", udp_socket(RECEIVE_PORT));
     
     while (the_state.T == RUNNING) {
         // zero out the buffer
@@ -111,7 +111,7 @@ int main_loop(void) {
         }
     }
 
-    debug("stop signal received, cleaning up\n");
+    message("stop signal received, cleaning up\n");
     // close the UDP socket in an orderly fashion since we're
     // no longer listening
     close(udp_socket(RECEIVE_PORT));
@@ -156,7 +156,7 @@ bool update_position(can_frame *frame) {
     } else {
         *old_position = position;
         changed = true;
-        debug("updated %c position to %f\n", dimension, *old_position);
+        message("updated %c position to %f\n", dimension, *old_position);
     }
 
     return changed;
@@ -172,28 +172,28 @@ bool handle_button_press(can_frame *frame) {
 
     switch (*payload) {
         case BUTTON_STATION_1:
-            debug("station 1 set\n");
+            message("station 1 set\n");
             changed = set_station(1);
             break;
         case BUTTON_STATION_2:
-            debug("station 2 set\n");
+            message("station 2 set\n");
             changed = set_station(2);
             break;
         case BUTTON_STATION_3:
-            debug("station 3 set\n");
+            message("station 3 set\n");
             changed = set_station(3);
             break;
         case BUTTON_VOLUME_DOWN:
-            debug("volume down pressed\n");
+            message("volume down pressed\n");
             changed = decrease_volume();
             break;
         case BUTTON_VOLUME_UP:
-            debug("volume up pressed\n");
+            message("volume up pressed\n");
             changed = increase_volume();
             break;
         default:
-            debug("invalid button press (%d) received, ignoring\n", 
-                  *payload);
+            message("invalid button press (%d) received, ignoring\n", 
+                    *payload);
     }
 
     return changed;
@@ -266,8 +266,8 @@ void broadcast_music_state() {
                         .can_dlc = BYTE_LENGTH_INFOTAINMENT_STATE };
     frame.data[0] = data;
 
-    debug("broadasting music state frame: playing %d, station %d, volume %d\n",
-          the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
+    message("broadasting music state frame: playing %d, station %d, volume %d\n",
+            the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
     broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
 }
 
@@ -284,7 +284,7 @@ void broadcast_position(canid_t can_id) {
     float network_position = iu_htonf(*position);
     memcpy(&frame.data[0], &network_position, sizeof(float));
 
-    debug("broadcasting new %c position: %f\n", dimension, *position);
+    message("broadcasting new %c position: %f\n", dimension, *position);
     broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
 }
 
@@ -309,6 +309,6 @@ void broadcast_heartbeat_ack(can_frame *frame) {
 }
 
 void stop(void) {
-    debug("stopping state machine after current iteration\n");
+    message("stopping state machine after current iteration\n");
     the_state.T = STOP;
 }
