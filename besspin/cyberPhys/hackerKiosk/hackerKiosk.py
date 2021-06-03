@@ -157,8 +157,8 @@ class HackerKiosk(threading.Thread):
             print(f"<{self.__class__.__name__}> Error sending message: {msg}: {exc}")
             return False
 
-    def hackOta(self, component_id) -> str:
-        print(f"restartComponent({component_id})")
+    def hackOta(self) -> str:
+        print(f"hackOta()")
         return "TODO"
 
     def hackInfotainment(self, hack_id) -> str:
