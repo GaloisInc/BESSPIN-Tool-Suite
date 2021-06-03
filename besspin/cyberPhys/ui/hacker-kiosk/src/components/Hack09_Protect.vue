@@ -9,7 +9,7 @@
 
 <style scoped>
   #hack09 {
-    background-image: url('/hack09_protect/hack09_protect_noBTN.png');
+    background-image: url('/hack09_protect/hack09_protect.png');
     height: 1920px;
     width: 1080px;
     text-align: center;

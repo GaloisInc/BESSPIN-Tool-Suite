@@ -7,7 +7,7 @@
 
 <style scoped>
   #hack04_access {
-    background-image: url('/hack04_access/hack04_access_noBTN.png');
+    background-image: url('/hack04_access/hack04_access.png');
     height: 1920px;
     width: 1080px;
     text-align: center;
