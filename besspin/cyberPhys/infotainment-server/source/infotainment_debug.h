@@ -10,8 +10,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifndef INFOTAINMENT_DEBUG_FLAG
+#define INFOTAINMENT_DEBUG_FLAG 0
+#endif
+
 // basic debug and error output functions
+/**
+ * An error. Prints and then exits the program.
+ */
 #define error(args...) { fprintf(stderr, ##args); exit(1); }
-#define debug(args...) { fprintf(stderr, ##args); }
+
+/**
+ * A message. Prints unconditionally.
+ */
+#define message(args...) { fprintf(stderr, ##args); }
+
+/**
+ * A debug message. Only prints if DEBUG_FLAG is 1.
+ */
+#define debug(args...) { if (INFOTAINMENT_DEBUG_FLAG) { fprintf(stderr, ##args); } }
 
 #endif // __INFOTAINMENT_DEBUG_H__

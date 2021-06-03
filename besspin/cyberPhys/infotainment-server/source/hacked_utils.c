@@ -62,22 +62,22 @@ int udp_socket(int listen_port) {
                     &current_len) == 0) {
         if (ntohs(current_address.sin_port) != listen_port) {
             // it's listening on the wrong port, close it
-            debug("closing socket on port %d\n", 
-                  ntohs(current_address.sin_port));
+            message("closing socket on port %d\n", 
+                    ntohs(current_address.sin_port));
             close(socketfd[index]);
             socketfd[index] = -1;
         } // else we leave the socket alone
     } else if (0 < socketfd[index]) {
         // couldn't get socket status, reset it to -1
-        debug("couldn't get socket status for socket %d, errno %d\n", 
-              socketfd[index], errno);
+        message("couldn't get socket status for socket %d, errno %d\n", 
+                socketfd[index], errno);
         socketfd[index] = -1;
     }
 
     // create the socket if it doesn't exist or has been closed     
     if (socketfd[index] <= 0 || 
         (fcntl(socketfd[index], F_GETFD) == -1 && errno != EBADF)) {
-        debug("creating socket on port %d\n", listen_port);
+        message("creating socket on port %d\n", listen_port);
 
         if ((socketfd[index] = 
                socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
@@ -99,7 +99,7 @@ int udp_socket(int listen_port) {
                        &(int){1}, sizeof(int)) < 0) {
             // this is not fatal but does mean a hack that tries to listen
             // on the same port won't work
-            debug("warning: unable to set port reuse mode\n");
+            message("warning: unable to set port reuse mode\n");
         }
 
         // bind the socket to the port
@@ -109,7 +109,7 @@ int udp_socket(int listen_port) {
             error("unable to listen on port %d\n", listen_port);
         }
 
-        debug("socket created, listening for broadcasts on port %d\n", listen_port);
+        message("socket created, listening for broadcasts on port %d\n", listen_port);
     }
 
     port[index] = listen_port;
@@ -222,7 +222,7 @@ can_frame *receive_frame(int socketfd, int port, uint8_t *message, int message_l
 }
 
 void set_broadcast_address(char *address) {
-    debug("setting broadcast address to %s\n", address);
+    message("setting broadcast address to %s\n", address);
     broadcast_address = address;
 }
 
@@ -243,8 +243,8 @@ int broadcast_frame(int from_port, int to_port, can_frame *frame) {
     memcpy(&frame_to_send, frame, sizeof(can_frame));
     frame_to_send.can_id = htonl(frame->can_id);
 
-    debug("sending frame to broadcast address %s:%d\n",
-        inet_ntoa(broadcast_addr.sin_addr), to_port);
+    message("sending frame to broadcast address %s:%d\n",
+            inet_ntoa(broadcast_addr.sin_addr), to_port);
     return sendto(udp_socket(from_port), &frame_to_send, 
                   5 + frame_to_send.can_dlc, 0, // no flags
                   (struct sockaddr *) &broadcast_addr, 

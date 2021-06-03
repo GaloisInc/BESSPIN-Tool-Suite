@@ -24,16 +24,16 @@ int main(int argc, char** argv) {
     sigemptyset(&action.sa_mask);
     sigaction(SIGINT, &action, NULL);
 
-    debug("attempting legitimate infotainment server\n");
+    message("attempting to kill legitimate infotainment server\n");
     int result = system("systemctl stop infotainmment-server.service");
     
     if (result != 0) {
-        debug("could not kill legitimate infotainmment server, running anyway\n");
+        message("could not kill legitimate infotainmment server, running anyway\n");
     } else {
-        debug("legitimate infotainment server killed\n");
+        message("legitimate infotainment server killed\n");
     }
 
-    debug("hacked infotainment server starting\n");
+    message("hacked infotainment server starting\n");
 
     if (argc == 2) {
         // one argument means an override of the broadcast address
@@ -47,10 +47,10 @@ int main(int argc, char** argv) {
     }
 
     if (result == 0) {
-        debug("hacked infotainment server exiting\n");
+        message("hacked infotainment server exiting\n");
     } else
     {
-        debug("hacked infotainment server reported error %d\n", result);
+        message("hacked infotainment server reported error %d\n", result);
     }
     
     return result;
