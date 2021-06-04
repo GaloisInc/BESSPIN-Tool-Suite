@@ -3,6 +3,7 @@
 import zmq
 import time
 import json
+import random
 
 context = zmq.Context()
 socket = context.socket(zmq.PAIR)
@@ -20,10 +21,20 @@ while True:
         time.sleep(1)
 
         # Send a status / state update to the client
-        socket.send_string(json.dumps({'function': 'hack-info', 'retval': 200}))
+        socket.send_string(json.dumps({'function': 'hack-info', 'status': 200}))
 
     elif decoded['event']['function'] == "changeStation":
-        socket.send_string(json.dumps({'function': 'changeStation', 'args': [3], 'retval': 200}))
+        station = decoded['event']['args'][0]
+        socket.send_string(json.dumps({'function': 'changeStation', 'retval': station, 'status': 200}))
+    elif decoded['event']['function'] == "volumeUp":
+        socket.send_string(json.dumps({'function': 'volumeUp','status': 200}))
+    elif decoded['event']['function'] == "volumeDown":
+        socket.send_string(json.dumps({'function': 'volumeDown', 'status': 200}))
+    elif decoded['event']['function'] == "exfil":
+        x = round(random.uniform(0.33, 266.66), 2)
+        y = round(random.uniform(33.33, 380.66), 2)
+        z = round(random.uniform(0.33, 360.66), 2)
+        socket.send_string(json.dumps({'function': 'exfil', 'status': 200, 'retval': [x, y, z]}))
 
 
     time.sleep(.5)

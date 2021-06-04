@@ -8,6 +8,8 @@
   @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
   #app, body {
     overflow: hidden;
+    width: 100vw;
+    height: 100vh;
     margin: 0;
     padding: 0;
     font-family: 'Roboto Mono', monospace;
@@ -18,7 +20,9 @@
     background-color: transparent;
     background-repeat: no-repeat;
     position: absolute;
-    border: none;
+    border: 1px solid red;
+    /* border: none; */
+    padding: 0;
     outline: none;
   }
   .hack-screen {

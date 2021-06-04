@@ -14,17 +14,15 @@
   }
   .hack11-btn {
     background-image: url('/hack11_protectInfoStop/hack11_protectInfoStop_continue_btn.png');
-    width: 716px;
+    width: 480px;
     height: 272px;
     top: 1620px;
     left: 300px;
   }
   .hack11-btn:active {
-    top: 1620px;
-    left: 300px;
-    width: 760px;
-    height: 320px;
-    background-image: url('/hack11_protectInfoStop/hack01_protectInfoStop_continue_btnHIT.png');
+    background-image: url('/hack11_protectInfoStop/hack11_protectInfoStop_continue_btnHIT.png');
+    background-position-x: 15px;
+    background-position-y: 15px;
   }
 </style>
 

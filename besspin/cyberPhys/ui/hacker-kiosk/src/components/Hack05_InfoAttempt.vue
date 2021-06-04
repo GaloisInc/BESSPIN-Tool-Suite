@@ -37,23 +37,25 @@
     },
     data() {
       return {
-        messages: []
+        messages: [],
+        poller: setInterval(() => { this.pollState() }, 3000)
       }
     },
     mounted() {
-      setInterval(() => { this.pollState() }, 3000);
       let vm = this;
       ipc.on('zmq-results',(event, q) => {
         q.forEach(item => {
           console.log("item", item);
           //TODO: Handle Failure?
-          if(item.function == "hack-info" && item.retval == 200) {
+          if(item.function == "hack-info" && item.status == 200) {
             vm.$router.push({ name: 'hack06_info_exploit' });
-            // clearInterval(poller);          
           }
         });
       });
 
+    },
+    unmounted() {
+      clearInterval(this.poller);
     },
     methods: {
       pollState() {

@@ -1,25 +1,48 @@
 <template>
   <div id="hack10">
-      <router-link class="hack10-btn img-btn" to="/hack11_protect_info_stop" tag="button">
-      </router-link>
-
       <!-- Data Exfil Button -->
-      <router-link class="hack10-exfil-btn img-btn" to="/hack11_protect_info_stop" tag="button"></router-link>
+      <button class="hack10-exfil-btn img-btn" @click="exfil()"></button>
+
+      <div id="exfil-msg" class="status-msg">{{ exfilMessage }}</div>
 
       <!-- Radio Station Buttons -->
-      <router-link class="hack10-station1-btn img-btn" to="/hack11_protect_info_stop" tag="button"></router-link>
-      <router-link class="hack10-station2-btn img-btn" to="/hack11_protect_info_stop" tag="button"></router-link>
-      <router-link class="hack10-station3-btn img-btn" to="/hack11_protect_info_stop" tag="button"></router-link>
+      <button class="hack10-station1-btn img-btn" @click="changeStation(1)"></button>
+      <button class="hack10-station2-btn img-btn" @click="changeStation(2)"></button>
+      <button class="hack10-station3-btn img-btn" @click="changeStation(3)"></button>
+
+      <div id="station-msg" class="status-msg">{{ stationMessage }}</div>
 
       <!-- Volume Buttons -->
-      <router-link class="hack10-up-btn img-btn" to="/hack11_protect_info_stop" tag="button"></router-link>
-      <router-link class="hack10-down-btn img-btn" to="/hack11_protect_info_stop" tag="button"></router-link>
+      <button class="hack10-down-btn img-btn" @click="volumeDown()"></button>
+      <button class="hack10-up-btn img-btn" @click="volumeUp()"></button>
 
+      <div id="volume-msg" class="status-msg">{{ volumeMessage }}</div>
+
+      <router-link v-if="clickCount >= 1" class="hack10-next-btn img-btn" to="/hack11_protect_info_stop" tag="button">
+      </router-link>
 
   </div>
 </template>
 
 <style scoped>
+
+  .status-msg {
+    font-size: 2em;
+    font-family: 'Roboto Mono', monospace;
+    position: absolute;
+    width: 810px;
+    left: 120px;
+  }
+  #volume-msg {
+    top: 1520px;
+  }
+  #station-msg {
+    top: 1050px;
+  }
+  #exfil-msg {
+    top: 580px;
+  }
+
   #hack10 {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_noBTN.png');
     height: 1920px;
@@ -35,19 +58,17 @@
     left: 260px;
   }
   .hack10-exfil-btn:active {
-    top: 350px;
-    left: 235px;
-    width: 600px;
-    height: 220px;
-    background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_gps_btnHIT.png');
+    background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_gps_btn_HIT.png');
+    background-position-x: 20px;
   }
 
   .hack10-station1-btn {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_radio_btn1.png');
-    width: 555px;
+    background-position-x: -20px;
+    width: 220px;
     height: 170px;
     top: 852px;
-    left: 260px;
+    left: 200px;
   }
   .hack10-station1-btn:active {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_radio_btn1_HIT.png');
@@ -55,10 +76,11 @@
 
   .hack10-station2-btn {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_radio_btn2.png');
-    width: 555px;
+    background-position-x: -20px;
+    width: 220px;
     height: 170px;
     top: 852px;
-    left: 460px;
+    left: 420px;
   }
   .hack10-station2-btn:active {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_radio_btn2_HIT.png');
@@ -66,21 +88,24 @@
 
   .hack10-station3-btn {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_radio_btn3.png');
-    width: 555px;
+    background-position-x: -20px;
+    width: 220px;
     height: 170px;
     top: 852px;
-    left: 660px;
+    left: 640px;
   }
   .hack10-station3-btn:active {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_radio_btn3_HIT.png');
+    background-position-x: -45px;
+    background-position-y: -25px;
   }
 
   .hack10-up-btn {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_up_btn.png');
-    width: 555px;
+    width: 250px;
     height: 170px;
     top: 1320px;
-    left: 300px;
+    left: 290px;
   }
   .hack10-up-btn:active {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_up_btnHIT.png');
@@ -88,30 +113,94 @@
 
   .hack10-down-btn {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_down_btn.png');
-    width: 555px;
+    width: 250px;
     height: 170px;
     top: 1320px;
-    left: 600px;
+    left: 540px;
   }
   .hack10-down-btn:active {
     background-image: url('/hack10_protectInfoAttempt/hack10_protectInfoAttempt_down_btnHIT.png');
   }
+
+
+  .hack10-next-btn {
+    background-image: url('/hack13_protectCriticalStop/hack13_protectCriticalStop_continue_btn.png');
+    width: 500px;
+    height: 272px;
+    top: 1620px;
+    left: 300px;
+  }
+  .hack10-next-btn:active {
+    background-image: url('/hack13_protectCriticalStop/hack13_protectCriticalStop_continue_btnHIT.png');
+    background-position-x: 15px;
+    background-position-y: 15px;
+  }
+
+
 </style>
 
 
 <script>
+
+  const electron = require('electron')
+  const ipc = electron.ipcRenderer;
+
   export default {
     name: 'Hack10_ProtectInfoAttempt',
     props: {
     },
     data() {
       return {
-        messages: []
+        messages: [],
+        clickCount: 0,
+        stationMessage: "",
+        exfilMessage: "",
+        volumeMessage: "",
+        poller: setInterval(() => { this.pollState() }, 500)
       }
     },
     mounted() {
+      ipc.on('zmq-results',(event, q) => {
+        q.forEach(item => {
+          if(item.function == "changeStation" && item.status == 200) {
+            this.stationMessage = "Station set to " + item.retval;
+          } else if (item.function == "volumeUp" && item.status == 200) {
+            this.volumeMessage = "Volume Increased";
+          } else if (item.function == "volumeDown" && item.status == 200) {
+            this.volumeMessage = "Volume Decreased";
+          } else if (item.function == "exfil") {
+            this.exfilMessage = item.retval.toString();
+          }
+        });
+      });
+    },
+    unmounted() {
+      clearInterval(this.poller);
     },
     methods: {
+      pollState() {
+        ipc.send('zmq-poll', []);
+      },
+      exfil() {
+        console.log("[click] data Exfil");
+        this.clickCount++;
+        ipc.send('cmd-msg', {'function': 'exfil'});
+      },
+      changeStation(which) {
+        console.log("[click] change to station ", which)
+        this.clickCount++;
+        ipc.send('cmd-msg', {'function': 'changeStation', 'args': [which]});
+      },
+      volumeUp() {
+        console.log("[click] volumeUp")
+        this.clickCount++;
+        ipc.send('cmd-msg', {'function': 'volumeUp'});
+      },
+      volumeDown() {
+        console.log("[click] volumeDown");
+        this.clickCount++;
+        ipc.send('cmd-msg', {'function': 'volumeDown'});
+      }
     }
   };
 </script>
