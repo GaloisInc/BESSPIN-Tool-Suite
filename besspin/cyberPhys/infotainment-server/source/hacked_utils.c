@@ -36,7 +36,7 @@ static char *broadcast_address = DEFAULT_BROADCAST_ADDRESS;
 static char *broadcast_address = HACKED_BROADCAST_ADDRESS;
 #endif
 
-static struct in_addr position_address = { .s_addr = 0 };
+static struct in_addr position_address = { .s_addr = INADDR_NONE };
 static struct in_addr local_address = { .s_addr = 0 };
 
 int udp_socket(int listen_port) {
