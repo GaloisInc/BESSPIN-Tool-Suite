@@ -27,11 +27,11 @@ Each LED string is terminated in a JST P/N SMP-04V-BC connector as shown in the 
 
 Any 100 mil spaced male header may be used for LED string connections at CN2 through CN9. The boards in the CyberPhysical demonstrator use Molex P/N 0901361204, which is a shrouded header with a key clip. Each four circuit harness used in the CyberPhysical demonstrator consists of the following:
 
-1 x Molex P/N 0901560144 (housing)
-4 x Molex P/N 0901192109 (crimp contacts, requires Molex Crimp Tool P/N 0638258100)
-Varied length of 4-circuit LED extension wire
-1 x JST P/N SMR-04V-B (housing)
-4 x JST P/N SYM-001T-P0.6(N) (crimp contacts)
+- 1 x Molex P/N 0901560144 (housing)
+- 4 x Molex P/N 0901192109 (crimp contacts, requires Molex Crimp Tool P/N 0638258100)
+- Varied length of 4-circuit LED extension wire
+- 1 x JST P/N SMR-04V-B (housing)
+- 4 x JST P/N SYM-001T-P0.6(N) (crimp contacts)
 
 Pin #1 of the Molex connector is 12 volts (Blue).
 
