@@ -10,6 +10,9 @@ Schematic and Board were created using Eagle 9.6.2 Premium. The following design
 
 ![Image of LED String Manager Board](LED_string_manager_board_small.png)
 
+# 12 Volt Power
+The board is powered with 12 volts through common 0.250 inch spade connectors. Wiring which can accommodate up to 7.5 amperes is recommended as well as a 7.5 ampere automotive standard blade fuse.
+
 # LED String Interface
 Each LED string _requires_ three circuits:
 - 12 volts (Blue)
