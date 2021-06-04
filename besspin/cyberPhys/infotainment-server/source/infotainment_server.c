@@ -267,7 +267,7 @@ void broadcast_music_state() {
     frame.data[0] = data;
 
     debug("broadasting music state frame: playing %d, station %d, volume %d\n",
-            the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
+          the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
     broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
 }
 
