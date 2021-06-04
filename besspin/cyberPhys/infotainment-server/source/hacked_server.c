@@ -313,8 +313,8 @@ void broadcast_music_state() {
                         .can_dlc = BYTE_LENGTH_INFOTAINMENT_STATE };
     frame.data[0] = data;
 
-    message("broadasting music state frame: playing %d, station %d, volume %d\n",
-            the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
+    debug("broadasting music state frame: playing %d, station %d, volume %d\n",
+          the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
     broadcast_frame(RECEIVE_PORT_CAN, SEND_PORT_CAN, &frame);
 }
 
@@ -331,7 +331,7 @@ void broadcast_position(canid_t can_id) {
     float network_position = iu_htonf(*position);
     memcpy(&frame.data[0], &network_position, sizeof(float));
 
-    message("broadcasting new %c position: %f\n", dimension, *position);
+    debug("broadcasting new %c position: %f\n", dimension, *position);
     // must broadcast both to infotainment thin client and to kiosk
     broadcast_frame(RECEIVE_PORT_KIOSK, SEND_PORT_KIOSK, &frame);
     broadcast_frame(RECEIVE_PORT_CAN, SEND_PORT_CAN, &frame);
