@@ -37,18 +37,14 @@ def joy_info(joy: pygame.joystick.Joystick) -> str:
 
 
 # print joystick parameters and traces
-#pygame.init()
-#joystick = init_joystick(joy_name)
-#joystick.init()
-#print(list_joysticks())
-#print(joy_info(joystick))
-#while True:
-#    _ = pygame.event.get()  # TODO: is this necessary?
-#    ret = [joystick.get_axis(idx) for idx in range(joystick.get_numaxes())]
-#    print(ret)
-#    ret = [joystick.get_hat(idx) for idx in range(joystick.get_numhats())]
-#    print(ret)
-jmc =JoystickMonitorComponent(joy_name, window_length=20)
-jmc.start()
+pygame.init()
+joystick = init_joystick(joy_name)
+joystick.init()
+print(list_joysticks())
+print(joy_info(joystick))
 while True:
-    pass
+    _ = pygame.event.get()  # TODO: is this necessary?
+    ret = [joystick.get_axis(idx) for idx in range(joystick.get_numaxes())]
+    print(ret)
+    ret = [joystick.get_hat(idx) for idx in range(joystick.get_numhats())]
+    print(ret)
