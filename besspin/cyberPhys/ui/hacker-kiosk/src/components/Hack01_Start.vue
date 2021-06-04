@@ -2,21 +2,22 @@
   <div id="hack01_start" class="hack-screen">
       <h1>Demo Setup</h1>
 
+
       <div class="demo-options">
-        <router-link tag="button" to="/hack02_intro">
+        <button @click="enableTimer()">
           <strong>Demo Timer On</strong>
           <p>
             This option limits the dmeo time to 5 minutes.  This is
             useful when there is a line of people waiting their turn.
           </p>
-        </router-link>
+        </button>
 
-        <router-link tag="button" to="/hack02_intro">
+        <button @click="disableTimer()">
           <strong>Demo Timer Off</strong>
           <p>
             This option has no time limit.
           </p>
-        </router-link>
+        </button>
       </div>
   </div>
 </template>
@@ -54,18 +55,32 @@
 </style>
 
 <script>
+  var globalTimer = undefined;
   export default {
     name: 'Hack01_Start',
     props: {
     },
     data() {
       return {
-        messages: []
       }
     },
     mounted() {
     },
     methods: {
+      disableTimer() {
+        clearInterval(globalTimer);
+        this.next();
+      },
+      resetTimer() {
+        globalTimer = setInterval(() => { console.log('reset'); window.location = '/#/hack02_intro';}, 5 * 60 * 1000);
+      },
+      enableTimer() {
+        this.resetTimer();
+        this.next();
+      },
+      next() {
+        this.$router.push({ name: 'hack02_intro' });
+      }
     }
   };
 </script>

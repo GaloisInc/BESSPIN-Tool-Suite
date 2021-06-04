@@ -1,5 +1,9 @@
 <template>
   <div id="hack02_intro">
+
+      <router-link class="hack02-btn-back img-btn" to="/" tag="button">
+      </router-link>
+
       <router-link class="hack02-btn img-btn" to="/hack03_show" tag="button">
       </router-link>
   </div>
@@ -11,6 +15,12 @@
     height: 1920px;
     width: 1080px;
     text-align: center;
+  }
+  .hack02-btn-back {
+    width: 100px;
+    height: 100px;
+    top: 0;
+    left: 0;
   }
   .hack02-btn {
     background-image: url('/hack02_intro/hack02_intro_btn.png');

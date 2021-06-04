@@ -16,27 +16,28 @@
   }
   .hack09-info-btn {
     background-image: url('/hack09_protect/hack09_protect_hackInfo_btn.png');
-    width: 716px;
-    height: 272px;
+    width: 450px;
+    height: 180px;
     top: 1610px;
-    left: 75px;
+    left: 85px;
+    background-position: -20px;
   }
   .hack09-info-btn:active {
-    left: 50px;
-    top: 1520px;
-    background-image: url('/hack09_protect/hack08_protect_hackInfo_btnHIT.png');
+    background-image: url('/hack09_protect/hack09_protect_hackInfo_btnHIT.png');
+    background-position-x: -5px;
   }
   .hack09-crit-btn {
     background-image: url('/hack09_protect/hack09_protect_hackCrit_btn.png');
-    width: 716px;
-    height: 272px;
+    width: 450px;
+    height: 180px;
     top: 1610px;
-    left: 515px;
+    left: 535px;
+    background-position-x: -20px;
   }
   .hack09-crit-btn:active {
-    left: 270px;
-    top: 1520px;
-    background-image: url('/hack09_protect/hack08_protect_hackCrit_btnHIT.png');
+    background-image: url('/hack09_protect/hack09_protect_hackCrit_btnHIT.png');
+    background-position-x: -5px;
+    background-position-y: 17px;
   }
 </style>
 
