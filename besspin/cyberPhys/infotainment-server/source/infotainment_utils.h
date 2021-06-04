@@ -59,6 +59,20 @@ void set_broadcast_address(char *address);
 struct in_addr *get_local_address();
 
 /**
+ * Sets the valid source address for position messages. If this address
+ * is invalid, position messages from anywhere will be considered valid.
+ * 
+ * @param address The valid position message address, as a string.
+ */
+void set_position_address(char *address);
+
+/**
+ * @return true if the specified address is a valid source for position messages,
+ * false otherwise.
+ */
+bool valid_position_source(struct in_addr address);
+
+/**
  * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces.
  * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces. It is assumed
  * that the CAN ID field in the frame is in host byte order.

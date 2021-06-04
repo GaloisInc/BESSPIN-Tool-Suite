@@ -35,11 +35,10 @@ int main(int argc, char** argv) {
 
     message("hacked infotainment server starting\n");
 
-    if (argc == 2) {
-        // one argument means an override of the broadcast address
-        set_broadcast_address(argv[1]);
-    }
-
+    #ifdef HACKED_POSITION_ADDRESS
+    set_position_source(HACKED_POSITION_ADDRESS);
+    #endif
+    
     if (initialize()) {
         result = main_loop();
     } else {

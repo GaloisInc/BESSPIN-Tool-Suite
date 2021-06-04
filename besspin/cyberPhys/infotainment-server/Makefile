@@ -20,6 +20,9 @@ FREEBSD_FLAGS = -Wno-error=sign-compare -mno-relax -fuse-ld=lld
 ARCH_FLAGS = -march=rv64imafdc -mabi=lp64d
 DEBUG := 0
 DEBUG_FLAGS = -DINFOTAINMENT_DEBUG_FLAG=$(DEBUG)
+HACKED_BROADCAST_ADDRESS := 255.255.255.255
+HACKED_POSITION_ADDRESS := -1.-1.-1.-1
+HACKED_FLAGS = -DHACKED_BROADCAST_ADDRESS="\"${HACKED_BROADCAST_ADDRESS}\"" -DHACKED_POSITION_ADDRESS="\"${HACKED_POSITION_ADDRESS}\""
 
 all: native linux freebsd
 
@@ -35,7 +38,7 @@ infotainment_server_native:
 
 hacked_server_native:
     # uses the local GCC, whatever it is
-	gcc -I$(CANLIB) $(DEBUG_FLAGS) $(HACKED_SRCS) -o hacked_server
+	gcc -I$(CANLIB) $(DEBUG_FLAGS) ${HACKED_FLAGS} $(HACKED_SRCS) -o hacked_server
 
 test_client_native:
     # uses the local GCC, whatever it is
@@ -45,7 +48,7 @@ infotainment_server_linux:
 	$(LINUX_CC) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_linux
 
 hacked_server_linux:
-	$(LINUX_CC) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(HACKED_SRCS) -o hacked_server_linux
+	$(LINUX_CC) $(ARCH_FLAGS) $(DEBUG_FLAGS) ${HACKED_FLAGS} -I$(CANLIB) $(HACKED_SRCS) -o hacked_server_linux
 
 test_client_linux:
 	$(LINUX_CC) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_linux
@@ -54,7 +57,7 @@ infotainment_server_freebsd:
 	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(SERVER_SRCS) -o infotainment_server_freebsd
 
 hacked_server_freebsd:
-	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(HACKED_SRCS) -o hacked_server_freebsd
+	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) $(DEBUG_FLAGS) ${HACKED_FLAGS} -I$(CANLIB) $(HACKED_SRCS) -o hacked_server_freebsd
 
 test_client_freebsd:
 	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_freebsd

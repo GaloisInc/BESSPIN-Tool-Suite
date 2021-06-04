@@ -25,6 +25,7 @@
 #include "infotainment_utils.h"
 
 static char *broadcast_address = DEFAULT_BROADCAST_ADDRESS;
+static struct in_addr position_address = { .s_addr = INADDR_NONE };
 static struct in_addr local_address = { .s_addr = 0 };
 
 int udp_socket(int listen_port) {
@@ -195,6 +196,16 @@ void set_broadcast_address(char *address) {
 
 struct in_addr *get_local_address() {
     return &local_address;
+}
+
+void set_position_address(char *address) {
+    message("setting valid position source to %s\n", address);
+    position_address.s_addr = inet_addr(address);
+}
+
+bool valid_position_source(struct in_addr address) {
+    return (position_address.s_addr == INADDR_NONE ||
+            position_address.s_addr == address.s_addr);
 }
 
 int broadcast_frame(int from_port, int to_port, can_frame *frame) {

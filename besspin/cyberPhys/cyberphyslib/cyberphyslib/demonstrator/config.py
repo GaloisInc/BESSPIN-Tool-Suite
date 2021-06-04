@@ -16,6 +16,10 @@ CC_TIMEOUT = 60 # s
 # Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
 APPLY_LISTS = False
 
+# position/heading margins of error before reporting changes
+MIN_POSITION_CHANGE = 0.01
+MIN_HEADING_CHANGE = 0.01
+
 # for zeromq comms (localhost)
 BEAMNG_SIM_PORT = 5014
 DIRECTOR_PORT = 5015

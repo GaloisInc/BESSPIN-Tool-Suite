@@ -30,7 +30,13 @@
 #include "hacked_utils.h"
 #include "infotainment_debug.h" // no need to hack debug functions
 
+#ifndef HACKED_BROADCAST_ADDRESS
 static char *broadcast_address = DEFAULT_BROADCAST_ADDRESS;
+#else
+static char *broadcast_address = HACKED_BROADCAST_ADDRESS;
+#endif
+
+static struct in_addr position_address = { .s_addr = 0 };
 static struct in_addr local_address = { .s_addr = 0 };
 
 int udp_socket(int listen_port) {
@@ -221,13 +227,17 @@ can_frame *receive_frame(int socketfd, int port, uint8_t *message, int message_l
     return result;
 }
 
-void set_broadcast_address(char *address) {
-    message("setting broadcast address to %s\n", address);
-    broadcast_address = address;
-}
-
 struct in_addr *get_local_address() {
     return &local_address;
+}
+
+bool valid_position_source(struct in_addr address) {
+    return (position_address.s_addr == INADDR_NONE ||
+            position_address.s_addr == address.s_addr);
+}
+
+void set_position_source(char *address) {
+    position_address.s_addr = inet_addr(address);
 }
 
 int broadcast_frame(int from_port, int to_port, can_frame *frame) {

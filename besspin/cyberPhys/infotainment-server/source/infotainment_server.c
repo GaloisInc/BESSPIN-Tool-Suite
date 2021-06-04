@@ -87,9 +87,13 @@ int main_loop(void) {
             case CAN_ID_CAR_Y:
             case CAN_ID_CAR_Z:
             case CAN_ID_CAR_R:
-                position_updated = update_position(frame);
+                if (valid_position_source(receive_address.sin_addr)) {
+                    position_updated = update_position(frame);
+                } else {
+                    debug("received position frame from invalid source, ignoring\n");
+                }
                 break;
-            
+
             case CAN_ID_BUTTON_PRESSED:
                 handle_button_press(frame);
                 break;

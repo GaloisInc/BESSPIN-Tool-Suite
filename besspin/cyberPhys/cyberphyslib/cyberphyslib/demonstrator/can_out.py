@@ -25,6 +25,7 @@ class CanOutPoller(ComponentPoller):
                          [(config.LOCATION_PORT, "location-events")],
                          sample_frequency=config.LOCATION_POLL_HZ)
         self._location = None
+        self._last_location = None
         self._network = network
     
     def on_start(self) -> None:
@@ -39,20 +40,46 @@ class CanOutPoller(ComponentPoller):
         if self._location is not None:
             pos = self._location[0]
 
-            # Send position X, Y 
-            self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("!f", pos[0]))
-            self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack("!f", pos[1]))
-            self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack("!f", pos[2]))
+            # Send position X, Y, Z
+            if self._last_location is not None:
+                last_pos = self._last_location[0]
+                send_x = abs(last_pos[0] - pos[0]) > config.MIN_POSITION_CHANGE
+                send_y = abs(last_pos[1] - pos[1]) > config.MIN_POSITION_CHANGE
+                send_z = abs(last_pos[2] - pos[2]) > config.MIN_POSITION_CHANGE
+            else:
+                send_x = True
+                send_y = True
+                send_z = True
 
-            # Convert from unit circle coords to heading
-            x = self._location[1][0]
-            y = self._location[1][1]
-            heading = math.degrees(math.atan2(x,y))
-            if x < 0:
-                heading = heading + 360
+            if send_x:
+                self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("!f", pos[0]))
+            if send_y:
+                self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack("!f", pos[1]))
+            if send_z:
+                self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack("!f", pos[2]))
+
+            heading = self.compute_heading(self._location)
+            if self._last_location is not None:
+                last_heading = self.compute_heading(self._last_location)
+                send_heading = abs(last_heading - heading) > config.MIN_HEADING_CHANGE
+            else:
+                send_heading = True
 
             # Send direction (heading)
-            self._network.send(canspecs.CAN_ID_CAR_R, struct.pack("!f", heading))
+            if send_heading:
+                self._network.send(canspecs.CAN_ID_CAR_R, struct.pack("!f", heading))
+
+            # save the location
+            self._last_location = self._location
+
+    def compute_heading(self, location):
+        """Convert unit circle coordinates in location data to a heading"""
+        x = location[1][0]
+        y = location[1][1]
+        heading = math.degrees(math.atan2(x,y))
+        if x < 0:
+            heading = heading + 360
+        return heading
 
     @recv_topic("beamng-vehicle")
     def _(self, msg, t):
