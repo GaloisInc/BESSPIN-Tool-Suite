@@ -20,7 +20,7 @@ JOYSTICK_NAME = 'FANATEC Podium Wheel Base DD1'
 # JOYSTICK_NAME = 'Thrustmaster T150 Racing Wheel'
 
 # See cyberPhys-test.ini for IP allocation
-APPLY_LISTS = False
+APPLY_LISTS = True
 
 # for zeromq comms (localhost)
 BEAMNG_SIM_PORT = 5014
@@ -33,7 +33,7 @@ LOCATION_PORT = 5021
 INFO_UI_PORT = 5022
 JMONITOR_PORT = 5023
 
-LOCATION_POLL_HZ = 10
+LOCATION_POLL_HZ = 5
 
 BEAMNG_SETTINGS_PATH_RELATIVE = r"\BeamNG.tech\settings\\"
 
