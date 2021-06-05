@@ -43,13 +43,9 @@ class CanOutPoller(ComponentPoller):
             # Send position X, Y, Z
             if self._last_location is not None:
                 last_pos = self._last_location[0]
-                send_x = abs(last_pos[0] - pos[0]) > config.MIN_POSITION_CHANGE
-                send_y = abs(last_pos[1] - pos[1]) > config.MIN_POSITION_CHANGE
-                send_z = abs(last_pos[2] - pos[2]) > config.MIN_POSITION_CHANGE
+                send_x, send_y, send_z = [abs(lpi - pi) > config.MIN_POSITION_CHANGE for lpi, pi in zip(last_pos, pos)]
             else:
-                send_x = True
-                send_y = True
-                send_z = True
+                send_x, send_y, send_z = (True, True, True)
 
             if send_x:
                 self._network.send(canspecs.CAN_ID_CAR_X, struct.pack("!f", pos[0]))
