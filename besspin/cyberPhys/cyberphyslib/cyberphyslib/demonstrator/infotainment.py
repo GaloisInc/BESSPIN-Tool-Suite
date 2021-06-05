@@ -159,7 +159,7 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         else:
             if self._sound is not None:
                 self._sound.stop()
-            self._volume = 0
+            self._volume = 0.0
             self._set_volume()
 
     @recv_can(canspecs.CAN_ID_CAR_X, canspecs.CAN_FORMAT_CAR_X)
