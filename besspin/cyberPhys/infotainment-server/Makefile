@@ -63,9 +63,11 @@ test_client_freebsd:
 	$(FREEBSD_CC) $(FREEBSD_FLAGS) $(ARCH_FLAGS) $(DEBUG_FLAGS) -I$(CANLIB) $(TEST_SRCS) -o test_client_freebsd
 	
 besspin_binaries: linux freebsd
-	cp infotainment_server_linux hacked_server_linux ../../../BESSPIN-LFS/GFE/appsBinaries/infotainment-server/debian/infotainment_server
-	cp infotainment_server_freebsd hacked_server_freebsd ../../../BESSPIN-LFS/GFE/appsBinaries/infotainment-server/FreeBSD/infotainment_server
-
+	cp infotainment_server_linux ../../../BESSPIN-LFS/GFE/appsBinaries/infotainment-server/debian/infotainment_server
+	cp infotainment_server_freebsd ../../../BESSPIN-LFS/GFE/appsBinaries/infotainment-server/FreeBSD/infotainment_server
+	cp hacked_server_linux ../../../BESSPIN-LFS/GFE/appsBinaries/infotainment-server/debian/hacked_server
+	cp hacked_server_freebsd ../../../BESSPIN-LFS/GFE/appsBinaries/infotainment-server/FreeBSD/hacked_server
+	
 clean:
 	@find . -name "*.out" -type f -delete
 	@find . -name "*.asm" -type f -delete
