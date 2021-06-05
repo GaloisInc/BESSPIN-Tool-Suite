@@ -17,8 +17,8 @@ CC_TIMEOUT = 60 # s
 APPLY_LISTS = False
 
 # position/heading margins of error before reporting changes
-MIN_POSITION_CHANGE = 0.01
-MIN_HEADING_CHANGE = 0.01
+MIN_POSITION_CHANGE = 0.8
+MIN_HEADING_CHANGE = 0.5
 
 # for zeromq comms (localhost)
 BEAMNG_SIM_PORT = 5014
