@@ -1,12 +1,12 @@
 /*
-    * Cyberphys Cyberphys Component IDs
-    * Project: SSITH CyberPhysical Demonstrator
-    * Name: lib/componentids.h
-    * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
-    * Michal Podhradsky <mpodhradsky@galois.com>
-    * Date: 03 June 2021
-    * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-    */
+* Cyberphys Cyberphys Component IDs
+* Project: SSITH CyberPhysical Demonstrator
+* Name: lib/componentids.h
+* Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+* Michal Podhradsky <mpodhradsky@galois.com>
+* Date: 07 June 2021
+* This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
+*/
 
 #ifndef COMPONENT_IDS_H
 #define COMPONENT_IDS_H

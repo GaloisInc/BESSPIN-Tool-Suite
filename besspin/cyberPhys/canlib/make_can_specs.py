@@ -59,23 +59,23 @@ class CanlibTemplate:
 class CanlibPy(CanlibTemplate):
     outfilename: str = "../cyberphyslib/cyberphyslib/canlib/canspecs.py"
     file_header: str = f"""\"\"\"Cyberphys CAN Frames Specification
-    Project: SSITH CyberPhysical Demonstrator
-    Name: {outfilename}
-    Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
-    Michal Podhradsky <mpodhradsky@galois.com>
-    Date: {CanlibTemplate.today.strftime("%d %B %Y")}
-    This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-    \"\"\"\n\n"""
+Project: SSITH CyberPhysical Demonstrator
+Name: {outfilename}
+Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+Michal Podhradsky <mpodhradsky@galois.com>
+Date: {CanlibTemplate.today.strftime("%d %B %Y")}
+This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
+\"\"\"\n\n"""
 
     outfilename_ids: str = "../cyberphyslib/cyberphyslib/canlib/componentids.py"
     file_header_ids: str = f"""\"\"\"Cyberphys Component IDs
-    Project: SSITH CyberPhysical Demonstrator
-    Name: {outfilename_ids}
-    Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
-    Michal Podhradsky <mpodhradsky@galois.com>
-    Date: {CanlibTemplate.today.strftime("%d %B %Y")}
-    This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-    \"\"\"\n\n"""
+Project: SSITH CyberPhysical Demonstrator
+Name: {outfilename_ids}
+Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+Michal Podhradsky <mpodhradsky@galois.com>
+Date: {CanlibTemplate.today.strftime("%d %B %Y")}
+This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
+\"\"\"\n\n"""
 
     def produce_can(self, can_entry):
         """generate code for a can info entry (row of csv file)"""
@@ -112,25 +112,25 @@ class CanlibPy(CanlibTemplate):
 class CanlibC(CanlibTemplate):
     outfilename: str = "lib/canspecs.h"
     file_header: str = f"""/*
-    * Cyberphys CAN Frames Specification
-    * Project: SSITH CyberPhysical Demonstrator
-    * Name: {outfilename}
-    * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
-    * Michal Podhradsky <mpodhradsky@galois.com>
-    * Date: {CanlibTemplate.today.strftime("%d %B %Y")}
-    * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-    */\n\n"""
+* Cyberphys CAN Frames Specification
+* Project: SSITH CyberPhysical Demonstrator
+* Name: {outfilename}
+* Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+* Michal Podhradsky <mpodhradsky@galois.com>
+* Date: {CanlibTemplate.today.strftime("%d %B %Y")}
+* This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
+*/\n\n"""
 
     outfilename_ids: str = "lib/componentids.h"
     file_header_ids: str = f"""/*
-    * Cyberphys Cyberphys Component IDs
-    * Project: SSITH CyberPhysical Demonstrator
-    * Name: {outfilename_ids}
-    * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
-    * Michal Podhradsky <mpodhradsky@galois.com>
-    * Date: {CanlibTemplate.today.strftime("%d %B %Y")}
-    * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-    */\n\n"""
+* Cyberphys Cyberphys Component IDs
+* Project: SSITH CyberPhysical Demonstrator
+* Name: {outfilename_ids}
+* Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+* Michal Podhradsky <mpodhradsky@galois.com>
+* Date: {CanlibTemplate.today.strftime("%d %B %Y")}
+* This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
+*/\n\n"""
 
     def produce_can(self, can_entry):
         """generate code for a can info entry (row of csv file)"""
@@ -186,25 +186,25 @@ class CanlibC(CanlibTemplate):
 class CanlibJs(CanlibTemplate):
     outfilename: str = "lib/canspecs.js"
     file_header: str = f"""/*
-    * Cyberphys CAN Frames Specification
-    * Project: SSITH CyberPhysical Demonstrator
-    * Name: {outfilename}
-    * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
-    * Michal Podhradsky <mpodhradsky@galois.com>
-    * Date: {CanlibTemplate.today.strftime("%d %B %Y")}
-    * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-    */\n\n"""
+* Cyberphys CAN Frames Specification
+* Project: SSITH CyberPhysical Demonstrator
+* Name: {outfilename}
+* Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+* Michal Podhradsky <mpodhradsky@galois.com>
+* Date: {CanlibTemplate.today.strftime("%d %B %Y")}
+* This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
+*/\n\n"""
 
     outfilename_ids: str = "lib/componentids.js"
     file_header_ids: str = f"""/*
-    * Cyberphys Cyberphys Component IDs
-    * Project: SSITH CyberPhysical Demonstrator
-    * Name: {outfilename_ids}
-    * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
-    * Michal Podhradsky <mpodhradsky@galois.com>
-    * Date: {CanlibTemplate.today.strftime("%d %B %Y")}
-    * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-    */\n\n"""
+* Cyberphys Cyberphys Component IDs
+* Project: SSITH CyberPhysical Demonstrator
+* Name: {outfilename_ids}
+* Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+* Michal Podhradsky <mpodhradsky@galois.com>
+* Date: {CanlibTemplate.today.strftime("%d %B %Y")}
+* This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
+*/\n\n"""
 
     def produce_can(self, can_entry):
         """generate code for a can info entry (row of csv file)"""

@@ -1,11 +1,11 @@
 """Cyberphys CAN Frames Specification
-    Project: SSITH CyberPhysical Demonstrator
-    Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
-    Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
-    Michal Podhradsky <mpodhradsky@galois.com>
-    Date: 03 June 2021
-    This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-    """
+Project: SSITH CyberPhysical Demonstrator
+Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
+Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
+Michal Podhradsky <mpodhradsky@galois.com>
+Date: 07 June 2021
+This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
+"""
 
 # Name: gear
 # Units: N/A
