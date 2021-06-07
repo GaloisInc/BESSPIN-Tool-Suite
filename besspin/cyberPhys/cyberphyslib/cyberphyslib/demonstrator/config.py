@@ -22,6 +22,10 @@ JOYSTICK_NAME = 'FANATEC Podium Wheel Base DD1'
 # See cyberPhys-test.ini for IP allocation
 APPLY_LISTS = True
 
+# position/heading margins of error before reporting changes
+MIN_POSITION_CHANGE = 0.8
+MIN_HEADING_CHANGE = 0.5
+
 # for zeromq comms (localhost)
 BEAMNG_SIM_PORT = 5014
 DIRECTOR_PORT = 5015

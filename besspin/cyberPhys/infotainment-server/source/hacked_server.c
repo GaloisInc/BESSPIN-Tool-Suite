@@ -129,10 +129,10 @@ void receive_from_socket(int socketfd, int port) {
         case CAN_ID_CAR_Y:
         case CAN_ID_CAR_Z:
         case CAN_ID_CAR_R:
-            if (port == RECEIVE_PORT_CAN) {
+            if (port == RECEIVE_PORT_CAN && valid_position_source(receive_address.sin_addr)) {
                 position_updated = update_position(frame);
             } else {
-                message("position update frame from kiosk ignored\n");
+                debug("position update frame from invalid source ignored\n");
             }
             break;
 
@@ -140,7 +140,7 @@ void receive_from_socket(int socketfd, int port) {
             if (port == RECEIVE_PORT_KIOSK) {
                 handle_button_press(frame);
             } else {
-                message("button press from CAN ignored\n");
+                debug("button press from CAN ignored\n");
             }
             break;
 
@@ -148,7 +148,7 @@ void receive_from_socket(int socketfd, int port) {
             if (port == RECEIVE_PORT_CAN) {
                 broadcast_heartbeat_ack(frame);
             } else {
-                message("heartbeat req from kiosk ignored\n");
+                debug("heartbeat req from kiosk ignored\n");
             }
             break;
     }

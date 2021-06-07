@@ -26,9 +26,14 @@ int main(int argc, char** argv) {
 
     debug("infotainment server starting\n");
 
-    if (argc == 2) {
-        // one argument means an override of the broadcast address
+    if (argc >= 2) {
+        // first argument, if any, is an override of the broadcast address
         set_broadcast_address(argv[1]);
+    }
+
+    if (argc >= 3) {
+        // second argument, if any, is the valid address for position updates
+        set_position_address(argv[2]);
     }
 
     int result;

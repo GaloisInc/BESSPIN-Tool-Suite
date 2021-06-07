@@ -60,16 +60,25 @@ can_frame *receive_frame(int socketfd, int port, uint8_t *buffer, int buffer_len
                          struct sockaddr_in *receive_address, 
                          socklen_t *receive_address_len);
 
-/**
- * Sets the broadcast address to use.
- * @param address The broadcast address, as a string.
- */
-void set_broadcast_address(char *address);
 
 /**
  * @return a pointer to the local address as a struct in_addr.
  */
 struct in_addr *get_local_address();
+
+/**
+ * @return true if the specified address is a valid source for position messages,
+ * false otherwise.
+ */
+bool valid_position_source(struct in_addr address);
+
+/** 
+ * Sets the valid position source. If it is not a valid address, any address
+ * is considered a valid position source.
+ * 
+ * @param address The address, as a string.
+ */
+void set_position_source(char *address);
 
 /**
  * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces.
