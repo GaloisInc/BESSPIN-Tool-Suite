@@ -1,95 +1,90 @@
 @startuml
 
-state "Hacker Kiosk start up" as KioskUp
-KioskUp: boot OS
-KioskUp: connect to network
-KioskUp: start kiosk webpage
-[*] --> KioskUp: Kiosk powered up
+[*] --> Slide2_KioskSetup
+Slide2_KioskSetup : select Demo timer On/Off
 
-KioskUp --> KioskWait
+Slide2_KioskSetup --> Slide3: Timer choice selected
 
-' TODO: add a timeout to the wait?
-state "Wait for components" as KioskWait
-KioskWait: Wait for CMD_COMPONENT_READY(BESSPIN_TOOl)
-KioskWait: Wait for CMD_COMPONENT_READY(IGNITION)
-
-' TODO: handle error conditions
-KioskWait --> KioskReady: Success\nSend CMD_COMPONENT_READY(KIOSK)\nSend CMD_LED_SEQ(BOOT)
-state "Hacker kiosk ready" as KioskReady
-KioskReady: welcome page
+state "Slide 3 INTRODUCTION" as Slide3
+Slide3: Tx CMD_ACTIVE_SCENARIO(SCENARIO_BASELINE)
+Slide3: Tx CMD_HACK_ACTIVE(0x0)
+Slide3: TODO: restart inactive components? SCENARIO_SECURE_ECU and SCENARIO_SECURE_INFOTAINMENT?
 
 
-state "Baseline Scenario" as ScenarioBaseline {
-    state "Scenario intro" as ScenarioBaselineIntro
-    ' ScenarioBaselineIntro: Driver: get faimilar with the controls
-    ScenarioBaselineIntro: Hacker: intro to SSITH
-    KioskReady --> ScenarioBaselineIntro: hacker arrived\nSend CMD_ACTIVE_SCENARIO(BASELINE)
+Slide3 --> Slide4: Click "Hack the car" button
 
-    state "Explain OTA server hack" as ScenarioBaselineExplainOtaHack {
-        ' ScenarioBaselineExplainOtaHack: Driver: drives to te airport
-        ScenarioBaselineExplainOtaHack: Hacker: explain OTA hack
-    }
+Slide4 --> Slide5: Click "Exploit OTA update" button
 
-    ScenarioBaselineIntro --> ScenarioBaselineExplainOtaHack: Hacker clicks though the intro slides
-    ScenarioBaselineExplainOtaHack --> ScenarioBaselineHackedOTA: Hacker clicks in "Hack OTA update server"\nSend CMD_LED_SEQ(OTA_HACK)
-    state "OTA server hacked" as ScenarioBaselineHackedOTA
-    ScenarioBaselineHackedOTA: signing key erased
+Slide5 --> Slide6_A: Click "Hack infotainment" button
 
-    state "Hack infotainment" as ScenarioBaselineHackInfotainment
-    ScenarioBaselineHackInfotainment: show available infotainment hacks
+state "Slide 6a HACK OTA SERVER" as Slide6_A
+Slide6_A: Call "OtaHack.hackServer()"
 
-    ScenarioBaselineHackedOTA --> ScenarioBaselineHackInfotainment: Explain infotainment hacks to hacker
+Slide6_A --> Slide6_B: "OtaHack.hackServer()" returned True
 
-    state "Upload Infotainment Hack" as ScenarioBaselineUploadInfotainmentHack
-    ScenarioBaselineUploadInfotainmentHack: upload specific binary
-    ScenarioBaselineHackInfotainment --> ScenarioBaselineUploadInfotainmentHack: Hacker: Choose a hack to upload
+state "Slide 6b HACK OTA SERVER" as Slide6_B
+Slide6_B: Call "OtaHack.uploadFile(evil-infotainment-server)"
 
-    state "Infotainment hack uploaded" as ScenarioBaselineInfotainmentHackUploaded
-    ScenarioBaselineUploadInfotainmentHack --> ScenarioBaselineInfotainmentHackUploaded: Send CMD_LED_SEQ(OTA_HACK)
-    ScenarioBaselineInfotainmentHackUploaded -left-> ScenarioBaselineHackInfotainment: Return to the hack selection screen
-    ScenarioBaselineInfotainmentHackUploaded: Binary uploaded
-    
+Slide6_B --> Slide7: "Next" button pressed
 
-    state "Hack critical systems" as ScenarioBaselineHackCriticalSystems
-    ScenarioBaselineHackInfotainment --> ScenarioBaselineHackCriticalSystems: Hacker: Clicks on next slide
-    ScenarioBaselineHackCriticalSystems: explain hacking critical systems
+state "Slide 7 Infotainment hacks" as Slide7
+Slide7: infotainment server hacks are calls to the python backend
 
-    state "Upload Critical Systtems Hack" as ScenarioBaselineUploadCriticalSystemsHack
-    ScenarioBaselineUploadCriticalSystemsHack: Binary uploaded
-    ScenarioBaselineHackCriticalSystems --> ScenarioBaselineUploadCriticalSystemsHack: Hacker: Choose a hack to upload
+Slide7 --> Slide7: A hack is selected
 
-    state "Critical systems hack uploaded" as ScenarioBaselineCriticalSystemsHackUploaded
-    ScenarioBaselineCriticalSystemsHackUploaded: Binary uploaded
-    ScenarioBaselineUploadCriticalSystemsHack --> ScenarioBaselineCriticalSystemsHackUploaded: Send CMD_LED_SEQ(???)
+Slide7 --> Slide9: "Next" button pressed
 
-    ScenarioBaselineCriticalSystemsHackUploaded --> ScenarioBaselineHackInfotainment: Return to the hack selection screen
+Slide9: Attempt to hack critical systems
 
+Slide9 --> Slide10: "Next" button pressed
 
-    state "Hack Critical Systems" as ScenarioBaselineHackCriticalSystems
-    ScenarioBaselineHackCriticalSystems --> ScenarioBaselineEndOfScenario: Hacker: Clicks on next slide
-    state "Scenario Done" as ScenarioBaselineEndOfScenario
-}
+Slide10 --> Slide10: A hack is selected
 
-state "Protected Critical Systems Scenario" as ScenarioCritical {
-    state "Introduce SSITH" as IntroSSITH
-    IntroSSITH: Note: new set of FPGAs was selected
+state "Slide 10 HACK CRITICAL SYSTEMS" as Slide10
+Slide10: When a hack is selected, an appropriate pre-compiled binary is selected
+Slide10: and uploaded using "OtaHack.uploadFile(binary)"
+Slide10: The hack button will color red/green based on the selection
+Slide10: and whether the upload was succesfull
+Slide10: Tx CMD_HACK_ACTIVE(hack-number) (to visualize hacks)
 
-    ScenarioBaselineEndOfScenario --> IntroSSITH: Send CMD_ACTIVE_SCENARIO(CRITICAL_SYSTEMS)\nSend CMD_LED_SEQ(SSITH_CRITICAL)
-}
+Slide10 --> Slide15: "Next" button pressed
 
-KioskTerminate --> [*]: Send CMD_COMPONENT_ERROR(KIOSK|TERMINATED)
+Slide15: restart baseline scenario components using CMD_RESTART() messages
+Slide15: Tx CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_ECU) to color CanDisplay
+Slide15: Tx CMD_HACK_ACTIVE(0x0)
 
-'@startuml
-'state "Hacker Kiosk Start up" as HackerKioskUp
-'state "Hacker Kiosk Ready" as HackerKioskReady
-'HackerKioskUp: boot OS
-'HackerKioskUp: connect to the network
-'HackerKioskUp: start Kiosk UI app
-'HackerKioskReady: wait for user
-'[*] --> HackerKioskUp: Hacker Kiosk powered up
-'HackerKioskUp -[#blue]-> HackerKioskReady: Success\nSend CMD_COMPONENT_READY(HACKER_KIOSK)
-'@enduml
+state "Slide 15 SSITH INTRO" as Slide15
+Slide15 --> Slide16: click "Hack Infotainment"
+Slide16: Tx CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_INFOTAINMENT)
 
+Slide16 --> Slide16: A hack is selected
+Slide16: All hacks fail with an error message (OTA hack not succesfull)
+Slide16: TODO: add a slide where we attempt to hack OTA server
+Slide16: TODO: OTA server crashes on SSITH P2 when a hack is attempted (~2min downtime)
+
+state "Slide 16 SECURE INFOTAINMENT" as Slide16
+Slide16 --> Slide17: "Next" button pressed
+
+Slide17 --> Slide20: "Next" button pressed
+
+state "Slide 20 Everything is hackable" as Slide20
+state "Slide 21 SSITH is The Solution" as Slide21
+Slide20 --> Slide21: "Restart" button pressed
+Slide21 -> Slide3
+
+Slide15 --> Slide18: click "Hack Cricial systems"
+Slide18: Tx CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_ECU)
+
+state "Slide 18 SECURE ECU" as Slide18
+
+Slide18 --> Slide18: A hack is selected
+Slide18: When a hack is selected, an appropriate pre-compiled binary is selected
+Slide18: and uploaded using "OtaHack.uploadFile(binary)"
+Slide18: The hack will fail, and lead to short (200ms?) unavailibility of the ECU
+Slide18: The buttons should indicate that.
+
+Slide18 --> Slide19: "Next" button pressed
+Slide19 --> Slide20: "Next" button pressed
 
 
 @enduml
