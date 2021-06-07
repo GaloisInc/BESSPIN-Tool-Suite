@@ -221,8 +221,8 @@ int broadcast_frame(int from_port, int to_port, can_frame *frame) {
     memcpy(&frame_to_send, frame, sizeof(can_frame));
     frame_to_send.can_id = htonl(frame->can_id);
 
-    message("sending frame to broadcast address %s:%d\n",
-        inet_ntoa(broadcast_addr.sin_addr), to_port);
+    debug("sending frame to broadcast address %s:%d\n",
+          inet_ntoa(broadcast_addr.sin_addr), to_port);
     return sendto(udp_socket(from_port), &frame_to_send, 
                   5 + frame_to_send.can_dlc, 0, // no flags
                   (struct sockaddr *) &broadcast_addr, 

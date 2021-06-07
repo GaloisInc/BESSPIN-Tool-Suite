@@ -135,9 +135,9 @@ class LedManagerComponent(ComponentPoller):
                 elif pat == "on":
                     pattern = cled.ConstantPattern(color)
                 elif pat == "ants":
-                    pattern = cled.AntsPattern(color, 4, False)
+                    pattern = cled.AntsPattern(color, 8, False)
                 elif pat == "ants_reverse":
-                    pattern = cled.AntsPattern(color, 4, True)
+                    pattern = cled.AntsPattern(color, 8, True)
                 elif pat == "pulse":
                     pattern = cled.PulsePattern(color, 1.0, 10, 10)
                 else:
