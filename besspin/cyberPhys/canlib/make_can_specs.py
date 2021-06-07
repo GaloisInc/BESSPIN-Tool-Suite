@@ -223,13 +223,11 @@ class CanlibJs(CanlibTemplate):
         canformat += "\""
 
         var_name =  "CAN_ID_" + fname.upper().replace(" -", "").replace(" ", "_")
-        format_name = "CAN_FORMAT_" + fname.upper().replace(" -", "").replace(" ", "_")
         return f"// Name: {fname}\n"\
             f"// Units: {units}\n"\
             f"// Type: {can_entry['Format']}\n"\
             f"// Description: {' '.join(fdescr.splitlines())}\n"\
-            f"const {var_name} = {cid}\n"\
-            f"const {format_name} = {canformat}\n\n"
+            f"const {var_name} = {cid}\n\n"
 
     def produce_ids(self, entry):
         """generate code for a ID info entry (row of csv file)"""
