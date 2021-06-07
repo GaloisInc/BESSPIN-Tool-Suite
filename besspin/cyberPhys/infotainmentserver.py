@@ -30,11 +30,16 @@ def install (xTarget):
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}Can't start infotainment server service on <{getSetting('osImage', targetId=xTarget.targetId)}>",
                                  exitCode=EXIT.Dev_Bug)
 
+    # Install the kill service script
+    xTarget.runCommand("mv kill_listeners.sh /opt/kill_listeners.sh",tee=appLog)
+
     printAndLog(f"{xTarget.targetIdInfo}infotainment server installed successfully.",tee=appLog)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def isServiceRunning (xTarget):
+    # TODO: query whether the service is running
+    #xTarget.runCommand("systemctl status infotainment-server.service", erroneousContents=["???"], tee=appLog)
     return True # not sure what to do here yet
 
 @decorate.debugWrap

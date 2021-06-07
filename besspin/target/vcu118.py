@@ -842,8 +842,10 @@ def resetEthAdaptor ():
         #get the name and check configuration if this is the first time called
         if (not doesSettingExist('ethAdaptor')):
             ethAdaptor= getSetting('vcu118EthAdaptorName')
-            if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('vcu118EthAdaptorMacAddress')):
-                logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('vcu118EthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
+            # Don't worry about MAC in cyberphys mode
+            if not (isEqSetting('mode','cyberPhys')):
+                if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('vcu118EthAdaptorMacAddress')):
+                    logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('vcu118EthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
             #Set the adaptor's name
             setSetting('ethAdaptor',ethAdaptor)
             printAndLog (f"<{getSetting('ethAdaptor')}> exists and its MAC address is properly configured.",doPrint=False)

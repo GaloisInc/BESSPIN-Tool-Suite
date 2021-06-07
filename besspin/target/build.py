@@ -353,7 +353,7 @@ def importImage(targetId=None):
     targetIdInfo = f'<target{targetId}>: ' if (targetId) else ''
     imagePaths = selectImagePaths(targetId=targetId)
     for ip in imagePaths:
-        cp (ip, getSetting('osImagesDir',targetId=targetId))
+        cp (ip, f"{getSetting('osImagesDir',targetId=targetId)}/{getSetting('osImage',targetId=targetId)}.elf")
     if (isEqSetting('target', 'vcu118', targetId=targetId)):
         # Fix the FreeBSD IP
         if (isEqSetting('osImage','FreeBSD',targetId=targetId) and isEqSetting('binarySource','GFE',targetId=targetId)):

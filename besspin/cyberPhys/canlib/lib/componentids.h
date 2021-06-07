@@ -1,19 +1,18 @@
 /*
 * Cyberphys Cyberphys Component IDs
 * Project: SSITH CyberPhysical Demonstrator
-* Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
+* Name: lib/componentids.h
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 23 April 2021
+* Date: 07 June 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-* Version hash: 956273597e1c80b771cde09098766c3a
 */
 
 #ifndef COMPONENT_IDS_H
 #define COMPONENT_IDS_H
 #define SCENARIO_BASELINE 0x11
 #define SCENARIO_SECURE_ECU 0x12
-#define SCENARIO_SECURE_ECU 0x13
+#define SCENARIO_SECURE_INFOTAINMENT 0x13
 #define BESSPIN_TOOL 0x20
 #define TARGET_1 0x21
 #define TARGET_2 0x22
