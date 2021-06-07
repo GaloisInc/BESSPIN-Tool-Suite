@@ -76,9 +76,9 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
 
     session_pid = os.getpid()
 
-    vol_increment = 0.1
+    vol_increment = 1 / (2 ** 4)
 
-    vol_range = 2 ** 5
+    vol_range = 2 ** 4
 
     @staticmethod
     def get_named_session(name: str) -> typ.Union[AudioSession, None]:

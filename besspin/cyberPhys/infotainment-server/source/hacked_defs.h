@@ -34,10 +34,10 @@
 #define MIN_VOLUME 0
 
 // the maximum volume
-#define MAX_VOLUME 31
+#define MAX_VOLUME 15
 
 // the "default" volume
-#define DEFAULT_VOLUME 11
+#define DEFAULT_VOLUME 8
 
 // the default broadcast address (as a string)
 #define DEFAULT_BROADCAST_ADDRESS "255.255.255.255"
