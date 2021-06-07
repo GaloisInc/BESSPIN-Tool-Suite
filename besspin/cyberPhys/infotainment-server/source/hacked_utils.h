@@ -1,16 +1,28 @@
 /**
- * Infotainment Server Utility Functions
+ * Hacked Infotainment Server Utility Functions
  * Copyright (C) 2020-21 Galois, Inc.
  * @author Daniel M. Zimmerman <dmz@galois.com>
  * @refine besspin_cyberphys.lando
+ * 
+ * This is the "hacked" version of the infotainment server; it listens only 
+ * to the hacker kiosk for control commands, and sends GPS positions
+ * back to the hacker kiosk as they are updated on the network. It also 
+ * still responds to network heartbeats, so that it will not be killed by
+ * an overly-aggressive watchdog.
  */
 
 #include <unistd.h>
 
-#include "infotainment_defs.h"
+#include "hacked_defs.h"
+
+/**
+ * The number of sockets to cache.
+ */
+#define SOCKET_CACHE_SIZE 2
 
 /**
  * Get a UDP socket listening on the specified port, creating it if necessary.
+ * This function will cache two sockets before killing one to create a new one.
  * @param listen_port The port number.
  * @return 0 if successful, error code if not successful
  */
@@ -36,22 +48,18 @@ float *position_for_dimension(infotainment_state *the_state, canid_t dimension_i
  * Receives a CAN frame sent to the specified port. In the returned frame, the CAN ID
  * is in host byte order.
  * 
- * @param port The port on which to receive.
+ * @param socketfd The file descriptor on which to receive.
+ * @param port The port that socket is listening on (for self-loop detection).
  * @param buffer The buffer in which to receive the CAN frame.
  * @param buffer_len The length of the CAN frame buffer.
  * @param receive_address The address that the CAN frame came from.
  * @param receive_address_len The length of the address that the CAN frame came from.
  * @return a pointer to the resulting CAN frame, or NULL if no CAN frame was received.
  */
-can_frame *receive_frame(int port, uint8_t *buffer, int buffer_len, 
+can_frame *receive_frame(int socketfd, int port, uint8_t *buffer, int buffer_len, 
                          struct sockaddr_in *receive_address, 
                          socklen_t *receive_address_len);
 
-/**
- * Sets the broadcast address to use.
- * @param address The broadcast address, as a string.
- */
-void set_broadcast_address(char *address);
 
 /**
  * @return a pointer to the local address as a struct in_addr.
@@ -59,18 +67,18 @@ void set_broadcast_address(char *address);
 struct in_addr *get_local_address();
 
 /**
- * Sets the valid source address for position messages. If this address
- * is invalid, position messages from anywhere will be considered valid.
- * 
- * @param address The valid position message address, as a string.
- */
-void set_position_address(char *address);
-
-/**
  * @return true if the specified address is a valid source for position messages,
  * false otherwise.
  */
 bool valid_position_source(struct in_addr address);
+
+/** 
+ * Sets the valid position source. If it is not a valid address, any address
+ * is considered a valid position source.
+ * 
+ * @param address The address, as a string.
+ */
+void set_position_source(char *address);
 
 /**
  * Broadcasts a CAN frame to the specified port, on all IPv4 interfaces.

@@ -1,8 +1,14 @@
 /**
- * Infotainment Server
+ * Hacked Infotainment Server
  * Copyright (C) 2020-21 Galois, Inc.
  * @author Daniel M. Zimmerman <dmz@galois.com>
  * @refine besspin_cyberphys.lando
+ * 
+ * This is the "hacked" version of the infotainment server; it listens only 
+ * to the hacker kiosk for control commands, and sends GPS positions
+ * back to the hacker kiosk as they are updated on the network. It also 
+ * still responds to network heartbeats, so that it will not be killed by
+ * an overly-aggressive watchdog.
  */
 
 // general includes
@@ -16,15 +22,16 @@
 #include <arpa/inet.h> 
 #include <netinet/in.h>
 #include <sys/types.h> 
+#include <sys/select.h>
 #include <sys/socket.h> 
 
 #include "canlib.h"
 #include "canspecs.h"
 
-#include "infotainment_defs.h"
-#include "infotainment_debug.h"
-#include "infotainment_server.h"
-#include "infotainment_utils.h"
+#include "hacked_defs.h"
+#include "hacked_server.h"
+#include "hacked_utils.h"
+#include "infotainment_debug.h" // no need to hack debug functions
 
 // initialize global state variables
 infotainment_state the_state = { .T = START };
@@ -53,6 +60,42 @@ bool initialize(void) {
 }
 
 int main_loop(void) {
+    message("socket numbers are %d (CAN) and %d (Kiosk)\n", 
+            udp_socket(RECEIVE_PORT_CAN), udp_socket(RECEIVE_PORT_KIOSK));
+    
+    while (the_state.T == RUNNING) {
+        // refresh the sockets in case one of them died
+        int can_socketfd = udp_socket(RECEIVE_PORT_CAN);
+        int kiosk_socketfd = udp_socket(RECEIVE_PORT_KIOSK);
+
+        fd_set sockets;
+        FD_ZERO(&sockets);
+        FD_SET(can_socketfd, &sockets);
+        FD_SET(kiosk_socketfd, &sockets);
+
+        int nfds = ((can_socketfd > kiosk_socketfd) ? can_socketfd : kiosk_socketfd) + 1; 
+        if (select(nfds, &sockets, (fd_set *) 0, (fd_set *) 0, 0) >= 0) {
+            if (FD_ISSET(can_socketfd, &sockets)) {
+                debug("CAN frame available on CAN socket\n");
+                receive_from_socket(can_socketfd, RECEIVE_PORT_CAN);
+            }
+            if (FD_ISSET(kiosk_socketfd, &sockets)) {
+                debug("CAN frame available on kiosk socket\n");
+                receive_from_socket(kiosk_socketfd, RECEIVE_PORT_KIOSK);
+            }
+        }
+    }
+
+    message("stop signal received, cleaning up\n");
+    // close the UDP sockets in an orderly fashion since we're
+    // no longer listening
+    close(udp_socket(RECEIVE_PORT_CAN));
+    close(udp_socket(RECEIVE_PORT_KIOSK));
+
+    return 0;
+}
+
+void receive_from_socket(int socketfd, int port) {
     // initialize socket address and buffer data structures
     struct sockaddr_in broadcast_address;
     struct sockaddr_in receive_address;
@@ -60,67 +103,67 @@ int main_loop(void) {
     uint8_t message[MESSAGE_BUFFER_SIZE];
     can_frame *frame;
 
-    message("socket number is %d\n", udp_socket(RECEIVE_PORT));
-    
-    while (the_state.T == RUNNING) {
-        // zero out the buffer
-        memset(&message, 0, MESSAGE_BUFFER_SIZE);
+    // receive a packet
+    memset(&message, 0, MESSAGE_BUFFER_SIZE);
+    frame = receive_frame(socketfd, port, message, MESSAGE_BUFFER_SIZE,
+                          &receive_address, &receive_address_len);
 
-        // receive a packet
-        frame = receive_frame(RECEIVE_PORT, message, MESSAGE_BUFFER_SIZE, 
-                              &receive_address, &receive_address_len);
-        
-        // attempt to decode the frame and see if it is for us
-        if (frame == NULL) {
-            continue;
-        } else if (!is_relevant(frame->can_id)) {
-            debug("received CAN frame with irrelevant ID %x\n", frame->can_id);
-            continue;
-        }
-
-        // change our state based on the received CAN frame
-
-        debug("processing CAN frame with ID %x\n", frame->can_id);
-        bool position_updated = false;
-        switch (frame->can_id) {
-            case CAN_ID_CAR_X:
-            case CAN_ID_CAR_Y:
-            case CAN_ID_CAR_Z:
-            case CAN_ID_CAR_R:
-                if (valid_position_source(receive_address.sin_addr)) {
-                    position_updated = update_position(frame);
-                } else {
-                    debug("received position frame from invalid source, ignoring\n");
-                }
-                break;
-
-            case CAN_ID_BUTTON_PRESSED:
-                handle_button_press(frame);
-                break;
-
-            case CAN_ID_HEARTBEAT_REQ:
-                broadcast_heartbeat_ack(frame);
-                break;
-        }
-
-        // broadcast the new state; we always broadcast the current music state
-        // if a button was pressed, and we also broadcast any position state 
-        // that has been updated
-
-        if (frame->can_id == CAN_ID_BUTTON_PRESSED) {
-            broadcast_music_state();
-        }
-        if (position_updated) {
-            broadcast_position(frame->can_id);
-        }
+    // attempt to decode the frame and see if it is for us
+    if (frame == NULL)
+    {
+        return;
+    }
+    else if (!is_relevant(frame->can_id))
+    {
+        debug("received CAN frame with irrelevant ID %x\n", frame->can_id);
+        return;
     }
 
-    message("stop signal received, cleaning up\n");
-    // close the UDP socket in an orderly fashion since we're
-    // no longer listening
-    close(udp_socket(RECEIVE_PORT));
+    // change our state based on the received CAN frame
 
-    return 0;
+    debug("processing CAN frame with ID %x\n", frame->can_id);
+    bool position_updated = false;
+    switch (frame->can_id)
+    {
+        case CAN_ID_CAR_X:
+        case CAN_ID_CAR_Y:
+        case CAN_ID_CAR_Z:
+        case CAN_ID_CAR_R:
+            if (port == RECEIVE_PORT_CAN && valid_position_source(receive_address.sin_addr)) {
+                position_updated = update_position(frame);
+            } else {
+                debug("position update frame from invalid source ignored\n");
+            }
+            break;
+
+        case CAN_ID_BUTTON_PRESSED:
+            if (port == RECEIVE_PORT_KIOSK) {
+                handle_button_press(frame);
+            } else {
+                debug("button press from CAN ignored\n");
+            }
+            break;
+
+        case CAN_ID_HEARTBEAT_REQ:
+            if (port == RECEIVE_PORT_CAN) {
+                broadcast_heartbeat_ack(frame);
+            } else {
+                debug("heartbeat req from kiosk ignored\n");
+            }
+            break;
+    }
+
+    // broadcast the new state; we always broadcast the current music state
+    // if a button was pressed (on the kiosk), and we also broadcast any 
+    // position state that has been updated
+    if (frame->can_id == CAN_ID_BUTTON_PRESSED && port == RECEIVE_PORT_KIOSK)
+    {
+        broadcast_music_state();
+    }
+    if (position_updated)
+    {
+        broadcast_position(frame->can_id);
+    }
 }
 
 bool is_relevant(canid_t can_id) {
@@ -272,7 +315,7 @@ void broadcast_music_state() {
 
     debug("broadasting music state frame: playing %d, station %d, volume %d\n",
           the_state.M == MUSIC_PLAYING, the_state.station, the_state.volume);
-    broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
+    broadcast_frame(RECEIVE_PORT_CAN, SEND_PORT_CAN, &frame);
 }
 
 void broadcast_position(canid_t can_id) {
@@ -289,7 +332,9 @@ void broadcast_position(canid_t can_id) {
     memcpy(&frame.data[0], &network_position, sizeof(float));
 
     debug("broadcasting new %c position: %f\n", dimension, *position);
-    broadcast_frame(RECEIVE_PORT, SEND_PORT, &frame);
+    // must broadcast both to infotainment thin client and to kiosk
+    broadcast_frame(RECEIVE_PORT_KIOSK, SEND_PORT_KIOSK, &frame);
+    broadcast_frame(RECEIVE_PORT_CAN, SEND_PORT_CAN, &frame);
 }
 
 void broadcast_heartbeat_ack(can_frame *frame) {
@@ -309,7 +354,7 @@ void broadcast_heartbeat_ack(can_frame *frame) {
     uint32_t *heartbeat_id = (uint32_t *) &ack.data[0];
     debug("broadcasting response to heartbeat request %ju\n", 
           (uintmax_t) ntohl(*heartbeat_id));
-    broadcast_frame(RECEIVE_PORT, SEND_PORT, &ack);
+    broadcast_frame(RECEIVE_PORT_CAN, SEND_PORT_CAN, &ack);
 }
 
 void stop(void) {

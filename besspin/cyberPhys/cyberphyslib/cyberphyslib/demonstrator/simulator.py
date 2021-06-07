@@ -54,6 +54,8 @@ class BeamNgCommand(enum.Enum):
     DISABLE_AUTOPILOT = enum.auto()
     UI_BUTTON_PRESSED = enum.auto()
     AUTOPILOT_STATUS = enum.auto()
+    TRANSITION_ACTIVE = enum.auto()
+    TRANSITION_INACTIVE = enum.auto()
 
 
 def requires_running_scenario(func):
@@ -362,3 +364,15 @@ class Sim(component.ComponentPoller):
                 self._disable_autopilot = True
                 self._in_autopilot = None
                 self.restart_command()
+
+    @recv_topic("jmonitor-beamng", BeamNgCommand.TRANSITION_INACTIVE)
+    def _(self, t):
+        if self._start_finished:
+            self.enable_autopilot_command()
+            self.restart_command()
+
+    @recv_topic("jmonitor-beamng", BeamNgCommand.TRANSITION_ACTIVE)
+    def _(self, t):
+        if self._start_finished:
+            self.disable_autopilot_command()
+            self.restart_command()

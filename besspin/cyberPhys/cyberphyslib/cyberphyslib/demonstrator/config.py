@@ -7,14 +7,24 @@ Date: 01 January 2021
 Cyberphys Demonstrator Configuration Variables
 """
 
+# directory of ignition stations
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
+# port timeouts
 SCENARIO_TIMEOUT = 5*60 # s
 CC_TIMEOUT = 60 # s
 
+# name of joystick for ignition to monitor
+JOYSTICK_NAME = 'FANATEC Podium Wheel Base DD1'
+# Uncomment for the thrustmaster t150 wheel
+# JOYSTICK_NAME = 'Thrustmaster T150 Racing Wheel'
+
 # See cyberPhys-test.ini for IP allocation
-# Also see https://github.com/GaloisInc/SSITH-CyberPhys/issues/225
-APPLY_LISTS = False
+APPLY_LISTS = True
+
+# position/heading margins of error before reporting changes
+MIN_POSITION_CHANGE = 0.8
+MIN_HEADING_CHANGE = 0.5
 
 # for zeromq comms (localhost)
 BEAMNG_SIM_PORT = 5014
@@ -25,8 +35,9 @@ CANM_PORT =  5018
 INFO_PLAY_PORT = 5019
 LOCATION_PORT = 5021
 INFO_UI_PORT = 5022
+JMONITOR_PORT = 5023
 
-LOCATION_POLL_HZ = 10
+LOCATION_POLL_HZ = 5
 
 BEAMNG_SETTINGS_PATH_RELATIVE = r"\BeamNG.tech\settings\\"
 
@@ -38,6 +49,7 @@ BEAMNG_CYBERPHYS_CS_FILE_NAME = r"game-settings_cyberphys.cs"
 
 BEAMNG_PORT=64256
 BEAMNG_PATH=r"C:\BeamNG.tech"
+
 # Override this if you need to change your user path. User path with spaces are not supported.
 BEAMNG_USER_PATH=None
 BEAMNG_OUTGAUGE_PORT = 4445 # Outgauge emulation
@@ -58,7 +70,9 @@ BEAMNG_COMPONENT_OUTPUT = [BEAMNG_COMPONENT_ELECTRIC,
                            BEAMNG_COMPONENT_SENSORS
                           ]
 
-BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands'), (INFO_UI_PORT, 'infoui-beamng')]
+BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands'),
+                          (INFO_UI_PORT, 'infoui-beamng'),
+                          (JMONITOR_PORT, 'jmonitor-beamng')]
 
 # keyword arguments to pass to Vehicle when creating a vehicle for the sim scenario
 BEAMNG_VEHICLE_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk854t_A.pc'}
