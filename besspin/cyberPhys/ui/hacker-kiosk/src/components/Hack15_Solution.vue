@@ -1,6 +1,6 @@
 <template>
   <div id="hack15">
-      <router-link class="hack15-btn img-btn" to="/hack02_intro" tag="button">
+      <router-link v-if="canContinue" class="hack15-btn img-btn" to="/hack02_intro" tag="button">
       </router-link>
   </div>
 </template>
@@ -36,12 +36,17 @@
     },
     data() {
       return {
-        messages: []
+        canContinue: false
       }
     },
     mounted() {
+      this.canContinue = false;
+      setTimeout(this.revealRestart, 5000);
     },
     methods: {
+      revealRestart() {
+        this.canContinue = true;
+      }
     }
   };
 </script>
