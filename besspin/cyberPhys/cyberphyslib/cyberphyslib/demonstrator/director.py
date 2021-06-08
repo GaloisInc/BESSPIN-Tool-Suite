@@ -248,7 +248,7 @@ class IgnitionDirector:
         player = infotain.InfotainmentPlayer(self.info_net)
         if not start_component(ui): return
         if not start_component(player): return
-        self.info_net.register(ui)
+        self.can_multiverse.register(ui)
         self.can_multiverse.register(player)
 
         # TODO: FIXME: componentize this?
