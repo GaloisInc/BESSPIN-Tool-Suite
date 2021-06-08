@@ -37,34 +37,18 @@ Examples:
 
 # argument parser
 parser = argparse.ArgumentParser(description="Can ID Canlib REPL")
-parser.add_argument("-port", type=int, default=5030, help="IP of TCP Bus")
+parser.add_argument("-port", type=int, default=5002, help="IP of TCP Bus")
 parser.add_argument("-ip", type=str, default="127.0.0.1", help="Port of TCP Bus")
 args = parser.parse_args()
 
 # Setup the CAN Network
-print("Connecting Transmitter Thread...")
-IP_ADMIN_PC = f"{args.ip}:{args.port}"
-nodes = ["127.0.0.1:5557", IP_ADMIN_PC]
-admin_pc = ccan.TcpBus(IP_ADMIN_PC, nodes)
+print("Connecting CanRepl to {args.ip}:{args.port}")
+can_network = ccan.UdpBus(port=args.port, ip=args.ip)
 
 # Setup the prompt
 canids = {name.split('CAN_ID_')[1]: getattr(ccan, name) for name in dir(ccan) if 'CAN_ID' in name}
 can_completer = NestedCompleter.from_nested_dict({**{name: None for name in canids.keys() }, **{'exit': None}})
 session = PromptSession('can console> ', completer=can_completer, auto_suggest=AutoSuggestFromHistory())
-
-# for printing incoming messages
-# this was too obnoxious for a single console application
-#def recv_thread(evt: threading.Event):
-#    recvr = ccan.TcpBus("127.0.0.1:5558", nodes)
-#    canidsr = {v: k for k, v in canids.items()}
-#    while not evt.is_set():
-#        msg = recvr.recv(0.5)
-#        if msg:
-#            print(f"\nRECEIVED {canidsr[msg.arbitration_id]}:\n\t{msg}\n")
-#print("Connecting Receiver Thread...")
-#rfinish = threading.Event()
-#rthread = threading.Thread(target=recv_thread, args=(rfinish,), daemon=True)
-#rthread.start()
 
 # Mainloop
 not_finished = True
@@ -84,11 +68,8 @@ while not_finished:
             data = (data,) if not isinstance(data, tuple) else data
             msg = ccan.Message(arbitration_id=canids[cid], data=struct.pack(pack, *data))
             print(f"Formed Message: {msg}")
-            admin_pc.send(msg)
+            can_network.send(msg)
         except KeyboardInterrupt:
             break
         except Exception as exc:
             print(f"Encountered Error: {exc}")
-
-#rfinish.set()
-#rthread.join()
