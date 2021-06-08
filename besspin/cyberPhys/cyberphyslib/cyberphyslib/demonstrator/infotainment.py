@@ -39,9 +39,7 @@ class InfotainmentProxy:
     """infotainment proxy between infotainment ui net and the can multiverse"""
     def __init__(self, info_net: CanNetwork, multiverse: CanNetwork):
         self.info_ui = InfotainmentUi(multiverse)
-        info_net.register(self.info_ui)
         self.info_player = InfotainmentPlayer(info_net)
-        #multiverse.register(self.info_player)
 
 
 class InfotainmentUiStatus(enum.IntEnum):
@@ -66,8 +64,6 @@ class InfotainmentUi(ccomp.ComponentPoller):
     def _(self, data):
         # alert simulator to turn off self driving mode
         self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
-        # forward to the other network
-        self._network.send(canspecs.CAN_ID_BUTTON_PRESSED, struct.pack(canspecs.CAN_FORMAT_BUTTON_PRESSED, data[0]))
 
 
 class InfotainmentPlayer(ccomp.ComponentPoller):
@@ -143,7 +139,8 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         station = 0x3 & val
         val >>= 2
         volume = val
-        assert station <= 0x3, f"station number isn't valid {station}"
+        station -= 1
+        assert station < 0x3, f"station number isn't valid {station}"
 
         # apply music mixer actions
         if music_playing:
@@ -152,9 +149,9 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
                 info_logger.info(f"changing volume to {target_volume} %%")
                 self._volume = target_volume
                 self._set_volume()
-            if self._sidx != station - 1 or self._sound is None:
-                info_logger.info(f"changing station to {self._sidx} index")
-                self._sidx = station - 1
+            if self._sidx != station or self._sound is None:
+                info_logger.info(f"changing station to {station} index")
+                self._sidx = station
                 self.play_sound()
         else:
             if self._sound is not None:
