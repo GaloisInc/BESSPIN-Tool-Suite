@@ -27,62 +27,62 @@
   }
 
   .hack12-brake-btn {
-    top: 1220px;
+    top: 1320px;
     left: 200px;
-    width: 716px;
-    height: 272px;
+    width: 330px;
+    height: 160px;
     background-image: url('/hack12_protectCritical/hack12_protectCritical_brakes_btn.png');
+    background-position-x: -15px;
+    background-position-y: -15px;
   }
   .hack12-brake-btn:active {
-    top: 1220px;
-    left: 200px;
-    width: 760px;
-    height: 320px;
     background-image: url('/hack12_protectCritical/hack12_protectCritical_brakes_btnHIT.png');
+    background-position-x: 0px;
+    background-position-y: 0px;
   }
 
   .hack12-accel-btn {
-    top: 1220px;
-    left: 500px;
-    width: 716px;
-    height: 272px;
+    top: 1320px;
+    left: 560px;
+    width: 330px;
+    height: 160px;
     background-image: url('/hack12_protectCritical/hack12_protectCritical_accel_btn.png');
+    background-position-x: -15px;
+    background-position-y: -15px;
   }
   .hack12-accel-btn:active {
-    top: 1220px;
-    left: 500px;
-    width: 760px;
-    height: 320px;
     background-image: url('/hack12_protectCritical/hack12_protectCritical_accel_btnHIT.png');
+    background-position-x: 0px;
+    background-position-y: 0px;
   }
 
   .hack12-steering-btn {
-    top: 1520px;
+    top: 1550px;
     left: 200px;
-    width: 716px;
-    height: 272px;
+    width: 330px;
+    height: 160px;
     background-image: url('/hack12_protectCritical/hack12_protectCritical_steering_btn.png');
+    background-position-x: -15px;
+    background-position-y: -15px;
   }
   .hack12-steering-btn:active {
-    top: 1520px;
-    left: 200px;
-    width: 760px;
-    height: 320px;
     background-image: url('/hack12_protectCritical/hack12_protectCritical_steering_btnHIT.png');
+    background-position-x: 0px;
+    background-position-y: 0px;
   }
   .hack12-trans-btn {
-    top: 1520px;
-    left: 500px;
-    width: 716px;
-    height: 272px;
+    top: 1550px;
+    left: 560px;
+    width: 330px;
+    height: 160px;
     background-image: url('/hack12_protectCritical/hack12_protectCritical_tran_btn.png');
+    background-position-x: -15px;
+    background-position-y: -15px;
   }
   .hack12-trans-btn:active {
-    top: 1520px;
-    left: 500px;
-    width: 760px;
-    height: 320px;
     background-image: url('/hack12_protectCritical/hack12_protectCritical_tran_btnHIT.png');
+    background-position-x: 0px;
+    background-position-y: 0px;
   }
 </style>
 
