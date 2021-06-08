@@ -85,6 +85,17 @@ class IgnitionDirector:
         {'trigger': 'next_state', 'source': 'cc_msg', 'dest': 'restart'}
     ]
 
+    hacks2patterns = {
+        ccan.HACK_NONE: ledm.LedPatterns.NOMINAL,# TODO?
+        ccan.HACK_OTA: ledm.LedPatterns.NOMINAL,
+        ccan.HACK_BRAKE: ledm.LedPatterns.BRAKE_HACK,
+        ccan.HACK_THROTTLE: ledm.LedPatterns.THROTTLE_HACK,
+        ccan.HACK_TRANSMISSION: ledm.LedPatterns.TRANSMISSION_HACK,
+        ccan.HACK_LKAS: ledm.LedPatterns.STEERING_HACK,
+        ccan.HACK_INFOTAINMENT_1: ledm.LedPatterns.ALL_ON,# TODO
+        ccan.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO
+    }
+
     @classmethod
     def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
         """produce director from the Besspin environment setup file"""
@@ -299,8 +310,7 @@ class IgnitionDirector:
                 else:
                     # TODO: FIXME: write test for this
                     lm: ledm.LedManagerComponent = self._handler["ledm"]
-                    # NOTE: is this the agreed on decoding mechanism?
-                    lm.update_pattern(ledm.LedPatterns(hack_idx))
+                    lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
 
             elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
                 # NOTE: this is not agreed on
