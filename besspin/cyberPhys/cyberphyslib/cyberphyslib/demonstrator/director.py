@@ -314,6 +314,8 @@ class IgnitionDirector:
 
             elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
                 # NOTE: this is not agreed on
+                # FIXME: should different light color be associated with SSITH scenario?
+                # white/blue vs. the baseline green?
                 nmap = {
                     canlib.SCENARIO_BASELINE: "base",
                     canlib.SCENARIO_SECURE_ECU: "secure_ecu",
