@@ -1,0 +1,115 @@
+"""
+Project: SSITH CyberPhysical Demonstrator
+director.py
+Author: Ethan Lew <elew@galois.com>
+Date: 06/09/2021
+Python 3.8.3
+O/S: Windows 10
+
+Kiosk State Machine
+"""
+from transitions.extensions import GraphMachine as Machine
+from transitions import State
+
+
+class KioskDirector:
+    """
+    Kiosk Director implements the desired state flow for the hacker kiosk experience
+
+    TODO: given the similar interfaces with IgnitionDirector, make a state machine base class?
+    """
+
+    # full name of the states
+    state_names = ["slide2_kiosk_setup",
+                   "slide3_introduction",
+                   "slide4",
+                   "slide5",
+                   "slide6a_hack_ota_server",
+                   "slide6b_hack_ota_server",
+                   "slide7_infotainment_hacks",
+                   "slide9",
+                   "slide10_hack_critical_systems",
+                   "slide15_ssith_intro",
+                   "slide16_secure_infotainment",
+                   "slide17",
+                   "slide18_secure_ecu",
+                   "slide19",
+                   "slide20_everything_is_hackable",
+                   "slide21_ssith_is_the_solution"]
+
+    # this is a brief description of the state transitions that is expanded at runtime
+    # into pytransitions transitions
+    transition_names = [
+        {'transition': ('slide2', 'slide3'), 'conditions': 'input_timer'},
+        {'transition': ('slide3', 'slide4'), 'conditions': 'input_hack_car'},
+        {'transition': ('slide4', 'slide5'), 'conditions': 'input_exploit_ota'},
+        {'transition': ('slide5', 'slide6a'), 'conditions': 'input_hack_infotainment'},
+        {'transition': ('slide6a', 'slide6b'), 'conditions': 'input_infotainment_hacked'},
+        {'transition': ('slide6b', 'slide7'), 'conditions': 'input_next'},
+        {'transition': ('slide7', 'slide7'), 'conditions': 'input_hack'},
+        {'transition': ('slide7', 'slide9'), 'conditions': 'input_next', 'unless': 'input_hack'},
+        {'transition': ('slide9', 'slide10'), 'conditions': 'input_next'},
+        {'transition': ('slide10', 'slide10'), 'conditions': 'input_hack'},
+        {'transition': ('slide10', 'slide15'), 'conditions': 'input_next', 'unless': 'input_hack'},
+        {'transition': ('slide15', 'slide16'), 'conditions': 'input_hack_infotainment'},
+        {'transition': ('slide15', 'slide18'), 'conditions': 'input_hack_critical', 'unless': 'input_hack_infotainment'},
+        {'transition': ('slide16', 'slide16'), 'conditions': 'input_hack'},
+        {'transition': ('slide18', 'slide18'), 'conditions': 'input_hack'},
+        {'transition': ('slide16', 'slide17'), 'conditions': 'input_next', 'unless': 'input_hack'},
+        {'transition': ('slide18', 'slide19'), 'conditions': 'input_next', 'unless': 'input_hack'},
+        {'transition': ('slide17', 'slide20'), 'conditions': 'input_next'},
+        {'transition': ('slide19', 'slide20'), 'conditions': 'input_next'},
+        {'transition': ('slide20', 'slide21'), 'conditions': 'input_restart'},
+        {'transition': ('slide21', 'slide3')}
+    ]
+
+    def __init__(self):
+        """kiosk state machine"""
+        self.states = None
+        self.transitions = None
+        self.machine = self.prepare_state_machine()
+
+    @property
+    def is_finished(self):
+        """state machine termination condition"""
+        return False
+
+    def run(self):
+        """start the state machine, and keep it transitioning until termination"""
+        try:
+            while not self.is_finished:
+                # advance the state machine
+                self.next_state()
+        except KeyboardInterrupt:
+            pass
+
+    def prepare_state_machine(self):
+        """expand state machine description and create pytransitions machine"""
+        def get_full_name(n):
+            map = {s.split('_')[0]: s for s in self.state_names}
+            return map[n]
+
+        # create state objects from state name
+        self.states = [State(name=s, on_enter=f'{s}_enter') for s in self.state_names]
+
+        # create transition objects from static transition description
+        self.transitions  = []
+        for tn in self.transition_names:
+            base_dict = {'trigger': 'next_state',
+                         'source': get_full_name(tn['transition'][0]),
+                         'dest': get_full_name(tn['transition'][1])}
+            if 'conditions' in tn:
+                base_dict['conditions'] = tn['conditions']
+            if 'unless' in tn:
+                base_dict['unless'] = tn['unless']
+            self.transitions.append(base_dict)
+
+        return Machine(self, states=self.states, transitions=self.transitions, initial='slide2_kiosk_setup', show_conditions=True)
+
+
+    def draw_graph(self, fname: str):
+        """draw a fsm graphviz graph (for documentation, troubleshooting)
+
+        NOTE: you will need to install graphviz (with dot)
+        """
+        self.machine.get_graph().draw(fname, prog='dot')
