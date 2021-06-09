@@ -14,8 +14,11 @@ from transitions import State
 
 def slide(f):
     """decorator for slide action methods"""
-    print(f.__name__)
-    return f
+    def inner(*args, **kwargs):
+        """TODO: make this log instead of print"""
+        print(f.__name__)
+        return f(*args, **kwargs)
+    return inner
 
 
 class KioskDirector:
@@ -165,9 +168,11 @@ class KioskDirector:
         1. hack
         """
         pass
+        pass
 
     @slide
     def slide7_infotainment_hacks_enter(self):
+        pass
         pass
 
     @slide
