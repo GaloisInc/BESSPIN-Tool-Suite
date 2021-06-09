@@ -149,10 +149,12 @@ class KioskDirector:
 
     @slide
     def slide4_enter(self):
+        """nothing"""
         pass
 
     @slide
     def slide5_enter(self):
+        """nothing"""
         pass
 
     @slide
@@ -165,48 +167,74 @@ class KioskDirector:
     @slide
     def slide6b_hack_ota_server_enter(self):
         """
-        1. hack
+        1. upload OTA payload file
         """
-        pass
         pass
 
     @slide
     def slide7_infotainment_hacks_enter(self):
-        pass
+        """infotainment server hacks are calls on the python backend (?)"""
         pass
 
     @slide
     def slide9_enter(self):
+        """
+        1. attempt to hack the critical systems?
+        """
         pass
 
     @slide
     def slide10_hack_critical_systems_enter(self):
+        """
+        1. Send TX_CMD_HACK_ACTIVE(hack-number)
+        - select correct precompiled binary
+        - color button red / green based on selection
+        """
         pass
 
     @slide
     def slide15_ssith_intro_enter(self):
+        """
+        1. restart baseline scenario components using CMD_RESTART
+        2. Send TX_CMD_ACTIVE_SECNARIO(SCENARIO_SECURE_ECU)
+        3. Send TX_CMD_HACK_ACTIVE(0x0)
+        """
         pass
 
     @slide
     def slide16_secure_infotainment_enter(self):
+        """
+        1. Send TX_CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_INFOTAINMENT)
+        - All hacks fail with an error message
+        - OTA server crashes on SSITH P2 when a hack is attempted
+        """
         pass
 
     @slide
     def slide17_enter(self):
+        """nothing"""
         pass
 
     @slide
     def slide18_secure_ecu_enter(self):
+        """
+        1. Send TX_CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_ECU)
+        - appropriate precompiled binary is selected
+        - will be a short unavailability of the ECU (buttons will indicate that)
+        """
         pass
 
     @slide
     def slide19_enter(self):
+        """nothing"""
         pass
 
     @slide
     def slide20_everything_is_hackable_enter(self):
+        """nothign"""
         pass
 
     @slide
     def slide21_ssith_is_the_solution_enter(self):
+        """nothing"""
         pass
