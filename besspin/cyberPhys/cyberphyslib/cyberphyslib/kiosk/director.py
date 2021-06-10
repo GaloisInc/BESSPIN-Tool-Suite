@@ -8,6 +8,8 @@ O/S: Windows 10
 
 Kiosk State Machine
 """
+import cyberphyslib.kiosk.client as kclient
+import cyberphyslib.canlib as canlib
 from transitions.extensions import GraphMachine as Machine
 from transitions import State
 
@@ -72,12 +74,13 @@ class KioskDirector:
         {'transition': ('slide21', 'slide3'), 'conditions': 'input_next'}
     ]
 
-    def __init__(self):
+    def __init__(self, ota_client: kclient.HackOtaClient):
         """kiosk state machine"""
         self.states = None
         self.transitions = None
         self.inputs = None
         self.machine = self.prepare_state_machine()
+        self.client: kclient.HackOtaClient = ota_client
 
     @property
     def is_finished(self):
@@ -133,6 +136,9 @@ class KioskDirector:
         """
         self.machine.get_graph().draw(fname, prog='dot')
 
+    def status_send(self, canid, argument):
+        pass
+
     @slide
     def slide2_kiosk_setup_enter(self):
         """timer choice selected"""
@@ -145,6 +151,8 @@ class KioskDirector:
         2. send TX_CMD_HACK_ACTIVE(0x0)
         TODO: restart inactive components?
         """
+        self.status_send(canlib.CAN_ID_CMD_ACTIVE_SCENARIO, "TODO")
+        self.status_send(canlib.CAN_ID_CMD_HACK_ACTIVE, 0x0)
         pass
 
     @slide
@@ -162,14 +170,16 @@ class KioskDirector:
         """
         1. hack OTA server
         """
-        pass
+        success = self.client.hack_server()
+        # TODO: error handling if not successful?
 
     @slide
     def slide6b_hack_ota_server_enter(self):
         """
         1. upload OTA payload file
         """
-        pass
+        # TODO: is this the correct call?
+        success, _ = self.client.change_secret_key()
 
     @slide
     def slide7_infotainment_hacks_enter(self):
@@ -181,6 +191,7 @@ class KioskDirector:
         """
         1. attempt to hack the critical systems?
         """
+        # TODO: what goes here?
         pass
 
     @slide
@@ -190,7 +201,7 @@ class KioskDirector:
         - select correct precompiled binary
         - color button red / green based on selection
         """
-        pass
+        self.status_send(canlib.CAN_ID_CMD_HACK_ACTIVE, "TODO")
 
     @slide
     def slide15_ssith_intro_enter(self):
@@ -199,7 +210,8 @@ class KioskDirector:
         2. Send TX_CMD_ACTIVE_SECNARIO(SCENARIO_SECURE_ECU)
         3. Send TX_CMD_HACK_ACTIVE(0x0)
         """
-        pass
+        self.status_send(canlib.CAN_ID_CMD_ACTIVE_SCENARIO, "TODO")
+        self.status_send(canlib.CAN_ID_CMD_HACK_ACTIVE, 0x0)
 
     @slide
     def slide16_secure_infotainment_enter(self):
@@ -208,7 +220,8 @@ class KioskDirector:
         - All hacks fail with an error message
         - OTA server crashes on SSITH P2 when a hack is attempted
         """
-        pass
+        self.status_send(canlib.CAN_ID_CMD_ACTIVE_SCENARIO, "TODO")
+
 
     @slide
     def slide17_enter(self):
@@ -222,7 +235,7 @@ class KioskDirector:
         - appropriate precompiled binary is selected
         - will be a short unavailability of the ECU (buttons will indicate that)
         """
-        pass
+        self.status_send(canlib.CAN_ID_CMD_ACTIVE_SCENARIO, "TODO")
 
     @slide
     def slide19_enter(self):
