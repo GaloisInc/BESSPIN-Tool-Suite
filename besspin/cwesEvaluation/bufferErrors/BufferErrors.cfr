@@ -12,6 +12,7 @@ abstract BufferErrors_Weakness
   xor Location
     Location_Stack
     Location_Heap
+    Location_Global
     
   xor Magnitude
     Magnitude_VeryClose
@@ -37,7 +38,7 @@ BufferErrors_Test : BufferErrors_Weakness ?
     SizeComputation_IntOverflowToBufferOverflow
     SizeComputation_IncorrectMallocCall
   [ Boundary_Below => SizeComputation_None ]
-  [ Location_Stack => !SizeComputation_IncorrectMallocCall ]
+  [ (Location_Stack || Location_Global) => !SizeComputation_IncorrectMallocCall ]
 
   xor BufferIndexScheme
     BufferIndexScheme_PointerArithmetic
@@ -49,11 +50,13 @@ BufferErrors_Test : BufferErrors_Weakness ?
                                            Excursion_Continuous &&
                                            SizeComputation_None &&
                                            !Access_Read_After_Write) ]
+  [ BufferIndexScheme_PathManipulation => !Location_Global ]
 
   Fixed_Length_Buffer ?
-  [ Fixed_Length_Buffer => (Location_Stack &&
+  [ Fixed_Length_Buffer => ( !Location_Heap &&
                             SizeComputation_None &&
                             !BufferIndexScheme_PathManipulation) ]
+  [ Location_Global => Fixed_Length_Buffer ]
 
   or CWE
     CWE_118

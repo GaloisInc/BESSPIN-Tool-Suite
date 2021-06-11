@@ -138,7 +138,7 @@ SCHEME       = { 'BufferIndexScheme_IndexArray' : 'ARRAY_ACCESS',
                  'BufferIndexScheme_PointerArithmetic' : 'PTR_ACCESS',
                  'BufferIndexScheme_PathManipulation' : 'PATH_MANIPULATION_ACCESS'}
 ACCESS       = { 'Access_Read' : 'READ', 'Access_Write' : 'WRITE' }
-LOCATION     = { 'Location_Stack' : 'STACK', 'Location_Heap' : 'HEAP' }
+LOCATION     = { 'Location_Stack' : 'STACK', 'Location_Heap' : 'HEAP', 'Location_Global' : 'GLOBAL' }
 COMPUTE_SIZE = { 'SizeComputation_None' : 'NO_COMPUTE_SIZE',
                  'SizeComputation_IntOverflowToBufferOverflow' :
                      'SIZE_OVERFLOW',
