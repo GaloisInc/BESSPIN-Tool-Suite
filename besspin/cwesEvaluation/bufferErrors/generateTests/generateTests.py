@@ -61,7 +61,7 @@ def generateTests(outdir):
         enumeratedFM = featureModelUtil.enumerateFM(model)
         if not getSettingDict('bufferErrors', 'useCustomErrorModel'):
             printAndLog(f"<generateTests> Caching instances to <{instancePath}>")
-            safeDumpJsonFile(enumeratedFM, instancePath)
+            safeDumpJsonFile(enumeratedFM, instancePath, indent=4)
         printAndLog("<generateTests> Done generating instances")
     if not enumeratedFM:
         logAndExit(f'<generateTests> Error model <{modelPath}> contains '

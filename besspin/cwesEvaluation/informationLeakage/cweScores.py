@@ -65,7 +65,7 @@ def generateCweMap():
             fm2    = featureModelUtil.addConstraints(fm, cfg)
             result = featureModelUtil.checkMust(fm2, CWES)
             mapping[t] = [ cwe for (cwe, on) in zip(CWES, result) if on ]
-        safeDumpJsonFile(mapping, savedMapFile)
+        safeDumpJsonFile(mapping, savedMapFile, indent=4)
     return mapping
 
 def scoreAllTests(logs):
