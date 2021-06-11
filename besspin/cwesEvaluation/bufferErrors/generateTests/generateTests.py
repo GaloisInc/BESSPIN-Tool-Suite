@@ -24,7 +24,7 @@ def parseBytes(sz):
 
 def generateTests(outdir):
     # Check that nTests is large enough to avoid score instability
-    minNTests = 40 if isEqSetting('osImage', 'FreeRTOS') else 100
+    minNTests = 60 if isEqSetting('osImage', 'FreeRTOS') else 150
     if getSettingDict('bufferErrors', 'nTests') < minNTests:
         warnAndLog(f"<generateTests> <nTests> must be at least <{minNTests}> "
                    f"for <{getSetting('osImage')}>.  Changing <nTests> to "
