@@ -401,10 +401,10 @@ def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
         logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
-def safeDumpJsonFile(jsonData, jsonFile):
+def safeDumpJsonFile(jsonData, jsonFile, indent=None):
     fJson = ftOpenFile(jsonFile, 'w')
     try:
-        json.dump(jsonData, fJson)
+        json.dump(jsonData, fJson, indent=indent)
         fJson.close()
     except Exception as exc:
         logAndExit(f"Failed to dump json <{jsonData}> to file <{jsonFile}>",
