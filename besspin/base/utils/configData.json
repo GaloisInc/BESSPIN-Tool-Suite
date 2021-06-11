@@ -361,10 +361,6 @@
             "type" : "bool"
         },
         {
-            "name" : "useCachedInstances",
-            "type" : "bool"
-        },
-        {
             "name" : "useCustomErrorModel",
             "type" : "bool"
         },
