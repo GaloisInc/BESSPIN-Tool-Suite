@@ -563,7 +563,11 @@ def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     cp(os.path.join(getSetting('tclSourceDir'), 'prog_vcu118.tcl'), cwd)
     if (mode=="bitstream"):
         tclMode = "bitstream_nonpersistent"
+        bitfile = getSetting('bitAndProbefiles',targetId=targetId)[0]
         extraFile = getSetting('bitAndProbefiles',targetId=targetId)[1]
+        targetInfo = f"<target{targetId}>: " if (targetId) else ''
+        printAndLog (f"{targetInfo} Programming VCU118 with this bitfile: {bitfile}")
+        printAndLog (f"{targetInfo} Programming VCU118 with this probe file: {extraFile}")
         timeout = 120
     elif(mode=="flash"):
         tclMode = "bitstreamAndData_flash"
