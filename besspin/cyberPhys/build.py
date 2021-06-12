@@ -108,44 +108,51 @@ def buildInfotainmentServer(tarName, targetId=None):
 @decorate.debugWrap
 @decorate.timeWrap
 def prepareFreeRTOS(targetId=None):
-    #Netboot on FreeRTOS?
-    if (isEqSetting('elfLoader','netboot',targetId=targetId)):
-        warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
-        setSetting('elfLoader','JTAG',targetId=targetId)
+    if isEnabled('useCustomOsImage',targetId=targetId):
+        targetInfo = f"<target{targetId}>: " if (targetId) else ''
+        printAndLog (f"{targetInfo} Warning, using a custom image")
+        imgPath = getSetting('pathToCustomOsImage',targetId=targetId)
+        printAndLog (f"{targetInfo} custom image path: {imgPath}")
+        cp(imgPath, getSetting('osImageElf',targetId=targetId))
+    else:
+        #Netboot on FreeRTOS?
+        if (isEqSetting('elfLoader','netboot',targetId=targetId)):
+            warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
+            setSetting('elfLoader','JTAG',targetId=targetId)
 
-    # define some paths
-    osImageAsm = os.path.join(getSetting('osImagesDir',targetId=targetId),"FreeRTOS.asm")
-    setSetting('osImageAsm',osImageAsm,targetId=targetId)
+        # define some paths
+        osImageAsm = os.path.join(getSetting('osImagesDir',targetId=targetId),"FreeRTOS.asm")
+        setSetting('osImageAsm',osImageAsm,targetId=targetId)
 
-    #build it
-    besspin.target.build.freeRTOSBuildChecks(targetId=targetId,freertosFork="classic")
-    buildDir = getSetting('buildDir',targetId=targetId)
+        #build it
+        besspin.target.build.freeRTOSBuildChecks(targetId=targetId,freertosFork="classic")
+        buildDir = getSetting('buildDir',targetId=targetId)
 
-    #copy the C files, .mk files, and any directory
-    copyDir(os.path.join(getSetting('repoDir'),'besspin','cyberPhys','srcFreeRTOS'),buildDir,copyContents=True)
-    copyDir(os.path.join(getSetting('repoDir'),'besspin','cyberPhys','canlib'),buildDir,copyContents=True)
+        #copy the C files, .mk files, and any directory
+        copyDir(os.path.join(getSetting('repoDir'),'besspin','cyberPhys','srcFreeRTOS'),buildDir,copyContents=True)
+        copyDir(os.path.join(getSetting('repoDir'),'besspin','cyberPhys','canlib'),buildDir,copyContents=True)
 
-    canPort = getSetting('cyberPhysCanbusPort')
-    configHfile = ftOpenFile (os.path.join(buildDir,'besspinFreeRTOSConfig.h'),'a')
-    try:
-        configHfile.write(f"#define CAN_PORT ({canPort}UL)\n")
-    except Exception as exc:
-        logAndExit(f"Failed to populate <besspinFreeRTOSConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
-    configHfile.close()
+        canPort = getSetting('cyberPhysCanbusPort')
+        configHfile = ftOpenFile (os.path.join(buildDir,'besspinFreeRTOSConfig.h'),'a')
+        try:
+            configHfile.write(f"#define CAN_PORT ({canPort}UL)\n")
+        except Exception as exc:
+            logAndExit(f"Failed to populate <besspinFreeRTOSConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+        configHfile.close()
 
-    configHfile = ftOpenFile (os.path.join(buildDir,'besspinFreeRTOSIPConfig.h'),'a')
-    try:
-        configHfile.write(f"#define ipconfigUSE_DHCP 0\n")
-        configHfile.write(f"#define ipconfigHAS_PRINTF 1\n")
-        configHfile.write(f"#define ipconfigHAS_DEBUG_PRINTF 0\n")
-    except Exception as exc:
-        logAndExit(f"Failed to populate <besspinFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
-    configHfile.close()
+        configHfile = ftOpenFile (os.path.join(buildDir,'besspinFreeRTOSIPConfig.h'),'a')
+        try:
+            configHfile.write(f"#define ipconfigUSE_DHCP 0\n")
+            configHfile.write(f"#define ipconfigHAS_PRINTF 1\n")
+            configHfile.write(f"#define ipconfigHAS_DEBUG_PRINTF 0\n")
+        except Exception as exc:
+            logAndExit(f"Failed to populate <besspinFreeRTOSIPConfig.h>.",exc=exc,exitCode=EXIT.Dev_Bug)
+        configHfile.close()
 
-    besspin.target.build.prepareFreeRTOSNetworkParameters(targetId=targetId)
-    besspin.target.build.buildFreeRTOS(targetId=targetId, buildDir=buildDir)
+        besspin.target.build.prepareFreeRTOSNetworkParameters(targetId=targetId)
+        besspin.target.build.buildFreeRTOS(targetId=targetId, buildDir=buildDir)
 
-    cp(os.path.join(buildDir,'FreeRTOS.elf'), getSetting('osImageElf',targetId=targetId))
+        cp(os.path.join(buildDir,'FreeRTOS.elf'), getSetting('osImageElf',targetId=targetId))
     return
 
 @decorate.debugWrap
