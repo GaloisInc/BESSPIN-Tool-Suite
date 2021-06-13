@@ -6,12 +6,11 @@ import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 import {CanListener, CanNetwork} from '../../common/can';
 import zmq, { socket } from 'zeromq';
-
-
+const config = require('./config.js');
 let canQueue= [];
 
 // UDP Network
-let can_net = new CanNetwork(5002);
+let can_net = new CanNetwork(config.CAN_UDP_PORT);
 can_net.register( new CanListener( (msg) => {
   canQueue.push(msg);
 }));
@@ -28,8 +27,9 @@ ipcMain.on('can-poll', (event) => {
 })
 
 // ZMQ Network
+let zmq_address = config.ZMQ_ADDRESS;
+console.log(config);
 let zmq_sock = zmq.socket("pair");
-let zmq_address = "tcp://127.0.0.1:3333";
 zmq_sock.connect(zmq_address);
 
 let zmqQueue = [];
