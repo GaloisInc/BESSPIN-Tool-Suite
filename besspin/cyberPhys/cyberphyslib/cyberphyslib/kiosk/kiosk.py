@@ -21,14 +21,13 @@ Exchange format:
 """
 import signal
 import zmq
-import threading
 import struct
 from can import Message
 
 import cyberphyslib.canlib as ccan
 
 
-class HackerKiosk(threading.Thread):
+class HackerKiosk:
     """
     TODO: switch to StoppableThread to avoid duplication
     TODO: implement a can send method to cut down on redundant code
@@ -39,11 +38,11 @@ class HackerKiosk(threading.Thread):
     ZMQ_POLL_TIMEOUT = 0.1
 
     def __init__(self):
-        # Threading
-        super().__init__(name="HackerKiosk", daemon=False)
-        self.stop_evt = threading.Event()
+        # TODO: not a thread Threading
+        #super().__init__(name="HackerKiosk", daemon=False)
 
         # CMD network init
+        # TODO: get addresses from the network config
         self.can_port = HackerKiosk.CMD_PORT
         self.host = f"10.88.88.2:{self.can_port}" # Can display
         self.nodes = [f"10.88.88.1:{self.can_port}",
@@ -74,27 +73,6 @@ class HackerKiosk(threading.Thread):
             "hackEcu": (self.hack_ecu, True),
             "sendHackActiveMsg": (self.send_hack_active_message, True)
         }
-
-        self.cmd_thread = threading.Thread(target=self.cmd_loop, args=[], daemon=True)
-
-    def run(self):
-        self.cmd_thread.start()
-        while not self.stopped:
-            msgs = dict(self.poller.poll(timeout=HackerKiosk.ZMQ_POLL_TIMEOUT))
-            if self.socket in msgs and msgs[self.socket] == zmq.POLLIN:
-                # recv there
-                self.serve()
-
-    def stop(self):
-        self.stop_evt.set()
-
-    @property
-    def stopped(self):
-        return self.stop_evt.is_set()
-
-    def exit(self):
-        self.stop()
-        self.join()
 
     def serve(self):
         req = self.socket.recv_json()
@@ -129,12 +107,6 @@ class HackerKiosk(threading.Thread):
 
         print(f"<{self.__class__.__name__}> Responding with {resp}")
         self.socket.send_json(resp)
-
-    def cmd_loop(self):
-        while True:
-            msg = self.canbus.recv()
-            if msg:
-                self.process_cmd_msg(msg)
 
     def process_cmd_msg(self, msg):
         """

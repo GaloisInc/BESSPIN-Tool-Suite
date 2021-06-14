@@ -13,6 +13,8 @@ import cyberphyslib.kiosk.kiosk as kkiosk
 import cyberphyslib.canlib as canlib
 from transitions.extensions import GraphMachine as Machine
 from transitions import State
+import threading
+import zmq
 
 
 def slide(f):
@@ -75,6 +77,13 @@ class KioskDirector:
         {'transition': ('slide21', 'slide3'), 'conditions': 'input_next'}
     ]
 
+    @classmethod
+    def for_besspin(cls):
+        """argument free constructor"""
+        kiosk = kkiosk.HackerKiosk()
+        client = kclient.HackOtaClient()
+        return cls(client, kiosk)
+
     def __init__(self, ota_client: kclient.HackOtaClient, kiosk: kkiosk.HackerKiosk):
         """kiosk state machine"""
         self.states = None
@@ -83,6 +92,35 @@ class KioskDirector:
         self.machine = self.prepare_state_machine()
         self.client: kclient.HackOtaClient = ota_client
         self.kiosk: kkiosk.HackerKiosk = kiosk
+        self.state_arg = None
+
+        self.stop_evt = threading.Event()
+        self.cmd_thread = threading.Thread(target=self.cmd_loop, args=[], daemon=True)
+
+    def run(self):
+        self.cmd_thread.start()
+        while not self.stopped:
+            msgs = dict(self.kiosk.poller.poll(timeout=kkiosk.HackerKiosk.ZMQ_POLL_TIMEOUT))
+            if self.kiosk.socket in msgs and msgs[self.kiosk.socket] == zmq.POLLIN:
+                # recv there
+                self.kiosk.serve()
+
+    def stop(self):
+        self.stop_evt.set()
+
+    @property
+    def stopped(self):
+        return self.stop_evt.is_set()
+
+    def exit(self):
+        self.stop()
+        #self.join() # NOTE: not a thread
+
+    def cmd_loop(self):
+        while True:
+            msg = self.kiosk.canbus.recv()
+            if msg:
+                self.kiosk.process_cmd_msg(msg)
 
     @property
     def is_finished(self):
@@ -94,7 +132,7 @@ class KioskDirector:
         for inp in self.inputs:
             setattr(self, f'{inp}', False)
 
-    def submit_button(self, button_name):
+    def submit_button(self, button_name, arg):
         """activate a button input and send the kiosk to the next state"""
         self.default_inputs()
         if hasattr(self, f'input_{button_name}'):
@@ -102,7 +140,11 @@ class KioskDirector:
         else:
             # TODO raise warning
             pass
-        self.next_state()
+        self.next_state(arg)
+
+    def set_arg(self, arg=None):
+        """setter for arguments shared between button call and state"""
+        self.state_arg = arg
 
     def prepare_state_machine(self):
         """expand state machine description and create pytransitions machine"""
@@ -119,7 +161,8 @@ class KioskDirector:
         for tn in self.transition_names:
             base_dict = {'trigger': 'next_state',
                          'source': get_full_name(tn['transition'][0]),
-                         'dest': get_full_name(tn['transition'][1])}
+                         'dest': get_full_name(tn['transition'][1]),
+                         'before': 'set_arg'}
             if 'conditions' in tn:
                 base_dict['conditions'] = tn['conditions']
                 self.inputs |= {tn['conditions']}
@@ -142,12 +185,12 @@ class KioskDirector:
         pass
 
     @slide
-    def slide2_kiosk_setup_enter(self):
+    def slide2_kiosk_setup_enter(self, arg):
         """timer choice selected"""
         pass
 
     @slide
-    def slide3_introduction_enter(self):
+    def slide3_introduction_enter(self, arg):
         """introduction
         1. send TX_CMD_ACTIVE_SCENARIO(BASELINE)
         2. send TX_CMD_HACK_ACTIVE(0x0)
@@ -158,17 +201,17 @@ class KioskDirector:
         pass
 
     @slide
-    def slide4_enter(self):
+    def slide4_enter(self, arg):
         """nothing"""
         pass
 
     @slide
-    def slide5_enter(self):
+    def slide5_enter(self, arg):
         """nothing"""
         pass
 
     @slide
-    def slide6a_hack_ota_server_enter(self):
+    def slide6a_hack_ota_server_enter(self, arg):
         """
         1. hack OTA server
         """
@@ -177,7 +220,7 @@ class KioskDirector:
         self.kiosk.hack_ota()
 
     @slide
-    def slide6b_hack_ota_server_enter(self):
+    def slide6b_hack_ota_server_enter(self, arg):
         """
         1. upload OTA payload file
         """
@@ -186,12 +229,12 @@ class KioskDirector:
         pass
 
     @slide
-    def slide7_infotainment_hacks_enter(self):
+    def slide7_infotainment_hacks_enter(self, arg):
         """infotainment server hacks are calls on the python backend (?)"""
         pass
 
     @slide
-    def slide9_enter(self):
+    def slide9_enter(self, arg):
         """
         1. attempt to hack the critical systems?
         """
@@ -199,7 +242,7 @@ class KioskDirector:
         pass
 
     @slide
-    def slide10_hack_critical_systems_enter(self):
+    def slide10_hack_critical_systems_enter(self, arg):
         """
         1. Send TX_CMD_HACK_ACTIVE(hack-number)
         - select correct precompiled binary
@@ -210,7 +253,7 @@ class KioskDirector:
         self.kiosk.switch_active_scenario("TODO?")
 
     @slide
-    def slide15_ssith_intro_enter(self):
+    def slide15_ssith_intro_enter(self, arg):
         """
         1. restart baseline scenario components using CMD_RESTART
         2. Send TX_CMD_ACTIVE_SECNARIO(SCENARIO_SECURE_ECU)
@@ -222,7 +265,7 @@ class KioskDirector:
         self.kiosk.send_hack_active_message(0x0)
 
     @slide
-    def slide16_secure_infotainment_enter(self):
+    def slide16_secure_infotainment_enter(self, arg):
         """
         1. Send TX_CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_INFOTAINMENT)
         - All hacks fail with an error message
@@ -232,12 +275,12 @@ class KioskDirector:
         self.kiosk.switch_active_scenario(canlib.SCENARIO_SECURE_INFOTAINMENT)
 
     @slide
-    def slide17_enter(self):
+    def slide17_enter(self, arg):
         """nothing"""
         pass
 
     @slide
-    def slide18_secure_ecu_enter(self):
+    def slide18_secure_ecu_enter(self, arg):
         """
         1. Send TX_CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_ECU)
         - appropriate precompiled binary is selected
@@ -247,16 +290,16 @@ class KioskDirector:
         self.kiosk.switch_active_scenario(canlib.SCENARIO_SECURE_ECU)
 
     @slide
-    def slide19_enter(self):
+    def slide19_enter(self, arg):
         """nothing"""
         pass
 
     @slide
-    def slide20_everything_is_hackable_enter(self):
+    def slide20_everything_is_hackable_enter(self, arg):
         """nothign"""
         pass
 
     @slide
-    def slide21_ssith_is_the_solution_enter(self):
+    def slide21_ssith_is_the_solution_enter(self, arg):
         """nothing"""
         pass
