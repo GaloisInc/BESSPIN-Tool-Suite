@@ -47,7 +47,7 @@ def getQuota(instance):
         # Decrease representation of Boundary_Above heap tests without size
         # computation. This increases the number of CWE-130, CWE-131, and
         # CWE-680 tests.
-        return baseQuota // 4
+        return baseQuota // 8
     if (compilingBareMetal() and
         (instance.Magnitude == "Magnitude_Far" or
          instance.DataSize == "DataSize_Huge")):
