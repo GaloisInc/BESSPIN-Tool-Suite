@@ -323,7 +323,12 @@ def prepareBusybox(targetId=None):
 @decorate.debugWrap
 def selectImagePaths(targetId=None):
     if isEnabled('useCustomOsImage',targetId=targetId):
-        return [getSetting('pathToCustomOsImage',targetId=targetId)]
+        # We need to make sure the name is right
+        tempPath = os.path.join(getSetting('workDir'),f'tmp{targetId}')
+        mkdir (tempPath,exitIfExists=False)
+        tempImagePath = os.path.join(tempPath,os.path.basename(getSetting('osImageElf',targetId=targetId)))
+        cp (getSetting('pathToCustomOsImage',targetId=targetId), tempImagePath)
+        return [tempImagePath]
     else:
         imageType = getSetting('target',targetId=targetId) if (getSetting('target',targetId=targetId)!='awsf1') else getSetting('pvAWS',targetId=targetId)
         if isEqSetting('binarySource','GFE',targetId=targetId):
@@ -353,7 +358,7 @@ def importImage(targetId=None):
     targetIdInfo = f'<target{targetId}>: ' if (targetId) else ''
     imagePaths = selectImagePaths(targetId=targetId)
     for ip in imagePaths:
-        cp (ip, f"{getSetting('osImagesDir',targetId=targetId)}/{getSetting('osImage',targetId=targetId)}.elf")
+        cp (ip, getSetting('osImagesDir',targetId=targetId))
     if (isEqSetting('target', 'vcu118', targetId=targetId)):
         # Fix the FreeBSD IP
         if (isEqSetting('osImage','FreeBSD',targetId=targetId) and isEqSetting('binarySource','GFE',targetId=targetId)):
