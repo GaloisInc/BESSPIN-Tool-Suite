@@ -43,13 +43,13 @@ commonDefaultsCWEs = {
 }
 
 unixDefaultsCWEs = commonDefaultsCWEs.union({
-    ('nTests',(100,)),
+    ('nTests',(150,)),
     ('cross-compiler',('GCC','Clang',)), # If cross-compiler is Clang, linker will be over-written to LLD
     ('linker',('GCC',)),
 })
 
 freertosDefaultsCWEs = commonDefaultsCWEs.union({
-    ('nTests',(40,))
+    ('nTests',(60,))
 })
 
 unixDefaults = commonDefaults.union({
