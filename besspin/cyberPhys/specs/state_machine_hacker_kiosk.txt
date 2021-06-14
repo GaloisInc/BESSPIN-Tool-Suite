@@ -44,7 +44,7 @@ state "Slide 10 HACK CRITICAL SYSTEMS" as Slide10
 Slide10: When a hack is selected, an appropriate pre-compiled binary is selected
 Slide10: and uploaded using "OtaHack.uploadFile(binary)"
 Slide10: The hack button will color red/green based on the selection
-Slide10: and whether the upload was succesfull
+Slide10: and whether the upload was successful
 Slide10: Tx CMD_HACK_ACTIVE(hack-number) (to visualize hacks)
 
 Slide10 --> Slide15: "Next" button pressed
@@ -58,7 +58,7 @@ Slide15 --> Slide16: click "Hack Infotainment"
 Slide16: Tx CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_INFOTAINMENT)
 
 Slide16 --> Slide16: A hack is selected
-Slide16: All hacks fail with an error message (OTA hack not succesfull)
+Slide16: All hacks fail with an error message (OTA hack not successfull)
 Slide16: TODO: add a slide where we attempt to hack OTA server
 Slide16: TODO: OTA server crashes on SSITH P2 when a hack is attempted (~2min downtime)
 
@@ -72,7 +72,7 @@ state "Slide 21 SSITH is The Solution" as Slide21
 Slide20 --> Slide21: "Restart" button pressed
 Slide21 -> Slide3
 
-Slide15 --> Slide18: click "Hack Cricial systems"
+Slide15 --> Slide18: click "Hack Critical systems"
 Slide18: Tx CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_ECU)
 
 state "Slide 18 SECURE ECU" as Slide18
@@ -80,7 +80,7 @@ state "Slide 18 SECURE ECU" as Slide18
 Slide18 --> Slide18: A hack is selected
 Slide18: When a hack is selected, an appropriate pre-compiled binary is selected
 Slide18: and uploaded using "OtaHack.uploadFile(binary)"
-Slide18: The hack will fail, and lead to short (200ms?) unavailibility of the ECU
+Slide18: The hack will fail, and lead to short (200ms?) unavailability of the ECU
 Slide18: The buttons should indicate that.
 
 Slide18 --> Slide19: "Next" button pressed
