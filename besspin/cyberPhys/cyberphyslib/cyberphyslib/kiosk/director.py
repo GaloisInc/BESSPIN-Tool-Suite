@@ -78,10 +78,12 @@ class KioskDirector:
     ]
 
     @classmethod
-    def for_besspin(cls):
+    def for_besspin(cls, dnc):
         """argument free constructor"""
-        kiosk = kkiosk.HackerKiosk()
-        client = kclient.HackOtaClient()
+        kiosk = kkiosk.HackerKiosk(dnc)
+        # TODO: FIXME: add this
+        #client = kclient.HackOtaClient()
+        client = None
         return cls(client, kiosk)
 
     def __init__(self, ota_client: kclient.HackOtaClient, kiosk: kkiosk.HackerKiosk):

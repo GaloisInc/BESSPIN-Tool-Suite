@@ -37,18 +37,15 @@ class HackerKiosk:
     ZMQ_PORT = 5091
     ZMQ_POLL_TIMEOUT = 0.1
 
-    def __init__(self):
+    def __init__(self, dnc):
         # TODO: not a thread Threading
         #super().__init__(name="HackerKiosk", daemon=False)
 
         # CMD network init
-        # TODO: get addresses from the network config
-        self.can_port = HackerKiosk.CMD_PORT
-        self.host = f"10.88.88.2:{self.can_port}" # Can display
-        self.nodes = [f"10.88.88.1:{self.can_port}",
-                      f"10.88.88.3:{self.can_port}",
-                      f"10.88.88.4:{self.can_port}",
-                      f"10.88.88.5:{self.can_port}"]
+        self.can_port = dnc.network_ports['canbusPort']
+        self.host_name = 'InfotainmentThinClient' # NOTE: is this wrong?
+        self.host = f"{dnc.nodes[self.host_name]}:{self.can_port}"
+        self.nodes = [f'{v}:{self.can_port}' for k,v in dnc.nodes.items() if v != dnc.nodes[self.host_name]]
         self.canbus = ccan.TcpBus(self.host, self.nodes)
 
         # ZMQ init
