@@ -108,18 +108,19 @@ def buildInfotainmentServer(tarName, targetId=None):
 @decorate.debugWrap
 @decorate.timeWrap
 def prepareFreeRTOS(targetId=None):
+    #Netboot on FreeRTOS?
+    if (isEqSetting('elfLoader','netboot',targetId=targetId)):
+        warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
+        setSetting('elfLoader','JTAG',targetId=targetId)
+
+    # Custom image?
     if isEnabled('useCustomOsImage',targetId=targetId):
         targetInfo = f"<target{targetId}>: " if (targetId) else ''
-        printAndLog (f"{targetInfo} Warning, using a custom image")
+        warnAndLog (f"{targetInfo} Warning, using a custom image")
         imgPath = getSetting('pathToCustomOsImage',targetId=targetId)
-        printAndLog (f"{targetInfo} custom image path: {imgPath}")
+        logging.debug(f"{targetInfo} custom image path: {imgPath}")
         cp(imgPath, getSetting('osImageElf',targetId=targetId))
     else:
-        #Netboot on FreeRTOS?
-        if (isEqSetting('elfLoader','netboot',targetId=targetId)):
-            warnAndLog (f"Netboot cannot load FreeRTOS image. Falling to JTAG.", doPrint=False)
-            setSetting('elfLoader','JTAG',targetId=targetId)
-
         # define some paths
         osImageAsm = os.path.join(getSetting('osImagesDir',targetId=targetId),"FreeRTOS.asm")
         setSetting('osImageAsm',osImageAsm,targetId=targetId)
