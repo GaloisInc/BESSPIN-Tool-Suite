@@ -39,6 +39,8 @@ def computeNaiveCWEsTally():
                     printAndLog(f"computeNaiveCWEsTally: CWE-{cwe} not found, but it is an exception. Skipping.",
                         doPrint=False)
                     continue
+                if (("documentationOnly" in cweInfo) and cweInfo["documentationOnly"]):
+                    continue
                 errorAndLog(f"computeNaiveCWEsTally: Failed to compute the tally! CWE-{cwe} score not found in <{vulClass}>.")
                 return
             vTally += toValue(scoresDict[vulClass][cwe])
