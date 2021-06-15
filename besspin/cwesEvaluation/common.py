@@ -379,8 +379,11 @@ def isTestEnabled(vulClass, testName):
     --------
         A boolean representing whether <testName> from <vulClass> is enabled.
     """
-    if (getSettingDict(vulClass,'runAllTests')):
-        return True
+    if (isEnabledDict(vulClass,'runAllTests')):
+        return (not isEnabledDict(vulClass,['testsInfo',testName,'documentationOnly'],default=False))
     else:
-        return getSettingDict(vulClass,['enabledTests',testName])
+        return (
+                isEnabledDict(vulClass,['enabledTests',testName])
+                and (not isEnabledDict(vulClass,['testsInfo',testName,'documentationOnly'],default=False))
+            )
 
