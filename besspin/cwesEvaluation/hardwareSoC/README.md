@@ -6,7 +6,9 @@ This class includes the CWEs related to SoC design and hardware implementation. 
 
 ## Testing ## 
 
-This Vulnerability Class will be only self-assessed.
+This Vulnerability Class will be only self-assessed. 
+
+Also, apart from CWEs 1037, 1050, and 1056, all the other CWEs are included for documentation purposes only. The other CWEs are not available to be self-assessed and are not included in the BESSPIN scale or the BESSPIN naïve tally.
 
 ------------------
 
