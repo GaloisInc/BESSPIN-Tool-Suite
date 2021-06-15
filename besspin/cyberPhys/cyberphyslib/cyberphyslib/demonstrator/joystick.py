@@ -19,6 +19,7 @@ import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
 from cyberphyslib.demonstrator.logger import jmonitor_logger
 from cyberphyslib.demonstrator.simulator import BeamNgCommand
+import cyberphyslib.canlib as ccan
 
 
 class T150Axes(enum.IntEnum):
@@ -46,10 +47,10 @@ def init_joystick(joy_name: str) -> pygame.joystick.Joystick:
     return tm_joy
 
 
-class ActivityMonitor(abc.ABC):
+class ActivityMonitor(abc.ABCMeta):
     """Monitor for User Activity Detection"""
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def is_active(self):
         return False
 
@@ -58,7 +59,7 @@ class ActivityMonitor(abc.ABC):
         return not self.is_active
 
 
-class WindowMonitor(ActivityMonitor):
+class WindowMonitor():
     """monitors a vector stream for activity (used inside of activity monitors)"""
 
     def __init__(self, window_length = 50, threshold = 1E-2):
@@ -82,7 +83,7 @@ class WindowMonitor(ActivityMonitor):
             return False
 
 
-class PedalMonitorComponent(ComponentPoller, ActivityMonitor):
+class PedalMonitorComponent(ComponentPoller):
     def __init__(self, window_length = 50, threshold=1E-2):
         super().__init__("pmonitor", [cconf.BEAMNG_COMPONENT_SENSORS, (cconf.DIRECTOR_PORT, "pmonitor-commands")],
                          [(cconf.PMONITOR_PORT, "pmonitor-events"),
@@ -123,9 +124,21 @@ class PedalMonitorComponent(ComponentPoller, ActivityMonitor):
         """
         return self.window.is_active
 
+    @recv_can(ccan.CAN_ID_BRAKE_INPUT, ccan.CAN_FORMAT_BRAKE_INPUT)
+    def _(self, data):
+        print("input")
+
+    @recv_can(ccan.CAN_ID_THROTTLE_INPUT, ccan.CAN_FORMAT_THROTTLE_INPUT)
+    def _(self, data):
+        print("throttle")
+
+    @recv_can(ccan.CAN_ID_GEAR, ccan.CAN_FORMAT_GEAR)
+    def _(self, data):
+        print("gear")
 
 
-class JoystickMonitorComponent(ComponentPoller, ActivityMonitor):
+
+class JoystickMonitorComponent(ComponentPoller):
     """Activity Monitor for the Steering Wheel
 
     Sample at an update rate, filling up a window of n length. If range is less
