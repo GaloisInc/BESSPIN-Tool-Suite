@@ -271,11 +271,11 @@ class IgnitionDirector:
         # startup the speedometer
         start_noncrit_component(speedo.Speedo())
 
-        # startup the joystick monitor
-        start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
+        # startup the pedal monitor
+        start_noncrit_component(cjoy.PedalMonitorComponent())
 
         # startup the joystick monitor
-        start_noncrit_component(cjoy.PedalMonitorComponent())
+        start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
 
         # check if noncritical error occurred
         if self.input_noncrit_fail:
@@ -355,7 +355,7 @@ class IgnitionDirector:
                 return
             else: # CC timeout condition
                 # NOTE: if jmonitor has failed assume user input is present
-                activity = self._handler['jmonitor'].is_active
+                activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
 
                 # if in self drive mode and activity has occurred, get out
                 if activity and self.self_drive_mode:
