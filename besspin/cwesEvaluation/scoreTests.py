@@ -89,7 +89,8 @@ class SCORES (enum.Enum):
         """
         return len(str(self))
 
-    def minScore (scoreList): #Note that no need for 'self' here; it's used as a function
+    @staticmethod
+    def minScore (scoreList):
         """
         Get the lowest score in a list of scores.
 
@@ -108,6 +109,7 @@ class SCORES (enum.Enum):
                 minScore = xScore
         return minScore
 
+    @staticmethod
     def avgScore (scoreList): #Always floors
         """
         Return the floor of the average of a list of scores.
@@ -127,7 +129,12 @@ class SCORES (enum.Enum):
         avgValue = sumScores // len(scoreList)
         return SCORES(avgValue)
 
-    def toScore (strScore):
+    @staticmethod
+    def weightedAvgScore (scoreList, partsWeights):
+        raise NotImplemented
+
+    @classmethod
+    def toScore (cls, strScore):
         """
         Convert a string representation of a score to a SCORES object.
 
@@ -140,7 +147,7 @@ class SCORES (enum.Enum):
         --------
             A SCORES object corresponding to <strScore>.
         """
-        return SCORES[getSettingDict('cwesAssessments',[strScore])]
+        return cls[getSettingDict('cwesAssessments',[strScore])]
 
 @decorate.debugWrap
 def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreReport.log"):
