@@ -449,6 +449,11 @@
             "name" : "cyberPhysWatchdogFrequency",
             "type" : "int",
             "val" : 2
+        },
+        {
+            "name" : "cyberPhysIpcPort",
+            "type" : "int",
+            "val" : "5091"
         }
     ]
 }

@@ -1,6 +1,8 @@
+<!-- TODO: hack OTA server again, so CHERI FreeRTOS can be hacked -->
+<!-- Show the output from CHERI to see how it mitigates the hacks? --> 
 <template>
   <div id="hack12">
-
+      <!-- TODO: mirror behavior from Hack8_page so the buttons can change colors -->
       <router-link class="hack12-brake-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
       </router-link>
 

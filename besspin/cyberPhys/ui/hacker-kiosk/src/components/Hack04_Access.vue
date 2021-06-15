@@ -1,3 +1,4 @@
+<!-- TODO: the Next button here has to initialize the hack!-->
 <template>
   <div id="hack04_access">
       <router-link class="hack04-btn img-btn" to="/hack05_info_attempt" tag="button">

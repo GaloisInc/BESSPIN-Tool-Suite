@@ -2,7 +2,7 @@
   <div id="hack09">
       <router-link class="hack09-info-btn img-btn" to="/hack10_protect_info_attempt" tag="button">
       </router-link>
-      <router-link class="hack09-crit-btn img-btn" to="/hack10_protect_info_attempt" tag="button">
+      <router-link class="hack09-crit-btn img-btn" to="/hack12_protect_info_attempt" tag="button">
       </router-link>
   </div>
 </template>

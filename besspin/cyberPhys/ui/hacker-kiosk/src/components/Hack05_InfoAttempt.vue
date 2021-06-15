@@ -38,7 +38,7 @@
     data() {
       return {
         messages: [],
-        poller: setInterval(() => { this.pollState() }, 3000)
+        poller: setInterval(() => { this.pollState() }, 500)
       }
     },
     mounted() {
@@ -47,7 +47,7 @@
         q.forEach(item => {
           console.log("item", item);
           //TODO: Handle Failure?
-          if(item.function == "hack-info" && item.status == 200) {
+          if(item.func == this.$options.name && item.status == 200) {
             vm.$router.push({ name: 'hack06_info_exploit' });
           }
         });
@@ -62,8 +62,8 @@
         ipc.send('zmq-poll', []);
       },
       hackInfotainment() {
-        ipc.send('cmd-msg', 'hack-info');
-        console.log("Send hack for infotainment");
+        ipc.send('button-pressed', this.$options.name, {});
+        console.log('button-pressed', this.$options.name,{});
       }
     }
   };

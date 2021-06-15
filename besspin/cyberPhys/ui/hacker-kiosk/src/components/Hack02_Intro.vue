@@ -1,3 +1,4 @@
+<!-- TODO: reset page, add logic for reseting the scenario -->
 <template>
   <div id="hack02_intro">
 
