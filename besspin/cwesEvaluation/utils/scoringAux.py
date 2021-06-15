@@ -7,11 +7,15 @@ from besspin.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 import re
 
 def overallScore (listScores, dispName, msgIfNotImplemented="Not Implemented", 
-        isSelfAssessment=False, msgIfSelfAssessment="Error - CWE text is not available", scoreString=None):
+        isSelfAssessment=False, msgIfSelfAssessment="Error - CWE text is not available", scoreString=None,
+        partsWeights=None):
     if (len(listScores)==0): #not implemented
         return [dispName, SCORES.NOT_IMPLEMENTED, msgIfNotImplemented]
     
-    ovrScore = SCORES.minScore(listScores)
+    if (partsWeights is None):
+        ovrScore = SCORES.minScore(listScores)
+    else:
+        ovrScore = SCORES.weightedAvgScore(listScores,partsWeights)
 
     if (scoreString is None):
         if (isSelfAssessment):
