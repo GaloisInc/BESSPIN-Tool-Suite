@@ -274,6 +274,9 @@ class IgnitionDirector:
         # startup the joystick monitor
         start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
 
+        # startup the joystick monitor
+        start_noncrit_component(cjoy.PedalMonitorComponent())
+
         # check if noncritical error occurred
         if self.input_noncrit_fail:
             return
