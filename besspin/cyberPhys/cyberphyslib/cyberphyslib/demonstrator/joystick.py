@@ -92,6 +92,10 @@ class PedalMonitorComponent(ComponentPoller):
         self._sensor_electrics = None
         self.window_length = window_length
         self.threshold = threshold
+        self.window = None
+        self.brake_value = None
+        self.throttle_value = None
+        self.gear_value = None
 
     def on_start(self):
         """start pollrt"""
@@ -101,16 +105,15 @@ class PedalMonitorComponent(ComponentPoller):
     def on_poll_poll(self, t):
         """fill up window of steering wheel observations"""
         edge = self.is_active
-        if self._sensor_electrics:
-            # self.window.append(pedals)
-            raise NotImplementedError
+        if (self.brake_value is not None and self.throttle_value is not None and self.gear_value is not None):
+            self.window.update([self.throttle_value, self.brake_value, self.gear_value])
         if edge is not self.is_active:
             if edge:
                 jmonitor_logger.info("falling edge (transition inactive)")
-                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_INACTIVE), "jmonitor-beamng")
+                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_INACTIVE), "pmonitor-beamng")
             else:
                 jmonitor_logger.info("rising edge (transition active)")
-                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_ACTIVE), "jmonitor-beamng")
+                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_ACTIVE), "pmonitor-beamng")
 
     @recv_topic("beamng-sensors")
     def _(self, msg, t):
@@ -122,20 +125,19 @@ class PedalMonitorComponent(ComponentPoller):
         """evaluate activity condition
         TODO: make an abstract base class here?
         """
-        return self.window.is_active
+        return self.window.is_active if self.window else False
 
     @recv_can(ccan.CAN_ID_BRAKE_INPUT, ccan.CAN_FORMAT_BRAKE_INPUT)
     def _(self, data):
-        print("input")
+        self.brake_value = data[0]
 
     @recv_can(ccan.CAN_ID_THROTTLE_INPUT, ccan.CAN_FORMAT_THROTTLE_INPUT)
     def _(self, data):
-        print("throttle")
+        self.throttle_value = data[0]
 
     @recv_can(ccan.CAN_ID_GEAR, ccan.CAN_FORMAT_GEAR)
     def _(self, data):
-        print("gear")
-
+        self.gear_value = data[0]
 
 
 class JoystickMonitorComponent(ComponentPoller):
@@ -157,6 +159,7 @@ class JoystickMonitorComponent(ComponentPoller):
         self.joystick = None
         self.window_length = window_length
         self.threshold = threshold
+        self.window = None
 
     def on_start(self):
         """initialize pygame"""
@@ -195,4 +198,4 @@ class JoystickMonitorComponent(ComponentPoller):
     @property
     def is_active(self):
         """evaluate activity condition"""
-        return np.array([w.is_active for w in self.window]).all()
+        return np.array([w.is_active for w in self.window]).all() if self.window else False
