@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: ../cyberphyslib/cyberphyslib/canlib/componentids.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 07 June 2021
+Date: 15 June 2021
 This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 """
 
@@ -21,6 +21,7 @@ TEENSY =  0x27
 IGNITION = 0x30
 LED_COMPONENT = 0x31
 HACKER_KIOSK = 0x40
+HACK_NONE = 0x50
 HACK_OTA = 0x51
 HACK_BRAKE = 0x51
 HACK_THROTTLE = 0x52
