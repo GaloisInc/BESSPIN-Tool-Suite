@@ -25,6 +25,6 @@ if __name__ == "__main__":
     dnc = config.DemonstratorNetworkConfig.from_setup_env(network_filepath)
     #kiosk = director.HackerKiosk.for_besspin(dnc)
     kiosk = director.HackerKiosk()
-    #kiosk.draw_graph("test.png")
+    kiosk.draw_graph("kiosk-backend-transitions.png")
     kiosk.run()
 
