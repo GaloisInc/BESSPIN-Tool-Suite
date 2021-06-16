@@ -275,20 +275,16 @@
                 "test_761": {
                     "cweText": "Free of Pointer not at Start of Buffer",
                     "unix": {
-                        "nParts": 4,
+                        "nParts": 2,
                         "scoreWeights": [
-                            1,
-                            1,
-                            1,
+                            0,
                             1
                         ]
                     },
                     "FreeRTOS": {
-                        "nParts": 4,
+                        "nParts": 2,
                         "scoreWeights": [
-                            1,
-                            1,
-                            1,
+                            0,
                             1
                         ]
                     }
