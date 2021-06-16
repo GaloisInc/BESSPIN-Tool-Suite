@@ -29,9 +29,19 @@
             "val" : "5041"
         },
         {
+            "name" : "cyberPhysIpcPort",
+            "type" : "int",
+            "val" : "5091"
+        },
+        {
             "name" : "cyberPhysOtaServerPort",
             "type" : "int",
             "val" : "5050"
+        },
+        {
+            "name" : "cyberPhysHackedInfotainmentPort",
+            "type" : "int",
+            "val" : "5811"
         },
         {
             "name" : "cyberPhysInfotainmentUiPort",
@@ -449,11 +459,6 @@
             "name" : "cyberPhysWatchdogFrequency",
             "type" : "int",
             "val" : 2
-        },
-        {
-            "name" : "cyberPhysIpcPort",
-            "type" : "int",
-            "val" : "5091"
         }
     ]
 }
