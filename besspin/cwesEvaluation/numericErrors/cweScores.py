@@ -80,7 +80,8 @@ def scoreAllTests(logs):
         ret.append(ovrScore)
 
     # Append ret with the CWEs scores based on other CWEs
-    for test, depTests in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
+    for test, testInfo in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
+        depTests = testInfo["tests"]
         testNum = test.split('_')[1]
         if (not isTestEnabled(VULCLASS,test)):
             continue
