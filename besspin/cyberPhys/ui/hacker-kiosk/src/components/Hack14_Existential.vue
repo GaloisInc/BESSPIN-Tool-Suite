@@ -1,3 +1,9 @@
+<!--
+
+"Everything is hackable (Either Secure scenario)"
+
+No action needed.
+--> 
 <template>
   <div id="hack14">
       <router-link class="hack14-btn img-btn" to="/hack15_solution" tag="button">

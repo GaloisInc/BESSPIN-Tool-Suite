@@ -1,4 +1,10 @@
-<!-- TODO: all hacks fail here, but the real deal is that the OTA server cannot be hacked: perhaps add a slide here? -->
+<!--
+
+"SSITH Protection enabled (Secure Infotainment scenario)"
+
+TODO:
+* @losborn we need to show a hack failure here - perhaps mirror the logic for the baseline scenario?
+-->
 <template>
   <div id="hack10">
       <!-- Data Exfil Button -->

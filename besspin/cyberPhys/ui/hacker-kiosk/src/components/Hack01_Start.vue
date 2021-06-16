@@ -1,3 +1,10 @@
+<!--
+
+DEMO SETUP PAGE
+
+TODO: 
+* @losborn: add timeouts for *each* screen, so the demo can "self-hack" by self-pressing the buttons
+-->
 <template>
   <div id="hack01_start" class="hack-screen">
       <h1>Demo Setup</h1>

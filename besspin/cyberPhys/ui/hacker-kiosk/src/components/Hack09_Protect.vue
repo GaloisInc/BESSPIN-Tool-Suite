@@ -1,8 +1,16 @@
+<!--
+
+"SSITH protects systems common means of exploitation"
+
+ToDO: 
+* @losborn  each button has to send a message so we can switch the scenarios!
+
+-->
 <template>
   <div id="hack09">
       <router-link class="hack09-info-btn img-btn" to="/hack10_protect_info_attempt" tag="button">
       </router-link>
-      <router-link class="hack09-crit-btn img-btn" to="/hack12_protect_info_attempt" tag="button">
+      <router-link class="hack09-crit-btn img-btn" to="/hack12_protect_critical" tag="button">
       </router-link>
   </div>
 </template>

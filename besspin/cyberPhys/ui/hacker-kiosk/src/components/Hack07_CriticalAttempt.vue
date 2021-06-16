@@ -1,3 +1,10 @@
+<!--
+
+"ATTEMPTING EXPLOIT OF CRITICAL SYSTEMS"
+
+No action needed
+
+-->
 <template>
   <div id="hack07">
       <router-link class="hack07-btn img-btn" to="/hack08_critical_exploit" tag="button">

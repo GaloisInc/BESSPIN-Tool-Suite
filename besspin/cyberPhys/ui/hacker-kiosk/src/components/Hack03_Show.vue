@@ -1,3 +1,10 @@
+<!--
+
+"This demo will show..."
+
+No action needed here
+
+-->
 <template>
   <div id="hack03_show">
       <router-link class="hack03-btn img-btn" to="/hack04_access" tag="button">

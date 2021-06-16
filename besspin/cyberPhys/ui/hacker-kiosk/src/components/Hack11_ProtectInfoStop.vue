@@ -1,3 +1,10 @@
+<!--
+
+"SSITH Protection enabled (Secure Infotainment scenario)"
+
+TODO:
+* @losborn show the failed OTA hack result - via an IPC call
+-->
 <template>
   <div id="hack11">
       <router-link class="hack11-btn img-btn" to="/hack12_protect_critical" tag="button">

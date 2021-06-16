@@ -1,3 +1,12 @@
+<!--
+
+"ATTEMPTING EXPLOIT"
+
+TODO: 
+* @losborn Needs to show results from the `previous` page/button click - how? What about a IPC call upon loading?
+* @losborn "next" should be available only after the exploit completes
+
+-->
 <template>
   <div id="hack05_info_attempt">
     <button class="hack05-btn img-btn" @click="hackInfotainment()"></button>

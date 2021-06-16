@@ -1,5 +1,11 @@
-<!-- TODO: hack OTA server again, so CHERI FreeRTOS can be hacked -->
-<!-- Show the output from CHERI to see how it mitigates the hacks? --> 
+<!--
+
+"SSITH Protection enabled (Secure ECU scenario)"
+
+TODO:
+* @podhrmic hack OTA server again, so CHERI FreeRTOS can be hacked (based on the previous scenario switch)
+* @losborn add logic for the buttons - they change only if the hack is OK, mirror the logic from the baseline scenario
+--> 
 <template>
   <div id="hack12">
       <!-- TODO: mirror behavior from Hack8_page so the buttons can change colors -->

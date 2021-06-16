@@ -1,3 +1,10 @@
+<!--
+
+"Everything is hackable (Either Secure scenario)"
+
+TODO:
+* @losborn Restart sends a message / calls restart function?
+--> 
 <template>
   <div id="hack15">
       <router-link v-if="canContinue" class="hack15-btn img-btn" to="/hack02_intro" tag="button">

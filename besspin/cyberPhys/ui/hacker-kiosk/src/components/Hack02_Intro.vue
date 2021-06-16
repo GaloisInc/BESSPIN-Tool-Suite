@@ -1,4 +1,18 @@
-<!-- TODO: reset page, add logic for reseting the scenario -->
+<!--
+
+INTRO PAGE
+
+"We live in a hyper connected world"
+
+
+TODO:
+* @losborn Add a reset button press that hapens upon loading the PAGE
+
+@podhrmic:
+* Switch to Baseline Scenario
+* reset what needs to be reset
+
+-->
 <template>
   <div id="hack02_intro">
 

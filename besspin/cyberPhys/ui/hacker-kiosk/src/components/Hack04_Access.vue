@@ -1,4 +1,12 @@
-<!-- TODO: the Next button here has to initialize the hack!-->
+<!--
+
+"ACCESS THE CAR'S SYSTEMS BY ..."
+
+TODO: 
+* @losborn The Next button press sends a message
+* @podhrmic the Next button here has to initialize the hack! So the next screen can print the results...
+
+-->
 <template>
   <div id="hack04_access">
       <router-link class="hack04-btn img-btn" to="/hack05_info_attempt" tag="button">

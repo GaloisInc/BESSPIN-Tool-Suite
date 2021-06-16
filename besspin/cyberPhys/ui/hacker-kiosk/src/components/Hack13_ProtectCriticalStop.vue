@@ -1,3 +1,10 @@
+<!--
+
+"SSITH Protection enabled (Secure ECU scenario)"
+
+TODO:
+* @losborn Show the output from CHERI to see how it mitigates the hacks - another IPC call (like for secure info)
+--> 
 <template>
   <div id="hack13">
       <router-link class="hack13-btn img-btn" to="/hack14_existential" tag="button">
