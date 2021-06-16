@@ -1,72 +1,268 @@
 {
-    "_usage" : "This json file has the environment setup that is not to be changed per run.",
-    "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
-    "_options" : "All types and options are explained in BESSPIN-Tool-Suite/besspin/base/utils/configData.json",
+    "_usage": "This json file has the environment setup that is not to be changed per run.",
+    "_disclaimer": "Testing is performed on a single set of values. Changing them might affect the functionality.",
+    "_options": "All types and options are explained in BESSPIN-Tool-Suite/besspin/base/utils/configData.json",
+    "_unix-nParts": "Number of parts of unix tests OR the string 'method' for custom test",
+    "_FreeRTOS-nParts": "Number of FreeRTOS tests parts -- currently not used",
+    "_unix|FreeRTOS-scoreWeights" : "The weights [0-1] of the test parts. They will be normalized.",
 
-    "numericErrors" : [
+    "numericErrors": [
         {
-            "name" : "supportsMultitasking",
-            "type" : "boolean",
-            "val"  : true
+            "name": "supportsMultitasking",
+            "type": "boolean",
+            "val": true
         },
         {
-            "name" : "testsInfo",
-            "type" : "dict",
-            "val" : {
-                "test_128" : {
-                    "cweText" : "Wrap-around Error"
+            "name": "testsInfo",
+            "type": "dict",
+            "val": {
+                "test_128": {
+                    "cweText": "Wrap-around Error",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    }
                 },
-                "test_190" : {
-                    "cweText" : "Integer Overflow or Wraparound"
+                "test_190": {
+                    "cweText": "Integer Overflow or Wraparound",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    }
                 },
-                "test_191" : {
-                    "cweText" : "Integer Underflow (Wrap or Wraparound)"
+                "test_191": {
+                    "cweText": "Integer Underflow (Wrap or Wraparound)",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    }
                 },
-                "test_192" : {
-                    "cweText" : "Integer Coercion Error"
+                "test_192": {
+                    "cweText": "Integer Coercion Error",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    }
                 },
-                "test_194" : {
-                    "cweText" : "Unexpected Sign Extension"
+                "test_194": {
+                    "cweText": "Unexpected Sign Extension",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    }
                 },
-                "test_195" : {
-                    "cweText" : "Signed to Unsigned Conversion Error"
+                "test_195": {
+                    "cweText": "Signed to Unsigned Conversion Error",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    }
                 },
-                "test_196" : {
-                    "cweText" : "Unsigned to Signed Conversion Error"
+                "test_196": {
+                    "cweText": "Unsigned to Signed Conversion Error",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    }
                 },
-                "test_197" : {
-                    "cweText" : "Numeric Truncation Error"
+                "test_197": {
+                    "cweText": "Numeric Truncation Error",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    }
                 },
-                "test_234" : {
-                    "cweText" : "Failure to Handle Missing Parameter"
+                "test_234": {
+                    "cweText": "Failure to Handle Missing Parameter",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    }
                 },
-                "test_369" : {
-                    "cweText" : "Divide By Zero"
+                "test_369": {
+                    "cweText": "Divide By Zero",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    }
                 },
-                "test_456" : {
-                    "cweText" : "Missing Initialization of a Variable"
+                "test_456": {
+                    "cweText": "Missing Initialization of a Variable",
+                    "unix": {
+                        "nParts": 3,
+                        "scoreWeights": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 3,
+                        "scoreWeights": [
+                            1,
+                            1,
+                            1
+                        ]
+                    }
                 },
-                "test_457" : {
-                    "cweText" : "Use of Uninitialized Variable"
+                "test_457": {
+                    "cweText": "Use of Uninitialized Variable",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    }
                 },
-                "test_665" : {
-                    "cweText" : "Improper Initialization"
+                "test_665": {
+                    "cweText": "Improper Initialization",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    }
                 },
-                "test_681" : {
-                    "cweText" : "Incorrect Conversion between Numeric Types"
+                "test_681": {
+                    "cweText": "Incorrect Conversion between Numeric Types"
                 },
-                "test_824" : {
-                    "cweText" : "Access of Uninitialized Pointer"
+                "test_824": {
+                    "cweText": "Access of Uninitialized Pointer",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    }
                 }
             }
         },
         {
-            "name" : "mapTestsToCwes",
-            "type" : "dict",
-            "val" : {
-                "test_681" : [
-                    "test_192", "test_194", "test_195", "test_196", "test_197"
-                ]
+            "name": "mapTestsToCwes",
+            "type": "dict",
+            "val": {
+                "test_681": {
+                    "tests": [
+                        "test_192",
+                        "test_194",
+                        "test_195",
+                        "test_196",
+                        "test_197"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1,
+                        1,
+                        1,
+                        1
+                    ]
+                }
             }
         }
     ]
