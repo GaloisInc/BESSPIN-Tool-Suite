@@ -3,7 +3,8 @@
 "SSITH Protection enabled (Secure Infotainment scenario)"
 
 TODO:
-* @losborn show the failed OTA hack result - via an IPC call
+* @lolsborn animation to be here?
+* @lolsborn Button to next page links to Hack14 page 
 -->
 <template>
   <div id="hack11">

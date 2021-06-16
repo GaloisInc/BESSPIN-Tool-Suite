@@ -6,7 +6,7 @@ INTRO PAGE
 
 
 TODO:
-* @losborn Add a reset button press that hapens upon loading the PAGE
+* @losborn Add a reset button press that hapens upon loading the PAGE (call IPC with "reset")
 
 @podhrmic:
 * Switch to Baseline Scenario

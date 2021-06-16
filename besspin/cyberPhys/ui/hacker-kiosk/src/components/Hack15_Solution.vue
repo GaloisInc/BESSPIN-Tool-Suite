@@ -2,8 +2,7 @@
 
 "Everything is hackable (Either Secure scenario)"
 
-TODO:
-* @losborn Restart sends a message / calls restart function?
+No action needed
 --> 
 <template>
   <div id="hack15">

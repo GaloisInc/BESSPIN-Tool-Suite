@@ -3,7 +3,7 @@
 "SSITH Protection enabled (Secure ECU scenario)"
 
 TODO:
-* @losborn Show the output from CHERI to see how it mitigates the hacks - another IPC call (like for secure info)
+* @losborn Video here...
 --> 
 <template>
   <div id="hack13">

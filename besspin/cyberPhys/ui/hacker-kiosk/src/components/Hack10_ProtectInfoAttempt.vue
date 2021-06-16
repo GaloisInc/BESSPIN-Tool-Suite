@@ -3,7 +3,7 @@
 "SSITH Protection enabled (Secure Infotainment scenario)"
 
 TODO:
-* @losborn we need to show a hack failure here - perhaps mirror the logic for the baseline scenario?
+* @losborn mirror the logic for the baseline scenario (use .retval)
 -->
 <template>
   <div id="hack10">

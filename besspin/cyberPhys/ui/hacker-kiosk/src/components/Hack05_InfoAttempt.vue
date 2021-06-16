@@ -3,8 +3,9 @@
 "ATTEMPTING EXPLOIT"
 
 TODO: 
-* @losborn Needs to show results from the `previous` page/button click - how? What about a IPC call upon loading?
-* @losborn "next" should be available only after the exploit completes
+* Here will come an animation
+* @lolsborn: add delay
+* (the exploit should be complete before the screen loads)
 
 -->
 <template>
