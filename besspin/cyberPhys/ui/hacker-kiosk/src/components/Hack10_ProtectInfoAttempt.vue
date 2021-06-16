@@ -173,9 +173,9 @@ TODO:
           if(item.func == this.$options.name + '_changeStation' && item.status == 200) {
             this.stationMessage = "Station set to " + item.retval;
           } else if (item.func == this.$options.name + '_volumeUp' && item.status == 200) {
-            this.volumeMessage = "Volume Increased";
+            this.volumeMessage = item.retval;
           } else if (item.func == this.$options.name + '_volumeDown' && item.status == 200) {
-            this.volumeMessage = "Volume Decreased";
+            this.volumeMessage = item.retval;
           } else if (item.func == this.$options.name + '_exfil') {
             this.exfilMessage = item.retval.toString();
           }

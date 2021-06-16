@@ -6,8 +6,6 @@ INTRO PAGE
 
 
 TODO:
-* @losborn Add a reset button press that hapens upon loading the PAGE (call IPC with "reset")
-
 @podhrmic:
 * Switch to Baseline Scenario
 * reset what needs to be reset
@@ -54,6 +52,9 @@ TODO:
 </style>
 
 <script>
+  const electron = require('electron')
+  const ipc = electron.ipcRenderer;
+
   export default {
     name: 'Hack02_Intro',
     props: {
@@ -64,6 +65,8 @@ TODO:
       }
     },
     mounted() {
+      // Reset Scenerio when the intro loads
+      ipc.send('button-pressed', 'reset', []);
     },
     methods: {
     }

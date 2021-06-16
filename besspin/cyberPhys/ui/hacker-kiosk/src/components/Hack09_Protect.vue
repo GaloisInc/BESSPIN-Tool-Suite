@@ -8,10 +8,10 @@ ToDO:
 -->
 <template>
   <div id="hack09">
-      <router-link class="hack09-info-btn img-btn" to="/hack10_protect_info_attempt" tag="button">
-      </router-link>
-      <router-link class="hack09-crit-btn img-btn" to="/hack12_protect_critical" tag="button">
-      </router-link>
+      <button class="hack09-info-btn img-btn" @click="protectInfo()">
+      </button>
+      <button class="hack09-crit-btn img-btn" @click="protectCrit()">
+      </button>
   </div>
 </template>
 
@@ -51,9 +51,20 @@ ToDO:
 
 
 <script>
+  const electron = require('electron')
+  const ipc = electron.ipcRenderer;
+
   export default {
     name: 'Hack09_Protect',
     props: {
+    },
+    protectCrit() {
+      ipc.send('button-pressed', this.$options.name + '_protect_critical', []);
+      this.$router.push({ name: 'hack12_protect_critical' });    
+    },
+    protectInfo() {
+      ipc.send('button-pressed', this.$options.name + '_protect_info', []);
+      this.$router.push({ name: 'hack10_protect_info_attempt' });    
     },
     data() {
       return {

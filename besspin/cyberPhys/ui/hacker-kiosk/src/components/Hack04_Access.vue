@@ -3,14 +3,13 @@
 "ACCESS THE CAR'S SYSTEMS BY ..."
 
 TODO: 
-* @losborn The Next button press sends a message
 * @podhrmic the Next button here has to initialize the hack! So the next screen can print the results...
 
 -->
 <template>
   <div id="hack04_access">
-      <router-link class="hack04-btn img-btn" to="/hack05_info_attempt" tag="button">
-      </router-link>
+      <button class="hack04-btn img-btn" @click="next()">
+      </button>
   </div>
 </template>
 
@@ -37,6 +36,9 @@ TODO:
 
 
 <script>
+    const electron = require('electron')
+    const ipc = electron.ipcRenderer;
+
   export default {
     name: 'Hack04_Access',
     props: {
@@ -49,6 +51,10 @@ TODO:
     mounted() {
     },
     methods: {
+      next() {
+        ipc.send('button-pressed', this.$options.name, {});
+        this.$router.push({ name: 'hack05_info_attempt' });
+      }
     }
   };
 </script>

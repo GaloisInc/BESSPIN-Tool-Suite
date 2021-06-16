@@ -1,16 +1,10 @@
 <!--
 
 "ATTEMPTING EXPLOIT"
-
-TODO: 
-* Here will come an animation
-* @lolsborn: add delay
-* (the exploit should be complete before the screen loads)
-
 -->
 <template>
   <div id="hack05_info_attempt">
-    <button class="hack05-btn img-btn" @click="hackInfotainment()"></button>
+    <button v-if="canContinue" class="hack05-btn img-btn" @click="hackInfotainment()"></button>
   </div>
 </template>
 
@@ -48,15 +42,18 @@ TODO:
     data() {
       return {
         messages: [],
+        canContinue: false,
         poller: setInterval(() => { this.pollState() }, 500)
       }
     },
     mounted() {
+      this.canContinue = false;
       let vm = this;
+      setTimeout(() => {vm.canContinue = true}, 3000);
+
       ipc.on('zmq-results',(event, q) => {
         q.forEach(item => {
           console.log("item", item);
-          //TODO: Handle Failure?
           if(item.func == this.$options.name && item.status == 200) {
             vm.$router.push({ name: 'hack06_info_exploit' });
           }
