@@ -1,90 +1,61 @@
 @startuml
 
-[*] --> Slide2_KioskSetup
-Slide2_KioskSetup : select Demo timer On/Off
+state "Hack02: INTRO PAGE" as hack02_kiosk_intro
+hack02_kiosk_intro: "We live in a hyper connected world"
 
-Slide2_KioskSetup --> Slide3: Timer choice selected
+[*] --> hack02_kiosk_intro
 
-state "Slide 3 INTRODUCTION" as Slide3
-Slide3: Tx CMD_ACTIVE_SCENARIO(SCENARIO_BASELINE)
-Slide3: Tx CMD_HACK_ACTIVE(0x0)
-Slide3: TODO: restart inactive components? SCENARIO_SECURE_ECU and SCENARIO_SECURE_INFOTAINMENT?
+note left of Reset: "Reset is reachable from all normal states"
+Reset: Switch to BASELINE_SCENARIO
+Reset: Reset Targets if needed
+
+Reset --> hack02_kiosk_intro: Reset complete
+
+hack02_kiosk_intro --> hack05_info_attempt: "HACK INFOTAINMENT"(Hack04_Access) button pressed
+note on link: "Normal transitions are RED"
+
+state "Hack05: ATTEMPTING EXPLOIT" as hack05_info_attempt
+hack05_info_attempt: Initialize OTA hack
+
+state "Hack06 EXPLOIT COMPLETE" as hack06_info_exploit
+hack05_info_attempt --> hack06_info_exploit: "NEXT" (hack05_info_attempt) button pressed
+
+hack06_info_exploit -[#green]-> hack06_info_exploit_attemp_hack: hack06_info_exploit_$VAR hack button pressed
+hack06_info_exploit_attemp_hack: send command to the hacked infotainment server
+hack06_info_exploit_attemp_hack -[#green]-> hack06_info_exploit: return err code and returnval
+note on link: "Temporary state transitions are GREEN"
+
+hack06_info_exploit -[#green]-> hack08_critical_exploit: hack08_critical_exploit_$VAR hack button pressed
+hack08_critical_exploit: upload and execute ECU hack binary
+hack08_critical_exploit -[#green]-> hack06_info_exploit: return err code and returnval
+
+state "Hack09: SSITH protects systems" as hack09_protect
+hack06_info_exploit --> hack09_protect: "NEXT" (hack08_critical_exploit) button pressed
+
+hack09_protect: Switch active scenario to SSITH Protected Infotainment
+
+hack09_protect --> hack10_protect_info_attempt: "HACK INFOTAINMENT" (hack09-info-btn) button pressed
+hack09_protect --> hack12_protect_critical: "HACK CRITICAL SYSTEMS" (hack09-crit-btn) button pressed
+
+state "Hack10: SSITH Protection enabled (Secure Infotainment scenario)" as hack10_protect_info_attempt
+
+hack10_protect_info_attempt -[#green]-> hack10_info_exploit_attempt_hack: Hack10_InfoExploit_$VAR hack button pressed
+hack10_info_exploit_attempt_hack: send command to the hacked infotainment server
+hack10_info_exploit_attempt_hack -[#green]-> hack10_protect_info_attempt: return err code and returnval ("Hack Failed)
 
 
-Slide3 --> Slide4: Click "Hack the car" button
+state "Hack12: SSITH Protection enabled (Secure ECU scenario)" as hack12_protect_critical
 
-Slide4 --> Slide5: Click "Exploit OTA update" button
+hack12_protect_critical -[#green]-> hack12_critical_exploit: hack12_critical_exploit_$VAR hack button pressed
+hack12_critical_exploit: attempt to upload and execute ECU hack binary
+hack12_critical_exploit -[#green]-> hack12_protect_critical: return err code and returnval ("Hack failed")
 
-Slide5 --> Slide6_A: Click "Hack infotainment" button
-
-state "Slide 6a HACK OTA SERVER" as Slide6_A
-Slide6_A: Call "OtaHack.hackServer()"
-
-Slide6_A --> Slide6_B: "OtaHack.hackServer()" returned True
-
-state "Slide 6b HACK OTA SERVER" as Slide6_B
-Slide6_B: Call "OtaHack.uploadFile(evil-infotainment-server)"
-
-Slide6_B --> Slide7: "Next" button pressed
-
-state "Slide 7 Infotainment hacks" as Slide7
-Slide7: infotainment server hacks are calls to the python backend
-
-Slide7 --> Slide7: A hack is selected
-
-Slide7 --> Slide9: "Next" button pressed
-
-Slide9: Attempt to hack critical systems
-
-Slide9 --> Slide10: "Next" button pressed
-
-Slide10 --> Slide10: A hack is selected
-
-state "Slide 10 HACK CRITICAL SYSTEMS" as Slide10
-Slide10: When a hack is selected, an appropriate pre-compiled binary is selected
-Slide10: and uploaded using "OtaHack.uploadFile(binary)"
-Slide10: The hack button will color red/green based on the selection
-Slide10: and whether the upload was successful
-Slide10: Tx CMD_HACK_ACTIVE(hack-number) (to visualize hacks)
-
-Slide10 --> Slide15: "Next" button pressed
-
-Slide15: restart baseline scenario components using CMD_RESTART() messages
-Slide15: Tx CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_ECU) to color CanDisplay
-Slide15: Tx CMD_HACK_ACTIVE(0x0)
-
-state "Slide 15 SSITH INTRO" as Slide15
-Slide15 --> Slide16: click "Hack Infotainment"
-Slide16: Tx CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_INFOTAINMENT)
-
-Slide16 --> Slide16: A hack is selected
-Slide16: All hacks fail with an error message (OTA hack not successfull)
-Slide16: TODO: add a slide where we attempt to hack OTA server
-Slide16: TODO: OTA server crashes on SSITH P2 when a hack is attempted (~2min downtime)
-
-state "Slide 16 SECURE INFOTAINMENT" as Slide16
-Slide16 --> Slide17: "Next" button pressed
-
-Slide17 --> Slide20: "Next" button pressed
-
-state "Slide 20 Everything is hackable" as Slide20
-state "Slide 21 SSITH is The Solution" as Slide21
-Slide20 --> Slide21: "Restart" button pressed
-Slide21 -> Slide3
-
-Slide15 --> Slide18: click "Hack Critical systems"
-Slide18: Tx CMD_ACTIVE_SCENARIO(SCENARIO_SECURE_ECU)
-
-state "Slide 18 SECURE ECU" as Slide18
-
-Slide18 --> Slide18: A hack is selected
-Slide18: When a hack is selected, an appropriate pre-compiled binary is selected
-Slide18: and uploaded using "OtaHack.uploadFile(binary)"
-Slide18: The hack will fail, and lead to short (200ms?) unavailability of the ECU
-Slide18: The buttons should indicate that.
-
-Slide18 --> Slide19: "Next" button pressed
-Slide19 --> Slide20: "Next" button pressed
+hack05_info_attempt -[#blue]-> Reset: RESET button pressed
+hack06_info_exploit -[#blue]-> Reset: RESET button pressed
+hack09_protect -[#blue]-> Reset: RESET button pressed
+note on link: "Reset transitions are BLUE"
+hack10_protect_info_attempt -[#blue]-> Reset: RESET button pressed
+hack12_protect_critical -[#blue]-> Reset: RESET button pressed
 
 
 @enduml
