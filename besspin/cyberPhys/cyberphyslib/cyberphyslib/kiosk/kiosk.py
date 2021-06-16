@@ -43,7 +43,7 @@ class HackerKiosk:
 
         # CMD network init
         self.can_port = dnc.network_ports['canbusPort']
-        self.host_name = 'InfotainmentThinClient' # NOTE: is this wrong?
+        self.host_name = 'HackerKiosk'
         self.host = f"{dnc.nodes[self.host_name]}:{self.can_port}"
         self.nodes = [f'{v}:{self.can_port}' for k,v in dnc.nodes.items() if v != dnc.nodes[self.host_name]]
         self.canbus = ccan.TcpBus(self.host, self.nodes)
