@@ -54,7 +54,8 @@ def scoreAllTests(logs):
             printAndLog(f"{VULCLASS}-Score-Details: {scoreInfo}",doPrint=False)
 
     # Append ret with the CWEs scores based on funcTests
-    for test, funcTests in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
+    for test, testInfo in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
+        funcTests = testInfo["tests"]
         if ((not isTestEnabled(VULCLASS,test)) or
             (isEnabled("runningMultitaskingTests") and
              hasMultitaskingException(VULCLASS, ["testsInfo", test]))):
