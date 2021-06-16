@@ -122,14 +122,14 @@
                     "unix": {
                         "nParts": 2,
                         "scoreWeights": [
-                            1,
+                            0,
                             1
                         ]
                     },
                     "FreeRTOS": {
                         "nParts": 2,
                         "scoreWeights": [
-                            1,
+                            0,
                             1
                         ]
                     }
@@ -139,7 +139,7 @@
                     "unix": {
                         "nParts": 3,
                         "scoreWeights": [
-                            1,
+                            0,
                             1,
                             1
                         ]
@@ -168,14 +168,14 @@
                         "nParts": 2,
                         "scoreWeights": [
                             1,
-                            1
+                            0
                         ]
                     },
                     "FreeRTOS": {
                         "nParts": 2,
                         "scoreWeights": [
                             1,
-                            1
+                            0
                         ]
                     }
                 },
@@ -260,14 +260,14 @@
                     "unix": {
                         "nParts": 2,
                         "scoreWeights": [
-                            1,
+                            0,
                             1
                         ]
                     },
                     "FreeRTOS": {
                         "nParts": 2,
                         "scoreWeights": [
-                            1,
+                            0,
                             1
                         ]
                     }
