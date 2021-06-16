@@ -6,7 +6,12 @@
 
 #ifdef BESSPIN_UNIX 
     #define FIXED_ADDR_DATA 0x15000
-    #define FIXED_ADDR_FUNC 0x2000020000
+    #ifdef BIN_SOURCE_LMCO
+        // Please refer to the conversation in https://github.com/GaloisInc/BESSPIN-Tool-Suite/issues/1207
+        #define FIXED_ADDR_FUNC 0x10260
+    #else
+        #define FIXED_ADDR_FUNC 0x2000020000
+    #endif
 #else
     #define FIXED_ADDR_DATA 0xc000d000
     #define FIXED_ADDR_FUNC 0xc000d000
