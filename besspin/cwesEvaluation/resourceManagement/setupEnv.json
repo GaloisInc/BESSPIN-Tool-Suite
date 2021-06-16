@@ -294,7 +294,7 @@
                     "unix": {
                         "nParts": 3,
                         "scoreWeights": [
-                            1,
+                            0,
                             1,
                             1
                         ]
@@ -302,7 +302,7 @@
                     "FreeRTOS": {
                         "nParts": 3,
                         "scoreWeights": [
-                            1,
+                            0,
                             1,
                             1
                         ]
@@ -373,14 +373,14 @@
                     "unix": {
                         "nParts": 2,
                         "scoreWeights": [
-                            1,
+                            0,
                             1
                         ]
                     },
                     "FreeRTOS": {
                         "nParts": 2,
                         "scoreWeights": [
-                            1,
+                            0,
                             1
                         ]
                     }
