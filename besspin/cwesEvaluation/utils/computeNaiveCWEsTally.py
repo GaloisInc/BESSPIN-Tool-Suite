@@ -2,7 +2,7 @@
 
 from besspin.base.utils.misc import *
 from besspin.cwesEvaluation.scoreTests import VUL_CLASSES, SCORES, tabulate_row, prettyVulClass
-from besspin.cwesEvaluation.utils.computeBesspinScale import isVulClassException, disp
+from besspin.cwesEvaluation.utils.computeBesspinScale import isVulClassException, disp, normalizingScoresTable
 
 def toValue(score):
     return int(score in [SCORES.NONE, SCORES.DETECTED])
@@ -19,7 +19,7 @@ def computeNaiveCWEsTally():
     """
     scoresDict = getSetting("cweScores")
     vulClassesScores = {vulClass:{} for vulClass in VUL_CLASSES}
-    ovrTally = 0
+    ovrTally = 0.0
     ovrCwesCount = 0
     for vulClass in getSetting("vulClasses"):
         if (isVulClassException(vulClass)): #skip if the combination is NA
@@ -30,7 +30,7 @@ def computeNaiveCWEsTally():
         except Exception as exc:
             logAndExit(f"Failed to extract the CWEs of {vulClass} from <testsInfo>.",exc=exc,exitCode=EXIT.Dev_Bug)
 
-        vTally = 0
+        vTally = 0.0
         vCwesCount = 0
         for cwe in vCwes:
             if (cwe not in scoresDict[vulClass]):
@@ -43,7 +43,12 @@ def computeNaiveCWEsTally():
                     continue
                 errorAndLog(f"computeNaiveCWEsTally: Failed to compute the tally! CWE-{cwe} score not found in <{vulClass}>.")
                 return
-            vTally += toValue(scoresDict[vulClass][cwe])
+            cweScore = scoresDict[vulClass][cwe]
+            if (cweScore not in normalizingScoresTable):
+                errorAndLog(f"computeNaiveCWEsTally: CWE-{cwe} score is {cweScore}. "
+                    f"Cannot compute the tally for scores not in [{','.join([str(s) for s in normalizingScoresTable])}]")
+                return
+            vTally += normalizingScoresTable[cweScore]
             vCwesCount += 1 #Should not use len(vCwes) because some CWEs are exempt
 
         if (vCwesCount==0): #To avoid division by zero in what comes
