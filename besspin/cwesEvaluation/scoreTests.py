@@ -24,8 +24,8 @@ class SCORES (enum.Enum):
     HIGH = 0
     MED = 1
     LOW = 2
+    NONE = 3
     DETECTED = 3
-    NONE = 4
     INF = 10
 
     def __str__ (self): #to replace '_' by '-' when printing
@@ -109,8 +109,8 @@ class SCORES (enum.Enum):
                 minScore = xScore
         return minScore
 
-    @staticmethod
-    def avgScore (scoreList): #Always floors
+    @classmethod
+    def avgScore (cls,scoreList): #Always floors
         """
         Return the floor of the average of a list of scores.
 
@@ -121,17 +121,24 @@ class SCORES (enum.Enum):
 
         RETURNS:
         --------
-            The lowest SCORES object in <scoreList>.
+            The average SCORES object in <scoreList>.
         """
         sumScores = 0
         for xScore in scoreList:
             sumScores += xScore.value
         avgValue = sumScores // len(scoreList)
-        return SCORES(avgValue)
+        return cls(avgValue)
 
-    @staticmethod
-    def weightedAvgScore (scoreList, partsWeights):
-        raise NotImplemented
+    @classmethod
+    def weightedAvgScore (cls, scoreList, partsWeights):
+        minScore = cls.minScore(scoreList)
+        if (minScore < cls.HIGH): #One of the parts has an error --> error
+            return minScore
+        sumScores = 0
+        for xScore, xWeight in zip(scoreList, partsWeights):
+            sumScores += xWeight * xScore.value
+        avgValue = sumScores // sum(partsWeights)
+        return cls(avgValue)
 
     @classmethod
     def toScore (cls, strScore):
