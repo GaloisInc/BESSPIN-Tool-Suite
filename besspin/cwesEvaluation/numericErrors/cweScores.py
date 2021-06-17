@@ -62,20 +62,16 @@ def scoreAllTests(logs):
     for name, log in logs:
         testNum = name.split('_')[1]
         logLines = ftReadLines(log)
-        nPartsMatch = matchExprInLines(r'^<NUMPARTS=(?P<numParts>\d+)>$',logLines)
+        osFlavor = "unix" if isEnabled("isUnix") else "FreeRTOS"
+        numParts = getSettingDict(VULCLASS,["testsInfo",name,osFlavor,"nParts"])
         partsScores = []
-        if (nPartsMatch is None):
-            errorAndLog(f"Failed to score {name}.",doPrint=False)
-            partsScores.append(SCORES.FAIL)
-        else:
-            numParts = int(nPartsMatch.group('numParts'))
+        for thisPart in range(1, numParts + 1):
+            partLines = partitionLines (logLines,thisPart,testNum) #partitioning first make sure the scoring is done for this part only
+            thisScore = scoreTestPart(partLines, testNum, thisPart)
+            partsScores.append(adjustToCustomScore(partLines,thisScore))
 
-            for thisPart in range(1, numParts + 1):
-                partLines = partitionLines (logLines,thisPart,testNum) #partitioning first make sure the scoring is done for this part only
-                thisScore = scoreTestPart(partLines, testNum, thisPart)
-                partsScores.append(adjustToCustomScore(partLines,thisScore))
-
-        ovrScore = overallScore(partsScores,f"TEST-{testNum}")
+        ovrScore = overallScore(partsScores,f"TEST-{testNum}",
+                    partsWeights=getSettingDict(VULCLASS,["testsInfo",name,osFlavor,"scoreWeights"]))
         scores[name] = ovrScore[1]
         ret.append(ovrScore)
 
@@ -95,7 +91,10 @@ def scoreAllTests(logs):
                 score = SCORES.FAIL
             scoreDetails.append(f"{depTest.split('_')[-1]}:{score}")
             listScores.append(score)
-        ret.append(overallScore(listScores,f"TEST-{testNum}",scoreString=', '.join(scoreDetails)))
+        ret.append(
+                overallScore(listScores,f"TEST-{testNum}",scoreString=', '.join(scoreDetails),
+                    partsWeights=testInfo["scoreWeights"])
+            )
     return ret
 
 @decorate.debugWrap
