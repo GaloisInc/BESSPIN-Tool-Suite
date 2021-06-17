@@ -100,7 +100,7 @@ def tabulate(vulClassesScores, ovrDetails):
     for vulClass in getSetting("vulClasses"):
         if (isVulClassException(vulClass)):
             continue
-        rows.append([prettyVulClass(vulClass), str(vulClassesScores[vulClass]["tally"]),
+        rows.append([prettyVulClass(vulClass), dispTally(vulClassesScores[vulClass]["tally"]),
                         str(vulClassesScores[vulClass]["total"]), disp(vulClassesScores[vulClass]["score"])])
 
     # Get the widthCols
@@ -125,3 +125,6 @@ def tabulate(vulClassesScores, ovrDetails):
 
     table.append(tabulate_row([],widthCols,drawLine=True))
     return table
+
+def dispTally(val):
+    return f"{val:.2f}"
