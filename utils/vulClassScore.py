@@ -54,6 +54,10 @@ def main(xArgs):
 
     loadConfiguration(configFile)
 
+    # dict key name used to distinguish between the two
+    osDiv = "unix" if isEnabled("isUnix") else "FreeRTOS"
+    setSetting("osDiv",osDiv)
+
     if (getSetting('mode') != 'evaluateSecurityTests'):
         print(f"(Error)~  This utility is only for <evaluateSecurityTests> mode.")
         exitBesspin(EXIT.Configuration)
