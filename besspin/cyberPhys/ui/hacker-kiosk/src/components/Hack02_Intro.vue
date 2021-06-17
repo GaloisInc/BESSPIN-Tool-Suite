@@ -70,7 +70,7 @@ TODO:
     mounted() {
       // Reset Scenerio when the intro loads
       if (!this.resetSent) {
-        ipc.send('button-pressed', 'reset', []);
+        ipc.send('button-pressed', 'reset', {});
         this.resetSent = true
       }
       ipc.on('zmq-results',(event, q) => {

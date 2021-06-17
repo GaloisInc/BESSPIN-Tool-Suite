@@ -4,13 +4,13 @@
 * Name: lib/componentids.js
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 07 June 2021
+* Date: 17 June 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
  const SCENARIO_BASELINE = 0x11
- const SCENARIO_SECURE_ECU = 0x12
- const SCENARIO_SECURE_INFOTAINMENT = 0x13
+ const SCENARIO_SECURE_INFOTAINMENT = 0x12
+ const SCENARIO_SECURE_ECU = 0x13
  const BESSPIN_TOOL = 0x20
  const TARGET_1 = 0x21
  const TARGET_2 = 0x22
@@ -22,6 +22,7 @@
  const IGNITION = 0x30
  const LED_COMPONENT = 0x31
  const HACKER_KIOSK = 0x40
+ const HACK_NONE = 0x50
  const HACK_OTA = 0x51
  const HACK_BRAKE = 0x51
  const HACK_THROTTLE = 0x52

@@ -135,6 +135,16 @@ class DemonstratorNetworkConfig:
                     network_ports["cyberphysNetworkPorts"][pname] = int(se["val"])
 
         return cls(**{**csenv, **network_ports})
+    
+    def getCmdNetworkNodes(self, component_name: str) -> (str, [str]):
+        "Return a tuple (host_ip, [subcribers_ip])"
+        nodes = self.nodes
+        cmdport = self.port_network_commandPort
+        host = nodes[component_name]
+        subscribers = [ f"{node}:{cmdport}" for node in nodes.values() if node != host]
+        host = f"{host}:{cmdport}"
+        print(f"host: {host}, subscribers: {subscribers}")
+        return host, subscribers
 
     def __init__(self,
                  cyberPhysWhitelists = None,

@@ -99,22 +99,19 @@ class IgnitionDirector:
     @classmethod
     def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
         """produce director from the Besspin environment setup file"""
-        # NOTE: should this be hard-coded?
-        # FIXME: what fields should I use from the setupEnv?
-        ip_admin = f"{net_conf.ip_AdminPc}:{net_conf.port_component_commander}"
-        ip_director = f"{net_conf.ip_SimPc}:{net_conf.port_component_interactiveManager}"
+        cmd_host, cmd_subscribers = net_conf.getCmdNetworkNodes("SimPc")
         ip_sim = net_conf.ip_SimPc
         can_port = net_conf.port_network_canbusPort
         info_port = net_conf.port_network_infotainmentUiPort
-        return cls(ip_admin, ip_director, ip_sim, can_port, info_port,
+        return cls(cmd_host, cmd_subscribers, ip_sim, can_port, info_port,
                    ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST,
                    ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST,
                    base_whitelist=net_conf.wl_BASELINE,
                    apply_lists=cconf.APPLY_LISTS)
 
     def __init__(self,
-                 admin_addr,
-                 director_addr,
+                 cmd_host,
+                 cmd_nodes,
                  sim_ip,
                  can_port,
                  info_port,
@@ -161,8 +158,7 @@ class IgnitionDirector:
         self.info_net = ccan.CanUdpNetwork("info-net", self.info_port, sip, blacklist=[sim_ip])
 
         # C&C message bus
-        nodes = [admin_addr, director_addr]
-        self.cc_recvr = canlib.TcpBus(director_addr, nodes)
+        self.cc_recvr = canlib.TcpBus(cmd_host, cmd_nodes)
 
         # input space as class members
         self.input_noncrit_fail = False

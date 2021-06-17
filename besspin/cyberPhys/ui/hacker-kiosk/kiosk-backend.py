@@ -8,7 +8,7 @@ Date: 16 June 2021
 """
 if __name__ == "__main__":
     # Project libs
-    from cyberphyslib.kiosk import director
+    from cyberphyslib.kiosk import kiosk
     from cyberphyslib.demonstrator import config
     import pathlib, os
     import argparse
@@ -23,8 +23,7 @@ if __name__ == "__main__":
         network_filepath = args.network_config
     assert os.path.exists(network_filepath), f"specified network config json ({network_filepath}) doesn't exist"
     dnc = config.DemonstratorNetworkConfig.from_setup_env(network_filepath)
-    #kiosk = director.HackerKiosk.for_besspin(dnc)
-    kiosk = director.HackerKiosk()
+    kiosk = kiosk.HackerKiosk(dnc)
     kiosk.draw_graph("kiosk-backend-transitions.png")
     kiosk.run()
 
