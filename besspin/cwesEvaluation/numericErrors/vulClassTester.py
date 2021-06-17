@@ -23,8 +23,7 @@ class vulClassTester(cwesEvaluationCompatibilityLayer):
             testNum = testName.split('_')[1]
         except Exception as exc:
             self.terminateAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
-        osFlavor = "unix" if isEnabled("isUnix") else "FreeRTOS"
-        numParts = getSettingDict(VULCLASS,["testsInfo",testName,osFlavor,"nParts"])
+        numParts = getSettingDict(VULCLASS,["testsInfo",testName,getSetting("osDiv"),"nParts"])
 
         return (testName, testName, numParts)
 

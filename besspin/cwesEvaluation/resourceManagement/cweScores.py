@@ -80,8 +80,7 @@ def scoreAllTests(logs):
 
 @decorate.debugWrap
 def defaultScoreTest(testName, logLines, testsInfoSection):
-    osFlavor = "unix" if isEnabled("isUnix") else "FreeRTOS"
-    nParts = getSettingDict(VULCLASS,[testsInfoSection,testName,osFlavor,"nParts"])
+    nParts = getSettingDict(VULCLASS,[testsInfoSection,testName,getSetting("osDiv"),"nParts"])
 
     scoreOptions = [SCORES.CALL_ERR, SCORES.HIGH, SCORES.MED, SCORES.LOW, SCORES.NONE]
 
@@ -139,4 +138,4 @@ def defaultScoreTest(testName, logLines, testsInfoSection):
     else: 
         dispName = f"{testName.replace('_','-').upper()}"
     return overallScore(listScores,dispName,
-            partsWeights=getSettingDict(VULCLASS,[testsInfoSection,testName,osFlavor,"scoreWeights"]))
+            partsWeights=getSettingDict(VULCLASS,[testsInfoSection,testName,getSetting("osDiv"),"scoreWeights"]))

@@ -56,6 +56,10 @@ def buildCwesEvaluation():
     buildDir = os.path.join(getSetting('workDir'), 'build')
     mkdir(buildDir, addToSettings="buildDir")
 
+    # dict key name used to distinguish between the two
+    osDiv = "unix" if isEnabled("isUnix") else "FreeRTOS"
+    setSetting("osDiv",osDiv)
+
     if isEqSetting('osImage', 'FreeRTOS'):
         # create the osImages directory
         osImagesDir = os.path.join(getSetting('workDir'),'osImages')
