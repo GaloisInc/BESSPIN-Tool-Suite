@@ -71,7 +71,10 @@ def scoreAllTests(logs):
             scoreDetails.append(f"{funcTest.split('_')[-1]}:{score}")
             listScores.append(score)
         dispName = f"{test.replace('_','-').upper()}"
-        ret.append(overallScore(listScores,dispName,scoreString=', '.join(scoreDetails)))
+        ret.append(
+                overallScore(listScores,dispName,scoreString=', '.join(scoreDetails),
+                    partsWeights=testInfo["scoreWeights"])
+            )
 
     return ret
 
@@ -135,4 +138,5 @@ def defaultScoreTest(testName, logLines, testsInfoSection):
         dispName = testName
     else: 
         dispName = f"{testName.replace('_','-').upper()}"
-    return overallScore(listScores,dispName)
+    return overallScore(listScores,dispName,
+            partsWeights=getSettingDict(VULCLASS,[testsInfoSection,testName,osFlavor,"scoreWeights"]))
