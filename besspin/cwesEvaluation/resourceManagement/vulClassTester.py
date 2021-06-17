@@ -84,7 +84,7 @@ class vulClassTester(cwesEvaluationCompatibilityLayer):
             # Test is disabled for multitasking on this OS
             return None
         parts = []
-        for iPart in range(getSettingDict(self.vulClass,[testsInfoSection,testName,"unix"])):
+        for iPart in range(getSettingDict(self.vulClass,[testsInfoSection,testName,"unix","nParts"])):
             parts.append(multitaskingPart(self.getPartHeader(iPart),
                                           self.PART_FOOTER,
                                           f"./{binTest} {iPart+1}"))
