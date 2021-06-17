@@ -9,6 +9,7 @@ TODO:
 <template>
   <div id="hack12">
       <!-- TODO: mirror behavior from Hack8_page so the buttons can change colors -->
+      <!--
       <router-link class="hack12-brake-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
       </router-link>
 
@@ -19,6 +20,23 @@ TODO:
       </router-link>
 
       <router-link class="hack12-trans-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
+      </router-link>
+      -->
+
+      <button :class="[!brakeECUOn ? 'hack08-brakes-btn-active' : '', 'hack12-brake-btn', 'img-btn']" @click="toggleBrakes()">
+      </button>
+
+      <button :class="[!acceleratorNormal ? 'hack08-accel-btn-active' : '', 'hack12-accel-btn', 'img-btn']" @click="toggleAccel()">
+      </button>
+
+      <button :class="[!lkaOn ? 'hack08-steer-btn-active' : '', 'hack12-steering-btn', 'img-btn']" @click="toggleSteering()">
+      </button>
+
+      <button :class="[!transDrive ? 'hack08-trans-btn-active' : '', 'hack12-trans-btn', 'img-btn']" @click="toggleTrans()">
+      </button>
+
+      <!--button v-if="clickCount >= 1" @click="next()" class="hack08-next-btn img-btn"></button-->
+      <router-link v-if="clickCount >= 1" class="hack08-next-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
       </router-link>
 
 
@@ -96,18 +114,63 @@ TODO:
 
 
 <script>
+  const electron = require('electron')
+  const ipc = electron.ipcRenderer;
+
   export default {
     name: 'Hack12_ProtectCritical',
     props: {
     },
     data() {
       return {
-        messages: []
+        brakeECUOn: true,
+        acceleratorNormal: true,
+        lkaOn: true,
+        transDrive: true,
+        poller: setInterval(() => { this.pollState() }, 500)
       }
     },
     mounted() {
+       ipc.on('zmq-results',(event, q) => {
+        q.forEach(item => {
+          if (item.func == 'critical_exploit' && item.status == 200) {
+            if(item.args == 'brakes') {
+              this.brakeECUOn = item.retval;
+            } else if (item.args == 'throttle') {
+              this.acceleratorNormal = item.retval;
+            } else if (item.args == 'lkas') {
+              this.lkaOn = item.retval;
+            } else if (item.args == 'transmission') {
+              this.transDrive = item.retval;
+            }
+          }
+        });
+      });
     },
     methods: {
+      pollState() {
+        ipc.send('zmq-poll', []);
+      },
+      toggleBrakes() {
+        this.clickCount++;
+        console.log("[click] brakeECUOn = " + this.brakeECUOn);
+        ipc.send('button-pressed', 'critical_exploit', 'brakes');
+      },
+      toggleAccel() {
+        this.clickCount++;
+        console.log("[click] acceleratorNormal = " + this.acceleratorNormal);
+        ipc.send('button-pressed', 'critical_exploit', 'throttle');
+      },
+      toggleSteering() {
+        this.clickCount++;
+        console.log("[click] lkaOn = " + this.lkaOn);
+        ipc.send('button-pressed', 'critical_exploit', 'lkas');
+      },
+      toggleTrans() {
+        this.clickCount++;
+        console.log("[click] transDrive = " + this.transDrive);
+        ipc.send('button-pressed', 'critical_exploit', 'transmission');
+      }
     }
   };
 </script>

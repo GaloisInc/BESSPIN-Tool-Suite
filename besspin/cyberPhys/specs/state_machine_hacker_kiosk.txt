@@ -11,7 +11,7 @@ Reset: Reset Targets if needed
 
 Reset --> hack02_kiosk_intro: Reset complete
 
-hack02_kiosk_intro --> hack05_info_attempt: "HACK INFOTAINMENT"(Hack04_Access) button pressed
+hack02_kiosk_intro --> hack05_info_attempt: "HACK INFOTAINMENT/NEXT"(Hack04_Access) button pressed
 note on link: "Normal transitions are RED"
 
 state "Hack05: ATTEMPTING EXPLOIT" as hack05_info_attempt

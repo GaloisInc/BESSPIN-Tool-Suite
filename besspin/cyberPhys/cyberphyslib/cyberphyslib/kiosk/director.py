@@ -62,7 +62,7 @@ class HackerKiosk:
         {'transition': ('hack06_info_exploit', 'hack09_protect'), 'conditions': 'button_pressed_next'},
         {'transition': ('hack09_protect', 'hack10_protect_info_attempt'), 'conditions': 'button_pressed_ssith_infotainment'},
         {'transition': ('hack10_protect_info_attempt', 'hack10_info_exploit_attempt_hack'), 'conditions': 'button_pressed_info_exploit'},
-        {'transition': ('hack10_info_exploit_attempt_hack', 'hack10_protect_info_attempt'), 'conditions': 'input_next', 'unless': 'exploit_complete'},
+        {'transition': ('hack10_info_exploit_attempt_hack', 'hack10_protect_info_attempt'), 'conditions': 'exploit_complete'},
         {'transition': ('hack09_protect', 'hack12_protect_critical'), 'conditions': 'button_pressed_ssith_ecu'},
         {'transition': ('hack12_protect_critical', 'hack12_critical_exploit'), 'conditions': 'button_pressed_critical_exploit'},
         {'transition': ('hack12_critical_exploit', 'hack12_protect_critical'), 'conditions': 'exploit_complete'},
@@ -106,6 +106,16 @@ class HackerKiosk:
             if self.socket in msgs and msgs[self.socket] == zmq.POLLIN:
                 req = self.socket.recv_json()
                 print(f"<{self.__class__.__name__}> Got request: {req}")
+                func = req['func']
+                args = req['args']
+                resp = {}
+                resp['args'] = args
+                resp['func'] = func
+                resp['retval'] = {}
+                resp['status'] = 200 # OK
+
+                print(f"<{self.__class__.__name__}> Responding with {resp}")
+                self.socket.send_json(resp)
 
 
     def stop(self):

@@ -52,7 +52,7 @@ TODO:
     },
     methods: {
       next() {
-        ipc.send('button-pressed', this.$options.name, {});
+        ipc.send('button-pressed', 'next', {});
         this.$router.push({ name: 'hack05_info_attempt' });
       }
     }

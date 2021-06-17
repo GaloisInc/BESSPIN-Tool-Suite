@@ -169,15 +169,16 @@ TODO:
     mounted() {
       ipc.on('zmq-results',(event, q) => {
         q.forEach(item => {
-          // TODO: how to show a hack failure? `status` != 200? Or in `retval`?
-          if(item.func == this.$options.name + '_changeStation' && item.status == 200) {
-            this.stationMessage = "Station set to " + item.retval;
-          } else if (item.func == this.$options.name + '_volumeUp' && item.status == 200) {
-            this.volumeMessage = item.retval;
-          } else if (item.func == this.$options.name + '_volumeDown' && item.status == 200) {
-            this.volumeMessage = item.retval;
-          } else if (item.func == this.$options.name + '_exfil') {
-            this.exfilMessage = item.retval.toString();
+          if (item.func == 'info_exploit' && item.status == 200) {
+            if(item.args == 'changeStation') {
+              this.stationMessage = "Station set to " + item.retval;
+            } else if (item.args == 'volumeUp') {
+              this.volumeMessage = item.retval;
+            } else if (item.args == 'volumeDown') {
+              this.volumeMessage = item.retval;
+            } else if (item.args == 'exfil') {
+              this.exfilMessage = item.retval.toString();
+            }
           }
         });
       });
@@ -186,28 +187,32 @@ TODO:
       clearInterval(this.poller);
     },
     methods: {
-      pollState() {
+pollState() {
         ipc.send('zmq-poll', []);
       },
       exfil() {
         console.log("[click] data Exfil");
         this.clickCount++;
-        ipc.send('button-pressed', this.$options.name + '_exfil', {});
+        ipc.send('button-pressed', 'info_exploit', 'exfil');
       },
       changeStation(which) {
         console.log("[click] change to station ", which)
         this.clickCount++;
-        ipc.send('button-pressed', this.$options.name + '_changeStation', which);
+        ipc.send('button-pressed', 'info_exploit', 'changeStation_' + which);
       },
       volumeUp() {
         console.log("[click] volumeUp")
         this.clickCount++;
-        ipc.send('button-pressed', this.$options.name + '_volumeUp',{});
+        ipc.send('button-pressed', 'info_exploit','volumeUp');
       },
       volumeDown() {
         console.log("[click] volumeDown");
         this.clickCount++;
-        ipc.send('button-pressed', this.$options.name + '_volumeDown',{});
+        ipc.send('button-pressed', 'info_exploit','volumeDown');
+      },
+      next() {
+        ipc.send('button-pressed', 'next', {});
+        this.$router.push({ name: 'hack07_critical_attempt' });
       }
     }
   };

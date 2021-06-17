@@ -54,7 +54,7 @@
       ipc.on('zmq-results',(event, q) => {
         q.forEach(item => {
           console.log("item", item);
-          if(item.func == this.$options.name && item.status == 200) {
+          if(item.func == 'next' && item.status == 200) {
             vm.$router.push({ name: 'hack06_info_exploit' });
           }
         });
@@ -69,7 +69,7 @@
         ipc.send('zmq-poll', []);
       },
       hackInfotainment() {
-        ipc.send('button-pressed', this.$options.name, {});
+        ipc.send('button-pressed', 'next', {});
         console.log('button-pressed', this.$options.name,{});
       }
     }

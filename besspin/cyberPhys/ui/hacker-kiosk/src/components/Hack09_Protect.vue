@@ -58,22 +58,23 @@ ToDO:
     name: 'Hack09_Protect',
     props: {
     },
-    protectCrit() {
-      ipc.send('button-pressed', this.$options.name + '_protect_critical', []);
-      this.$router.push({ name: 'hack12_protect_critical' });    
-    },
-    protectInfo() {
-      ipc.send('button-pressed', this.$options.name + '_protect_info', []);
-      this.$router.push({ name: 'hack10_protect_info_attempt' });    
-    },
     data() {
       return {
-        messages: []
+        messages: [],
+        poller: setInterval(() => { this.pollState() }, 500)
       }
     },
     mounted() {
     },
     methods: {
+    protectCrit() {
+      ipc.send('button-pressed', 'ssith_ecu', []);
+      this.$router.push({ name: 'hack12_protect_critical' });
+    },
+    protectInfo() {
+      ipc.send('button-pressed', 'ssith_infotainment', []);
+      this.$router.push({ name: 'hack10_protect_info_attempt' });
+    },
     }
   };
 </script>
