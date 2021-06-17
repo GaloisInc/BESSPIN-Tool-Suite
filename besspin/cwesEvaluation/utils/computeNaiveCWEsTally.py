@@ -48,7 +48,10 @@ def computeNaiveCWEsTally():
                 errorAndLog(f"computeNaiveCWEsTally: CWE-{cwe} score is {cweScore}. "
                     f"Cannot compute the tally for scores not in [{','.join([str(s) for s in normalizingScoresTable])}]")
                 return
-            vTally += normalizingScoresTable[cweScore]
+            normalizedCweScore = normalizingScoresTable[cweScore]
+            if (normalizedCweScore is None): #skip it -- Not implemented
+                continue
+            vTally += normalizedCweScore
             vCwesCount += 1 #Should not use len(vCwes) because some CWEs are exempt
 
         if (vCwesCount==0): #To avoid division by zero in what comes
