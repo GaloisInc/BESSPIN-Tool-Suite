@@ -43,23 +43,23 @@
       return {
         messages: [],
         canContinue: false,
+        clicked: false,
         poller: setInterval(() => { this.pollState() }, 500)
       }
     },
     mounted() {
       this.canContinue = false;
-      let vm = this;
-      setTimeout(() => {vm.canContinue = true}, 3000);
+      setTimeout(() => {this.canContinue = true}, 3000);
 
       ipc.on('zmq-results',(event, q) => {
         q.forEach(item => {
           console.log("item", item);
-          if(item.func == 'next' && item.status == 200) {
-            vm.$router.push({ name: 'hack06_info_exploit' });
+          if(item.func == 'next' && item.status == 200 && !this.clicked) {
+            this.$router.push({ name: 'hack06_info_exploit' });
+            this.clicked = true
           }
         });
       });
-
     },
     unmounted() {
       clearInterval(this.poller);
@@ -70,7 +70,7 @@
       },
       hackInfotainment() {
         ipc.send('button-pressed', 'next', {});
-        console.log('button-pressed', this.$options.name,{});
+        console.log('button-pressed', 'next',{});
       }
     }
   };

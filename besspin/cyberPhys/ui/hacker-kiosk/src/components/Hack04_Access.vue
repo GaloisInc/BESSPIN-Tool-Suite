@@ -36,8 +36,8 @@ TODO:
 
 
 <script>
-    const electron = require('electron')
-    const ipc = electron.ipcRenderer;
+  const electron = require('electron')
+  const ipc = electron.ipcRenderer;
 
   export default {
     name: 'Hack04_Access',
@@ -45,15 +45,32 @@ TODO:
     },
     data() {
       return {
-        messages: []
+        messages: [],
+        clicked: false,
+        poller: setInterval(() => { this.pollState() }, 500)
       }
     },
     mounted() {
+      ipc.on('zmq-results',(event, q) => {
+        q.forEach(item => {
+          console.log("item", item);
+          if(item.func == 'next' && item.status == 200 && !this.clicked) {
+            this.$router.push({ name: 'hack05_info_attempt' });
+            this.clicked = true
+          }
+        });
+      });
+    },
+    unmounted() {
+      clearInterval(this.poller);
     },
     methods: {
+      pollState() {
+        ipc.send('zmq-poll', []);
+      },
       next() {
         ipc.send('button-pressed', 'next', {});
-        this.$router.push({ name: 'hack05_info_attempt' });
+        console.log('button-pressed', 'next',{});
       }
     }
   };

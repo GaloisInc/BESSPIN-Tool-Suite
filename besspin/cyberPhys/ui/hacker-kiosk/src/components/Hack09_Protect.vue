@@ -66,15 +66,21 @@ ToDO:
     },
     mounted() {
     },
+    unmounted() {
+      clearInterval(this.poller);
+    },
     methods: {
-    protectCrit() {
-      ipc.send('button-pressed', 'ssith_ecu', []);
-      this.$router.push({ name: 'hack12_protect_critical' });
-    },
-    protectInfo() {
-      ipc.send('button-pressed', 'ssith_infotainment', []);
-      this.$router.push({ name: 'hack10_protect_info_attempt' });
-    },
+      pollState() {
+        ipc.send('zmq-poll', []);
+      },
+      protectCrit() {
+        ipc.send('button-pressed', 'ssith_ecu', []);
+        this.$router.push({ name: 'hack12_protect_critical' });
+      },
+      protectInfo() {
+        ipc.send('button-pressed', 'ssith_infotainment', []);
+        this.$router.push({ name: 'hack10_protect_info_attempt' });
+      },
     }
   };
 </script>

@@ -17,8 +17,8 @@ TODO:
       <router-link class="hack02-btn-back img-btn" to="/" tag="button">
       </router-link>
 
-      <router-link class="hack02-btn img-btn" to="/hack03_show" tag="button">
-      </router-link>
+      <button class="hack02-btn img-btn" @click="next()">
+      </button>
   </div>
 </template>
 
@@ -61,14 +61,39 @@ TODO:
     },
     data() {
       return {
-        messages: []
+        messages: [],
+        clicked: false,
+        resetSent: false,
+        poller: setInterval(() => { this.pollState() }, 500)
       }
     },
     mounted() {
       // Reset Scenerio when the intro loads
-      ipc.send('button-pressed', 'reset', []);
+      if (!this.resetSent) {
+        ipc.send('button-pressed', 'reset', []);
+        this.resetSent = true
+      }
+      ipc.on('zmq-results',(event, q) => {
+        q.forEach(item => {
+          console.log("item", item);
+          if(item.func == 'next' && item.status == 200 && !this.clicked) {
+            this.$router.push({ name: 'hack03_show' });
+            this.clicked = true
+          }
+        });
+      });
+    },
+    unmounted() {
+      clearInterval(this.poller);
     },
     methods: {
+      pollState() {
+        ipc.send('zmq-poll', []);
+      },
+      next() {
+        ipc.send('button-pressed', 'next', {});
+        console.log('button-pressed', 'next',{});
+      }
     }
   };
 </script>
