@@ -9,8 +9,7 @@ normalizingScoresTable = {
     SCORES.MED : 1/3,
     SCORES.LOW : 2/3,
     SCORES.NONE : 1.0,
-    SCORES.DETECTED : 1.0,
-    SCORES.NOT_IMPLEMENTED : None #Intentionally a non-numerical value to cause errors if goes unnoticed
+    SCORES.DETECTED : 1.0
 }
 
 besspinCoeffsFactors = {
