@@ -118,7 +118,7 @@ def tabulate(vulClassesScores, ovrDetails):
 
     #The overall score row
     if (ovrDetails["score"]!=-1):
-        ovrRow = (["Overall Score",str(ovrDetails["tally"]),
+        ovrRow = (["Overall Score",dispTally(ovrDetails["tally"]),
                     str(ovrDetails["total"]),disp(ovrDetails["score"])])
         table.append(tabulate_row([],widthCols,drawSeparation=True,horizSeparator='='))
         table.append(tabulate_row(ovrRow,widthCols))
