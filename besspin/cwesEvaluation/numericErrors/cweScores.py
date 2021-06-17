@@ -62,8 +62,7 @@ def scoreAllTests(logs):
     for name, log in logs:
         testNum = name.split('_')[1]
         logLines = ftReadLines(log)
-        osFlavor = "unix" if isEnabled("isUnix") else "FreeRTOS"
-        numParts = getSettingDict(VULCLASS,["testsInfo",name,osFlavor,"nParts"])
+        numParts = getSettingDict(VULCLASS,["testsInfo",name,getSetting("osDiv"),"nParts"])
         partsScores = []
         for thisPart in range(1, numParts + 1):
             partLines = partitionLines (logLines,thisPart,testNum) #partitioning first make sure the scoring is done for this part only
@@ -71,7 +70,7 @@ def scoreAllTests(logs):
             partsScores.append(adjustToCustomScore(partLines,thisScore))
 
         ovrScore = overallScore(partsScores,f"TEST-{testNum}",
-                    partsWeights=getSettingDict(VULCLASS,["testsInfo",name,osFlavor,"scoreWeights"]))
+                    partsWeights=getSettingDict(VULCLASS,["testsInfo",name,getSetting("osDiv"),"scoreWeights"]))
         scores[name] = ovrScore[1]
         ret.append(ovrScore)
 
