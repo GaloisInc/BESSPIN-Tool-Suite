@@ -127,6 +127,7 @@ TODO:
         acceleratorNormal: true,
         lkaOn: true,
         transDrive: true,
+        clickCount: 0,
         poller: setInterval(() => { this.pollState() }, 500)
       }
     },
