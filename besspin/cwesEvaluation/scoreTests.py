@@ -316,6 +316,7 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
             table.append(tabulate_row([],widthCols,drawSeparation=True))
         else:
             firstRow = False
+        row[0] = row[0].replace("TEST","CWE") #To ensure consistency
         table.append(tabulate_row(row, widthCols))
 
     # Draw bottom edge
