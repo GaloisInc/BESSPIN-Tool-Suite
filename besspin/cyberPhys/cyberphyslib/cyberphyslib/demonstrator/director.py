@@ -86,14 +86,14 @@ class IgnitionDirector:
     ]
 
     hacks2patterns = {
-        canlib.HACK_NONE: ledm.LedPatterns.NOMINAL,# TODO?
-        canlib.HACK_OTA: ledm.LedPatterns.NOMINAL,
+        canlib.HACK_NONE: ledm.LedPatterns.NOMINAL,
+        #canlib.HACK_OTA: ledm.LedPatterns.NOMINAL, # TODO: add pattern for OTA hack?
         canlib.HACK_BRAKE: ledm.LedPatterns.BRAKE_HACK,
         canlib.HACK_THROTTLE: ledm.LedPatterns.THROTTLE_HACK,
         canlib.HACK_TRANSMISSION: ledm.LedPatterns.TRANSMISSION_HACK,
         canlib.HACK_LKAS: ledm.LedPatterns.STEERING_HACK,
-        canlib.HACK_INFOTAINMENT_1: ledm.LedPatterns.ALL_ON,# TODO
-        canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO
+        #canlib.HACK_INFOTAINMENT_1: ledm.LedPatterns.ALL_ON,# TODO: add pattern for infotainment hack
+        #canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO add pattern for infotainment hack
     }
 
     @classmethod
@@ -133,6 +133,10 @@ class IgnitionDirector:
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
         self.scenario_timeout = cconf.SCENARIO_TIMEOUT
         self.cc_timeout = cconf.CC_TIMEOUT # 20 seconds
+
+        # Need to know what is the active scenario
+        # TODO: is there a better solution?
+        self.active_scenario = canlib.SCENARIO_BASELINE
 
         self.joystick_name = cconf.JOYSTICK_NAME
 
@@ -304,25 +308,31 @@ class IgnitionDirector:
             elif id == canlib.CAN_ID_CMD_HACK_ACTIVE:
                 hack_idx = struct.unpack("!B", msg.data)[0]
                 ignition_logger.debug(f"process cc: set hack active {hack_idx}")
-                if self._noncrit:
-                    ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
-                else:
-                    # TODO: FIXME: write test for this
-                    lm: ledm.LedManagerComponent = self._handler["ledm"]
-                    lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
+                # Process HACK_ACTIVE messages only in baseline scenario
+                if self.active_scenario == canlib.SCENARIO_BASELINE:
+                    if self._noncrit:
+                        ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
+                    else:
+                        lm: ledm.LedManagerComponent = self._handler["ledm"]
+                        lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
 
             elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
-                # NOTE: this is not agreed on
-                # FIXME: should different light color be associated with SSITH scenario?
-                # white/blue vs. the baseline green?
                 nmap = {
                     canlib.SCENARIO_BASELINE: "base",
                     canlib.SCENARIO_SECURE_ECU: "secure_ecu",
                     canlib.SCENARIO_SECURE_INFOTAINMENT: "secure_infotainment"}
                 scen_idx = struct.unpack("!B", msg.data)[0]
                 ignition_logger.debug(f"process cc: active scenario {scen_idx}")
+                self.active_scenario = scen_idx
                 cm: ccan.CanMultiverseComponent = self._handler["canm"]
                 cm.select_network(nmap[scen_idx])
+                # Update LED patterns
+                lm: ledm.LedManagerComponent = self._handler["ledm"]
+                if scen_idx == canlib.SCENARIO_BASELINE:
+                    pattern = ledm.LedPatterns.NOMINAL
+                else:
+                    ledm.LedPatterns.SSITH
+                lm.update_pattern(ledm.LedPatterns(pattern))
 
             elif id == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
                 aut_idx = struct.unpack("!B", msg.data)[0]
