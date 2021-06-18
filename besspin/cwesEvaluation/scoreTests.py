@@ -25,7 +25,7 @@ class SCORES (enum.Enum):
     MED = 1
     LOW = 2
     NONE = 3
-    DETECTED = 3
+    DETECTED = 4 #The value of DETECTED will be overridden to be 3 (= NONE)
     INF = 10
 
     def __str__ (self): #to replace '_' by '-' when printing
@@ -42,6 +42,20 @@ class SCORES (enum.Enum):
             return "N/A"
         else:
             return "%s" % self.name.replace('_','-')
+
+    @property
+    def value(self):
+        """
+        DETECTED and NONE should have the same value, but setting two ENUM constants to the same value means one of them
+        is an alias to the other. Which we don't want for clarity; To distinguish between the NONE and DETECTED
+        concepts. This makes NONE and DETECTED have the same value for the sake of averaging or any value related
+        operations. Average will thus never yield DETECTED, but rather NONE. So you can see individual test parts be
+        scored DETECTED, but the overall CWE score will be NONE.
+        """
+        if (self.name == "DETECTED"):
+            return self.__class__["NONE"]._value_
+        else:
+            return self._value_
 
     def __lt__(self, other):
         """
