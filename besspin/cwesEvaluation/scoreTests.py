@@ -170,6 +170,16 @@ class SCORES (enum.Enum):
         """
         return cls[getSettingDict('cwesAssessments',[strScore])]
 
+    @classmethod
+    def toTableExactRepr (cls, score):
+        """
+        Translate the score to the string representation in the table as normalized exact score (2nd score column)
+        """
+        if ((score > cls.DETECTED) or (score < cls.HIGH)):
+            return '-'
+        else:
+            return str(score.value/cls.DETECTED.value)
+
 @decorate.debugWrap
 def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreReport.log"):
     """
@@ -247,7 +257,7 @@ def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreRepo
                 xConfig.set(besspin.base.config.CWES_SELF_ASSESSMENT_SECTION,f"assessment_{cweNameD}",f"{row[1]}")
                 if (vulClass not in ["bufferErrors", "informationLeakage"]):
                     xConfig.set(besspin.base.config.CWES_ENABLED_TESTS_SECTION,f"test_{cweNameD}",'No') #already tested
-                fcsv.write(f"{cweName},{row[1]},{row[1].value},\"{row[2]}\"\n")
+                fcsv.write(f"{cweName},{row[1]},{row[1].value},{row[2]},\"{row[3]}\"\n")
             fcsv.close()
         except Exception as exc:
             logAndExit(f"<scoreTests> Failed to generate the needed files and outputs for <{vulClass}> scores.",
