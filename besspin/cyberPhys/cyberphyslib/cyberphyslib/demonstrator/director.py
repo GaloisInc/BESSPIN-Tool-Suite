@@ -86,14 +86,14 @@ class IgnitionDirector:
     ]
 
     hacks2patterns = {
-        ccan.HACK_NONE: ledm.LedPatterns.NOMINAL,# TODO?
-        ccan.HACK_OTA: ledm.LedPatterns.NOMINAL,
-        ccan.HACK_BRAKE: ledm.LedPatterns.BRAKE_HACK,
-        ccan.HACK_THROTTLE: ledm.LedPatterns.THROTTLE_HACK,
-        ccan.HACK_TRANSMISSION: ledm.LedPatterns.TRANSMISSION_HACK,
-        ccan.HACK_LKAS: ledm.LedPatterns.STEERING_HACK,
-        ccan.HACK_INFOTAINMENT_1: ledm.LedPatterns.ALL_ON,# TODO
-        ccan.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO
+        canlib.HACK_NONE: ledm.LedPatterns.NOMINAL,# TODO?
+        canlib.HACK_OTA: ledm.LedPatterns.NOMINAL,
+        canlib.HACK_BRAKE: ledm.LedPatterns.BRAKE_HACK,
+        canlib.HACK_THROTTLE: ledm.LedPatterns.THROTTLE_HACK,
+        canlib.HACK_TRANSMISSION: ledm.LedPatterns.TRANSMISSION_HACK,
+        canlib.HACK_LKAS: ledm.LedPatterns.STEERING_HACK,
+        canlib.HACK_INFOTAINMENT_1: ledm.LedPatterns.ALL_ON,# TODO
+        canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO
     }
 
     @classmethod
@@ -267,6 +267,9 @@ class IgnitionDirector:
         # startup the speedometer
         start_noncrit_component(speedo.Speedo())
 
+        # startup the pedal monitor
+        start_noncrit_component(cjoy.PedalMonitorComponent())
+
         # startup the joystick monitor
         start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
 
@@ -348,7 +351,7 @@ class IgnitionDirector:
                 return
             else: # CC timeout condition
                 # NOTE: if jmonitor has failed assume user input is present
-                activity = self._handler['jmonitor'].is_active
+                activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
 
                 # if in self drive mode and activity has occurred, get out
                 if activity and self.self_drive_mode:

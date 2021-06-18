@@ -222,8 +222,8 @@ def isEnabled(setting, targetId=None, default=None):
         logAndExit (f"isEnabled: The value of <{setting}> is not boolean: <{val}>.",exitCode=EXIT.Dev_Bug)
 
 @decorate.debugWrap
-def isEnabledDict(setting, hierarchy, targetId=None):
-    val = getSettingDict(setting, hierarchy, targetId=targetId)
+def isEnabledDict(setting, hierarchy, targetId=None, default=None):
+    val = getSettingDict(setting, hierarchy, targetId=targetId, default=default)
     if isinstance(val, bool):
         return val
     else:

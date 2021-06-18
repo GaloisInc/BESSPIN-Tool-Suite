@@ -36,6 +36,7 @@ INFO_PLAY_PORT = 5019
 LOCATION_PORT = 5021
 INFO_UI_PORT = 5022
 JMONITOR_PORT = 5023
+PMONITOR_PORT = 5024
 
 LOCATION_POLL_HZ = 5
 
@@ -72,7 +73,8 @@ BEAMNG_COMPONENT_OUTPUT = [BEAMNG_COMPONENT_ELECTRIC,
 
 BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands'),
                           (INFO_UI_PORT, 'infoui-beamng'),
-                          (JMONITOR_PORT, 'jmonitor-beamng')]
+                          (JMONITOR_PORT, 'jmonitor-beamng'),
+                          (PMONITOR_PORT, 'pmonitor-beamng')]
 
 # keyword arguments to pass to Vehicle when creating a vehicle for the sim scenario
 BEAMNG_VEHICLE_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk854t_A.pc'}
