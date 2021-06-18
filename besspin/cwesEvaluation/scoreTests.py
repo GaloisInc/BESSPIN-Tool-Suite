@@ -151,8 +151,7 @@ class SCORES (enum.Enum):
         sumScores = 0
         for xScore, xWeight in zip(scoreList, partsWeights):
             sumScores += xWeight * xScore.value
-        avgValue = sumScores // sum(partsWeights)
-        return cls(avgValue)
+        return ( cls(sumScores//sum(partsWeights)), sumScores/sum(partsWeights) )
 
     @classmethod
     def toScore (cls, strScore):
@@ -175,10 +174,13 @@ class SCORES (enum.Enum):
         """
         Translate the score to the string representation in the table as normalized exact score (2nd score column)
         """
-        if ((score > cls.DETECTED) or (score < cls.HIGH)):
+        if (isinstance(score,cls)): #Overloading
+            score = score.value
+
+        if ((score > cls.DETECTED.value) or (score < cls.HIGH.value)):
             return '-'
         else:
-            return str(score.value/cls.DETECTED.value)
+            return str(score/cls.DETECTED.value)
 
 @decorate.debugWrap
 def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreReport.log"):
