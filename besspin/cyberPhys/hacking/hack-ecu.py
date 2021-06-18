@@ -34,86 +34,85 @@ import argparse
 #
 # Also can be found by `(gdb) info frame` in `process_j1939`:
 # (gdb) info frame
-# Stack level 0, frame at 0xc0140730:
-#  pc = 0xc0008a0c in process_j1939
-#     (/home/galoisuser/Workspace/BESSPIN-Tool-Suite/workDir/build_1/main_besspin.c:594);
-#     saved pc = 0xc00088ce
-#  called by frame at 0xc01407c0
+# Stack level 0, frame at 0xc02406b0:
+#  pc = 0xc00089cc in process_j1939
+#     (/home/galoisuser/Workspace/BESSPIN-Tool-Suite/workDir/build_1/main_besspin.c:597); saved pc = 0xc000888e
+#  called by frame at 0xc0240740
 #  source language c.
-#  Arglist at 0xc0140730, args: xListeningSocket=0xc0140a80 <ucHeap+767240>,
-#     xClient=0xc0140760 <ucHeap+766440>, msg_len=0xc0140758 <ucHeap+766432>,
-#     can_id=0xc0140754 <ucHeap+766428>,
-#     msg_buf=0xc0140750 <ucHeap+766424> '\245' <repeats 26 times>,
-#  Locals at 0xc0140730, Previous frame's sp is 0xc0140730
+#  Arglist at 0xc02406b0, args: xListeningSocket=0xc0240a00 <ucHeap+767240>, 
+#     xClient=0xc02406e0 <ucHeap+766440>, msg_len=0xc02406d8 <ucHeap+766432>, 
+#     can_id=0xc02406d4 <ucHeap+766428>, msg_buf=0xc02406d0 <ucHeap+766424> "\001"
+#  Locals at 0xc02406b0, Previous frame's sp is 0xc02406b0
 #  Saved registers:
-#   ra at 0xc0140728, fp at 0xc0140720, pc at 0xc0140728
+#   ra at 0xc02406a8, fp at 0xc02406a0, pc at 0xc02406a8
 # (gdb) x $ra
-# 0xc00088ce <prvCanRxTask+362>:  0x07a387aa <<< This is the return address
-RETURN_ADDR = 0xc00088f2
+# 0xc000888e <prvCanRxTask+362>:	0x07a387aa <<< This is the return address
+RETURN_ADDR = 0xc000888e
 
 # (gdb) p camera_ok
 # (gdb) false
 CAMERA_OK_VAL = 1
 CAMERA_OK_VAL_NOMINAL = 0
 # (gdb) p &camera_ok
-# (gdb) (_Bool *) 0xc0890352 <camera_ok>
-CAMERA_OK_ADDR = 0xc0890352
+# (gdb) (_Bool *) 0xc09902d2 <camera_ok>
+CAMERA_OK_ADDR = 0xc09902d2
 
 # (gdb) p steering_assist
 # (gdb) 0 '\000'
 STEERING_ASSIST_VAL = 100
 STEERING_ASSIST_VAL_NOMINAL = 0
 # (gdb) p &steering_assist
-# (gdb) (uint8_t *) 0xc0890362 <steering_assist> ""
-STEERING_ASSIST_ADDR = 0xc0890362
+# (gdb) (uint8_t *) 0xc09902e2 <steering_assist> ""
+STEERING_ASSIST_ADDR = 0xc09902e2
 
 # (gdb) p throttle_min
 # $10 = 64
 THROTTLE_MIN_VAL = -900
 THROTTLE_MIN_VAL_NOMINAL = 64
 # (gdb) p &throttle_min
-# $11 = (int16_t *) 0xc0890364 <throttle_min>
-THROTTLE_MIN_ADDR = 0xc0890364
+# $11 = (int16_t *) 0xc09902e4 <throttle_min>
+THROTTLE_MIN_ADDR = 0xc09902e4
 
 # (gdb) p throttle_gain
 # $12 = 100
 THROTTLE_GAIN_VAL = 3000
 THROTTLE_GAIN_VAL_NOMINAL = 100
 # (gdb) p &throttle_gain
-# $13 = (int16_t *) 0xc089034e <throttle_gain>
-THROTTLE_GAIN_ADDR = 0xc089034e
+# $13 = (int16_t *) 0xc09902ce <throttle_gain>
+THROTTLE_GAIN_ADDR = 0xc09902ce
 
 # (gdb) p brake_max
 # $14 = 270
 BRAKE_MAX_VAL = 0
 BRAKE_MAX_VAL_NOMINAL = 270
 # (gdb) p &brake_max
-# $15 = (int16_t *) 0xc0890340 <brake_max>
-BRAKE_MAX_ADDR = 0xc0890340
+# $15 = (int16_t *) 0xc09902c0 <brake_max>
+BRAKE_MAX_ADDR = 0xc09902c0
 
 # (gdb) p brake_gain
 # $17 = 100
 BRAKE_GAIN_VAL = 0
 BRAKE_GAIN_VAL_NOMINAL = 100
 # (gdb) p &brake_gain
-# $18 = (int16_t *) 0xc0890370 <brake_gain>
-BRAKE_GAIN_ADDR = 0xc0890370
+# $18 = (int16_t *) 0xc09902f0 <brake_gain>
+BRAKE_GAIN_ADDR = 0xc09902f0
 
 # (gdb) p &transmission_ok
-# (gdb) (_Bool *) 0xc0890366 <transmission_ok>
-TRANSMISSION_OK_ADDR = 0xc0890366
+# (gdb) (_Bool *) 0xc09902e6 <transmission_ok>
+TRANSMISSION_OK_ADDR = 0xc09902e6
 # Set to 0 to make transmission not OK
 TRANSMISSION_OK_VAL = 0
 TRANSMISSION_OK_VAL_NOMINAL = 1
 
 # (gdb) p &j1939_rx_buf
-# (gdb) (uint8_t (*)[256]) 0xc0890240 <j1939_rx_buf>
+# (gdb) (uint8_t (*)[256]) 0xc09901c0 <j1939_rx_buf>
 # We are jumping to this address
-J1939_RX_BUF_ADDR = 0xc0890240
+J1939_RX_BUF_ADDR = 0xc09901c0
+
 # (gdb) p $fp
-# (gdb) (void *) 0xc01407c0 <ucHeap+766392>
+# (gdb) (void *) 0xc0240740 <ucHeap+766536>
 # This should FP of prvCanRxTask because we are jumping back there
-FRAME_ADDR = 0xc01407c0
+FRAME_ADDR = 0xc0240740
 
 # Buffer size of char msg[];
 RX_BUFFER_SIZE = 100

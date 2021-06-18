@@ -39,9 +39,11 @@ cwesShortcuts = {
 vulClasses = list(cwesShortcuts.values())
 cwesCsvHeaders = {"vulClass" : 1, "CWE":2, "Link":3, "Description":4, "CWEs List":6, "# CWEs":7}
 exclusions = ( #These are not checked: fPath-vulClass
-    [f"configSecurityTests-test-{vClass}" for vClass in ["bufferErrors", "informationLeakage"]]
+    [f"configSecurityTests-test-{vClass}" for vClass in ["bufferErrors", "informationLeakage", "hardwareSoC"]]
     +
     [f"ClaferModel-{vClass}" for vClass in ["PPAC", "hardwareSoC", "injection"]]
+    +
+    [f"configSecurityTests-assessment-{vClass}" for vClass in ["hardwareSoC"]]
 )
 
 class cwesDict:

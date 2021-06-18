@@ -34,9 +34,11 @@ def main(xArgs):
                     testsDict = xDict["val"]
         if (testsDict is None):
             errorExit(f"Failed to extract the tests dict in <{vulClass}/setupEnv.json>.")
-        for xTest in testsDict.keys():
+        for xTest,testInfo in testsDict.items():
             if (not xTest.startswith("test_")):
                 errorExit(f"Unrecognized test format in <{vulClass}/setupEnv.json>: <{xTest}>.")
+            if (("documentationOnly" in testInfo) and (testInfo["documentationOnly"])): #This test should be skipped
+                continue
             toolCWEs[vulClass].append(xTest.split("test_")[1])
 
     # Check for the complete coverage
