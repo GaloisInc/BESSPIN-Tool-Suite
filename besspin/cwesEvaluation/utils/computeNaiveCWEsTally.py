@@ -7,6 +7,12 @@ from besspin.cwesEvaluation.utils.computeBesspinScale import isVulClassException
 def toValue(score):
     return int(score in [SCORES.NONE, SCORES.DETECTED])
 
+@classmethod
+def normalizeToComputation (cls, score):
+    """
+    Translate the exact normalized and string for the table to the computation values
+    """
+
 @decorate.debugWrap
 def computeNaiveCWEsTally():
     """
@@ -43,7 +49,7 @@ def computeNaiveCWEsTally():
                     continue
                 errorAndLog(f"computeNaiveCWEsTally: Failed to compute the tally! CWE-{cwe} score not found in <{vulClass}>.")
                 return
-            cweScore = scoresDict[vulClass][cwe]
+            cweScore = scoresDict[vulClass][cwe][0] # We use the floored value for the binary tally (also to check validity for NoImpl)
             if (cweScore not in normalizingScoresTable):
                 errorAndLog(f"computeNaiveCWEsTally: CWE-{cwe} score is {cweScore}. "
                     f"Cannot compute the tally for scores not in [{','.join([str(s) for s in normalizingScoresTable])}]")
@@ -52,7 +58,7 @@ def computeNaiveCWEsTally():
             if (normalizedCweScore is None): #skip it -- Not implemented
                 continue
             vTally["binary"] += toValue(cweScore)
-            vTally["exact"] += normalizedCweScore
+            vTally["exact"] += float(scoresDict[vulClass][cwe][1]) # If it passed the previous two checks, then it's a float
             vCwesCount += 1 #Should not use len(vCwes) because some CWEs are exempt
 
         if (vCwesCount==0): #To avoid division by zero in what comes

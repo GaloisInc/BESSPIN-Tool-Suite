@@ -253,7 +253,7 @@ def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreRepo
             for row in rows:
                 cweName = f"{'-'.join(row[0].split('-')[1:])}"
                 cweNameD = cweName.replace('-','_')
-                scoresDict[cweNameD] = row[1]
+                scoresDict[cweNameD] = (row[1],row[2]) #Store both of them 
                 xConfig.set(besspin.base.config.CWES_SELF_ASSESSMENT_SECTION,f"assessment_{cweNameD}",f"{row[1]}")
                 if (vulClass not in ["bufferErrors", "informationLeakage"]):
                     xConfig.set(besspin.base.config.CWES_ENABLED_TESTS_SECTION,f"test_{cweNameD}",'No') #already tested
