@@ -23,7 +23,7 @@ def overallScore (listScores, dispName, msgIfNotImplemented="Not Implemented",
         else:
             scoreString = ', '.join([f"p{i+1:02d}:{partScore}" for i,partScore in enumerate(listScores)])
 
-    return [dispName, ovrScore, scoreString]
+    return [dispName, ovrScore, SCORES.toTableExactRepr(ovrScore), scoreString]
 
 def doesKeywordExistInLines (lines, keyword):
     for line in lines:
