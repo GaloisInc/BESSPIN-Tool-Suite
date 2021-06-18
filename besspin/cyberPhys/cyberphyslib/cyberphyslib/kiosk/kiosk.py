@@ -100,15 +100,16 @@ class HackerKiosk:
     INFO_SERVER_PATH = "infotainment-server/debian/"
     INFO_SERVER_HACKED_PATH =  BASELINE_HACK_PATH + INFO_SERVER_PATH + "hacked_server"
     INFO_SERVER_NOMINAL_PATH = BASELINE_HACK_PATH + INFO_SERVER_PATH + "infotainment_server"
-    ECU_HACKS_PATH = "ecu_hacks/"
-    BRAKES_NOMINAL_HACK_PATH = BASELINE_HACK_PATH + ECU_HACKS_PATH +"brakesNominal"
-    BRAKES_HACKED_HACK_PATH = BASELINE_HACK_PATH + ECU_HACKS_PATH +"brakesHacked"
-    THROTTLE_NOMINAL_HACK_PATH = BASELINE_HACK_PATH + ECU_HACKS_PATH +"throttleNominal"
-    THROTTLE_HACKED_HACK_PATH = BASELINE_HACK_PATH + ECU_HACKS_PATH +"throttleHacked"
-    LKAS_NOMINAL_HACK_PATH = BASELINE_HACK_PATH + ECU_HACKS_PATH +"lkasNominal"
-    LKAS_HACKED_HACK_PATH = BASELINE_HACK_PATH + ECU_HACKS_PATH +"lkasHacked"
-    TRANSMISSION_NOMINAL_HACK_PATH = BASELINE_HACK_PATH + ECU_HACKS_PATH +"transmissionNominal"
-    TRANSMISSION_HACKED_HACK_PATH = BASELINE_HACK_PATH + ECU_HACKS_PATH +"transmissionHacked"
+    # TODO: move the hacks to BESSPIN-LFS dir
+    ECU_HACKS_PATH = "../../hacking/ecu_hacks/"
+    BRAKES_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"brakesNominal"
+    BRAKES_HACKED_HACK_PATH = ECU_HACKS_PATH +"brakesHacked"
+    THROTTLE_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"throttleNominal"
+    THROTTLE_HACKED_HACK_PATH = ECU_HACKS_PATH +"throttleHacked"
+    LKAS_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"lkasNominal"
+    LKAS_HACKED_HACK_PATH = ECU_HACKS_PATH +"lkasHacked"
+    TRANSMISSION_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"transmissionNominal"
+    TRANSMISSION_HACKED_HACK_PATH = ECU_HACKS_PATH +"transmissionHacked"
 
     # full name of the states
     state_names = [
@@ -151,7 +152,7 @@ class HackerKiosk:
         {'transition': ('hack12_protect_critical', 'reset'), 'conditions': 'button_pressed_reset'},
     ]
 
-    def __init__(self, net_conf, deploy_mode=False):
+    def __init__(self, net_conf, deploy_mode=True):
         """kiosk state machine"""
         assert(net_conf)
         self.deploy_mode = deploy_mode
@@ -619,8 +620,19 @@ class HackerKiosk:
         """
         Parse `arg` and upload & execute hacked/nominal
         binary to the target OTA server
+        * Binary is target dependent (has a specific IP)
         TODO: simplify / make it a pattern?
         """
+        if self.active_scenario == canlib.SCENARIO_BASELINE:
+            suffix = "_baseline"
+        elif self.active_scenario == canlib.SCENARIO_SCENARIO_SECURE_INFOTAINMENT:
+            suffix = "_ssithInfo"
+        elif self.active_scenario == canlib.SCENARIO_SCENARIO_SECURE_ECU:
+            suffix = "_ssithEcu"
+        else:
+            # This shouldn't happen
+            print(f"Unknown scenario! {self.active_scenario}")
+            return
         if arg == "brakes":
             if self.deploy_mode:
                 if self.brakes_ok:
@@ -629,7 +641,7 @@ class HackerKiosk:
                 else:
                     # brakes are OFF, we want them back ON
                     filename = HackerKiosk.BRAKES_NOMINAL_HACK_PATH
-                hack_ok, _ = self.ota_server.upload_and_execute_file(filename)
+                hack_ok, _ = self.ota_server.upload_and_execute_file(filename + suffix)
             else:
                 hack_ok = True
             # Update status only if hack_ok
@@ -650,7 +662,7 @@ class HackerKiosk:
                 else:
                     # Throttle is hacked, restore nominal operation
                     filename = HackerKiosk.THROTTLE_NOMINAL_HACK_PATH
-                hack_ok, _ = self.ota_server.upload_and_execute_file(filename)
+                hack_ok, _ = self.ota_server.upload_and_execute_file(filename + suffix)
             else:
                 hack_ok = True
             # Update status only if hack_ok
@@ -671,7 +683,7 @@ class HackerKiosk:
                 else:
                     # LKAS is enabled, we want to disable it (nominal)
                     filename = HackerKiosk.LKAS_NOMINAL_HACK_PATH
-                hack_ok, _ = self.ota_server.upload_and_execute_file(filename)
+                hack_ok, _ = self.ota_server.upload_and_execute_file(filename + suffix)
             else:
                 hack_ok = True
             # Update status only if hack_ok
@@ -693,7 +705,7 @@ class HackerKiosk:
                     # Transmission is disabled/hacked, we want to enable it
                     # (back to nominal)
                     filename = HackerKiosk.TRANSMISSION_NOMINAL_HACK_PATH
-                hack_ok, _ = self.ota_server.upload_and_execute_file(filename)
+                hack_ok, _ = self.ota_server.upload_and_execute_file(filename + suffix)
             else:
                 hack_ok = True
             # Update status only if hack_ok
