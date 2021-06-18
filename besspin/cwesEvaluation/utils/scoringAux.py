@@ -14,8 +14,9 @@ def overallScore (listScores, dispName, msgIfNotImplemented="Not Implemented",
     
     if (partsWeights is None):
         ovrScore = SCORES.minScore(listScores)
+        exactScore = ovrScore
     else:
-        ovrScore = SCORES.weightedAvgScore(listScores,partsWeights)
+        ovrScore, exactScore = SCORES.weightedAvgScore(listScores,partsWeights)
 
     if (scoreString is None):
         if (isSelfAssessment):
@@ -23,7 +24,7 @@ def overallScore (listScores, dispName, msgIfNotImplemented="Not Implemented",
         else:
             scoreString = ', '.join([f"p{i+1:02d}:{partScore}" for i,partScore in enumerate(listScores)])
 
-    return [dispName, ovrScore, SCORES.toTableExactRepr(ovrScore), scoreString]
+    return [dispName, ovrScore, SCORES.toTableExactRepr(exactScore), scoreString]
 
 def doesKeywordExistInLines (lines, keyword):
     for line in lines:
