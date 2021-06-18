@@ -99,6 +99,11 @@ The BESSPIN score is the security figure of merit that is used to evaluate the S
 
 ---
 
-## Naïve CWEs Tally ##
+## Naïve CWEs Tallies ##
 
-For each vulnerability class, the CWEs scores are tallyed with a unity weight for each CWE. A percentage score will be computed as `100` times the sum of the scores divided by the number of CWEs of that class. Also, an overall single figure of merit will be computed in a similar fashion for all CWEs in the list. 
+For each vulnerability class, the CWEs scores are tallied in two ways:
+    1. In a binary way, with 1 for `NONE` or `DETECTED`, and 0 otherwise.
+    2. In an exact way, with the scores normalized to 1.
+For each tally (binary and exact), a percentage score will be computed as `100` times the sum of the scores divided by the number of CWEs of that class. Also, an overall single figure of merit will be computed in a similar fashion for all CWEs in the list.
+
+It is called naïve because it assumes all CWEs are created equal. The [BESSPIN scale](#besspin-scale) is our attempt against naïveté. 
