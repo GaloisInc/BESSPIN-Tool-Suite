@@ -94,7 +94,7 @@ def scoreAllTests(logs):
             score = SCORES.avgScore(implemented)
         else:
             score = SCORES.NOT_IMPLEMENTED
-        ret.append([f"CWE-{testNum}", score, notes])
+        ret.append([f"CWE-{testNum}", score, SCORES.toTableExactRepr(score), notes])
     return ret
 
 
