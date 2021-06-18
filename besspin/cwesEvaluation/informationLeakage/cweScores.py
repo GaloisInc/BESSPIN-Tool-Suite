@@ -91,10 +91,11 @@ def scoreAllTests(logs):
         notes = "Results: " + ', '.join(notesList)
         implemented = [ s for s in listScores if s != SCORES.NOT_IMPLEMENTED ]
         if len(implemented) > 0:
-            score = SCORES.avgScore(implemented)
+            flooredScore, exactScore = SCORES.avgScore(implemented)
         else:
-            score = SCORES.NOT_IMPLEMENTED
-        ret.append([f"CWE-{testNum}", score, SCORES.toTableExactRepr(score), notes])
+            flooredScore = SCORES.NOT_IMPLEMENTED
+            exactScore = flooredScore
+        ret.append([f"CWE-{testNum}", flooredScore, SCORES.toTableExactRepr(exactScore), notes])
     return ret
 
 

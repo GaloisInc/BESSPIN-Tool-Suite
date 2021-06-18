@@ -124,7 +124,7 @@ class SCORES (enum.Enum):
         return minScore
 
     @classmethod
-    def avgScore (cls,scoreList): #Always floors
+    def avgScore (cls,scoreList):
         """
         Return the floor of the average of a list of scores.
 
@@ -140,8 +140,7 @@ class SCORES (enum.Enum):
         sumScores = 0
         for xScore in scoreList:
             sumScores += xScore.value
-        avgValue = sumScores // len(scoreList)
-        return cls(avgValue)
+        return ( cls(sumScores//len(scoreList)), sumScores/len(scoreList) )
 
     @classmethod
     def weightedAvgScore (cls, scoreList, partsWeights):
