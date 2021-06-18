@@ -290,18 +290,27 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
     """
     table = []
 
-    headers = ["TEST","Score","Notes"]
+    headers = ["CWE","Score","Score","Notes"]
     if hasMultitaskScores:
         headers.append("Multitasking Pass")
+
+    # prettify elements
+    for iRow in range(len(elements)):
+        elements[iRow][0] = elements[iRow][0].replace("TEST","CWE") #To ensure consistency
+        try:
+            val = float(elements[iRow][2])
+            elements[iRow][2] = f"{100*val:.2f}%"
+        except:
+            pass
 
     # fullElements contains the headers as well so that the width computation
     # takes header width into account
     fullElements= [headers] + elements
 
     if hasMultitaskScores:
-        widths = [ (len(e[0]), len(e[1]), len(e[2]), len(e[3])) for e in fullElements]
+        widths = [ (len(e[0]), len(e[1]), len(e[2]), len(e[3]), len(e[4])) for e in fullElements]
     else:
-        widths = [ (len(e[0]), len(e[1]), len(e[2])) for e in fullElements ]
+        widths = [ (len(e[0]), len(e[1]), len(e[2]), len(e[3])) for e in fullElements ]
     widthCols = [ 2 + max([w[i] for w in widths]) for i in range(len(widths[0]))]
 
     # Draw title header
@@ -309,14 +318,19 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
     table.append(tabulate_row([title], [sum(widthCols) + len(widths[0]) - 1]))
     table.append(tabulate_row([],widthCols,drawLine=True))
 
+    # Draw the header (one column less)
+    headers.remove("Score")
+    headersWidthCols = [widthCols[0], 1 + sum(widthCols[1:3])] + widthCols[3:]
+    table.append(tabulate_row(headers, headersWidthCols))
+    table.append(tabulate_row([],headersWidthCols,drawSeparation=True))
+
     # Draw each result
     firstRow = True
-    for row in fullElements:
+    for row in elements:
         if (not firstRow):
             table.append(tabulate_row([],widthCols,drawSeparation=True))
         else:
             firstRow = False
-        row[0] = row[0].replace("TEST","CWE") #To ensure consistency
         table.append(tabulate_row(row, widthCols))
 
     # Draw bottom edge
