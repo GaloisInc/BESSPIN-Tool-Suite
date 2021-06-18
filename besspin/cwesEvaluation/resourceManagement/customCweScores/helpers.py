@@ -78,7 +78,7 @@ def overallScore (listScores, testNum):
                 getSettingDict("resourceManagement",["testsInfo",f"test_{testNum}",getSetting("osDiv"),"scoreWeights"]))
     scoreString = ', '.join([f"p{i+1:02d}:{partScore}" for i,partScore in enumerate(listScores)])
 
-    return ["TEST-{0}".format(testNum), ovrScore, scoreString]
+    return ["TEST-{0}".format(testNum), ovrScore, SCORES.toTableExactRepr(ovrScore), scoreString]
 
 def doesKeywordExist (lines, keyword):
     for line in lines:
