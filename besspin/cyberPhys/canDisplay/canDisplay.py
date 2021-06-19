@@ -25,6 +25,10 @@ import cyberphyslib.canlib as ccan
 # make CAN module less noisy
 logging.getLogger("can").setLevel(logging.WARNING)
 
+STATE_NORMAL = "normal"
+STATE_HACKED = "hacked"
+STATE_SSITH = "ssith"
+
 class CanDisplay(threading.Thread):
     CMD_PORT = 5041
     ZMQ_PORT = 5091
@@ -53,7 +57,8 @@ class CanDisplay(threading.Thread):
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
 
-        self.state = ccan.SCENARIO_BASELINE
+        self.scenario = ccan.SCENARIO_BASELINE
+        self.state = STATE_NORMAL
 
         print(f"<{self.__class__.__name__}> Listening on CAN_PORT {self.can_port}, and ZMQ_PORT {self.zmq_port}")
 
@@ -76,32 +81,18 @@ class CanDisplay(threading.Thread):
 
     def exit(self):
         self.stop()
-        self.join()
-
-    def serveScenarioStatus(self):
-        """
-        Reply to requests for update
-        """
-        return self.state
 
     def serve(self):
         req = self.socket.recv_json()
         print(f"<{self.__class__.__name__}> Got request {req}")
         assert("func" in req and "args" in req)
-        func = req['func']
-        args = req['args']
-        resp = {}
-        resp['args'] = args
-        resp['func'] = func
-        resp['retval'] = {}
-        if func == "serveScenarioStatus":
-            resp['retval'] = self.serveScenarioStatus()
-            resp['status'] = 200 # OK
+        if req['func'] == "scenario":
+            req['retval'] = self.state
+            req['status'] = 200 # OK
         else:
-            resp['status'] = 501 # Not implemented
-
-        print(f"<{self.__class__.__name__}> Responding with {resp}")
-        self.socket.send_json(resp)
+            req['status'] = 501 # Not implemented
+        print(f"<{self.__class__.__name__}> Responding with {req}")
+        self.socket.send_json(req)
 
     def cmdLoop(self):
         while True:
@@ -120,13 +111,20 @@ class CanDisplay(threading.Thread):
                 if data == ccan.SCENARIO_BASELINE or\
                    data == ccan.SCENARIO_SECURE_ECU or\
                    data == ccan.SCENARIO_SECURE_INFOTAINMENT:
-                    self.state = data
+                   self.scenario = data
                 else:
                     print(f"<{self.__class__.__name__}> Unknown scenario ID: {data}")
+                if self.scenario == ccan.SCENARIO_BASELINE:
+                    self.state = STATE_NORMAL
+                else:
+                    self.state = STATE_SSITH
             elif cid == ccan.CAN_ID_CMD_HACK_ACTIVE:
-                self.state = data
+                if self.scenario == ccan.SCENARIO_BASELINE:
+                    if data == ccan.HACK_NONE:
+                        self.state = STATE_NORMAL
+                    else:
+                        self.state = STATE_HACKED
                 print(f"<{self.__class__.__name__}> Hack ID: {data}")
-
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 

@@ -7,7 +7,7 @@ Date: 16 June 2021
 
 """
 
-DEPLOY_MODE = False
+DEPLOY_MODE = True
 
 if __name__ == "__main__":
     # Project libs
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # ugh, this filepath access is sketchy and will complicate the deployment of ignition
     parser = argparse.ArgumentParser(description="BESSPIN Demonstrator Kiosk Backend")
-    parser.add_argument("-network-config", type=str, default="", help="Path to BESSPIN Target setupEnv.json")
+    parser.add_argument("--network-config", type=str, default="", help="Path to BESSPIN Target setupEnv.json")
     args = parser.parse_args()
     if args.network_config == "":
         network_filepath = pathlib.Path(os.path.realpath(__file__)).parent / ".." / ".." / "base" / "utils" / "setupEnv.json"
@@ -26,11 +26,11 @@ if __name__ == "__main__":
         network_filepath = args.network_config
     assert os.path.exists(network_filepath), f"specified network config json ({network_filepath}) doesn't exist"
     dnc = config.DemonstratorNetworkConfig.from_setup_env(network_filepath)
-    kiosk = kiosk.HackerKiosk(dnc)
+    kiosk = kiosk.HackerKiosk(dnc,deploy_mode=DEPLOY_MODE)
     if DEPLOY_MODE:
-        kiosk.run()
+        print("Running in deploy mode!")
     else:
         print("Running in test mode!")
         kiosk.draw_graph("kiosk-backend-transitions.png")
-        kiosk.run(deploy_mode=False)
+    kiosk.run()
 

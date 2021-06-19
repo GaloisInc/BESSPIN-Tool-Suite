@@ -82,6 +82,13 @@ ComponentDictionary = {
     canlib.BUTTON_VOLUME_UP: "BUTTON_VOLUME_UP"
 }
 
+ButtonDictionary = {
+    canlib.BUTTON_STATION_1: "BUTTON_STATION_1",
+    canlib.BUTTON_STATION_2: "BUTTON_STATION_2",
+    canlib.BUTTON_STATION_3: "BUTTON_STATION_3",
+    canlib.BUTTON_VOLUME_DOWN: "BUTTON_VOLUME_DOWN",
+    canlib.BUTTON_VOLUME_UP: "BUTTON_VOLUME_UP"
+}
 
 class HackerKiosk:
     """
@@ -95,9 +102,11 @@ class HackerKiosk:
         canlib.SCENARIO_SECURE_ECU: "10.88.88.31",
     }
     # We assume the kiosk is executed from BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk
-    BASELINE_HACK_PATH = "../../../../BESSPIN-LFS/GFE/appsBinaries/"
+    #
+    BASELINE_HACK_PATH = "../../hacking/"
     # Assume Debian
-    INFO_SERVER_PATH = "infotainment-server/debian/"
+    #INFO_SERVER_PATH = "infotainment-server/debian/"
+    INFO_SERVER_PATH = "infotainment-server/"
     INFO_SERVER_HACKED_PATH =  BASELINE_HACK_PATH + INFO_SERVER_PATH + "hacked_server"
     INFO_SERVER_NOMINAL_PATH = BASELINE_HACK_PATH + INFO_SERVER_PATH + "infotainment_server"
     # TODO: move the hacks to BESSPIN-LFS dir
@@ -202,6 +211,8 @@ class HackerKiosk:
         self.default_inputs()
 
     def run(self):
+        if self.deploy_mode:
+            self.cmd_thread.start()
         while not self.stopped:
             msgs = dict(self.poller.poll(HackerKiosk.ZMQ_POLL_TIMEOUT))
             if self.socket in msgs and msgs[self.socket] == zmq.POLLIN:
@@ -340,7 +351,7 @@ class HackerKiosk:
         2) if 1) successfull, upload and execute hacked info server binary
         """
         print("Attemptig to hack OTA server.")
-        if self.deploy_mode:
+        if False:#self.deploy_mode:
             hack_ok, data = self.ota_server.hack_server()
             if hack_ok:
                 print("Hack successful!")
@@ -431,7 +442,7 @@ class HackerKiosk:
         """
         self.button_pressed_ssith_infotainment = False
 
-        if self.deploy_mode:
+        if False:#self.deploy_mode:
             hack_ok, data = self.ota_server.hack_server()
             print(data)
         else:
@@ -452,7 +463,7 @@ class HackerKiosk:
         self.exploit_complete = True
 
         self.execute_infotainment_hack(arg)
-        # TODO FXI THIS
+        # TODO FIX THIS
         self.ipc_msg['retval'] = "Hack Failed"
 
         self.ipc_msg['status'] = 200 # OK
@@ -468,7 +479,7 @@ class HackerKiosk:
         if not self.hack12_has_been_initialized:
             self.switchActiveScenario(canlib.SCENARIO_SECURE_ECU)
 
-            if self.deploy_mode:
+            if False:#self.deploy_mode:
                 hack_ok, data = self.ota_server.hack_server()
                 print(hack_ok)
                 print(data)
@@ -515,7 +526,6 @@ class HackerKiosk:
 
         if self.deploy_mode:
             self.ota_server = kclient.HackOtaClient(url)
-
             try:
                 msg = Message(arbitration_id=canlib.CAN_ID_CMD_ACTIVE_SCENARIO,
                             data=struct.pack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, scenario_id))
@@ -543,12 +553,11 @@ class HackerKiosk:
                 print(f"<{self.__class__.__name__}> Error sending message: {msg}: {exc}")
                 return False
         else:
-            print(f"CAN_ID_CMD_RESTART: {ComponentDictionary[component_id]}")
             return True
 
     def hackActive(self, hack_id) -> bool:
         """
-        Notify peers about the active hack
+        Notify peers about the active hack (only in BASELINE scenario)
         (Ignition LED manager changes LED pattern)
         """
         print(f"CAN_ID_CMD_HACK_ACTIVE: {ComponentDictionary[hack_id]}")
@@ -569,7 +578,7 @@ class HackerKiosk:
         Mimic an infotainment client and send button press to
         the hacked info server, over UDP CAN network with a special port
         """
-        print(f"CAN_ID_BUTTON_PRESSED: {ComponentDictionary[button_id]}")
+        print(f"CAN_ID_BUTTON_PRESSED: {ButtonDictionary[button_id]}")
         if self.deploy_mode:
             try:
                 msg = Message(arbitration_id=canlib.CAN_ID_BUTTON_PRESSED,
@@ -589,7 +598,6 @@ class HackerKiosk:
         * or listen to the incoming position messages (GPS exfil)
         * updates `retval` accordingly
         """
-        self.hackActive(canlib.HACK_INFOTAINMENT_1)
         if arg == "volumeUp":
             self.buttonPressed(canlib.BUTTON_VOLUME_UP)
             self.ipc_msg['retval'] = "Volume increased"
@@ -625,16 +633,16 @@ class HackerKiosk:
         """
         if self.active_scenario == canlib.SCENARIO_BASELINE:
             suffix = "_baseline"
-        elif self.active_scenario == canlib.SCENARIO_SCENARIO_SECURE_INFOTAINMENT:
+        elif self.active_scenario == canlib.SCENARIO_SECURE_INFOTAINMENT:
             suffix = "_ssithInfo"
-        elif self.active_scenario == canlib.SCENARIO_SCENARIO_SECURE_ECU:
+        elif self.active_scenario == canlib.SCENARIO_SECURE_ECU:
             suffix = "_ssithEcu"
         else:
             # This shouldn't happen
             print(f"Unknown scenario! {self.active_scenario}")
             return
         if arg == "brakes":
-            if self.deploy_mode:
+            if False:#self.deploy_mode:
                 if self.brakes_ok:
                     # Brakes are OK, we want them OFF(hacked)
                     filename = HackerKiosk.BRAKES_HACKED_HACK_PATH
@@ -653,9 +661,10 @@ class HackerKiosk:
             if not self.brakes_ok:
                 self.hackActive(canlib.HACK_BRAKE)
             else:
-                self.hackActive(canlib.HACK_NONE)
+                if self.brakes_ok and self.throttle_ok and self.transmission_ok and self.lkas_disabled:
+                    self.hackActive(canlib.HACK_NONE)
         elif arg == "throttle":
-            if self.deploy_mode:
+            if False:#self.deploy_mode:
                 if self.throttle_ok:
                     # Throttle is OK, we want to hack it (full throttle)
                     filename = HackerKiosk.THROTTLE_HACKED_HACK_PATH
@@ -674,9 +683,10 @@ class HackerKiosk:
             if not self.throttle_ok:
                 self.hackActive(canlib.HACK_THROTTLE)
             else:
-                self.hackActive(canlib.HACK_NONE)
+                if self.brakes_ok and self.throttle_ok and self.transmission_ok and self.lkas_disabled:
+                    self.hackActive(canlib.HACK_NONE)
         elif arg == "lkas":
-            if self.deploy_mode:
+            if False:#self.deploy_mode:
                 if self.lkas_disabled:
                     # LKAS is disabled, we want to enable it (hack it)
                     filename = HackerKiosk.LKAS_HACKED_HACK_PATH
@@ -695,9 +705,10 @@ class HackerKiosk:
             if not self.lkas_disabled:
                 self.hackActive(canlib.HACK_LKAS)
             else:
-                self.hackActive(canlib.HACK_NONE)
+                if self.brakes_ok and self.throttle_ok and self.transmission_ok and self.lkas_disabled:
+                    self.hackActive(canlib.HACK_NONE)
         elif arg == "transmission":
-            if self.deploy_mode:
+            if False:#self.deploy_mode:
                 if self.transmission_ok:
                     # Transmission is OK, we want to disable it (hack it)
                     filename = HackerKiosk.TRANSMISSION_HACKED_HACK_PATH
@@ -717,7 +728,8 @@ class HackerKiosk:
             if not self.transmission_ok:
                 self.hackActive(canlib.HACK_TRANSMISSION)
             else:
-                self.hackActive(canlib.HACK_NONE)
+                if self.brakes_ok and self.throttle_ok and self.transmission_ok and self.lkas_disabled:
+                    self.hackActive(canlib.HACK_NONE)
         else:
             print(f"Unknown arg: {arg}")
             self.ipc_msg['retval'] = False
