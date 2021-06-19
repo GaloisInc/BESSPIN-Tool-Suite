@@ -331,7 +331,7 @@ class IgnitionDirector:
                 if scen_idx == canlib.SCENARIO_BASELINE:
                     pattern = ledm.LedPatterns.NOMINAL
                 else:
-                    ledm.LedPatterns.SSITH
+                    pattern = ledm.LedPatterns.SSITH
                 lm.update_pattern(ledm.LedPatterns(pattern))
 
             elif id == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
