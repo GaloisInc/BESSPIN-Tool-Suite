@@ -16,6 +16,9 @@
 
 <script>
 import Console from './components/Console.vue'
+const electron = require('electron')
+const ipc = electron.ipcRenderer;
+
 
 export default {
   name: 'App',
