@@ -24,8 +24,24 @@ export default {
   },
   data() {
     return {
-      state: "normal"
+      state: "normal",
+      poller: setInterval(() => { this.pollState() }, 100)
     }
+  },
+  pollState() {
+    ipc.send('zmq-poll', []);
+  },
+  mounted() {
+    ipc.on('zmq-results',(event, q) => {
+      q.forEach(item => {
+        if(this.state != item.retval) {
+          this.state = item.retval;
+        }
+      });
+    });
+  },
+  unmounted() {
+    clearInterval(this.poller);
   },
   methods: {
     changeState(state) {
