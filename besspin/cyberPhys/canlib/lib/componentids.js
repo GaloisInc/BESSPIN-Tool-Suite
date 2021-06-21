@@ -4,7 +4,7 @@
 * Name: lib/componentids.js
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 17 June 2021
+* Date: 21 June 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
@@ -39,3 +39,5 @@
  const BUTTON_STATION_3 = 0x03
  const BUTTON_VOLUME_DOWN = 0x10
  const BUTTON_VOLUME_UP = 0x11
+ const SENSOR_THROTTLE = 0xBE
+ const SENSOR_BRAKE = 0xBF
