@@ -58,7 +58,7 @@ def computeNaiveCWEsTally():
             if (normalizedCweScore is None): #skip it -- Not implemented
                 continue
             vTally["binary"] += toValue(cweScore)
-            vTally["exact"] += float(scoresDict[vulClass][cwe][1]) # If it passed the previous two checks, then it's a float
+            vTally["exact"] += scoresDict[vulClass][cwe][1]
             vCwesCount += 1 #Should not use len(vCwes) because some CWEs are exempt
 
         if (vCwesCount==0): #To avoid division by zero in what comes

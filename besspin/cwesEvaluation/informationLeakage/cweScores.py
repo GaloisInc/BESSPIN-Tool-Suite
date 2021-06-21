@@ -94,8 +94,8 @@ def scoreAllTests(logs):
             flooredScore, exactScore = SCORES.avgScore(implemented)
         else:
             flooredScore = SCORES.NOT_IMPLEMENTED
-            exactScore = flooredScore
-        ret.append([f"CWE-{testNum}", flooredScore, SCORES.toTableExactRepr(exactScore), notes])
+            exactScore = flooredScore.value
+        ret.append([f"CWE-{testNum}", flooredScore, exactScore, notes])
     return ret
 
 

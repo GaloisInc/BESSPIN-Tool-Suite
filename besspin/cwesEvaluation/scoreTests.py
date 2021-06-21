@@ -169,17 +169,11 @@ class SCORES (enum.Enum):
         return cls[getSettingDict('cwesAssessments',[strScore])]
 
     @classmethod
-    def toTableExactRepr (cls, score):
+    def normalize (cls, scoreVal):
         """
-        Translate the score to the string representation in the table as normalized exact score (2nd score column)
+        Normalize the exact score (2nd score column)
         """
-        if (isinstance(score,cls)): #Overloading
-            score = score.value
-
-        if ((score > cls.DETECTED.value) or (score < cls.HIGH.value)):
-            return '-'
-        else:
-            return str(score/cls.DETECTED.value)
+        return scoreVal/cls.DETECTED.value
 
 @decorate.debugWrap
 def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreReport.log"):
@@ -251,14 +245,16 @@ def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreRepo
         if (vulClass not in ["bufferErrors", "informationLeakage"]):
             xConfig.add_section(besspin.base.config.CWES_ENABLED_TESTS_SECTION)
         try:
-            for row in rows:
-                cweName = f"{'-'.join(row[0].split('-')[1:])}"
+            for iRow in range(len(rows)):
+                cweName = f"{'-'.join(rows[iRow][0].split('-')[1:])}"
                 cweNameD = cweName.replace('-','_')
-                scoresDict[cweNameD] = (row[1],row[2]) #Store both of them 
-                xConfig.set(besspin.base.config.CWES_SELF_ASSESSMENT_SECTION,f"assessment_{cweNameD}",f"{row[1]}")
+                rows[iRow][0] = rows[iRow][0].replace("TEST","CWE") #To ensure consistency
+                rows[iRow][2] = SCORES.normalize(rows[iRow][2]) #Normalize to get percentage
+                scoresDict[cweNameD] = (rows[iRow][1],rows[iRow][2]) #Store both of them 
+                xConfig.set(besspin.base.config.CWES_SELF_ASSESSMENT_SECTION,f"assessment_{cweNameD}",f"{rows[iRow][1]}")
                 if (vulClass not in ["bufferErrors", "informationLeakage"]):
                     xConfig.set(besspin.base.config.CWES_ENABLED_TESTS_SECTION,f"test_{cweNameD}",'No') #already tested
-                fcsv.write(f"{cweName},{row[1]},{row[1].value},{row[2]},\"{row[3]}\"\n")
+                fcsv.write(f"{cweName},{rows[iRow][1]},{rows[iRow][1].value},{rows[iRow][2]},\"{rows[iRow][3]}\"\n")
             fcsv.close()
         except Exception as exc:
             logAndExit(f"<scoreTests> Failed to generate the needed files and outputs for <{vulClass}> scores.",
@@ -305,14 +301,13 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
     if hasMultitaskScores:
         headers.append("Multitasking Pass")
 
-    # prettify elements
+    # prettify the percentage
     for iRow in range(len(elements)):
-        elements[iRow][0] = elements[iRow][0].replace("TEST","CWE") #To ensure consistency
-        try:
-            val = float(elements[iRow][2])
-            elements[iRow][2] = f"{100*val:.2f}%"
-        except:
-            pass
+        percVal = elements[iRow][2]
+        if (percVal < 0): # failure
+            elements[iRow][2] = '-'
+        else:
+            elements[iRow][2] = f"{100*percVal:.2f}%"
 
     # fullElements contains the headers as well so that the width computation
     # takes header width into account

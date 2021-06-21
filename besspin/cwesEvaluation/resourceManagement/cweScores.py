@@ -41,7 +41,7 @@ def scoreAllTests(logs):
                 testScorerFunc = getattr(globals()[name],name)
             except Exception as exc:
                 errorAndLog(f"scoreAllTests-{VULCLASS}: Could not locate the scorer function for <{name}>",exc=exc)
-                ret.append([f"{name.replace('_','-').upper()}", SCORES.FAIL, "Failed to Score!"])
+                ret.append([f"{name.replace('_','-').upper()}", SCORES.FAIL, SCORES.FAIL.value, "Failed to Score!"])
                 continue
             scoreInfo = testScorerFunc(logLines)
         else: # Use the custom scorer
