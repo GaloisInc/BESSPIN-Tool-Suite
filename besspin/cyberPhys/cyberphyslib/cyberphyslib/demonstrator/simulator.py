@@ -226,9 +226,17 @@ class Sim(component.ComponentPoller):
                 self._vehicle.update_vehicle()
                 self._location = (tuple(self._vehicle.state["pos"]), tuple(self._vehicle.state["dir"]))
                 self.send_message(message.Message(self._location), "beamng-vehicle")
-            except ConnectionAbortedError:
+            except ConnectionAbortedError as exc:
+                logger.sim_logger.error(f"Connection error: {exc}")
                 self.exit()
             except Exception as exc:
+                logger.sim_logger.error(f"Error: {exc}")
+                logger.sim_logger.info(f"Checking vehicle connection...")
+                try:
+                    self._vehicle.hello()
+                except Exception as vexc:
+                    logger.sim_logger.warning(f"Vehicle hello failed! Reconnecting the vehicle to the BeamNGPy context")
+                    self._vehicle.connect(self._beamng_context)
                 pass
 
     def on_poll_exit(self) -> None:
