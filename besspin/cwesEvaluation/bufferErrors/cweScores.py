@@ -48,10 +48,10 @@ def score(testScores):
     notes = ', '.join([part for part in [uncaughtPart, invPart, failPart] if part])
     if (t == 0): #all failed or invalid
         ovrScore = SCORES.CALL_ERR if e == 0 else SCORES.FAIL
-        ovrScoreExact = '-'
+        ovrScoreExact = ovrScore.value
     elif (s == 0): #all are DETECTED/NONE
         ovrScore = SCORES.NONE
-        ovrScoreExact = 1.0
+        ovrScoreExact = ovrScore.value
     else: #partial score
         """ 
         - Currently, every 's' is considered as HIGH.
@@ -75,9 +75,9 @@ def score(testScores):
             ovrScore = SCORES.HIGH
         else:
             ovrScore = SCORES(math.floor(unadjustedScore))
-        ovrScoreExact = unadjustedScore/SCORES.DETECTED.value
+        ovrScoreExact = unadjustedScore
 
-    return [ovrScore, str(ovrScoreExact), notes]
+    return [ovrScore, ovrScoreExact, notes]
 
 
 def scoreByCWE(rows):

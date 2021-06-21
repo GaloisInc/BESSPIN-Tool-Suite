@@ -52,7 +52,7 @@ def scoreAllTests(logs):
         ret.append([
             f"{testName.replace('_','-').upper()}", 
             adjustedScore,
-            SCORES.toTableExactRepr(adjustedScore),
+            adjustedScore.value,
             getSettingDict(VULCLASS, ["testsInfo", testName, "cweText"])])
 
     return ret
