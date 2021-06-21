@@ -249,12 +249,17 @@ def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreRepo
                 cweName = f"{'-'.join(rows[iRow][0].split('-')[1:])}"
                 cweNameD = cweName.replace('-','_')
                 rows[iRow][0] = rows[iRow][0].replace("TEST","CWE") #To ensure consistency
-                rows[iRow][2] = SCORES.normalize(rows[iRow][2]) #Normalize to get percentage
-                scoresDict[cweNameD] = (rows[iRow][1],rows[iRow][2]) #Store both of them 
+                percVal = SCORES.normalize(rows[iRow][2]) #Normalize to get percentage
+                scoresDict[cweNameD] = (rows[iRow][1],percVal) #Store both of them 
+                if (percVal < 0): # failure
+                    rows[iRow][2] = '-'
+                else:
+                    rows[iRow][2] = f"{100*percVal:.2f}%"
                 xConfig.set(besspin.base.config.CWES_SELF_ASSESSMENT_SECTION,f"assessment_{cweNameD}",f"{rows[iRow][1]}")
                 if (vulClass not in ["bufferErrors", "informationLeakage"]):
                     xConfig.set(besspin.base.config.CWES_ENABLED_TESTS_SECTION,f"test_{cweNameD}",'No') #already tested
                 fcsv.write(f"{cweName},{rows[iRow][1]},{rows[iRow][1].value},{rows[iRow][2]},\"{rows[iRow][3]}\"\n")
+
             fcsv.close()
         except Exception as exc:
             logAndExit(f"<scoreTests> Failed to generate the needed files and outputs for <{vulClass}> scores.",
@@ -300,14 +305,6 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
     headers = ["CWE","Score","Score","Notes"]
     if hasMultitaskScores:
         headers.append("Multitasking Pass")
-
-    # prettify the percentage
-    for iRow in range(len(elements)):
-        percVal = elements[iRow][2]
-        if (percVal < 0): # failure
-            elements[iRow][2] = '-'
-        else:
-            elements[iRow][2] = f"{100*percVal:.2f}%"
 
     # fullElements contains the headers as well so that the width computation
     # takes header width into account
