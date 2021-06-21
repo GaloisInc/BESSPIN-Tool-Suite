@@ -62,12 +62,10 @@ def main(xArgs):
         print(f"(Error)~  This utility is only for <evaluateSecurityTests> mode.")
         exitBesspin(EXIT.Configuration)
 
-    if (xArgs.vulClass == "all"):
-        for vulClass in getSetting("vulClasses"): 
-            scoreTests (vulClass, os.path.join(getSetting('cwesEvaluationLogs'),vulClass),prettyVulClass(vulClass))
-    else:
+    if (xArgs.vulClass != "all"): #overwrite vulClasses
         setSetting("vulClasses",[xArgs.vulClass])
-        scoreTests (xArgs.vulClass, os.path.join(getSetting('cwesEvaluationLogs'),xArgs.vulClass),prettyVulClass(xArgs.vulClass))
+    for vulClass in getSetting("vulClasses"): 
+        scoreTests (vulClass, os.path.join(getSetting('cwesEvaluationLogs'),vulClass),prettyVulClass(vulClass))
     checkValidScores()
 
     if (isEnabled('computeNaiveCWEsTally')):
