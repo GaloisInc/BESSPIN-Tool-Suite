@@ -4,7 +4,7 @@
 * Name: lib/componentids.h
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 17 June 2021
+* Date: 21 June 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
@@ -41,5 +41,7 @@
 #define BUTTON_STATION_3 0x03
 #define BUTTON_VOLUME_DOWN 0x10
 #define BUTTON_VOLUME_UP 0x11
+#define SENSOR_THROTTLE 0xBE
+#define SENSOR_BRAKE 0xBF
 
 #endif

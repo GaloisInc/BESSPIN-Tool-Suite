@@ -18,6 +18,7 @@
 /* Canlib */
 #include "canspecs.h"
 #include "canlib.h"
+#include "componentids.h"
 #include "j1939.h"
 
 /* BESSPIN config */
@@ -371,6 +372,12 @@ static void prvSensorTask(void *pvParameters)
     brake_min = BRAKE_MIN;
     brake_max = BRAKE_MAX;
 
+    // Error report buffer, initialized with the Teensy ID (since we never send any other ID)
+    char eBuffer[16];
+    uint32_t network_ordered_teensy_id = htonl(TEENSY);
+    memcpy(&eBuffer[0], &network_ordered_teensy_id, sizeof(uint32_t));
+    uint32_t sensor_error_id = 0; // will be filled in when an error is reported
+
     int err_cnt = 0;
 
     for (;;)
@@ -430,8 +437,19 @@ static void prvSensorTask(void *pvParameters)
         tmp_throttle = min(max(tmp_throttle, 0), 100);
         tmp_var = (uint8_t)tmp_throttle;
 
-        /* Send throttle */
-        if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_THROTTLE_INPUT, (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        /* Send throttle; if the raw throttle value is 0, send an error instead */
+        if (throttle_raw == 0)
+        {
+            /* indicate that this is a throttle error */
+            sensor_error_id = htonl(SENSOR_THROTTLE);
+            memcpy(&cBuffer[4], &sensor_error_id, sizeof(uint32_t));
+
+            if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_CMD_COMPONENT_ERROR, (void *)eBuffer, BYTE_LENGTH_CMD_COMPONENT_ERROR) != SUCCESS)
+            {
+                FreeRTOS_printf(("%s (prvSensorTask) send throttle error failed\r\n", getCurrTime()));
+            }
+        }
+        else if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_THROTTLE_INPUT, (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
         {
             FreeRTOS_printf(("%s (prvSensorTask) send throttle failed\r\n", getCurrTime()));
         }
@@ -444,8 +462,19 @@ static void prvSensorTask(void *pvParameters)
         tmp_brake = min(max(tmp_brake, 0), 100);
         tmp_var = (uint8_t)tmp_brake;
 
-        /* Send brake */
-        if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_BRAKE_INPUT, (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
+        /* Send brake; if the raw brake value is 0, send an error instead */
+        if (brake_raw == 0)
+        {
+            /* indicate that this is a brake error */
+            sensor_error_id = htonl(SENSOR_BRAKE);
+            memcpy(&cBuffer[4], &sensor_error_id, sizeof(uint32_t));
+
+            if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_CMD_COMPONENT_ERROR, (void *)eBuffer, BYTE_LENGTH_CMD_COMPONENT_ERROR) != SUCCESS)
+            {
+                FreeRTOS_printf(("%s (prvSensorTask) send brake error failed\r\n", getCurrTime()));
+            }
+        }
+        else if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_BRAKE_INPUT, (void *)&tmp_var, sizeof(tmp_var)) != SUCCESS)
         {
             FreeRTOS_printf(("%s (prvSensorTask) send brake failed\r\n", getCurrTime()));
         }
