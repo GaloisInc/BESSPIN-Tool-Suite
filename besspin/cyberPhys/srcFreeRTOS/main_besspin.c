@@ -442,7 +442,7 @@ static void prvSensorTask(void *pvParameters)
         {
             /* indicate that this is a throttle error */
             sensor_error_id = htonl(SENSOR_THROTTLE);
-            memcpy(&cBuffer[4], &sensor_error_id, sizeof(uint32_t));
+            memcpy(&eBuffer[4], &sensor_error_id, sizeof(uint32_t));
 
             if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_CMD_COMPONENT_ERROR, (void *)eBuffer, BYTE_LENGTH_CMD_COMPONENT_ERROR) != SUCCESS)
             {
@@ -467,7 +467,7 @@ static void prvSensorTask(void *pvParameters)
         {
             /* indicate that this is a brake error */
             sensor_error_id = htonl(SENSOR_BRAKE);
-            memcpy(&cBuffer[4], &sensor_error_id, sizeof(uint32_t));
+            memcpy(&eBuffer[4], &sensor_error_id, sizeof(uint32_t));
 
             if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_CMD_COMPONENT_ERROR, (void *)eBuffer, BYTE_LENGTH_CMD_COMPONENT_ERROR) != SUCCESS)
             {
