@@ -381,7 +381,7 @@ static void prvSensorTask(void *pvParameters)
 
     for (;;)
     {
-        if iic_enabled {
+        if (iic_enabled) {
             returnval = iic_receive(&Iic0, TEENSY_I2C_ADDRESS, data, 5);
         } else {
             returnval = 1;
