@@ -11,13 +11,13 @@ Cyberphys Demonstrator Configuration Variables
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
 # port timeouts
-SCENARIO_TIMEOUT = 5*60 # s
-CC_TIMEOUT = 60 # s
+SCENARIO_TIMEOUT = 5*10 # s
+CC_TIMEOUT = 10 # s
 
 # name of joystick for ignition to monitor
 JOYSTICK_NAME = 'FANATEC Podium Wheel Base DD1'
 # Uncomment for the thrustmaster t150 wheel
-# JOYSTICK_NAME = 'Thrustmaster T150 Racing Wheel'
+JOYSTICK_NAME = 'Thrustmaster T150 Racing Wheel'
 
 # See cyberPhys-test.ini for IP allocation
 APPLY_LISTS = True

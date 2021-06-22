@@ -21,7 +21,7 @@ import os
 from cyberphyslib.demonstrator import config, component, message, logger
 import cyberphyslib.canlib.canspecs as canspecs
 
-from beamngpy import BeamNGpy, Scenario, Vehicle
+from beamngpy import BeamNGpy, Scenario, Vehicle, setup_logging
 from beamngpy.sensors import Electrics, GForces
 
 
@@ -141,6 +141,8 @@ class Sim(component.ComponentPoller):
                     bng.change_setting(setting, value)
                 bng.apply_graphics_setting()
 
+        setup_logging("beamng.log")
+
         self._beamng_context = BeamNGpy('localhost', config.BEAMNG_PORT, **bng_args)
 
         self._beamng_context.open()
@@ -163,9 +165,7 @@ class Sim(component.ComponentPoller):
         # Compile the scenario and place it in BeamNG's map folder
         self._scenario.make(self._beamng_context)
 
-
         try:
-
             # Start BeamNG and enter the main loop
             assert not self.polling_thread.stopped
             self._beamng_context.hide_hud()
@@ -219,11 +219,14 @@ class Sim(component.ComponentPoller):
                         self.control_evt = False
                         self.control = {}
 
-                self.sensor_output = self._beamng_context.poll_sensors(self._vehicle)
-                self.send_message(message.Message(self.sensor_output["electrics"]),
+                # begin deprecation warning
+                #self.sensor_output = self._beamng_context.poll_sensors(self._vehicle)
+                self.sensor_output = self._vehicle.poll_sensors()
+
+                self.send_message(message.Message(self.sensor_output["electrics"]["values"]),
                                 "beamng-sensors")
 
-                self._vehicle.update_vehicle()
+                #self._vehicle.update_vehicle()
                 self._location = (tuple(self._vehicle.state["pos"]), tuple(self._vehicle.state["dir"]))
                 self.send_message(message.Message(self._location), "beamng-vehicle")
             except ConnectionAbortedError as exc:
@@ -236,6 +239,7 @@ class Sim(component.ComponentPoller):
                     self._vehicle.hello()
                 except Exception as vexc:
                     logger.sim_logger.warning(f"Vehicle hello failed! Reconnecting the vehicle to the BeamNGPy context")
+                    self._vehicle.disconnect()
                     self._vehicle.connect(self._beamng_context)
                 pass
 

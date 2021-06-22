@@ -165,13 +165,18 @@ class JoystickMonitorComponent(ComponentPoller):
         """initialize pygame"""
         pygame.init()
         self.start_poller()
-        try:
-            self.joystick = init_joystick(self.joy_name)
-            self._no_joystick = False
-            self.window = [WindowMonitor(window_length=self.window_length, threshold=self.threshold) for _ in range(len(self.joystick))]
-        except Exception as exc:
-            self.joystick =  None
-            self._no_joystick = True
+        def _on_start(attempts = 2):
+            try:
+                self.joystick = init_joystick(self.joy_name)
+                self._no_joystick = False
+                self.window = [WindowMonitor(window_length=self.window_length, threshold=self.threshold) for _ in range(len(self.joystick))]
+            except Exception as exc:
+                jmonitor_logger.error(f"ERROR: {exc}")
+                self.joystick =  None
+                self._no_joystick = True
+                if attempts > 0:
+                    return _on_start(attempts - 1)
+        return  _on_start()
 
     def wait_ready_command(self):
         import time

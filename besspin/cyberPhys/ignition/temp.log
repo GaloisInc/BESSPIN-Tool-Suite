@@ -1,0 +1,66 @@
+C:\Users\elew\.julia\conda\3\envs\cyberphys\python.exe C:/Users/elew/SSITH/SSITH-FETT-Target/besspin/cyberPhys/ignition/ignition.py
+pygame 2.0.0 (SDL 2.0.12, python 3.6.12)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+<TcpBus> Binding to tcp://192.168.0.231:44004
+DEBUG 2021-06-21 16:48:49,804 [ignition] Startup State: Enter
+<TcpBus> Connecting publisher to tcp://10.88.88.1:44002
+<TcpBus> Connection successfull!
+ INFO 2021-06-21 16:48:50,532 [ignition] Handler: Launching Service beamng...
+WARNING 2021-06-21 16:49:02,043 [py.warnings] C:\Users\elew\SSITH\SSITH-FETT-Target\besspin\cyberPhys\cyberphyslib\cyberphyslib\demonstrator\simulator.py:144: ResourceWarning: unclosed file <_io.TextIOWrapper name='C:\\Users\\elew\\SSITH\\SSITH-FETT-Target\\besspin\\cyberPhys\\ignition\\beamng.log' mode='w' encoding='utf-8'>
+  setup_logging("beamng.log")
+
+WARNING 2021-06-21 16:49:12,804 [py.warnings] C:\Users\elew\.julia\conda\3\envs\cyberphys\lib\site-packages\beamngpy\beamngcommon.py:51: DeprecationWarning: 'rot' is deprecated, use rot_mat instead
+  DeprecationWarning)
+
+WARNING 2021-06-21 16:50:04,452 [py.warnings] C:\Users\elew\.julia\conda\3\envs\cyberphys\lib\site-packages\beamngpy\vehicle.py:172: ResourceWarning: unclosed <socket.socket fd=3344, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 64278), raddr=('127.0.0.1', 64277)>
+  self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+WARNING 2021-06-21 16:50:06,233 [py.warnings] C:\Users\elew\SSITH\SSITH-FETT-Target\besspin\cyberPhys\cyberphyslib\cyberphyslib\demonstrator\component.py:119: ResourceWarning: unclosed <socket.socket fd=3340, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 64112), raddr=('127.0.0.1', 64256)>
+  self.on_start()
+
+WARNING 2021-06-21 16:50:06,234 [py.warnings] C:\Users\elew\.julia\conda\3\envs\cyberphys\lib\site-packages\beamngpy\beamng.py:905: DeprecationWarning: "BeamNGpy.poll_sensors" is deprecated.
+Use "Vehicle.poll_sensors" instead.
+This function is going to be removed in the future.
+  DeprecationWarning)
+
+WARNING 2021-06-21 16:50:06,235 [py.warnings] C:\Users\elew\.julia\conda\3\envs\cyberphys\lib\site-packages\beamngpy\vehicle.py:335: DeprecationWarning: return type will be None in future versions
+  "return type will be None in future versions", DeprecationWarning)
+
+WARNING 2021-06-21 16:50:06,254 [py.warnings] C:\Users\elew\.julia\conda\3\envs\cyberphys\lib\site-packages\beamngpy\vehicle.py:310: DeprecationWarning: Update_vehicle is deprecated
+the .Vehicle.state attribute is now a default sensor for every vehicle and is updated through poll_sensors
+  ' is updated through poll_sensors', DeprecationWarning)
+
+ INFO 2021-06-21 16:50:06,531 [ignition] Handler: Launching Service canm...
+ INFO 2021-06-21 16:50:06,960 [ignition] Handler: Launching Service location...
+DEBUG 2021-06-21 16:50:06,960 [can] Starting CanOutPoller Component
+ INFO 2021-06-21 16:50:08,089 [ignition] Handler: Launching Service infoui...
+ INFO 2021-06-21 16:50:08,290 [ignition] Handler: Launching Service infoplay...
+ INFO 2021-06-21 16:50:08,890 [ignition] Handler: Launching Service ledm...
+DEBUG 2021-06-21 16:50:08,891 [led_manage] Starting Fadecandy PC Server process: ['C:\\Users\\elew\\SSITH\\SSITH-FETT-Target\\besspin\\cyberPhys\\cyberphyslib\\cyberphyslib\\demonstrator\\utils\\fcserver.exe', 'C:\\Users\\elew\\SSITH\\SSITH-FETT-Target\\besspin\\cyberPhys\\cyberphyslib\\cyberphyslib\\demonstrator\\utils\\cyberphys_led_strings.json']
+ INFO 2021-06-21 16:50:29,119 [ignition] Handler: Launching Service speedo...
+ INFO 2021-06-21 16:50:29,119 [speedo] Starting speedometer thread.
+ERROR 2021-06-21 16:50:29,123 [speedo] USB speedometer not found.
+ INFO 2021-06-21 16:50:29,528 [ignition] Handler: Launching Service pmonitor...
+ INFO 2021-06-21 16:50:29,938 [ignition] Handler: Launching Service jmonitor...
+DEBUG 2021-06-21 16:50:30,504 [ignition] jmonitor service failed to start (ComponentStatus.ERROR)
+DEBUG 2021-06-21 16:50:30,504 [ignition] jmonitor service failed to start
+DEBUG 2021-06-21 16:50:30,504 [ignition] Noncrit_failure state: enter
+ERROR 2021-06-21 16:50:30,504 [ignition] Ignition achieved a noncritical error. Continuing anyway...
+DEBUG 2021-06-21 16:50:30,504 [ignition] Ready state: enter
+ INFO 2021-06-21 16:51:02,384 [info_mux] changing volume to 0.125 %%
+ INFO 2021-06-21 16:51:02,393 [info_mux] changing station to 1 index
+ INFO 2021-06-21 16:51:04,282 [info_mux] changing station to 0 index
+ INFO 2021-06-21 16:51:05,203 [info_mux] changing volume to 0.1875 %%
+ INFO 2021-06-21 16:51:05,558 [info_mux] changing volume to 0.25 %%
+ INFO 2021-06-21 16:51:05,763 [info_mux] changing volume to 0.3125 %%
+ INFO 2021-06-21 16:51:05,969 [info_mux] changing volume to 0.375 %%
+ INFO 2021-06-21 16:51:06,172 [info_mux] changing volume to 0.4375 %%
+ INFO 2021-06-21 16:51:06,378 [info_mux] changing volume to 0.5 %%
+ INFO 2021-06-21 16:51:06,635 [info_mux] changing volume to 0.5625 %%
+ INFO 2021-06-21 16:51:07,199 [info_mux] changing volume to 0.5 %%
+ INFO 2021-06-21 16:51:07,251 [info_mux] changing volume to 0.4375 %%
+ INFO 2021-06-21 16:51:07,661 [info_mux] changing volume to 0.3125 %%
+ INFO 2021-06-21 16:51:07,865 [info_mux] changing volume to 0.25 %%
+
+Process finished with exit code -1
+
