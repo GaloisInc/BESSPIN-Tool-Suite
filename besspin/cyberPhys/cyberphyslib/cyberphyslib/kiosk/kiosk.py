@@ -241,7 +241,8 @@ class HackerKiosk:
             if msg:
                 cid, data = msg.arbitration_id, msg.data
                 try:
-                    # TODO?
+                    # TODO: fix the exception
+                    # 'bytearray' object cannot be interpreted as an integer
                     print(f"<{self.__class__.__name__}> CAN_ID={hex(cid)}, data={hex(data)}")
                 except Exception as exc:
                     print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")

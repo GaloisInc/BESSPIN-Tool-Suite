@@ -84,7 +84,3 @@ class Watchdog(ccomp.ComponentPoller):
             besspin.cyberPhys.run.resetComponent("infotainment",self.targetId)
         elif msg == f"RESET {self.targetId}":
             self.reset_target("Reset requested")
-        
-
-
-

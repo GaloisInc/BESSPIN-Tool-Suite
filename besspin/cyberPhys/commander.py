@@ -154,6 +154,8 @@ class Commander(ccomp.ComponentPoller):
         cid, data = msg.arbitration_id, msg.data
 
         try:
+            # TODO: fix the exception
+            # 'bytearray' object cannot be interpreted as an integer
             if cid == canlib.CAN_ID_CMD_RESTART:
                 dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, data)[0]
                 printAndLog(f"<{self.__class__.__name__}> Reset dev_id: {dev_id}", doPrint=Commander.DEBUG)
