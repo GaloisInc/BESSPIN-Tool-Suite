@@ -10,29 +10,29 @@ do
         SUFFIX="_baseline"
         # 1) ${HACK_TYPE}Nominal_baseline
         ./hack-ecu.py --port $PORT --type $HACK_TYPE --ip $IP --nominal ${TEST}
-        mv j1939hack/hack.elf ${HACK_TYPE}Nominal${SUFFIX}${TEST}
+        mv j1939hack/hack.elf ${HACK_TYPE}Nominal${SUFFIX}${TEST}.elf
         # 2) ${HACK_TYPE}Hacked_baseline
         ./hack-ecu.py --port $PORT --type $HACK_TYPE --ip $IP ${TEST}
-        mv j1939hack/hack.elf ${HACK_TYPE}Hacked${SUFFIX}${TEST}
+        mv j1939hack/hack.elf ${HACK_TYPE}Hacked${SUFFIX}${TEST}.elf
 
         # Target2
         IP="10.88.88.22"
         SUFFIX="_ssithInfo"
         # 1) ${HACK_TYPE}Nominal_baseline
         ./hack-ecu.py --port $PORT --type $HACK_TYPE --ip $IP --nominal ${TEST}
-        mv j1939hack/hack.elf ${HACK_TYPE}Nominal${SUFFIX}${TEST}
+        mv j1939hack/hack.elf ${HACK_TYPE}Nominal${SUFFIX}${TEST}.elf
         # 2) ${HACK_TYPE}Hacked_baseline
         ./hack-ecu.py --port $PORT --type $HACK_TYPE --ip $IP ${TEST}
-        mv j1939hack/hack.elf ${HACK_TYPE}Hacked${SUFFIX}${TEST}
+        mv j1939hack/hack.elf ${HACK_TYPE}Hacked${SUFFIX}${TEST}.elf
 
         # Target3
         IP="10.88.88.32"
         SUFFIX="_ssithEcu"
         # 1) ${HACK_TYPE}Nominal_baseline
         ./hack-ecu.py --port $PORT --type $HACK_TYPE --ip $IP --nominal ${TEST}
-        mv j1939hack/hack.elf ${HACK_TYPE}Nominal${SUFFIX}${TEST}
+        mv j1939hack/hack.elf ${HACK_TYPE}Nominal${SUFFIX}${TEST}.elf
         # 2) ${HACK_TYPE}Hacked_baseline
         ./hack-ecu.py --port $PORT --type $HACK_TYPE --ip $IP ${TEST}
-        mv j1939hack/hack.elf ${HACK_TYPE}Hacked${SUFFIX}${TEST}
+        mv j1939hack/hack.elf ${HACK_TYPE}Hacked${SUFFIX}${TEST}.elf
     done
 done
