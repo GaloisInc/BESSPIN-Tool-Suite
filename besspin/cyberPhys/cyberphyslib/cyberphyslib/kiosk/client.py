@@ -45,12 +45,14 @@ class HackOtaClient:
     @staticmethod
     def send_request(base_url: str, srvc_name: str, arg):
         """form request and patch ota client"""
-        resp = requests.patch(f"{base_url}/{srvc_name}/{len(arg)}", arg)
-        print(resp.status_code)
-        print(resp.content)
-        # FIXME: gracefully handle exceptions
-        assert resp.status_code == 200, f"upload file request received status code {resp.status_code}"
-        return resp.status_code, resp.content
+        try:
+            resp = requests.patch(f"{base_url}/{srvc_name}/{len(arg)}", arg)
+            print(resp.status_code)
+            print(resp.content)
+            return resp.status_code, resp.content
+        except Exception as exc:
+            print(f"<OTA Update Server> Error occured: {exc}")
+            return 500
 
     def __init__(self, base_url, platform='Debian', debug=False):
         print(f"<{self.__class__.__name__}> Url: {base_url}, platform: {platform}")

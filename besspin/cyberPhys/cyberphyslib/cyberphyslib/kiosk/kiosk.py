@@ -192,6 +192,9 @@ class HackerKiosk:
         self.transmission_ok = True
         self.throttle_ok = True
         self.hack12_has_been_initialized = False
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
 
         # IPC message
         self.ipc_msg = {}
@@ -206,6 +209,7 @@ class HackerKiosk:
                                                   whitelist=["10.88.88.11","10.88.88.21","10.88.88.31"],
                                                   do_bind=True)
             self.cmd_thread = threading.Thread(target=self.cmdLoop, args=[], daemon=True)
+            self.info_thread = threading.Thread(target=self.infoLoop, args=[], daemon=True)
 
         print(f"<{self.__class__.__name__}> Listening on ZMQ_PORT {self.zmq_port}")
         self.default_inputs()
@@ -235,6 +239,29 @@ class HackerKiosk:
     def exit(self):
         self.stop()
 
+    def infoLoop(self):
+        """Purpose of this function is to listen
+        to position updates from the hacked infotainment server
+        """
+        while True:
+            msg = self.infotainment_bus.recv()
+            if msg:
+                cid, data = msg.arbitration_id, msg.data
+                try:
+                    # TODO: we need to listen to the CAN_ID_CAR_X/Y/Z/R from the hacked server
+                    # Make sure we are listening for the right IP address
+                    if cid == canlib.CAN_ID_CAR_X:
+                        # Get X coordinate
+                        self.x = struct.unpack(canlib.CAN_FORMAT_CAR_X, data)[0]
+                    elif cid == canlib.CAN_ID_CAR_Y:
+                        # Get Y coordinate
+                        self.y = struct.unpack(canlib.CAN_FORMAT_CAR_Y, data)[0]
+                    elif cid == canlib.CAN_ID_CAR_Z:
+                        # Get Z coordinate
+                        self.z = struct.unpack(canlib.CAN_FORMAT_CAR_Z, data)[0]
+                except Exception as exc:
+                    print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
+
     def cmdLoop(self):
         while True:
             msg = self.cmd_bus.recv()
@@ -243,7 +270,7 @@ class HackerKiosk:
                 try:
                     # TODO: fix the exception
                     # 'bytearray' object cannot be interpreted as an integer
-                    print(f"<{self.__class__.__name__}> CAN_ID={hex(cid)}, data={hex(data)}")
+                    print(f"<{self.__class__.__name__}> CAN_ID={hex(cid)}, data={data}")
                 except Exception as exc:
                     print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
@@ -262,6 +289,9 @@ class HackerKiosk:
         self.lkas_disabled = True
         self.transmission_ok = True
         self.throttle_ok = True
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
 
     def submit_button(self, button_name, arg):
         """activate a button input and send the kiosk to the next state"""
@@ -308,6 +338,25 @@ class HackerKiosk:
         """
         self.machine.get_graph().draw(fname, prog='dot')
 
+    def hack_ota_and_upload_hacked_infotainment_server(self) -> bool:
+        """
+        1) Hack OTA server
+        2) if 1) successfull, upload and execute hacked info server binary
+        """
+        print("Attemptig to hack OTA server.")
+        if self.deploy_mode:
+            print("Uploading the hacked infotainment server")
+            hack_ok, data = self.ota_server.upload_and_execute_file(HackerKiosk.INFO_SERVER_HACKED_PATH)
+            if hack_ok:
+                print("Hack successful! Data: {data}")
+            else:
+                print(f"Hack failed with: {data}")
+        else:
+            print("Hack successful!")
+            print("Uploading hacked infotainment server")
+            print("Upload successful!")
+            hack_ok = True
+        return hack_ok
 
     @page
     def reset_enter(self, arg):
@@ -345,33 +394,6 @@ class HackerKiosk:
         self.button_pressed_next = False
         # Respond
         self.ipc_msg['status'] = 200 # OK
-
-    def hack_ota_and_upload_hacked_infotainment_server(self) -> bool:
-        """
-        1) Hack OTA server
-        2) if 1) successfull, upload and execute hacked info server binary
-        """
-        print("Attemptig to hack OTA server.")
-        if False:#self.deploy_mode:
-            hack_ok, data = self.ota_server.hack_server()
-            if hack_ok:
-                print("Hack successful!")
-                print("Uploading hacked infotainment server")
-                hack_ok, data = self.ota_server.upload_and_execute_file(HackerKiosk.INFO_SERVER_HACKED_PATH)
-                if hack_ok:
-                    print("Upload successful!")
-                    hack_ok = True
-                else:
-                    print(f"Upload failed with: {data}")
-                    hack_ok = False
-            else:
-                print(f"Hack failed with: {data}")
-        else:
-            print("Hack successful!")
-            print("Uploading hacked infotainment server")
-            print("Upload successful!")
-            hack_ok = True
-        return hack_ok
 
     @page
     def hack05_info_attempt_enter(self, arg):
@@ -443,14 +465,7 @@ class HackerKiosk:
         """
         self.button_pressed_ssith_infotainment = False
 
-        if False:#self.deploy_mode:
-            hack_ok, data = self.ota_server.hack_server()
-            print(data)
-        else:
-            print("Attemptig to hack OTA server.")
-            print("Hack failed!")
-            hack_ok = False
-
+        hack_ok = self.hack_ota_and_upload_hacked_infotainment_server()
         self.ipc_msg['retval'] = hack_ok
         self.ipc_msg['status'] = 200 # OK
 
@@ -479,15 +494,6 @@ class HackerKiosk:
 
         if not self.hack12_has_been_initialized:
             self.switchActiveScenario(canlib.SCENARIO_SECURE_ECU)
-
-            if False:#self.deploy_mode:
-                hack_ok, data = self.ota_server.hack_server()
-                print(hack_ok)
-                print(data)
-            else:
-                print("Attemptig to hack OTA server.")
-                print("Hack succesfull!")
-
             self.hack12_has_been_initialized = True
 
         self.ipc_msg['status'] = 200 # OK
@@ -500,9 +506,8 @@ class HackerKiosk:
         self.button_pressed_critical_exploit = False
         self.exploit_complete = True
 
+        # `ipc_msg` is updated accordingly
         self.execute_ecu_hack(arg)
-        # TODO FXI THIS
-        self.ipc_msg['retval'] = False
         self.ipc_msg['status'] = 200 # OK
 
 
@@ -598,6 +603,9 @@ class HackerKiosk:
         * send `buttonPressed` message (volume/music)
         * or listen to the incoming position messages (GPS exfil)
         * updates `retval` accordingly
+
+        NOTE: there is (currently) no confirmation that the server received
+        the message
         """
         if arg == "volumeUp":
             self.buttonPressed(canlib.BUTTON_VOLUME_UP)
@@ -606,20 +614,18 @@ class HackerKiosk:
             self.buttonPressed(canlib.BUTTON_VOLUME_DOWN)
             self.ipc_msg['retval'] = "Volume decreased"
         elif arg == "exfil":
-            # TODO: we need to listen to the CAN_ID_CAR_X/Y/Z/R from the hacked server
-            # Make sure we are listening for the right IP address
-            self.ipc_msg['retval'] = "TODO: Not implemented yet"
+            self.ipc_msg['retval'] = f"{self.x}, {self.y}, {self.z}"
         elif arg == "changeStation_1":
             self.buttonPressed(canlib.BUTTON_STATION_1)
-            self.ipc_msg['retval'] = 1
+            self.ipc_msg['retval'] = "Station set to 1"
             self.ipc_msg['args'] = 'changeStation'
         elif arg == "changeStation_2":
             self.buttonPressed(canlib.BUTTON_STATION_2)
-            self.ipc_msg['retval'] = 2
+            self.ipc_msg['retval'] = "Station set to 2"
             self.ipc_msg['args'] = 'changeStation'
         elif arg == "changeStation_3":
             self.buttonPressed(canlib.BUTTON_STATION_3)
-            self.ipc_msg['retval'] = 3
+            self.ipc_msg['retval'] = "Station set to 3"
             self.ipc_msg['args'] = 'changeStation'
         else:
             print(f"Unkwon arg: {arg}")
@@ -643,7 +649,7 @@ class HackerKiosk:
             print(f"Unknown scenario! {self.active_scenario}")
             return
         if arg == "brakes":
-            if False:#self.deploy_mode:
+            if self.deploy_mode:
                 if self.brakes_ok:
                     # Brakes are OK, we want them OFF(hacked)
                     filename = HackerKiosk.BRAKES_HACKED_HACK_PATH
@@ -665,7 +671,7 @@ class HackerKiosk:
                 if self.brakes_ok and self.throttle_ok and self.transmission_ok and self.lkas_disabled:
                     self.hackActive(canlib.HACK_NONE)
         elif arg == "throttle":
-            if False:#self.deploy_mode:
+            if self.deploy_mode:
                 if self.throttle_ok:
                     # Throttle is OK, we want to hack it (full throttle)
                     filename = HackerKiosk.THROTTLE_HACKED_HACK_PATH
@@ -687,7 +693,7 @@ class HackerKiosk:
                 if self.brakes_ok and self.throttle_ok and self.transmission_ok and self.lkas_disabled:
                     self.hackActive(canlib.HACK_NONE)
         elif arg == "lkas":
-            if False:#self.deploy_mode:
+            if self.deploy_mode:
                 if self.lkas_disabled:
                     # LKAS is disabled, we want to enable it (hack it)
                     filename = HackerKiosk.LKAS_HACKED_HACK_PATH
@@ -709,7 +715,7 @@ class HackerKiosk:
                 if self.brakes_ok and self.throttle_ok and self.transmission_ok and self.lkas_disabled:
                     self.hackActive(canlib.HACK_NONE)
         elif arg == "transmission":
-            if False:#self.deploy_mode:
+            if self.deploy_mode:
                 if self.transmission_ok:
                     # Transmission is OK, we want to disable it (hack it)
                     filename = HackerKiosk.TRANSMISSION_HACKED_HACK_PATH
