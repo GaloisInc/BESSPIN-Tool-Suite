@@ -1,4 +1,4 @@
-#!/usr/env/python3
+#! /usr/bin/env python3
 """
 Project: SSITH CyberPhysical Demonstrator
 Name: kiosk-backend.py
@@ -8,6 +8,7 @@ Date: 16 June 2021
 """
 
 DEPLOY_MODE = True
+DEFAULT_PATH = "~/BESSPIN-Tool-Suite/besspin/base/utils/setupEnv.json"
 
 if __name__ == "__main__":
     # Project libs
@@ -18,12 +19,9 @@ if __name__ == "__main__":
 
     # ugh, this filepath access is sketchy and will complicate the deployment of ignition
     parser = argparse.ArgumentParser(description="BESSPIN Demonstrator Kiosk Backend")
-    parser.add_argument("--network-config", type=str, default="", help="Path to BESSPIN Target setupEnv.json")
+    parser.add_argument("--network-config", type=str, default=DEFAULT_PATH, help="Path to BESSPIN Target setupEnv.json")
     args = parser.parse_args()
-    if args.network_config == "":
-        network_filepath = pathlib.Path(os.path.realpath(__file__)).parent / ".." / ".." / "base" / "utils" / "setupEnv.json"
-    else:
-        network_filepath = args.network_config
+    network_filepath = pathlib.Path(os.path.realpath(args.network_config))
     assert os.path.exists(network_filepath), f"specified network config json ({network_filepath}) doesn't exist"
     dnc = config.DemonstratorNetworkConfig.from_setup_env(network_filepath)
     kiosk = kiosk.HackerKiosk(dnc,deploy_mode=DEPLOY_MODE)

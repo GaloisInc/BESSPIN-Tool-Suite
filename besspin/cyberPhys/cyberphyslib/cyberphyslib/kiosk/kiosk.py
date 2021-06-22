@@ -242,7 +242,7 @@ class HackerKiosk:
                 cid, data = msg.arbitration_id, msg.data
                 try:
                     # TODO?
-                    print(f"<{self.__class__.__name__}> CAN_ID={cid}, data={data}")
+                    print(f"<{self.__class__.__name__}> CAN_ID={hex(cid)}, data={hex(data)}")
                 except Exception as exc:
                     print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
