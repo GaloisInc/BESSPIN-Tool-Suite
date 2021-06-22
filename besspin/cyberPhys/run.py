@@ -45,6 +45,15 @@ def runCyberPhys(xTarget):
 
 @decorate.debugWrap
 @decorate.timeWrap
+def resetComponent(component, targetId):
+    xTarget = getSetting('targetObj',targetId=targetId)
+    if component == "ota":
+        otaserver.restart(xTarget)
+    elif component == "infotainment":
+        infotainmentserver.restart(xTarget)
+
+@decorate.debugWrap
+@decorate.timeWrap
 def isTargetAlive(targetId):
     xTarget = getSetting('targetObj',targetId=targetId)
     if not xTarget.process.isalive():
@@ -59,11 +68,8 @@ def isTargetAlive(targetId):
     if osImage in ['debian', 'FreeBSD']:
         if not otaserver.isServiceRunning(xTarget):
             printAndLog(f"{xTarget.targetIdInfo}ota server didn't respond.")
-            # NOTE: this code is commented out now, need to test OTA more before re-enabling or deleting
-            # this code for good
-            # otaserver.restart(xTarget)
-            # return otaserver.isServiceRunning(xTarget)
-
+        if not infotainmentserver.isServiceRunning(xTarget):
+            printAndLog(f"{xTarget.targetIdInfo}infotainment server didn't respond.")
     return True
 
 @decorate.debugWrap

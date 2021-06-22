@@ -198,8 +198,6 @@ class Commander(ccomp.ComponentPoller):
             devId = self.componentIds[componentId]
             targetId = self.targetIds[devId]
             printAndLog(f"<{self.__class__.__name__}> Restarting infotainment on target {targetId}")
-            xTarget = getSetting('targetObj',targetId=targetId)
-            xTarget.runCommand("/opt/kill_listeners.sh")
             infotainmentserver.restart(targetId)
         else:
             printAndLog(f"<{self.__class__.__name__}> Unknown component ID {componentId}")

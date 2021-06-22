@@ -2,6 +2,7 @@
 
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
+import besspin.cyberPhys.run
 from besspin.base.threadControl import ftQueueUtils
 import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
 
@@ -75,8 +76,15 @@ class Watchdog(ccomp.ComponentPoller):
     @recv_topic("base-topic")
     def _(self, msg, t):
         """Filter received messages"""
-        if msg == f"RESET {self.targetId}":
+        if msg == f"OTA_RESET {self.targetId}":
+            printAndLog(f"OTA_RESET {self.targetId} requested")
+            besspin.cyberPhys.run.resetComponent("ota",self.targetId)
+        elif msg == f"INFOTAINMENT_RESET {self.targetId}":
+            printAndLog(f"INFOTAINMENT_RESET {self.targetId} requested")
+            besspin.cyberPhys.run.resetComponent("infotainment",self.targetId)
+        elif msg == f"RESET {self.targetId}":
             self.reset_target("Reset requested")
+        
 
 
 

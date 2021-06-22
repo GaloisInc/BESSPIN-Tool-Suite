@@ -121,6 +121,7 @@ class DemonstratorNetworkConfig:
     def from_setup_env(cls, fname: str):
         """create instance from Besspin target setupEnv.json"""
         import json, os, re
+        print(f"Loading config from {fname}")
         assert os.path.exists(fname)
         with open(fname, "r") as f:
             senv = json.load(f)
