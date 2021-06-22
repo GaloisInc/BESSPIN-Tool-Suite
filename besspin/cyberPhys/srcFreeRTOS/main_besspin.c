@@ -374,7 +374,7 @@ static void prvSensorTask(void *pvParameters)
 
     // Error report buffer, initialized with the Teensy ID (since we never send any other ID)
     char eBuffer[16];
-    uint32_t network_ordered_teensy_id = htonl(TEENSY);
+    uint32_t network_ordered_teensy_id = FreeRTOS_htonl(TEENSY);
     memcpy(&eBuffer[0], &network_ordered_teensy_id, sizeof(uint32_t));
     uint32_t sensor_error_id = 0; // will be filled in when an error is reported
 
@@ -441,7 +441,7 @@ static void prvSensorTask(void *pvParameters)
         if (throttle_raw == 0)
         {
             /* indicate that this is a throttle error */
-            sensor_error_id = htonl(SENSOR_THROTTLE);
+            sensor_error_id = FreeRTOS_htonl(SENSOR_THROTTLE);
             memcpy(&eBuffer[4], &sensor_error_id, sizeof(uint32_t));
 
             if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_CMD_COMPONENT_ERROR, (void *)eBuffer, BYTE_LENGTH_CMD_COMPONENT_ERROR) != SUCCESS)
@@ -466,7 +466,7 @@ static void prvSensorTask(void *pvParameters)
         if (brake_raw == 0)
         {
             /* indicate that this is a brake error */
-            sensor_error_id = htonl(SENSOR_BRAKE);
+            sensor_error_id = FreeRTOS_htonl(SENSOR_BRAKE);
             memcpy(&eBuffer[4], &sensor_error_id, sizeof(uint32_t));
 
             if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_CMD_COMPONENT_ERROR, (void *)eBuffer, BYTE_LENGTH_CMD_COMPONENT_ERROR) != SUCCESS)
