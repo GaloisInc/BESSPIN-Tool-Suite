@@ -14,14 +14,15 @@
     padding: 0;
     font-family: 'Roboto Mono', monospace;
     color: #ddd;
+    background-color: #000;
     font-size: 1.2em;
   }
   .img-btn {
     background-color: transparent;
     background-repeat: no-repeat;
     position: absolute;
-    border: 1px solid red;
-    /* border: none; */
+    /* border: 1px solid red; */
+    border: none;
     padding: 0;
     outline: none;
   }

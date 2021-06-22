@@ -25,10 +25,6 @@
 #include "besspinFreeRTOSConfig.h"
 #include "besspinFreeRTOSIPConfig.h"
 
-#if !(BSP_USE_IIC0)
-#error "One or more peripherals are nor present, this test cannot be run"
-#endif
-
 #define STRINGIZE_NX(A) #A
 #define STRINGIZE(A) STRINGIZE_NX(A)
 #define CYBERPHYS_BROADCAST_ADDR STRINGIZE(configGATEWAY_ADDR0) \
@@ -119,6 +115,9 @@ static const uint8_t ucNetMask[4] = {configNET_MASK0, configNET_MASK1, configNET
 static const uint8_t ucGatewayAddress[4] = {configGATEWAY_ADDR0, configGATEWAY_ADDR1, configGATEWAY_ADDR2, configGATEWAY_ADDR3};
 static const uint8_t ucDNSServerAddress[4] = {configDNS_SERVER_ADDR0, configDNS_SERVER_ADDR1, configDNS_SERVER_ADDR2, configDNS_SERVER_ADDR3};
 const uint8_t ucMACAddress[6] = {configMAC_ADDR0, configMAC_ADDR1, configMAC_ADDR2, configMAC_ADDR3, configMAC_ADDR4, configMAC_ADDR5};
+
+/* IIC enabled? */
+bool iic_enabled = BSP_USE_IIC0;
 
 /* Auxilliary function */
 int16_t min(int16_t a, int16_t b)
@@ -374,7 +373,7 @@ static void prvSensorTask(void *pvParameters)
 
     // Error report buffer, initialized with the Teensy ID (since we never send any other ID)
     char eBuffer[16];
-    uint32_t network_ordered_teensy_id = htonl(TEENSY);
+    uint32_t network_ordered_teensy_id = FreeRTOS_htonl(TEENSY);
     memcpy(&eBuffer[0], &network_ordered_teensy_id, sizeof(uint32_t));
     uint32_t sensor_error_id = 0; // will be filled in when an error is reported
 
@@ -382,7 +381,12 @@ static void prvSensorTask(void *pvParameters)
 
     for (;;)
     {
-        returnval = iic_receive(&Iic0, TEENSY_I2C_ADDRESS, data, 5);
+        if iic_enabled {
+            returnval = iic_receive(&Iic0, TEENSY_I2C_ADDRESS, data, 5);
+        } else {
+            returnval = 1;
+        }
+
         vTaskDelay(pdMS_TO_TICKS(1));
         if (returnval < 1) {
             FreeRTOS_printf(("%s (prvSensorTask) iic_receive error: %i\r\n", getCurrTime(), returnval));
@@ -441,7 +445,7 @@ static void prvSensorTask(void *pvParameters)
         if (throttle_raw == 0)
         {
             /* indicate that this is a throttle error */
-            sensor_error_id = htonl(SENSOR_THROTTLE);
+            sensor_error_id = FreeRTOS_htonl(SENSOR_THROTTLE);
             memcpy(&eBuffer[4], &sensor_error_id, sizeof(uint32_t));
 
             if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_CMD_COMPONENT_ERROR, (void *)eBuffer, BYTE_LENGTH_CMD_COMPONENT_ERROR) != SUCCESS)
@@ -466,7 +470,7 @@ static void prvSensorTask(void *pvParameters)
         if (brake_raw == 0)
         {
             /* indicate that this is a brake error */
-            sensor_error_id = htonl(SENSOR_BRAKE);
+            sensor_error_id = FreeRTOS_htonl(SENSOR_BRAKE);
             memcpy(&eBuffer[4], &sensor_error_id, sizeof(uint32_t));
 
             if (send_can_message(xClientSocket, &xDestinationAddress, CAN_ID_CMD_COMPONENT_ERROR, (void *)eBuffer, BYTE_LENGTH_CMD_COMPONENT_ERROR) != SUCCESS)
