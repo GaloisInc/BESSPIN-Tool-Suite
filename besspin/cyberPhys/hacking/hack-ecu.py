@@ -35,9 +35,9 @@ import argparse
 # Also can be found by `(gdb) info frame` in `process_j1939`:
 # (gdb) info frame
 # Stack level 0, frame at 0xc0240730:
-#  pc = 0xc0008aaa in process_j1939
-#     (/home/galoisuser/BESSPIN-Tool-Suite/workDir/build_1/main_besspin.c:626); 
-#     saved pc = 0xc000896c
+#  pc = 0xc0008ac0 in process_j1939
+#     (/home/galoisuser/BESSPIN-Tool-Suite/workDir/build_1/main_besspin.c:630); 
+#     saved pc = 0xc0008982
 #  called by frame at 0xc02407c0
 #  source language c.
 #  Arglist at 0xc0240730, args: xListeningSocket=0xc0240a80 <ucHeap+767240>, 
@@ -48,8 +48,8 @@ import argparse
 #  Saved registers:
 #   ra at 0xc0240728, fp at 0xc0240720, pc at 0xc0240728
 # (gdb) x $ra
-# 0xc000896c <prvCanRxTask+362>:	0x07a387aa <<< This is the return address
-RETURN_ADDR = 0xc000896c
+# 0xc0008982 <prvCanRxTask+362>:	0x07a387aa <<< This is the return address
+RETURN_ADDR = 0xc0008982
 
 # (gdb) p camera_ok
 # (gdb) false
@@ -72,8 +72,8 @@ STEERING_ASSIST_ADDR = 0xc0990362
 THROTTLE_MIN_VAL = -900
 THROTTLE_MIN_VAL_NOMINAL = 64
 # (gdb) p &throttle_min
-# $11 = (int16_t *) 0xc09902e4 <throttle_min>
-THROTTLE_MIN_ADDR = 0xc09902e4
+# $11 = (int16_t *) 0xc0990364 <throttle_min>
+THROTTLE_MIN_ADDR = 0xc0990364
 
 # (gdb) p throttle_gain
 # $12 = 100
@@ -114,7 +114,7 @@ J1939_RX_BUF_ADDR = 0xc0990240
 # (gdb) p $fp
 # (gdb) (void *) 0xc0240730 <ucHeap+766392>
 # This should FP of prvCanRxTask because we are jumping back there
-FRAME_ADDR = 0xc0240730
+FRAME_ADDR = 0xc02407c0
 
 # Buffer size of char msg[];
 RX_BUFFER_SIZE = 100
