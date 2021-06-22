@@ -107,9 +107,9 @@ class IgnitionDirector:
         can_port = net_conf.port_network_canbusPort
         info_port = net_conf.port_network_infotainmentUiPort
         return cls(ip_admin, ip_director, ip_sim, can_port, info_port,
-                   ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST,
-                   ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST,
-                   base_whitelist=net_conf.wl_BASELINE,
+                   ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST + [net_conf.ip_InfotainmentThinClient],
+                   ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST + [net_conf.ip_InfotainmentThinClient],
+                   base_whitelist=net_conf.wl_BASELINE + [net_conf.ip_InfotainmentThinClient],
                    apply_lists=cconf.APPLY_LISTS)
 
     def __init__(self,
@@ -272,7 +272,7 @@ class IgnitionDirector:
         start_noncrit_component(speedo.Speedo())
 
         # startup the pedal monitor
-        start_noncrit_component(cjoy.PedalMonitorComponent())
+        start_noncrit_component(cjoy.PedalMonitorComponent(window_length=1000))
 
         # startup the joystick monitor
         start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
