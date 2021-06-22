@@ -104,12 +104,9 @@ class HackerKiosk:
     # We assume the kiosk is executed from BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk
     #
     BASELINE_HACK_PATH = "../../hacking/"
-    # Assume Debian
-    #INFO_SERVER_PATH = "infotainment-server/debian/"
+    # TODO: move the hacks to BESSPIN-LFS dir
     INFO_SERVER_PATH = "infotainment-server/"
     INFO_SERVER_HACKED_PATH =  BASELINE_HACK_PATH + INFO_SERVER_PATH + "hacked_server"
-    INFO_SERVER_NOMINAL_PATH = BASELINE_HACK_PATH + INFO_SERVER_PATH + "infotainment_server"
-    # TODO: move the hacks to BESSPIN-LFS dir
     ECU_HACKS_PATH = "../../hacking/ecu_hacks/"
     BRAKES_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"brakesNominal"
     BRAKES_HACKED_HACK_PATH = ECU_HACKS_PATH +"brakesHacked"
