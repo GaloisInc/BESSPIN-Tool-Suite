@@ -302,7 +302,7 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
     """
     table = []
 
-    headers = ["CWE","Score","Score","Notes"]
+    headers = ["CWE","Score","Score","Notes"] #Two "Score" columns whose header will merge into one wide cell
     if hasMultitaskScores:
         headers.append("Multitasking Pass")
 
