@@ -48,7 +48,8 @@ import argparse
 #  Saved registers:
 #   ra at 0xc0240728, fp at 0xc0240720, pc at 0xc0240728
 # (gdb) x $ra
-# 0xc0008982 <prvCanRxTask+362>:	0x07a387aa <<< This is the return address
+# 0xc0008982 <prvCanRxTask+362>:	0x07a387aa
+# ^^^^^^^^^^--- this is the return address within prvCanRxTask
 RETURN_ADDR = 0xc0008982
 
 # (gdb) p camera_ok
@@ -111,9 +112,13 @@ TRANSMISSION_OK_VAL_NOMINAL = 1
 # We are jumping to this address
 J1939_RX_BUF_ADDR = 0xc0990240
 
-# (gdb) p $fp
-# (gdb) (void *) 0xc0240730 <ucHeap+766392>
-# This should FP of prvCanRxTask because we are jumping back there
+# (gdb) info frame
+# Stack level 0, frame at 0xc0240730:
+#  pc = 0xc0008ac0 in process_j1939 <--- this is process_j1939's frame
+#     (/home/galoisuser/BESSPIN-Tool-Suite/workDir/build_1/main_besspin.c:630); 
+#     saved pc = 0xc0008982
+#  called by frame at 0xc02407c0 <--- this is the frame pointer for prvCanRxTask
+#                                     so we need to set it when we return there  
 FRAME_ADDR = 0xc02407c0
 
 # Buffer size of char msg[];
