@@ -66,8 +66,9 @@ def main(xArgs):
         setSetting("vulClasses",[xArgs.vulClass])
     for vulClass in getSetting("vulClasses"): 
         scoreTests (vulClass, os.path.join(getSetting('cwesEvaluationLogs'),vulClass),prettyVulClass(vulClass))
-    checkValidScores()
-
+    
+    if (isEnabled('checkAgainstValidScores')):
+        checkValidScores()
     if (isEnabled('computeNaiveCWEsTally')):
         computeNaiveCWEsTally()
     if (isEnabled('computeBesspinScale')):
