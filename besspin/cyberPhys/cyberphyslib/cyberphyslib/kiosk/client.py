@@ -221,11 +221,14 @@ class HackOtaClient:
             self.update_file_bytes = f.read()
 
     def upload_file(self, update_path):
+        print(f"Preparing file for upload: {update_path}")
         self.prepare_file_for_upload(update_path)
+        print(f"Requesting filename: {self.update_filename}")
         self.request_filename(self.update_filename)
+        print(f"Requesting to upload a file of lenght {self.update_file_bytes}")
         self.request_upload_file(self.update_file_bytes)
+        print(f"Requesting to authenticate the file")
         return self.request_authenticate_message(self.get_hmac().digest())
-
 
     def upload_and_execute_file(self, update_path, tryToHack=True)->(bool, str):
         """

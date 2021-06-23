@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: ../cyberphyslib/cyberphyslib/canlib/componentids.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 21 June 2021
+Date: 23 June 2021
 This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 """
 
@@ -33,6 +33,9 @@ INFOTAINMENT_THIN_CLIENT = 0x60
 INFOTAINMENT_SERVER_1 = 0x61
 INFOTAINMENT_SERVER_2 = 0x62
 INFOTAINMENT_SERVER_3 = 0x63
+OTA_UPDATE_SERVER_1 = 0x64
+OTA_UPDATE_SERVER_2 = 0x65
+OTA_UPDATE_SERVER_3 = 0x66
 BUTTON_STATION_1 = 0x01
 BUTTON_STATION_2 = 0x02
 BUTTON_STATION_3 = 0x03

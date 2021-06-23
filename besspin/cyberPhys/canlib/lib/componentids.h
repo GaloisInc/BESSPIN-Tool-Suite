@@ -4,7 +4,7 @@
 * Name: lib/componentids.h
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 21 June 2021
+* Date: 23 June 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
@@ -36,6 +36,9 @@
 #define INFOTAINMENT_SERVER_1 0x61
 #define INFOTAINMENT_SERVER_2 0x62
 #define INFOTAINMENT_SERVER_3 0x63
+#define OTA_UPDATE_SERVER_1 0x64
+#define OTA_UPDATE_SERVER_2 0x65
+#define OTA_UPDATE_SERVER_3 0x66
 #define BUTTON_STATION_1 0x01
 #define BUTTON_STATION_2 0x02
 #define BUTTON_STATION_3 0x03

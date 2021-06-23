@@ -75,6 +75,9 @@ ComponentDictionary = {
     canlib.INFOTAINMENT_SERVER_1: "INFOTAINMENT_SERVER_1",
     canlib.INFOTAINMENT_SERVER_2: "INFOTAINMENT_SERVER_2",
     canlib.INFOTAINMENT_SERVER_3: "INFOTAINMENT_SERVER_3",
+    canlib.OTA_UPDATE_SERVER_1: "OTA_UPDATE_SERVER_1",
+    canlib.OTA_UPDATE_SERVER_2: "OTA_UPDATE_SERVER_2",
+    canlib.OTA_UPDATE_SERVER_3: "OTA_UPDATE_SERVER_3",
     canlib.BUTTON_STATION_1: "BUTTON_STATION_1",
     canlib.BUTTON_STATION_2: "BUTTON_STATION_2",
     canlib.BUTTON_STATION_3: "BUTTON_STATION_3",
@@ -192,6 +195,7 @@ class HackerKiosk:
         self.x = 0.0
         self.y = 0.0
         self.z = 0.0
+        self.ota_server = None
 
         # IPC message
         self.ipc_msg = {}
@@ -371,12 +375,14 @@ class HackerKiosk:
         # Target 1 is baseline FreeRTOS
         self.restartComponent(canlib.TARGET_1)
         # FIXME: reset CHERI just in case
-        self.restartComponent(canlib.TARGET_3)
+        #self.restartComponent(canlib.TARGET_3)
         # Infotainment server 1 is the baseline info server
         self.restartComponent(canlib.INFOTAINMENT_SERVER_1)
+        self.restartComponent(canlib.OTA_UPDATE_SERVER_1)
         # TODO: No need to reset Info server 2?
         # Infotainment server 3 is in the secure ECU scenario
-        self.restartComponent(canlib.INFOTAINMENT_SERVER_3)
+        #self.restartComponent(canlib.INFOTAINMENT_SERVER_3)
+        self.restartComponent(canlib.OTA_UPDATE_SERVER_3)
 
         # TODO: Wait till the reset is complete?
         # Reset state
@@ -480,7 +486,6 @@ class HackerKiosk:
         self.execute_infotainment_hack(arg)
         # TODO FIX THIS
         self.ipc_msg['retval'] = "Hack Failed"
-
         self.ipc_msg['status'] = 200 # OK
 
     @page
@@ -655,7 +660,8 @@ class HackerKiosk:
                 else:
                     # brakes are OFF, we want them back ON
                     filename = HackerKiosk.BRAKES_NOMINAL_HACK_PATH
-                hack_ok, _ = self.ota_server.upload_and_execute_file(filename + suffix)
+                hack_ok, res = self.ota_server.upload_and_execute_file(filename + suffix)
+                print(res)
             else:
                 hack_ok = True
             # Update status only if hack_ok
@@ -677,7 +683,8 @@ class HackerKiosk:
                 else:
                     # Throttle is hacked, restore nominal operation
                     filename = HackerKiosk.THROTTLE_NOMINAL_HACK_PATH
-                hack_ok, _ = self.ota_server.upload_and_execute_file(filename + suffix)
+                hack_ok, res = self.ota_server.upload_and_execute_file(filename + suffix)
+                print(res)
             else:
                 hack_ok = True
             # Update status only if hack_ok
@@ -699,7 +706,8 @@ class HackerKiosk:
                 else:
                     # LKAS is enabled, we want to disable it (nominal)
                     filename = HackerKiosk.LKAS_NOMINAL_HACK_PATH
-                hack_ok, _ = self.ota_server.upload_and_execute_file(filename + suffix)
+                hack_ok, res = self.ota_server.upload_and_execute_file(filename + suffix)
+                print(res)
             else:
                 hack_ok = True
             # Update status only if hack_ok
@@ -722,7 +730,8 @@ class HackerKiosk:
                     # Transmission is disabled/hacked, we want to enable it
                     # (back to nominal)
                     filename = HackerKiosk.TRANSMISSION_NOMINAL_HACK_PATH
-                hack_ok, _ = self.ota_server.upload_and_execute_file(filename + suffix)
+                hack_ok, res = self.ota_server.upload_and_execute_file(filename + suffix)
+                print(res)
             else:
                 hack_ok = True
             # Update status only if hack_ok
