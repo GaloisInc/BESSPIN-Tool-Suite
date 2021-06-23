@@ -232,6 +232,7 @@ class HackOtaClient:
         Attempts to upload and authenticate a file
         If it fails, attempt o hack the server and retry
         """
+        print(f"OTA client attempting to upload a file: {update_path}")
         if not os.path.isfile(update_path):
             res = f">>> Specified file {update_path} does not exist, exiting"
             if self.debug:

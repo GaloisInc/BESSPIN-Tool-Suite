@@ -106,7 +106,7 @@ class HackerKiosk:
     BASELINE_HACK_PATH = "../../hacking/"
     # TODO: move the hacks to BESSPIN-LFS dir
     INFO_SERVER_PATH = "infotainment-server/"
-    INFO_SERVER_HACKED_PATH =  BASELINE_HACK_PATH + INFO_SERVER_PATH + "hacked_server"
+    INFO_SERVER_HACKED_PATH =  BASELINE_HACK_PATH + INFO_SERVER_PATH + "hacked_server.elf"
     ECU_HACKS_PATH = "../../hacking/ecu_hacks/"
     BRAKES_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"brakesNominal"
     BRAKES_HACKED_HACK_PATH = ECU_HACKS_PATH +"brakesHacked"
@@ -370,6 +370,8 @@ class HackerKiosk:
         self.switchActiveScenario(canlib.SCENARIO_BASELINE)
         # Target 1 is baseline FreeRTOS
         self.restartComponent(canlib.TARGET_1)
+        # FIXME: reset CHERI just in case
+        self.restartComponent(canlib.TARGET_3)
         # Infotainment server 1 is the baseline info server
         self.restartComponent(canlib.INFOTAINMENT_SERVER_1)
         # TODO: No need to reset Info server 2?
@@ -636,11 +638,11 @@ class HackerKiosk:
         TODO: simplify / make it a pattern?
         """
         if self.active_scenario == canlib.SCENARIO_BASELINE:
-            suffix = "_baseline"
+            suffix = "_baseline.elf"
         elif self.active_scenario == canlib.SCENARIO_SECURE_INFOTAINMENT:
-            suffix = "_ssithInfo"
+            suffix = "_ssithInfo.elf"
         elif self.active_scenario == canlib.SCENARIO_SECURE_ECU:
-            suffix = "_ssithEcu"
+            suffix = "_ssithEcu.elf"
         else:
             # This shouldn't happen
             print(f"Unknown scenario! {self.active_scenario}")

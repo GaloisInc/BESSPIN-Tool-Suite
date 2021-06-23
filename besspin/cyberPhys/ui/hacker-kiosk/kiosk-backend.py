@@ -8,7 +8,7 @@ Date: 16 June 2021
 """
 
 DEPLOY_MODE = True
-DEFAULT_PATH = "~/BESSPIN-Tool-Suite/besspin/base/utils/setupEnv.json"
+DEFAULT_PATH = "/home/pi/BESSPIN-Tool-Suite/besspin/base/utils/setupEnv.json"
 
 if __name__ == "__main__":
     # Project libs
