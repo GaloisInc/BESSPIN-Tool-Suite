@@ -103,7 +103,7 @@ class IgnitionDirector:
         ip_sim = net_conf.ip_SimPc
         can_port = net_conf.port_network_canbusPort
         info_port = net_conf.port_network_infotainmentUiPort
-        return cls(ip_admin, ip_director, ip_sim, can_port, info_port,
+        return cls(cmd_host, cmd_subscribers, ip_sim, can_port, info_port,
                    ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST + [net_conf.ip_InfotainmentThinClient],
                    ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST + [net_conf.ip_InfotainmentThinClient],
                    base_whitelist=net_conf.wl_BASELINE + [net_conf.ip_InfotainmentThinClient],
