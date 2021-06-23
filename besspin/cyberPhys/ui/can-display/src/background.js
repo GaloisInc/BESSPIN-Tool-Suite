@@ -13,10 +13,19 @@ const config = require('./config.js');
 // UPD CAN Network
 let canQueue= [];
 
+// List of CAN IDs to show on the display
+let canIDList = [
+  'AAF01000',
+  'AAF01A00',
+  'AAF01B00',
+  'AAF01D00',
+  'AAFEAA00'
+]
+
 let can_net = new CanNetwork(config.CAN_UDP_PORT);
 can_net.register( new CanListener( (msg) => {
   canQueue.push(msg);
-}));
+}, canIDList));
 
 // ZMQ Network
 let zmq_address = config.ZMQ_ADDRESS;
