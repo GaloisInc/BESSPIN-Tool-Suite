@@ -30,9 +30,6 @@ export default {
       poller: setInterval(() => { this.pollState() }, 100)
     }
   },
-  pollState() {
-    ipc.send('zmq-poll', []);
-  },
   mounted() {
     ipc.on('zmq-results',(event, q) => {
       q.forEach(item => {
@@ -46,6 +43,9 @@ export default {
     clearInterval(this.poller);
   },
   methods: {
+    pollState() {
+      ipc.send('zmq-poll', []);
+    },
     changeState(state) {
       this.state = state;
     }

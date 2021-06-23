@@ -15,11 +15,11 @@ let canQueue= [];
 
 // List of CAN IDs to show on the display
 let canIDList = [
-  'AAF01000',
-  'AAF01A00',
-  'AAF01B00',
-  'AAF01D00',
-  'AAFEAA00'
+  0xAAF01000,
+  0xAAF01A00,
+  0xAAF01B00,
+  0xAAF01D00,
+  0xAAFEAA00
 ]
 
 let can_net = new CanNetwork(config.CAN_UDP_PORT);
