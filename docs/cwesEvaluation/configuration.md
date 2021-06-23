@@ -19,6 +19,7 @@ Moreover, some of the SSITH TA-1 teams require specific and known compiling and 
 The parameters of this section are:
   - `vulClasses`: A list of the vunerability classes to be executed, contained by square brackets and comma
     separated. Choose among the [SSITH CWEs list](./ssithCWEsList.md): *bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors, hardwareSoC, injection*. When a `${vulClass}` is included, its configuration section is loaded as well ([details](#vulnerability-classes )).
+  - `checkAgainstValidScores`: If enabled, after scoring, the tool checks the scores validity against the pre-coded expected results. This is only applicable when `binarySource` is set to `GFE`.
   - `useCustomCWEsConfigsPath`: If enabled, then instead of loading --if needed-- the vulnerability classes INI files from [configSecurityTests](../../configSecurityTests), the tool will look for these INI files inside `pathToCustomCWEsConfigs`. We refer to the chosen path for the INI files as `${CWEsConfigs}` from this point onwards.
   - `pathToCustomCWEsConfigs`: The path containing the CWEs config files in case `useCustomCWEsConfigsPath` is enabled.
   - `useCustomScoring`: Configure the scoring methods as instructed by 
