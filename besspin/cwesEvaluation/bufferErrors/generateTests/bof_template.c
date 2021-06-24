@@ -129,6 +129,17 @@ size_t mock_get_message_size(void) {{
 }}
 #endif  // INCORRECT_MALLOC_CALL
 
+#ifdef SIZE_OVERFLOW
+    // This is a simple manoeuver to avoid the compiler optimizing out the integer overflow. 
+    // See #1130 for more details.
+    static __attribute__((noinline)) size_t {sub_func} (size_t {sub_func_arg1}, size_t {sub_func_arg2}) {{
+        size_t {sub_func_ret} = 0;
+        {sub_func_ret} += {sub_func_arg1};
+        {sub_func_ret} -= {sub_func_arg2};
+        return {sub_func_ret};
+    }}
+#endif
+
 
 void test_buffer_overflow(void)
 {{
@@ -140,7 +151,7 @@ void test_buffer_overflow(void)
     // that's partially correct, but later overflowed.
     size_t {min_size} = {idx0} + {access_len} + 1;
     // Arrive at N via overflow
-    size_t {buf_size} = {min_size} + ((~((size_t) 0)) - {min_size} + {N}) + 1;
+    size_t {buf_size} = {min_size} + ({sub_func}((~((size_t) 0)), {min_size}) + {N}) + 1;
     if ({buf_size} < {min_size}) {{
         // `buf_size` is too small, either because the overflow was undetected,
         // or because the value was replaced with one that is still too small.
