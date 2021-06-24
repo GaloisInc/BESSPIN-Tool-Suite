@@ -483,9 +483,19 @@ class BofTestGen:
             #                          parameter `N`
             #  NO_COMPUTE_SIZE       : Using hard coded `N` value
             'compute_size'     : Choice(COMPUTE_SIZE[bof_instance.SizeComputation]),
-            # Variable holding smallest buffer size that will cover all reads
-            # and writes.  Only used if SIZE_OVERFLOW is defined.
+
+            # This chunk is only used if SIZE_OVERFLOW is defined.
+            # Variable holding smallest buffer size that will cover all reads and writes.
             'min_size'        : Name("min_size", 3, 15),
+            # The function name for subtraction to force the integer overflow.
+            'sub_func'        : Name("sub_func", 3, 15),
+            # The first argument of sub_func
+            'sub_func_arg1'        : Name("sub_func_arg1", 3, 15),
+            # The second argument of sub_func
+            'sub_func_arg2'        : Name("sub_func_arg2", 3, 15),
+            # The return variable of sub_func
+            'sub_func_ret'        : Name("sub_func_ret", 3, 15),
+
             # Variable holding the size of `buf`
             'buf_size'        : Name("buf_size", 3, 15),
             # Variable holding the number of bytes to allocate in heap tests
