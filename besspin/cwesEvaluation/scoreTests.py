@@ -146,7 +146,7 @@ class SCORES (enum.Enum):
     def weightedAvgScore (cls, scoreList, partsWeights):
         minScore = cls.minScore(scoreList)
         if (minScore < cls.HIGH): #One of the parts has an error --> error
-            return minScore
+            return (minScore, minScore.value)
         sumScores = 0
         for xScore, xWeight in zip(scoreList, partsWeights):
             sumScores += xWeight * xScore.value
