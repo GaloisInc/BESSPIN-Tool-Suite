@@ -36,8 +36,8 @@ def partitionLines (lines,testPart,testNum):
     startFound = False
     iStart = 0
     iEnd = len(lines)-1
-    start = f"TEST {testNum} PART P{testPart:02d}"
-    end = f"TEST {testNum} PART P{(testPart+1):02d}"
+    start = f"TEST test_{testNum} PART P{testPart:02d}"
+    end = f"TEST test_{testNum} PART P{(testPart+1):02d}"
     for iLine,line in enumerate(lines):
         if (start in line):
             startFound = True
