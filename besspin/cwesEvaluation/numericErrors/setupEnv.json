@@ -19,15 +19,19 @@
                 "test_128": {
                     "cweText": "Wrap-around Error",
                     "unix": {
-                        "nParts": 2,
+                        "nParts": 4,
                         "scoreWeights": [
+                            1,
+                            1,
                             1,
                             1
                         ]
                     },
                     "FreeRTOS": {
-                        "nParts": 2,
+                        "nParts": 4,
                         "scoreWeights": [
+                            1,
+                            1,
                             1,
                             1
                         ]
