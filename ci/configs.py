@@ -34,8 +34,11 @@ commonDefaultsFETT = {
 commonDefaultsCWEs = {
     ('mode',('evaluateSecurityTests',)),
     ('vulClasses', ('[bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors, hardwareSoC, injection]',)),
+    ('checkAgainstValidScores',('Yes',)),
     ('useCustomScoring',('No',)),
     ('useCustomCompiling',('No',)),
+    ('computeNaiveCWEsTally',('Yes',)),
+    ('computeBesspinScale',('Yes',)),
     ('FreeRTOStimeout',(10,)),
     ('runAllTests',('Yes',)),
     ('runUnixMultitaskingTests',('Yes',)),
