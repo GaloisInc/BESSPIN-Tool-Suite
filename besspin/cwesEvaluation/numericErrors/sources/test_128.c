@@ -42,6 +42,7 @@ static __attribute__((noinline)) uint8_t mult_8 (uint8_t in1, uint8_t in2);
             testpart = 0;
         } 
 #endif
+        printf ("TEST 128 PART P0%d\n",testpart);
         switch(testpart) {
             case 1 :
                 test_op_dtype_xlen(testpart, MULT);
