@@ -80,6 +80,7 @@ This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_sp
     def produce_can(self, can_entry):
         """generate code for a can info entry (row of csv file)"""
         cid = can_entry["CAN ID"]
+        dlc = can_entry["Byte Length"]
         units =  can_entry["Units"]
         units = units if isinstance(units, str) else "<N/A>"
         fname =  can_entry["Field Name"]
@@ -95,12 +96,14 @@ This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_sp
 
         var_name =  "CAN_ID_" + fname.upper().replace(" -", "").replace(" ", "_")
         format_name = "CAN_FORMAT_" + fname.upper().replace(" -", "").replace(" ", "_")
+        dlc_name = "CAN_DLC_" + fname.upper().replace(" -", "").replace(" ", "_")
         return f"# Name: {fname}\n"\
             f"# Units: {units}\n"\
             f"# Type: {can_entry['Format']}\n"\
             f"# Description: {' '.join(fdescr.splitlines())}\n"\
             f"{var_name}: int = {cid}\n"\
-            f"{format_name}: str = {canformat}\n\n"
+            f"{format_name}: str = {canformat}\n"\
+            f"{dlc_name}: str = {dlc}\n\n"
 
     def produce_ids(self, entry):
         """generate code for a ID info entry (row of csv file)"""

@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: ../cyberphyslib/cyberphyslib/canlib/componentids.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 23 June 2021
+Date: 25 June 2021
 This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 """
 
@@ -43,3 +43,4 @@ BUTTON_VOLUME_DOWN = 0x10
 BUTTON_VOLUME_UP = 0x11
 SENSOR_THROTTLE = 0xBE
 SENSOR_BRAKE = 0xBF
+ERROR_UNSPECIFIED = 0xF0
