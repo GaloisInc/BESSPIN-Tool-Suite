@@ -293,7 +293,7 @@ def hack_compile(test=False):
     print(">>> Compiling hack")
     host = ""
     if test:
-        host = "-x86"
+        host = "-host"
     cmd = f"cd {j1939_hack_dir}; make clean; make hack{host}; cd .."
     subprocess.call(cmd,shell=True)
 
@@ -303,7 +303,7 @@ def main():
     parser.add_argument('--ip', help='target IP address', default=DEFAULT_IP)
     parser.add_argument('--port', type=int, help='target RX port', default=DEFAULT_PORT)
     parser.add_argument('--type', help='Type of hack', choices=HACKS,default=THROTTLE)
-    parser.add_argument('--test', help='Compile for x86 target', action='store_true')
+    parser.add_argument('--test', help='Compile for host target', action='store_true')
     parser.add_argument('--nominal', help='Reverts the hack to nominal values', action='store_true',default=False)
     args = parser.parse_args()
 
