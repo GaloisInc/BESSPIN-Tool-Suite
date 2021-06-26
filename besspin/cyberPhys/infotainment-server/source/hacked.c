@@ -25,10 +25,10 @@ int main(int argc, char** argv) {
     sigaction(SIGINT, &action, NULL);
 
     message("attempting to kill legitimate infotainment server\n");
-    int result = system("systemctl stop infotainmment-server.service");
+    int result = system("systemctl stop infotainment-server.service");
     
     if (result != 0) {
-        message("could not kill legitimate infotainmment server, running anyway\n");
+        message("could not kill legitimate infotainmment server, running anyway. Result was %i\n",result);
     } else {
         message("legitimate infotainment server killed\n");
     }

@@ -14,7 +14,7 @@ def install (xTarget):
 
     printAndLog(f"{xTarget.targetIdInfo}infotainment server install: starting the service...", doPrint=False, tee=appLog)
     xTarget.runCommand("mkdir -p /usr/local/sbin",tee=appLog)
-    xTarget.runCommand("install infotainment_server /usr/local/sbin/infotainment_server", erroneousContents="install:", tee=appLog)
+    xTarget.runCommand("install infotainment_server.elf /usr/local/sbin/infotainment_server", erroneousContents="install:", tee=appLog)
     serviceTimeout = 120
     if isEqSetting('osImage','debian',targetId=xTarget.targetId):
         xTarget.runCommand("cp infotainment-server.service /lib/systemd/system/infotainment-server.service", erroneousContents="install:", tee=appLog)
