@@ -202,13 +202,22 @@ class IgnitionDirector:
         """
         self.machine.get_graph().draw(fname, prog='dot')
 
-    def status_send(self, canid, argument):
-        msg = extcan.Message(arbitration_id=canid, dlc=1, data=struct.pack("!B", argument))
+    def component_ready_send(self, component_id):
+        msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
+                             dlc=canlib.CAN_DLC_CMD_COMPONENT_READY,
+                             data=struct.pack(component_id))
+        self.cc_recvr.send(msg)
+
+    def component_error_send(self, component_id, error_id):
+        msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
+                             dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
+                             data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR,
+                                              component_id, error_id))
         self.cc_recvr.send(msg)
 
 ### STATE ENTRY CALLBACKS
     def terminate_enter(self):
-        self.status_send(canlib.CAN_ID_CMD_COMPONENT_ERROR, 0x00)
+        self.component_error_send(canlib.IGNITION, canlib.ERROR_UNSPECIFIED)
         ignition_logger.debug("Termination State: Enter")
         self.is_finished = True
         self._handler.exit()
@@ -349,7 +358,7 @@ class IgnitionDirector:
 
     def ready_enter(self):
         ignition_logger.debug("Ready state: enter")
-        self.status_send(canlib.CAN_ID_CMD_COMPONENT_READY, 0x00)
+        self.component_ready_send(canlib.IGNITION)
         scenario_start = time.time()
         while((time.time() - scenario_start) < self.scenario_timeout):
             cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
@@ -393,7 +402,7 @@ class IgnitionDirector:
     def noncrit_failure_enter(self):
         ignition_logger.debug("Noncrit_failure state: enter")
         ignition_logger.error("Ignition achieved a noncritical error. Continuing anyway...")
-        self.status_send(canlib.CAN_ID_CMD_COMPONENT_ERROR, 0x01)
+        self.component_error_send(canlib.LED_COMPONENT,canlib.ERROR_UNSPECIFIED)
         self._noncrit = True
         self.default_input()
         return

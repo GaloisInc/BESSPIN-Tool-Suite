@@ -57,6 +57,7 @@ class Commander(ccomp.ComponentPoller):
         # Communication with other components
         name = "commander"
         in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts(name)
+        printAndLog(f"Starting {name} with in_socks: {in_socks} and out_socks: {out_socks}, sample freq: {self.POLL_FREQ}[Hz]", doPrint=False)
         super().__init__(name, in_socks, out_socks, sample_frequency=self.POLL_FREQ)
 
         self.state = CommanderStates.BOOT

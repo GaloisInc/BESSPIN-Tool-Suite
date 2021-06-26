@@ -46,13 +46,13 @@ class HackOtaClient:
     def send_request(base_url: str, srvc_name: str, arg):
         """form request and patch ota client"""
         try:
-            resp = requests.patch(f"{base_url}/{srvc_name}/{len(arg)}", arg)
+            resp = requests.patch(f"{base_url}/{srvc_name}/{len(arg)}", arg, timeout=1.0)
             print(resp.status_code)
             print(resp.content)
             return resp.status_code, resp.content
         except Exception as exc:
             print(f"<OTA Update Server> Error occured: {exc}")
-            return 500
+            return 500, "Error in senq_request"
 
     def __init__(self, base_url, platform='Debian', debug=False):
         print(f"<{self.__class__.__name__}> Url: {base_url}, platform: {platform}")
@@ -225,7 +225,7 @@ class HackOtaClient:
         self.prepare_file_for_upload(update_path)
         print(f"Requesting filename: {self.update_filename}")
         self.request_filename(self.update_filename)
-        print(f"Requesting to upload a file of lenght {self.update_file_bytes}")
+        print(f"Requesting to upload a file of lenght {len(self.update_file_bytes)}")
         self.request_upload_file(self.update_file_bytes)
         print(f"Requesting to authenticate the file")
         return self.request_authenticate_message(self.get_hmac().digest())

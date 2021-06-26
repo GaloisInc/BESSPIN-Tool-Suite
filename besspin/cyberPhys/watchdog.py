@@ -27,7 +27,7 @@ class Watchdog(ccomp.ComponentPoller):
         in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts('watchdogBase', targetId)
         name = f"watchdog{targetId}"
         f_Hz = getSetting('cyberPhysWatchdogFrequency')
-        printAndLog(f"Starting {name} wihh {in_socks} and {out_socks}", doPrint=False)
+        printAndLog(f"Starting {name} with in_socks: {in_socks} and out_socks: {out_socks}, sample freq: {f_Hz}[Hz]", doPrint=False)
         super().__init__(name, in_socks, out_socks, sample_frequency=f_Hz)
 
         self.wHeartbeatQueue = getSetting('watchdogHeartbeatQueue', targetId=targetId)
@@ -79,8 +79,10 @@ class Watchdog(ccomp.ComponentPoller):
         if msg == f"OTA_RESET {self.targetId}":
             printAndLog(f"OTA_RESET {self.targetId} requested")
             besspin.cyberPhys.run.resetComponent("ota",self.targetId)
+            # TODO: notify when reset completed
         elif msg == f"INFOTAINMENT_RESET {self.targetId}":
             printAndLog(f"INFOTAINMENT_RESET {self.targetId} requested")
             besspin.cyberPhys.run.resetComponent("infotainment",self.targetId)
+            # TODO: notify when reset completed
         elif msg == f"RESET {self.targetId}":
             self.reset_target("Reset requested")
