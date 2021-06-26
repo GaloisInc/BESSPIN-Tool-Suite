@@ -127,7 +127,7 @@ class CanDisplay(threading.Thread):
                         self.state = STATE_NORMAL
                     else:
                         self.state = STATE_HACKED
-                print(f"Scenario: {self.scenario}")
+            print(f"State: {self.scenario}")
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
