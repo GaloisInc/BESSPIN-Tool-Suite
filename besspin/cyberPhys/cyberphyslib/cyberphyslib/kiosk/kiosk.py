@@ -108,7 +108,7 @@ class HackerKiosk:
     }
 
     INFO_SERVER_HACKED_PATH =  "/home/pi/BESSPIN-Tool-Suite/BESSPIN-LFS/GFE/appsBinaries/infotainment-server/debian/hacked_server.elf"
-    ECU_HACKS_PATH = "/home/pi/BESSPIN-Tool-Suite/BESSPIN-LFS/GFE/appsBinaries/ecu-hacks"
+    ECU_HACKS_PATH = "/home/pi/BESSPIN-Tool-Suite/BESSPIN-LFS/GFE/appsBinaries/ecu-hacks/"
     BRAKES_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"brakesNominal"
     BRAKES_HACKED_HACK_PATH = ECU_HACKS_PATH +"brakesHacked"
     THROTTLE_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"throttleNominal"
