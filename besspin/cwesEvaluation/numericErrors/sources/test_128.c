@@ -26,7 +26,6 @@ static __attribute__((noinline)) size_t mult_xlen (size_t in1, size_t in2);
 static __attribute__((noinline)) uint8_t mult_8 (uint8_t in1, uint8_t in2);
 
 #ifdef BESSPIN_FREERTOS
-    #define NUM_OF_TEST_PARTS 8
     void main() {
         int testpart = BESSPIN_TEST_PART;
 #elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
