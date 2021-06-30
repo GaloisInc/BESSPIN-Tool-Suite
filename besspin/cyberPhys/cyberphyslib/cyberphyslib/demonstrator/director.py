@@ -242,6 +242,13 @@ class IgnitionDirector:
         ignition_logger.debug("Startup State: Enter")
         simulator.Sim.kill_beamng(1)
 
+        # startup the pedal monitor
+        start_noncrit_component(cjoy.PedalMonitorComponent())
+
+        # startup the joystick monitor
+        start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
+
+
         # startup beamng
         if not start_component(simulator.Sim()): return
 
@@ -270,12 +277,6 @@ class IgnitionDirector:
 
         # startup the speedometer
         start_noncrit_component(speedo.Speedo())
-
-        # startup the pedal monitor
-        start_noncrit_component(cjoy.PedalMonitorComponent())
-
-        # startup the joystick monitor
-        start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
 
         # check if noncritical error occurred
         if self.input_noncrit_fail:
