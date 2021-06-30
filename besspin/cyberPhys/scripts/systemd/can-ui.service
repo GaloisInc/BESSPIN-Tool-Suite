@@ -1,0 +1,16 @@
+[Unit]
+Description=Can UI Service
+After=network.target
+StartLimitIntervalSec=0
+
+
+[Service]
+Environment="DISPLAY=:0"
+Type=simple
+Restart=always
+RestartSec=1
+User=pi
+ExecStart=/home/pi/deploy/can-display-0.1.0-armv7l.AppImage
+
+[Install]
+WantedBy=multi-user.target
