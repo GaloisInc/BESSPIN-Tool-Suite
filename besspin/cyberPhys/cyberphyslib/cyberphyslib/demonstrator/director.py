@@ -371,7 +371,7 @@ class IgnitionDirector:
             else: # CC timeout condition
                 # NOTE: if jmonitor has failed assume user input is present
                 #activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
-                activity = True
+                activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
 
                 # if in self drive mode and activity has occurred, get out
                 if activity and self.self_drive_mode:
