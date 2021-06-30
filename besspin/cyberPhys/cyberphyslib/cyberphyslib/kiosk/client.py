@@ -52,7 +52,7 @@ class HackOtaClient:
             return resp.status_code, resp.content
         except Exception as exc:
             print(f"<OTA Update Server> Error occured: {exc}")
-            return 500, "Error in senq_request"
+            return 500, "Error in send_request"
 
     def __init__(self, base_url, platform='Debian', debug=False):
         print(f"<{self.__class__.__name__}> Url: {base_url}, platform: {platform}")

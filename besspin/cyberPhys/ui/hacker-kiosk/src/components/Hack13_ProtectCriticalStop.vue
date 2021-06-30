@@ -2,8 +2,6 @@
 
 "SSITH Protection enabled (Secure ECU scenario)"
 
-TODO:
-* @losborn Video here...
 --> 
 <template>
   <div id="hack13">

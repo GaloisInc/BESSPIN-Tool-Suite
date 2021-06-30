@@ -199,15 +199,15 @@ class Commander(ccomp.ComponentPoller):
         printAndLog(f"<{self.__class__.__name__}> Restarting component ID {componentId}")
         # Infotainment reset for now
         if componentId == canlib.INFOTAINMENT_SERVER_1 or\
-           componentId == canlib.INFOTAINMENT_SERVER_2 or\
-           componentId == canlib.INFOTAINMENT_SERVER_3:
+          componentId == canlib.INFOTAINMENT_SERVER_2 or\
+          componentId == canlib.INFOTAINMENT_SERVER_3:
             devId = self.componentIds[componentId]
             targetId = self.targetIds[devId]
             printAndLog(f"<{self.__class__.__name__}> Restarting infotainment on target {targetId}")
             self.send_message(ccomp.Message(f"INFOTAINMENT_RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
         elif componentId == canlib.OTA_UPDATE_SERVER_1 or\
-           componentId == canlib.OTA_UPDATE_SERVER_2 or\
-           componentId == canlib.OTA_UPDATE_SERVER_3:
+          componentId == canlib.OTA_UPDATE_SERVER_2 or\
+          componentId == canlib.OTA_UPDATE_SERVER_3:
             devId = self.componentIds[componentId]
             targetId = self.targetIds[devId]
             printAndLog(f"<{self.__class__.__name__}> Restarting infotainment on target {targetId}")

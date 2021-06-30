@@ -2,9 +2,6 @@
 
 "SSITH protects systems common means of exploitation"
 
-ToDO: 
-* @losborn  each button has to send a message so we can switch the scenarios!
-
 -->
 <template>
   <div id="hack09">

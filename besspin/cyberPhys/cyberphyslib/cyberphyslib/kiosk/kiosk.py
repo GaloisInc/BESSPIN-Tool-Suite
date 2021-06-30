@@ -338,9 +338,9 @@ class HackerKiosk:
     def hack_ota_and_upload_hacked_infotainment_server(self) -> bool:
         """
         1) Hack OTA server
-        2) if 1) successfull, upload and execute hacked info server binary
+        2) if 1) successful, upload and execute hacked info server binary
         """
-        print("Attemptig to hack OTA server.")
+        print("Attempting to hack OTA server.")
         if self.deploy_mode:
             print("Uploading the hacked infotainment server")
             hack_ok, data = self.ota_server.upload_and_execute_file(HackerKiosk.INFO_SERVER_HACKED_PATH)
@@ -358,7 +358,7 @@ class HackerKiosk:
     @page
     def reset_enter(self, arg):
         """
-        Swith to BASELINE_SCENARIO
+        Switch to BASELINE_SCENARIO
         * no active hack
         * scenario is Baseline
         * reset Target1, InfoServer1, InfoServer3
@@ -421,7 +421,7 @@ class HackerKiosk:
     @page
     def hack06_info_exploit_attemp_hack_enter(self, arg):
         """
-        Attemp a selected infotainment exploit
+        Attempt a selected infotainment exploit
         * check args for which hack to use
         """
         self.button_pressed_info_exploit = False
@@ -435,7 +435,7 @@ class HackerKiosk:
     @page
     def hack08_critical_exploit_enter(self, arg):
         """
-        Attemp a selected critical exploit
+        Attempt a selected critical exploit
         * check args for which hack to use
         """
         self.button_pressed_critical_exploit = False
@@ -473,7 +473,7 @@ class HackerKiosk:
     @page
     def hack10_info_exploit_attempt_hack_enter(self, arg):
         """
-        Attemp a selected infotainment exploit
+        Attempt a selected infotainment exploit
 
         """
         self.button_pressed_info_exploit = False
@@ -501,7 +501,7 @@ class HackerKiosk:
     @page
     def hack12_critical_exploit_enter(self, arg):
         """
-        Attemp a selected ecu exploit
+        Attempt a selected ecu exploit
         """
         self.button_pressed_critical_exploit = False
         self.exploit_complete = True
@@ -528,7 +528,7 @@ class HackerKiosk:
         url = f"http://{HackerKiosk.OTA_SERVER_IP[self.active_scenario]}:{self.ota_server_port}"
 
         print(f"Setting up OTA client with URL: {url}")
-        print(f"CMD_CHANGE_ACTIVE_SCENATIO: {ComponentDictionary[scenario_id]}")
+        print(f"CMD_CHANGE_ACTIVE_SCENARIO: {ComponentDictionary[scenario_id]}")
 
         self.ota_server = kclient.HackOtaClient(url)
         try:
