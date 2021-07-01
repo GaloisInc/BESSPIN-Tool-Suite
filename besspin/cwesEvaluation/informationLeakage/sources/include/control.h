@@ -1,11 +1,15 @@
 #ifndef __CONTROL_H__
 #define __CONTROL_H__
 
+#ifndef __IEX_GEN__CAPABILITIES__
 #ifdef __IEX_GEN__ARRAYS__
 extern char secret[OBJ_SIZE];
 #else
 extern char *secret;
 #endif // !ARRAYS/STATIC
+#else // __IEX_GEN__CAPABILITIES__
+extern uintptr_t *secret;
+#endif // __IEX_GEN__CAPABILITIES__
 
 // For checking test dependencies
 extern char *STORE_IMPL;
@@ -33,13 +37,13 @@ send_and_run(struct umessage *msg);
 
 // return 1 <=> `str` contains the secret value
 int
-matches_secret(const char *str);
+matches_secret(const void *str);
 
 // Removes the secret value from `in`, copying result
 // into `out` buffer. Both buffers should have size
 // `in_size`
 void
-scrub(const char *in, size_t in_size, char *out);
+scrub(const void *in, size_t in_size, void *out);
 
 //////////////////////////////////
 // Wrappers around OS interface //

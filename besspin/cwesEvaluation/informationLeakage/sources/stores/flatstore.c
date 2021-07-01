@@ -9,9 +9,9 @@ char *STORE_IMPL   = "FLATSTORE";
 const size_t store_size = OBJ_SIZE*STORE_SIZE*NDOMAINS;
 
 #ifdef __IEX_GEN__ARRAYS__
-static char public_store[OBJ_SIZE*STORE_SIZE] =  {0};
-static char system_store[OBJ_SIZE*STORE_SIZE] =  {0};
-static char store[OBJ_SIZE*STORE_SIZE*NDOMAINS] = {0};
+static char public_store[OBJ_SIZE*STORE_SIZE] STORE_ALIGN   = {0};
+static char system_store[OBJ_SIZE*STORE_SIZE] STORE_ALIGN   = {0};
+static char store[OBJ_SIZE*STORE_SIZE*NDOMAINS] STORE_ALIGN = {0};
 #else
 static char *public_store;
 static char *system_store;
@@ -84,7 +84,7 @@ store_get(int domain, saddr_t addr)
     struct store_get_res *ret = test_malloc(sizeof(*ret));
     puts("get malloc\r\n");
     ret->size   = OBJ_SIZE;
-    ret->result = test_malloc(OBJ_SIZE);
+    ret->result = STRIP_STORE_LOCAL(test_malloc(OBJ_SIZE));
     puts("res malloc\r\n");
     DEBUG_PRINTF("DOM: %d\n", domain);
     DEBUG_PRINTF("addr: %d\n", ADDR_SADDR(addr));

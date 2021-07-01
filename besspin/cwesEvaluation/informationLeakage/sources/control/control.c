@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __IEX_GEN__CAPABILITIES__
+#include <cheri/cheric.h>
+#endif
+
+#ifndef __IEX_GEN__CAPABILITIES__
 #ifdef __IEX_GEN__ARRAYS__
 #ifdef __IEX_GEN__STATIC_SECRET__
 char secret[OBJ_SIZE] = SECRET_PATTERN;
@@ -18,6 +23,11 @@ char *secret = SECRET_PATTERN;
 char *secret;
 #endif // !ARRAYS/STATIC
 #endif
+#else // __IEX_GEN__CAPABILITIES__
+uintptr_t *secret;
+static uintptr_t secret_cap;
+static uintptr_t pad_cap = 0x09ad09ad09ad09ad;
+#endif // __IEX_GEN__CAPABILITIES__
 
 void get_msg(int domain,
              uaddr_t addr,
@@ -59,8 +69,9 @@ void go_msg(int domain,
 }
 
 int
-matches_secret(const char *str)
+matches_secret(const void *str)
 {
+#ifndef __IEX_GEN__CAPABILITIES__
     const char *p;
     puts("TESTING\r\n");
     if ((p = strstr(str, PAD))) {
@@ -73,6 +84,24 @@ matches_secret(const char *str)
             }
         }
     }
+#else // __IEX_GEN__CAPABILITIES__
+    const uintptr_t *caps = str;
+    puts("TESTING\r\n");
+    if (!__builtin_is_aligned(str, sizeof(uintptr_t))) {
+        // Can't (easily) contain caps
+	return 0;
+    }
+    if (__builtin_cheri_equal_exact(secret[0], caps[0])) {
+        puts("ONE\r\n");
+        if (__builtin_cheri_equal_exact(secret[1], caps[1])) {
+            puts("TWO\r\n");
+            if (__builtin_cheri_equal_exact(secret[2], caps[2])) {
+                puts("THREE\r\n");
+                return 1;
+            }
+        }
+    }
+#endif // __IEX_GEN__CAPABILITIES__
 
     return 0;
 }
@@ -87,8 +116,9 @@ send_and_run(struct umessage *msg)
 }
 
 void
-scrub(const char *in, size_t in_size, char *out)
+scrub(const void *in, size_t in_size, void *out)
 {
+#ifndef __IEX_GEN__CAPABILITIES__
     size_t idx = 0;
     const char *p = in;
     char *bad = NULL;
@@ -100,15 +130,34 @@ scrub(const char *in, size_t in_size, char *out)
             advance = bad - p;
             next    = bad + strlen(SECRET_PATTERN);
         }
-        memcpy(&out[idx], p, advance);
+        memcpy((char *)out + idx, p, advance);
         idx += advance;
         p = next;
     }
+#else // __IEX_GEN__CAPABILITIES__
+    const uintptr_t *inp = in;
+    uintptr_t *outp = out;
+    while ((char *)inp < (char *)in + in_size) {
+        size_t size = (char *)inp - (char *)in;
+        if (size < sizeof(uintptr_t)) {
+            memcpy(outp, inp, size);
+            return;
+        }
+        /*
+         * XXX: should this be less restrictive (e.g. address equiality +
+         * a tag?)
+         */
+        if (!__builtin_cheri_equal_exact(*inp, secret_cap))
+            *outp++ = *inp;
+        inp++;
+    }
+#endif // __IEX_GEN__CAPABILITIES__
 }
 
 void
 initialize_secret()
 {
+#ifndef __IEX_GEN__CAPABILITIES__
 #ifndef __IEX_GEN__STATIC_SECRET__
 #ifndef __IEX_GEN__ARRAYS__
   secret = test_malloc(OBJ_SIZE);
@@ -117,6 +166,13 @@ initialize_secret()
   strncat(&secret[0], SECRET_TEXT, sizeof(SECRET_TEXT));
   strncat(&secret[0], PAD, sizeof(PAD));
 #endif
+#else // __IEX_GEN__CAPABILITIES__
+    secret = test_malloc(OBJ_SIZE);
+    secret_cap = cheri_andperm(secret, ~CHERI_PERM_GLOBAL);
+    secret[0] = pad_cap;
+    secret[1] = secret_cap;
+    secret[2] = pad_cap;
+#endif // __IEX_GEN__CAPABILITIES__
 }
 
 #ifdef BESSPIN_FREERTOS

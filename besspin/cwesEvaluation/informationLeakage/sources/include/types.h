@@ -4,6 +4,18 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "parameters.h"
+#ifdef __IEX_GEN__CAPABILITIES__
+#include <machine/cherireg.h>
+#include <cheri/cheric.h>
+#endif
+
+#ifndef __IEX_GEN__CAPABILITIES__
+#define STORE_ALIGN
+#define STRIP_STORE_LOCAL(x) (x)
+#else
+#define STORE_ALIGN __attribute__((aligned(sizeof(uintptr_t))))
+#define STRIP_STORE_LOCAL(x) cheri_andperm((x), ~CHERI_PERM_STORE_LOCAL_CAP)
+#endif
 
 #ifndef STORE_SIZE
 #error "STORE_SIZE undefined"

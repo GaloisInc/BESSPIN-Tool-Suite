@@ -11,14 +11,14 @@ char *__STORE_CWES = "";
 struct store_obj {
     int domain;
     saddr_t addr;
-    char data[OBJ_SIZE + 1];
+    char data[OBJ_SIZE + 1] STORE_ALIGN;
 };
 
 #ifdef __IEX_GEN__ARRAYS__
-struct store_obj public_store[STORE_SIZE]   = {0};
-struct store_obj system_store_a[STORE_SIZE] = {0};
-struct store_obj store[NDOMAINS*STORE_SIZE] = {0};
-struct store_obj system_store_b[STORE_SIZE] = {0};
+struct store_obj public_store[STORE_SIZE] STORE_ALIGN   = {0};
+struct store_obj system_store_a[STORE_SIZE] STORE_ALIGN = {0};
+struct store_obj store[NDOMAINS*STORE_SIZE] STORE_ALIGN = {0};
+struct store_obj system_store_b[STORE_SIZE] STORE_ALIGN = {0};
 #else
 struct store_obj *public_store;
 struct store_obj *system_store_a;
@@ -102,7 +102,7 @@ store_get(int domain, saddr_t addr)
     int off = OBJ_OFF(addr);
     struct store_get_res *ret = test_malloc(sizeof(*ret));
     ret->size   = OBJ_SIZE;
-    ret->result = test_malloc(OBJ_SIZE);
+    ret->result = STRIP_STORE_LOCAL(test_malloc(OBJ_SIZE));
 
     struct store_obj *target = NULL;
     target = find(domain, addr);

@@ -13,20 +13,20 @@ char *STORE_IMPL   = "SEPARATE";
 const size_t store_size = OBJ_SIZE*STORE_SIZE*NDOMAINS;
 // TODO: what to do here?
 #ifdef __IEX_GEN__ARRAYS__
-static char public_store[OBJ_SIZE*STORE_SIZE] = {0};
-static char store_secret[OBJ_SIZE*STORE_SIZE] = {0};
-static char store_0[OBJ_SIZE*STORE_SIZE] = {0};
+static char public_store[OBJ_SIZE*STORE_SIZE] STORE_ALIGN = {0};
+static char store_secret[OBJ_SIZE*STORE_SIZE] STORE_ALIGN = {0};
+static char store_0[OBJ_SIZE*STORE_SIZE] STORE_ALIGN = {0};
 #if NDOMAINS > 1
-static char store_1[OBJ_SIZE*STORE_SIZE] = {0};
+static char store_1[OBJ_SIZE*STORE_SIZE] STORE_ALIGN = {0};
 #endif
 #if NDOMAINS > 2
-static char store_2[OBJ_SIZE*STORE_SIZE] = {0};
+static char store_2[OBJ_SIZE*STORE_SIZE] STORE_ALIGN = {0};
 #endif
 #if NDOMAINS > 3
-static char store_3[OBJ_SIZE*STORE_SIZE] = {0};
+static char store_3[OBJ_SIZE*STORE_SIZE] STORE_ALIGN = {0};
 #endif
 #if NDOMAINS > 4
-static char store_4[OBJ_SIZE*STORE_SIZE] = {0};
+static char store_4[OBJ_SIZE*STORE_SIZE] STORE_ALIGN = {0};
 #endif
 #else
 static char *public_store;
@@ -120,7 +120,7 @@ store_get(int domain, saddr_t addr)
 #ifdef DEBUG
     printf("GET(%d, (%d, %d)) >> ", domain, OBJ_ADDR(addr), (char)OBJ_OFF(addr));
 #endif
-    struct store_get_res *ret = test_malloc(sizeof(*ret));
+    struct store_get_res *ret = STRIP_STORE_LOCAL(test_malloc(sizeof(*ret)));
     ret->size   = OBJ_SIZE;
     ret->result = test_malloc(OBJ_SIZE);
 
