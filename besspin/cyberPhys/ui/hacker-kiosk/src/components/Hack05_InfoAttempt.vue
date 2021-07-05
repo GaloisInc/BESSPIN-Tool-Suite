@@ -4,11 +4,26 @@
 -->
 <template>
   <div id="hack05_info_attempt">
+
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack05_infoAttempt.webm" type="video/webm">
+      </video>
+      <div id="bg"></div>
+
+
     <button v-if="canContinue" class="hack05-btn img-btn" @click="hackInfotainment()"></button>
   </div>
 </template>
 
 <style scoped>
+ #bg {
+    background-image: url('/hack05_infoAttempt/hack05_infoAttempt.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
   #hack05_info_attempt {
     background-image: url('/hack05_infoAttempt/hack05_infoAttempt.png');
     height: 1920px;

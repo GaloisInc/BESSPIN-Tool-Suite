@@ -6,14 +6,27 @@ No action needed
 --> 
 <template>
   <div id="hack15">
+
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack15_solution.webm" type="video/webm">
+      </video>
+      <!-- <div id="bg"></div> -->
+
       <router-link v-if="canContinue" class="hack15-btn img-btn" to="/hack02_intro" tag="button">
       </router-link>
   </div>
 </template>
 
 <style scoped>
-  #hack15 {
+ #bg {
     background-image: url('/hack15_solution/hack15_solution_noBTN.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #hack15 {
     height: 1920px;
     width: 1080px;
     text-align: center;

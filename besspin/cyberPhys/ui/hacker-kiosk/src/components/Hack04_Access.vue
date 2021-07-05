@@ -7,15 +7,30 @@ TODO:
 
 -->
 <template>
+
   <div id="hack04_access">
+
+
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack04_access.webm" type="video/webm">
+      </video>
+      <div id="bg"></div>
+
       <button class="hack04-btn img-btn" @click="next()">
       </button>
   </div>
 </template>
 
 <style scoped>
-  #hack04_access {
+  #bg {
     background-image: url('/hack04_access/hack04_access.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #hack04_access {
     height: 1920px;
     width: 1080px;
     text-align: center;

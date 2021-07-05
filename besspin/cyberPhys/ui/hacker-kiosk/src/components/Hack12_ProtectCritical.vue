@@ -4,24 +4,11 @@
 
 TODO:
 * @podhrmic hack OTA server again, so CHERI FreeRTOS can be hacked (based on the previous scenario switch)
-* @losborn add logic for the buttons - they change only if the hack is OK, mirror the logic from the baseline scenario
 --> 
 <template>
   <div id="hack12">
-      <!-- TODO: mirror behavior from Hack8_page so the buttons can change colors -->
-      <!--
-      <router-link class="hack12-brake-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
-      </router-link>
-
-      <router-link class="hack12-accel-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
-      </router-link>
-
-      <router-link class="hack12-steering-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
-      </router-link>
-
-      <router-link class="hack12-trans-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
-      </router-link>
-      -->
+      <video :class="webcamEnabled ? 'webcamFeed' : ''" autoplay="true" id="videoElement" loop></video>
+      <div id="bg"></div>
 
       <button :class="[!brakeECUOn ? 'hack08-brakes-btn-active' : '', 'hack12-brake-btn', 'img-btn']" @click="toggleBrakes()">
       </button>
@@ -35,7 +22,6 @@ TODO:
       <button :class="[!transDrive ? 'hack08-trans-btn-active' : '', 'hack12-trans-btn', 'img-btn']" @click="toggleTrans()">
       </button>
 
-      <!--button v-if="clickCount >= 1" @click="next()" class="hack08-next-btn img-btn"></button-->
       <router-link v-if="clickCount >= 1" class="hack08-next-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
       </router-link>
 
@@ -44,14 +30,27 @@ TODO:
 </template>
 
 <style scoped>
-  #hack12 {
+  #bg {
     /* TODO: Replace with BG image that has button subtitles */
     background-image: url('/hack12_protectCritical/hack12_protectCritical_protected_critInput_noBTN.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .webcamFeed {
+    position: absolute;
+    margin: auto;
+    top: 540px;
+    left: 75px;
+    height: 670px;
+  }
+  #hack12 {
     height: 1920px;
     width: 1080px;
     text-align: center;
   }
-
   .hack12-brake-btn {
     top: 1320px;
     left: 200px;
@@ -117,6 +116,17 @@ TODO:
   const electron = require('electron')
   const ipc = electron.ipcRenderer;
 
+  const hacks = {
+    NONE: 0,
+    BRAKES: 1,
+    STEER: 2,
+    TRANS: 3,
+    ACCEL: 4,
+  }
+
+  const transHackSrc = "/videos/hack12_protectCritical_protected_critInput TRANS.webm"
+  const accelHackSrc = "/videos/hack12_protectCritical_protected_critInput ACCEL.webm"
+
   export default {
     name: 'Hack12_ProtectCritical',
     props: {
@@ -128,6 +138,7 @@ TODO:
         lkaOn: true,
         transDrive: true,
         clickCount: 0,
+        webcamEnabled: false,
         poller: setInterval(() => { this.pollState() }, 500)
       }
     },
@@ -149,6 +160,39 @@ TODO:
       });
     },
     methods: {
+      enableWebcamFeed(feed_id) {
+        var video = document.querySelector("#videoElement");
+        if (navigator.mediaDevices.getUserMedia) {
+          navigator.mediaDevices.getUserMedia({ video: true })
+          .then( (stream) => {
+            video.srcObject = stream;
+          })
+          .catch( () => {
+            console.log("Unable to initialize webcam feed ", feed_id);
+          });
+        }
+      },
+
+      // The video feed on this page has 5 different states.
+      // 1. No hack selected
+      // 2. Brakes (Webcam Feed)
+      // 3. Steering (Webcam Feed)
+      // 4. Transmission
+      // 5. Accelerator
+      swapVideoFeed(feed_id) {
+        this.webcamEnabled = false;
+        var video = document.querySelector("#videoElement");
+        if(feed_id == hacks.STEER || feed_id == hacks.BRAKES) {
+          this.webcamEnabled = true;
+          this.enableWebcamFeed(feed_id);
+        } else if(feed_id == hacks.TRANS) {
+          video.srcObject = null;
+          video.src =  transHackSrc;
+        } else if(feed_id == hacks.ACCEL) {
+          video.srcObject = null;
+          video.src = accelHackSrc;
+        }
+      },
       pollState() {
         ipc.send('zmq-poll', []);
       },
@@ -156,21 +200,25 @@ TODO:
         this.clickCount++;
         console.log("[click] brakeECUOn = " + this.brakeECUOn);
         ipc.send('button-pressed', 'critical_exploit', 'brakes');
+        this.swapVideoFeed(hacks.BRAKES);
       },
       toggleAccel() {
         this.clickCount++;
         console.log("[click] acceleratorNormal = " + this.acceleratorNormal);
         ipc.send('button-pressed', 'critical_exploit', 'throttle');
+        this.swapVideoFeed(hacks.ACCEL);
       },
       toggleSteering() {
         this.clickCount++;
         console.log("[click] lkaOn = " + this.lkaOn);
         ipc.send('button-pressed', 'critical_exploit', 'lkas');
+        this.swapVideoFeed(hacks.STEER);
       },
       toggleTrans() {
         this.clickCount++;
         console.log("[click] transDrive = " + this.transDrive);
         ipc.send('button-pressed', 'critical_exploit', 'transmission');
+        this.swapVideoFeed(hacks.TRANS);
       }
     }
   };

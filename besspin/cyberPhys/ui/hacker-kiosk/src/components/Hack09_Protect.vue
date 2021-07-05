@@ -5,6 +5,12 @@
 -->
 <template>
   <div id="hack09">
+
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack09_protect.webm" type="video/webm">
+      </video>
+      <div id="bg"></div>
+
       <button class="hack09-info-btn img-btn" @click="protectInfo()">
       </button>
       <button class="hack09-crit-btn img-btn" @click="protectCrit()">
@@ -13,8 +19,15 @@
 </template>
 
 <style scoped>
-  #hack09 {
+  #bg {
     background-image: url('/hack09_protect/hack09_protect.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #hack09 {
     height: 1920px;
     width: 1080px;
     text-align: center;
