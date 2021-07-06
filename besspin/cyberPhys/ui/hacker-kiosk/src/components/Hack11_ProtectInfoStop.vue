@@ -8,14 +8,26 @@ TODO:
 -->
 <template>
   <div id="hack11">
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack11_protectInfoStop.webm" type="video/webm">
+      </video>
+      <!-- <div id="bg"></div> -->
+
       <router-link class="hack11-btn img-btn" to="/hack14_existential" tag="button">
       </router-link>
   </div>
 </template>
 
 <style scoped>
-  #hack11 {
+ #bg {
     background-image: url('/hack11_protectInfoStop/hack11_protectInfoStop_noBTN.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #hack11 {
     height: 1920px;
     width: 1080px;
     text-align: center;

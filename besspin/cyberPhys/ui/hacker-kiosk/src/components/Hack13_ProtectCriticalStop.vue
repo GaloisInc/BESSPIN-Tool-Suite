@@ -5,14 +5,27 @@
 --> 
 <template>
   <div id="hack13">
+
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack13_protectCriticalStop.webm" type="video/webm">
+      </video>
+      <!-- <div id="bg"></div> -->
+
       <router-link class="hack13-btn img-btn" to="/hack14_existential" tag="button">
       </router-link>
   </div>
 </template>
 
 <style scoped>
-  #hack13 {
+ #bg {
     background-image: url('/hack13_protectCriticalStop/hack13_protectCriticalStop_noBTN.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #hack13 {
     height: 1920px;
     width: 1080px;
     text-align: center;

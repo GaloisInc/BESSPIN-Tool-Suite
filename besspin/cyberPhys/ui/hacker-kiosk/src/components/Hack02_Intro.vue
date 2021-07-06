@@ -14,6 +14,11 @@ TODO:
 <template>
   <div id="hack02_intro">
 
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/H_2_Connected_World_v6.webm" type="video/webm">
+      </video>
+      <div id="bg"></div>
+
       <router-link class="hack02-btn-back img-btn" to="/" tag="button">
       </router-link>
 
@@ -23,8 +28,22 @@ TODO:
 </template>
 
 <style scoped>
-  #hack02_intro {
+  #bg {
     background-image: url('/hack02_intro/hack02_intro.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #videoElement {
+    position: absolute;
+    margin: auto;
+    top: 580px;
+    left:0px;
+    height: 870px;
+  }
+  #hack02_intro {
     height: 1920px;
     width: 1080px;
     text-align: center;
