@@ -249,7 +249,7 @@ class LedManagerComponent(ComponentPoller):
 
     def update_leds(self):
         """update pixels to values inside led strings"""
-        self.client.put_pixels(self.pixel_array.tolist())
+        self.client.put_pixels((self.pixel_array * cconf.BRIGHTNESS_FACTOR).tolist())
 
     def update_pattern(self, pattern_name):
         """update the pattern to display"""

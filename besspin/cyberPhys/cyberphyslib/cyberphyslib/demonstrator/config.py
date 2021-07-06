@@ -10,6 +10,9 @@ Cyberphys Demonstrator Configuration Variables
 # directory of ignition stations
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
+# LED Brightness Factor
+BRIGHTNESS_FACTOR = 0.8
+
 # port timeouts
 SCENARIO_TIMEOUT = 5*60 # s
 CC_TIMEOUT = 60 # s
