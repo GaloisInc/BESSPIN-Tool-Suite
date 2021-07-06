@@ -24,8 +24,10 @@ TODO:
       <button :class="[!transDrive ? 'hack08-trans-btn-active' : '', 'hack12-trans-btn', 'img-btn']" @click="toggleTrans()">
       </button>
 
-      <router-link v-if="clickCount >= 1" class="hack08-next-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
-      </router-link>
+      <!-- <router-link v-if="clickCount >= 1" class="hack08-next-btn img-btn" to="/hack13_protect_critical_stop" tag="button">
+      </router-link> -->
+      <button v-if="clickCount >= 1" @click="next()" class="hack12-next-btn img-btn"></button>
+
 
 
   </div>
@@ -111,6 +113,14 @@ TODO:
     background-position-x: 0px;
     background-position-y: 0px;
   }
+  .hack12-next-btn {
+    background-image: url('/hack14_existential/hack14_existential_continue_btn.png');
+    width: calc(716px * .7);
+    height: calc(272px * .7);
+    background-size: 70%;
+    top: 1700px;
+    left: 340px;
+  }
 </style>
 
 
@@ -162,6 +172,10 @@ TODO:
       });
     },
     methods: {
+      next() {
+        ipc.send('button-pressed', 'next', []);
+        this.$router.push({ name: 'hack13_protect_critical_stop' });
+      },
       enableWebcamFeed(feed_id) {
         var video = document.querySelector("#videoElement");
         if (navigator.mediaDevices.getUserMedia) {
