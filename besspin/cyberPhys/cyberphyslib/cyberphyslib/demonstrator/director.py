@@ -205,7 +205,8 @@ class IgnitionDirector:
     def component_ready_send(self, component_id):
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_READY,
-                             data=struct.pack(component_id))
+                             data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY,
+                                              component_id))
         self.cc_recvr.send(msg)
 
     def component_error_send(self, component_id, error_id):
