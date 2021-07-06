@@ -11,7 +11,7 @@ TODO:
       <video autoplay="true" id="videoElement" loop>
         <source src="/videos/hack11_protectInfoStop.webm" type="video/webm">
       </video>
-      <!-- <div id="bg"></div> -->
+      <div id="bg"></div>
 
       <router-link class="hack11-btn img-btn" to="/hack14_existential" tag="button">
       </router-link>
@@ -20,7 +20,7 @@ TODO:
 
 <style scoped>
  #bg {
-    background-image: url('/hack11_protectInfoStop/hack11_protectInfoStop_noBTN.png');
+    background-image: url('/hack11_protectInfoStop/hack11_protectInfoStop.png');
     height: 100vh;
     width: 100vw;
     position: absolute;

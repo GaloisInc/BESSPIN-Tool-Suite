@@ -7,7 +7,9 @@ TODO:
 --> 
 <template>
   <div id="hack12">
-      <video :class="webcamEnabled ? 'webcamFeed' : ''" autoplay="true" id="videoElement" loop></video>
+      <video :class="webcamEnabled ? 'webcamFeed' : ''" autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack15_solution.webm" type="video/webm">
+      </video>
       <div id="bg"></div>
 
       <button :class="[!brakeECUOn ? 'hack08-brakes-btn-active' : '', 'hack12-brake-btn', 'img-btn']" @click="toggleBrakes()">
