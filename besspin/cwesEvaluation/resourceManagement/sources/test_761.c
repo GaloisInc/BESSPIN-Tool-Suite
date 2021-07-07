@@ -21,20 +21,19 @@
 
 int contains_char(char c) {
     char *str;
-    int i = 0;
     str = (char*)MALLOC(20*sizeof(char));
     if (str == NULL) {
         printf("<INVALID> Failed to Malloc.\n");
         return FAILURE;
     }
     strcpy(str, "Search!");
-    while (i < strlen(str)) {
-        if (str[i] == c) {
+    while (*str != 0) {
+        if (*str == c) {
             FREE(str);
             printf("\n<MATCHED_CHAR> free string and return success\n");
             return SUCCESS;
         }
-        i = i + 1;
+        str = str + 1;
     }
     FREE(str); //CRASH
     printf("\n<DEREFERENCE-VIOLATION>\n");
