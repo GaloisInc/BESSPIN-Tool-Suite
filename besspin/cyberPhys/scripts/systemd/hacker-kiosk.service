@@ -1,0 +1,14 @@
+[Unit]
+Description=Hacker Kiosk Service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=pi
+ExecStart=/usr/bin/env python3 /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk/kiosk-backend.py
+
+[Install]
+WantedBy=multi-user.target

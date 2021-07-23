@@ -10,6 +10,9 @@ Cyberphys Demonstrator Configuration Variables
 # directory of ignition stations
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
 
+# LED Brightness Factor
+BRIGHTNESS_FACTOR = 0.8
+
 # port timeouts
 SCENARIO_TIMEOUT = 5*60 # s
 CC_TIMEOUT = 60 # s
@@ -121,6 +124,7 @@ class DemonstratorNetworkConfig:
     def from_setup_env(cls, fname: str):
         """create instance from Besspin target setupEnv.json"""
         import json, os, re
+        print(f"Loading config from {fname}")
         assert os.path.exists(fname)
         with open(fname, "r") as f:
             senv = json.load(f)
@@ -137,6 +141,16 @@ class DemonstratorNetworkConfig:
                     network_ports["cyberphysNetworkPorts"][pname] = int(se["val"])
 
         return cls(**{**csenv, **network_ports})
+    
+    def getCmdNetworkNodes(self, component_name: str) -> (str, [str]):
+        "Return a tuple (host_ip, [subcribers_ip])"
+        nodes = self.nodes
+        cmdport = self.port_network_commandPort
+        host = nodes[component_name]
+        subscribers = [ f"{node}:{cmdport}" for node in nodes.values() if node != host]
+        host = f"{host}:{cmdport}"
+        print(f"host: {host}, subscribers: {subscribers}")
+        return host, subscribers
 
     def __init__(self,
                  cyberPhysWhitelists = None,

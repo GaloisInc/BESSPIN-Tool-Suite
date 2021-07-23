@@ -1,15 +1,33 @@
+<!--
+
+"SSITH protects systems common means of exploitation"
+
+-->
 <template>
   <div id="hack09">
-      <router-link class="hack09-info-btn img-btn" to="/hack10_protect_info_attempt" tag="button">
-      </router-link>
-      <router-link class="hack09-crit-btn img-btn" to="/hack10_protect_info_attempt" tag="button">
-      </router-link>
+
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack09_protect.webm" type="video/webm">
+      </video>
+      <div id="bg"></div>
+
+      <button class="hack09-info-btn img-btn" @click="protectInfo()">
+      </button>
+      <button class="hack09-crit-btn img-btn" @click="protectCrit()">
+      </button>
   </div>
 </template>
 
 <style scoped>
-  #hack09 {
+  #bg {
     background-image: url('/hack09_protect/hack09_protect.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #hack09 {
     height: 1920px;
     width: 1080px;
     text-align: center;
@@ -43,18 +61,36 @@
 
 
 <script>
+  const electron = require('electron')
+  const ipc = electron.ipcRenderer;
+
   export default {
     name: 'Hack09_Protect',
     props: {
     },
     data() {
       return {
-        messages: []
+        messages: [],
+        poller: setInterval(() => { this.pollState() }, 500)
       }
     },
     mounted() {
     },
+    unmounted() {
+      clearInterval(this.poller);
+    },
     methods: {
+      pollState() {
+        ipc.send('zmq-poll', []);
+      },
+      protectCrit() {
+        ipc.send('button-pressed', 'ssith_ecu', []);
+        this.$router.push({ name: 'hack12_protect_critical' });
+      },
+      protectInfo() {
+        ipc.send('button-pressed', 'ssith_infotainment', []);
+        this.$router.push({ name: 'hack10_protect_info_attempt' });
+      },
     }
   };
 </script>

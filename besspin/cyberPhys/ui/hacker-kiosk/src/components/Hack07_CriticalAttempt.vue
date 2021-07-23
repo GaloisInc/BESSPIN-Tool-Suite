@@ -1,11 +1,33 @@
+<!--
+
+"ATTEMPTING EXPLOIT OF CRITICAL SYSTEMS"
+
+No action needed
+
+-->
 <template>
   <div id="hack07">
+
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack07_criticalAttempt.webm" type="video/webm">
+      </video>
+      <div id="bg"></div>
+
       <router-link class="hack07-btn img-btn" to="/hack08_critical_exploit" tag="button">
       </router-link>
   </div>
 </template>
 
 <style scoped>
+
+ #bg {
+    background-image: url('/hack07_criticalAttempt/hack07_criticalAttempt.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
   #hack07 {
     background-image: url('/hack07_criticalAttempt/hack07_criticalAttempt.png');
     height: 1920px;

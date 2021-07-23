@@ -3,13 +3,13 @@ Project: SSITH CyberPhysical Demonstrator
 Name: ../cyberphyslib/cyberphyslib/canlib/componentids.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 15 June 2021
+Date: 25 June 2021
 This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 """
 
 SCENARIO_BASELINE = 0x11
-SCENARIO_SECURE_ECU = 0x12
-SCENARIO_SECURE_INFOTAINMENT = 0x13
+SCENARIO_SECURE_INFOTAINMENT = 0x12
+SCENARIO_SECURE_ECU = 0x13
 BESSPIN_TOOL = 0x20
 TARGET_1 = 0x21
 TARGET_2 = 0x22
@@ -33,3 +33,14 @@ INFOTAINMENT_THIN_CLIENT = 0x60
 INFOTAINMENT_SERVER_1 = 0x61
 INFOTAINMENT_SERVER_2 = 0x62
 INFOTAINMENT_SERVER_3 = 0x63
+OTA_UPDATE_SERVER_1 = 0x64
+OTA_UPDATE_SERVER_2 = 0x65
+OTA_UPDATE_SERVER_3 = 0x66
+BUTTON_STATION_1 = 0x01
+BUTTON_STATION_2 = 0x02
+BUTTON_STATION_3 = 0x03
+BUTTON_VOLUME_DOWN = 0x10
+BUTTON_VOLUME_UP = 0x11
+SENSOR_THROTTLE = 0xBE
+SENSOR_BRAKE = 0xBF
+ERROR_UNSPECIFIED = 0xF0

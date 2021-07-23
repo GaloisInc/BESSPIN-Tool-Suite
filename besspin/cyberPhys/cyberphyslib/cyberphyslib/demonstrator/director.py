@@ -86,35 +86,32 @@ class IgnitionDirector:
     ]
 
     hacks2patterns = {
-        canlib.HACK_NONE: ledm.LedPatterns.NOMINAL,# TODO?
-        canlib.HACK_OTA: ledm.LedPatterns.NOMINAL,
+        canlib.HACK_NONE: ledm.LedPatterns.NOMINAL,
+        #canlib.HACK_OTA: ledm.LedPatterns.NOMINAL, # TODO: add pattern for OTA hack?
         canlib.HACK_BRAKE: ledm.LedPatterns.BRAKE_HACK,
         canlib.HACK_THROTTLE: ledm.LedPatterns.THROTTLE_HACK,
         canlib.HACK_TRANSMISSION: ledm.LedPatterns.TRANSMISSION_HACK,
         canlib.HACK_LKAS: ledm.LedPatterns.STEERING_HACK,
-        canlib.HACK_INFOTAINMENT_1: ledm.LedPatterns.ALL_ON,# TODO
-        canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO
+        #canlib.HACK_INFOTAINMENT_1: ledm.LedPatterns.ALL_ON,# TODO: add pattern for infotainment hack
+        #canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO add pattern for infotainment hack
     }
 
     @classmethod
     def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
         """produce director from the Besspin environment setup file"""
-        # NOTE: should this be hard-coded?
-        # FIXME: what fields should I use from the setupEnv?
-        ip_admin = f"{net_conf.ip_AdminPc}:{net_conf.port_component_commander}"
-        ip_director = f"{net_conf.ip_SimPc}:{net_conf.port_component_interactiveManager}"
+        cmd_host, cmd_subscribers = net_conf.getCmdNetworkNodes("SimPc")
         ip_sim = net_conf.ip_SimPc
         can_port = net_conf.port_network_canbusPort
         info_port = net_conf.port_network_infotainmentUiPort
-        return cls(ip_admin, ip_director, ip_sim, can_port, info_port,
-                   ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST,
-                   ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST,
-                   base_whitelist=net_conf.wl_BASELINE,
+        return cls(cmd_host, cmd_subscribers, ip_sim, can_port, info_port,
+                   ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST + [net_conf.ip_InfotainmentThinClient],
+                   ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST + [net_conf.ip_InfotainmentThinClient],
+                   base_whitelist=net_conf.wl_BASELINE + [net_conf.ip_InfotainmentThinClient],
                    apply_lists=cconf.APPLY_LISTS)
 
     def __init__(self,
-                 admin_addr,
-                 director_addr,
+                 cmd_host,
+                 cmd_nodes,
                  sim_ip,
                  can_port,
                  info_port,
@@ -136,6 +133,10 @@ class IgnitionDirector:
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
         self.scenario_timeout = cconf.SCENARIO_TIMEOUT
         self.cc_timeout = cconf.CC_TIMEOUT # 20 seconds
+
+        # Need to know what is the active scenario
+        # TODO: is there a better solution?
+        self.active_scenario = canlib.SCENARIO_BASELINE
 
         self.joystick_name = cconf.JOYSTICK_NAME
 
@@ -161,8 +162,7 @@ class IgnitionDirector:
         self.info_net = ccan.CanUdpNetwork("info-net", self.info_port, sip, blacklist=[sim_ip])
 
         # C&C message bus
-        nodes = [admin_addr, director_addr]
-        self.cc_recvr = canlib.TcpBus(director_addr, nodes)
+        self.cc_recvr = canlib.TcpBus(cmd_host, cmd_nodes)
 
         # input space as class members
         self.input_noncrit_fail = False
@@ -202,13 +202,23 @@ class IgnitionDirector:
         """
         self.machine.get_graph().draw(fname, prog='dot')
 
-    def status_send(self, canid, argument):
-        msg = extcan.Message(arbitration_id=canid, dlc=1, data=struct.pack("!B", argument))
+    def component_ready_send(self, component_id):
+        msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
+                             dlc=canlib.CAN_DLC_CMD_COMPONENT_READY,
+                             data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY,
+                                              component_id))
+        self.cc_recvr.send(msg)
+
+    def component_error_send(self, component_id, error_id):
+        msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
+                             dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
+                             data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR,
+                                              component_id, error_id))
         self.cc_recvr.send(msg)
 
 ### STATE ENTRY CALLBACKS
     def terminate_enter(self):
-        self.status_send(canlib.CAN_ID_CMD_COMPONENT_ERROR, 0x00)
+        self.component_error_send(canlib.IGNITION, canlib.ERROR_UNSPECIFIED)
         ignition_logger.debug("Termination State: Enter")
         self.is_finished = True
         self._handler.exit()
@@ -272,7 +282,7 @@ class IgnitionDirector:
         start_noncrit_component(speedo.Speedo())
 
         # startup the pedal monitor
-        start_noncrit_component(cjoy.PedalMonitorComponent())
+        start_noncrit_component(cjoy.PedalMonitorComponent(window_length=1000))
 
         # startup the joystick monitor
         start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
@@ -308,25 +318,32 @@ class IgnitionDirector:
             elif id == canlib.CAN_ID_CMD_HACK_ACTIVE:
                 hack_idx = struct.unpack("!B", msg.data)[0]
                 ignition_logger.debug(f"process cc: set hack active {hack_idx}")
-                if self._noncrit:
-                    ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
-                else:
-                    # TODO: FIXME: write test for this
+                # Process HACK_ACTIVE messages only in baseline scenario
+                if self.active_scenario == canlib.SCENARIO_BASELINE:
+                    # NOTE:  tread Led manager as a critical component
+                    #if self._noncrit:
+                    #    ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
+                    #else:
                     lm: ledm.LedManagerComponent = self._handler["ledm"]
                     lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
 
             elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
-                # NOTE: this is not agreed on
-                # FIXME: should different light color be associated with SSITH scenario?
-                # white/blue vs. the baseline green?
                 nmap = {
                     canlib.SCENARIO_BASELINE: "base",
                     canlib.SCENARIO_SECURE_ECU: "secure_ecu",
                     canlib.SCENARIO_SECURE_INFOTAINMENT: "secure_infotainment"}
                 scen_idx = struct.unpack("!B", msg.data)[0]
                 ignition_logger.debug(f"process cc: active scenario {scen_idx}")
+                self.active_scenario = scen_idx
                 cm: ccan.CanMultiverseComponent = self._handler["canm"]
                 cm.select_network(nmap[scen_idx])
+                # Update LED patterns
+                lm: ledm.LedManagerComponent = self._handler["ledm"]
+                if scen_idx == canlib.SCENARIO_BASELINE:
+                    pattern = ledm.LedPatterns.NOMINAL
+                else:
+                    pattern = ledm.LedPatterns.SSITH
+                lm.update_pattern(ledm.LedPatterns(pattern))
 
             elif id == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
                 aut_idx = struct.unpack("!B", msg.data)[0]
@@ -343,7 +360,7 @@ class IgnitionDirector:
 
     def ready_enter(self):
         ignition_logger.debug("Ready state: enter")
-        self.status_send(canlib.CAN_ID_CMD_COMPONENT_READY, 0x00)
+        self.component_ready_send(canlib.IGNITION)
         scenario_start = time.time()
         while((time.time() - scenario_start) < self.scenario_timeout):
             cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
@@ -355,6 +372,7 @@ class IgnitionDirector:
                 return
             else: # CC timeout condition
                 # NOTE: if jmonitor has failed assume user input is present
+                #activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
                 activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
 
                 # if in self drive mode and activity has occurred, get out
@@ -386,7 +404,7 @@ class IgnitionDirector:
     def noncrit_failure_enter(self):
         ignition_logger.debug("Noncrit_failure state: enter")
         ignition_logger.error("Ignition achieved a noncritical error. Continuing anyway...")
-        self.status_send(canlib.CAN_ID_CMD_COMPONENT_ERROR, 0x01)
+        self.component_error_send(canlib.LED_COMPONENT,canlib.ERROR_UNSPECIFIED)
         self._noncrit = True
         self.default_input()
         return

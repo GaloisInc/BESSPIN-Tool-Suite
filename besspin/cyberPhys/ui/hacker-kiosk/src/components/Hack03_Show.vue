@@ -1,13 +1,35 @@
+<!--
+
+"This demo will show..."
+
+No action needed here
+
+-->
 <template>
+
   <div id="hack03_show">
+
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack03_show.webm" type="video/webm">
+      </video>
+      <div id="bg"></div>
+
+
       <router-link class="hack03-btn img-btn" to="/hack04_access" tag="button">
       </router-link>
   </div>
 </template>
 
 <style scoped>
-  #hack03_show {
+  #bg {
     background-image: url('/hack03_show/hack03_show.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  #hack03_show {
     height: 1920px;
     width: 1080px;
     text-align: center;

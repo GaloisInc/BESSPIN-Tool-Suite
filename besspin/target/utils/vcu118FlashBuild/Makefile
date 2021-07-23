@@ -6,7 +6,7 @@ ifeq ($(XLEN),32)
 	ARCH_ABI := -march=rv32im -mabi=ilp32
 else 
 	ifeq ($(BIN_SOURCE),SRI_Cambridge)
-		ARCH_ABI := -march=rv64imafdcxcheri -mabi=l64pc128d
+		$(error Booting from flash is not supported for SRI_Cambridge binaries)
 	else
 		ARCH_ABI := -march=rv64imafdc -mabi=lp64d
 	endif

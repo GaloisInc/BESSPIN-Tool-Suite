@@ -57,4 +57,5 @@ class RelayManager(ccomp.Component):
         self.turn_on_relays()
         time.sleep(self.relay_delay)
         self.turn_off_relays()
+        printAndLog(f"{self.name} Reset completed, sending READY 0 message")
         self.send_message(ccomp.Message(f"READY 0"), getSetting('cyberPhysComponentBaseTopic'))

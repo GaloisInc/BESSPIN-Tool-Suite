@@ -29,7 +29,7 @@ class Commander(ccomp.ComponentPoller):
     """
     READY_MSG_TIMEOUT = 10.0 #[s]
     CC_TIMEOUT = 0.1
-    POLL_FREQ = 1.0
+    POLL_FREQ = 0.5
     DEBUG = True
 
     targetIds = {
@@ -46,6 +46,9 @@ class Commander(ccomp.ComponentPoller):
         canlib.INFOTAINMENT_SERVER_1: canlib.TARGET_4,
         canlib.INFOTAINMENT_SERVER_2: canlib.TARGET_5,
         canlib.INFOTAINMENT_SERVER_3: canlib.TARGET_6,
+        canlib.OTA_UPDATE_SERVER_1: canlib.TARGET_4,
+        canlib.OTA_UPDATE_SERVER_2: canlib.TARGET_5,
+        canlib.OTA_UPDATE_SERVER_3: canlib.TARGET_6,
         }
 
     targetList = [k for k in targetIds.keys()]
@@ -54,6 +57,7 @@ class Commander(ccomp.ComponentPoller):
         # Communication with other components
         name = "commander"
         in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts(name)
+        printAndLog(f"Starting {name} with in_socks: {in_socks} and out_socks: {out_socks}, sample freq: {self.POLL_FREQ}[Hz]", doPrint=False)
         super().__init__(name, in_socks, out_socks, sample_frequency=self.POLL_FREQ)
 
         self.state = CommanderStates.BOOT
@@ -71,7 +75,7 @@ class Commander(ccomp.ComponentPoller):
 
         # C&C Network connection
         host, subscribers = besspin.cyberPhys.launch.getNetworkNodes("AdminPc")
-        self.cc_bus = canlib.TcpBus(host, subscribers)
+        self.cmd_bus = canlib.TcpBus(host, subscribers)
 
         self.start_poller()
 
@@ -139,14 +143,14 @@ class Commander(ccomp.ComponentPoller):
             dlc=8,
             data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, componentId, 0))
         printAndLog(f"Commander sending {msg}",doPrint=True)
-        self.cc_bus.send(msg)
+        self.cmd_bus.send(msg)
 
     def sendComponentReady(self, componentId):
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
             dlc=4,
             data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, componentId))
         #printAndLog(f"Commander sending {msg}",doPrint=False)
-        self.cc_bus.send(msg)
+        self.cmd_bus.send(msg)
 
     def processCmdMsg(self, msg):
         """process CMD message
@@ -154,6 +158,8 @@ class Commander(ccomp.ComponentPoller):
         cid, data = msg.arbitration_id, msg.data
 
         try:
+            # TODO: fix the exception
+            # 'bytearray' object cannot be interpreted as an integer
             if cid == canlib.CAN_ID_CMD_RESTART:
                 dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, data)[0]
                 printAndLog(f"<{self.__class__.__name__}> Reset dev_id: {dev_id}", doPrint=Commander.DEBUG)
@@ -176,13 +182,14 @@ class Commander(ccomp.ComponentPoller):
         TODO: when to reset ALL targets?
         """
         # Periodically send CMD_COMPONENT_READY()
-        if (time.time() - self.last_ready_msg) > self.READY_MSG_TIMEOUT:
-            self.sendComponentReady(canlib.BESSPIN_TOOL)
-        
+        #if (time.time() - self.last_ready_msg) > self.READY_MSG_TIMEOUT:
+        #    self.sendComponentReady(canlib.BESSPIN_TOOL)
+        # NOTE: sending CMD_COMPONENT_READY temporaily disabled
+        # because it was interfering with Ignition's state machine
+
         # Check if there is a C&C restart request (single target)
-        cc_recv = self.cc_bus.recv(timeout=self.CC_TIMEOUT)
+        cc_recv = self.cmd_bus.recv(timeout=self.CC_TIMEOUT)
         if cc_recv:
-            print(cc_recv)
             self.processCmdMsg(cc_recv)
     
     def restartComponent(self, componentId):
@@ -197,9 +204,14 @@ class Commander(ccomp.ComponentPoller):
             devId = self.componentIds[componentId]
             targetId = self.targetIds[devId]
             printAndLog(f"<{self.__class__.__name__}> Restarting infotainment on target {targetId}")
-            xTarget = getSetting('targetObj',targetId=targetId)
-            xTarget.runCommand("/opt/kill_listeners.sh")
-            infotainmentserver.restart(targetId)
+            self.send_message(ccomp.Message(f"INFOTAINMENT_RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
+        elif componentId == canlib.OTA_UPDATE_SERVER_1 or\
+           componentId == canlib.OTA_UPDATE_SERVER_2 or\
+           componentId == canlib.OTA_UPDATE_SERVER_3:
+            devId = self.componentIds[componentId]
+            targetId = self.targetIds[devId]
+            printAndLog(f"<{self.__class__.__name__}> Restarting infotainment on target {targetId}")
+            self.send_message(ccomp.Message(f"OTA_RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
         else:
             printAndLog(f"<{self.__class__.__name__}> Unknown component ID {componentId}")
 

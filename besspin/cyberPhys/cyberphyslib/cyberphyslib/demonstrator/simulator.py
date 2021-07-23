@@ -148,7 +148,7 @@ class Sim(component.ComponentPoller):
         self._scenario = Scenario(config.BEAMNG_SCENARIO_MAP, 'SSITH',
                                   description='Drive protected.')
         self._vehicle = Vehicle('ego_vehicle', licence='SSITH', **config.BEAMNG_VEHICLE_CONFIG,
-                                color='Red')
+                                color='Black')
 
         gforces = GForces()
         electrics = Electrics()

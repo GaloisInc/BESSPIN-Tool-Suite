@@ -1,13 +1,33 @@
+<!--
+
+"SSITH Protection enabled (Secure Infotainment scenario)"
+
+TODO:
+* @lolsborn animation to be here?
+* @lolsborn Button to next page links to Hack14 page 
+-->
 <template>
   <div id="hack11">
-      <router-link class="hack11-btn img-btn" to="/hack12_protect_critical" tag="button">
+      <video autoplay="true" id="videoElement" loop>
+        <source src="/videos/hack11_protectInfoStop.webm" type="video/webm">
+      </video>
+      <div id="bg"></div>
+
+      <router-link class="hack11-btn img-btn" to="/hack14_existential" tag="button">
       </router-link>
   </div>
 </template>
 
 <style scoped>
+ #bg {
+    background-image: url('/hack11_protectInfoStop/hack11_protectInfoStop.png');
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
   #hack11 {
-    background-image: url('/hack11_protectInfoStop/hack11_protectInfoStop_noBTN.png');
     height: 1920px;
     width: 1080px;
     text-align: center;

@@ -198,4 +198,4 @@ class JoystickMonitorComponent(ComponentPoller):
     @property
     def is_active(self):
         """evaluate activity condition"""
-        return np.array([w.is_active for w in self.window]).all() if self.window else False
+        return np.array([w.is_active for w in self.window]).any() if self.window else False

@@ -68,8 +68,8 @@ def copyInfotainmentServerFiles(tarName, targetId=None):
     # grab the pre-built binary
     osImage = getSetting('osImage', targetId=targetId)
     infotainmentBinDir = getBinDir('infotainment-server', targetId=targetId)
-    cpFilesToBuildDir(infotainmentBinDir, pattern="infotainment_server", targetId=targetId)
-    tarFiles = ["infotainment_server"]
+    cpFilesToBuildDir(infotainmentBinDir, pattern="infotainment_server.elf", targetId=targetId)
+    tarFiles = ["infotainment_server.elf"]
 
     infotainmentAppDir = getCyberphysAppDir('infotainment-server')
     runtimeFilesDir = os.path.join(infotainmentAppDir, osImage)

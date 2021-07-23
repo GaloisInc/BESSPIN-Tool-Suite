@@ -16,6 +16,8 @@
 
 <script>
 import Console from './components/Console.vue'
+const electron = require('electron')
+const ipc = electron.ipcRenderer;
 
 export default {
   name: 'App',
@@ -24,10 +26,26 @@ export default {
   },
   data() {
     return {
-      state: "normal"
+      state: "normal",
+      poller: setInterval(() => { this.pollState() }, 100)
     }
   },
+  mounted() {
+    ipc.on('zmq-results',(event, q) => {
+      q.forEach(item => {
+        if(this.state != item.retval) {
+          this.state = item.retval;
+        }
+      });
+    });
+  },
+  unmounted() {
+    clearInterval(this.poller);
+  },
   methods: {
+    pollState() {
+      ipc.send('zmq-poll', []);
+    },
     changeState(state) {
       this.state = state;
     }
