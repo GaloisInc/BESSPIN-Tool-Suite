@@ -556,7 +556,7 @@ def loadCyberPhysConfiguration (configData):
         setExtraTargetSettings(targetId=iTarget)
 
     #Check that the unmixable options are consistent
-    unmixableSettings = ["useCustomTargetIp", "useCustomHwTarget", "vcu118Mode"]
+    unmixableSettings = ["useCustomTargetIp", "useCustomHwTarget"]
     for unmixableSetting in unmixableSettings:
         t1Val = getSetting(unmixableSetting,targetId=1)
         for iTarget in range(2,getSetting('nTargets')+1):
