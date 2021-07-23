@@ -320,11 +320,12 @@ class IgnitionDirector:
                 ignition_logger.debug(f"process cc: set hack active {hack_idx}")
                 # Process HACK_ACTIVE messages only in baseline scenario
                 if self.active_scenario == canlib.SCENARIO_BASELINE:
-                    if self._noncrit:
-                        ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
-                    else:
-                        lm: ledm.LedManagerComponent = self._handler["ledm"]
-                        lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
+                    # NOTE:  tread Led manager as a critical component
+                    #if self._noncrit:
+                    #    ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
+                    #else:
+                    lm: ledm.LedManagerComponent = self._handler["ledm"]
+                    lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
 
             elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
                 nmap = {
