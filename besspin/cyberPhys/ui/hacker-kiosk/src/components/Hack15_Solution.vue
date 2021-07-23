@@ -10,7 +10,7 @@ No action needed
       <video autoplay="true" id="videoElement" loop>
         <source src="/videos/hack15_solution.webm" type="video/webm">
       </video>
-      <!-- <div id="bg"></div> -->
+      <div id="bg"></div>
 
       <router-link v-if="canContinue" class="hack15-btn img-btn" to="/hack02_intro" tag="button">
       </router-link>
@@ -19,7 +19,7 @@ No action needed
 
 <style scoped>
  #bg {
-    background-image: url('/hack15_solution/hack15_solution_noBTN.png');
+    background-image: url('/hack15_solution/hack15_solution.png');
     height: 100vh;
     width: 100vw;
     position: absolute;
