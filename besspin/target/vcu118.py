@@ -129,6 +129,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     warnAndLog(f"{self.targetIdInfo}Network is not up on target. Trying again "
                             f"({self.debianNtkRetriesIdx+1}/{self.debianNtkRetriesMax})...")
                     self.runCommand ("ifdown eth0",exitOnError=False)
+                    self.runCommand ("ip addr flush dev eth0",exitOnError=False)
                 self.debianNtkRetriesIdx += 1
                 outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],exitOnError=False)
                 isSuccess, _, _, _ = outCmd
