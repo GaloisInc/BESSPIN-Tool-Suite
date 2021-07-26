@@ -45,7 +45,7 @@ import subprocess
 def page(f):
     """decorator for page action methods"""
     def inner(*args, **kwargs):
-        """TODO: make this log instead of print"""
+        """NOTE: make this log instead of print"""
         print(f">>>STATE: {f.__name__}")
         return f(*args, **kwargs)
     return inner
@@ -245,7 +245,7 @@ class HackerKiosk:
             if msg:
                 cid, data = msg.arbitration_id, msg.data
                 try:
-                    # TODO: we need to listen to the CAN_ID_CAR_X/Y/Z/R from the hacked server
+                    # NOTE: we need to listen to the CAN_ID_CAR_X/Y/Z/R from the hacked server
                     # Make sure we are listening for the right IP address
                     if cid == canlib.CAN_ID_CAR_X:
                         # Get X coordinate
@@ -266,7 +266,7 @@ class HackerKiosk:
             if msg:
                 cid, data = msg.arbitration_id, msg.data
                 try:
-                    # TODO: Do something else here?
+                    # NOTE: Do something else here?
                     print(f"<{self.__class__.__name__}> CMD_BUS CAN_ID={hex(cid)}, data={data}")
                 except Exception as exc:
                     print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
@@ -624,7 +624,7 @@ class HackerKiosk:
         Parse `arg` and upload & execute hacked/nominal
         binary to the target OTA server
         * Binary is target dependent (has a specific IP)
-        TODO: simplify / make it a pattern?
+        NOTE: simplify / make it a pattern?
         """
         if self.active_scenario == canlib.SCENARIO_BASELINE:
             if self.deploy_mode:
