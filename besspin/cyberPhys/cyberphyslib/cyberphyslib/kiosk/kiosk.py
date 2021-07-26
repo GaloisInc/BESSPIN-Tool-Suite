@@ -480,7 +480,11 @@ class HackerKiosk:
         self.exploit_complete = True
 
         self.execute_infotainment_hack(arg)
-        # TODO FIX THIS
+        # NOTE: we assume that the hack failed.
+        # To properly check ifthe hack was succesfull or not,
+        # we would have to listen to the hacked infotainment
+        # UDP traffic, and see if a state has changed *after*
+        # a button is pressed.
         self.ipc_msg['retval'] = "Hack Failed"
         self.ipc_msg['status'] = 200 # OK
 
