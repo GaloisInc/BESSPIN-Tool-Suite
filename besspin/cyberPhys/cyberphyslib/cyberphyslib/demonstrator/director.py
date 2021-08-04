@@ -312,6 +312,7 @@ class IgnitionDirector:
                 ignition_logger.debug(f"process cc: restart")
                 dev_id = struct.unpack("!I", msg.data)[0]
                 if dev_id == canlib.IGNITION:
+                    ignition_logger.debug("Director: restarting ignition from CMD_RESTART")
                     bsim: simulator.Sim = self._handler["beamng"]
                     bsim.restart_command()
 
@@ -383,6 +384,7 @@ class IgnitionDirector:
                 elif self.self_drive_mode or activity: # do nothing if self drive mode or user activity
                     pass
                 else:
+                    ignition_logger.debug("Director: no activity detected, switching to self-drive")
                     self.default_input()
                     self.input_self_drive = True
                     return
@@ -410,6 +412,7 @@ class IgnitionDirector:
         return
 
     def self_drive_enter(self):
+        ignition_logger.debug("Self drive state: enter")
         sim: simulator.Sim = self._handler["beamng"]
         msg = sim.enable_autopilot_command()
         self.default_input()
