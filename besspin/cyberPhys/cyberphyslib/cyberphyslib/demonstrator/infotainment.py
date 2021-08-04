@@ -95,7 +95,8 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         self._network = can_network
         self._sidx: int = 0
         self._sound: typ.Union[mixer.Sound, None] = None
-        self._volume = 0.5
+        # NOTE: disable infotainment music for now
+        self._volume = 0.0
         self._set_volume()
         self.play_sound()
 
