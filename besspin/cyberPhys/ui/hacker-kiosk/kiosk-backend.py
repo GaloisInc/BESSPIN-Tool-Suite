@@ -6,8 +6,8 @@ Author: Ethan Lew <elew@galois.com>, Michal Podhradsky <mpodhradsky@galois.com>,
 Date: 16 June 2021
 
 """
-
-DEPLOY_MODE = True
+# NOTE: Switch back to True when debian issues are resolved
+DEPLOY_MODE = False
 DEFAULT_PATH = "/home/pi/BESSPIN-Tool-Suite/besspin/base/utils/setupEnv.json"
 
 if __name__ == "__main__":
