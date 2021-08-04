@@ -109,14 +109,14 @@ class HackerKiosk:
 
     INFO_SERVER_HACKED_PATH =  "/home/pi/BESSPIN-Tool-Suite/BESSPIN-LFS/GFE/appsBinaries/infotainment-server/debian/hacked_server.elf"
     ECU_HACKS_PATH = "/home/pi/BESSPIN-Tool-Suite/BESSPIN-LFS/GFE/appsBinaries/ecu-hacks/"
-    BRAKES_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"brakesNominal"
-    BRAKES_HACKED_HACK_PATH = ECU_HACKS_PATH +"brakesHacked"
+    BRAKES_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"brakeNominal"
+    BRAKES_HACKED_HACK_PATH = ECU_HACKS_PATH +"brakeHacked"
     THROTTLE_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"throttleNominal"
     THROTTLE_HACKED_HACK_PATH = ECU_HACKS_PATH +"throttleHacked"
     LKAS_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"lkasNominal"
     LKAS_HACKED_HACK_PATH = ECU_HACKS_PATH +"lkasHacked"
-    TRANSMISSION_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"transmissionNominal"
-    TRANSMISSION_HACKED_HACK_PATH = ECU_HACKS_PATH +"transmissionHacked"
+    TRANSMISSION_NOMINAL_HACK_PATH = ECU_HACKS_PATH +"gearNominal"
+    TRANSMISSION_HACKED_HACK_PATH = ECU_HACKS_PATH +"gearHacked"
 
     # full name of the states
     state_names = [
@@ -661,7 +661,7 @@ class HackerKiosk:
                 print(res)
             else:
                 # Execute critical hack from the host
-                cmd = f""
+                cmd = f"{filename}"
                 subprocess.call(cmd,shell=True)
                 hack_ok = True
             # Update status only if hack_ok
@@ -686,7 +686,7 @@ class HackerKiosk:
                 print(res)
             else:
                 # Execute critical hack from the host
-                cmd = f""
+                cmd = f"{filename}"
                 subprocess.call(cmd,shell=True)
                 hack_ok = True
             # Update status only if hack_ok
@@ -711,7 +711,7 @@ class HackerKiosk:
                 print(res)
             else:
                 # Execute critical hack from the host
-                cmd = f""
+                cmd = f"{filename}"
                 subprocess.call(cmd,shell=True)
                 hack_ok = True
             # Update status only if hack_ok
@@ -737,7 +737,7 @@ class HackerKiosk:
                 print(res)
             else:
                 # Execute critical hack from the host
-                cmd = f""
+                cmd = f"{filename}"
                 subprocess.call(cmd,shell=True)
                 hack_ok = True
             # Update status only if hack_ok
