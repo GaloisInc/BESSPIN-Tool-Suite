@@ -120,13 +120,13 @@ class HackerKiosk:
 
     # full name of the states
     state_names = [
-                   "reset",
+                   "reset", # reset SSITH ECU scenario components here
                    "hack02_kiosk_intro",
                    "hack05_info_attempt",
                    "hack06_info_exploit",
                    "hack06_info_exploit_attemp_hack",
                    "hack08_critical_exploit",
-                   "hack09_protect",
+                   "hack09_protect",# reset Baseline scenario components here
                    "hack10_protect_info_attempt",
                    "hack10_info_exploit_attempt_hack",
                    "hack12_protect_critical",
@@ -368,17 +368,15 @@ class HackerKiosk:
 
         self.hackActive(canlib.HACK_NONE)
         self.switchActiveScenario(canlib.SCENARIO_BASELINE)
-        # Target 1 is baseline FreeRTOS
-        self.restartComponent(canlib.TARGET_1)
+
+        # Reset SSITH ECU scenario components
+        self.restartComponent(canlib.INFOTAINMENT_SERVER_3)
+        self.restartComponent(canlib.OTA_UPDATE_SERVER_3)
+
         # FIXME: reset CHERI just in case
         #self.restartComponent(canlib.TARGET_3)
-        # Infotainment server 1 is the baseline info server
-        self.restartComponent(canlib.INFOTAINMENT_SERVER_1)
-        self.restartComponent(canlib.OTA_UPDATE_SERVER_1)
         # TODO: No need to reset Info server 2?
         # Infotainment server 3 is in the secure ECU scenario
-        #self.restartComponent(canlib.INFOTAINMENT_SERVER_3)
-        #self.restartComponent(canlib.OTA_UPDATE_SERVER_3)
 
         # TODO: Wait till the reset is complete?
         # Reset state
@@ -456,6 +454,11 @@ class HackerKiosk:
 
         self.hackActive(canlib.HACK_NONE)
         self.switchActiveScenario(canlib.SCENARIO_SECURE_INFOTAINMENT)
+
+        # Reset components for the baseline scenario
+        self.restartComponent(canlib.INFOTAINMENT_SERVER_1)
+        self.restartComponent(canlib.OTA_UPDATE_SERVER_1)
+        self.restartComponent(canlib.TARGET_1)
 
         self.ipc_msg['status'] = 200 # OK
 
@@ -677,12 +680,12 @@ class HackerKiosk:
         elif arg == "throttle":
             if self.throttle_ok:
                 # Throttle is OK, we want to hack it (full throttle)
-                filename = HackerKiosk.THROTTLE_HACKED_HACK_PATH
+                filename = HackerKiosk.THROTTLE_HACKED_HACK_PATH + suffix
             else:
                 # Throttle is hacked, restore nominal operation
-                filename = HackerKiosk.THROTTLE_NOMINAL_HACK_PATH
+                filename = HackerKiosk.THROTTLE_NOMINAL_HACK_PATH + suffix
             if self.deploy_mode:
-                hack_ok, res = self.ota_server.upload_and_execute_file(filename + suffix)
+                hack_ok, res = self.ota_server.upload_and_execute_file(filename)
                 print(res)
             else:
                 # Execute critical hack from the host
@@ -702,12 +705,12 @@ class HackerKiosk:
         elif arg == "lkas":
             if self.lkas_disabled:
                 # LKAS is disabled, we want to enable it (hack it)
-                filename = HackerKiosk.LKAS_HACKED_HACK_PATH
+                filename = HackerKiosk.LKAS_HACKED_HACK_PATH + suffix
             else:
                 # LKAS is enabled, we want to disable it (nominal)
-                filename = HackerKiosk.LKAS_NOMINAL_HACK_PATH
+                filename = HackerKiosk.LKAS_NOMINAL_HACK_PATH + suffix
             if self.deploy_mode:
-                hack_ok, res = self.ota_server.upload_and_execute_file(filename + suffix)
+                hack_ok, res = self.ota_server.upload_and_execute_file(filename)
                 print(res)
             else:
                 # Execute critical hack from the host
@@ -727,13 +730,13 @@ class HackerKiosk:
         elif arg == "transmission":
             if self.transmission_ok:
                 # Transmission is OK, we want to disable it (hack it)
-                filename = HackerKiosk.TRANSMISSION_HACKED_HACK_PATH
+                filename = HackerKiosk.TRANSMISSION_HACKED_HACK_PATH + suffix
             else:
                 # Transmission is disabled/hacked, we want to enable it
                 # (back to nominal)
-                filename = HackerKiosk.TRANSMISSION_NOMINAL_HACK_PATH
+                filename = HackerKiosk.TRANSMISSION_NOMINAL_HACK_PATH + suffix
             if self.deploy_mode:
-                hack_ok, res = self.ota_server.upload_and_execute_file(filename + suffix)
+                hack_ok, res = self.ota_server.upload_and_execute_file(filename)
                 print(res)
             else:
                 # Execute critical hack from the host
