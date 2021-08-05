@@ -9,6 +9,8 @@ Date: 16 June 2021
 # NOTE: Switch back to True when debian issues are resolved
 DEPLOY_MODE = False
 DEFAULT_PATH = "/home/pi/BESSPIN-Tool-Suite/besspin/base/utils/setupEnv.json"
+DRAW_GRAPH = False
+
 
 if __name__ == "__main__":
     # Project libs
@@ -29,6 +31,7 @@ if __name__ == "__main__":
         print("Running in deploy mode!")
     else:
         print("Running in test mode!")
+    if DRAW_GRAPH:
         kiosk.draw_graph("kiosk-backend-transitions.png")
     kiosk.run()
 
