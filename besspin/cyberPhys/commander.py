@@ -168,8 +168,9 @@ class Commander(ccomp.ComponentPoller):
                     printAndLog(f"<{self.__class__.__name__}> targetId: {targetId}", doPrint=Commander.DEBUG)
                     self.targets[targetId] = "RESET"
                     self.target_reset_requested = True
-                elif dev_id in self.componentIds:
-                    self.restartComponent(dev_id)
+                # FIXME: Don't restart components *yet* (wait for the infotainment to become ready)
+                #elif dev_id in self.componentIds:
+                #    self.restartComponent(dev_id)
 
                     
         except Exception as exc:
