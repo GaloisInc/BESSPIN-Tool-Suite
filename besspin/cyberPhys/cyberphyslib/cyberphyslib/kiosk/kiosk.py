@@ -99,7 +99,6 @@ class HackerKiosk:
     """
     Kiosk Director implements the desired state flow for the hacker kiosk experience
     """
-    ZMQ_PORT = 5091
     ZMQ_POLL_TIMEOUT = 0.1
     OTA_SERVER_IP = {
         canlib.SCENARIO_BASELINE: "10.88.88.11",
@@ -151,18 +150,19 @@ class HackerKiosk:
         {'transition': ('hack09_protect', 'hack12_protect_critical'), 'conditions': 'button_pressed_ssith_ecu'},
         {'transition': ('hack12_protect_critical', 'hack12_critical_exploit'), 'conditions': 'button_pressed_critical_exploit'},
         {'transition': ('hack12_critical_exploit', 'hack12_protect_critical'), 'conditions': 'exploit_complete'},
-        {'transition': ('hack02_kiosk_intro', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('hack05_info_attempt', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('hack06_info_exploit', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('hack09_protect', 'reset'), 'conditions': 'button_pressed_reset'},
         {'transition': ('hack10_protect_info_attempt', 'reset'), 'conditions': 'button_pressed_reset'},
         {'transition': ('hack12_protect_critical', 'reset'), 'conditions': 'button_pressed_reset'},
     ]
 
-    def __init__(self, net_conf, deploy_mode=True):
+
+    def __init__(self, net_conf, deploy_mode=True, draw_graph=False):
         """kiosk state machine"""
         assert(net_conf)
         self.deploy_mode = deploy_mode
+        if self.deploy_mode:
+            print("Starting in deploy mode!")
+        else:
+            print("Starting in test mode!")
 
         self.states = None
         self.transitions = None
@@ -170,6 +170,11 @@ class HackerKiosk:
         self.machine = self.prepare_state_machine()
         self.state_arg = None
         self.is_reset_completed = False
+
+        if draw_graph:
+            # FIXME: not properly initialized,
+            # a little cludge to get the transitions graph
+            return
 
         self.stop_evt = threading.Event()
 
@@ -264,10 +269,20 @@ class HackerKiosk:
         while True:
             msg = self.cmd_bus.recv()
             if msg:
-                cid, data = msg.arbitration_id, msg.data
+                cid, bytedata = msg.arbitration_id, msg.data
+                data = int.from_bytes(bytedata, byteorder='big', signed=False)
                 try:
-                    # NOTE: Do something else here?
-                    print(f"<{self.__class__.__name__}> CMD_BUS CAN_ID={hex(cid)}, data={data}")
+                    if cid == canlib.CAN_ID_HEARTBEAT_REQ:
+                        print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(data)}")
+                        # respond with a heartbeat response
+                        # Component ID / sender IP address (uint32_t) | heartbeat request number (uint32_t)
+                        heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
+                                    is_extended_id=True,
+                                    data=list(canlib.HACKER_KIOSK.to_bytes(4, byteorder = 'big'), bytedata))
+                        self.cmd_bus.send(heartbeat_ack)
+                    else:
+                        # NOTE: Do something else here?
+                        print(f"<{self.__class__.__name__}> CMD_BUS CAN_ID={hex(cid)}, data={data}")
                 except Exception as exc:
                     print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
