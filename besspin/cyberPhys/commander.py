@@ -43,12 +43,13 @@ class Commander(ccomp.ComponentPoller):
     }
 
     componentIds = {
-        canlib.INFOTAINMENT_SERVER_1: canlib.TARGET_4,
-        canlib.INFOTAINMENT_SERVER_2: canlib.TARGET_5,
-        canlib.INFOTAINMENT_SERVER_3: canlib.TARGET_6,
-        canlib.OTA_UPDATE_SERVER_1: canlib.TARGET_4,
-        canlib.OTA_UPDATE_SERVER_2: canlib.TARGET_5,
-        canlib.OTA_UPDATE_SERVER_3: canlib.TARGET_6,
+        # FIXME: this is a very dumb way of saying "Restart OTA/Infoserver on target 1"
+        canlib.INFOTAINMENT_SERVER_1: canlib.TARGET_1,
+        canlib.INFOTAINMENT_SERVER_2: canlib.TARGET_1,
+        canlib.INFOTAINMENT_SERVER_3: canlib.TARGET_1,
+        canlib.OTA_UPDATE_SERVER_1: canlib.TARGET_1,
+        canlib.OTA_UPDATE_SERVER_2: canlib.TARGET_1,
+        canlib.OTA_UPDATE_SERVER_3: canlib.TARGET_1,
         }
 
     targetList = [k for k in targetIds.keys()]
@@ -169,8 +170,8 @@ class Commander(ccomp.ComponentPoller):
                     self.targets[targetId] = "RESET"
                     self.target_reset_requested = True
                 # FIXME: Don't restart components *yet* (wait for the infotainment to become ready)
-                #elif dev_id in self.componentIds:
-                #    self.restartComponent(dev_id)
+                elif dev_id in self.componentIds:
+                    self.restartComponent(dev_id)
 
                     
         except Exception as exc:
