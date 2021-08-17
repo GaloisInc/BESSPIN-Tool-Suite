@@ -6,8 +6,35 @@ import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 import {CanListener, CanNetwork, CANID, CanMessage} from '../../common/can';
 import {Config} from '../../common/config';
+import zmq, { socket } from 'zeromq';
+const zmq_config = require('./config.js');
+
 let can_net = new CanNetwork(5013);
 let dport = 5002;
+
+// ZMQ Network
+let zmq_address = zmq_config.ZMQ_ADDRESS;
+console.log(zmq_config);
+let zmq_sock = zmq.socket("req");
+zmq_sock.connect(zmq_address);
+
+let zmqQueue = [];
+
+zmq_sock.on('message', (msg) => {
+  let decoded = JSON.parse(msg);
+  console.log("zmq message recieved: ", decoded);
+  zmqQueue.push(decoded);
+});
+
+ipcMain.on('zmq-poll', (event) => {
+  event.reply('zmq-results',  JSON.parse(JSON.stringify(zmqQueue)));
+  zmqQueue = [];
+});
+
+ipcMain.on('button-pressed', (event, func, args) => {
+  console.log('button-pressed', func, args);
+  zmq_sock.send(JSON.stringify({'func': func, 'args': args}));
+});
 
 let car_loc = {
   x: 0,
