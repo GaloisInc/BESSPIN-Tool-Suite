@@ -436,7 +436,8 @@
                 "InfotainmentThinClient" : "10.88.88.2",
                 "HackerKiosk" : "10.88.88.3",
                 "SimPc" : "10.88.88.4",
-                "CanDisplay" : "10.88.88.5"
+                "CanDisplay" : "10.88.88.5",
+                "DebianPc" : "10.88.88.6"
             }
         },
         {
