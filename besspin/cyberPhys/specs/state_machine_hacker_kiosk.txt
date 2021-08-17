@@ -3,11 +3,13 @@
 state "Hack02: INTRO PAGE" as hack02_kiosk_intro
 hack02_kiosk_intro: "We live in a hyper connected world"
 
-[*] --> hack02_kiosk_intro
+[*] --> hack02_kiosk_intro: Assume the first time we start, the targets are properly reset.
 
-note left of Reset: "Reset is reachable from all normal states"
+
+note left of Reset: "Reset is reachable only from the SSITH scenario end."
 Reset: Switch to BASELINE_SCENARIO
-Reset: Reset Targets if needed
+Reset: Reset INFOTAINMENT_SERVER_3
+Reset: Reset OTA_UPDATE_SERVER_3
 
 Reset --> hack02_kiosk_intro: Reset complete
 
@@ -27,12 +29,17 @@ note on link: "Temporary state transitions are GREEN"
 
 hack06_info_exploit -[#green]-> hack08_critical_exploit: hack08_critical_exploit_$VAR hack button pressed
 hack08_critical_exploit: upload and execute ECU hack binary
+hack08_critical_exploit: Toggle active hack for selected subsystem
 hack08_critical_exploit -[#green]-> hack06_info_exploit: return err code and returnval
 
 state "Hack09: SSITH protects systems" as hack09_protect
 hack06_info_exploit --> hack09_protect: "NEXT" (hack08_critical_exploit) button pressed
 
-hack09_protect: Switch active scenario to SSITH Protected Infotainment
+hack09_protect: Switch active scenario to SCENARIO_SECURE_INFOTAINMENT
+hack09_protect: Swicth active hack to HACK_NONE
+hack09_protect: Reset INFOTAINMENT_SERVER_1
+hack09_protect: Reset OTA_UPDATE_SERVER_1
+hack09_protect: Reset TARGET_1
 
 hack09_protect --> hack10_protect_info_attempt: "HACK INFOTAINMENT" (hack09-info-btn) button pressed
 hack09_protect --> hack12_protect_critical: "HACK CRITICAL SYSTEMS" (hack09-crit-btn) button pressed
@@ -50,9 +57,9 @@ hack12_protect_critical -[#green]-> hack12_critical_exploit: hack12_critical_exp
 hack12_critical_exploit: attempt to upload and execute ECU hack binary
 hack12_critical_exploit -[#green]-> hack12_protect_critical: return err code and returnval ("Hack failed")
 
-hack05_info_attempt -[#blue]-> Reset: RESET button pressed
-hack06_info_exploit -[#blue]-> Reset: RESET button pressed
-hack09_protect -[#blue]-> Reset: RESET button pressed
+' hack05_info_attempt -[#blue]-> Reset: RESET button pressed
+' hack06_info_exploit -[#blue]-> Reset: RESET button pressed
+' hack09_protect -[#blue]-> Reset: RESET button pressed
 note on link: "Reset transitions are BLUE"
 hack10_protect_info_attempt -[#blue]-> Reset: RESET button pressed
 hack12_protect_critical -[#blue]-> Reset: RESET button pressed
