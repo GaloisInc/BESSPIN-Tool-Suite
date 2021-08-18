@@ -128,6 +128,17 @@ TODO:
   const electron = require('electron')
   const ipc = electron.ipcRenderer;
 
+  const { Atem } = require('atem-connection')
+  const myAtem = new Atem()
+  myAtem.on('info', console.log)
+  myAtem.on('error', console.error)
+
+  myAtem.connect('192.168.10.240') // Use the default static IP
+
+  myAtem.on('ATEM: StateChanged', (state, pathToChange) => {
+	  console.log(state) // catch the ATEM state.
+  })
+
   const hacks = {
     NONE: 0,
     BRAKES: 1,
@@ -201,6 +212,15 @@ TODO:
         if(feed_id == hacks.STEER || feed_id == hacks.BRAKES) {
           this.webcamEnabled = true;
           this.enableWebcamFeed(feed_id);
+          if (feed_id == hacks.STEER) {
+            myAtem.changeProgramInput(1).then(() => {
+            console.log("ATEM: Switched to Steering Cam (1)");
+          });
+          } else {
+            	myAtem.changeProgramInput(2).then(() => {
+                console.log("ATEM: Switched to Brakes Cam (2)");
+              });
+          }
         } else if(feed_id == hacks.TRANS) {
           video.srcObject = null;
           video.src =  transHackSrc;
