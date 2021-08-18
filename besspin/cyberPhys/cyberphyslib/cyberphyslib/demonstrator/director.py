@@ -97,6 +97,18 @@ class IgnitionDirector:
     }
 
     @classmethod
+    def draw_graph(cls, fname: str):
+        """draw a fsm graphviz graph (for documentation, troubleshooting)
+
+        NOTE: you will need to install graphviz (with dot)
+        """
+        class TmpObj(object):
+            pass
+        machine = Machine(TmpObj(), states=cls.states,
+                          transitions=cls.transitions, initial='startup', show_conditions=True)
+        machine.get_graph().draw(fname, prog='dot')
+
+    @classmethod
     def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
         """produce director from the Besspin environment setup file"""
         cmd_host, cmd_subscribers = net_conf.getCmdNetworkNodes("SimPc")
@@ -214,6 +226,8 @@ class IgnitionDirector:
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR,
                                               component_id, error_id))
+    def status_send(self, canid, argument):
+        msg = extcan.Message(arbitration_id=canid, dlc=1, data=struct.pack("!B", argument))
         self.cc_recvr.send(msg)
 
 ### STATE ENTRY CALLBACKS
