@@ -85,6 +85,18 @@ class IgnitionDirector:
     ]
 
     @classmethod
+    def draw_graph(cls, fname: str):
+        """draw a fsm graphviz graph (for documentation, troubleshooting)
+
+        NOTE: you will need to install graphviz (with dot)
+        """
+        class TmpObj(object):
+            pass
+        machine = Machine(TmpObj(), states=cls.states,
+                          transitions=cls.transitions, initial='startup', show_conditions=True)
+        machine.get_graph().draw(fname, prog='dot')
+
+    @classmethod
     def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
         """produce director from the Besspin environment setup file"""
         # NOTE: should this be hard-coded?
@@ -181,13 +193,6 @@ class IgnitionDirector:
         self.input_cc_msg = False
         self.input_s_timeout = False
         self.input_self_drive = False
-
-    def draw_graph(self, fname: str):
-        """draw a fsm graphviz graph (for documentation, troubleshooting)
-
-        NOTE: you will need to install graphviz (with dot)
-        """
-        self.machine.get_graph().draw(fname, prog='dot')
 
     def status_send(self, canid, argument):
         msg = extcan.Message(arbitration_id=canid, dlc=1, data=struct.pack("!B", argument))
