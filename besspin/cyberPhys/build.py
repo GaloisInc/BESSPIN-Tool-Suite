@@ -83,10 +83,6 @@ def copyInfotainmentServerFiles(tarName, targetId=None):
         logAndExit(f"Installing infotainment-server is not supported on <{osImage}>",
                    exitCode=EXIT.Dev_Bug)
 
-    # Add the script to kill any service listening on port 5002
-    cpFilesToBuildDir(runtimeFilesDir, pattern="kill_listeners.sh", targetId=targetId)
-    tarFiles += ["kill_listeners.sh"]
-
     buildDirPathTuplePartial = functools.partial(buildDirPathTuple, targetId=targetId)
     filesList=map(buildDirPathTuplePartial, tarFiles)
     return filesList
