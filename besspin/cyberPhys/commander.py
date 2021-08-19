@@ -141,15 +141,15 @@ class Commander(ccomp.ComponentPoller):
     # TODO: add `dlc` into canspecs.py
     def sendComponentError(self, componentId):
         msg = Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
-            dlc=8,
-            data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, componentId, 0))
+                      dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
+                      data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, componentId, 0))
         printAndLog(f"Commander sending {msg}",doPrint=True)
         self.cmd_bus.send(msg)
 
     def sendComponentReady(self, componentId):
         msg = Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
-            dlc=4,
-            data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, componentId))
+                      dlc=canlib.CAN_DLC_CMD_COMPONENT_READY,
+                      data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, componentId))
         #printAndLog(f"Commander sending {msg}",doPrint=False)
         self.cmd_bus.send(msg)
 
@@ -172,8 +172,8 @@ class Commander(ccomp.ComponentPoller):
                 req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)
                 print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(req_number)}")
                 heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
-                            is_extended_id=True,
-                            data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
+                                        dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
+                                        data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
                 self.cmd_bus.send(heartbeat_ack)
             else:
                 pass
