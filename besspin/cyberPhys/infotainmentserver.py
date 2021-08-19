@@ -20,6 +20,7 @@ def install (xTarget):
         xTarget.runCommand("cp infotainment-server.service /lib/systemd/system/infotainment-server.service", erroneousContents="install:", tee=appLog)
         xTarget.runCommand("systemctl enable infotainment-server.service", timeout=serviceTimeout, tee=appLog)
         xTarget.runCommand("systemctl start infotainment-server.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
+        xTarget.runCommand("mv kill_listeners.sh /opt/kill_listeners.sh",tee=appLog)
     elif isEqSetting('osImage','FreeBSD', targetId=xTarget.targetId):
         xTarget.runCommand("install -d /usr/local/etc/rc.d", tee=appLog)
         xTarget.runCommand("install infotainment-server.sh /usr/local/etc/rc.d/infotainment-server", erroneousContents="install:", tee=appLog)
@@ -48,7 +49,8 @@ def restart (xTarget):
     printAndLog(f"{xTarget.targetIdInfo}Restarting infotainment server service!", tee=appLog)
     serviceTimeout = 120
     if isEqSetting('osImage','debian',targetId=xTarget.targetId):
-        xTarget.runCommand("pkill infotainment_se",exitOnError=False,tee=appLog)
+        #xTarget.runCommand("pkill infotainment_se",exitOnError=False,tee=appLog)
+        xTarget.runCommand("/opt/kill_listeners.sh",exitOnError=False,tee=appLog)
         xTarget.runCommand("systemctl stop infotainment-server.service", erroneousContents=["Failed to stop", "error code"], tee=appLog)
         xTarget.runCommand("systemctl start infotainment-server.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
     elif isEqSetting('osImage','FreeBSD',targetId=xTarget.targetId):
