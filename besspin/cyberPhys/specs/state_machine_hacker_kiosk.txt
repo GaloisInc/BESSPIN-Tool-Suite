@@ -36,7 +36,7 @@ state "Hack09: SSITH protects systems" as hack09_protect
 hack06_info_exploit --> hack09_protect: "NEXT" (hack08_critical_exploit) button pressed
 
 hack09_protect: Switch active scenario to SCENARIO_SECURE_INFOTAINMENT
-hack09_protect: Swicth active hack to HACK_NONE
+hack09_protect: Switch active hack to HACK_NONE
 hack09_protect: Reset INFOTAINMENT_SERVER_1
 hack09_protect: Reset OTA_UPDATE_SERVER_1
 hack09_protect: Reset TARGET_1
