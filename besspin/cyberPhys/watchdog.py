@@ -75,6 +75,9 @@ class Watchdog(ccomp.ComponentPoller):
 
     @recv_topic("base-topic")
     def _(self, msg, t):
+        # Disable ttyLogger
+        wasLogging = besspin.cyberPhys.launch.stopTtyLogging(self.targetId)
+
         """Filter received messages"""
         if msg == f"OTA_RESET {self.targetId}":
             printAndLog(f"OTA_RESET {self.targetId} requested")
@@ -86,3 +89,7 @@ class Watchdog(ccomp.ComponentPoller):
             # TODO: notify when reset completed
         elif msg == f"RESET {self.targetId}":
             self.reset_target("Reset requested")
+
+        # Re-enable ttyLogger
+        if (wasLogging):
+            besspin.cyberPhys.launch.startTtyLogging(self.targetId)
