@@ -2,18 +2,19 @@
 
 
 actor Driver
-participant "ThinClient\n(Separate network)" as ThinClient
-participant Mux
-collections "Infotainment\nServer" as Server
+participant "ThinClient\n(listents to port 5013)" as ThinClient
+collections "Infotainment\nServer\n(listens to port 5002) " as Server
+participant "Ignition\n(listens to port 5002)" as Ignition
 
 Driver --> ThinClient: presses button
-ThinClient -[#red]> Mux: CAN msg BUTTON_PRESSED
-Mux -[#green]> Server: Forward BUTTON_PRESSED
-Server -> Server: Update internal state
-Server -[#green]> Mux: CAN msg INFOTAINMENT_STATE
-Mux -> Mux: Filter only the server on the active network
-Mux -> Mux: Update music/volume state from active server
-Mux -[#red]> ThinClient: Forward INFOTAINMENT_STATE
-ThinClient --> Driver: displays respose
+ThinClient -[#red]> Server: broadcast CAN_ID_BUTTON_PRESSED to port 5002
+Server -[#red]> Ignition: broadcast CAN_ID_INFOTAINMENT_STATE to port 5002
+Ignition -> Ignition: Receive only from the server on the active network
+Ignition -> Ignition: Update music/volume state
+Ignition -> Ignition: Poll simulator for position updates
+
+Ignition -[#green]> ThinClient: Send CAN_ID_CAR_X/Y/Z/X to port 5013
+ThinClient -> ThinClient: Update map position
+ThinClient --> Driver: displays map
 
 @enduml
