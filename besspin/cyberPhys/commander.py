@@ -9,7 +9,8 @@ from besspin.cyberPhys import infotainmentserver
 
 import time
 import struct
-import can as extcan
+
+from can import Message
 from enum import Enum, auto
 
 class CommanderStates(Enum):
@@ -139,14 +140,14 @@ class Commander(ccomp.ComponentPoller):
     # TODO: handle sending componentId|error_code as required in message specs
     # TODO: add `dlc` into canspecs.py
     def sendComponentError(self, componentId):
-        msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
+        msg = Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
             dlc=8,
             data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, componentId, 0))
         printAndLog(f"Commander sending {msg}",doPrint=True)
         self.cmd_bus.send(msg)
 
     def sendComponentReady(self, componentId):
-        msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
+        msg = Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
             dlc=4,
             data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, componentId))
         #printAndLog(f"Commander sending {msg}",doPrint=False)
@@ -155,24 +156,27 @@ class Commander(ccomp.ComponentPoller):
     def processCmdMsg(self, msg):
         """process CMD message
         """
-        cid, data = msg.arbitration_id, msg.data
-
+        cid = msg.arbitration_id
         try:
-            # TODO: fix the exception
-            # 'bytearray' object cannot be interpreted as an integer
             if cid == canlib.CAN_ID_CMD_RESTART:
-                dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, data)[0]
+                dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
                 printAndLog(f"<{self.__class__.__name__}> Reset dev_id: {dev_id}", doPrint=Commander.DEBUG)
                 if dev_id in self.targetIds:
                     targetId = self.targetIds[dev_id]
                     printAndLog(f"<{self.__class__.__name__}> targetId: {targetId}", doPrint=Commander.DEBUG)
                     self.targets[targetId] = "RESET"
                     self.target_reset_requested = True
-                # FIXME: Don't restart components *yet* (wait for the infotainment to become ready)
-                #elif dev_id in self.componentIds:
-                #    self.restartComponent(dev_id)
-
-                    
+                elif dev_id in self.componentIds:
+                    self.restartComponent(dev_id)
+            elif cid == canlib.CAN_ID_HEARTBEAT_REQ:
+                req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)
+                print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(req_number)}")
+                heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
+                            is_extended_id=True,
+                            data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
+                self.cmd_bus.send(heartbeat_ack)
+            else:
+                pass
         except Exception as exc:
             printAndLog(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
