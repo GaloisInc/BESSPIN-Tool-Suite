@@ -31,7 +31,8 @@ def test_761 (logLines):
             doesKeywordExist(partsLines[2],'Abort') or
             doesKeywordExist(partsLines[2],'Aborted') or
             doesKeywordExist(partsLines[2],'<QEMU ABORTED>') or
-            doesKeywordExist(partsLines[2],'<GDB-SIGTRAP>')
+            doesKeywordExist(partsLines[2],'<GDB-SIGTRAP>') or
+            (doesKeywordExist(partsLines[2],'<TIMEOUT>') and doesKeywordExist(partsLines[2],'mcause=0x4'))
         ):
         partsScores[2] = SCORES.HIGH
     else:
