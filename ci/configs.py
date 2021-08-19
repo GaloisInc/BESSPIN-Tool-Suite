@@ -6,8 +6,8 @@
     Each tuple represents one setting and its possible values.
     Each "values" should be a tuple. Please note that a 1-element tuple should be: ('element',)
 """
-backupBesspinAMI = { 'ImageId' : 'ami-07fc3f8f4525f1c94', 
-                'CreationDate' : '2020-09-08T16:28:43.000Z',
+backupBesspinAMI = { 'ImageId' : 'ami-067bd21562d1f150e', 
+                'CreationDate' : '2021-05-19T20:09:51.000Z',
                 'OwnerId' : '363527286999'} 
 # Please update occasionally. Used by ./utils.getBesspinAMI() instead of erring.
 
@@ -34,8 +34,11 @@ commonDefaultsFETT = {
 commonDefaultsCWEs = {
     ('mode',('evaluateSecurityTests',)),
     ('vulClasses', ('[bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors, hardwareSoC, injection]',)),
+    ('checkAgainstValidScores',('Yes',)),
     ('useCustomScoring',('No',)),
     ('useCustomCompiling',('No',)),
+    ('computeNaiveCWEsTally',('Yes',)),
+    ('computeBesspinScale',('Yes',)),
     ('FreeRTOStimeout',(10,)),
     ('runAllTests',('Yes',)),
     ('runUnixMultitaskingTests',('Yes',)),
@@ -43,13 +46,13 @@ commonDefaultsCWEs = {
 }
 
 unixDefaultsCWEs = commonDefaultsCWEs.union({
-    ('nTests',(100,)),
+    ('nTests',(150,)),
     ('cross-compiler',('GCC','Clang',)), # If cross-compiler is Clang, linker will be over-written to LLD
     ('linker',('GCC',)),
 })
 
 freertosDefaultsCWEs = commonDefaultsCWEs.union({
-    ('nTests',(40,))
+    ('nTests',(60,))
 })
 
 unixDefaults = commonDefaults.union({

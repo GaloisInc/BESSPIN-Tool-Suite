@@ -19,6 +19,8 @@ import enum
 import serial, serial.tools.list_ports_windows
 import pathlib
 import os
+import subprocess
+import psutil
 
 from .component import ComponentPoller, ComponentStatus
 from .logger import led_manage_logger
@@ -133,9 +135,9 @@ class LedManagerComponent(ComponentPoller):
                 elif pat == "on":
                     pattern = cled.ConstantPattern(color)
                 elif pat == "ants":
-                    pattern = cled.AntsPattern(color, 4, False)
+                    pattern = cled.AntsPattern(color, 8, False)
                 elif pat == "ants_reverse":
-                    pattern = cled.AntsPattern(color, 4, True)
+                    pattern = cled.AntsPattern(color, 8, True)
                 elif pat == "pulse":
                     pattern = cled.PulsePattern(color, 1.0, 10, 10)
                 else:
@@ -158,6 +160,36 @@ class LedManagerComponent(ComponentPoller):
         self.client = opc.Client(self.opc_address)
         self.led_strings = led_strings
         self._no_client = False
+
+    def prepare_call(self):
+        """prepare process call for fadecandy server OPC"""
+        base_path = pathlib.Path(os.path.realpath(__file__)).parent / "utils"
+        fadecandy_executable = "fcserver.exe"
+        fadecandy_json_cfg = "cyberphys_led_strings.json"
+        return [str((base_path / fadecandy_executable).resolve()),
+                str((base_path / fadecandy_json_cfg).resolve())]
+
+    def start_opc(self):
+        """starts the fadecandy server OPC server"""
+        call = self.prepare_call()
+        led_manage_logger.debug(f'Starting Fadecandy PC Server process: {call}')
+        self.process = subprocess.Popen(call)
+
+    def kill_opc(self):
+        """kill the fadecandy server OPC process"""
+        # check if Fadecandy server is running
+        fadecandy_pid = None
+        for process in psutil.process_iter():
+            try:
+                if 'fcserver' in process.name():
+                    print("Fadecandy server is running as pid " + str(process.pid))
+                    fadecandy_pid = process.pid
+            except:
+                pass
+        # if it is running, shut it down and restart
+        if fadecandy_pid is not None:
+           print("Shutting down Fadecandy and opening in known configuration.")
+           os.kill(fadecandy_pid, 9)
 
     def system_startup(self):
         """system startup procedure required to turn on LEDs without persistent pixels"""
@@ -217,7 +249,7 @@ class LedManagerComponent(ComponentPoller):
 
     def update_leds(self):
         """update pixels to values inside led strings"""
-        self.client.put_pixels(self.pixel_array.tolist())
+        self.client.put_pixels((self.pixel_array * cconf.BRIGHTNESS_FACTOR).tolist())
 
     def update_pattern(self, pattern_name):
         """update the pattern to display"""
@@ -235,8 +267,14 @@ class LedManagerComponent(ComponentPoller):
 
 ### component relevant methods
     def on_start(self):
+        self.start_opc()
         self.system_startup()
+        self.update_pattern(LedPatterns.NOMINAL)
+        self.update_leds()
         self.start_poller()
+
+    def on_exit(self):
+        self.kill_opc()
 
     def on_poll_poll(self, t):
         """LED Manager Component Mainloop"""
@@ -248,3 +286,4 @@ class LedManagerComponent(ComponentPoller):
     def _(self, msg, t):
         """subscribe to requests to change the led pattern"""
         self.update_pattern(msg.message)
+        self.update_leds()

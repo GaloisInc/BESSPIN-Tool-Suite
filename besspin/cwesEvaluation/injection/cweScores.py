@@ -6,7 +6,7 @@ import re
 
 from besspin.base.utils.misc import *
 from besspin.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
-from besspin.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests
+from besspin.cwesEvaluation.utils.scoringAux import defaultSelfAssessmentScoreAllTests, overallScore
 
 VULCLASS = "injection"
 
@@ -46,7 +46,7 @@ def scoreInj1TestPart(logLines, testNum, info):
     else:
         score = SCORES.HIGH
 
-    return [f"TEST-{testNum}", adjustToCustomScore(logLines, score), info]
+    return overallScore([adjustToCustomScore(logLines, score)], f"TEST-{testNum}", scoreString=info)
 
 def scoreInj1Test(logLines, testName):
     testNum, info = getTestNumAndInfo(testName)
@@ -71,7 +71,7 @@ def scoreInj1Test(logLines, testName):
             return scores[score]
 
     # A valid offset was never found
-    return [f"TEST-{testNum}", adjustToCustomScore(logLines, SCORES.FAIL), info]
+    return overallScore([adjustToCustomScore(logLines, SCORES.FAIL)], f"TEST-{testNum}", scoreString=info)
 
 def scoreControlFlowTest(logLines, testName):
     """
@@ -99,4 +99,4 @@ def scoreControlFlowTest(logLines, testName):
     else:
         score = SCORES.HIGH
 
-    return [f"TEST-{testNum}", adjustToCustomScore(logLines, score), info]
+    return overallScore([adjustToCustomScore(logLines, score)], f"TEST-{testNum}", scoreString=info)

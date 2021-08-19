@@ -24,7 +24,7 @@ def parseBytes(sz):
 
 def generateTests(outdir):
     # Check that nTests is large enough to avoid score instability
-    minNTests = 40 if isEqSetting('osImage', 'FreeRTOS') else 100
+    minNTests = 60 if isEqSetting('osImage', 'FreeRTOS') else 150
     if getSettingDict('bufferErrors', 'nTests') < minNTests:
         warnAndLog(f"<generateTests> <nTests> must be at least <{minNTests}> "
                    f"for <{getSetting('osImage')}>.  Changing <nTests> to "
@@ -47,12 +47,25 @@ def generateTests(outdir):
 
     # Prune out other vulnerability classes
     model = featureModelUtil.splitFM(model, ["BufferErrors_Test"])[0]
-    instancePath = os.path.join(bufferErrorsDir, "CachedInstances.json")
-    if (getSettingDict('bufferErrors', 'useCachedInstances') and
-        not getSettingDict('bufferErrors', 'useCustomErrorModel')):
+    cachedInstanceFile = getSettingDict('bufferErrors','cachedInstancePath')
+    
+    # Whether to enumerate or not
+    if (getSettingDict('bufferErrors', 'useCustomErrorModel')): #custom model, has to compute
+        doEnumerateFM = True
+    else:
+        computedModelHash = computeMd5ForFile(modelPath)
+        if (computedModelHash != getSettingDict('bufferErrors',"modelHash")):
+            warnAndLog (f"BOF:generateTests: The saved hash in {os.path.join(bufferErrorsDir,'setupEnv.json')}"
+                f" does not match the computed value <{computedModelHash}>. Please consider committing any"
+                f" model changes accordingly.")
+            doEnumerateFM = True
+        else:
+            doEnumerateFM = False
+
+    if (not doEnumerateFM):
         printAndLog("<generateTests> Loading cached instances "
-                    f"<{instancePath}>")
-        enumeratedFM = safeLoadJsonFile(instancePath)
+                    f"<{cachedInstanceFile}>")
+        enumeratedFM = safeLoadJsonFile(cachedInstanceFile)
     else:
         printAndLog(f"<generateTests> Sliced model {modelPath} with BufferErrors_Test")
         printAndLog("<generateTests> Enumerating instances...(this can take a while)")
@@ -60,8 +73,8 @@ def generateTests(outdir):
         model = featureModelUtil.addConstraints(model, ["BufferErrors_Test"])
         enumeratedFM = featureModelUtil.enumerateFM(model)
         if not getSettingDict('bufferErrors', 'useCustomErrorModel'):
-            printAndLog(f"<generateTests> Caching instances to <{instancePath}>")
-            safeDumpJsonFile(enumeratedFM, instancePath)
+            printAndLog(f"<generateTests> Caching instances to <{cachedInstanceFile}>")
+            safeDumpJsonFile(enumeratedFM, cachedInstanceFile, indent=4)
         printAndLog("<generateTests> Done generating instances")
     if not enumeratedFM:
         logAndExit(f'<generateTests> Error model <{modelPath}> contains '

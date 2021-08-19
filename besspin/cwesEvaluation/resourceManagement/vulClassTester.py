@@ -33,7 +33,7 @@ class vulClassTester(cwesEvaluationCompatibilityLayer):
         if (not isEnabled('isUnix')):
             self.terminateAndExit (f"<executeTest> for FreeRTOS should never be called.",exitCode=EXIT.Dev_Bug)
         
-        if (isEqSettingDict(self.vulClass,[testsInfoSection,testName,"unix"],"method")):
+        if (isEqSettingDict(self.vulClass,[testsInfoSection,testName,"unix","nParts"],"method")):
             if (hasattr(cweTests,testName)):
                 outLog = getattr(getattr(cweTests,testName),testName)(self,binTest)
             else:
@@ -54,7 +54,7 @@ class vulClassTester(cwesEvaluationCompatibilityLayer):
     def defaultUnixTest(self, testName, binTest, testsInfoSection):
         outLog = self.getTestHeader(testName)
 
-        for iPart in range(getSettingDict(self.vulClass,[testsInfoSection,testName,"unix"])):
+        for iPart in range(getSettingDict(self.vulClass,[testsInfoSection,testName,"unix","nParts"])):
             outLog += self.getPartHeader(iPart)
             if ("extraUnixTimeout" in getSettingDict(self.vulClass,[testsInfoSection,testName])):
                 timeout = 120
@@ -84,7 +84,7 @@ class vulClassTester(cwesEvaluationCompatibilityLayer):
             # Test is disabled for multitasking on this OS
             return None
         parts = []
-        for iPart in range(getSettingDict(self.vulClass,[testsInfoSection,testName,"unix"])):
+        for iPart in range(getSettingDict(self.vulClass,[testsInfoSection,testName,"unix","nParts"])):
             parts.append(multitaskingPart(self.getPartHeader(iPart),
                                           self.PART_FOOTER,
                                           f"./{binTest} {iPart+1}"))

@@ -1,352 +1,854 @@
 {
-    "_usage" : "This json file has the environment setup that is not to be changed per run.",
-    "_disclaimer" : "Testing is performed on a single set of values. Changing them might affect the functionality.",
-    "_options" : "All types and options are explained in BESSPIN-Tool-Suite/besspin/base/utils/configData.json",
-    "_unix" : "Number of parts of unix tests OR the string 'method' for custom test",
-    "_FreeRTOS" : "Number of FreeRTOS tests parts -- currently not used",
-    "_useDefaultScorer" : "Whether to use a custom scorer or the default scorer -- absent means False",
+    "_usage": "This json file has the environment setup that is not to be changed per run.",
+    "_disclaimer": "Testing is performed on a single set of values. Changing them might affect the functionality.",
+    "_options": "All types and options are explained in BESSPIN-Tool-Suite/besspin/base/utils/configData.json",
+    "_unix-nParts": "Number of parts of unix tests OR the string 'method' for custom test",
+    "_FreeRTOS-nParts": "Number of FreeRTOS tests parts -- currently not used",
+    "_unix|FreeRTOS-scoreWeights" : "The weights [0-1] of the test parts. They will be normalized.",
+    "_useDefaultScorer": "Whether to use a custom scorer or the default scorer -- absent means False",
 
-    "resourceManagement" : [
+    "resourceManagement": [
         {
-            "name" : "supportsMultitasking",
-            "type" : "boolean",
-            "val"  : true
+            "name": "supportsMultitasking",
+            "type": "boolean",
+            "val": true
         },
         {
-            "name" : "testsInfo",
-            "type" : "dict",
-            "val" : {
-                "test_188" : {
-                    "cweText" : "Reliance on Data/Memory Layout",
-                    "unix" : 6,
-                    "FreeRTOS" : 3
-                },
-                "test_415" : {
-                    "cweText" : "Double Free",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
-                },
-                "test_416" : {
-                    "cweText" : "Use After Free"
-                },
-                "test_400" : {
-                    "cweText" : "Uncontrolled Resource Consumption",
-                    "multitaskingExceptions" : ["FreeBSD"]
-                },
-                "test_404" : {
-                    "cweText" : "Improper Resource Shutdown or Release"
-                },
-                "test_463" : {
-                    "cweText" : "Deletion of Data Structure Sentinel",
-                    "unix" : 2,
-                    "FreeRTOS" : 2,
-                    "useDefaultScorer" : "Yes",
-                    "highKeywords" : {
-                        "any" : {
-                            "any" : ["<OVERWRITTEN-STR-SENTINEL>", "AAAAAAAAAAAAAAAA"]
+            "name": "testsInfo",
+            "type": "dict",
+            "val": {
+                "test_188": {
+                    "cweText": "Reliance on Data/Memory Layout",
+                    "unix": {
+                        "nParts": 8,
+                        "scoreWeights": [
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 8,
+                        "scoreWeights": [
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "useDefaultScorer": "Yes",
+                    "NEG-call-errKeywords": {
+                        "any": {
+                            "any": [
+                                "<BEGIN-MESS-"
+                            ]
+                        }
+                    },
+                    "highKeywords": {
+                        "debian": {
+                            "any": [
+                                "<GOOD-CHARS>",
+                                "Aborted",
+                                "Segmentation fault"
+                            ]
+                        },
+                        "FreeBSD": {
+                            "any": [
+                                "<GOOD-CHARS>",
+                                "Abort",
+                                "Segmentation fault"
+                            ]
+                        },
+                        "FreeRTOS": {
+                            "qemu": [
+                                "<GOOD-CHARS>",
+                                "<QEMU ABORTED>"
+                            ],
+                            "any": [
+                                "<GOOD-CHARS>",
+                                "<GDB-SIGTRAP>"
+                            ]
                         }
                     }
                 },
-                "test_467" : {
-                    "cweText" : "Use of sizeof() on a Pointer Type",
-                    "unix" : 1,
-                    "FreeRTOS" : 1,
-                    "useDefaultScorer" : "Yes",
-                    "highKeywords" : {
-                        "any" : {
-                            "any" : ["<END-OF-MAIN>"]
+                "test_415": {
+                    "cweText": "Double Free",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    }
+                },
+                "test_416": {
+                    "cweText": "Use After Free"
+                },
+                "test_400": {
+                    "cweText": "Uncontrolled Resource Consumption",
+                    "multitaskingExceptions": [
+                        "FreeBSD"
+                    ]
+                },
+                "test_404": {
+                    "cweText": "Improper Resource Shutdown or Release"
+                },
+                "test_463": {
+                    "cweText": "Deletion of Data Structure Sentinel",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "useDefaultScorer": "Yes",
+                    "highKeywords": {
+                        "any": {
+                            "any": [
+                                "<OVERWRITTEN-STR-SENTINEL>",
+                                "AAAAAAAAAAAAAAAA"
+                            ]
                         }
                     }
                 },
-                "test_468" : {
-                    "cweText" : "Incorrect Pointer Scaling",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
+                "test_467": {
+                    "cweText": "Use of sizeof() on a Pointer Type",
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "useDefaultScorer": "Yes",
+                    "highKeywords": {
+                        "any": {
+                            "any": [
+                                "<END-OF-MAIN>"
+                            ]
+                        }
+                    }
                 },
-                "test_476" : {
-                    "cweText" : "NULL Pointer Dereference",
-                    "unix" : 3,
-                    "FreeRTOS" : 2,
-                    "gfeScoringExceptions" : [
+                "test_468": {
+                    "cweText": "Incorrect Pointer Scaling",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            0,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            0,
+                            1
+                        ]
+                    }
+                },
+                "test_476": {
+                    "cweText": "NULL Pointer Dereference",
+                    "unix": {
+                        "nParts": 3,
+                        "scoreWeights": [
+                            0,
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "gfeScoringExceptions": [
                         {
-                            "osImage" : "debian",
-                            "score" : "NONE"
+                            "osImage": "debian",
+                            "score": "NONE"
                         },
                         {
-                            "osImage" : "FreeBSD",
-                            "score" : "NONE"
+                            "osImage": "FreeBSD",
+                            "score": "NONE"
                         }
                     ]
                 },
-                "test_562" : {
-                    "cweText" : "Return of Stack Variable Address",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
+                "test_562": {
+                    "cweText": "Return of Stack Variable Address",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            0
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            0
+                        ]
+                    }
                 },
-                "test_587" : {
-                    "cweText" : "Assignment of a Fixed Address to a Pointer",
-                    "unix" : 2,
-                    "FreeRTOS" : 2,
-                    "useDefaultScorer" : "Yes",
-                    "highKeywords" : {
-                        "debian" : {
-                            "any" : ["<END-OF-MAIN>", "Segmentation fault"]
+                "test_587": {
+                    "cweText": "Assignment of a Fixed Address to a Pointer",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "useDefaultScorer": "Yes",
+                    "highKeywords": {
+                        "debian": {
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "Segmentation fault"
+                            ]
                         },
-                        "FreeBSD" : {
-                            "any" : ["<END-OF-MAIN>", "Segmentation fault"]
+                        "FreeBSD": {
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "Segmentation fault"
+                            ]
                         },
-                        "FreeRTOS" : {
-                            "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
-                            "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>", "<TIMEOUT>"]
+                        "FreeRTOS": {
+                            "qemu": [
+                                "<END-OF-MAIN>",
+                                "<QEMU ABORTED>"
+                            ],
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "<GDB-SIGTRAP>",
+                                "<TIMEOUT>"
+                            ]
                         }
                     },
-                    "call-errKeywords" : {
-                        "FreeRTOS" : {
-                            "any" : ["Pipeline exception"]
+                    "call-errKeywords": {
+                        "FreeRTOS": {
+                            "any": [
+                                "Pipeline exception"
+                            ]
                         },
-                        "any" : {
-                            "any" : []
+                        "any": {
+                            "any": []
                         }
                     }
                 },
-                "test_588" : {
-                    "cweText" : "Attempt to Access Child of a Non-structure Pointer",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
+                "test_588": {
+                    "cweText": "Attempt to Access Child of a Non-structure Pointer",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    }
                 },
-                "test_590" : {
-                    "cweText" : "Free of Memory not on the Heap"
+                "test_590": {
+                    "cweText": "Free of Memory not on the Heap"
                 },
-                "test_672" : {
-                    "cweText" : "Operation on a Resource after Expiration or Release"
+                "test_672": {
+                    "cweText": "Operation on a Resource after Expiration or Release"
                 },
-                "test_690" : {
-                    "cweText" : "Unchecked Return Value to NULL Pointer Dereference",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
+                "test_690": {
+                    "cweText": "Unchecked Return Value to NULL Pointer Dereference",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            0,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            0,
+                            1
+                        ]
+                    }
                 },
-                "test_761" : {
-                    "cweText" : "Free of Pointer not at Start of Buffer",
-                    "unix" : 4,
-                    "FreeRTOS" : 4
+                "test_761": {
+                    "cweText": "Free of Pointer not at Start of Buffer",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            0,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            0,
+                            1
+                        ]
+                    }
                 },
-                "test_762" : {
-                    "cweText" : "Mismatched Memory Management Routines",
-                    "unix" : 3,
-                    "FreeRTOS" : 3
+                "test_762": {
+                    "cweText": "Mismatched Memory Management Routines",
+                    "unix": {
+                        "nParts": 3,
+                        "scoreWeights": [
+                            0,
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 3,
+                        "scoreWeights": [
+                            0,
+                            1,
+                            1
+                        ]
+                    }
                 },
-                "test_763" : {
-                    "cweText" : "Release of Invalid Pointer or Reference",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
+                "test_763": {
+                    "cweText": "Release of Invalid Pointer or Reference",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    }
                 },
-                "test_770" : {
-                    "cweText" : "Allocation of Resources Without Limits or Throttling",
-                    "multitaskingExceptions" : ["FreeBSD"]
+                "test_770": {
+                    "cweText": "Allocation of Resources Without Limits or Throttling",
+                    "multitaskingExceptions": [
+                        "FreeBSD"
+                    ]
                 },
-                "test_771" : {
-                    "cweText" : "Missing Reference to Active Allocated Resource"
+                "test_771": {
+                    "cweText": "Missing Reference to Active Allocated Resource"
                 },
-                "test_772" : {
-                    "cweText" : "Missing Release of Resource after Effective Lifetime"
+                "test_772": {
+                    "cweText": "Missing Release of Resource after Effective Lifetime"
                 },
-                "test_789" : {
-                    "cweText" : "Uncontrolled Memory Allocation",
-                    "multitaskingExceptions" : ["FreeBSD"]
+                "test_789": {
+                    "cweText": "Uncontrolled Memory Allocation",
+                    "multitaskingExceptions": [
+                        "FreeBSD"
+                    ]
                 },
-                "test_825" : {
-                    "cweText" : "Expired Pointer Dereference",
-                    "unix" : 3,
-                    "FreeRTOS" : 3
+                "test_825": {
+                    "cweText": "Expired Pointer Dereference",
+                    "unix": {
+                        "nParts": 3,
+                        "scoreWeights": [
+                            1,
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 3,
+                        "scoreWeights": [
+                            1,
+                            1,
+                            1
+                        ]
+                    }
                 },
-                "test_908" : {
-                    "cweText" : "Use of Uninitialized Resource"
+                "test_908": {
+                    "cweText": "Use of Uninitialized Resource"
                 },
-                "test_909" : {
-                    "cweText" : "Missing Initialization of Resource"
+                "test_909": {
+                    "cweText": "Missing Initialization of Resource"
                 },
-                "test_911" : {
-                    "cweText" : "Improper Update of Reference Count",
-                    "unix" : 2,
-                    "FreeRTOS" : 2
+                "test_911": {
+                    "cweText": "Improper Update of Reference Count",
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            0,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            0,
+                            1
+                        ]
+                    }
                 }
             }
         },
         {
-            "name" : "mapTestsToCwes",
-            "type" : "dict",
-            "val" : {
-                "test_400" : [
-                    "test_rlr_heapExhaust", "test_rlr_stackExhaust", "test_rlr_noRelease", "test_rlr_errorRelease"
-                ],
-                "test_404" : [
-                    "test_rlr_noRelease", "test_rlr_errorRelease", "test_rlr_heapUsePostRelease", "test_rlr_stackUsePostRelease"
-                ],
-                "test_416" : [
-                    "test_rlr_heapUsePostRelease"
-                ],
-                "test_590" : [
-                    "test_762"
-                ],
-                "test_672" : [
-                    "test_rlr_heapUsePostRelease", "test_rlr_stackUsePostRelease"
-                ],
-                "test_770" : [
-                    "test_rlr_heapExhaust", "test_rlr_stackExhaust"
-                ],
-                "test_771" : [
-                    "test_rlr_noRelease", "test_rlr_errorRelease"
-                ],
-                "test_772" : [
-                    "test_rlr_noRelease", "test_rlr_errorRelease"
-                ],
-                "test_789" : [
-                    "test_rlr_heapExhaust", "test_rlr_stackExhaust"
-                ],
-                "test_908" : [
-                    "test_ri_uninitStack", "test_ri_uninitHeap"
-                ],
-                "test_909" : [
-                    "test_ri_uninitStack", "test_ri_uninitHeap"
-                ]
+            "name": "mapTestsToCwes",
+            "type": "dict",
+            "val": {
+                "test_400": {
+                    "tests": [
+                        "test_rlr_heapExhaust",
+                        "test_rlr_stackExhaust",
+                        "test_rlr_noRelease",
+                        "test_rlr_errorRelease"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ]
+                },
+                "test_404": {
+                    "tests": [
+                        "test_rlr_noRelease",
+                        "test_rlr_errorRelease",
+                        "test_rlr_heapUsePostRelease",
+                        "test_rlr_stackUsePostRelease"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1,
+                        1,
+                        1
+                    ]
+                },
+                "test_416": {
+                    "tests": [
+                        "test_rlr_heapUsePostRelease"
+                    ],
+                    "scoreWeights": [
+                        1
+                    ]
+                },
+                "test_590": {
+                    "tests": [
+                        "test_762"
+                    ],
+                    "scoreWeights": [
+                        1
+                    ]
+                },
+                "test_672": {
+                    "tests": [
+                        "test_rlr_heapUsePostRelease",
+                        "test_rlr_stackUsePostRelease"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1
+                    ]
+                },
+                "test_770": {
+                    "tests": [
+                        "test_rlr_heapExhaust",
+                        "test_rlr_stackExhaust"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1
+                    ]
+                },
+                "test_771": {
+                    "tests": [
+                        "test_rlr_noRelease",
+                        "test_rlr_errorRelease"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1
+                    ]
+                },
+                "test_772": {
+                    "tests": [
+                        "test_rlr_noRelease",
+                        "test_rlr_errorRelease"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1
+                    ]
+                },
+                "test_789": {
+                    "tests": [
+                        "test_rlr_heapExhaust",
+                        "test_rlr_stackExhaust"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1
+                    ]
+                },
+                "test_908": {
+                    "tests": [
+                        "test_ri_uninitStack",
+                        "test_ri_uninitHeap"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1
+                    ]
+                },
+                "test_909": {
+                    "tests": [
+                        "test_ri_uninitStack",
+                        "test_ri_uninitHeap"
+                    ],
+                    "scoreWeights": [
+                        1,
+                        1
+                    ]
+                }
             }
         },
         {
-            "name" : "funcTestsInfo",
-            "type" : "dict",
-            "val" : {
-                "test_rlr_heapExhaust" : {
-                    "unix" : 1,
-                    "FreeRTOS" : 1,
-                    "extraUnixTimeout" : "Yes",
-                    "highKeywords" : {
-                        "debian" : {
-                            "any" : ["<END-OF-MAIN>", "Killed", "Out of memory"]
+            "name": "funcTestsInfo",
+            "type": "dict",
+            "val": {
+                "test_rlr_heapExhaust": {
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "extraUnixTimeout": "Yes",
+                    "highKeywords": {
+                        "debian": {
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "Killed",
+                                "Out of memory"
+                            ]
                         },
-                        "FreeBSD" : {
-                            "any" : ["<END-OF-MAIN>", "Killed", "out of swap space", "<TIMEOUT>"]
+                        "FreeBSD": {
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "Killed",
+                                "out of swap space",
+                                "<TIMEOUT>"
+                            ]
                         },
-                        "FreeRTOS" : {
-                            "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
-                            "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
+                        "FreeRTOS": {
+                            "qemu": [
+                                "<END-OF-MAIN>",
+                                "<QEMU ABORTED>"
+                            ],
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "<GDB-SIGTRAP>"
+                            ]
                         }
                     },
-                    "multitaskingExceptions" : ["FreeBSD"]
+                    "multitaskingExceptions": [
+                        "FreeBSD"
+                    ]
                 },
-                "test_rlr_stackExhaust" : {
-                    "unix" : 1,
-                    "FreeRTOS" : 1,
-                    "highKeywords" : {
-                        "debian" : {
-                            "any" : ["Segmentation fault"]
+                "test_rlr_stackExhaust": {
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "highKeywords": {
+                        "debian": {
+                            "any": [
+                                "Segmentation fault"
+                            ]
                         },
-                        "FreeBSD" : {
-                            "any" : ["Segmentation fault", "<TIMEOUT>"]
+                        "FreeBSD": {
+                            "any": [
+                                "Segmentation fault",
+                                "<TIMEOUT>"
+                            ]
                         },
-                        "FreeRTOS" : {
-                            "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
-                            "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
+                        "FreeRTOS": {
+                            "qemu": [
+                                "<END-OF-MAIN>",
+                                "<QEMU ABORTED>"
+                            ],
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "<TIMEOUT>"
+                            ]
                         }
                     },
-                    "multitaskingExceptions" : ["FreeBSD"]
+                    "multitaskingExceptions": [
+                        "FreeBSD"
+                    ]
                 },
-                "test_rlr_noRelease" : {
-                    "unix" : 1,
-                    "FreeRTOS" : 1,
-                    "highKeywords" : {
-                        "any" : {
-                            "any" : ["<END-OF-MAIN>"]
+                "test_rlr_noRelease": {
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "highKeywords": {
+                        "any": {
+                            "any": [
+                                "<END-OF-MAIN>"
+                            ]
                         }
                     },
-                    "NEG-call-errKeywords" : {
-                        "any" : {
-                            "any" : ["<NO-FREE>"]
+                    "NEG-call-errKeywords": {
+                        "any": {
+                            "any": [
+                                "<NO-FREE>"
+                            ]
                         }
                     }
                 },
-                "test_rlr_errorRelease" : {
-                    "unix" : 1,
-                    "FreeRTOS" : 1,
-                    "highKeywords" : {
-                        "debian" : {
-                            "any" : ["Aborted", "Segmentation fault"]
+                "test_rlr_errorRelease": {
+                    "unix": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 1,
+                        "scoreWeights": [
+                            1
+                        ]
+                    },
+                    "highKeywords": {
+                        "debian": {
+                            "any": [
+                                "Aborted",
+                                "Segmentation fault"
+                            ]
                         },
-                        "FreeBSD" : {
-                            "any" : ["Abort", "Segmentation fault"]
+                        "FreeBSD": {
+                            "any": [
+                                "Abort",
+                                "Segmentation fault"
+                            ]
                         },
-                        "FreeRTOS" : {
-                            "qemu" : ["<END-OF-MAIN>", "<QEMU ABORTED>"],
-                            "any" : ["<END-OF-MAIN>", "<GDB-SIGTRAP>"]
+                        "FreeRTOS": {
+                            "qemu": [
+                                "<END-OF-MAIN>",
+                                "<QEMU ABORTED>"
+                            ],
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "<GDB-SIGTRAP>"
+                            ]
                         }
                     },
-                    "NEG-call-errKeywords" : {
-                        "any" : {
-                            "any" : ["<CAUSE-ERROR>"]
+                    "NEG-call-errKeywords": {
+                        "any": {
+                            "any": [
+                                "<CAUSE-ERROR>"
+                            ]
                         }
                     }
                 },
-                "test_rlr_heapUsePostRelease" : {
-                    "unix" : 2,
-                    "FreeRTOS" : 2,
-                    "highKeywords" : {
-                        "debian" : {
-                            "any" : ["<END-OF-MAIN>", "Aborted", "Segmentation fault"]
+                "test_rlr_heapUsePostRelease": {
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "highKeywords": {
+                        "debian": {
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "Aborted",
+                                "Segmentation fault"
+                            ]
                         },
-                        "FreeBSD" : {
-                            "any" : ["<END-OF-MAIN>"]
+                        "FreeBSD": {
+                            "any": [
+                                "<END-OF-MAIN>"
+                            ]
                         },
-                        "FreeRTOS" : {
-                            "qemu" : ["<END-OF-MAIN>"],
-                            "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
+                        "FreeRTOS": {
+                            "qemu": [
+                                "<END-OF-MAIN>"
+                            ],
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "<TIMEOUT>"
+                            ]
                         }
                     },
-                    "NEG-call-errKeywords" : {
-                        "any" : {
-                            "any" : ["<USE-POST-FREE>"]
+                    "NEG-call-errKeywords": {
+                        "any": {
+                            "any": [
+                                "<USE-POST-FREE>"
+                            ]
                         }
                     }
                 },
-                "test_rlr_stackUsePostRelease" : {
-                    "unix" : 2,
-                    "FreeRTOS" : 2,
-                    "highKeywords" : {
-                        "debian" : {
-                            "any" : ["<END-OF-MAIN>", "Aborted", "Segmentation fault"]
+                "test_rlr_stackUsePostRelease": {
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "highKeywords": {
+                        "debian": {
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "Aborted",
+                                "Segmentation fault"
+                            ]
                         },
-                        "FreeBSD" : {
-                            "any" : ["<END-OF-MAIN>"]
+                        "FreeBSD": {
+                            "any": [
+                                "<END-OF-MAIN>"
+                            ]
                         },
-                        "FreeRTOS" : {
-                            "qemu" : ["<END-OF-MAIN>"],
-                            "any" : ["<END-OF-MAIN>", "<TIMEOUT>"]
+                        "FreeRTOS": {
+                            "qemu": [
+                                "<END-OF-MAIN>"
+                            ],
+                            "any": [
+                                "<END-OF-MAIN>",
+                                "<TIMEOUT>"
+                            ]
                         }
                     },
-                    "NEG-call-errKeywords" : {
-                        "any" : {
-                            "any" : ["<USE-POST-FREE>"]
+                    "NEG-call-errKeywords": {
+                        "any": {
+                            "any": [
+                                "<USE-POST-FREE>"
+                            ]
                         }
                     }
                 },
-                "test_ri_uninitStack" : {
-                    "unix" : 2,
-                    "FreeRTOS" : 2,
-                    "highKeywords" : {
-                        "any" : {
-                            "any" : ["<END-OF-MAIN>"]
+                "test_ri_uninitStack": {
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "highKeywords": {
+                        "any": {
+                            "any": [
+                                "<END-OF-MAIN>"
+                            ]
                         }
                     }
                 },
-                "test_ri_uninitHeap" : {
-                    "unix" : 2,
-                    "FreeRTOS" : 2,
-                    "highKeywords" : {
-                        "any" : {
-                            "any" : ["<END-OF-MAIN>"]
+                "test_ri_uninitHeap": {
+                    "unix": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "FreeRTOS": {
+                        "nParts": 2,
+                        "scoreWeights": [
+                            1,
+                            1
+                        ]
+                    },
+                    "highKeywords": {
+                        "any": {
+                            "any": [
+                                "<END-OF-MAIN>"
+                            ]
                         }
                     }
                 }
             }
-
         }
     ]
 }

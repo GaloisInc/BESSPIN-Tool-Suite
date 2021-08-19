@@ -24,8 +24,8 @@ class SCORES (enum.Enum):
     HIGH = 0
     MED = 1
     LOW = 2
-    DETECTED = 3
-    NONE = 4
+    NONE = 3
+    DETECTED = 4 #The value of DETECTED will be overridden to be 3 (= NONE)
     INF = 10
 
     def __str__ (self): #to replace '_' by '-' when printing
@@ -42,6 +42,20 @@ class SCORES (enum.Enum):
             return "N/A"
         else:
             return "%s" % self.name.replace('_','-')
+
+    @property
+    def value(self):
+        """
+        DETECTED and NONE should have the same value, but setting two ENUM constants to the same value means one of them
+        is an alias to the other. Which we don't want for clarity; To distinguish between the NONE and DETECTED
+        concepts. This makes NONE and DETECTED have the same value for the sake of averaging or any value related
+        operations. Average will thus never yield DETECTED, but rather NONE. So you can see individual test parts be
+        scored DETECTED, but the overall CWE score will be NONE.
+        """
+        if (self.name == "DETECTED"):
+            return self.__class__["NONE"]._value_
+        else:
+            return self._value_
 
     def __lt__(self, other):
         """
@@ -89,7 +103,8 @@ class SCORES (enum.Enum):
         """
         return len(str(self))
 
-    def minScore (scoreList): #Note that no need for 'self' here; it's used as a function
+    @staticmethod
+    def minScore (scoreList):
         """
         Get the lowest score in a list of scores.
 
@@ -108,7 +123,8 @@ class SCORES (enum.Enum):
                 minScore = xScore
         return minScore
 
-    def avgScore (scoreList): #Always floors
+    @classmethod
+    def avgScore (cls,scoreList):
         """
         Return the floor of the average of a list of scores.
 
@@ -119,15 +135,25 @@ class SCORES (enum.Enum):
 
         RETURNS:
         --------
-            The lowest SCORES object in <scoreList>.
+            The average SCORES object in <scoreList>.
         """
         sumScores = 0
         for xScore in scoreList:
             sumScores += xScore.value
-        avgValue = sumScores // len(scoreList)
-        return SCORES(avgValue)
+        return ( cls(sumScores//len(scoreList)), sumScores/len(scoreList) )
 
-    def toScore (strScore):
+    @classmethod
+    def weightedAvgScore (cls, scoreList, partsWeights):
+        minScore = cls.minScore(scoreList)
+        if (minScore < cls.HIGH): #One of the parts has an error --> error
+            return (minScore, minScore.value)
+        sumScores = 0
+        for xScore, xWeight in zip(scoreList, partsWeights):
+            sumScores += xWeight * xScore.value
+        return ( cls(sumScores//sum(partsWeights)), sumScores/sum(partsWeights) )
+
+    @classmethod
+    def toScore (cls, strScore):
         """
         Convert a string representation of a score to a SCORES object.
 
@@ -140,7 +166,14 @@ class SCORES (enum.Enum):
         --------
             A SCORES object corresponding to <strScore>.
         """
-        return SCORES[getSettingDict('cwesAssessments',[strScore])]
+        return cls[getSettingDict('cwesAssessments',[strScore])]
+
+    @classmethod
+    def normalize (cls, scoreVal):
+        """
+        Normalize the exact score (2nd score column)
+        """
+        return scoreVal/cls.DETECTED.value
 
 @decorate.debugWrap
 def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreReport.log"):
@@ -212,14 +245,21 @@ def scoreTests(vulClass, logsDir, title, doPrint=True, reportFileName="scoreRepo
         if (vulClass not in ["bufferErrors", "informationLeakage"]):
             xConfig.add_section(besspin.base.config.CWES_ENABLED_TESTS_SECTION)
         try:
-            for row in rows:
-                cweName = f"{'-'.join(row[0].split('-')[1:])}"
+            for iRow in range(len(rows)):
+                cweName = f"{'-'.join(rows[iRow][0].split('-')[1:])}"
                 cweNameD = cweName.replace('-','_')
-                scoresDict[cweNameD] = row[1]
-                xConfig.set(besspin.base.config.CWES_SELF_ASSESSMENT_SECTION,f"assessment_{cweNameD}",f"{row[1]}")
+                rows[iRow][0] = rows[iRow][0].replace("TEST","CWE") #To ensure consistency
+                percVal = SCORES.normalize(rows[iRow][2]) #Normalize to get percentage
+                scoresDict[cweNameD] = (rows[iRow][1],percVal) #Store both of them 
+                if (percVal < 0): # failure
+                    rows[iRow][2] = '-'
+                else:
+                    rows[iRow][2] = f"{100*percVal:.2f}%"
+                xConfig.set(besspin.base.config.CWES_SELF_ASSESSMENT_SECTION,f"assessment_{cweNameD}",f"{rows[iRow][1]}")
                 if (vulClass not in ["bufferErrors", "informationLeakage"]):
                     xConfig.set(besspin.base.config.CWES_ENABLED_TESTS_SECTION,f"test_{cweNameD}",'No') #already tested
-                fcsv.write(f"{cweName},{row[1]},{row[1].value},\"{row[2]}\"\n")
+                fcsv.write(f"{cweName},{rows[iRow][1]},{rows[iRow][1].value},{rows[iRow][2]},\"{rows[iRow][3]}\"\n")
+
             fcsv.close()
         except Exception as exc:
             logAndExit(f"<scoreTests> Failed to generate the needed files and outputs for <{vulClass}> scores.",
@@ -262,7 +302,7 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
     """
     table = []
 
-    headers = ["TEST","Score","Notes"]
+    headers = ["CWE","Score","Score","Notes"] #Two "Score" columns whose header will merge into one wide cell
     if hasMultitaskScores:
         headers.append("Multitasking Pass")
 
@@ -271,9 +311,9 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
     fullElements= [headers] + elements
 
     if hasMultitaskScores:
-        widths = [ (len(e[0]), len(e[1]), len(e[2]), len(e[3])) for e in fullElements]
+        widths = [ (len(e[0]), len(e[1]), len(e[2]), len(e[3]), len(e[4])) for e in fullElements]
     else:
-        widths = [ (len(e[0]), len(e[1]), len(e[2])) for e in fullElements ]
+        widths = [ (len(e[0]), len(e[1]), len(e[2]), len(e[3])) for e in fullElements ]
     widthCols = [ 2 + max([w[i] for w in widths]) for i in range(len(widths[0]))]
 
     # Draw title header
@@ -281,9 +321,15 @@ def tabulate(elements, vulClass, title, hasMultitaskScores):
     table.append(tabulate_row([title], [sum(widthCols) + len(widths[0]) - 1]))
     table.append(tabulate_row([],widthCols,drawLine=True))
 
+    # Draw the header (one column less)
+    headers.remove("Score")
+    headersWidthCols = [widthCols[0], 1 + sum(widthCols[1:3])] + widthCols[3:]
+    table.append(tabulate_row(headers, headersWidthCols))
+    table.append(tabulate_row([],headersWidthCols,drawSeparation=True))
+
     # Draw each result
     firstRow = True
-    for row in fullElements:
+    for row in elements:
         if (not firstRow):
             table.append(tabulate_row([],widthCols,drawSeparation=True))
         else:

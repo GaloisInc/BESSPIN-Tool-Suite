@@ -51,7 +51,8 @@ def computeBesspinScale():
     scoresDict = getSetting("cweScores")
     normalizedScores = {vulClass:{} for vulClass in getSetting("vulClasses")}
     for vulClass in getSetting("vulClasses"):
-        for cwe,cweScore in scoresDict[vulClass].items():
+        for cwe,cweScores in scoresDict[vulClass].items():
+            cweScore = cweScores[0] # We use the non-exact value for BESSPIN Scale (because this is not empirical)
             if (cweScore not in normalizingScoresTable):
                 errorAndLog(f"computeBesspinScale: CWE-{cwe} score is {cweScore}. "
                     f"Cannot compute the scale for scores not in [{','.join([str(s) for s in normalizingScoresTable])}]")

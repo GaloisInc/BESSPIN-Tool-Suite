@@ -4,17 +4,12 @@ The main file for running cyberPhys
 """
 
 from besspin.base.utils.misc import *
-import besspin.cyberPhys.launch
 import besspin.target.launch
 from besspin.base.threadControl import ftQueueUtils
-from besspin.cyberPhys import otaserver, infotainmentserver, relaymanager
+from besspin.cyberPhys import otaserver, infotainmentserver
 
 # Import for CAN bus
 from besspin.cyberPhys.cyberphyslib.cyberphyslib.canlib import UdpBus, Message, CAN_ID_HEARTBEAT_ACK, CAN_ID_HEARTBEAT_REQ
-
-import struct
-import ipaddress
-import zmq
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -33,6 +28,10 @@ def runCyberPhys(xTarget):
     else:
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}<runCyberPhys> is not implemented for <{xTarget.osImage}>.",exitCode=EXIT.Implementation)
 
+    # Enable SSH on root/riscv
+    if (xTarget.osImage=='debian'):
+        xTarget.enableSshOnRoot()
+
     # The appLog will be the file object flying around for logging into app.out
     appLog = ftOpenFile(os.path.join(getSetting('workDir'),f"app{xTarget.targetSuffix}.out"), 'a')
     appLog.write('-'*20 + "<BESSPIN-TOOL-SUITE-OUT>" + '-'*20 + '\n\n')
@@ -43,6 +42,15 @@ def runCyberPhys(xTarget):
         appModule.install(xTarget)
         appLog.flush()
     return
+
+@decorate.debugWrap
+@decorate.timeWrap
+def resetComponent(component, targetId):
+    xTarget = getSetting('targetObj',targetId=targetId)
+    if component == "ota":
+        otaserver.restart(xTarget)
+    elif component == "infotainment":
+        infotainmentserver.restart(xTarget)
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -60,11 +68,8 @@ def isTargetAlive(targetId):
     if osImage in ['debian', 'FreeBSD']:
         if not otaserver.isServiceRunning(xTarget):
             printAndLog(f"{xTarget.targetIdInfo}ota server didn't respond.")
-            # NOTE: this code is commented out now, need to test OTA more before re-enabling or deleting
-            # this code for good
-            # otaserver.restart(xTarget)
-            # return otaserver.isServiceRunning(xTarget)
-
+        if not infotainmentserver.isServiceRunning(xTarget):
+            printAndLog(f"{xTarget.targetIdInfo}infotainment server didn't respond.")
     return True
 
 @decorate.debugWrap

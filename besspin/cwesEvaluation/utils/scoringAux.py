@@ -7,11 +7,16 @@ from besspin.cwesEvaluation.scoreTests import SCORES, adjustToCustomScore
 import re
 
 def overallScore (listScores, dispName, msgIfNotImplemented="Not Implemented", 
-        isSelfAssessment=False, msgIfSelfAssessment="Error - CWE text is not available", scoreString=None):
+        isSelfAssessment=False, msgIfSelfAssessment="Error - CWE text is not available", scoreString=None,
+        partsWeights=None):
     if (len(listScores)==0): #not implemented
-        return [dispName, SCORES.NOT_IMPLEMENTED, msgIfNotImplemented]
+        return [dispName, SCORES.NOT_IMPLEMENTED, SCORES.NOT_IMPLEMENTED.value, msgIfNotImplemented]
     
-    ovrScore = SCORES.minScore(listScores)
+    if (partsWeights is None):
+        ovrScore = SCORES.minScore(listScores)
+        exactScore = ovrScore.value
+    else:
+        ovrScore, exactScore = SCORES.weightedAvgScore(listScores,partsWeights)
 
     if (scoreString is None):
         if (isSelfAssessment):
@@ -19,7 +24,7 @@ def overallScore (listScores, dispName, msgIfNotImplemented="Not Implemented",
         else:
             scoreString = ', '.join([f"p{i+1:02d}:{partScore}" for i,partScore in enumerate(listScores)])
 
-    return [dispName, ovrScore, scoreString]
+    return [dispName, ovrScore, exactScore, scoreString]
 
 def doesKeywordExistInLines (lines, keyword):
     for line in lines:

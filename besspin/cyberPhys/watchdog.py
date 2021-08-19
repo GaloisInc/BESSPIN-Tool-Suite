@@ -2,6 +2,7 @@
 
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
+import besspin.cyberPhys.run
 from besspin.base.threadControl import ftQueueUtils
 import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
 
@@ -23,9 +24,10 @@ class Watchdog(ccomp.ComponentPoller):
     3. reeset the target upon request
     """
     def __init__(self, targetId):
-        in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts('watchdogBase')
+        in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts('watchdogBase', targetId)
         name = f"watchdog{targetId}"
         f_Hz = getSetting('cyberPhysWatchdogFrequency')
+        printAndLog(f"Starting {name} with in_socks: {in_socks} and out_socks: {out_socks}, sample freq: {f_Hz}[Hz]", doPrint=False)
         super().__init__(name, in_socks, out_socks, sample_frequency=f_Hz)
 
         self.wHeartbeatQueue = getSetting('watchdogHeartbeatQueue', targetId=targetId)
@@ -37,8 +39,9 @@ class Watchdog(ccomp.ComponentPoller):
         """watchdog mainloop"""
         self.process_hearbeat()
         if not besspin.cyberPhys.run.watchdog.isTargetAlive(self.targetId):
-            printAndLog(f"<{self.name}> Target is not alive, stoping")
-            self.stop()
+            printAndLog(f"<{self.name}> Target is not alive, attempting reset...")
+            self.send_message(ccomp.Message(f"ERROR {self.targetId}"), getSetting('cyberPhysComponentBaseTopic'))
+            self.reset_target("Not alive")
 
     def process_hearbeat(self) -> bool:
         responses = []
@@ -61,17 +64,25 @@ class Watchdog(ccomp.ComponentPoller):
             return False
 
     def reset_target(self, errorString: str):
-        """Reset target and return true if the reset was successful"""
+        """Reset target
+        NOTE: this function ends with an error if besspin.target.launch.resetTarget()
+        is not successful. How to better handle errors during target reset?"""
         warnAndLog(f"<target{self.targetId}>: {errorString}! Resetting...")
         # Here we should reset
         besspin.target.launch.resetTarget(getSetting('targetObj',targetId=self.targetId))
         printAndLog("Please press Enter to return to the interactive shell...")
+        self.send_message(ccomp.Message(f"READY {self.targetId}"), getSetting('cyberPhysComponentBaseTopic'))
 
     @recv_topic("base-topic")
     def _(self, msg, t):
         """Filter received messages"""
-        if msg == f"RESET {self.targetId}":
+        if msg == f"OTA_RESET {self.targetId}":
+            printAndLog(f"OTA_RESET {self.targetId} requested")
+            besspin.cyberPhys.run.resetComponent("ota",self.targetId)
+            # TODO: notify when reset completed
+        elif msg == f"INFOTAINMENT_RESET {self.targetId}":
+            printAndLog(f"INFOTAINMENT_RESET {self.targetId} requested")
+            besspin.cyberPhys.run.resetComponent("infotainment",self.targetId)
+            # TODO: notify when reset completed
+        elif msg == f"RESET {self.targetId}":
             self.reset_target("Reset requested")
-
-
-

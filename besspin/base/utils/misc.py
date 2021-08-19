@@ -222,8 +222,8 @@ def isEnabled(setting, targetId=None, default=None):
         logAndExit (f"isEnabled: The value of <{setting}> is not boolean: <{val}>.",exitCode=EXIT.Dev_Bug)
 
 @decorate.debugWrap
-def isEnabledDict(setting, hierarchy, targetId=None):
-    val = getSettingDict(setting, hierarchy, targetId=targetId)
+def isEnabledDict(setting, hierarchy, targetId=None, default=None):
+    val = getSettingDict(setting, hierarchy, targetId=targetId, default=default)
     if isinstance(val, bool):
         return val
     else:
@@ -401,10 +401,10 @@ def safeLoadJsonFile (jsonFile, emptyIfNoFile=False):
         logAndExit(f"Failed to load json file <{jsonFile}>.",exc=exc,exitCode=EXIT.Files_and_paths)
     return jsonData
 
-def safeDumpJsonFile(jsonData, jsonFile):
+def safeDumpJsonFile(jsonData, jsonFile, indent=None):
     fJson = ftOpenFile(jsonFile, 'w')
     try:
-        json.dump(jsonData, fJson)
+        json.dump(jsonData, fJson, indent=indent)
         fJson.close()
     except Exception as exc:
         logAndExit(f"Failed to dump json <{jsonData}> to file <{jsonFile}>",

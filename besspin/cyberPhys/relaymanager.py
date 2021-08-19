@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
-
+from besspin.base.utils.misc import *
 import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
-import time
 
+import time
 import serial, serial.tools.list_ports_posix
 
 class RelayManager(ccomp.Component):
@@ -53,7 +53,9 @@ class RelayManager(ccomp.Component):
     @recv_topic("base-topic","RESET 0")
     def _(self, t):
         """a topic level callback"""
-        print(f"{self.name} Reset requested")
+        printAndLog(f"{self.name} Reset requested")
         self.turn_on_relays()
         time.sleep(self.relay_delay)
         self.turn_off_relays()
+        printAndLog(f"{self.name} Reset completed, sending READY 0 message")
+        self.send_message(ccomp.Message(f"READY 0"), getSetting('cyberPhysComponentBaseTopic'))

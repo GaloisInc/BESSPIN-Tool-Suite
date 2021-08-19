@@ -1,6 +1,5 @@
 <template>
   <div id="console">
-    <h2>CAN Bus Data Stream</h2>
     <div id="stream-headers">
       <div class="header msg_id_header">
         CAN ID
@@ -15,8 +14,8 @@
     <div id="console-stream">
       <li v-for="message in messages" v-bind:key="message.timestamp">
       <div class="msg_id">0x{{ message.id.toString(16).toUpperCase() }}</div>
-      <div class="msg_timestamp"> {{ message.timestamp }} </div>
-      <div class="msg_data">{{ message.data }}</div>
+      <div class="msg_timestamp"> {{ Math.round(message.timestamp) }} </div>
+      <div class="msg_data">{{ message.data.toString() }}</div>
       </li>
     </div>
   </div>
@@ -24,15 +23,10 @@
 
 <style scoped>
  @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
-  #console {
-    margin-top: 300px;
-    position: absolute;
-    left: 500px;
-  }
   #console-stream {
     font-family: 'Roboto Mono', monospace;
     width: 600px;
-    height: 590px;
+    height: 350px;
     /* border: 1px solid green; */
     overflow: scroll;
     overflow-x: hidden;
@@ -42,13 +36,13 @@
     padding-left: 0;
   }
   .msg_timestamp, .msg_timestamp_header {
-    width: 180px;
+    width: 110px;
   }
   .msg_timestamp, .msg_id, .msg_data, .header {
     display: inline-block;
   }
   .msg_id, .msg_id_header {
-    width: 110px;
+    width: 140px;
   }
   .header {
     font-weight: bold;

@@ -25,7 +25,7 @@
 #define {read_after_write}
 // BUF_ACCESS = (PTR_ACCESS, ARRAY_ACCESS, PATH_MANIPULATION_ACCESS)
 #define {buf_access}
-// LOCATION = (STACK, HEAP)
+// LOCATION = (STACK, HEAP, GLOBAL)
 #define {location}
 // EXCURSION = (CONTINUOUS, DISCRETE)
 #define {excursion}
@@ -49,7 +49,7 @@
 #endif
 
 // Required for memset's definition
-#ifdef STACK
+#if (defined(STACK) || defined(GLOBAL))
 #include <string.h>
 #endif
 
@@ -78,6 +78,14 @@
 
 #ifdef JMP
 jmp_buf env;
+#endif
+
+#ifdef GLOBAL
+    {buf_type} {buf_name}[{N}];
+
+    #ifdef BUF2_PRESENT
+        {buf_type2} {buf_name2}[{N2}];
+    #endif
 #endif
 
 /*****************************
@@ -121,6 +129,17 @@ size_t mock_get_message_size(void) {{
 }}
 #endif  // INCORRECT_MALLOC_CALL
 
+#ifdef SIZE_OVERFLOW
+    // This is a simple manoeuver to avoid the compiler optimizing out the integer overflow. 
+    // See #1130 for more details.
+    static __attribute__((noinline)) size_t {sub_func} (size_t {sub_func_arg1}, size_t {sub_func_arg2}) {{
+        size_t {sub_func_ret} = 0;
+        {sub_func_ret} += {sub_func_arg1};
+        {sub_func_ret} -= {sub_func_arg2};
+        return {sub_func_ret};
+    }}
+#endif
+
 
 void test_buffer_overflow(void)
 {{
@@ -132,7 +151,7 @@ void test_buffer_overflow(void)
     // that's partially correct, but later overflowed.
     size_t {min_size} = {idx0} + {access_len} + 1;
     // Arrive at N via overflow
-    size_t {buf_size} = {min_size} + ((~((size_t) 0)) - {min_size} + {N}) + 1;
+    size_t {buf_size} = {min_size} + ({sub_func}((~((size_t) 0)), {min_size}) + {N}) + 1;
     if ({buf_size} < {min_size}) {{
         // `buf_size` is too small, either because the overflow was undetected,
         // or because the value was replaced with one that is still too small.
@@ -150,7 +169,9 @@ void test_buffer_overflow(void)
     //temp var
     {tmp_var_type} {tmp_var_name};
 
-#ifdef STACK
+#ifdef GLOBAL
+    memset({buf_name}, 0, sizeof({buf_type})*{N});
+#elif defined(STACK)
     // Cleared via memset so that we can do error checking
     // without wiping OS structures (ie if we overflowed into bss)
 #ifdef STATIC_ALLOC
@@ -189,10 +210,15 @@ void test_buffer_overflow(void)
             printf("<valid malloc result>\r\n");
             fflush(stdout);
     }}
-#endif
+#endif // STACK/GLOBAL/HEAP
+
+#ifdef BUF2_PRESENT
+
+#ifdef GLOBAL
+    memset({buf_name2}, 0, sizeof({buf_type2})*{N2});
+#endif//GLOBAL
 
 #ifdef STACK
-#ifdef BUF2_PRESENT
 #ifdef STATIC_ALLOC
     if ({N2} > SIZE({buf_type2}, {N2}, {memmax})) {{
         // Template generator should ensure this never happens, but double check
@@ -206,8 +232,9 @@ void test_buffer_overflow(void)
     {buf_type2} {buf_name2}[SIZE({buf_type2},{N2},{memmax})];
     memset({buf_name2}, 0, sizeof({buf_type2})*SIZE({buf_type2},{N2},{memmax}));
 #endif  //STATIC_ALLOC
-#endif//BUF2_PRESENT
 #endif//STACK
+
+#endif//BUF2_PRESENT
 
              printf("continous\r\n");
              fflush(stdout);
@@ -331,7 +358,7 @@ void test_path_manipulation(void) {{
     // Allocate {buf_name2} to hold the result of a proper realpath call
 #ifdef STACK
     char {buf_name2}[PATH_MAX];
-#else
+#else //HEAP (GLOBAL && PATH_MANIPULATION_ACCESS not allowed)
     char* {buf_name2} = malloc(sizeof(char) * PATH_MAX);
     if ({buf_name2} == NULL) {{
         printf("TEST INVALID. <malloc {buf_name2}>\r\n");
@@ -359,7 +386,7 @@ void test_path_manipulation(void) {{
                              {memmax} - (PATH_MAX * sizeof(char)));
 #ifdef STACK
     char {buf_name}[{buf_size}];
-#else
+#else //HEAP (GLOBAL && PATH_MANIPULATION_ACCESS not allowed)
     char* {buf_name} = malloc(sizeof(char) * {buf_size});
     if ({buf_name} == NULL) {{
         printf("TEST INVALID. <malloc>\r\n");

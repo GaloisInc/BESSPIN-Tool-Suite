@@ -9,13 +9,13 @@ SRCS = main.c $(CANLIB)/j1939.c $(CANLIB)/canlib.c
 
 DEFAULT: hack
 
-all: hack hack-x86 clean
+all: hack hack-host clean
 
 hack:
 	@riscv64-unknown-linux-gnu-gcc -march=rv64imafd -mabi=lp64d $(INCLUDES) $(SRCS) -o $(BASENAME).elf
 	@riscv64-unknown-linux-gnu-objdump -S $(BASENAME).elf > $(BASENAME).asm
 
-hack-x86:
+hack-host:
 	@gcc $(INCLUDES) $(SRCS) -o $(BASENAME).elf
 
 clean:

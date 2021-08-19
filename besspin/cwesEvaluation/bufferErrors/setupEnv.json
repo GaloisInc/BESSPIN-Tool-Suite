@@ -78,6 +78,16 @@
                     "cweText" : "Use of Out-of-range Pointer Offset"
                 }
             }
+        },
+        {
+            "name" : "cachedInstancePath",
+            "type" : "filePath",
+            "val" : "besspin/cwesEvaluation/bufferErrors/CachedInstances.json"
+        },
+        {
+            "name" : "modelHash",
+            "type" : "string",
+            "val" : "e4cee6a4655d35add2fb01989facfa92"
         }
     ]
 }

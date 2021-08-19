@@ -14,7 +14,7 @@ def install (xTarget):
 
     printAndLog(f"{xTarget.targetIdInfo}infotainment server install: starting the service...", doPrint=False, tee=appLog)
     xTarget.runCommand("mkdir -p /usr/local/sbin",tee=appLog)
-    xTarget.runCommand("install infotainment_server /usr/local/sbin/infotainment_server", erroneousContents="install:", tee=appLog)
+    xTarget.runCommand("install infotainment_server.elf /usr/local/sbin/infotainment_server", erroneousContents="install:", tee=appLog)
     serviceTimeout = 120
     if isEqSetting('osImage','debian',targetId=xTarget.targetId):
         xTarget.runCommand("cp infotainment-server.service /lib/systemd/system/infotainment-server.service", erroneousContents="install:", tee=appLog)
@@ -30,11 +30,18 @@ def install (xTarget):
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}Can't start infotainment server service on <{getSetting('osImage', targetId=xTarget.targetId)}>",
                                  exitCode=EXIT.Dev_Bug)
 
+    # Install the kill service script
+    xTarget.runCommand("mv kill_listeners.sh /opt/kill_listeners.sh",tee=appLog)
+
     printAndLog(f"{xTarget.targetIdInfo}infotainment server installed successfully.",tee=appLog)
 
 @decorate.debugWrap
 @decorate.timeWrap
 def isServiceRunning (xTarget):
+    # TODO: query whether the service is running
+    # Perhaps listen for messages from the server?
+    # Running the command below takes several seconds, thus is impractical:
+    #xTarget.runCommand("systemctl status infotainment-server.service", erroneousContents=["???"], tee=appLog)
     return True # not sure what to do here yet
 
 @decorate.debugWrap
@@ -44,6 +51,7 @@ def restart (xTarget):
     printAndLog(f"{xTarget.targetIdInfo}Restarting infotainment server service!", tee=appLog)
     serviceTimeout = 120
     if isEqSetting('osImage','debian',targetId=xTarget.targetId):
+        xTarget.runCommand("/opt/kill_listeners.sh",exitOnError=False,tee=appLog)
         xTarget.runCommand("systemctl stop infotainment-server.service", erroneousContents=["Failed to stop", "error code"], tee=appLog)
         xTarget.runCommand("systemctl start infotainment-server.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
     elif isEqSetting('osImage','FreeBSD',targetId=xTarget.targetId):

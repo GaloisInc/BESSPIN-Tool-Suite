@@ -65,7 +65,7 @@ def generateCweMap():
             fm2    = featureModelUtil.addConstraints(fm, cfg)
             result = featureModelUtil.checkMust(fm2, CWES)
             mapping[t] = [ cwe for (cwe, on) in zip(CWES, result) if on ]
-        safeDumpJsonFile(mapping, savedMapFile)
+        safeDumpJsonFile(mapping, savedMapFile, indent=4)
     return mapping
 
 def scoreAllTests(logs):
@@ -91,10 +91,11 @@ def scoreAllTests(logs):
         notes = "Results: " + ', '.join(notesList)
         implemented = [ s for s in listScores if s != SCORES.NOT_IMPLEMENTED ]
         if len(implemented) > 0:
-            score = SCORES.avgScore(implemented)
+            flooredScore, exactScore = SCORES.avgScore(implemented)
         else:
-            score = SCORES.NOT_IMPLEMENTED
-        ret.append([f"CWE-{testNum}", score, notes])
+            flooredScore = SCORES.NOT_IMPLEMENTED
+            exactScore = flooredScore.value
+        ret.append([f"CWE-{testNum}", flooredScore, exactScore, notes])
     return ret
 
 
