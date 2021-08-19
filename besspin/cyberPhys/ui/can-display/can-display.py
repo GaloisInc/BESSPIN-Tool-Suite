@@ -17,6 +17,7 @@ Exchange format:
 import signal
 import logging
 import zmq
+import struct
 from enum import Enum
 import threading
 
@@ -103,39 +104,40 @@ class CanDisplay(threading.Thread):
         """
         process CMD message
         """
-        cid, bytedata = msg.arbitration_id, msg.data
-        data = int.from_bytes(bytedata, byteorder='big', signed=False)
-
+        cid = msg.arbitration_id
         try:
             if cid == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
-                print(f"<{self.__class__.__name__}> CAN_ID_CMD_ACTIVE_SCENARIO: {hex(data)}")
-                if data == canlib.SCENARIO_BASELINE or\
-                   data == canlib.SCENARIO_SECURE_ECU or\
-                   data == canlib.SCENARIO_SECURE_INFOTAINMENT:
-                   self.scenario = data
+                scenario_id = struct.unpack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, msg.data)[0]
+                print(f"<{self.__class__.__name__}> CAN_ID_CMD_ACTIVE_SCENARIO: {hex(scenario_id)}")
+                if scenario_id == canlib.SCENARIO_BASELINE or\
+                   scenario_id == canlib.SCENARIO_SECURE_ECU or\
+                   scenario_id == canlib.SCENARIO_SECURE_INFOTAINMENT:
+                   self.scenario = scenario_id
                 else:
-                    print(f"<{self.__class__.__name__}> Unknown scenario ID: {hex(data)}")
+                    print(f"<{self.__class__.__name__}> Unknown scenario ID: {hex(scenario_id)}")
                 if self.scenario == canlib.SCENARIO_BASELINE:
                     self.state = STATE_NORMAL
                 else:
                     self.state = STATE_SSITH
+                print(f"Scenario: {self.scenario}, State: {self.state}")
             elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
-                print(f"<{self.__class__.__name__}> CAN_ID_CMD_HACK_ACTIVE: {hex(data)}")
+                hack_id = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
+                print(f"<{self.__class__.__name__}> CAN_ID_CMD_HACK_ACTIVE: {hex(hack_id)}")
                 if self.scenario == canlib.SCENARIO_BASELINE:
-                    if data == canlib.HACK_NONE:
+                    if hack_id == canlib.HACK_NONE:
                         self.state = STATE_NORMAL
                     else:
                         self.state = STATE_HACKED
+                    print(f"Scenario: {self.scenario}, State: {self.state}")
             elif cid == canlib.CAN_ID_HEARTBEAT_REQ:
-                print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(data)}")
-                # respond with a heartbeat response
-                # Component ID / sender IP address (uint32_t) | heartbeat request number (uint32_t)
+                req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)
+                print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(req_number)}")
                 heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
                             is_extended_id=True,
-                            data=list(canlib.HACKER_KIOSK.to_bytes(4, byteorder = 'big'), bytedata))
+                            data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
                 self.cmd_bus.send(heartbeat_ack)
-
-            print(f"State: {self.scenario}")
+            else:
+                pass
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 

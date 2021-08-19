@@ -30,7 +30,6 @@ from transitions import State
 import time
 import struct
 
-
 class IgnitionDirector:
     """
     Ignition program that implements the desired execution flow
@@ -301,30 +300,23 @@ class IgnitionDirector:
         return self._handler["beamng"]._in_autopilot
 
     def process_cc(self, msg):
-        """process cc message
-        TODO: FIXME: @michal review this carefully -- not sure how compliant this is with the spec
-        """
-        import struct
-        id, data = msg.arbitration_id, msg.data
-
+        """process cc message"""
+        id = msg.arbitration_id
         try:
             if id == canlib.CAN_ID_CMD_RESTART:
                 ignition_logger.debug(f"process cc: restart")
-                dev_id = struct.unpack("!I", msg.data)[0]
+                dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
                 if dev_id == canlib.IGNITION:
                     ignition_logger.debug("Director: restarting ignition from CMD_RESTART")
                     bsim: simulator.Sim = self._handler["beamng"]
                     bsim.restart_command()
 
             elif id == canlib.CAN_ID_CMD_HACK_ACTIVE:
-                hack_idx = struct.unpack("!B", msg.data)[0]
+                hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
                 ignition_logger.debug(f"process cc: set hack active {hack_idx}")
                 # Process HACK_ACTIVE messages only in baseline scenario
                 if self.active_scenario == canlib.SCENARIO_BASELINE:
                     # NOTE:  tread Led manager as a critical component
-                    #if self._noncrit:
-                    #    ignition_logger.debug(f"process cc: not setting led manager as noncritical failure occured")
-                    #else:
                     lm: ledm.LedManagerComponent = self._handler["ledm"]
                     lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
 
@@ -333,7 +325,7 @@ class IgnitionDirector:
                     canlib.SCENARIO_BASELINE: "base",
                     canlib.SCENARIO_SECURE_ECU: "secure_ecu",
                     canlib.SCENARIO_SECURE_INFOTAINMENT: "secure_infotainment"}
-                scen_idx = struct.unpack("!B", msg.data)[0]
+                scen_idx = struct.unpack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, msg.data)[0]
                 ignition_logger.debug(f"process cc: active scenario {scen_idx}")
                 self.active_scenario = scen_idx
                 cm: ccan.CanMultiverseComponent = self._handler["canm"]
@@ -347,7 +339,7 @@ class IgnitionDirector:
                 lm.update_pattern(ledm.LedPatterns(pattern))
 
             elif id == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
-                aut_idx = struct.unpack("!B", msg.data)[0]
+                aut_idx = struct.unpack(canlib.CAN_FORMAT_CMD_SET_DRIVING_MODE, msg.data)[0]
                 ignition_logger.debug(f"process cc: set driving mode {aut_idx}")
                 bsim: simulator.Sim = self._handler["beamng"]
                 if aut_idx == 0:
@@ -373,7 +365,6 @@ class IgnitionDirector:
                 return
             else: # CC timeout condition
                 # NOTE: if jmonitor has failed assume user input is present
-                #activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
                 activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
 
                 # if in self drive mode and activity has occurred, get out
