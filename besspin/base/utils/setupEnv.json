@@ -29,9 +29,19 @@
             "val" : "5041"
         },
         {
+            "name" : "cyberPhysIpcPort",
+            "type" : "int",
+            "val" : "5091"
+        },
+        {
             "name" : "cyberPhysOtaServerPort",
             "type" : "int",
             "val" : "5050"
+        },
+        {
+            "name" : "cyberPhysHackedInfotainmentPort",
+            "type" : "int",
+            "val" : "5811"
         },
         {
             "name" : "cyberPhysInfotainmentUiPort",
@@ -425,7 +435,8 @@
                 "AdminPc" : "10.88.88.1",
                 "InfotainmentThinClient" : "10.88.88.2",
                 "HackerKiosk" : "10.88.88.3",
-                "SimPc" : "10.88.88.4"
+                "SimPc" : "10.88.88.4",
+                "CanDisplay" : "10.88.88.5"
             }
         },
         {

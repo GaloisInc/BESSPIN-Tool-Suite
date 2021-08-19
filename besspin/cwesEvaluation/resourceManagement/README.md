@@ -239,19 +239,9 @@ Reliance on Data or Memory Layout \[[CWE-188](https://cwe.mitre.org/data/definit
 - The software makes invalid assumptions about how protocol data 
   or memory is organized at a lower level, resulting in unintended program behavior.   
 - The test demonstrates the consequences of a calculating an offset relative to another 
-  field to pick out a specific piece of data on the stack memory segment. 
-  - The `example_byte_past` function: In this example the memory address of variable `e` 
-    is derived by adding 1 to the address of variable `d`. This derived address is then used 
-    to assign the value `e` to the variable `e`. Here, variable `e` may not be one byte past `d` and 
-    it depends of the protocol implementation.
-  - The `example_byte_in_front` function: The similar explanation like in the previous example
-    except that the variable `b` may be one byte in front of `a`. 
-  - The `example_three_bytes_past` function: In this example variable `h` 
-    may be three bytes past the variable `g`.
-  - The `example_three_bytes_in_front` function: In this example variable `v` 
-    may be three bytes in front of the variable `u`.
-  - The `example_input_args_past_on_stack` function: The similar as previous example related to the 
-    byte past, except that arguments are considered on the stack.
+  field to pick out a specific piece of data. The test has 8 parts because it runs on the 
+  combinations in 3 dimensions: stack vs heap, write vs read, and after vs before which is
+  the direction where the offset is added (subtracted).
 
 
 ### TEST-468 ###

@@ -190,7 +190,7 @@ def loadConfigSection (xConfig,configSection,jsonData,dataSection,setup=False,
                 if ((iPar['type'] == 'filePath') and (not os.path.isfile(val)) and ("ignore" not in iPar)):
                     logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid file path in section [{configSection}].",exitCode=EXIT.Configuration)
                 if ((iPar['type'] == 'dirPath') and (not os.path.isdir(val)) and ("ignore" not in iPar)):
-                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{configSection}].",exitCode=EXIT.Configuration)
+                    logAndExit(f"{fileName}: <{iPar['name']}> has to be a valid directory path in section [{configSection}]. Val:{val}",exitCode=EXIT.Configuration)
             elif (iPar['type'] == 'ipAddress'):
                 ipMatch = re.match(r"(\d{1,3}\.){3}\d{1,3}$",val)
                 if (ipMatch is None):
@@ -556,7 +556,7 @@ def loadCyberPhysConfiguration (configData):
         setExtraTargetSettings(targetId=iTarget)
 
     #Check that the unmixable options are consistent
-    unmixableSettings = ["useCustomTargetIp", "useCustomHwTarget", "vcu118Mode"]
+    unmixableSettings = ["useCustomTargetIp", "useCustomHwTarget"]
     for unmixableSetting in unmixableSettings:
         t1Val = getSetting(unmixableSetting,targetId=1)
         for iTarget in range(2,getSetting('nTargets')+1):

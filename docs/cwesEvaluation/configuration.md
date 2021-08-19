@@ -19,6 +19,7 @@ Moreover, some of the SSITH TA-1 teams require specific and known compiling and 
 The parameters of this section are:
   - `vulClasses`: A list of the vunerability classes to be executed, contained by square brackets and comma
     separated. Choose among the [SSITH CWEs list](./ssithCWEsList.md): *bufferErrors, PPAC, resourceManagement, informationLeakage, numericErrors, hardwareSoC, injection*. When a `${vulClass}` is included, its configuration section is loaded as well ([details](#vulnerability-classes )).
+  - `checkAgainstValidScores`: If enabled, after scoring, the tool checks the scores validity against the pre-coded expected results. This is only applicable when `binarySource` is set to `GFE`.
   - `useCustomCWEsConfigsPath`: If enabled, then instead of loading --if needed-- the vulnerability classes INI files from [configSecurityTests](../../configSecurityTests), the tool will look for these INI files inside `pathToCustomCWEsConfigs`. We refer to the chosen path for the INI files as `${CWEsConfigs}` from this point onwards.
   - `pathToCustomCWEsConfigs`: The path containing the CWEs config files in case `useCustomCWEsConfigsPath` is enabled.
   - `useCustomScoring`: Configure the scoring methods as instructed by 
@@ -111,7 +112,6 @@ The buffer errors class has the following additional parameters:
   - `pathToCustomErrorModel`: The path to the error model when `useCustomErrorModel` is enabled.
   - `numericTypes`: List the numeric types the generated tests should use. You may choose `[ints, floats]` or either one of them (within brackets).
   - `nTests`: The number of random tests generated.  Must be at least 40 for FreeRTOS and at least 100 for debian and FreeBSD.
-  - `useCachedInstances`: Enable to use a cache of all possible enumerations of the builtin buffer errors model, rather than generating the enumerations from scratch. Enabling this option will save 10's of minutes of runtime of the buffer errors tool with no impact on the tool's randomness.  The only reason to disable this option is if you have modified the builtin error model definition. Disabling this option will re-generate the cache file, allowing you to safely re-enable this option after a single run with a new model definition. Please note that this option only applies to the builtin error model and has no effect if `useCustomErrorModel` is enabled.
   - `nSkip`: Before generating `nTests` tests, generate and throw away `nSkip` tests.
   - `heapSize`: Maximum heap size.
   - `stackSize`: Maximum stack size.

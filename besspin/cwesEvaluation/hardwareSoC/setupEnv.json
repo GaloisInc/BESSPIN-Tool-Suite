@@ -10,148 +10,196 @@
             "type" : "dict",
             "val" : {
                 "test_208" : {
-                    "cweText" : "Observable Timing Discrepancy"
+                    "cweText" : "Observable Timing Discrepancy",
+                    "documentationOnly" : true
                 },
                 "test_385" : {
-                    "cweText" : "Covert Timing Channel"
+                    "cweText" : "Covert Timing Channel",
+                    "documentationOnly" : true
                 },
                 "test_920" : {
-                    "cweText" : "Improper Restriction of Power Consumption"
+                    "cweText" : "Improper Restriction of Power Consumption",
+                    "documentationOnly" : true
                 },
                 "test_1037" : {
-                    "cweText" : "Processor Optimization Removal or Modification of Security-critical Code"
+                    "cweText" : "Processor Optimization Removal or Modification of Security-critical Code",
+                    "documentationOnly" : false
                 },
                 "test_1050" : {
-                    "cweText" : "Excessive Platform Resource Consumption within a Loop"
+                    "cweText" : "Excessive Platform Resource Consumption within a Loop",
+                    "documentationOnly" : false
                 },
                 "test_1189" : {
-                    "cweText" : "Improper Isolation of Shared Resources on System-on-Chip (SoC)"
+                    "cweText" : "Improper Isolation of Shared Resources on System-on-Chip (SoC)",
+                    "documentationOnly" : true
                 },
                 "test_1193" : {
-                    "cweText" : "Power-On of Untrusted Execution Core Before Enabling Fabric Access Control"
+                    "cweText" : "Power-On of Untrusted Execution Core Before Enabling Fabric Access Control",
+                    "documentationOnly" : true
                 },
                 "test_1209" : {
-                    "cweText" : "Failure to Disable Reserved Bits"
+                    "cweText" : "Failure to Disable Reserved Bits",
+                    "documentationOnly" : true
                 },
                 "test_1220" : {
-                    "cweText" : "Insufficient Granularity of Access Control"
+                    "cweText" : "Insufficient Granularity of Access Control",
+                    "documentationOnly" : true
                 },
                 "test_1221" : {
-                    "cweText" : "Incorrect Register Defaults or Module Parameters"
+                    "cweText" : "Incorrect Register Defaults or Module Parameters",
+                    "documentationOnly" : true
                 },
                 "test_1222" : {
-                    "cweText" : "Insufficient Granularity of Address Regions Protected by Register Locks"
+                    "cweText" : "Insufficient Granularity of Address Regions Protected by Register Locks",
+                    "documentationOnly" : true
                 },
                 "test_1223" : {
-                    "cweText" : "Race Condition for Write-Once Attributes"
+                    "cweText" : "Race Condition for Write-Once Attributes",
+                    "documentationOnly" : true
                 },
                 "test_1224" : {
-                    "cweText" : "Improper Restriction of Write-Once Bit Fields"
+                    "cweText" : "Improper Restriction of Write-Once Bit Fields",
+                    "documentationOnly" : true
                 },
                 "test_1231" : {
-                    "cweText" : "Improper Implementation of Lock Protection Registers"
+                    "cweText" : "Improper Implementation of Lock Protection Registers",
+                    "documentationOnly" : true
                 },
                 "test_1232" : {
-                    "cweText" : "Improper Lock Behavior After Power State Transition"
+                    "cweText" : "Improper Lock Behavior After Power State Transition",
+                    "documentationOnly" : true
                 },
                 "test_1233" : {
-                    "cweText" : "Improper Hardware Lock Protection for Security Sensitive Controls"
+                    "cweText" : "Improper Hardware Lock Protection for Security Sensitive Controls",
+                    "documentationOnly" : true
                 },
                 "test_1234" : {
-                    "cweText" : "Hardware Internal or Debug Modes Allow Override of Locks"
+                    "cweText" : "Hardware Internal or Debug Modes Allow Override of Locks",
+                    "documentationOnly" : true
                 },
                 "test_1239" : {
-                    "cweText" : "Improper Zeroization of Hardware Register"
+                    "cweText" : "Improper Zeroization of Hardware Register",
+                    "documentationOnly" : true
                 },
                 "test_1240" : {
-                    "cweText" : "Use of a Risky Cryptographic Primitive"
+                    "cweText" : "Use of a Risky Cryptographic Primitive",
+                    "documentationOnly" : true
                 },
                 "test_1241" : {
-                    "cweText" : "Use of Predictable Algorithm in Random Number Generator"
+                    "cweText" : "Use of Predictable Algorithm in Random Number Generator",
+                    "documentationOnly" : true
                 },
                 "test_1242" : {
-                    "cweText" : "Inclusion of Undocumented Features or Chicken Bits"
+                    "cweText" : "Inclusion of Undocumented Features or Chicken Bits",
+                    "documentationOnly" : true
                 },
                 "test_1243" : {
-                    "cweText" : "Exposure of Security-Sensitive Fuse Values During Debug"
+                    "cweText" : "Exposure of Security-Sensitive Fuse Values During Debug",
+                    "documentationOnly" : true
                 },
                 "test_1245" : {
-                    "cweText" : "Improper Finite State Machines (FSMs) in Hardware Logic"
+                    "cweText" : "Improper Finite State Machines (FSMs) in Hardware Logic",
+                    "documentationOnly" : true
                 },
                 "test_1246" : {
-                    "cweText" : "Improper Write Handling in Limited-write Non-Volatile Memories"
+                    "cweText" : "Improper Write Handling in Limited-write Non-Volatile Memories",
+                    "documentationOnly" : true
                 },
                 "test_1251" : {
-                    "cweText" : "Mirrored Regions with Different Values"
+                    "cweText" : "Mirrored Regions with Different Values",
+                    "documentationOnly" : true
                 },
                 "test_1252" : {
-                    "cweText" : "CPU Hardware Not Configured to Support Exclusivity of Write and Execute Operations"
+                    "cweText" : "CPU Hardware Not Configured to Support Exclusivity of Write and Execute Operations",
+                    "documentationOnly" : true
                 },
                 "test_1253" : {
-                    "cweText" : "Incorrect Selection of Fuse Values"
+                    "cweText" : "Incorrect Selection of Fuse Values",
+                    "documentationOnly" : true
                 },
                 "test_1254" : {
-                    "cweText" : "Incorrect Comparison Logic Granularity"
+                    "cweText" : "Incorrect Comparison Logic Granularity",
+                    "documentationOnly" : true
                 },
                 "test_1256" : {
-                    "cweText" : "Hardware Features Enable Physical Attacks from Software"
+                    "cweText" : "Hardware Features Enable Physical Attacks from Software",
+                    "documentationOnly" : false
                 },
                 "test_1257" : {
-                    "cweText" : "Improper Access Control Applied to Mirrored or Aliased Memory Regions"
+                    "cweText" : "Improper Access Control Applied to Mirrored or Aliased Memory Regions",
+                    "documentationOnly" : true
                 },
                 "test_1259" : {
-                    "cweText" : "Improper Protection of Security Identifiers"
+                    "cweText" : "Improper Protection of Security Identifiers",
+                    "documentationOnly" : true
                 },
                 "test_1260" : {
-                    "cweText" : "Improper Handling of Overlap Between Protected Memory Ranges"
+                    "cweText" : "Improper Handling of Overlap Between Protected Memory Ranges",
+                    "documentationOnly" : true
                 },
                 "test_1261" : {
-                    "cweText" : "Improper Handling of Single Event Upsets"
+                    "cweText" : "Improper Handling of Single Event Upsets",
+                    "documentationOnly" : true
                 },
                 "test_1262" : {
-                    "cweText" : "Register Interface Allows Software Access to Sensitive Data or Security Settings"
+                    "cweText" : "Register Interface Allows Software Access to Sensitive Data or Security Settings",
+                    "documentationOnly" : true
                 },
                 "test_1264" : {
-                    "cweText" : "Hardware Logic with Insecure De-Synchronization between Control and Data Channels"
+                    "cweText" : "Hardware Logic with Insecure De-Synchronization between Control and Data Channels",
+                    "documentationOnly" : true
                 },
                 "test_1268" : {
-                    "cweText" : "Agents Included in Control Policy are not Contained in Less-Privileged Policy"
+                    "cweText" : "Agents Included in Control Policy are not Contained in Less-Privileged Policy",
+                    "documentationOnly" : true
                 },
                 "test_1270" : {
-                    "cweText" : "Generation of Incorrect Security Identifiers"
+                    "cweText" : "Generation of Incorrect Security Identifiers",
+                    "documentationOnly" : true
                 },
                 "test_1271" : {
-                    "cweText" : "Missing Known Value on Reset for Registers Holding Security Settings"
+                    "cweText" : "Missing Known Value on Reset for Registers Holding Security Settings",
+                    "documentationOnly" : true
                 },
                 "test_1272" : {
-                    "cweText" : "Debug/Power State Transitions Leak Information"
+                    "cweText" : "Debug/Power State Transitions Leak Information",
+                    "documentationOnly" : true
                 },
                 "test_1273" : {
-                    "cweText" : "Device Unlock Credential Sharing"
+                    "cweText" : "Device Unlock Credential Sharing",
+                    "documentationOnly" : true
                 },
                 "test_1274" : {
-                    "cweText" : "Insufficient Protections on the Volatile Memory Containing Boot Code"
+                    "cweText" : "Insufficient Protections on the Volatile Memory Containing Boot Code",
+                    "documentationOnly" : true
                 },
                 "test_1276" : {
-                    "cweText" : "Hardware Block Incorrectly Connected to Larger System"
+                    "cweText" : "Hardware Block Incorrectly Connected to Larger System",
+                    "documentationOnly" : true
                 },
                 "test_1277" : {
-                    "cweText" : "Firmware Not Updateable"
+                    "cweText" : "Firmware Not Updateable",
+                    "documentationOnly" : true
                 },
                 "test_1279" : {
-                    "cweText" : "Cryptographic Primitives used without Successful Self-Test"
+                    "cweText" : "Cryptographic Primitives used without Successful Self-Test",
+                    "documentationOnly" : true
                 },
                 "test_1280" : {
-                    "cweText" : "Access Control Check Implemented After Asset is Accessed"
+                    "cweText" : "Access Control Check Implemented After Asset is Accessed",
+                    "documentationOnly" : true
                 },
                 "test_1281" : {
-                    "cweText" : "Sequence of Processor Instructions Leads to Unexpected Behavior (Halt and Catch Fire)"
+                    "cweText" : "Sequence of Processor Instructions Leads to Unexpected Behavior (Halt and Catch Fire)",
+                    "documentationOnly" : true
                 },
                 "test_1282" : {
-                    "cweText" : "Assumed-Immutable Data Stored in Writable Memory"
+                    "cweText" : "Assumed-Immutable Data Stored in Writable Memory",
+                    "documentationOnly" : true
                 },
                 "test_1283" : {
-                    "cweText" : "Mutable Attestation or Measurement Reporting Data"
+                    "cweText" : "Mutable Attestation or Measurement Reporting Data",
+                    "documentationOnly" : true
                 }
             }
         }

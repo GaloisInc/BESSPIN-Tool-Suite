@@ -48,9 +48,11 @@ def scoreAllTests(logs):
         except Exception as exc:
             errorAndLog(f"Failed to score <{VULCLASS}:{testName}>.",exc=exc)
 
+        adjustedScore = adjustToCustomScore(logText.splitlines(),score)
         ret.append([
             f"{testName.replace('_','-').upper()}", 
-            adjustToCustomScore(logText.splitlines(),score), 
+            adjustedScore,
+            adjustedScore.value,
             getSettingDict(VULCLASS, ["testsInfo", testName, "cweText"])])
 
     return ret

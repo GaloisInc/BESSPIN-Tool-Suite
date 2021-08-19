@@ -1,95 +1,61 @@
 @startuml
 
-state "Hacker Kiosk start up" as KioskUp
-KioskUp: boot OS
-KioskUp: connect to network
-KioskUp: start kiosk webpage
-[*] --> KioskUp: Kiosk powered up
+state "Hack02: INTRO PAGE" as hack02_kiosk_intro
+hack02_kiosk_intro: "We live in a hyper connected world"
 
-KioskUp --> KioskWait
+[*] --> hack02_kiosk_intro
 
-' TODO: add a timeout to the wait?
-state "Wait for components" as KioskWait
-KioskWait: Wait for CMD_COMPONENT_READY(BESSPIN_TOOl)
-KioskWait: Wait for CMD_COMPONENT_READY(IGNITION)
+note left of Reset: "Reset is reachable from all normal states"
+Reset: Switch to BASELINE_SCENARIO
+Reset: Reset Targets if needed
 
-' TODO: handle error conditions
-KioskWait --> KioskReady: Success\nSend CMD_COMPONENT_READY(KIOSK)\nSend CMD_LED_SEQ(BOOT)
-state "Hacker kiosk ready" as KioskReady
-KioskReady: welcome page
+Reset --> hack02_kiosk_intro: Reset complete
 
+hack02_kiosk_intro --> hack05_info_attempt: "HACK INFOTAINMENT/NEXT"(Hack04_Access) button pressed
+note on link: "Normal transitions are RED"
 
-state "Baseline Scenario" as ScenarioBaseline {
-    state "Scenario intro" as ScenarioBaselineIntro
-    ' ScenarioBaselineIntro: Driver: get faimilar with the controls
-    ScenarioBaselineIntro: Hacker: intro to SSITH
-    KioskReady --> ScenarioBaselineIntro: hacker arrived\nSend CMD_ACTIVE_SCENARIO(BASELINE)
+state "Hack05: ATTEMPTING EXPLOIT" as hack05_info_attempt
+hack05_info_attempt: Initialize OTA hack
 
-    state "Explain OTA server hack" as ScenarioBaselineExplainOtaHack {
-        ' ScenarioBaselineExplainOtaHack: Driver: drives to te airport
-        ScenarioBaselineExplainOtaHack: Hacker: explain OTA hack
-    }
+state "Hack06 EXPLOIT COMPLETE" as hack06_info_exploit
+hack05_info_attempt --> hack06_info_exploit: "NEXT" (hack05_info_attempt) button pressed
 
-    ScenarioBaselineIntro --> ScenarioBaselineExplainOtaHack: Hacker clicks though the intro slides
-    ScenarioBaselineExplainOtaHack --> ScenarioBaselineHackedOTA: Hacker clicks in "Hack OTA update server"\nSend CMD_LED_SEQ(OTA_HACK)
-    state "OTA server hacked" as ScenarioBaselineHackedOTA
-    ScenarioBaselineHackedOTA: signing key erased
+hack06_info_exploit -[#green]-> hack06_info_exploit_attemp_hack: hack06_info_exploit_$VAR hack button pressed
+hack06_info_exploit_attemp_hack: send command to the hacked infotainment server
+hack06_info_exploit_attemp_hack -[#green]-> hack06_info_exploit: return err code and returnval
+note on link: "Temporary state transitions are GREEN"
 
-    state "Hack infotainment" as ScenarioBaselineHackInfotainment
-    ScenarioBaselineHackInfotainment: show available infotainment hacks
+hack06_info_exploit -[#green]-> hack08_critical_exploit: hack08_critical_exploit_$VAR hack button pressed
+hack08_critical_exploit: upload and execute ECU hack binary
+hack08_critical_exploit -[#green]-> hack06_info_exploit: return err code and returnval
 
-    ScenarioBaselineHackedOTA --> ScenarioBaselineHackInfotainment: Explain infotainment hacks to hacker
+state "Hack09: SSITH protects systems" as hack09_protect
+hack06_info_exploit --> hack09_protect: "NEXT" (hack08_critical_exploit) button pressed
 
-    state "Upload Infotainment Hack" as ScenarioBaselineUploadInfotainmentHack
-    ScenarioBaselineUploadInfotainmentHack: upload specific binary
-    ScenarioBaselineHackInfotainment --> ScenarioBaselineUploadInfotainmentHack: Hacker: Choose a hack to upload
+hack09_protect: Switch active scenario to SSITH Protected Infotainment
 
-    state "Infotainment hack uploaded" as ScenarioBaselineInfotainmentHackUploaded
-    ScenarioBaselineUploadInfotainmentHack --> ScenarioBaselineInfotainmentHackUploaded: Send CMD_LED_SEQ(OTA_HACK)
-    ScenarioBaselineInfotainmentHackUploaded -left-> ScenarioBaselineHackInfotainment: Return to the hack selection screen
-    ScenarioBaselineInfotainmentHackUploaded: Binary uploaded
-    
+hack09_protect --> hack10_protect_info_attempt: "HACK INFOTAINMENT" (hack09-info-btn) button pressed
+hack09_protect --> hack12_protect_critical: "HACK CRITICAL SYSTEMS" (hack09-crit-btn) button pressed
 
-    state "Hack critical systems" as ScenarioBaselineHackCriticalSystems
-    ScenarioBaselineHackInfotainment --> ScenarioBaselineHackCriticalSystems: Hacker: Clicks on next slide
-    ScenarioBaselineHackCriticalSystems: explain hacking critical systems
+state "Hack10: SSITH Protection enabled (Secure Infotainment scenario)" as hack10_protect_info_attempt
 
-    state "Upload Critical Systtems Hack" as ScenarioBaselineUploadCriticalSystemsHack
-    ScenarioBaselineUploadCriticalSystemsHack: Binary uploaded
-    ScenarioBaselineHackCriticalSystems --> ScenarioBaselineUploadCriticalSystemsHack: Hacker: Choose a hack to upload
-
-    state "Critical systems hack uploaded" as ScenarioBaselineCriticalSystemsHackUploaded
-    ScenarioBaselineCriticalSystemsHackUploaded: Binary uploaded
-    ScenarioBaselineUploadCriticalSystemsHack --> ScenarioBaselineCriticalSystemsHackUploaded: Send CMD_LED_SEQ(???)
-
-    ScenarioBaselineCriticalSystemsHackUploaded --> ScenarioBaselineHackInfotainment: Return to the hack selection screen
+hack10_protect_info_attempt -[#green]-> hack10_info_exploit_attempt_hack: Hack10_InfoExploit_$VAR hack button pressed
+hack10_info_exploit_attempt_hack: send command to the hacked infotainment server
+hack10_info_exploit_attempt_hack -[#green]-> hack10_protect_info_attempt: return err code and returnval ("Hack Failed)
 
 
-    state "Hack Critical Systems" as ScenarioBaselineHackCriticalSystems
-    ScenarioBaselineHackCriticalSystems --> ScenarioBaselineEndOfScenario: Hacker: Clicks on next slide
-    state "Scenario Done" as ScenarioBaselineEndOfScenario
-}
+state "Hack12: SSITH Protection enabled (Secure ECU scenario)" as hack12_protect_critical
 
-state "Protected Critical Systems Scenario" as ScenarioCritical {
-    state "Introduce SSITH" as IntroSSITH
-    IntroSSITH: Note: new set of FPGAs was selected
+hack12_protect_critical -[#green]-> hack12_critical_exploit: hack12_critical_exploit_$VAR hack button pressed
+hack12_critical_exploit: attempt to upload and execute ECU hack binary
+hack12_critical_exploit -[#green]-> hack12_protect_critical: return err code and returnval ("Hack failed")
 
-    ScenarioBaselineEndOfScenario --> IntroSSITH: Send CMD_ACTIVE_SCENARIO(CRITICAL_SYSTEMS)\nSend CMD_LED_SEQ(SSITH_CRITICAL)
-}
-
-KioskTerminate --> [*]: Send CMD_COMPONENT_ERROR(KIOSK|TERMINATED)
-
-'@startuml
-'state "Hacker Kiosk Start up" as HackerKioskUp
-'state "Hacker Kiosk Ready" as HackerKioskReady
-'HackerKioskUp: boot OS
-'HackerKioskUp: connect to the network
-'HackerKioskUp: start Kiosk UI app
-'HackerKioskReady: wait for user
-'[*] --> HackerKioskUp: Hacker Kiosk powered up
-'HackerKioskUp -[#blue]-> HackerKioskReady: Success\nSend CMD_COMPONENT_READY(HACKER_KIOSK)
-'@enduml
-
+hack05_info_attempt -[#blue]-> Reset: RESET button pressed
+hack06_info_exploit -[#blue]-> Reset: RESET button pressed
+hack09_protect -[#blue]-> Reset: RESET button pressed
+note on link: "Reset transitions are BLUE"
+hack10_protect_info_attempt -[#blue]-> Reset: RESET button pressed
+hack12_protect_critical -[#blue]-> Reset: RESET button pressed
 
 
 @enduml

@@ -73,11 +73,12 @@ def partitionLines (lines,start,end,testNum=None,doPrintWarnings=True):
 
 def overallScore (listScores, testNum):
     if (len(listScores)==0): #not implemented
-        return ["TEST-{0}".format(testNum), SCORES.NOT_IMPLEMENTED, "Not Implemented"]
-    ovrScore = SCORES.minScore(listScores)
+        return ["TEST-{0}".format(testNum), SCORES.NOT_IMPLEMENTED, SCORES.NOT_IMPLEMENTED.value, "Not Implemented"]
+    ovrScore, exactScore = SCORES.weightedAvgScore(listScores,
+                getSettingDict("resourceManagement",["testsInfo",f"test_{testNum}",getSetting("osDiv"),"scoreWeights"]))
     scoreString = ', '.join([f"p{i+1:02d}:{partScore}" for i,partScore in enumerate(listScores)])
 
-    return ["TEST-{0}".format(testNum), ovrScore, scoreString]
+    return ["TEST-{0}".format(testNum), ovrScore, exactScore, scoreString]
 
 def doesKeywordExist (lines, keyword):
     for line in lines:

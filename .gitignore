@@ -24,3 +24,6 @@ besspin-ci.log
 *.o
 *.bin
 besspin/cyberPhys/hacking/j1939hack/main.h
+besspin/cyberPhys/ui/can-display/package-lock.json
+besspin/cyberPhys/ui/infotainment/package-lock.json
+besspin/cyberPhys/ui/hacker-kiosk/package-lock.json

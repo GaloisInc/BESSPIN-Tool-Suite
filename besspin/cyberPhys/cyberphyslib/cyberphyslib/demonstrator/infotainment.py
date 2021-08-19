@@ -27,6 +27,7 @@ import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.logger import info_logger
 from cyberphyslib.demonstrator.can import CanNetwork
 from cyberphyslib.canlib.canspecs import *
+from cyberphyslib.demonstrator.simulator import BeamNgCommand
 import cyberphyslib.canlib.canspecs as canspecs
 import enum
 
@@ -38,9 +39,7 @@ class InfotainmentProxy:
     """infotainment proxy between infotainment ui net and the can multiverse"""
     def __init__(self, info_net: CanNetwork, multiverse: CanNetwork):
         self.info_ui = InfotainmentUi(multiverse)
-        info_net.register(self.info_ui)
         self.info_player = InfotainmentPlayer(info_net)
-        #multiverse.register(self.info_player)
 
 
 class InfotainmentUiStatus(enum.IntEnum):
@@ -64,10 +63,7 @@ class InfotainmentUi(ccomp.ComponentPoller):
     @recv_can(canspecs.CAN_ID_BUTTON_PRESSED,canspecs.CAN_FORMAT_BUTTON_PRESSED)
     def _(self, data):
         # alert simulator to turn off self driving mode
-        from cyberphyslib.demonstrator.simulator import BeamNgCommand
         self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
-        # forward to the other network
-        self._network.send(canspecs.CAN_ID_BUTTON_PRESSED, struct.pack(canspecs.CAN_FORMAT_BUTTON_PRESSED, data[0]))
 
 
 class InfotainmentPlayer(ccomp.ComponentPoller):
@@ -76,9 +72,9 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
 
     session_pid = os.getpid()
 
-    vol_increment = 0.1
+    vol_increment = 1 / (2 ** 4)
 
-    vol_range = 2 ** 5
+    vol_range = 2 ** 4
 
     @staticmethod
     def get_named_session(name: str) -> typ.Union[AudioSession, None]:
@@ -99,7 +95,8 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         self._network = can_network
         self._sidx: int = 0
         self._sound: typ.Union[mixer.Sound, None] = None
-        self._volume = 0.5
+        # NOTE: disable infotainment music for now
+        self._volume = 0.0
         self._set_volume()
         self.play_sound()
 
@@ -143,7 +140,8 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         station = 0x3 & val
         val >>= 2
         volume = val
-        assert station <= 0x3, f"station number isn't valid {station}"
+        station -= 1
+        assert station < 0x3, f"station number isn't valid {station}"
 
         # apply music mixer actions
         if music_playing:
@@ -152,14 +150,14 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
                 info_logger.info(f"changing volume to {target_volume} %%")
                 self._volume = target_volume
                 self._set_volume()
-            if self._sidx != station - 1 or self._sound is None:
-                info_logger.info(f"changing station to {self._sidx} index")
-                self._sidx = station - 1
+            if self._sidx != station or self._sound is None:
+                info_logger.info(f"changing station to {station} index")
+                self._sidx = station
                 self.play_sound()
         else:
             if self._sound is not None:
                 self._sound.stop()
-            self._set_volume(0.0)
+            self._set_volume()
 
     @recv_can(canspecs.CAN_ID_CAR_X, canspecs.CAN_FORMAT_CAR_X)
     def _(self, data):

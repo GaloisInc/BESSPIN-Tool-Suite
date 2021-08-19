@@ -41,7 +41,7 @@ def scoreAllTests(logs):
                 testScorerFunc = getattr(globals()[name],name)
             except Exception as exc:
                 errorAndLog(f"scoreAllTests-{VULCLASS}: Could not locate the scorer function for <{name}>",exc=exc)
-                ret.append([f"{name.replace('_','-').upper()}", SCORES.FAIL, "Failed to Score!"])
+                ret.append([f"{name.replace('_','-').upper()}", SCORES.FAIL, SCORES.FAIL.value, "Failed to Score!"])
                 continue
             scoreInfo = testScorerFunc(logLines)
         else: # Use the custom scorer
@@ -54,7 +54,8 @@ def scoreAllTests(logs):
             printAndLog(f"{VULCLASS}-Score-Details: {scoreInfo}",doPrint=False)
 
     # Append ret with the CWEs scores based on funcTests
-    for test, funcTests in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
+    for test, testInfo in getSettingDict(VULCLASS,["mapTestsToCwes"]).items():
+        funcTests = testInfo["tests"]
         if ((not isTestEnabled(VULCLASS,test)) or
             (isEnabled("runningMultitaskingTests") and
              hasMultitaskingException(VULCLASS, ["testsInfo", test]))):
@@ -70,14 +71,16 @@ def scoreAllTests(logs):
             scoreDetails.append(f"{funcTest.split('_')[-1]}:{score}")
             listScores.append(score)
         dispName = f"{test.replace('_','-').upper()}"
-        ret.append(overallScore(listScores,dispName,scoreString=', '.join(scoreDetails)))
+        ret.append(
+                overallScore(listScores,dispName,scoreString=', '.join(scoreDetails),
+                    partsWeights=testInfo["scoreWeights"])
+            )
 
     return ret
 
 @decorate.debugWrap
 def defaultScoreTest(testName, logLines, testsInfoSection):
-    osFlavor = "unix" if isEnabled("isUnix") else "FreeRTOS"
-    nParts = getSettingDict(VULCLASS,[testsInfoSection,testName,osFlavor])
+    nParts = getSettingDict(VULCLASS,[testsInfoSection,testName,getSetting("osDiv"),"nParts"])
 
     scoreOptions = [SCORES.CALL_ERR, SCORES.HIGH, SCORES.MED, SCORES.LOW, SCORES.NONE]
 
@@ -134,4 +137,5 @@ def defaultScoreTest(testName, logLines, testsInfoSection):
         dispName = testName
     else: 
         dispName = f"{testName.replace('_','-').upper()}"
-    return overallScore(listScores,dispName)
+    return overallScore(listScores,dispName,
+            partsWeights=getSettingDict(VULCLASS,[testsInfoSection,testName,getSetting("osDiv"),"scoreWeights"]))

@@ -129,6 +129,7 @@ class vcu118Target (fpgaTarget, commonTarget):
                     warnAndLog(f"{self.targetIdInfo}Network is not up on target. Trying again "
                             f"({self.debianNtkRetriesIdx+1}/{self.debianNtkRetriesMax})...")
                     self.runCommand ("ifdown eth0",exitOnError=False)
+                    self.runCommand ("ip addr flush dev eth0",exitOnError=False)
                 self.debianNtkRetriesIdx += 1
                 outCmd = self.runCommand ("ifup eth0",endsWith=['rx/tx','off'],expectedContents=['Link is Up'],exitOnError=False)
                 isSuccess, _, _, _ = outCmd
@@ -553,7 +554,7 @@ _MAX_PROG_ATTEMPTS = 3
 
 @decorate.debugWrap
 @decorate.timeWrap
-def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
+def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None, doPrint=True):
     """programs the vcu118 fpga, either with a given bitstream and probe file or the flash with the bitstream and the os binary
     """
     targetInfo = f"<target{targetId}>: " if (targetId) else ''
@@ -563,7 +564,11 @@ def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
     cp(os.path.join(getSetting('tclSourceDir'), 'prog_vcu118.tcl'), cwd)
     if (mode=="bitstream"):
         tclMode = "bitstream_nonpersistent"
+        bitfile = getSetting('bitAndProbefiles',targetId=targetId)[0]
         extraFile = getSetting('bitAndProbefiles',targetId=targetId)[1]
+        targetInfo = f"<target{targetId}>: " if (targetId) else ''
+        printAndLog (f"{targetInfo} Programming VCU118 with this bitfile: {bitfile}",doPrint=doPrint)
+        printAndLog (f"{targetInfo} Programming VCU118 with this probe file: {extraFile}",doPrint=doPrint)
         timeout = 120
     elif(mode=="flash"):
         tclMode = "bitstreamAndData_flash"
@@ -597,7 +602,7 @@ def programVcu118(mode, attempts=_MAX_PROG_ATTEMPTS-1, targetId=None):
         if attempts > 0:
             errorAndLog(f"{targetInfo}programVcu118: failed to program the FPGA. " 
                 f"Trying again ({_MAX_PROG_ATTEMPTS-attempts+1}/{_MAX_PROG_ATTEMPTS})...",doPrint=True)
-            programVcu118(mode, attempts=attempts-1, targetId=targetId)
+            programVcu118(mode, attempts=attempts-1, targetId=targetId, doPrint=doPrint)
         else:
             logAndExit(f"{targetInfo}programVcu118: failed to program the FPGA.",exitCode=EXIT.Run)
 
@@ -682,14 +687,14 @@ def programBitfile (doPrint=True,targetId=None):
     mode = getSetting('vcu118Mode',targetId=targetId)
     if (mode=='nonPersistent'):
         printAndLog(f"{targetInfo}Programming the bitfile...",doPrint=doPrint)
-        programVcu118("bitstream",targetId=targetId)
+        programVcu118("bitstream",targetId=targetId,doPrint=doPrint)
         printAndLog(f"{targetInfo}Programmed bitfile {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
             f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
     elif (mode=='flashProgramAndBoot'):
         checkThatUartIsKnownForFlash(targetId=targetId)
         prepareOsBinaryForFlash(targetId=targetId)
         printAndLog(f"{targetInfo}Programming the flash...",doPrint=doPrint)
-        programVcu118("flash",targetId=targetId)
+        programVcu118("flash",targetId=targetId,doPrint=doPrint)
         printAndLog(f"{targetInfo}Programmed with bitstream {getSetting('bitAndProbefiles',targetId=targetId)[0]} "
             f"(md5: {getSetting('md5bifile',targetId=targetId)})",doPrint=doPrint)
         waitForTargetsAndUser(targetId=targetId)
@@ -842,8 +847,10 @@ def resetEthAdaptor ():
         #get the name and check configuration if this is the first time called
         if (not doesSettingExist('ethAdaptor')):
             ethAdaptor= getSetting('vcu118EthAdaptorName')
-            if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('vcu118EthAdaptorMacAddress')):
-                logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('vcu118EthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
+            # Don't worry about MAC in cyberphys mode
+            if not (isEqSetting('mode','cyberPhys')):
+                if (getAddrOfAdaptor(ethAdaptor,'MAC') != getSetting('vcu118EthAdaptorMacAddress')):
+                    logAndExit(f"checkEthAdaptorConfiguration: <{ethAdaptor}> does not have the expected mac address <{getSetting('vcu118EthAdaptorMacAddress')}>. Please check the network configuration.",exitCode=EXIT.Network)
             #Set the adaptor's name
             setSetting('ethAdaptor',ethAdaptor)
             printAndLog (f"<{getSetting('ethAdaptor')}> exists and its MAC address is properly configured.",doPrint=False)

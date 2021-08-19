@@ -1,0 +1,4 @@
+name,length,polarity,nominal pattern,nominal pattern color,ssith pattern,ssith pattern color,brake hack pattern,brake hack pattern color,throttle hack pattern,throttle hack pattern color,steering hack pattern,steering hack pattern color,transmission hack pattern,transmission hack pattern color,all off,all off color,all on,all on color
+leds_driver_front_brake_1,63,normal,on,"(0,255,0)",ants,"(0,0,255)",ants,"(255,0,0)",off,"(0,0,0)",off,"(0,0,0)",off,"(0,0,0)",off,"(0,0,0)",on,"(255,255,255)"
+leds_driver_front_brake_2,44,normal,on,"(0,255,0)",ants_reverse,"(0,0,255)",ants_reverse,"(255,0,0)",off,"(0,0,0)",off,"(0,0,0)",off,"(0,0,0)",off,"(0,0,0)",on,"(255,255,255)"
+leds_driver_front_wheel_well,63,normal,on,"(0,255,0)",on,"(0,0,255)",off,"(0,0,0)",off,"(0,0,0)",on,"(255,0,0)",off,"(0,0,0)",off,"(0,0,0)",on,"(255,255,255)"

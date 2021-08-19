@@ -23,11 +23,7 @@ To generate, please use [this utility](../build/besspinCoeffsList.py).
 |Numeric Errors|Type Errors|moderate|user|low|high|
 |Numeric Errors|Value Errors|critical|user|high|high|
 |||||||
-|Hardware SoC|Improper Hardware Design|critical|machine|high|low|
-|Hardware SoC|Mishandling Permissions and Boundaries|critical|machine|high|low|
-|Hardware SoC|Vulnerable Transitions|critical|machine|high|low|
-|Hardware SoC|DoS and Side Channels|critical|machine|high|low|
-|Hardware SoC|Crypto and Security Elements|critical|machine|high|low|
+|Hardware SoC|Selected|critical|machine|high|low|
 |||||||
 |Injection|Trust Untrusted Data|critical|user|high|high|
 |||||||

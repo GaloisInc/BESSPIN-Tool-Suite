@@ -1,15 +1,14 @@
 """Cyberphys Component IDs
 Project: SSITH CyberPhysical Demonstrator
-Name: ../cyberphyslib/cyberphyslib/canlib/canspecs.py
+Name: ../cyberphyslib/cyberphyslib/canlib/componentids.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 22 April 2021
+Date: 25 June 2021
 This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
-Version hash: 956273597e1c80b771cde09098766c3a
 """
 
 SCENARIO_BASELINE = 0x11
-SCENARIO_SECURE_ECU = 0x12
+SCENARIO_SECURE_INFOTAINMENT = 0x12
 SCENARIO_SECURE_ECU = 0x13
 BESSPIN_TOOL = 0x20
 TARGET_1 = 0x21
@@ -18,9 +17,11 @@ TARGET_3 = 0x23
 TARGET_4 = 0x24
 TARGET_5 = 0x25
 TARGET_6 = 0x26
+TEENSY =  0x27
 IGNITION = 0x30
 LED_COMPONENT = 0x31
 HACKER_KIOSK = 0x40
+HACK_NONE = 0x50
 HACK_OTA = 0x51
 HACK_BRAKE = 0x51
 HACK_THROTTLE = 0x52
@@ -32,3 +33,14 @@ INFOTAINMENT_THIN_CLIENT = 0x60
 INFOTAINMENT_SERVER_1 = 0x61
 INFOTAINMENT_SERVER_2 = 0x62
 INFOTAINMENT_SERVER_3 = 0x63
+OTA_UPDATE_SERVER_1 = 0x64
+OTA_UPDATE_SERVER_2 = 0x65
+OTA_UPDATE_SERVER_3 = 0x66
+BUTTON_STATION_1 = 0x01
+BUTTON_STATION_2 = 0x02
+BUTTON_STATION_3 = 0x03
+BUTTON_VOLUME_DOWN = 0x10
+BUTTON_VOLUME_UP = 0x11
+SENSOR_THROTTLE = 0xBE
+SENSOR_BRAKE = 0xBF
+ERROR_UNSPECIFIED = 0xF0

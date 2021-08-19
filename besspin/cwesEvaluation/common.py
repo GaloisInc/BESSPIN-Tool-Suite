@@ -117,11 +117,8 @@ def checkMultitaskingScores(vulClass, multitaskingScores, instance, multitasking
             continue
         try:
             multitaskingScore = multitaskingScores[cwe]
-            if vulClass in ['bufferErrors', 'informationLeakage']:
-                testName = f"CWE-{cwe}"
-            else:
-                testName = f"TEST-{cwe}"
-            if multitaskingScore == score:
+            testName = f"CWE-{cwe}"
+            if multitaskingScore[0] == score[0]: #only check the enum score, not the exact value
                 multitaskingPasses[testName] = multitaskingPasses.get(testName, 0) + 1
                 scoreText = "PASS"
             else:
@@ -132,8 +129,8 @@ def checkMultitaskingScores(vulClass, multitaskingScores, instance, multitasking
             results.append((prettyVulClass(vulClass),
                             testName,
                             str(instance),
-                            score,
-                            multitaskingScore,
+                            score[0],
+                            multitaskingScore[0],
                             scoreText))
         except Exception as exc:
             logAndExit("<checkMultitaskingScores> Failed to check "
@@ -379,8 +376,10 @@ def isTestEnabled(vulClass, testName):
     --------
         A boolean representing whether <testName> from <vulClass> is enabled.
     """
-    if (getSettingDict(vulClass,'runAllTests')):
+    if (isEnabledDict(vulClass,['testsInfo',testName,'documentationOnly'],default=False)):
+        return False
+    elif (isEnabledDict(vulClass,'runAllTests')):
         return True
     else:
-        return getSettingDict(vulClass,['enabledTests',testName])
+        return isEnabledDict(vulClass,['enabledTests',testName])
 

@@ -2,9 +2,8 @@ import collections
 
 from besspin.base.utils.misc import *
 
-# Access, Boundary, and Location all have 2 possible values.  Therefore,
-# NUM_CONCEPTS == 2 * 2 * 2
-NUM_CONCEPTS = 2**3
+# Access, Boundary, and Location.  Therefore,
+NUM_CONCEPTS = 2 * 2 * 3
 
 def instanceToConcept(instance):
     """
@@ -48,7 +47,7 @@ def getQuota(instance):
         # Decrease representation of Boundary_Above heap tests without size
         # computation. This increases the number of CWE-130, CWE-131, and
         # CWE-680 tests.
-        return baseQuota // 4
+        return baseQuota // 8
     if (compilingBareMetal() and
         (instance.Magnitude == "Magnitude_Far" or
          instance.DataSize == "DataSize_Huge")):
@@ -61,9 +60,9 @@ def getQuota(instance):
         # when building for bare metal we must manually down weight these
         # parameters.
         return baseQuota // 2
-    if (instance.Location == "Location_Stack" and
+    if (instance.Location in ["Location_Stack", "Location_Global"] and
         instance.Magnitude == "Magnitude_Far"):
-        # Decrease number of tests with errors that are far from stack
+        # Decrease number of tests with errors that are far from stack/bss
         # allocated memory.  These errors are often detected by the OS, and
         # therefore don't necessarily test the processors themselves.  Down
         # weighting these tests also increases test score stability.

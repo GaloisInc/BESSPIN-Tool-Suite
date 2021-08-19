@@ -25,6 +25,7 @@
 #include "infotainment_utils.h"
 
 static char *broadcast_address = DEFAULT_BROADCAST_ADDRESS;
+static struct in_addr position_address = { .s_addr = INADDR_NONE };
 static struct in_addr local_address = { .s_addr = 0 };
 
 int udp_socket(int listen_port) {
@@ -39,20 +40,20 @@ int udp_socket(int listen_port) {
     if (getsockname(socketfd, (struct sockaddr *) &current_address, &current_len) == 0) {
         if (ntohs(current_address.sin_port) != listen_port) {
             // it's listening on the wrong port, close it
-            debug("closing socket on port %d\n", ntohs(current_address.sin_port));
+            message("closing socket on port %d\n", ntohs(current_address.sin_port));
             close(socketfd);
             socketfd = -1;
         } // else we leave the socket alone
     } else {
         // couldn't get socket status, reset it to -1
-        debug("couldn't get socket status for socket %d, errno %d\n", 
-              socketfd, errno);
+        message("couldn't get socket status for socket %d, errno %d\n", 
+                socketfd, errno);
         socketfd = -1;
     }
 
     // create the socket if it doesn't exist or has been closed     
     if (socketfd < 0 || (fcntl(socketfd, F_GETFD) == -1 && errno != EBADF)) {
-        debug("creating socket on port %d\n", listen_port);
+        message("creating socket on port %d\n", listen_port);
 
         if ((socketfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
             error("unable to create socket: error %d\n", errno);
@@ -83,7 +84,7 @@ int udp_socket(int listen_port) {
             error("unable to listen on port %d\n", listen_port);
         }
 
-        debug("socket created, listening for broadcasts on port %d\n", listen_port);
+        message("socket created, listening for broadcasts on port %d\n", listen_port);
     }
 
     return socketfd;   
@@ -189,12 +190,22 @@ can_frame *receive_frame(int port, uint8_t *message, int message_len,
 }
 
 void set_broadcast_address(char *address) {
-    debug("setting broadcast address to %s\n", address);
+    message("setting broadcast address to %s\n", address);
     broadcast_address = address;
 }
 
 struct in_addr *get_local_address() {
     return &local_address;
+}
+
+void set_position_address(char *address) {
+    message("setting valid position source to %s\n", address);
+    position_address.s_addr = inet_addr(address);
+}
+
+bool valid_position_source(struct in_addr address) {
+    return (position_address.s_addr == INADDR_NONE ||
+            position_address.s_addr == address.s_addr);
 }
 
 int broadcast_frame(int from_port, int to_port, can_frame *frame) {
@@ -211,7 +222,7 @@ int broadcast_frame(int from_port, int to_port, can_frame *frame) {
     frame_to_send.can_id = htonl(frame->can_id);
 
     debug("sending frame to broadcast address %s:%d\n",
-        inet_ntoa(broadcast_addr.sin_addr), to_port);
+          inet_ntoa(broadcast_addr.sin_addr), to_port);
     return sendto(udp_socket(from_port), &frame_to_send, 
                   5 + frame_to_send.can_dlc, 0, // no flags
                   (struct sockaddr *) &broadcast_addr, 

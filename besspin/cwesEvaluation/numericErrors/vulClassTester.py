@@ -8,14 +8,8 @@ from besspin.cwesEvaluation.compat import cwesEvaluationCompatibilityLayer
 from besspin.cwesEvaluation.multitasking.multitasking import multitaskingPart, multitaskingTest
 from besspin.base.utils.misc import *
 
-## All tests are assumed to have 1 part except for the following:
-partCount = {"test_128" : 2,
-             "test_456" : 3,
-             "test_457" : 2,
-             "test_665" : 2,
-             "test_824" : 2}
-
 NE_OUTPUT_FILE = "ne-output.txt"
+VULCLASS = "numericErrors"
 
 class vulClassTester(cwesEvaluationCompatibilityLayer):
     def __init__(self, target):
@@ -29,10 +23,7 @@ class vulClassTester(cwesEvaluationCompatibilityLayer):
             testNum = testName.split('_')[1]
         except Exception as exc:
             self.terminateAndExit (f"executeTest: Failed to parse <{binTest}>.",exc=exc,exitCode=EXIT.Dev_Bug)
-        if testName in partCount:
-            numParts = partCount [testName]
-        else:
-            numParts = 1
+        numParts = getSettingDict(VULCLASS,["testsInfo",testName,getSetting("osDiv"),"nParts"])
 
         return (testName, testName, numParts)
 

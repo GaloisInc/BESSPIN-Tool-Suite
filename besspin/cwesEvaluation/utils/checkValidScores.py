@@ -15,7 +15,8 @@ def checkValidScores ():
     osImage = getSetting('osImage')
     for vulClass in getSetting("vulClasses"):
         vScoresDict = getSettingDict("cweScores",vulClass)
-        for cwe,score in vScoresDict.items():
+        for cwe,scoreTuple in vScoresDict.items():
+            score = scoreTuple[0] # Check the enum score and ignore the exact one
             if (score == SCORES.HIGH): #looks fine
                 continue
             if ("gfeScoringExceptions" in getSettingDict(vulClass,["testsInfo",f"test_{cwe}"])):

@@ -199,6 +199,10 @@
             "choices" : [ "bufferErrors", "PPAC", "resourceManagement", "informationLeakage", "numericErrors", "hardwareSoC", "injection" ]
         },
         {
+            "name" : "checkAgainstValidScores",
+            "type" : "boolean"
+        },
+        {
             "name" : "useCustomCWEsConfigsPath",
             "type" : "boolean"
         },
@@ -358,10 +362,6 @@
         },
         {
             "name" : "csvFile",
-            "type" : "bool"
-        },
-        {
-            "name" : "useCachedInstances",
             "type" : "bool"
         },
         {

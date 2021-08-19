@@ -1,151 +1,202 @@
 #include "testsParameters.h"
-
 #include <stdio.h>
-void
-example_byte_in_front(void) { // works for MacOS Catalina
-    char a='a';
-    char b;
-    *(&a - 1) = 'b';
-    if (b == 'b') {
-        printf("\n<PROTOCOL_ONE_BYTE_IN_FRONT> b=%c\n", b);
-    }else {
-        printf("\n<WRONG_PROTOCOL> No one byte in front.\n");
-    }
-}
+#include <stdlib.h>
+#include <string.h>
 
-void
-example_byte_past(void) { // works for Debian
-    char d='d';
-    char e;
-    *(&d + 1) = 'e';
-    if (e == 'e') {
-        printf("\n<PROTOCOL_ONE_BYTE_PAST> e=%c\n", e);
-    }else {
-        printf("\n<WRONG_PROTOCOL> No byte past.\n");
-    }
-}
-
-void
-example_input_args_past_on_stack(char x, char y) {
-    if(*(&x - 1) == y) {
-        printf("\n<EXPECTED_INPUT_PAST> y=%c\n", y);
-    }
-    else {
-        printf("\n<WRONG_PROTOCOL> No byte past.\n");
-    }
-}
-
-void
-example_input_args_in_front_on_stack(char x, char y) {
-    if(*(&x + 1) == y) {
-        printf("\n<EXPECTED_INPUT_PAST> y=%c\n", y);
-    }
-    else {
-        printf("\n<WRONG_PROTOCOL> No byte past.\n");
-    }
-}
-
-#ifdef BESSPIN_FREERTOS
-
-#if (defined(BESSPIN_FPGA))
-#include "FreeRTOS.h"
-#endif
-// ----------------- FreeRTOS Test ----------
-#define NUM_OF_TEST_PARTS 4
-
-void main() {
-    printf("\n<OSIMAGE=FreeRTOS>\n");
-#if BESSPIN_TEST_PART == 1
-    printf("\n---Part01: example_byte_in_front.---\n");
-    example_byte_in_front();
-#elif BESSPIN_TEST_PART == 2
-    printf("---Part02: example_byte_past.---\n");
-    example_byte_past();
-#elif BESSPIN_TEST_PART == 3
-    printf("---Part03: example_input_args_past_on_stack.---\n");
-    example_input_args_past_on_stack('A', 'B');
-#elif BESSPIN_TEST_PART == 4
-    printf("---Part04: example_input_args_past_on_stack.---\n");
-    example_input_args_in_front_on_stack('A', 'B');
+#if (defined(BESSPIN_FREERTOS) && defined(BESSPIN_FPGA))
+    #include "FreeRTOS.h"
+    #define MALLOC pvPortMalloc
+    #define FREE vPortFree
 #else
-    printf("SCORE:188:%d:TEST ERROR\n",BESSPIN_TEST_PART);
+    #define MALLOC malloc
+    #define FREE free
 #endif
+
+#define FILL_AMOUNT_STACK 16 //arbitrary value
+#define MESS_RADIUS_STACK FILL_AMOUNT_STACK //seems enough
+
+#define FILL_AMOUNT_HEAP 128 //Let's go far
+#define MESS_RADIUS_HEAP FILL_AMOUNT_HEAP //seems reasonable
+
+enum direction {BEFORE, AFTER};
+enum operation {READ, WRITE};
+
+static void stackTest(enum direction dirOffset, enum operation opType);
+static void heapTest(enum direction dirOffset, enum operation opType);
+
+// --------------- FreeRTOS Test ---------------
+#ifdef BESSPIN_FREERTOS
+    #define NUM_OF_TEST_PARTS 8
+
+    void main() {
+        printf("\n<OSIMAGE=FreeRTOS>\n");
+        #if BESSPIN_TEST_PART==1
+            printf("\n---Part01: Stack Test [BEFORE, READ] ---\n");
+            stackTest(BEFORE, READ);
+        #elif BESSPIN_TEST_PART==2
+            printf("\n---Part02: Stack Test [BEFORE, WRITE] ---\n");
+            stackTest(BEFORE, WRITE);
+        #elif BESSPIN_TEST_PART==3
+            printf("\n---Part03: Stack Test [AFTER, READ] ---\n");
+            stackTest(AFTER, READ);
+        #elif BESSPIN_TEST_PART==4
+            printf("\n---Part04: Stack Test [AFTER, WRITE] ---\n");
+            stackTest(AFTER, WRITE);
+        #elif BESSPIN_TEST_PART==5
+            printf("\n---Part05: Heap Test [BEFORE, READ] ---\n");
+            heapTest(BEFORE, READ);
+        #elif BESSPIN_TEST_PART==6
+            printf("\n---Part06: Heap Test [BEFORE, WRITE] ---\n");
+            heapTest(BEFORE, WRITE);
+        #elif BESSPIN_TEST_PART==7
+            printf("\n---Part07: Heap Test [AFTER, READ] ---\n");
+            heapTest(AFTER, READ);
+        #elif BESSPIN_TEST_PART==8
+            printf("\n---Part08: Heap Test [AFTER, WRITE] ---\n");
+            heapTest(AFTER, WRITE);
+        #else
+            printf("\n<INVALID> Part[%d] not in [1,%d].\n",BESSPIN_TEST_PART,NUM_OF_TEST_PARTS);
+            return;
+        #endif
+
+        printf("\n<END-OF-MAIN>\n");
+        return;
+    }
+
+// --------------- Debian && FreeBSD test ---------------
+#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
+    #include "unbufferStdout.h"
+    int main(int argc, char *argv[]);
+
+    int main(int argc, char *argv[]) {
+        unbufferStdout();
+        int option;
+        if (argc > 1) { //be safe
+            option = atoi(argv[1]);
+        } else {
+            option = -1;
+        }
+
+        switch(option) {
+            case 1 :
+                stackTest(BEFORE, READ);
+                break;
+            case 2 :
+                stackTest(BEFORE, WRITE);
+                break;
+            case 3 :
+                stackTest(AFTER, READ);
+                break;
+            case 4 :
+                stackTest(AFTER, WRITE);
+                break;
+            case 5 :
+                heapTest(BEFORE, READ);
+                break;
+            case 6 :
+                heapTest(BEFORE, WRITE);
+                break;
+            case 7 :
+                heapTest(AFTER, READ);
+                break;
+            case 8 :
+                heapTest(AFTER, WRITE);
+                break;
+            default :
+                printf("\n<INVALID> Part[%d] not in [1,8].\n",option);
+                return 1;
+        }
+        printf("\n<END-OF-MAIN>\n");
+        return 0;
+    }
+#endif //ifdef BESSPIN_FREERTOS
+
+static void stackTest(enum direction dirOffset, enum operation opType) {
+    char fillStart[FILL_AMOUNT_STACK];
+    char goodCharBefore = 'A';
+    char badChar = 'X';
+    char goodCharAfter = 'A';
+    char fillEnd[FILL_AMOUNT_STACK];
+
+    int offset;
+    char * pLoc;
+
+    // This printing is essential to avoid any re-arrangements or optimizations.
+    printf("\nfillStart\t= <%p>\n&goodCharBefore\t= <%p>\n&badChar\t= <%p>\n&goodCharAfter\t= <%p>\nfillEnd\t\t= <%p>\n\n",
+                fillStart, &goodCharBefore, &badChar, &goodCharAfter, fillEnd);
+
+    // fill the padding with 'X' -- why not
+    memset(fillStart,'X',FILL_AMOUNT_STACK);
+    memset(fillEnd,'X',FILL_AMOUNT_STACK);
+    
+    // Mess with badChar before and after
+    printf("<BEGIN-MESS-%d-%d>\n",dirOffset,opType); 
+    for (offset=1; offset<=MESS_RADIUS_STACK; offset++) {
+        if (dirOffset==AFTER) {
+            printf("OFFSET: <+%d>.\n",offset);
+            pLoc = (&badChar + offset);
+        } else {
+            printf("OFFSET: <-%d>.\n",offset);
+            pLoc = (&badChar - offset);
+        }
+        if (opType==WRITE) {
+            *pLoc = 'X';
+        } else {
+            printf("pLoc=<%c>\n",*pLoc);
+        }
+        printf("<GOOD-CHARS> = <%c,%c>\n",goodCharBefore,goodCharAfter);
+        
+    }
+
     return;
 }
 
-//---------------- Debian && FreeBSD test ------------------------------------------------------
-#elif (defined(BESSPIN_DEBIAN) || defined(BESSPIN_FREEBSD))
+static void heapTest(enum direction dirOffset, enum operation opType) {
+    char *fillStart = (char *) MALLOC (FILL_AMOUNT_HEAP);
+    char *goodCharBefore = (char *) MALLOC (1);
+    char *badChar = (char *) MALLOC (1);
+    char *goodCharAfter = (char *) MALLOC (1);
+    char *fillEnd = (char *) MALLOC (FILL_AMOUNT_HEAP);
 
-#include <stdlib.h>
-#include "unbufferStdout.h"
+    int offset;
+    char * pLoc;
 
-/** aligned on 32-bit boundaries.*/
-void
-example_three_bytes_past() {
-    char g='g';
-    char h;
-    *(&g + 3) = 'h';
-    if (h == 'h') {
-        printf("\n<PROTOCOL_THREE_BYTE_PAST> h=%c\n", h);
-    } else {
-        printf("\n<WRONG_PROTOCOL> No three bytes past.\n");
+    if (    (fillStart==NULL) || (fillEnd==NULL) || 
+            (goodCharBefore==NULL) || (goodCharAfter==NULL) ||
+            (badChar==NULL)
+        ) {
+        printf("<INVALID> Failed to Malloc.\n");
+        return;
     }
 
-}
+    // This printing is essential to avoid any re-arrangements or optimizations.
+    printf("\nfillStart\t= <%p>\ngoodCharBefore\t= <%p>\nbadChar\t= <%p>\ngoodCharAfter\t= <%p>\nfillEnd\t\t= <%p>\n\n",
+                fillStart, goodCharBefore, badChar, goodCharAfter, fillEnd);
 
-/** aligned on 32-bit boundaries.*/
-void
-example_three_bytes_in_front() {
-    char u='q';
-    char v;
-    *(&u - 3) = 'v';
-    if (v == 'v') {
-        printf("\n<PROTOCOL_THREE_BYTES_IN_FRONT> v=%c\n", v);
-    } else {
-        printf("\n<WRONG_PROTOCOL> No three bytes in front.\n");
+    // All initializations
+    memset(fillStart,'X',FILL_AMOUNT_HEAP);
+    *goodCharBefore = 'A';
+    *badChar = 'X';
+    *goodCharAfter = 'A';
+    memset(fillEnd,'X',FILL_AMOUNT_HEAP);
+
+    // Mess with badChar before and after
+    printf("<BEGIN-MESS-%d-%d>\n",dirOffset,opType); 
+    for (offset=1; offset<=MESS_RADIUS_HEAP; offset++) {
+        if (dirOffset==AFTER) {
+            printf("OFFSET: <+%d>.\n",offset);
+            pLoc = (badChar + offset);
+        } else {
+            printf("OFFSET: <-%d>.\n",offset);
+            pLoc = (badChar - offset);
+        }
+        if (opType==WRITE) {
+            *pLoc = 'X';
+        } else {
+            printf("pLoc=<%c>\n",*pLoc);
+        }
+        printf("<GOOD-CHARS> = <%c,%c>\n",*goodCharBefore,*goodCharAfter);
     }
 
+    return;
 }
-
-int main(int argc, char *argv[]) {
-    unbufferStdout();
-    int option;
-    if (argc > 1) { //be safe
-        option = atoi(argv[1]);
-    } else {
-        option = -1;
-    }
-    switch(option) {
-        case 1 :
-            printf("\n<example_byte_in_front>\n");
-            example_byte_in_front();
-            break;
-        case 2 :
-            printf("\n<example_one_byte_past>\n");
-            example_byte_past();
-            break;
-        case 3 :
-            printf("\n<example_three_bytes_in_front>\n");
-            example_three_bytes_in_front();
-            break;
-        case 4 :
-            printf("\n<example_three_bytes_past>\n");
-            example_three_bytes_past();
-            break;
-        case 5 :
-            printf("\n<example_input_args_past_on_stack>\n");
-            example_input_args_past_on_stack('A', 'B');
-            break;
-        case 6 :
-            printf("\n<example_input_args_in_front_on_stack>\n");
-            example_input_args_in_front_on_stack('A', 'B');
-            break;
-        default :
-            printf("SCORE:188:%d:TEST ERROR\n",option);
-            return 1;
-    }  
-    return 0;
-}
-
-#endif // end of if FreeRTOS
-

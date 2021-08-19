@@ -56,6 +56,10 @@ def buildCwesEvaluation():
     buildDir = os.path.join(getSetting('workDir'), 'build')
     mkdir(buildDir, addToSettings="buildDir")
 
+    # dict key name used to distinguish between the two
+    osDiv = "unix" if isEnabled("isUnix") else "FreeRTOS"
+    setSetting("osDiv",osDiv)
+
     if isEqSetting('osImage', 'FreeRTOS'):
         # create the osImages directory
         osImagesDir = os.path.join(getSetting('workDir'),'osImages')
@@ -166,7 +170,11 @@ def buildCwesEvaluation():
                 cp (os.path.join(sourcesDir,'envBesspin.mk'), vulClassDir)
                 tests = [os.path.basename(f).split(".c")[0] for f in glob.glob(os.path.join(sourcesDir, "test_*.c"))]
                 if (doesSettingExistDict(vulClass,["mapTestsToCwes"])): #this class has special maps
-                    for cweTest, testsList in getSettingDict(vulClass,["mapTestsToCwes"]).items():
+                    for cweTest, testInfo in getSettingDict(vulClass,["mapTestsToCwes"]).items():
+                        if ("tests" not in testInfo):
+                            logAndExit(f"Test {vulClass}:{cweTest} is missing the key <tests> in "
+                                f"<mapTestsToCwes>.",exitCode=EXIT.Dev_Bug)
+                        testsList = testInfo["tests"]
                         for test in testsList:
                             isAlreadyEnabled = getSettingDict(vulClass,['enabledTests',test], default=False)
                             setSettingDict( vulClass,['enabledTests',test],
