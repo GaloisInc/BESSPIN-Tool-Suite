@@ -49,6 +49,8 @@ def restart (xTarget):
     printAndLog(f"{xTarget.targetIdInfo}Restarting infotainment server service!", tee=appLog)
     serviceTimeout = 120
     if isEqSetting('osImage','debian',targetId=xTarget.targetId):
+        # NOTE: pkill should work too, keeping this as an alternative to
+        # the kill_listeners.sh script
         #xTarget.runCommand("pkill infotainment_se",exitOnError=False,tee=appLog)
         xTarget.runCommand("/opt/kill_listeners.sh",exitOnError=False,tee=appLog)
         xTarget.runCommand("systemctl stop infotainment-server.service", erroneousContents=["Failed to stop", "error code"], tee=appLog)
