@@ -266,7 +266,8 @@ def stopTtyLogging(targetId):
     xTarget = getSetting('targetObj',targetId=targetId)
     if (not isEnabled('isTtyLogging',targetId=targetId)):
         warnAndLog(f"{xTarget.targetIdInfo}stopTtyLogging: The TTY was not being logged!",doPrint=False)
-        return
+        return False
     getSetting('ttyLogger',targetId=targetId).stop()
     setSetting('isTtyLogging',False,targetId=targetId)
+    return True
 
