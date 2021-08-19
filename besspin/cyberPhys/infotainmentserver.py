@@ -53,8 +53,7 @@ def restart (xTarget):
         # the kill_listeners.sh script
         #xTarget.runCommand("pkill infotainment_se",exitOnError=False,tee=appLog)
         xTarget.runCommand("/opt/kill_listeners.sh",exitOnError=False,tee=appLog)
-        xTarget.runCommand("systemctl stop infotainment-server.service", erroneousContents=["Failed to stop", "error code"], tee=appLog)
-        xTarget.runCommand("systemctl start infotainment-server.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
+        xTarget.runCommand("systemctl restart infotainment-server.service", erroneousContents=["Failed", "error code"], tee=appLog)
     elif isEqSetting('osImage','FreeBSD',targetId=xTarget.targetId):
         xTarget.runCommand("service infotainment-server stop", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
         xTarget.runCommand("service infotainment-server start", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
