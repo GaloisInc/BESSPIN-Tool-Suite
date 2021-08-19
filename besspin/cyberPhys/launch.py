@@ -26,18 +26,13 @@ def getNetworkNodes(component_name: str) -> (str, [str]):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def getComponentPorts(component_name: str, targetId=None) -> ([(int, str)], [(int, str)]):
+def getComponentPorts(component_name: str) -> ([(int, str)], [(int, str)]):
     """
-    Return a tuple (in_socks, out_socks) based on the component name
+    Return a tuple (in_socks, out_socks) based on the component name.
     """
     ports = getSetting('cyberPhysComponentPorts')
     topic = getSetting('cyberPhysComponentBaseTopic')
-    if targetId:
-        # config depends on target ID
-        out_port = ports[component_name] + targetId
-    else:
-        # Not targetID bound
-        out_port = ports[component_name]
+    out_port = ports[component_name]
     in_socks = [(p,topic) for p in ports.values() if p != out_port]
     out_socks = [(out_port, topic)]
     return in_socks, out_socks

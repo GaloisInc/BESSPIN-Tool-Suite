@@ -448,7 +448,12 @@
                 "commander" : 44002,
                 "interactiveLoop" : 44003,
                 "interactiveManager" : 44004,
-                "watchdogBase" : 45000
+                "watchdog1" : 45001,
+                "watchdog2" : 45002,
+                "watchdog3" : 45003,
+                "watchdog4" : 45004,
+                "watchdog5" : 45005,
+                "watchdog6" : 45006
             }
         },
         {

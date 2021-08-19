@@ -78,6 +78,7 @@ class Commander(ccomp.ComponentPoller):
         host, subscribers = besspin.cyberPhys.launch.getNetworkNodes("AdminPc")
         self.cmd_bus = canlib.TcpBus(host, subscribers)
 
+    def on_start(self):
         self.start_poller()
 
     def on_poll_poll(self, t):
@@ -137,8 +138,6 @@ class Commander(ccomp.ComponentPoller):
             #      'unless': 'degraded_mode_possible'},
             self.terminate_enter()
 
-    # TODO: handle sending componentId|error_code as required in message specs
-    # TODO: add `dlc` into canspecs.py
     def sendComponentError(self, componentId):
         msg = Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
                       dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
@@ -150,7 +149,7 @@ class Commander(ccomp.ComponentPoller):
         msg = Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
                       dlc=canlib.CAN_DLC_CMD_COMPONENT_READY,
                       data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, componentId))
-        #printAndLog(f"Commander sending {msg}",doPrint=False)
+        printAndLog(f"Commander sending {msg}",doPrint=False)
         self.cmd_bus.send(msg)
 
     def processCmdMsg(self, msg):
@@ -186,12 +185,6 @@ class Commander(ccomp.ComponentPoller):
         Check if there is a problem from the watchdog (target restarted)
         TODO: when to reset ALL targets?
         """
-        # Periodically send CMD_COMPONENT_READY()
-        #if (time.time() - self.last_ready_msg) > self.READY_MSG_TIMEOUT:
-        #    self.sendComponentReady(canlib.BESSPIN_TOOL)
-        # NOTE: sending CMD_COMPONENT_READY temporaily disabled
-        # because it was interfering with Ignition's state machine
-
         # Check if there is a C&C restart request (single target)
         cc_recv = self.cmd_bus.recv(timeout=self.CC_TIMEOUT)
         if cc_recv:
@@ -252,7 +245,6 @@ class Commander(ccomp.ComponentPoller):
     @recv_topic("base-topic")
     def _(self, msg, t):
         """Filter received messages"""
-        printAndLog(f"<{self.__class__.__name__}> Received msg: {msg}",doPrint=False)
         for targetId in range(1,getSetting('nTargets')+1):
             if msg == f"READY {targetId}":
                 self.targets[targetId] = "READY"
