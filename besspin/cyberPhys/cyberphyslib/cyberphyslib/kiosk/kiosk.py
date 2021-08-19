@@ -33,6 +33,7 @@ NOTE: Scenarios are:
 """
 import cyberphyslib.kiosk.client as kclient
 import cyberphyslib.canlib as canlib
+import cyberphyslib.demonstrator.config as cconf
 
 from can import Message
 from transitions.extensions import GraphMachine as Machine
@@ -155,14 +156,15 @@ class HackerKiosk:
     ]
 
 
-    def __init__(self, net_conf, deploy_mode=True, draw_graph=False):
+    def __init__(self, net_conf: cconf.DemonstratorNetworkConfig, deploy_mode=True, draw_graph=False):
         """kiosk state machine"""
         assert(net_conf)
+        self.net_conf = net_conf
         self.deploy_mode = deploy_mode
         if self.deploy_mode:
-            print("Starting in deploy mode!")
+            print(f"<{self.__class__.__name__}> Starting in deploy mode!")
         else:
-            print("Starting in test mode!")
+            print(f"<{self.__class__.__name__}> Starting in test mode!")
 
         self.states = None
         self.transitions = None
@@ -170,16 +172,20 @@ class HackerKiosk:
         self.machine = self.prepare_state_machine()
         self.state_arg = None
         self.is_reset_completed = False
+        self.initialized = False
 
         if draw_graph:
-            # FIXME: not properly initialized,
-            # a little cludge to get the transitions graph
+            print(f"<{self.__class__.__name__}> Drawing graph, *NOT* initializing.")
             return
+        else:
+            self.initialize()
 
+    def initialize(self):
+        print(f"<{self.__class__.__name__}> Initializing network!")
         self.stop_evt = threading.Event()
 
         # ZMQ init
-        self.zmq_port = net_conf.port_network_ipcPort
+        self.zmq_port = self.net_conf.port_network_ipcPort
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind(f"tcp://*:{self.zmq_port}")
@@ -189,7 +195,7 @@ class HackerKiosk:
 
         # State machine data
         self.active_scenario = canlib.SCENARIO_BASELINE
-        self.ota_server_port = net_conf.port_network_otaServerPort
+        self.ota_server_port = self.net_conf.port_network_otaServerPort
         self.brakes_ok = True
         self.lkas_disabled = True
         self.transmission_ok = True
@@ -204,18 +210,24 @@ class HackerKiosk:
         self.ipc_msg = {}
 
         # CMD BUS
-        cmd_host, cmd_subscribers = net_conf.getCmdNetworkNodes("HackerKiosk")
+        cmd_host, cmd_subscribers = self.net_conf.getCmdNetworkNodes("HackerKiosk")
         self.cmd_bus = canlib.TcpBus(cmd_host, cmd_subscribers)
         # CAN UDP BUS (For hacked infotainment server)
-        print(f"<{self.__class__.__name__}> UDP bus listening at {net_conf.nodes['HackerKiosk']}:{net_conf.port_network_hackedInfotainmentPort}")
-        self.infotainment_bus = canlib.UdpBus(port=net_conf.port_network_hackedInfotainmentPort,ip="")
+        print(f"<{self.__class__.__name__}> UDP bus listening at {self.net_conf.nodes['HackerKiosk']}:\
+            {self.net_conf.port_network_hackedInfotainmentPort}")
+        self.infotainment_bus = canlib.UdpBus(port=self.net_conf.port_network_hackedInfotainmentPort,ip="")
         self.cmd_thread = threading.Thread(target=self.cmdLoop, args=[], daemon=True)
         self.info_thread = threading.Thread(target=self.infoLoop, args=[], daemon=True)
 
         print(f"<{self.__class__.__name__}> Listening on ZMQ_PORT {self.zmq_port}")
         self.default_inputs()
 
+        self.initialized = True
+
+
     def run(self):
+        if not self.initialized:
+            self.initialize()
         self.cmd_thread.start()
         self.info_thread.start()
         while not self.stopped:
@@ -248,19 +260,19 @@ class HackerKiosk:
         while True:
             msg = self.infotainment_bus.recv()
             if msg:
-                cid, data = msg.arbitration_id, msg.data
+                cid = msg.arbitration_id
                 try:
                     # NOTE: we need to listen to the CAN_ID_CAR_X/Y/Z/R from the hacked server
                     # Make sure we are listening for the right IP address
                     if cid == canlib.CAN_ID_CAR_X:
                         # Get X coordinate
-                        self.x = struct.unpack(canlib.CAN_FORMAT_CAR_X, data)[0]
+                        self.x = struct.unpack(canlib.CAN_FORMAT_CAR_X, msg.data)[0]
                     elif cid == canlib.CAN_ID_CAR_Y:
                         # Get Y coordinate
-                        self.y = struct.unpack(canlib.CAN_FORMAT_CAR_Y, data)[0]
+                        self.y = struct.unpack(canlib.CAN_FORMAT_CAR_Y, msg.data)[0]
                     elif cid == canlib.CAN_ID_CAR_Z:
                         # Get Z coordinate
-                        self.z = struct.unpack(canlib.CAN_FORMAT_CAR_Z, data)[0]
+                        self.z = struct.unpack(canlib.CAN_FORMAT_CAR_Z, msg.data)[0]
                 except Exception as exc:
                     print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
@@ -269,20 +281,17 @@ class HackerKiosk:
         while True:
             msg = self.cmd_bus.recv()
             if msg:
-                cid, bytedata = msg.arbitration_id, msg.data
-                data = int.from_bytes(bytedata, byteorder='big', signed=False)
+                cid = msg.arbitration_id
                 try:
                     if cid == canlib.CAN_ID_HEARTBEAT_REQ:
-                        print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(data)}")
-                        # respond with a heartbeat response
-                        # Component ID / sender IP address (uint32_t) | heartbeat request number (uint32_t)
+                        req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)
+                        print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(req_number)}")
                         heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
                                     is_extended_id=True,
-                                    data=list(canlib.HACKER_KIOSK.to_bytes(4, byteorder = 'big'), bytedata))
+                                    data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
                         self.cmd_bus.send(heartbeat_ack)
                     else:
-                        # NOTE: Do something else here?
-                        print(f"<{self.__class__.__name__}> CMD_BUS CAN_ID={hex(cid)}, data={data}")
+                        pass
                 except Exception as exc:
                     print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
