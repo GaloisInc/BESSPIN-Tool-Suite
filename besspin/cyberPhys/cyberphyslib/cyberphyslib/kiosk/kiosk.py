@@ -290,6 +290,15 @@ class HackerKiosk:
                                                 dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
                                                 data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
                         self.cmd_bus.send(heartbeat_ack)
+                    elif cid == canlib.CAN_ID_CMD_FUNCTIONALITY_LEVEL:
+                        level = struct.unpack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL, msg.data)
+                        print(f"<{self.__class__.__name__}> CAN_ID_CMD_FUNCTIONALITY_LEVEL: {hex(level)}")
+                        if level == canlib.FUNCTIONALITY_FULL:
+                            print(f"<{self.__class__.__name__}> Deploy mode enabled")
+                            self.deploy_mode = True
+                        else:
+                            print(f"<{self.__class__.__name__}> Deploy mode disabled")
+                            self.deploy_mode = False
                     else:
                         pass
                 except Exception as exc:
