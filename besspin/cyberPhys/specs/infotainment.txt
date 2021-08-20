@@ -9,9 +9,14 @@ participant "Ignition\n(listens to port 5002)" as Ignition
 Driver --> ThinClient: presses button
 ThinClient -[#red]> Server: broadcast CAN_ID_BUTTON_PRESSED to port 5002
 Server -[#red]> Ignition: broadcast CAN_ID_INFOTAINMENT_STATE to port 5002
-Ignition -> Ignition: Receive only from the server on the active network
+Ignition -> Ignition: Receive infotainment state update only\nfrom the server on the active network
 Ignition -> Ignition: Update music/volume state
 Ignition -> Ignition: Poll simulator for position updates
+
+Ignition -[#red]> Server: Send CAN_ID_CAR_X/Y/Z/X to port 5002
+Server -> Server: Filter position updates to prevent jitter
+Server -[#red]> Ignition: (if the position change is significant enough)\nSend CAN_ID_CAR_X/Y/Z/X to port 5002
+Ignition -> Ignition: Receive position update only\nfrom the server on the active network
 
 Ignition -[#green]> ThinClient: Send CAN_ID_CAR_X/Y/Z/X to port 5013
 ThinClient -> ThinClient: Update map position
