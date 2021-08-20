@@ -4,7 +4,7 @@
 * Name: lib/componentids.h
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 25 June 2021
+* Date: 20 August 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
@@ -13,6 +13,9 @@
 #define SCENARIO_BASELINE 0x11
 #define SCENARIO_SECURE_INFOTAINMENT 0x12
 #define SCENARIO_SECURE_ECU 0x13
+#define FUNCTIONALITY_MINIMAL 0x16
+#define FUNCTIONALITY_MEDIUM 0x17
+#define FUNCTIONALITY_FULL 0x18
 #define BESSPIN_TOOL 0x20
 #define TARGET_1 0x21
 #define TARGET_2 0x22
@@ -20,7 +23,7 @@
 #define TARGET_4 0x24
 #define TARGET_5 0x25
 #define TARGET_6 0x26
-#define TEENSY  0x27
+#define TEENSY 0x27
 #define IGNITION 0x30
 #define LED_COMPONENT 0x31
 #define HACKER_KIOSK 0x40
