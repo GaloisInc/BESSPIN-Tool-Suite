@@ -129,6 +129,8 @@ class HackerKioskUnitTests(unittest.TestCase):
     def run_reset(self, t: TestHackerKiosk):
         print("Pressing reset")
         t.do_button_pressed_reset("")
+        # This takes ~20s to reset the two components
+        # OTA_SERVER_3 and INFO_SERVER_3
         time.sleep(HackerKioskUnitTests.LONG_DELAY_S)
 
     def run_introduction(self, t: TestHackerKiosk):
@@ -224,7 +226,9 @@ class HackerKioskUnitTests(unittest.TestCase):
 
         print("Pressing next, goes to SECURE_INTO_SCENARIO")
         t.do_button_pressed_next("")
+        # This takes 38s to reset OTA_SERVER_1 + INFO_SERVER_1 + Target1
         time.sleep(HackerKioskUnitTests.DEFAULT_DELAY_S)
+        time.sleep(HackerKioskUnitTests.LONG_DELAY_S)
 
         print("Choosing SSITH infotainment scenario")
         t.do_button_pressed_ssith_infotainment("")
@@ -245,7 +249,9 @@ class HackerKioskUnitTests(unittest.TestCase):
 
         print("Pressing next, goes to SECURE_INTO_SCENARIO")
         t.do_button_pressed_next("")
+        # This takes 38s to reset OTA_SERVER_1 + INFO_SERVER_1 + Target1
         time.sleep(HackerKioskUnitTests.DEFAULT_DELAY_S)
+        time.sleep(HackerKioskUnitTests.LONG_DELAY_S)
 
         print("Choosing SSITH ecu scenario")
         t.do_button_pressed_ssith_ecu("")
@@ -253,3 +259,16 @@ class HackerKioskUnitTests(unittest.TestCase):
         self.run_infotainment_exploits(t)
 
         self.run_reset(t)
+
+    def run_scenarios(self):
+        iter_max = 100
+        for i in range(1,iter_max):
+            print(f"Launching iteration {i}")
+            print("Lanching BASELINE->SECURE_ECU scenario")
+            self.test_scenario_baseline_to_secure_ecu()
+            print("Fnished BASELINE->SECURE_ECU scenario")
+            print("Lanching BASELINE->SECURE_INFOTAINMENT scenario")
+            self.test_scenario_baseline_to_secure_infotainment()
+            print("Finished BASELINE->SECURE_INFOTAINMENT scenario")
+            print(f"Finished iteration {i}")
+        print("Done")
