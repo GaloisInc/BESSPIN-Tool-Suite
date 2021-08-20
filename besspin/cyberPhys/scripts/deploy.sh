@@ -1,6 +1,6 @@
 #! /bin/bash
 # TODO: add fixed IP values to avoid dependency on local DNS
-for IP in hacker-kiosk can-display
+for IP in hacker-kiosk can-display infotainment
 do
 	echo "Deploying to ${IP}"
 	rsync --progress -a --exclude=.git/* --exclude=FreeRTOS --exclude=workDir BESSPIN-Tool-Suite pi@${IP}:~/
