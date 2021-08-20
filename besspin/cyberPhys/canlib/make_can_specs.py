@@ -109,7 +109,11 @@ This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_sp
         """generate code for a ID info entry (row of csv file)"""
         component_name = entry["Component"]
         component_id = entry["ID"]
-        return f"{component_name} = {component_id}\n" 
+        component_notes = entry["Notes"]
+        if component_notes:
+            return f"{component_name} = {component_id} # {component_notes}\n"
+        else:
+            return f"{component_name} = {component_id}\n"
 
 
 class CanlibC(CanlibTemplate):
