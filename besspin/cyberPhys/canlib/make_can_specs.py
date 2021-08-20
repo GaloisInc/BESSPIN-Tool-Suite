@@ -103,7 +103,7 @@ This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_sp
             f"# Description: {' '.join(fdescr.splitlines())}\n"\
             f"{var_name}: int = {cid}\n"\
             f"{format_name}: str = {canformat}\n"\
-            f"{dlc_name}: str = {dlc}\n\n"
+            f"{dlc_name}: int = {dlc}\n\n"
 
     def produce_ids(self, entry):
         """generate code for a ID info entry (row of csv file)"""
