@@ -55,8 +55,7 @@ def restart (xTarget):
     if isEqSetting('osImage','debian',targetId=xTarget.targetId):
         xTarget.runCommand("systemctl restart ota.service", erroneousContents=["Failed", "error code"],tee=appLog)
     elif isEqSetting('osImage','FreeBSD',targetId=xTarget.targetId):
-        xTarget.runCommand("service ota stop", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
-        xTarget.runCommand("service ota start", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
+        xTarget.runCommand("service ota restart", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
     else:
         xTarget.terminateAndExit (f"{xTarget.targetIdInfo}Can't restart ota service on <{getSetting('osImage',targetId=xTarget.targetId)}>",
                      exitCode=EXIT.Dev_Bug)
