@@ -222,6 +222,9 @@ class HackerKiosk:
         print(f"<{self.__class__.__name__}> Listening on ZMQ_PORT {self.zmq_port}")
         self.default_inputs()
 
+        # To make sure the OTA server is properly initialized
+        self.switchActiveScenario(canlib.SCENARIO_BASELINE)
+
         self.initialized = True
 
 
