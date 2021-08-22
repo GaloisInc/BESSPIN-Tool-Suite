@@ -1,25 +1,21 @@
 #! /usr/bin/env python3
 from besspin.base.utils.misc import *
-import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
 
 import time
 import serial, serial.tools.list_ports_posix
 
-class RelayManager(ccomp.Component):
+class RelayManager():
     """ 
     Controls USB relay Amazon ASIN B01CN7E0RQ that is a part of cyberphys admin PC
     It resets the Teensy board
     """
-    ## Relay interface and control parameters
+    # Relay interface and control parameters
     # Relays here are Amazon ASIN B01CN7E0RQ
     relay_usb_product_id = "29987"  # note, this is a USB product ID, not a process ID
     relay_baud = 9600
     relay_on = b'\xA0\x01\x01\xA2'
     relay_off = b'\xA0\x01\x00\xA1'
     relay_delay = 0.5
-
-    def __init__(self, *args):
-        super(RelayManager, self).__init__(*args)
 
     @staticmethod
     def iterate_relays():
@@ -49,13 +45,11 @@ class RelayManager(ccomp.Component):
             relay.flushInput()
             relay.write(RelayManager.relay_off)
 
-
-    @recv_topic("base-topic","RESET 0")
-    def _(self, t):
+    @staticmethod
+    def toggleRelays() -> None:
         """a topic level callback"""
-        printAndLog(f"{self.name} Reset requested")
-        self.turn_on_relays()
-        time.sleep(self.relay_delay)
-        self.turn_off_relays()
-        printAndLog(f"{self.name} Reset completed, sending READY 0 message")
-        self.send_message(ccomp.Message(f"READY 0"), getSetting('cyberPhysComponentBaseTopic'))
+        printAndLog("<RelayManager> Reset requested")
+        RelayManager.turn_on_relays()
+        time.sleep(RelayManager.relay_delay)
+        RelayManager.turn_off_relays()
+        printAndLog("<RelayManager> Reset completed")

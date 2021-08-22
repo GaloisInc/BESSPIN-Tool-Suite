@@ -66,20 +66,21 @@ def startCyberPhys():
         #   for interactive, so we'll keep it all as queues for consistency and more future compatibility).
         exitQueue = queue.Queue(maxsize=getSetting('nTargets')+int(isEnabled('interactiveShell')))
         setSetting('cyberPhysQueue',exitQueue)
-        for targetId in range(1,getSetting('nTargets')+1):
-            # queue from heartbeat thread -> watchdog thread
-            setSetting('watchdogHeartbeatQueue',queue.Queue(),targetId=targetId)
+        #for targetId in range(1,getSetting('nTargets')+1):
+        #    # queue from heartbeat thread -> watchdog thread
+        #    setSetting('watchdogHeartbeatQueue',queue.Queue(),targetId=targetId)
 
         # queue used to stop the heartbeat thread
-        setSetting('heartbeatQueue', queue.Queue(maxsize=1))
+        #setSetting('heartbeatQueue', queue.Queue(maxsize=1))
 
         # Start the watchdogs
-        for targetId in range(1,getSetting('nTargets')+1):
-            components.append(besspin.cyberPhys.watchdog.Watchdog(targetId))
+        #for targetId in range(1,getSetting('nTargets')+1):
+        #    components.append(besspin.cyberPhys.watchdog.Watchdog(targetId))
 
         # Start the heartbeat watchdog
-        allThreads = runThreadPerTarget(besspin.cyberPhys.run.heartBeatListener,
-                        addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
+        allThreads = []
+        #allThreads = runThreadPerTarget(besspin.cyberPhys.run.heartBeatListener,
+        #                addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
 
         # Pipe the UART
         if (isEnabled('pipeTheUart')):
@@ -90,8 +91,8 @@ def startCyberPhys():
 
         # Start relay manager
         in_socks, out_socks = getComponentPorts("relayManager")
-        components.append(
-            besspin.cyberPhys.relaymanager.RelayManager("relayManager", in_socks, out_socks))
+        #components.append(
+        #    besspin.cyberPhys.relaymanager.RelayManager("relayManager", in_socks, out_socks))
         components.append(besspin.cyberPhys.commander.Commander())
 
         for c in components:
@@ -114,7 +115,7 @@ def startCyberPhys():
         ftQueueUtils("cyberPhysMain:queue",exitQueue,'get') #block until receiving an error or termination
     
         # Terminating all threads
-        ftQueueUtils(f"target{targetId}:heartbeat:queue",getSetting('heartbeatQueue'),'put')
+        #ftQueueUtils(f"target{targetId}:heartbeat:queue",getSetting('heartbeatQueue'),'put')
         if (isEnabled('interactiveShell')):
             ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
 
