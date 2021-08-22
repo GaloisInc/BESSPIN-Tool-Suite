@@ -287,14 +287,14 @@ class HackerKiosk:
                 cid = msg.arbitration_id
                 try:
                     if cid == canlib.CAN_ID_HEARTBEAT_REQ:
-                        req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)
+                        req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)[0]
                         print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(req_number)}")
                         heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
                                                 dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
                                                 data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
                         self.cmd_bus.send(heartbeat_ack)
                     elif cid == canlib.CAN_ID_CMD_FUNCTIONALITY_LEVEL:
-                        level = struct.unpack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL, msg.data)
+                        level = struct.unpack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL, msg.data)[0]
                         print(f"<{self.__class__.__name__}> CAN_ID_CMD_FUNCTIONALITY_LEVEL: {hex(level)}")
                         if level == canlib.FUNCTIONALITY_FULL:
                             print(f"<{self.__class__.__name__}> Deploy mode enabled")
@@ -302,6 +302,9 @@ class HackerKiosk:
                         else:
                             print(f"<{self.__class__.__name__}> Deploy mode disabled")
                             self.deploy_mode = False
+                    elif cid == canlib.CAN_ID_CMD_COMPONENT_READY:
+                        component_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, msg.data)[0]
+                        print(f"<{self.__class__.__name__}> CAN_ID_CMD_COMPONENT_READY: {hex(component_id)}")
                     else:
                         pass
                 except Exception as exc:
