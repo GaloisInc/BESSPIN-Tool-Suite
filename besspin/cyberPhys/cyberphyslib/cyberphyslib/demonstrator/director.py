@@ -301,9 +301,9 @@ class IgnitionDirector:
 
     def process_cc(self, msg):
         """process cc message"""
-        id = msg.arbitration_id
+        cid = msg.arbitration_id
         try:
-            if id == canlib.CAN_ID_CMD_RESTART:
+            if cid == canlib.CAN_ID_CMD_RESTART:
                 ignition_logger.debug(f"process cc: restart")
                 dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
                 if dev_id == canlib.IGNITION:
@@ -311,7 +311,7 @@ class IgnitionDirector:
                     bsim: simulator.Sim = self._handler["beamng"]
                     bsim.restart_command()
 
-            elif id == canlib.CAN_ID_CMD_HACK_ACTIVE:
+            elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
                 hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
                 ignition_logger.debug(f"process cc: set hack active {hack_idx}")
                 # Process HACK_ACTIVE messages only in baseline scenario
@@ -320,7 +320,7 @@ class IgnitionDirector:
                     lm: ledm.LedManagerComponent = self._handler["ledm"]
                     lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
 
-            elif id == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
+            elif cid == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
                 nmap = {
                     canlib.SCENARIO_BASELINE: "base",
                     canlib.SCENARIO_SECURE_ECU: "secure_ecu",
@@ -338,7 +338,7 @@ class IgnitionDirector:
                     pattern = ledm.LedPatterns.SSITH
                 lm.update_pattern(ledm.LedPatterns(pattern))
 
-            elif id == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
+            elif cid == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
                 aut_idx = struct.unpack(canlib.CAN_FORMAT_CMD_SET_DRIVING_MODE, msg.data)[0]
                 ignition_logger.debug(f"process cc: set driving mode {aut_idx}")
                 bsim: simulator.Sim = self._handler["beamng"]
