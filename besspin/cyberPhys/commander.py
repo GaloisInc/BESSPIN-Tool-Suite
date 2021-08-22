@@ -1,28 +1,13 @@
 #! /usr/bin/env python3
-
-from besspin import target
+from besspin.cyberPhys.relaymanager import RelayManager
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
 import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
 import besspin.cyberPhys.cyberphyslib.cyberphyslib.canlib as canlib
-from besspin.cyberPhys import infotainmentserver
 
-import time
 import struct
 
 from can import Message
-from enum import Enum, auto
-
-class CommanderStates(Enum):
-    '''
-    FSM description
-    '''
-    BOOT = auto() # All targets booted OK
-    READY = auto() # Targets are ready
-    RESTART_TARGET = auto() # Restart target
-    FAILIURE_RECOVERY = auto() # Attempt to recovery a failed restart
-    DEGRADED_MODE = auto() # Initialize degraded mode
-    TERMINATE = auto() # Terminate the tool
 
 class Commander(ccomp.ComponentPoller):
     """
@@ -33,6 +18,8 @@ class Commander(ccomp.ComponentPoller):
     POLL_FREQ = 0.5
     DEBUG = True
 
+    # NOTE: this setup is for one commander directing 6 targets
+    # For two separate commanders, this has to be adjusted
     targetIds = {
         canlib.TEENSY: 0,
         canlib.TARGET_1: 1,
@@ -61,8 +48,6 @@ class Commander(ccomp.ComponentPoller):
         printAndLog(f"Starting {name} with in_socks: {in_socks} and out_socks: {out_socks}, sample freq: {self.POLL_FREQ}[Hz]", doPrint=False)
         super().__init__(name, in_socks, out_socks, sample_frequency=self.POLL_FREQ)
 
-        self.state = CommanderStates.BOOT
-
         # input space as class members
         self.target_reset_requested = False
         self.ready_msg_timeout = False
@@ -83,60 +68,31 @@ class Commander(ccomp.ComponentPoller):
 
     def on_poll_poll(self, t):
         """main loop"""
-        # NOTE: You may want to check for termination so that you don't need to add a cycle at terminate.
-
-        if self.state == CommanderStates.BOOT:
-            #     # startup logic
-            #     { 'trigger': 'next_state', 'source': 'boot', 'dest': 'ready'},
-            # Finish booting
-            printAndLog(f"<{self.__class__.__name__}> booted.", doPrint=Commander.DEBUG)
-            self.state = CommanderStates.READY
-        elif self.state == CommanderStates.READY:
-            # Most common state
-            #     # ready logic
-            #     {'trigger': 'next_state', 'source': 'ready', 'dest': 'ready',
-            #      'unless': ['target_error, target_reset_requested']},
-            self.ready_enter()
-            if self.target_reset_requested:
-            #     {'trigger': 'next_state', 'source': 'ready', 'dest': 'restart_target',
-            #      'conditions': 'target_reset_requested'},
-                printAndLog(f"<{self.__class__.__name__}> Target restart requested", doPrint=Commander.DEBUG)
-                self.state = CommanderStates.RESTART_TARGET
-            elif self.target_error:
-            #     {'trigger': 'next_state', 'source': 'ready', 'dest': 'restart_target',
-            #      'conditions': 'target_error'},
-                printAndLog(f"<{self.__class__.__name__}> Target error detected", doPrint=Commander.DEBUG)
-                self.state = CommanderStates.RESTART_TARGET
-
-        elif self.state == CommanderStates.RESTART_TARGET:
-            # Attempt target restart
-            if self.target_reset_requested:
-                self.restart_target_enter()
-                # TODO
-                self.state = CommanderStates.READY
-            elif self.restart_ok:
-                #     {'trigger': 'next_state', 'source': 'restart_target', 'dest': 'ready',
-                #      'conditions': 'restart_ok'},
-                self.state = CommanderStates.READY
-            else:
-                printAndLog(f"<{self.__class__.__name__}> Waiting for target to become ready", doPrint=Commander.DEBUG)
-                #     {'trigger': 'next_state', 'source': 'restart_target', 'dest': 'failure_recovery',
-                #      'conditions': 'restart_failed'},
-        elif self.state == CommanderStates.FAILIURE_RECOVERY:
-            #     # recovery logic
-            #     {'trigger': 'next_state', 'source': 'failure_recovery', 'dest': 'terminate',
-            #      'unless': 'recovery_possible'},
-            self.failure_recovery_enter()
-        elif self.state == CommanderStates.DEGRADED_MODE:
-            #     {'trigger': 'next_state', 'source': 'failure_recovery', 'dest': 'degraded_mode',
-            #      'conditions': 'recovery_possible'},
-            #     {'trigger': 'next_state', 'source': 'degraded_mode', 'dest': 'ready',
-            #      'conditions': 'degraded_mode_possible'},
-            logAndExit(f"<{self.__class__.__name__}> State not implemented")
-        elif self.state == CommanderStates.TERMINATE:
-            #     {'trigger': 'next_state', 'source': 'degraded_mode', 'dest': 'terminate',
-            #      'unless': 'degraded_mode_possible'},
-            self.terminate_enter()
+        # Check if there is a C&C restart request (single target)
+        msg = self.cmd_bus.recv(timeout=self.CC_TIMEOUT)
+        if msg:
+            cid = msg.arbitration_id
+            try:
+                if cid == canlib.CAN_ID_CMD_RESTART:
+                    devId = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
+                    printAndLog(f"<{self.__class__.__name__}> Reset devId: {devId}", doPrint=Commander.DEBUG)
+                    if devId == canlib.TEENSY:
+                        self.restartTeensy()
+                    elif devId in self.targetIds:
+                        self.restartTarget(devId)
+                    elif devId in self.componentIds:
+                        self.restartComponent(devId)
+                elif cid == canlib.CAN_ID_HEARTBEAT_REQ:
+                    req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)[0]
+                    print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(req_number)}")
+                    heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
+                                            dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
+                                            data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
+                    self.cmd_bus.send(heartbeat_ack)
+                else:
+                    pass
+            except Exception as exc:
+                printAndLog(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
     def sendComponentError(self, componentId):
         msg = Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
@@ -152,105 +108,59 @@ class Commander(ccomp.ComponentPoller):
         printAndLog(f"Commander sending {msg}",doPrint=False)
         self.cmd_bus.send(msg)
 
-    def processCmdMsg(self, msg):
-        """process CMD message
+    def restartTeensy(self):
         """
-        cid = msg.arbitration_id
-        try:
-            if cid == canlib.CAN_ID_CMD_RESTART:
-                dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
-                printAndLog(f"<{self.__class__.__name__}> Reset dev_id: {dev_id}", doPrint=Commander.DEBUG)
-                if dev_id in self.targetIds:
-                    targetId = self.targetIds[dev_id]
-                    printAndLog(f"<{self.__class__.__name__}> targetId: {targetId}", doPrint=Commander.DEBUG)
-                    self.targets[targetId] = "RESET"
-                    self.target_reset_requested = True
-                elif dev_id in self.componentIds:
-                    self.restartComponent(dev_id)
-            elif cid == canlib.CAN_ID_HEARTBEAT_REQ:
-                req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)
-                print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(req_number)}")
-                heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
-                                        dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
-                                        data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
-                self.cmd_bus.send(heartbeat_ack)
-            else:
-                pass
-        except Exception as exc:
-            printAndLog(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
+        Toggle USB connected relays to restart Teensy board
+        """
+        printAndLog(f"<{self.__class__.__name__}> Restarting Teensy")
+        RelayManager.toggleRelays()
+        self.sendComponentReady(canlib.TEENSY)
+        printAndLog(f"<{self.__class__.__name__}> Teensy restarted")
 
-    def ready_enter(self):
+    def restartTarget(self, devId):
         """
-        Most common state
-        Check if there is a problem from the watchdog (target restarted)
-        TODO: when to reset ALL targets?
+        Restart target
         """
-        # Check if there is a C&C restart request (single target)
-        cc_recv = self.cmd_bus.recv(timeout=self.CC_TIMEOUT)
-        if cc_recv:
-            self.processCmdMsg(cc_recv)
+        targetId = self.targetIds[devId]
+        printAndLog(f"<{self.__class__.__name__}> Restarting target {targetId}")
+        # Logger is disabed inside the resetTarget function
+        besspin.target.launch.resetTarget(getSetting('targetObj',targetId=targetId))
+        self.sendComponentReady(devId)
+        printAndLog(f"<{self.__class__.__name__}> Restarting target {targetId} done")
     
     def restartComponent(self, componentId):
         """
-        Restart Besspin component
+        Restart component
         """
         printAndLog(f"<{self.__class__.__name__}> Restarting component ID {componentId}")
-        # Infotainment reset for now
+
         if componentId == canlib.INFOTAINMENT_SERVER_1 or\
            componentId == canlib.INFOTAINMENT_SERVER_2 or\
            componentId == canlib.INFOTAINMENT_SERVER_3:
             devId = self.componentIds[componentId]
             targetId = self.targetIds[devId]
             printAndLog(f"<{self.__class__.__name__}> Restarting infotainment on target {targetId}")
-            self.send_message(ccomp.Message(f"INFOTAINMENT_RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
+            # Disable ttyLogger
+            wasLogging = besspin.cyberPhys.launch.stopTtyLogging(targetId)
+            besspin.cyberPhys.run.resetComponent("infotainment",targetId)
+            # Re-enable ttyLogger
+            if (wasLogging):
+                besspin.cyberPhys.launch.startTtyLogging(targetId)
+            self.sendComponentReady(componentId)
+            printAndLog(f"<{self.__class__.__name__}> Restarting infotainment done")
         elif componentId == canlib.OTA_UPDATE_SERVER_1 or\
            componentId == canlib.OTA_UPDATE_SERVER_2 or\
            componentId == canlib.OTA_UPDATE_SERVER_3:
             devId = self.componentIds[componentId]
             targetId = self.targetIds[devId]
-            printAndLog(f"<{self.__class__.__name__}> Restarting infotainment on target {targetId}")
-            self.send_message(ccomp.Message(f"OTA_RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
+            printAndLog(f"<{self.__class__.__name__}> Restarting OTA server on target {targetId}")
+            # Disable ttyLogger
+            wasLogging = besspin.cyberPhys.launch.stopTtyLogging(targetId)
+            besspin.cyberPhys.run.resetComponent("ota",targetId)
+            # Re-enable ttyLogger
+            if (wasLogging):
+                besspin.cyberPhys.launch.startTtyLogging(targetId)
+            self.sendComponentReady(componentId)
+            printAndLog(f"<{self.__class__.__name__}> Restarting OTA server done")
         else:
             printAndLog(f"<{self.__class__.__name__}> Unknown component ID {componentId}")
-
-    def restart_target_enter(self):
-        """
-        Initiate target restart
-        """
-        printAndLog(f"<{self.__class__.__name__}> Restarting target")
-        self.target_reset_requested = False
-
-        for targetId in range(1,getSetting('nTargets')+1):
-            if self.targets[targetId] == "RESET":
-                # Initiate reset of this target
-                self.send_message(ccomp.Message(f"RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
-                self.targets[targetId] = "WAIT"
-
-    def failure_recovery_enter(self):
-        """
-        Not much to do here right now
-        TODO: better failure recovery
-        """
-        printAndLog(f"<{self.__class__.__name__}> Attempting failure recovery...")
-
-    def terminate_enter(self):
-        """
-        Send CMD_COMPONENT_ERROR before exiting
-        NOTE: not sure how well this will fit the flow - maybe replace this
-        with a call in __del__ function
-        """
-        self.sendComponentError(canlib.BESSPIN_TOOL)
-        printAndLog(f"<{self.__class__.__name__}> Terminating...")
-
-    @recv_topic("base-topic")
-    def _(self, msg, t):
-        """Filter received messages"""
-        for targetId in range(1,getSetting('nTargets')+1):
-            if msg == f"READY {targetId}":
-                self.targets[targetId] = "READY"
-                self.restart_ok = True
-                self.sendComponentReady(self.targetList[targetId])
-            elif msg == f"ERROR {targetId}":
-                # Request a reset of the target
-                self.targets[targetId] = "RESET"
-                self.target_reset_requested = True
