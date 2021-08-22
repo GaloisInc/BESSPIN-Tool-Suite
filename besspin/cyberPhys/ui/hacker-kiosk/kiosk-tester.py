@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
 
 class HackerKioskUnitTests(unittest.TestCase):
-    DEFAULT_DELAY_S = 10
+    DEFAULT_DELAY_S = 20
     SHORT_DElAY_S = 5
     LONG_DELAY_S = 30
 
