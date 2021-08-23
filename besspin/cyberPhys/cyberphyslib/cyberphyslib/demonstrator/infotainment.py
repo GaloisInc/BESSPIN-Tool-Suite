@@ -109,6 +109,10 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         sound is re-enabled
         """
         self._sound_enabled = enable
+        if enable:
+            self.play_sound()
+        else:
+            self._sound.stop()
 
     def on_start(self):
         self.send_message(ccomp.Message(InfotainmentPlayerStatus.READY), "infoplay-events")
@@ -131,18 +135,15 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
 
     def _set_volume(self):
         """find audio session and set the master volume given the volume state"""
-        if self._sound is None:
-            self.play_sound()
-        session = AudioUtilities.GetProcessSession(self.session_pid)
-        if session:
-            volume = session._ctl.QueryInterface(ISimpleAudioVolume)
-            if self._sound_enabled:
+        if self._sound_enabled:
+            if self._sound is None:
+                self.play_sound()
+            session = AudioUtilities.GetProcessSession(self.session_pid)
+            if session:
+                volume = session._ctl.QueryInterface(ISimpleAudioVolume)
                 volume.SetMasterVolume(self._volume, None)
             else:
-                # Mute sound
-                volume.SetMasterVolume(0.0, None)
-        else:
-            raise RuntimeError(f"audio session doesn't exist!")
+                raise RuntimeError(f"audio session doesn't exist!")
 
     @recv_can(canspecs.CAN_ID_INFOTAINMENT_STATE, canspecs.CAN_FORMAT_INFOTAINMENT_STATE)
     def _(self, data):
