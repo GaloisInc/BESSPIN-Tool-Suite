@@ -62,7 +62,7 @@ ipcMain.on('can-loc-poll', (event) => {
 
 
 ipcMain.on('volume-inc', () => {
-  console.debug("volume dec");
+  console.debug("volume inc");
   can_net.send_to_port(CanMessage.fromChar(CANID.CAN_ID_BUTTON_PRESSED,
     Config.BUTTON_VOLUME_UP).buffer(), dport);
 })
