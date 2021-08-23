@@ -58,6 +58,12 @@ export default {
   bottom: 70px;
   right: 50px;
 }
+.reset-btn:active, .reset-btn:focus {
+  outline: none;
+}
+.reset-btn:active {
+    background: #d2190b;
+}
 .vol-button, .station-button {
   position: absolute;
   background: none;
