@@ -102,6 +102,12 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         self.play_sound()
 
     def enable_sound(self, enable: bool):
+        """
+        Disable sound (used in self-driving mode)
+        NOTE: maybe use `self._sound.stop()` to interrupt
+        current song, so it starts from the beginning when
+        sound is re-enabled
+        """
         self._sound_enabled = enable
 
     def on_start(self):
