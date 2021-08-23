@@ -1,13 +1,8 @@
 """
 Project: SSITH CyberPhysical Demonstrator
 director.py
-Author: Ethan Lew <elew@galois.com>
-Date: 06/09/2021
-Python 3.8.3
-O/S: Windows 10
-
-Kiosk State Machine
-Hacker Kiosk backend
+Author: Ethan Lew <elew@galois.com>, Michal Podhradsky <mpodhradsky@galois.com>
+Kiosk State Machine/ Hacker Kiosk backend
 
 Exchange format:
 {
@@ -38,6 +33,7 @@ import cyberphyslib.demonstrator.config as cconf
 from can import Message
 from transitions.extensions import GraphMachine as Machine
 from transitions import State
+
 import threading
 import zmq
 import struct
@@ -46,11 +42,12 @@ import subprocess
 def page(f):
     """decorator for page action methods"""
     def inner(*args, **kwargs):
-        """NOTE: make this log instead of print"""
+        # NOTE: make this log instead of print
         print(f">>>STATE: {f.__name__}")
         return f(*args, **kwargs)
     return inner
 
+# TODO: make this a part of canlib
 ComponentDictionary = {
     canlib.SCENARIO_BASELINE: "SCENARIO_BASELINE",
     canlib.SCENARIO_SECURE_ECU: "SCENARIO_SECURE_ECU",
@@ -101,6 +98,7 @@ class HackerKiosk:
     Kiosk Director implements the desired state flow for the hacker kiosk experience
     """
     ZMQ_POLL_TIMEOUT = 0.1
+    # TODO: make this a part of the specs/config
     OTA_SERVER_IP = {
         canlib.SCENARIO_BASELINE: "10.88.88.11",
         canlib.SCENARIO_SECURE_INFOTAINMENT: "10.88.88.21",
