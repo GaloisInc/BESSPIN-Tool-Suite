@@ -12,7 +12,7 @@ import cyberphyslib.demonstrator.can as ccan
 import cyberphyslib.demonstrator.simulator as simulator
 import cyberphyslib.demonstrator.speedometer as speedo
 import cyberphyslib.demonstrator.leds_manage as ledm
-import cyberphyslib.demonstrator.infotainment as infotain
+import cyberphyslib.demonstrator.infotainment as infotainment
 import cyberphyslib.demonstrator.can_out as ccout
 import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
@@ -264,8 +264,8 @@ class IgnitionDirector:
         register_components()
 
         # startup infotainment proxy
-        ui = infotain.InfotainmentUi(self.can_multiverse)
-        player = infotain.InfotainmentPlayer(self.info_net)
+        ui = infotainment.InfotainmentUi(self.can_multiverse)
+        player = infotainment.InfotainmentPlayer(self.info_net)
         if not start_component(ui): return
         if not start_component(player): return
         self.can_multiverse.register(ui)
@@ -342,10 +342,13 @@ class IgnitionDirector:
                 aut_idx = struct.unpack(canlib.CAN_FORMAT_CMD_SET_DRIVING_MODE, msg.data)[0]
                 ignition_logger.debug(f"process cc: set driving mode {aut_idx}")
                 bsim: simulator.Sim = self._handler["beamng"]
+                player: infotainment.InfotainmentPlayer = self._handler["player"]
                 if aut_idx == 0:
                     bsim.disable_autopilot_command()
+                    player.enable_sound(True)
                 else:
                     bsim.enable_autopilot_command()
+                    player.enable_sound(False)
             else:
                 pass
         except Exception as exc:
@@ -405,7 +408,9 @@ class IgnitionDirector:
     def self_drive_enter(self):
         ignition_logger.debug("Self drive state: enter")
         sim: simulator.Sim = self._handler["beamng"]
-        msg = sim.enable_autopilot_command()
+        sim.enable_autopilot_command()
+        player: infotainment.InfotainmentPlayer = self._handler["player"]
+        player.enable_sound(False)
         self.default_input()
 
     def timeout_enter(self):
