@@ -260,16 +260,14 @@ class IgnitionDirector:
         # startup the can location poller
         if not start_component(ccout.CanOutPoller(self.can_multiverse)): return
 
-        # add everything to the can multiverse network
-        register_components()
-
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
         player = infotainment.InfotainmentPlayer(self.info_net)
         if not start_component(ui): return
         if not start_component(player): return
-        self.can_multiverse.register(ui)
-        self.can_multiverse.register(player)
+
+        # add everything to the can multiverse network
+        register_components()
 
         # TODO: FIXME: componentize this?
         self.info_net.start()
@@ -342,7 +340,7 @@ class IgnitionDirector:
                 aut_idx = struct.unpack(canlib.CAN_FORMAT_CMD_SET_DRIVING_MODE, msg.data)[0]
                 ignition_logger.debug(f"process cc: set driving mode {aut_idx}")
                 bsim: simulator.Sim = self._handler["beamng"]
-                player: infotainment.InfotainmentPlayer = self._handler["player"]
+                player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
                 if aut_idx == 0:
                     bsim.disable_autopilot_command()
                     player.enable_sound(True)
@@ -410,7 +408,7 @@ class IgnitionDirector:
         ignition_logger.debug("Self drive state: enter")
         sim: simulator.Sim = self._handler["beamng"]
         sim.enable_autopilot_command()
-        player: infotainment.InfotainmentPlayer = self._handler["player"]
+        player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
         player.enable_sound(False)
         self.default_input()
 
