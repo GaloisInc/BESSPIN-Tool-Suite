@@ -140,7 +140,7 @@ class CanDisplay(threading.Thread):
                 if error_id == canlib.ERROR_NONE:
                     print(f"<{self.__class__.__name__}> No errors")
                 else:
-                    print(f"<{self.__class__.__name__}> Error {error_id} from component {component_id}")
+                    print(f"<{self.__class__.__name__}> Error {hex(error_id)} from component {hex(component_id)}")
             else:
                 pass
         except Exception as exc:
