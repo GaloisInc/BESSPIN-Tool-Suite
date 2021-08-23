@@ -85,7 +85,7 @@ class InfotainmentBackend(threading.Thread):
             print(f"<{self.__class__.__name__}> Requesting BeamNG reset {req}")
             reset_req = Message(arbitration_id=canlib.CAN_ID_CMD_RESTART,
                                 dlc=canlib.CAN_DLC_CMD_RESTART,
-                                data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART, canlib.canlib.IGNITION))
+                                data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART, canlib.IGNITION))
             self.cmd_bus.send(reset_req)
         else:
             req['status'] = 501 # Not implemented
