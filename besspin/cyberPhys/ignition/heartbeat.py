@@ -6,6 +6,8 @@ import typing as typ
 from cyberphyslib.canlib import TcpBus
 import cyberphyslib.canlib.canspecs as canspecs
 import cyberphyslib.canlib.componentids as cids
+import cyberphyslib.demonstrator.can as cycan
+import cyberphyslib.demonstrator.component as cycomp
 import can
 import struct
 # TODO: add this to the requirements
@@ -97,26 +99,23 @@ class OtaMonitor(HttpMonitor):
 
 
 class TcpHeartbeatMonitor(HealthMonitor):
-    def __init__(self, addr: str, nodes: typ.Dict[str, int]):
-        self.addr = addr
-        self.nodes = list(nodes.keys())
-        self.id_map = nodes
-        print(self.addr, self.nodes)
-        self.tcp_bus = TcpBus(self.addr, self.nodes)
+    def __init__(self, bus: TcpBus):
+        self.curr_req_number = 0
+        self.tcp_bus = bus
 
-    def form_heartbeat_req_msg(self, node_id: int):
+    def form_heartbeat_req_msg(self, req_number: int):
         msg = can.Message(arbitration_id=canspecs.CAN_ID_HEARTBEAT_REQ,
-                          data=struct.pack(canspecs.CAN_FORMAT_HEARTBEAT_REQ, node_id),
-                          dlc=4)
+                          data=struct.pack(canspecs.CAN_FORMAT_HEARTBEAT_REQ, req_number))
         return msg
 
-    def send_heartbeat_req_msg(self, node_id: int):
-        m = self.form_heartbeat_req_msg(node_id)
-        self.tcp_bus.send(self.form_heartbeat_req_msg(node_id))
+    def send_heartbeat_req_msg(self, req_number: int):
+        m = self.form_heartbeat_req_msg(req_number)
+        self.tcp_bus.send(m)
 
     def send_req_nodes(self):
-        for node, nid in self.id_map.items():
-            self.send_heartbeat_req_msg(nid)
+        #for _, _ in self.id_map.items():
+        self.send_heartbeat_req_msg(self.curr_req_number)
+        self.curr_req_number += 1
 
     def main_loop(self):
         while True:
@@ -129,36 +128,81 @@ class TcpHeartbeatMonitor(HealthMonitor):
 
 
 class TcpHeartbeatClient:
-    def __init__(self, addr: str, client_id: int, nodes: typ.Dict[str, int]):
-        self.addr = addr
-        self.nodes = list(nodes.keys())
-        self.id_map = nodes
+    def __init__(self, client_id: int, bus: TcpBus):
         self.client_id = client_id
-        print(self.addr, self.nodes)
-        self.tcp_bus = TcpBus(self.addr, self.nodes)
+        self.tcp_bus = bus
 
-    def form_heartbeat_ack_msg(self):
+    def form_heartbeat_ack_msg(self, req_number: int):
         msg = can.Message(arbitration_id=canspecs.CAN_ID_HEARTBEAT_ACK,
-                          data=struct.pack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, self.client_id),
-                          dlc=4)
+                          data=struct.pack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, self.client_id, req_number))
         return msg
 
-    def send_heartbeat_ack_msg(self, node_id: int):
-        self.tcp_bus.send(self.form_heartbeat_ack_msg())
+    def send_heartbeat_ack_msg(self, req_number: int):
+        self.tcp_bus.send(self.form_heartbeat_ack_msg(req_number))
 
     def recv(self, timeout=1.0):
         return self.tcp_bus.recv(timeout)
 
-    def main_loop(self):
-        while True:
-            r = self.tcp_bus.recv(1.0)
-            #for node, nid in self.id_map.items():
-            #    self.send_heartbeat_ack_msg(nid)
-            #print(r)
+
+class HeartbeatTaskComponent(cycomp.ComponentPoller):
+    def __init__(self, *args, **kwargs):
+        super(HeartbeatTaskComponent, self).__init__(*args, **kwargs)
+        # poller properties
+        self.heartbeat_thread = cycomp.ThreadExiting(name=f"{self.name}-heartbeat",
+                                                   sample_frequency=1 / self.sample_period)
+        self.heartbeat_thread.on_poll = self.on_heartbeat_poll
+        self.heartbeat_thread.on_start = self.on_heartbeat_start
+        self.heartbeat_thread.on_exit = self.on_heartbeat_exit
+        self._heartbeat_call_started = False
+
+    def on_start(self):
+        self.heartbeat_thread.start()
+
+    def on_exit(self):
+        self.heartbeat_thread.exit()
+
+    def on_heartbeat_start(self):
+        pass
+
+    def on_heartbeat_exit(self):
+        pass
+
+    def on_heartbeat_poll(self, t):
+        pass
+
+
+class HeartbeatClientComponent(HeartbeatTaskComponent):
+    def __init__(self, addr: str, client_id: int, nodes: typ.Dict[str, int], *args, **kwargs):
+        super(HeartbeatClientComponent, self).__init__(*args, **kwargs)
+        self._heartbeat_client = None
+
+    def register_heartbeat_bus(self, bus: TcpBus, client_id: int):
+        self._heartbeat_client: TcpHeartbeatClient = TcpHeartbeatClient(client_id, bus)
+
+    def on_heartbeat_poll(self, t):
+        if self._heartbeat_client:
+            r = self._heartbeat_client.recv(1.0)
+            while not isinstance(r, can.Message) or r.arbitration_id != canspecs.CAN_ID_HEARTBEAT_REQ:
+                r = c.recv()
+            idx = struct.unpack("!I", r.data)[0]
+            self._heartbeat_client.send_heartbeat_ack_msg(idx)
+
+
+class HeartbeatMonitorComponent(HeartbeatTaskComponent):
+    def __init__(self, *args, **kwargs):
+        super(HeartbeatMonitorComponent, self).__init__(*args, **kwargs)
+        self._heartbeat_monitor = None
+
+    def register_heartbeat_bus(self, bus: TcpBus):
+        self._heartbeat_monitor: TcpHeartbeatMonitor = TcpHeartbeatMonitor(bus)
+
+    def on_heartbeat_poll(self, t):
+        if self._heartbeat_monitor:
+            self._heartbeat_monitor.send_req_nodes()
 
 
 if __name__ == "__main__":
-    sm = ServiceMonitor("docker.service", "192.168.0.161")
+    sm = ServiceMonitor("docker.service", "192.168.0.161", user="elew", password="elew")
     print(sm.is_healthy)
     om = OtaMonitor("https://www.google.com")
     print(om.is_healthy)
@@ -168,10 +212,12 @@ if __name__ == "__main__":
                  "127.0.0.1:5557": cids.INFOTAINMENT_SERVER_1,
                  "127.0.0.1:5558": cids.INFOTAINMENT_SERVER_2,
                  "127.0.0.1:5559": cids.INFOTAINMENT_SERVER_3}
-    thm = TcpHeartbeatMonitor("127.0.0.1:5555", tcp_descr)
-    clients = [TcpHeartbeatClient(addr, nid, tcp_descr) for addr, nid in tcp_descr.items()[::-1] if nid != 0]
-    thm.send_req_nodes()
-    # FIXME: order matters...
-    for c in clients[::-1]:
-        r = c.recv()
-        print(r)
+    thm = HeartbeatMonitorComponent("127.0.0.1:5555", tcp_descr, "monitor", set(), set())
+    clients = [HeartbeatClientComponent(addr, nid, tcp_descr, f"client-{addr}", set(), set()) for addr, nid in list(tcp_descr.items())[1:] if nid != 0]
+    thm.start()
+    thm.start_poller()
+    for c in clients:
+        c.start()
+        c.start_poller()
+    while True:
+        pass
