@@ -84,14 +84,12 @@ class CanDisplay(threading.Thread):
 
     def serve(self):
         req = self.socket.recv_json()
-        print(f"<{self.__class__.__name__}> Got request {req}")
         assert("func" in req and "args" in req)
         if req['func'] == "scenario":
             req['retval'] = self.state
             req['status'] = 200 # OK
         else:
             req['status'] = 501 # Not implemented
-        print(f"<{self.__class__.__name__}> Responding with {req}")
         self.socket.send_json(req)
 
     def cmdLoop(self):
@@ -136,6 +134,13 @@ class CanDisplay(threading.Thread):
                                         dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
                                         data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK, req_number))
                 self.cmd_bus.send(heartbeat_ack)
+            elif cid == canlib.CAN_ID_CMD_COMPONENT_ERROR:
+                component_id, error_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, msg.data)
+                # TODO: pass error info to the frontend
+                if error_id == canlib.ERROR_NONE:
+                    print(f"<{self.__class__.__name__}> No errors")
+                else:
+                    print(f"<{self.__class__.__name__}> Error {error_id} from component {component_id}")
             else:
                 pass
         except Exception as exc:
