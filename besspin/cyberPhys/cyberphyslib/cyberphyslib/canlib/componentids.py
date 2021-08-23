@@ -3,7 +3,7 @@ Project: SSITH CyberPhysical Demonstrator
 Name: ../cyberphyslib/cyberphyslib/canlib/componentids.py
 Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 Michal Podhradsky <mpodhradsky@galois.com>
-Date: 20 August 2021
+Date: 23 August 2021
 This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 """
 
@@ -44,6 +44,7 @@ BUTTON_STATION_2 = 0x02
 BUTTON_STATION_3 = 0x03
 BUTTON_VOLUME_DOWN = 0x10
 BUTTON_VOLUME_UP = 0x11
-SENSOR_THROTTLE = 0xBE
-SENSOR_BRAKE = 0xBF
-ERROR_UNSPECIFIED = 0xF0
+SENSOR_THROTTLE = 0xBE # Throttle sensor error (From FreeRTOS ECU)
+SENSOR_BRAKE = 0xBF # Brake sensor error (From FreeRTOS ECU)
+ERROR_UNSPECIFIED = 0xF0 # General error
+ERROR_NONE = 0xFF # No error (clears errors)

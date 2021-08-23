@@ -4,7 +4,7 @@
 * Name: lib/componentids.js
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 20 August 2021
+* Date: 23 August 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
@@ -48,3 +48,4 @@
  const SENSOR_THROTTLE = 0xBE
  const SENSOR_BRAKE = 0xBF
  const ERROR_UNSPECIFIED = 0xF0
+ const ERROR_NONE = 0xFF
