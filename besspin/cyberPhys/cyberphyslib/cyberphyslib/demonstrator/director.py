@@ -356,7 +356,8 @@ class IgnitionDirector:
 
     def ready_enter(self):
         ignition_logger.debug("Ready state: enter")
-        self.component_ready_send(canlib.IGNITION)
+        # NOTE: no need to send READY from Ignition, at least right now
+        #self.component_ready_send(canlib.IGNITION)
         scenario_start = time.time()
         while((time.time() - scenario_start) < self.scenario_timeout):
             cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
