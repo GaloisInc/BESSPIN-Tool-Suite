@@ -95,10 +95,14 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         self._network = can_network
         self._sidx: int = 0
         self._sound: typ.Union[mixer.Sound, None] = None
+        self._sound_enabled = True
         # NOTE: disable infotainment music for now
         self._volume = 0.0
         self._set_volume()
         self.play_sound()
+
+    def enable_sound(self, enable: bool):
+        self._sound_enabled = enable
 
     def on_start(self):
         self.send_message(ccomp.Message(InfotainmentPlayerStatus.READY), "infoplay-events")
@@ -126,7 +130,11 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         session = AudioUtilities.GetProcessSession(self.session_pid)
         if session:
             volume = session._ctl.QueryInterface(ISimpleAudioVolume)
-            volume.SetMasterVolume(self._volume, None)
+            if self._sound_enabled:
+                volume.SetMasterVolume(self._volume, None)
+            else:
+                # Mute sound
+                volume.SetMasterVolume(0.0, None)
         else:
             raise RuntimeError(f"audio session doesn't exist!")
 
