@@ -43,7 +43,7 @@ class HealthMonitor(abc.ABC):
 
 
 class SshMonitor(HealthMonitor):
-    def __init__(self, connection: str, user=None, password=None, **kwargs):
+    def __init__(self, addr: str, user=None, password=None, **kwargs):
         # user and password need to be transformed into proper level of fabric
         # kwarg hierarchy
         if user:
@@ -54,11 +54,11 @@ class SshMonitor(HealthMonitor):
             else:
                 kwargs["connect_kwargs"] = {"password": password}
         self.connection_kwargs = kwargs
-        self.connection: str = connection
+        self.addr: str = addr
 
     def command(self, command: str):
         # NOTE: should I persist the connect rather than make a new one each time?
-        result = fabric.Connection(self.connection, **self.connection_kwargs).run(command, hide=True)
+        result = fabric.Connection(self.addr, **self.connection_kwargs).run(command, hide=True)
         return result
 
 
@@ -98,10 +98,19 @@ class OtaMonitor(HttpMonitor):
             return False
 
 
+import collections
+
+
 class TcpHeartbeatMonitor(HealthMonitor):
-    def __init__(self, bus: TcpBus):
+    maxlen = 5
+
+    def __init__(self, client_ids, bus: TcpBus):
         self.curr_req_number = 0
         self.tcp_bus = bus
+        self.response_buffer = {c: collections.deque(maxlen=self.maxlen) for c in client_ids}
+
+    def submit_response(self, cid: int, rep):
+        self.response_buffer[cid].append(rep)
 
     def form_heartbeat_req_msg(self, req_number: int):
         msg = can.Message(arbitration_id=canspecs.CAN_ID_HEARTBEAT_REQ,
@@ -124,6 +133,12 @@ class TcpHeartbeatMonitor(HealthMonitor):
             print(r)
 
     def run_health_test(self) -> bool:
+        for cid, buff in self.response_buffer.items():
+            mid = len(buff) if len(buff) <= self.maxlen else max(buff)
+            d = self.curr_req_number - mid
+            if d > self.maxlen:
+                print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
+                return False
         return True
 
 
@@ -172,7 +187,7 @@ class HeartbeatTaskComponent(cycomp.ComponentPoller):
 
 
 class HeartbeatClientComponent(HeartbeatTaskComponent):
-    def __init__(self, addr: str, client_id: int, nodes: typ.Dict[str, int], *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(HeartbeatClientComponent, self).__init__(*args, **kwargs)
         self._heartbeat_client = None
 
@@ -180,10 +195,10 @@ class HeartbeatClientComponent(HeartbeatTaskComponent):
         self._heartbeat_client: TcpHeartbeatClient = TcpHeartbeatClient(client_id, bus)
 
     def on_heartbeat_poll(self, t):
-        if self._heartbeat_client:
+        if self._heartbeat_client is not None:
             r = self._heartbeat_client.recv(1.0)
             while not isinstance(r, can.Message) or r.arbitration_id != canspecs.CAN_ID_HEARTBEAT_REQ:
-                r = c.recv()
+                r = self._heartbeat_client.recv()
             idx = struct.unpack("!I", r.data)[0]
             self._heartbeat_client.send_heartbeat_ack_msg(idx)
 
@@ -193,12 +208,24 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
         super(HeartbeatMonitorComponent, self).__init__(*args, **kwargs)
         self._heartbeat_monitor = None
 
-    def register_heartbeat_bus(self, bus: TcpBus):
-        self._heartbeat_monitor: TcpHeartbeatMonitor = TcpHeartbeatMonitor(bus)
+    def register_heartbeat_bus(self, bus: TcpBus, client_ids):
+        self._heartbeat_monitor: TcpHeartbeatMonitor = TcpHeartbeatMonitor(client_ids, bus)
+        self.n = len(client_ids)
 
     def on_heartbeat_poll(self, t):
-        if self._heartbeat_monitor:
-            self._heartbeat_monitor.send_req_nodes()
+        if self._heartbeat_monitor is not None:
+            hm: TcpHeartbeatMonitor = self._heartbeat_monitor
+            hm.send_req_nodes()
+            #print(self._heartbeat_monitor.tcp_bus.recv(1.0))
+            rets = [self._heartbeat_monitor.tcp_bus.recv(1.0) for _ in range(self.n)]
+            rets = [(struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, r.data) if r is not None else r) for r in rets]
+            for r in rets:
+                if r is not None:
+                    hm.submit_response(r[0], r[1])
+            hm.run_health_test()
+            #print(hm.is_healthy)
+            #print(hm.response_buffer)
+
 
 
 if __name__ == "__main__":
@@ -212,12 +239,22 @@ if __name__ == "__main__":
                  "127.0.0.1:5557": cids.INFOTAINMENT_SERVER_1,
                  "127.0.0.1:5558": cids.INFOTAINMENT_SERVER_2,
                  "127.0.0.1:5559": cids.INFOTAINMENT_SERVER_3}
-    thm = HeartbeatMonitorComponent("127.0.0.1:5555", tcp_descr, "monitor", set(), set())
-    clients = [HeartbeatClientComponent(addr, nid, tcp_descr, f"client-{addr}", set(), set()) for addr, nid in list(tcp_descr.items())[1:] if nid != 0]
+    thm = HeartbeatMonitorComponent("monitor", set(), set())
+    thm.register_heartbeat_bus(TcpBus("127.0.0.1:5555",
+                                      ["127.0.0.1:5556", "127.0.0.1:5557",
+                                       "127.0.0.1:5558", "127.0.0.1:5559"]),
+                               [cids.HACKER_KIOSK, cids.INFOTAINMENT_SERVER_1,
+                                cids.INFOTAINMENT_SERVER_2, cids.INFOTAINMENT_SERVER_3])
+    clients = [HeartbeatClientComponent(f"client-{idx}", set(), set()) for idx in range(len(tcp_descr)-1)]
     thm.start()
     thm.start_poller()
-    for c in clients:
+    for c, (addr, cid) in zip(clients, ((a, c) for a,c in tcp_descr.items() if c !=0)):
+        c.register_heartbeat_bus(TcpBus(addr, ["127.0.0.1:5555"]), cid)
         c.start()
         c.start_poller()
+
+    import time
+    time.sleep(10.0)
+    clients[-1].exit()
     while True:
         pass
