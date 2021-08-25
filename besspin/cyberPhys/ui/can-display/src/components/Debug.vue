@@ -17,8 +17,7 @@
     font-family: 'Roboto Mono', monospace;
     width: 350px;
     height: 400px;
-    overflow: scroll;
-    overflow-x: hidden;
+    overflow: hidden;
     font-size: .8em;
   }
   #debug li {
