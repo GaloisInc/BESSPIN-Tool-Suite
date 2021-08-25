@@ -28,7 +28,7 @@
     width: 600px;
     height: 350px;
     /* border: 1px solid green; */
-    overflow: scroll;
+    overflow: hidden;
     overflow-x: hidden;
   }
   #console li {

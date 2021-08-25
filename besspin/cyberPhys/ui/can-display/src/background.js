@@ -42,7 +42,7 @@ zmq_sock.on('message', (msg) => {
   // TODO: Decide if this is a debug message or something else
   if(decoded.func == 'scenario') {
     zmqQueue.push(decoded);
-  } else if(decoded.fun == 'error') {
+  } else if(decoded.func == 'error') {
     debugMsg = {message: decoded.retval};
   } else {
     console.log("Unknown ZMQ message: " + JSON.stringify(decoded));
