@@ -106,7 +106,7 @@ class CanDisplay(threading.Thread):
         try:
             if cid == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
                 scenario_id = struct.unpack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, msg.data)[0]
-                print(f"<{self.__class__.__name__}> CAN_ID_CMD_ACTIVE_SCENARIO: {hex(scenario_id)}")
+                print(f"<{self.__class__.__name__}> CAN_ID_CMD_ACTIVE_SCENARIO: {canlib.CanlibComponentNames.get(scenario_id,None)}")
                 if scenario_id == canlib.SCENARIO_BASELINE or\
                    scenario_id == canlib.SCENARIO_SECURE_ECU or\
                    scenario_id == canlib.SCENARIO_SECURE_INFOTAINMENT:
@@ -120,7 +120,7 @@ class CanDisplay(threading.Thread):
                 print(f"Scenario: {self.scenario}, State: {self.state}")
             elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
                 hack_id = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
-                print(f"<{self.__class__.__name__}> CAN_ID_CMD_HACK_ACTIVE: {hex(hack_id)}")
+                print(f"<{self.__class__.__name__}> CAN_ID_CMD_HACK_ACTIVE: {canlib.CanlibComponentNames.get(hack_id,None)}")
                 if self.scenario == canlib.SCENARIO_BASELINE:
                     if hack_id == canlib.HACK_NONE:
                         self.state = STATE_NORMAL
@@ -140,7 +140,8 @@ class CanDisplay(threading.Thread):
                 if error_id == canlib.ERROR_NONE:
                     print(f"<{self.__class__.__name__}> No errors")
                 else:
-                    print(f"<{self.__class__.__name__}> Error {hex(error_id)} from component {hex(component_id)}")
+                    print(f"<{self.__class__.__name__}> Error {canlib.CanlibComponentNames.get(error_id,None)}\
+                        from component {canlib.CanlibComponentNames.get(component_id,None)}")
             else:
                 pass
         except Exception as exc:
