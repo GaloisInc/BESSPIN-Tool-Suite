@@ -218,7 +218,7 @@ class IgnitionDirector:
 ### STATE ENTRY CALLBACKS
     def terminate_enter(self):
         self.component_error_send(canlib.IGNITION, canlib.ERROR_UNSPECIFIED)
-        ignition_logger.debug("Termination State: Enter")
+        ignition_logger.info("Termination State: Enter")
         self.is_finished = True
         self._handler.exit()
         self.info_net.exit()
@@ -233,7 +233,7 @@ class IgnitionDirector:
         def start_component(comp):
             msg = self._handler.start_component(comp)
             if msg != ccomp.ComponentStatus.READY:
-                ignition_logger.debug(f"{comp.name} service failed to start ({msg})")
+                ignition_logger.info(f"{comp.name} service failed to start ({msg})")
                 self.input_noncrit_fail = False
                 self.input_component_fail = True
                 return False
@@ -241,14 +241,14 @@ class IgnitionDirector:
 
         def start_noncrit_component(comp):
             if not start_component(comp):
-                ignition_logger.debug(f"{comp.name} service failed to start")
+                ignition_logger.info(f"{comp.name} service failed to start")
                 self.input_noncrit_fail = True
                 self.input_component_fail = False
                 return False
             self.can_multiverse.register(comp)
             return True
 
-        ignition_logger.debug("Startup State: Enter")
+        ignition_logger.info("Startup State: Enter")
         simulator.Sim.kill_beamng(1)
 
         # startup beamng
@@ -302,16 +302,18 @@ class IgnitionDirector:
         cid = msg.arbitration_id
         try:
             if cid == canlib.CAN_ID_CMD_RESTART:
-                ignition_logger.debug(f"process cc: restart")
+                ignition_logger.info(f"process cc: restart")
                 dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
                 if dev_id == canlib.IGNITION:
-                    ignition_logger.debug("Director: restarting ignition from CMD_RESTART")
+                    ignition_logger.info("Director: restarting ignition from CMD_RESTART")
                     bsim: simulator.Sim = self._handler["beamng"]
+                    # NOTE: should we exit self-drive mode?
+                    # bsim.disable_autopilot_command()
                     bsim.restart_command()
 
             elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
                 hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
-                ignition_logger.debug(f"process cc: set hack active {hack_idx}")
+                ignition_logger.info(f"process cc: set hack active {hack_idx}")
                 # Process HACK_ACTIVE messages only in baseline scenario
                 if self.active_scenario == canlib.SCENARIO_BASELINE:
                     # NOTE:  tread Led manager as a critical component
@@ -324,7 +326,7 @@ class IgnitionDirector:
                     canlib.SCENARIO_SECURE_ECU: "secure_ecu",
                     canlib.SCENARIO_SECURE_INFOTAINMENT: "secure_infotainment"}
                 scen_idx = struct.unpack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, msg.data)[0]
-                ignition_logger.debug(f"process cc: active scenario {scen_idx}")
+                ignition_logger.info(f"process cc: active scenario {scen_idx}")
                 self.active_scenario = scen_idx
                 cm: ccan.CanMultiverseComponent = self._handler["canm"]
                 cm.select_network(nmap[scen_idx])
@@ -336,51 +338,48 @@ class IgnitionDirector:
                     pattern = ledm.LedPatterns.SSITH
                 lm.update_pattern(ledm.LedPatterns(pattern))
 
-            elif cid == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
-                aut_idx = struct.unpack(canlib.CAN_FORMAT_CMD_SET_DRIVING_MODE, msg.data)[0]
-                ignition_logger.debug(f"process cc: set driving mode {aut_idx}")
-                bsim: simulator.Sim = self._handler["beamng"]
-                player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
-                if aut_idx == 0:
-                    bsim.disable_autopilot_command()
-                    player.enable_sound(True)
-                else:
-                    bsim.enable_autopilot_command()
-                    player.enable_sound(False)
+            # NOTE: delete this - nobody should be sending CAN_ID_CMD_SET_DRIVING_MODE anyway 
+            # elif cid == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
+            #     aut_idx = struct.unpack(canlib.CAN_FORMAT_CMD_SET_DRIVING_MODE, msg.data)[0]
+            #     ignition_logger.info(f"process cc: set driving mode {aut_idx}")
+            #     bsim: simulator.Sim = self._handler["beamng"]
+            #     player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
+            #     if aut_idx == 0:
+            #         bsim.disable_autopilot_command()
+            #         player.enable_sound(True)
+            #     else:
+            #         bsim.enable_autopilot_command()
+            #         player.enable_sound(False)
             else:
                 pass
         except Exception as exc:
             ignition_logger.error(f"process cc: error with message {msg}: {exc}")
 
     def ready_enter(self):
-        ignition_logger.debug("Ready state: enter")
-        # NOTE: no need to send READY from Ignition, at least right now
-        #self.component_ready_send(canlib.IGNITION)
+        ignition_logger.info("Ready state: enter")
         scenario_start = time.time()
         while((time.time() - scenario_start) < self.scenario_timeout):
             cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
             if cc_recv:
                 self.default_input()
-                self.input_cc_msg = True
-                # process the cc_packet
                 self.process_cc(cc_recv)
-                return
-            else: # CC timeout condition
-                # NOTE: if jmonitor has failed assume user input is present
-                activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
+            
+            # NOTE: if jmonitor has failed assume user input is present
+            activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
 
-                # if in self drive mode and activity has occurred, get out
-                if activity and self.self_drive_mode:
-                    self.default_input()
-                    self.input_self_drive = False
-                    return
-                elif self.self_drive_mode or activity: # do nothing if self drive mode or user activity
-                    pass
-                else:
-                    ignition_logger.debug("Director: no activity detected, switching to self-drive")
-                    self.default_input()
-                    self.input_self_drive = True
-                    return
+            # if in self drive mode and activity has occurred, get out
+            if activity and self.self_drive_mode:
+                ignition_logger.info("Director: activity detected, switching to manual")
+                self.default_input()
+                self.input_self_drive = False
+                return
+            elif self.self_drive_mode or activity: # do nothing if self drive mode or user activity
+                pass
+            else:
+                ignition_logger.info("Director: no activity detected, switching to self-drive")
+                self.default_input()
+                self.input_self_drive = True
+                return
 
         self.default_input()
         self.input_s_timeout = True
@@ -391,21 +390,43 @@ class IgnitionDirector:
         return
 
     def restart_enter(self):
-        ignition_logger.debug("Restart state: enter")
+        ignition_logger.info("Restart state: enter")
         sim: simulator.Sim = self._handler["beamng"]
-        msg = sim.restart_command()
+        sim.restart_command()
         return
 
     def noncrit_failure_enter(self):
-        ignition_logger.debug("Noncrit_failure state: enter")
+        ignition_logger.info("Noncrit_failure state: enter")
         ignition_logger.error("Ignition achieved a noncritical error. Continuing anyway...")
         self.component_error_send(canlib.LED_COMPONENT,canlib.ERROR_UNSPECIFIED)
         self._noncrit = True
         self.default_input()
         return
 
+    def enable_autopilot(self):
+        """
+        Enable autopilot
+        """
+        ignition_logger.info("Enable autopilot, disable sound")
+        sim: simulator.Sim = self._handler["beamng"]
+        sim.enable_autopilot_command()
+        sim.restart_command()
+        player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
+        player.enable_sound(False)
+
+    def disable_autopilot(self):
+        """
+        Disable autopilot
+        """
+        ignition_logger.info("Disable autopilot, enable sound")
+        sim: simulator.Sim = self._handler["beamng"]
+        sim.disable_autopilot_command()
+        sim.restart_command()
+        player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
+        player.enable_sound(True)
+
     def self_drive_enter(self):
-        ignition_logger.debug("Self drive state: enter")
+        ignition_logger.info("Self drive state: enter")
         sim: simulator.Sim = self._handler["beamng"]
         sim.enable_autopilot_command()
         player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
