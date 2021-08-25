@@ -814,6 +814,9 @@ def findMainAdaptorInfo ():
 @decorate.debugWrap
 @decorate.timeWrap
 def resetEthAdaptor ():
+    if isEqSetting('mode','cyberPhys'):
+        printAndLog (f"Skiping resetEthAdaptor in cyberphys mode. Make sure your network is up.",doPrint=True)
+        return
     with getSetting('networkLock'):
         if doesSettingExist('vcu118EthAdaptorReset') and isEnabled('vcu118EthAdaptorReset'): #for future compatibility if needed to re-reset
             return #already reset
