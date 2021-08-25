@@ -56,7 +56,7 @@
         vm.update(arg);
       });
 
-      setInterval(() => { this.poll() }, 3000);
+      setInterval(() => { this.poll() }, 500);
     },
     methods: {
       update: function(msg) {
