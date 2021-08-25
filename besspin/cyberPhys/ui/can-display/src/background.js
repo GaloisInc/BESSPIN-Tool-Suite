@@ -34,17 +34,30 @@ let zmq_sock = zmq.socket("req");
 zmq_sock.connect(zmq_address);
 
 let zmqQueue = [];
+let debugMsg = {message: ''};
 
 zmq_sock.on('message', (msg) => {
   let decoded = JSON.parse(msg);
   console.log("zmq message recieved: ", decoded);
-  zmqQueue.push(decoded);
+  // TODO: Decide if this is a debug message or something else
+  if(decoded.func == 'scenario') {
+    zmqQueue.push(decoded);
+  } else if(decoded.func == 'error') {
+    debugMsg = {message: decoded.retval};
+  } else {
+    console.log("Unknown ZMQ message: " + JSON.stringify(decoded));
+  }
 });
 
 ipcMain.on('zmq-poll', (event) => {
   event.reply('zmq-results',  JSON.parse(JSON.stringify(zmqQueue)));
   zmqQueue = [];
   zmq_sock.send(JSON.stringify({'func': 'scenario', 'args': {}}));
+});
+
+ipcMain.on('debug-poll', (event) => {
+  event.reply('debug-reply', JSON.parse(JSON.stringify(debugMsg)));
+  zmq_sock.send(JSON.stringify({'func': 'error', 'args': {}}));
 });
 
 ipcMain.on('can-poll', (event) => {
