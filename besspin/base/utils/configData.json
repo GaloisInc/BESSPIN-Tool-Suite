@@ -50,6 +50,10 @@
             "name" : "pathToCustomCyberPhysConfig",
             "type" : "filePath",
             "condition" : "useCustomCyberPhysConfig"
+        },
+        {
+            "name" : "hostName",
+            "type" : "string"
         }
     ],
 
@@ -133,6 +137,10 @@
             "name" : "customTargetIp",
             "type" : "ipAddress",
             "condition" : "useCustomTargetIp"
+        },
+        {
+            "name" : "customTargetName",
+            "type" : "string"
         }
     ],
 
