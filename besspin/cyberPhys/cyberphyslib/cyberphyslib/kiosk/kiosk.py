@@ -47,52 +47,6 @@ def page(f):
         return f(*args, **kwargs)
     return inner
 
-# TODO: make this a part of canlib
-ComponentDictionary = {
-    canlib.SCENARIO_BASELINE: "SCENARIO_BASELINE",
-    canlib.SCENARIO_SECURE_ECU: "SCENARIO_SECURE_ECU",
-    canlib.SCENARIO_SECURE_INFOTAINMENT: "SCENARIO_SECURE_INFOTAINMENT",
-    canlib.BESSPIN_TOOL: "BESSPIN_TOOL",
-    canlib.TARGET_1: "TARGET_1",
-    canlib.TARGET_2: "TARGET_2",
-    canlib.TARGET_3: "TARGET_3",
-    canlib.TARGET_4: "TARGET_4",
-    canlib.TARGET_5: "TARGET_5",
-    canlib.TARGET_6: "TARGET_6",
-    canlib.TEENSY: "TEENSY",
-    canlib.IGNITION: "IGNITION",
-    canlib.LED_COMPONENT: "LED_COMPONENT",
-    canlib.HACKER_KIOSK: "HACKER_KIOSK",
-    canlib.HACK_NONE: "HACK_NONE",
-    canlib.HACK_OTA: "HACK_OTA",
-    canlib.HACK_BRAKE: "HACK_BRAKE",
-    canlib.HACK_THROTTLE: "HACK_THROTTLE",
-    canlib.HACK_TRANSMISSION: "HACK_TRANSMISSION",
-    canlib.HACK_LKAS: "HACK_LKAS",
-    canlib.HACK_INFOTAINMENT_1: "HACK_INFOTAINMENT_1",
-    canlib.HACK_INFOTAINMENT_2: "HACK_INFOTAINMENT_2",
-    canlib.INFOTAINMENT_THIN_CLIENT: "INFOTAINMENT_THIN_CLIENT",
-    canlib.INFOTAINMENT_SERVER_1: "INFOTAINMENT_SERVER_1",
-    canlib.INFOTAINMENT_SERVER_2: "INFOTAINMENT_SERVER_2",
-    canlib.INFOTAINMENT_SERVER_3: "INFOTAINMENT_SERVER_3",
-    canlib.OTA_UPDATE_SERVER_1: "OTA_UPDATE_SERVER_1",
-    canlib.OTA_UPDATE_SERVER_2: "OTA_UPDATE_SERVER_2",
-    canlib.OTA_UPDATE_SERVER_3: "OTA_UPDATE_SERVER_3",
-    canlib.BUTTON_STATION_1: "BUTTON_STATION_1",
-    canlib.BUTTON_STATION_2: "BUTTON_STATION_2",
-    canlib.BUTTON_STATION_3: "BUTTON_STATION_3",
-    canlib.BUTTON_VOLUME_DOWN: "BUTTON_VOLUME_DOWN",
-    canlib.BUTTON_VOLUME_UP: "BUTTON_VOLUME_UP"
-}
-
-ButtonDictionary = {
-    canlib.BUTTON_STATION_1: "BUTTON_STATION_1",
-    canlib.BUTTON_STATION_2: "BUTTON_STATION_2",
-    canlib.BUTTON_STATION_3: "BUTTON_STATION_3",
-    canlib.BUTTON_VOLUME_DOWN: "BUTTON_VOLUME_DOWN",
-    canlib.BUTTON_VOLUME_UP: "BUTTON_VOLUME_UP"
-}
-
 class HackerKiosk:
     """
     Kiosk Director implements the desired state flow for the hacker kiosk experience
@@ -280,7 +234,7 @@ class HackerKiosk:
     def cmdLoop(self):
         print(f"<{self.__class__.__name__}> Cmd loop started")
         while True:
-            msg = self.cmd_bus.recv()
+            msg = self.cmd_bus.recv(timeout=0.1)
             if msg:
                 cid = msg.arbitration_id
                 try:
@@ -293,7 +247,7 @@ class HackerKiosk:
                         self.cmd_bus.send(heartbeat_ack)
                     elif cid == canlib.CAN_ID_CMD_FUNCTIONALITY_LEVEL:
                         level = struct.unpack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL, msg.data)[0]
-                        print(f"<{self.__class__.__name__}> CAN_ID_CMD_FUNCTIONALITY_LEVEL: {hex(level)}")
+                        print(f"<{self.__class__.__name__}> CAN_ID_CMD_FUNCTIONALITY_LEVEL: {canlib.CanlibComponentNames.get(level,None)}")
                         if level == canlib.FUNCTIONALITY_FULL:
                             print(f"<{self.__class__.__name__}> Deploy mode enabled")
                             self.deploy_mode = True
@@ -302,7 +256,7 @@ class HackerKiosk:
                             self.deploy_mode = False
                     elif cid == canlib.CAN_ID_CMD_COMPONENT_READY:
                         component_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, msg.data)[0]
-                        print(f"<{self.__class__.__name__}> CAN_ID_CMD_COMPONENT_READY: {hex(component_id)}")
+                        print(f"<{self.__class__.__name__}> CAN_ID_CMD_COMPONENT_READY: {canlib.CanlibComponentNames.get(component_id,None)}")
                     else:
                         pass
                 except Exception as exc:
@@ -495,7 +449,7 @@ class HackerKiosk:
         # Reset components for the baseline scenario
         self.restartComponent(canlib.INFOTAINMENT_SERVER_1)
         self.restartComponent(canlib.OTA_UPDATE_SERVER_1)
-        self.restartComponent(canlib.TARGET_1)
+        self.restartComponent(canlib.FREERTOS_1)
 
         self.ipc_msg['status'] = 200 # OK
 
@@ -572,7 +526,7 @@ class HackerKiosk:
         url = f"http://{HackerKiosk.OTA_SERVER_IP[self.active_scenario]}:{self.ota_server_port}"
 
         print(f"Setting up OTA client with URL: {url}")
-        print(f"CMD_CHANGE_ACTIVE_SCENARIO: {ComponentDictionary[scenario_id]}")
+        print(f"CMD_CHANGE_ACTIVE_SCENARIO: {canlib.CanlibComponentNames.get(scenario_id,None)}")
 
         self.ota_server = kclient.HackOtaClient(url)
         try:
@@ -589,7 +543,7 @@ class HackerKiosk:
         Notify peers about the restart (AdminPC is doing the restart)
         TODO: wait for some sort of response?
         """
-        print(f"CAN_ID_CMD_RESTART: {ComponentDictionary[component_id]}")
+        print(f"CAN_ID_CMD_RESTART: {canlib.CanlibComponentNames.get(component_id,None)}")
         try:
             msg = Message(arbitration_id=canlib.CAN_ID_CMD_RESTART,
                         data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART, component_id))
@@ -604,7 +558,7 @@ class HackerKiosk:
         Notify peers about the active hack (only in BASELINE scenario)
         (Ignition LED manager changes LED pattern)
         """
-        print(f"CAN_ID_CMD_HACK_ACTIVE: {ComponentDictionary[hack_id]}")
+        print(f"CAN_ID_CMD_HACK_ACTIVE: {canlib.CanlibComponentNames.get(hack_id,None)}")
         try:
             msg = Message(arbitration_id=canlib.CAN_ID_CMD_HACK_ACTIVE,
                         data=struct.pack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, hack_id))
@@ -619,11 +573,12 @@ class HackerKiosk:
         Mimic an infotainment client and send button press to
         the hacked info server, over UDP CAN network with a special port
         """
-        print(f"CAN_ID_BUTTON_PRESSED: {ButtonDictionary[button_id]}")
+        print(f"CAN_ID_BUTTON_PRESSED: {canlib.CanlibComponentNames.get(button_id, None)}")
         try:
             msg = Message(arbitration_id=canlib.CAN_ID_BUTTON_PRESSED,
+                        dlc=canlib.CAN_DLC_BUTTON_PRESSED,
                         data=struct.pack(canlib.CAN_FORMAT_BUTTON_PRESSED, button_id))
-            self.infotainment_bus.send(msg)
+            self.infotainment_bus.send(msg, tx_ip="10.88.88.255")
             return True
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error sending message: {msg}: {exc}")

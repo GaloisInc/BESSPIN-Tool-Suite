@@ -108,62 +108,6 @@ class cyberPhysShell(cmd.Cmd):
     def emptyline(self): #to avoid repeating the last command on <enter>
         return
 
-    def do_reset(self,inp):
-        """reset TARGET_ID
-        resets the target with the chosen ID"""
-        if (len(inp.split(' '))>1) or inp=='':
-            print(self.do_reset.__doc__)
-            return
-        targetId = inp
-        # NOTE: ID=0 is Teensy
-        assert (int(targetId) in range(0,getSetting('nTargets')+1)), "validating target ID"
-        targetId = int(targetId)
-        printAndLog(f"Request reseting target {targetId}")
-        self.sender.send_message(ccomp.Message(f"RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
-        return
-
-    def do_infotainment_reset(self,inp):
-        """infotainment_reset TARGET_ID (1..3)
-        resets the infotainment server with the chosen ID"""
-        if (len(inp.split(' '))>1) or inp=='':
-            print(self.do_reset.__doc__)
-            return
-        inp = int(inp)
-        if inp == 1:
-            targetId = 4
-        elif inp == 2:
-            targetId = 5
-        elif inp == 3:
-            targetId = 6
-        else:
-            warnAndLog(f"Error: componend Id out of range. Was {inp}, range is 1..3")
-            return
-
-        printAndLog(f"Request reseting target {targetId}")
-        self.sender.send_message(ccomp.Message(f"INFOTAINMENT_RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
-        return
-
-    def do_ota_reset(self,inp):
-        """ota_ TARGET_ID (1..3)
-        resets the OTA update server with the chosen ID"""
-        if (len(inp.split(' '))>1) or inp=='':
-            print(self.do_reset.__doc__)
-            return
-        inp = int(inp)
-        if inp == 1:
-            targetId = 4
-        elif inp == 2:
-            targetId = 5
-        elif inp == 3:
-            targetId = 6
-        else:
-            warnAndLog(f"Error: componend Id out of range. Was {inp}, range is 1..3")
-            return
-
-        printAndLog(f"Request reseting target {targetId}")
-        self.sender.send_message(ccomp.Message(f"OTA_RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
-        return
-
     def do_ip(self,inp):
         """ip
         Displays the IPs of the running targets"""

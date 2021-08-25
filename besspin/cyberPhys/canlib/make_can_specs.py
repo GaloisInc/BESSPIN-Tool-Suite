@@ -115,6 +115,27 @@ This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_sp
         else:
             return f"{component_name} = {component_id}\n"
 
+    def generate_id_dicts(self, components):
+        """genereate components dictionaries"""
+        componentNames = "\nCanlibComponentNames = {"
+        componentIds = "\nCanlibComponentIds = {"
+        for component in components:
+            componentNames += f"\n\t{component['Component']}: \"{component['Component']}\","
+            componentIds += f"\n\t\"{component['Component']}\": {component['Component']},"
+        componentNames += "\n}"
+        componentIds += "\n}"
+        return componentNames + "\n" + componentIds + "\n"
+
+    def generate_ids(self, component_ids):
+        """overload inherited method to be able to generate component dictionaries"""
+        with open(self.outfilename_ids, 'w') as f:
+            f.write(self.file_header_ids)
+            components = []
+            for _, row in component_ids.iterrows():
+                f.write(self.produce_ids(row))
+                components.append(row)
+            f.write(self.generate_id_dicts(components))
+
 
 class CanlibC(CanlibTemplate):
     outfilename: str = "lib/canspecs.h"
