@@ -60,10 +60,11 @@ class InfotainmentUi(ccomp.ComponentPoller):
     def on_start(self):
         self.send_message(ccomp.Message(InfotainmentUiStatus.READY), "infoui-events")
 
-    @recv_can(canspecs.CAN_ID_BUTTON_PRESSED,canspecs.CAN_FORMAT_BUTTON_PRESSED)
-    def _(self, data):
-        # alert simulator to turn off self driving mode
-        self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
+    # TODO: how to enable switching from self-drive when a button is pressed?
+    # @recv_can(canspecs.CAN_ID_BUTTON_PRESSED,canspecs.CAN_FORMAT_BUTTON_PRESSED)
+    # def _(self, data):
+    #     # alert simulator to turn off self driving mode
+    #     self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
 
 
 class InfotainmentPlayer(ccomp.ComponentPoller):
