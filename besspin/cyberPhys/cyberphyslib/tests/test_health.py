@@ -8,12 +8,13 @@ Test for Component Health Monitoring
 """
 from cyberphyslib.demonstrator.health import *
 import cyberphyslib.canlib.componentids as cids
+import cyberphyslib.demonstrator.can as cycan
 
 import time
 
 
 def test_service_health():
-    """test the component object
+    """test the service healthcheck
 
     operational tests:
     failure mode tests:
@@ -22,6 +23,46 @@ def test_service_health():
     # TODO: how to test
     #sm = ServiceMonitor("docker.service", "<ADDR>")
     #assert sm.is_healthy
+
+
+def test_udp_heartbeat():
+    """test the UDP heartbeat component
+
+    operational tests:
+    failure mode tests:
+    """
+    net = cycan.CanUdpNetwork("name", 5030, "127.0.0.1")
+    net.start()
+    print("test UDP")
+
+    cid_descr = {cids.HACKER_KIOSK, cids.INFOTAINMENT_SERVER_1, cids.INFOTAINMENT_SERVER_2, cids.INFOTAINMENT_SERVER_3}
+    thm = HeartbeatMonitorComponent("monitor", set(), set())
+    net.register(thm)
+    thm.register_can_heartbeat_bus(net.bus, cid_descr)
+    clients = [HeartbeatClientComponent(f"client-{idx}", set(), set()) \
+               for idx in range(4)]
+    thm.start()
+    thm.start_poller()
+    for c, cid in zip(clients, cid_descr):
+        c.register_can_heartbeat_bus(net.bus, cid)
+        net.register(c)
+        #c.start()
+        #c.start_poller()
+
+    time.sleep(5.0)
+    assert thm.is_healthy
+    #clients[-1].exit()
+    #clients[-1].join()
+    #time.sleep(5.0)
+    #assert not thm.is_healthy
+
+    #for c in clients:
+    #    c.exit()
+    #    c.join()
+    thm.exit()
+    thm.join()
+    net.exit()
+    net.join()
 
 
 def test_ota_health():
@@ -69,12 +110,14 @@ def test_tcp_heartbeat():
         c.start()
         c.start_poller()
 
-    time.sleep(10.0)
+    time.sleep(5.0)
     assert thm.is_healthy
     clients[-1].exit()
-    time.sleep(10.0)
+    time.sleep(5.0)
     assert not thm.is_healthy
 
     for c in clients:
         c.exit()
+        c.join()
     thm.exit()
+    thm.join()

@@ -8,7 +8,7 @@ O/S: Windows 10
 
 Component Health Monitoring Objects and Components
 """
-from cyberphyslib.canlib import TcpBus
+from cyberphyslib.canlib import TcpBus, UdpBus
 import cyberphyslib.canlib.canspecs as canspecs
 import cyberphyslib.demonstrator.component as cycomp
 
@@ -136,7 +136,7 @@ class OtaMonitor(HttpMonitor):
 HeartbeatResponseType = typing.Union[None, typing.Tuple[int, int]]
 
 
-class TcpHeartbeatMonitor(HealthMonitor):
+class BusHeartbeatMonitor(HealthMonitor):
     """
     Heartbeat monitor is responsible for
 
@@ -154,9 +154,9 @@ class TcpHeartbeatMonitor(HealthMonitor):
                           data=struct.pack(canspecs.CAN_FORMAT_HEARTBEAT_REQ, req_number))
         return msg
 
-    def __init__(self, client_ids: typing.Sequence[int], bus: TcpBus):
+    def __init__(self, client_ids: typing.Sequence[int], bus: typing.Union[TcpBus, UdpBus]):
         self.curr_req_number = 0
-        self.tcp_bus = bus
+        self.bus = bus
         self.response_buffer: typing.Dict[int, typing.Deque[HeartbeatResponseType]] = {
             c: collections.deque(maxlen=self.maxlen) for c in client_ids
         }
@@ -168,7 +168,7 @@ class TcpHeartbeatMonitor(HealthMonitor):
     def send_heartbeat_req_msg(self, req_number: int):
         """set REQ can packet over the TCP bus"""
         m = self.form_heartbeat_req_msg(req_number)
-        self.tcp_bus.send(m)
+        self.bus.send(m)
 
     def send_req_nodes(self):
         """send REQ to nodes"""
@@ -189,14 +189,14 @@ class TcpHeartbeatMonitor(HealthMonitor):
         return True
 
 
-class TcpHeartbeatClient:
+class BusHeartbeatClient:
     """
     TcpHeartbeatClient is responsible for handling the heartbeat events that components are expected
     to have to be correctly monitored by TcpHeartbeatMonitor
     """
-    def __init__(self, client_id: int, bus: TcpBus):
+    def __init__(self, client_id: int, bus: typing.Union[TcpBus, UdpBus]):
         self.client_id = client_id
-        self.tcp_bus = bus
+        self.bus = bus
 
     def form_heartbeat_ack_msg(self, req_number: int):
         """form ACK can message"""
@@ -206,10 +206,10 @@ class TcpHeartbeatClient:
 
     def send_heartbeat_ack_msg(self, req_number: int):
         """send teh ACK message over the tcp bus"""
-        self.tcp_bus.send(self.form_heartbeat_ack_msg(req_number))
+        self.bus.send(self.form_heartbeat_ack_msg(req_number))
 
     def recv(self, timeout=1.0):
-        return self.tcp_bus.recv(timeout)
+        return self.bus.recv(timeout)
 
 
 class HeartbeatTaskComponent(cycomp.ComponentPoller):
@@ -225,24 +225,26 @@ class HeartbeatTaskComponent(cycomp.ComponentPoller):
         myc.start()
         ```
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, heartbeat_sample_period=0.2, **kwargs):
         super(HeartbeatTaskComponent, self).__init__(*args, **kwargs)
         # poller properties
         # NOTE: should sample period be larger?
         self.heartbeat_thread = cycomp.ThreadExiting(name=f"{self.name}-heartbeat",
-                                                     sample_frequency=1 / self.sample_period)
+                                                     sample_frequency=1 / heartbeat_sample_period)
         self.heartbeat_thread.on_poll = self.on_heartbeat_poll
         self.heartbeat_thread.on_start = self.on_heartbeat_start
         self.heartbeat_thread.on_exit = self.on_heartbeat_exit
         self._heartbeat_call_started = False
 
     def on_start(self):
+        if not self._heartbeat_call_started:
+            self.heartbeat_thread.start()
         super().on_start()
-        self.heartbeat_thread.start()
 
     def on_exit(self):
-        self.heartbeat_thread.exit()
         super().exit()
+        if self._heartbeat_call_started:
+            self.heartbeat_thread.exit()
 
     def on_heartbeat_start(self):
         pass
@@ -269,19 +271,29 @@ class HeartbeatClientComponent(HeartbeatTaskComponent):
 
     def __init__(self, *args, **kwargs):
         super(HeartbeatClientComponent, self).__init__(*args, **kwargs)
-        self._heartbeat_client = None
+        self._heartbeat_client_tcp = None
+        self._heartbeat_client_udp = None
 
     def register_heartbeat_bus(self, bus: TcpBus, client_id: int):
         """register heartbeat client component with TCP bus and a client identifier"""
-        self._heartbeat_client: TcpHeartbeatClient = TcpHeartbeatClient(client_id, bus)
+        self._heartbeat_client_tcp: BusHeartbeatClient = BusHeartbeatClient(client_id, bus)
+
+    def register_can_heartbeat_bus(self, bus: UdpBus, client_id: int):
+        self._heartbeat_client_udp: BusHeartbeatClient = BusHeartbeatClient(client_id, bus)
 
     def on_heartbeat_poll(self, t):
-        if self._heartbeat_client is not None:
-            r = self._heartbeat_client.recv(1.0)
+        if self._heartbeat_client_tcp is not None:
+            r = self._heartbeat_client_tcp.recv(1.0)
             while not isinstance(r, can.Message) or r.arbitration_id != canspecs.CAN_ID_HEARTBEAT_REQ:
-                r = self._heartbeat_client.recv()
+                r = self._heartbeat_client_tcp.recv()
             idx = struct.unpack("!I", r.data)[0]
-            self._heartbeat_client.send_heartbeat_ack_msg(idx)
+            self._heartbeat_client_tcp.send_heartbeat_ack_msg(idx)
+
+    @recv_can(canspecs.CAN_ID_HEARTBEAT_REQ, canspecs.CAN_FORMAT_HEARTBEAT_REQ)
+    def _(self, data):
+        # TODO: check this
+        if self._heartbeat_client_udp is not None:
+            self._heartbeat_client_udp.send_heartbeat_ack_msg(data[0])
 
 
 class HeartbeatMonitorComponent(HeartbeatTaskComponent):
@@ -300,29 +312,42 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
     """
     def __init__(self, *args, **kwargs):
         super(HeartbeatMonitorComponent, self).__init__(*args, **kwargs)
-        self._heartbeat_monitor = None
-        self.n_clients = 0
+        self._heartbeat_monitor_tcp: typing.Optional[BusHeartbeatMonitor] = None
+        self._heartbeat_monitor_udp: typing.Optional[BusHeartbeatMonitor] = None
+        self.n_clients_tcp = 0
 
     def register_heartbeat_bus(self, bus: TcpBus, client_ids):
         """register the monitor on a bus and provide the clients to be monitored"""
-        self._heartbeat_monitor: TcpHeartbeatMonitor = TcpHeartbeatMonitor(client_ids, bus)
-        self.n_clients = len(client_ids)
+        self._heartbeat_monitor_tcp: BusHeartbeatMonitor = BusHeartbeatMonitor(client_ids, bus)
+        self.n_clients_tcp = len(client_ids)
+
+    def register_can_heartbeat_bus(self, bus: UdpBus, client_ids):
+        self._heartbeat_monitor_udp: BusHeartbeatMonitor = BusHeartbeatMonitor(client_ids, bus)
 
     def on_heartbeat_poll(self, t):
-        if self._heartbeat_monitor is not None:
-            hm: TcpHeartbeatMonitor = self._heartbeat_monitor
+        if self._heartbeat_monitor_tcp is not None:
+            hm: BusHeartbeatMonitor = self._heartbeat_monitor_tcp
             hm.send_req_nodes()
-            rets = [self._heartbeat_monitor.tcp_bus.recv(1.0) for _ in range(self.n_clients)]
+            rets = [self._heartbeat_monitor_tcp.bus.recv(1.0) for _ in range(self.n_clients_tcp)]
             rets = [(struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, r.data) if r is not None else r) for r in rets]
             for r in rets:
                 if r is not None:
                     hm.submit_response(r[0], r[1])
-            hm.run_health_test()
+            #hm.run_health_test()
+        if self._heartbeat_monitor_udp is not None:
+            hm: BusHeartbeatMonitor = self._heartbeat_monitor_udp
+            hm.send_req_nodes()
 
     def run_health_test(self) -> bool:
-        if self._heartbeat_monitor is not None:
-            hm: TcpHeartbeatMonitor = self._heartbeat_monitor
-            return hm.run_health_test()
+        tcp_result = True
+        udp_result = True
+        if self._heartbeat_monitor_tcp is not None:
+            hm: BusHeartbeatMonitor = self._heartbeat_monitor_tcp
+            tcp_result = hm.run_health_test()
+        if self._heartbeat_monitor_udp is not None:
+            hm: BusHeartbeatMonitor = self._heartbeat_monitor_udp
+            udp_result = hm.run_health_test()
+        return tcp_result and udp_result
 
     @property
     def is_healthy(self) -> bool:
@@ -332,3 +357,8 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
     @property
     def is_unhealthy(self) -> bool:
         return not self.is_healthy
+
+    @recv_can(canspecs.CAN_ID_HEARTBEAT_ACK, canspecs.CAN_FORMAT_HEARTBEAT_ACK)
+    def _(self, data):
+        # TODO: check this
+        self._heartbeat_monitor_udp.submit_response(*data)
