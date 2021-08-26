@@ -6,6 +6,8 @@ Date: 01 January 2021
 
 Cyberphys Demonstrator Configuration Variables
 """
+# name of log filename for demonstrator library
+LOG_FILENAME: str = "ignition.demonstrator.log"
 
 # directory of ignition stations
 RADIO_SOUND_DIR = r"C:\\sound"  # FIXME: commit songs to repo? (requires merge from infotainment-ui branch)
