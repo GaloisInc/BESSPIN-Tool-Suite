@@ -69,7 +69,7 @@ volatile unsigned long previous_poll_time = 25;
 const unsigned int polling_interval = 20;
 
 // debug message setting
-const bool debug_msg_on = false;
+const bool debug_msg_on = true;
 
 FlexCAN Can0(CAN_baud, 0, 1, 1);
 CAN_message_t CAN_msg;
