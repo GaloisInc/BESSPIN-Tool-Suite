@@ -59,6 +59,7 @@ class CanDisplay(threading.Thread):
 
         self.scenario = canlib.SCENARIO_BASELINE
         self.state = STATE_NORMAL
+        self.error_msg = ""
 
         print(f"<{self.__class__.__name__}> Listening on CAN_PORT {net_conf.port_network_commandPort}, and ZMQ_PORT {self.zmq_port}")
 
@@ -87,6 +88,9 @@ class CanDisplay(threading.Thread):
         assert("func" in req and "args" in req)
         if req['func'] == "scenario":
             req['retval'] = self.state
+            req['status'] = 200 # OK
+        elif req['func'] == "error":
+            req['retval'] = self.error_msg
             req['status'] = 200 # OK
         else:
             req['status'] = 501 # Not implemented
@@ -136,12 +140,12 @@ class CanDisplay(threading.Thread):
                 self.cmd_bus.send(heartbeat_ack)
             elif cid == canlib.CAN_ID_CMD_COMPONENT_ERROR:
                 component_id, error_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, msg.data)
-                # TODO: pass error info to the frontend
                 if error_id == canlib.ERROR_NONE:
+                    self.error_msg = ""
                     print(f"<{self.__class__.__name__}> No errors")
                 else:
-                    print(f"<{self.__class__.__name__}> Error {canlib.CanlibComponentNames.get(error_id,None)}\
-                        from component {canlib.CanlibComponentNames.get(component_id,None)}")
+                    self.error_msg += f"\nComponent {canlib.CanlibComponentNames.get(component_id,None)}: {canlib.CanlibComponentNames.get(error_id,None)}"
+                    print(f"<{self.__class__.__name__}> {self.error_msg}")
             else:
                 pass
         except Exception as exc:
