@@ -601,7 +601,7 @@ class HackerKiosk:
             self.buttonPressed(canlib.BUTTON_VOLUME_DOWN)
             self.ipc_msg['retval'] = "Volume decreased"
         elif arg == "exfil":
-            self.ipc_msg['retval'] = f"{self.x}, {self.y}, {self.z}"
+            self.ipc_msg['retval'] = f"{self.x}, {self.y}"
         elif arg == "changeStation_1":
             self.buttonPressed(canlib.BUTTON_STATION_1)
             self.ipc_msg['retval'] = "Station set to 1"
