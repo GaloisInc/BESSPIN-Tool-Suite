@@ -43,6 +43,7 @@ class IgnitionDirector:
     machine are responsible for identifying the appropriate inputs based on the component behavior.
     """
     # FSM description
+    #TODO: prune the state machine
     states=[State(name='startup', on_enter='startup_enter'),
             State(name='noncrit_failure', on_enter='noncrit_failure_enter'),
             State(name='ready', on_enter='ready_enter'),
@@ -337,19 +338,6 @@ class IgnitionDirector:
                 else:
                     pattern = ledm.LedPatterns.SSITH
                 lm.update_pattern(ledm.LedPatterns(pattern))
-
-            # NOTE: delete this - nobody should be sending CAN_ID_CMD_SET_DRIVING_MODE anyway 
-            # elif cid == canlib.CAN_ID_CMD_SET_DRIVING_MODE:
-            #     aut_idx = struct.unpack(canlib.CAN_FORMAT_CMD_SET_DRIVING_MODE, msg.data)[0]
-            #     ignition_logger.info(f"process cc: set driving mode {aut_idx}")
-            #     bsim: simulator.Sim = self._handler["beamng"]
-            #     player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
-            #     if aut_idx == 0:
-            #         bsim.disable_autopilot_command()
-            #         player.enable_sound(True)
-            #     else:
-            #         bsim.enable_autopilot_command()
-            #         player.enable_sound(False)
             else:
                 pass
         except Exception as exc:
@@ -357,32 +345,31 @@ class IgnitionDirector:
 
     def ready_enter(self):
         ignition_logger.info("Ready state: enter")
-        scenario_start = time.time()
-        while((time.time() - scenario_start) < self.scenario_timeout):
-            cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
-            if cc_recv:
-                self.default_input()
-                self.process_cc(cc_recv)
-            
-            # NOTE: if jmonitor has failed assume user input is present
-            activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
+        # NOTE: Disabling scenario reset because it is not clear what happens if we reset
+        # TODO: add scenario timeout only in the self-drive mode
+        cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
+        if cc_recv:
+            self.default_input()
+            self.process_cc(cc_recv)
 
-            # if in self drive mode and activity has occurred, get out
-            if activity and self.self_drive_mode:
-                ignition_logger.info("Director: activity detected, switching to manual")
-                self.default_input()
-                self.input_self_drive = False
-                return
-            elif self.self_drive_mode or activity: # do nothing if self drive mode or user activity
-                pass
-            else:
-                ignition_logger.info("Director: no activity detected, switching to self-drive")
-                self.default_input()
-                self.input_self_drive = True
-                return
+        # NOTE: if jmonitor has failed assume user input is present
+        activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
+
+        # if in self drive mode and activity has occurred, get out
+        if activity and self.self_drive_mode:
+            ignition_logger.info("Director: activity detected, switching to manual")
+            self.default_input()
+            self.disable_autopilot()
+            return
+        elif self.self_drive_mode or activity: # do nothing if self drive mode or user activity
+            pass
+        else:
+            ignition_logger.info("Director: no activity detected, switching to self-drive")
+            self.default_input()
+            self.enable_autopilot()
+            return
 
         self.default_input()
-        self.input_s_timeout = True
 
     def cc_msg_enter(self):
         ignition_logger.debug("cc msg state: enter")
