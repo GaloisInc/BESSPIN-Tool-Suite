@@ -136,7 +136,7 @@ TODO:
   myAtem.connect('192.168.10.240') // Use the default static IP
 
   myAtem.on('ATEM: StateChanged', (state, pathToChange) => {
-	  console.log(state) // catch the ATEM state.
+    console.log(state) // catch the ATEM state.
   })
 
   const hacks = {
@@ -217,7 +217,7 @@ TODO:
             console.log("ATEM: Switched to Steering Cam (1)");
           });
           } else {
-            	myAtem.changeProgramInput(2).then(() => {
+              myAtem.changeProgramInput(2).then(() => {
                 console.log("ATEM: Switched to Brakes Cam (2)");
               });
           }
