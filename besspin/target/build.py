@@ -164,7 +164,7 @@ def getTargetMac(targetId=None):
     thisTarget = getSetting('target',targetId=targetId)
     if (thisTarget=='vcu118'): #use hostIP + targetId
         macInc = 0 if (targetId is None) else targetId
-        if not isEqSetting('osImage','FreeRTOS',targetId=targetId):
+        if not isEqSetting('osImage','FreeRTOS',targetId=targetId) and isEqSetting('mode','cyberPhys'):
             # NOTE: This should guarantee unique IPs for all cyberphys targets
             macInc = macInc+6
         macTarget = getSetting(f"{thisTarget}MacAddrTarget")
