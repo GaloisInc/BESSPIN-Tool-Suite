@@ -66,9 +66,9 @@ class HeartbeatMonitor:
                     }
 
         self.https = {
-            "ota_server_1" : "",
-            "ota_server_2" : "",
-            "ota_server_3" : ""
+            "ota_server_1" : "http://10.88.88.1:5050",
+            "ota_server_2" : "http://10.88.88.2:5050",
+            "ota_server_3" : "http://10.88.88.3:5050"
         }
 
         self.monitor = {"10.88.88.4": cids.IGNITION}
@@ -86,11 +86,19 @@ class HeartbeatMonitor:
         }
         #self.can_monitor: typing.Optional[HeartbeatMonitorComponent] = None
         self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())
+        self.ota_monitors = {k: OtaMonitor(addr) for k, addr in self.https.items()}
+
+    def mainloop(self):
+        import time
+        while True:
+            time.sleep(1.0)
+            for k, v in self.ota_monitors.items():
+                if not v.is_healthy:
+                    print(f"WARNING! {k} HTTP failed health check")
 
     def setup_can(self):
         self.can_bus.register(self.component_monitor)
         self.component_monitor.register_can_heartbeat_bus(self.can_bus.bus, self.udp_descr.values())
-        #self.can_monitor.start()
 
     def setup_tcp(self):
         addrs, vals = list(zip(*((k, v) for k,v in self.tcp_descr)))
