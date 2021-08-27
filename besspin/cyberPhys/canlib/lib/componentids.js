@@ -4,7 +4,7 @@
 * Name: lib/componentids.js
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 24 August 2021
+* Date: 26 August 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
@@ -25,6 +25,7 @@
  const BESSPIN_TOOL_DEBIAN = 0x28
  const IGNITION = 0x30
  const LED_COMPONENT = 0x31
+ const CAN_DISPLAY = 0x32
  const HACKER_KIOSK = 0x40
  const HACK_NONE = 0x50
  const HACK_OTA = 0x51
