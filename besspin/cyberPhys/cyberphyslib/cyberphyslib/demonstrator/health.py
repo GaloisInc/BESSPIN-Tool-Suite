@@ -21,7 +21,8 @@ import re
 import requests
 import typing
 import struct
-
+import socket
+import time
 
 import fabric
 import can
@@ -66,9 +67,9 @@ class HeartbeatMonitor:
                     }
 
         self.https = {
-            "ota_server_1" : "http://10.88.88.1:5050",
-            "ota_server_2" : "http://10.88.88.2:5050",
-            "ota_server_3" : "http://10.88.88.3:5050"
+            "ota_server_1" : "http://10.88.88.11:5050",
+            "ota_server_2" : "http://10.88.88.21:5050",
+            "ota_server_3" : "http://10.88.88.31:5050"
         }
 
         self.monitor = {"10.88.88.4": cids.IGNITION}
@@ -95,6 +96,10 @@ class HeartbeatMonitor:
             for k, v in self.ota_monitors.items():
                 if not v.is_healthy:
                     print(f"WARNING! {k} HTTP failed health check")
+            print("Testing UDP")
+            if self.component_monitor is not None:
+                if not self.component_monitor._heartbeat_monitor_udp.is_healthy:
+                    print(f"ERROR! UDP Failed")
 
     def setup_can(self):
         self.can_bus.register(self.component_monitor)
@@ -163,6 +168,8 @@ class HttpMonitor(HealthMonitor):
     """
     Health monitoring involving http connections
     """
+    request_timeout = 1.0
+
     def __init__(self, addr: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.addr = addr
@@ -173,7 +180,7 @@ class HttpMonitor(HealthMonitor):
 
     def run_health_test(self) -> bool:
         try:
-            ret = requests.get(self.addr)
+            ret = requests.get(self.addr, timeout = self.request_timeout)
             # check for OK status code
             return self.check_response(ret)
         except Exception as exc:
@@ -209,7 +216,7 @@ class OtaMonitor(HttpMonitor):
         return ret.status_code == 200
 
 
-HeartbeatResponseType = typing.Union[None, typing.Tuple[int, int]]
+HeartbeatResponseType = float
 
 
 class BusHeartbeatMonitor(HealthMonitor):
@@ -222,6 +229,7 @@ class BusHeartbeatMonitor(HealthMonitor):
     """
     # length of response buffers (time horizon of ACKs)
     maxlen = 5
+    wait_period = 10.0
 
     @staticmethod
     def form_heartbeat_req_msg(req_number: int):
@@ -236,6 +244,7 @@ class BusHeartbeatMonitor(HealthMonitor):
         self.response_buffer: typing.Dict[int, typing.Deque[HeartbeatResponseType]] = {
             c: collections.deque(maxlen=self.maxlen) for c in client_ids
         }
+        self.start_time = time.time()
 
     def submit_response(self, client_id: int, response: HeartbeatResponseType):
         """submit a response from client_id to the ACK buffer"""
@@ -244,7 +253,9 @@ class BusHeartbeatMonitor(HealthMonitor):
             cname = idmap.get(client_id, "<UNKNOWN>")
             print(f"WARNING! Received unanticipated response 0x{client_id: X} ({cname})")
         else:
-            self.response_buffer[client_id].append(response)
+            #print(f"Submitted {socket.inet_ntoa(struct.pack('!L', client_id))} {response}")
+            if response is not None:
+                self.response_buffer[client_id].append(time.time())
 
     def send_heartbeat_req_msg(self, req_number: int):
         """set REQ can packet over the TCP bus"""
@@ -262,11 +273,17 @@ class BusHeartbeatMonitor(HealthMonitor):
             within MAXLEN of the current REQ number, the component is considered healthy
         """
         for cid, buff in self.response_buffer.items():
-            mid = len(buff) if len(buff) <= self.maxlen else max(buff)
-            d = self.curr_req_number - mid
-            if d > self.maxlen:
-                print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
-                return False
+            if len(buff) > 0:
+                ltime = max(buff)
+                delta = time.time() - ltime
+                print(delta)
+                if delta > self.maxlen:
+                    print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
+                    return False
+            else:
+                if time.time() - self.start_time > self.wait_period:
+                    print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
+                    return False
         return True
 
 
