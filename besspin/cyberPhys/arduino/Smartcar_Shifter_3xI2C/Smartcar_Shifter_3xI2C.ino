@@ -38,8 +38,8 @@ unsigned int max_i2c_trans_delay_ms = 500;
 #endif
 
 // Analog inputs
-#define ANALOG_IN_BRAKE A15
-#define ANALOG_IN_THROTTLE A14
+#define ANALOG_IN_BRAKE A14
+#define ANALOG_IN_THROTTLE A15
 
 // Master requesting data
 void requestEvent_I2C0(void);
@@ -178,11 +178,13 @@ void loop()
     sprintf(printbuf, "throttle_raw: %u", throttle_raw);
     PRINT(printbuf);
   }
-  // data[0,1] = brake_raw
-  // data[2,3] = throttle_raw
+
+  // data[0,1] = throttle_raw
+  // data[2,3] = brake_raw
   // data[4] = gear
-  memcpy(&data[0], &brake_raw, 2);
-  memcpy(&data[2], &throttle_raw, 2);
+
+  memcpy(&data[0], &throttle_raw, 2);
+  memcpy(&data[2], &brake_raw, 2);
   memcpy(&data[4], (const void *)&shifter_gear, 1);
 
   toggle_led();
