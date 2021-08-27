@@ -1,66 +1,38 @@
 @startuml
-state "BESSPIN tool start up" as BesspinToolUp
-BesspinToolUp: init network
-BesspinToolUp: start nix shell
-[*] --> BesspinToolUp: AdminPC powered up
+[*] --> BesspinToolBootTargets: Start Tool-Suite
 
 state "BESSPIN tool boot targets" as BesspinToolBootTargets
-BesspinToolUp --> BesspinToolBootTargets: BESSPIN tool booted
-BesspinToolBootTargets: load from flash
+BesspinToolBootTargets: load from flash / over JTAG
 BesspinToolBootTargets: start services
 
 state "BESSPIN tool ready" as BesspinToolReady
-BesspinToolBootTargets --> BesspinToolBooted: All targets booted
+BesspinToolBootTargets --> BesspinToolReady: All targets booted
 
 state "BESSPIN Tool Boot Error" as BesspinToolBootError
-BesspinToolBootError: attempts to reboot target(s)
+BesspinToolBootError: reboot target(s) / restart services
 
 BesspinToolBootTargets --> BesspinToolBootError: Target(s) failed to boot
-state "BESSPIN tool booted" as BesspinToolBooted
-BesspinToolBooted: All targets booted successfully
-BesspinToolBootError --> BesspinToolBooted: Target(s) reboot successfull
-BesspinToolBootError --> BesspinToolTerminate: Target(s) reboot failed
+BesspinToolBootError --> BesspinToolReady: Target(s) reboot / services restart successfull
+BesspinToolBootError --> BesspinToolTerminate: Target(s) reboot / services restart failed
 
-BesspinToolBooted --> BesspinToolReady: Send CMD_COMPONENT_READY(BESSPIN_TOOL)
-
-BesspinToolReady --> BesspinToolReady: Periodically\nsend CMD_COMPONENT_READY(BESSPIN_TOOL)
-
-state "BESSPIN Tool Target Error" as BesspinToolTargetError
-BesspinToolTargetError: OS boot error
-BesspinToolTargetError: network error
-BesspinToolTargetError: application error
-
-BesspinToolTargetError --> BesspinToolRestartTarget: Attempt to restart
-
-state "BESSPIN tool terminate" as BesspinToolTerminate
-BesspinToolTerminate: Orderly shutdown
-
-BesspinToolReady: targets respond to ping
+BesspinToolReady: targets / services runnings
 BesspinToolReady: targets respond to HEARTBET_REQ
 
-BesspinToolReady --> BesspinToolTargetError: Target failed\nSend CMD_COMPONENT_ERROR(TARGET_ID)
+' NOTE: we don't need to send `component ready` because we are using the heartbeat
+' BesspinToolReady --> BesspinToolReady: Periodically send\nCMD_COMPONENT_READY(BESSPIN_TOOL)
+
+state "BESSPIN Tool respond to heartbeat"  as BesspingToolRespondToHeartbeat
+BesspingToolRespondToHeartbeat: ID = BESSPIN_TOOL_FREERTOS or\nBESSPIN_TOOL_DEBIAN
+BesspinToolReady -> BesspingToolRespondToHeartbeat: Received\nCAN_ID_HEARTBEAT_REQ(REQ_NUM)
+BesspingToolRespondToHeartbeat -> BesspinToolReady: Send\nCAN_FORMAT_HEARTBEAT_ACK(REQ_NUM|ID)
 
 state "BESSPIN tool restart target" as BesspinToolRestartTarget
-BesspinToolRestartTarget: Reboot FreeRTOS
-BesspinToolRestartTarget: Restart application
-BesspinToolReady --> BesspinToolRestartTarget: Received CMD_RESTART_COMPONENT(TARGET_ID)
+BesspinToolRestartTarget: Restart target / service
+BesspinToolReady -> BesspinToolRestartTarget: Received\nCMD_RESTART_COMPONENT(TARGET_ID)
+BesspinToolRestartTarget -> BesspinToolReady: Restart successfull\nSend CMD_COMPONENT_READY(TARGET_ID)
+BesspinToolRestartTarget --> BesspinToolTerminate: Restart failed
 
-BesspinToolRestartTarget --> BesspinToolReady: Restart successfull\nSend CMD_COMPONENT_READY(TARGET_ID)
-BesspinToolRestartTarget --> BesspinToolRecoverableFailiure: Restart failed.
-
-state "BESSPIN tool check if failiure is recoverable" as BesspinToolRecoverableFailiure
-BesspinToolRecoverableFailiure: Is degraded mode possible?
-
-BesspinToolRecoverableFailiure --> BesspinToolTerminate: Not possible
-
-BesspinToolRecoverableFailiure --> BesspinToolDegradedModeInit: Possible
-state "BESSPIN tool init degraded mode" as BesspinToolDegradedModeInit
-BesspinToolDegradedModeInit: limited number of scenarios
-note top of BesspinToolDegradedModeInit: properly mark DEGRADED state of operations?
-note top of BesspinToolDegradedModeInit: TODO: elaborate on DEGRADED mode
-
-BesspinToolDegradedModeInit --> BesspinToolReady: Send CMD_SCENARIO_NOT_AVAILABLE(SCENARIO_ID)
-
-BesspinToolTerminate --> [*]: Send CMD_COMPONENT_ERROR(BESSPIN_TOOL|TERMINATED)
+state "BESSPIN tool terminate" as BesspinToolTerminate
+BesspinToolTerminate --> [*]
 
 @enduml
