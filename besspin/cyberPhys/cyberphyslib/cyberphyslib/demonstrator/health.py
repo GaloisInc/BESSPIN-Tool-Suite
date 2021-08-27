@@ -11,6 +11,7 @@ Component Health Monitoring Objects and Components
 from cyberphyslib.canlib import TcpBus, UdpBus
 import cyberphyslib.canlib.canspecs as canspecs
 import cyberphyslib.demonstrator.component as cycomp
+import cyberphyslib.canlib.componentids as cids
 
 
 import abc
@@ -37,7 +38,49 @@ class HeartbeatMonitor:
     TODO: implement tthis
     """
     def ___init__(self):
-        pass
+        services = {
+            "can-display-ui":
+                {
+                    "user" : "",
+                    "password" : "",
+                    "address" : "",
+                    "service_name": ""
+                },
+            "hacker-kiosk-ui":
+                {
+                    "user" : "",
+                    "password" : "",
+                    "address" : "",
+                    "service_name": ""
+                },
+            "infotainment-client-ui":
+                {
+                    "user" : "",
+                    "password" : "",
+                    "address" : "",
+                    "service_name": ""
+                }
+                    }
+
+        https = {
+            "ota_server_1" : "",
+            "ota_server_2" : "",
+            "ota_server_3" : ""
+        }
+
+        monitor = {"10.88.88.4", cids.IGNITION}
+        udp_descr = {
+            # TODO: add FreeRTOS stuff here
+            "10.88.88.12": cids.INFOTAINMENT_SERVER_1,
+            "10.88.88.22": cids.INFOTAINMENT_SERVER_2,
+            "10.88.88.32": cids.INFOTAINMENT_SERVER_3
+        }
+        tcp_descr = {
+            "10.88.88.5": "CAN_DISPLAY",
+            "10.88.88.3": "HACKER_KIOSK",
+            "10.88.88.2": "InfotainmentThinClient",
+            # TODO: add tool suite commanders
+        }
 
 
 class HealthMonitor(abc.ABC):
