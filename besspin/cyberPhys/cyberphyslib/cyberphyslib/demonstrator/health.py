@@ -20,11 +20,11 @@ import collections
 import re
 import requests
 import typing
+import struct
 
 
 import fabric
 import can
-import struct
 
 
 class HeartbeatMonitor:
@@ -231,7 +231,12 @@ class BusHeartbeatMonitor(HealthMonitor):
 
     def submit_response(self, client_id: int, response: HeartbeatResponseType):
         """submit a response from client_id to the ACK buffer"""
-        self.response_buffer[client_id].append(response)
+        if client_id not in self.response_buffer:
+            idmap = {v: k for k, v in cids.__dict__.items()}
+            cname = idmap.get(client_id, "<UNKNOWN>")
+            print(f"WARNING! Received unanticipated response 0x{client_id: X} ({cname})")
+        else:
+            self.response_buffer[client_id].append(response)
 
     def send_heartbeat_req_msg(self, req_number: int):
         """set REQ can packet over the TCP bus"""
