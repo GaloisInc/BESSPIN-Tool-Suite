@@ -18,8 +18,12 @@ import functools
 import psutil
 import time
 import os
+import serial
+import re
+
 from cyberphyslib.demonstrator import config, component, message, logger
 import cyberphyslib.canlib.canspecs as canspecs
+from besspin.cyberPhys.cyberphyslib.cyberphyslib import canlib
 
 from beamngpy import BeamNGpy, Scenario, Vehicle
 from beamngpy.sensors import Electrics, GForces
@@ -66,9 +70,19 @@ def requires_running_scenario(func):
             return func(self, *args, **kwargs)
     return inner
 
-
 class Sim(component.ComponentPoller):
     beamng_process_name = "BeamNG.tech.x64.exe"
+    # Serial port setup
+    READ_LIMIT = 254
+    THROTTLE_MAX = 926
+    THROTTLE_MIN = 64
+    THROTTLE_GAIN =  100
+    BRAKE_MAX = 270
+    BRAKE_MIN = 50
+    BRAKE_GAIN = 100
+    COM_PORT = 'COM43'
+    BAUDRATE = 115200
+
     @staticmethod
     def is_running_beamng():
         """returns whether BeamNG process is running"""
@@ -120,6 +134,13 @@ class Sim(component.ComponentPoller):
 
         # record whether sim is paused or not
         self._is_paused = False
+        # TODO: maybe start disabled?
+        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
+        # Teensy related variables
+        self.teensy_serial = serial.Serial(self.COM_PORT, self.BAUDRATE, timeout=0)
+        self.re_gear = re.compile('shifter_gear: 0X\d*')
+        self.re_brake = re.compile('brake_raw: \d*')
+        self.re_throttle = re.compile('throttle_raw: \d*')
 
     def on_start(self) -> None:
         if not self.stopped:
@@ -239,6 +260,46 @@ class Sim(component.ComponentPoller):
                     self._vehicle.connect(self._beamng_context)
                 pass
 
+            # Read serial if ECUs are not working
+            if self.system_functionality_level <= canlib.FUNCTIONALITY_MINIMAL:
+                try:
+                    val = self.teensy_serial.read(self.READ_LIMIT).decode('utf-8')
+                    gear_raw = self.re_gear.findall(val)
+                    if gear_raw:
+                        gear_raw = int(gear_raw[-1].split()[-1],16)
+                        #            'P'     'R'         'N'   'D'
+                        gear_map = {0x28: 1, 0x27: -1, 0x26: 0, 0x25: 2}
+                        gear = gear_map.get(val, 0)
+                        self.control["gear"] = gear
+                        self.control_evt = True
+
+                    throttle_raw = self.re_throttle.findall(val)
+                    if throttle_raw:
+                        throttle_raw = int(throttle_raw[-1].split()[-1])
+                        # Scale the throttle
+                        tmp_throttle = max(throttle_raw - self.THROTTLE_MIN, 0)
+                        tmp_throttle = tmp_throttle * self.THROTTLE_GAIN / (self.THROTTLE_MAX - self.THROTTLE_MIN)
+                        throttle = min(max(tmp_throttle, 0), 100)/100
+                        self.control["throttle"] = throttle
+                        self.control_evt = True
+
+                    brake_raw = self.re_brake.findall(val)
+                    if brake_raw:
+                        brake_raw = int(brake_raw[-1].split()[-1])
+                        # Scale the brake
+                        tmp_brake = max(self.BRAKE_MAX - brake_raw, 0)
+                        tmp_brake = tmp_brake * self.BRAKE_GAIN / (self.BRAKE_MAX - self.BRAKE_MIN)
+                        brake = min(max(tmp_brake, 0), 100)/100
+                        self.control["brake"] = brake
+                        self.control_evt = True
+
+                    # TODO: remove this from the log?
+                    logger.sim_logger.info(f"Brake: {self.control['brake']}, Throttle: {self.control['throttle']}, Gear: {self.control['gear']}")
+                    # TODO: Flush the old data?
+                    #self.teensy_serial.reset_input_buffer()
+                except Exception as exc:
+                    logger.sim_logger.warning(f"Serial port exception: {exc}")
+
     def on_poll_exit(self) -> None:
         """beamNG exit method"""
         logger.sim_logger.info(f"{self.__class__.__name__} Exit Signal Received. This might take a while...")
@@ -249,11 +310,22 @@ class Sim(component.ComponentPoller):
     def exit(self):
         super(Sim, self).exit()
 
+    def update_functionality_level(self, new_func_level):
+        """
+        Updates the component's functionality level
+        When FUNCTIONALITY_MINIMAL/NONE don' update from CAN
+        but from serial (in a separate thread)
+        """
+        if new_func_level != self.system_functionality_level:
+            # Update component functionality level
+            self.system_functionality_level = new_func_level
+
     ########## can receive ###########
     def control_process(self, name, data, bounds=(0.0, 1.0)):
         data = min(max(data[0], bounds[0]), bounds[1])
-        self.control[name] = data
-        self.control_evt = True
+        if self.system_functionality_level > canlib.FUNCTIONALITY_MINIMAL:
+            self.control[name] = data
+            self.control_evt = True
 
     @recv_can(canspecs.CAN_ID_STEERING_INPUT, canspecs.CAN_FORMAT_STEERING_INPUT)
     def _(self, data):

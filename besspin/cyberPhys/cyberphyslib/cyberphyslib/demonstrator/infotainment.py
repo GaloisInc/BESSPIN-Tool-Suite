@@ -16,6 +16,7 @@ The infotainment proxy is responsible for:
 
     4. Forwarding the infotainment packet to the active CAN network
 """
+from besspin.cyberPhys.cyberphyslib.cyberphyslib import canlib
 import glob
 import os
 import pathlib
@@ -97,10 +98,24 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         self._sidx: int = 0
         self._sound: typ.Union[mixer.Sound, None] = None
         self._sound_enabled = True
+        # TODO: maybe start disabled?
+        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
         # NOTE: disable infotainment music for now
         self._volume = 0.0
         self._set_volume()
         self.play_sound()
+
+    def update_functionality_level(self, new_func_level):
+        """
+        Updates the component's functionality level
+        Unless FUNCTIONALITY_FULL disable all sounds
+        """
+        if new_func_level != self.system_functionality_level:
+            if new_func_level != canlib.FUNCTIONALITY_FULL:
+                # Disable sound first
+                self.enable_sound(False)
+            # Update component functionality level
+            self.system_functionality_level = new_func_level
 
     def enable_sound(self, enable: bool):
         """
@@ -110,7 +125,7 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         sound is re-enabled
         """
         self._sound_enabled = enable
-        if enable:
+        if enable and (self.system_functionality_level == canlib.FUNCTIONALITY_FULL):
             self.play_sound()
         else:
             self._sound.stop()
