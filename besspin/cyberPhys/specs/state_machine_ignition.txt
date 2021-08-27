@@ -63,12 +63,26 @@ HealthCheck --> IgnitionReady: Health check complete
 
 IgnitionReady --> ActivityCheck: Check activity
 
-state "Check driver activity" as ActivityCheck
-ActivityCheck: 1) activity and self_drive_mode => Swicth to manual mode
-ActivityCheck: 2) only self_drive_mode => check scenario timer (reset if expired)
-ActivityCheck: 3) only activity => do nothing
-ActivityCheck: 4) no activity and no self_drive_mode => Switch to self drive\n(and start self-drive timer)
-ActivityCheck --> IgnitionReady: Activity checked
+state "Check driver activity" as ActivityCheck {
+    ActivityCheckStart --> CheckSelfDriveTimer: No activity detected & self_drive_mode
+    CheckSelfDriveTimer: Has scenario timer expired? 
+    state "Restart Scenario" as ActivityCheckRestartScenario
+    ActivityCheckRestartScenario: Restart scenario timer
+    CheckSelfDriveTimer --> ActivityCheckRestartScenario: Yes
+    ActivityCheckRestartScenario --> ActivityCheckDone: Restart done
+    CheckSelfDriveTimer --> ActivityCheckDone: No
+
+    ActivityCheckStart --> DisableSelfDrive: Activity detected & self_drive_mode
+    DisableSelfDrive: Disable self-drive mode
+    DisableSelfDrive: Disable self-drive scenario timer 
+    DisableSelfDrive --> ActivityCheckDone: Done
+
+    ActivityCheckStart --> ActivityCheckDone: Activity detected & !self_drive_mode\n(No change needed)
+    ActivityCheckStart --> SwitchToSelfDrive: No activity detected & !self_drive_mode
+    SwitchToSelfDrive: Enable self-drive mode
+    SwitchToSelfDrive: Start self-drive scenario timer
+    SwitchToSelfDrive --> ActivityCheckDone: Done
+}
 
 state "Process CMD message" as ProcessCmdMsg {
     
