@@ -10,8 +10,9 @@ Component Health Monitoring Objects and Components
 """
 from cyberphyslib.canlib import TcpBus, UdpBus
 import cyberphyslib.canlib.canspecs as canspecs
-import cyberphyslib.demonstrator.component as cycomp
 import cyberphyslib.canlib.componentids as cids
+import cyberphyslib.demonstrator.component as cycomp
+import cyberphyslib.demonstrator.can as cycan
 
 
 import abc
@@ -35,10 +36,12 @@ class HeartbeatMonitor:
     * ssh request check
     * http request check
 
-    TODO: implement tthis
+    TODO: implement this
     """
-    def ___init__(self):
-        services = {
+    def __init__(self, can_bus: cycan.CanUdpNetwork):
+        self.can_bus = can_bus
+
+        self.services = {
             "can-display-ui":
                 {
                     "user" : "",
@@ -62,25 +65,47 @@ class HeartbeatMonitor:
                 }
                     }
 
-        https = {
+        self.https = {
             "ota_server_1" : "",
             "ota_server_2" : "",
             "ota_server_3" : ""
         }
 
-        monitor = {"10.88.88.4", cids.IGNITION}
-        udp_descr = {
+        self.monitor = {"10.88.88.4": cids.IGNITION}
+        self.udp_descr = {
             # TODO: add FreeRTOS stuff here
             "10.88.88.12": cids.INFOTAINMENT_SERVER_1,
             "10.88.88.22": cids.INFOTAINMENT_SERVER_2,
             "10.88.88.32": cids.INFOTAINMENT_SERVER_3
         }
-        tcp_descr = {
+        self.tcp_descr = {
             "10.88.88.5": "CAN_DISPLAY",
             "10.88.88.3": "HACKER_KIOSK",
             "10.88.88.2": "InfotainmentThinClient",
             # TODO: add tool suite commanders
         }
+        #self.can_monitor: typing.Optional[HeartbeatMonitorComponent] = None
+        self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())
+
+    def setup_can(self):
+        self.can_bus.register(self.component_monitor)
+        self.component_monitor.register_can_heartbeat_bus(self.can_bus.bus, self.udp_descr.values())
+        #self.can_monitor.start()
+
+    def setup_tcp(self):
+        addrs, vals = list(zip(*((k, v) for k,v in self.tcp_descr)))
+        self.component_monitor.register_heartbeat_bus(TcpBus(
+            list(self.monitor.keys())[0],
+            addrs),
+            vals
+        )
+
+    def start_monitor(self):
+        self.component_monitor.start()
+
+    def exit_monitor(self):
+        self.component_monitor.exit()
+        self.component_monitor.join()
 
 
 class HealthMonitor(abc.ABC):
