@@ -108,6 +108,7 @@ class ThreadExiting(threading.Thread):
         self.poller_start_time = None
         self.polling_thread = None
         self.sample_period = 1.0 / sample_frequency
+        self._exit_called = False
 
     def on_poll(self, t):
         pass
@@ -143,7 +144,9 @@ class ThreadExiting(threading.Thread):
 
     def exit(self):
         self.stop()
-        self.join()
+        #if not self._exit_called:
+        #    self.join()
+        self._exit_called = True
 
 
 class Component(ThreadExiting, metaclass=ComponentMeta):

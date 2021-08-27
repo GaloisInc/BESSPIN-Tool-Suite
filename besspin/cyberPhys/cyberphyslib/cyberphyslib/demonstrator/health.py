@@ -310,11 +310,12 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
         myc.start()
         ```
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, tcp_timeout=1.0, **kwargs):
         super(HeartbeatMonitorComponent, self).__init__(*args, **kwargs)
         self._heartbeat_monitor_tcp: typing.Optional[BusHeartbeatMonitor] = None
         self._heartbeat_monitor_udp: typing.Optional[BusHeartbeatMonitor] = None
         self.n_clients_tcp = 0
+        self.tcp_timeout = tcp_timeout
 
     def register_heartbeat_bus(self, bus: TcpBus, client_ids):
         """register the monitor on a bus and provide the clients to be monitored"""
@@ -328,7 +329,7 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
         if self._heartbeat_monitor_tcp is not None:
             hm: BusHeartbeatMonitor = self._heartbeat_monitor_tcp
             hm.send_req_nodes()
-            rets = [self._heartbeat_monitor_tcp.bus.recv(1.0) for _ in range(self.n_clients_tcp)]
+            rets = [self._heartbeat_monitor_tcp.bus.recv(self.tcp_timeout) for _ in range(self.n_clients_tcp)]
             rets = [(struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, r.data) if r is not None else r) for r in rets]
             for r in rets:
                 if r is not None:
