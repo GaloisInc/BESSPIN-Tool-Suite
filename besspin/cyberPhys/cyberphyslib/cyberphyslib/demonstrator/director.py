@@ -138,6 +138,8 @@ class IgnitionDirector:
         # TODO: is there a better solution?
         self.active_scenario = canlib.SCENARIO_BASELINE
         self.self_drive_scenario_start = None
+        # TODO: eventually start with minimal functionality
+        self.system_functionality_level = canlib.FUNCTIONALITY_FULL # For now
 
         self.joystick_name = cconf.JOYSTICK_NAME
 
@@ -379,24 +381,26 @@ class IgnitionDirector:
 
         self.default_input()
 
-    def cc_msg_enter(self):
-        ignition_logger.debug("cc msg state: enter")
-        self.default_input()
-        return
-
-    def restart_enter(self):
-        ignition_logger.info("Restart state: enter")
-        sim: simulator.Sim = self._handler["beamng"]
-        sim.restart_command()
-        return
-
-    def noncrit_failure_enter(self):
-        ignition_logger.info("Noncrit_failure state: enter")
-        ignition_logger.error("Ignition achieved a noncritical error. Continuing anyway...")
-        self.component_error_send(canlib.LED_COMPONENT,canlib.ERROR_UNSPECIFIED)
-        self._noncrit = True
-        self.default_input()
-        return
+    def update_functionality_level(self, new_func_level):
+        """
+        Update system functionality level
+        """
+        if new_func_level != self.system_functionality_level:
+            levels = [canlib.FUNCTIONALITY_FULL,
+                      canlib.FUNCTIONALITY_MEDIUM,
+                      canlib.FUNCTIONALITY_MINIMAL,
+                      canlib.FUNCTIONALITY_NONE
+                      ]
+            if new_func_level in levels:
+                ignition_logger.info(f"Switching to {new_func_level}")
+                sim: simulator.Sim = self._handler["beamng"]
+                player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
+                player.update_functionality_level(new_func_level)
+                sim.update_functionality_level(new_func_level)
+                self.system_functionality_level = new_func_level
+            else:
+                ignition_logger.info(f"Unknown functionality level {new_func_level}, ignoring.")
+                return
 
     def restart_simulator(self):
         ignition_logger.info("Restart simulato")
@@ -427,6 +431,26 @@ class IgnitionDirector:
         player.enable_sound(True)
         self.self_drive_scenario_start = None
 
+    # TODO: trim down the states below (maybe transition is not that useful now?)
+    def cc_msg_enter(self):
+        ignition_logger.debug("cc msg state: enter")
+        self.default_input()
+        return
+
+    def restart_enter(self):
+        ignition_logger.info("Restart state: enter")
+        sim: simulator.Sim = self._handler["beamng"]
+        sim.restart_command()
+        return
+
+    def noncrit_failure_enter(self):
+        ignition_logger.info("Noncrit_failure state: enter")
+        ignition_logger.error("Ignition achieved a noncritical error. Continuing anyway...")
+        self.component_error_send(canlib.LED_COMPONENT,canlib.ERROR_UNSPECIFIED)
+        self._noncrit = True
+        self.default_input()
+        return
+
     def self_drive_enter(self):
         ignition_logger.info("Self drive state: enter")
         sim: simulator.Sim = self._handler["beamng"]
@@ -438,3 +462,4 @@ class IgnitionDirector:
     def timeout_enter(self):
         ignition_logger.info("Timeout state: enter")
         self.default_input()
+    # end TODO
