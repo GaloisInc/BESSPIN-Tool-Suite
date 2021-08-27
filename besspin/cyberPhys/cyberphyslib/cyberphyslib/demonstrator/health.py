@@ -232,7 +232,7 @@ class BusHeartbeatMonitor(HealthMonitor):
     def submit_response(self, client_id: int, response: HeartbeatResponseType):
         """submit a response from client_id to the ACK buffer"""
         if client_id not in self.response_buffer:
-            idmap = {v: k for k, v in cids.__dict__.items()}
+            idmap = {v: k for k, v in cids.__dict__.items() if isinstance(v, int)}
             cname = idmap.get(client_id, "<UNKNOWN>")
             print(f"WARNING! Received unanticipated response 0x{client_id: X} ({cname})")
         else:
