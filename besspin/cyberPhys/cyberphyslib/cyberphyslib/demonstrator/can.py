@@ -15,7 +15,7 @@ from .component import ThreadExiting, Component
 import cyberphyslib.demonstrator.component as ccomp
 
 # TODO: @ethanlew import canlib/python/canlib.py properly
-from cyberphyslib.canlib import CanDataType, UdpBus
+from cyberphyslib.canlib import CanDataType, UdpBus, TcpBus
 
 
 class CanListener(metaclass=ABCMeta):
@@ -105,6 +105,36 @@ class CanNetwork(ThreadExiting, abc.ABC):
         """
         while not self.stopped:
             ret = self.recv(timeout=self.POLL_RECV_TIMEOUT)
+
+
+
+class CanTcpNetwork(CanNetwork):
+    """
+    CanTcpNetwork provide a way to send and receive can messages over TCP. This
+    is used to share CC messages to multiple components.
+
+    TODO: the message is almost directly the same as Udp network. The object hierarchy likely
+    can be adjusted to reuse the methods.
+    """
+    def __init__(self, name, port, ip):
+        super().__init__(name)
+        self.port = port
+        self.ip = ip
+        self.bus = TcpBus(self.port, self.ip)
+
+    def send(self, can_id: int, data: CanDataType):
+        if isinstance(data, str):
+            data = bytearray(data.encode())
+        msg = Message(arbitration_id=can_id, data=data, is_extended_id=True)
+        self.bus.send(msg)
+
+    def recv(self, timeout=None) -> typ.Union[None, typ.Tuple[int, Message]]:
+        msg: Message = self.bus.recv(timeout=timeout)
+        if msg:
+            can_id, data, data_len = msg.arbitration_id, msg.data, msg.dlc
+            for k, v in self._listeners.items():
+                v.recv_cc(can_id, data_len, data)
+            return can_id, msg
 
 
 class CanUdpNetwork(CanNetwork):

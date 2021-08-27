@@ -19,11 +19,16 @@ else:
 assert os.path.exists(network_filepath), f"specified network config json ({network_filepath}) doesn't exist"
 dnc = config.DemonstratorNetworkConfig.from_setup_env(network_filepath)
 
+# create buses for both the can (udp) and cc (tcp) buses
 print("Starting the CAN bus")
-net = cycan.CanUdpNetwork("name", dnc.port_network_canbusPort, dnc.ip_SimPc)
-net.start()
+udp_net = cycan.CanUdpNetwork("udp-net", dnc.port_network_canbusPort, dnc.ip_SimPc)
+tcp_net = cycan.CanTcpNetwork("tcp-net", dnc.port_network_canbusPort, dnc.ip_SimPc)
+udp_net.start()
+tcp_net.start()
 
-hm = cyhealth.HeartbeatMonitor(net)
+# start everything up
+hm = cyhealth.HeartbeatMonitor(udp_net)
 hm.setup_can()
+hm.setup_cc()
 hm.start_monitor()
 hm.mainloop()
