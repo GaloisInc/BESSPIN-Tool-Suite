@@ -137,6 +137,7 @@ class IgnitionDirector:
         # Need to know what is the active scenario
         # TODO: is there a better solution?
         self.active_scenario = canlib.SCENARIO_BASELINE
+        self.self_drive_scenario_start = None
 
         self.joystick_name = cconf.JOYSTICK_NAME
 
@@ -344,7 +345,6 @@ class IgnitionDirector:
             ignition_logger.error(f"process cc: error with message {msg}: {exc}")
 
     def ready_enter(self):
-        ignition_logger.info("Ready state: enter")
         # NOTE: Disabling scenario reset because it is not clear what happens if we reset
         # TODO: add scenario timeout only in the self-drive mode
         cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
@@ -353,6 +353,7 @@ class IgnitionDirector:
             self.process_cc(cc_recv)
 
         # NOTE: if jmonitor has failed assume user input is present
+        # TODO: will this work if the monitor doesn't initialize?
         activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
 
         # if in self drive mode and activity has occurred, get out
@@ -361,7 +362,14 @@ class IgnitionDirector:
             self.default_input()
             self.disable_autopilot()
             return
-        elif self.self_drive_mode or activity: # do nothing if self drive mode or user activity
+        elif self.self_drive_mode:
+            # Monitor for a scenario timeout
+            if self.self_drive_scenario_start:
+                if (time.time() - self.self_drive_scenario_start) > self.scenario_timeout:
+                    # Restart the car if self-driving for too long
+                    self.restart_simulator()
+                    self.self_drive_scenario_start = time.time()
+        elif activity: # do nothing if user actvity is present
             pass
         else:
             ignition_logger.info("Director: no activity detected, switching to self-drive")
@@ -390,6 +398,11 @@ class IgnitionDirector:
         self.default_input()
         return
 
+    def restart_simulator(self):
+        ignition_logger.info("Restart simulato")
+        sim: simulator.Sim = self._handler["beamng"]
+        sim.restart_command()
+
     def enable_autopilot(self):
         """
         Enable autopilot
@@ -400,6 +413,7 @@ class IgnitionDirector:
         sim.restart_command()
         player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
         player.enable_sound(False)
+        self.self_drive_scenario_start = time.time()
 
     def disable_autopilot(self):
         """
@@ -411,6 +425,7 @@ class IgnitionDirector:
         sim.restart_command()
         player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
         player.enable_sound(True)
+        self.self_drive_scenario_start = None
 
     def self_drive_enter(self):
         ignition_logger.info("Self drive state: enter")
