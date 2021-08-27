@@ -24,6 +24,8 @@ IgnitionTerminate: Orderly shutdown
 IgnitionReady --> HealthCheck: Check system health
 state "System Health Check" as HealthCheck {
     HealthCheckStart --> BaseSystemsHealthy
+    note right of HealthCheckStart: Select required components based on ACTIVE_SCENARIO?
+    note top of HealthCheckStart: How to handle component resets?
 
     state "Base systems healthy" as BaseSystemsHealthy
     BaseSystemsHealthy: CAN_DISPLAY
