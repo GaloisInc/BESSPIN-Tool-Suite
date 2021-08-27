@@ -63,7 +63,8 @@ if [ $? != 0 ]
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
     tmux send-keys -t $SESSIONNAME "powershell.exe" C-m
     tmux send-keys -t $SESSIONNAME "cd .\\BESSPIN-Tool-Suite\\besspin\\cyberPhys\\ignition\\" C-m
-    tmux send-keys -t $SESSIONNAME "Get-Content .\\ignition.demonstrator.log -Tail 10" C-m
+    tmux send-keys -t $SESSIONNAME "Get-Content .\\ignition.demonstrator.log -Tail 20" C-m
+fi
 
 SESSIONNAME="can-display"
 IP=10.88.88.5
