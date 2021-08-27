@@ -26,6 +26,4 @@ net.start()
 hm = cyhealth.HeartbeatMonitor(net)
 hm.setup_can()
 hm.start_monitor()
-
-while True:
-    pass
+hm.mainloop()
