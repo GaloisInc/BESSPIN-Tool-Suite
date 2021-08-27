@@ -45,24 +45,21 @@ class HeartbeatMonitor:
         self.services = {
             "can-display-ui":
                 {
-                    "user" : "",
-                    "password" : "",
-                    "address" : "",
-                    "service_name": ""
+                    "user" : "pi",
+                    "address" : "10.88.88.5",
+                    "service_name": "can-ui"
                 },
             "hacker-kiosk-ui":
                 {
-                    "user" : "",
-                    "password" : "",
-                    "address" : "",
-                    "service_name": ""
+                    "user" : "pi",
+                    "address" : "10.88.88.3",
+                    "service_name": "hacker-ui"
                 },
             "infotainment-client-ui":
                 {
-                    "user" : "",
-                    "password" : "",
-                    "address" : "",
-                    "service_name": ""
+                    "user" : "pi",
+                    "address" : "10.88.88.2",
+                    "service_name": "infotainment"
                 }
                     }
 
