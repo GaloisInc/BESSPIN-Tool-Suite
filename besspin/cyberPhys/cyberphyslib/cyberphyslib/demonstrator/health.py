@@ -39,8 +39,9 @@ class HeartbeatMonitor:
 
     TODO: implement this
     """
-    def __init__(self, can_bus: cycan.CanUdpNetwork):
+    def __init__(self, can_bus: cycan.CanUdpNetwork, cc_bus: cycan.CanTcpNetwork):
         self.can_bus = can_bus
+        self.cc_bus = cc_bus
 
         self.services = {
             "can-display-ui":
@@ -110,6 +111,10 @@ class HeartbeatMonitor:
     def setup_can(self):
         self.can_bus.register(self.component_monitor)
         self.component_monitor.register_can_heartbeat_bus(self.can_bus.bus, self.udp_descr.values())
+
+    def setup_cc(self):
+        self.cc_bus.register(self.component_monitor)
+        self.component_monitor.register_heartbeat_bus(self.cc_bus.bus, self.tcp_descr.values())
 
     def setup_tcp(self):
         addrs, vals = list(zip(*((k, v) for k,v in self.tcp_descr)))
