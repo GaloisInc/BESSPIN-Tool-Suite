@@ -46,18 +46,21 @@ class HeartbeatMonitor:
             "can-display-ui":
                 {
                     "user" : "pi",
+                    "password": "WelcomeToGalois",
                     "address" : "10.88.88.5",
                     "service_name": "can-ui"
                 },
             "hacker-kiosk-ui":
                 {
                     "user" : "pi",
+                    "password": "WelcomeToGalois",
                     "address" : "10.88.88.3",
                     "service_name": "hacker-ui"
                 },
             "infotainment-client-ui":
                 {
                     "user" : "pi",
+                    "password": "WelcomeToGalois",
                     "address" : "10.88.88.2",
                     "service_name": "infotainment"
                 }
@@ -85,6 +88,9 @@ class HeartbeatMonitor:
         #self.can_monitor: typing.Optional[HeartbeatMonitorComponent] = None
         self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())
         self.ota_monitors = {k: OtaMonitor(addr) for k, addr in self.https.items()}
+        self.service_monitors = {k: ServiceMonitor(params["service_name"], params["address"],
+                                                   user=params["user"],
+                                                   password=params["password"]) for k, params in self.services.items()}
 
     def mainloop(self):
         import time
@@ -93,6 +99,9 @@ class HeartbeatMonitor:
             for k, v in self.ota_monitors.items():
                 if not v.is_healthy:
                     print(f"WARNING! {k} HTTP failed health check")
+            for k, v in self.service_monitors.items():
+                if not v.is_healthy:
+                    print(f"WARNING! {k} Service failed health check")
             print("Testing UDP")
             if self.component_monitor is not None:
                 if not self.component_monitor._heartbeat_monitor_udp.is_healthy:
@@ -201,7 +210,7 @@ class ServiceMonitor(SshMonitor):
             return re.search(r"(Active: active \(running\))", ret.stdout) is not None
         except Exception as exc:
             # TODO: log this?
-            print(f"Exception {exc} has occurred")
+            #print(f"Exception {exc} has occurred")
             return False
 
 
@@ -273,7 +282,7 @@ class BusHeartbeatMonitor(HealthMonitor):
             if len(buff) > 0:
                 ltime = max(buff)
                 delta = time.time() - ltime
-                print(delta)
+                #print(delta)
                 if delta > self.maxlen:
                     print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
                     return False
