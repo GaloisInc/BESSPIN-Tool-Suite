@@ -84,8 +84,8 @@ TODO:
         ipc.send('zmq-poll', []);
       },
       next() {
-        ipc.send('button-pressed', 'next', {});
-        console.log('button-pressed', 'next',{});
+        ipc.send('button-pressed', 'hack04-next', {});
+        console.log('button-pressed', 'hack04-next',{});
       }
     }
   };

@@ -173,7 +173,7 @@ TODO:
     },
     methods: {
       next() {
-        ipc.send('button-pressed', 'next', []);
+        ipc.send('button-pressed', 'hack12-next', []);
         this.$router.push({ name: 'hack13_protect_critical_stop' });
       },
       enableWebcamFeed(feed_id) {

@@ -84,8 +84,8 @@
         ipc.send('zmq-poll', []);
       },
       hackInfotainment() {
-        ipc.send('button-pressed', 'next', {});
-        console.log('button-pressed', 'next',{});
+        ipc.send('button-pressed', 'hack05-next', {});
+        console.log('button-pressed', 'hack05-next',{});
       }
     }
   };
