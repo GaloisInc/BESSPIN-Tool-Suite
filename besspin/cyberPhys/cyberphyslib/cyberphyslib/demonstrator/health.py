@@ -81,10 +81,11 @@ class HeartbeatMonitor:
             "10.88.88.32": cids.INFOTAINMENT_SERVER_3
         }
         self.tcp_descr = {
-            "10.88.88.5": "CAN_DISPLAY",
-            "10.88.88.3": "HACKER_KIOSK",
-            "10.88.88.2": "InfotainmentThinClient",
-            # TODO: add tool suite commanders
+            '10.88.88.1:5041': ip2int('10.88.88.1:5041'),
+            '10.88.88.2:5041': ip2int('10.88.88.2:5041'),
+            '10.88.88.3:5041': ip2int('10.88.88.3:5041'),
+            '10.88.88.5:5041': ip2int('10.88.88.5:5041'),
+            '10.88.88.6:5041': ip2int('10.88.88.6:5041')
         }
         #self.can_monitor: typing.Optional[HeartbeatMonitorComponent] = None
         self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())
@@ -97,26 +98,36 @@ class HeartbeatMonitor:
         import time
         while True:
             time.sleep(1.0)
+
+            print("Testing OTA")
             for k, v in self.ota_monitors.items():
                 if not v.is_healthy:
                     print(f"WARNING! {k} HTTP failed health check")
+
+            print("Testing Services")
             for k, v in self.service_monitors.items():
                 if not v.is_healthy:
                     print(f"WARNING! {k} Service failed health check")
-            print("Testing UDP")
+
+            print("Testing UDP/TCP")
             if self.component_monitor is not None:
                 if not self.component_monitor._heartbeat_monitor_udp.is_healthy:
                     print(f"ERROR! UDP Failed")
+                if not self.component_monitor._heartbeat_monitor_tcp.is_healthy:
+                    print(f"ERROR! TCP Failed")
 
     def setup_can(self):
+        """register the UDP CAN bus for the monitoring"""
         self.can_bus.register(self.component_monitor)
         self.component_monitor.register_can_heartbeat_bus(self.can_bus.bus, self.udp_descr.values())
 
     def setup_cc(self):
+        """register the TCP C&C bus for the monitoring"""
         self.cc_bus.register(self.component_monitor)
         self.component_monitor.register_heartbeat_bus(self.cc_bus.bus, self.tcp_descr.values())
 
     def setup_tcp(self):
+        """FIXME: this is no longer relevant as a TCP network object was created"""
         addrs, vals = list(zip(*((k, v) for k,v in self.tcp_descr)))
         self.component_monitor.register_heartbeat_bus(TcpBus(
             list(self.monitor.keys())[0],
@@ -125,9 +136,11 @@ class HeartbeatMonitor:
         )
 
     def start_monitor(self):
+        """monitor initialization"""
         self.component_monitor.start()
 
     def exit_monitor(self):
+        """monitor teardown"""
         self.component_monitor.exit()
         self.component_monitor.join()
 
@@ -404,6 +417,13 @@ class HeartbeatClientComponent(HeartbeatTaskComponent):
         if self._heartbeat_client_udp is not None:
             self._heartbeat_client_udp.send_heartbeat_ack_msg(data[0])
 
+    def recv_cc(self, can_id, data_len, data):
+        # unpack
+        print("NotImplementedError: recv cc")
+        req_number = struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_REQ, data)
+        if self._heartbeat_client_tcp is not None:
+            self._heartbeat_client_tcp.send_heartbeat_ack_msg(req_number[0])
+
 
 class HeartbeatMonitorComponent(HeartbeatTaskComponent):
     """
@@ -470,5 +490,18 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
 
     @recv_can(canspecs.CAN_ID_HEARTBEAT_ACK, canspecs.CAN_FORMAT_HEARTBEAT_ACK)
     def _(self, data):
+        """UDP Acknowledge: submit the ack to the monitor"""
         # TODO: check this
-        self._heartbeat_monitor_udp.submit_response(*data)
+        cid, rnum = data
+        if self._heartbeat_monitor_udp is not None:
+            self._heartbeat_monitor_udp.submit_response(cid, (cid, rnum))
+
+    def recv_cc(self, can_id, data_len, data):
+        """TCP Acknowledge: submit the ack to the monitor"""
+        # unpack
+        # TODO: test this and remove the print statement
+        if can_id == canspecs.CAN_ID_HEARTBEAT_ACK:
+            print("NotImplementedError: recv cc")
+            cid, rnum = struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, data)
+            if self._heartbeat_client_tcp is not None:
+                self._heartbeat_client_tcp.send_heartbeat_ack_msg(cid, (cid, rnum))
