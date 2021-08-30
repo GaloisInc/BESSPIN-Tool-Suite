@@ -75,6 +75,7 @@
       }
     },
     mounted() {
+      // NOTE: perhaps process the response here for page transition?
     },
     unmounted() {
       clearInterval(this.poller);
