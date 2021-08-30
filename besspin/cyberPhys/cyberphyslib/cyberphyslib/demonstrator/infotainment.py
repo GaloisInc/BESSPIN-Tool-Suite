@@ -154,12 +154,15 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         if self._sound_enabled:
             if self._sound is None:
                 self.play_sound()
-            session = AudioUtilities.GetProcessSession(self.session_pid)
-            if session:
-                volume = session._ctl.QueryInterface(ISimpleAudioVolume)
-                volume.SetMasterVolume(self._volume, None)
-            else:
-                raise RuntimeError(f"audio session doesn't exist!")
+            try:
+                session = AudioUtilities.GetProcessSession(self.session_pid)
+                if session:
+                    volume = session._ctl.QueryInterface(ISimpleAudioVolume)
+                    volume.SetMasterVolume(self._volume, None)
+                else:
+                    raise RuntimeError(f"audio session doesn't exist!")
+            except Exception as exc:
+                info_logger.info(f"Error processing audio session: {exc}")
 
     @recv_can(canspecs.CAN_ID_INFOTAINMENT_STATE, canspecs.CAN_FORMAT_INFOTAINMENT_STATE)
     def _(self, data):
