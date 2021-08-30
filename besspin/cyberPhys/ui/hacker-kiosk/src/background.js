@@ -17,7 +17,7 @@ myAtem.connect('192.168.10.240') // Use the default static IP
 
 myAtem.on('ATEM: StateChanged', (state, pathToChange) => {
   console.log(state, pathToChange) // catch the ATEM state.
-})
+});
 
 ipcMain.on('atem-switch', (ch) => {
   myAtem.changeProgramInput(ch).then(() => {
