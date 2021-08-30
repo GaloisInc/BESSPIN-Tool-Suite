@@ -16,21 +16,20 @@ The infotainment proxy is responsible for:
 
     4. Forwarding the infotainment packet to the active CAN network
 """
-from besspin.cyberPhys.cyberphyslib.cyberphyslib import canlib
 import glob
 import os
 import pathlib
 import struct
 import typing as typ
+import enum
 
 import cyberphyslib.demonstrator.config as config
 import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.logger import info_logger
 from cyberphyslib.demonstrator.can import CanNetwork
-from cyberphyslib.canlib.canspecs import *
+from cyberphyslib.canlib.canlib import *
 from cyberphyslib.demonstrator.simulator import BeamNgCommand
-import cyberphyslib.canlib.canspecs as canspecs
-import enum
+import cyberphyslib.canlib.canlib as canlib
 
 from pygame import mixer
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, AudioSession
@@ -62,7 +61,7 @@ class InfotainmentUi(ccomp.ComponentPoller):
         self.send_message(ccomp.Message(InfotainmentUiStatus.READY), "infoui-events")
 
     # TODO: how to enable switching from self-drive when a button is pressed?
-    # @recv_can(canspecs.CAN_ID_BUTTON_PRESSED,canspecs.CAN_FORMAT_BUTTON_PRESSED)
+    # @recv_can(canlib.CAN_ID_BUTTON_PRESSED,canlib.CAN_FORMAT_BUTTON_PRESSED)
     # def _(self, data):
     #     # alert simulator to turn off self driving mode
     #     self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
@@ -164,7 +163,7 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
             except Exception as exc:
                 info_logger.info(f"Error processing audio session: {exc}")
 
-    @recv_can(canspecs.CAN_ID_INFOTAINMENT_STATE, canspecs.CAN_FORMAT_INFOTAINMENT_STATE)
+    @recv_can(canlib.CAN_ID_INFOTAINMENT_STATE, canlib.CAN_FORMAT_INFOTAINMENT_STATE)
     def _(self, data):
         """respond to the infotainment button press"""
         # decode the incoming value
@@ -193,19 +192,19 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
                 self._sound.stop()
             self._set_volume()
 
-    @recv_can(canspecs.CAN_ID_CAR_X, canspecs.CAN_FORMAT_CAR_X)
+    @recv_can(canlib.CAN_ID_CAR_X, canlib.CAN_FORMAT_CAR_X)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_X, struct.pack(canspecs.CAN_FORMAT_CAR_X, data[0]))
+        self._network.send(canlib.CAN_ID_CAR_X, struct.pack(canlib.CAN_FORMAT_CAR_X, data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_Y, canspecs.CAN_FORMAT_CAR_Y)
+    @recv_can(canlib.CAN_ID_CAR_Y, canlib.CAN_FORMAT_CAR_Y)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack(canspecs.CAN_FORMAT_CAR_Y, data[0]))
+        self._network.send(canlib.CAN_ID_CAR_Y, struct.pack(canlib.CAN_FORMAT_CAR_Y, data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_Z, canspecs.CAN_FORMAT_CAR_Z)
+    @recv_can(canlib.CAN_ID_CAR_Z, canlib.CAN_FORMAT_CAR_Z)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack(canspecs.CAN_FORMAT_CAR_Z, data[0]))
+        self._network.send(canlib.CAN_ID_CAR_Z, struct.pack(canlib.CAN_FORMAT_CAR_Z, data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_R, canspecs.CAN_FORMAT_CAR_R)
+    @recv_can(canlib.CAN_ID_CAR_R, canlib.CAN_FORMAT_CAR_R)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_R, struct.pack(canspecs.CAN_FORMAT_CAR_R, data[0]))
+        self._network.send(canlib.CAN_ID_CAR_R, struct.pack(canlib.CAN_FORMAT_CAR_R, data[0]))
 
