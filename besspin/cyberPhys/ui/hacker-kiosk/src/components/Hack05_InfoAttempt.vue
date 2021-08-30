@@ -69,7 +69,7 @@
       ipc.on('zmq-results',(event, q) => {
         q.forEach(item => {
           console.log("item", item);
-          if(item.func == 'next' && item.status == 200 && !this.clicked) {
+          if(item.func == 'hack05-next' && item.status == 200 && !this.clicked) {
             this.$router.push({ name: 'hack06_info_exploit' });
             this.clicked = true
           }
