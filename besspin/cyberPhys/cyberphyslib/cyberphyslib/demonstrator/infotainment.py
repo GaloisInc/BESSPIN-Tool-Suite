@@ -27,9 +27,8 @@ import cyberphyslib.demonstrator.config as config
 import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.logger import info_logger
 from cyberphyslib.demonstrator.can import CanNetwork
-from cyberphyslib.canlib.canlib import *
 from cyberphyslib.demonstrator.simulator import BeamNgCommand
-import cyberphyslib.canlib.canlib as canlib
+import cyberphyslib.canlib as canlib
 
 from pygame import mixer
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, AudioSession
