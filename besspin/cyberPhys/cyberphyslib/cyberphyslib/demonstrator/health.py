@@ -28,6 +28,12 @@ import fabric
 import can
 
 
+def ip2int(ip):
+    """Convert an IP string to an int"""
+    packedIP = socket.inet_aton(ip)
+    return struct.unpack("!L", packedIP)[0]
+
+
 class HeartbeatMonitor:
     """
     Heartbeat Monitor has 4 capabilities
@@ -75,19 +81,19 @@ class HeartbeatMonitor:
 
         self.monitor = {"10.88.88.4": cids.IGNITION}
         self.udp_descr = {
-            # TODO: add FreeRTOS stuff here
-            "10.88.88.12": cids.INFOTAINMENT_SERVER_1,
-            "10.88.88.22": cids.INFOTAINMENT_SERVER_2,
-            "10.88.88.32": cids.INFOTAINMENT_SERVER_3
+            "10.88.88.12": ip2int('10.88.88.11'),
+            "10.88.88.22": ip2int('10.88.88.21'),
+            "10.88.88.32": ip2int('10.88.88.31'),
+            "22.88.88.10": ip2int('22.88.88.10'),
+            "32.88.88.10": ip2int('32.88.88.10'),
+            "12.88.88.10": ip2int('12.88.88.10'),
         }
+
         self.tcp_descr = {
-            '10.88.88.1:5041': ip2int('10.88.88.1:5041'),
-            '10.88.88.2:5041': ip2int('10.88.88.2:5041'),
-            '10.88.88.3:5041': ip2int('10.88.88.3:5041'),
-            '10.88.88.5:5041': ip2int('10.88.88.5:5041'),
-            '10.88.88.6:5041': ip2int('10.88.88.6:5041')
+            '10.88.88.6:5041': 0x28, # BESSPIN TOOL DEBIAN
+            '10.88.88.2:5041': 0x60, # INFOTAINMENT THIN CLIENT
         }
-        #self.can_monitor: typing.Optional[HeartbeatMonitorComponent] = None
+
         self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())
         self.ota_monitors = {k: OtaMonitor(addr) for k, addr in self.https.items()}
         self.service_monitors = {k: ServiceMonitor(params["service_name"], params["address"],
@@ -109,10 +115,11 @@ class HeartbeatMonitor:
                 if not v.is_healthy:
                     print(f"WARNING! {k} Service failed health check")
 
-            print("Testing UDP/TCP")
+            print("Testing UDP")
             if self.component_monitor is not None:
                 if not self.component_monitor._heartbeat_monitor_udp.is_healthy:
                     print(f"ERROR! UDP Failed")
+                print("Testing TCP")
                 if not self.component_monitor._heartbeat_monitor_tcp.is_healthy:
                     print(f"ERROR! TCP Failed")
 
@@ -275,7 +282,7 @@ class BusHeartbeatMonitor(HealthMonitor):
         if client_id not in self.response_buffer:
             idmap = {v: k for k, v in cids.__dict__.items() if isinstance(v, int)}
             cname = idmap.get(client_id, "<UNKNOWN>")
-            print(f"WARNING! Received unanticipated response 0x{client_id: X} ({cname})")
+            print(f"WARNING! Received unanticipated response {client_id} ({cname})")
         else:
             #print(f"Submitted {socket.inet_ntoa(struct.pack('!L', client_id))} {response}")
             if response is not None:
@@ -458,11 +465,11 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
         if self._heartbeat_monitor_tcp is not None:
             hm: BusHeartbeatMonitor = self._heartbeat_monitor_tcp
             hm.send_req_nodes()
-            rets = [self._heartbeat_monitor_tcp.bus.recv(self.tcp_timeout) for _ in range(self.n_clients_tcp)]
-            rets = [(struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, r.data) if r is not None else r) for r in rets]
-            for r in rets:
-                if r is not None:
-                    hm.submit_response(r[0], r[1])
+            #rets = [self._heartbeat_monitor_tcp.bus.recv(self.tcp_timeout) for _ in range(self.n_clients_tcp)]
+            #rets = [(struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, r.data) if r is not None else r) for r in rets]
+            #for r in rets:
+            #    if r is not None:
+            #        hm.submit_response(r[0], r[1])
             #hm.run_health_test()
         if self._heartbeat_monitor_udp is not None:
             hm: BusHeartbeatMonitor = self._heartbeat_monitor_udp
@@ -501,7 +508,6 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
         # unpack
         # TODO: test this and remove the print statement
         if can_id == canspecs.CAN_ID_HEARTBEAT_ACK:
-            print("NotImplementedError: recv cc")
             cid, rnum = struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, data)
-            if self._heartbeat_client_tcp is not None:
-                self._heartbeat_client_tcp.send_heartbeat_ack_msg(cid, (cid, rnum))
+            if self._heartbeat_monitor_tcp is not None:
+                self._heartbeat_monitor_tcp.submit_response(cid, (cid, rnum))
