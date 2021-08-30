@@ -368,6 +368,7 @@ class IgnitionDirector:
             # Monitor for a scenario timeout
             if self.self_drive_scenario_start:
                 if (time.time() - self.self_drive_scenario_start) > self.scenario_timeout:
+                    ignition_logger.info("Director: Scenario timeout, restarting")
                     # Restart the car if self-driving for too long
                     self.restart_simulator()
                     self.self_drive_scenario_start = time.time()
