@@ -116,11 +116,11 @@ class CanTcpNetwork(CanNetwork):
     TODO: the message is almost directly the same as Udp network. The object hierarchy likely
     can be adjusted to reuse the methods.
     """
-    def __init__(self, name, port, ip):
+    def __init__(self, name, host, nodes):
         super().__init__(name)
-        self.port = port
-        self.ip = ip
-        self.bus = TcpBus(self.port, self.ip)
+        self.host = host
+        self.nodes = nodes
+        self.bus = TcpBus(self.host, self.nodes)
 
     def send(self, can_id: int, data: CanDataType):
         if isinstance(data, str):
