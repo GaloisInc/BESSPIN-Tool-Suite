@@ -23,7 +23,7 @@ import re
 
 from cyberphyslib.demonstrator import config, component, message, logger
 import cyberphyslib.canlib.canspecs as canspecs
-from besspin.cyberPhys.cyberphyslib.cyberphyslib import canlib
+from cyberphyslib import canlib
 
 from beamngpy import BeamNGpy, Scenario, Vehicle
 from beamngpy.sensors import Electrics, GForces
@@ -354,6 +354,16 @@ class Sim(component.ComponentPoller):
             logger.sim_logger.error(f"received gear map value {val} cannot be decoded!")
         gear = gear_map.get(val, 0)
         return self.control_process("gear", (gear,), bounds=(-1, 5))
+
+    @recv_can(canspecs.CAN_ID_CMD_COMPONENT_ERROR, canspecs.CAN_FORMAT_CMD_COMPONENT_ERROR)
+    def _(self, data):
+        """
+        This should be broadcasted by FreeRTOS only
+        Make sure we reset Teensy here
+        """
+        # TODO: finish this
+        component_id, error_id = data
+
 
     ########## register topic receive methods ##########
     def wait_ready_command(self):
