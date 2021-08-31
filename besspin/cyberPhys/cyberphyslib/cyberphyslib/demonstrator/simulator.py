@@ -135,7 +135,7 @@ class Sim(component.ComponentPoller):
         # record whether sim is paused or not
         self._is_paused = False
         # NOTE: start with minial functionality
-        self.system_functionality_level = canlib.FUNCTIONALITY_NONE
+        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
         # Teensy related variables
         self.teensy_serial = serial.Serial(self.COM_PORT, self.BAUDRATE, timeout=0)
         self.re_gear = re.compile('shifter_gear: 0X\d*')

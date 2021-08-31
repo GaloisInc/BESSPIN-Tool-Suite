@@ -99,7 +99,7 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
 
         # NOTE: start without music/sound
         self._volume = 0.0
-        self.system_functionality_level = canlib.FUNCTIONALITY_NONE
+        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
         self._set_volume()
         self.play_sound()
 
