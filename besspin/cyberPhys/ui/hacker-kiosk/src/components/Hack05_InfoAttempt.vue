@@ -69,7 +69,7 @@
       ipc.on('zmq-results',(event, q) => {
         q.forEach(item => {
           console.log("item", item);
-          if(item.func == 'hack05-next' && item.status == 200 && !this.clicked) {
+          if(item.func == 'hack05_next' && item.status == 200 && !this.clicked) {
             this.$router.push({ name: 'hack06_info_exploit' });
             this.clicked = true
           }
@@ -84,8 +84,8 @@
         ipc.send('zmq-poll', []);
       },
       hackInfotainment() {
-        ipc.send('button-pressed', 'hack05-next', {});
-        console.log('button-pressed', 'hack05-next',{});
+        ipc.send('button-pressed', 'hack05_next', {});
+        console.log('button-pressed', 'hack05_next',{});
       }
     }
   };

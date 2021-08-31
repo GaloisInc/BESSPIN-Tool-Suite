@@ -91,10 +91,15 @@ class TestHackerKiosk(cmd.Cmd):
     def do_button_pressed_next(self,inp):
         """
         Simulates pressing "NEXT" button
+        Expected button presses:
+        hack02_next
+        hack04_next
+        hack05_next
+        hack08_next
         """
         req = {}
-        req['func'] = "next"
         req['args'] = {}
+        req['func'] = f"{inp}_next"
         self.sendJson(req)
 
     def do_button_pressed_ssith_infotainment(self,inp):
@@ -137,15 +142,15 @@ class HackerKioskUnitTests(unittest.TestCase):
         print("Introduction")
 
         print("Pressing NEXT")
-        t.do_button_pressed_next("")
+        t.do_button_pressed_next("hack02")
         time.sleep(HackerKioskUnitTests.DEFAULT_DELAY_S)
 
         print("Pressing NEXT. Will hack OTA -> Upload successful!")
-        t.do_button_pressed_next("")
+        t.do_button_pressed_next("hack04")
         time.sleep(HackerKioskUnitTests.DEFAULT_DELAY_S)
 
         print("Pressing NEXT. Gets you to the OTA hacking screen")
-        t.do_button_pressed_next("")
+        t.do_button_pressed_next("hack05")
         time.sleep(HackerKioskUnitTests.DEFAULT_DELAY_S)
 
 
@@ -225,7 +230,7 @@ class HackerKioskUnitTests(unittest.TestCase):
         self.run_critical_exploits(t)
 
         print("Pressing next, goes to SECURE_INTO_SCENARIO")
-        t.do_button_pressed_next("")
+        t.do_button_pressed_next("hack08")
         # This takes 38s to reset OTA_SERVER_1 + INFO_SERVER_1 + Target1
         time.sleep(HackerKioskUnitTests.DEFAULT_DELAY_S)
         time.sleep(HackerKioskUnitTests.LONG_DELAY_S)
@@ -248,7 +253,7 @@ class HackerKioskUnitTests(unittest.TestCase):
         self.run_critical_exploits(t)
 
         print("Pressing next, goes to SECURE_INTO_SCENARIO")
-        t.do_button_pressed_next("")
+        t.do_button_pressed_next("hack08")
         # This takes 38s to reset OTA_SERVER_1 + INFO_SERVER_1 + Target1
         time.sleep(HackerKioskUnitTests.DEFAULT_DELAY_S)
         time.sleep(HackerKioskUnitTests.LONG_DELAY_S)
