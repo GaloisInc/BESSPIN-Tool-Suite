@@ -305,7 +305,7 @@ class IgnitionDirector:
         start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
 
         # startup the heartbeat monitor
-        start_component(cyhealth.HeartbeatMonitor(self.can_multiverse._can_multiverse, self.cc_net))
+        start_component(cyhealth.HeartbeatMonitor(self.can_multiverse, self.cc_net))
 
         # check if noncritical error occurred
         if self.input_noncrit_fail:
