@@ -194,18 +194,18 @@ class IgnitionDirector:
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_READY,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY,
                                               component_id))
-        self.cmd_net.send(msg)
+        self.cmd_net.send_msg(msg)
 
     def component_error_send(self, component_id, error_id):
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR,
                                               component_id, error_id))
-        self.cmd_net.send(msg)
+        self.cmd_net.send_msg(msg)
 
     def status_send(self, canid, argument):
         msg = extcan.Message(arbitration_id=canid, dlc=1, data=struct.pack("!B", argument))
-        self.cmd_net.send(msg)
+        self.cmd_net.send_msg(msg)
 
     def process_cmd_message(self):
         """process CMD message and:
@@ -213,9 +213,9 @@ class IgnitionDirector:
         2) update LED pattern
         3) switch active CAN network
         """
-        msg = self.cmd_net.recv(timeout=self.cc_timeout)
-        if msg:
-            cid = msg.arbitration_id
+        recv = self.cmd_net.recv(timeout=self.cc_timeout)
+        if recv:
+            cid, msg = recv
             try:
                 if cid == canlib.CAN_ID_CMD_RESTART:
                     ignition_logger.info(f"process cc: restart")

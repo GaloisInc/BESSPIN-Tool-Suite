@@ -106,10 +106,9 @@ class InfotainmentBackend(threading.Thread):
         try:
             if cid == canlib.CAN_ID_HEARTBEAT_REQ:
                 req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)[0]
-                print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(req_number)}")
                 heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
                                         dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
-                                        data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.INFOTAINMENT_THIN_CLIENT, req_number))
+                                        data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.INFOTAINMENT_BACKEND, req_number))
                 self.cmd_bus.send(heartbeat_ack)
             else:
                 pass
