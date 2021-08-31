@@ -122,6 +122,12 @@ class IgnitionDirector:
                    base_whitelist=net_conf.wl_BASELINE + [net_conf.ip_InfotainmentThinClient],
                    apply_lists=cconf.APPLY_LISTS)
 
+    @property
+    def self_drive_mode(self):
+        """self drive state exists in the sim service -- don't duplicate or invalidate this"""
+        # TODO: FIXME: ugly access
+        return self._handler["beamng"]._in_autopilot
+
     def __init__(self,
                  cmd_host,
                  cmd_nodes,
@@ -314,14 +320,13 @@ class IgnitionDirector:
         self.default_input()
         return
 
-    @property
-    def self_drive_mode(self):
-        """self drive state exists in the sim service -- don't duplicate or invalidate this"""
-        # TODO: FIXME: ugly access
-        return self._handler["beamng"]._in_autopilot
 
     def process_cc(self, msg):
-        """process cc message"""
+        """process cc message and:
+        1) restart BeamNG
+        2) update LED pattern
+        3) switch active CAN network
+        """
         cid = msg.arbitration_id
         try:
             if cid == canlib.CAN_ID_CMD_RESTART:
@@ -329,10 +334,7 @@ class IgnitionDirector:
                 dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
                 if dev_id == canlib.IGNITION:
                     ignition_logger.info("Director: restarting ignition from CMD_RESTART")
-                    bsim: simulator.Sim = self._handler["beamng"]
-                    # NOTE: should we exit self-drive mode?
-                    # bsim.disable_autopilot_command()
-                    bsim.restart_command()
+                    self.restart_simulator()
 
             elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
                 hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
@@ -366,13 +368,15 @@ class IgnitionDirector:
             ignition_logger.error(f"process cc: error with message {msg}: {exc}")
 
     def ready_enter(self):
-        # NOTE: Disabling scenario reset because it is not clear what happens if we reset
-        # TODO: add scenario timeout only in the self-drive mode
+        # Process CMD messages
         cc_recv = self.cc_net.recv(timeout=self.cc_timeout)
         if cc_recv:
-            self.default_input()
             self.process_cc(cc_recv)
 
+
+        # Process UDP CAN is done asynchronously in different components
+
+        # Check driver activity
         # NOTE: if jmonitor has failed assume user input is present
         # TODO: will this work if the monitor doesn't initialize?
         activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
@@ -380,9 +384,7 @@ class IgnitionDirector:
         # if in self drive mode and activity has occurred, get out
         if activity and self.self_drive_mode:
             ignition_logger.info("Director: activity detected, switching to manual")
-            self.default_input()
             self.disable_autopilot()
-            return
         elif self.self_drive_mode:
             # Monitor for a scenario timeout
             if self.self_drive_scenario_start:
@@ -395,9 +397,10 @@ class IgnitionDirector:
             pass
         else:
             ignition_logger.info("Director: no activity detected, switching to self-drive")
-            self.default_input()
             self.enable_autopilot()
-            return
+
+        # System health check
+        # update_functionality_level
 
         self.default_input()
 
@@ -423,7 +426,7 @@ class IgnitionDirector:
                 return
 
     def restart_simulator(self):
-        ignition_logger.info("Restart simulato")
+        ignition_logger.info("Restart simulator")
         sim: simulator.Sim = self._handler["beamng"]
         sim.restart_command()
 
@@ -452,16 +455,6 @@ class IgnitionDirector:
         self.self_drive_scenario_start = None
 
     # TODO: trim down the states below (maybe transition is not that useful now?)
-    def cc_msg_enter(self):
-        ignition_logger.debug("cc msg state: enter")
-        self.default_input()
-        return
-
-    def restart_enter(self):
-        ignition_logger.info("Restart state: enter")
-        sim: simulator.Sim = self._handler["beamng"]
-        sim.restart_command()
-        return
 
     def noncrit_failure_enter(self):
         ignition_logger.info("Noncrit_failure state: enter")
@@ -471,15 +464,3 @@ class IgnitionDirector:
         self.default_input()
         return
 
-    def self_drive_enter(self):
-        ignition_logger.info("Self drive state: enter")
-        sim: simulator.Sim = self._handler["beamng"]
-        sim.enable_autopilot_command()
-        player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
-        player.enable_sound(False)
-        self.default_input()
-
-    def timeout_enter(self):
-        ignition_logger.info("Timeout state: enter")
-        self.default_input()
-    # end TODO
