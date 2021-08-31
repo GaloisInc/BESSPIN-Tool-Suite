@@ -52,21 +52,21 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
         self.cc_bus = cc_bus
 
         self.services = {
-            "can_display_ui":
+            cids.CAN_DISPLAY_FRONTEND:
                 {
                     "user" : "pi",
                     "password": "WelcomeToGalois",
                     "address" : "10.88.88.5",
                     "service_name": "can-ui"
                 },
-            "hacker_kiosk_ui":
+            cids.HACKER_KIOSK_FRONTEND:
                 {
                     "user" : "pi",
                     "password": "WelcomeToGalois",
                     "address" : "10.88.88.3",
                     "service_name": "hacker-ui"
                 },
-            "infotainment_client_ui":
+            cids.INFOTAINMENT_THIN_CLIENT:
                 {
                     "user" : "pi",
                     "password": "WelcomeToGalois",
@@ -76,26 +76,29 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
                     }
 
         self.https = {
-            "ota_server_1" : "http://10.88.88.11:5050",
-            "ota_server_2" : "http://10.88.88.21:5050",
-            "ota_server_3" : "http://10.88.88.31:5050"
+            cids.OTA_UPDATE_SERVER_1 : "http://10.88.88.11:5050",
+            cids.OTA_UPDATE_SERVER_2 : "http://10.88.88.21:5050",
+            cids.OTA_UPDATE_SERVER_3 : "http://10.88.88.31:5050"
         }
 
         self.monitor = {"10.88.88.4": cids.IGNITION}
 
         # @michal Check These Keys Please
         self.udp_descr = {
-            "baseline_ecu": ip2int('10.88.88.11'),
-            "baseline_infotainment": ip2int('12.88.88.10'),
-            "ssith_info_ecu": ip2int('10.88.88.21'),
-            "ssith_info_infotainment": ip2int('22.88.88.10'),
-            "ssith_ecu_ecu": ip2int('10.88.88.31'),
-            "ssith_ecu_infotainment": ip2int('32.88.88.10'),
+            cids.INFOTAINMENT_SERVER_1: ip2int('10.88.88.11'),
+            cids.FREERTOS_1: ip2int('12.88.88.10'),
+            cids.INFOTAINMENT_SERVER_2: ip2int('10.88.88.21'),
+            cids.FREERTOS_2_CHERI: ip2int('22.88.88.10'),
+            cids.INFOTAINMENT_SERVER_3: ip2int('10.88.88.31'),
+            cids.FREERTOS_3: ip2int('32.88.88.10'),
         }
 
         self.tcp_descr = {
-            'besspin_tool_debian': 0x28, # BESSPIN TOOL DEBIAN
-            'infotainment_thin_client': 0x60, # INFOTAINMENT THIN CLIENT
+            cids.BESSPIN_TOOL_FREERTOS: cids.BESSPIN_TOOL_FREERTOS,
+            cids.BESSPIN_TOOL_DEBIAN: cids.BESSPIN_TOOL_DEBIAN,
+            cids.CAN_DISPLAY_BACKEND: cids.CAN_DISPLAY_BACKEND,
+            cids.HACKER_KIOSK_BACKEND: cids.HACKER_KIOSK_BACKEND,
+            cids.INFOTAINMENT_BACKEND: cids.INFOTAINMENT_BACKEND,
         }
 
         self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())

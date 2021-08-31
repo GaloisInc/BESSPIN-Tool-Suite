@@ -157,10 +157,7 @@ class IgnitionDirector:
         # start the can networks
         self.can_multiverse = ccan.CanMultiverse("multiverse", networks, default_network="base")
         self.info_net = ccan.CanUdpNetwork("info-net", self.info_port, sip, blacklist=[sim_ip])
-        self.cc_net = ccan.CanTcpNetwork("cc-net", cmd_host, cmd_nodes)
-
-        # C&C message bus
-        #self.cc_recvr = canlib.TcpBus(cmd_host, cmd_nodes)
+        self.cmd_net = ccan.CanTcpNetwork("cc-net", cmd_host, cmd_nodes)
 
         # input space as class members
         self.input_noncrit_fail = False
@@ -197,18 +194,18 @@ class IgnitionDirector:
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_READY,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY,
                                               component_id))
-        self.cc_recvr.send(msg)
+        self.cmd_net.send(msg)
 
     def component_error_send(self, component_id, error_id):
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR,
                                               component_id, error_id))
-        self.cc_recvr.send(msg)
+        self.cmd_net.send(msg)
 
     def status_send(self, canid, argument):
         msg = extcan.Message(arbitration_id=canid, dlc=1, data=struct.pack("!B", argument))
-        self.cc_recvr.send(msg)
+        self.cmd_net.send(msg)
 
     def process_cmd_message(self):
         """process CMD message and:
@@ -216,7 +213,7 @@ class IgnitionDirector:
         2) update LED pattern
         3) switch active CAN network
         """
-        msg = self.cc_net.recv(timeout=self.cc_timeout)
+        msg = self.cmd_net.recv(timeout=self.cc_timeout)
         if msg:
             cid = msg.arbitration_id
             try:
@@ -432,7 +429,7 @@ class IgnitionDirector:
         if not start_component(ledm.LedManagerComponent.for_ignition()): return
 
         # startup the heartbeat monitor
-        if not start_component(cyhealth.HeartbeatMonitor(self.can_multiverse, self.cc_net)): return
+        if not start_component(cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)): return
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
