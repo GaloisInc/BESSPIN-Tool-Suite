@@ -291,20 +291,20 @@ class IgnitionDirector:
         # self.update_functionality_level(new_level)
         # components = some_healthchec-query
         #
-        minimal_functionality_systems = [
+        minimal_functionality_systems = {
             canlib.CAN_DISPLAY_FRONTEND,
             canlib.CAN_DISPLAY_BACKEND,
             canlib.HACKER_KIOSK_FRONTEND,
             canlib.HACKER_KIOSK_BACKEND,
             # Teensy?
-        ]
-        medium_functionality_systems = [
+        }
+        medium_functionality_systems = {
             canlib.BESSPIN_TOOL_FREERTOS,
             canlib.FREERTOS_1,
             canlib.FREERTOS_2_CHERI,
             canlib.FREERTOS_3,
-        ]
-        full_functionality_systems = [
+        }
+        full_functionality_systems = {
             canlib.DEBIAN_1,
             canlib.DEBIAN_2_LMCO,
             canlib.DEBIAN_3,
@@ -317,10 +317,33 @@ class IgnitionDirector:
             canlib.OTA_UPDATE_SERVER_2,
             canlib.OTA_UPDATE_SERVER_3,
             canlib.INFOTAINMENT_BACKEND
-        ]
-        # for component in base_systems:
-        #     if component is not healthy:
-        #         restart component
+        }
+
+        hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
+        hr: dict  = hm.health_report
+
+        for cid, is_healthy in hr.items():
+            if not is_healthy:
+                # restart cid
+                ignition_logger.warn(f"Sending restart request to component with id {cid}")
+                msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_RESTART,
+                                     dlc=canlib.CAN_DLC_CMD_RESTART,
+                                     data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART,
+                                                      cid))
+                self.cmd_net.send(msg)
+
+        func_set = {k for k, v in hr.items() if v}
+        if full_functionality_systems.issubset(func_set):
+            # we are fully functional
+            ignition_logger.info("Ignition is at full functionality level")
+        elif medium_functionality_systems.issubset(func_set):
+            # medium functionality
+            ignition_logger.warn("Ignition is at medium functionality level")
+        elif minimal_functionality_systems.issubset(func_set):
+            # minimal functionality
+            ignition_logger.warn("Ignition is at minimal functionality level")
+        else:
+            ignition_logger.warn("Ignition is a null functionality level")
 
     def update_functionality_level(self, new_func_level):
         """
