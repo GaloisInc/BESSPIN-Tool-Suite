@@ -74,7 +74,6 @@ class Commander(ccomp.ComponentPoller):
                         self.restartComponent(devId)
                 elif cid == canlib.CAN_ID_HEARTBEAT_REQ:
                     req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)[0]
-                    print(f"<{self.__class__.__name__}> CAN_ID_HEARTBEAT_REQ: {hex(req_number)}")
                     if self.hostname == "AdminPC":
                         tool_suite_id = canlib.BESSPIN_TOOL_FREERTOS
                     else:
