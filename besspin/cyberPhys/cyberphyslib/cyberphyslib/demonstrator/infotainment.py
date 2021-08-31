@@ -96,10 +96,10 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         self._sidx: int = 0
         self._sound: typ.Union[mixer.Sound, None] = None
         self._sound_enabled = True
-        # TODO: maybe start disabled?
-        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
-        # NOTE: disable infotainment music for now
+
+        # NOTE: start without music/sound
         self._volume = 0.0
+        self.system_functionality_level = canlib.FUNCTIONALITY_NONE
         self._set_volume()
         self.play_sound()
 
