@@ -129,21 +129,24 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
                 health_logger.debug(f"WARNING! {k} Service failed health check")
 
         if self.component_monitor is not None:
-            health_logger.debug("Testing UDP")
-            health_report = self.component_monitor._heartbeat_monitor_udp.run_health_tests()
-            kmap = {v:k for k,v in self.udp_descr.items()}
-            ret.update({f"udp_{kmap[k]}": v for k, v in health_report.items()})
-            if not all(health_report.values()):
-                health_logger.debug(f"Health Status: {health_report}")
-                health_logger.debug(f"ERROR! UDP Failed")
+            # TODO: this monitor access is ugly
+            if self.component_monitor._heartbeat_monitor_udp is not None:
+                health_logger.debug("Testing UDP")
+                health_report = self.component_monitor._heartbeat_monitor_udp.run_health_tests()
+                kmap = {v:k for k,v in self.udp_descr.items()}
+                ret.update({f"udp_{kmap[k]}": v for k, v in health_report.items()})
+                if not all(health_report.values()):
+                    health_logger.debug(f"Health Status: {health_report}")
+                    health_logger.debug(f"ERROR! UDP Failed")
 
-            health_logger.debug("Testing TCP")
-            health_report = self.component_monitor._heartbeat_monitor_tcp.run_health_tests()
-            kmap = {v:k for k,v in self.tcp_descr.items()}
-            ret.update({f"tcp_{kmap[k]}": v for k, v in health_report.items()})
-            if not all(health_report.values()):
-                health_logger.debug(f"Health Status: {health_report}")
-                health_logger.debug(f"ERROR! UDP Failed")
+            if self.component_monitor._heartbeat_monitor_tcp is not None:
+                health_logger.debug("Testing TCP")
+                health_report = self.component_monitor._heartbeat_monitor_tcp.run_health_tests()
+                kmap = {v:k for k,v in self.tcp_descr.items()}
+                ret.update({f"tcp_{kmap[k]}": v for k, v in health_report.items()})
+                if not all(health_report.values()):
+                    health_logger.debug(f"Health Status: {health_report}")
+                    health_logger.debug(f"ERROR! UDP Failed")
 
         self._health_report = ret
 
