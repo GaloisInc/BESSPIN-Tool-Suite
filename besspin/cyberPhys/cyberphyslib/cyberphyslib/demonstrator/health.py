@@ -90,8 +90,8 @@ class HeartbeatMonitor:
         }
 
         self.tcp_descr = {
-            '10.88.88.6:5041': 0x28, # BESSPIN TOOL DEBIAN
-            '10.88.88.2:5041': 0x60, # INFOTAINMENT THIN CLIENT
+            'BESSPIN_TOOL_DEBIAN': 0x28, # BESSPIN TOOL DEBIAN
+            'INFOTAINMENT_THIN_CLIENT': 0x60, # INFOTAINMENT THIN CLIENT
         }
 
         self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())
@@ -101,6 +101,9 @@ class HeartbeatMonitor:
                                                    password=params["password"]) for k, params in self.services.items()}
 
     def mainloop(self):
+        """
+        Example Health Monitoring Mainloop
+        """
         import time
         while True:
             time.sleep(1.0)
@@ -115,13 +118,18 @@ class HeartbeatMonitor:
                 if not v.is_healthy:
                     print(f"WARNING! {k} Service failed health check")
 
-            print("Testing UDP")
             if self.component_monitor is not None:
-                if not self.component_monitor._heartbeat_monitor_udp.is_healthy:
+                print("Testing UDP")
+                health_report = self.component_monitor._heartbeat_monitor_udp.run_health_tests()
+                if not all(health_report):
+                    print(f"Health Failure(s): {health_report}")
                     print(f"ERROR! UDP Failed")
+
                 print("Testing TCP")
-                if not self.component_monitor._heartbeat_monitor_tcp.is_healthy:
-                    print(f"ERROR! TCP Failed")
+                health_report = self.component_monitor._heartbeat_monitor_tcp.run_health_tests()
+                if not all(health_report):
+                    print(f"Health Failure(s): {health_report}")
+                    print(f"ERROR! UDP Failed")
 
     def setup_can(self):
         """register the UDP CAN bus for the monitoring"""
@@ -247,7 +255,7 @@ class OtaMonitor(HttpMonitor):
         return ret.status_code == 200
 
 
-HeartbeatResponseType = float
+HeartbeatResponseType = typing.Tuple[float, float]
 
 
 class BusHeartbeatMonitor(HealthMonitor):
@@ -272,7 +280,7 @@ class BusHeartbeatMonitor(HealthMonitor):
     def __init__(self, client_ids: typing.Sequence[int], bus: typing.Union[TcpBus, UdpBus]):
         self.curr_req_number = 0
         self.bus = bus
-        self.response_buffer: typing.Dict[int, typing.Deque[HeartbeatResponseType]] = {
+        self.response_buffer: typing.Dict[int, typing.Deque[float]] = {
             c: collections.deque(maxlen=self.maxlen) for c in client_ids
         }
         self.start_time = time.time()
@@ -280,11 +288,11 @@ class BusHeartbeatMonitor(HealthMonitor):
     def submit_response(self, client_id: int, response: HeartbeatResponseType):
         """submit a response from client_id to the ACK buffer"""
         if client_id not in self.response_buffer:
+            # TODO: FIXME: add fault location
             idmap = {v: k for k, v in cids.__dict__.items() if isinstance(v, int)}
             cname = idmap.get(client_id, "<UNKNOWN>")
             print(f"WARNING! Received unanticipated response {client_id} ({cname})")
         else:
-            #print(f"Submitted {socket.inet_ntoa(struct.pack('!L', client_id))} {response}")
             if response is not None:
                 self.response_buffer[client_id].append(time.time())
 
@@ -303,19 +311,23 @@ class BusHeartbeatMonitor(HealthMonitor):
             for a given history of component with component id cid, if the maximum value is
             within MAXLEN of the current REQ number, the component is considered healthy
         """
+        return all(self.run_health_tests())
+
+    def run_health_tests(self) -> typing.Dict[typing.Hashable, bool]:
+        """return health result for each component entered in the response buffer"""
+        outcome = {k: True for k in self.response_buffer.keys()}
         for cid, buff in self.response_buffer.items():
             if len(buff) > 0:
                 ltime = max(buff)
                 delta = time.time() - ltime
-                #print(delta)
                 if delta > self.maxlen:
                     print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
-                    return False
+                    outcome[cid] = False
             else:
                 if time.time() - self.start_time > self.wait_period:
-                    print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
-                    return False
-        return True
+                    print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test (No Submissions)!")
+                    outcome[cid] = False
+        return outcome
 
 
 class BusHeartbeatClient:
@@ -465,12 +477,6 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
         if self._heartbeat_monitor_tcp is not None:
             hm: BusHeartbeatMonitor = self._heartbeat_monitor_tcp
             hm.send_req_nodes()
-            #rets = [self._heartbeat_monitor_tcp.bus.recv(self.tcp_timeout) for _ in range(self.n_clients_tcp)]
-            #rets = [(struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, r.data) if r is not None else r) for r in rets]
-            #for r in rets:
-            #    if r is not None:
-            #        hm.submit_response(r[0], r[1])
-            #hm.run_health_test()
         if self._heartbeat_monitor_udp is not None:
             hm: BusHeartbeatMonitor = self._heartbeat_monitor_udp
             hm.send_req_nodes()
@@ -498,15 +504,12 @@ class HeartbeatMonitorComponent(HeartbeatTaskComponent):
     @recv_can(canspecs.CAN_ID_HEARTBEAT_ACK, canspecs.CAN_FORMAT_HEARTBEAT_ACK)
     def _(self, data):
         """UDP Acknowledge: submit the ack to the monitor"""
-        # TODO: check this
         cid, rnum = data
         if self._heartbeat_monitor_udp is not None:
             self._heartbeat_monitor_udp.submit_response(cid, (cid, rnum))
 
     def recv_cc(self, can_id, data_len, data):
         """TCP Acknowledge: submit the ack to the monitor"""
-        # unpack
-        # TODO: test this and remove the print statement
         if can_id == canspecs.CAN_ID_HEARTBEAT_ACK:
             cid, rnum = struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_ACK, data)
             if self._heartbeat_monitor_tcp is not None:
