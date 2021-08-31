@@ -8,21 +8,7 @@ const { exec } = require("child_process");
 import zmq, { socket } from 'zeromq';
 const config = require('./config.js');
 
-// const { Atem } = require('atem-connection')
-// const myAtem = new Atem()
-// myAtem.on('info', console.log)
-// myAtem.on('error', console.error)
-
-// myAtem.connect('192.168.10.240') // Use the default static IP
-
-// myAtem.on('ATEM: StateChanged', (state, pathToChange) => {
-//   console.log(state, pathToChange) // catch the ATEM state.
-// });
-
-ipcMain.on('atem-switch', (ch) => {
-  // myAtem.changeProgramInput(ch).then(() => {
-  //   console.log("ATEM: Switched to Steering Cam (" + ch + ")");
-  // });
+ipcMain.on('atem-switch', (event, ch) => {
   var atemexec = '/home/pi/build/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk/atem-control.js';
   exec(`${atemexec} ${ch}`, (error, stdout, stderr) => {
     if (error) {
