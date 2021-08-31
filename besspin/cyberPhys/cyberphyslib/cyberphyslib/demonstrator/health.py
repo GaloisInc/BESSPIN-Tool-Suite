@@ -120,14 +120,14 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
         health_logger.debug("Testing OTA")
         for k, v in self.ota_monitors.items():
             hs = v.is_healthy
-            ret[f"http_{k}"] = hs
+            ret[k] = hs
             if not hs:
                 health_logger.debug(f"WARNING! {k} HTTP failed health check")
 
         health_logger.debug("Testing Services")
         for k, v in self.service_monitors.items():
             hs = v.is_healthy
-            ret[f"service_{k}"] = hs
+            ret[k] = hs
             if not hs:
                 health_logger.debug(f"WARNING! {k} Service failed health check")
 
@@ -136,8 +136,8 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
             if self.component_monitor._heartbeat_monitor_udp is not None:
                 health_logger.debug("Testing UDP")
                 health_report = self.component_monitor._heartbeat_monitor_udp.run_health_tests()
-                kmap = {v:k for k,v in self.udp_descr.items()}
-                ret.update({f"udp_{kmap[k]}": v for k, v in health_report.items()})
+                kmap = {v: k for k,v in self.udp_descr.items()}
+                ret.update({kmap[k]: v for k, v in health_report.items()})
                 if not all(health_report.values()):
                     health_logger.debug(f"Health Status: {health_report}")
                     health_logger.debug(f"ERROR! UDP Failed")
@@ -145,8 +145,8 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
             if self.component_monitor._heartbeat_monitor_tcp is not None:
                 health_logger.debug("Testing TCP")
                 health_report = self.component_monitor._heartbeat_monitor_tcp.run_health_tests()
-                kmap = {v:k for k,v in self.tcp_descr.items()}
-                ret.update({f"tcp_{kmap[k]}": v for k, v in health_report.items()})
+                kmap = {v: k for k, v in self.tcp_descr.items()}
+                ret.update({kmap[k]: v for k, v in health_report.items()})
                 if not all(health_report.values()):
                     health_logger.debug(f"Health Status: {health_report}")
                     health_logger.debug(f"ERROR! UDP Failed")
