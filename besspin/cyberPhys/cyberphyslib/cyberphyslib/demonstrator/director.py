@@ -44,46 +44,22 @@ class IgnitionDirector:
     machine are responsible for identifying the appropriate inputs based on the component behavior.
     """
     # FSM description
-    #TODO: prune the state machine
-    states=[State(name='startup', on_enter='startup_enter'),
-            State(name='noncrit_failure', on_enter='noncrit_failure_enter'),
-            State(name='ready', on_enter='ready_enter'),
-            State(name='terminate', on_enter='terminate_enter'),
-            State(name='self_drive', on_enter='self_drive_enter'),
-            State(name='restart', on_enter='restart_enter'),
-            State(name='timeout', on_enter='timeout_enter'),
-            State(name='cc_msg', on_enter='cc_msg_enter'),
-            State(name='can', on_enter='can_enter')]
+    states=[
+        State(name='startup', on_enter='startup_enter'),
+        State(name='ready', on_enter='ready_enter'),
+        State(name='terminate', on_enter='terminate_enter'),
+    ]
 
     transitions = [
         # startup logic
-        { 'trigger': 'next_state', 'source': 'startup', 'dest': 'noncrit_failure',
-          'conditions': 'input_noncrit_fail', 'unless': 'input_component_fail'},
         { 'trigger': 'next_state', 'source': 'startup', 'dest': 'terminate',
           'conditions': 'input_component_fail' },
         { 'trigger': 'next_state', 'source': 'startup', 'dest': 'ready',
           'unless': ['input_component_fail', 'input_noncrit_fail'] },
-        { 'trigger': 'next_state', 'source': 'noncrit_failure', 'dest': 'ready'},
 
         # ready logic
         {'trigger': 'next_state', 'source': 'ready', 'dest': 'ready',
-         'unless': ['input_s_timeout', 'input_cc_msg', 'input_can_msg', 'input_self_drive']},
-        {'trigger': 'next_state', 'source': 'ready', 'dest': 'self_drive',
-         'conditions': 'input_self_drive', 'unless': ['input_cc_msg', 'input_can_msg', 'input_s_timeout']},
-        {'trigger': 'next_state', 'source': 'ready', 'dest': 'timeout',
-         'conditions': 'input_s_timeout'},
-        {'trigger': 'next_state', 'source': 'ready', 'dest': 'cc_msg',
-         'conditions': 'input_cc_msg', 'unless': 'input_s_timeout'},
-        {'trigger': 'next_state', 'source': 'ready', 'dest': 'can',
-         'conditions': 'input_can_msg', 'unless': ['input_cc_msg', 'input_s_timeout']},
-
-        {'trigger': 'next_state', 'source': 'timeout', 'dest': 'restart'},
-        {'trigger': 'next_state', 'source': 'restart', 'dest': 'ready'},
-        #{'trigger': 'next_state', 'source': 'restart', 'dest': 'terminate'}, # no known failure modes here
-        {'trigger': 'next_state', 'source': 'can', 'dest': 'ready'},
-        {'trigger': 'next_state', 'source': 'self_drive', 'dest': 'restart'},
-        {'trigger': 'next_state', 'source': 'cc_msg', 'dest': 'ready'},
-        {'trigger': 'next_state', 'source': 'cc_msg', 'dest': 'restart'}
+         'unless': ['input_component_fail', 'input_noncrit_fail']},
     ]
 
     hacks2patterns = {
@@ -151,14 +127,13 @@ class IgnitionDirector:
 
         # NOTE: there are inconsistencies between TcpBus and UdpBus arguments
         self.scenario_timeout = cconf.SCENARIO_TIMEOUT
-        self.cc_timeout = cconf.CC_TIMEOUT # 20 seconds
+        self.cc_timeout = cconf.CC_TIMEOUT
 
         # Need to know what is the active scenario
         # TODO: is there a better solution?
         self.active_scenario = canlib.SCENARIO_BASELINE
         self.self_drive_scenario_start = None
-        # TODO: eventually start with minimal functionality
-        self.system_functionality_level = canlib.FUNCTIONALITY_FULL # For now
+        self.system_functionality_level = canlib.FUNCTIONALITY_NONE
 
         self.joystick_name = cconf.JOYSTICK_NAME
 
@@ -190,10 +165,6 @@ class IgnitionDirector:
         # input space as class members
         self.input_noncrit_fail = False
         self.input_component_fail = False
-        self.input_can_msg = False
-        self.input_cc_msg = False
-        self.input_s_timeout = False
-        self.input_self_drive = False
 
         self.is_finished = False
         self._noncrit = False
@@ -213,10 +184,6 @@ class IgnitionDirector:
         """input initialization"""
         self.input_noncrit_fail = False
         self.input_component_fail = False
-        self.input_can_msg = False
-        self.input_cc_msg = False
-        self.input_s_timeout = False
-        self.input_self_drive = False
 
     def draw_graph(self, fname: str):
         """draw a fsm graphviz graph (for documentation, troubleshooting)
@@ -237,146 +204,66 @@ class IgnitionDirector:
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR,
                                               component_id, error_id))
+        self.cc_recvr.send(msg)
+
     def status_send(self, canid, argument):
         msg = extcan.Message(arbitration_id=canid, dlc=1, data=struct.pack("!B", argument))
         self.cc_recvr.send(msg)
 
-### STATE ENTRY CALLBACKS
-    def terminate_enter(self):
-        self.component_error_send(canlib.IGNITION, canlib.ERROR_UNSPECIFIED)
-        ignition_logger.info("Termination State: Enter")
-        self.is_finished = True
-        self._handler.exit()
-        self.info_net.exit()
-
-    def startup_enter(self):
-        def register_components():
-            # register call of the components to the CAN multiverse network
-            for c in self._handler.components:
-                if c.name != "canm":
-                    self.can_multiverse.register(c)
-
-        def start_component(comp):
-            msg = self._handler.start_component(comp)
-            if msg != ccomp.ComponentStatus.READY:
-                ignition_logger.info(f"{comp.name} service failed to start ({msg})")
-                self.input_noncrit_fail = False
-                self.input_component_fail = True
-                return False
-            return True
-
-        def start_noncrit_component(comp):
-            if not start_component(comp):
-                ignition_logger.info(f"{comp.name} service failed to start")
-                self.input_noncrit_fail = True
-                self.input_component_fail = False
-                return False
-            self.can_multiverse.register(comp)
-            return True
-
-        ignition_logger.info("Startup State: Enter")
-        simulator.Sim.kill_beamng(1)
-
-        # startup beamng
-        if not start_component(simulator.Sim()): return
-
-        # startup the multiverse
-        if not start_component(ccan.CanMultiverseComponent(self.can_multiverse)): return
-
-        # startup the can location poller
-        if not start_component(ccout.CanOutPoller(self.can_multiverse)): return
-
-        # startup infotainment proxy
-        ui = infotainment.InfotainmentUi(self.can_multiverse)
-        player = infotainment.InfotainmentPlayer(self.info_net)
-        if not start_component(ui): return
-        if not start_component(player): return
-
-        # add everything to the can multiverse network
-        register_components()
-
-        # TODO: FIXME: componentize this?
-        self.info_net.start()
-
-        # startup led manager
-        start_noncrit_component(ledm.LedManagerComponent.for_ignition())
-
-        # startup the speedometer
-        start_noncrit_component(speedo.Speedo())
-
-        # startup the pedal monitor
-        start_noncrit_component(cjoy.PedalMonitorComponent(window_length=1000))
-
-        # startup the joystick monitor
-        start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
-
-        # startup the heartbeat monitor
-        start_component(cyhealth.HeartbeatMonitor(self.can_multiverse, self.cc_net))
-
-        # check if noncritical error occurred
-        if self.input_noncrit_fail:
-            return
-
-        self.default_input()
-        return
-
-
-    def process_cc(self, msg):
-        """process cc message and:
+    def process_cmd_message(self):
+        """process CMD message and:
         1) restart BeamNG
         2) update LED pattern
         3) switch active CAN network
         """
-        cid = msg.arbitration_id
-        try:
-            if cid == canlib.CAN_ID_CMD_RESTART:
-                ignition_logger.info(f"process cc: restart")
-                dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
-                if dev_id == canlib.IGNITION:
-                    ignition_logger.info("Director: restarting ignition from CMD_RESTART")
-                    self.restart_simulator()
+        msg = self.cc_net.recv(timeout=self.cc_timeout)
+        if msg:
+            cid = msg.arbitration_id
+            try:
+                if cid == canlib.CAN_ID_CMD_RESTART:
+                    ignition_logger.info(f"process cc: restart")
+                    dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
+                    if dev_id == canlib.IGNITION:
+                        ignition_logger.info("Director: restarting ignition from CMD_RESTART")
+                        self.restart_simulator()
 
-            elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
-                hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
-                ignition_logger.info(f"process cc: set hack active {hack_idx}")
-                # Process HACK_ACTIVE messages only in baseline scenario
-                if self.active_scenario == canlib.SCENARIO_BASELINE:
-                    # NOTE:  tread Led manager as a critical component
+                elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
+                    hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
+                    ignition_logger.info(f"process cc: set hack active {hack_idx}")
+                    # Process HACK_ACTIVE messages only in baseline scenario
+                    if self.active_scenario == canlib.SCENARIO_BASELINE:
+                        # NOTE:  tread Led manager as a critical component
+                        lm: ledm.LedManagerComponent = self._handler["ledm"]
+                        lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
+
+                elif cid == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
+                    nmap = {
+                        canlib.SCENARIO_BASELINE: "base",
+                        canlib.SCENARIO_SECURE_ECU: "secure_ecu",
+                        canlib.SCENARIO_SECURE_INFOTAINMENT: "secure_infotainment"}
+                    scen_idx = struct.unpack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, msg.data)[0]
+                    ignition_logger.info(f"process cc: active scenario {scen_idx}")
+                    self.active_scenario = scen_idx
+                    cm: ccan.CanMultiverseComponent = self._handler["canm"]
+                    cm.select_network(nmap[scen_idx])
+                    # Update LED patterns
                     lm: ledm.LedManagerComponent = self._handler["ledm"]
-                    lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
-
-            elif cid == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
-                nmap = {
-                    canlib.SCENARIO_BASELINE: "base",
-                    canlib.SCENARIO_SECURE_ECU: "secure_ecu",
-                    canlib.SCENARIO_SECURE_INFOTAINMENT: "secure_infotainment"}
-                scen_idx = struct.unpack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, msg.data)[0]
-                ignition_logger.info(f"process cc: active scenario {scen_idx}")
-                self.active_scenario = scen_idx
-                cm: ccan.CanMultiverseComponent = self._handler["canm"]
-                cm.select_network(nmap[scen_idx])
-                # Update LED patterns
-                lm: ledm.LedManagerComponent = self._handler["ledm"]
-                if scen_idx == canlib.SCENARIO_BASELINE:
-                    pattern = ledm.LedPatterns.NOMINAL
+                    if scen_idx == canlib.SCENARIO_BASELINE:
+                        pattern = ledm.LedPatterns.NOMINAL
+                    else:
+                        pattern = ledm.LedPatterns.SSITH
+                    lm.update_pattern(ledm.LedPatterns(pattern))
                 else:
-                    pattern = ledm.LedPatterns.SSITH
-                lm.update_pattern(ledm.LedPatterns(pattern))
-            else:
-                pass
-        except Exception as exc:
-            ignition_logger.error(f"process cc: error with message {msg}: {exc}")
+                    pass
+            except Exception as exc:
+                ignition_logger.error(f"process cc: error with message {msg}: {exc}")
 
-    def ready_enter(self):
-        # Process CMD messages
-        cc_recv = self.cc_net.recv(timeout=self.cc_timeout)
-        if cc_recv:
-            self.process_cc(cc_recv)
-
-
-        # Process UDP CAN is done asynchronously in different components
-
-        # Check driver activity
+    def check_driver_activity(self):
+        """
+        If inactive, switch to self-drive
+        If active, switch to manual drive
+        If in self-drive, restart upon scenario timeout
+        """
         # NOTE: if jmonitor has failed assume user input is present
         # TODO: will this work if the monitor doesn't initialize?
         activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
@@ -399,10 +286,44 @@ class IgnitionDirector:
             ignition_logger.info("Director: no activity detected, switching to self-drive")
             self.enable_autopilot()
 
-        # System health check
-        # update_functionality_level
-
-        self.default_input()
+    def system_health_check(self):
+        """
+        Query system health, update functionality level if necessary
+        """
+        # TODO
+        # self.update_functionality_level(new_level)
+        # components = some_healthchec-query
+        #
+        minimal_functionality_systems = [
+            canlib.CAN_DISPLAY_FRONTEND,
+            canlib.CAN_DISPLAY_BACKEND,
+            canlib.HACKER_KIOSK_FRONTEND,
+            canlib.HACKER_KIOSK_BACKEND,
+            # Teensy?
+        ]
+        medium_functionality_systems = [
+            canlib.BESSPIN_TOOL_FREERTOS,
+            canlib.FREERTOS_1,
+            canlib.FREERTOS_2_CHERI,
+            canlib.FREERTOS_3,
+        ]
+        full_functionality_systems = [
+            canlib.DEBIAN_1,
+            canlib.DEBIAN_2_LMCO,
+            canlib.DEBIAN_3,
+            canlib.BESSPIN_TOOL_DEBIAN,
+            canlib.INFOTAINMENT_THIN_CLIENT,
+            canlib.INFOTAINMENT_SERVER_1,
+            canlib.INFOTAINMENT_SERVER_2,
+            canlib.INFOTAINMENT_SERVER_3,
+            canlib.OTA_UPDATE_SERVER_1,
+            canlib.OTA_UPDATE_SERVER_2,
+            canlib.OTA_UPDATE_SERVER_3,
+            canlib.INFOTAINMENT_BACKEND
+        ]
+        # for component in base_systems:
+        #     if component is not healthy:
+        #         restart component
 
     def update_functionality_level(self, new_func_level):
         """
@@ -454,13 +375,100 @@ class IgnitionDirector:
         player.enable_sound(True)
         self.self_drive_scenario_start = None
 
-    # TODO: trim down the states below (maybe transition is not that useful now?)
+### STATE ENTRY CALLBACKS
+    def terminate_enter(self):
+        self.component_error_send(canlib.IGNITION, canlib.ERROR_UNSPECIFIED)
+        ignition_logger.info("Termination State: Enter")
+        self.is_finished = True
+        self._handler.exit()
+        self.info_net.exit()
 
-    def noncrit_failure_enter(self):
-        ignition_logger.info("Noncrit_failure state: enter")
-        ignition_logger.error("Ignition achieved a noncritical error. Continuing anyway...")
-        self.component_error_send(canlib.LED_COMPONENT,canlib.ERROR_UNSPECIFIED)
-        self._noncrit = True
+    def startup_enter(self):
+        def register_components():
+            # register call of the components to the CAN multiverse network
+            for c in self._handler.components:
+                if c.name != "canm":
+                    self.can_multiverse.register(c)
+
+        def start_component(comp):
+            msg = self._handler.start_component(comp)
+            if msg != ccomp.ComponentStatus.READY:
+                ignition_logger.info(f"{comp.name} service failed to start ({msg})")
+                self.input_noncrit_fail = False
+                self.input_component_fail = True
+                return False
+            return True
+
+        def start_noncrit_component(comp):
+            if not start_component(comp):
+                ignition_logger.info(f"{comp.name} Noncritical service failed to start")
+                self.input_noncrit_fail = True
+                self.input_component_fail = False
+                if comp.name == 'jmonitor':
+                    self.component_error_send(canlib.JOYSTICK_MONITOR,canlib.ERROR_UNSPECIFIED)
+                elif comp.name == 'pmonitor':
+                    self.component_error_send(canlib.PEDAL_MONITOR,canlib.ERROR_UNSPECIFIED)
+                elif comp.name == 'speedo':
+                    self.component_error_send(canlib.INSTRUMENT_CLUSTER,canlib.ERROR_UNSPECIFIED)
+                else:
+                    ignition_logger.info(f"Unexpected component name: {comp.name}")
+                return False
+            self.can_multiverse.register(comp)
+            return True
+
+        ignition_logger.info("Startup State: Enter")
+        simulator.Sim.kill_beamng(1)
+
+        # startup beamng
+        if not start_component(simulator.Sim()): return
+
+        # startup the multiverse
+        if not start_component(ccan.CanMultiverseComponent(self.can_multiverse)): return
+
+        # startup the can location poller
+        if not start_component(ccout.CanOutPoller(self.can_multiverse)): return
+
+        # startup led manager
+        if not start_component(ledm.LedManagerComponent.for_ignition()): return
+
+        # startup the heartbeat monitor
+        if not start_component(cyhealth.HeartbeatMonitor(self.can_multiverse, self.cc_net)): return
+
+        # startup infotainment proxy
+        ui = infotainment.InfotainmentUi(self.can_multiverse)
+        player = infotainment.InfotainmentPlayer(self.info_net)
+        if not start_component(ui): return
+        if not start_component(player): return
+
+        # add everything to the can multiverse network
+        register_components()
+
+        self.info_net.start()
+
+        # startup the speedometer
+        start_noncrit_component(speedo.Speedo())
+
+        # startup the pedal monitor
+        start_noncrit_component(cjoy.PedalMonitorComponent(window_length=1000))
+
+        # startup the joystick monitor
+        start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
+
+        # check if noncritical error occurred
+        if self.input_noncrit_fail:
+            return
+
         self.default_input()
         return
 
+    def ready_enter(self):
+        # Process CMD messages
+        self.process_cmd_message()
+
+        # Process UDP CAN is done asynchronously in different components
+
+        # Check driver activity
+        self.check_driver_activity()
+
+        # System health check
+        self.system_health_check()
