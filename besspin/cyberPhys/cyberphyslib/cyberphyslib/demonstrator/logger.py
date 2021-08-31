@@ -26,6 +26,7 @@ ssith_button_logger: logging.Logger = logging.getLogger("ssith-button")
 led_manage_logger: logging.Logger = logging.getLogger("led_manage")
 ignition_logger: logging.Logger = logging.getLogger("ignition")
 jmonitor_logger: logging.Logger = logging.getLogger("jmonitor")
+health_logger: logging.Logger = logging.getLogger("health")
 
 
 

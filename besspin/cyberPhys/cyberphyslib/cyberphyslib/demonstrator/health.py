@@ -13,7 +13,7 @@ import cyberphyslib.canlib.canspecs as canspecs
 import cyberphyslib.canlib.componentids as cids
 import cyberphyslib.demonstrator.component as cycomp
 import cyberphyslib.demonstrator.can as cycan
-
+from cyberphyslib.demonstrator.logger import health_logger
 
 import abc
 import collections
@@ -34,7 +34,7 @@ def ip2int(ip):
     return struct.unpack("!L", packedIP)[0]
 
 
-class HeartbeatMonitor:
+class HeartbeatMonitor(cycomp.ComponentPoller):
     """
     Heartbeat Monitor has 4 capabilities
 
@@ -46,25 +46,27 @@ class HeartbeatMonitor:
     TODO: implement this
     """
     def __init__(self, can_bus: cycan.CanUdpNetwork, cc_bus: cycan.CanTcpNetwork):
+        super(HeartbeatMonitor, self).__init__("health-monitor", set(), set(), sampling_frequency=1/2.0)
+
         self.can_bus = can_bus
         self.cc_bus = cc_bus
 
         self.services = {
-            "can-display-ui":
+            "can_display_ui":
                 {
                     "user" : "pi",
                     "password": "WelcomeToGalois",
                     "address" : "10.88.88.5",
                     "service_name": "can-ui"
                 },
-            "hacker-kiosk-ui":
+            "hacker_kiosk_ui":
                 {
                     "user" : "pi",
                     "password": "WelcomeToGalois",
                     "address" : "10.88.88.3",
                     "service_name": "hacker-ui"
                 },
-            "infotainment-client-ui":
+            "infotainment_client_ui":
                 {
                     "user" : "pi",
                     "password": "WelcomeToGalois",
@@ -81,17 +83,17 @@ class HeartbeatMonitor:
 
         self.monitor = {"10.88.88.4": cids.IGNITION}
         self.udp_descr = {
-            "10.88.88.12": ip2int('10.88.88.11'),
-            "10.88.88.22": ip2int('10.88.88.21'),
-            "10.88.88.32": ip2int('10.88.88.31'),
-            "22.88.88.10": ip2int('22.88.88.10'),
-            "32.88.88.10": ip2int('32.88.88.10'),
-            "12.88.88.10": ip2int('12.88.88.10'),
+            "baseline_ecu": ip2int('10.88.88.11'),
+            "baseline_infotainment": ip2int('12.88.88.10'),
+            "ssith_info_ecu": ip2int('10.88.88.21'),
+            "ssith_info_infotainment": ip2int('22.88.88.10'),
+            "ssith_ecu_ecu": ip2int('10.88.88.31'),
+            "ssith_ecu_infotainment": ip2int('32.88.88.10'),
         }
 
         self.tcp_descr = {
-            'BESSPIN_TOOL_DEBIAN': 0x28, # BESSPIN TOOL DEBIAN
-            'INFOTAINMENT_THIN_CLIENT': 0x60, # INFOTAINMENT THIN CLIENT
+            'besspin_tool_debian': 0x28, # BESSPIN TOOL DEBIAN
+            'infotainment_thin_client': 0x60, # INFOTAINMENT THIN CLIENT
         }
 
         self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())
@@ -99,37 +101,50 @@ class HeartbeatMonitor:
         self.service_monitors = {k: ServiceMonitor(params["service_name"], params["address"],
                                                    user=params["user"],
                                                    password=params["password"]) for k, params in self.services.items()}
+        self._health_report = {}
 
-    def mainloop(self):
+    def on_start(self):
+        self.start_poller()
+
+    def on_poll_poll(self, t):
         """
         Example Health Monitoring Mainloop
         """
-        import time
-        while True:
-            time.sleep(1.0)
+        ret = {}
+        health_logger.debug("Testing OTA")
+        for k, v in self.ota_monitors.items():
+            ret[f"http_{k}"] = v.is_healthy
+            if not v.is_healthy:
+                health_logger.debug(f"WARNING! {k} HTTP failed health check")
 
-            print("Testing OTA")
-            for k, v in self.ota_monitors.items():
-                if not v.is_healthy:
-                    print(f"WARNING! {k} HTTP failed health check")
+        health_logger.debug("Testing Services")
+        for k, v in self.service_monitors.items():
+            ret[f"service_{k}"] = v.is_healthy
+            if not v.is_healthy:
+                health_logger.debug(f"WARNING! {k} Service failed health check")
 
-            print("Testing Services")
-            for k, v in self.service_monitors.items():
-                if not v.is_healthy:
-                    print(f"WARNING! {k} Service failed health check")
+        if self.component_monitor is not None:
+            health_logger.debug("Testing UDP")
+            health_report = self.component_monitor._heartbeat_monitor_udp.run_health_tests()
+            kmap = {v:k for k,v in self.udp_descr}
+            ret.update({f"udp_{kmap[k]}": v for k, v in health_report.items()})
+            if not all(health_report.values()):
+                health_logger.debug(f"Health Status: {health_report}")
+                health_logger.debug(f"ERROR! UDP Failed")
 
-            if self.component_monitor is not None:
-                print("Testing UDP")
-                health_report = self.component_monitor._heartbeat_monitor_udp.run_health_tests()
-                if not all(health_report.values()):
-                    print(f"Health Status: {health_report}")
-                    print(f"ERROR! UDP Failed")
+            health_logger.debug("Testing TCP")
+            health_report = self.component_monitor._heartbeat_monitor_tcp.run_health_tests()
+            kmap = {v:k for k,v in self.tcp_descr}
+            ret.update({f"udp_{kmap[k]}": v for k, v in health_report.items()})
+            if not all(health_report.values()):
+                health_logger.debug(f"Health Status: {health_report}")
+                health_logger.debug(f"ERROR! UDP Failed")
 
-                print("Testing TCP")
-                health_report = self.component_monitor._heartbeat_monitor_tcp.run_health_tests()
-                if not all(health_report.values()):
-                    print(f"Health Status: {health_report}")
-                    print(f"ERROR! UDP Failed")
+        self._health_report = ret
+
+    @property
+    def health_report(self):
+        return self._health_report
 
     def setup_can(self):
         """register the UDP CAN bus for the monitoring"""
@@ -243,7 +258,7 @@ class ServiceMonitor(SshMonitor):
             return re.search(r"(Active: active \(running\))", ret.stdout) is not None
         except Exception as exc:
             # TODO: log this?
-            #print(f"Exception {exc} has occurred")
+            #health_logger.debug(f"Exception {exc} has occurred")
             return False
 
 
@@ -291,7 +306,7 @@ class BusHeartbeatMonitor(HealthMonitor):
             # TODO: FIXME: add fault location
             idmap = {v: k for k, v in cids.__dict__.items() if isinstance(v, int)}
             cname = idmap.get(client_id, "<UNKNOWN>")
-            print(f"WARNING! Received unanticipated response {client_id} ({cname})")
+            health_logger.debug(f"WARNING! Received unanticipated response {client_id} ({cname})")
         else:
             if response is not None:
                 self.response_buffer[client_id].append(time.time())
@@ -321,11 +336,11 @@ class BusHeartbeatMonitor(HealthMonitor):
                 ltime = max(buff)
                 delta = time.time() - ltime
                 if delta > self.maxlen:
-                    print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
+                    health_logger.debug(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
                     outcome[cid] = False
             else:
                 if time.time() - self.start_time > self.wait_period:
-                    print(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test (No Submissions)!")
+                    health_logger.debug(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test (No Submissions)!")
                     outcome[cid] = False
         return outcome
 
@@ -432,13 +447,11 @@ class HeartbeatClientComponent(HeartbeatTaskComponent):
 
     @recv_can(canspecs.CAN_ID_HEARTBEAT_REQ, canspecs.CAN_FORMAT_HEARTBEAT_REQ)
     def _(self, data):
-        # TODO: check this
         if self._heartbeat_client_udp is not None:
             self._heartbeat_client_udp.send_heartbeat_ack_msg(data[0])
 
     def recv_cc(self, can_id, data_len, data):
-        # unpack
-        print("NotImplementedError: recv cc")
+        health_logger.debug("NotImplementedError: recv cc")
         req_number = struct.unpack(canspecs.CAN_FORMAT_HEARTBEAT_REQ, data)
         if self._heartbeat_client_tcp is not None:
             self._heartbeat_client_tcp.send_heartbeat_ack_msg(req_number[0])

@@ -1,10 +1,7 @@
 import cyberphyslib.demonstrator.health as cyhealth
-import cyberphyslib.demonstrator.config as cyconfig
 import cyberphyslib.demonstrator.can as cycan
-
-from cyberphyslib.demonstrator import director
 from cyberphyslib.demonstrator import config
-import pathlib, os
+import pathlib, os, time
 import argparse
 
 # ugh, this filepath access is sketchy and will complicate the deployment of ignition
@@ -32,4 +29,8 @@ hm = cyhealth.HeartbeatMonitor(udp_net, tcp_net)
 hm.setup_can()
 hm.setup_cc()
 hm.start_monitor()
-hm.mainloop()
+hm.start()
+
+while True:
+    time.sleep(3.0)
+    print(hm.health_status)
