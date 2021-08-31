@@ -128,7 +128,10 @@ class CanTcpNetwork(CanNetwork):
         msg = Message(arbitration_id=can_id, data=data, is_extended_id=True)
         self.bus.send(msg)
 
-    def recv(self, timeout=None) -> typ.Union[None, typ.Tuple[int, Message]]:
+    def send_msg(self, msg: Message):
+        self.bus.send(msg)
+
+    def recv(self, timeout=None) -> typ.Optional[typ.Tuple[int, Message]]:
         msg: Message = self.bus.recv(timeout=timeout)
         if msg:
             can_id, data, data_len = msg.arbitration_id, msg.data, msg.dlc
