@@ -17,6 +17,7 @@ import cyberphyslib.demonstrator.can_out as ccout
 import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
 import cyberphyslib.demonstrator.joystick as cjoy
+import cyberphyslib.demonstrator.health as cyhealth
 import cyberphyslib.canlib as canlib
 import can as extcan
 
@@ -175,9 +176,10 @@ class IgnitionDirector:
         # start the can networks
         self.can_multiverse = ccan.CanMultiverse("multiverse", networks, default_network="base")
         self.info_net = ccan.CanUdpNetwork("info-net", self.info_port, sip, blacklist=[sim_ip])
+        self.cc_net = ccan.CanTcpNetwork("cc-net", cmd_host, cmd_nodes)
 
         # C&C message bus
-        self.cc_recvr = canlib.TcpBus(cmd_host, cmd_nodes)
+        #self.cc_recvr = canlib.TcpBus(cmd_host, cmd_nodes)
 
         # input space as class members
         self.input_noncrit_fail = False
@@ -302,6 +304,9 @@ class IgnitionDirector:
         # startup the joystick monitor
         start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
 
+        # startup the heartbeat monitor
+        start_component(cyhealth.HeartbeatMonitor(self.can_multiverse._can_multiverse, self.cc_net))
+
         # check if noncritical error occurred
         if self.input_noncrit_fail:
             return
@@ -363,7 +368,7 @@ class IgnitionDirector:
     def ready_enter(self):
         # NOTE: Disabling scenario reset because it is not clear what happens if we reset
         # TODO: add scenario timeout only in the self-drive mode
-        cc_recv = self.cc_recvr.recv(timeout=self.cc_timeout)
+        cc_recv = self.cc_net.recv(timeout=self.cc_timeout)
         if cc_recv:
             self.default_input()
             self.process_cc(cc_recv)
