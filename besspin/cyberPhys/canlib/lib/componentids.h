@@ -4,7 +4,7 @@
 * Name: lib/componentids.h
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 27 August 2021
+* Date: 31 August 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
@@ -35,6 +35,9 @@
 #define LED_COMPONENT 0x31
 #define CAN_DISPLAY_FRONTEND 0x32
 #define CAN_DISPLAY_BACKEND 0x33
+#define PEDAL_MONITOR 0x34
+#define JOYSTICK_MONITOR 0x35
+#define INSTRUMENT_CLUSTER 0x36
 #define HACKER_KIOSK_FRONTEND 0x40
 #define HACKER_KIOSK_BACKEND 0x41
 #define HACK_NONE 0x50
