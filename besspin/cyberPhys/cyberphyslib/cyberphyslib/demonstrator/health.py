@@ -121,14 +121,14 @@ class HeartbeatMonitor:
             if self.component_monitor is not None:
                 print("Testing UDP")
                 health_report = self.component_monitor._heartbeat_monitor_udp.run_health_tests()
-                if not all(health_report):
-                    print(f"Health Failure(s): {health_report}")
+                if not all(health_report.values()):
+                    print(f"Health Status: {health_report}")
                     print(f"ERROR! UDP Failed")
 
                 print("Testing TCP")
                 health_report = self.component_monitor._heartbeat_monitor_tcp.run_health_tests()
-                if not all(health_report):
-                    print(f"Health Failure(s): {health_report}")
+                if not all(health_report.values()):
+                    print(f"Health Status: {health_report}")
                     print(f"ERROR! UDP Failed")
 
     def setup_can(self):
