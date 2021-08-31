@@ -46,7 +46,7 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
     TODO: implement this
     """
     def __init__(self, can_bus: cycan.CanUdpNetwork, cc_bus: cycan.CanTcpNetwork):
-        super(HeartbeatMonitor, self).__init__("health-monitor", set(), set(), sampling_frequency=1/2.0)
+        super(HeartbeatMonitor, self).__init__("health-monitor", set(), set(), sample_frequency=30)
 
         self.can_bus = can_bus
         self.cc_bus = cc_bus
@@ -82,6 +82,8 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
         }
 
         self.monitor = {"10.88.88.4": cids.IGNITION}
+
+        # @michal Check These Keys Please
         self.udp_descr = {
             "baseline_ecu": ip2int('10.88.88.11'),
             "baseline_infotainment": ip2int('12.88.88.10'),
@@ -101,9 +103,10 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
         self.service_monitors = {k: ServiceMonitor(params["service_name"], params["address"],
                                                    user=params["user"],
                                                    password=params["password"]) for k, params in self.services.items()}
-        self._health_report = {}
+        self._health_report = None
 
     def on_start(self):
+        super(HeartbeatMonitor, self).on_start()
         self.start_poller()
 
     def on_poll_poll(self, t):
@@ -113,20 +116,22 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
         ret = {}
         health_logger.debug("Testing OTA")
         for k, v in self.ota_monitors.items():
-            ret[f"http_{k}"] = v.is_healthy
-            if not v.is_healthy:
+            hs = v.is_healthy
+            ret[f"http_{k}"] = hs
+            if not hs:
                 health_logger.debug(f"WARNING! {k} HTTP failed health check")
 
         health_logger.debug("Testing Services")
         for k, v in self.service_monitors.items():
-            ret[f"service_{k}"] = v.is_healthy
-            if not v.is_healthy:
+            hs = v.is_healthy
+            ret[f"service_{k}"] = hs
+            if not hs:
                 health_logger.debug(f"WARNING! {k} Service failed health check")
 
         if self.component_monitor is not None:
             health_logger.debug("Testing UDP")
             health_report = self.component_monitor._heartbeat_monitor_udp.run_health_tests()
-            kmap = {v:k for k,v in self.udp_descr}
+            kmap = {v:k for k,v in self.udp_descr.items()}
             ret.update({f"udp_{kmap[k]}": v for k, v in health_report.items()})
             if not all(health_report.values()):
                 health_logger.debug(f"Health Status: {health_report}")
@@ -134,8 +139,8 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
 
             health_logger.debug("Testing TCP")
             health_report = self.component_monitor._heartbeat_monitor_tcp.run_health_tests()
-            kmap = {v:k for k,v in self.tcp_descr}
-            ret.update({f"udp_{kmap[k]}": v for k, v in health_report.items()})
+            kmap = {v:k for k,v in self.tcp_descr.items()}
+            ret.update({f"tcp_{kmap[k]}": v for k, v in health_report.items()})
             if not all(health_report.values()):
                 health_logger.debug(f"Health Status: {health_report}")
                 health_logger.debug(f"ERROR! UDP Failed")
@@ -144,6 +149,8 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
 
     @property
     def health_report(self):
+        while self._health_report is None:
+            time.sleep(0.5)
         return self._health_report
 
     def setup_can(self):
