@@ -32,13 +32,15 @@ if __name__ == "__main__":
     # create buses for both the can (udp) and cc (tcp) buses
     print("Starting the CAN bus")
     udp_net = cycan.CanUdpNetwork("udp-net", dnc.port_network_canbusPort, dnc.ip_SimPc)
-    udp_net.start()
+    can_multiverse = cycan.CanMultiverse("multiverse", [udp_net], "udp-net")
+    can_multiverse.start()
+
     print("Starting the Tcp Bus")
     tcp_net = cycan.CanTcpNetwork("tcp-net", '10.88.88.4:5041', ['10.88.88.1:5041', '10.88.88.2:5041', '10.88.88.3:5041', '10.88.88.5:5041', '10.88.88.6:5041'] )
     tcp_net.start()
 
     # initialize and start the heartbeat component
-    hm = cyhealth.HeartbeatMonitor(udp_net, tcp_net)
+    hm = cyhealth.HeartbeatMonitor(can_multiverse, tcp_net)
     hm.setup_can()
     hm.setup_cc()
     hm.start_monitor()
