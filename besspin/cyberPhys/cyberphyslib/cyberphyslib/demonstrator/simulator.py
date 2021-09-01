@@ -20,6 +20,7 @@ import time
 import os
 import serial
 import re
+import threading
 
 from cyberphyslib.demonstrator import config, component, message, logger
 import cyberphyslib.canlib.canspecs as canspecs
@@ -70,7 +71,7 @@ def requires_running_scenario(func):
             return func(self, *args, **kwargs)
     return inner
 
-class SerialMonitor(component.ComponentPoller):
+class SerialMonitor():
     READ_LIMIT = 254
     THROTTLE_MAX = 926
     THROTTLE_MIN = 64
@@ -80,9 +81,9 @@ class SerialMonitor(component.ComponentPoller):
     BRAKE_GAIN = 100
     COM_PORT = 'COM43'
     BAUDRATE = 115200
+    SLEEP_TIME_S=0.05 # 20Hz
 
     def __init__(self):
-        super().__init__("serial-monitor", sample_frequency=20.0)
         # Teensy related variables
         self.teensy_serial = serial.Serial(self.COM_PORT, self.BAUDRATE, timeout=0)
         self.re_gear = re.compile('shifter_gear: 0X\d\d')
@@ -97,7 +98,7 @@ class SerialMonitor(component.ComponentPoller):
 
         logger.sim_logger.warning(f"Starting serial monitor.")
 
-    def on_poll_poll(self, t):
+    def serial_loop(self):
         try:
             val = self.teensy_serial.read(self.READ_LIMIT).decode('ascii',errors='ignore')
             gear_raw = self.re_gear.findall(val)
@@ -126,6 +127,7 @@ class SerialMonitor(component.ComponentPoller):
             self.timestamp = self.re_time.findall(val)[-1]
             logger.sim_logger.info(f"{self.timestamp} Brake: {self.brake}, Throttle: {self.throttle}, Gear: {self.gear}")
             self.teensy_serial.reset_input_buffer()
+            time.sleep(self.SLEEP_TIME_S)
         except Exception as exc:
             logger.sim_logger.warning(f"Serial port exception: {exc}")
 
@@ -185,7 +187,7 @@ class Sim(component.ComponentPoller):
         self._is_paused = False
         # spin up the serial port reader
         self.teensy = SerialMonitor()
-        self.teensy.start()
+        self.teensy_thread = threading.Thread(target=self.teensy.serial_loop, args=[], daemon=True)
 
         # NOTE: start with minial functionality
         self.system_functionality_level = canlib.FUNCTIONALITY_FULL
