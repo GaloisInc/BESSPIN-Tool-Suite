@@ -19,6 +19,8 @@ BRIGHTNESS_FACTOR = 0.8
 SCENARIO_TIMEOUT = 5*60 # s
 CC_TIMEOUT = 1 # s
 
+HEALTH_CHECK_PERIOD_S = 10
+
 # name of joystick for ignition to monitor
 JOYSTICK_NAME = 'FANATEC Podium Wheel Base DD1'
 # Uncomment for the thrustmaster t150 wheel

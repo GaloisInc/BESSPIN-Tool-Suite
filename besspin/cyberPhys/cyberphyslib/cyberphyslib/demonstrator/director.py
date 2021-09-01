@@ -166,6 +166,10 @@ class IgnitionDirector:
         self.is_finished = False
         self._noncrit = False
 
+        # Component health monitoring
+        self.last_time_checked_health = None
+        self.health_check_period = cconf.HEALTH_CHECK_PERIOD_S
+
     def run(self):
         """start the state machine, and keep it transitioning until termination"""
         try:
@@ -495,4 +499,7 @@ class IgnitionDirector:
         self.check_driver_activity()
 
         # System health check
-        #self.system_health_check()
+        if self.last_time_checked_health:
+            if (time.time() - self.last_time_checked_health) > self.HEALTH_CHECK_PERIOD:
+                self.system_health_check()
+                self.last_time_checked_health = time.time()
