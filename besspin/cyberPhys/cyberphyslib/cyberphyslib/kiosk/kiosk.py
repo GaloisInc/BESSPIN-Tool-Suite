@@ -72,8 +72,8 @@ class HackerKiosk:
 
     # full name of the states
     state_names = [
-                   "reset", # reset SSITH ECU scenario components here
-                   "hack02_kiosk_intro",
+                   "hack02_kiosk_intro_and_reset",
+                   "hack04_kiosk_access",
                    "hack05_info_attempt",
                    "hack06_info_exploit",
                    "hack06_info_exploit_attemp_hack",
@@ -88,23 +88,23 @@ class HackerKiosk:
     # this is a brief description of the state transitions that is expanded at runtime
     # into pytransitions transitions
     transition_names = [
-        {'transition': ('reset', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('reset', 'hack02_kiosk_intro'), 'conditions': 'button_pressed_next'},
-        {'transition': ('hack02_kiosk_intro', 'hack05_info_attempt'), 'conditions': 'button_pressed_next'},
-        {'transition': ('hack05_info_attempt', 'hack06_info_exploit'), 'conditions': 'button_pressed_next'},
+        {'transition': ('hack02_kiosk_intro_and_reset', 'hack02_kiosk_intro_and_reset'), 'conditions': 'button_pressed_reset'},
+        {'transition': ('hack02_kiosk_intro_and_reset', 'hack04_kiosk_access'), 'conditions': 'button_pressed_hack02_next'},
+        {'transition': ('hack04_kiosk_access', 'hack05_info_attempt'), 'conditions': 'button_pressed_hack04_next'},
+        {'transition': ('hack05_info_attempt', 'hack06_info_exploit'), 'conditions': 'button_pressed_hack05_next'},
         {'transition': ('hack06_info_exploit', 'hack06_info_exploit_attemp_hack'), 'conditions': 'button_pressed_info_exploit'},
         {'transition': ('hack06_info_exploit_attemp_hack', 'hack06_info_exploit'), 'conditions': 'exploit_complete'},
         {'transition': ('hack06_info_exploit', 'hack08_critical_exploit'), 'conditions': 'button_pressed_critical_exploit'},
         {'transition': ('hack08_critical_exploit', 'hack06_info_exploit'), 'conditions': 'exploit_complete'},
-        {'transition': ('hack06_info_exploit', 'hack09_protect'), 'conditions': 'button_pressed_next'},
+        {'transition': ('hack06_info_exploit', 'hack09_protect'), 'conditions': 'button_pressed_hack08_next'},
         {'transition': ('hack09_protect', 'hack10_protect_info_attempt'), 'conditions': 'button_pressed_ssith_infotainment'},
         {'transition': ('hack10_protect_info_attempt', 'hack10_info_exploit_attempt_hack'), 'conditions': 'button_pressed_info_exploit'},
         {'transition': ('hack10_info_exploit_attempt_hack', 'hack10_protect_info_attempt'), 'conditions': 'exploit_complete'},
         {'transition': ('hack09_protect', 'hack12_protect_critical'), 'conditions': 'button_pressed_ssith_ecu'},
         {'transition': ('hack12_protect_critical', 'hack12_critical_exploit'), 'conditions': 'button_pressed_critical_exploit'},
         {'transition': ('hack12_critical_exploit', 'hack12_protect_critical'), 'conditions': 'exploit_complete'},
-        {'transition': ('hack10_protect_info_attempt', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('hack12_protect_critical', 'reset'), 'conditions': 'button_pressed_reset'},
+        {'transition': ('hack10_protect_info_attempt', 'hack02_kiosk_intro_and_reset'), 'conditions': 'button_pressed_reset'},
+        {'transition': ('hack12_protect_critical', 'hack02_kiosk_intro_and_reset'), 'conditions': 'button_pressed_reset'},
     ]
 
 
@@ -315,7 +315,7 @@ class HackerKiosk:
                 self.inputs |= {tn['unless']}
             self.transitions.append(base_dict)
 
-        return Machine(self, states=self.states, transitions=self.transitions, initial='reset', show_conditions=True)
+        return Machine(self, states=self.states, transitions=self.transitions, initial='hack02_kiosk_intro_and_reset', show_conditions=True)
 
 
     def draw_graph(self, fname: str):
@@ -346,14 +346,13 @@ class HackerKiosk:
         return hack_ok
 
     @page
-    def reset_enter(self, arg):
+    def hack02_kiosk_intro_and_reset_enter(self, arg):
         """
         Switch to BASELINE_SCENARIO
         * no active hack
         * scenario is Baseline
         * reset Target1, InfoServer1, InfoServer3
         """
-        self.button_pressed_next = False
         self.button_pressed_reset = False
 
         self.hackActive(canlib.HACK_NONE)
@@ -375,12 +374,12 @@ class HackerKiosk:
         self.ipc_msg['status'] = 200 # OK
 
     @page
-    def hack02_kiosk_intro_enter(self, arg):
+    def hack04_kiosk_access_enter(self, arg):
         """
-        Reset is complete
+        Intermediate state
         No action needed
         """
-        self.button_pressed_next = False
+        self.button_pressed_hack02_next = False
         # Respond
         self.ipc_msg['status'] = 200 # OK
 
@@ -391,7 +390,7 @@ class HackerKiosk:
         * hack the server
         * upload hacked infotainment
         """
-        self.button_pressed_next = False
+        self.button_pressed_hack04_next = False
         hack_ok = self.hack_ota_and_upload_hacked_infotainment_server()
         self.ipc_msg['retval'] = hack_ok
         self.ipc_msg['status'] = 200 # OK
@@ -401,7 +400,7 @@ class HackerKiosk:
         """
         Wait for the exploit selection
         """
-        self.button_pressed_next = False
+        self.button_pressed_hack05_next = False
         self.exploit_complete = False
 
         self.ipc_msg['status'] = 200 # OK
@@ -418,7 +417,6 @@ class HackerKiosk:
         self.execute_infotainment_hack(arg)
 
         self.ipc_msg['status'] = 200 # OK
-
 
     @page
     def hack08_critical_exploit_enter(self, arg):
@@ -440,7 +438,7 @@ class HackerKiosk:
         Switch to SSITH_INFOTAINMENT_SCENARIO
         NOTE: Reset baseline target(s) here to save time?
         """
-        self.button_pressed_next = False
+        self.button_pressed_hack08_next = False
 
         self.hackActive(canlib.HACK_NONE)
         self.switchActiveScenario(canlib.SCENARIO_SECURE_INFOTAINMENT)
@@ -600,7 +598,7 @@ class HackerKiosk:
             self.buttonPressed(canlib.BUTTON_VOLUME_DOWN)
             self.ipc_msg['retval'] = "Volume decreased"
         elif arg == "exfil":
-            self.ipc_msg['retval'] = f"{self.x}, {self.y}"
+            self.ipc_msg['retval'] = f"{round(self.x)}, {round(self.y)}"
         elif arg == "changeStation_1":
             self.buttonPressed(canlib.BUTTON_STATION_1)
             self.ipc_msg['retval'] = "Station set to 1"
