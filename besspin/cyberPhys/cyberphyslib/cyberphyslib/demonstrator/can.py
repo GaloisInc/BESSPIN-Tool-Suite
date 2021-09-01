@@ -162,6 +162,9 @@ class CanUdpNetwork(CanNetwork):
         msg = Message(arbitration_id=can_id, data=data, is_extended_id=True)
         self.bus.send(msg)
 
+    def send_msg(self, msg: Message):
+        self.bus.send(msg)
+
     def recv(self, timeout=None) -> typ.Union[None, typ.Tuple[int, Message]]:
         msg: Message = self.bus.recv(timeout=timeout)
         if msg:
@@ -213,6 +216,9 @@ class CanMultiverse(CanNetwork):
     def send(self, can_id: int, data: CanDataType) -> None:
         self._active_network.send(can_id, data)
 
+    def send_msg(self, msg: Message):
+        self._active_network.send_msg(msg)
+
     def recv(self, timeout=None) -> typ.Union[None, typ.Tuple[int, Message]]:
         ret = self._active_network.recv(timeout=timeout)
         if ret:
@@ -224,6 +230,10 @@ class CanMultiverse(CanNetwork):
     @property
     def networks(self):
         return {n.name: n for n in self._networks}
+
+    @property
+    def bus(self):
+        return self
 
 
 import cyberphyslib.demonstrator.message as message

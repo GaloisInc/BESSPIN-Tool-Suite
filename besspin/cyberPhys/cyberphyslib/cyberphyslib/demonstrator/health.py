@@ -326,7 +326,7 @@ class BusHeartbeatMonitor(HealthMonitor):
     def send_heartbeat_req_msg(self, req_number: int):
         """set REQ can packet over the TCP bus"""
         m = self.form_heartbeat_req_msg(req_number)
-        self.bus.send(m)
+        self.bus.send_msg(m)
 
     def send_req_nodes(self):
         """send REQ to nodes"""
@@ -374,7 +374,7 @@ class BusHeartbeatClient:
 
     def send_heartbeat_ack_msg(self, req_number: int):
         """send teh ACK message over the tcp bus"""
-        self.bus.send(self.form_heartbeat_ack_msg(req_number))
+        self.bus.send_msg(self.form_heartbeat_ack_msg(req_number))
 
     def recv(self, timeout=1.0):
         return self.bus.recv(timeout)
