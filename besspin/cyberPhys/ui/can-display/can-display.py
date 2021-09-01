@@ -135,7 +135,7 @@ class CanDisplay(threading.Thread):
                 req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)[0]
                 heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
                                         dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
-                                        data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.CAN_DISPLAY, req_number))
+                                        data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.CAN_DISPLAY_BACKEND, req_number))
                 self.cmd_bus.send(heartbeat_ack)
             elif cid == canlib.CAN_ID_CMD_COMPONENT_ERROR:
                 component_id, error_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, msg.data)

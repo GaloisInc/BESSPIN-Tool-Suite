@@ -17,7 +17,7 @@ BRIGHTNESS_FACTOR = 0.8
 
 # port timeouts
 SCENARIO_TIMEOUT = 5*60 # s
-CC_TIMEOUT = 0.1 # s
+CC_TIMEOUT = 1 # s
 
 # name of joystick for ignition to monitor
 JOYSTICK_NAME = 'FANATEC Podium Wheel Base DD1'

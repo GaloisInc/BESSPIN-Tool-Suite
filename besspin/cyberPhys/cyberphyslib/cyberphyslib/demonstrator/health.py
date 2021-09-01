@@ -46,27 +46,27 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
     TODO: implement this
     """
     def __init__(self, can_bus: cycan.CanUdpNetwork, cc_bus: cycan.CanTcpNetwork):
-        super(HeartbeatMonitor, self).__init__("health-monitor", set(), set(), sample_frequency=30)
+        super(HeartbeatMonitor, self).__init__("health-monitor", set(), set(), sample_frequency=1)
 
         self.can_bus = can_bus
         self.cc_bus = cc_bus
 
         self.services = {
-            "can_display_ui":
+            cids.CAN_DISPLAY_FRONTEND:
                 {
                     "user" : "pi",
                     "password": "WelcomeToGalois",
                     "address" : "10.88.88.5",
                     "service_name": "can-ui"
                 },
-            "hacker_kiosk_ui":
+            cids.HACKER_KIOSK_FRONTEND:
                 {
                     "user" : "pi",
                     "password": "WelcomeToGalois",
                     "address" : "10.88.88.3",
                     "service_name": "hacker-ui"
                 },
-            "infotainment_client_ui":
+            cids.INFOTAINMENT_THIN_CLIENT:
                 {
                     "user" : "pi",
                     "password": "WelcomeToGalois",
@@ -76,26 +76,28 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
                     }
 
         self.https = {
-            "ota_server_1" : "http://10.88.88.11:5050",
-            "ota_server_2" : "http://10.88.88.21:5050",
-            "ota_server_3" : "http://10.88.88.31:5050"
+            cids.OTA_UPDATE_SERVER_1 : "http://10.88.88.11:5050",
+            cids.OTA_UPDATE_SERVER_2 : "http://10.88.88.21:5050",
+            cids.OTA_UPDATE_SERVER_3 : "http://10.88.88.31:5050"
         }
 
         self.monitor = {"10.88.88.4": cids.IGNITION}
 
-        # @michal Check These Keys Please
         self.udp_descr = {
-            "baseline_ecu": ip2int('10.88.88.11'),
-            "baseline_infotainment": ip2int('12.88.88.10'),
-            "ssith_info_ecu": ip2int('10.88.88.21'),
-            "ssith_info_infotainment": ip2int('22.88.88.10'),
-            "ssith_ecu_ecu": ip2int('10.88.88.31'),
-            "ssith_ecu_infotainment": ip2int('32.88.88.10'),
+            cids.INFOTAINMENT_SERVER_1: ip2int('10.88.88.11'),
+            cids.FREERTOS_1: ip2int('12.88.88.10'),
+            cids.INFOTAINMENT_SERVER_2: ip2int('10.88.88.21'),
+            cids.FREERTOS_2_CHERI: ip2int('22.88.88.10'),
+            cids.INFOTAINMENT_SERVER_3: ip2int('10.88.88.31'),
+            cids.FREERTOS_3: ip2int('32.88.88.10'),
         }
 
         self.tcp_descr = {
-            'besspin_tool_debian': 0x28, # BESSPIN TOOL DEBIAN
-            'infotainment_thin_client': 0x60, # INFOTAINMENT THIN CLIENT
+            cids.BESSPIN_TOOL_FREERTOS: cids.BESSPIN_TOOL_FREERTOS,
+            cids.BESSPIN_TOOL_DEBIAN: cids.BESSPIN_TOOL_DEBIAN,
+            cids.CAN_DISPLAY_BACKEND: cids.CAN_DISPLAY_BACKEND,
+            cids.HACKER_KIOSK_BACKEND: cids.HACKER_KIOSK_BACKEND,
+            cids.INFOTAINMENT_BACKEND: cids.INFOTAINMENT_BACKEND,
         }
 
         self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())
@@ -117,14 +119,14 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
         health_logger.debug("Testing OTA")
         for k, v in self.ota_monitors.items():
             hs = v.is_healthy
-            ret[f"http_{k}"] = hs
+            ret[k] = hs
             if not hs:
                 health_logger.debug(f"WARNING! {k} HTTP failed health check")
 
         health_logger.debug("Testing Services")
         for k, v in self.service_monitors.items():
             hs = v.is_healthy
-            ret[f"service_{k}"] = hs
+            ret[k] = hs
             if not hs:
                 health_logger.debug(f"WARNING! {k} Service failed health check")
 
@@ -133,8 +135,8 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
             if self.component_monitor._heartbeat_monitor_udp is not None:
                 health_logger.debug("Testing UDP")
                 health_report = self.component_monitor._heartbeat_monitor_udp.run_health_tests()
-                kmap = {v:k for k,v in self.udp_descr.items()}
-                ret.update({f"udp_{kmap[k]}": v for k, v in health_report.items()})
+                kmap = {v: k for k,v in self.udp_descr.items()}
+                ret.update({kmap[k]: v for k, v in health_report.items()})
                 if not all(health_report.values()):
                     health_logger.debug(f"Health Status: {health_report}")
                     health_logger.debug(f"ERROR! UDP Failed")
@@ -142,8 +144,8 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
             if self.component_monitor._heartbeat_monitor_tcp is not None:
                 health_logger.debug("Testing TCP")
                 health_report = self.component_monitor._heartbeat_monitor_tcp.run_health_tests()
-                kmap = {v:k for k,v in self.tcp_descr.items()}
-                ret.update({f"tcp_{kmap[k]}": v for k, v in health_report.items()})
+                kmap = {v: k for k, v in self.tcp_descr.items()}
+                ret.update({kmap[k]: v for k, v in health_report.items()})
                 if not all(health_report.values()):
                     health_logger.debug(f"Health Status: {health_report}")
                     health_logger.debug(f"ERROR! UDP Failed")
@@ -316,7 +318,7 @@ class BusHeartbeatMonitor(HealthMonitor):
             # TODO: FIXME: add fault location
             idmap = {v: k for k, v in cids.__dict__.items() if isinstance(v, int)}
             cname = idmap.get(client_id, "<UNKNOWN>")
-            health_logger.debug(f"WARNING! Received unanticipated response {client_id} ({cname})")
+            print(f"WARNING! Received unanticipated response {client_id} ({cname})")
         else:
             if response is not None:
                 self.response_buffer[client_id].append(time.time())
@@ -324,7 +326,7 @@ class BusHeartbeatMonitor(HealthMonitor):
     def send_heartbeat_req_msg(self, req_number: int):
         """set REQ can packet over the TCP bus"""
         m = self.form_heartbeat_req_msg(req_number)
-        self.bus.send(m)
+        self.bus.send_msg(m)
 
     def send_req_nodes(self):
         """send REQ to nodes"""
@@ -372,7 +374,7 @@ class BusHeartbeatClient:
 
     def send_heartbeat_ack_msg(self, req_number: int):
         """send teh ACK message over the tcp bus"""
-        self.bus.send(self.form_heartbeat_ack_msg(req_number))
+        self.bus.send_msg(self.form_heartbeat_ack_msg(req_number))
 
     def recv(self, timeout=1.0):
         return self.bus.recv(timeout)
@@ -391,7 +393,7 @@ class HeartbeatTaskComponent(cycomp.ComponentPoller):
         myc.start()
         ```
     """
-    def __init__(self, *args, heartbeat_sample_period=0.2, **kwargs):
+    def __init__(self, *args, heartbeat_sample_period=1.0, **kwargs):
         super(HeartbeatTaskComponent, self).__init__(*args, **kwargs)
         # poller properties
         # NOTE: should sample period be larger?
