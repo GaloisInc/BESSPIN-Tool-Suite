@@ -62,7 +62,8 @@ async function createWindow() {
     autoHideMenuBar: true,
     kiosk: !isDevelopment,
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      devTools: isDevelopment,
     }
   })
 
