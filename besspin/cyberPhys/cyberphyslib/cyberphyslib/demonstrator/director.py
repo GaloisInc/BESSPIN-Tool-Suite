@@ -325,6 +325,8 @@ class IgnitionDirector:
 
         hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
         hr: dict  = hm.health_report
+        ignition_logger.warn(f"{hr}")
+
 
         for cid, is_healthy in hr.items():
             if not is_healthy:
