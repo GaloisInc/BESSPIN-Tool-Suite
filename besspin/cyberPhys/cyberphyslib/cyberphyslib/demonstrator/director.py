@@ -495,4 +495,4 @@ class IgnitionDirector:
         self.check_driver_activity()
 
         # System health check
-        self.system_health_check()
+        #self.system_health_check()

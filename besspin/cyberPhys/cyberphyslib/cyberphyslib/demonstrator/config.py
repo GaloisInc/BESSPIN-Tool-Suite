@@ -82,6 +82,7 @@ BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands'),
                           (PMONITOR_PORT, 'pmonitor-beamng')]
 
 # keyword arguments to pass to Vehicle when creating a vehicle for the sim scenario
+# Sports car: vehicles/etk800/etk856ttsportplus_A.pc
 BEAMNG_VEHICLE_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk854t_A.pc'}
 
 # game settings for beamng
