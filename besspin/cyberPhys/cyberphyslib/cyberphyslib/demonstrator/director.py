@@ -319,31 +319,31 @@ class IgnitionDirector:
             canlib.INFOTAINMENT_BACKEND
         }
 
-        #hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
-        #hr: dict  = hm.health_report
+        hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
+        hr: dict  = hm.health_report
 
-        #for cid, is_healthy in hr.items():
-        #    if not is_healthy:
-        #        # restart cid
-        #        ignition_logger.warn(f"Sending restart request to component with id {cid}")
-        #        msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_RESTART,
-        #                             dlc=canlib.CAN_DLC_CMD_RESTART,
-        #                             data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART,
-        #                                              cid))
-        #        self.cmd_net.send(msg)
+        for cid, is_healthy in hr.items():
+            if not is_healthy:
+                # restart cid
+                ignition_logger.warn(f"Need to send restart request to component with id {cid}")
+                #msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_RESTART,
+                #                     dlc=canlib.CAN_DLC_CMD_RESTART,
+                #                     data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART,
+                #                                      cid))
+                #self.cmd_net.send_msg(msg)
 
-        #func_set = {k for k, v in hr.items() if v}
-        #if (full_functionality_systems | medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
-        #    # we are fully functional
-        #    ignition_logger.info("Ignition is at full functionality level")
-        #elif (medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
-        #    # medium functionality
-        #    ignition_logger.warn("Ignition is at medium functionality level")
-        #elif (minimal_functionality_systems).issubset(func_set):
-        #    # minimal functionality
-        #    ignition_logger.warn("Ignition is at minimal functionality level")
-        #else:
-        #    ignition_logger.warn("Ignition is a null functionality level")
+        func_set = {k for k, v in hr.items() if v}
+        if (full_functionality_systems | medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
+            # we are fully functional
+            ignition_logger.info("Ignition is at full functionality level")
+        elif (medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
+            # medium functionality
+            ignition_logger.warn("Ignition is at medium functionality level")
+        elif (minimal_functionality_systems).issubset(func_set):
+            # minimal functionality
+            ignition_logger.warn("Ignition is at minimal functionality level")
+        else:
+            ignition_logger.warn("Ignition is a null functionality level")
 
     def update_functionality_level(self, new_func_level):
         """
@@ -452,11 +452,11 @@ class IgnitionDirector:
         if not start_component(ledm.LedManagerComponent.for_ignition()): return
 
         # startup the heartbeat monitor
-        #hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
-        #hm.setup_cc()
-        #hm.setup_can()
-        #if not start_component(hm): return
-        #hm.start_monitor()
+        hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
+        hm.setup_cc()
+        hm.setup_can()
+        if not start_component(hm): return
+        hm.start_monitor()
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
