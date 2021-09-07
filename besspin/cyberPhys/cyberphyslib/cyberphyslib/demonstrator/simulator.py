@@ -295,8 +295,9 @@ class Sim(component.ComponentPoller):
 
                     # TODO: remove this from the log?
                     logger.sim_logger.info(f"Brake: {self.control['brake']}, Throttle: {self.control['throttle']}, Gear: {self.control['gear']}")
-                    # TODO: Flush the old data?
-                    #self.teensy_serial.reset_input_buffer()
+                    self.teensy_serial.reset_input_buffer()
+                    # NOTE: sleep a bit to emulate 20Hz read
+                    time.sleep(0.05)
                 except Exception as exc:
                     logger.sim_logger.warning(f"Serial port exception: {exc}")
 
