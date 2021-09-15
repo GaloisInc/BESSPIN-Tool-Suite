@@ -153,9 +153,11 @@ class IgnitionDirector(ccomp.ComponentPoller):
             self.check_driver_activity()
 
             # System health check
-            if int(t) % (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY) == 0:
+            if self.check_health_cnt ==((1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY)*IgnitionDirector.DIRECTOR_FREQUENCY):
                 ignition_logger.info(f"Teensy healthy? {self._handler['teensy'].is_healthy}")
                 self.system_health_check()
+            else:
+                self.check_health_cnt += 1
 
         except KeyboardInterrupt:
             ignition_logger.info("Received keyboard interrupt. Terminating....")

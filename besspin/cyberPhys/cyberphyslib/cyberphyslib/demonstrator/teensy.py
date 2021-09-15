@@ -29,9 +29,9 @@ class TeensyMonitor(ComponentPoller):
         super().__init__("teensy", [],[],sample_frequency= 20.0)
         
         # Teensy related variables
-        self.re_gear = re.compile('shifter_gear: 0X\d*')
-        self.re_brake = re.compile('brake_raw: \d*')
-        self.re_throttle = re.compile('throttle_raw: \d*')
+        self.re_gear = re.compile('shifter_gear: 0X\d+')
+        self.re_brake = re.compile('brake_raw: \d+')
+        self.re_throttle = re.compile('throttle_raw: \d+')
 
     def on_start(self):
         """open serial port"""
@@ -65,8 +65,6 @@ class TeensyMonitor(ComponentPoller):
                 tmp_brake = tmp_brake * self.BRAKE_GAIN / (self.BRAKE_MAX - self.BRAKE_MIN)
                 self.brake = min(max(tmp_brake, 0), 100)/100
 
-            # TODO: remove this from the log?
-            teensy_logger.debug(f"Brake: {self.brake}, Throttle: {self.throttle}, Gear: {self.gear}")
             self.teensy_serial.reset_input_buffer()
         except Exception as exc:
             teensy_logger.warning(f"Serial port exception: {exc}")  
