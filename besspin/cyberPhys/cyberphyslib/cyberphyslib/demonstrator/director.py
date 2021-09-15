@@ -127,7 +127,7 @@ class IgnitionDirector(ccomp.ComponentPoller):
         self._noncrit = False
 
         # Frequency divider
-        self.check_health_cnt = 0
+        self.check_health_time = time.time()
 
     def on_start(self):
         """
@@ -137,6 +137,8 @@ class IgnitionDirector(ccomp.ComponentPoller):
         """
         if self.startup():
             ignition_logger.info("Startup successful: starting polling")
+            # Clean the errors
+            self.component_error_send(canlib.IGNITION, canlib.ERROR_NONE)
             self.start_poller()
         else:
             ignition_logger.error("A critical component failed. Terminating....")
@@ -144,26 +146,21 @@ class IgnitionDirector(ccomp.ComponentPoller):
 
     def on_poll_poll(self, t):
         """main loop"""
-        try:
-            # Process CMD messages
-            self.process_cmd_message()
+        # Process CMD messages
+        self.process_cmd_message()
 
-            # Process UDP CAN is done asynchronously in different components
+        # Process UDP CAN is done asynchronously in different components
 
-            # Check driver activity
-            self.check_driver_activity()
+        # Check driver activity
+        self.check_driver_activity()
 
-            # System health check
-            if self.check_health_cnt == int(1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY*IgnitionDirector.DIRECTOR_FREQUENCY):
-                ignition_logger.info(f"Teensy healthy? {self._handler['teensy'].is_healthy}")
-                self.system_health_check()
-                self.check_health_cnt = 0
-            else:
-                self.check_health_cnt += 1
+        # System health check
+        if (t - self.check_health_time) > (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY):
+            self.system_health_check()
+            self.check_health_time = t
 
-        except KeyboardInterrupt:
-            ignition_logger.info("Received keyboard interrupt. Terminating....")
-            self.terminate()
+    def on_poll_exit(self):
+        self.terminate()
 
     def component_ready_send(self, component_id):
         """
@@ -268,16 +265,12 @@ class IgnitionDirector(ccomp.ComponentPoller):
         """
         Query system health, update functionality level if necessary
         """
-        # TODO
-        # self.update_functionality_level(new_level)
-        # components = some_healthchec-query
-        #
         minimal_functionality_systems = {
             canlib.CAN_DISPLAY_FRONTEND,
             canlib.CAN_DISPLAY_BACKEND,
             canlib.HACKER_KIOSK_FRONTEND,
             canlib.HACKER_KIOSK_BACKEND,
-            # Teensy?
+            canlib.TEENSY
         }
         medium_functionality_systems = {
             canlib.BESSPIN_TOOL_FREERTOS,
@@ -303,10 +296,12 @@ class IgnitionDirector(ccomp.ComponentPoller):
         hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
         hr: dict  = hm.health_report
 
+        # Get teensy information
+        hr[canlib.TEENSY] = self._handler['teensy'].is_healthy
         for cid, is_healthy in hr.items():
             if not is_healthy:
                 # restart cid
-                ignition_logger.warn(f"Need to send restart request to component with id {cid}")
+                ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
                 #msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_RESTART,
                 #                     dlc=canlib.CAN_DLC_CMD_RESTART,
                 #                     data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART,
@@ -381,7 +376,7 @@ class IgnitionDirector(ccomp.ComponentPoller):
 
     def terminate(self):
         """
-        Terminate ignition
+        Terminating ignition
         """
         self.component_error_send(canlib.IGNITION, canlib.ERROR_UNSPECIFIED)
         ignition_logger.info("Termination State: Enter")
