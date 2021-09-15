@@ -18,50 +18,22 @@ import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
 import cyberphyslib.demonstrator.joystick as cjoy
 import cyberphyslib.demonstrator.health as cyhealth
+import cyberphyslib.demonstrator.teensy as cteensy
+import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.canlib as canlib
 import can as extcan
 
 from cyberphyslib.demonstrator.handler import ComponentHandler
 from cyberphyslib.demonstrator.logger import ignition_logger
 
-#import transitions
-from transitions.extensions import GraphMachine as Machine
-from transitions import State
-
 import time
 import struct
 
-class IgnitionDirector:
+class IgnitionDirector(ccomp.ComponentPoller):
     """
-    Ignition program that implements the desired execution flow
-
-    IgnitionDirector is a Moore FSM with 9 states and 6 inputs, namely
-
-        input = {component_fail, fadecandy_fail, scenario_timeout, cc_msg, can_msg, self_drive}
-        state = {startup, noncrit_failure, ready, terminate, self_drive, restart, timeout, cc_msg, can}
-
-    Two states whose transitions depend on input are startup and the ready state. Callbacks associated with this state
-    machine are responsible for identifying the appropriate inputs based on the component behavior.
+    Ignition program that implements the desired execution flow.
+    The simplified state machine is now implemented without the `transitions` module
     """
-    # FSM description
-    states=[
-        State(name='startup', on_enter='startup_enter'),
-        State(name='ready', on_enter='ready_enter'),
-        State(name='terminate', on_enter='terminate_enter'),
-    ]
-
-    transitions = [
-        # startup logic
-        { 'trigger': 'next_state', 'source': 'startup', 'dest': 'terminate',
-          'conditions': 'input_component_fail' },
-        { 'trigger': 'next_state', 'source': 'startup', 'dest': 'ready',
-          'unless': ['input_component_fail', 'input_noncrit_fail'] },
-
-        # ready logic
-        {'trigger': 'next_state', 'source': 'ready', 'dest': 'ready',
-         'unless': ['input_component_fail', 'input_noncrit_fail']},
-    ]
-
     hacks2patterns = {
         canlib.HACK_NONE: ledm.LedPatterns.NOMINAL,
         #canlib.HACK_OTA: ledm.LedPatterns.NOMINAL, # TODO: add pattern for OTA hack?
@@ -72,18 +44,6 @@ class IgnitionDirector:
         #canlib.HACK_INFOTAINMENT_1: ledm.LedPatterns.ALL_ON,# TODO: add pattern for infotainment hack
         #canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO add pattern for infotainment hack
     }
-
-    @classmethod
-    def draw_graph(cls, fname: str):
-        """draw a fsm graphviz graph (for documentation, troubleshooting)
-
-        NOTE: you will need to install graphviz (with dot)
-        """
-        class TmpObj(object):
-            pass
-        machine = Machine(TmpObj(), states=cls.states,
-                          transitions=cls.transitions, initial='startup', show_conditions=True)
-        machine.get_graph().draw(fname, prog='dot')
 
     @classmethod
     def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
@@ -101,7 +61,6 @@ class IgnitionDirector:
     @property
     def self_drive_mode(self):
         """self drive state exists in the sim service -- don't duplicate or invalidate this"""
-        # TODO: FIXME: ugly access
         return self._handler["beamng"]._in_autopilot
 
     def __init__(self,
@@ -118,7 +77,8 @@ class IgnitionDirector:
                  base_blacklist=False,
                  apply_lists = True
                  ):
-        """ignition state machine"""
+        super().__init__("ignition-director", [], [], sample_frequency=20.0)
+
         self.can_multiverse = None
         self.info_net = None
         self.proxy = None
@@ -138,7 +98,6 @@ class IgnitionDirector:
         self.joystick_name = cconf.JOYSTICK_NAME
 
         self._handler = ComponentHandler()
-        self.machine = Machine(self, states=self.states, transitions=self.transitions, initial='startup', show_conditions=True)
 
         sip = sim_ip
         can_ssith_info = ccan.CanUdpNetwork("secure_infotainment", can_port, sip)
@@ -159,37 +118,46 @@ class IgnitionDirector:
         self.info_net = ccan.CanUdpNetwork("info-net", self.info_port, sip, blacklist=[sim_ip])
         self.cmd_net = ccan.CanTcpNetwork("cc-net", cmd_host, cmd_nodes)
 
-        # input space as class members
-        self.input_noncrit_fail = False
-        self.input_component_fail = False
-
         self.is_finished = False
         self._noncrit = False
 
-    def run(self):
-        """start the state machine, and keep it transitioning until termination"""
+    def on_start(self):
+        """
+        Start function
+        - Initialize components
+        - Start the periodic poller
+        """
+        if self.startup():
+            ignition_logger.info("Startup successful: starting polling")
+            self.start_poller()
+        else:
+            ignition_logger.error("A critical component failed. Terminating....")
+            self.terminate()
+
+    def on_poll_poll(self, t):
+        """main loop"""
         try:
-            self.startup_enter()
-            while not self.is_finished:
-                # advance the state machine
-                self.next_state()
+            # Process CMD messages
+            self.process_cmd_message()
+
+            # Process UDP CAN is done asynchronously in different components
+
+            # Check driver activity
+            self.check_driver_activity()
+
+            # System health check
+            # TODO: in a separate thread
+            #self.system_health_check()
+
+
         except KeyboardInterrupt:
             ignition_logger.info("Received keyboard interrupt. Terminating....")
-            self.terminate_enter()
-
-    def default_input(self):
-        """input initialization"""
-        self.input_noncrit_fail = False
-        self.input_component_fail = False
-
-    def draw_graph(self, fname: str):
-        """draw a fsm graphviz graph (for documentation, troubleshooting)
-
-        NOTE: you will need to install graphviz (with dot)
-        """
-        self.machine.get_graph().draw(fname, prog='dot')
+            self.terminate()
 
     def component_ready_send(self, component_id):
+        """
+        Send CAN_ID_CMD_COMPONENT_READY message
+        """
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_READY,
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_READY,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_READY,
@@ -197,14 +165,13 @@ class IgnitionDirector:
         self.cmd_net.send_msg(msg)
 
     def component_error_send(self, component_id, error_id):
+        """
+        Send CAN_ID_CMD_COMPONENT_ERROR message
+        """
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR,
                                               component_id, error_id))
-        self.cmd_net.send_msg(msg)
-
-    def status_send(self, canid, argument):
-        msg = extcan.Message(arbitration_id=canid, dlc=1, data=struct.pack("!B", argument))
         self.cmd_net.send_msg(msg)
 
     def process_cmd_message(self):
@@ -212,6 +179,7 @@ class IgnitionDirector:
         1) restart BeamNG
         2) update LED pattern
         3) switch active CAN network
+        4) handle external component resets
         """
         recv = self.cmd_net.recv(timeout=self.cc_timeout)
         if recv:
@@ -223,6 +191,8 @@ class IgnitionDirector:
                     if dev_id == canlib.IGNITION:
                         ignition_logger.info("Director: restarting ignition from CMD_RESTART")
                         self.restart_simulator()
+                    #else:
+                    # TODO: handle external component resets
 
                 elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
                     hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
@@ -347,7 +317,7 @@ class IgnitionDirector:
 
     def update_functionality_level(self, new_func_level):
         """
-        Update system functionality level
+        Update system functionality level if Ignition component and its subcomponents
         """
         if new_func_level != self.system_functionality_level:
             levels = [canlib.FUNCTIONALITY_FULL,
@@ -367,6 +337,9 @@ class IgnitionDirector:
                 return
 
     def restart_simulator(self):
+        """
+        Restart BeamNG simulator (car back to the beginning)
+        """
         ignition_logger.info("Restart simulator")
         sim: simulator.Sim = self._handler["beamng"]
         sim.restart_command()
@@ -395,15 +368,20 @@ class IgnitionDirector:
         player.enable_sound(True)
         self.self_drive_scenario_start = None
 
-### STATE ENTRY CALLBACKS
-    def terminate_enter(self):
+    def terminate(self):
+        """
+        Terminate ignition
+        """
         self.component_error_send(canlib.IGNITION, canlib.ERROR_UNSPECIFIED)
         ignition_logger.info("Termination State: Enter")
         self.is_finished = True
         self._handler.exit()
         self.info_net.exit()
 
-    def startup_enter(self):
+    def startup(self) -> bool:
+        """
+        Startup and initialize ignition
+        """
         def register_components():
             # register call of the components to the CAN multiverse network
             for c in self._handler.components:
@@ -436,33 +414,37 @@ class IgnitionDirector:
             self.can_multiverse.register(comp)
             return True
 
-        ignition_logger.info("Startup State: Enter")
         simulator.Sim.kill_beamng(1)
 
         # startup beamng
-        if not start_component(simulator.Sim()): return
+        if not start_component(simulator.Sim()): return False
 
         # startup the multiverse
-        if not start_component(ccan.CanMultiverseComponent(self.can_multiverse)): return
+        if not start_component(ccan.CanMultiverseComponent(self.can_multiverse)): return False
 
         # startup the can location poller
-        if not start_component(ccout.CanOutPoller(self.can_multiverse)): return
+        if not start_component(ccout.CanOutPoller(self.can_multiverse)): return False
 
         # startup led manager
-        if not start_component(ledm.LedManagerComponent.for_ignition()): return
+        if not start_component(ledm.LedManagerComponent.for_ignition()): return False
 
         # startup the heartbeat monitor
         hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
         hm.setup_cc()
         hm.setup_can()
-        if not start_component(hm): return
+        if not start_component(hm): return False
         hm.start_monitor()
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
         player = infotainment.InfotainmentPlayer(self.info_net)
-        if not start_component(ui): return
-        if not start_component(player): return
+        if not start_component(ui): return False
+        if not start_component(player): return False
+
+
+        # Teensy serial reader
+        teensy = cteensy.TeensyMonitor()
+        if not start_component(teensy): return False
 
         # add everything to the can multiverse network
         register_components()
@@ -478,21 +460,4 @@ class IgnitionDirector:
         # startup the joystick monitor
         start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))
 
-        # check if noncritical error occurred
-        if self.input_noncrit_fail:
-            return
-
-        self.default_input()
-        return
-
-    def ready_enter(self):
-        # Process CMD messages
-        self.process_cmd_message()
-
-        # Process UDP CAN is done asynchronously in different components
-
-        # Check driver activity
-        self.check_driver_activity()
-
-        # System health check
-        self.system_health_check()
+        return True
