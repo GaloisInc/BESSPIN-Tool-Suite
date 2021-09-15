@@ -48,6 +48,7 @@ class IgnitionDirector(ccomp.ComponentPoller):
     # Health monitoring features
     DIRECTOR_FREQUENCY = 20.0
     HEALTH_MONITOR_FREQUENCY = 0.1 # Every 10s
+    check_health_cnt: int
 
     @classmethod
     def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
@@ -153,9 +154,10 @@ class IgnitionDirector(ccomp.ComponentPoller):
             self.check_driver_activity()
 
             # System health check
-            if self.check_health_cnt ==((1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY)*IgnitionDirector.DIRECTOR_FREQUENCY):
+            if self.check_health_cnt == int(1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY*IgnitionDirector.DIRECTOR_FREQUENCY):
                 ignition_logger.info(f"Teensy healthy? {self._handler['teensy'].is_healthy}")
                 self.system_health_check()
+                self.check_health_cnt = 0
             else:
                 self.check_health_cnt += 1
 
