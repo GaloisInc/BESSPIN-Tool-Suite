@@ -126,7 +126,8 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         if enable and (self.system_functionality_level == canlib.FUNCTIONALITY_FULL):
             self.play_sound()
         else:
-            self._sound.stop()
+            if self._sound:
+                self._sound.stop()
 
     def on_start(self):
         self.send_message(ccomp.Message(InfotainmentPlayerStatus.READY), "infoplay-events")
@@ -139,28 +140,29 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         """play sound file depending on station select"""
         if self._sound is not None:
             self._sound.stop()
-        mixer.init()
-        mixer.get_init()
-        self._sound = mixer.Sound(
-            str(self.stations[self._sidx])
-        )
-        self._sound.play(loops=-1)
-        self._set_volume()
+        # mixer.init()
+        # mixer.get_init()
+        # self._sound = mixer.Sound(
+        #     str(self.stations[self._sidx])
+        # )
+        # self._sound.play(loops=-1)
+        # self._set_volume()
 
     def _set_volume(self):
         """find audio session and set the master volume given the volume state"""
-        if self._sound_enabled:
-            if self._sound is None:
-                self.play_sound()
-            try:
-                session = AudioUtilities.GetProcessSession(self.session_pid)
-                if session:
-                    volume = session._ctl.QueryInterface(ISimpleAudioVolume)
-                    volume.SetMasterVolume(self._volume, None)
-                else:
-                    raise RuntimeError(f"audio session doesn't exist!")
-            except Exception as exc:
-                info_logger.info(f"Error processing audio session: {exc}")
+        pass
+        # if self._sound_enabled:
+        #     if self._sound is None:
+        #         self.play_sound()
+        #     try:
+        #         session = AudioUtilities.GetProcessSession(self.session_pid)
+        #         if session:
+        #             volume = session._ctl.QueryInterface(ISimpleAudioVolume)
+        #             volume.SetMasterVolume(self._volume, None)
+        #         else:
+        #             raise RuntimeError(f"audio session doesn't exist!")
+        #     except Exception as exc:
+        #         info_logger.info(f"Error processing audio session: {exc}")
 
     @recv_can(canlib.CAN_ID_INFOTAINMENT_STATE, canlib.CAN_FORMAT_INFOTAINMENT_STATE)
     def _(self, data):
