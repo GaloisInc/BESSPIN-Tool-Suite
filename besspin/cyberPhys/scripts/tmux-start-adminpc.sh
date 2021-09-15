@@ -61,9 +61,7 @@ if [ $? != 0 ]
     tmux new-session -s $SESSIONNAME -n script -d
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "powershell.exe\n" C-m
-    tmux send-keys -t $SESSIONNAME "cd .\\BESSPIN-Tool-Suite\\besspin\\cyberPhys\\ignition\\\n" C-m
-    tmux send-keys -t $SESSIONNAME "Get-Content .\\ignition.demonstrator.log -Tail 20\n" C-m
+    tmux send-keys -t $SESSIONNAME "powershell.exe" C-m
 fi
 
 SESSIONNAME="can-display"

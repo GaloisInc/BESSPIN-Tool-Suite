@@ -9,10 +9,10 @@
 for IP in 10.88.88.2 10.88.88.3 10.88.88.5 # InfotainmentThinClient | HackerKiosk | CanDisplay
 do
 	echo "Deploying to ${IP}"
-	rsync --progress -a --exclude=.git/* --exclude=FreeRTOS --exclude=workDir BESSPIN-Tool-Suite pi@${IP}:~/
+	rsync --progress -a --exclude=.git/* --exclude=FreeRTOS --exclude=BESSPIN-Environment --exclude=BESSPIN-Voter-Registration --exclude=workDir BESSPIN-Tool-Suite pi@${IP}:~/
     ssh pi@${IP} "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/cyberphyslib && sudo python3 setup.py install"
 done
 
 echo "Deploying to NUC_2/DebianPc"
 IP=10.88.88.6
-rsync --progress -a --exclude=.git/* --exclude=FreeRTOS --exclude=workDir BESSPIN-Tool-Suite galoisuser@${IP}:~/
+rsync --progress -a --exclude=.git/* --exclude=workDir BESSPIN-Tool-Suite galoisuser@${IP}:~/
