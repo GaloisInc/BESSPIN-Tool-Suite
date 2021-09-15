@@ -121,6 +121,9 @@ class IgnitionDirector(ccomp.ComponentPoller):
         self.is_finished = False
         self._noncrit = False
 
+        # Frequency divider
+        self.check_health_cnt = 0
+
     def on_start(self):
         """
         Start function
@@ -146,9 +149,12 @@ class IgnitionDirector(ccomp.ComponentPoller):
             self.check_driver_activity()
 
             # System health check
-            # TODO: in a separate thread
             #self.system_health_check()
-
+            if self.check_health_cnt == 20: # Once a second?
+                ignition_logger.info(f"Teensy healthy? {self._handler['teensy'].is_healthy}")
+                self.check_health_cnt = 0
+            else:
+                self.check_health_cnt += 1
 
         except KeyboardInterrupt:
             ignition_logger.info("Received keyboard interrupt. Terminating....")

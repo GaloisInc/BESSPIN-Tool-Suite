@@ -66,7 +66,7 @@ class TeensyMonitor(ComponentPoller):
                 self.brake = min(max(tmp_brake, 0), 100)/100
 
             # TODO: remove this from the log?
-            teensy_logger.info(f"Brake: {self.brake}, Throttle: {self.throttle}, Gear: {self.gear}")
+            teensy_logger.debug(f"Brake: {self.brake}, Throttle: {self.throttle}, Gear: {self.gear}")
             self.teensy_serial.reset_input_buffer()
         except Exception as exc:
             teensy_logger.warning(f"Serial port exception: {exc}")  
