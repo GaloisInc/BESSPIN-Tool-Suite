@@ -45,6 +45,10 @@ class IgnitionDirector(ccomp.ComponentPoller):
         #canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO add pattern for infotainment hack
     }
 
+    # Health monitoring features
+    DIRECTOR_FREQUENCY = 20.0
+    HEALTH_MONITOR_FREQUENCY = 0.1 # Every 10s
+
     @classmethod
     def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
         """produce director from the Besspin environment setup file"""
@@ -77,7 +81,7 @@ class IgnitionDirector(ccomp.ComponentPoller):
                  base_blacklist=False,
                  apply_lists = True
                  ):
-        super().__init__("ignition-director", [], [], sample_frequency=20.0)
+        super().__init__("ignition-director", [], [], sample_frequency=IgnitionDirector.DIRECTOR_FREQUENCY)
 
         self.can_multiverse = None
         self.info_net = None
@@ -149,12 +153,9 @@ class IgnitionDirector(ccomp.ComponentPoller):
             self.check_driver_activity()
 
             # System health check
-            #self.system_health_check()
-            if self.check_health_cnt == 20: # Once a second?
+            if int(t) % (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY) == 0:
                 ignition_logger.info(f"Teensy healthy? {self._handler['teensy'].is_healthy}")
-                self.check_health_cnt = 0
-            else:
-                self.check_health_cnt += 1
+                self.system_health_check()
 
         except KeyboardInterrupt:
             ignition_logger.info("Received keyboard interrupt. Terminating....")

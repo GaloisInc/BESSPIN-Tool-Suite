@@ -41,7 +41,7 @@ class TeensyMonitor(ComponentPoller):
     def on_poll_poll(self, t):
         """read and partse serial data"""
         try:
-            val = self.teensy_serial.read(self.READ_LIMIT).decode('utf-8')
+            val = self.teensy_serial.read(self.READ_LIMIT).decode('ascii','ignore')
             gear_raw = self.re_gear.findall(val)
             if gear_raw:
                 gear_raw = int(gear_raw[-1].split()[-1],16)
