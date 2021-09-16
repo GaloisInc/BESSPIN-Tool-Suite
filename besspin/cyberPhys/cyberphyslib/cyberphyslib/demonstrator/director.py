@@ -127,6 +127,8 @@ class IgnitionDirector():
         # Frequency divider
         self.check_health_time = 0.0
 
+        self.teensy = cteensy.TeensyMonitor()
+
     def start(self):
         """
         Start function
@@ -137,11 +139,10 @@ class IgnitionDirector():
             ignition_logger.info("Startup successful: starting polling")
             # Clean the errors
             self.component_error_send(canlib.IGNITION, canlib.ERROR_NONE)
-            self.start_poller()
+            self.main_loop()
         else:
             ignition_logger.error("A critical component failed. Terminating....")
             self.terminate()
-        self.main_loop()
 
     def main_loop(self):
         """main loop"""
@@ -161,13 +162,14 @@ class IgnitionDirector():
 
             # System health check
             if delta_t > (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY):
-                self.system_health_check()
+                #self.system_health_check()
                 self.check_health_time = t
                 print(f"Main loop freq: {cnt/delta_t}[Hz]")
+                print(f"Teensy is healty? {self.teensy.is_healthy}")
                 cnt = 0
 
             # Approximately sleep
-            time.sleep(0.05)
+            time.sleep(0.04)
 
 
     def component_ready_send(self, component_id):
@@ -452,8 +454,7 @@ class IgnitionDirector():
 
 
         # Teensy serial reader
-        teensy = cteensy.TeensyMonitor()
-        if not start_component(teensy): return False
+        self.teensy.start()
 
         # add everything to the can multiverse network
         register_components()

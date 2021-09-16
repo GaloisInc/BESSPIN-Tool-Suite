@@ -33,7 +33,6 @@ import cyberphyslib.canlib as canlib
 from pygame import mixer
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, AudioSession
 
-
 class InfotainmentProxy:
     """infotainment proxy between infotainment ui net and the can multiverse"""
     def __init__(self, info_net: CanNetwork, multiverse: CanNetwork):
@@ -51,6 +50,9 @@ class InfotainmentPlayerStatus(enum.IntEnum):
 
 class InfotainmentUi(ccomp.ComponentPoller):
     """infotainment component that handles the infotainment ui net -> multiverse forwarding"""
+    # Set to True if testing remotely and no audio endpoint is present
+    REMOTE_TESTING = False
+
     def __init__(self, can_network: CanNetwork):
         super().__init__("infoui", [(config.DIRECTOR_PORT, 'infoui-commands')], [(config.INFO_UI_PORT, 'infoui-events'),
                                                                                  (config.INFO_UI_PORT, 'infoui-beamng')])
@@ -59,11 +61,11 @@ class InfotainmentUi(ccomp.ComponentPoller):
     def on_start(self):
         self.send_message(ccomp.Message(InfotainmentUiStatus.READY), "infoui-events")
 
-    # TODO: how to enable switching from self-drive when a button is pressed?
-    # @recv_can(canlib.CAN_ID_BUTTON_PRESSED,canlib.CAN_FORMAT_BUTTON_PRESSED)
-    # def _(self, data):
-    #     # alert simulator to turn off self driving mode
-    #     self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
+    # This should enable switching from self-drive when a button is pressed
+    @recv_can(canlib.CAN_ID_BUTTON_PRESSED,canlib.CAN_FORMAT_BUTTON_PRESSED)
+    def _(self, data):
+        # alert simulator to turn off self driving mode
+        self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
 
 
 class InfotainmentPlayer(ccomp.ComponentPoller):
@@ -140,29 +142,32 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         """play sound file depending on station select"""
         if self._sound is not None:
             self._sound.stop()
-        # mixer.init()
-        # mixer.get_init()
-        # self._sound = mixer.Sound(
-        #     str(self.stations[self._sidx])
-        # )
-        # self._sound.play(loops=-1)
-        # self._set_volume()
+        if not self.REMOTE_TESTING:
+            mixer.init()
+            mixer.get_init()
+            self._sound = mixer.Sound(
+                str(self.stations[self._sidx])
+            )
+            self._sound.play(loops=-1)
+            self._set_volume()
 
     def _set_volume(self):
         """find audio session and set the master volume given the volume state"""
-        pass
-        # if self._sound_enabled:
-        #     if self._sound is None:
-        #         self.play_sound()
-        #     try:
-        #         session = AudioUtilities.GetProcessSession(self.session_pid)
-        #         if session:
-        #             volume = session._ctl.QueryInterface(ISimpleAudioVolume)
-        #             volume.SetMasterVolume(self._volume, None)
-        #         else:
-        #             raise RuntimeError(f"audio session doesn't exist!")
-        #     except Exception as exc:
-        #         info_logger.info(f"Error processing audio session: {exc}")
+        if self.REMOTE_TESTING:
+            pass
+        else:
+            if self._sound_enabled:
+                if self._sound is None:
+                    self.play_sound()
+                try:
+                    session = AudioUtilities.GetProcessSession(self.session_pid)
+                    if session:
+                        volume = session._ctl.QueryInterface(ISimpleAudioVolume)
+                        volume.SetMasterVolume(self._volume, None)
+                    else:
+                        raise RuntimeError(f"audio session doesn't exist!")
+                except Exception as exc:
+                    info_logger.info(f"Error processing audio session: {exc}")
 
     @recv_can(canlib.CAN_ID_INFOTAINMENT_STATE, canlib.CAN_FORMAT_INFOTAINMENT_STATE)
     def _(self, data):
