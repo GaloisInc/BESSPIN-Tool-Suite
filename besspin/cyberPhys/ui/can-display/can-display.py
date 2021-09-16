@@ -38,6 +38,9 @@ STATE_SSITH = "ssith"
 class CanDisplay(threading.Thread):
     ZMQ_POLL_TIMEOUT = 0.1
 
+    # Keep a dictionary of components, and keep tabs on which ones are showing errors
+    component_status = canlib.CanlibComponentNames
+
     def __init__(self):
         # Threading
         super().__init__(name="CanDisplay", daemon=False)
@@ -61,9 +64,24 @@ class CanDisplay(threading.Thread):
         self.state = STATE_NORMAL
         self.error_msg = ""
 
+        # initialize components dictionary - no errors by default
+        for key in self.component_status:
+            self.component_status[key] = canlib.ERROR_NONE
+
         print(f"<{self.__class__.__name__}> Listening on CAN_PORT {net_conf.port_network_commandPort}, and ZMQ_PORT {self.zmq_port}")
 
         self.cmd_thread = threading.Thread(target=self.cmdLoop, args=[], daemon=True)
+
+    def update_component_status(self, component_id, error_id):
+        """
+        Update the component dictionary and update the error message
+        """
+        self.component_status[component_id] = error_id
+        err_msg = ""
+        for key,val in self.component_status:
+            if val != canlib.ERROR_NONE:
+                err_msg += f"\nComponent {canlib.CanlibComponentNames.get(key,None)}: {canlib.CanlibComponentNames.get(val,None)}"
+        self.error_msg = err_msg
 
     def run(self):
         self.cmd_thread.start()
@@ -139,12 +157,12 @@ class CanDisplay(threading.Thread):
                 self.cmd_bus.send(heartbeat_ack)
             elif cid == canlib.CAN_ID_CMD_COMPONENT_ERROR:
                 component_id, error_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, msg.data)
+                self.update_component_status(component_id, error_id)
+
                 if error_id == canlib.ERROR_NONE:
-                    self.error_msg = ""
                     print(f"<{self.__class__.__name__}> No errors")
                 else:
-                    self.error_msg += f"\nComponent {canlib.CanlibComponentNames.get(component_id,None)}: {canlib.CanlibComponentNames.get(error_id,None)}"
-                    print(f"<{self.__class__.__name__}> {self.error_msg}")
+                    print(f"<{self.__class__.__name__}> Component {canlib.CanlibComponentNames.get(component_id,None)}: {canlib.CanlibComponentNames.get(error_id,None)}")
             else:
                 pass
         except Exception as exc:

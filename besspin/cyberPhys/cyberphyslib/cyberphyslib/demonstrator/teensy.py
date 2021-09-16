@@ -70,18 +70,6 @@ class TeensyMonitor(ComponentPoller):
             teensy_logger.warning(f"Serial port exception: {exc}")  
 
     @property
-    def gear(self):
-        return self.gear
-
-    @property
-    def throttle_scaled(self):
-        return self.throttle
-
-    @property
-    def brake_scaled(self):
-        return self.brake
-
-    @property
     def is_healthy(self):
         """is teensy functioning properly?"""
         if self.brake_raw == 0 or self.throttle_raw == 0:

@@ -73,17 +73,18 @@ if [ $? != 0 ]
     tmux new-session -s $SESSIONNAME -n script -d
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "sudo systemctl stop can-ui" C-m
-    tmux send-keys -t $SESSIONNAME "sudo systemctl start can-ui" C-m
+    tmux send-keys -t $SESSIONNAME "sleep 20" C-m
     tmux send-keys -t $SESSIONNAME "sudo systemctl restart can-ui" C-m
     tmux send-keys -t $SESSIONNAME "systemctl status can-ui" C-m
 
     tmux split-window -h -t $SESSIONNAME
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "sudo systemctl stop can-display" C-m
-    tmux send-keys -t $SESSIONNAME "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/can-display" C-m
-    tmux send-keys -t $SESSIONNAME "python3 can-display.py" C-m
+    tmux send-keys -t $SESSIONNAME "sleep 20" C-m
+    tmux send-keys -t $SESSIONNAME "sudo systemctl restart can-display" C-m
+    #tmux send-keys -t $SESSIONNAME "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/can-display" C-m
+    #tmux send-keys -t $SESSIONNAME "python3 can-display.py" C-m
+    tmux send-keys -t $SESSIONNAME "systemctl status can-display" C-m
 fi
 
 SESSIONNAME="debian"

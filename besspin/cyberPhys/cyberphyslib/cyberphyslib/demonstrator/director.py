@@ -29,7 +29,7 @@ from cyberphyslib.demonstrator.logger import ignition_logger
 import time
 import struct
 
-class IgnitionDirector(ccomp.ComponentPoller):
+class IgnitionDirector():
     """
     Ignition program that implements the desired execution flow.
     The simplified state machine is now implemented without the `transitions` module
@@ -48,7 +48,6 @@ class IgnitionDirector(ccomp.ComponentPoller):
     # Health monitoring features
     DIRECTOR_FREQUENCY = 20.0
     HEALTH_MONITOR_FREQUENCY = 0.1 # Every 10s
-    check_health_cnt: int
 
     @classmethod
     def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
@@ -82,7 +81,6 @@ class IgnitionDirector(ccomp.ComponentPoller):
                  base_blacklist=False,
                  apply_lists = True
                  ):
-        super().__init__("ignition-director", [], [], sample_frequency=IgnitionDirector.DIRECTOR_FREQUENCY)
 
         self.can_multiverse = None
         self.info_net = None
@@ -127,9 +125,9 @@ class IgnitionDirector(ccomp.ComponentPoller):
         self._noncrit = False
 
         # Frequency divider
-        self.check_health_time = time.time()
+        self.check_health_time = 0.0
 
-    def on_start(self):
+    def start(self):
         """
         Start function
         - Initialize components
@@ -143,24 +141,34 @@ class IgnitionDirector(ccomp.ComponentPoller):
         else:
             ignition_logger.error("A critical component failed. Terminating....")
             self.terminate()
+        self.main_loop()
 
-    def on_poll_poll(self, t):
+    def main_loop(self):
         """main loop"""
-        # Process CMD messages
-        self.process_cmd_message()
+        self.check_health_time = time.time()
+        cnt = 0
+        while (True):
+            cnt += 1
+            t = time.time()
+            delta_t = t - self.check_health_time
+            # Process CMD messages
+            self.process_cmd_message()
 
-        # Process UDP CAN is done asynchronously in different components
+            # Process UDP CAN is done asynchronously in different components
 
-        # Check driver activity
-        self.check_driver_activity()
+            # Check driver activity
+            self.check_driver_activity()
 
-        # System health check
-        if (t - self.check_health_time) > (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY):
-            self.system_health_check()
-            self.check_health_time = t
+            # System health check
+            if delta_t > (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY):
+                self.system_health_check()
+                self.check_health_time = t
+                print(f"Main loop freq: {cnt/delta_t}[Hz]")
+                cnt = 0
 
-    def on_poll_exit(self):
-        self.terminate()
+            # Approximately sleep
+            time.sleep(0.05)
+
 
     def component_ready_send(self, component_id):
         """
@@ -302,11 +310,6 @@ class IgnitionDirector(ccomp.ComponentPoller):
             if not is_healthy:
                 # restart cid
                 ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
-                #msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_RESTART,
-                #                     dlc=canlib.CAN_DLC_CMD_RESTART,
-                #                     data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART,
-                #                                      cid))
-                #self.cmd_net.send_msg(msg)
 
         func_set = {k for k, v in hr.items() if v}
         if (full_functionality_systems | medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
