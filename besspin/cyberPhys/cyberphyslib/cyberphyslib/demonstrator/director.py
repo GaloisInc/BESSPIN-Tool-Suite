@@ -443,8 +443,8 @@ class IgnitionDirector():
         hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
         hm.setup_cc()
         hm.setup_can()
-        if not start_component(hm): return False
-        hm.start_monitor()
+        #if not start_component(hm): return False
+        #hm.start_monitor()
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)

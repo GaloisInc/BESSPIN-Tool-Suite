@@ -50,9 +50,6 @@ class InfotainmentPlayerStatus(enum.IntEnum):
 
 class InfotainmentUi(ccomp.ComponentPoller):
     """infotainment component that handles the infotainment ui net -> multiverse forwarding"""
-    # Set to True if testing remotely and no audio endpoint is present
-    REMOTE_TESTING = False
-
     def __init__(self, can_network: CanNetwork):
         super().__init__("infoui", [(config.DIRECTOR_PORT, 'infoui-commands')], [(config.INFO_UI_PORT, 'infoui-events'),
                                                                                  (config.INFO_UI_PORT, 'infoui-beamng')])
@@ -77,6 +74,9 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
     vol_increment = 1 / (2 ** 4)
 
     vol_range = 2 ** 4
+
+    # Set to True if testing remotely and no audio endpoint is present
+    REMOTE_TESTING = False
 
     @staticmethod
     def get_named_session(name: str) -> typ.Union[AudioSession, None]:

@@ -84,7 +84,7 @@ class Sim(component.ComponentPoller):
         """kill BeamNG process if it's running"""
         if Sim.is_running_beamng():
             os.system(f"taskkill /im {Sim.beamng_process_name}")
-            time.sleep(1)
+            time.sleep(2)
             if Sim.is_running_beamng():
                 if attempts > 0:
                     logging.warning(f"kill_beamng failed. Trying again...")
