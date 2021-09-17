@@ -96,7 +96,7 @@ class Sim(component.ComponentPoller):
     in_descr = config.BEAMNG_COMPONENT_INPUT
     out_descr = config.BEAMNG_COMPONENT_OUTPUT
 
-    def __init__(self):
+    def __init__(self, use_race_car=False):
         self.port = config.BEAMNG_PORT
         self.path = config.BEAMNG_PATH
 
@@ -124,6 +124,7 @@ class Sim(component.ComponentPoller):
         self._is_paused = False
         # NOTE: start with minial functionality
         self.system_functionality_level = canlib.FUNCTIONALITY_FULL
+        self.use_race_car = use_race_car
 
     def on_start(self) -> None:
         if not self.stopped:
@@ -151,8 +152,12 @@ class Sim(component.ComponentPoller):
 
         self._scenario = Scenario(config.BEAMNG_SCENARIO_MAP, 'SSITH',
                                   description='Drive protected.')
-        self._vehicle = Vehicle('ego_vehicle', licence='SSITH', **config.BEAMNG_VEHICLE_CONFIG,
-                                color='Black')
+        if self.use_race_car:
+            self._vehicle = Vehicle('ego_vehicle', licence='SSITH', **config.BEAMNG_RACE_CAR_CONFIG,
+                                    color='Black')
+        else:
+            self._vehicle = Vehicle('ego_vehicle', licence='SSITH', **config.BEAMNG_VEHICLE_CONFIG,
+                                    color='Black')
 
         gforces = GForces()
         electrics = Electrics()
