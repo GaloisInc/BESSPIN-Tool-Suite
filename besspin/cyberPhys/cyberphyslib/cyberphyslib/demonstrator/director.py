@@ -435,7 +435,7 @@ class IgnitionDirector():
 
         # hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
         # hr: dict  = hm.health_report
-        # 
+        #
         # # Get teensy information
         # hr[canlib.TEENSY] = self._handler['teensy'].is_healthy
         # self.component_health_check(self.minimal_functionality_systems, hr)
@@ -590,7 +590,7 @@ class IgnitionDirector():
         if not start_component(player): return False
 
         # Teensy serial reader
-        #self.teensy.start()
+        self.teensy.start()
 
         # add everything to the can multiverse network
         register_components()
