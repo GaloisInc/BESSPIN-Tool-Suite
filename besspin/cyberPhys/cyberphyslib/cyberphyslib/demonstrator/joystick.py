@@ -12,13 +12,12 @@ import collections
 import enum
 import pygame
 import abc
-from collections import deque
+
 import numpy as np
+
 from .component import ComponentPoller, ComponentStatus
-import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
 from cyberphyslib.demonstrator.logger import jmonitor_logger
-from cyberphyslib.demonstrator.simulator import BeamNgCommand
 import cyberphyslib.canlib as ccan
 
 

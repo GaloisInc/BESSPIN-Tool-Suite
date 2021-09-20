@@ -27,9 +27,11 @@ if [ $? != 0 ]
     tmux split-window -h -t $SESSIONNAME
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "sudo systemctl stop infotainment-backend" C-m
-    tmux send-keys -t $SESSIONNAME "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/infotainment" C-m
-    tmux send-keys -t $SESSIONNAME "python3 infotainment-backend.py" C-m
+    tmux send-keys -t $SESSIONNAME "sleep 20" C-m
+    tmux send-keys -t $SESSIONNAME "sudo systemctl restart infotainment-backend" C-m
+    #tmux send-keys -t $SESSIONNAME "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/infotainment" C-m
+    #tmux send-keys -t $SESSIONNAME "python3 infotainment-backend.py" C-m
+    tmux send-keys -t $SESSIONNAME "systemctl status infotainment-backend" C-m
 fi
 
 SESSIONNAME="hacker-kiosk"
@@ -41,15 +43,18 @@ if [ $? != 0 ]
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
     tmux send-keys -t $SESSIONNAME "/home/pi/mouse-config.sh" C-m
+    tmux send-keys -t $SESSIONNAME "sleep 20" C-m
     tmux send-keys -t $SESSIONNAME "sudo systemctl restart hacker-ui" C-m
     tmux send-keys -t $SESSIONNAME "systemctl status hacker-ui" C-m
 
     tmux split-window -h -t $SESSIONNAME
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh pi@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "sudo systemctl stop hacker-kiosk" C-m
-    tmux send-keys -t $SESSIONNAME "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk" C-m
-    tmux send-keys -t $SESSIONNAME "python3 kiosk-backend.py --deploy-mode" C-m
+    tmux send-keys -t $SESSIONNAME "sleep 20" C-m
+    tmux send-keys -t $SESSIONNAME "sudo systemctl restart hacker-kiosk" C-m
+    tmux send-keys -t $SESSIONNAME "systemctl status hacker-kiosk" C-m
+    #tmux send-keys -t $SESSIONNAME "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk" C-m
+    #tmux send-keys -t $SESSIONNAME "python3 kiosk-backend.py --deploy-mode" C-m
 fi
 
 SESSIONNAME="simPc"
@@ -61,9 +66,7 @@ if [ $? != 0 ]
     tmux new-session -s $SESSIONNAME -n script -d
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "powershell.exe\n" C-m
-    tmux send-keys -t $SESSIONNAME "cd .\\BESSPIN-Tool-Suite\\besspin\\cyberPhys\\ignition\\\n" C-m
-    tmux send-keys -t $SESSIONNAME "Get-Content .\\ignition.demonstrator.log -Tail 20\n" C-m
+    tmux send-keys -t $SESSIONNAME "powershell.exe" C-m
 fi
 
 SESSIONNAME="can-display"
@@ -75,17 +78,18 @@ if [ $? != 0 ]
     tmux new-session -s $SESSIONNAME -n script -d
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "sudo systemctl stop can-ui" C-m
-    tmux send-keys -t $SESSIONNAME "sudo systemctl start can-ui" C-m
+    tmux send-keys -t $SESSIONNAME "sleep 20" C-m
     tmux send-keys -t $SESSIONNAME "sudo systemctl restart can-ui" C-m
     tmux send-keys -t $SESSIONNAME "systemctl status can-ui" C-m
 
     tmux split-window -h -t $SESSIONNAME
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "sudo systemctl stop can-display" C-m
-    tmux send-keys -t $SESSIONNAME "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/can-display" C-m
-    tmux send-keys -t $SESSIONNAME "python3 can-display.py" C-m
+    tmux send-keys -t $SESSIONNAME "sleep 20" C-m
+    tmux send-keys -t $SESSIONNAME "sudo systemctl restart can-display" C-m
+    #tmux send-keys -t $SESSIONNAME "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/can-display" C-m
+    #tmux send-keys -t $SESSIONNAME "python3 can-display.py" C-m
+    tmux send-keys -t $SESSIONNAME "systemctl status can-display" C-m
 fi
 
 SESSIONNAME="debian"

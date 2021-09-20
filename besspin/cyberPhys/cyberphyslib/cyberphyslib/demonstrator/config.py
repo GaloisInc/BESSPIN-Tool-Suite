@@ -17,7 +17,7 @@ BRIGHTNESS_FACTOR = 0.8
 
 # port timeouts
 SCENARIO_TIMEOUT = 5*60 # s
-CC_TIMEOUT = 1 # s
+CC_TIMEOUT = 0.01 # s
 
 # name of joystick for ignition to monitor
 JOYSTICK_NAME = 'FANATEC Podium Wheel Base DD1'
@@ -83,6 +83,7 @@ BEAMNG_COMPONENT_INPUT = [(DIRECTOR_PORT, 'beamng-commands'),
 
 # keyword arguments to pass to Vehicle when creating a vehicle for the sim scenario
 BEAMNG_VEHICLE_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk854t_A.pc'}
+BEAMNG_RACE_CAR_CONFIG = {"model" : "etk800", "partConfig": 'vehicles/etk800/etk856ttsportplus_A.pc'}
 
 # game settings for beamng
 BEAMNG_GRAPHICS_SETTINGS = {'GraphicDisplayModes': 'Fullscreen',

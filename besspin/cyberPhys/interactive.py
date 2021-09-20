@@ -7,9 +7,9 @@ from logging import warn
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
 import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
+from besspin.cyberPhys.relaymanager import RelayManager
 
-
-import cmd, os, threading, io
+import cmd, threading
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -114,6 +114,14 @@ class cyberPhysShell(cmd.Cmd):
         for iTarget in range(1,getSetting('nTargets')+1):
             printAndLog(f"<target{iTarget}>: {self.getTargetMember(iTarget,'ipTarget')}")
         return
+
+    def do_restart_teensy(self,inp):
+        """
+        Restart Teensy board
+        """
+        printAndLog("Restarting Teensy")
+        RelayManager.toggleRelays()
+        printAndLog("Teensy restarted")
 
     def do_uart(self,inp):
         """uart
