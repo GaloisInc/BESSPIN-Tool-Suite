@@ -30,7 +30,6 @@ import cyberphyslib.demonstrator.can as cycan
 from cyberphyslib.demonstrator.logger import health_logger
 
 
-
 def ip2int(ip):
     """Convert an IP string to an int"""
     packedIP = socket.inet_aton(ip)
@@ -162,9 +161,8 @@ class BusHeartbeatMonitor(HealthMonitor):
                           data=struct.pack(canspecs.CAN_FORMAT_HEARTBEAT_REQ, req_number))
         return msg
 
-    def __init__(self, client_ids: typing.Sequence[int], bus: typing.Union[TcpBus, UdpBus]):
+    def __init__(self, client_ids: typing.Sequence[int]):
         self.curr_req_number = 0
-        self.bus = bus
         self.response_buffer: typing.Dict[int, typing.Deque[float]] = {
             c: collections.deque(maxlen=self.maxlen) for c in client_ids
         }
@@ -181,15 +179,11 @@ class BusHeartbeatMonitor(HealthMonitor):
             if response is not None:
                 self.response_buffer[client_id].append(time.time())
 
-    def send_heartbeat_req_msg(self, req_number: int):
-        """set REQ can packet over the TCP bus"""
-        m = self.form_heartbeat_req_msg(req_number)
-        self.bus.send_msg(m)
-
-    def send_req_nodes(self):
-        """send REQ to nodes"""
-        self.send_heartbeat_req_msg(self.curr_req_number)
+    def get_req_msg(self) -> can.Message:
+        """generate REQ msg"""
+        m = self.form_heartbeat_req_msg(self.curr_req_number)
         self.curr_req_number += 1
+        return m
 
     def run_health_test(self) -> bool:
         """implement the heartbeat health:
@@ -218,7 +212,7 @@ class BusHeartbeatMonitor(HealthMonitor):
 class HeartbeatMonitor(threading.Thread):
     FREQUENCY = 0.1
 
-    def __init__(self, tcp_bus: TcpBus):
+    def __init__(self):
         threading.Thread.__init__(self,daemon=True)
         self.services = {
             cids.CAN_DISPLAY_FRONTEND:
@@ -260,13 +254,14 @@ class HeartbeatMonitor(threading.Thread):
             cids.HACKER_KIOSK_BACKEND: cids.HACKER_KIOSK_BACKEND,
             cids.INFOTAINMENT_BACKEND: cids.INFOTAINMENT_BACKEND,
         }
-        self.component_monitor = BusHeartbeatMonitor(self.tcp_descr,tcp_bus)
+        self.component_monitor = BusHeartbeatMonitor(self.tcp_descr)
         self.ping_monitors  = {k: PingMonitor(addr) for k, addr in self.pings.items()}
         self.ota_monitors = {k: OtaMonitor(addr) for k, addr in self.https.items()}
         self.service_monitors = {k: ServiceMonitor(params["service_name"], params["address"],
                                                    user=params["user"],
                                                    password=params["password"]) for k, params in self.services.items()}
         self._health_report = {}
+        #self.dummy = DummyComp()
 
     def run(self):
         while True:
@@ -293,12 +288,27 @@ class HeartbeatMonitor(threading.Thread):
                     health_logger.debug(f"WARNING! {k} Ping failed health check")
 
             health_logger.debug("Testing TCP")
-            self.component_monitor.send_req_nodes()
+            health_report = self.component_monitor.run_health_tests()
+            kmap = {v: k for k, v in self.tcp_descr.items()}
+            ret.update({kmap[k]: v for k, v in health_report.items()})
+            if not all(health_report.values()):
+                health_logger.debug(f"Health Status: {health_report}")
+                health_logger.debug(f"ERROR! TCP Failed")
 
             self._health_report = ret
-
-            time.sleep(1.0/self.FREQUENCY)
     
     @property
     def health_report(self):
         return self._health_report
+
+# class DummyComp(cycomp.ComponentPoller):
+
+#     def __init__(self):
+#         super().__init__("health-monitor", set(), set(), sample_frequency=1)
+
+#     def on_poll_poll(self, t):
+#         print("I am dummy poller")
+
+#     @recv_can(canspecs.CAN_ID_HEARTBEAT_ACK, canspecs.CAN_FORMAT_HEARTBEAT_ACK)
+#     def _(self, data):
+#         print(f"Dummy poller got ACK: {data}")

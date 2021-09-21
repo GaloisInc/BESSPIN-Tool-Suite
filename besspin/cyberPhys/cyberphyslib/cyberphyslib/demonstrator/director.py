@@ -84,6 +84,7 @@ class IgnitionDirector():
     }
 
     HEALTH_MONITOR_FREQUENCY = 0.1 # Every 10s
+    HEART_RATE_FREQUENCY = 1.0 # Every 1s
 
     minimal_functionality_systems = {
         canlib.CAN_DISPLAY_FRONTEND: ComponentHealthTracker(cid=canlib.CAN_DISPLAY_FRONTEND,can_be_reset=False),
@@ -200,7 +201,7 @@ class IgnitionDirector():
         self.check_health_time = 0.0
 
         self.teensy = cteensy.TeensyMonitor()
-        self.hm = cyhealth.HeartbeatMonitor(self.cmd_net)
+        self.hm = cyhealth.HeartbeatMonitor()
 
     def start(self):
         """
@@ -220,11 +221,14 @@ class IgnitionDirector():
     def main_loop(self):
         """main loop"""
         self.check_health_time = time.time()
+        self.check_heartbeat_time = time.time()
         cnt = 0
         while (True):
             cnt += 1
             t = time.time()
             delta_t = t - self.check_health_time
+            hr_delta_t = t - self.check_heartbeat_time
+
             # Process CMD messages
             self.process_cmd_message()
 
@@ -241,6 +245,14 @@ class IgnitionDirector():
                 self.control['throttle'] = self.teensy.throttle
                 self.control['brake'] = self.teensy.brake
                 self.control_evt = True
+
+            # Heartbeat
+            if hr_delta_t > (1/IgnitionDirector.HEART_RATE_FREQUENCY):
+                self.check_heartbeat_time = t
+                print("sending heartbeat")
+                hr_msg = self.hm.component_monitor.get_req_msg()
+                self.cmd_net.send_msg(hr_msg)
+
 
             # System health check
             if delta_t > (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY):
@@ -343,6 +355,7 @@ class IgnitionDirector():
                 elif cid == canlib.CAN_ID_HEARTBEAT_ACK:
                     # Update response
                     client_id, req_num = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_ACK, msg.data)
+                    print(f"Got heartbeat response from {client_id} number {req_num}")
                     self.hm.component_monitor.submit_response(client_id, (client_id, req_num))
                 else:
                     pass
@@ -580,6 +593,7 @@ class IgnitionDirector():
 
         # startup the heartbeat monitor
         self.hm.start()
+        #if not start_component(self.hm.dummy): return False
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
