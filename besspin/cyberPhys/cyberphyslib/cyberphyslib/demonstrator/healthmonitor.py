@@ -142,27 +142,18 @@ class OtaMonitor(HttpMonitor):
     def check_response(self, ret: requests.Response) -> bool:
         return ret.status_code == 200
 
-
-
-
-class HeartbeatMonitorComponent(cycomp.ComponentPoller):
+HeartbeatResponseType = typing.Tuple[float, float]
+class BusHeartbeatMonitor(HealthMonitor):
     """
-    Heartbeat Monitor Component (component to check the health of the clients)
+    Heartbeat monitor is responsible for
 
-    FIXME: all clients must be registered or else the monitor wont receive at the correct rate
-
-    Examples:
-        ```
-        myc = heartbeat_component("myc", {("msg-in", 5006)}, {"msg-out", 5007})
-        client_ids = [0x45, 0x56]
-        myc.register_heartbeat_bus(bus_obj, client_ids)
-        myc.start()
-        ```
+        1. sending out the heartbeat requests (REQ)
+        2. listening for heartbeat acknowledgements (ACK)
+        3. determining system health from ACK patterns
     """
-    def __init__(self, bus: UdpBus):
-        super().__init__("hbmonitor", [], [], sample_frequency=1.0)
-        self.udp_bus = bus
-        self.req_number = 0
+    # length of response buffers (time horizon of ACKs)
+    maxlen = 5
+    wait_period = 10.0
 
     @staticmethod
     def form_heartbeat_req_msg(req_number: int):
@@ -171,31 +162,63 @@ class HeartbeatMonitorComponent(cycomp.ComponentPoller):
                           data=struct.pack(canspecs.CAN_FORMAT_HEARTBEAT_REQ, req_number))
         return msg
 
-    def on_poll_poll(self, t):
-        # send heartbeat request
-        self.req_number += 1
-        m = self.form_heartbeat_req_msg(self.req_number)
-        self.udp_bus.send_msg(m)
+    def __init__(self, client_ids: typing.Sequence[int], bus: typing.Union[TcpBus, UdpBus]):
+        self.curr_req_number = 0
+        self.bus = bus
+        self.response_buffer: typing.Dict[int, typing.Deque[float]] = {
+            c: collections.deque(maxlen=self.maxlen) for c in client_ids
+        }
+        self.start_time = time.time()
 
-    @property
-    def is_healthy(self) -> bool:
-        """health property"""
-        return False
+    def submit_response(self, client_id: int, response: HeartbeatResponseType):
+        """submit a response from client_id to the ACK buffer"""
+        if client_id not in self.response_buffer:
+            # TODO: FIXME: add fault location
+            idmap = {v: k for k, v in cids.__dict__.items() if isinstance(v, int)}
+            cname = idmap.get(client_id, "<UNKNOWN>")
+            print(f"WARNING! Received unanticipated response {client_id} ({cname})")
+        else:
+            if response is not None:
+                self.response_buffer[client_id].append(time.time())
 
-    @property
-    def is_unhealthy(self) -> bool:
-        return not self.is_healthy
+    def send_heartbeat_req_msg(self, req_number: int):
+        """set REQ can packet over the TCP bus"""
+        m = self.form_heartbeat_req_msg(req_number)
+        self.bus.send_msg(m)
 
-    @recv_can(canspecs.CAN_ID_HEARTBEAT_ACK, canspecs.CAN_FORMAT_HEARTBEAT_ACK)
-    def _(self, data):
-        """UDP Acknowledge: submit the ack to the monitor"""
-        cid, rnum = data
-        print(f"Got response from component {cid} rnum {rnum}")
+    def send_req_nodes(self):
+        """send REQ to nodes"""
+        self.send_heartbeat_req_msg(self.curr_req_number)
+        self.curr_req_number += 1
+
+    def run_health_test(self) -> bool:
+        """implement the heartbeat health:
+            for a given history of component with component id cid, if the maximum value is
+            within MAXLEN of the current REQ number, the component is considered healthy
+        """
+        return all(self.run_health_tests())
+
+    def run_health_tests(self) -> typing.Dict[typing.Hashable, bool]:
+        """return health result for each component entered in the response buffer"""
+        outcome = {k: True for k in self.response_buffer.keys()}
+        for cid, buff in self.response_buffer.items():
+            if len(buff) > 0:
+                ltime = max(buff)
+                delta = time.time() - ltime
+                if delta > self.maxlen:
+                    health_logger.debug(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test!")
+                    outcome[cid] = False
+            else:
+                if time.time() - self.start_time > self.wait_period:
+                    health_logger.debug(f"ERROR: Component with ID {cid} Has Failed Heartbeat Health Test (No Submissions)!")
+                    outcome[cid] = False
+        return outcome
+
 
 class HeartbeatMonitor(threading.Thread):
     FREQUENCY = 0.1
 
-    def __init__(self):
+    def __init__(self, tcp_bus: TcpBus):
         threading.Thread.__init__(self,daemon=True)
         self.services = {
             cids.CAN_DISPLAY_FRONTEND:
@@ -230,19 +253,20 @@ class HeartbeatMonitor(threading.Thread):
             cids.DEBIAN_2_LMCO : "10.88.88.21",
             cids.DEBIAN_3 : "10.88.88.31",
         }
-
-        self.component_monitor = None
+        self.tcp_descr = {
+            cids.BESSPIN_TOOL_FREERTOS: cids.BESSPIN_TOOL_FREERTOS,
+            cids.BESSPIN_TOOL_DEBIAN: cids.BESSPIN_TOOL_DEBIAN,
+            cids.CAN_DISPLAY_BACKEND: cids.CAN_DISPLAY_BACKEND,
+            cids.HACKER_KIOSK_BACKEND: cids.HACKER_KIOSK_BACKEND,
+            cids.INFOTAINMENT_BACKEND: cids.INFOTAINMENT_BACKEND,
+        }
+        self.component_monitor = BusHeartbeatMonitor(self.tcp_descr,tcp_bus)
         self.ping_monitors  = {k: PingMonitor(addr) for k, addr in self.pings.items()}
         self.ota_monitors = {k: OtaMonitor(addr) for k, addr in self.https.items()}
         self.service_monitors = {k: ServiceMonitor(params["service_name"], params["address"],
                                                    user=params["user"],
                                                    password=params["password"]) for k, params in self.services.items()}
         self._health_report = {}
-    
-    def start_monitor(self, can_bus):
-        """monitor initialization"""
-        self.component_monitor = HeartbeatMonitorComponent(can_bus)
-        self.component_monitor.start()
 
     def run(self):
         while True:
@@ -267,6 +291,9 @@ class HeartbeatMonitor(threading.Thread):
                 ret[k] = hs
                 if not hs:
                     health_logger.debug(f"WARNING! {k} Ping failed health check")
+
+            health_logger.debug("Testing TCP")
+            self.component_monitor.send_req_nodes()
 
             self._health_report = ret
 

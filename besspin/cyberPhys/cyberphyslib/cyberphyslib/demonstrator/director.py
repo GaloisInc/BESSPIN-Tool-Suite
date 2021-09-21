@@ -200,7 +200,7 @@ class IgnitionDirector():
         self.check_health_time = 0.0
 
         self.teensy = cteensy.TeensyMonitor()
-        self.hm = cyhealth.HeartbeatMonitor()
+        self.hm = cyhealth.HeartbeatMonitor(self.cmd_net)
 
     def start(self):
         """
@@ -340,6 +340,10 @@ class IgnitionDirector():
                     else:
                         pattern = ledm.LedPatterns.SSITH
                     lm.update_pattern(ledm.LedPatterns(pattern))
+                elif cid == canlib.CAN_ID_HEARTBEAT_ACK:
+                    # Update response
+                    client_id, req_num = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_ACK, msg.data)
+                    self.hm.component_monitor.submit_response(client_id, (client_id, req_num))
                 else:
                     pass
             except Exception as exc:
@@ -575,12 +579,7 @@ class IgnitionDirector():
         if not start_component(ledm.LedManagerComponent.for_ignition()): return False
 
         # startup the heartbeat monitor
-        #hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
-        #hm.setup_cc()
-        #hm.setup_can()
         self.hm.start()
-        #if not start_component(hm): return False
-        self.hm.start_monitor(self.can_multiverse)
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
