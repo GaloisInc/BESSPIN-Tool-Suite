@@ -438,7 +438,7 @@ class IgnitionDirector():
         print(hr)
         
         # Get teensy information
-        hr[canlib.TEENSY] = self._handler['teensy'].is_healthy
+        hr[canlib.TEENSY] = self.teensy.is_healthy
         # self.component_health_check(self.minimal_functionality_systems, hr)
         # self.component_health_check(self.medium_functionality_systems, hr)
         # self.component_health_check(self.full_functionality_systems, hr)

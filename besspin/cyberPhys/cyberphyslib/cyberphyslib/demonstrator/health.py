@@ -84,20 +84,20 @@ class HeartbeatMonitor(cycomp.ComponentPoller):
         self.monitor = {"10.88.88.4": cids.IGNITION}
 
         self.udp_descr = {
-            cids.INFOTAINMENT_SERVER_1: ip2int('10.88.88.11'),
-            cids.FREERTOS_1: ip2int('12.88.88.10'),
-            cids.INFOTAINMENT_SERVER_2: ip2int('10.88.88.21'),
-            cids.FREERTOS_2_CHERI: ip2int('22.88.88.10'),
-            cids.INFOTAINMENT_SERVER_3: ip2int('10.88.88.31'),
-            cids.FREERTOS_3: ip2int('32.88.88.10'),
+#            cids.INFOTAINMENT_SERVER_1: ip2int('10.88.88.11'),
+#            cids.FREERTOS_1: ip2int('12.88.88.10'),
+#            cids.INFOTAINMENT_SERVER_2: ip2int('10.88.88.21'),
+#            cids.FREERTOS_2_CHERI: ip2int('22.88.88.10'),
+#            cids.INFOTAINMENT_SERVER_3: ip2int('10.88.88.31'),
+#            cids.FREERTOS_3: ip2int('32.88.88.10'),
         }
 
         self.tcp_descr = {
-            cids.BESSPIN_TOOL_FREERTOS: cids.BESSPIN_TOOL_FREERTOS,
-            cids.BESSPIN_TOOL_DEBIAN: cids.BESSPIN_TOOL_DEBIAN,
-            cids.CAN_DISPLAY_BACKEND: cids.CAN_DISPLAY_BACKEND,
-            cids.HACKER_KIOSK_BACKEND: cids.HACKER_KIOSK_BACKEND,
-            cids.INFOTAINMENT_BACKEND: cids.INFOTAINMENT_BACKEND,
+#            cids.BESSPIN_TOOL_FREERTOS: cids.BESSPIN_TOOL_FREERTOS,
+#            cids.BESSPIN_TOOL_DEBIAN: cids.BESSPIN_TOOL_DEBIAN,
+#            cids.CAN_DISPLAY_BACKEND: cids.CAN_DISPLAY_BACKEND,
+#            cids.HACKER_KIOSK_BACKEND: cids.HACKER_KIOSK_BACKEND,
+#            cids.INFOTAINMENT_BACKEND: cids.INFOTAINMENT_BACKEND,
         }
 
         self.component_monitor = HeartbeatMonitorComponent("can_monitor", set(), set())
