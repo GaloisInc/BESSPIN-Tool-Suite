@@ -433,22 +433,23 @@ class IgnitionDirector():
         # This is how we should be handling components
 
 
-        # hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
-        # hr: dict  = hm.health_report
-        #
-        # # Get teensy information
-        # hr[canlib.TEENSY] = self._handler['teensy'].is_healthy
+        hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
+        hr: dict  = hm.health_report
+        print(hr)
+        
+        # Get teensy information
+        hr[canlib.TEENSY] = self._handler['teensy'].is_healthy
         # self.component_health_check(self.minimal_functionality_systems, hr)
         # self.component_health_check(self.medium_functionality_systems, hr)
         # self.component_health_check(self.full_functionality_systems, hr)
-        #
+        
         # Here we need to set the functionality level
         # iterate over components, if at least one UNHEALHY in each set, mark the level?
 
-        # for cid, is_healthy in hr.items():
-        #     if not is_healthy:
-        #         # restart cid
-        #         ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
+        for cid, is_healthy in hr.items():
+            if not is_healthy:
+                # restart cid
+                ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
 
         # func_set = {k for k, v in hr.items() if v}
         # if (full_functionality_systems | medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
@@ -577,11 +578,11 @@ class IgnitionDirector():
         if not start_component(ledm.LedManagerComponent.for_ignition()): return False
 
         # startup the heartbeat monitor
-        #hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
+        hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
         #hm.setup_cc()
         #hm.setup_can()
-        #if not start_component(hm): return False
-        #hm.start_monitor()
+        if not start_component(hm): return False
+        hm.start_monitor()
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
