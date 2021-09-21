@@ -130,6 +130,29 @@ class HeartbeatMonitor(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self,daemon=True)
+        self.services = {
+            cids.CAN_DISPLAY_FRONTEND:
+                {
+                    "user" : "pi",
+                    "password": "WelcomeToGalois",
+                    "address" : "10.88.88.5",
+                    "service_name": "can-ui"
+                },
+            cids.HACKER_KIOSK_FRONTEND:
+                {
+                    "user" : "pi",
+                    "password": "WelcomeToGalois",
+                    "address" : "10.88.88.3",
+                    "service_name": "hacker-ui"
+                },
+            cids.INFOTAINMENT_THIN_CLIENT:
+                {
+                    "user" : "pi",
+                    "password": "WelcomeToGalois",
+                    "address" : "10.88.88.2",
+                    "service_name": "infotainment"
+                }
+                    }
         self.https = {
                 cids.OTA_UPDATE_SERVER_1 : "http://10.88.88.11:5050",
                 cids.OTA_UPDATE_SERVER_2 : "http://10.88.88.21:5050",
@@ -137,6 +160,9 @@ class HeartbeatMonitor(threading.Thread):
             }
     
         self.ota_monitors = {k: OtaMonitor(addr) for k, addr in self.https.items()}
+        self.service_monitors = {k: ServiceMonitor(params["service_name"], params["address"],
+                                                   user=params["user"],
+                                                   password=params["password"]) for k, params in self.services.items()}
         self._health_report = {}
     
     def run(self):
@@ -148,6 +174,13 @@ class HeartbeatMonitor(threading.Thread):
                 ret[k] = hs
                 if not hs:
                     health_logger.debug(f"WARNING! {k} HTTP failed health check")
+            
+            health_logger.debug("Testing Services")
+            for k, v in self.service_monitors.items():
+                hs = v.is_healthy
+                ret[k] = hs
+                if not hs:
+                    health_logger.debug(f"WARNING! {k} Service failed health check")
             
             self._health_report = ret
 
