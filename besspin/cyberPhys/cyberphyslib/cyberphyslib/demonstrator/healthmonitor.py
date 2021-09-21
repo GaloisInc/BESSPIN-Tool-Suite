@@ -244,24 +244,36 @@ class HeartbeatMonitor(threading.Thread):
             }
         self.pings = {
             cids.DEBIAN_1 : "10.88.88.11",
+            cids.FREERTOS_1: "10.88.88.12",
             cids.DEBIAN_2_LMCO : "10.88.88.21",
+            cids.FREERTOS_2_CHERI: "10.88.88.22",
             cids.DEBIAN_3 : "10.88.88.31",
+            cids.FREERTOS_3: "10.88.88.32"
         }
-        self.tcp_descr = {
+        self.heartbeat_desc = {
+            # TCP components
             cids.BESSPIN_TOOL_FREERTOS: cids.BESSPIN_TOOL_FREERTOS,
             cids.BESSPIN_TOOL_DEBIAN: cids.BESSPIN_TOOL_DEBIAN,
             cids.CAN_DISPLAY_BACKEND: cids.CAN_DISPLAY_BACKEND,
             cids.HACKER_KIOSK_BACKEND: cids.HACKER_KIOSK_BACKEND,
             cids.INFOTAINMENT_BACKEND: cids.INFOTAINMENT_BACKEND,
+            # UDP components
+            # NOTE: only active network components can respond
+            cids.INFOTAINMENT_SERVER_1: ip2int('10.88.88.11'),
+            cids.INFOTAINMENT_SERVER_2: ip2int('10.88.88.21'),
+            cids.INFOTAINMENT_SERVER_3: ip2int('10.88.88.31'),
+            # FreeRTOS is temporaily handled via pings
+            #cids.FREERTOS_1: ip2int('12.88.88.10'),
+            #cids.FREERTOS_2_CHERI: ip2int('22.88.88.10'),
+            #cids.FREERTOS_3: ip2int('32.88.88.10')
         }
-        self.component_monitor = BusHeartbeatMonitor(self.tcp_descr)
+        self.component_monitor = BusHeartbeatMonitor(self.heartbeat_desc)
         self.ping_monitors  = {k: PingMonitor(addr) for k, addr in self.pings.items()}
         self.ota_monitors = {k: OtaMonitor(addr) for k, addr in self.https.items()}
         self.service_monitors = {k: ServiceMonitor(params["service_name"], params["address"],
                                                    user=params["user"],
                                                    password=params["password"]) for k, params in self.services.items()}
         self._health_report = {}
-        #self.dummy = DummyComp()
 
     def run(self):
         while True:
@@ -289,7 +301,7 @@ class HeartbeatMonitor(threading.Thread):
 
             health_logger.debug("Testing TCP")
             health_report = self.component_monitor.run_health_tests()
-            kmap = {v: k for k, v in self.tcp_descr.items()}
+            kmap = {v: k for k, v in self.heartbeat_desc.items()}
             ret.update({kmap[k]: v for k, v in health_report.items()})
             if not all(health_report.values()):
                 health_logger.debug(f"Health Status: {health_report}")
@@ -300,15 +312,3 @@ class HeartbeatMonitor(threading.Thread):
     @property
     def health_report(self):
         return self._health_report
-
-# class DummyComp(cycomp.ComponentPoller):
-
-#     def __init__(self):
-#         super().__init__("health-monitor", set(), set(), sample_frequency=1)
-
-#     def on_poll_poll(self, t):
-#         print("I am dummy poller")
-
-#     @recv_can(canspecs.CAN_ID_HEARTBEAT_ACK, canspecs.CAN_FORMAT_HEARTBEAT_ACK)
-#     def _(self, data):
-#         print(f"Dummy poller got ACK: {data}")

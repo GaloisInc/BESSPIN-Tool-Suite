@@ -249,17 +249,15 @@ class IgnitionDirector():
             # Heartbeat
             if hr_delta_t > (1/IgnitionDirector.HEART_RATE_FREQUENCY):
                 self.check_heartbeat_time = t
-                print("sending heartbeat")
                 hr_msg = self.hm.component_monitor.get_req_msg()
                 self.cmd_net.send_msg(hr_msg)
-
+                self.can_multiverse.send_msg(hr_msg)
 
             # System health check
             if delta_t > (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY):
                 self.system_health_check()
                 self.check_health_time = t
                 print(f"Main loop freq: {cnt/delta_t}[Hz]")
-                print(f"Teensy is healty? {self.teensy.is_healthy}")
                 cnt = 0
 
             # Approximately sleep
@@ -355,7 +353,6 @@ class IgnitionDirector():
                 elif cid == canlib.CAN_ID_HEARTBEAT_ACK:
                     # Update response
                     client_id, req_num = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_ACK, msg.data)
-                    print(f"Got heartbeat response from {client_id} number {req_num}")
                     self.hm.component_monitor.submit_response(client_id, (client_id, req_num))
                 else:
                     pass
@@ -449,21 +446,20 @@ class IgnitionDirector():
             self.component_error_send(canlib.TEENSY, canlib.ERROR_NONE)
 
         hr: dict  = self.hm.health_report
-        print(hr)
-        
         # Get teensy information
-        # hr[canlib.TEENSY] = self.teensy.is_healthy
-        # self.component_health_check(self.minimal_functionality_systems, hr)
-        # self.component_health_check(self.medium_functionality_systems, hr)
-        # self.component_health_check(self.full_functionality_systems, hr)
+        hr[canlib.TEENSY] = self.teensy.is_healthy
+
+        #self.component_health_check(self.minimal_functionality_systems, hr)
+        #self.component_health_check(self.medium_functionality_systems, hr)
+        #self.component_health_check(self.full_functionality_systems, hr)
         
         # Here we need to set the functionality level
         # iterate over components, if at least one UNHEALHY in each set, mark the level?
 
-        # for cid, is_healthy in hr.items():
-        #     if not is_healthy:
-        #         # restart cid
-        #         ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
+        for cid, is_healthy in hr.items():
+            if not is_healthy:
+                # restart cid
+                ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
 
         # func_set = {k for k, v in hr.items() if v}
         # if (full_functionality_systems | medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
@@ -593,7 +589,6 @@ class IgnitionDirector():
 
         # startup the heartbeat monitor
         self.hm.start()
-        #if not start_component(self.hm.dummy): return False
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
