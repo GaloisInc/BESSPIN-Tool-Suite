@@ -580,7 +580,7 @@ class IgnitionDirector():
         #hm.setup_can()
         self.hm.start()
         #if not start_component(hm): return False
-        #hm.start_monitor()
+        self.hm.start_monitor(self.can_multiverse)
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
