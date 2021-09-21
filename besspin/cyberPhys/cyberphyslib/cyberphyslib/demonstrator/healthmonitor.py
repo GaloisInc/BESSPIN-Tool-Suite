@@ -19,6 +19,8 @@ import socket
 import time
 import fabric
 import can
+import subprocess
+
 
 from cyberphyslib.canlib import TcpBus, UdpBus
 import cyberphyslib.canlib.canspecs as canspecs
@@ -75,6 +77,24 @@ class SshMonitor(HealthMonitor):
         result = fabric.Connection(self.addr, **self.connection_kwargs).run(command, hide=True)
         return result
 
+class PingMonitor(HealthMonitor):
+    """
+    If this monitor receives can succesfully ping the component,
+    it considers it healthy
+    """
+    def __init__(self, addr: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.addr = addr
+
+    @abc.abstractmethod
+    def run_health_test(self) -> bool:
+        retCode = subprocess.call(["ping", "-c","1","-w","1",self.addr])
+        if retCode == 0:
+            return True
+        else:
+            return False
+
+
 class HttpMonitor(HealthMonitor):
     """
     Health monitoring involving http connections
@@ -95,7 +115,7 @@ class HttpMonitor(HealthMonitor):
             # check for OK status code
             return self.check_response(ret)
         except Exception as exc:
-            # TODO: log this?
+            health_logger.debug(f"<{self.__class__.__name__}> Exception {exc} has occurred")
             return False
 
 class ServiceMonitor(SshMonitor):
@@ -110,11 +130,9 @@ class ServiceMonitor(SshMonitor):
         try:
             ret = self.command(rf"systemctl status {self.service_name}")
             # regex match for active and running service
-            # NOTE: is this correct and stable?
             return re.search(r"(Active: active \(running\))", ret.stdout) is not None
         except Exception as exc:
-            # TODO: log this?
-            #health_logger.debug(f"Exception {exc} has occurred")
+            health_logger.debug(f"<{self.__class__.__name__}> Exception {exc} has occurred")
             return False
 
 
@@ -158,7 +176,13 @@ class HeartbeatMonitor(threading.Thread):
                 cids.OTA_UPDATE_SERVER_2 : "http://10.88.88.21:5050",
                 cids.OTA_UPDATE_SERVER_3 : "http://10.88.88.31:5050"
             }
+        self.pings = {
+            cids.DEBIAN_1 : "10.88.88.11",
+            cids.DEBIAN_2_LMCO : "10.88.88.21",
+            cids.DEBIAN_3 : "10.88.88.31",
+        }
     
+        self.ping_monitors  = {k: PingMonitor(addr) for k, addr in self.ping.items()}
         self.ota_monitors = {k: OtaMonitor(addr) for k, addr in self.https.items()}
         self.service_monitors = {k: ServiceMonitor(params["service_name"], params["address"],
                                                    user=params["user"],
@@ -181,7 +205,14 @@ class HeartbeatMonitor(threading.Thread):
                 ret[k] = hs
                 if not hs:
                     health_logger.debug(f"WARNING! {k} Service failed health check")
-            
+
+            health_logger.debug("Testing Ping")
+            for k, v in self.ping_monitors.items():
+                hs = v.is_healthy
+                ret[k] = hs
+                if not hs:
+                    health_logger.debug(f"WARNING! {k} Ping failed health check")
+
             self._health_report = ret
 
             time.sleep(1.0/self.FREQUENCY)
