@@ -24,7 +24,7 @@ import cyberphyslib.demonstrator.can_out as ccout
 import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
 import cyberphyslib.demonstrator.joystick as cjoy
-import cyberphyslib.demonstrator.health as cyhealth
+import cyberphyslib.demonstrator.healthmonitor as cyhealth
 import cyberphyslib.demonstrator.teensy as cteensy
 import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.canlib as canlib
@@ -200,6 +200,7 @@ class IgnitionDirector():
         self.check_health_time = 0.0
 
         self.teensy = cteensy.TeensyMonitor()
+        self.hm = cyhealth.HeartbeatMonitor()
 
     def start(self):
         """
@@ -430,15 +431,11 @@ class IgnitionDirector():
         else:
             self.component_error_send(canlib.TEENSY, canlib.ERROR_NONE)
 
-        # This is how we should be handling components
-
-
-        hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
-        hr: dict  = hm.health_report
+        hr: dict  = self.hm.health_report
         print(hr)
         
         # Get teensy information
-        hr[canlib.TEENSY] = self.teensy.is_healthy
+        # hr[canlib.TEENSY] = self.teensy.is_healthy
         # self.component_health_check(self.minimal_functionality_systems, hr)
         # self.component_health_check(self.medium_functionality_systems, hr)
         # self.component_health_check(self.full_functionality_systems, hr)
@@ -446,10 +443,10 @@ class IgnitionDirector():
         # Here we need to set the functionality level
         # iterate over components, if at least one UNHEALHY in each set, mark the level?
 
-        for cid, is_healthy in hr.items():
-            if not is_healthy:
-                # restart cid
-                ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
+        # for cid, is_healthy in hr.items():
+        #     if not is_healthy:
+        #         # restart cid
+        #         ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
 
         # func_set = {k for k, v in hr.items() if v}
         # if (full_functionality_systems | medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
@@ -578,11 +575,12 @@ class IgnitionDirector():
         if not start_component(ledm.LedManagerComponent.for_ignition()): return False
 
         # startup the heartbeat monitor
-        hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
+        #hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
         #hm.setup_cc()
         #hm.setup_can()
-        if not start_component(hm): return False
-        hm.start_monitor()
+        self.hm.start()
+        #if not start_component(hm): return False
+        #hm.start_monitor()
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
