@@ -1,1 +1,0 @@
-Note: image files are high resolution!
