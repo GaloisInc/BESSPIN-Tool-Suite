@@ -39,7 +39,7 @@ class CanDisplay(threading.Thread):
     ZMQ_POLL_TIMEOUT = 0.1
 
     # Keep a dictionary of components, and keep tabs on which ones are showing errors
-    component_status = canlib.CanlibComponentNames
+    component_status = canlib.CanlibComponentNames.copy()
 
     def __init__(self):
         # Threading
@@ -78,10 +78,13 @@ class CanDisplay(threading.Thread):
         """
         self.component_status[component_id] = error_id
         err_msg = ""
-        for key,val in self.component_status:
-            if val != canlib.ERROR_NONE:
-                err_msg += f"\nComponent {canlib.CanlibComponentNames.get(key,None)}: {canlib.CanlibComponentNames.get(val,None)}"
-        self.error_msg = err_msg
+        for cid in self.component_status:
+            err = self.component_status[cid]
+            if  err != canlib.ERROR_NONE:
+                err_msg += f"\n{canlib.CanlibComponentNames.get(cid,None)}: {canlib.CanlibComponentNames.get(err,None)}"
+        if (err_msg == "" and self.error_msg != "") or (err_msg != ""):
+            print("Errors:")
+            print(f"{self.error_msg}")
 
     def run(self):
         self.cmd_thread.start()
@@ -158,11 +161,6 @@ class CanDisplay(threading.Thread):
             elif cid == canlib.CAN_ID_CMD_COMPONENT_ERROR:
                 component_id, error_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, msg.data)
                 self.update_component_status(component_id, error_id)
-
-                if error_id == canlib.ERROR_NONE:
-                    print(f"<{self.__class__.__name__}> No errors")
-                else:
-                    print(f"<{self.__class__.__name__}> Component {canlib.CanlibComponentNames.get(component_id,None)}: {canlib.CanlibComponentNames.get(error_id,None)}")
             else:
                 pass
         except Exception as exc:
