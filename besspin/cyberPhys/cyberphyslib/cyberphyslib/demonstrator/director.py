@@ -67,6 +67,25 @@ class ComponentHealthTracker():
         self.can_be_reset = can_be_reset
         self.max_wait_after_reset = max_wait_after_reset
 
+    def __str__(self):
+        end_color = '\033[0m'
+        if self.status == ComponentStatus.HEALTHY:
+            status = "HEALTHY"
+            color = '\033[92m'
+        elif self.status == ComponentStatus.RESTARTING:
+            status = "RESTARTING"
+            color = '\033[93m'
+        elif self.status == ComponentStatus.UNHEALTHY:
+            status = "UNHEALTHY"
+            color = '\033[91m'
+        elif self.status == ComponentStatus.UNKNWON:
+            status = "UNKNWON"
+            color = '\033[94m'
+        else:
+            status = "UNDEFINED"
+            color = '\033[95m'
+        return f"{self.name} : {color} {status} {end_color}"
+
 class IgnitionDirector():
     """
     Ignition program that implements the desired execution flow.
@@ -387,14 +406,14 @@ class IgnitionDirector():
             ignition_logger.info("Director: no activity detected, switching to self-drive")
             self.enable_autopilot()
 
-    def component_health_check(self, component_dictionary, health_report):
+    def component_health_check(self, component_dictionary: dict, health_report: dict):
         """
         Iterate over components in the dictionry and perform checks
         """
         for cid in component_dictionary:
+            component: ComponentHealthTracker = component_dictionary[cid]
             if cid in health_report:
                 is_healthy: bool = health_report[cid]
-                component: ComponentHealthTracker = component_dictionary[cid]
                 old_status = component.status
                 if is_healthy:
                     # New report says component is healthy
@@ -434,35 +453,35 @@ class IgnitionDirector():
                         component.status = ComponentStatus.UNHEALTHY
             else:
                 component.status = ComponentStatus.UNKNWON
-            ignition_logger.warn(f"{canlib.CanlibComponentNames[component.cid]} : {component.status}")
+            ignition_logger.warn(component)
 
     def system_health_check(self):
         """
         Query system health, update functionality level if necessary
         """
-        # NOTE: this a patch to reset teensy when it gets stuck
-        if not self.teensy.is_healthy:
-            ignition_logger.warning(f"Teensy is not healthy, restarting.")
-            self.component_restart_send(canlib.TEENSY)
-            self.component_error_send(canlib.TEENSY, canlib.ERROR_UNSPECIFIED)
-        else:
-            self.component_error_send(canlib.TEENSY, canlib.ERROR_NONE)
+        # # NOTE: this a patch to reset teensy when it gets stuck
+        # if not self.teensy.is_healthy:
+        #     ignition_logger.warning(f"Teensy is not healthy, restarting.")
+        #     self.component_restart_send(canlib.TEENSY)
+        #     self.component_error_send(canlib.TEENSY, canlib.ERROR_UNSPECIFIED)
+        # else:
+        #     self.component_error_send(canlib.TEENSY, canlib.ERROR_NONE)
 
         hr: dict  = self.hm.health_report
         # Get teensy information
         hr[canlib.TEENSY] = self.teensy.is_healthy
 
-        #self.component_health_check(self.minimal_functionality_systems, hr)
-        #self.component_health_check(self.medium_functionality_systems, hr)
-        #self.component_health_check(self.full_functionality_systems, hr)
+        self.component_health_check(self.minimal_functionality_systems, hr)
+        self.component_health_check(self.medium_functionality_systems, hr)
+        self.component_health_check(self.full_functionality_systems, hr)
         
         # Here we need to set the functionality level
         # iterate over components, if at least one UNHEALHY in each set, mark the level?
 
-        for cid, is_healthy in hr.items():
-            if not is_healthy:
-                # restart cid
-                ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
+        # for cid, is_healthy in hr.items():
+        #     if not is_healthy:
+        #         # restart cid
+        #         ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
 
         # func_set = {k for k, v in hr.items() if v}
         # if (full_functionality_systems | medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
