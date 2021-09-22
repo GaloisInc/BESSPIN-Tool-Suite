@@ -13,18 +13,24 @@ if(channel !== 1 && channel !== 2) {
   return;
 }
 
+// Automatically exit if process is hung after 5s
+setTimeout(() => {
+  process.exit()
+}, 5000);
 
 myAtem.connect('192.168.10.240')
 
 myAtem.on('connected', () => {
-	myAtem.changeProgramInput(channel).then(() => {
-		// Fired once the atem has acknowledged the command
-		// Note: the state likely hasnt updated yet, but will follow shortly
-		console.log('Program input set')
-	})
-	console.log(myAtem.state)
+        myAtem.changeProgramInput(channel).then(() => {
+                // Fired once the atem has acknowledged the command
+                // Note: the state likely hasnt updated yet, but will follow shortly
+                console.log('Program input set');
+                process.exit();
+
+        })
+        console.log(myAtem.state)
 })
 
 myAtem.on('stateChanged', (state, pathToChange) => {
-	console.log(state) // catch the ATEM state.
+        console.log(state) // catch the ATEM state.
 })
