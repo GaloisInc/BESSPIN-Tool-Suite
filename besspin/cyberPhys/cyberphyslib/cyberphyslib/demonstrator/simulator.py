@@ -267,6 +267,7 @@ class Sim(component.ComponentPoller):
             # Update component functionality level
             self.system_functionality_level = new_func_level
 
+
     ########## can receive ###########
     def control_process(self, name, data, bounds=(0.0, 1.0)):
         data = min(max(data[0], bounds[0]), bounds[1])

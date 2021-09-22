@@ -82,8 +82,9 @@ class CanDisplay(threading.Thread):
             err = self.component_status[cid]
             if  err != canlib.ERROR_NONE:
                 err_msg += f"\n{canlib.CanlibComponentNames.get(cid,None)}: {canlib.CanlibComponentNames.get(err,None)}"
-        if (err_msg == "" and self.error_msg != "") or (err_msg != ""):
-            print("Errors:")
+        if err_msg == "" and self.error_msg != "":
+            print("NO ERRORS")
+        elif err_msg != "":
             print(f"{self.error_msg}")
 
     def run(self):

@@ -102,7 +102,7 @@ class IgnitionDirector():
         #canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO add pattern for infotainment hack
     }
 
-    HEALTH_MONITOR_FREQUENCY = 0.1 # The full component health monitor cycle takes around 30 seconds
+    HEALTH_MONITOR_FREQUENCY = 0.035 # The full component health monitor cycle takes around 30 seconds
     HEART_RATE_FREQUENCY = 1.0 # Every 1s
     DIRECTOR_FREQUENCY = 25.0 # 20s in reality due to execution time
 
@@ -266,10 +266,10 @@ class IgnitionDirector():
                 # If in minimal mode, read teensy data here
                 sim: simulator.Sim = self._handler["beamng"]
                 # NOTE: ugly!
-                self.control['gear'] = self.teensy.gear
-                self.control['throttle'] = self.teensy.throttle
-                self.control['brake'] = self.teensy.brake
-                self.control_evt = True
+                sim.control['gear'] = self.teensy.gear
+                sim.control['throttle'] = self.teensy.throttle
+                sim.control['brake'] = self.teensy.brake
+                sim.control_evt = True
 
             # Heartbeat
             if hr_delta_t > (1/IgnitionDirector.HEART_RATE_FREQUENCY):
@@ -332,8 +332,8 @@ class IgnitionDirector():
             cid, msg = recv
             try:
                 if cid == canlib.CAN_ID_CMD_RESTART:
-                    ignition_logger.info(f"process cc: restart")
                     dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
+                    ignition_logger.info(f"process cc: restart {canlib.CanlibComponentNames.get(dev_id)}")
                     if dev_id == canlib.IGNITION:
                         ignition_logger.info("Director: restarting ignition from CMD_RESTART")
                         self.restart_simulator()
@@ -352,7 +352,7 @@ class IgnitionDirector():
 
                 elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
                     hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
-                    ignition_logger.info(f"process cc: set hack active {hack_idx}")
+                    ignition_logger.info(f"process cc: set hack active {canlib.CanlibComponentNames.get(hack_idx)}")
                     # Process HACK_ACTIVE messages only in baseline scenario
                     if self.active_scenario == canlib.SCENARIO_BASELINE:
                         # NOTE:  treat Led manager as a critical component
@@ -365,7 +365,7 @@ class IgnitionDirector():
                         canlib.SCENARIO_SECURE_ECU: "secure_ecu",
                         canlib.SCENARIO_SECURE_INFOTAINMENT: "secure_infotainment"}
                     scen_idx = struct.unpack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, msg.data)[0]
-                    ignition_logger.info(f"process cc: active scenario {scen_idx}")
+                    ignition_logger.info(f"process cc: active scenario {canlib.CanlibComponentNames.get(scen_idx)}")
                     self.active_scenario = scen_idx
                     cm: ccan.CanMultiverseComponent = self._handler["canm"]
                     cm.select_network(nmap[scen_idx])
@@ -468,7 +468,6 @@ class IgnitionDirector():
                         component.status = ComponentStatus.UNHEALTHY
             else:
                 component.status = ComponentStatus.UNKNOWN
-            ignition_logger.warn(component)
             status = status and (component.status is not ComponentStatus.UNHEALTHY)
         return status
 
@@ -486,25 +485,31 @@ class IgnitionDirector():
         start_color = '\033[94m'
         end_color = '\033[0m'
 
-        ignition_logger.warn("UI components status:")
+        system_status = ["UI components:\n"]
         self.component_health_check(self.ui_components, hr)
-        ignition_logger.warn("MINIMAL functionality systems status:")
+        system_status += [f"{component}\n" for component in self.ui_components.values()]
+
+        system_status += ["MINIMAL functionality components:\n"]
         if self.component_health_check(self.minimal_functionality_systems, hr):
             func_level = canlib.FUNCTIONALITY_MINIMAL
             start_color = '\033[91m'
+        system_status += [f"{component}\n" for component in self.minimal_functionality_systems.values()]
 
-        ignition_logger.warn("MEDIUM functionality systems status:")
+        system_status += ["MEDIUM functionality components:\n"]
         if self.component_health_check(self.medium_functionality_systems, hr):
             func_level = canlib.FUNCTIONALITY_MEDIUM
             start_color = '\033[93m'
+        system_status += [f"{component}\n" for component in self.medium_functionality_systems.values()]
 
-        ignition_logger.warn("FULL functionality systems status:")
+        system_status += ["FULL functionality components:\n"]
         if self.component_health_check(self.full_functionality_systems, hr):
             func_level = canlib.FUNCTIONALITY_FULL
             start_color = '\033[92m'
+        system_status += [f"{component}\n" for component in self.full_functionality_systems.values()]
 
         self.update_functionality_level(func_level)
-        ignition_logger.warn(f"Functionality level {start_color} {canlib.CanlibComponentNames.get(func_level)} {end_color}")
+        ignition_logger.info(''.join(system_status))
+        ignition_logger.info(f"Functionality level {start_color} {canlib.CanlibComponentNames.get(func_level)} {end_color}")
 
     def update_functionality_level(self, new_func_level):
         """
@@ -517,7 +522,7 @@ class IgnitionDirector():
                       canlib.FUNCTIONALITY_NONE
                       ]
             if new_func_level in levels:
-                ignition_logger.info(f"Switching to {new_func_level}")
+                ignition_logger.info(f"Switching to {canlib.CanlibComponentNames.get(new_func_level)}")
                 sim: simulator.Sim = self._handler["beamng"]
                 player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
                 player.update_functionality_level(new_func_level)
