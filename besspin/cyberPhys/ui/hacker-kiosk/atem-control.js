@@ -32,5 +32,5 @@ myAtem.on('connected', () => {
 })
 
 myAtem.on('stateChanged', (state, pathToChange) => {
-        console.log(state) // catch the ATEM state.
+    console.log(state) // catch the ATEM state.
 })
