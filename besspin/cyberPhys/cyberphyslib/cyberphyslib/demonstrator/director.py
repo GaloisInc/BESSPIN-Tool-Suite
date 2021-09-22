@@ -13,7 +13,7 @@ import time
 import struct
 import can as extcan
 
-from enum import Enum
+from enum import Enum, auto
 
 import cyberphyslib.demonstrator.can as ccan
 import cyberphyslib.demonstrator.simulator as simulator
@@ -40,10 +40,10 @@ class ComponentStatus(Enum):
     UNHEALTHY - the component is unhealthy and an error should be reported
     UNKNOWN - we don't know the status of the component (uncommon)
     """
-    UNKNWON = 0
-    HEALTHY = 1
-    RESTARTING = 2
-    UNHEALTHY = 3
+    HEALTHY = auto()
+    RESTARTING = auto()
+    UNHEALTHY = auto()
+    UNKNOWN = auto()
 
 class ComponentHealthTracker():
     """
@@ -57,7 +57,7 @@ class ComponentHealthTracker():
     """
     name = "componentName"
     cid = 0
-    status = ComponentStatus.UNKNWON
+    status = ComponentStatus.UNKNOWN
     time_of_reset = None
     DEFAULT_WAIT_TIME = 10.0
 
@@ -71,20 +71,20 @@ class ComponentHealthTracker():
         end_color = '\033[0m'
         if self.status == ComponentStatus.HEALTHY:
             status = "HEALTHY"
-            color = '\033[92m'
+            start_color = '\033[92m'
         elif self.status == ComponentStatus.RESTARTING:
             status = "RESTARTING"
-            color = '\033[93m'
+            start_color = '\033[93m'
         elif self.status == ComponentStatus.UNHEALTHY:
             status = "UNHEALTHY"
-            color = '\033[91m'
-        elif self.status == ComponentStatus.UNKNWON:
-            status = "UNKNWON"
-            color = '\033[94m'
+            start_color = '\033[91m'
+        elif self.status == ComponentStatus.UNKNOWN:
+            status = "UNKNOWN"
+            start_color = '\033[94m'
         else:
             status = "UNDEFINED"
-            color = '\033[95m'
-        return f"{self.name} : {color} {status} {end_color}"
+            start_color = '\033[95m'
+        return f"{self.name} : {start_color} {status} {end_color}"
 
 class IgnitionDirector():
     """
@@ -194,7 +194,7 @@ class IgnitionDirector():
         # TODO: is there a better solution?
         self.active_scenario = canlib.SCENARIO_BASELINE
         self.self_drive_scenario_start = None
-        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
+        self.system_functionality_level = canlib.FUNCTIONALITY_NONE
 
         self.joystick_name = cconf.JOYSTICK_NAME
 
@@ -437,7 +437,7 @@ class IgnitionDirector():
                         # it is healthy now
                         self.component_error_send(cid, canlib.ERROR_NONE)
                         component.status = ComponentStatus.HEALTHY
-                    elif old_status == ComponentStatus.UNKNWON:
+                    elif old_status == ComponentStatus.UNKNOWN:
                         component.status = ComponentStatus.HEALTHY
                         # it is healthy now
                         self.component_error_send(cid, canlib.ERROR_NONE)
@@ -462,43 +462,49 @@ class IgnitionDirector():
                     elif old_status == ComponentStatus.UNHEALTHY:
                         # no change here
                         pass
-                    elif old_status == ComponentStatus.UNKNWON:
+                    elif old_status == ComponentStatus.UNKNOWN:
                         # notify
                         self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
                         component.status = ComponentStatus.UNHEALTHY
             else:
-                component.status = ComponentStatus.UNKNWON
+                component.status = ComponentStatus.UNKNOWN
             ignition_logger.warn(component)
-            status = status and (component.status < ComponentStatus.UNHEALTHY)
+            status = status and (component.status is not ComponentStatus.UNHEALTHY)
         return status
 
     def system_health_check(self):
         """
         Query system health, update functionality level if necessary
         """
+        # Get health report
         hr: dict  = self.hm.health_report
         # Add teensy information
         hr[canlib.TEENSY] = self.teensy.is_healthy
+
+        # Check functionality levels
+        func_level = canlib.FUNCTIONALITY_NONE
+        start_color = '\033[94m'
+        end_color = '\033[0m'
 
         ignition_logger.warn("UI components status:")
         self.component_health_check(self.ui_components, hr)
         ignition_logger.warn("MINIMAL functionality systems status:")
         if self.component_health_check(self.minimal_functionality_systems, hr):
-            ignition_logger.warn("MINIMAL functionality achieved")
-        else:
-            ignition_logger.warn("MINIMAL functionality failed")
+            func_level = canlib.FUNCTIONALITY_MINIMAL
+            start_color = '\033[91m'
 
         ignition_logger.warn("MEDIUM functionality systems status:")
         if self.component_health_check(self.medium_functionality_systems, hr):
-            ignition_logger.warn("MEDIUM functionality achieved")
-        else:
-            ignition_logger.warn("MEDIUM functionality failed")
+            func_level = canlib.FUNCTIONALITY_MEDIUM
+            start_color = '\033[93m'
 
         ignition_logger.warn("FULL functionality systems status:")
         if self.component_health_check(self.full_functionality_systems, hr):
-            ignition_logger.warn("FULL functionality achieved")
-        else:
-            ignition_logger.warn("FULL functionality failed")
+            func_level = canlib.FUNCTIONALITY_FULL
+            start_color = '\033[92m'
+
+        self.update_functionality_level(func_level)
+        ignition_logger.warn(f"Functionality level {start_color} {canlib.CanlibComponentNames.get(func_level)} {end_color}")
 
     def update_functionality_level(self, new_func_level):
         """
