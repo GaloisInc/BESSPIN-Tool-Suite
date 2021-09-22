@@ -259,9 +259,9 @@ class HeartbeatMonitor(threading.Thread):
             cids.INFOTAINMENT_BACKEND: cids.INFOTAINMENT_BACKEND,
             # UDP components
             # NOTE: only active network components can respond
-            cids.INFOTAINMENT_SERVER_1: ip2int('10.88.88.11'),
-            cids.INFOTAINMENT_SERVER_2: ip2int('10.88.88.21'),
-            cids.INFOTAINMENT_SERVER_3: ip2int('10.88.88.31'),
+            #cids.INFOTAINMENT_SERVER_1: ip2int('10.88.88.11'),
+            #cids.INFOTAINMENT_SERVER_2: ip2int('10.88.88.21'),
+            #cids.INFOTAINMENT_SERVER_3: ip2int('10.88.88.31'),
             # FreeRTOS is temporaily handled via pings
             #cids.FREERTOS_1: ip2int('12.88.88.10'),
             #cids.FREERTOS_2_CHERI: ip2int('22.88.88.10'),

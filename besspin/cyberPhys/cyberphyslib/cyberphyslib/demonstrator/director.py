@@ -88,24 +88,24 @@ class IgnitionDirector():
 
     minimal_functionality_systems = {
         canlib.CAN_DISPLAY_FRONTEND: ComponentHealthTracker(cid=canlib.CAN_DISPLAY_FRONTEND,can_be_reset=False),
-        #canlib.CAN_DISPLAY_BACKEND: ComponentHealthTracker(cid=canlib.CAN_DISPLAY_BACKEND,can_be_reset=False),
+        canlib.CAN_DISPLAY_BACKEND: ComponentHealthTracker(cid=canlib.CAN_DISPLAY_BACKEND,can_be_reset=False),
         canlib.HACKER_KIOSK_FRONTEND: ComponentHealthTracker(cid=canlib.HACKER_KIOSK_FRONTEND,can_be_reset=False),
-        #canlib.HACKER_KIOSK_BACKEND: ComponentHealthTracker(cid=canlib.HACKER_KIOSK_BACKEND,can_be_reset=False),
+        canlib.HACKER_KIOSK_BACKEND: ComponentHealthTracker(cid=canlib.HACKER_KIOSK_BACKEND,can_be_reset=False),
         canlib.TEENSY: ComponentHealthTracker(cid=canlib.TEENSY)
     }
 
     medium_functionality_systems = {
-        #canlib.BESSPIN_TOOL_FREERTOS: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_FREERTOS,can_be_reset=False),
+        canlib.BESSPIN_TOOL_FREERTOS: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_FREERTOS,can_be_reset=False),
         canlib.FREERTOS_1: ComponentHealthTracker(cid=canlib.FREERTOS_1, max_wait_after_reset=60),
         canlib.FREERTOS_2_CHERI: ComponentHealthTracker(cid=canlib.FREERTOS_2_CHERI, max_wait_after_reset=60),
         canlib.FREERTOS_3: ComponentHealthTracker(cid=canlib.FREERTOS_3, max_wait_after_reset=60),
     }
 
     full_functionality_systems = {
-        #canlib.DEBIAN_1: ComponentHealthTracker(cid=canlib.DEBIAN_1,can_be_reset=False),
-        #canlib.DEBIAN_2_LMCO: ComponentHealthTracker(cid=canlib.DEBIAN_2_LMCO,can_be_reset=False),
-        #canlib.DEBIAN_3: ComponentHealthTracker(cid=canlib.DEBIAN_3,can_be_reset=False),
-        #canlib.BESSPIN_TOOL_DEBIAN: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_DEBIAN,can_be_reset=False),
+        canlib.DEBIAN_1: ComponentHealthTracker(cid=canlib.DEBIAN_1,can_be_reset=False),
+        canlib.DEBIAN_2_LMCO: ComponentHealthTracker(cid=canlib.DEBIAN_2_LMCO,can_be_reset=False),
+        canlib.DEBIAN_3: ComponentHealthTracker(cid=canlib.DEBIAN_3,can_be_reset=False),
+        canlib.BESSPIN_TOOL_DEBIAN: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_DEBIAN,can_be_reset=False),
         canlib.INFOTAINMENT_THIN_CLIENT: ComponentHealthTracker(cid=canlib.INFOTAINMENT_THIN_CLIENT,can_be_reset=False),
         canlib.INFOTAINMENT_SERVER_1: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_1, max_wait_after_reset=30),
         canlib.INFOTAINMENT_SERVER_2: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_2, max_wait_after_reset=30),
@@ -113,7 +113,7 @@ class IgnitionDirector():
         canlib.OTA_UPDATE_SERVER_1: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_1, max_wait_after_reset=30),
         canlib.OTA_UPDATE_SERVER_2: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_2, max_wait_after_reset=30),
         canlib.OTA_UPDATE_SERVER_3: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_3, max_wait_after_reset=30),
-        #canlib.INFOTAINMENT_BACKEND: ComponentHealthTracker(cid=canlib.INFOTAINMENT_BACKEND,can_be_reset=False)
+        canlib.INFOTAINMENT_BACKEND: ComponentHealthTracker(cid=canlib.INFOTAINMENT_BACKEND,can_be_reset=False)
     }
 
     # Easter egg^_^
@@ -392,46 +392,49 @@ class IgnitionDirector():
         Iterate over components in the dictionry and perform checks
         """
         for cid in component_dictionary:
-            is_healthy: bool = health_report[cid]
-            component: ComponentHealthTracker = component_dictionary[cid]
-            old_status = component.status
-            if is_healthy:
-                # New report says component is healthy
-                if old_status == ComponentStatus.HEALTHY:
-                    # no change here
-                    pass
-                elif old_status == ComponentStatus.RESTARTING:
-                    # restart was successfull!
-                    self.component_error_send(cid, canlib.ERROR_NONE)
-                    component.status = ComponentStatus.HEALTHY
-                elif old_status == ComponentStatus.UNHEALTHY:
-                    # it is healthy now
-                    self.component_error_send(cid, canlib.ERROR_NONE)
-                    component.status = ComponentStatus.HEALTHY
-                elif old_status == ComponentStatus.UNKNWON:
-                    component.status = ComponentStatus.HEALTHY
-            else:
-                # New report says component is not healthy
-                if old_status == ComponentStatus.HEALTHY:
-                    # Possibly request a reset here
-                    # self.component_restart_send(cid)
-                    self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
-                    component.status = ComponentStatus.UNHEALTHY
-                elif old_status == ComponentStatus.RESTARTING:
-                    # see how long ago was the reset
-                    delta_t = time.time() - component.time_of_reset
-                    if delta_t > component.max_wait_after_reset:
-                        # too much time passed, mark as unhealthy
+            if cid in health_report:
+                is_healthy: bool = health_report[cid]
+                component: ComponentHealthTracker = component_dictionary[cid]
+                old_status = component.status
+                if is_healthy:
+                    # New report says component is healthy
+                    if old_status == ComponentStatus.HEALTHY:
+                        # no change here
+                        pass
+                    elif old_status == ComponentStatus.RESTARTING:
+                        # restart was successfull!
+                        self.component_error_send(cid, canlib.ERROR_NONE)
+                        component.status = ComponentStatus.HEALTHY
+                    elif old_status == ComponentStatus.UNHEALTHY:
+                        # it is healthy now
+                        self.component_error_send(cid, canlib.ERROR_NONE)
+                        component.status = ComponentStatus.HEALTHY
+                    elif old_status == ComponentStatus.UNKNWON:
+                        component.status = ComponentStatus.HEALTHY
+                else:
+                    # New report says component is not healthy
+                    if old_status == ComponentStatus.HEALTHY:
+                        # Possibly request a reset here
+                        # self.component_restart_send(cid)
                         self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
                         component.status = ComponentStatus.UNHEALTHY
-                elif old_status == ComponentStatus.UNHEALTHY:
-                    # no change here
-                    pass
-                elif old_status == ComponentStatus.UNKNWON:
-                    # notify
-                    self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
-                    component.status = ComponentStatus.UNHEALTHY
-
+                    elif old_status == ComponentStatus.RESTARTING:
+                        # see how long ago was the reset
+                        delta_t = time.time() - component.time_of_reset
+                        if delta_t > component.max_wait_after_reset:
+                            # too much time passed, mark as unhealthy
+                            self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
+                            component.status = ComponentStatus.UNHEALTHY
+                    elif old_status == ComponentStatus.UNHEALTHY:
+                        # no change here
+                        pass
+                    elif old_status == ComponentStatus.UNKNWON:
+                        # notify
+                        self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
+                        component.status = ComponentStatus.UNHEALTHY
+            else:
+                component.status = ComponentStatus.UNKNWON
+            ignition_logger.warn(f"{canlib.CanlibComponentNames[component.cid]} : {component.status}")
 
     def system_health_check(self):
         """
