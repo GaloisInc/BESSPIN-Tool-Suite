@@ -102,7 +102,7 @@ class IgnitionDirector():
         #canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO add pattern for infotainment hack
     }
 
-    HEALTH_MONITOR_FREQUENCY = 0.1 # Every 10s
+    HEALTH_MONITOR_FREQUENCY = 0.035 # Every ~30s
     HEART_RATE_FREQUENCY = 1.0 # Every 1s
 
     minimal_functionality_systems = {
@@ -307,6 +307,7 @@ class IgnitionDirector():
         """
         Send CAN_ID_CMD_COMPONENT_ERROR message
         """
+        ignition_logger.warn(f"component_error_send: CID: {hex(component_id)} ERR: {hex(error_id)}")
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_COMPONENT_ERROR,
                              dlc=canlib.CAN_DLC_CMD_COMPONENT_ERROR,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR,
