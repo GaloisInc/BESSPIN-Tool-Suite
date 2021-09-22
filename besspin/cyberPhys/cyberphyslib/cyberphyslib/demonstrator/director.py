@@ -489,8 +489,8 @@ class IgnitionDirector():
             ignition_logger.warn("MINIMAL functionality failed")
 
         ignition_logger.warn("MEDIUM functionality systems status:")
-        if self.component_health_check(self.medium_functionality_systems, hr)
-        ignition_logger.warn("MEDIUM functionality achieved")
+        if self.component_health_check(self.medium_functionality_systems, hr):
+            ignition_logger.warn("MEDIUM functionality achieved")
         else:
             ignition_logger.warn("MEDIUM functionality failed")
 
