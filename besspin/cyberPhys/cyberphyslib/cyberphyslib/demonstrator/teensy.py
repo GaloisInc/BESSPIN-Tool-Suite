@@ -49,7 +49,7 @@ class TeensyMonitor(threading.Thread):
                         gear_raw = int(gear_raw[-1].split()[-1],16)
                         #            'P'     'R'         'N'   'D'
                         gear_map = {0x28: 1, 0x27: -1, 0x26: 0, 0x25: 2}
-                        self.gear = gear_map.get(val, 0)
+                        self.gear = gear_map.get(gear_raw, 0)
 
                     throttle_raw = self.re_throttle.findall(val)
                     if throttle_raw:

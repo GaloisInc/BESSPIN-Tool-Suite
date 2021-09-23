@@ -111,12 +111,10 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         Updates the component's functionality level
         Unless FUNCTIONALITY_FULL disable all sounds
         """
-        if new_func_level != self.system_functionality_level:
-            if new_func_level != canlib.FUNCTIONALITY_FULL:
-                # Disable sound first
-                self.enable_sound(False)
-            # Update component functionality level
-            self.system_functionality_level = new_func_level
+        self.system_functionality_level = new_func_level
+        if self.system_functionality_level != canlib.FUNCTIONALITY_FULL:
+            # Disable sound
+            self.enable_sound(False)
 
     def enable_sound(self, enable: bool):
         """

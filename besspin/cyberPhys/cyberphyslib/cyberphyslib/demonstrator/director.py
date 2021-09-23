@@ -262,7 +262,7 @@ class IgnitionDirector():
             # Check driver activity
             self.check_driver_activity()
 
-            if self.system_functionality_level < canlib.FUNCTIONALITY_MEDIUM:
+            if self.system_functionality_level == canlib.FUNCTIONALITY_MINIMAL:
                 # If in minimal mode, read teensy data here
                 sim: simulator.Sim = self._handler["beamng"]
                 # NOTE: ugly!
@@ -496,26 +496,30 @@ class IgnitionDirector():
         start_color = '\033[94m'
         end_color = '\033[0m'
 
-        system_status = ["\nUI components:\n"]
         self.component_health_check(self.ui_components, hr)
-        system_status += [f"\t{component}\n" for component in self.ui_components.values()]
+        minimal_ok = self.component_health_check(self.minimal_functionality_systems, hr)
+        medium_ok = self.component_health_check(self.medium_functionality_systems, hr)
+        full_ok = self.component_health_check(self.full_functionality_systems, hr)
 
-        system_status += ["MINIMAL functionality components:\n"]
-        if self.component_health_check(self.minimal_functionality_systems, hr):
-            func_level = canlib.FUNCTIONALITY_MINIMAL
-            start_color = '\033[91m'
-        system_status += [f"\t{component}\n" for component in self.minimal_functionality_systems.values()]
-
-        system_status += ["MEDIUM functionality components:\n"]
-        if self.component_health_check(self.medium_functionality_systems, hr):
-            func_level = canlib.FUNCTIONALITY_MEDIUM
-            start_color = '\033[93m'
-        system_status += [f"\t{component}\n" for component in self.medium_functionality_systems.values()]
-
-        system_status += ["FULL functionality components:\n"]
-        if self.component_health_check(self.full_functionality_systems, hr):
+        if minimal_ok and medium_ok and full_ok:
             func_level = canlib.FUNCTIONALITY_FULL
             start_color = '\033[92m'
+        elif minimal_ok and medium_ok:
+            func_level = canlib.FUNCTIONALITY_MEDIUM
+            start_color = '\033[93m'
+        elif minimal_ok:
+            func_level = canlib.FUNCTIONALITY_MINIMAL
+            start_color = '\033[91m'
+        else:
+            pass
+
+        system_status = ["\nUI components:\n"]
+        system_status += [f"\t{component}\n" for component in self.ui_components.values()]
+        system_status += ["MINIMAL functionality components:\n"]
+        system_status += [f"\t{component}\n" for component in self.minimal_functionality_systems.values()]
+        system_status += ["MEDIUM functionality components:\n"]
+        system_status += [f"\t{component}\n" for component in self.medium_functionality_systems.values()]
+        system_status += ["FULL functionality components:\n"]
         system_status += [f"\t{component}\n" for component in self.full_functionality_systems.values()]
 
         self.update_functionality_level(func_level)
@@ -539,10 +543,9 @@ class IgnitionDirector():
                 player.update_functionality_level(new_func_level)
                 sim.update_functionality_level(new_func_level)
                 self.system_functionality_level = new_func_level
-                self.functionality_level_send(self.system_functionality_level)
             else:
                 ignition_logger.info(f"Unknown functionality level {new_func_level}, ignoring.")
-                return
+        self.functionality_level_send(self.system_functionality_level)
 
     def restart_simulator(self):
         """
@@ -619,6 +622,14 @@ class IgnitionDirector():
                 else:
                     ignition_logger.info(f"Unexpected component name: {comp.name}")
                 return False
+            if comp.name == 'jmonitor':
+                self.component_error_send(canlib.JOYSTICK_MONITOR,canlib.ERROR_NONE)
+            elif comp.name == 'pmonitor':
+                self.component_error_send(canlib.PEDAL_MONITOR,canlib.ERROR_NONE)
+            elif comp.name == 'speedo':
+                self.component_error_send(canlib.INSTRUMENT_CLUSTER,canlib.ERROR_NONE)
+            else:
+                ignition_logger.info(f"Unexpected component name: {comp.name}")
             self.can_multiverse.register(comp)
             return True
 
