@@ -87,11 +87,8 @@ class CanDisplay(threading.Thread):
                     err_msg += f"\n{canlib.CanlibComponentNames.get(cid,None)}: {canlib.CanlibComponentNames.get(err,None)}"
         if self.func_level != canlib.FUNCTIONALITY_FULL:
             err_msg += f"\nFUNCTIONALITY: {canlib.CanlibComponentNames.get(self.func_level)}"
-        if err_msg == "" and self.error_msg != "":
-            print("NO ERRORS")
-        elif err_msg != "":
-            self.error_msg = err_msg
-            print(f"{self.error_msg}")
+        self.error_msg = err_msg
+        print(f"{self.error_msg}")
 
     def run(self):
         self.cmd_thread.start()
