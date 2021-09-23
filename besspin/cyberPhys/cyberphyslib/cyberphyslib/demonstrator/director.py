@@ -476,6 +476,8 @@ class IgnitionDirector():
                             component.status = ComponentStatus.UNHEALTHY
                     elif old_status == ComponentStatus.UNHEALTHY:
                         # no change here
+                        # Send the error message again just in case
+                        self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
                         pass
                     elif old_status == ComponentStatus.UNKNOWN:
                         # notify
