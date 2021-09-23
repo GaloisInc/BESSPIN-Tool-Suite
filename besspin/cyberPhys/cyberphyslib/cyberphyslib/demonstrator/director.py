@@ -485,30 +485,30 @@ class IgnitionDirector():
         start_color = '\033[94m'
         end_color = '\033[0m'
 
-        system_status = ["UI components:\n"]
+        system_status = ["\nUI components:\n"]
         self.component_health_check(self.ui_components, hr)
-        system_status += [f"{component}\n" for component in self.ui_components.values()]
+        system_status += [f"\t{component}\n" for component in self.ui_components.values()]
 
         system_status += ["MINIMAL functionality components:\n"]
         if self.component_health_check(self.minimal_functionality_systems, hr):
             func_level = canlib.FUNCTIONALITY_MINIMAL
             start_color = '\033[91m'
-        system_status += [f"{component}\n" for component in self.minimal_functionality_systems.values()]
+        system_status += [f"\t{component}\n" for component in self.minimal_functionality_systems.values()]
 
         system_status += ["MEDIUM functionality components:\n"]
         if self.component_health_check(self.medium_functionality_systems, hr):
             func_level = canlib.FUNCTIONALITY_MEDIUM
             start_color = '\033[93m'
-        system_status += [f"{component}\n" for component in self.medium_functionality_systems.values()]
+        system_status += [f"\t{component}\n" for component in self.medium_functionality_systems.values()]
 
         system_status += ["FULL functionality components:\n"]
         if self.component_health_check(self.full_functionality_systems, hr):
             func_level = canlib.FUNCTIONALITY_FULL
             start_color = '\033[92m'
-        system_status += [f"{component}\n" for component in self.full_functionality_systems.values()]
+        system_status += [f"\t{component}\n" for component in self.full_functionality_systems.values()]
 
         self.update_functionality_level(func_level)
-        ignition_logger.info(''.join(system_status))
+        ignition_logger.info(f"Helth report: {''.join(system_status)}")
         ignition_logger.info(f"Functionality level {start_color} {canlib.CanlibComponentNames.get(func_level)} {end_color}")
 
     def update_functionality_level(self, new_func_level):
