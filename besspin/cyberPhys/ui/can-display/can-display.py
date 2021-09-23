@@ -81,10 +81,10 @@ class CanDisplay(threading.Thread):
         err_msg = ""
         if component_id and error_id:
             self.component_status[component_id] = error_id
-            for cid in self.component_status:
-                err = self.component_status[cid]
-                if  err != canlib.ERROR_NONE:
-                    err_msg += f"\n{canlib.CanlibComponentNames.get(cid,None)}: {canlib.CanlibComponentNames.get(err,None)}"
+        for cid in self.component_status:
+            err = self.component_status[cid]
+            if  err != canlib.ERROR_NONE:
+                err_msg += f"\n{canlib.CanlibComponentNames.get(cid,None)}: {canlib.CanlibComponentNames.get(err,None)}"
         if self.func_level != canlib.FUNCTIONALITY_FULL:
             err_msg += f"\nFUNCTIONALITY: {canlib.CanlibComponentNames.get(self.func_level)}"
         self.error_msg = err_msg
