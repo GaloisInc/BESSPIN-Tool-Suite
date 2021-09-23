@@ -10,7 +10,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=pi
-ExecStart=/home/pi/deploy/hacker-kiosk-0.1.0-armv7l.AppImage
+ExecStart=/home/galoisuser/deploy/hacker-kiosk-0.1.0-armv7l.AppImage
 
 [Install]
 WantedBy=multi-user.target

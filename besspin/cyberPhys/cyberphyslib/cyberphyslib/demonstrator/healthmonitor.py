@@ -224,7 +224,7 @@ class HeartbeatMonitor(threading.Thread):
                 },
             cids.HACKER_KIOSK_FRONTEND:
                 {
-                    "user" : "pi",
+                    "user" : "galoisuser",
                     "password": "WelcomeToGalois",
                     "address" : "10.88.88.3",
                     "service_name": "hacker-ui"

@@ -36,6 +36,7 @@ fi
 
 SESSIONNAME="hacker-kiosk"
 IP=10.88.88.3
+USER=galoisuser
 tmux has-session -t $SESSIONNAME &> /dev/null
 if [ $? != 0 ]
  then

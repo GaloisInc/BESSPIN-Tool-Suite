@@ -8,7 +8,7 @@ Type=simple
 Restart=always
 RestartSec=10
 User=pi
-ExecStart=/usr/bin/env python3 /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk/kiosk-backend.py
+ExecStart=/usr/bin/env python3 /home/galoisuser/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk/kiosk-backend.py
 
 [Install]
 WantedBy=multi-user.target
