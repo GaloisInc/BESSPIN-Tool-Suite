@@ -77,7 +77,7 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
     vol_range = 2 ** 4
 
     # Set to True if testing remotely and no audio endpoint is present
-    REMOTE_TESTING = True
+    REMOTE_TESTING = False
 
     @staticmethod
     def get_named_session(name: str) -> typ.Union[AudioSession, None]:

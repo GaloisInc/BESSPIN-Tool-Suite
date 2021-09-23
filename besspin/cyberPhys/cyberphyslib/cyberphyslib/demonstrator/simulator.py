@@ -123,7 +123,7 @@ class Sim(component.ComponentPoller):
         # record whether sim is paused or not
         self._is_paused = False
         # NOTE: start with minial functionality
-        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
+        self.system_functionality_level = canlib.FUNCTIONALITY_MINIMAL
         self.use_race_car = use_race_car
 
     def on_start(self) -> None:

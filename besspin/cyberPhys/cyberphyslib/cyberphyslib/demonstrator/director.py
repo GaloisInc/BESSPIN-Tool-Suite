@@ -310,6 +310,17 @@ class IgnitionDirector():
                                               component_id))
         self.cmd_net.send_msg(msg)
 
+    def functionality_level_send(self, func_level):
+        """
+        Send CAN_ID_CMD_FUNCTIONALITY_LEVEL message
+        """
+        ignition_logger.warn(f"Sending CAN_ID_CMD_FUNCTIONALITY_LEVEL({canlib.CanlibComponentNames.get(func_level)})")
+        msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_FUNCTIONALITY_LEVEL,
+                             dlc=canlib.CAN_DLC_CMD_FUNCTIONALITY_LEVEL,
+                             data=struct.pack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL,
+                                              func_level))
+        self.cmd_net.send_msg(msg)
+
     def component_error_send(self, component_id, error_id):
         """
         Send CAN_ID_CMD_COMPONENT_ERROR message
@@ -528,6 +539,7 @@ class IgnitionDirector():
                 player.update_functionality_level(new_func_level)
                 sim.update_functionality_level(new_func_level)
                 self.system_functionality_level = new_func_level
+                self.functionality_level_send(self.system_functionality_level)
             else:
                 ignition_logger.info(f"Unknown functionality level {new_func_level}, ignoring.")
                 return

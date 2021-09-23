@@ -63,6 +63,7 @@ class CanDisplay(threading.Thread):
         self.scenario = canlib.SCENARIO_BASELINE
         self.state = STATE_NORMAL
         self.error_msg = ""
+        self.func_level = canlib.FUNCTIONALITY_NONE
 
         # initialize components dictionary - no errors by default
         for key in self.component_status:
@@ -72,19 +73,24 @@ class CanDisplay(threading.Thread):
 
         self.cmd_thread = threading.Thread(target=self.cmdLoop, args=[], daemon=True)
 
-    def update_component_status(self, component_id, error_id):
+    def update_component_status(self, component_id=None, error_id=None):
         """
-        Update the component dictionary and update the error message
+        Update the component dictionary and update the error message,
+        including the functionality level
         """
-        self.component_status[component_id] = error_id
         err_msg = ""
-        for cid in self.component_status:
-            err = self.component_status[cid]
-            if  err != canlib.ERROR_NONE:
-                err_msg += f"\n{canlib.CanlibComponentNames.get(cid,None)}: {canlib.CanlibComponentNames.get(err,None)}"
+        if component_id and error_id:
+            self.component_status[component_id] = error_id
+            for cid in self.component_status:
+                err = self.component_status[cid]
+                if  err != canlib.ERROR_NONE:
+                    err_msg += f"\n{canlib.CanlibComponentNames.get(cid,None)}: {canlib.CanlibComponentNames.get(err,None)}"
+        if self.func_level != canlib.FUNCTIONALITY_FULL:
+            err_msg += f"\nFUNCTIONALITY: {canlib.CanlibComponentNames.get(self.func_level)}"
         if err_msg == "" and self.error_msg != "":
             print("NO ERRORS")
         elif err_msg != "":
+            self.error_msg = err_msg
             print(f"{self.error_msg}")
 
     def run(self):
@@ -162,6 +168,9 @@ class CanDisplay(threading.Thread):
             elif cid == canlib.CAN_ID_CMD_COMPONENT_ERROR:
                 component_id, error_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_ERROR, msg.data)
                 self.update_component_status(component_id, error_id)
+            elif cid == canlib.CAN_ID_CMD_FUNCTIONALITY_LEVEL:
+                self.func_level = struct.unpack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL, msg.data)[0]
+                self.update_component_status()
             else:
                 pass
         except Exception as exc:
