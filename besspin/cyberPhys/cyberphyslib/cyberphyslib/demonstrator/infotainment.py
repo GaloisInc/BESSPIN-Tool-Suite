@@ -76,9 +76,6 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
 
     vol_range = 2 ** 4
 
-    # Set to True if testing remotely and no audio endpoint is present
-    REMOTE_TESTING = False
-
     @staticmethod
     def get_named_session(name: str) -> typ.Union[AudioSession, None]:
         """get an audio session with a specific process name
@@ -93,12 +90,15 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
                     return session, volume
         return None
 
-    def __init__(self, can_network: CanNetwork):
+    def __init__(self, can_network: CanNetwork, remote_testing=False):
         super().__init__("infoplay", [(config.DIRECTOR_PORT, 'infoplay-commands')], [(config.INFO_PLAY_PORT, 'infoplay-events')])
         self._network = can_network
         self._sidx: int = 0
         self._sound: typ.Union[mixer.Sound, None] = None
         self._sound_enabled = True
+
+        # Set to True if testing remotely and no audio endpoint is present
+        self.remote_testing = remote_testing
 
         # NOTE: start without music/sound
         self._volume = 0.0
@@ -111,12 +111,10 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         Updates the component's functionality level
         Unless FUNCTIONALITY_FULL disable all sounds
         """
-        if new_func_level != self.system_functionality_level:
-            if new_func_level != canlib.FUNCTIONALITY_FULL:
-                # Disable sound first
-                self.enable_sound(False)
-            # Update component functionality level
-            self.system_functionality_level = new_func_level
+        self.system_functionality_level = new_func_level
+        if self.system_functionality_level != canlib.FUNCTIONALITY_FULL:
+            # Disable sound
+            self.enable_sound(False)
 
     def enable_sound(self, enable: bool):
         """
@@ -143,7 +141,7 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         """play sound file depending on station select"""
         if self._sound is not None:
             self._sound.stop()
-        if not self.REMOTE_TESTING:
+        if not self.remote_testing:
             mixer.init()
             mixer.get_init()
             self._sound = mixer.Sound(
@@ -154,7 +152,7 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
 
     def _set_volume(self):
         """find audio session and set the master volume given the volume state"""
-        if self.REMOTE_TESTING:
+        if self.remote_testing:
             pass
         else:
             if self._sound_enabled:

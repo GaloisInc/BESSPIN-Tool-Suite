@@ -1,0 +1,16 @@
+[Unit]
+Description=Hacker Kiosk UI 
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/pi/.Xauthority"
+Type=simple
+Restart=always
+RestartSec=1
+User=pi
+ExecStart=/home/galoisuser/deploy/hacker-kiosk-0.1.0-armv7l.AppImage
+
+[Install]
+WantedBy=multi-user.target

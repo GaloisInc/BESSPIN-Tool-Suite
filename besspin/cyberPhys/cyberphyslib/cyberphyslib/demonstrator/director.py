@@ -24,7 +24,7 @@ import cyberphyslib.demonstrator.can_out as ccout
 import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
 import cyberphyslib.demonstrator.joystick as cjoy
-import cyberphyslib.demonstrator.health as cyhealth
+import cyberphyslib.demonstrator.healthmonitor as cyhealth
 import cyberphyslib.demonstrator.teensy as cteensy
 import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.canlib as canlib
@@ -43,7 +43,7 @@ class ComponentStatus(Enum):
     HEALTHY = auto()
     RESTARTING = auto()
     UNHEALTHY = auto()
-    UNKNWON = auto()
+    UNKNOWN = auto()
 
 class ComponentHealthTracker():
     """
@@ -51,21 +51,41 @@ class ComponentHealthTracker():
     can_id - as defined in Canlib
     status - status of the component
     time_of_reset - when was last reset requested
+    can_be_reset - can Ignition request a reset of this component?
     max_wait_after_reset - how long can we wait after a reset
         until the component is considered unhealthy (to avoid false
         positives after a reset)
     """
     name = "componentName"
     cid = 0
-    status = ComponentStatus.UNKNWON
+    status = ComponentStatus.UNKNOWN
     time_of_reset = None
-    DEFAULT_WAIT_TIME = 10.0
+    DEFAULT_WAIT_TIME = 60.0
 
     def __init__(self, cid, max_wait_after_reset=DEFAULT_WAIT_TIME, can_be_reset=True):
         self.name = canlib.CanlibComponentNames.get(cid,"UnknownComponent")
         self.cid = cid
         self.can_be_reset = can_be_reset
         self.max_wait_after_reset = max_wait_after_reset
+
+    def __str__(self):
+        end_color = '\033[0m'
+        if self.status == ComponentStatus.HEALTHY:
+            status = "HEALTHY"
+            start_color = '\033[92m'
+        elif self.status == ComponentStatus.RESTARTING:
+            status = "RESTARTING"
+            start_color = '\033[93m'
+        elif self.status == ComponentStatus.UNHEALTHY:
+            status = "UNHEALTHY"
+            start_color = '\033[91m'
+        elif self.status == ComponentStatus.UNKNOWN:
+            status = "UNKNOWN"
+            start_color = '\033[94m'
+        else:
+            status = "UNDEFINED"
+            start_color = '\033[95m'
+        return f"{self.name} : {start_color} {status} {end_color}"
 
 class IgnitionDirector():
     """
@@ -83,46 +103,55 @@ class IgnitionDirector():
         #canlib.HACK_INFOTAINMENT_2: ledm.LedPatterns.ALL_ON,# TODO add pattern for infotainment hack
     }
 
-    HEALTH_MONITOR_FREQUENCY = 0.1 # Every 10s
+    HEALTH_MONITOR_FREQUENCY = 0.035 # The full component health monitor cycle takes around 30 seconds
+    HEART_RATE_FREQUENCY = 1.0 # Every 1s
+    DIRECTOR_FREQUENCY = 25.0 # 20s in reality due to execution time
+
+    ui_components = {
+        # only inform of an error, don't reset or change functionality mode
+        canlib.CAN_DISPLAY_FRONTEND: ComponentHealthTracker(cid=canlib.CAN_DISPLAY_FRONTEND,can_be_reset=False),
+        canlib.CAN_DISPLAY_BACKEND: ComponentHealthTracker(cid=canlib.CAN_DISPLAY_BACKEND,can_be_reset=False),
+        canlib.HACKER_KIOSK_FRONTEND: ComponentHealthTracker(cid=canlib.HACKER_KIOSK_FRONTEND,can_be_reset=False),
+        canlib.HACKER_KIOSK_BACKEND: ComponentHealthTracker(cid=canlib.HACKER_KIOSK_BACKEND,can_be_reset=False),
+    }
 
     minimal_functionality_systems = {
-        canlib.CAN_DISPLAY_FRONTEND: ComponentHealthTracker(cid=canlib.CAN_DISPLAY_FRONTEND,can_be_reset=False),
-        #canlib.CAN_DISPLAY_BACKEND: ComponentHealthTracker(cid=canlib.CAN_DISPLAY_BACKEND,can_be_reset=False),
-        canlib.HACKER_KIOSK_FRONTEND: ComponentHealthTracker(cid=canlib.HACKER_KIOSK_FRONTEND,can_be_reset=False),
-        #canlib.HACKER_KIOSK_BACKEND: ComponentHealthTracker(cid=canlib.HACKER_KIOSK_BACKEND,can_be_reset=False),
-        canlib.TEENSY: ComponentHealthTracker(cid=canlib.TEENSY)
+        # Necessary for a simulator-only run
+        canlib.TEENSY: ComponentHealthTracker(cid=canlib.TEENSY),
+        canlib.IGNITION: ComponentHealthTracker(cid=canlib.IGNITION,can_be_reset=False)
     }
 
     medium_functionality_systems = {
-        #canlib.BESSPIN_TOOL_FREERTOS: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_FREERTOS,can_be_reset=False),
+        # The tool doesn't respond to heartbeats when restarting components - use "fake" reset command to handle this
+        canlib.BESSPIN_TOOL_FREERTOS: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_FREERTOS,max_wait_after_reset=120),
         canlib.FREERTOS_1: ComponentHealthTracker(cid=canlib.FREERTOS_1, max_wait_after_reset=60),
         canlib.FREERTOS_2_CHERI: ComponentHealthTracker(cid=canlib.FREERTOS_2_CHERI, max_wait_after_reset=60),
         canlib.FREERTOS_3: ComponentHealthTracker(cid=canlib.FREERTOS_3, max_wait_after_reset=60),
     }
 
     full_functionality_systems = {
-        #canlib.DEBIAN_1: ComponentHealthTracker(cid=canlib.DEBIAN_1,can_be_reset=False),
-        #canlib.DEBIAN_2_LMCO: ComponentHealthTracker(cid=canlib.DEBIAN_2_LMCO,can_be_reset=False),
-        #canlib.DEBIAN_3: ComponentHealthTracker(cid=canlib.DEBIAN_3,can_be_reset=False),
-        #canlib.BESSPIN_TOOL_DEBIAN: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_DEBIAN,can_be_reset=False),
+        canlib.DEBIAN_1: ComponentHealthTracker(cid=canlib.DEBIAN_1,can_be_reset=False),
+        canlib.DEBIAN_2_LMCO: ComponentHealthTracker(cid=canlib.DEBIAN_2_LMCO,can_be_reset=False),
+        canlib.DEBIAN_3: ComponentHealthTracker(cid=canlib.DEBIAN_3,can_be_reset=False),
+        # The tool doesn't respond to heartbeats when restarting components - use "fake" reset command to handle this
+        canlib.BESSPIN_TOOL_DEBIAN: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_DEBIAN, max_wait_after_reset=120),
         canlib.INFOTAINMENT_THIN_CLIENT: ComponentHealthTracker(cid=canlib.INFOTAINMENT_THIN_CLIENT,can_be_reset=False),
-        canlib.INFOTAINMENT_SERVER_1: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_1, max_wait_after_reset=30),
-        canlib.INFOTAINMENT_SERVER_2: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_2, max_wait_after_reset=30),
-        canlib.INFOTAINMENT_SERVER_3: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_3, max_wait_after_reset=30),
-        canlib.OTA_UPDATE_SERVER_1: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_1, max_wait_after_reset=30),
-        canlib.OTA_UPDATE_SERVER_2: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_2, max_wait_after_reset=30),
-        canlib.OTA_UPDATE_SERVER_3: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_3, max_wait_after_reset=30),
-        #canlib.INFOTAINMENT_BACKEND: ComponentHealthTracker(cid=canlib.INFOTAINMENT_BACKEND,can_be_reset=False)
+        # NOTE: these could be potentially reset
+        canlib.INFOTAINMENT_SERVER_1: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_1, can_be_reset=False),
+        canlib.INFOTAINMENT_SERVER_2: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_2, can_be_reset=False),
+        canlib.INFOTAINMENT_SERVER_3: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_3, can_be_reset=False),
+        canlib.OTA_UPDATE_SERVER_1: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_1, can_be_reset=False),
+        canlib.OTA_UPDATE_SERVER_2: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_2, can_be_reset=False),
+        canlib.OTA_UPDATE_SERVER_3: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_3, can_be_reset=False),
+        canlib.INFOTAINMENT_BACKEND: ComponentHealthTracker(cid=canlib.INFOTAINMENT_BACKEND,can_be_reset=False)
     }
 
-    # Easter egg^_^
-    race_car = False
-
-    def set_race_car(self, race_car):
-        self.race_car = race_car    
+    # How many times in a row we can attempt to switch the autopilot mode
+    # before throwing an error
+    MAX_AUTOPILOT_COUNT = 25
 
     @classmethod
-    def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
+    def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig,race_car=False,no_sound=False):
         """produce director from the Besspin environment setup file"""
         cmd_host, cmd_subscribers = net_conf.getCmdNetworkNodes("SimPc")
         ip_sim = net_conf.ip_SimPc
@@ -132,7 +161,7 @@ class IgnitionDirector():
                    ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST + [net_conf.ip_InfotainmentThinClient],
                    ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST + [net_conf.ip_InfotainmentThinClient],
                    base_whitelist=net_conf.wl_BASELINE + [net_conf.ip_InfotainmentThinClient],
-                   apply_lists=cconf.APPLY_LISTS)
+                   apply_lists=cconf.APPLY_LISTS, race_car=race_car, no_sound=no_sound)
 
     @property
     def self_drive_mode(self):
@@ -151,7 +180,9 @@ class IgnitionDirector():
                  ssith_info_blacklist=False,
                  ssith_ecu_blacklist=False,
                  base_blacklist=False,
-                 apply_lists = True
+                 apply_lists = True,
+                 race_car = False,
+                 no_sound = False
                  ):
 
         self.can_multiverse = None
@@ -168,7 +199,7 @@ class IgnitionDirector():
         # TODO: is there a better solution?
         self.active_scenario = canlib.SCENARIO_BASELINE
         self.self_drive_scenario_start = None
-        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
+        self.system_functionality_level = canlib.FUNCTIONALITY_NONE
 
         self.joystick_name = cconf.JOYSTICK_NAME
 
@@ -200,6 +231,13 @@ class IgnitionDirector():
         self.check_health_time = 0.0
 
         self.teensy = cteensy.TeensyMonitor()
+        self.hm = cyhealth.HeartbeatMonitor()
+
+        self.enable_autopilot_counter = 0
+        self.disable_autopilot_counter = 0
+
+        self.race_car = race_car
+        self.no_sound = no_sound
 
     def start(self):
         """
@@ -219,11 +257,14 @@ class IgnitionDirector():
     def main_loop(self):
         """main loop"""
         self.check_health_time = time.time()
+        self.check_heartbeat_time = time.time()
         cnt = 0
         while (True):
             cnt += 1
             t = time.time()
             delta_t = t - self.check_health_time
+            hr_delta_t = t - self.check_heartbeat_time
+
             # Process CMD messages
             self.process_cmd_message()
 
@@ -232,25 +273,31 @@ class IgnitionDirector():
             # Check driver activity
             self.check_driver_activity()
 
-            if self.system_functionality_level < canlib.FUNCTIONALITY_MEDIUM:
+            if self.system_functionality_level == canlib.FUNCTIONALITY_MINIMAL:
                 # If in minimal mode, read teensy data here
                 sim: simulator.Sim = self._handler["beamng"]
                 # NOTE: ugly!
-                self.control['gear'] = self.teensy.gear
-                self.control['throttle'] = self.teensy.throttle
-                self.control['brake'] = self.teensy.brake
-                self.control_evt = True
+                sim.control['gear'] = self.teensy.gear
+                sim.control['throttle'] = self.teensy.throttle
+                sim.control['brake'] = self.teensy.brake
+                sim.control_evt = True
+
+            # Heartbeat
+            if hr_delta_t > (1/IgnitionDirector.HEART_RATE_FREQUENCY):
+                self.check_heartbeat_time = t
+                hr_msg = self.hm.component_monitor.get_req_msg()
+                self.cmd_net.send_msg(hr_msg)
+                self.can_multiverse.send_msg(hr_msg)
 
             # System health check
             if delta_t > (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY):
                 self.system_health_check()
                 self.check_health_time = t
                 print(f"Main loop freq: {cnt/delta_t}[Hz]")
-                print(f"Teensy is healty? {self.teensy.is_healthy}")
                 cnt = 0
 
             # Approximately sleep
-            time.sleep(0.04)
+            time.sleep(1.0/IgnitionDirector.DIRECTOR_FREQUENCY)
 
 
     def component_ready_send(self, component_id):
@@ -267,10 +314,22 @@ class IgnitionDirector():
         """
         Send CAN_ID_CMD_RESTART message
         """
+        ignition_logger.warn(f"Requesting reset of {canlib.CanlibComponentNames.get(component_id)}")
         msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_RESTART,
                              dlc=canlib.CAN_DLC_CMD_RESTART,
                              data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART,
                                               component_id))
+        self.cmd_net.send_msg(msg)
+
+    def functionality_level_send(self, func_level):
+        """
+        Send CAN_ID_CMD_FUNCTIONALITY_LEVEL message
+        """
+        ignition_logger.warn(f"Sending CAN_ID_CMD_FUNCTIONALITY_LEVEL({canlib.CanlibComponentNames.get(func_level)})")
+        msg = extcan.Message(arbitration_id=canlib.CAN_ID_CMD_FUNCTIONALITY_LEVEL,
+                             dlc=canlib.CAN_DLC_CMD_FUNCTIONALITY_LEVEL,
+                             data=struct.pack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL,
+                                              func_level))
         self.cmd_net.send_msg(msg)
 
     def component_error_send(self, component_id, error_id):
@@ -295,8 +354,8 @@ class IgnitionDirector():
             cid, msg = recv
             try:
                 if cid == canlib.CAN_ID_CMD_RESTART:
-                    ignition_logger.info(f"process cc: restart")
                     dev_id = struct.unpack(canlib.CAN_FORMAT_CMD_RESTART, msg.data)[0]
+                    ignition_logger.info(f"process cc: restart {canlib.CanlibComponentNames.get(dev_id)}")
                     if dev_id == canlib.IGNITION:
                         ignition_logger.info("Director: restarting ignition from CMD_RESTART")
                         self.restart_simulator()
@@ -315,7 +374,7 @@ class IgnitionDirector():
 
                 elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
                     hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
-                    ignition_logger.info(f"process cc: set hack active {hack_idx}")
+                    ignition_logger.info(f"process cc: set hack active {canlib.CanlibComponentNames.get(hack_idx)}")
                     # Process HACK_ACTIVE messages only in baseline scenario
                     if self.active_scenario == canlib.SCENARIO_BASELINE:
                         # NOTE:  treat Led manager as a critical component
@@ -328,7 +387,7 @@ class IgnitionDirector():
                         canlib.SCENARIO_SECURE_ECU: "secure_ecu",
                         canlib.SCENARIO_SECURE_INFOTAINMENT: "secure_infotainment"}
                     scen_idx = struct.unpack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, msg.data)[0]
-                    ignition_logger.info(f"process cc: active scenario {scen_idx}")
+                    ignition_logger.info(f"process cc: active scenario {canlib.CanlibComponentNames.get(scen_idx)}")
                     self.active_scenario = scen_idx
                     cm: ccan.CanMultiverseComponent = self._handler["canm"]
                     cm.select_network(nmap[scen_idx])
@@ -339,6 +398,10 @@ class IgnitionDirector():
                     else:
                         pattern = ledm.LedPatterns.SSITH
                     lm.update_pattern(ledm.LedPatterns(pattern))
+                elif cid == canlib.CAN_ID_HEARTBEAT_ACK:
+                    # Update response
+                    client_id, req_num = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_ACK, msg.data)
+                    self.hm.component_monitor.submit_response(client_id, (client_id, req_num))
                 else:
                     pass
             except Exception as exc:
@@ -372,96 +435,116 @@ class IgnitionDirector():
             ignition_logger.info("Director: no activity detected, switching to self-drive")
             self.enable_autopilot()
 
-    def component_health_check(self, component_dictionary, health_report):
+    def component_health_check(self, component_dictionary: dict, health_report: dict) -> bool:
         """
         Iterate over components in the dictionry and perform checks
+        Return True if all components are healthy
         """
+        status = True
         for cid in component_dictionary:
-            is_healthy: bool = health_report[cid]
             component: ComponentHealthTracker = component_dictionary[cid]
-            old_status = component.status
-            if is_healthy:
-                # New report says component is healthy
-                if old_status == ComponentStatus.HEALTHY:
-                    # no change here
-                    pass
-                elif old_status == ComponentStatus.RESTARTING:
-                    # restart was successfull!
-                    self.component_error_send(cid, canlib.ERROR_NONE)
-                    component.status = ComponentStatus.HEALTHY
-                elif old_status == ComponentStatus.UNHEALTHY:
-                    # it is healthy now
-                    self.component_error_send(cid, canlib.ERROR_NONE)
-                    component.status = ComponentStatus.HEALTHY
-                elif old_status == ComponentStatus.UNKNWON:
-                    component.status = ComponentStatus.HEALTHY
-            else:
-                # New report says component is not healthy
-                if old_status == ComponentStatus.HEALTHY:
-                    # Possibly request a reset here
-                    # self.component_restart_send(cid)
-                    self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
-                    component.status = ComponentStatus.UNHEALTHY
-                elif old_status == ComponentStatus.RESTARTING:
-                    # see how long ago was the reset
-                    delta_t = time.time() - component.time_of_reset
-                    if delta_t > component.max_wait_after_reset:
-                        # too much time passed, mark as unhealthy
+            if cid in health_report:
+                is_healthy: bool = health_report[cid]
+                old_status = component.status
+                if is_healthy:
+                    # New report says component is healthy
+                    if old_status == ComponentStatus.HEALTHY:
+                        # no change here
+                        pass
+                    elif old_status == ComponentStatus.RESTARTING:
+                        # restart was successfull!
+                        self.component_error_send(cid, canlib.ERROR_NONE)
+                        component.status = ComponentStatus.HEALTHY
+                    elif old_status == ComponentStatus.UNHEALTHY:
+                        # it is healthy now
+                        self.component_error_send(cid, canlib.ERROR_NONE)
+                        component.status = ComponentStatus.HEALTHY
+                    elif old_status == ComponentStatus.UNKNOWN:
+                        component.status = ComponentStatus.HEALTHY
+                        # it is healthy now
+                        self.component_error_send(cid, canlib.ERROR_NONE)
+                else:
+                    # New report says component is not healthy
+                    if old_status == ComponentStatus.HEALTHY:
+                        # Possibly request a reset here
+                        if component.can_be_reset:
+                            self.component_restart_send(cid)
+                            component.time_of_reset = time.time()
+                            component.status = ComponentStatus.RESTARTING
+                        else:
+                            component.status = ComponentStatus.UNHEALTHY
+                        self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
+                    elif old_status == ComponentStatus.RESTARTING:
+                        # see how long ago was the reset
+                        delta_t = time.time() - component.time_of_reset
+                        if delta_t > component.max_wait_after_reset:
+                            # too much time passed, mark as unhealthy
+                            self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
+                            component.status = ComponentStatus.UNHEALTHY
+                    elif old_status == ComponentStatus.UNHEALTHY:
+                        # no change here
+                        # Send the error message again just in case
+                        self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
+                        pass
+                    elif old_status == ComponentStatus.UNKNOWN:
+                        # notify
                         self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
                         component.status = ComponentStatus.UNHEALTHY
-                elif old_status == ComponentStatus.UNHEALTHY:
-                    # no change here
-                    pass
-                elif old_status == ComponentStatus.UNKNWON:
-                    # notify
-                    self.component_error_send(cid, canlib.ERROR_UNSPECIFIED)
-                    component.status = ComponentStatus.UNHEALTHY
-
+            else:
+                component.status = ComponentStatus.UNKNOWN
+            status = status and (component.status is not ComponentStatus.UNHEALTHY)
+        return status
 
     def system_health_check(self):
         """
         Query system health, update functionality level if necessary
         """
-        # NOTE: this a patch to reset teensy when it gets stuck
-        if not self.teensy.is_healthy:
-            ignition_logger.warning(f"Teensy is not healthy, restarting.")
-            self.component_restart_send(canlib.TEENSY)
-            self.component_error_send(canlib.TEENSY, canlib.ERROR_UNSPECIFIED)
+        # Get health report
+        hr: dict  = self.hm.health_report
+        # Add teensy information
+        hr[canlib.TEENSY] = self.teensy.is_healthy
+
+        # Check Sim error counters
+        if (self.enable_autopilot_counter > IgnitionDirector.MAX_AUTOPILOT_COUNT) \
+            or (self.disable_autopilot_counter > IgnitionDirector.MAX_AUTOPILOT_COUNT):
+            hr[canlib.IGNITION] = False
         else:
-            self.component_error_send(canlib.TEENSY, canlib.ERROR_NONE)
+            hr[canlib.IGNITION] = True
 
-        # This is how we should be handling components
+        # Check functionality levels
+        func_level = canlib.FUNCTIONALITY_NONE
+        start_color = '\033[94m'
+        end_color = '\033[0m'
 
+        self.component_health_check(self.ui_components, hr)
+        minimal_ok = self.component_health_check(self.minimal_functionality_systems, hr)
+        medium_ok = self.component_health_check(self.medium_functionality_systems, hr)
+        full_ok = self.component_health_check(self.full_functionality_systems, hr)
 
-        # hm: cyhealth.HeartbeatMonitor = self._handler["health-monitor"]
-        # hr: dict  = hm.health_report
-        #
-        # # Get teensy information
-        # hr[canlib.TEENSY] = self._handler['teensy'].is_healthy
-        # self.component_health_check(self.minimal_functionality_systems, hr)
-        # self.component_health_check(self.medium_functionality_systems, hr)
-        # self.component_health_check(self.full_functionality_systems, hr)
-        #
-        # Here we need to set the functionality level
-        # iterate over components, if at least one UNHEALHY in each set, mark the level?
+        if minimal_ok and medium_ok and full_ok:
+            func_level = canlib.FUNCTIONALITY_FULL
+            start_color = '\033[92m'
+        elif minimal_ok and medium_ok:
+            func_level = canlib.FUNCTIONALITY_MEDIUM
+            start_color = '\033[93m'
+        elif minimal_ok:
+            func_level = canlib.FUNCTIONALITY_MINIMAL
+            start_color = '\033[91m'
+        else:
+            pass
 
-        # for cid, is_healthy in hr.items():
-        #     if not is_healthy:
-        #         # restart cid
-        #         ignition_logger.warn(f"Need to send restart request to component {canlib.CanlibComponentNames[cid]}")
+        system_status = ["\nUI components:\n"]
+        system_status += [f"\t{component}\n" for component in self.ui_components.values()]
+        system_status += ["MINIMAL functionality components:\n"]
+        system_status += [f"\t{component}\n" for component in self.minimal_functionality_systems.values()]
+        system_status += ["MEDIUM functionality components:\n"]
+        system_status += [f"\t{component}\n" for component in self.medium_functionality_systems.values()]
+        system_status += ["FULL functionality components:\n"]
+        system_status += [f"\t{component}\n" for component in self.full_functionality_systems.values()]
 
-        # func_set = {k for k, v in hr.items() if v}
-        # if (full_functionality_systems | medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
-        #     # we are fully functional
-        #     ignition_logger.info("Ignition is at full functionality level")
-        # elif (medium_functionality_systems | minimal_functionality_systems).issubset(func_set):
-        #     # medium functionality
-        #     ignition_logger.warn("Ignition is at medium functionality level")
-        # elif (minimal_functionality_systems).issubset(func_set):
-        #     # minimal functionality
-        #     ignition_logger.warn("Ignition is at minimal functionality level")
-        # else:
-        #     ignition_logger.warn("Ignition is a null functionality level")
+        self.update_functionality_level(func_level)
+        ignition_logger.info(f"Health report: {''.join(system_status)}")
+        ignition_logger.info(f"Functionality level {start_color} {canlib.CanlibComponentNames.get(func_level)} {end_color}")
 
     def update_functionality_level(self, new_func_level):
         """
@@ -474,7 +557,7 @@ class IgnitionDirector():
                       canlib.FUNCTIONALITY_NONE
                       ]
             if new_func_level in levels:
-                ignition_logger.info(f"Switching to {new_func_level}")
+                ignition_logger.info(f"Switching to {canlib.CanlibComponentNames.get(new_func_level)}")
                 sim: simulator.Sim = self._handler["beamng"]
                 player: infotainment.InfotainmentPlayer = self._handler["infoplay"]
                 player.update_functionality_level(new_func_level)
@@ -482,7 +565,7 @@ class IgnitionDirector():
                 self.system_functionality_level = new_func_level
             else:
                 ignition_logger.info(f"Unknown functionality level {new_func_level}, ignoring.")
-                return
+        self.functionality_level_send(self.system_functionality_level)
 
     def restart_simulator(self):
         """
@@ -496,6 +579,10 @@ class IgnitionDirector():
         """
         Enable autopilot
         """
+        # Manage counters
+        self.enable_autopilot_counter += 1
+        self.disable_autopilot_counter = 0
+
         ignition_logger.info("Enable autopilot, disable sound")
         sim: simulator.Sim = self._handler["beamng"]
         sim.enable_autopilot_command()
@@ -508,6 +595,10 @@ class IgnitionDirector():
         """
         Disable autopilot
         """
+        # Manage counters
+        self.enable_autopilot_counter = 0
+        self.disable_autopilot_counter += 1
+
         ignition_logger.info("Disable autopilot, enable sound")
         sim: simulator.Sim = self._handler["beamng"]
         sim.disable_autopilot_command()
@@ -559,6 +650,14 @@ class IgnitionDirector():
                 else:
                     ignition_logger.info(f"Unexpected component name: {comp.name}")
                 return False
+            if comp.name == 'jmonitor':
+                self.component_error_send(canlib.JOYSTICK_MONITOR,canlib.ERROR_NONE)
+            elif comp.name == 'pmonitor':
+                self.component_error_send(canlib.PEDAL_MONITOR,canlib.ERROR_NONE)
+            elif comp.name == 'speedo':
+                self.component_error_send(canlib.INSTRUMENT_CLUSTER,canlib.ERROR_NONE)
+            else:
+                ignition_logger.info(f"Unexpected component name: {comp.name}")
             self.can_multiverse.register(comp)
             return True
 
@@ -577,15 +676,11 @@ class IgnitionDirector():
         if not start_component(ledm.LedManagerComponent.for_ignition()): return False
 
         # startup the heartbeat monitor
-        #hm = cyhealth.HeartbeatMonitor(self.can_multiverse, self.cmd_net)
-        #hm.setup_cc()
-        #hm.setup_can()
-        #if not start_component(hm): return False
-        #hm.start_monitor()
+        self.hm.start()
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
-        player = infotainment.InfotainmentPlayer(self.info_net)
+        player = infotainment.InfotainmentPlayer(can_network=self.info_net,remote_testing=self.no_sound)
         if not start_component(ui): return False
         if not start_component(player): return False
 

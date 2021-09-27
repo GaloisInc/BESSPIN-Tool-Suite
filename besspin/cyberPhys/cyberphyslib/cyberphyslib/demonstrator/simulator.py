@@ -123,7 +123,7 @@ class Sim(component.ComponentPoller):
         # record whether sim is paused or not
         self._is_paused = False
         # NOTE: start with minial functionality
-        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
+        self.system_functionality_level = canlib.FUNCTIONALITY_MINIMAL
         self.use_race_car = use_race_car
 
     def on_start(self) -> None:
@@ -261,16 +261,15 @@ class Sim(component.ComponentPoller):
         """
         Updates the component's functionality level
         When FUNCTIONALITY_MINIMAL/NONE don' update from CAN
-        but from serial (in a separate thread)
+        but from serial (the director handles it)
         """
-        if new_func_level != self.system_functionality_level:
-            # Update component functionality level
-            self.system_functionality_level = new_func_level
+        self.system_functionality_level = new_func_level
+
 
     ########## can receive ###########
     def control_process(self, name, data, bounds=(0.0, 1.0)):
         data = min(max(data[0], bounds[0]), bounds[1])
-        if self.system_functionality_level > canlib.FUNCTIONALITY_MINIMAL:
+        if (self.system_functionality_level == canlib.FUNCTIONALITY_MEDIUM) or (self.system_functionality_level == canlib.FUNCTIONALITY_FULL):
             self.control[name] = data
             self.control_evt = True
 

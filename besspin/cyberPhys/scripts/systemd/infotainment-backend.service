@@ -1,0 +1,15 @@
+[Unit]
+Description=Infotainment Backend Service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Environment="DISPLAY=:0"
+Type=simple
+Restart=always
+RestartSec=10
+User=pi
+ExecStart=/home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/infotainment/infotainment-backend.py
+
+[Install]
+WantedBy=multi-user.target
