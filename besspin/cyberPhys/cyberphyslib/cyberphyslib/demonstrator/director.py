@@ -161,7 +161,7 @@ class IgnitionDirector():
                    ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST + [net_conf.ip_InfotainmentThinClient],
                    ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST + [net_conf.ip_InfotainmentThinClient],
                    base_whitelist=net_conf.wl_BASELINE + [net_conf.ip_InfotainmentThinClient],
-                   apply_lists=cconf.APPLY_LISTS, race_car, no_sound)
+                   apply_lists=cconf.APPLY_LISTS, race_car=race_car, no_sound=no_sound)
 
     @property
     def self_drive_mode(self):
@@ -616,8 +616,6 @@ class IgnitionDirector():
         self.is_finished = True
         self._handler.exit()
         self.info_net.exit()
-        ignition_logger.flush()
-        ignition_logger.terminate()
 
     def startup(self) -> bool:
         """
@@ -682,7 +680,7 @@ class IgnitionDirector():
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
-        player = infotainment.InfotainmentPlayer(self.info_net,remote_testing=self.no_sound)
+        player = infotainment.InfotainmentPlayer(can_network=self.info_net,remote_testing=self.no_sound)
         if not start_component(ui): return False
         if not start_component(player): return False
 

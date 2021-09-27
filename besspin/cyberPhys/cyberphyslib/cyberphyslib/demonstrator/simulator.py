@@ -253,8 +253,6 @@ class Sim(component.ComponentPoller):
         self.kill_beamng()
         if self._beamng_context is not None:
             self._beamng_context.close()
-        logger.sim_logger.flush()
-        logger.sim_logger.terminate()
 
     def exit(self):
         super(Sim, self).exit()

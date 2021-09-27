@@ -6,8 +6,6 @@ Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <el
 Date: 15 April 2021
 
 """
-import time
-
 if __name__ == "__main__":
     # Project libs
     from cyberphyslib.demonstrator import director
