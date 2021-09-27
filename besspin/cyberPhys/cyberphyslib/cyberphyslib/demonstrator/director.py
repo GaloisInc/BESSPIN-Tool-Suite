@@ -543,7 +543,7 @@ class IgnitionDirector():
         system_status += [f"\t{component}\n" for component in self.full_functionality_systems.values()]
 
         self.update_functionality_level(func_level)
-        ignition_logger.info(f"Helth report: {''.join(system_status)}")
+        ignition_logger.info(f"Health report: {''.join(system_status)}")
         ignition_logger.info(f"Functionality level {start_color} {canlib.CanlibComponentNames.get(func_level)} {end_color}")
 
     def update_functionality_level(self, new_func_level):

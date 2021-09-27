@@ -95,10 +95,10 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         self._network = can_network
         self._sidx: int = 0
         self._sound: typ.Union[mixer.Sound, None] = None
-        self._sound_enabled = remote_testing
+        self._sound_enabled = True
 
         # Set to True if testing remotely and no audio endpoint is present
-        self.remote_testing = False
+        self.remote_testing = remote_testing
 
         # NOTE: start without music/sound
         self._volume = 0.0
