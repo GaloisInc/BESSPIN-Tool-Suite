@@ -117,7 +117,8 @@ class IgnitionDirector():
 
     minimal_functionality_systems = {
         # Necessary for a simulator-only run
-        canlib.TEENSY: ComponentHealthTracker(cid=canlib.TEENSY)
+        canlib.TEENSY: ComponentHealthTracker(cid=canlib.TEENSY),
+        canlib.IGNITION: ComponentHealthTracker(cid=canlib.IGNITION,can_be_reset=False)
     }
 
     medium_functionality_systems = {
@@ -145,14 +146,12 @@ class IgnitionDirector():
         canlib.INFOTAINMENT_BACKEND: ComponentHealthTracker(cid=canlib.INFOTAINMENT_BACKEND,can_be_reset=False)
     }
 
-    # Easter egg^_^
-    race_car = False
-
-    def set_race_car(self, race_car):
-        self.race_car = race_car    
+    # How many times in a row we can attempt to switch the autopilot mode
+    # before throwing an error
+    MAX_AUTOPILOT_COUNT = 25
 
     @classmethod
-    def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig):
+    def from_network_config(cls, net_conf: cconf.DemonstratorNetworkConfig,race_car=False,no_sound=False):
         """produce director from the Besspin environment setup file"""
         cmd_host, cmd_subscribers = net_conf.getCmdNetworkNodes("SimPc")
         ip_sim = net_conf.ip_SimPc
@@ -162,7 +161,7 @@ class IgnitionDirector():
                    ssith_info_whitelist=net_conf.wl_SSITH_INFO_WHITELIST + [net_conf.ip_InfotainmentThinClient],
                    ssith_ecu_whitelist=net_conf.wl_SSITH_ECU_WHITELIST + [net_conf.ip_InfotainmentThinClient],
                    base_whitelist=net_conf.wl_BASELINE + [net_conf.ip_InfotainmentThinClient],
-                   apply_lists=cconf.APPLY_LISTS)
+                   apply_lists=cconf.APPLY_LISTS, race_car, no_sound)
 
     @property
     def self_drive_mode(self):
@@ -181,7 +180,9 @@ class IgnitionDirector():
                  ssith_info_blacklist=False,
                  ssith_ecu_blacklist=False,
                  base_blacklist=False,
-                 apply_lists = True
+                 apply_lists = True,
+                 race_car = False,
+                 no_sound = False
                  ):
 
         self.can_multiverse = None
@@ -231,6 +232,12 @@ class IgnitionDirector():
 
         self.teensy = cteensy.TeensyMonitor()
         self.hm = cyhealth.HeartbeatMonitor()
+
+        self.enable_autopilot_counter = 0
+        self.disable_autopilot_counter = 0
+
+        self.race_car = race_car
+        self.no_sound = no_sound
 
     def start(self):
         """
@@ -497,6 +504,13 @@ class IgnitionDirector():
         # Add teensy information
         hr[canlib.TEENSY] = self.teensy.is_healthy
 
+        # Check Sim error counters
+        if (self.enable_autopilot_counter > IgnitionDirector.MAX_AUTOPILOT_COUNT) \
+            or (self.disable_autopilot_counter > IgnitionDirector.MAX_AUTOPILOT_COUNT):
+            hr[canlib.IGNITION] = False
+        else:
+            hr[canlib.IGNITION] = True
+
         # Check functionality levels
         func_level = canlib.FUNCTIONALITY_NONE
         start_color = '\033[94m'
@@ -565,6 +579,10 @@ class IgnitionDirector():
         """
         Enable autopilot
         """
+        # Manage counters
+        self.enable_autopilot_counter += 1
+        self.disable_autopilot_counter = 0
+
         ignition_logger.info("Enable autopilot, disable sound")
         sim: simulator.Sim = self._handler["beamng"]
         sim.enable_autopilot_command()
@@ -577,6 +595,10 @@ class IgnitionDirector():
         """
         Disable autopilot
         """
+        # Manage counters
+        self.enable_autopilot_counter = 0
+        self.disable_autopilot_counter += 1
+
         ignition_logger.info("Disable autopilot, enable sound")
         sim: simulator.Sim = self._handler["beamng"]
         sim.disable_autopilot_command()
@@ -594,6 +616,8 @@ class IgnitionDirector():
         self.is_finished = True
         self._handler.exit()
         self.info_net.exit()
+        ignition_logger.flush()
+        ignition_logger.terminate()
 
     def startup(self) -> bool:
         """
@@ -658,7 +682,7 @@ class IgnitionDirector():
 
         # startup infotainment proxy
         ui = infotainment.InfotainmentUi(self.can_multiverse)
-        player = infotainment.InfotainmentPlayer(self.info_net)
+        player = infotainment.InfotainmentPlayer(self.info_net,remote_testing=self.no_sound)
         if not start_component(ui): return False
         if not start_component(player): return False
 
