@@ -280,6 +280,7 @@ class IgnitionDirector():
                 sim.control['gear'] = self.teensy.gear
                 sim.control['throttle'] = self.teensy.throttle
                 sim.control['brake'] = self.teensy.brake
+                # steering for hacks
                 sim.control_evt = True
 
             # Heartbeat

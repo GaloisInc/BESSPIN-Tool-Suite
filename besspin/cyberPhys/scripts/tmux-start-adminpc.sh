@@ -43,18 +43,18 @@ if [ $? != 0 ]
     tmux new-session -s $SESSIONNAME -n script -d
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
     tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "/home/pi/mouse-config.sh" C-m
+    tmux send-keys -t $SESSIONNAME "/home/${USER}/mouse-config.sh" C-m
     tmux send-keys -t $SESSIONNAME "sleep 20" C-m
     tmux send-keys -t $SESSIONNAME "sudo systemctl restart hacker-ui" C-m
-    tmux send-keys -t $SESSIONNAME "journalctl -fu hacker-ui" C-m
+    tmux send-keys -t $SESSIONNAME "sudo journalctl -fu hacker-ui" C-m
 
     tmux split-window -h -t $SESSIONNAME
     tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "ssh pi@${IP}" C-m
+    tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
     tmux send-keys -t $SESSIONNAME "sleep 20" C-m
     #tmux send-keys -t $SESSIONNAME "sudo systemctl restart hacker-kiosk" C-m
     tmux send-keys -t $SESSIONNAME "sudo systemctl stop hacker-kiosk" C-m
-    tmux send-keys -t $SESSIONNAME "cd /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk" C-m
+    tmux send-keys -t $SESSIONNAME "cd /home/${USER}/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk" C-m
     tmux send-keys -t $SESSIONNAME "python3 kiosk-backend.py --deploy-mode" C-m
 fi
 
