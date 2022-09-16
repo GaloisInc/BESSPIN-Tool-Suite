@@ -266,40 +266,41 @@ class Sim(component.ComponentPoller):
         self.system_functionality_level = new_func_level
 
 
-    ########## can receive ###########
-    def control_process(self, name, data, bounds=(0.0, 1.0)):
-        data = min(max(data[0], bounds[0]), bounds[1])
-        if (self.system_functionality_level == canlib.FUNCTIONALITY_MEDIUM) or (self.system_functionality_level == canlib.FUNCTIONALITY_FULL):
-            self.control[name] = data
-            self.control_evt = True
+    # NOTE: unregister CAN UDP messages, since all the data comes from Teensy board for the museum exhibit
+    # ########## can receive ###########
+    # def control_process(self, name, data, bounds=(0.0, 1.0)):
+    #     data = min(max(data[0], bounds[0]), bounds[1])
+    #     if (self.system_functionality_level == canlib.FUNCTIONALITY_MEDIUM) or (self.system_functionality_level == canlib.FUNCTIONALITY_FULL):
+    #         self.control[name] = data
+    #         self.control_evt = True
 
-    @recv_can(canspecs.CAN_ID_STEERING_INPUT, canspecs.CAN_FORMAT_STEERING_INPUT)
-    def _(self, data):
-        """steering -1.0, 1.0"""
-        data = (float(data[0])/100.0,)
-        return self.control_process("steering", data, bounds=(-1.0, 1.0))
+    # @recv_can(canspecs.CAN_ID_STEERING_INPUT, canspecs.CAN_FORMAT_STEERING_INPUT)
+    # def _(self, data):
+    #     """steering -1.0, 1.0"""
+    #     data = (float(data[0])/100.0,)
+    #     return self.control_process("steering", data, bounds=(-1.0, 1.0))
 
-    @recv_can(canspecs.CAN_ID_THROTTLE_INPUT, canspecs.CAN_FORMAT_THROTTLE_INPUT)
-    def _(self, data):
-        """throttle [0..100] -> 0.0, 1.0"""
-        data = (float(data[0])/100.0,)
-        return self.control_process("throttle", data)
+    # @recv_can(canspecs.CAN_ID_THROTTLE_INPUT, canspecs.CAN_FORMAT_THROTTLE_INPUT)
+    # def _(self, data):
+    #     """throttle [0..100] -> 0.0, 1.0"""
+    #     data = (float(data[0])/100.0,)
+    #     return self.control_process("throttle", data)
 
-    @recv_can(canspecs.CAN_ID_BRAKE_INPUT, canspecs.CAN_FORMAT_BRAKE_INPUT)
-    def _(self, data):
-        """brake [0..100] -> 0.0, 1.0"""
-        data = (float(data[0])/100.0,)
-        return self.control_process("brake", data)
+    # @recv_can(canspecs.CAN_ID_BRAKE_INPUT, canspecs.CAN_FORMAT_BRAKE_INPUT)
+    # def _(self, data):
+    #     """brake [0..100] -> 0.0, 1.0"""
+    #     data = (float(data[0])/100.0,)
+    #     return self.control_process("brake", data)
 
-    @recv_can(canspecs.CAN_ID_GEAR, canspecs.CAN_FORMAT_GEAR)
-    def _(self, data):
-        """gear [P, R, N, D] -> -1, 5"""
-        val, = data
-        gear_map = {80: 1, 82: -1, 78: 0, 68: 2}
-        if val not in gear_map:
-            logger.sim_logger.error(f"received gear map value {val} cannot be decoded!")
-        gear = gear_map.get(val, 0)
-        return self.control_process("gear", (gear,), bounds=(-1, 5))
+    # @recv_can(canspecs.CAN_ID_GEAR, canspecs.CAN_FORMAT_GEAR)
+    # def _(self, data):
+    #     """gear [P, R, N, D] -> -1, 5"""
+    #     val, = data
+    #     gear_map = {80: 1, 82: -1, 78: 0, 68: 2}
+    #     if val not in gear_map:
+    #         logger.sim_logger.error(f"received gear map value {val} cannot be decoded!")
+    #     gear = gear_map.get(val, 0)
+    #     return self.control_process("gear", (gear,), bounds=(-1, 5))
 
     ########## register topic receive methods ##########
     def wait_ready_command(self):
