@@ -1,16 +1,18 @@
 #!/bin/bash
-SESSIONNAME="adminpc"
-tmux has-session -t $SESSIONNAME &> /dev/null
-if [ $? != 0 ]
- then
-    tmux new-session -s $SESSIONNAME -n script -d
-    tmux send-keys -t $SESSIONNAME "sudo /opt/net_setup.sh" C-m
-    tmux send-keys -t $SESSIONNAME "ip a" C-m
 
-    tmux split-window -h -t $SESSIONNAME
-    tmux send-keys -t $SESSIONNAME 'nix-shell' C-m
-    tmux send-keys -t $SESSIONNAME './besspin.py -d -c besspin/cyberPhys/configs/config-cyberphys-freertos.ini' C-m
-fi
+# NOTE: disabling FreeRTOS session for the exhibit
+# SESSIONNAME="adminpc"
+# tmux has-session -t $SESSIONNAME &> /dev/null
+# if [ $? != 0 ]
+#  then
+#     tmux new-session -s $SESSIONNAME -n script -d
+#     tmux send-keys -t $SESSIONNAME "sudo /opt/net_setup.sh" C-m
+#     tmux send-keys -t $SESSIONNAME "ip a" C-m
+
+#     tmux split-window -h -t $SESSIONNAME
+#     tmux send-keys -t $SESSIONNAME 'nix-shell' C-m
+#     tmux send-keys -t $SESSIONNAME './besspin.py -d -c besspin/cyberPhys/configs/config-cyberphys-freertos.ini' C-m
+# fi
 
 SESSIONNAME="infotainment"
 IP=10.88.88.2
@@ -55,7 +57,7 @@ if [ $? != 0 ]
     #tmux send-keys -t $SESSIONNAME "sudo systemctl restart hacker-kiosk" C-m
     tmux send-keys -t $SESSIONNAME "sudo systemctl stop hacker-kiosk" C-m
     tmux send-keys -t $SESSIONNAME "cd /home/${USER}/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk" C-m
-    tmux send-keys -t $SESSIONNAME "python3 kiosk-backend.py --deploy-mode" C-m
+    tmux send-keys -t $SESSIONNAME "python3 kiosk-backend.py" C-m
 fi
 
 SESSIONNAME="simPc"
@@ -93,22 +95,18 @@ if [ $? != 0 ]
     tmux send-keys -t $SESSIONNAME "systemctl status can-display" C-m
 fi
 
-SESSIONNAME="debian"
-IP=10.88.88.6
-USER=galoisuser
+# NOTE: Disabling debian boards for the exhibit
+SESSIONNAME="local"
 tmux has-session -t $SESSIONNAME &> /dev/null
 if [ $? != 0 ]
  then
     tmux new-session -s $SESSIONNAME -n script -d
-    tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
     tmux send-keys -t $SESSIONNAME "sudo /opt/net_setup.sh" C-m
     tmux send-keys -t $SESSIONNAME "ip a" C-m
+    tmux send-keys -t $SESSIONNAME "sudo systemctl stop infotainment-server.service" C-m
+    tmux send-keys -t $SESSIONNAME "sudo systemctl start infotainment-server.service" C-m
+    tmux send-keys -t $SESSIONNAME "sudo journalctl -fu infotainment-server" C-m
 
     tmux split-window -h -t $SESSIONNAME
-    tmux send-keys -t $SESSIONNAME "/opt/ping-until-available.sh ${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "ssh ${USER}@${IP}" C-m
-    tmux send-keys -t $SESSIONNAME "cd BESSPIN-Tool-Suite" C-m
-    tmux send-keys -t $SESSIONNAME 'nix-shell' C-m
-    tmux send-keys -t $SESSIONNAME './besspin.py -d -c besspin/cyberPhys/configs/config-cyberphys-debian.ini' C-m
+    tmux send-keys -t $SESSIONNAME "sudo systemctl status infotainment-server.service" C-m
 fi
