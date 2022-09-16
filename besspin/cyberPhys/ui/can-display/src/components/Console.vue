@@ -22,7 +22,8 @@
 </template>
 
 <style scoped>
- @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
+  /*  Commenting out this in case it fails fetching it from the network*/
+ /*@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');*/
   #console-stream {
     font-family: 'Roboto Mono', monospace;
     width: 600px;

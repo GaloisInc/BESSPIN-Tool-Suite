@@ -14,6 +14,8 @@ import struct
 import can as extcan
 
 from enum import Enum, auto
+from random import randrange
+from cyberphyslib.canlib import canspecs
 
 import cyberphyslib.demonstrator.can as ccan
 import cyberphyslib.demonstrator.simulator as simulator
@@ -123,27 +125,29 @@ class IgnitionDirector():
 
     medium_functionality_systems = {
         # The tool doesn't respond to heartbeats when restarting components - use "fake" reset command to handle this
-        canlib.BESSPIN_TOOL_FREERTOS: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_FREERTOS,max_wait_after_reset=120),
-        canlib.FREERTOS_1: ComponentHealthTracker(cid=canlib.FREERTOS_1, max_wait_after_reset=60),
-        canlib.FREERTOS_2_CHERI: ComponentHealthTracker(cid=canlib.FREERTOS_2_CHERI, max_wait_after_reset=60),
-        canlib.FREERTOS_3: ComponentHealthTracker(cid=canlib.FREERTOS_3, max_wait_after_reset=60),
+        # canlib.BESSPIN_TOOL_FREERTOS: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_FREERTOS,max_wait_after_reset=120),
+        # canlib.FREERTOS_1: ComponentHealthTracker(cid=canlib.FREERTOS_1, max_wait_after_reset=60),
+        # canlib.FREERTOS_2_CHERI: ComponentHealthTracker(cid=canlib.FREERTOS_2_CHERI, max_wait_after_reset=60),
+        # canlib.FREERTOS_3: ComponentHealthTracker(cid=canlib.FREERTOS_3, max_wait_after_reset=60),
     }
 
     full_functionality_systems = {
-        canlib.DEBIAN_1: ComponentHealthTracker(cid=canlib.DEBIAN_1,can_be_reset=False),
-        canlib.DEBIAN_2_LMCO: ComponentHealthTracker(cid=canlib.DEBIAN_2_LMCO,can_be_reset=False),
-        canlib.DEBIAN_3: ComponentHealthTracker(cid=canlib.DEBIAN_3,can_be_reset=False),
+        # canlib.DEBIAN_1: ComponentHealthTracker(cid=canlib.DEBIAN_1,can_be_reset=False),
+        # canlib.DEBIAN_2_LMCO: ComponentHealthTracker(cid=canlib.DEBIAN_2_LMCO,can_be_reset=False),
+        # canlib.DEBIAN_3: ComponentHealthTracker(cid=canlib.DEBIAN_3,can_be_reset=False),
         # The tool doesn't respond to heartbeats when restarting components - use "fake" reset command to handle this
-        canlib.BESSPIN_TOOL_DEBIAN: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_DEBIAN, max_wait_after_reset=120),
-        canlib.INFOTAINMENT_THIN_CLIENT: ComponentHealthTracker(cid=canlib.INFOTAINMENT_THIN_CLIENT,can_be_reset=False),
+        # canlib.BESSPIN_TOOL_DEBIAN: ComponentHealthTracker(cid=canlib.BESSPIN_TOOL_DEBIAN, max_wait_after_reset=120),
+        # NOTE: This one might be more useful
+        # canlib.INFOTAINMENT_THIN_CLIENT: ComponentHealthTracker(cid=canlib.INFOTAINMENT_THIN_CLIENT,can_be_reset=False),
         # NOTE: these could be potentially reset
-        canlib.INFOTAINMENT_SERVER_1: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_1, can_be_reset=False),
-        canlib.INFOTAINMENT_SERVER_2: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_2, can_be_reset=False),
-        canlib.INFOTAINMENT_SERVER_3: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_3, can_be_reset=False),
-        canlib.OTA_UPDATE_SERVER_1: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_1, can_be_reset=False),
-        canlib.OTA_UPDATE_SERVER_2: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_2, can_be_reset=False),
-        canlib.OTA_UPDATE_SERVER_3: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_3, can_be_reset=False),
-        canlib.INFOTAINMENT_BACKEND: ComponentHealthTracker(cid=canlib.INFOTAINMENT_BACKEND,can_be_reset=False)
+        # canlib.INFOTAINMENT_SERVER_1: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_1, can_be_reset=False),
+        # canlib.INFOTAINMENT_SERVER_2: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_2, can_be_reset=False),
+        # canlib.INFOTAINMENT_SERVER_3: ComponentHealthTracker(cid=canlib.INFOTAINMENT_SERVER_3, can_be_reset=False),
+        # canlib.OTA_UPDATE_SERVER_1: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_1, can_be_reset=False),
+        # canlib.OTA_UPDATE_SERVER_2: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_2, can_be_reset=False),
+        # canlib.OTA_UPDATE_SERVER_3: ComponentHealthTracker(cid=canlib.OTA_UPDATE_SERVER_3, can_be_reset=False),
+        # NOTE: This one might be more useful
+        # canlib.INFOTAINMENT_BACKEND: ComponentHealthTracker(cid=canlib.INFOTAINMENT_BACKEND,can_be_reset=False)
     }
 
     # How many times in a row we can attempt to switch the autopilot mode
@@ -200,8 +204,10 @@ class IgnitionDirector():
         self.active_scenario = canlib.SCENARIO_BASELINE
         self.self_drive_scenario_start = None
         self.system_functionality_level = canlib.FUNCTIONALITY_NONE
+        self.active_hack = canlib.HACK_NONE
 
         self.joystick_name = cconf.JOYSTICK_NAME
+        #self.pmonitor = cjoy.PedalMonitorComponent()
 
         self._handler = ComponentHandler()
 
@@ -211,6 +217,11 @@ class IgnitionDirector():
         can_base = ccan.CanUdpNetwork("base", can_port, sip)
         networks = [can_base, can_ssith_ecu, can_ssith_info]
 
+        # NOTE: for the museum (IP of the debian NUC)
+        # All other whitelists are the same, the idea is we can restart on the NUC fairly quickly
+        base_whitelist = ["10.88.88.6"]
+        ssith_info_whitelist = ["10.88.88.6"]
+        ssith_ecu_whitelist = ["10.88.88.6"]
         if apply_lists:
             can_ssith_info.whitelist = ssith_info_whitelist
             can_ssith_ecu.whitelist = ssith_ecu_whitelist
@@ -273,14 +284,58 @@ class IgnitionDirector():
             # Check driver activity
             self.check_driver_activity()
 
-            if self.system_functionality_level == canlib.FUNCTIONALITY_MINIMAL:
-                # If in minimal mode, read teensy data here
-                sim: simulator.Sim = self._handler["beamng"]
-                # NOTE: ugly!
+            # Normally we read Teensy data only in minimal mode,
+            # but now we don't care (for the museum exhibit)
+            #if self.system_functionality_level == canlib.FUNCTIONALITY_MINIMAL:
+            #    # If in minimal mode, read teensy data here
+            sim: simulator.Sim = self._handler["beamng"]
+
+            if self.active_scenario is canlib.SCENARIO_BASELINE:
+                if self.active_hack is canlib.HACK_BRAKE:
+                    sim.control['gear'] = self.teensy.gear
+                    sim.control['throttle'] = self.teensy.throttle
+                    sim.control['brake'] = 0
+                elif self.active_hack is canlib.HACK_THROTTLE:
+                    sim.control['gear'] = self.teensy.gear
+                    sim.control['throttle'] = 1.0
+                    sim.control['brake'] = self.teensy.brake
+                elif self.active_hack is canlib.HACK_TRANSMISSION:
+                    sim.control['gear'] = 0
+                    sim.control['throttle'] = self.teensy.throttle
+                    sim.control['brake'] = self.teensy.brake
+                elif self.active_hack is canlib.HACK_LKAS:
+                    sim.control['gear'] = self.teensy.gear
+                    sim.control['throttle'] = self.teensy.throttle
+                    sim.control['brake'] = self.teensy.brake
+                    # see @recv_can(canspecs.CAN_ID_STEERING_INPUT, canspecs.CAN_FORMAT_STEERING_INPUT)
+                    # in simulator.py, we simpluy emulate it
+                    # TODO: this could be made better / more powerful?
+                    sim.control['steering'] = float(randrange(0,200,1) - 100)/100
+                else:
+                    # Either unknown hack, or HACK_NONE
+                    sim.control['gear'] = self.teensy.gear
+                    sim.control['throttle'] = self.teensy.throttle
+                    sim.control['brake'] = self.teensy.brake
+            else:
+                # Active scenario is SSITH protected, hacks don't work
                 sim.control['gear'] = self.teensy.gear
                 sim.control['throttle'] = self.teensy.throttle
                 sim.control['brake'] = self.teensy.brake
-                sim.control_evt = True
+
+            # Ugly update of the pedal monitor / disable the pedal monitor altogether
+            #self._handler['pmonitor'].update(sim.control['throttle'],sim.control['brake'],sim.control['gear'])
+            #self.pmonitor.update(sim.control['throttle'],sim.control['brake'],sim.control['gear'])
+            #ignition_logger.info(f"Teensy values: brake|throttle|gear {self.teensy.brake}|{self.teensy.throttle}|{self.teensy.gear}")
+
+            # Send messages
+            msg_gear = canlib.Message(arbitration_id=canspecs.CAN_ID_GEAR, data=struct.pack(canspecs.CAN_FORMAT_GEAR, int(self.teensy.gear+1.0) ))
+            msg_throttle = canlib.Message(arbitration_id=canspecs.CAN_ID_THROTTLE_INPUT, data=struct.pack(canspecs.CAN_FORMAT_THROTTLE_INPUT, int(self.teensy.throttle*100) ))
+            msg_brake = canlib.Message(arbitration_id=canspecs.CAN_ID_BRAKE_INPUT, data=struct.pack(canspecs.CAN_FORMAT_BRAKE_INPUT, int(self.teensy.brake*100) ))
+            self.can_multiverse.send_msg(msg_gear)
+            self.can_multiverse.send_msg(msg_throttle)
+            self.can_multiverse.send_msg(msg_brake)
+
+            sim.control_evt = True
 
             # Heartbeat
             if hr_delta_t > (1/IgnitionDirector.HEART_RATE_FREQUENCY):
@@ -293,7 +348,7 @@ class IgnitionDirector():
             if delta_t > (1/IgnitionDirector.HEALTH_MONITOR_FREQUENCY):
                 self.system_health_check()
                 self.check_health_time = t
-                print(f"Main loop freq: {cnt/delta_t}[Hz]")
+                ignition_logger.info(f"Main loop freq: {cnt/delta_t}[Hz]")
                 cnt = 0
 
             # Approximately sleep
@@ -373,13 +428,13 @@ class IgnitionDirector():
                             pass
 
                 elif cid == canlib.CAN_ID_CMD_HACK_ACTIVE:
-                    hack_idx = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
-                    ignition_logger.info(f"process cc: set hack active {canlib.CanlibComponentNames.get(hack_idx)}")
+                    self.active_hack = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
+                    ignition_logger.info(f"process cc: set hack active {canlib.CanlibComponentNames.get(self.active_hack)}")
                     # Process HACK_ACTIVE messages only in baseline scenario
                     if self.active_scenario == canlib.SCENARIO_BASELINE:
                         # NOTE:  treat Led manager as a critical component
                         lm: ledm.LedManagerComponent = self._handler["ledm"]
-                        lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[hack_idx]))
+                        lm.update_pattern(ledm.LedPatterns(IgnitionDirector.hacks2patterns[self.active_hack]))
 
                 elif cid == canlib.CAN_ID_CMD_ACTIVE_SCENARIO:
                     nmap = {
@@ -415,7 +470,8 @@ class IgnitionDirector():
         """
         # NOTE: if jmonitor has failed assume user input is present
         # TODO: will this work if the monitor doesn't initialize?
-        activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
+        #activity = self._handler['jmonitor'].is_active or self._handler['pmonitor'].is_active
+        activity = self._handler['jmonitor'].is_active
 
         # if in self drive mode and activity has occurred, get out
         if activity and self.self_drive_mode:
@@ -696,7 +752,7 @@ class IgnitionDirector():
         start_noncrit_component(speedo.Speedo())
 
         # startup the pedal monitor
-        start_noncrit_component(cjoy.PedalMonitorComponent(window_length=1000))
+        #start_noncrit_component(cjoy.PedalMonitorComponent())
 
         # startup the joystick monitor
         start_noncrit_component(cjoy.JoystickMonitorComponent(self.joystick_name))

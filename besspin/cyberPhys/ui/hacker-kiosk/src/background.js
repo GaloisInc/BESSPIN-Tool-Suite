@@ -60,10 +60,10 @@ async function createWindow() {
     height: 1920,
     frame: false,
     autoHideMenuBar: true,
-    kiosk: !isDevelopment,
+    kiosk: true,
     webPreferences: {
       nodeIntegration: true,
-      devTools: isDevelopment,
+      devTools: false,
     }
   })
 

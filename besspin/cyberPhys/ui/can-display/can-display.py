@@ -151,7 +151,7 @@ class CanDisplay(threading.Thread):
                 hack_id = struct.unpack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, msg.data)[0]
                 print(f"<{self.__class__.__name__}> CAN_ID_CMD_HACK_ACTIVE: {canlib.CanlibComponentNames.get(hack_id,None)}")
                 if self.scenario == canlib.SCENARIO_BASELINE:
-                    if hack_id == canlib.HACK_NONE:
+                    if hack_id == canlib.HACK_NONE or hack_id == canlib.HACK_INFOTAINMENT_MUSIC or hack_id == canlib.HACK_INFOTAINMENT_VOLUME:
                         self.state = STATE_NORMAL
                     else:
                         self.state = STATE_HACKED
