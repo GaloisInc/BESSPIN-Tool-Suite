@@ -18,8 +18,10 @@ import functools
 import psutil
 import time
 import os
+
 from cyberphyslib.demonstrator import config, component, message, logger
 import cyberphyslib.canlib.canspecs as canspecs
+from cyberphyslib import canlib
 
 from beamngpy import BeamNGpy, Scenario, Vehicle
 from beamngpy.sensors import Electrics, GForces
@@ -66,9 +68,9 @@ def requires_running_scenario(func):
             return func(self, *args, **kwargs)
     return inner
 
-
 class Sim(component.ComponentPoller):
     beamng_process_name = "BeamNG.tech.x64.exe"
+
     @staticmethod
     def is_running_beamng():
         """returns whether BeamNG process is running"""
@@ -82,7 +84,7 @@ class Sim(component.ComponentPoller):
         """kill BeamNG process if it's running"""
         if Sim.is_running_beamng():
             os.system(f"taskkill /im {Sim.beamng_process_name}")
-            time.sleep(1)
+            time.sleep(2)
             if Sim.is_running_beamng():
                 if attempts > 0:
                     logging.warning(f"kill_beamng failed. Trying again...")
@@ -94,7 +96,7 @@ class Sim(component.ComponentPoller):
     in_descr = config.BEAMNG_COMPONENT_INPUT
     out_descr = config.BEAMNG_COMPONENT_OUTPUT
 
-    def __init__(self):
+    def __init__(self, use_race_car=False):
         self.port = config.BEAMNG_PORT
         self.path = config.BEAMNG_PATH
 
@@ -120,6 +122,9 @@ class Sim(component.ComponentPoller):
 
         # record whether sim is paused or not
         self._is_paused = False
+        # NOTE: start with minial functionality
+        self.system_functionality_level = canlib.FUNCTIONALITY_MINIMAL
+        self.use_race_car = use_race_car
 
     def on_start(self) -> None:
         if not self.stopped:
@@ -147,8 +152,12 @@ class Sim(component.ComponentPoller):
 
         self._scenario = Scenario(config.BEAMNG_SCENARIO_MAP, 'SSITH',
                                   description='Drive protected.')
-        self._vehicle = Vehicle('ego_vehicle', licence='SSITH', **config.BEAMNG_VEHICLE_CONFIG,
-                                color='Black')
+        if self.use_race_car:
+            self._vehicle = Vehicle('ego_vehicle', licence='SSITH', **config.BEAMNG_RACE_CAR_CONFIG,
+                                    color='Black')
+        else:
+            self._vehicle = Vehicle('ego_vehicle', licence='SSITH', **config.BEAMNG_VEHICLE_CONFIG,
+                                    color='Black')
 
         gforces = GForces()
         electrics = Electrics()
@@ -162,7 +171,6 @@ class Sim(component.ComponentPoller):
 
         # Compile the scenario and place it in BeamNG's map folder
         self._scenario.make(self._beamng_context)
-
 
         try:
 
@@ -249,39 +257,50 @@ class Sim(component.ComponentPoller):
     def exit(self):
         super(Sim, self).exit()
 
-    ########## can receive ###########
-    def control_process(self, name, data, bounds=(0.0, 1.0)):
-        data = min(max(data[0], bounds[0]), bounds[1])
-        self.control[name] = data
-        self.control_evt = True
+    def update_functionality_level(self, new_func_level):
+        """
+        Updates the component's functionality level
+        When FUNCTIONALITY_MINIMAL/NONE don' update from CAN
+        but from serial (the director handles it)
+        """
+        self.system_functionality_level = new_func_level
 
-    @recv_can(canspecs.CAN_ID_STEERING_INPUT, canspecs.CAN_FORMAT_STEERING_INPUT)
-    def _(self, data):
-        """steering -1.0, 1.0"""
-        data = (float(data[0])/100.0,)
-        return self.control_process("steering", data, bounds=(-1.0, 1.0))
 
-    @recv_can(canspecs.CAN_ID_THROTTLE_INPUT, canspecs.CAN_FORMAT_THROTTLE_INPUT)
-    def _(self, data):
-        """throttle [0..100] -> 0.0, 1.0"""
-        data = (float(data[0])/100.0,)
-        return self.control_process("throttle", data)
+    # NOTE: unregister CAN UDP messages, since all the data comes from Teensy board for the museum exhibit
+    # ########## can receive ###########
+    # def control_process(self, name, data, bounds=(0.0, 1.0)):
+    #     data = min(max(data[0], bounds[0]), bounds[1])
+    #     if (self.system_functionality_level == canlib.FUNCTIONALITY_MEDIUM) or (self.system_functionality_level == canlib.FUNCTIONALITY_FULL):
+    #         self.control[name] = data
+    #         self.control_evt = True
 
-    @recv_can(canspecs.CAN_ID_BRAKE_INPUT, canspecs.CAN_FORMAT_BRAKE_INPUT)
-    def _(self, data):
-        """brake [0..100] -> 0.0, 1.0"""
-        data = (float(data[0])/100.0,)
-        return self.control_process("brake", data)
+    # @recv_can(canspecs.CAN_ID_STEERING_INPUT, canspecs.CAN_FORMAT_STEERING_INPUT)
+    # def _(self, data):
+    #     """steering -1.0, 1.0"""
+    #     data = (float(data[0])/100.0,)
+    #     return self.control_process("steering", data, bounds=(-1.0, 1.0))
 
-    @recv_can(canspecs.CAN_ID_GEAR, canspecs.CAN_FORMAT_GEAR)
-    def _(self, data):
-        """gear [P, R, N, D] -> -1, 5"""
-        val, = data
-        gear_map = {80: 1, 82: -1, 78: 0, 68: 2}
-        if val not in gear_map:
-            logger.sim_logger.error(f"received gear map value {val} cannot be decoded!")
-        gear = gear_map.get(val, 0)
-        return self.control_process("gear", (gear,), bounds=(-1, 5))
+    # @recv_can(canspecs.CAN_ID_THROTTLE_INPUT, canspecs.CAN_FORMAT_THROTTLE_INPUT)
+    # def _(self, data):
+    #     """throttle [0..100] -> 0.0, 1.0"""
+    #     data = (float(data[0])/100.0,)
+    #     return self.control_process("throttle", data)
+
+    # @recv_can(canspecs.CAN_ID_BRAKE_INPUT, canspecs.CAN_FORMAT_BRAKE_INPUT)
+    # def _(self, data):
+    #     """brake [0..100] -> 0.0, 1.0"""
+    #     data = (float(data[0])/100.0,)
+    #     return self.control_process("brake", data)
+
+    # @recv_can(canspecs.CAN_ID_GEAR, canspecs.CAN_FORMAT_GEAR)
+    # def _(self, data):
+    #     """gear [P, R, N, D] -> -1, 5"""
+    #     val, = data
+    #     gear_map = {80: 1, 82: -1, 78: 0, 68: 2}
+    #     if val not in gear_map:
+    #         logger.sim_logger.error(f"received gear map value {val} cannot be decoded!")
+    #     gear = gear_map.get(val, 0)
+    #     return self.control_process("gear", (gear,), bounds=(-1, 5))
 
     ########## register topic receive methods ##########
     def wait_ready_command(self):

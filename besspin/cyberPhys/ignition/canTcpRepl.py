@@ -38,8 +38,8 @@ Examples:
 # Setup the CAN Network
 print("Connecting Transmitter Thread...(Adjust the host and node IPs to your host")
 cmdPort = 5041
-host = f"10.88.88.2:{cmdPort}"
-nodes = [f"10.88.88.1:{cmdPort}",f"10.88.88.3:{cmdPort}",f"10.88.88.3:{cmdPort}",f"10.88.88.4:{cmdPort}"]
+host = f"10.88.88.4:{cmdPort}"
+nodes = [f"10.88.88.1:{cmdPort}",f"10.88.88.2:{cmdPort}",f"10.88.88.3:{cmdPort}",f"10.88.88.5:{cmdPort}",f"10.88.88.6:{cmdPort}"]
 admin_pc = ccan.TcpBus(host, nodes)
 
 # Setup the prompt

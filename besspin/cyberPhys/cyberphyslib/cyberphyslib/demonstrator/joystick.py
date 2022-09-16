@@ -12,13 +12,12 @@ import collections
 import enum
 import pygame
 import abc
-from collections import deque
+
 import numpy as np
+
 from .component import ComponentPoller, ComponentStatus
-import cyberphyslib.demonstrator.component as ccomp
 import cyberphyslib.demonstrator.config as cconf
 from cyberphyslib.demonstrator.logger import jmonitor_logger
-from cyberphyslib.demonstrator.simulator import BeamNgCommand
 import cyberphyslib.canlib as ccan
 
 
@@ -104,16 +103,8 @@ class PedalMonitorComponent(ComponentPoller):
 
     def on_poll_poll(self, t):
         """fill up window of steering wheel observations"""
-        edge = self.is_active
         if (self.brake_value is not None and self.throttle_value is not None and self.gear_value is not None):
             self.window.update([self.throttle_value, self.brake_value, self.gear_value])
-        if edge is not self.is_active:
-            if edge:
-                jmonitor_logger.info("falling edge (transition inactive)")
-                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_INACTIVE), "pmonitor-beamng")
-            else:
-                jmonitor_logger.info("rising edge (transition active)")
-                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_ACTIVE), "pmonitor-beamng")
 
     @recv_topic("beamng-sensors")
     def _(self, msg, t):
@@ -181,19 +172,11 @@ class JoystickMonitorComponent(ComponentPoller):
 
     def on_poll_poll(self, t):
         """fill up window of steering wheel observations"""
-        edge = self.is_active
         if self.joystick:
             for idx, joy in enumerate(self.joystick):
                 _ = pygame.event.get() # TODO: is this necessary?
                 ret = [joy.get_axis(idx) for idx in range(joy.get_numaxes())]
                 self.window[idx].update(ret)
-        if edge is not self.is_active:
-            if edge:
-                jmonitor_logger.info("falling edge (transition inactive)")
-                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_INACTIVE), "jmonitor-beamng")
-            else:
-                jmonitor_logger.info("rising edge (transition active)")
-                self.send_message(ccomp.Message(BeamNgCommand.TRANSITION_ACTIVE), "jmonitor-beamng")
 
     @property
     def is_active(self):

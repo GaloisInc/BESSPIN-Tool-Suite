@@ -19,7 +19,8 @@ FREEBSD_CC = clang -target riscv64-unknown-freebsd12.1 --sysroot=$(BESSPIN_GFE_F
 FREEBSD_FLAGS = -Wno-error=sign-compare -mno-relax -fuse-ld=lld
 ARCH_FLAGS = -march=rv64imafdc -mabi=lp64d
 DEBUG := 0
-DEBUG_FLAGS = -DINFOTAINMENT_DEBUG_FLAG=$(DEBUG)
+INFO := 1
+DEBUG_FLAGS = -DINFOTAINMENT_DEBUG_FLAG=$(DEBUG) -DINFOTAINMENT_INFO_FLAG=$(INFO)
 # Demonstrator broadcast address
 HACKED_BROADCAST_ADDRESS := 10.88.88.255
 # SimPC address

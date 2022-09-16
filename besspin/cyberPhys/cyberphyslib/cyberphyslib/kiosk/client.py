@@ -275,6 +275,11 @@ class HackOtaClient:
                 print(content)
             return True, "Verification OK"
 
+        # If all other branches fail, terminate properly
+        if self.debug:
+            print(content)
+        return False, "Verification failed"
+
     def get_hmac(self):
         # compute the HMAC for the file, with our "key" (64 zero bytes)
         emptykey = bytes(self.KEY_SIZE)

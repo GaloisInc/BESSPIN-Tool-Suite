@@ -15,7 +15,7 @@ from .component import ThreadExiting, Component
 import cyberphyslib.demonstrator.component as ccomp
 
 # TODO: @ethanlew import canlib/python/canlib.py properly
-from cyberphyslib.canlib import CanDataType, UdpBus
+from cyberphyslib.canlib import CanDataType, UdpBus, TcpBus
 
 
 class CanListener(metaclass=ABCMeta):
@@ -107,6 +107,39 @@ class CanNetwork(ThreadExiting, abc.ABC):
             ret = self.recv(timeout=self.POLL_RECV_TIMEOUT)
 
 
+
+class CanTcpNetwork(CanNetwork):
+    """
+    CanTcpNetwork provide a way to send and receive can messages over TCP. This
+    is used to share CC messages to multiple components.
+
+    TODO: the message is almost directly the same as Udp network. The object hierarchy likely
+    can be adjusted to reuse the methods.
+    """
+    def __init__(self, name, host, nodes):
+        super().__init__(name)
+        self.host = host
+        self.nodes = nodes
+        self.bus = TcpBus(self.host, self.nodes)
+
+    def send(self, can_id: int, data: CanDataType):
+        if isinstance(data, str):
+            data = bytearray(data.encode())
+        msg = Message(arbitration_id=can_id, data=data, is_extended_id=True)
+        self.bus.send(msg)
+
+    def send_msg(self, msg: Message):
+        self.bus.send(msg)
+
+    def recv(self, timeout=None) -> typ.Optional[typ.Tuple[int, Message]]:
+        msg: Message = self.bus.recv(timeout=timeout)
+        if msg:
+            can_id, data, data_len = msg.arbitration_id, msg.data, msg.dlc
+            for k, v in self._listeners.items():
+                v.recv_cc(can_id, data_len, data)
+            return can_id, msg
+
+
 class CanUdpNetwork(CanNetwork):
     """
     UDP Can Bus Implementation of Can Network
@@ -127,6 +160,9 @@ class CanUdpNetwork(CanNetwork):
         if isinstance(data, str):
             data = bytearray(data.encode())
         msg = Message(arbitration_id=can_id, data=data, is_extended_id=True)
+        self.bus.send(msg)
+
+    def send_msg(self, msg: Message):
         self.bus.send(msg)
 
     def recv(self, timeout=None) -> typ.Union[None, typ.Tuple[int, Message]]:
@@ -180,6 +216,9 @@ class CanMultiverse(CanNetwork):
     def send(self, can_id: int, data: CanDataType) -> None:
         self._active_network.send(can_id, data)
 
+    def send_msg(self, msg: Message):
+        self._active_network.send_msg(msg)
+
     def recv(self, timeout=None) -> typ.Union[None, typ.Tuple[int, Message]]:
         ret = self._active_network.recv(timeout=timeout)
         if ret:
@@ -191,6 +230,10 @@ class CanMultiverse(CanNetwork):
     @property
     def networks(self):
         return {n.name: n for n in self._networks}
+
+    @property
+    def bus(self):
+        return self
 
 
 import cyberphyslib.demonstrator.message as message

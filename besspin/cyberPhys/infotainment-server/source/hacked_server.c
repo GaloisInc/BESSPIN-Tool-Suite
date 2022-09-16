@@ -27,6 +27,7 @@
 
 #include "canlib.h"
 #include "canspecs.h"
+#include "componentids.h"
 
 #include "hacked_defs.h"
 #include "hacked_server.h"
@@ -37,10 +38,11 @@
 infotainment_state the_state = { .T = START };
 
 bool initialize(void) {
-    if (the_state.T == RUNNING) {
-        debug("initialize called on running server\n");
-        return false;
-    }
+    // Disable, as we will re-initialize
+    // if (the_state.T == RUNNING) {
+    //     debug("initialize called on running server\n");
+    //     return false;
+    // }
 
     // initialize the state; we don't know much initially but
     // we'll set the various fields to sane values
@@ -55,6 +57,11 @@ bool initialize(void) {
     the_state.pos_z = 0.0f;
     the_state.pos_r = 0.0f;
     the_state.T = RUNNING;
+
+    // Hacked/Regular switch
+    the_state.active_hack = HACK_NONE;
+    the_state.active_scenario = SCENARIO_BASELINE;
+    the_state.hacked = false;
 
     return true;
 }
@@ -125,6 +132,12 @@ void receive_from_socket(int socketfd, int port) {
     bool position_updated = false;
     switch (frame->can_id)
     {
+        case CAN_ID_CMD_HACK_ACTIVE:
+            handle_cmd_hack_active(frame);
+            break;
+        case CAN_ID_CMD_ACTIVE_SCENARIO:
+            handle_cmd_active_scenario(frame);
+            break;
         case CAN_ID_CAR_X:
         case CAN_ID_CAR_Y:
         case CAN_ID_CAR_Z:
@@ -137,7 +150,8 @@ void receive_from_socket(int socketfd, int port) {
             break;
 
         case CAN_ID_BUTTON_PRESSED:
-            if (port == RECEIVE_PORT_KIOSK) {
+            //if (port == RECEIVE_PORT_KIOSK) {
+            if (port == get_valid_receive_port()) {
                 handle_button_press(frame);
             } else {
                 debug("button press from CAN ignored\n");
@@ -156,7 +170,7 @@ void receive_from_socket(int socketfd, int port) {
     // broadcast the new state; we always broadcast the current music state
     // if a button was pressed (on the kiosk), and we also broadcast any 
     // position state that has been updated
-    if (frame->can_id == CAN_ID_BUTTON_PRESSED && port == RECEIVE_PORT_KIOSK)
+    if (frame->can_id == CAN_ID_BUTTON_PRESSED && port == get_valid_receive_port())
     {
         broadcast_music_state();
     }
@@ -176,6 +190,8 @@ bool is_relevant(canid_t can_id) {
         case CAN_ID_CAR_Z:
         case CAN_ID_CAR_R:
         case CAN_ID_HEARTBEAT_REQ:
+        case CAN_ID_CMD_HACK_ACTIVE:
+        case CAN_ID_CMD_ACTIVE_SCENARIO:
             result = true;
     }
 
@@ -207,6 +223,50 @@ bool update_position(can_frame *frame) {
     }
 
     return changed;
+}
+
+int get_valid_receive_port(void) {
+    if (the_state.hacked) {
+        // in hacked mode, listen to RECEIVE_PORT_KIOSK
+        return RECEIVE_PORT_KIOSK;
+    } else {
+        // otherwise listen to regular CAN_BUS port
+        return RECEIVE_PORT_CAN;
+    }
+}
+
+bool handle_cmd_active_scenario(can_frame *frame) {
+    // make sure the frame is an appropriate type
+    assert(frame->can_id == CAN_ID_CMD_ACTIVE_SCENARIO);
+    unsigned char *payload = (unsigned char *) frame->data;
+
+    // see what is the active scenario
+    // if the scenario has changed, re-initialize the server
+    uint8_t new_scenario = *payload;
+    if (the_state.active_scenario != new_scenario) {
+        printf("Scenario changed, was %u and now is %u\n",the_state.active_scenario, new_scenario);
+        the_state.active_scenario = new_scenario;
+        initialize();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool handle_cmd_hack_active(can_frame *frame) {
+    // make sure the frame is an appropriate type
+    assert(frame->can_id == CAN_ID_CMD_HACK_ACTIVE);
+    unsigned char *payload = (unsigned char *) frame->data;
+    the_state.active_hack = *payload;
+    
+    // Only if in SCENARIO_BASELINE and active hack is HACK_INFOTAINMENT_MUSIC then switch to
+    // the hacked state
+    if (the_state.active_hack == HACK_INFOTAINMENT_MUSIC && the_state.active_scenario == SCENARIO_BASELINE) {
+        the_state.hacked = true;
+        printf("Infotainment hack active in baseline scenario");
+        return true;
+    }
+    return false;
 }
 
 bool handle_button_press(can_frame *frame) {

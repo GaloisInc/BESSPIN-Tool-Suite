@@ -103,13 +103,38 @@ This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_sp
             f"# Description: {' '.join(fdescr.splitlines())}\n"\
             f"{var_name}: int = {cid}\n"\
             f"{format_name}: str = {canformat}\n"\
-            f"{dlc_name}: str = {dlc}\n\n"
+            f"{dlc_name}: int = {dlc}\n\n"
 
     def produce_ids(self, entry):
         """generate code for a ID info entry (row of csv file)"""
         component_name = entry["Component"]
         component_id = entry["ID"]
-        return f"{component_name} = {component_id}\n" 
+        component_notes = entry["Notes"]
+        if component_notes:
+            return f"{component_name} = {component_id} # {component_notes}\n"
+        else:
+            return f"{component_name} = {component_id}\n"
+
+    def generate_id_dicts(self, components):
+        """genereate components dictionaries"""
+        componentNames = "\nCanlibComponentNames = {"
+        componentIds = "\nCanlibComponentIds = {"
+        for component in components:
+            componentNames += f"\n\t{component['Component']}: \"{component['Component']}\","
+            componentIds += f"\n\t\"{component['Component']}\": {component['Component']},"
+        componentNames += "\n}"
+        componentIds += "\n}"
+        return componentNames + "\n" + componentIds + "\n"
+
+    def generate_ids(self, component_ids):
+        """overload inherited method to be able to generate component dictionaries"""
+        with open(self.outfilename_ids, 'w') as f:
+            f.write(self.file_header_ids)
+            components = []
+            for _, row in component_ids.iterrows():
+                f.write(self.produce_ids(row))
+                components.append(row)
+            f.write(self.generate_id_dicts(components))
 
 
 class CanlibC(CanlibTemplate):

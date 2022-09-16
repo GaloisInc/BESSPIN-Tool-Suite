@@ -6,13 +6,15 @@ Date: 01 January 2021
 
 Logs for Cyberphys Components
 """
-import pathlib, os
+import cyberphyslib.demonstrator.config as config
 
+import pathlib, os
 import logging.config
+
 
 # load utils/logging.conf
 logging_filepath = pathlib.Path(os.path.realpath(__file__)).parent / "utils" / "logging.conf"
-logging.config.fileConfig(logging_filepath)
+logging.config.fileConfig(logging_filepath, defaults={ 'logfilename' : config.LOG_FILENAME } )
 
 # create logger objects
 root_logger: logging.Logger = logging.getLogger('root')
@@ -24,6 +26,8 @@ ssith_button_logger: logging.Logger = logging.getLogger("ssith-button")
 led_manage_logger: logging.Logger = logging.getLogger("led_manage")
 ignition_logger: logging.Logger = logging.getLogger("ignition")
 jmonitor_logger: logging.Logger = logging.getLogger("jmonitor")
+teensy_logger: logging.Logger = logging.getLogger("teensy")
+health_logger: logging.Logger = logging.getLogger("health")
 
 
 

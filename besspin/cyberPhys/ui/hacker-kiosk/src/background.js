@@ -4,9 +4,24 @@ import { app, protocol, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
-
+const { exec } = require("child_process");
 import zmq, { socket } from 'zeromq';
 const config = require('./config.js');
+
+ipcMain.on('atem-switch', (event, ch) => {
+  var atemexec = '/home/pi/build/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk/atem-control.js';
+  exec(`${atemexec} ${ch}`, (error, stdout, stderr) => {
+    if (error) {
+      console.log(`error: ${error.message}`);
+      return;
+  }
+  if (stderr) {
+    console.log(`stderr: ${stderr}`);
+    return;
+  }
+    console.log(`stdout: ${stdout}`);
+  })
+})
 
 // ZMQ Network
 let zmq_address = config.ZMQ_ADDRESS;
@@ -45,9 +60,10 @@ async function createWindow() {
     height: 1920,
     frame: false,
     autoHideMenuBar: true,
-    kiosk: !isDevelopment,
+    kiosk: true,
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      devTools: false,
     }
   })
 

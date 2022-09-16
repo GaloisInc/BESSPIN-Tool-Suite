@@ -173,7 +173,6 @@ TODO:
     },
     methods: {
       next() {
-        ipc.send('button-pressed', 'next', []);
         this.$router.push({ name: 'hack13_protect_critical_stop' });
       },
       enableWebcamFeed(feed_id) {
@@ -201,6 +200,11 @@ TODO:
         if(feed_id == hacks.STEER || feed_id == hacks.BRAKES) {
           this.webcamEnabled = true;
           this.enableWebcamFeed(feed_id);
+          if (feed_id == hacks.STEER) {
+            ipc.send('atem-switch', 1);
+          } else {
+            ipc.send('atem-switch', 2);
+          }
         } else if(feed_id == hacks.TRANS) {
           video.srcObject = null;
           video.src =  transHackSrc;

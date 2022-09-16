@@ -6,7 +6,7 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 Restart=always
-RestartSec=1
+RestartSec=10
 User=pi
 ExecStart=/usr/bin/env python3 /home/pi/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/can-display/can-display.py
 

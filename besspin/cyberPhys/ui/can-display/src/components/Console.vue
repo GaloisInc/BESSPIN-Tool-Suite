@@ -22,14 +22,15 @@
 </template>
 
 <style scoped>
- @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');
+  /*  Commenting out this in case it fails fetching it from the network*/
+ /*@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap');*/
   #console-stream {
     font-family: 'Roboto Mono', monospace;
     width: 600px;
     height: 350px;
     /* border: 1px solid green; */
-    overflow: scroll;
-    overflow-x: hidden;
+    /* overflow: scroll; */
+    overflow: hidden;
   }
   #console li {
     list-style-type: none;

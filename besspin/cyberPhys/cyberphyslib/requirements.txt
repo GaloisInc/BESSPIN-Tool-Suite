@@ -13,3 +13,4 @@ opclib==0.0.7
 python-can==3.3.4
 pygame==2.0.1
 pycaw==20181226
+fabric==2.6.0

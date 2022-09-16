@@ -7,7 +7,7 @@ Type=simple
 ExecStart=/usr/local/sbin/infotainment_server 10.88.88.255 10.88.88.4
 PrivateTmp=true
 Restart=on-failure
-RestartSec=60s
+RestartSec=10s
 
 [Install]
 WantedBy=multi-user.target

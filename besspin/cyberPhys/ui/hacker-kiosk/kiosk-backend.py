@@ -6,11 +6,7 @@ Author: Ethan Lew <elew@galois.com>, Michal Podhradsky <mpodhradsky@galois.com>,
 Date: 16 June 2021
 
 """
-# NOTE: Switch back to True when debian issues are resolved
-DEPLOY_MODE = False
-DEFAULT_PATH = "/home/pi/BESSPIN-Tool-Suite/besspin/base/utils/setupEnv.json"
-DRAW_GRAPH = False
-
+DEFAULT_NETWORK_CONFIG_PATH = "/home/pi/BESSPIN-Tool-Suite/besspin/base/utils/setupEnv.json"
 
 if __name__ == "__main__":
     # Project libs
@@ -21,17 +17,17 @@ if __name__ == "__main__":
 
     # ugh, this filepath access is sketchy and will complicate the deployment of ignition
     parser = argparse.ArgumentParser(description="BESSPIN Demonstrator Kiosk Backend")
-    parser.add_argument("--network-config", type=str, default=DEFAULT_PATH, help="Path to BESSPIN Target setupEnv.json")
+    parser.add_argument("--network-config", type=str, default=DEFAULT_NETWORK_CONFIG_PATH, help="Path to BESSPIN Target setupEnv.json")
+    parser.add_argument("--draw-graph", action='store_true', help="Generate transitions graph and exit")
+    parser.add_argument("--deploy-mode", action='store_true', help="Start in deploy mode (can be switched later)")
     args = parser.parse_args()
     network_filepath = pathlib.Path(os.path.realpath(args.network_config))
     assert os.path.exists(network_filepath), f"specified network config json ({network_filepath}) doesn't exist"
     dnc = config.DemonstratorNetworkConfig.from_setup_env(network_filepath)
-    kiosk = kiosk.HackerKiosk(dnc,deploy_mode=DEPLOY_MODE)
-    if DEPLOY_MODE:
-        print("Running in deploy mode!")
+    kiosk = kiosk.HackerKiosk(dnc,deploy_mode=args.deploy_mode, draw_graph=args.draw_graph)
+    if args.draw_graph:
+        print("Drawing transitions graph.")
+        kiosk.draw_graph("../../specs/state_machine_hacker_kiosk_implemented.png")
     else:
-        print("Running in test mode!")
-    if DRAW_GRAPH:
-        kiosk.draw_graph("kiosk-backend-transitions.png")
-    kiosk.run()
-
+        print("Starting application.")
+        kiosk.run()

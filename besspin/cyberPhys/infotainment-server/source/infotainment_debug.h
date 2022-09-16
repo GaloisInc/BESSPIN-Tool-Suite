@@ -14,6 +14,10 @@
 #define INFOTAINMENT_DEBUG_FLAG 0
 #endif
 
+#ifndef INFOTAINMENT_INFO_FLAG
+#define INFOTAINMENT_INFO_FLAG 0
+#endif
+
 // basic debug and error output functions
 /**
  * An error. Prints and then exits the program.
@@ -23,7 +27,7 @@
 /**
  * A message. Prints unconditionally.
  */
-#define message(args...) { fprintf(stderr, ##args); }
+#define message(args...) { if (INFOTAINMENT_INFO_FLAG) { fprintf(stderr, ##args); } }
 
 /**
  * A debug message. Only prints if DEBUG_FLAG is 1.

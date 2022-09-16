@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="cyberphyslib", # Replace with your own username
-    version="0.0.1",
+    version="0.0.2",
     author=("Ethan Lew", "Michal Podhradsky", "Steven Osborn", "Kristopher Dobelstein"),
     author_email=("elew@galois.com", "mpodhradsky@galois.com ", "steven@lolsborn.com", "kris.dobelstein@agilehardwarenwllc.com"),
     description="BESSPIN Cyberphys Library",

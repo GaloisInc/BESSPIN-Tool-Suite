@@ -76,16 +76,15 @@ def copyInfotainmentServerFiles(tarName, targetId=None):
     if osImage == 'debian':
         cpFilesToBuildDir(runtimeFilesDir, pattern="infotainment-server.service", targetId=targetId)
         tarFiles += ["infotainment-server.service"]
+        # Add the script to kill any service listening on port 5002
+        cpFilesToBuildDir(runtimeFilesDir, pattern="kill_listeners.sh", targetId=targetId)
+        tarFiles += ["kill_listeners.sh"]
     elif osImage == 'FreeBSD':
         cpFilesToBuildDir(runtimeFilesDir, pattern="infotainment-server.sh", targetId=targetId)
         tarFiles += ["infotainment-server.sh"]
     else:
         logAndExit(f"Installing infotainment-server is not supported on <{osImage}>",
                    exitCode=EXIT.Dev_Bug)
-
-    # Add the script to kill any service listening on port 5002
-    cpFilesToBuildDir(runtimeFilesDir, pattern="kill_listeners.sh", targetId=targetId)
-    tarFiles += ["kill_listeners.sh"]
 
     buildDirPathTuplePartial = functools.partial(buildDirPathTuple, targetId=targetId)
     filesList=map(buildDirPathTuplePartial, tarFiles)

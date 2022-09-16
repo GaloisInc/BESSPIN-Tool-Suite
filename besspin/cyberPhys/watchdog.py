@@ -24,8 +24,8 @@ class Watchdog(ccomp.ComponentPoller):
     3. reeset the target upon request
     """
     def __init__(self, targetId):
-        in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts('watchdogBase', targetId)
         name = f"watchdog{targetId}"
+        in_socks, out_socks = besspin.cyberPhys.launch.getComponentPorts(name)
         f_Hz = getSetting('cyberPhysWatchdogFrequency')
         printAndLog(f"Starting {name} with in_socks: {in_socks} and out_socks: {out_socks}, sample freq: {f_Hz}[Hz]", doPrint=False)
         super().__init__(name, in_socks, out_socks, sample_frequency=f_Hz)
@@ -34,11 +34,14 @@ class Watchdog(ccomp.ComponentPoller):
         self.last_heartbeat = 0
         self.targetId = targetId
         self.targetIp = besspin.cyberPhys.launch.get_target_ip(targetId)
-    
+
+    def on_start(self):
+        self.start_poller()
+
     def on_poll_poll(self, t):
         """watchdog mainloop"""
         self.process_hearbeat()
-        if not besspin.cyberPhys.run.watchdog.isTargetAlive(self.targetId):
+        if not besspin.cyberPhys.run.isTargetAlive(self.targetId):
             printAndLog(f"<{self.name}> Target is not alive, attempting reset...")
             self.send_message(ccomp.Message(f"ERROR {self.targetId}"), getSetting('cyberPhysComponentBaseTopic'))
             self.reset_target("Not alive")
@@ -70,19 +73,30 @@ class Watchdog(ccomp.ComponentPoller):
         warnAndLog(f"<target{self.targetId}>: {errorString}! Resetting...")
         # Here we should reset
         besspin.target.launch.resetTarget(getSetting('targetObj',targetId=self.targetId))
-        printAndLog("Please press Enter to return to the interactive shell...")
+        printAndLog(f"<target{self.targetId}>: Target reset done")
+        self.send_message(ccomp.Message(f"READY {self.targetId}"), getSetting('cyberPhysComponentBaseTopic'))
+
+    def reset_component(self, componentName: str):
+        warnAndLog(f"<target{self.targetId}>: Resetting {componentName}")
+        besspin.cyberPhys.run.resetComponent(componentName,self.targetId)
+        printAndLog(f"<target{self.targetId}>: Component {componentName} reset done")
         self.send_message(ccomp.Message(f"READY {self.targetId}"), getSetting('cyberPhysComponentBaseTopic'))
 
     @recv_topic("base-topic")
     def _(self, msg, t):
+        # Disable ttyLogger
+        wasLogging = besspin.cyberPhys.launch.stopTtyLogging(self.targetId)
+
         """Filter received messages"""
         if msg == f"OTA_RESET {self.targetId}":
             printAndLog(f"OTA_RESET {self.targetId} requested")
-            besspin.cyberPhys.run.resetComponent("ota",self.targetId)
-            # TODO: notify when reset completed
+            self.reset_component("ota")
         elif msg == f"INFOTAINMENT_RESET {self.targetId}":
             printAndLog(f"INFOTAINMENT_RESET {self.targetId} requested")
-            besspin.cyberPhys.run.resetComponent("infotainment",self.targetId)
-            # TODO: notify when reset completed
+            self.reset_component("infotainment")
         elif msg == f"RESET {self.targetId}":
             self.reset_target("Reset requested")
+
+        # Re-enable ttyLogger
+        if (wasLogging):
+            besspin.cyberPhys.launch.startTtyLogging(self.targetId)

@@ -26,18 +26,13 @@ def getNetworkNodes(component_name: str) -> (str, [str]):
 
 @decorate.debugWrap
 @decorate.timeWrap
-def getComponentPorts(component_name: str, targetId=None) -> ([(int, str)], [(int, str)]):
+def getComponentPorts(component_name: str) -> ([(int, str)], [(int, str)]):
     """
-    Return a tuple (in_socks, out_socks) based on the component name
+    Return a tuple (in_socks, out_socks) based on the component name.
     """
     ports = getSetting('cyberPhysComponentPorts')
     topic = getSetting('cyberPhysComponentBaseTopic')
-    if targetId:
-        # config depends on target ID
-        out_port = ports[component_name] + targetId
-    else:
-        # Not targetID bound
-        out_port = ports[component_name]
+    out_port = ports[component_name]
     in_socks = [(p,topic) for p in ports.values() if p != out_port]
     out_socks = [(out_port, topic)]
     return in_socks, out_socks
@@ -71,20 +66,6 @@ def startCyberPhys():
         #   for interactive, so we'll keep it all as queues for consistency and more future compatibility).
         exitQueue = queue.Queue(maxsize=getSetting('nTargets')+int(isEnabled('interactiveShell')))
         setSetting('cyberPhysQueue',exitQueue)
-        for targetId in range(1,getSetting('nTargets')+1):
-            # queue from heartbeat thread -> watchdog thread
-            setSetting('watchdogHeartbeatQueue',queue.Queue(),targetId=targetId)
-
-        # queue used to stop the heartbeat thread
-        setSetting('heartbeatQueue', queue.Queue(maxsize=1))
-
-        # Start the watchdogs
-        for targetId in range(1,getSetting('nTargets')+1):
-            components.append(besspin.cyberPhys.watchdog.Watchdog(targetId))
-
-        # Start the heartbeat watchdog
-        allThreads = runThreadPerTarget(besspin.cyberPhys.run.heartBeatListener,
-                        addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
 
         # Pipe the UART
         if (isEnabled('pipeTheUart')):
@@ -93,10 +74,8 @@ def startCyberPhys():
         else: #log the output instead
             runThreadPerTarget(startTtyLogging)
 
-        # Start relay manager
-        in_socks, out_socks = getComponentPorts("relayManager")
-        components.append(
-            besspin.cyberPhys.relaymanager.RelayManager("relayManager", in_socks, out_socks))
+        # Initialize components
+        components = []
         components.append(besspin.cyberPhys.commander.Commander())
 
         for c in components:
@@ -112,14 +91,14 @@ def startCyberPhys():
         setSetting('interactorQueue',queue.Queue(maxsize=2))
 
         # Start the interactive shell
-        allThreads += runThreadPerTarget(besspin.cyberPhys.interactive.interact,
+        allThreads = runThreadPerTarget(besspin.cyberPhys.interactive.interact,
                         addTargetIdToKwargs=False, onlyStart=True, singleThread=True)
 
         # Start the watch on the watchdogs [+ interactive shell]
         ftQueueUtils("cyberPhysMain:queue",exitQueue,'get') #block until receiving an error or termination
     
         # Terminating all threads
-        ftQueueUtils(f"target{targetId}:heartbeat:queue",getSetting('heartbeatQueue'),'put')
+        #ftQueueUtils(f"target{targetId}:heartbeat:queue",getSetting('heartbeatQueue'),'put')
         if (isEnabled('interactiveShell')):
             ftQueueUtils("interactiveShell:queue",getSetting('interactorQueue'),'put',itemToPut='main')
 
@@ -266,7 +245,8 @@ def stopTtyLogging(targetId):
     xTarget = getSetting('targetObj',targetId=targetId)
     if (not isEnabled('isTtyLogging',targetId=targetId)):
         warnAndLog(f"{xTarget.targetIdInfo}stopTtyLogging: The TTY was not being logged!",doPrint=False)
-        return
+        return False
     getSetting('ttyLogger',targetId=targetId).stop()
     setSetting('isTtyLogging',False,targetId=targetId)
+    return True
 

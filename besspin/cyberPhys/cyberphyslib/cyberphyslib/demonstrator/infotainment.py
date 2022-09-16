@@ -21,19 +21,17 @@ import os
 import pathlib
 import struct
 import typing as typ
+import enum
 
 import cyberphyslib.demonstrator.config as config
 import cyberphyslib.demonstrator.component as ccomp
 from cyberphyslib.demonstrator.logger import info_logger
 from cyberphyslib.demonstrator.can import CanNetwork
-from cyberphyslib.canlib.canspecs import *
 from cyberphyslib.demonstrator.simulator import BeamNgCommand
-import cyberphyslib.canlib.canspecs as canspecs
-import enum
+import cyberphyslib.canlib as canlib
 
 from pygame import mixer
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume, AudioSession
-
 
 class InfotainmentProxy:
     """infotainment proxy between infotainment ui net and the can multiverse"""
@@ -60,10 +58,12 @@ class InfotainmentUi(ccomp.ComponentPoller):
     def on_start(self):
         self.send_message(ccomp.Message(InfotainmentUiStatus.READY), "infoui-events")
 
-    @recv_can(canspecs.CAN_ID_BUTTON_PRESSED,canspecs.CAN_FORMAT_BUTTON_PRESSED)
-    def _(self, data):
-        # alert simulator to turn off self driving mode
-        self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
+    # TODO: test and add this?
+    # # This should enable switching from self-drive when a button is pressed
+    # @recv_can(canlib.CAN_ID_BUTTON_PRESSED,canlib.CAN_FORMAT_BUTTON_PRESSED)
+    # def _(self, data):
+    #     # alert simulator to turn off self driving mode
+    #     self.send_message(ccomp.Message(BeamNgCommand.UI_BUTTON_PRESSED), "infoui-beamng")
 
 
 class InfotainmentPlayer(ccomp.ComponentPoller):
@@ -90,15 +90,45 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
                     return session, volume
         return None
 
-    def __init__(self, can_network: CanNetwork):
+    def __init__(self, can_network: CanNetwork, remote_testing=False):
         super().__init__("infoplay", [(config.DIRECTOR_PORT, 'infoplay-commands')], [(config.INFO_PLAY_PORT, 'infoplay-events')])
         self._network = can_network
         self._sidx: int = 0
         self._sound: typ.Union[mixer.Sound, None] = None
-        # NOTE: disable infotainment music for now
+        self._sound_enabled = True
+
+        # Set to True if testing remotely and no audio endpoint is present
+        self.remote_testing = remote_testing
+
+        # NOTE: start without music/sound
         self._volume = 0.0
+        self.system_functionality_level = canlib.FUNCTIONALITY_FULL
         self._set_volume()
         self.play_sound()
+
+    def update_functionality_level(self, new_func_level):
+        """
+        Updates the component's functionality level
+        Unless FUNCTIONALITY_FULL disable all sounds
+        """
+        self.system_functionality_level = new_func_level
+        if self.system_functionality_level != canlib.FUNCTIONALITY_FULL:
+            # Disable sound
+            self.enable_sound(False)
+
+    def enable_sound(self, enable: bool):
+        """
+        Disable sound (used in self-driving mode)
+        NOTE: maybe use `self._sound.stop()` to interrupt
+        current song, so it starts from the beginning when
+        sound is re-enabled
+        """
+        self._sound_enabled = enable
+        if enable and (self.system_functionality_level == canlib.FUNCTIONALITY_FULL):
+            self.play_sound()
+        else:
+            if self._sound:
+                self._sound.stop()
 
     def on_start(self):
         self.send_message(ccomp.Message(InfotainmentPlayerStatus.READY), "infoplay-events")
@@ -111,26 +141,34 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
         """play sound file depending on station select"""
         if self._sound is not None:
             self._sound.stop()
-        mixer.init()
-        mixer.get_init()
-        self._sound = mixer.Sound(
-            str(self.stations[self._sidx])
-        )
-        self._sound.play(loops=-1)
-        self._set_volume()
+        if not self.remote_testing:
+            mixer.init()
+            mixer.get_init()
+            self._sound = mixer.Sound(
+                str(self.stations[self._sidx])
+            )
+            self._sound.play(loops=-1)
+            self._set_volume()
 
     def _set_volume(self):
         """find audio session and set the master volume given the volume state"""
-        if self._sound is None:
-            self.play_sound()
-        session = AudioUtilities.GetProcessSession(self.session_pid)
-        if session:
-            volume = session._ctl.QueryInterface(ISimpleAudioVolume)
-            volume.SetMasterVolume(self._volume, None)
+        if self.remote_testing:
+            pass
         else:
-            raise RuntimeError(f"audio session doesn't exist!")
+            if self._sound_enabled:
+                if self._sound is None:
+                    self.play_sound()
+                try:
+                    session = AudioUtilities.GetProcessSession(self.session_pid)
+                    if session:
+                        volume = session._ctl.QueryInterface(ISimpleAudioVolume)
+                        volume.SetMasterVolume(self._volume, None)
+                    else:
+                        raise RuntimeError(f"audio session doesn't exist!")
+                except Exception as exc:
+                    info_logger.info(f"Error processing audio session: {exc}")
 
-    @recv_can(canspecs.CAN_ID_INFOTAINMENT_STATE, canspecs.CAN_FORMAT_INFOTAINMENT_STATE)
+    @recv_can(canlib.CAN_ID_INFOTAINMENT_STATE, canlib.CAN_FORMAT_INFOTAINMENT_STATE)
     def _(self, data):
         """respond to the infotainment button press"""
         # decode the incoming value
@@ -159,19 +197,19 @@ class InfotainmentPlayer(ccomp.ComponentPoller):
                 self._sound.stop()
             self._set_volume()
 
-    @recv_can(canspecs.CAN_ID_CAR_X, canspecs.CAN_FORMAT_CAR_X)
+    @recv_can(canlib.CAN_ID_CAR_X, canlib.CAN_FORMAT_CAR_X)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_X, struct.pack(canspecs.CAN_FORMAT_CAR_X, data[0]))
+        self._network.send(canlib.CAN_ID_CAR_X, struct.pack(canlib.CAN_FORMAT_CAR_X, data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_Y, canspecs.CAN_FORMAT_CAR_Y)
+    @recv_can(canlib.CAN_ID_CAR_Y, canlib.CAN_FORMAT_CAR_Y)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Y, struct.pack(canspecs.CAN_FORMAT_CAR_Y, data[0]))
+        self._network.send(canlib.CAN_ID_CAR_Y, struct.pack(canlib.CAN_FORMAT_CAR_Y, data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_Z, canspecs.CAN_FORMAT_CAR_Z)
+    @recv_can(canlib.CAN_ID_CAR_Z, canlib.CAN_FORMAT_CAR_Z)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_Z, struct.pack(canspecs.CAN_FORMAT_CAR_Z, data[0]))
+        self._network.send(canlib.CAN_ID_CAR_Z, struct.pack(canlib.CAN_FORMAT_CAR_Z, data[0]))
 
-    @recv_can(canspecs.CAN_ID_CAR_R, canspecs.CAN_FORMAT_CAR_R)
+    @recv_can(canlib.CAN_ID_CAR_R, canlib.CAN_FORMAT_CAR_R)
     def _(self, data):
-        self._network.send(canspecs.CAN_ID_CAR_R, struct.pack(canspecs.CAN_FORMAT_CAR_R, data[0]))
+        self._network.send(canlib.CAN_ID_CAR_R, struct.pack(canlib.CAN_FORMAT_CAR_R, data[0]))
 

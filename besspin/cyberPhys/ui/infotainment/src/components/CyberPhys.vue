@@ -6,6 +6,8 @@
 
     <button @click="incVolume()" type="button" id="vol-up" class="vol-button"></button>
     <button @click="decVolume()" type="button" id="vol-down" class="vol-button"></button>
+
+    <button @click="resetSim()" type="button" id="reset-sim" class="reset-btn">Reset</button>
   </div>
 </template>
 
@@ -24,6 +26,10 @@ export default {
   mounted: function() {
   },
   methods: {
+    resetSim: function() {
+      console.log('Resetting simulator scenario');
+      ipcRenderer.send('button-pressed', 'reset', {});
+    },
     incVolume: function() {
       ipcRenderer.send('volume-inc');
     },
@@ -39,6 +45,25 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.reset-btn {
+  position: absolute;
+  background: #F44336;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.2em;
+  border-radius: 40px;
+  border: none;
+  height: 45px;
+  width: 100px;
+  bottom: 70px;
+  right: 50px;
+}
+.reset-btn:active, .reset-btn:focus {
+  outline: none;
+}
+.reset-btn:active {
+    background: #d2190b;
+}
 .vol-button, .station-button {
   position: absolute;
   background: none;

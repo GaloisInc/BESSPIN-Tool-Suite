@@ -24,17 +24,17 @@ int main(int argc, char** argv) {
     sigemptyset(&action.sa_mask);
     sigaction(SIGINT, &action, NULL);
 
-    message("attempting to kill legitimate infotainment server\n");
-    int result = system("systemctl stop infotainment-server.service");
+    // message("attempting to kill legitimate infotainment server\n");
+    // int result = system("systemctl stop infotainment-server.service");
     
-    if (result != 0) {
-        message("could not kill legitimate infotainmment server, running anyway. Result was %i\n",result);
-    } else {
-        message("legitimate infotainment server killed\n");
-    }
+    // if (result != 0) {
+    //     message("could not kill legitimate infotainmment server, running anyway. Result was %i\n",result);
+    // } else {
+    //     message("legitimate infotainment server killed\n");
+    // }
 
-    message("hacked infotainment server starting\n");
-
+    // message("hacked infotainment server starting\n");
+    int result = 0;
     #ifdef HACKED_POSITION_ADDRESS
     set_position_source(HACKED_POSITION_ADDRESS);
     #endif

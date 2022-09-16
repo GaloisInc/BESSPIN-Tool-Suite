@@ -19,7 +19,7 @@ class CanConstants():
     DEST_BROADCAST = "<broadcast>"
     CAN_MIN_BYTES = 4 + 1 + 1  # sending an empty frame doesn't make sense, min 6 bytes per frame
     CAN_MAX_BYTES = 64 + 4 + 1  # 64 bytes of DATA, 4 bytes of ID, 1 byte od DLC
-    COMMAND_ID_PREFIX =  [0xAA, 0xFE, 0xEB] # CAN ID signifying a command message
+    COMMAND_ID_PREFIX =  [0xAA] # CAN ID signifying a command message
 
 class TcpBus(BusABC):
     """
@@ -61,6 +61,9 @@ class TcpBus(BusABC):
         if timeout:
             print(f"<{self.__class__.__name__}> Warning: ignoring timeout of {timeout} [s] during send()")
         self.publisher.send(byte_msg)
+
+    def send_msg(self, msg):
+        self.send(msg)
 
     def _recv_internal(self, timeout):
         # Initialize poll set
@@ -155,6 +158,9 @@ class UdpBus(BusABC):
         if timeout:
             print(f"<{self.__class__.__name__}> Warning: ignoring timeout of {timeout} [s] during send()")
         self._sock.sendto(byte_msg, (tx_ip, tx_port))
+
+    def send_msg(self, msg):
+        self.send(msg)
 
     def _recv_internal(self, timeout):
         ready = select.select([self._sock], [], [], timeout)

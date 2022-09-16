@@ -4,7 +4,7 @@
 * Name: lib/canspecs.h
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 25 June 2021
+* Date: 31 August 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
@@ -244,28 +244,16 @@
 #define CAN_ID_CMD_RESTART 0XAAFEEB04
 #define BYTE_LENGTH_CMD_RESTART 4
 
-// cmd_scenario_not_available
+// cmd_functionality_level
 // Type: uint8_t
-// Sender: BESSPIN Tool
+// Sender: Ignition
 // Receiver: Hacker kiosk
 // Bounds/Range: N/A
 // Units: N/A
 // J1939 compatible: No
 //
-// Scenario ID (uint8_t)
-#define CAN_ID_CMD_SCENARIO_NOT_AVAILABLE 0XAAFEEB05
-#define BYTE_LENGTH_CMD_SCENARIO_NOT_AVAILABLE 1
-
-// cmd_scenario_available
-// Type: uint8_t
-// Sender: BESSPIN Tool
-// Receiver: Hacker kiosk
-// Bounds/Range: N/A
-// Units: N/A
-// J1939 compatible: No
-//
-// Scenario ID (uint8_t)
-#define CAN_ID_CMD_SCENARIO_AVAILABLE 0XAAFEEB06
-#define BYTE_LENGTH_CMD_SCENARIO_AVAILABLE 1
+// Functionality level (uint8_t)
+#define CAN_ID_CMD_FUNCTIONALITY_LEVEL 0XAAFEEB05
+#define BYTE_LENGTH_CMD_FUNCTIONALITY_LEVEL 1
 
 #endif

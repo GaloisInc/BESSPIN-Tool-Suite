@@ -4,7 +4,7 @@
 * Name: lib/canspecs.js
 * Author: Steven Osborn <steven@lolsborn.com>, Kristofer Dobelstein, Ethan Lew <elew@galois.com>
 * Michal Podhradsky <mpodhradsky@galois.com>
-* Date: 25 June 2021
+* Date: 31 August 2021
 * This file was created by BESSPIN-Tool-Suite/besspin/cyberPhys/canlib/make_can_spec.py
 */
 
@@ -122,15 +122,9 @@ const CAN_ID_CMD_SET_DRIVING_MODE = 0XAAFEEB07
 // Description: Component ID / sender IP address (uint32_t)
 const CAN_ID_CMD_RESTART = 0XAAFEEB04
 
-// Name: cmd_scenario_not_available
+// Name: cmd_functionality_level
 // Units: N/A
 // Type: uint8_t
-// Description: Scenario ID (uint8_t)
-const CAN_ID_CMD_SCENARIO_NOT_AVAILABLE = 0XAAFEEB05
-
-// Name: cmd_scenario_available
-// Units: N/A
-// Type: uint8_t
-// Description: Scenario ID (uint8_t)
-const CAN_ID_CMD_SCENARIO_AVAILABLE = 0XAAFEEB06
+// Description: Functionality level (uint8_t)
+const CAN_ID_CMD_FUNCTIONALITY_LEVEL = 0XAAFEEB05
 

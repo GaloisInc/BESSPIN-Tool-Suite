@@ -8,9 +8,10 @@ Environment="DISPLAY=:0"
 Environment="XAUTHORITY=/home/pi/.Xauthority"
 Type=simple
 Restart=always
-RestartSec=1
-User=pi
-ExecStart=/home/pi/deploy/hacker-kiosk-0.1.0-armv7l.AppImage
+RestartSec=10
+User=galoisuser
+WorkingDirectory=/home/galoisuser/build/BESSPIN-Tool-Suite/besspin/cyberPhys/ui/hacker-kiosk
+ExecStart=/home/galoisuser/.nvm/versions/node/v14.15.0/bin/npm run electron:serve
 
 [Install]
 WantedBy=multi-user.target

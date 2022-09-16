@@ -7,9 +7,9 @@ from logging import warn
 from besspin.base.utils.misc import *
 import besspin.cyberPhys.launch
 import besspin.cyberPhys.cyberphyslib.cyberphyslib.demonstrator.component as ccomp
+from besspin.cyberPhys.relaymanager import RelayManager
 
-
-import cmd, os, threading, io
+import cmd, threading
 
 @decorate.debugWrap
 @decorate.timeWrap
@@ -108,68 +108,20 @@ class cyberPhysShell(cmd.Cmd):
     def emptyline(self): #to avoid repeating the last command on <enter>
         return
 
-    def do_reset(self,inp):
-        """reset TARGET_ID
-        resets the target with the chosen ID"""
-        if (len(inp.split(' '))>1) or inp=='':
-            print(self.do_reset.__doc__)
-            return
-        targetId = inp
-        # NOTE: ID=0 is Teensy
-        assert (int(targetId) in range(0,getSetting('nTargets')+1)), "validating target ID"
-        targetId = int(targetId)
-        printAndLog(f"Request reseting target {targetId}")
-        self.sender.send_message(ccomp.Message(f"RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
-        return
-
-    def do_infotainment_reset(self,inp):
-        """infotainment_reset TARGET_ID (1..3)
-        resets the infotainment server with the chosen ID"""
-        if (len(inp.split(' '))>1) or inp=='':
-            print(self.do_reset.__doc__)
-            return
-        inp = int(inp)
-        if inp == 1:
-            targetId = 4
-        elif inp == 2:
-            targetId = 5
-        elif inp == 3:
-            targetId = 6
-        else:
-            warnAndLog(f"Error: componend Id out of range. Was {inp}, range is 1..3")
-            return
-
-        printAndLog(f"Request reseting target {targetId}")
-        self.sender.send_message(ccomp.Message(f"INFOTAINMENT_RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
-        return
-
-    def do_ota_reset(self,inp):
-        """ota_ TARGET_ID (1..3)
-        resets the OTA update server with the chosen ID"""
-        if (len(inp.split(' '))>1) or inp=='':
-            print(self.do_reset.__doc__)
-            return
-        inp = int(inp)
-        if inp == 1:
-            targetId = 4
-        elif inp == 2:
-            targetId = 5
-        elif inp == 3:
-            targetId = 6
-        else:
-            warnAndLog(f"Error: componend Id out of range. Was {inp}, range is 1..3")
-            return
-
-        printAndLog(f"Request reseting target {targetId}")
-        self.sender.send_message(ccomp.Message(f"OTA_RESET {targetId}"), getSetting('cyberPhysComponentBaseTopic'))
-        return
-
     def do_ip(self,inp):
         """ip
         Displays the IPs of the running targets"""
         for iTarget in range(1,getSetting('nTargets')+1):
             printAndLog(f"<target{iTarget}>: {self.getTargetMember(iTarget,'ipTarget')}")
         return
+
+    def do_restart_teensy(self,inp):
+        """
+        Restart Teensy board
+        """
+        printAndLog("Restarting Teensy")
+        RelayManager.toggleRelays()
+        printAndLog("Teensy restarted")
 
     def do_uart(self,inp):
         """uart

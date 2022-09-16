@@ -20,6 +20,7 @@ def install (xTarget):
         xTarget.runCommand("cp infotainment-server.service /lib/systemd/system/infotainment-server.service", erroneousContents="install:", tee=appLog)
         xTarget.runCommand("systemctl enable infotainment-server.service", timeout=serviceTimeout, tee=appLog)
         xTarget.runCommand("systemctl start infotainment-server.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
+        xTarget.runCommand("mv kill_listeners.sh /opt/kill_listeners.sh",tee=appLog)
     elif isEqSetting('osImage','FreeBSD', targetId=xTarget.targetId):
         xTarget.runCommand("install -d /usr/local/etc/rc.d", tee=appLog)
         xTarget.runCommand("install infotainment-server.sh /usr/local/etc/rc.d/infotainment-server", erroneousContents="install:", tee=appLog)
@@ -29,9 +30,6 @@ def install (xTarget):
     else:
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}Can't start infotainment server service on <{getSetting('osImage', targetId=xTarget.targetId)}>",
                                  exitCode=EXIT.Dev_Bug)
-
-    # Install the kill service script
-    xTarget.runCommand("mv kill_listeners.sh /opt/kill_listeners.sh",tee=appLog)
 
     printAndLog(f"{xTarget.targetIdInfo}infotainment server installed successfully.",tee=appLog)
 
@@ -51,12 +49,13 @@ def restart (xTarget):
     printAndLog(f"{xTarget.targetIdInfo}Restarting infotainment server service!", tee=appLog)
     serviceTimeout = 120
     if isEqSetting('osImage','debian',targetId=xTarget.targetId):
+        # NOTE: pkill should work too, keeping this as an alternative to
+        # the kill_listeners.sh script
+        #xTarget.runCommand("pkill infotainment_se",exitOnError=False,tee=appLog)
         xTarget.runCommand("/opt/kill_listeners.sh",exitOnError=False,tee=appLog)
-        xTarget.runCommand("systemctl stop infotainment-server.service", erroneousContents=["Failed to stop", "error code"], tee=appLog)
-        xTarget.runCommand("systemctl start infotainment-server.service", erroneousContents=["Failed to start", "error code"], tee=appLog)
+        xTarget.runCommand("systemctl restart infotainment-server.service", erroneousContents=["Failed", "error code"], tee=appLog)
     elif isEqSetting('osImage','FreeBSD',targetId=xTarget.targetId):
-        xTarget.runCommand("service infotainment-server stop", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
-        xTarget.runCommand("service infotainment-server start", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
+        xTarget.runCommand("service infotainment-server restart", erroneousContents=["failed"], tee=appLog, timeout=serviceTimeout)
     else:
         xTarget.terminateAndExit(f"{xTarget.targetIdInfo}Can't restart infotainment server service on <{getSetting('osImage', targetId=xTarget.targetId)}>",
                                  exitCode=EXIT.Dev_Bug)

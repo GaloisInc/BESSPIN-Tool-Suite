@@ -1,13 +1,8 @@
 """
 Project: SSITH CyberPhysical Demonstrator
 director.py
-Author: Ethan Lew <elew@galois.com>
-Date: 06/09/2021
-Python 3.8.3
-O/S: Windows 10
-
-Kiosk State Machine
-Hacker Kiosk backend
+Author: Ethan Lew <elew@galois.com>, Michal Podhradsky <mpodhradsky@galois.com>
+Kiosk State Machine/ Hacker Kiosk backend
 
 Exchange format:
 {
@@ -33,10 +28,12 @@ NOTE: Scenarios are:
 """
 import cyberphyslib.kiosk.client as kclient
 import cyberphyslib.canlib as canlib
+import cyberphyslib.demonstrator.config as cconf
 
 from can import Message
 from transitions.extensions import GraphMachine as Machine
 from transitions import State
+
 import threading
 import zmq
 import struct
@@ -45,62 +42,17 @@ import subprocess
 def page(f):
     """decorator for page action methods"""
     def inner(*args, **kwargs):
-        """NOTE: make this log instead of print"""
+        # NOTE: make this log instead of print
         print(f">>>STATE: {f.__name__}")
         return f(*args, **kwargs)
     return inner
-
-ComponentDictionary = {
-    canlib.SCENARIO_BASELINE: "SCENARIO_BASELINE",
-    canlib.SCENARIO_SECURE_ECU: "SCENARIO_SECURE_ECU",
-    canlib.SCENARIO_SECURE_INFOTAINMENT: "SCENARIO_SECURE_INFOTAINMENT",
-    canlib.BESSPIN_TOOL: "BESSPIN_TOOL",
-    canlib.TARGET_1: "TARGET_1",
-    canlib.TARGET_2: "TARGET_2",
-    canlib.TARGET_3: "TARGET_3",
-    canlib.TARGET_4: "TARGET_4",
-    canlib.TARGET_5: "TARGET_5",
-    canlib.TARGET_6: "TARGET_6",
-    canlib.TEENSY: "TEENSY",
-    canlib.IGNITION: "IGNITION",
-    canlib.LED_COMPONENT: "LED_COMPONENT",
-    canlib.HACKER_KIOSK: "HACKER_KIOSK",
-    canlib.HACK_NONE: "HACK_NONE",
-    canlib.HACK_OTA: "HACK_OTA",
-    canlib.HACK_BRAKE: "HACK_BRAKE",
-    canlib.HACK_THROTTLE: "HACK_THROTTLE",
-    canlib.HACK_TRANSMISSION: "HACK_TRANSMISSION",
-    canlib.HACK_LKAS: "HACK_LKAS",
-    canlib.HACK_INFOTAINMENT_1: "HACK_INFOTAINMENT_1",
-    canlib.HACK_INFOTAINMENT_2: "HACK_INFOTAINMENT_2",
-    canlib.INFOTAINMENT_THIN_CLIENT: "INFOTAINMENT_THIN_CLIENT",
-    canlib.INFOTAINMENT_SERVER_1: "INFOTAINMENT_SERVER_1",
-    canlib.INFOTAINMENT_SERVER_2: "INFOTAINMENT_SERVER_2",
-    canlib.INFOTAINMENT_SERVER_3: "INFOTAINMENT_SERVER_3",
-    canlib.OTA_UPDATE_SERVER_1: "OTA_UPDATE_SERVER_1",
-    canlib.OTA_UPDATE_SERVER_2: "OTA_UPDATE_SERVER_2",
-    canlib.OTA_UPDATE_SERVER_3: "OTA_UPDATE_SERVER_3",
-    canlib.BUTTON_STATION_1: "BUTTON_STATION_1",
-    canlib.BUTTON_STATION_2: "BUTTON_STATION_2",
-    canlib.BUTTON_STATION_3: "BUTTON_STATION_3",
-    canlib.BUTTON_VOLUME_DOWN: "BUTTON_VOLUME_DOWN",
-    canlib.BUTTON_VOLUME_UP: "BUTTON_VOLUME_UP"
-}
-
-ButtonDictionary = {
-    canlib.BUTTON_STATION_1: "BUTTON_STATION_1",
-    canlib.BUTTON_STATION_2: "BUTTON_STATION_2",
-    canlib.BUTTON_STATION_3: "BUTTON_STATION_3",
-    canlib.BUTTON_VOLUME_DOWN: "BUTTON_VOLUME_DOWN",
-    canlib.BUTTON_VOLUME_UP: "BUTTON_VOLUME_UP"
-}
 
 class HackerKiosk:
     """
     Kiosk Director implements the desired state flow for the hacker kiosk experience
     """
-    ZMQ_PORT = 5091
     ZMQ_POLL_TIMEOUT = 0.1
+    # TODO: make this a part of the specs/config
     OTA_SERVER_IP = {
         canlib.SCENARIO_BASELINE: "10.88.88.11",
         canlib.SCENARIO_SECURE_INFOTAINMENT: "10.88.88.21",
@@ -120,8 +72,8 @@ class HackerKiosk:
 
     # full name of the states
     state_names = [
-                   "reset", # reset SSITH ECU scenario components here
-                   "hack02_kiosk_intro",
+                   "hack02_kiosk_intro_and_reset",
+                   "hack04_kiosk_access",
                    "hack05_info_attempt",
                    "hack06_info_exploit",
                    "hack06_info_exploit_attemp_hack",
@@ -136,33 +88,35 @@ class HackerKiosk:
     # this is a brief description of the state transitions that is expanded at runtime
     # into pytransitions transitions
     transition_names = [
-        {'transition': ('reset', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('reset', 'hack02_kiosk_intro'), 'conditions': 'button_pressed_next'},
-        {'transition': ('hack02_kiosk_intro', 'hack05_info_attempt'), 'conditions': 'button_pressed_next'},
-        {'transition': ('hack05_info_attempt', 'hack06_info_exploit'), 'conditions': 'button_pressed_next'},
+        {'transition': ('hack02_kiosk_intro_and_reset', 'hack02_kiosk_intro_and_reset'), 'conditions': 'button_pressed_reset'},
+        {'transition': ('hack02_kiosk_intro_and_reset', 'hack04_kiosk_access'), 'conditions': 'button_pressed_hack02_next'},
+        {'transition': ('hack04_kiosk_access', 'hack05_info_attempt'), 'conditions': 'button_pressed_hack04_next'},
+        {'transition': ('hack05_info_attempt', 'hack06_info_exploit'), 'conditions': 'button_pressed_hack05_next'},
         {'transition': ('hack06_info_exploit', 'hack06_info_exploit_attemp_hack'), 'conditions': 'button_pressed_info_exploit'},
         {'transition': ('hack06_info_exploit_attemp_hack', 'hack06_info_exploit'), 'conditions': 'exploit_complete'},
         {'transition': ('hack06_info_exploit', 'hack08_critical_exploit'), 'conditions': 'button_pressed_critical_exploit'},
         {'transition': ('hack08_critical_exploit', 'hack06_info_exploit'), 'conditions': 'exploit_complete'},
-        {'transition': ('hack06_info_exploit', 'hack09_protect'), 'conditions': 'button_pressed_next'},
+        {'transition': ('hack06_info_exploit', 'hack09_protect'), 'conditions': 'button_pressed_hack08_next'},
         {'transition': ('hack09_protect', 'hack10_protect_info_attempt'), 'conditions': 'button_pressed_ssith_infotainment'},
         {'transition': ('hack10_protect_info_attempt', 'hack10_info_exploit_attempt_hack'), 'conditions': 'button_pressed_info_exploit'},
         {'transition': ('hack10_info_exploit_attempt_hack', 'hack10_protect_info_attempt'), 'conditions': 'exploit_complete'},
         {'transition': ('hack09_protect', 'hack12_protect_critical'), 'conditions': 'button_pressed_ssith_ecu'},
         {'transition': ('hack12_protect_critical', 'hack12_critical_exploit'), 'conditions': 'button_pressed_critical_exploit'},
         {'transition': ('hack12_critical_exploit', 'hack12_protect_critical'), 'conditions': 'exploit_complete'},
-        {'transition': ('hack02_kiosk_intro', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('hack05_info_attempt', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('hack06_info_exploit', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('hack09_protect', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('hack10_protect_info_attempt', 'reset'), 'conditions': 'button_pressed_reset'},
-        {'transition': ('hack12_protect_critical', 'reset'), 'conditions': 'button_pressed_reset'},
+        {'transition': ('hack10_protect_info_attempt', 'hack02_kiosk_intro_and_reset'), 'conditions': 'button_pressed_reset'},
+        {'transition': ('hack12_protect_critical', 'hack02_kiosk_intro_and_reset'), 'conditions': 'button_pressed_reset'},
     ]
 
-    def __init__(self, net_conf, deploy_mode=True):
+
+    def __init__(self, net_conf: cconf.DemonstratorNetworkConfig, deploy_mode=False, draw_graph=False):
         """kiosk state machine"""
         assert(net_conf)
+        self.net_conf = net_conf
         self.deploy_mode = deploy_mode
+        if self.deploy_mode:
+            print(f"<{self.__class__.__name__}> Starting in deploy mode!")
+        else:
+            print(f"<{self.__class__.__name__}> Starting in test mode!")
 
         self.states = None
         self.transitions = None
@@ -170,11 +124,20 @@ class HackerKiosk:
         self.machine = self.prepare_state_machine()
         self.state_arg = None
         self.is_reset_completed = False
+        self.initialized = False
 
+        if draw_graph:
+            print(f"<{self.__class__.__name__}> Drawing graph, *NOT* initializing.")
+            return
+        else:
+            self.initialize()
+
+    def initialize(self):
+        print(f"<{self.__class__.__name__}> Initializing network!")
         self.stop_evt = threading.Event()
 
         # ZMQ init
-        self.zmq_port = net_conf.port_network_ipcPort
+        self.zmq_port = self.net_conf.port_network_ipcPort
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind(f"tcp://*:{self.zmq_port}")
@@ -184,7 +147,7 @@ class HackerKiosk:
 
         # State machine data
         self.active_scenario = canlib.SCENARIO_BASELINE
-        self.ota_server_port = net_conf.port_network_otaServerPort
+        self.ota_server_port = self.net_conf.port_network_otaServerPort
         self.brakes_ok = True
         self.lkas_disabled = True
         self.transmission_ok = True
@@ -199,18 +162,30 @@ class HackerKiosk:
         self.ipc_msg = {}
 
         # CMD BUS
-        cmd_host, cmd_subscribers = net_conf.getCmdNetworkNodes("HackerKiosk")
+        cmd_host, cmd_subscribers = self.net_conf.getCmdNetworkNodes("HackerKiosk")
         self.cmd_bus = canlib.TcpBus(cmd_host, cmd_subscribers)
         # CAN UDP BUS (For hacked infotainment server)
-        print(f"<{self.__class__.__name__}> UDP bus listening at {net_conf.nodes['HackerKiosk']}:{net_conf.port_network_hackedInfotainmentPort}")
-        self.infotainment_bus = canlib.UdpBus(port=net_conf.port_network_hackedInfotainmentPort,ip="")
+        print(f"<{self.__class__.__name__}> UDP bus listening at {self.net_conf.nodes['HackerKiosk']}:\
+            {self.net_conf.port_network_hackedInfotainmentPort}")
+        self.infotainment_bus = canlib.UdpBus(port=self.net_conf.port_network_hackedInfotainmentPort,ip="")
+        print(f"<{self.__class__.__name__}> Infotainment bus listening at {cmd_host}:\
+            {self.net_conf.port_network_hackedInfotainmentPort}")
+        self.udp_bus = canlib.UdpBus(port=self.net_conf.port_network_canbusPort,ip="")
+        print(f"<{self.__class__.__name__}> UDP2 bus listening at {cmd_host}:\
+            {self.net_conf.port_network_canbusPort}")
         self.cmd_thread = threading.Thread(target=self.cmdLoop, args=[], daemon=True)
         self.info_thread = threading.Thread(target=self.infoLoop, args=[], daemon=True)
 
         print(f"<{self.__class__.__name__}> Listening on ZMQ_PORT {self.zmq_port}")
         self.default_inputs()
 
+        # To make sure the OTA server is properly initialized
+        self.switchActiveScenario(canlib.SCENARIO_BASELINE)
+        self.initialized = True
+
     def run(self):
+        if not self.initialized:
+            self.initialize()
         self.cmd_thread.start()
         self.info_thread.start()
         while not self.stopped:
@@ -243,31 +218,50 @@ class HackerKiosk:
         while True:
             msg = self.infotainment_bus.recv()
             if msg:
-                cid, data = msg.arbitration_id, msg.data
+                cid = msg.arbitration_id
                 try:
                     # NOTE: we need to listen to the CAN_ID_CAR_X/Y/Z/R from the hacked server
                     # Make sure we are listening for the right IP address
                     if cid == canlib.CAN_ID_CAR_X:
                         # Get X coordinate
-                        self.x = struct.unpack(canlib.CAN_FORMAT_CAR_X, data)[0]
+                        self.x = struct.unpack(canlib.CAN_FORMAT_CAR_X, msg.data)[0]
                     elif cid == canlib.CAN_ID_CAR_Y:
                         # Get Y coordinate
-                        self.y = struct.unpack(canlib.CAN_FORMAT_CAR_Y, data)[0]
+                        self.y = struct.unpack(canlib.CAN_FORMAT_CAR_Y, msg.data)[0]
                     elif cid == canlib.CAN_ID_CAR_Z:
                         # Get Z coordinate
-                        self.z = struct.unpack(canlib.CAN_FORMAT_CAR_Z, data)[0]
+                        self.z = struct.unpack(canlib.CAN_FORMAT_CAR_Z, msg.data)[0]
                 except Exception as exc:
                     print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
     def cmdLoop(self):
         print(f"<{self.__class__.__name__}> Cmd loop started")
         while True:
-            msg = self.cmd_bus.recv()
+            msg = self.cmd_bus.recv(timeout=0.1)
             if msg:
-                cid, data = msg.arbitration_id, msg.data
+                cid = msg.arbitration_id
                 try:
-                    # NOTE: Do something else here?
-                    print(f"<{self.__class__.__name__}> CMD_BUS CAN_ID={hex(cid)}, data={data}")
+                    if cid == canlib.CAN_ID_HEARTBEAT_REQ:
+                        req_number = struct.unpack(canlib.CAN_FORMAT_HEARTBEAT_REQ, msg.data)[0]
+                        heartbeat_ack = Message(arbitration_id=canlib.CAN_ID_HEARTBEAT_ACK,
+                                                dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
+                                                data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK_BACKEND, req_number))
+                        self.cmd_bus.send(heartbeat_ack)
+                    # NOTE: do not switch deploy mode in the exhibit
+                    # elif cid == canlib.CAN_ID_CMD_FUNCTIONALITY_LEVEL:
+                    #     level = struct.unpack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL, msg.data)[0]
+                    #     print(f"<{self.__class__.__name__}> CAN_ID_CMD_FUNCTIONALITY_LEVEL: {canlib.CanlibComponentNames.get(level,None)}")
+                    #     if level == canlib.FUNCTIONALITY_FULL:
+                    #         print(f"<{self.__class__.__name__}> Deploy mode enabled")
+                    #         self.deploy_mode = True
+                    #     else:
+                    #         print(f"<{self.__class__.__name__}> Deploy mode disabled")
+                    #         self.deploy_mode = False
+                    elif cid == canlib.CAN_ID_CMD_COMPONENT_READY:
+                        component_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, msg.data)[0]
+                        print(f"<{self.__class__.__name__}> CAN_ID_CMD_COMPONENT_READY: {canlib.CanlibComponentNames.get(component_id,None)}")
+                    else:
+                        pass
                 except Exception as exc:
                     print(f"<{self.__class__.__name__}> Error processing message: {msg}: {exc}")
 
@@ -325,7 +319,7 @@ class HackerKiosk:
                 self.inputs |= {tn['unless']}
             self.transitions.append(base_dict)
 
-        return Machine(self, states=self.states, transitions=self.transitions, initial='reset', show_conditions=True)
+        return Machine(self, states=self.states, transitions=self.transitions, initial='hack02_kiosk_intro_and_reset', show_conditions=True)
 
 
     def draw_graph(self, fname: str):
@@ -346,24 +340,26 @@ class HackerKiosk:
             hack_ok, data = self.ota_server.upload_and_execute_file(HackerKiosk.INFO_SERVER_HACKED_PATH)
             if hack_ok:
                 print("Hack successful!")
+                self.hackActive(canlib.HACK_INFOTAINMENT_MUSIC)
             else:
                 print(f"Hack failed with: {data}")
         else:
             print("Hack successful!")
             print("Uploading hacked infotainment server")
+            if self.active_scenario == canlib.SCENARIO_BASELINE:
+                self.hackActive(canlib.HACK_INFOTAINMENT_MUSIC)
             print("Upload successful!")
             hack_ok = True
         return hack_ok
 
     @page
-    def reset_enter(self, arg):
+    def hack02_kiosk_intro_and_reset_enter(self, arg):
         """
         Switch to BASELINE_SCENARIO
         * no active hack
         * scenario is Baseline
         * reset Target1, InfoServer1, InfoServer3
         """
-        self.button_pressed_next = False
         self.button_pressed_reset = False
 
         self.hackActive(canlib.HACK_NONE)
@@ -385,12 +381,12 @@ class HackerKiosk:
         self.ipc_msg['status'] = 200 # OK
 
     @page
-    def hack02_kiosk_intro_enter(self, arg):
+    def hack04_kiosk_access_enter(self, arg):
         """
-        Reset is complete
+        Intermediate state
         No action needed
         """
-        self.button_pressed_next = False
+        self.button_pressed_hack02_next = False
         # Respond
         self.ipc_msg['status'] = 200 # OK
 
@@ -401,7 +397,7 @@ class HackerKiosk:
         * hack the server
         * upload hacked infotainment
         """
-        self.button_pressed_next = False
+        self.button_pressed_hack04_next = False
         hack_ok = self.hack_ota_and_upload_hacked_infotainment_server()
         self.ipc_msg['retval'] = hack_ok
         self.ipc_msg['status'] = 200 # OK
@@ -411,7 +407,7 @@ class HackerKiosk:
         """
         Wait for the exploit selection
         """
-        self.button_pressed_next = False
+        self.button_pressed_hack05_next = False
         self.exploit_complete = False
 
         self.ipc_msg['status'] = 200 # OK
@@ -428,7 +424,6 @@ class HackerKiosk:
         self.execute_infotainment_hack(arg)
 
         self.ipc_msg['status'] = 200 # OK
-
 
     @page
     def hack08_critical_exploit_enter(self, arg):
@@ -450,7 +445,7 @@ class HackerKiosk:
         Switch to SSITH_INFOTAINMENT_SCENARIO
         NOTE: Reset baseline target(s) here to save time?
         """
-        self.button_pressed_next = False
+        self.button_pressed_hack08_next = False
 
         self.hackActive(canlib.HACK_NONE)
         self.switchActiveScenario(canlib.SCENARIO_SECURE_INFOTAINMENT)
@@ -458,7 +453,7 @@ class HackerKiosk:
         # Reset components for the baseline scenario
         self.restartComponent(canlib.INFOTAINMENT_SERVER_1)
         self.restartComponent(canlib.OTA_UPDATE_SERVER_1)
-        self.restartComponent(canlib.TARGET_1)
+        self.restartComponent(canlib.FREERTOS_1)
 
         self.ipc_msg['status'] = 200 # OK
 
@@ -482,7 +477,9 @@ class HackerKiosk:
         self.button_pressed_info_exploit = False
         self.exploit_complete = True
 
-        self.execute_infotainment_hack(arg)
+        # Send the button press only in deploy_mode
+        if self.deploy_mode:
+            self.execute_infotainment_hack(arg)
         # NOTE: we assume that the hack failed.
         # To properly check ifthe hack was succesfull or not,
         # we would have to listen to the hacked infotainment
@@ -535,13 +532,15 @@ class HackerKiosk:
         url = f"http://{HackerKiosk.OTA_SERVER_IP[self.active_scenario]}:{self.ota_server_port}"
 
         print(f"Setting up OTA client with URL: {url}")
-        print(f"CMD_CHANGE_ACTIVE_SCENARIO: {ComponentDictionary[scenario_id]}")
+        print(f"CMD_CHANGE_ACTIVE_SCENARIO: {canlib.CanlibComponentNames.get(scenario_id,None)}")
 
         self.ota_server = kclient.HackOtaClient(url)
         try:
             msg = Message(arbitration_id=canlib.CAN_ID_CMD_ACTIVE_SCENARIO,
                         data=struct.pack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, scenario_id))
             self.cmd_bus.send(msg)
+            # for the museum
+            self.udp_bus.send(msg, tx_ip="10.88.88.255")
             return True
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error sending message: {msg}: {exc}")
@@ -552,7 +551,7 @@ class HackerKiosk:
         Notify peers about the restart (AdminPC is doing the restart)
         TODO: wait for some sort of response?
         """
-        print(f"CAN_ID_CMD_RESTART: {ComponentDictionary[component_id]}")
+        print(f"CAN_ID_CMD_RESTART: {canlib.CanlibComponentNames.get(component_id,None)}")
         try:
             msg = Message(arbitration_id=canlib.CAN_ID_CMD_RESTART,
                         data=struct.pack(canlib.CAN_FORMAT_CMD_RESTART, component_id))
@@ -567,11 +566,13 @@ class HackerKiosk:
         Notify peers about the active hack (only in BASELINE scenario)
         (Ignition LED manager changes LED pattern)
         """
-        print(f"CAN_ID_CMD_HACK_ACTIVE: {ComponentDictionary[hack_id]}")
+        print(f"CAN_ID_CMD_HACK_ACTIVE: {canlib.CanlibComponentNames.get(hack_id,None)}")
         try:
             msg = Message(arbitration_id=canlib.CAN_ID_CMD_HACK_ACTIVE,
                         data=struct.pack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, hack_id))
             self.cmd_bus.send(msg)
+            # for the museum
+            self.udp_bus.send(msg, tx_ip="10.88.88.255")
             return True
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error sending message: {msg}: {exc}")
@@ -582,11 +583,12 @@ class HackerKiosk:
         Mimic an infotainment client and send button press to
         the hacked info server, over UDP CAN network with a special port
         """
-        print(f"CAN_ID_BUTTON_PRESSED: {ButtonDictionary[button_id]}")
+        print(f"CAN_ID_BUTTON_PRESSED: {canlib.CanlibComponentNames.get(button_id, None)}")
         try:
             msg = Message(arbitration_id=canlib.CAN_ID_BUTTON_PRESSED,
+                        dlc=canlib.CAN_DLC_BUTTON_PRESSED,
                         data=struct.pack(canlib.CAN_FORMAT_BUTTON_PRESSED, button_id))
-            self.infotainment_bus.send(msg)
+            self.infotainment_bus.send(msg, tx_ip="10.88.88.255")
             return True
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error sending message: {msg}: {exc}")
@@ -609,7 +611,7 @@ class HackerKiosk:
             self.buttonPressed(canlib.BUTTON_VOLUME_DOWN)
             self.ipc_msg['retval'] = "Volume decreased"
         elif arg == "exfil":
-            self.ipc_msg['retval'] = f"{self.x}, {self.y}, {self.z}"
+            self.ipc_msg['retval'] = f"{round(self.x)}, {round(self.y)}"
         elif arg == "changeStation_1":
             self.buttonPressed(canlib.BUTTON_STATION_1)
             self.ipc_msg['retval'] = "Station set to 1"

@@ -11,18 +11,21 @@
       </table>
     </div>
     <Console/>
+    <Debug/>
   </div>
 </template>
 
 <script>
 import Console from './components/Console.vue'
+import Debug from './components/Debug.vue'
 const electron = require('electron')
 const ipc = electron.ipcRenderer;
 
 export default {
   name: 'App',
   components: {
-    Console
+    Console,
+    Debug
   },
   data() {
     return {
@@ -66,6 +69,11 @@ html, body {
   position: absolute;
   top: 200px;
   left: 400px;
+}
+#debug {
+  position: absolute;
+  top: 870px;
+  left: 120px;
 }
 #console {
   position: absolute;

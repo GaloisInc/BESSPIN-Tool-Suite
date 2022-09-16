@@ -169,7 +169,7 @@
         q.forEach(item => {
           if (item.func == 'info_exploit' && item.status == 200) {
             if(item.args == 'changeStation') {
-              this.stationMessage = "Station set to " + item.retval;
+              this.stationMessage = item.retval;
             } else if (item.args == 'volumeUp') {
               this.volumeMessage = item.retval;
             } else if (item.args == 'volumeDown') {
@@ -209,7 +209,6 @@ pollState() {
         ipc.send('button-pressed', 'info_exploit','volumeDown');
       },
       next() {
-        ipc.send('button-pressed', 'next', {});
         this.$router.push({ name: 'hack07_critical_attempt' });
       }
     }
