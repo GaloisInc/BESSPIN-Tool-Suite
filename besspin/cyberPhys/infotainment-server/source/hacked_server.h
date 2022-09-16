@@ -110,4 +110,23 @@ void broadcast_heartbeat_ack(can_frame *frame);
  */
 void stop(void);
 
+/**
+ * Return a valid receive port, based on whether the server is hacked
+ */
+int get_valid_receive_port(void);
+
+/**
+ * Handle new active scenario.
+ * If the active scenario is different than the last saved one,
+ * re-initialize the server
+ */
+bool handle_cmd_active_scenario(can_frame *frame);
+
+/**
+ * Update the active hack.
+ * If the scenario is baseline, and the hack is for infotainment,
+ * switch to hacked state.
+ */
+bool handle_cmd_hack_active(can_frame *frame);
+
 #endif // __INFOTAINMENT_SERVER_H__

@@ -77,6 +77,9 @@ typedef struct infotainment_state_t {
     float pos_y;
     float pos_z;
     float pos_r;
+    uint8_t active_hack;
+    uint8_t active_scenario;
+    bool hacked;
 } infotainment_state;
 
 // constants for interpreting CAN messages; these are subject to 
