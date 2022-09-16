@@ -108,7 +108,7 @@ class HackerKiosk:
     ]
 
 
-    def __init__(self, net_conf: cconf.DemonstratorNetworkConfig, deploy_mode=True, draw_graph=False):
+    def __init__(self, net_conf: cconf.DemonstratorNetworkConfig, deploy_mode=False, draw_graph=False):
         """kiosk state machine"""
         assert(net_conf)
         self.net_conf = net_conf
@@ -168,6 +168,11 @@ class HackerKiosk:
         print(f"<{self.__class__.__name__}> UDP bus listening at {self.net_conf.nodes['HackerKiosk']}:\
             {self.net_conf.port_network_hackedInfotainmentPort}")
         self.infotainment_bus = canlib.UdpBus(port=self.net_conf.port_network_hackedInfotainmentPort,ip="")
+        print(f"<{self.__class__.__name__}> Infotainment bus listening at {cmd_host}:\
+            {self.net_conf.port_network_hackedInfotainmentPort}")
+        self.udp_bus = canlib.UdpBus(port=self.net_conf.port_network_canbusPort,ip="")
+        print(f"<{self.__class__.__name__}> UDP2 bus listening at {cmd_host}:\
+            {self.net_conf.port_network_canbusPort}")
         self.cmd_thread = threading.Thread(target=self.cmdLoop, args=[], daemon=True)
         self.info_thread = threading.Thread(target=self.infoLoop, args=[], daemon=True)
 
@@ -176,9 +181,7 @@ class HackerKiosk:
 
         # To make sure the OTA server is properly initialized
         self.switchActiveScenario(canlib.SCENARIO_BASELINE)
-
         self.initialized = True
-
 
     def run(self):
         if not self.initialized:
@@ -244,15 +247,16 @@ class HackerKiosk:
                                                 dlc=canlib.CAN_DLC_HEARTBEAT_ACK,
                                                 data=struct.pack(canlib.CAN_FORMAT_HEARTBEAT_ACK, canlib.HACKER_KIOSK_BACKEND, req_number))
                         self.cmd_bus.send(heartbeat_ack)
-                    elif cid == canlib.CAN_ID_CMD_FUNCTIONALITY_LEVEL:
-                        level = struct.unpack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL, msg.data)[0]
-                        print(f"<{self.__class__.__name__}> CAN_ID_CMD_FUNCTIONALITY_LEVEL: {canlib.CanlibComponentNames.get(level,None)}")
-                        if level == canlib.FUNCTIONALITY_FULL:
-                            print(f"<{self.__class__.__name__}> Deploy mode enabled")
-                            self.deploy_mode = True
-                        else:
-                            print(f"<{self.__class__.__name__}> Deploy mode disabled")
-                            self.deploy_mode = False
+                    # NOTE: do not switch deploy mode in the exhibit
+                    # elif cid == canlib.CAN_ID_CMD_FUNCTIONALITY_LEVEL:
+                    #     level = struct.unpack(canlib.CAN_FORMAT_CMD_FUNCTIONALITY_LEVEL, msg.data)[0]
+                    #     print(f"<{self.__class__.__name__}> CAN_ID_CMD_FUNCTIONALITY_LEVEL: {canlib.CanlibComponentNames.get(level,None)}")
+                    #     if level == canlib.FUNCTIONALITY_FULL:
+                    #         print(f"<{self.__class__.__name__}> Deploy mode enabled")
+                    #         self.deploy_mode = True
+                    #     else:
+                    #         print(f"<{self.__class__.__name__}> Deploy mode disabled")
+                    #         self.deploy_mode = False
                     elif cid == canlib.CAN_ID_CMD_COMPONENT_READY:
                         component_id = struct.unpack(canlib.CAN_FORMAT_CMD_COMPONENT_READY, msg.data)[0]
                         print(f"<{self.__class__.__name__}> CAN_ID_CMD_COMPONENT_READY: {canlib.CanlibComponentNames.get(component_id,None)}")
@@ -336,11 +340,14 @@ class HackerKiosk:
             hack_ok, data = self.ota_server.upload_and_execute_file(HackerKiosk.INFO_SERVER_HACKED_PATH)
             if hack_ok:
                 print("Hack successful!")
+                self.hackActive(canlib.HACK_INFOTAINMENT_MUSIC)
             else:
                 print(f"Hack failed with: {data}")
         else:
             print("Hack successful!")
             print("Uploading hacked infotainment server")
+            if self.active_scenario == canlib.SCENARIO_BASELINE:
+                self.hackActive(canlib.HACK_INFOTAINMENT_MUSIC)
             print("Upload successful!")
             hack_ok = True
         return hack_ok
@@ -470,7 +477,9 @@ class HackerKiosk:
         self.button_pressed_info_exploit = False
         self.exploit_complete = True
 
-        self.execute_infotainment_hack(arg)
+        # Send the button press only in deploy_mode
+        if self.deploy_mode:
+            self.execute_infotainment_hack(arg)
         # NOTE: we assume that the hack failed.
         # To properly check ifthe hack was succesfull or not,
         # we would have to listen to the hacked infotainment
@@ -530,6 +539,8 @@ class HackerKiosk:
             msg = Message(arbitration_id=canlib.CAN_ID_CMD_ACTIVE_SCENARIO,
                         data=struct.pack(canlib.CAN_FORMAT_CMD_ACTIVE_SCENARIO, scenario_id))
             self.cmd_bus.send(msg)
+            # for the museum
+            self.udp_bus.send(msg, tx_ip="10.88.88.255")
             return True
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error sending message: {msg}: {exc}")
@@ -560,6 +571,8 @@ class HackerKiosk:
             msg = Message(arbitration_id=canlib.CAN_ID_CMD_HACK_ACTIVE,
                         data=struct.pack(canlib.CAN_FORMAT_CMD_HACK_ACTIVE, hack_id))
             self.cmd_bus.send(msg)
+            # for the museum
+            self.udp_bus.send(msg, tx_ip="10.88.88.255")
             return True
         except Exception as exc:
             print(f"<{self.__class__.__name__}> Error sending message: {msg}: {exc}")
